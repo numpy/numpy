@@ -317,7 +317,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (PyDict_Check(ip)) {
             PyObject *typestr;
             PyObject *tmp = NULL;
-            typestr = PyDict_GetItemString(ip, "typestr");
+            typestr = _PyDict_GetItemStringWithError(ip, "typestr");
+            if (typestr == NULL && PyErr_Occurred()) {
+                goto fail;
+            }
             /* Allow unicode type strings */
             if (typestr && PyUnicode_Check(typestr)) {
                 tmp = PyUnicode_AsASCIIString(typestr);

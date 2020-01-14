@@ -509,12 +509,17 @@ _convert_from_array_descr(PyObject *obj, int align)
             _report_generic_error();
             goto fail;
         }
-        if ((PyDict_GetItem(fields, name) != NULL)
+        if ((PyDict_GetItemWithError(fields, name) != NULL)
              || (title
                  && PyBaseString_Check(title)
-                 && (PyDict_GetItem(fields, title) != NULL))) {
+                 && (PyDict_GetItemWithError(fields, title) != NULL))) {
             PyErr_Format(PyExc_ValueError,
                     "field %R occurs more than once", name);
+            Py_DECREF(conv);
+            goto fail;
+        }
+        else if (PyErr_Occurred()) {
+            /* Dict lookup crashed */
             Py_DECREF(conv);
             goto fail;
         }
@@ -545,7 +550,11 @@ _convert_from_array_descr(PyObject *obj, int align)
                 goto fail;
             }
             if (PyBaseString_Check(title)) {
-                if (PyDict_GetItem(fields, title) != NULL) {
+                PyObject *existing = PyDict_GetItemWithError(fields, title);
+                if (existing == NULL && PyErr_Occurred()) {
+                    goto fail;
+                }
+                if (existing != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
                     Py_DECREF(tup);
@@ -786,8 +795,12 @@ _validate_union_object_dtype(PyArray_Descr *new, PyArray_Descr *conv)
     if (name == NULL) {
         return -1;
     }
-    tup = PyDict_GetItem(conv->fields, name);
+    tup = PyDict_GetItemWithError(conv->fields, name);
     if (tup == NULL) {
+        if (!PyErr_Occurred()) {
+            /* fields was missing the name it claimed to contain */
+            PyErr_BadInternalCall();
+        }
         return -1;
     }
     dtype = (PyArray_Descr *)PyTuple_GET_ITEM(tup, 0);
@@ -909,8 +922,12 @@ _validate_object_field_overlap(PyArray_Descr *dtype)
         if (key == NULL) {
             return -1;
         }
-        tup = PyDict_GetItem(fields, key);
+        tup = PyDict_GetItemWithError(fields, key);
         if (tup == NULL) {
+            if (!PyErr_Occurred()) {
+                /* fields was missing the name it claimed to contain */
+                PyErr_BadInternalCall();
+            }
             return -1;
         }
         if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
@@ -925,8 +942,12 @@ _validate_object_field_overlap(PyArray_Descr *dtype)
                     if (key == NULL) {
                         return -1;
                     }
-                    tup = PyDict_GetItem(fields, key);
+                    tup = PyDict_GetItemWithError(fields, key);
                     if (tup == NULL) {
+                        if (!PyErr_Occurred()) {
+                            /* fields was missing the name it claimed to contain */
+                            PyErr_BadInternalCall();
+                        }
                         return -1;
                     }
                     if (!PyArg_ParseTuple(tup, "Oi|O", &fld2_dtype,
@@ -1178,9 +1199,14 @@ _convert_from_dict(PyObject *obj, int align)
         }
 
         /* Insert into dictionary */
-        if (PyDict_GetItem(fields, name) != NULL) {
+        if (PyDict_GetItemWithError(fields, name) != NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "name already used as a name or title");
+            Py_DECREF(tup);
+            goto fail;
+        }
+        else if (PyErr_Occurred()) {
+            /* MemoryError during dict lookup */
             Py_DECREF(tup);
             goto fail;
         }
@@ -1188,7 +1214,7 @@ _convert_from_dict(PyObject *obj, int align)
         Py_DECREF(name);
         if (len == 3) {
             if (PyBaseString_Check(title)) {
-                if (PyDict_GetItem(fields, title) != NULL) {
+                if (PyDict_GetItemWithError(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
                     Py_DECREF(tup);
@@ -1614,8 +1640,11 @@ _convert_from_str(PyObject *obj, int align)
         if (typeDict == NULL) {
             goto fail;
         }
-        PyObject *item = PyDict_GetItem(typeDict, obj);
+        PyObject *item = PyDict_GetItemWithError(typeDict, obj);
         if (item == NULL) {
+            if (PyErr_Occurred()) {
+                return NULL;
+            }
             goto fail;
         }
 
@@ -2106,7 +2135,16 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
         int ret;
         key = PyTuple_GET_ITEM(self->names, i);
         /* Borrowed references to item and new_key */
-        item = PyDict_GetItem(self->fields, key);
+        item = PyDict_GetItemWithError(self->fields, key);
+        if (item == NULL) {
+            if (!PyErr_Occurred()) {
+                /* fields was missing the name it claimed to contain */
+                PyErr_BadInternalCall();
+            }
+            Py_DECREF(new_names);
+            Py_DECREF(new_fields);
+            return -1;
+        }
         new_key = PyTuple_GET_ITEM(new_names, i);
         /* Check for duplicates */
         ret = PyDict_Contains(new_fields, new_key);
@@ -2554,8 +2592,12 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         if (fields != Py_None) {
             PyObject *key, *list;
             key = PyInt_FromLong(-1);
-            list = PyDict_GetItem(fields, key);
+            list = PyDict_GetItemWithError(fields, key);
             if (!list) {
+                if (!PyErr_Occurred()) {
+                    /* fields was missing the name it claimed to contain */
+                    PyErr_BadInternalCall();
+                }
                 return NULL;
             }
             Py_INCREF(list);
@@ -2726,8 +2768,12 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
             for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
                 name = PyTuple_GET_ITEM(names, i);
-                field = PyDict_GetItem(fields, name);
+                field = PyDict_GetItemWithError(fields, name);
                 if (!field) {
+                    if (!PyErr_Occurred()) {
+                        /* fields was missing the name it claimed to contain */
+                        PyErr_BadInternalCall();
+                    }
                     return NULL;
                 }
 
@@ -3212,10 +3258,12 @@ _check_has_fields(PyArray_Descr *self)
 static PyObject *
 _subscript_by_name(PyArray_Descr *self, PyObject *op)
 {
-    PyObject *obj = PyDict_GetItem(self->fields, op);
+    PyObject *obj = PyDict_GetItemWithError(self->fields, op);
     if (obj == NULL) {
-        PyErr_Format(PyExc_KeyError,
-                "Field named %R not found.", op);
+        if (!PyErr_Occurred()) {
+            PyErr_Format(PyExc_KeyError,
+                    "Field named %R not found.", op);
+        }
         return NULL;
     }
     PyObject *descr = PyTuple_GET_ITEM(obj, 0);
@@ -3292,9 +3340,11 @@ arraydescr_field_subset_view(PyArray_Descr *self, PyObject *ind)
          */
         PyTuple_SET_ITEM(names, i, name);
 
-        tup = PyDict_GetItem(self->fields, name);
+        tup = PyDict_GetItemWithError(self->fields, name);
         if (tup == NULL) {
-            PyErr_SetObject(PyExc_KeyError, name);
+            if (!PyErr_Occurred()) {
+                PyErr_SetObject(PyExc_KeyError, name);
+            }
             goto fail;
         }
 

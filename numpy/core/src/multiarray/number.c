@@ -57,8 +57,11 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
  */
 
 /* FIXME - macro contains a return */
-#define SET(op)   temp = PyDict_GetItemString(dict, #op); \
-    if (temp != NULL) { \
+#define SET(op)   temp = _PyDict_GetItemStringWithError(dict, #op); \
+    if (temp == NULL && PyErr_Occurred()) { \
+        return -1; \
+    } \
+    else if (temp != NULL) { \
         if (!(PyCallable_Check(temp))) { \
             return -1; \
         } \

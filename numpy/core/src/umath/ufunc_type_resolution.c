@@ -1379,9 +1379,12 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItem(ufunc->userloops, key);
+            obj = PyDict_GetItemWithError(ufunc->userloops, key);
             Py_DECREF(key);
-            if (obj == NULL) {
+            if (obj == NULL && PyErr_Occurred()){
+                return -1;
+            }
+            else if (obj == NULL) {
                 continue;
             }
             for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
@@ -1784,9 +1787,12 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItem(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key);
             Py_DECREF(key);
-            if (obj == NULL) {
+            if (obj == NULL && PyErr_Occurred()){
+                return -1;
+            }
+            else if (obj == NULL) {
                 continue;
             }
             for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
@@ -1848,9 +1854,12 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItem(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key);
             Py_DECREF(key);
-            if (obj == NULL) {
+            if (obj == NULL && PyErr_Occurred()){
+                return -1;
+            }
+            else if (obj == NULL) {
                 continue;
             }
 
