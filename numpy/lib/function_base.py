@@ -1582,7 +1582,7 @@ def arg_trim_zeros(filt):
     """
     nonzero = np.argwhere(filt)
     if nonzero.size == 0:
-        start = stop = nonzero
+        start = stop = np.array([], dtype=np.intp)
     else:
         start = nonzero.min(axis=0)
         stop = nonzero.max(axis=0)
@@ -1636,20 +1636,20 @@ def trim_zeros(filt, trim='fb', axis=-1):
     [1, 2]
 
     """
-    start, stop = arg_trim_zeros(filt)
+    filt_ = np.asarray(filt)
+    start, stop = arg_trim_zeros(filt_)
     stop += 1  # Adjust for slicing
-    ndim = start.shape[-1]
 
     if start.size == 0:
         # filt is all-zero -> assign same values to start and stop so that
         # resulting slice will be empty
-        start = stop = np.zeros(ndim, dtype=np.intp)
+        start = stop = np.zeros(filt_.ndim, dtype=np.intp)
     else:
         trim = trim.lower()
         if 'f' not in trim:
-            start = (None,) * ndim
+            start = (None,) * filt_.ndim
         if 'b' not in trim:
-            stop = (None,) * ndim
+            stop = (None,) * filt_.ndim
 
     if len(start) == 1:
         # filt is 1D -> don't use multi-dimensional slicing to preserve
@@ -1660,7 +1660,7 @@ def trim_zeros(filt, trim='fb', axis=-1):
         sl = tuple(slice(*x) for x in zip(start, stop))
     else:
         # only trim single axis
-        axis = normalize_axis_index(axis, ndim)
+        axis = normalize_axis_index(axis, filt_.ndim)
         sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
 
     return filt[sl]
