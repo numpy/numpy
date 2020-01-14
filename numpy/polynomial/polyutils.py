@@ -545,7 +545,7 @@ def _valnd(val_f, c, *args):
     args = [np.asanyarray(a) for a in args]
     shape0 = args[0].shape
     if not all((a.shape == shape0 for a in args[1:])):
-        if len(args) ==3:
+        if len(args) == 3:
             raise ValueError('x, y, z are incompatible')
         elif len(args) == 2:
             raise ValueError('x, y are incompatible')
