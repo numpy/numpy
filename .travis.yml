@@ -87,6 +87,8 @@ jobs:
           packages:
             - gfortran
             - eatmydata
+            - libgfortran5
+            - libgfortran3
 
     - python: 3.7
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1

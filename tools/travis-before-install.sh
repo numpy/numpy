@@ -33,6 +33,7 @@ fi
 
 source venv/bin/activate
 python -V
+gcc --version
 
 popd
 
