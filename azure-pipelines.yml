@@ -187,7 +187,7 @@ stages:
     - template: azure-steps-windows.yml
   - job: Linux_PyPy3
     pool:
-      vmIMage: 'ubuntu-16.04'
+      vmIMage: 'ubuntu-18.04'
     steps:
     - script: source tools/pypy-test.sh
       displayName: 'Run PyPy3 Build / Tests'
