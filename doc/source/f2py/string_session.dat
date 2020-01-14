@@ -12,19 +12,19 @@ c : input string(len=-1)
 d : in/output rank-0 array(string(len=-1),'c')
 
 >>> from numpy import array
->>> a = array('123')
->>> b = array('123')
->>> c = array('123')
->>> d = array('123')
+>>> a = array(b'123\0\0')
+>>> b = array(b'123\0\0')
+>>> c = array(b'123')
+>>> d = array(b'123')
 >>> mystring.foo(a, b, c, d)
  A=123
- B=123��
+ B=123
  C=123
  D=123
  CHANGE A,B,C,D
  A=A23
- B=B23��
+ B=B23
  C=C23
  D=D23
->>> a.tostring(), b.tostring(), c.tostring(), d.tostring()
-(b'123', b'B2\x00', b'123', b'D2\x00')
+>>> a[()], b[()], c[()], d[()]
+(b'123', b'B23', b'123', b'D2')

@@ -28,11 +28,10 @@ created an array from object
 False
 >>> a.flags.f_contiguous
 True
->>> b = arr.foo(a)                 # even if a is proper-contiguous
-...                                # and has proper type, a copy is made
-...                                # forced by intent(copy) attribute
-...                                # to preserve its original contents
-... 
+# even if a is proper-contiguous and has proper type,
+# a copy is made forced by intent(copy) attribute
+# to preserve its original contents
+>>> b = arr.foo(a)
 copied an array: size=6, elsize=8
 >>> print(a)
 [[ 1.  3.  4.]
