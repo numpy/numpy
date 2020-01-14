@@ -4017,7 +4017,7 @@ cdef class Generator:
                                         total, num_colors, colors_ptr, nsamp,
                                         num_variates, variates_ptr)
             if result == -1:
-                raise MemoryError("Insufficent memory for multivariate_"
+                raise MemoryError("Insufficient memory for multivariate_"
                                   "hypergeometric with method='count' and "
                                   "sum(colors)=%d" % total)
         else:

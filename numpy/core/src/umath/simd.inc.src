@@ -1856,7 +1856,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  * method: x* = x - y*PI/2, where y = rint(x*2/PI). x* \in [-PI/4, PI/4].
  * (3) Map cos(x) to (+/-)sine or (+/-)cosine of x* based on the quadrant k =
  * int(y).
- * (4) For elements outside that range, Cody-Waite reduction peforms poorly
+ * (4) For elements outside that range, Cody-Waite reduction performs poorly
  * leading to catastrophic cancellation. We compute cosine by calling glibc in
  * a scalar fashion.
  * (5) Vectorized implementation has a max ULP of 1.49 and performs at least

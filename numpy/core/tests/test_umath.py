@@ -1624,7 +1624,7 @@ class TestSpecialMethods:
             @property
             def args(self):
                 # We need to ensure these are fetched at the same time, before
-                # any other ufuncs are calld by the assertions
+                # any other ufuncs are called by the assertions
                 return (self._prepare_args, self._wrap_args)
             def __repr__(self):
                 return "a"  # for short test output

@@ -856,7 +856,7 @@ def test_unicode_object_array():
 
 class TestContextManager:
     def test_ctx_mgr(self):
-        # test that context manager actuall works
+        # test that context manager actually works
         with np.printoptions(precision=2):
             s = str(np.array([2.0]) / 3)
         assert_equal(s, '[0.67]')

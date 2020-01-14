@@ -8324,7 +8324,7 @@ def test_npymath_real():
                 assert_allclose(got, expected)
 
 def test_uintalignment_and_alignment():
-    # alignment code needs to satisfy these requrements:
+    # alignment code needs to satisfy these requirements:
     #  1. numpy structs match C struct layout
     #  2. ufuncs/casting is safe wrt to aligned access
     #  3. copy code is safe wrt to "uint alidned" access

@@ -1882,7 +1882,7 @@ class TestClip:
         assert_array_strict_equal(ac, act)
 
     def test_clip_with_out_transposed(self):
-        # Test that the out argument works when tranposed
+        # Test that the out argument works when transposed
         a = np.arange(16).reshape(4, 4)
         out = np.empty_like(a).T
         a.clip(4, 10, out=out)

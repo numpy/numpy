@@ -41,7 +41,7 @@
  */
 
 /*
- * Scanning function for next element parsing and seperator skipping.
+ * Scanning function for next element parsing and separator skipping.
  * These functions return:
  *   - 0 to indicate more data to read
  *   - -1 when reading stopped at the end of the string/file

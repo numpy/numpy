@@ -436,7 +436,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         if seqdtype.names is None:
             seqdtype = np.dtype([('', seqdtype)])
         if not flatten or _zip_dtype((seqarrays,), flatten=True) == seqdtype:
-            # Minimal processing needed: just make sure everythng's a-ok
+            # Minimal processing needed: just make sure everything's a-ok
             seqarrays = seqarrays.ravel()
             # Find what type of array we must return
             if usemask:
