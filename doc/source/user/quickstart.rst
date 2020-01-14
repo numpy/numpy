@@ -460,6 +460,8 @@ operate elementwise on an array, producing an array as output.
     `vectorize`,
     `where`
 
+.. _quickstart.indexing-slicing-and-iterating:
+
 Indexing, Slicing and Iterating
 -------------------------------
 

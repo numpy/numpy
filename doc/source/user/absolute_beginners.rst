@@ -3,6 +3,8 @@
 NumPy: the absolute basics for beginners
 ****************************************
 
+.. currentmodule:: numpy
+
 Welcome to the absolute beginner's guide to NumPy! If you have comments or
 suggestions, please don’t hesitate to reach out!
 
@@ -423,7 +425,7 @@ contiguous in memory, C-like order otherwise. (This is an optional parameter and
 doesn't need to be specified.)
 
 If you want to learn more about C and Fortran order, you can 
-`read more about the internal organization of NumPy arrays here <https://numpy.org/devdocs/reference/internals.html>`_. 
+:ref:`read more about the internal organization of NumPy arrays here <numpy-internals>`.
 Essentially, C and Fortran orders have to do with how indices correspond 
 to the order the array isstored in memory. In Fortran, when moving through 
 the elements of a two dimensional array as it is stored in memory, the **first** 
@@ -435,7 +437,7 @@ the most rapidly. The matrix is stored by rows, making it a **Row-major
 language**. What you do for C or Fortran depends on whether it's more important
 to preserve the indexing convention or not reorder the data.
 
-`Learn more about shape manipulation here <https://numpy.org/devdocs/user/quickstart.html#shape-manipulation>`_.
+:ref:`Learn more about shape manipulation here <quickstart.shape-manipulation>`.
 
 :ref:` Learn more about shape manipulation here <_quickstart.shape-manipulation>`
 
@@ -501,8 +503,8 @@ You can add an axis at index position 0 with::
   >>> c.shape
  (1, 6)
 
-`Find more information about newaxis here <https://numpy.org/devdocs/reference/arrays.indexing.html#index-1>`_ and 
-`expand_dims here <https://numpy.org/devdocs/reference/generated/numpy.expand_dims.html>`_.
+Find more information about :ref:`newaxis here <arrays.indexing>` and
+``expand_dims`` at `expand_dims`.
 
 Indexing and slicing 
 --------------------
@@ -614,10 +616,10 @@ array of indices will be empty. For example::
   (array([], dtype=int64), array([], dtype=int64))
 
 
-`Learn more about indexing and slicing here <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_ 
-and `here <https://numpy.org/devdocs/user/basics.indexing.html>`_.
+`Learn more about indexing and slicing here <quickstart.indexing-slicing-and-iterating>`
+and `here <basics.indexing>`_.
 
-`Read more about using the nonzero function here <https://numpy.org/devdocs/reference/generated/numpy.nonzero.html>`_.
+Read more about using the nonzero function at: `nonzero`.
 
 
 How to create an array from existing data
