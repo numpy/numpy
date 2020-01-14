@@ -99,7 +99,7 @@ def _deprecate_argsort_axis(arr):
         The array which argsort was called on
 
     np.ma.argsort has a long-term bug where the default of the axis argument
-    is wrong (gh-8701), which now must be kept for backwards compatibiity.
+    is wrong (gh-8701), which now must be kept for backwards compatibility.
     Thankfully, this only makes a difference when arrays are 2- or more-
     dimensional, so we only need a warning then.
     """

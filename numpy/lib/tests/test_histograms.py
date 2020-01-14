@@ -81,7 +81,7 @@ class TestHistogram:
         a, b = histogram(v, bins, density=False)
         assert_array_equal(a, [1, 2, 3, 4])
 
-        # Variale bin widths are especially useful to deal with
+        # Variable bin widths are especially useful to deal with
         # infinities.
         v = np.arange(10)
         bins = [0, 1, 3, 6, np.inf]

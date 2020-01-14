@@ -316,7 +316,7 @@ A total of 438 pull requests were merged for this release.
 * `#10618 <https://github.com/numpy/numpy/pull/10618>`__: MAINT: Stop using non-tuple indices internally
 * `#10619 <https://github.com/numpy/numpy/pull/10619>`__: BUG: np.ma.flatnotmasked_contiguous behaves differently on mask=nomask...
 * `#10621 <https://github.com/numpy/numpy/pull/10621>`__: BUG: deallocate recursive closure in arrayprint.py
-* `#10623 <https://github.com/numpy/numpy/pull/10623>`__: BUG: Correctly identify comma seperated dtype strings
+* `#10623 <https://github.com/numpy/numpy/pull/10623>`__: BUG: Correctly identify comma separated dtype strings
 * `#10625 <https://github.com/numpy/numpy/pull/10625>`__: BUG: Improve the accuracy of the FFT implementation
 * `#10635 <https://github.com/numpy/numpy/pull/10635>`__: ENH: Implement initial kwarg for ufunc.add.reduce
 * `#10641 <https://github.com/numpy/numpy/pull/10641>`__: MAINT: Post 1.14.1 release updates for master branch
@@ -343,7 +343,7 @@ A total of 438 pull requests were merged for this release.
 * `#10699 <https://github.com/numpy/numpy/pull/10699>`__: DOC: Grammar of np.gradient docstring
 * `#10702 <https://github.com/numpy/numpy/pull/10702>`__: TST, DOC: Upload devdocs and neps after circleci build
 * `#10703 <https://github.com/numpy/numpy/pull/10703>`__: MAINT: NEP process updates
-* `#10708 <https://github.com/numpy/numpy/pull/10708>`__: BUG: fix problem with modifing pyf lines containing ';' in f2py
+* `#10708 <https://github.com/numpy/numpy/pull/10708>`__: BUG: fix problem with modifying pyf lines containing ';' in f2py
 * `#10710 <https://github.com/numpy/numpy/pull/10710>`__: BUG: fix error message in numpy.select
 * `#10711 <https://github.com/numpy/numpy/pull/10711>`__: MAINT: Hard tab and whitespace cleanup.
 * `#10715 <https://github.com/numpy/numpy/pull/10715>`__: MAINT: Fixed C++ guard in f2py test.

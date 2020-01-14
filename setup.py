@@ -407,7 +407,7 @@ def setup_package():
     os.chdir(src_path)
     sys.path.insert(0, src_path)
 
-    # Rewrite the version file everytime
+    # Rewrite the version file every time
     write_version_py()
 
     # The f2py scripts that will be installed

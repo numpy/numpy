@@ -772,7 +772,7 @@ def cholesky(a):
     return wrap(r.astype(result_t, copy=False))
 
 
-# QR decompostion
+# QR decomposition
 
 def _qr_dispatcher(a, mode=None):
     return (a,)

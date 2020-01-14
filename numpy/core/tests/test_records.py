@@ -422,7 +422,7 @@ class TestRecord:
         a['obj'] = data
         a['int'] = 42
         ctor, args = a[0].__reduce__()
-        # check the contructor is what we expect before interpreting the arguments
+        # check the constructor is what we expect before interpreting the arguments
         assert ctor is np.core.multiarray.scalar
         dtype, obj = args
         # make sure we did not pickle the address
