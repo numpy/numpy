@@ -1811,7 +1811,7 @@ class TestUfunc:
         assert_raises(TypeError, f, d, 0, keepdims="invalid", dtype="invalid",
                      out=None)
 
-        # invalid keyord
+        # invalid keyword
         assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
         assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",

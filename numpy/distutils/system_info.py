@@ -714,7 +714,7 @@ class system_info:
         return info
 
     def get_info(self, notfound_action=0):
-        """ Return a dictonary with items that are compatible
+        """ Return a dictionary with items that are compatible
             with numpy.distutils.setup keyword arguments.
         """
         flag = 0

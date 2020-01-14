@@ -448,7 +448,7 @@ input arguments:
 This might be useful, but it's not clear if we really need it. Pint seems to
 get along OK without any explicit array creation routines (favoring
 multiplication by units, e.g., ``np.ones(5) * ureg.m``), and for the most part
-Dask is also OK with existing ``__array_function__`` style overides (e.g.,
+Dask is also OK with existing ``__array_function__`` style overrides (e.g.,
 favoring ``np.ones_like`` over ``np.ones``). Choosing whether to place an array
 on the CPU or GPU could be solved by `making array creation lazy
 <https://github.com/google/jax/pull/1668>`_.

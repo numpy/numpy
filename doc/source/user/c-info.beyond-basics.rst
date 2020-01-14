@@ -110,7 +110,7 @@ to a small(er) fraction of the total time. Even if the interior of the
 loop is performed without a function call it can be advantageous to
 perform the inner loop over the dimension with the highest number of
 elements to take advantage of speed enhancements available on micro-
-processors that use pipelining to enhance fundmental operations.
+processors that use pipelining to enhance fundamental operations.
 
 The :c:func:`PyArray_IterAllButAxis` ( ``array``, ``&dim`` ) constructs an
 iterator object that is modified so that it will not iterate over the

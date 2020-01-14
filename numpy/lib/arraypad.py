@@ -232,7 +232,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
 
 def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     """
-    Calculate statistic for the empty-padded array in given dimnsion.
+    Calculate statistic for the empty-padded array in given dimension.
 
     Parameters
     ----------
@@ -271,7 +271,7 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
 
     if (left_length == 0 or right_length == 0) \
             and stat_func in {np.amax, np.amin}:
-        # amax and amin can't operate on an emtpy array,
+        # amax and amin can't operate on an empty array,
         # raise a more descriptive warning here instead of the default one
         raise ValueError("stat_length of 0 yields no value for padding")
 

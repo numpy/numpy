@@ -1538,7 +1538,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          *   - If other is not convertible to an array, pass on the error
          *     (MHvK, 2018-06-18: not sure about this, but it's what we have).
          *
-         * However, for backwards compatibilty, we cannot yet return arrays,
+         * However, for backwards compatibility, we cannot yet return arrays,
          * so we raise warnings instead.  Furthermore, we warn on python2
          * for LT, LE, GE, GT, since fall-back behaviour is poorly defined.
          */

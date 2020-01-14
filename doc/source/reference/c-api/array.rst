@@ -1223,7 +1223,7 @@ Converting data types
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is superceded by :c:func:`PyArray_MinScalarType` and/or
+    This function is superseded by :c:func:`PyArray_MinScalarType` and/or
     :c:func:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
@@ -1237,7 +1237,7 @@ Converting data types
 .. c:function:: void PyArray_ArrayType( \
         PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
 
-    This function is superceded by :c:func:`PyArray_ResultType`.
+    This function is superseded by :c:func:`PyArray_ResultType`.
 
     This function works similarly to :c:func:`PyArray_ObjectType` (...)
     except it handles flexible arrays. The *mintype* argument can have
@@ -1248,7 +1248,7 @@ Converting data types
 .. c:function:: PyArrayObject** PyArray_ConvertToCommonType( \
         PyObject* op, int* n)
 
-    The functionality this provides is largely superceded by iterator
+    The functionality this provides is largely superseded by iterator
     :c:type:`NpyIter` introduced in 1.6, with flag
     :c:data:`NPY_ITER_COMMON_DTYPE` or with the same dtype parameter for
     all operands.
@@ -1439,7 +1439,7 @@ An ndarray can have a data segment that is not a simple contiguous
 chunk of well-behaved memory you can manipulate. It may not be aligned
 with word boundaries (very important on some platforms). It might have
 its data in a different byte-order than the machine recognizes. It
-might not be writeable. It might be in Fortan-contiguous order. The
+might not be writeable. It might be in Fortran-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
 
@@ -2488,7 +2488,7 @@ an element copier function as a primitive.::
 Array Iterators
 ---------------
 
-As of NumPy 1.6.0, these array iterators are superceded by
+As of NumPy 1.6.0, these array iterators are superseded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an

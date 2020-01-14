@@ -1841,7 +1841,7 @@ typedef struct geev_params_struct {
     void *WR; /* RWORK in complex versions, REAL W buffer for (sd)geev*/
     void *WI;
     void *VLR; /* REAL VL buffers for _geev where _ is s, d */
-    void *VRR; /* REAL VR buffers for _geev hwere _ is s, d */
+    void *VRR; /* REAL VR buffers for _geev where _ is s, d */
     void *WORK;
     void *W;  /* final w */
     void *VL; /* final vl */
