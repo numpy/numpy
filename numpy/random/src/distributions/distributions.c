@@ -263,7 +263,7 @@ double random_standard_gamma(bitgen_t *bitgen_state,
 
 float random_standard_gamma_f(bitgen_t *bitgen_state,
                                              float shape) {
-  float b, c;
+  float b, c, d;
   float U, V, X, Y;
 
   if (shape == 1.0f) {
@@ -288,21 +288,21 @@ float random_standard_gamma_f(bitgen_t *bitgen_state,
       }
     }
   } else {
-    b = shape - 1.0f / 3.0f;
-    c = 1.0f / sqrtf(9.0f * b);
+    U = floor(shape);
+    V = (U - 1.0f) / (shape - 1.0f);
+    Y = expf(U - shape) * powf(shape - 1.0f, shape - U);
+    RAND_INT_TYPE k;
     for (;;) {
-      do {
-        X = random_standard_normal_f(bitgen_state);
-        V = 1.0f + c * X;
-      } while (V <= 0.0f);
-
-      V = V * V * V;
-      U = next_float(bitgen_state);
-      if (U < 1.0f - 0.0331f * (X * X) * (X * X))
-        return (b * V);
-      /* logf(0.0) ok here */
-      if (logf(U) < 0.5f * X * X + b * (1.0f - V + logf(V)))
-        return (b * V);
+      b = 1.0f;
+      for (k = 0; k < U; k++) {
+        b *= next_float(bitgen_state);
+      }
+      X = -1.0f / V * logf(b);
+      c = powf(X, shape - 1.0f) * expf(-X);
+      d = Y * powf(X, U - 1.0f) * expf(-V * X);
+      if (next_float(bitgen_state) <= c/d) {
+        return X;
+      }
     }
   }
 }
