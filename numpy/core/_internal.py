@@ -556,7 +556,6 @@ class _Stream:
 
     def __bool__(self):
         return bool(self.s)
-    __nonzero__ = __bool__
 
 
 def _dtype_from_pep3118(spec):

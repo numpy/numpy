@@ -1215,8 +1215,6 @@ class TestNonzero:
         class BoolErrors:
             def __bool__(self):
                 raise ValueError("Not allowed")
-            def __nonzero__(self):
-                raise ValueError("Not allowed")
 
         assert_raises(ValueError, np.nonzero, np.array([BoolErrors()]))
 
