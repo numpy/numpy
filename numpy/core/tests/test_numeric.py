@@ -1991,7 +1991,9 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, exp)
 
-    @pytest.mark.xfail(reason="no scalar nan propagation yet")
+    @pytest.mark.xfail(reason="no scalar nan propagation yet",
+                       raises=AssertionError,
+                       strict=True)
     @pytest.mark.parametrize("arr, amin, amax", [
         # problematic scalar nan case from hypothesis
         (np.zeros(10, dtype=np.int64),
@@ -2001,10 +2003,10 @@ class TestClip:
     def test_clip_scalar_nan_propagation(self, arr, amin, amax):
         # enforcement of scalar nan propagation for comparisons
         # called through clip()
-        expected = np.minimum(np.maximum(a, amin), amax)
+        expected = np.minimum(np.maximum(arr, amin), amax)
         with assert_warns(DeprecationWarning):
             actual = np.clip(arr, amin, amax)
-            assert_equal(actual, expected)
+        assert_equal(actual, expected)
 
     @pytest.mark.xfail(reason="propagation doesn't match spec")
     @pytest.mark.parametrize("arr, amin, amax", [
