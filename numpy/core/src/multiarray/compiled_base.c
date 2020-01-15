@@ -1255,8 +1255,12 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                           " used instead of 'dims'") < 0) {
                 return NULL;
             }
-            PyDict_SetItemString(kwds, "shape", dims_item);
-            PyDict_DelItemString(kwds, "dims");
+            if (PyDict_SetItemString(kwds, "shape", dims_item) < 0) {
+                return NULL;
+            }
+            if (PyDict_DelItemString(kwds, "dims") < 0) {
+                return NULL;
+            }
         }
     }
 
