@@ -217,7 +217,7 @@ void random_standard_normal_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *
 
 double random_standard_gamma(bitgen_t *bitgen_state,
                                             double shape) {
-  double b, c;
+  double b, c, d;
   double U, V, X, Y;
 
   if (shape == 1.0) {
@@ -242,21 +242,21 @@ double random_standard_gamma(bitgen_t *bitgen_state,
       }
     }
   } else {
-    b = shape - 1. / 3.;
-    c = 1. / sqrt(9 * b);
+    U = floor(shape);
+    V = (U - 1.0) / (shape - 1.0);
+    Y = exp(U - shape) * pow(shape - 1.0, shape - U);
+    RAND_INT_TYPE k;
     for (;;) {
-      do {
-        X = random_standard_normal(bitgen_state);
-        V = 1.0 + c * X;
-      } while (V <= 0.0);
-
-      V = V * V * V;
-      U = next_double(bitgen_state);
-      if (U < 1.0 - 0.0331 * (X * X) * (X * X))
-        return (b * V);
-      /* log(0.0) ok here */
-      if (log(U) < 0.5 * X * X + b * (1. - V + log(V)))
-        return (b * V);
+      b = 1.0;
+      for (k = 0; k < U; k++) {
+        b *= next_double(bitgen_state);
+      }
+      X = -1.0 / V * log(b);
+      c = pow(X, shape - 1.0) * exp(-X);
+      d = Y * pow(X, U - 1.0) * exp(-V * X);
+      if (next_double(bitgen_state) <= c/d) {
+        return X;
+      }
     }
   }
 }
