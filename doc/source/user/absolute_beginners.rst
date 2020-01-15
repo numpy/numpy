@@ -32,7 +32,7 @@ arrays and matrices.
 
 `Learn more about NumPy here <https://numpy.org/devdocs/user/whatisnumpy.html>`_!
 
-Learn more about :ref:`NumPy here <whatisnumpy>`!
+Learn more about :ref:`NumPy here <quickstart.the-basics>`!
 
 Installing NumPy 
 ----------------
