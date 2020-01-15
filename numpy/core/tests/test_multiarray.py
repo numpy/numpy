@@ -2247,10 +2247,11 @@ class TestMethods:
         assert_equal([a.searchsorted(a[i], 'left') for i in ind], ind)
         assert_equal([a.searchsorted(a[i], 'right') for i in ind], ind + 1)
 
-    def test_searchsorted_with_sorter(self):
+    def test_searchsorted_with_invalid_sorter(self):
         a = np.array([5, 2, 1, 3, 4])
         s = np.argsort(a)
-        assert_raises(TypeError, np.searchsorted, a, 0, sorter=(1, (2, 3)))
+        assert_raises(TypeError, np.searchsorted, a, 0,
+                      sorter=np.array((1, (2, 3)), dtype=object))
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1.1])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1, 2, 3, 4])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1, 2, 3, 4, 5, 6])
@@ -2260,6 +2261,7 @@ class TestMethods:
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1, 0, 1, 2, 3])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4, 0, -1, 2, 3])
 
+    def test_searchsorted_with_sorter(self):
         a = np.random.rand(300)
         s = a.argsort()
         b = np.sort(a)
