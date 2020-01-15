@@ -32,6 +32,8 @@ arrays and matrices.
 
 `Learn more about NumPy here <https://numpy.org/devdocs/user/whatisnumpy.html>`_!
 
+:ref:`Learn more about NumPy here <numpy-whatisnumpy>`!
+
 Installing NumPy 
 ----------------
   
