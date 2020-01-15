@@ -3590,7 +3590,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     }
 };
 
-static void
+static int
 addUfuncs(PyObject *dictionary) {
     PyObject *f;
     int i;
@@ -3609,12 +3609,19 @@ addUfuncs(PyObject *dictionary) {
                                                 d->doc,
                                                 0,
                                                 d->signature);
-        PyDict_SetItemString(dictionary, d->name, f);
+        if (f == NULL) {
+            return -1;
+        }
 #if 0
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
+        int ret = PyDict_SetItemString(dictionary, d->name, f);
         Py_DECREF(f);
+        if (ret < 0) {
+            return -1;
+        }
     }
+    return 0;
 }
 
 
@@ -3654,17 +3661,22 @@ PyObject *PyInit__umath_linalg(void)
     import_ufunc();
 
     d = PyModule_GetDict(m);
+    if (d == NULL) {
+        return NULL;
+    }
 
     version = PyString_FromString(umath_linalg_version_string);
-    PyDict_SetItemString(d, "__version__", version);
+    if (version == NULL) {
+        return NULL;
+    }
+    int ret = PyDict_SetItemString(d, "__version__", version);
     Py_DECREF(version);
+    if (ret < 0) {
+        return NULL;
+    }
 
     /* Load the ufunc operators into the module's namespace */
-    addUfuncs(d);
-
-    if (PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load _umath_linalg module.");
+    if (addUfuncs(d) < 0) {
         return NULL;
     }
 

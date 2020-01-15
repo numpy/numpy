@@ -4687,7 +4687,7 @@ set_typeinfo(PyObject *dict)
     infodict = PyDict_New();
     if (infodict == NULL) return -1;
 
-
+    int ret;
     /**begin repeat
      *
      * #name = BOOL,
@@ -4730,10 +4730,15 @@ set_typeinfo(PyObject *dict)
         &Py@Name@ArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "@name@", s);
+    ret = PyDict_SetItemString(infodict, "@name@", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
 
 
     /**end repeat**/
@@ -4753,10 +4758,15 @@ set_typeinfo(PyObject *dict)
         _ALIGN(@type@), &Py@Name@ArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "@name@", s);
+    ret = PyDict_SetItemString(infodict, "@name@", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
 
     /**end repeat**/
 
@@ -4766,37 +4776,57 @@ set_typeinfo(PyObject *dict)
         &PyObjectArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "OBJECT", s);
+    ret = PyDict_SetItemString(infodict, "OBJECT", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinfo(
         NPY_STRINGLTR, NPY_STRING, 0, _ALIGN(char),
         &PyStringArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "STRING", s);
+    ret = PyDict_SetItemString(infodict, "STRING", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinfo(
         NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN(npy_ucs4),
         &PyUnicodeArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "UNICODE", s);
+    ret = PyDict_SetItemString(infodict, "UNICODE", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinfo(
         NPY_VOIDLTR, NPY_VOID, 0, _ALIGN(char),
         &PyVoidArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "VOID", s);
+    ret = PyDict_SetItemString(infodict, "VOID", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinforanged(
         NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
         _ALIGN(npy_datetime),
@@ -4805,10 +4835,15 @@ set_typeinfo(PyObject *dict)
         &PyDatetimeArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "DATETIME", s);
+    ret = PyDict_SetItemString(infodict, "DATETIME", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinforanged(
         NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
         _ALIGN(npy_timedelta),
@@ -4817,15 +4852,23 @@ set_typeinfo(PyObject *dict)
         &PyTimedeltaArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "TIMEDELTA", s);
+    ret = PyDict_SetItemString(infodict, "TIMEDELTA", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
 
-#define SETTYPE(name)                           \
-    Py_INCREF(&Py##name##ArrType_Type);         \
-    PyDict_SetItemString(infodict, #name,       \
-            (PyObject *)&Py##name##ArrType_Type)
+#define SETTYPE(name)                                   \
+    Py_INCREF(&Py##name##ArrType_Type);                 \
+    if (PyDict_SetItemString(infodict, #name,           \
+            (PyObject *)&Py##name##ArrType_Type) < 0) { \
+        Py_DECREF(infodict);                            \
+        return -1;                                      \
+    }
 
     SETTYPE(Generic);
     SETTYPE(Number);
@@ -4840,8 +4883,11 @@ set_typeinfo(PyObject *dict)
 
 #undef SETTYPE
 
-    PyDict_SetItemString(dict, "typeinfo", infodict);
+    ret = PyDict_SetItemString(dict, "typeinfo", infodict);
     Py_DECREF(infodict);
+    if (ret < 0) {
+        return -1;
+    }
     return 0;
 }
 

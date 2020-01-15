@@ -272,31 +272,56 @@ array_interface_get(PyArrayObject *self)
         Py_DECREF(dict);
         return NULL;
     }
+    int ret;
 
     /* dataptr */
     obj = array_dataptr_get(self);
-    PyDict_SetItemString(dict, "data", obj);
+    ret = PyDict_SetItemString(dict, "data", obj);
     Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(dict);
+        return NULL;
+    }
 
     obj = array_protocol_strides_get(self);
-    PyDict_SetItemString(dict, "strides", obj);
+    ret = PyDict_SetItemString(dict, "strides", obj);
     Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(dict);
+        return NULL;
+    }
 
     obj = array_protocol_descr_get(self);
-    PyDict_SetItemString(dict, "descr", obj);
+    ret = PyDict_SetItemString(dict, "descr", obj);
     Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(dict);
+        return NULL;
+    }
 
     obj = arraydescr_protocol_typestr_get(PyArray_DESCR(self));
-    PyDict_SetItemString(dict, "typestr", obj);
+    ret = PyDict_SetItemString(dict, "typestr", obj);
     Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(dict);
+        return NULL;
+    }
 
     obj = array_shape_get(self);
-    PyDict_SetItemString(dict, "shape", obj);
+    ret = PyDict_SetItemString(dict, "shape", obj);
     Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(dict);
+        return NULL;
+    }
 
     obj = PyInt_FromLong(3);
-    PyDict_SetItemString(dict, "version", obj);
+    ret = PyDict_SetItemString(dict, "version", obj);
     Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(dict);
+        return NULL;
+    }
 
     return dict;
 }

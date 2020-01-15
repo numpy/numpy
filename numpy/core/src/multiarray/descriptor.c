@@ -560,11 +560,15 @@ _convert_from_array_descr(PyObject *obj, int align)
                     Py_DECREF(tup);
                     goto fail;
                 }
-                PyDict_SetItem(fields, title, tup);
+                if (PyDict_SetItem(fields, title, tup) < 0) {
+                    goto fail;
+                }
             }
         }
         else {
-            PyDict_SetItem(fields, name, tup);
+            if (PyDict_SetItem(fields, name, tup) < 0) {
+                goto fail;
+            }
         }
 
         totalsize += conv->elsize;
@@ -1210,8 +1214,12 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(tup);
             goto fail;
         }
-        PyDict_SetItem(fields, name, tup);
+        int ret = PyDict_SetItem(fields, name, tup);
         Py_DECREF(name);
+        if (ret < 0) {
+            Py_DECREF(tup);
+            goto fail;
+        }
         if (len == 3) {
             if (PyBaseString_Check(title)) {
                 if (PyDict_GetItemWithError(fields, title) != NULL) {
@@ -1220,7 +1228,14 @@ _convert_from_dict(PyObject *obj, int align)
                     Py_DECREF(tup);
                     goto fail;
                 }
-                PyDict_SetItem(fields, title, tup);
+                else if (PyErr_Occurred()) {
+                    /* MemoryError during dict lookup */
+                    goto fail;
+                }
+                if (PyDict_SetItem(fields, title, tup) < 0) {
+                    Py_DECREF(tup);
+                    goto fail;
+                }
             }
         }
         Py_DECREF(tup);
@@ -2127,7 +2142,14 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     self->hash = -1;
     /* Update dictionary keys in fields */
     new_names = PySequence_Tuple(val);
+    if (new_names == NULL) {
+        return -1;
+    }
     new_fields = PyDict_New();
+    if (new_fields == NULL) {
+        Py_DECREF(new_names);
+        return -1;
+    }
     for (i = 0; i < N; i++) {
         PyObject *key;
         PyObject *item;
@@ -2148,16 +2170,22 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
         new_key = PyTuple_GET_ITEM(new_names, i);
         /* Check for duplicates */
         ret = PyDict_Contains(new_fields, new_key);
-        if (ret != 0) {
-            if (ret < 0) {
-                PyErr_Clear();
-            }
+        if (ret < 0) {
+            Py_DECREF(new_names);
+            Py_DECREF(new_fields);
+            return -1;
+        }
+        else if (ret != 0) {
             PyErr_SetString(PyExc_ValueError, "Duplicate field names given.");
             Py_DECREF(new_names);
             Py_DECREF(new_fields);
             return -1;
         }
-        PyDict_SetItem(new_fields, new_key, item);
+        if (PyDict_SetItem(new_fields, new_key, item) < 0) {
+            Py_DECREF(new_names);
+            Py_DECREF(new_fields);
+            return -1;
+        }
     }
 
     /* Replace names */
@@ -2981,8 +3009,13 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
                 Py_INCREF(old);
                 PyTuple_SET_ITEM(newvalue, i, old);
             }
-            PyDict_SetItem(newfields, key, newvalue);
+            int ret = PyDict_SetItem(newfields, key, newvalue);
             Py_DECREF(newvalue);
+            if (ret < 0) {
+                Py_DECREF(newfields);
+                Py_DECREF(new);
+                return NULL;
+            }
         }
         Py_DECREF(new->fields);
         new->fields = newfields;

@@ -610,7 +610,13 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
     }
 
     import_array();
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
     import_ufunc();
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     d = PyModule_GetDict(m);
 
