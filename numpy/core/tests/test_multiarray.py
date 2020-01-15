@@ -46,6 +46,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
     temppath, suppress_warnings, break_cycles,
     )
+from numpy.testing._private.utils import _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
@@ -95,26 +96,6 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
     data = np.ndarray(shape, dtype, buf, order=order)
     data.fill(0)
     return data
-
-def _no_tracing(func):
-    """
-    Decorator to temporarily turn off tracing for the duration of a test.
-    Needed in tests that check refcounting, otherwise the tracing itself
-    influences the refcounts
-    """
-    if not hasattr(sys, 'gettrace'):
-        return func
-    else:
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            original_trace = sys.gettrace()
-            try:
-                sys.settrace(None)
-                return func(*args, **kwargs)
-            finally:
-                sys.settrace(original_trace)
-        return wrapper
-
 
 
 class TestFlags(object):
