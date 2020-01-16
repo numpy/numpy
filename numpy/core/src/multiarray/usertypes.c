@@ -151,6 +151,18 @@ test_deprecated_arrfuncs_members(PyArray_ArrFuncs *f) {
             return -1;
         }
     }
+    /* NumPy 1.19, 2020-01-15 */
+    if (f->fastclip != NULL) {
+        /* fastclip was already deprecated at execution time in 1.17. */
+        if (DEPRECATE(
+                "The ->f->fastclip member of custom dtypes is deprecated; "
+                "setting it will be an error in the future.\n"
+                "The custom dtype you are using must be changed to use "
+                "PyUFunc_RegisterLoopForDescr to attach a custom loop to "
+                "np.core.umath.clip, np.minimum, and np.maximum") < 0) {
+            return -1;
+        }
+    }
     return 0;
 }
 
