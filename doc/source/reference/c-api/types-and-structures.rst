@@ -453,8 +453,8 @@ PyArrayDescr_Type and PyArray_Descr
            int **cancastscalarkindto;
            int *cancastto;
            PyArray_FastClipFunc *fastclip;
-           PyArray_FastPutmaskFunc *fastputmask;
-           PyArray_FastTakeFunc *fasttake;
+           PyArray_FastPutmaskFunc *fastputmask;  /* deprecated */
+           PyArray_FastTakeFunc *fasttake;  /* deprecated */
            PyArray_ArgFunc *argmin;
        } PyArray_ArrFuncs;
 
@@ -650,6 +650,10 @@ PyArrayDescr_Type and PyArray_Descr
     .. c:member:: void fastputmask( \
             void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
 
+        .. deprecated:: 1.19
+            Setting this function is deprecated and should always be ``NULL``,
+            if set, it will be ignored.
+
         A function that takes a pointer ``in`` to an array of ``n_in``
         items, a pointer ``mask`` to an array of ``n_in`` boolean
         values, and a pointer ``vals`` to an array of ``nv`` items.
@@ -661,6 +665,10 @@ PyArrayDescr_Type and PyArray_Descr
             void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
             npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
             NPY_CLIPMODE clipmode)
+
+        .. deprecated:: 1.19
+            Setting this function is deprecated and should always be ``NULL``,
+            if set, it will be ignored.
 
         A function that takes a pointer ``src`` to a C contiguous,
         behaved segment, interpreted as a 3-dimensional array of shape
