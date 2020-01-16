@@ -8,10 +8,7 @@ from numpy.testing import tempdir, assert_, assert_warns
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
 # emulate them import StringIO from the io module.
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 class redirect_stdout:
     """Context manager to redirect stdout for exec_command test."""

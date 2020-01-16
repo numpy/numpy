@@ -31,8 +31,6 @@ scalars_and_codes = [
 scalars_only, codes_only = zip(*scalars_and_codes)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="Python 2 scalars lack a buffer interface")
 class TestScalarPEP3118:
 
     @pytest.mark.parametrize('scalar', scalars_only, ids=codes_only)
@@ -91,7 +89,7 @@ class TestScalarPEP3118:
         expected = {'strides': (1,), 'itemsize': 1, 'ndim': 1,
                     'shape': (8,), 'format': 'B'}
         v = memoryview(dt1)
-        res = as_dict(v) 
+        res = as_dict(v)
         assert_equal(res, expected)
 
         v = memoryview(dt2 - dt1)

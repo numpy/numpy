@@ -341,15 +341,8 @@ class TestMethods:
         assert_array_equal(C, tgt)
 
     def test_decode(self):
-        if sys.version_info[0] >= 3:
-            A = np.char.array([b'\\u03a3'])
-            assert_(A.decode('unicode-escape')[0] == '\u03a3')
-        else:
-            with suppress_warnings() as sup:
-                if sys.py3kwarning:
-                    sup.filter(DeprecationWarning, "'hex_codec'")
-                A = np.char.array(['736563726574206d657373616765'])
-                assert_(A.decode('hex_codec')[0] == 'secret message')
+        A = np.char.array([b'\\u03a3'])
+        assert_(A.decode('unicode-escape')[0] == '\u03a3')
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
@@ -360,18 +353,12 @@ class TestMethods:
         assert_(T[2, 0] == b'123      345 \0')
 
     def test_join(self):
-        if sys.version_info[0] >= 3:
-            # NOTE: list(b'123') == [49, 50, 51]
-            #       so that b','.join(b'123') results to an error on Py3
-            A0 = self.A.decode('ascii')
-        else:
-            A0 = self.A
+        # NOTE: list(b'123') == [49, 50, 51]
+        #       so that b','.join(b'123') results to an error on Py3
+        A0 = self.A.decode('ascii')
 
         A = np.char.join([',', '#'], A0)
-        if sys.version_info[0] >= 3:
-            assert_(issubclass(A.dtype.type, np.unicode_))
-        else:
-            assert_(issubclass(A.dtype.type, np.string_))
+        assert_(issubclass(A.dtype.type, np.unicode_))
         tgt = np.array([[' ,a,b,c, ', ''],
                         ['1,2,3,4,5', 'M#i#x#e#d#C#a#s#e'],
                         ['1,2,3, ,\t, ,3,4,5, ,\x00, ', 'U#P#P#E#R']])
@@ -441,15 +428,6 @@ class TestMethods:
                [b'12########## \t ##########45 \x00', b'UPPER']]
         assert_(issubclass(R.dtype.type, np.string_))
         assert_array_equal(R, tgt)
-
-        if sys.version_info[0] < 3:
-            # NOTE: b'abc'.replace(b'a', 'b') is not allowed on Py3
-            R = self.A.replace(b'a', u'\u03a3')
-            tgt = [[u' \u03a3bc ', ''],
-                   ['12345', u'MixedC\u03a3se'],
-                   ['123 \t 345 \x00', 'UPPER']]
-            assert_(issubclass(R.dtype.type, np.unicode_))
-            assert_array_equal(R, tgt)
 
     def test_rjust(self):
         assert_(issubclass(self.A.rjust(10).dtype.type, np.string_))
