@@ -475,9 +475,16 @@ array_dealloc(PyArrayObject *self)
     PyObject_GC_UnTrack(self);
     /*
      * prevent deeply-nested object arrays from causing stack overflows
-     * on deallocation
+     * on deallocation. On new versions of python the first version is
+     * used to prevent potential problems with subclasses.
+     * See: https://bugs.python.org/issue35983
+     * The new macros were added in Python 3.8
      */
+#ifdef Py_TRASHCAN_BEGIN
+    Py_TRASHCAN_BEGIN(self, array_dealloc);
+#else
     Py_TRASHCAN_SAFE_BEGIN(self);
+#endif
 
     _dealloc_cached_buffer_info((PyObject*)self);
 
@@ -543,7 +550,12 @@ array_dealloc(PyArrayObject *self)
     Py_DECREF(fa->descr);
     Py_TYPE(self)->tp_free((PyObject *)self);
 
-    Py_TRASHCAN_SAFE_END(self)
+    /* Use new macro when available, these are identical */
+#ifdef Py_TRASHCAN_BEGIN
+    Py_TRASHCAN_END;
+#else
+    Py_TRASHCAN_SAFE_END(self);
+#endif
 }
 
 
