@@ -148,12 +148,8 @@ class Ufunc:
 # String-handling utilities to avoid locale-dependence.
 
 import string
-if sys.version_info[0] < 3:
-    UPPER_TABLE = string.maketrans(string.ascii_lowercase,
-                                   string.ascii_uppercase)
-else:
-    UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
-                                  bytes(string.ascii_uppercase, "ascii"))
+UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
+                              bytes(string.ascii_uppercase, "ascii"))
 
 def english_upper(s):
     """ Apply English case rules to convert ASCII strings to all upper case.
@@ -1076,15 +1072,9 @@ def make_ufuncs(funcdict):
         uf = funcdict[name]
         mlist = []
         docstring = textwrap.dedent(uf.docstring).strip()
-        if sys.version_info[0] < 3:
-            docstring = docstring.encode('string-escape')
-            docstring = docstring.replace(r'"', r'\"')
-        else:
-            docstring = docstring.encode('unicode-escape').decode('ascii')
-            docstring = docstring.replace(r'"', r'\"')
-            # XXX: I don't understand why the following replace is not
-            # necessary in the python 2 case.
-            docstring = docstring.replace(r"'", r"\'")
+        docstring = docstring.encode('unicode-escape').decode('ascii')
+        docstring = docstring.replace(r'"', r'\"')
+        docstring = docstring.replace(r"'", r"\'")
         # Split the docstring because some compilers (like MS) do not like big
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n

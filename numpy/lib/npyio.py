@@ -7,6 +7,7 @@ import warnings
 import weakref
 import contextlib
 from operator import itemgetter, index as opindex
+from collections.abc import Mapping
 
 import numpy as np
 from . import format
@@ -25,12 +26,6 @@ from numpy.compat import (
     asbytes, asstr, asunicode, bytes, basestring, os_fspath, os_PathLike,
     pickle, contextlib_nullcontext
     )
-
-if sys.version_info[0] >= 3:
-    from collections.abc import Mapping
-else:
-    from future_builtins import map
-    from collections import Mapping
 
 
 @set_module('numpy')
@@ -264,26 +259,25 @@ class NpzFile(Mapping):
             raise KeyError("%s is not a file in the archive" % key)
 
 
-    if sys.version_info.major == 3:
-        # deprecate the python 2 dict apis that we supported by accident in
-        # python 3. We forgot to implement itervalues() at all in earlier
-        # versions of numpy, so no need to deprecated it here.
+    # deprecate the python 2 dict apis that we supported by accident in
+    # python 3. We forgot to implement itervalues() at all in earlier
+    # versions of numpy, so no need to deprecated it here.
 
-        def iteritems(self):
-            # Numpy 1.15, 2018-02-20
-            warnings.warn(
-                "NpzFile.iteritems is deprecated in python 3, to match the "
-                "removal of dict.itertems. Use .items() instead.",
-                DeprecationWarning, stacklevel=2)
-            return self.items()
+    def iteritems(self):
+        # Numpy 1.15, 2018-02-20
+        warnings.warn(
+            "NpzFile.iteritems is deprecated in python 3, to match the "
+            "removal of dict.itertems. Use .items() instead.",
+            DeprecationWarning, stacklevel=2)
+        return self.items()
 
-        def iterkeys(self):
-            # Numpy 1.15, 2018-02-20
-            warnings.warn(
-                "NpzFile.iterkeys is deprecated in python 3, to match the "
-                "removal of dict.iterkeys. Use .keys() instead.",
-                DeprecationWarning, stacklevel=2)
-            return self.keys()
+    def iterkeys(self):
+        # Numpy 1.15, 2018-02-20
+        warnings.warn(
+            "NpzFile.iterkeys is deprecated in python 3, to match the "
+            "removal of dict.iterkeys. Use .keys() instead.",
+            DeprecationWarning, stacklevel=2)
+        return self.keys()
 
 
 @set_module('numpy')
@@ -412,11 +406,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # result can similarly silently corrupt numerical data.
         raise ValueError("encoding must be 'ASCII', 'latin1', or 'bytes'")
 
-    if sys.version_info[0] >= 3:
-        pickle_kwargs = dict(encoding=encoding, fix_imports=fix_imports)
-    else:
-        # Nothing to do on Python 2
-        pickle_kwargs = {}
+    pickle_kwargs = dict(encoding=encoding, fix_imports=fix_imports)
 
     # TODO: Use contextlib.ExitStack once we drop Python 2
     if hasattr(file, 'read'):
@@ -539,16 +529,10 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         fid = open(file, "wb")
         own_fid = True
 
-    if sys.version_info[0] >= 3:
-        pickle_kwargs = dict(fix_imports=fix_imports)
-    else:
-        # Nothing to do on Python 2
-        pickle_kwargs = None
-
     try:
         arr = np.asanyarray(arr)
         format.write_array(fid, arr, allow_pickle=allow_pickle,
-                           pickle_kwargs=pickle_kwargs)
+                           pickle_kwargs=dict(fix_imports=fix_imports))
     finally:
         if own_fid:
             fid.close()
@@ -691,7 +675,7 @@ def savez_compressed(file, *args, **kwds):
     The ``.npz`` file format is a zipped archive of files named after the
     variables they contain.  The archive is compressed with
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
-    in ``.npy`` format. For a description of the ``.npy`` format, see 
+    in ``.npy`` format. For a description of the ``.npy`` format, see
     :py:mod:`numpy.lib.format`.
 
 
@@ -1375,9 +1359,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         open(fname, 'wt').close()
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
-        # need to convert str to unicode for text io output
-        if sys.version_info[0] == 2:
-            fh = WriteWrap(fh, encoding or 'latin1')
     elif hasattr(fname, 'write'):
         # wrap to handle byte output streams
         fh = WriteWrap(fname, encoding or 'latin1')

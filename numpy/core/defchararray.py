@@ -1953,8 +1953,8 @@ class chararray(ndarray):
         # strings in the new array.
         itemsize = long(itemsize)
 
-        if sys.version_info[0] >= 3 and isinstance(buffer, str):
-            # On Py3, unicode objects do not have the buffer interface
+        if isinstance(buffer, str):
+            # unicode objects do not have the buffer interface
             filler = buffer
             buffer = None
         else:

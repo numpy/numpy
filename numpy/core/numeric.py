@@ -35,12 +35,6 @@ bitwise_not = invert
 ufunc = type(sin)
 newaxis = None
 
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
-
-
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 

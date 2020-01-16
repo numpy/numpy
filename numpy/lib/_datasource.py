@@ -70,70 +70,6 @@ def _check_mode(mode, encoding, newline):
             raise ValueError("Argument 'newline' not supported in binary mode")
 
 
-def _python2_bz2open(fn, mode, encoding, newline):
-    """Wrapper to open bz2 in text mode.
-
-    Parameters
-    ----------
-    fn : str
-        File name
-    mode : {'r', 'w'}
-        File mode. Note that bz2 Text files are not supported.
-    encoding : str
-        Ignored, text bz2 files not supported in Python2.
-    newline : str
-        Ignored, text bz2 files not supported in Python2.
-    """
-    import bz2
-
-    _check_mode(mode, encoding, newline)
-
-    if "t" in mode:
-        # BZ2File is missing necessary functions for TextIOWrapper
-        warnings.warn("Assuming latin1 encoding for bz2 text file in Python2",
-                      RuntimeWarning, stacklevel=5)
-        mode = mode.replace("t", "")
-    return bz2.BZ2File(fn, mode)
-
-def _python2_gzipopen(fn, mode, encoding, newline):
-    """ Wrapper to open gzip in text mode.
-
-    Parameters
-    ----------
-    fn : str, bytes, file
-        File path or opened file.
-    mode : str
-        File mode. The actual files are opened as binary, but will decoded
-        using the specified `encoding` and `newline`.
-    encoding : str
-        Encoding to be used when reading/writing as text.
-    newline : str
-        Newline to be used when reading/writing as text.
-
-    """
-    import gzip
-    # gzip is lacking read1 needed for TextIOWrapper
-    class GzipWrap(gzip.GzipFile):
-        def read1(self, n):
-            return self.read(n)
-
-    _check_mode(mode, encoding, newline)
-
-    gz_mode = mode.replace("t", "")
-
-    if isinstance(fn, (str, bytes)):
-        binary_file = GzipWrap(fn, gz_mode)
-    elif hasattr(fn, "read") or hasattr(fn, "write"):
-        binary_file = GzipWrap(None, gz_mode, fileobj=fn)
-    else:
-        raise TypeError("filename must be a str or bytes object, or a file")
-
-    if "t" in mode:
-        return io.TextIOWrapper(binary_file, encoding, newline=newline)
-    else:
-        return binary_file
-
-
 # Using a class instead of a module-level dictionary
 # to reduce the initial 'import numpy' overhead by
 # deferring the import of lzma, bz2 and gzip until needed
@@ -174,19 +110,13 @@ class _FileOpeners:
 
         try:
             import bz2
-            if sys.version_info[0] >= 3:
-                self._file_openers[".bz2"] = bz2.open
-            else:
-                self._file_openers[".bz2"] = _python2_bz2open
+            self._file_openers[".bz2"] = bz2.open
         except ImportError:
             pass
 
         try:
             import gzip
-            if sys.version_info[0] >= 3:
-                self._file_openers[".gz"] = gzip.open
-            else:
-                self._file_openers[".gz"] = _python2_gzipopen
+            self._file_openers[".gz"] = gzip.open
         except ImportError:
             pass
 
@@ -547,14 +477,10 @@ class DataSource:
         if os.path.exists(path):
             return True
 
-        # We import this here because importing urllib2 is slow and
+        # We import this here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         # Test cached url
         upath = self.abspath(path)

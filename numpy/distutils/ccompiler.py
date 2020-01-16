@@ -271,12 +271,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    # FIXME:RELATIVE_IMPORT
-    if sys.version_info[0] < 3:
-        from .fcompiler import FCompiler, is_f_file, has_f90_header
-    else:
-        from numpy.distutils.fcompiler import (FCompiler, is_f_file,
-                                               has_f90_header)
+    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+                                           has_f90_header)
     if isinstance(self, FCompiler):
         display = []
         for fc in ['f77', 'f90', 'fix']:

@@ -20,17 +20,13 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
+import builtins
 import sys
 import operator
 import warnings
 import textwrap
 import re
 from functools import reduce
-
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
 
 import numpy as np
 import numpy.core.umath as umath
@@ -6393,10 +6389,6 @@ class MaskedConstant(MaskedArray):
 
     def __str__(self):
         return str(masked_print_option._display)
-
-    if sys.version_info.major < 3:
-        def __unicode__(self):
-            return unicode(masked_print_option._display)
 
     def __repr__(self):
         if self is MaskedConstant.__singleton:
