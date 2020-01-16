@@ -317,7 +317,7 @@ class Template:
                 arg0 = e_value.args[0]
             else:
                 arg0 = coerce_text(e_value)
-            e_value.args = (self._add_line_info(arg0, pos),)            
+            e_value.args = (self._add_line_info(arg0, pos),)
             if PY3:
                 raise e_value
             else:
@@ -461,14 +461,11 @@ def html_quote(value, force=True):
         return ''
     if not isinstance(value, basestring_):
         value = coerce_text(value)
-    if sys.version >= "3" and isinstance(value, bytes):
+    if isinstance(value, bytes):
         value = html_escape(value.decode('latin1'), 1)
         value = value.encode('latin1')
     else:
         value = html_escape(value, 1)
-    if sys.version < "3":
-        if is_unicode(value):
-            value = value.encode('ascii', 'xmlcharrefreplace')
     return value
 
 
@@ -1286,7 +1283,7 @@ def fill_command(args=None):
         template_content = sys.stdin.read()
         template_name = '<stdin>'
     else:
-        with open(template_name, 'rb', encoding="latin-1") as f: 
+        with open(template_name, 'rb', encoding="latin-1") as f:
             template_content = f.read()
     if options.use_html:
         TemplateClass = HTMLTemplate
@@ -1295,7 +1292,7 @@ def fill_command(args=None):
     template = TemplateClass(template_content, name=template_name)
     result = template.substitute(vars)
     if options.output:
-        with open(options.output, 'wb') as f: 
+        with open(options.output, 'wb') as f:
             f.write(result)
     else:
         sys.stdout.write(result)

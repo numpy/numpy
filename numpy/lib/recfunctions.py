@@ -5,7 +5,6 @@ Most of these functions were initially implemented by John Hunter for
 matplotlib.  They have been rewritten and extended for convenience.
 
 """
-import sys
 import itertools
 import numpy as np
 import numpy.ma as ma
@@ -16,9 +15,6 @@ from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
 from numpy.compat import basestring
 from numpy.testing import suppress_warnings
-
-if sys.version_info[0] < 3:
-    from future_builtins import zip
 
 _check_fill_value = np.ma.core._check_fill_value
 
@@ -333,12 +329,7 @@ def _izip_records(seqarrays, fill_value=None, flatten=True):
     else:
         zipfunc = _izip_fields
 
-    if sys.version_info[0] >= 3:
-        zip_longest = itertools.zip_longest
-    else:
-        zip_longest = itertools.izip_longest
-
-    for tup in zip_longest(*seqarrays, fillvalue=fill_value):
+    for tup in itertools.zip_longest(*seqarrays, fillvalue=fill_value):
         yield tuple(zipfunc(tup))
 
 

@@ -195,7 +195,7 @@ def find_names(module, names_dict):
     names_dict : dict
         Dictionary which contains module name as key and a set of found
         function names and directives as value
-    
+
     Returns
     -------
     None
@@ -229,12 +229,12 @@ def find_names(module, names_dict):
 def get_all_dict(module):
     """
     Return a copy of the __all__ dict with irrelevant items removed.
-    
+
     Parameters
     ----------
     module : ModuleType
         The module whose __all__ dict has to be processed
-    
+
     Returns
     -------
     deprecated : list
@@ -242,7 +242,7 @@ def get_all_dict(module):
     not_deprecated : list
         List of non callable or non deprecated sub modules
     others : list
-        List of remaining types of sub modules 
+        List of remaining types of sub modules
     """
     if hasattr(module, "__all__"):
         all_dict = copy.deepcopy(module.__all__)
@@ -863,7 +863,7 @@ def check_doctests(module, verbose, ns=None,
     ns : dict
         Name space of module
     dots : bool
-    
+
     doctest_warnings : bool
 
     Returns
@@ -934,7 +934,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     ns : dict
         Name space
-    
+
     dots : bool
 
     doctest_warnings : bool
@@ -978,12 +978,8 @@ def check_doctests_testfile(fname, verbose, ns=None,
         return results
 
     full_name = fname
-    if sys.version_info.major <= 2:
-        with open(fname) as f:
-            text = f.read()
-    else:
-        with open(fname, encoding='utf-8') as f:
-            text = f.read()
+    with open(fname, encoding='utf-8') as f:
+        text = f.read()
 
     PSEUDOCODE = set(['some_function', 'some_module', 'import example',
                       'ctypes.CDLL',     # likely need compiling, skip it
@@ -1116,7 +1112,7 @@ def init_matplotlib():
 def main(argv):
     """
     Validates the docstrings of all the pre decided set of
-    modules for errors and docstring standards. 
+    modules for errors and docstring standards.
     """
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("module_names", metavar="SUBMODULES", default=[],

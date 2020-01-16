@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 import sys, os
 import re
+from io import StringIO
+
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
 
-PY2 = sys.version_info < (3, 0)
-
-if PY2:
-    from io import BytesIO as UStringIO
-else:
-    from io import StringIO as UStringIO
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
@@ -25,8 +21,8 @@ def sep_seq(sequence, sep):
     return pat
 
 def runScanner(data, scanner_class, lexicon=None):
-    info = UStringIO(data)
-    outfo = UStringIO()
+    info = StringIO(data)
+    outfo = StringIO()
     if lexicon is not None:
         scanner = scanner_class(lexicon, info)
     else:
@@ -193,7 +189,7 @@ def cleanComments(source):
             return SourceLines
 
     state = SourceLines
-    for line in UStringIO(source):
+    for line in StringIO(source):
         state = state(line)
     comments.flushTo(lines)
     return lines.getValue()
@@ -221,7 +217,7 @@ def removeHeader(source):
         return OutOfHeader
 
     state = LookingForHeader
-    for line in UStringIO(source):
+    for line in StringIO(source):
         state = state(line)
     return lines.getValue()
 
@@ -230,7 +226,7 @@ def removeSubroutinePrototypes(source):
         r'/[*] Subroutine [*]/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
     )
     lines = LineQueue()
-    for line in UStringIO(source):
+    for line in StringIO(source):
         if not expression.match(line):
             lines.add(line)
 
@@ -252,7 +248,7 @@ def removeBuiltinFunctions(source):
             return InBuiltInFunctions
 
     state = LookingForBuiltinFunctions
-    for line in UStringIO(source):
+    for line in StringIO(source):
         state = state(line)
     return lines.getValue()
 

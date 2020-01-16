@@ -2,7 +2,6 @@ from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
 
 from os.path import join as pjoin
 import shutil
-import sys
 from numpy import memmap, float32, array
 import numpy as np
 from tempfile import mkdtemp
@@ -22,10 +21,7 @@ class Indexing(Benchmark):
               'indexes_': get_indexes_(),
               'indexes_rand_': get_indexes_rand_()}
 
-        if sys.version_info[0] >= 3:
-            code = "def run():\n    for a in squares_.values(): a[%s]%s"
-        else:
-            code = "def run():\n    for a in squares_.itervalues(): a[%s]%s"
+        code = "def run():\n    for a in squares_.values(): a[%s]%s"
         code = code % (sel, op)
 
         exec(code, ns)
