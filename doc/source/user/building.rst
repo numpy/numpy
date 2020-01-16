@@ -35,6 +35,12 @@ Building NumPy requires the following software installed:
    installed. However, if these are available, NumPy's setup script can detect
    them and use them for building. A number of different LAPACK library setups
    can be used, including optimized LAPACK libraries such as OpenBLAS or MKL.
+   The choice and location of these libraries as well as include paths and
+   other such build options can be specified in a ``site.cfg`` file located in
+   the NumPy root repository or a ``.numpy-site.cfg`` file in your home
+   directory. See the ``site.cfg.example`` example file included in the NumPy
+   repository or sdist for documentation, and below for specifying search
+   priority from environmental variables.
 
 4) Cython
 
@@ -105,7 +111,8 @@ Accelerated BLAS/LAPACK libraries
 ---------------------------------
 
 NumPy searches for optimized linear algebra libraries such as BLAS and LAPACK.
-There are specific orders for searching these libraries, as described below.
+There are specific orders for searching these libraries, as described below and
+in the ``site.cfg.example`` file.
 
 BLAS
 ~~~~

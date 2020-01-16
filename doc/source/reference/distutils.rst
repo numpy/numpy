@@ -15,6 +15,11 @@ keyword arguments to pass to the setup function (by passing the
 dictionary obtained from the todict() method of the class). More
 information is available in the :ref:`distutils-user-guide`.
 
+The choice and location of linked libraries such as BLAS and LAPACK as well as
+include paths and other such build options can be specified in a ``site.cfg``
+file located in the NumPy root repository or a ``.numpy-site.cfg`` file in your
+home directory. See the ``site.cfg.example`` example file included in the NumPy
+repository or sdist for documentation.
 
 .. index::
    single: distutils
