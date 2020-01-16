@@ -1,6 +1,6 @@
 Fasttake and fastputmask slots are deprecated and NULL'ed
 ---------------------------------------------------------
-The fasttake and fastputmask slots are now never used internally.
-They will always set to NULL for builtin dtypes.
-No downstream project should be using these, so no compatibility
-issue are expected.
+The fasttake and fastputmask slots are now never used and
+must always be set to NULL. This will result in no change in behaviour.
+However, if a user dtype should set one of these a DeprecationWarning
+will be given.

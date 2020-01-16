@@ -128,6 +128,32 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->cancastto = NULL;
 }
 
+
+static int
+test_deprecated_arrfuncs_members(PyArray_ArrFuncs *f) {
+    /* NumPy 1.19, 2020-01-15 */
+    if (f->fastputmask != NULL) {
+        if (DEPRECATE(
+                "The ->f->fastputmask member of custom dtypes is ignored; "
+                "setting it may be an error in the future.\n"
+                "The custom dtype you are using must be revised, but "
+                "results will not be affected.") < 0) {
+            return -1;
+        }
+    }
+    /* NumPy 1.19, 2020-01-15 */
+    if (f->fasttake != NULL) {
+        if (DEPRECATE(
+                "The ->f->fastputmask member of custom dtypes is ignored; "
+                "setting it may be an error in the future.\n"
+                "The custom dtype you are using must be revised, but "
+                "results will not be affected.") < 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 /*
   returns typenum to associate with this type >=NPY_USERDEF.
   needs the userdecrs table and PyArray_NUMUSER variables
@@ -176,6 +202,11 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
     }
+
+    if (test_deprecated_arrfuncs_members(f) < 0) {
+        return -1;
+    }
+
     userdescrs = realloc(userdescrs,
                          (NPY_NUMUSERTYPES+1)*sizeof(void *));
     if (userdescrs == NULL) {
