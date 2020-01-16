@@ -1034,7 +1034,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int nin = ufunc->nin;
     int nout = ufunc->nout;
     int nop = ufunc->nargs;
-    PyObject *obj, *context;
+    PyObject *obj;
     PyArray_Descr *dtype = NULL;
     /*
      * Initialize output objects so caller knows when outputs and optional
@@ -1071,22 +1071,8 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
             out_op[i] = (PyArrayObject *)PyArray_FromArray(obj_a, NULL, 0);
         }
         else {
-            if (!PyArray_IsScalar(obj, Generic)) {
-                /*
-                 * TODO: There should be a comment here explaining what
-                 *       context does.
-                 */
-                context = Py_BuildValue("OOi", ufunc, args, i);
-                if (context == NULL) {
-                    goto fail;
-                }
-            }
-            else {
-                context = NULL;
-            }
             out_op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                    NULL, 0, 0, 0, context);
-            Py_XDECREF(context);
+                                    NULL, 0, 0, 0, NULL);
         }
 
         if (out_op[i] == NULL) {
@@ -4401,7 +4387,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyObject *axes_in = NULL;
     PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
     PyObject *op;
-    PyObject *obj_ind, *context;
+    PyObject *obj_ind;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
     PyArrayObject *out = NULL;
@@ -4495,14 +4481,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     /* Ensure input is an array */
-    if (!PyArray_Check(op) && !PyArray_IsScalar(op, Generic)) {
-        context = Py_BuildValue("O(O)i", ufunc, op, 0);
-    }
-    else {
-        context = NULL;
-    }
-    mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, context);
-    Py_XDECREF(context);
+    mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, NULL);
     if (mp == NULL) {
         goto fail;
     }
