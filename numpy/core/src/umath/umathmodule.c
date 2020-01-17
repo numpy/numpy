@@ -70,9 +70,7 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
 }
 
 PyObject *
-ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
-    /* Keywords are ignored for now */
-
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     PyObject *function, *pyname = NULL;
     int nin, nout, i, nargs;
     PyUFunc_PyFuncData *fdata;
@@ -81,14 +79,18 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     Py_ssize_t fname_len = -1;
     void * ptr, **data;
     int offset[2];
+    PyObject *identity = NULL;  /* note: not the same semantics as Py_None */
+    static char *kwlist[] = {"", "nin", "nout", "identity", NULL};
 
-    if (!PyArg_ParseTuple(args, "Oii:frompyfunc", &function, &nin, &nout)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oii|$O:frompyfunc", kwlist,
+                &function, &nin, &nout, &identity)) {
         return NULL;
     }
     if (!PyCallable_Check(function)) {
         PyErr_SetString(PyExc_TypeError, "function must be callable");
         return NULL;
     }
+
     nargs = nin + nout;
 
     pyname = PyObject_GetAttrString(function, "__name__");
@@ -146,10 +148,10 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     /* Do a better job someday */
     doc = "dynamic ufunc based on a python function";
 
-    self = (PyUFuncObject *)PyUFunc_FromFuncAndData(
+    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
             (PyUFuncGenericFunction *)pyfunc_functions, data,
-            types, /* ntypes */ 1, nin, nout, PyUFunc_None,
-            str, doc, /* unused */ 0);
+            types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
+            str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
         PyArray_free(ptr);
