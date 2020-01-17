@@ -581,6 +581,18 @@ class recarray(ndarray):
             return self.setfield(val, *res)
 
 
+def _deprecate_shape_0_as_None(shape):
+    if shape == 0:
+        warnings.warn(
+            "Passing `shape=0` to have the shape be inferred is deprecated, "
+            "and in future will be equivalent to `shape=(0,)`. To infer "
+            "the shape and suppress this warning, pass `shape=None` instead.",
+            FutureWarning, stacklevel=3)
+        return None
+    else:
+        return shape
+
+
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """ create a record array from a (flat) list of arrays
@@ -598,10 +610,12 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     arrayList = [sb.asarray(x) for x in arrayList]
 
-    if shape is None or shape == 0:
-        shape = arrayList[0].shape
+    # NumPy 1.19.0, 2020-01-01
+    shape = _deprecate_shape_0_as_None(shape)
 
-    if isinstance(shape, int):
+    if shape is None:
+        shape = arrayList[0].shape
+    elif isinstance(shape, int):
         shape = (shape,)
 
     if formats is None and dtype is None:
@@ -687,7 +701,9 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     try:
         retval = sb.array(recList, dtype=descr)
     except (TypeError, ValueError):
-        if (shape is None or shape == 0):
+        # NumPy 1.19.0, 2020-01-01
+        shape = _deprecate_shape_0_as_None(shape)
+        if shape is None:
             shape = len(recList)
         if isinstance(shape, (int, long)):
             shape = (shape,)
@@ -726,7 +742,11 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
         descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
     itemsize = descr.itemsize
-    if (shape is None or shape == 0 or shape == -1):
+
+    # NumPy 1.19.0, 2020-01-01
+    shape = _deprecate_shape_0_as_None(shape)
+
+    if shape is None or shape == -1:
         shape = (len(datastring) - offset) // itemsize
 
     _array = recarray(shape, descr, buf=datastring, offset=offset)
@@ -769,7 +789,10 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     if dtype is None and formats is None:
         raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
 
-    if (shape is None or shape == 0):
+    # NumPy 1.19.0, 2020-01-01
+    shape = _deprecate_shape_0_as_None(shape)
+
+    if shape is None:
         shape = (-1,)
     elif isinstance(shape, (int, long)):
         shape = (shape,)
