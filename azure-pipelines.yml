@@ -8,7 +8,7 @@ trigger:
 variables:
   # OpenBLAS_version should be updated
   # to match numpy-wheels repo
-  OpenBLAS_version: 0.3.7
+  OpenBLAS_version: 0.3.8
 
 stages:
 - stage: InitialTests
