@@ -1067,10 +1067,7 @@ L140:
 
        ILAENV = 0
 */
-    ret_val = 1;
-    if (ret_val == 1) {
-	ret_val = ieeeck_(&c__1, &c_b172, &c_b173);
-    }
+    ret_val = ieeeck_(&c__1, &c_b172, &c_b173);
     return ret_val;
 
 L150:
@@ -1080,10 +1077,7 @@ L150:
 
        ILAENV = 0
 */
-    ret_val = 1;
-    if (ret_val == 1) {
-	ret_val = ieeeck_(&c__0, &c_b172, &c_b173);
-    }
+    ret_val = ieeeck_(&c__0, &c_b172, &c_b173);
     return ret_val;
 
 L160:
