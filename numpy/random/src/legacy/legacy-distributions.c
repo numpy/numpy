@@ -84,7 +84,7 @@ double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale) {
 }
 
 double legacy_pareto(aug_bitgen_t *aug_state, double a) {
-  return exp(legacy_standard_exponential(aug_state) / a) - 1;
+  return expm1(legacy_standard_exponential(aug_state) / a);
 }
 
 double legacy_weibull(aug_bitgen_t *aug_state, double a) {

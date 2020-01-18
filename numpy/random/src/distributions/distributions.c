@@ -448,7 +448,7 @@ double random_standard_cauchy(bitgen_t *bitgen_state) {
 }
 
 double random_pareto(bitgen_t *bitgen_state, double a) {
-  return exp(random_standard_exponential(bitgen_state) / a) - 1;
+  return expm1(random_standard_exponential(bitgen_state) / a);
 }
 
 double random_weibull(bitgen_t *bitgen_state, double a) {
