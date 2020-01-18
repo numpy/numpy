@@ -153,7 +153,7 @@ static NPY_INLINE NPY_GCC_TARGET_@ISA@ void
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_unary_@isa@_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(@type@), @REGISTER_SIZE@)) {
@@ -179,7 +179,7 @@ static NPY_INLINE void
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
+run_unary_@isa@_@func@_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
@@ -200,7 +200,7 @@ static NPY_INLINE void
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_sincos_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps, NPY_TRIG_OP my_trig_op)
+run_unary_@isa@_sincos_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps, NPY_TRIG_OP my_trig_op)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
@@ -238,7 +238,7 @@ sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_@name@_simd_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (@check@(sizeof(@type@), VECTOR_SIZE_BYTES)) {
@@ -272,7 +272,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
@@ -328,7 +328,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && @simd@ && defined NPY_HAVE_SSE2_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
@@ -367,7 +367,7 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_@kind@_simd_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_@kind@_simd_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (steps[0] == sizeof(@type@) && steps[1] == 1 &&
@@ -403,7 +403,7 @@ sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+run_binary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
@@ -418,7 +418,7 @@ run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
 
 
 static NPY_INLINE int
-run_reduce_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+run_reduce_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
@@ -443,7 +443,7 @@ sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_unary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 &&

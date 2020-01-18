@@ -14,8 +14,8 @@ extern "C" {
  */
 typedef void (*PyUFuncGenericFunction)
             (char **args,
-             npy_intp *dimensions,
-             npy_intp *strides,
+             npy_intp const *dimensions,
+             npy_intp const *strides,
              void *innerloopdata);
 
 /*
