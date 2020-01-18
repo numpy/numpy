@@ -20,6 +20,9 @@ If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
 https://scipy.org/install.html for instructions.
 
+
+.. _quickstart.the-basics:
+
 The Basics
 ==========
 
@@ -272,6 +275,8 @@ can change the printing options using ``set_printoptions``.
 
     >>> np.set_printoptions(threshold=sys.maxsize)       # sys module should be imported
 
+
+.. _quickstart.basic-operations:
 
 Basic Operations
 ----------------
@@ -687,6 +692,9 @@ dimensions are automatically calculated::
    `resize`,
    `ravel`
 
+
+.. _quickstart.stacking-arrays:
+
 Stacking together different arrays
 ----------------------------------
 
@@ -802,6 +810,9 @@ which the division should occur::
 `vsplit` splits along the vertical
 axis, and `array_split` allows
 one to specify along which axis to split.
+
+
+.. _quickstart.copies-and-views:
 
 Copies and Views
 ================
