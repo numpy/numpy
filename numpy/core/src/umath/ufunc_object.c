@@ -3861,8 +3861,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         stride_copy[1] = stride1;
         stride_copy[2] = stride0;
 
-        needs_api = NpyIter_IterationNeedsAPI(iter);
-
         NPY_BEGIN_THREADS_NDITER(iter);
 
         do {
