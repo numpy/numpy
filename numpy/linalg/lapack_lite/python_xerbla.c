@@ -2,9 +2,6 @@
 #include "numpy/npy_common.h"
 #include "npy_cblas.h"
 
-#undef c_abs
-#include "f2c.h"
-
 /*
   From the original manpage:
   --------------------------

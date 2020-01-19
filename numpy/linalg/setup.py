@@ -38,8 +38,13 @@ def configuration(parent_package='', top_path=None):
             def calc_info(self):
                 info = {'language': 'c'}
                 if sys.maxsize > 2**32:
-                    # Build lapack-lite in 64-bit integer mode
-                    info['define_macros'] = [('HAVE_BLAS_ILP64', None)]
+                    # Build lapack-lite in 64-bit integer mode.
+                    # The suffix is arbitrary (lapack_lite symbols follow it),
+                    # but use the "64_" convention here.
+                    info['define_macros'] = [
+                        ('HAVE_BLAS_ILP64', None),
+                        ('BLAS_SYMBOL_SUFFIX', '64_')
+                    ]
                 self.set_info(**info)
 
         lapack_info = numpy_linalg_lapack_lite().get_info(2)

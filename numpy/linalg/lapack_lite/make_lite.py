@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Usage: make_lite.py <wrapped_routines_file> <lapack_dir> <output_dir>
+Usage: make_lite.py <wrapped_routines_file> <lapack_dir>
 
 Typical invocation:
 
@@ -13,6 +13,7 @@ Requires the following to be on the path:
 """
 import sys
 import os
+import re
 import subprocess
 import shutil
 
@@ -33,11 +34,14 @@ F2C_ARGS = ['-A', '-Nx800']
 
 # The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
-HEADER = '''\
+HEADER_BLURB = '''\
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
+'''
+
+HEADER = HEADER_BLURB + '''\
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -279,6 +283,52 @@ def ensure_executable(name):
     except:
         raise SystemExit(name + ' not found')
 
+def create_name_header(output_dir):
+    routine_re = re.compile(r'^      (subroutine|.* function)\s+(\w+)\(.*$',
+                            re.I)
+    extern_re = re.compile(r'^extern [a-z]+ ([a-z0-9_]+)\(.*$')
+
+    # BLAS/LAPACK symbols
+    symbols = set(['xerbla'])
+    for fn in os.listdir(output_dir):
+        fn = os.path.join(output_dir, fn)
+
+        if not fn.endswith('.f'):
+            continue
+
+        with open(fn, 'r') as f:
+            for line in f:
+                m = routine_re.match(line)
+                if m:
+                    symbols.add(m.group(2).lower())
+
+    # f2c symbols
+    f2c_symbols = set()
+    with open('f2c.h', 'r') as f:
+        for line in f:
+            m = extern_re.match(line)
+            if m:
+                f2c_symbols.add(m.group(1))
+
+    with open(os.path.join(output_dir, 'lapack_lite_names.h'), 'w') as f:
+        f.write(HEADER_BLURB)
+        f.write(
+            "/*\n"
+            " * This file renames all BLAS/LAPACK and f2c symbols to avoid\n"
+            " * dynamic symbol name conflicts, in cases where e.g.\n"
+            " * integer sizes do not match with 'standard' ABI.\n"
+            " */\n")
+
+        # Rename BLAS/LAPACK symbols
+        for name in sorted(symbols):
+            f.write("#define %s_ BLAS_FUNC(%s)\n" % (name, name))
+
+        # Rename also symbols that f2c exports itself
+        f.write("\n"
+                "/* Symbols exported by f2c.c */\n")
+        for name in sorted(f2c_symbols):
+            f.write("#define %s numpy_lapack_lite_%s\n" % (name, name))
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
@@ -328,12 +378,14 @@ def main():
 
         print()
 
+    create_name_header(output_dir)
+
     for fname in os.listdir(output_dir):
-        if fname.endswith('.c'):
+        if fname.endswith('.c') or fname == 'lapack_lite_names.h':
             print('Copying ' + fname)
             shutil.copy(
                 os.path.join(output_dir, fname),
-                os.path.dirname(__file__),
+                os.path.abspath(os.path.dirname(__file__)),
             )
 
 
