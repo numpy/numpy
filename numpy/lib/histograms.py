@@ -416,12 +416,13 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     quantized = np.floor_divide(zeroed_min, width) * width
     left_edges = np.unique(quantized) # TODO: consider np.unique(a, return_counts=True)
     right_edges = left_edges + width
-    unzeroed_edges = np.unique((left_edges, right_edges)) + first_edge
-    edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
+    extra_right_edges = right_edges + width # otherwise fp rounding can fill empty bins
+    edges = np.unique((left_edges, right_edges, extra_right_edges)) + first_edge
+    # edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
 
     TOL = width/2
     widths = np.concatenate(([width], np.diff(edges)))  # remove bins produced by float errors
-    return edges[(widths>TOL) & (edges <= last_edge)]
+    return bins = edges[widths>TOL][:-1] # remove last extra right edge
 
 def _get_bin_edges(a, bins, range, weights):
     """
