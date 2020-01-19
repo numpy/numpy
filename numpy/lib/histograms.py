@@ -421,8 +421,9 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     # edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
 
     TOL = width/2
-    widths = np.concatenate(([width], np.diff(edges)))  # remove bins produced by float errors
-    return bins = edges[widths>TOL][:-1] # remove last extra right edge
+    widths = np.concatenate(([width], np.diff(edges)))
+    bins = edges[widths>TOL][:-1] # remove fp artifacts, remove last extra right edge
+    return bins
 
 def _get_bin_edges(a, bins, range, weights):
     """
