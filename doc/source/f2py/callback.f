@@ -2,7 +2,7 @@ C FILE: CALLBACK.F
       SUBROUTINE FOO(FUN,R)
       EXTERNAL FUN
       INTEGER I
-      REAL*8 R
+      REAL*8 R, FUN
 Cf2py intent(out) r
       R = 0D0
       DO I=-5,5
