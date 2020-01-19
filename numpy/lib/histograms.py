@@ -410,7 +410,8 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     if a.size == 0:
         return np.array([0,1])
 
-    width = _unsigned_subtract(last_edge, first_edge) / n_equal_bins
+    fd_width = _unsigned_subtract(last_edge, first_edge) / n_equal_bins
+    width = fd_width if (last_edge/fd_width <= 1e+16) else last_edge/1e+16 # fp resolution
     zeroed_min = a - first_edge
     quantized = np.floor_divide(zeroed_min, width) * width
     left_edges = np.unique(quantized) # TODO: consider np.unique(a, return_counts=True)
