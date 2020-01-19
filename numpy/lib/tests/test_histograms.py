@@ -613,7 +613,9 @@ class TestHistogramOptimBinNums(object):
     def test_merged_bins_empty(self):
         """
         Check that merged histogram bins are empty
-        merges happen when 'auto' defaults to 'fd'
+        Bin merges can happen when bin type is set to 'auto' and defaults to 'fd'
+
+        All test values have been precomputed and shouldn't change
         """
         bin_merge_test = {
               5000:   {'auto': (10000, 12, True)},
