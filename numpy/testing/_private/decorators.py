@@ -13,8 +13,6 @@ function name, setup and teardown functions and so on - see
 ``nose.tools`` for more information.
 
 """
-from __future__ import division, absolute_import, print_function
-
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3

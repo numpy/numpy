@@ -8,8 +8,6 @@ NOTE: Many of the methods of ndarray have corresponding functions.
       core/fromnumeric.py, core/defmatrix.py up-to-date.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from numpy.core import numerictypes as _numerictypes
@@ -1036,7 +1034,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         A string containing the data.
     dtype : data-type, optional
         The data type of the array; default: float.  For binary input data,
-        the data must be in exactly this format. Most builtin numeric types are 
+        the data must be in exactly this format. Most builtin numeric types are
         supported and extension types may be supported.
 
         .. versionadded:: 1.18.0
@@ -1485,59 +1483,6 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype('S4')
 
     """)
-
-if sys.version_info.major < 3:
-    add_newdoc('numpy.core.multiarray', 'newbuffer',
-        """
-        newbuffer(size)
-
-        Return a new uninitialized buffer object.
-
-        Parameters
-        ----------
-        size : int
-            Size in bytes of returned buffer object.
-
-        Returns
-        -------
-        newbuffer : buffer object
-            Returned, uninitialized buffer object of `size` bytes.
-
-        """)
-
-    add_newdoc('numpy.core.multiarray', 'getbuffer',
-        """
-        getbuffer(obj [,offset[, size]])
-
-        Create a buffer object from the given object referencing a slice of
-        length size starting at offset.
-
-        Default is the entire buffer. A read-write buffer is attempted followed
-        by a read-only buffer.
-
-        Parameters
-        ----------
-        obj : object
-
-        offset : int, optional
-
-        size : int, optional
-
-        Returns
-        -------
-        buffer_obj : buffer
-
-        Examples
-        --------
-        >>> buf = np.getbuffer(np.ones(5), 1, 3)
-        >>> len(buf)
-        3
-        >>> buf[0]
-        '\\x00'
-        >>> buf
-        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
-
-        """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
@@ -3953,7 +3898,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Examples
     --------
-    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``, 
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``,
     except that ``tolist`` changes numpy scalars to Python scalars:
 
     >>> a = np.uint32([1, 2])
@@ -4124,21 +4069,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     """
-    a.view(dtype=None, type=None)
+    a.view([dtype][, type])
 
     New view of array with the same data.
+
+    .. note::
+        Passing None for ``dtype`` is different from omitting the parameter,
+        since the former invokes ``dtype(None)`` which is an alias for
+        ``dtype('float_')``.
 
     Parameters
     ----------
     dtype : data-type or ndarray sub-class, optional
-        Data-type descriptor of the returned view, e.g., float32 or int16. The
-        default, None, results in the view having the same data-type as `a`.
+        Data-type descriptor of the returned view, e.g., float32 or int16.
+        Omitting it results in the view having the same data-type as `a`.
         This argument can also be specified as an ndarray sub-class, which
         then specifies the type of the returned object (this is equivalent to
         setting the ``type`` parameter).
     type : Python type, optional
-        Type of the returned view, e.g., ndarray or matrix.  Again, the
-        default None results in type preservation.
+        Type of the returned view, e.g., ndarray or matrix.  Again, omission
+        of the parameter results in type preservation.
 
     Notes
     -----
@@ -4230,7 +4180,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
-    frompyfunc(func, nin, nout)
+    frompyfunc(func, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
 
@@ -4245,6 +4195,13 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
         The number of input arguments.
     nout : int
         The number of objects returned by `func`.
+    identity : object, optional
+        The value to use for the `~numpy.ufunc.identity` attribute of the resulting
+        object. If specified, this is equivalent to setting the underlying
+        C ``identity`` field to ``PyUFunc_IdentityValue``.
+        If omitted, the identity is set to ``PyUFunc_None``. Note that this is
+        _not_ equivalent to setting the identity to ``None``, which implies the
+        operation is reorderable.
 
     Returns
     -------

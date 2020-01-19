@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import functools
 import itertools
 import operator
@@ -17,12 +15,10 @@ from .multiarray import (
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
-    inner, int_asbuffer, lexsort, matmul, may_share_memory,
+    inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
     zeros, normalize_axis_index)
-if sys.version_info[0] < 3:
-    from .multiarray import newbuffer, getbuffer
 
 from . import overrides
 from . import umath
@@ -52,7 +48,7 @@ array_function_dispatch = functools.partial(
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
-    'fromstring', 'fromfile', 'frombuffer', 'int_asbuffer', 'where',
+    'fromstring', 'fromfile', 'frombuffer', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
     'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
@@ -66,9 +62,6 @@ __all__ = [
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
     'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
-
-if sys.version_info[0] < 3:
-    __all__.extend(['getbuffer', 'newbuffer'])
 
 
 @set_module('numpy')
@@ -289,7 +282,7 @@ def full(shape, fill_value, dtype=None, order='C'):
     ----------
     shape : int or sequence of ints
         Shape of the new array, e.g., ``(2, 3)`` or ``2``.
-    fill_value : scalar
+    fill_value : scalar or array_like
         Fill value.
     dtype : data-type, optional
         The desired data-type for the array  The default, None, means
@@ -318,6 +311,10 @@ def full(shape, fill_value, dtype=None, order='C'):
     >>> np.full((2, 2), 10)
     array([[10, 10],
            [10, 10]])
+
+    >>> np.full((2, 2), [1, 2])
+    array([[1, 2],
+           [1, 2]])
 
     """
     if dtype is None:
@@ -1723,7 +1720,7 @@ def indices(dimensions, dtype=int, sparse=False):
 
 
 @set_module('numpy')
-def fromfunction(function, shape, **kwargs):
+def fromfunction(function, shape, *, dtype=float, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
 
@@ -1774,7 +1771,6 @@ def fromfunction(function, shape, **kwargs):
            [2, 3, 4]])
 
     """
-    dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
 

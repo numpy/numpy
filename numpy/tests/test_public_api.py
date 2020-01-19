@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import subprocess
 import pkgutil
@@ -30,9 +28,6 @@ def check_dir(module, module_name=None):
     return results
 
 
-@pytest.mark.skipif(
-    sys.version_info[0] < 3,
-    reason="NumPy exposes slightly different functions on Python 2")
 def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)
@@ -50,7 +45,6 @@ def test_numpy_namespace():
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'get_include': 'numpy.lib.utils.get_include',
-        'int_asbuffer': 'numpy.core._multiarray_umath.int_asbuffer',
         'mafromtxt': 'numpy.lib.npyio.mafromtxt',
         'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
@@ -228,7 +222,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.command.install_data",
     "distutils.command.install_headers",
     "distutils.command.sdist",
-    "distutils.compat",
     "distutils.conv_template",
     "distutils.core",
     "distutils.extension",

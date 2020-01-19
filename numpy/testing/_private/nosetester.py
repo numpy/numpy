@@ -4,8 +4,6 @@ Nose test running.
 This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import warnings
@@ -112,7 +110,7 @@ def run_module_suite(file_to_run=None, argv=None):
     nose.run(argv=argv, addplugins=[KnownFailurePlugin()])
 
 
-class NoseTester(object):
+class NoseTester:
     """
     Nose test runner.
 
@@ -450,20 +448,6 @@ class NoseTester(object):
                 warnings.simplefilter("always")
                 from ...distutils import cpuinfo
             sup.filter(category=UserWarning, module=cpuinfo)
-            # See #7949: Filter out deprecation warnings due to the -3 flag to
-            # python 2
-            if sys.version_info.major == 2 and sys.py3kwarning:
-                # This is very specific, so using the fragile module filter
-                # is fine
-                import threading
-                sup.filter(DeprecationWarning,
-                           r"sys\.exc_clear\(\) not supported in 3\.x",
-                           module=threading)
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
-                sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
-                sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
-                sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")
             # Filter out some deprecation warnings inside nose 1.3.7 when run
             # on python 3.5b2. See
             #     https://github.com/nose-devs/nose/issues/929

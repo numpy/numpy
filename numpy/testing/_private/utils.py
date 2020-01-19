@@ -2,8 +2,6 @@
 Utility function to facilitate testing.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import platform
@@ -21,12 +19,9 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-import numpy.__config__
+import numpy.linalg.lapack_lite
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -54,7 +49,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
-HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack_ilp64_opt_info')
+HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
 def import_nose():
@@ -1346,14 +1341,7 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-
-    if sys.version_info.major >= 3:
-        funcname = _d.assertRaisesRegex
-    else:
-        # Only present in Python 2.7, missing from unittest in 2.6
-        funcname = _d.assertRaisesRegexp
-
-    return funcname(exception_class, expected_regexp, *args, **kwargs)
+    return _d.assertRaisesRegex(exception_class, expected_regexp, *args, **kwargs)
 
 
 def decorate_methods(cls, decorator, testmatch=None):
@@ -1636,8 +1624,9 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %g ULP" %
-                             maxulp)
+        raise AssertionError("Arrays are not almost equal up to %g "
+                             "ULP (max difference is %g ULP)" %
+                             (maxulp, np.max(ret)))
     return ret
 
 
@@ -2002,7 +1991,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
                 mod.__warningregistry__.update(self._warnreg_copies[mod])
 
 
-class suppress_warnings(object):
+class suppress_warnings:
     """
     Context manager and decorator doing much the same as
     ``warnings.catch_warnings``.
@@ -2217,8 +2206,7 @@ class suppress_warnings(object):
         del self._filters
 
     def _showwarning(self, message, category, filename, lineno,
-                     *args, **kwargs):
-        use_warnmsg = kwargs.pop("use_warnmsg", None)
+                     *args, use_warnmsg=None, **kwargs):
         for cat, _, pattern, mod, rec in (
                 self._suppressions + self._tmp_suppressions)[::-1]:
             if (issubclass(category, cat) and
@@ -2476,3 +2464,24 @@ def _get_mem_available():
             return info['memfree'] + info['cached']
 
     return None
+
+
+def _no_tracing(func):
+    """
+    Decorator to temporarily turn off tracing for the duration of a test.
+    Needed in tests that check refcounting, otherwise the tracing itself
+    influences the refcounts
+    """
+    if not hasattr(sys, 'gettrace'):
+        return func
+    else:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            original_trace = sys.gettrace()
+            try:
+                sys.settrace(None)
+                return func(*args, **kwargs)
+            finally:
+                sys.settrace(original_trace)
+        return wrapper
+

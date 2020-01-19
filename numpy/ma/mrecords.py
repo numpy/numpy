@@ -8,8 +8,6 @@ and the masking of individual fields.
 .. moduleauthor:: Pierre Gerard-Marchant
 
 """
-from __future__ import division, absolute_import, print_function
-
 #  We should make sure that no field is called '_mask','mask','_fieldmask',
 #  or whatever restricted keywords.  An idea would be to no bother in the
 #  first place, and then rename the invalid fields with a trailing
@@ -87,7 +85,7 @@ def _get_fieldmask(self):
     return fdmask
 
 
-class MaskedRecords(MaskedArray, object):
+class MaskedRecords(MaskedArray):
     """
 
     Attributes

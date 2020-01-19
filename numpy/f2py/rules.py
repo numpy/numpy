@@ -50,8 +50,6 @@ $Date: 2005/08/30 08:58:42 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.129 $"[10:-1]
 
 from . import __version__
@@ -180,7 +178,6 @@ static PyMethodDef f2py_module_methods[] = {
 \t{NULL,NULL}
 };
 
-#if PY_VERSION_HEX >= 0x03000000
 static struct PyModuleDef moduledef = {
 \tPyModuleDef_HEAD_INIT,
 \t"#modulename#",
@@ -192,35 +189,20 @@ static struct PyModuleDef moduledef = {
 \tNULL,
 \tNULL
 };
-#endif
 
-#if PY_VERSION_HEX >= 0x03000000
-#define RETVAL m
 PyMODINIT_FUNC PyInit_#modulename#(void) {
-#else
-#define RETVAL
-PyMODINIT_FUNC init#modulename#(void) {
-#endif
 \tint i;
 \tPyObject *m,*d, *s, *tmp;
-#if PY_VERSION_HEX >= 0x03000000
 \tm = #modulename#_module = PyModule_Create(&moduledef);
-#else
-\tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
-#endif
 \tPy_TYPE(&PyFortran_Type) = &PyType_Type;
 \timport_array();
 \tif (PyErr_Occurred())
-\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return RETVAL;}
+\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R""" + """evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
 \tPy_DECREF(s);
-#if PY_VERSION_HEX >= 0x03000000
 \ts = PyUnicode_FromString(
-#else
-\ts = PyString_FromString(
-#endif
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
 \tPy_DECREF(s);
@@ -245,7 +227,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tif (! PyErr_Occurred())
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-\treturn RETVAL;
+\treturn m;
 }
 #ifdef __cplusplus
 }
@@ -448,11 +430,7 @@ rout_rules = [
       tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
-#if PY_VERSION_HEX >= 0x03000000
       s = PyUnicode_FromString("#name#");
-#else
-      s = PyString_FromString("#name#");
-#endif
       PyObject_SetAttrString(o,"__name__", s);
       Py_DECREF(s);
     }
@@ -490,11 +468,7 @@ rout_rules = [
       tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
-#if PY_VERSION_HEX >= 0x03000000
       s = PyUnicode_FromString("#name#");
-#else
-      s = PyString_FromString("#name#");
-#endif
       PyObject_SetAttrString(o,"__name__", s);
       Py_DECREF(s);
     }

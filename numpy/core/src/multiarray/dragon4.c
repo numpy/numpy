@@ -1565,8 +1565,8 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
 /* Options struct for easy passing of Dragon4 options.
  *
  *   scientific - boolean controlling whether scientific notation is used
- *   digit_mode - whether to use unique or fixed fracional output
- *   cutoff_mode - whether 'precision' refers to toal digits, or digits past
+ *   digit_mode - whether to use unique or fixed fractional output
+ *   cutoff_mode - whether 'precision' refers to to all digits, or digits past
  *                 the decimal point.
  *   precision - When negative, prints as many digits as needed for a unique
  *               number. When positive specifies the maximum number of

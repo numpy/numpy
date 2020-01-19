@@ -41,7 +41,7 @@
  */
 
 /*
- * Scanning function for next element parsing and seperator skipping.
+ * Scanning function for next element parsing and separator skipping.
  * These functions return:
  *   - 0 to indicate more data to read
  *   - -1 when reading stopped at the end of the string/file
@@ -629,13 +629,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
     }
 
     if ((nd == 0) || PyString_Check(s) ||
-#if defined(NPY_PY3K)
-            PyMemoryView_Check(s) ||
-#else
-            PyBuffer_Check(s) ||
-#endif
-            PyUnicode_Check(s)) {
-
+            PyMemoryView_Check(s) || PyUnicode_Check(s)) {
         /* If an object has no length, leave it be */
         if (string_type && s != NULL &&
                 !PyString_Check(s) && !PyUnicode_Check(s)) {
@@ -644,11 +638,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
                 s_string = PyObject_Str(s);
             }
             else {
-#if defined(NPY_PY3K)
                 s_string = PyObject_Str(s);
-#else
-                s_string = PyObject_Unicode(s);
-#endif
             }
             if (s_string) {
                 n = PyObject_Length(s_string);
@@ -736,10 +726,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 
     /* obj is a String */
     if (PyString_Check(obj) ||
-#if defined(NPY_PY3K)
-#else
-            PyBuffer_Check(obj) ||
-#endif
             PyUnicode_Check(obj)) {
         if (stop_at_string) {
             *maxndim = 0;
@@ -838,7 +824,11 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         int nd = -1;
         if (PyDict_Check(e)) {
             PyObject *new;
-            new = PyDict_GetItemString(e, "shape");
+            new = _PyDict_GetItemStringWithError(e, "shape");
+            if (new == NULL && PyErr_Occurred()) {
+                Py_DECREF(e);
+                return -1;
+            }
             if (new && PyTuple_Check(new)) {
                 nd = PyTuple_GET_SIZE(new);
                 if (nd < *maxndim) {
@@ -950,7 +940,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 }
 
 static PyObject *
-raise_memory_error(int nd, npy_intp *dims, PyArray_Descr *descr)
+raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
 {
     static PyObject *exc_type = NULL;
 
@@ -1633,6 +1623,8 @@ fail:
  *              validate and possibly copy arr itself ...
  *      }
  *      ... use arr ...
+ * context is passed to PyArray_FromArrayAttr, which ignores it. Since this is
+ * a NUMPY_API function, we cannot remove it.
  */
 NPY_NO_EXPORT int
 PyArray_GetArrayParamsFromObject(PyObject *op,
@@ -1885,6 +1877,10 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 /*NUMPY_API
  * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
+ *
+ * context is passed to PyArray_GetArrayParamsFromObject, which passes it to
+ * PyArray_FromArrayAttr, which raises if it is not NULL. Since this is a
+ * NUMPY_API function, we cannot remove it.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -2352,9 +2348,7 @@ PyArray_FromStructInterface(PyObject *input)
 NPY_NO_EXPORT int
 _is_default_descr(PyObject *descr, PyObject *typestr) {
     PyObject *tuple, *name, *typestr2;
-#if defined(NPY_PY3K)
     PyObject *tmp = NULL;
-#endif
     int ret = 0;
 
     if (!PyList_Check(descr) || PyList_GET_SIZE(descr) != 1) {
@@ -2369,7 +2363,6 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
         return 0;
     }
     typestr2 = PyTuple_GET_ITEM(tuple, 1);
-#if defined(NPY_PY3K)
     /* Allow unicode type strings */
     if (PyUnicode_Check(typestr2)) {
         tmp = PyUnicode_AsASCIIString(typestr2);
@@ -2378,14 +2371,11 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
         }
         typestr2 = tmp;
     }
-#endif
     if (PyBytes_Check(typestr2) &&
             PyObject_RichCompareBool(typestr, typestr2, Py_EQ)) {
         ret = 1;
     }
-#if defined(NPY_PY3K)
     Py_XDECREF(tmp);
-#endif
 
     return ret;
 }
@@ -2402,11 +2392,7 @@ PyArray_FromInterface(PyObject *origin)
     PyArrayObject *ret;
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#else
-    Py_ssize_t buffer_len;
-#endif
     int res, i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
@@ -2427,14 +2413,16 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Get type string from interface specification */
-    attr = PyDict_GetItemString(iface, "typestr");
+    attr = _PyDict_GetItemStringWithError(iface, "typestr");
     if (attr == NULL) {
         Py_DECREF(iface);
-        PyErr_SetString(PyExc_ValueError,
-                "Missing __array_interface__ typestr");
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Missing __array_interface__ typestr");
+        }
         return NULL;
     }
-#if defined(NPY_PY3K)
+
     /* Allow unicode type strings */
     if (PyUnicode_Check(attr)) {
         PyObject *tmp = PyUnicode_AsASCIIString(attr);
@@ -2446,7 +2434,7 @@ PyArray_FromInterface(PyObject *origin)
     else {
         Py_INCREF(attr);
     }
-#endif
+
     if (!PyBytes_Check(attr)) {
         PyErr_SetString(PyExc_TypeError,
                     "__array_interface__ typestr must be a string");
@@ -2463,7 +2451,10 @@ PyArray_FromInterface(PyObject *origin)
      * the 'descr' attribute.
      */
     if (dtype->type_num == NPY_VOID) {
-        PyObject *descr = PyDict_GetItemString(iface, "descr");
+        PyObject *descr = _PyDict_GetItemStringWithError(iface, "descr");
+        if (descr == NULL && PyErr_Occurred()) {
+            goto fail;
+        }
         PyArray_Descr *new_dtype = NULL;
 
         if (descr != NULL && !_is_default_descr(descr, attr) &&
@@ -2474,15 +2465,20 @@ PyArray_FromInterface(PyObject *origin)
         }
     }
 
-#if defined(NPY_PY3K)
     Py_DECREF(attr);  /* Pairs with the unicode handling above */
-#endif
 
     /* Get shape tuple from interface specification */
-    attr = PyDict_GetItemString(iface, "shape");
+    attr = _PyDict_GetItemStringWithError(iface, "shape");
     if (attr == NULL) {
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
         /* Shape must be specified when 'data' is specified */
-        if (PyDict_GetItemString(iface, "data") != NULL) {
+        PyObject *data = _PyDict_GetItemStringWithError(iface, "data");
+        if (data == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
+        else if (data != NULL) {
             Py_DECREF(iface);
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ shape");
@@ -2513,7 +2509,10 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Get data buffer from interface specification */
-    attr = PyDict_GetItemString(iface, "data");
+    attr = _PyDict_GetItemStringWithError(iface, "data");
+    if (attr == NULL && PyErr_Occurred()){
+        return NULL;
+    }
 
     /* Case for data access through pointer */
     if (attr && PyTuple_Check(attr)) {
@@ -2557,7 +2556,6 @@ PyArray_FromInterface(PyObject *origin)
         else {
             base = origin;
         }
-#if defined(NPY_PY3K)
         if (PyObject_GetBuffer(base, &view,
                     PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
             PyErr_Clear();
@@ -2576,21 +2574,13 @@ PyArray_FromInterface(PyObject *origin)
          */
         PyBuffer_Release(&view);
         _dealloc_cached_buffer_info(base);
-#else
-        res = PyObject_AsWriteBuffer(base, (void **)&data, &buffer_len);
-        if (res < 0) {
-            PyErr_Clear();
-            res = PyObject_AsReadBuffer(
-                        base, (const void **)&data, &buffer_len);
-            if (res < 0) {
-                goto fail;
-            }
-            dataflags &= ~NPY_ARRAY_WRITEABLE;
-        }
-#endif
+
         /* Get offset number from interface specification */
-        attr = PyDict_GetItemString(iface, "offset");
-        if (attr) {
+        attr = _PyDict_GetItemStringWithError(iface, "offset");
+        if (attr == NULL && PyErr_Occurred()) {
+            goto fail;
+        }
+        else if (attr) {
             npy_longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
@@ -2625,7 +2615,10 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
     }
-    attr = PyDict_GetItemString(iface, "strides");
+    attr = _PyDict_GetItemStringWithError(iface, "strides");
+    if (attr == NULL && PyErr_Occurred()){
+        return NULL;
+    }
     if (attr != NULL && attr != Py_None) {
         if (!PyTuple_Check(attr)) {
             PyErr_SetString(PyExc_TypeError,
@@ -2661,13 +2654,18 @@ PyArray_FromInterface(PyObject *origin)
     return NULL;
 }
 
-/*NUMPY_API*/
+/*NUMPY_API
+ */
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 {
     PyObject *new;
     PyObject *array_meth;
 
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return NULL;
+    }
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
@@ -2675,29 +2673,11 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
         }
         return Py_NotImplemented;
     }
-    if (context == NULL) {
-        if (typecode == NULL) {
-            new = PyObject_CallFunction(array_meth, NULL);
-        }
-        else {
-            new = PyObject_CallFunction(array_meth, "O", typecode);
-        }
+    if (typecode == NULL) {
+        new = PyObject_CallFunction(array_meth, NULL);
     }
     else {
-        if (typecode == NULL) {
-            new = PyObject_CallFunction(array_meth, "OO", Py_None, context);
-            if (new == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                new = PyObject_CallFunction(array_meth, "");
-            }
-        }
-        else {
-            new = PyObject_CallFunction(array_meth, "OO", typecode, context);
-            if (new == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                new = PyObject_CallFunction(array_meth, "O", typecode);
-            }
-        }
+        new = PyObject_CallFunction(array_meth, "O", typecode);
     }
     Py_DECREF(array_meth);
     if (new == NULL) {
@@ -3590,7 +3570,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
  */
 #define FROM_BUFFER_SIZE 4096
 static PyArrayObject *
-array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
+array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nread,
                 void *stream, next_element next, skip_separator skip_sep,
                 void *stream_data)
 {
@@ -3780,9 +3760,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 {
     PyArrayObject *ret;
     char *data;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#endif
     Py_ssize_t ts;
     npy_intp s, n;
     int itemsize;
@@ -3803,7 +3781,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         return NULL;
     }
 
-#if defined(NPY_PY3K)
     if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
@@ -3822,16 +3799,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
      */
     PyBuffer_Release(&view);
     _dealloc_cached_buffer_info(buf);
-#else
-    if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
-        writeable = 0;
-        PyErr_Clear();
-        if (PyObject_AsReadBuffer(buf, (void *)&data, &ts) == -1) {
-            Py_DECREF(type);
-            return NULL;
-        }
-    }
-#endif
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,

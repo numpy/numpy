@@ -30,8 +30,8 @@
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_assign_scalar(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+raw_array_assign_scalar(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data)
 {
     int idim;
@@ -101,11 +101,11 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp *wheremask_strides)
+        npy_intp const *wheremask_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];

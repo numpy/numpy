@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import itertools
 import pytest
@@ -12,9 +10,6 @@ from numpy.compat import long
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_array_equal
     )
-
-if sys.version_info[0] >= 3:
-    xrange = range
 
 
 ndims = 2
@@ -140,11 +135,7 @@ def test_diophantine_fuzz():
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
                 # take too long)
-                try:
-                    ranges = tuple(xrange(0, a*ub+1, a) for a, ub in zip(A, U))
-                except OverflowError:
-                    # xrange on 32-bit Python 2 may overflow
-                    continue
+                ranges = tuple(range(0, a*ub+1, a) for a, ub in zip(A, U))
 
                 size = 1
                 for r in ranges:
@@ -477,7 +468,7 @@ def check_internal_overlap(a, manual_expected=None):
 
     # Brute-force check
     m = set()
-    ranges = tuple(xrange(n) for n in a.shape)
+    ranges = tuple(range(n) for n in a.shape)
     for v in itertools.product(*ranges):
         offset = sum(s*w for s, w in zip(a.strides, v))
         if offset in m:
@@ -564,7 +555,7 @@ def test_internal_overlap_fuzz():
 def test_non_ndarray_inputs():
     # Regression check for gh-5604
 
-    class MyArray(object):
+    class MyArray:
         def __init__(self, data):
             self.data = data
 
@@ -572,7 +563,7 @@ def test_non_ndarray_inputs():
         def __array_interface__(self):
             return self.data.__array_interface__
 
-    class MyArray2(object):
+    class MyArray2:
         def __init__(self, data):
             self.data = data
 
@@ -619,7 +610,7 @@ def assert_copy_equivalent(operation, args, out, **kwargs):
         assert_equal(got, expected)
 
 
-class TestUFunc(object):
+class TestUFunc:
     """
     Test ufunc call memory overlap handling
     """

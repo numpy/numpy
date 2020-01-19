@@ -1347,37 +1347,6 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
 }
-/*
- * Function to check and report floor division warning when python2.x is
- * invoked with -3 switch
- * See PEP238 and #7949 for numpy
- * This function will not be hit for py3 or when __future__ imports division.
- * See generate_umath.py for reason
-*/
-NPY_NO_EXPORT int
-PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
-                                  NPY_CASTING casting,
-                                  PyArrayObject **operands,
-                                  PyObject *type_tup,
-                                  PyArray_Descr **out_dtypes)
-{
- /* Deprecation checks needed only on python 2 */
-#if !defined(NPY_PY3K)
-    int type_num1, type_num2;
-
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
-
-    /* If both types are integer, warn the user, same as python does */
-    if (Py_DivisionWarningFlag &&
-            (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
-            (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
-        PyErr_Warn(PyExc_DeprecationWarning, "numpy: classic int division");
-    }
-#endif
-    return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
-                                        type_tup, out_dtypes);
-}
 
 static int
 find_userloop(PyUFuncObject *ufunc,
@@ -1410,9 +1379,12 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItem(ufunc->userloops, key);
+            obj = PyDict_GetItemWithError(ufunc->userloops, key);
             Py_DECREF(key);
-            if (obj == NULL) {
+            if (obj == NULL && PyErr_Occurred()){
+                return -1;
+            }
+            else if (obj == NULL) {
                 continue;
             }
             for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
@@ -1815,9 +1787,12 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItem(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key);
             Py_DECREF(key);
-            if (obj == NULL) {
+            if (obj == NULL && PyErr_Occurred()){
+                return -1;
+            }
+            else if (obj == NULL) {
                 continue;
             }
             for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
@@ -1879,9 +1854,12 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItem(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key);
             Py_DECREF(key);
-            if (obj == NULL) {
+            if (obj == NULL && PyErr_Occurred()){
+                return -1;
+            }
+            else if (obj == NULL) {
                 continue;
             }
 

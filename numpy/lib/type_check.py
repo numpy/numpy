@@ -1,7 +1,6 @@
 """Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
 """
-from __future__ import division, absolute_import, print_function
 import functools
 import warnings
 

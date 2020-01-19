@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
@@ -13,10 +11,10 @@ import warnings
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import atleast_1d, transpose
+from numpy.core import transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
-    empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
+    ndarray, around, floor, ceil, take, dot, where, intp,
     integer, isscalar, absolute
     )
 from numpy.core.umath import (
@@ -38,20 +36,15 @@ from numpy.core.multiarray import (
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 
-if sys.version_info[0] < 3:
-    # Force range to be a generator, for np.delete's usage.
-    range = xrange
-    import __builtin__ as builtins
-else:
-    import builtins
+import builtins
+
+# needed in this module for compatibility
+from numpy.lib.histograms import histogram, histogramdd
 
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
-
-# needed in this module for compatibility
-from numpy.lib.histograms import histogram, histogramdd
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
@@ -70,7 +63,7 @@ def _rot90_dispatcher(m, k=None, axes=None):
 
 
 @array_function_dispatch(_rot90_dispatcher)
-def rot90(m, k=1, axes=(0,1)):
+def rot90(m, k=1, axes=(0, 1)):
     """
     Rotate an array by 90 degrees in the plane specified by axes.
 
@@ -150,7 +143,7 @@ def rot90(m, k=1, axes=(0,1)):
                                                 axes_list[axes[0]])
 
     if k == 1:
-        return transpose(flip(m,axes[1]), axes_list)
+        return transpose(flip(m, axes[1]), axes_list)
     else:
         # k == 3
         return flip(transpose(m, axes_list), axes[1])
@@ -777,14 +770,14 @@ def copy(a, order='K'):
 # Basic operations
 
 
-def _gradient_dispatcher(f, *varargs, **kwargs):
+def _gradient_dispatcher(f, *varargs, axis=None, edge_order=None):
     yield f
     for v in varargs:
         yield v
 
 
 @array_function_dispatch(_gradient_dispatcher)
-def gradient(f, *varargs, **kwargs):
+def gradient(f, *varargs, axis=None, edge_order=1):
     """
     Return the gradient of an N-dimensional array.
 
@@ -961,11 +954,10 @@ def gradient(f, *varargs, **kwargs):
     f = np.asanyarray(f)
     N = f.ndim  # number of dimensions
 
-    axes = kwargs.pop('axis', None)
-    if axes is None:
+    if axis is None:
         axes = tuple(range(N))
     else:
-        axes = _nx.normalize_axis_tuple(axes, N)
+        axes = _nx.normalize_axis_tuple(axis, N)
 
     len_axes = len(axes)
     n = len(varargs)
@@ -979,13 +971,18 @@ def gradient(f, *varargs, **kwargs):
         # scalar or 1d array for each axis
         dx = list(varargs)
         for i, distances in enumerate(dx):
-            if np.ndim(distances) == 0:
+            distances = np.asanyarray(distances)
+            if distances.ndim == 0:
                 continue
-            elif np.ndim(distances) != 1:
+            elif distances.ndim != 1:
                 raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
+            if np.issubdtype(distances.dtype, np.integer):
+                # Convert numpy integer types to float64 to avoid modular
+                # arithmetic in np.diff(distances).
+                distances = distances.astype(np.float64)
             diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
@@ -995,10 +992,6 @@ def gradient(f, *varargs, **kwargs):
     else:
         raise TypeError("invalid number of arguments")
 
-    edge_order = kwargs.pop('edge_order', 1)
-    if kwargs:
-        raise TypeError('"{}" are not valid keyword arguments.'.format(
-                                                  '", "'.join(kwargs.keys())))
     if edge_order > 2:
         raise ValueError("'edge_order' greater than 2 not supported")
 
@@ -1024,8 +1017,12 @@ def gradient(f, *varargs, **kwargs):
     elif np.issubdtype(otype, np.inexact):
         pass
     else:
-        # all other types convert to floating point
-        otype = np.double
+        # All other types convert to floating point.
+        # First check if f is a numpy integer type; if so, convert f to float64
+        # to avoid modular arithmetic when computing the changes in f.
+        if np.issubdtype(otype, np.integer):
+            f = f.astype(np.float64)
+        otype = np.float64
 
     for axis, ax_dx in zip(axes, dx):
         if f.shape[axis] < edge_order + 1:
@@ -1612,6 +1609,7 @@ def trim_zeros(filt, trim='fb'):
                 last = last - 1
     return filt[first:last]
 
+
 def _extract_dispatcher(condition, arr):
     return (condition, arr)
 
@@ -1867,7 +1865,7 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
 
 
 @set_module('numpy')
-class vectorize(object):
+class vectorize:
     """
     vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
               signature=None)
@@ -2947,6 +2945,7 @@ def hamming(M):
     n = arange(0, M)
     return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
 
+
 ## Code from cephes for i0
 
 _i0A = [
@@ -3489,6 +3488,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     else:
         return r
 
+
 def _median(a, axis=None, out=None, overwrite_input=False):
     # can't be reasonably be implemented in terms of percentile as we have to
     # call mean to not break astropy
@@ -3707,7 +3707,7 @@ def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the q-th quantile of the data along the specified axis.
-    
+
     .. versionadded:: 1.15.0
 
     Parameters
@@ -3878,7 +3878,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             "interpolation can only be 'linear', 'lower' 'higher', "
             "'midpoint', or 'nearest'")
 
-    n = np.array(False, dtype=bool) # check for nan's flag
+    n = np.array(False, dtype=bool)  # check for nan's flag
     if indices.dtype == intp:  # take the points along axis
         # Check if the array contains any nan's
         if np.issubdtype(a.dtype, np.inexact):
@@ -3897,7 +3897,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         if zerod:
             indices = indices[0]
         r = take(ap, indices, axis=axis, out=out)
-
 
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
@@ -4059,13 +4058,13 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-def _meshgrid_dispatcher(*xi, **kwargs):
+def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
     return xi
 
 
 # Based on scitools meshgrid
 @array_function_dispatch(_meshgrid_dispatcher)
-def meshgrid(*xi, **kwargs):
+def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
     Return coordinate matrices from coordinate vectors.
 
@@ -4171,14 +4170,6 @@ def meshgrid(*xi, **kwargs):
     """
     ndim = len(xi)
 
-    copy_ = kwargs.pop('copy', True)
-    sparse = kwargs.pop('sparse', False)
-    indexing = kwargs.pop('indexing', 'xy')
-
-    if kwargs:
-        raise TypeError("meshgrid() got an unexpected keyword argument '%s'"
-                        % (list(kwargs)[0],))
-
     if indexing not in ['xy', 'ij']:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
@@ -4196,7 +4187,7 @@ def meshgrid(*xi, **kwargs):
         # Return the full N-D matrix (not only the 1-D vector)
         output = np.broadcast_arrays(*output, subok=True)
 
-    if copy_:
+    if copy:
         output = [x.copy() for x in output]
 
     return output

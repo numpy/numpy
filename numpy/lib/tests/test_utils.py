@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import inspect
 import sys
 import pytest
@@ -9,10 +7,7 @@ from numpy.testing import assert_, assert_equal, assert_raises_regex
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
@@ -102,7 +97,7 @@ def test_safe_eval_nameconstant():
     utils.safe_eval('None')
 
 
-class TestByteBounds(object):
+class TestByteBounds:
 
     def test_byte_bounds(self):
         # pointer difference matches size * itemsize

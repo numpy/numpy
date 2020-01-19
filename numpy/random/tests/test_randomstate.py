@@ -61,7 +61,7 @@ def assert_mt19937_state_equal(a, b):
     assert_equal(a['gauss'], b['gauss'])
 
 
-class TestSeed(object):
+class TestSeed:
     def test_scalar(self):
         s = random.RandomState(0)
         assert_equal(s.randint(1000), 684)
@@ -108,7 +108,7 @@ class TestSeed(object):
         assert_raises(ValueError, random.RandomState, MT19937)
 
 
-class TestBinomial(object):
+class TestBinomial:
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -123,7 +123,7 @@ class TestBinomial(object):
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
 
-class TestMultinomial(object):
+class TestMultinomial:
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -168,7 +168,7 @@ class TestMultinomial(object):
         assert_array_equal(non_contig, contig)
 
 
-class TestSetState(object):
+class TestSetState:
     def setup(self):
         self.seed = 1234567890
         self.random_state = random.RandomState(self.seed)
@@ -255,7 +255,7 @@ class TestSetState(object):
         assert repr(self.random_state).startswith('RandomState(MT19937)')
 
 
-class TestRandint(object):
+class TestRandint:
 
     rfunc = random.randint
 
@@ -392,7 +392,7 @@ class TestRandint(object):
             assert_equal(type(sample), dt)
 
 
-class TestRandomDist(object):
+class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
@@ -1245,7 +1245,7 @@ class TestRandomDist(object):
         assert_array_equal(actual, desired)
 
 
-class TestBroadcast(object):
+class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
     def setup(self):
@@ -1832,7 +1832,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
 
-class TestThread(object):
+class TestThread:
     # make sure each state produces the same sequence even in threads
     def setup(self):
         self.seeds = range(4)
@@ -1879,7 +1879,7 @@ class TestThread(object):
 
 
 # See Issue #4263
-class TestSingleEltArrayInput(object):
+class TestSingleEltArrayInput:
     def setup(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])

@@ -69,18 +69,11 @@
 #define PyArray_DEFAULT NPY_DEFAULT_TYPE
 
 /* These DATETIME bits aren't used internally */
-#if PY_VERSION_HEX >= 0x03000000
 #define PyDataType_GetDatetimeMetaData(descr)                                 \
     ((descr->metadata == NULL) ? NULL :                                       \
         ((PyArray_DatetimeMetaData *)(PyCapsule_GetPointer(                   \
                 PyDict_GetItemString(                                         \
                     descr->metadata, NPY_METADATA_DTSTR), NULL))))
-#else
-#define PyDataType_GetDatetimeMetaData(descr)                                 \
-    ((descr->metadata == NULL) ? NULL :                                       \
-        ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(                    \
-                PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
-#endif
 
 /*
  * Deprecated as of NumPy 1.7, this kind of shortcut doesn't

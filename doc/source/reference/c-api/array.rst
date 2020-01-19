@@ -426,10 +426,8 @@ From other objects
     may be 0. Also, if *op* is not already an array (or does not
     expose the array interface), then a new array will be created (and
     filled from *op* using the sequence protocol). The new array will
-    have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context* argument
-    is passed to the :obj:`~numpy.class.__array__` method of *op* and is only used if
-    the array is constructed that way. Almost always this
-    parameter is ``NULL``.
+    have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context*
+    argument is unused.
 
     .. c:var:: NPY_ARRAY_C_CONTIGUOUS
 
@@ -574,6 +572,8 @@ From other objects
     :c:data:`NPY_ARRAY_WRITEABLE` to PyArray_FromAny, where the writeable array may
     be a copy of the input.
 
+    `context` is not used.
+
     When success (0 return value) is returned, either out_arr
     is filled with a non-NULL PyArrayObject and
     the rest of the parameters are untouched, or out_arr is
@@ -677,10 +677,8 @@ From other objects
         PyObject* op, PyArray_Descr* dtype, PyObject* context)
 
     Return an ndarray object from a Python object that exposes the
-    :obj:`~numpy.class.__array__` method. The :obj:`~numpy.class.__array__` method can take 0, 1, or 2
-    arguments ([dtype, context]) where *context* is used to pass
-    information about where the :obj:`~numpy.class.__array__` method is being called
-    from (currently only used in ufuncs).
+    :obj:`~numpy.class.__array__` method. The :obj:`~numpy.class.__array__`
+    method can take 0, or 1 argument ``([dtype])``. ``context`` is unused.
 
 .. c:function:: PyObject* PyArray_ContiguousFromAny( \
         PyObject* op, int typenum, int min_depth, int max_depth)
@@ -859,15 +857,16 @@ General check of Python Type
     conversion occurs. Otherwise, out will contain a borrowed
     reference to :c:data:`Py_NotImplemented` and no error condition is set.
 
-.. c:function:: PyArray_HasArrayInterfaceType(op, type, context, out)
+.. c:function:: PyArray_HasArrayInterfaceType(op, dtype, context, out)
 
     If ``op`` implements any part of the array interface, then ``out``
     will contain a new reference to the newly created ndarray using
     the interface or ``out`` will contain ``NULL`` if an error during
     conversion occurs. Otherwise, out will contain a borrowed
     reference to Py_NotImplemented and no error condition is set.
-    This version allows setting of the type and context in the part of
-    the array interface that looks for the :obj:`~numpy.class.__array__` attribute.
+    This version allows setting of the dtype in the part of the array interface
+    that looks for the :obj:`~numpy.class.__array__` attribute. `context` is
+    unused.
 
 .. c:function:: PyArray_IsZeroDim(op)
 
@@ -1223,7 +1222,7 @@ Converting data types
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is superceded by :c:func:`PyArray_MinScalarType` and/or
+    This function is superseded by :c:func:`PyArray_MinScalarType` and/or
     :c:func:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
@@ -1237,7 +1236,7 @@ Converting data types
 .. c:function:: void PyArray_ArrayType( \
         PyObject* op, PyArray_Descr* mintype, PyArray_Descr* outtype)
 
-    This function is superceded by :c:func:`PyArray_ResultType`.
+    This function is superseded by :c:func:`PyArray_ResultType`.
 
     This function works similarly to :c:func:`PyArray_ObjectType` (...)
     except it handles flexible arrays. The *mintype* argument can have
@@ -1248,7 +1247,7 @@ Converting data types
 .. c:function:: PyArrayObject** PyArray_ConvertToCommonType( \
         PyObject* op, int* n)
 
-    The functionality this provides is largely superceded by iterator
+    The functionality this provides is largely superseded by iterator
     :c:type:`NpyIter` introduced in 1.6, with flag
     :c:data:`NPY_ITER_COMMON_DTYPE` or with the same dtype parameter for
     all operands.
@@ -1439,7 +1438,7 @@ An ndarray can have a data segment that is not a simple contiguous
 chunk of well-behaved memory you can manipulate. It may not be aligned
 with word boundaries (very important on some platforms). It might have
 its data in a different byte-order than the machine recognizes. It
-might not be writeable. It might be in Fortan-contiguous order. The
+might not be writeable. It might be in Fortran-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
 
@@ -2488,7 +2487,7 @@ an element copier function as a primitive.::
 Array Iterators
 ---------------
 
-As of NumPy 1.6.0, these array iterators are superceded by
+As of NumPy 1.6.0, these array iterators are superseded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
@@ -2514,7 +2513,7 @@ this useful approach to looping over an array.
     stride and that axis will be used.
 
 .. c:function:: PyObject *PyArray_BroadcastToShape( \
-        PyObject* arr, npy_intp *dimensions, int nd)
+        PyObject* arr, npy_intp const *dimensions, int nd)
 
     Return an array iterator that is broadcast to iterate as an array
     of the shape provided by *dimensions* and *nd*.

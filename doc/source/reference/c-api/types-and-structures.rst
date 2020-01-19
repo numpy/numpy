@@ -452,9 +452,9 @@ PyArrayDescr_Type and PyArray_Descr
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
            int *cancastto;
-           PyArray_FastClipFunc *fastclip;
-           PyArray_FastPutmaskFunc *fastputmask;
-           PyArray_FastTakeFunc *fasttake;
+           PyArray_FastClipFunc *fastclip;  /* deprecated */
+           PyArray_FastPutmaskFunc *fastputmask;  /* deprecated */
+           PyArray_FastTakeFunc *fasttake;  /* deprecated */
            PyArray_ArgFunc *argmin;
        } PyArray_ArrFuncs;
 
@@ -641,6 +641,16 @@ PyArrayDescr_Type and PyArray_Descr
     .. c:member:: void fastclip( \
             void *in, npy_intp n_in, void *min, void *max, void *out)
 
+        .. deprecated:: 1.17
+            The use of this function will give a deprecation warning when
+            ``np.clip``. Instead of this function, the datatype must
+            instead use ``PyUFunc_RegisterLoopForDescr`` to attach a custom
+            loop to ``np.core.umath.clip``, ``np.minimum``, and ``np.maximum``.
+
+        .. deprecated:: 1.19
+            Setting this function is deprecated and should always be ``NULL``,
+            if set, it will be ignored.
+
         A function that reads ``n_in`` items from ``in``, and writes to
         ``out`` the read value if it is within the limits pointed to by
         ``min`` and ``max``, or the corresponding limit if outside. The
@@ -649,6 +659,10 @@ PyArrayDescr_Type and PyArray_Descr
 
     .. c:member:: void fastputmask( \
             void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
+
+        .. deprecated:: 1.19
+            Setting this function is deprecated and should always be ``NULL``,
+            if set, it will be ignored.
 
         A function that takes a pointer ``in`` to an array of ``n_in``
         items, a pointer ``mask`` to an array of ``n_in`` boolean
@@ -661,6 +675,10 @@ PyArrayDescr_Type and PyArray_Descr
             void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
             npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
             NPY_CLIPMODE clipmode)
+
+        .. deprecated:: 1.19
+            Setting this function is deprecated and should always be ``NULL``,
+            if set, it will be ignored.
 
         A function that takes a pointer ``src`` to a C contiguous,
         behaved segment, interpreted as a 3-dimensional array of shape

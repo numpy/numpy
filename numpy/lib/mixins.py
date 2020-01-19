@@ -1,6 +1,4 @@
 """Mixin classes for custom array types that don't inherit from ndarray."""
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from numpy.core import umath as um
@@ -60,7 +58,7 @@ def _unary_method(ufunc, name):
     return func
 
 
-class NDArrayOperatorsMixin(object):
+class NDArrayOperatorsMixin:
     """Mixin defining all operator special methods using __array_ufunc__.
 
     This class implements the special methods for almost all of Python's

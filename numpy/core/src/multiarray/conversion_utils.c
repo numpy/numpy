@@ -152,11 +152,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
-#if defined(NPY_PY3K)
     Py_buffer view;
-#else
-    Py_ssize_t buflen;
-#endif
 
     buf->ptr = NULL;
     buf->flags = NPY_ARRAY_BEHAVED;
@@ -165,7 +161,6 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
         return NPY_SUCCEED;
     }
 
-#if defined(NPY_PY3K)
     if (PyObject_GetBuffer(obj, &view,
                 PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE|PyBUF_SIMPLE) != 0) {
         PyErr_Clear();
@@ -192,22 +187,6 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     if (PyMemoryView_Check(obj)) {
         buf->base = PyMemoryView_GET_BASE(obj);
     }
-#else
-    if (PyObject_AsWriteBuffer(obj, &(buf->ptr), &buflen) < 0) {
-        PyErr_Clear();
-        buf->flags &= ~NPY_ARRAY_WRITEABLE;
-        if (PyObject_AsReadBuffer(obj, (const void **)&(buf->ptr),
-                                  &buflen) < 0) {
-            return NPY_FAIL;
-        }
-    }
-    buf->len = (npy_intp) buflen;
-
-    /* Point to the base of the buffer object if present */
-    if (PyBuffer_Check(obj)) {
-        buf->base = ((PyArray_Chunk *)obj)->base;
-    }
-#endif
     if (buf->base == NULL) {
         buf->base = obj;
     }
@@ -812,18 +791,6 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
      * Since it is the usual case, first check if o is an integer. This is
      * an exact check, since otherwise __index__ is used.
      */
-#if !defined(NPY_PY3K)
-    if (PyInt_CheckExact(o)) {
-  #if (NPY_SIZEOF_LONG <= NPY_SIZEOF_INTP)
-        /* No overflow is possible, so we can just return */
-        return PyInt_AS_LONG(o);
-  #else
-        long_value = PyInt_AS_LONG(o);
-        goto overflow_check;
-  #endif
-    }
-    else
-#endif
     if (PyLong_CheckExact(o)) {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
         long_value = PyLong_AsLongLong(o);
@@ -1145,7 +1112,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
   PyArray_IntTupleFromIntp
 */
 NPY_NO_EXPORT PyObject *
-PyArray_IntTupleFromIntp(int len, npy_intp *vals)
+PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 {
     int i;
     PyObject *intTuple = PyTuple_New(len);

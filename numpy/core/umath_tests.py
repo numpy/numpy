@@ -2,8 +2,6 @@
 Shim for _umath_tests to allow a deprecation period for the new name.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 
 # 2018-04-04, numpy 1.15.0

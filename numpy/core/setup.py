@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import os
 import sys
 import pickle
@@ -38,7 +36,7 @@ NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CH
 # Use pickle in all cases, as cPickle is gone in python3 and the difference
 # in time is only in build. -- Charles Harris, 2013-03-30
 
-class CallOnceOnly(object):
+class CallOnceOnly:
     def __init__(self):
         self._check_types = None
         self._check_ieee_macros = None
@@ -468,10 +466,6 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('NPY_DO_NOT_OPTIMIZE_ULONG_right_shift')
                 moredefs.append('NPY_DO_NOT_OPTIMIZE_LONGLONG_right_shift')
                 moredefs.append('NPY_DO_NOT_OPTIMIZE_ULONGLONG_right_shift')
-
-            # Py3K check
-            if sys.version_info[0] >= 3:
-                moredefs.append(('NPY_PY3K', 1))
 
             # Generate the config.h file from moredefs
             with open(target, 'w') as target_f:

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import platform
 import pytest
 
@@ -7,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_, assert_raises
 
 
-class TestErrstate(object):
+class TestErrstate:
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_invalid(self):
         with np.errstate(all='raise', under='ignore'):

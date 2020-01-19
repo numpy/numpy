@@ -1,7 +1,5 @@
 """ Test functions for linalg module
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 
 import numpy as np
@@ -12,7 +10,7 @@ from numpy.testing import (
 )
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_eig_build(self):
         # Ticket #652

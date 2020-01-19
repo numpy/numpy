@@ -388,7 +388,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_TypeNumFromName(char *str)
+PyArray_TypeNumFromName(char const *str)
 {
     int i;
     PyArray_Descr *descr;
@@ -614,7 +614,7 @@ PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+PyArray_CompareUCS4(npy_ucs4 const *s1, npy_ucs4 const *s2, size_t len)
 {
     npy_ucs4 c1, c2;
     while(len-- > 0) {
@@ -703,35 +703,40 @@ PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
    If they are NULL terminated, then stop comparison.
 */
 static int
-_myunincmp(npy_ucs4 *s1, npy_ucs4 *s2, int len1, int len2)
+_myunincmp(npy_ucs4 const *s1, npy_ucs4 const *s2, int len1, int len2)
 {
-    npy_ucs4 *sptr;
-    npy_ucs4 *s1t=s1, *s2t=s2;
+    npy_ucs4 const *sptr;
+    npy_ucs4 *s1t = NULL;
+    npy_ucs4 *s2t = NULL;
     int val;
     npy_intp size;
     int diff;
 
+    /* Replace `s1` and `s2` with aligned copies if needed */
     if ((npy_intp)s1 % sizeof(npy_ucs4) != 0) {
         size = len1*sizeof(npy_ucs4);
         s1t = malloc(size);
         memcpy(s1t, s1, size);
+        s1 = s1t;
     }
     if ((npy_intp)s2 % sizeof(npy_ucs4) != 0) {
         size = len2*sizeof(npy_ucs4);
         s2t = malloc(size);
         memcpy(s2t, s2, size);
+        s2 = s1t;
     }
-    val = PyArray_CompareUCS4(s1t, s2t, PyArray_MIN(len1,len2));
+
+    val = PyArray_CompareUCS4(s1, s2, PyArray_MIN(len1,len2));
     if ((val != 0) || (len1 == len2)) {
         goto finish;
     }
     if (len2 > len1) {
-        sptr = s2t+len1;
+        sptr = s2+len1;
         val = -1;
         diff = len2-len1;
     }
     else {
-        sptr = s1t+len2;
+        sptr = s1+len2;
         val = 1;
         diff=len1-len2;
     }
@@ -744,10 +749,11 @@ _myunincmp(npy_ucs4 *s1, npy_ucs4 *s2, int len1, int len2)
     val = 0;
 
  finish:
-    if (s1t != s1) {
+    /* Cleanup the aligned copies */
+    if (s1t) {
         free(s1t);
     }
-    if (s2t != s2) {
+    if (s2t) {
         free(s2t);
     }
     return val;
@@ -763,9 +769,9 @@ _myunincmp(npy_ucs4 *s1, npy_ucs4 *s2, int len1, int len2)
  * If they are NULL terminated, then stop comparison.
  */
 static int
-_mystrncmp(char *s1, char *s2, int len1, int len2)
+_mystrncmp(char const *s1, char const *s2, int len1, int len2)
 {
-    char *sptr;
+    char const *sptr;
     int val;
     int diff;
 
@@ -827,7 +833,7 @@ static void _unistripw(npy_ucs4 *s, int n)
 
 
 static char *
-_char_copy_n_strip(char *original, char *temp, int nc)
+_char_copy_n_strip(char const *original, char *temp, int nc)
 {
     if (nc > SMALL_STRING) {
         temp = malloc(nc);
@@ -850,7 +856,7 @@ _char_release(char *ptr, int nc)
 }
 
 static char *
-_uni_copy_n_strip(char *original, char *temp, int nc)
+_uni_copy_n_strip(char const *original, char *temp, int nc)
 {
     if (nc*sizeof(npy_ucs4) > SMALL_STRING) {
         temp = malloc(nc*sizeof(npy_ucs4));
@@ -919,7 +925,7 @@ _compare_strings(PyArrayObject *result, PyArrayMultiIterObject *multi,
     int N1, N2;
     int (*compfunc)(void *, void *, int, int);
     void (*relfunc)(char *, int);
-    char* (*stripfunc)(char *, char *, int);
+    char* (*stripfunc)(char const *, char *, int);
 
     compfunc = func;
     dptr = (npy_bool *)PyArray_DATA(result);
@@ -998,22 +1004,18 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val, cast = 0;
+    int val;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
-#if defined(NPY_PY3K)
         /*
          * Comparison between Bytes and Unicode is not defined in Py3K;
          * we follow.
          */
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
-#else
-        cast = 1;
-#endif  /* define(NPY_PY3K) */
     }
-    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
+    if (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
                 PyArray_DESCR(other)->type_num == NPY_UNICODE) {
@@ -1331,14 +1333,6 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
          * get us the desired TypeError, but on python 2, one gets strange
          * ordering, so we emit a warning.
          */
-#if !defined(NPY_PY3K)
-        /* 2015-05-14, 1.10 */
-        if (DEPRECATE(
-                "unorderable dtypes; returning scalar but in "
-                "the future this will be an error") < 0) {
-            goto fail;
-        }
-#endif
         Py_XDECREF(exc);
         Py_XDECREF(val);
         Py_XDECREF(tb);
@@ -1544,7 +1538,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          *   - If other is not convertible to an array, pass on the error
          *     (MHvK, 2018-06-18: not sure about this, but it's what we have).
          *
-         * However, for backwards compatibilty, we cannot yet return arrays,
+         * However, for backwards compatibility, we cannot yet return arrays,
          * so we raise warnings instead.  Furthermore, we warn on python2
          * for LT, LE, GE, GT, since fall-back behaviour is poorly defined.
          */
@@ -1601,7 +1595,7 @@ PyArray_ElementStrides(PyObject *obj)
 /*NUMPY_API*/
 NPY_NO_EXPORT npy_bool
 PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
-                     npy_intp *dims, npy_intp *newstrides)
+                     npy_intp const *dims, npy_intp const *newstrides)
 {
     npy_intp begin, end;
     npy_intp lower_offset;
@@ -1788,12 +1782,7 @@ array_free(PyObject * v)
 
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.ndarray",                            /* tp_name */
     NPY_SIZEOF_PYARRAYOBJECT,                   /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -1802,11 +1791,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (printfunc)NULL,                            /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     (reprfunc)array_repr,                       /* tp_repr */
     &array_as_number,                           /* tp_as_number */
     &array_as_sequence,                         /* tp_as_sequence */
@@ -1821,12 +1806,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (getattrofunc)0,                            /* tp_getattro */
     (setattrofunc)0,                            /* tp_setattro */
     &array_as_buffer,                           /* tp_as_buffer */
-    (Py_TPFLAGS_DEFAULT
-#if !defined(NPY_PY3K)
-     | Py_TPFLAGS_CHECKTYPES
-     | Py_TPFLAGS_HAVE_NEWBUFFER
-#endif
-     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
+    (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE), /* tp_flags */
     0,                                          /* tp_doc */
 
     (traverseproc)0,                            /* tp_traverse */

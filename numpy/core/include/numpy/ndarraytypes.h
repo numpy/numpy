@@ -353,21 +353,12 @@ struct NpyAuxData_tag {
 
 #define NPY_USE_PYMEM 1
 
+
 #if NPY_USE_PYMEM == 1
-   /* numpy sometimes calls PyArray_malloc() with the GIL released. On Python
-      3.3 and older, it was safe to call PyMem_Malloc() with the GIL released.
-      On Python 3.4 and newer, it's better to use PyMem_RawMalloc() to be able
-      to use tracemalloc. On Python 3.6, calling PyMem_Malloc() with the GIL
-      released is now a fatal error in debug mode. */
-#  if PY_VERSION_HEX >= 0x03040000
-#    define PyArray_malloc PyMem_RawMalloc
-#    define PyArray_free PyMem_RawFree
-#    define PyArray_realloc PyMem_RawRealloc
-#  else
-#    define PyArray_malloc PyMem_Malloc
-#    define PyArray_free PyMem_Free
-#    define PyArray_realloc PyMem_Realloc
-#  endif
+/* use the Raw versions which are safe to call with the GIL released */
+#define PyArray_malloc PyMem_RawMalloc
+#define PyArray_free PyMem_RawFree
+#define PyArray_realloc PyMem_RawRealloc
 #else
 #define PyArray_malloc malloc
 #define PyArray_free free

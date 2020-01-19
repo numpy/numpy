@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import pytest
 
@@ -2188,7 +2186,7 @@ def test_iter_no_broadcast():
                   [['readonly'], ['readonly'], ['readonly', 'no_broadcast']])
 
 
-class TestIterNested(object):
+class TestIterNested:
 
     def test_basic(self):
         # Test nested iteration basic usage

@@ -1,7 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-import warnings
 import functools
 import sys
 import pytest
@@ -30,7 +27,7 @@ def _add_keepdims(func):
     return wrapped
 
 
-class TestTakeAlongAxis(object):
+class TestTakeAlongAxis:
     def test_argequivalent(self):
         """ Test it translates from arg<func> to <func> """
         from numpy.random import rand
@@ -82,7 +79,7 @@ class TestTakeAlongAxis(object):
         assert_equal(actual.shape, (3, 2, 5))
 
 
-class TestPutAlongAxis(object):
+class TestPutAlongAxis:
     def test_replace_max(self):
         a_base = np.array([[10, 30, 20], [60, 40, 50]])
 
@@ -107,7 +104,7 @@ class TestPutAlongAxis(object):
         assert_equal(take_along_axis(a, ai, axis=1), 20)
 
 
-class TestApplyAlongAxis(object):
+class TestApplyAlongAxis:
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
@@ -273,14 +270,14 @@ class TestApplyAlongAxis(object):
             assert_equal(type(actual[i]), type(expected[i]))
 
 
-class TestApplyOverAxes(object):
+class TestApplyOverAxes:
     def test_simple(self):
         a = np.arange(24).reshape(2, 3, 4)
         aoa_a = apply_over_axes(np.sum, a, [0, 2])
         assert_array_equal(aoa_a, np.array([[[60], [92], [124]]]))
 
 
-class TestExpandDims(object):
+class TestExpandDims:
     def test_functionality(self):
         s = (2, 3, 4, 5)
         a = np.empty(s)
@@ -320,7 +317,7 @@ class TestExpandDims(object):
         assert_equal(expanded.mask.shape, (2, 1, 5))
 
 
-class TestArraySplit(object):
+class TestArraySplit:
     def test_integer_0_split(self):
         a = np.arange(10)
         assert_raises(ValueError, array_split, a, 0)
@@ -454,7 +451,7 @@ class TestArraySplit(object):
         compare_results(res, desired)
 
 
-class TestSplit(object):
+class TestSplit:
     # The split function is essentially the same as array_split,
     # except that it test if splitting will result in an
     # equal split.  Only test for this case.
@@ -470,7 +467,7 @@ class TestSplit(object):
         assert_raises(ValueError, split, a, 3)
 
 
-class TestColumnStack(object):
+class TestColumnStack:
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
 
@@ -499,7 +496,7 @@ class TestColumnStack(object):
             column_stack((np.arange(3) for _ in range(2)))
 
 
-class TestDstack(object):
+class TestDstack:
     def test_non_iterable(self):
         assert_raises(TypeError, dstack, 1)
 
@@ -538,7 +535,7 @@ class TestDstack(object):
 
 # array_split has more comprehensive test of splitting.
 # only do simple test on hsplit, vsplit, and dsplit
-class TestHsplit(object):
+class TestHsplit:
     """Only testing for integer splits.
 
     """
@@ -567,7 +564,7 @@ class TestHsplit(object):
         compare_results(res, desired)
 
 
-class TestVsplit(object):
+class TestVsplit:
     """Only testing for integer splits.
 
     """
@@ -594,7 +591,7 @@ class TestVsplit(object):
         compare_results(res, desired)
 
 
-class TestDsplit(object):
+class TestDsplit:
     # Only testing for integer splits.
     def test_non_iterable(self):
         assert_raises(ValueError, dsplit, 1, 1)
@@ -627,7 +624,7 @@ class TestDsplit(object):
         compare_results(res, desired)
 
 
-class TestSqueeze(object):
+class TestSqueeze:
     def test_basic(self):
         from numpy.random import rand
 
@@ -646,7 +643,7 @@ class TestSqueeze(object):
         assert_equal(type(res), np.ndarray)
 
 
-class TestKron(object):
+class TestKron:
     def test_return_type(self):
         class myarray(np.ndarray):
             __array_priority__ = 0.0
@@ -659,7 +656,7 @@ class TestKron(object):
         assert_equal(type(kron(ma, a)), myarray)
 
 
-class TestTile(object):
+class TestTile:
     def test_basic(self):
         a = np.array([0, 1, 2])
         b = [[1, 2], [3, 4]]
@@ -699,7 +696,7 @@ class TestTile(object):
                 assert_equal(large, klarge)
 
 
-class TestMayShareMemory(object):
+class TestMayShareMemory:
     def test_basic(self):
         d = np.ones((50, 60))
         d2 = np.ones((30, 60, 6))

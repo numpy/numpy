@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import re
 import sys
@@ -34,7 +32,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
 from numpy.compat import npy_load_module
 
@@ -51,7 +48,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
            'get_num_build_jobs']
 
-class InstallableLib(object):
+class InstallableLib:
     """
     Container to hold information on an installable library.
 
@@ -728,7 +725,7 @@ def get_frame(level=0):
 
 ######################
 
-class Configuration(object):
+class Configuration:
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules',
@@ -1972,9 +1969,8 @@ class Configuration(object):
                 try:
                     version_module = npy_load_module('_'.join(n.split('.')),
                                                      fn, info)
-                except ImportError:
-                    msg = get_exception()
-                    self.warn(str(msg))
+                except ImportError as e:
+                    self.warn(str(e))
                     version_module = None
                 if version_module is None:
                     continue

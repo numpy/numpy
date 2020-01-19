@@ -33,7 +33,7 @@
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_datetime(char *str, Py_ssize_t len,
+parse_iso_8601_datetime(char const *str, Py_ssize_t len,
                     NPY_DATETIMEUNIT unit,
                     NPY_CASTING casting,
                     npy_datetimestruct *out,

@@ -1,8 +1,6 @@
 """See https://github.com/numpy/numpy/pull/11937.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import uuid
@@ -16,8 +14,6 @@ from . import util
 
 
 def setup_module():
-    if sys.platform == 'win32' and sys.version_info[0] < 3:
-        pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
     if not util.has_c_compiler():
         pytest.skip("Needs C compiler")
     if not util.has_f77_compiler():

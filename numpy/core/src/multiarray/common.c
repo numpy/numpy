@@ -165,22 +165,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     goto fail;
                 }
-#if defined(NPY_PY3K)
-    #if PY_VERSION_HEX >= 0x03030000
                 itemsize = PyUnicode_GetLength(temp);
-    #else
-                itemsize = PyUnicode_GET_SIZE(temp);
-    #endif
-#else
-                itemsize = PyString_GET_SIZE(temp);
-#endif
             }
             else if (string_type == NPY_UNICODE) {
-#if defined(NPY_PY3K)
                 if ((temp = PyObject_Str(obj)) == NULL) {
-#else
-                if ((temp = PyObject_Unicode(obj)) == NULL) {
-#endif
                     goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
@@ -221,22 +209,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     goto fail;
                 }
-#if defined(NPY_PY3K)
-    #if PY_VERSION_HEX >= 0x03030000
                 itemsize = PyUnicode_GetLength(temp);
-    #else
-                itemsize = PyUnicode_GET_SIZE(temp);
-    #endif
-#else
-                itemsize = PyString_GET_SIZE(temp);
-#endif
             }
             else if (string_type == NPY_UNICODE) {
-#if defined(NPY_PY3K)
                 if ((temp = PyObject_Str(obj)) == NULL) {
-#else
-                if ((temp = PyObject_Unicode(obj)) == NULL) {
-#endif
                     goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
@@ -340,24 +316,21 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
-#if defined(NPY_PY3K)
             PyObject *tmp = NULL;
-#endif
-            typestr = PyDict_GetItemString(ip, "typestr");
-#if defined(NPY_PY3K)
+            typestr = _PyDict_GetItemStringWithError(ip, "typestr");
+            if (typestr == NULL && PyErr_Occurred()) {
+                goto fail;
+            }
             /* Allow unicode type strings */
             if (typestr && PyUnicode_Check(typestr)) {
                 tmp = PyUnicode_AsASCIIString(typestr);
                 typestr = tmp;
             }
-#endif
             if (typestr && PyBytes_Check(typestr)) {
                 dtype =_array_typedescr_fromstr(PyBytes_AS_STRING(typestr));
-#if defined(NPY_PY3K)
                 if (tmp == typestr) {
                     Py_DECREF(tmp);
                 }
-#endif
                 Py_DECREF(ip);
                 if (dtype == NULL) {
                     goto fail;
@@ -396,19 +369,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     else if (PyErr_Occurred()) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
-
-    /* The old buffer interface */
-#if !defined(NPY_PY3K)
-    if (PyBuffer_Check(obj)) {
-        dtype = PyArray_DescrNewFromType(NPY_VOID);
-        if (dtype == NULL) {
-            goto fail;
-        }
-        dtype->elsize = Py_TYPE(obj)->tp_as_sequence->sq_length(obj);
-        PyErr_Clear();
-        goto promote_types;
-    }
-#endif
 
     /* The __array__ attribute */
     ip = PyArray_LookupSpecial_OnInstance(obj, "__array__");
@@ -478,9 +438,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     if (common_type != NULL && !string_type &&
             (common_type == &PyFloat_Type ||
 /* TODO: we could add longs if we add a range check */
-#if !defined(NPY_PY3K)
-             common_type == &PyInt_Type ||
-#endif
              common_type == &PyBool_Type ||
              common_type == &PyComplex_Type)) {
         size = 1;
@@ -554,7 +511,7 @@ fail:
 
 /* new reference */
 NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *c_str)
+_array_typedescr_fromstr(char const *c_str)
 {
     PyArray_Descr *descr = NULL;
     PyObject *stringobj = PyString_FromString(c_str);
@@ -612,12 +569,7 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
     PyObject *base = PyArray_BASE(ap);
-#if defined(NPY_PY3K)
     Py_buffer view;
-#else
-    void *dummy;
-    Py_ssize_t n;
-#endif
 
     /*
      * C-data wrapping arrays may not own their data while not having a base;
@@ -661,7 +613,6 @@ _IsWriteable(PyArrayObject *ap)
         assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }
 
-#if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         PyErr_Clear();
         return NPY_FALSE;
@@ -675,12 +626,6 @@ _IsWriteable(PyArrayObject *ap)
      * _dealloc_cached_buffer_info, but in this case leave it in the cache to
      * speed up future calls to _IsWriteable.
      */
-#else
-    if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
-        PyErr_Clear();
-        return NPY_FALSE;
-    }
-#endif
     return NPY_TRUE;
 }
 
@@ -695,7 +640,7 @@ _IsWriteable(PyArrayObject *ap)
  * @return Python unicode string
  */
 NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
+convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
     PyObject *ret, *tmp;

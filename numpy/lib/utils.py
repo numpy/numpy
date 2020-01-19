@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import types
@@ -55,7 +53,7 @@ def _set_function_name(func, name):
     return func
 
 
-class _Deprecate(object):
+class _Deprecate:
     """
     Decorator class to deprecate old functions.
 

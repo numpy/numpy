@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import re
 import itertools
 
@@ -26,7 +24,7 @@ def lineType(line):
     else:
         return STATEMENT
 
-class LineIterator(object):
+class LineIterator:
     """LineIterator(iterable)
 
     Return rstrip()'d lines from iterable, while keeping a count of the
@@ -49,7 +47,7 @@ class LineIterator(object):
     next = __next__
 
 
-class PushbackIterator(object):
+class PushbackIterator:
     """PushbackIterator(iterable)
 
     Return an iterator for which items can be pushed back into.

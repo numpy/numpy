@@ -2,8 +2,6 @@
 
 Note that tests with MaskedArray and linalg are done in separate files.
 """
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import textwrap
@@ -290,7 +288,7 @@ def test_kron_matrix():
     assert_equal(type(np.kron(m, a)), np.matrix)
 
 
-class TestConcatenatorMatrix(object):
+class TestConcatenatorMatrix:
     # 2018-04-29: moved here from core.tests.test_index_tricks.
     def test_matrix(self):
         a = [1, 2]

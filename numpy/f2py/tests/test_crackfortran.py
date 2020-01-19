@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import numpy as np
@@ -37,4 +35,3 @@ class TestNoSpace(util.F2PyTest):
         self.module.subc([w, k])
         assert_array_equal(k, w + 1)
         assert self.module.t0(23) == b'2'
-

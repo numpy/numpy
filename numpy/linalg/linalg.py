@@ -8,8 +8,6 @@ version only accesses the following LAPACK functions: dgesv, zgesv,
 dgeev, zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf,
 zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 """
-from __future__ import division, absolute_import, print_function
-
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
@@ -774,7 +772,7 @@ def cholesky(a):
     return wrap(r.astype(result_t, copy=False))
 
 
-# QR decompostion
+# QR decomposition
 
 def _qr_dispatcher(a, mode=None):
     return (a,)

@@ -13,8 +13,6 @@ $Date: 2005/07/20 11:27:58 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 from . import __version__
 from .auxfuncs import (
     applyrules, debugcapi, dictappend, errmess, getargs, hasnote, isarray,

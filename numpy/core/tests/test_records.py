@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 try:
     # Accessing collections abstract classes from collections
@@ -20,18 +18,14 @@ from numpy.testing import (
 from numpy.compat import pickle
 
 
-class TestFromrecords(object):
+class TestFromrecords:
     def test_fromrecords(self):
         r = np.rec.fromrecords([[456, 'dbe', 1.2], [2, 'de', 1.3]],
                             names='col1,col2,col3')
         assert_equal(r[0].item(), (456, 'dbe', 1.2))
         assert_equal(r['col1'].dtype.kind, 'i')
-        if sys.version_info[0] >= 3:
-            assert_equal(r['col2'].dtype.kind, 'U')
-            assert_equal(r['col2'].dtype.itemsize, 12)
-        else:
-            assert_equal(r['col2'].dtype.kind, 'S')
-            assert_equal(r['col2'].dtype.itemsize, 3)
+        assert_equal(r['col2'].dtype.kind, 'U')
+        assert_equal(r['col2'].dtype.itemsize, 12)
         assert_equal(r['col3'].dtype.kind, 'f')
 
     def test_fromrecords_0len(self):
@@ -326,7 +320,7 @@ class TestFromrecords(object):
 
 
 @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):
         with temppath(suffix='.bin') as path:
@@ -342,7 +336,7 @@ class TestPathUsage(object):
             assert_array_equal(x, a)
 
 
-class TestRecord(object):
+class TestRecord:
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
@@ -424,7 +418,7 @@ class TestRecord(object):
         a['obj'] = data
         a['int'] = 42
         ctor, args = a[0].__reduce__()
-        # check the contructor is what we expect before interpreting the arguments
+        # check the constructor is what we expect before interpreting the arguments
         assert ctor is np.core.multiarray.scalar
         dtype, obj = args
         # make sure we did not pickle the address

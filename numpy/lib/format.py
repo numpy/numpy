@@ -161,8 +161,6 @@ alternatives, is described in the `"npy-format" NEP
 evolved with time and this document is more current.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy
 import sys
 import io
@@ -551,9 +549,7 @@ def _filter_header(s):
 
     tokens = []
     last_token_was_number = False
-    # adding newline as python 2.7.5 workaround
-    string = s + "\n"
-    for token in tokenize.generate_tokens(StringIO(string).readline):
+    for token in tokenize.generate_tokens(StringIO(s).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
@@ -563,8 +559,7 @@ def _filter_header(s):
         else:
             tokens.append(token)
         last_token_was_number = (token_type == tokenize.NUMBER)
-    # removing newline (see above) as python 2.7.5 workaround
-    return tokenize.untokenize(tokens)[:-1]
+    return tokenize.untokenize(tokens)
 
 
 def _read_array_header(fp, version):

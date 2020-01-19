@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 import pytest
@@ -9,10 +7,7 @@ from numpy.testing import assert_, assert_equal
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 

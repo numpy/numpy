@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import os
 import re
 import struct
@@ -21,16 +19,16 @@ ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
 # Sentinel value to specify using the full type description in the
 # function name
-class FullTypeDescr(object):
+class FullTypeDescr:
     pass
 
-class FuncNameSuffix(object):
+class FuncNameSuffix:
     """Stores the suffix to append when generating functions names.
     """
     def __init__(self, suffix):
         self.suffix = suffix
 
-class TypeDescription(object):
+class TypeDescription:
     """Type signature for a ufunc.
 
     Attributes
@@ -120,7 +118,7 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
         tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype, simd=simdt))
     return tds
 
-class Ufunc(object):
+class Ufunc:
     """Description of a ufunc.
 
     Attributes
@@ -132,7 +130,7 @@ class Ufunc(object):
     type_descriptions : list of TypeDescription objects
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions, **kwargs):
+                 *type_descriptions, signature=None):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -141,13 +139,11 @@ class Ufunc(object):
         self.docstring = docstring
         self.typereso = typereso
         self.type_descriptions = []
-        self.signature = kwargs.pop('signature', None)
+        self.signature = signature
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
-        if kwargs:
-            raise ValueError('unknown kwargs %r' % str(kwargs))
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -305,17 +301,6 @@ defdict = {
            TypeDescription('m', FullTypeDescr, 'dm', 'm'),
           ],
           TD(O, f='PyNumber_Multiply'),
-          ),
-'divide':
-    Ufunc(2, 1, None, # One is only a unit to the right, not the left
-          docstrings.get('numpy.core.umath.divide'),
-          'PyUFunc_MixedDivisionTypeResolver',
-          TD(intfltcmplx),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
-           TypeDescription('m', FullTypeDescr, 'md', 'm'),
-           TypeDescription('m', FullTypeDescr, 'mm', 'd'),
-          ],
-          TD(O, f='PyNumber_Divide'),
           ),
 'floor_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
@@ -956,10 +941,6 @@ defdict = {
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 }
-
-if sys.version_info[0] >= 3:
-    # Will be aliased to true_divide in umathmodule.c.src:InitOtherOperators
-    del defdict['divide']
 
 def indent(st, spaces):
     indentation = ' '*spaces

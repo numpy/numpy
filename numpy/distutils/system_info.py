@@ -128,8 +128,6 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import re
@@ -163,7 +161,6 @@ from numpy.distutils.exec_command import (
 from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler as _customized_ccompiler
 from numpy.distutils import _shell_utils
 import distutils.ccompiler
@@ -582,7 +579,7 @@ class UmfpackNotFoundError(NotFoundError):
     the UMFPACK environment variable."""
 
 
-class system_info(object):
+class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """
@@ -717,7 +714,7 @@ class system_info(object):
         return info
 
     def get_info(self, notfound_action=0):
-        """ Return a dictonary with items that are compatible
+        """ Return a dictionary with items that are compatible
             with numpy.distutils.setup keyword arguments.
         """
         flag = 0
@@ -2102,16 +2099,17 @@ class openblas_info(blas_info):
                 return None
 
         # Generate numpy.distutils virtual static library file
-        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        basename = self.__class__.__name__
+        tmpdir = os.path.join(os.getcwd(), 'build', basename)
         if not os.path.isdir(tmpdir):
             os.makedirs(tmpdir)
 
         info = {'library_dirs': [tmpdir],
-                'libraries': ['openblas'],
+                'libraries': [basename],
                 'language': 'f77'}
 
-        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
-        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        fake_lib_file = os.path.join(tmpdir, basename + '.fobjects')
+        fake_clib_file = os.path.join(tmpdir, basename + '.cobjects')
         with open(fake_lib_file, 'w') as f:
             f.write("\n".join(library_paths))
         with open(fake_clib_file, 'w') as f:
@@ -2540,18 +2538,18 @@ class numerix_info(system_info):
             try:
                 import numpy  # noqa: F401
                 which = "numpy", "defaulted"
-            except ImportError:
-                msg1 = str(get_exception())
+            except ImportError as e:
+                msg1 = str(e)
                 try:
                     import Numeric  # noqa: F401
                     which = "numeric", "defaulted"
-                except ImportError:
-                    msg2 = str(get_exception())
+                except ImportError as e:
+                    msg2 = str(e)
                     try:
                         import numarray  # noqa: F401
                         which = "numarray", "defaulted"
-                    except ImportError:
-                        msg3 = str(get_exception())
+                    except ImportError as e:
+                        msg3 = str(e)
                         log.info(msg1)
                         log.info(msg2)
                         log.info(msg3)
