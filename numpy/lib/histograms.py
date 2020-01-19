@@ -410,7 +410,7 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     if a.size == 0:
         return np.array([0,1])
 
-    width = np.ptp((first_edge,last_edge))/(n_equal_bins)
+    width = _unsigned_subtract(last_edge, first_edge) / n_equal_bins
     zeroed_min = a - first_edge
     quantized = np.floor_divide(zeroed_min, width) * width
     left_edges = np.unique(quantized) # TODO: consider np.unique(a, return_counts=True)
@@ -419,7 +419,7 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
 
     TOL = width/2
-    widths = np.append(width, np.diff(edges)) #remove bins produced by float errors
+    widths = np.concatenate(([width], np.diff(edges)))  # remove bins produced by float errors
     return edges[(widths>TOL) & (edges <= last_edge)]
 
 def _get_bin_edges(a, bins, range, weights):
