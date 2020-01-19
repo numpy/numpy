@@ -854,8 +854,8 @@ Read more about :ref:`array methods here <array.ndarray.methods>`.
 Creating matrices
 -----------------
 
-You can pass Python lists of lists to create a matrix to represent them in
-NumPy. ::
+You can pass Python lists of lists to create a 2-D array (or "matrix") to
+represent them in NumPy. ::
 
   >>> np.array([[1, 2], [3, 4]])
 
@@ -883,7 +883,6 @@ columns or rows using the ``axis`` parameter::
   >>> data.max(axis=0)
   >>> data.max(axis=1)
 
-
 .. image:: images/np_matrix_aggregation_row.png
 
 Once you've created your matrices, you can add and multiply them using
@@ -901,7 +900,7 @@ broadcast rules for the operation. ::
 
 .. image:: images/np_matrix_broadcasting.png
 
-Be aware that when NumPy prints N-Dimensional arrays, the last axis is looped
+Be aware that when NumPy prints N-dimensional arrays, the last axis is looped
 over the fastest while the first axis is the slowest. That means that::
 
   >>> np.ones((4, 3, 2))
@@ -923,7 +922,6 @@ Will print out like this::
          [[1., 1.],
           [1., 1.],
           [1., 1.]]])
-
 
 There are often instances where we want NumPy to initialize the values of an
 array. NumPy offers functions like ``ones()`` and ``zeros()``, and the
@@ -954,10 +952,10 @@ Generating random numbers
 -------------------------
 
 The use of random number generation is an important part of the configuration
-and evaluation of machine learning algorithms. Whether you need to randomly
-initialize weights in an artificial neural network, split data into random sets,
-or randomly shuffle your dataset, being able to generate random numbers
-(actually, repeatable pseudo-random numbers) is essential.
+and evaluation of many numerical and machine learning algorithms. Whether you
+need to randomly initialize weights in an artificial neural network, split data
+into random sets, or randomly shuffle your dataset, being able to generate
+random numbers (actually, repeatable pseudo-random numbers) is essential.
 
 With ``Generator.integers``, you can generate random integers from low (remember
 that this is inclusive with NumPy) to high (exclusive). You can set
@@ -1019,8 +1017,9 @@ You can find unique values with::
 
 If the axis argument isn't passed, your 2D array will be flattened.
 
-If you want to get the unique rows or columns, make sure to pass the ``axis`` argument. To
-find the unique rows, specify ``axis=0`` and for columns, specify ``axis=1``. ::
+If you want to get the unique rows or columns, make sure to pass the ``axis``
+argument. To find the unique rows, specify ``axis=0`` and for columns, specify
+``axis=1``. ::
 
   >>> unique_rows = np.unique(a_2d, axis=0)
   >>> print(unique_rows)
@@ -1049,7 +1048,6 @@ To learn more about finding the unique elements in an array, see `unique`.
 
 Transposing and reshaping a matrix
 ----------------------------------
-
 
 *This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T()``
 
@@ -1082,7 +1080,7 @@ If you start with this array::
 
 You can transpose your array with ``arr.transpose()``. ::
 
-  >>> arr.transpose(arr)
+  >>> arr.transpose()
   array([[0, 3],
          [1, 4],
          [2, 5]])
@@ -1137,7 +1135,7 @@ You can reverse the content in all of the rows and all of the columns with::
      [ 8  7  6  5]
      [ 4  3  2  1]]
 
-You can easily reverse only the **rows** with::
+You can easily reverse only the *rows* with::
 
   >>> reversed_arr_rows = np.flip(arr_2d, axis=0)
 
@@ -1148,7 +1146,7 @@ You can easily reverse only the **rows** with::
    [ 5  6  7  8]
    [ 1  2  3  4]]
 
-Or reverse only the **columns** with::
+Or reverse only the *columns* with::
 
   >>> reversed_arr_columns = np.flip(arr_2d, axis=1)
 
@@ -1193,17 +1191,17 @@ Reshaping and flattening multidimensional arrays
 
 There are two popular ways to flatten an array: ``.flatten()`` and ``.ravel()``.
 The primary difference between the two is that the new array created using
-``ravel()`` is actually a reference to the parent array. This means that any
-changes to the new array will affect the parent array as well. Since ``ravel``
-does not create a copy, it's memory efficient.
+``ravel()`` is actually a reference to the parent array (i.e., a "view"). This
+means that any changes to the new array will affect the parent array as well.
+Since ``ravel`` does not create a copy, it's memory efficient.
 
 If you start with this array::
 
-  >>> array = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> x = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``flatten`` to flatten your array into a 1D array. ::
 
-  >>> array.flatten()
+  >>> x.flatten()
   array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12])
 
 When you use ``flatten``, changes to your new array won't change the parent
@@ -1211,37 +1209,28 @@ array.
 
 For example::
 
-  >>> a1 = array.flatten()
-  >>> a1[0] = 100
-  >>> print('Original array: ')
-  >>> print(array)
-  >>> print('New array: ')
-  >>> print(a1)
-  Original array:
-    [[ 1  2  3  4]
-     [ 5  6  7  8]
-     [ 9 10 11 12]]
-  New array:
-    [100 2 3 4 5 6 7 8 9 10 11 12]
-
+  >>> a1 = x.flatten()
+  >>> a1[0] = 99
+  >>> print(x)  # Original array
+  [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+  >>> print(a1)  # New array
+  [99  2  3  4  5  6  7  8  9 10 11 12]
 
 But when you use ``ravel``, the changes you make to the new array will affect
 the parent array.
 
 For example::
 
-  >>> a2 = array.ravel()
-  >>> a2[0] = 101
-  >>> print('Original array: ')
-  >>> print(array)
-  >>> print('New array: ')
-  >>> print(a2)
-  Original array:
-    [[101   2   3   4]
-     [  5   6   7   8]
-     [  9  10  11  12]]
-  New array:
-    [101 2 3 4 5 6 7 8 9 10 11 12]
+  >>> a2 = x.ravel()
+  >>> a2[0] = 98
+  >>> print(x)  # Original array
+  [[98  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+  >>> print(a2)  # New array
+  [98  2  3  4  5  6  7  8  9 10 11 12]
 
 Read more about ``flatten`` at `ndarray.flatten` and ``ravel`` at `ravel`.
 
@@ -1310,7 +1299,8 @@ Running ::
 
   >>> a?
 
-Will return a lot of useful information. ::
+Will return a lot of useful information (first details about ``a`` itself,
+followed by the docstring of ``ndarray`` of which ``a`` is an instance)::
 
   Type:            ndarray
   String form:     [1 2 3 4 5 6]
@@ -1340,100 +1330,7 @@ Will return a lot of useful information. ::
 
   shape : tuple of ints
       Shape of created array.
-  dtype : data-type, optional
-      Any object that can be interpreted as a numpy data type.
-  buffer : object exposing buffer interface, optional
-      Used to fill the array with data.
-  offset : int, optional
-      Offset of array data in buffer.
-  strides : tuple of ints, optional
-      Strides of data in memory.
-  order : {'C', 'F'}, optional
-      Row-major (C-style) or column-major (Fortran-style) order.
-
-  Attributes
-  ----------
-  T : ndarray
-      Transpose of the array.
-  data : buffer
-      The array's elements, in memory.
-  dtype : dtype object
-      Describes the format of the elements in the array.
-  flags : dict
-      Dictionary containing information related to memory use, e.g.,
-      'C_CONTIGUOUS', 'OWNDATA', 'WRITEABLE', etc.
-  flat : numpy.flatiter object
-      Flattened version of the array as an iterator.  The iterator
-      allows assignments, e.g., ``x.flat = 3`` (See `ndarray.flat` for
-      assignment examples; TODO).
-  imag : ndarray
-      Imaginary part of the array.
-  real : ndarray
-      Real part of the array.
-  size : int
-      Number of elements in the array.
-  itemsize : int
-      The memory use of each array element in bytes.
-  nbytes : int
-      The total number of bytes required to store the array data,
-      i.e., ``itemsize * size``.
-  ndim : int
-      The array's number of dimensions.
-  shape : tuple of ints
-      Shape of the array.
-  strides : tuple of ints
-      The step-size required to move from one element to the next in
-      memory. For example, a contiguous ``(3, 4)`` array of type
-      ``int16`` in C-order has strides ``(8, 2)``.  This implies that
-      to move from element to element in memory requires jumps of 2 bytes.
-      To move from row-to-row, one needs to jump 8 bytes at a time
-      (``2 * 4``).
-  ctypes : ctypes object
-      Class containing properties of the array needed for interaction
-      with ctypes.
-  base : ndarray
-      If the array is a view into another array, that array is its `base`
-      (unless that array is also a view).  The `base` array is where the
-      array data is actually stored.
-
-  See Also
-  --------
-  array : Construct an array.
-  zeros : Create an array, each element of which is zero.
-  empty : Create an array, but leave its allocated memory unchanged (i.e.,
-          it contains "garbage").
-  dtype : Create a data-type.
-
-  Notes
-  -----
-  There are two modes of creating an array using ``__new__``:
-
-  1. If `buffer` is None, then only `shape`, `dtype`, and `order`
-     are used.
-  2. If `buffer` is an object exposing the buffer interface, then
-     all keywords are interpreted.
-
-  No ``__init__`` method is needed because the array is fully initialized
-  after the ``__new__`` method.
-
-  Examples
-  --------
-  These examples illustrate the low-level `ndarray` constructor.  Refer
-  to the `See Also` section above for easier ways of constructing an
-  ndarray.
-
-  First mode, `buffer` is None:
-
-  >>> np.ndarray(shape=(2,2), dtype=float, order='F')
-  array([[ -1.13698227e+002,   4.25087011e-303],
-         [  2.88528414e-306,   3.27025015e-309]])         #random
-
-  Second mode:
-
-  >>> np.ndarray((2,), buffer=np.array([1,2,3]),
-  ...            offset=np.int_().itemsize,
-  ...            dtype=int) # offset = 1*itemsize, i.e. skip first element
-  array([2, 3])
+  ...
 
 This also works for functions and other objects that **you** create. Just
 remember to include a docstring with your function using a string literal
@@ -1485,7 +1382,7 @@ built-in objects and types, for example::
 and ::
 
   >>> len??
-  ​Signature: len(obj, /)
+  Signature: len(obj, /)
   Docstring: Return the number of items in a container.
   Type:      builtin_function_or_method
 
@@ -1493,12 +1390,11 @@ have the same output because they were compiled in a programming language other
 than Python.
 
 
-
 Working with mathematical formulas
 ----------------------------------
 
-Implementing mathematical formulas that work on arrays is one of the things that
-make NumPy so highly regarded in the scientific Python community.
+The ease of implementing mathematical formulas that work on arrays is one of
+the things that make NumPy so widely used in the scientific Python community.
 
 For example, this is the mean square error formula (a central formula used in
 supervised machine learning models that deal with regression):
@@ -1529,14 +1425,14 @@ error value for that prediction and a score for the quality of the model.
 How to save and load NumPy objects
 ----------------------------------
 
-*This section covers* ``numpy.save``, ``numpy.savez``, ``numpy.savetxt``,
-``numpy.load``, ``numpy.loadtxt``
+*This section covers* ``np.save``, ``np.savez``, ``np.savetxt``,
+``np.load``, ``np.loadtxt``
 
 -----
 
 You will, at some point, want to save your arrays to disk and load them back
 without having to re-run the code. Fortunately, there are several ways to save
-and load objects with Numpy. The ndarray objects can be saved to and loaded from
+and load objects with NumPy. The ndarray objects can be saved to and loaded from
 the disk files with ``loadtxt`` and ``savetxt`` functions that handle normal
 text files, ``load`` and ``save`` functions that handle NumPy binary files with
 a **.npy** file extension, and a ``savez`` function that handles NumPy files
@@ -1549,18 +1445,18 @@ architecture.
 
 If you want to store a single ndarray object, store it as a .npy file using
 ``np.save``. If you want to store more than one ndarray object in a single file,
-save it as a .npz file using ``np.savez``. You can also
-save several arrays into a single file in compressed npz format with `savez_compressed`.
+save it as a .npz file using ``np.savez``. You can also save several arrays
+into a single file in compressed npz format with `savez_compressed`.
 
 It's easy to save and load and array with ``np.save()``. Just make sure to
-specify the array you want to save and a file name.  For example, if you create
+specify the array you want to save and a file name. For example, if you create
 this array::
 
   >>> a = np.array([1, 2, 3, 4, 5, 6])
 
 You can save it as "filename.npy" with::
 
-  >>> np.save('filename',a)
+  >>> np.save('filename', a)
 
 You can use ``np.load()`` to reconstruct your array. ::
 
@@ -1570,7 +1466,6 @@ If you want to check your array, you can run:::
 
   >>> print(b)
   [1 2 3 4 5 6]
-
 
 You can save a NumPy array as a plain text file like a **.csv** or **.txt** file
 with ``np.savetxt``.
@@ -1588,10 +1483,9 @@ You can quickly and easily load your saved text file using ``loadtxt()``::
   >>> np.loadtxt('new_file.csv')
   array([1., 2., 3., 4., 5., 6., 7., 8.])
 
-
 The ``savetxt()`` and ``loadtxt()`` functions accept additional optional
 parameters such as header, footer, and delimiter. While text files can be easier
-for sharing, .npy and .npz files are faster to retrieve. If you need more
+for sharing, .npy and .npz files are smaller and faster to read. If you need more
 sophisticated handling of your text file (for example, if you need to work with
 lines that contain missing values), you will want to use the `genfromtxt`
 function.
@@ -1631,7 +1525,8 @@ If you created this array "a" ::
 
 You could create a Pandas dataframe ::
 
-  >>> df = pd.DataFrame(a) print(df)
+  >>> df = pd.DataFrame(a)
+  >>> print(df)
 
 **Output:**
 
@@ -1657,7 +1552,8 @@ You can also save your array with the NumPy ``savetxt`` method. ::
 
   >>> np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header='1,  2,  3,  4')
 
-If you're using the command line, you can read your saved CSV any time with a command such as::
+If you're using the command line, you can read your saved CSV any time with a
+command such as::
 
   >>> cat np.csv
   #  1,  2,  3,  4
@@ -1715,15 +1611,16 @@ For example, you can plot a 1D array like this::
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
-  fig = plt.figure()
-  ax = Axes3D(fig)
-  X = np.arange(-5, 5, 0.15)
-  Y = np.arange(-5, 5, 0.15)
-  X, Y = np.meshgrid(X, Y)
-  R = np.sqrt(X**2 + Y**2)
-  Z = np.sin(R)
+  >>> from mpl_toolkits.mplot3d import Axes3D
+  >>> fig = plt.figure()
+  >>> ax = Axes3D(fig)
+  >>> X = np.arange(-5, 5, 0.15)
+  >>> Y = np.arange(-5, 5, 0.15)
+  >>> X, Y = np.meshgrid(X, Y)
+  >>> R = np.sqrt(X**2 + Y**2)
+  >>> Z = np.sin(R)
 
-  ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
+  >>> ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
 
 .. plot:: user/plots/matplotlib3.py
    :align: center
@@ -1734,7 +1631,6 @@ To read more about Matplotlib and what it can do, take a look at
 `the official documentation <https://matplotlib.org/>`_.
 For directions regarding installing Matplotlib, see the official
 `installation section <https://matplotlib.org/users/installing.html>`_.
-
 
 
 -------------------------------------------------------
