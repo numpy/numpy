@@ -98,6 +98,7 @@ An example
     >>> type(b)
     <type 'numpy.ndarray'>
 
+.. _quickstart.array-creation:
 
 Array Creation
 --------------

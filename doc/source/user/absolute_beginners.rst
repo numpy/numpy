@@ -115,7 +115,7 @@ What is an array?
 An array is a central data structure of the NumPy library. An array is a grid of
 values and it contains information about the raw data, how to locate an element,
 and how to interpret an element. It has a grid of elements that can be indexed
-in :ref:` various ways <_quickstart.indexing-slicing-and-iterating>`.
+in :ref:`various ways <quickstart.indexing-slicing-and-iterating>`.
 The elements are all of the same type, referred to as the array ``dtype``.
 
 An array can be indexed by a tuple of nonnegative integers, by booleans, by
@@ -216,12 +216,12 @@ You can visualize your array this way:
 *Be aware that these visualizations are meant to simplify ideas and give you a basic understanding of NumPy concepts and mechanics. Arrays and array operations are much more complicated than are captured here!*
 
 Besides creating an array from a sequence of elements, you can easily create an
-array filled with ``0s``::
+array filled with ``0``'s::
 
   >>> np.zeros(2)
   array([0., 0.])
 
-Or an array filled with ``1s``::
+Or an array filled with ``1``'s::
 
   >>> np.ones(2)
   array([1., 1.])
@@ -248,32 +248,29 @@ you will specify the **first number**, **last number**, and the **step size**. :
 You can also use ``np.linspace()`` to create an array with values that are
 spaced linearly in a specified interval::
 
-  >>> np.linspace(0, 10, 5)
+  >>> np.linspace(0, 10, num=5)
   array([ 0. ,  2.5,  5. ,  7.5, 10. ])
 
 **Specifying your data type**
 
-While the default data type is floating point (``float64``), you can explicitly
-specify which data type you want using ``dtype``. ::
+While the default data type is floating point (``np.float64``), you can explicitly
+specify which data type you want using the ``dtype`` keyword. ::
 
-  >>> array = np.ones(2, dtype=int64)
-  >>> array
+  >>> x = np.ones(2, dtype=np.int64)
+  >>> x
   array([1, 1])
 
-:ref:` Learn more about creating arrays here <_quickstart.array-creation>`
+:ref:`Learn more about creating arrays here <quickstart.array-creation>`
 
 Adding, removing, and sorting elements
 --------------------------------------
-
 
 *This section covers* ``np.sort()``, ``np.concatenate()``
 
 -----
 
-
 Sorting an element is simple with ``np.sort()``. You can specify the axis, kind,
 and order when you call the function.
-To read more about sorting an array, see: `sort`.
 
 If you start with this array::
 
@@ -291,11 +288,12 @@ In addition to sort, which returns a sorted copy of an array, you can use:
 - `searchsorted`, which will find elements in a sorted array, and
 - `partition`, which is a partial sort.
 
+To read more about sorting an array, see: `sort`.
+
 If you start with these arrays::
 
   >>> a = np.array([1, 2, 3, 4])
   >>> b = np.array([5, 6, 7, 8])
-
 
 You can concatenate them with ``np.concatenate()``. ::
 
@@ -314,7 +312,6 @@ You can concatenate them with::
          [3, 4],
          [5, 6]])
 
-
 In order to remove elements from an array, it's simple to use indexing to select
 the elements that you want to keep.
 
@@ -324,31 +321,29 @@ To read more about concatenate, see: `concatenate`.
 How do you know the shape and size of an array?
 -----------------------------------------------
 
-
-*This section covers* ``ndarray.ndim()``, ``ndarray.size()``,
-``ndarray.shape()``
+*This section covers* ``ndarray.ndim``, ``ndarray.size``, ``ndarray.shape``
 
 -----
 
-**ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
+``ndarray.ndim`` will tell you the number of axes, or dimensions, of the array.
 
-**ndarray.size** will tell you the total number of elements of the array. This
+``ndarray.size`` will tell you the total number of elements of the array. This
 is the *product* of the elements of the array's shape.
 
-**ndarray.shape** will display a tuple of integers that indicate the number of
+``ndarray.shape`` will display a tuple of integers that indicate the number of
 elements stored along each dimension of the array. If, for example, you have a
-2D array with 2 rows and 3 columns, the shape of your array is (2,3).
+2-D array with 2 rows and 3 columns, the shape of your array is ``(2, 3)``.
 
 For example, if you create this array::
 
-  >>> array_example = np.array([[[0, 1, 2, 3]
-                                 [4, 5, 6, 7]],
-
-                                [[0, 1, 2, 3]
-                                 [4, 5, 6, 7]],
-
-                                [[0 ,1 ,2, 3]
-                                 [4, 5, 6, 7]]])
+  >>> array_example = np.array([[[0, 1, 2, 3],
+  ...                            [4, 5, 6, 7]],
+  ...
+  ...                           [[0, 1, 2, 3],
+  ...                            [4, 5, 6, 7]],
+  ...
+  ...                           [[0 ,1 ,2, 3],
+  ...                            [4, 5, 6, 7]]])
 
 To find the number of dimensions of the array, run::
 
@@ -390,7 +385,7 @@ If you start with this array::
 You can use ``reshape()`` to reshape your array. For example, you can reshape
 this array to an array with three rows and two columns::
 
-  >>> b = a.reshape(3,2)
+  >>> b = a.reshape(3, 2)
   >>> print(b)
   [[0 1]
    [2 3]
@@ -415,8 +410,8 @@ doesn't need to be specified.)
 If you want to learn more about C and Fortran order, you can
 :ref:`read more about the internal organization of NumPy arrays here <numpy-internals>`.
 Essentially, C and Fortran orders have to do with how indices correspond
-to the order the array isstored in memory. In Fortran, when moving through
-the elements of a two dimensional array as it is stored in memory, the **first**
+to the order the array is stored in memory. In Fortran, when moving through
+the elements of a two-dimensional array as it is stored in memory, the **first**
 index is the most rapidly varying index. As the first index moves to the next
 row as it changes, the matrix is stored one column at a time.
 This is why Fortran is thought of as a **Column-major language**.
@@ -456,7 +451,7 @@ You can use ``np.newaxis`` to add a new axis::
 
 You can explicitly convert a 1D array with either a row vector or a column
 vector using ``np.newaxis``. For example, you can convert a 1D array to a row
-vector by inserting an axis  along the first dimension::
+vector by inserting an axis along the first dimension::
 
   >>> row_vector = a[np.newaxis, :]
   >>> row_vector.shape
@@ -474,7 +469,7 @@ with ``np.expand_dims``.
 For example, if you start with this array::
 
   >>> a = np.array([1, 2, 3, 4, 5, 6])
-  >>>  a.shape
+  >>> a.shape
   (6,)
 
 You can use ``np.expand_dims`` to add an axis at index position 1 with::
@@ -492,19 +487,23 @@ You can add an axis at index position 0 with::
 Find more information about :ref:`newaxis here <arrays.indexing>` and
 ``expand_dims`` at `expand_dims`.
 
+
 Indexing and slicing
 --------------------
 
 You can index and slice NumPy arrays in the same ways you can slice Python
 lists. ::
 
-  >>> data = np.array([1,2,3])
+  >>> data = np.array([1, 2, 3])
 
-  >>> print(data[0]) print(data[1]) print(data[0:2]) print(data[1:])
-  >>> print(data[-2:])
+  >>> data[1]
   2
-  [1 2]
-  [2 3]
+  >>> data[0:2]
+  array([1, 2])
+  >>> data[1:]
+  array([2, 3])
+  >>> data[-2:]
+  array([2, 3])
 
 You can visualize it this way:
 
@@ -552,8 +551,8 @@ return boolean values that specify whether or not the values in an array fulfill
 a certain condition. This can be useful with arrays that contain names or other
 categorical values. ::
 
-  >>> five_up = (array > 5) | (array == 5)
-  print(five_up)
+  >>> five_up = (a > 5) | (a == 5)
+  >>> print(five_up)
   [[False False False False]
    [ True  True  True  True]
    [ True  True  True True]]
@@ -582,7 +581,7 @@ example::
   >>> list_of_coordinates= list(zip(b[0], b[1]))
 
   >>> for coord in list_of_coordinates:
-  >>>   print(coord)
+  ...     print(coord)
   (0, 0)
   (0, 1)
   (0, 2)
@@ -598,9 +597,8 @@ If the element you're looking for doesn't exist in the array, then the returned
 array of indices will be empty. For example::
 
   >>> not_there = np.nonzero(a == 42)
-  print(not_there)
+  >>> print(not_there)
   (array([], dtype=int64), array([], dtype=int64))
-
 
 Learn more about :ref:`indexing and slicing here <quickstart.indexing-slicing-and-iterating>`
 and :ref:`here <basics.indexing>`.
@@ -610,7 +608,6 @@ Read more about using the nonzero function at: `nonzero`.
 
 How to create an array from existing data
 -----------------------------------------
-
 
 *This section covers* ``slicing and indexing``, ``np.vstack()``, ``np.hstack()``,
 ``np.hsplit()``, ``.view()``, ``copy()``
@@ -623,7 +620,7 @@ Let's say you have this array:
 
 ::
 
-  array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+  array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 
 You can create a new array from a section of your array any time by specifying
 where you want to slice your array. ::
@@ -636,21 +633,17 @@ Here, you grabbed a section of your array from index position 3 through index
 position 8.
 
 You can also stack two existing arrays, both vertically and horizontally. Let's
-say you have two arrays:
+say you have two arrays, ``a1`` and ``a2``::
 
-**a_1**::
+  >>> a1 = np.array([[1, 1],
+  ...                [2, 2]])
 
-  array([[1, 1],
-         [2, 2]])
-
-and **a_2**::
-
-  array([[3, 3],
-         [4, 4]])
+  >>> a2 = np.array([[3, 3],
+  ...                [4, 4]])
 
 You can stack them vertically with ``vstack``::
 
-  >>> np.vstack((a_1, a_2))
+  >>> np.vstack((a1, a2))
   array([[1, 1],
          [2, 2],
          [3, 3],
@@ -658,7 +651,7 @@ You can stack them vertically with ``vstack``::
 
 Or stack them horizontally with ``hstack``::
 
-  >>> np.hstack((a_1, a_2))
+  >>> np.hstack((a1, a2))
   array([[1, 1, 3, 3],
          [2, 2, 4, 4]])
 
@@ -668,13 +661,15 @@ specify either the number of equally shaped arrays to return or the columns
 
 Let's say you have this array::
 
-  array([[1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12],
+  >>> x = np.arange(1, 25).reshape(2, 12)
+  >>> x
+  array([[ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12],
          [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]])
 
 If you wanted to split this array into three equally shaped arrays, you would
 run::
 
-  >>> np.hsplit(array, 3)
+  >>> np.hsplit(x, 3)
   [array([[1,  2,  3,  4],
           [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
           [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
@@ -701,12 +696,26 @@ original array!
 
 Let's say you create this array::
 
-  >>> a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+Now we create an array ``b1`` by slicing ``a`` and modify the first element of
+``b1``. This will modify the corresponding element in ``a`` as well! ::
+
+  >>> b1 = a[0, :]
+  >>> b1
+  array([1, 2, 3, 4])
+  >>> b1[0] = 99
+  >>> b1
+  array([99,  2,  3,  4])
+  >>> a
+  array([[99,  2,  3,  4],
+         [ 5,  6,  7,  8],
+         [ 9, 10, 11, 12]])
 
 Using the ``copy`` method will make a complete copy of the array and its data (a
 *deep copy*). To use this on your array, you could run::
 
-  >>> b = a.copy()
+  >>> b2 = a.copy()
 
 :ref:`Learn more about copies and views here <quickstart.copies-and-views>`.
 
@@ -788,7 +797,7 @@ concept is called **broadcasting**. Broadcasting is a mechanism that allows
 NumPy to perform operations on arrays of different shapes. The dimensions of
 your array must be compatible, for example, when the dimensions of both arrays
 are equal or when one of them is 1. If the dimensions are not compatible, you
-will get a value error.
+will get a ``ValueError``.
 
 :ref:`Learn more about broadcasting here <basics.broadcasting>`.
 
@@ -800,7 +809,7 @@ More useful array operations
 
 -----
 
-NumPy also performs aggregation functions. In addition to ``min``,  ``max``, and
+NumPy also performs aggregation functions. In addition to ``min``, ``max``, and
 ``sum``, you can easily run ``mean`` to get the average, ``prod`` to get the
 result of multiplying the elements together, ``std`` to get the standard
 deviation, and more. ::
@@ -813,21 +822,21 @@ deviation, and more. ::
 
 Let's start with this array, called "a" ::
 
-  [[0.45053314 0.17296777 0.34376245 0.5510652]
-   [0.54627315 0.05093587 0.40067661 0.55645993]
-   [0.12697628 0.82485143 0.26590556 0.56917101]]
+  >>> a = np.array([[0.45053314, 0.17296777, 0.34376245, 0.5510652],
+  ...               [0.54627315, 0.05093587, 0.40067661, 0.55645993],
+  ...               [0.12697628, 0.82485143, 0.26590556, 0.56917101]])
 
 It's very common to want to aggregate along a row or column. By default, every
 NumPy aggregation function will return the aggregate of the entire array. To
 find the sum or the minimum of the elements in your array, run::
 
   >>> a.sum()
-  4.8595783866706
+  4.8595784
 
 Or::
 
   >>> a.min()
-  0.050935870838424435
+  0.05093587
 
 You can specify on which axis you want the aggregation function to be computed.
 For example, you can find the minimum value within each column by specifying
@@ -845,8 +854,7 @@ Read more about :ref:`array methods here <array.ndarray.methods>`.
 How to inspect the size and shape of a NumPy array
 --------------------------------------------------
 
-
-*This section covers* ``arr.shape()``, ``arr.size()``
+*This section covers* ``arr.shape``, ``arr.size``
 
 -----
 
@@ -855,7 +863,7 @@ NumPy will return the dimensions of the array as a tuple.
 
 For example, if you create this array::
 
-  >>> arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> arr = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``arr.shape`` to find the shape of your array. ::
 
