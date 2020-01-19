@@ -382,6 +382,11 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     """
     Computes the bins used internally by `np.histogram(bins='auto')`.
 
+    TODO: consider leveraging np.unique(a, return_counts=True)
+    Immediately return the resulting edges and counts, which
+    avoids re-computing bin counts.
+    Significant speed up, but bypasses existing bin counting code.
+
     Parameters
     ==========
     a : ndarray
@@ -408,7 +413,7 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     width = np.ptp((first_edge,last_edge))/(n_equal_bins)
     zeroed_min = a - first_edge
     quantized = np.floor_divide(zeroed_min, width) * width
-    left_edges = np.unique(quantized)
+    left_edges = np.unique(quantized) # TODO: consider np.unique(a, return_counts=True)
     right_edges = left_edges + width
     unzeroed_edges = np.unique((left_edges, right_edges)) + first_edge
     edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
