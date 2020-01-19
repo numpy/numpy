@@ -610,6 +610,33 @@ class TestHistogramOptimBinNums(object):
         assert_equal(sum(a), 5)
         assert_equal(len(b), 5)
 
+    def test_merged_bins_empty(self):
+        """
+        Check that merged histogram bins are empty
+        merges happen when 'auto' defaults to 'fd'
+        """
+        bin_merge_test = {
+              5000:   {'auto': (10000, 12, True)},
+              50_000:  {'auto': (100000, 16, True)},
+              100_000: {'auto': (200000, 16, True)}
+             }
+
+        for testlen, expectedResults in bin_merge_test.items():
+            x1 = np.linspace(-1000, -900, testlen // 5 * 2)
+            x2 = np.linspace(1, 100, testlen // 5 * 3)
+            x3 = np.linspace(1000, 1100, testlen)
+            x = np.hstack((x1, x2, x3))
+            for estimator, test_values in expectedResults.items():
+                hist_counts, hist_bin_edges = np.histogram(x, estimator, range = None)
+                vals, counts = np.unique(np.diff(hist_bin_edges), return_counts=True)
+                mode = vals[np.argmax(counts)]
+                merged_bins = np.where(np.diff(hist_bin_edges)>(mode*1.5))[0]
+                is_merged_bins_zero = np.count_nonzero(hist_counts[merged_bins]) == 0
+                total_counts, total_bins, merged_bins_zero = test_values
+                assert_equal(sum(hist_counts), total_counts)
+                assert_equal(len(hist_bin_edges), total_bins)
+                assert_equal(is_merged_bins_zero, merged_bins_zero)
+
 class TestHistogramdd(object):
 
     def test_simple(self):
