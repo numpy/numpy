@@ -841,7 +841,7 @@ cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset
 
 cdef extern from "numpy/ufuncobject.h":
 
-    ctypedef void (*PyUFuncGenericFunction) (char **, const npy_intp *, const npy_intp *, void *)
+    ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
     ctypedef extern class numpy.ufunc [object PyUFuncObject, check_size ignore]:
         cdef:
@@ -890,47 +890,47 @@ cdef extern from "numpy/ufuncobject.h":
     int PyUFunc_GenericFunction \
         (ufunc, PyObject *, PyObject *, PyArrayObject **)
     void PyUFunc_f_f_As_d_d \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_d_d \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_f_f \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_g_g \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_F_F_As_D_D \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_F_F \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_D_D \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_G_G \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_O_O \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_ff_f_As_dd_d \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_ff_f \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_dd_d \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_gg_g \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_FF_F_As_DD_D \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_DD_D \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_FF_F \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_GG_G \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_OO_O \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_O_O_method \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_OO_O_method \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_On_Om \
-         (char **, const npy_intp *, const npy_intp *, void *)
+         (char **, npy_intp *, npy_intp *, void *)
     int PyUFunc_GetPyValues \
         (char *, int *, int *, PyObject **)
     int PyUFunc_checkfperr \
