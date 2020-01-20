@@ -9,11 +9,11 @@ from numpy.core.numeric import (
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 import numpy.matrixlib as matrixlib
-from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from .function_base import diff
+from .stride_tricks import as_strided
 
 
 array_function_dispatch = functools.partial(
@@ -525,7 +525,7 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-    
+
     See Also
     --------
     column_stack : Stack 1-D arrays as columns into a 2-D array.

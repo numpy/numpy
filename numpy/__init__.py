@@ -121,7 +121,7 @@ if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
     try:
-        from numpy.__config__ import show as show_config
+        from .__config__ import show as show_config
     except ImportError:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
@@ -226,7 +226,7 @@ else:
         from .testing import Tester
 
     # Pytest testing
-    from numpy._pytesttester import PytestTester
+    from ._pytesttester import PytestTester
     test = PytestTester(__name__)
     del PytestTester
 

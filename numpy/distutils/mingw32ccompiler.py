@@ -14,8 +14,9 @@ import re
 import textwrap
 
 # Overwrite certain distutils.ccompiler functions:
-import numpy.distutils.ccompiler
-from numpy.distutils import log
+from . import ccompiler
+from . import log
+
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)
@@ -28,7 +29,7 @@ from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
                               UnknownFileError)
-from numpy.distutils.misc_util import (msvc_runtime_library,
+from .misc_util import (msvc_runtime_library,
                                        msvc_runtime_version,
                                        msvc_runtime_major,
                                        get_build_architecture)

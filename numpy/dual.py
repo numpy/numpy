@@ -19,9 +19,9 @@ __all__ = ['fft', 'ifft', 'fftn', 'ifftn', 'fft2', 'ifft2',
            'norm', 'inv', 'svd', 'solve', 'det', 'eig', 'eigvals',
            'eigh', 'eigvalsh', 'lstsq', 'pinv', 'cholesky', 'i0']
 
-import numpy.linalg as linpkg
-import numpy.fft as fftpkg
-from numpy.lib import i0
+from . import linalg as linpkg
+from . import fft as fftpkg
+from .lib import i0
 import sys
 
 

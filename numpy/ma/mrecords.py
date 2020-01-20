@@ -28,7 +28,7 @@ from numpy.core.records import (
 _byteorderconv = np.core.records._byteorderconv
 
 import numpy.ma as ma
-from numpy.ma import (
+from . import (
         MAError, MaskedArray, masked, nomask, masked_array, getdata,
         getmaskarray, filled
         )

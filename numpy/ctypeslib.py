@@ -56,7 +56,7 @@ import os
 from numpy import (
     integer, ndarray, dtype as _dtype, deprecate, array, frombuffer
 )
-from numpy.core.multiarray import _flagdict, flagsobj
+from .core.multiarray import _flagdict, flagsobj
 
 try:
     import ctypes
@@ -79,10 +79,10 @@ if ctypes is None:
     load_library = _dummy
     as_ctypes = _dummy
     as_array = _dummy
-    from numpy import intp as c_intp
+    from . import intp as c_intp
     _ndptr_base = object
 else:
-    import numpy.core._internal as nic
+    from .core import _internal as nic
     c_intp = nic._getintp_ctype()
     del nic
     _ndptr_base = ctypes.c_void_p
@@ -126,7 +126,7 @@ else:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
-            from numpy.distutils.misc_util import get_shared_lib_extension
+            from .distutils.misc_util import get_shared_lib_extension
             so_ext = get_shared_lib_extension()
             libname_ext = [libname + so_ext]
             # mac, windows and linux >= py3.2 shared library and loadable

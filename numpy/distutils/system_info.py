@@ -148,17 +148,17 @@ from configparser import RawConfigParser as ConfigParser
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
 import distutils.sysconfig
-from numpy.distutils import log
 from distutils.util import get_platform
 
-from numpy.distutils.exec_command import (
+from .exec_command import (
     find_executable, filepath_from_subprocess_output,
     get_pythonexe)
-from numpy.distutils.misc_util import (is_sequence, is_string,
+from .misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
-from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils import customized_ccompiler as _customized_ccompiler
-from numpy.distutils import _shell_utils
+from .command.config import config as cmd_config
+from . import customized_ccompiler as _customized_ccompiler
+from . import log
+from . import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -2044,7 +2044,7 @@ class openblas_info(blas_info):
         info = self.check_libs(lib_dirs, openblas_libs, [])
 
         if c.compiler_type == "msvc" and info is None:
-            from numpy.distutils.fcompiler import new_fcompiler
+            from .fcompiler import new_fcompiler
             f = new_fcompiler(c_compiler=c)
             if f and f.compiler_type == 'gnu95':
                 # Try gfortran-compatible library files

@@ -15,10 +15,10 @@ from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.core import overrides
 from numpy.core.overrides import set_module
-from numpy.lib.twodim_base import diag, vander
-from numpy.lib.function_base import trim_zeros
-from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
+from .twodim_base import diag, vander
+from .function_base import trim_zeros
+from .type_check import iscomplex, real, imag, mintypecode
 
 
 array_function_dispatch = functools.partial(
