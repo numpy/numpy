@@ -21,9 +21,10 @@ runtime:
 
 build:
     ci:
-    # install dependencies
+    # install dependencies and newer toolchain for gfortran5
+    - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
     - sudo apt-get update
-    - sudo apt-get install gcc gfortran
+    - sudo apt-get install gcc gfortran libgfortran5
     - target=$(python tools/openblas_support.py)
     - ls -lR "${target}"
     - sudo cp -r "${target}"/lib/* /usr/lib
@@ -48,7 +49,7 @@ build:
     - extra_path=$(printf "%s:" "${extra_directories[@]}")
     - export PATH="${extra_path}${PATH}"
     # check OpenBLAS version
-    - python tools/openblas_support.py --check_version 0.3.7
+    - python tools/openblas_support.py --check_version 0.3.8
     # run the test suite
     - python runtests.py -n --debug-info --show-build-log -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
 

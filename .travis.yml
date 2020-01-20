@@ -3,7 +3,7 @@
 language: python
 group: travis_latest
 os: linux
-dist: xenial
+dist: bionic
 
 # Travis whitelists the installable packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-whitelist
@@ -11,6 +11,8 @@ addons:
   apt:
     packages: &common_packages
       - gfortran
+      - libgfortran5
+      - libgfortran3
       - libatlas-base-dev
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
@@ -27,7 +29,7 @@ stages:
 
 env:
   global:
-    - OpenBLAS_version=0.3.7
+    - OpenBLAS_version=0.3.8
     - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
     # The following is generated with the command:
     # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
@@ -47,7 +49,6 @@ jobs:
     - python: 3.7
 
     - python: 3.6
-      dist: bionic
       env: USE_DEBUG=1
       addons:
         apt:
@@ -86,6 +87,8 @@ jobs:
           packages:
             - gfortran
             - eatmydata
+            - libgfortran5
+            - libgfortran3
 
     - python: 3.7
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
@@ -112,7 +115,17 @@ jobs:
       arch: s390x
       env:
        # use s390x OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
+
+    - python: 3.7
+      os: linux
+      arch: aarch64
+      env:
+       # use ppc64le OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
+       - ATLAS=None
+
 
 
 before_install:
