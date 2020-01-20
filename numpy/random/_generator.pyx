@@ -2919,7 +2919,6 @@ cdef class Generator:
                 it = np.PyArray_MultiIterNew2(p_arr, n_arr)
                 randoms = <np.ndarray>np.empty(it.shape, np.int64)
 
-            randoms_data = <np.int64_t *>np.PyArray_DATA(randoms)
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
