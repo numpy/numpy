@@ -18,6 +18,13 @@ class TestParameters(util.F2PyTest):
                _path('src', 'parameter', 'constant_both.f90'),
                _path('src', 'parameter', 'constant_compound.f90'),
                _path('src', 'parameter', 'constant_non_compound.f90'),
+               _path('src', 'parameter', 'constant_array_params.f90'),
+#               _path('src', 'parameter', 'constant_array_parens.f90'),
+#               _path('src', 'parameter', 'constant_array_brackets.f90'),
+#               _path('src', 'parameter', 'constant_array_wrong_dims.f90'),
+#               _path('src', 'parameter', 'constant_real_array.f90'),
+#               _path('src', 'parameter', 'constant_integer_array.f90'),
+#               _path('src', 'parameter', 'constant_char_array.f90'),
     ]
 
     @pytest.mark.slow
@@ -114,3 +121,13 @@ class TestParameters(util.F2PyTest):
         x = np.arange(3, dtype=np.float64)
         self.module.foo_sum(x)
         assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
+
+    def test_constant_param_array(self):
+        # non-contiguous should raise error
+        x = np.arange(6, dtype=np.float64)[::2]
+        assert_raises(ValueError, self.module.foo_array, x)
+
+        # check values with contiguous array
+        x = np.arange(3, dtype=np.float64)
+        self.module.foo_array(x)
+        assert_equal(x, [0.0 + 3.0, 1.0 * 5.0, 3.0 + 5.0])

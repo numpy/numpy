@@ -2427,8 +2427,10 @@ def get_parameters(vars, global_params={}):
     selected_kind_re = re.compile(
         r'\bselected_(int|real)_kind\s*\(\s*(?P<value>.*)\s*\)', re.I)
     for n in param_names:
+        print("vars[n] = {}".format(vars[n]))
         if '=' in vars[n]:
             v = vars[n]['=']
+            print("v = {}".format(v))
             if islogical(vars[n]):
                 v = v.lower()
                 for repl in [
@@ -2480,6 +2482,16 @@ def get_parameters(vars, global_params={}):
                 if v[0] == '(' and v[-1] == ')':
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
+
+            # Identifying array parameters so that the eval expression
+            # below does not throw an Exception
+            if v:
+            #     # 1. check if delimiters match
+            #     if v[0:2] == '(\\' and v[-2:] == '//)':
+                    
+            #     # 2. check if dimensions match assigned values
+            if v[0] == '(':
+                v = v[2:-2]
 
             try:
                 params[n] = eval(v, g_params, params)
