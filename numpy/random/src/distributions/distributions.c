@@ -294,8 +294,13 @@ float random_standard_gamma_f(bitgen_t *bitgen_state,
     }
   } else {
     U = floor(shape);
-    V = (U - 1.0f) / (shape - 1.0f);
-    Y = expf(U - shape) * powf(shape - 1.0f, shape - U);
+    if (shape < 2.0f) {
+      V = 1.0f / shape;
+      Y = expf(1.0f - shape) * powf(shape, shape - 1.0f);
+    } else {
+      V = (U - 1.0f) / (shape - 1.0f);
+      Y = expf(U - shape) * powf(shape - 1.0f, shape - U);
+    }
     RAND_INT_TYPE k;
     for (;;) {
       b = 1.0f;
