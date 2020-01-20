@@ -3356,7 +3356,6 @@ cdef class RandomState:
                 it = np.PyArray_MultiIterNew2(p_arr, n_arr)
                 randoms = <np.ndarray>np.empty(it.shape, int)
 
-            randoms_data = <long *>np.PyArray_DATA(randoms)
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
