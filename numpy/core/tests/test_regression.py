@@ -36,11 +36,10 @@ class TestRegression:
         # Ticket #16
         a = np.transpose(np.array([[2, 9], [7, 0], [3, 8]]))
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            f = BytesIO()
-            pickle.dump(a, f, protocol=proto)
-            f.seek(0)
-            b = pickle.load(f)
-            f.close()
+            with BytesIO() as f:
+                pickle.dump(a, f, protocol=proto)
+                f.seek(0)
+                b = pickle.load(f)
             assert_array_equal(a, b)
 
     def test_typeNA(self):
@@ -94,11 +93,10 @@ class TestRegression:
         # Ticket #50
         ca = np.char.array(np.arange(1000, 1010), itemsize=4)
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            f = BytesIO()
-            pickle.dump(ca, f, protocol=proto)
-            f.seek(0)
-            ca = np.load(f, allow_pickle=True)
-            f.close()
+            with BytesIO() as f:
+                pickle.dump(ca, f, protocol=proto)
+                f.seek(0)
+                ca = np.load(f, allow_pickle=True)
 
     def test_noncontiguous_fill(self):
         # Ticket #58.
@@ -358,11 +356,10 @@ class TestRegression:
         # Implemented in r2840
         dt = np.dtype([('x', int), ('y', np.object_), ('z', 'O')])
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            f = BytesIO()
-            pickle.dump(dt, f, protocol=proto)
-            f.seek(0)
-            dt_ = pickle.load(f)
-            f.close()
+            with BytesIO() as f:
+                pickle.dump(dt, f, protocol=proto)
+                f.seek(0)
+                dt_ = pickle.load(f)
             assert_equal(dt, dt_)
 
     def test_mem_array_creation_invalid_specification(self):
