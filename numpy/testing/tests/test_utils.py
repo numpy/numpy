@@ -341,24 +341,6 @@ class TestEqual(TestArrayEqual):
         self._assert_func(x, x)
         self._test_not_equal(x, y)
 
-    def test_error_message(self):
-        with pytest.raises(AssertionError) as exc_info:
-            self._assert_func(np.array([1, 2]), np.array([[1, 2]]))
-        msg = str(exc_info.value)
-        msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
-        msg_reference = textwrap.dedent("""\
-
-        Arrays are not equal
-
-        (shapes (2,), (1, 2) mismatch)
-         x: array([1, 2])
-         y: array([[1, 2]])""")
-
-        try:
-            assert_equal(msg, msg_reference)
-        except AssertionError:
-            assert_equal(msg2, msg_reference)
-
     def test_object(self):
         #gh-12942
         import datetime

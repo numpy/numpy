@@ -298,6 +298,7 @@ defdict = {
           ],
           TD(O, f='PyNumber_Multiply'),
           ),
+#'divide' : aliased to true_divide in umathmodule.c:initumath
 'floor_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),

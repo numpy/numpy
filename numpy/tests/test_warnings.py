@@ -35,7 +35,7 @@ class FindFuncs(ast.NodeVisitor):
         if p.ls[-1] == 'simplefilter' or p.ls[-1] == 'filterwarnings':
             if node.args[0].s == "ignore":
                 raise AssertionError(
-                    "ignore filter should not be used; found in "
+                    "warnings should have an appropriate stacklevel; found in "
                     "{} on line {}".format(self.__filename, node.lineno))
 
         if p.ls[-1] == 'warn' and (
