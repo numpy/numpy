@@ -1,5 +1,5 @@
 import sys
-from distutils.core import *
+from distutils.core import Distribution, setup
 
 if 'setuptools' in sys.modules:
     have_setuptools = True

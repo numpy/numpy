@@ -14,7 +14,7 @@ from numpy._build_utils.apple_accelerate import (
     uses_accelerate_framework, get_sgemv_fix
     )
 from numpy.compat import npy_load_module
-from setup_common import *
+from setup_common import *  # noqa: F403
 
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.

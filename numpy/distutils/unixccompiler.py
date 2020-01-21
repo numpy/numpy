@@ -4,8 +4,8 @@ unixccompiler - can handle very long argument lists for ar.
 """
 import os
 
-from distutils.errors import DistutilsExecError, CompileError
-from distutils.unixccompiler import *
+from distutils.errors import CompileError, DistutilsExecError, LibError
+from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.ccompiler import replace_method
 from numpy.distutils.misc_util import _commandline_dep_string
 from numpy.distutils import log
