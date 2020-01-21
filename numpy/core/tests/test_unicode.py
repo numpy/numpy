@@ -4,9 +4,6 @@ import numpy as np
 from numpy.compat import unicode
 from numpy.testing import assert_, assert_equal, assert_array_equal
 
-# Python 3.3+ uses a flexible string representation
-ucs4 = False
-
 def buffer_length(arr):
     if isinstance(arr, unicode):
         arr = str(arr)
@@ -63,10 +60,7 @@ class CreateZeros:
         # Encode to ascii and double check
         assert_(ua_scalar.encode('ascii') == b'')
         # Check buffer lengths for scalars
-        if ucs4:
-            assert_(buffer_length(ua_scalar) == 0)
-        else:
-            assert_(buffer_length(ua_scalar) == 0)
+        assert_(buffer_length(ua_scalar) == 0)
 
     def test_zeros0D(self):
         # Check creation of 0-dimensional objects
@@ -116,17 +110,14 @@ class CreateValues:
         assert_(ua_scalar.encode('utf-8') ==
                         (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
-        if ucs4:
-            assert_(buffer_length(ua_scalar) == 4*self.ulen)
+        if self.ucs_value == ucs4_value:
+            # In UCS2, the \U0010FFFF will be represented using a
+            # surrogate *pair*
+            assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
         else:
-            if self.ucs_value == ucs4_value:
-                # In UCS2, the \U0010FFFF will be represented using a
-                # surrogate *pair*
-                assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
-            else:
-                # In UCS2, the \uFFFF will be represented using a
-                # regular 2-byte word
-                assert_(buffer_length(ua_scalar) == 2*self.ulen)
+            # In UCS2, the \uFFFF will be represented using a
+            # regular 2-byte word
+            assert_(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
         # Check creation of 0-dimensional objects with values
@@ -201,17 +192,14 @@ class AssignValues:
         assert_(ua_scalar.encode('utf-8') ==
                         (self.ucs_value*self.ulen).encode('utf-8'))
         # Check buffer lengths for scalars
-        if ucs4:
-            assert_(buffer_length(ua_scalar) == 4*self.ulen)
+        if self.ucs_value == ucs4_value:
+            # In UCS2, the \U0010FFFF will be represented using a
+            # surrogate *pair*
+            assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
         else:
-            if self.ucs_value == ucs4_value:
-                # In UCS2, the \U0010FFFF will be represented using a
-                # surrogate *pair*
-                assert_(buffer_length(ua_scalar) == 2*2*self.ulen)
-            else:
-                # In UCS2, the \uFFFF will be represented using a
-                # regular 2-byte word
-                assert_(buffer_length(ua_scalar) == 2*self.ulen)
+            # In UCS2, the \uFFFF will be represented using a
+            # regular 2-byte word
+            assert_(buffer_length(ua_scalar) == 2*self.ulen)
 
     def test_values0D(self):
         # Check assignment of 0-dimensional objects with values
