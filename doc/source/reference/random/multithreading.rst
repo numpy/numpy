@@ -19,7 +19,7 @@ seed will produce the same outputs.
 
 .. code-block:: ipython
 
-    from numpy.random import default_rng, PCG64
+    from numpy.random import Generator, PCG64
     import multiprocessing
     import concurrent.futures
     import numpy as np
@@ -31,14 +31,12 @@ seed will produce the same outputs.
                 threads = multiprocessing.cpu_count()
             self.threads = threads
 
-            self._random_generators = [bg]
+            self._random_generators = [Generator(bg)]
             last_bg = bg
             for _ in range(0, threads-1):
                 new_bg = last_bg.jumped()
-                self._random_generators.append(new_bg)
+                self._random_generators.append(Generator(new_bg))
                 last_bg = new_bg
-            self._random_generators = [default_rng(bg) for bg in
-                                       self._random_generators]
 
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
@@ -94,7 +92,7 @@ The single threaded call directly uses the BitGenerator.
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-        ...: rg = default_rng(PCG64())
+        ...: rg = Generator(PCG64())
         ...: %timeit rg.standard_normal(out=values)
 
     99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -105,7 +103,7 @@ that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = default_rng(PCG64())
+    In [6]: rg = Generator(PCG64())
         ...: %timeit rg.standard_normal(10000000)
 
     125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
