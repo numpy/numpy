@@ -4661,25 +4661,23 @@ class TestIO:
         assert_array_equal(d, e)
 
     def test_empty_files_binary(self):
-        f = open(self.filename, 'w')
-        f.close()
+        with open(self.filename, 'w') as f:
+            pass
         y = np.fromfile(self.filename)
         assert_(y.size == 0, "Array not empty")
 
     def test_empty_files_text(self):
-        f = open(self.filename, 'w')
-        f.close()
+        with open(self.filename, 'wb') as f:
+            pass
         y = np.fromfile(self.filename, sep=" ")
         assert_(y.size == 0, "Array not empty")
 
     def test_roundtrip_file(self):
-        f = open(self.filename, 'wb')
-        self.x.tofile(f)
-        f.close()
+        with open(self.filename, 'wb') as f:
+            self.x.tofile(f)
         # NB. doesn't work with flush+seek, due to use of C stdio
-        f = open(self.filename, 'rb')
-        y = np.fromfile(f, dtype=self.dtype)
-        f.close()
+        with open(self.filename, 'rb') as f:
+            y = np.fromfile(f, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
     def test_roundtrip_filename(self):
@@ -4778,19 +4776,17 @@ class TestIO:
                  io.DEFAULT_BUFFER_SIZE*8]
 
         for size in sizes:
-            f = open(self.filename, 'wb')
-            f.seek(size-1)
-            f.write(b'\0')
-            f.close()
+            with open(self.filename, 'wb') as f:
+                f.seek(size-1)
+                f.write(b'\0')
 
             for mode in ['rb', 'r+b']:
                 err_msg = "%d %s" % (size, mode)
 
-                f = open(self.filename, mode)
-                f.read(2)
-                np.fromfile(f, dtype=np.float64, count=1)
-                pos = f.tell()
-                f.close()
+                with open(self.filename, mode) as f:
+                    f.read(2)
+                    np.fromfile(f, dtype=np.float64, count=1)
+                    pos = f.tell()
                 assert_equal(pos, 10, err_msg=err_msg)
 
     def test_file_position_after_tofile(self):
@@ -4802,22 +4798,20 @@ class TestIO:
         for size in sizes:
             err_msg = "%d" % (size,)
 
-            f = open(self.filename, 'wb')
-            f.seek(size-1)
-            f.write(b'\0')
-            f.seek(10)
-            f.write(b'12')
-            np.array([0], dtype=np.float64).tofile(f)
-            pos = f.tell()
-            f.close()
+            with open(self.filename, 'wb') as f:
+                f.seek(size-1)
+                f.write(b'\0')
+                f.seek(10)
+                f.write(b'12')
+                np.array([0], dtype=np.float64).tofile(f)
+                pos = f.tell()
             assert_equal(pos, 10 + 2 + 8, err_msg=err_msg)
 
-            f = open(self.filename, 'r+b')
-            f.read(2)
-            f.seek(0, 1)  # seek between read&write required by ANSI C
-            np.array([0], dtype=np.float64).tofile(f)
-            pos = f.tell()
-            f.close()
+            with open(self.filename, 'r+b') as f:
+                f.read(2)
+                f.seek(0, 1)  # seek between read&write required by ANSI C
+                np.array([0], dtype=np.float64).tofile(f)
+                pos = f.tell()
             assert_equal(pos, 10, err_msg=err_msg)
 
     def test_load_object_array_fromfile(self):
@@ -4870,9 +4864,8 @@ class TestIO:
             y = np.fromstring(s, **kw)
         assert_array_equal(y, value)
 
-        f = open(self.filename, 'wb')
-        f.write(s)
-        f.close()
+        with open(self.filename, 'wb') as f:
+            f.write(s)
         y = np.fromfile(self.filename, **kw)
         assert_array_equal(y, value)
 
@@ -4956,33 +4949,28 @@ class TestIO:
         # can't use _check_from because fromstring can't handle True/False
         v = np.array([True, False, True, False], dtype=np.bool_)
         s = b'1,0,-2.3,0'
-        f = open(self.filename, 'wb')
-        f.write(s)
-        f.close()
+        with open(self.filename, 'wb') as f:
+            f.write(s)
         y = np.fromfile(self.filename, sep=',', dtype=np.bool_)
         assert_(y.dtype == '?')
         assert_array_equal(y, v)
 
     def test_tofile_sep(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
-        f = open(self.filename, 'w')
-        x.tofile(f, sep=',')
-        f.close()
-        f = open(self.filename, 'r')
-        s = f.read()
-        f.close()
+        with open(self.filename, 'w') as f:
+            x.tofile(f, sep=',')
+        with open(self.filename, 'r') as f:
+            s = f.read()
         #assert_equal(s, '1.51,2.0,3.51,4.0')
         y = np.array([float(p) for p in s.split(',')])
         assert_array_equal(x,y)
 
     def test_tofile_format(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
-        f = open(self.filename, 'w')
-        x.tofile(f, sep=',', format='%.2f')
-        f.close()
-        f = open(self.filename, 'r')
-        s = f.read()
-        f.close()
+        with open(self.filename, 'w') as f:
+            x.tofile(f, sep=',', format='%.2f')
+        with open(self.filename, 'r') as f:
+            s = f.read()
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
     def test_locale(self):
