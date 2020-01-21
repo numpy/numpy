@@ -1134,7 +1134,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         /* Order of operations important for MSVC 2015 */
         *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
-    assert((npy_uintp)n < (stride) || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
+    assert(n < stride || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
     if (i + 3 * stride <= n) {
         /* load the first elements */
         @vtype@ c1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
