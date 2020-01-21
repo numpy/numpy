@@ -2242,10 +2242,7 @@ def get_info(pkgname, dirs=None):
     return info
 
 def is_bootstrapping():
-    if sys.version_info[0] >= 3:
-        import builtins
-    else:
-        import __builtin__ as builtins
+    import builtins
 
     try:
         builtins.__NUMPY_SETUP__

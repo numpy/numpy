@@ -8,11 +8,7 @@ from distutils.errors import DistutilsExecError, CompileError
 from distutils.unixccompiler import *
 from numpy.distutils.ccompiler import replace_method
 from numpy.distutils.misc_util import _commandline_dep_string
-
-if sys.version_info[0] < 3:
-    from . import log
-else:
-    from numpy.distutils import log
+from numpy.distutils import log
 
 # Note that UnixCCompiler._compile appeared in Python 2.3
 def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):

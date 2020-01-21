@@ -871,11 +871,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     # Local import to speed up numpy's import time.
     import inspect
 
-    if sys.version_info[0] >= 3:
-        # In Python3 stderr, stdout are text files.
-        from io import StringIO
-    else:
-        from StringIO import StringIO
+    from io import StringIO
 
     if module is None:
         module = "numpy"
