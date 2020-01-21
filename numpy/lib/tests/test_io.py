@@ -7,6 +7,7 @@ import warnings
 import io
 import re
 import pytest
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
@@ -15,7 +16,7 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, Path
+from numpy.compat import asbytes, bytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -362,7 +363,6 @@ class TestSaveTxt:
         c.seek(0)
         assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
         v = a[['x', 'z']]
@@ -2339,7 +2339,6 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
 class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_loadtxt(self):
