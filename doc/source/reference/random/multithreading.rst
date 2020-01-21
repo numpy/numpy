@@ -69,12 +69,12 @@ random value after.
 .. code-block:: ipython
 
     In [2]: mrng = MultithreadedRNG(10000000, seed=0)
-    ...: print(mrng.values[-1])
-    0.0
+       ...: print(mrng.values[-1])
+    Out[2]: 0.0
 
     In [3]: mrng.fill()
-        ...: print(mrng.values[-1])
-    -0.40807406258535955
+       ...: print(mrng.values[-1])
+    Out[3]: -0.40807406258535955
 
 The time required to produce using multiple threads can be compared to
 the time required to generate using a single thread.
@@ -82,20 +82,20 @@ the time required to generate using a single thread.
 .. code-block:: ipython
 
     In [4]: print(mrng.threads)
-        ...: %timeit mrng.fill()
+       ...: %timeit mrng.fill()
 
-    4
-    32.8 ms ± 2.71 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    Out[4]: 4
+       ...: 32.8 ms ± 2.71 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 The single threaded call directly uses the BitGenerator.
 
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-        ...: rg = Generator(PCG64())
-        ...: %timeit rg.standard_normal(out=values)
+       ...: rg = Generator(PCG64())
+       ...: %timeit rg.standard_normal(out=values)
 
-    99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    Out[5]: 99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 The gains are substantial and the scaling is reasonable even for large that
 are only moderately large.  The gains are even larger when compared to a call
@@ -104,6 +104,6 @@ that does not use an existing array due to array creation overhead.
 .. code-block:: ipython
 
     In [6]: rg = Generator(PCG64())
-        ...: %timeit rg.standard_normal(10000000)
+       ...: %timeit rg.standard_normal(10000000)
 
-    125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
