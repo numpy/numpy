@@ -4388,6 +4388,11 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyObject *m, *d, *s;
     PyObject *c_api;
 
+    /* Initialize CPU features */
+    if (npy_cpu_init() < 0) {
+        goto err;
+    }
+
     /* Create the module and add the functions */
     m = PyModule_Create(&moduledef);
     if (!m) {
@@ -4511,6 +4516,16 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     s = PyUString_FromString("3.1");
     PyDict_SetItemString(d, "__version__", s);
+    Py_DECREF(s);
+
+    s = npy_cpu_features_dict();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_features__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
     Py_DECREF(s);
 
     s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
