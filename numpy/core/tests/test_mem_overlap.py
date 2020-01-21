@@ -42,9 +42,7 @@ def _indices_for_axis():
     res = []
     for nelems in (0, 2, 3):
         ind = _indices_for_nelems(nelems)
-
-        # no itertools.product available in Py2.4
-        res.extend([(a, b) for a in ind for b in ind])  # all assignments of size "nelems"
+        res.extend(itertools.product(ind, ind))  # all assignments of size "nelems"
 
     return res
 
@@ -53,18 +51,7 @@ def _indices(ndims):
     """Returns ((axis0_src, axis0_dst), (axis1_src, axis1_dst), ... ) index pairs."""
 
     ind = _indices_for_axis()
-
-    # no itertools.product available in Py2.4
-
-    res = [[]]
-    for i in range(ndims):
-        newres = []
-        for elem in ind:
-            for others in res:
-                newres.append([elem] + others)
-        res = newres
-
-    return res
+    return itertools.product(ind, repeat=ndims)
 
 
 def _check_assignment(srcidx, dstidx):
