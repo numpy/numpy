@@ -1813,21 +1813,21 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         }
         /* If object arrays are forced */
         if (is_object != DISCOVERED_OK) {
-            static PyObject * visibleDeprecationWarning = NULL;
+            static PyObject *visibleDeprecationWarning = NULL;
             npy_cache_import(
                 "numpy", "VisibleDeprecationWarning",
                 &visibleDeprecationWarning);
             if (visibleDeprecationWarning == NULL) {
                 return -1;
-                }
+            }
             if (is_object == DISCOVERED_RAGGED && requested_dtype == NULL) {
                 /* NumPy 1.19, 2019-11-01 */
                 if (PyErr_WarnEx(visibleDeprecationWarning, "Creating an "
-                    "ndarray from ragged nested sequences (which is a "
-                    "list-or-tuple of lists-or-tuples-or ndarrays with "
-                    "different lengths or shapes) is deprecated. If you "
-                    "meant to do this, you must specify 'dtype=object' when "
-                    "creating the ndarray", 1) < 0)
+                        "ndarray from ragged nested sequences (which is a "
+                        "list-or-tuple of lists-or-tuples-or ndarrays with "
+                        "different lengths or shapes) is deprecated. If you "
+                        "meant to do this, you must specify 'dtype=object' "
+                        "when creating the ndarray", 1) < 0)
                 {
                     return -1;
                 }
