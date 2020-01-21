@@ -1559,7 +1559,6 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     return ret;
 }
 
-
 #define STRIDING_OK(op, order) \
                 ((order) == NPY_ANYORDER || \
                  (order) == NPY_KEEPORDER || \

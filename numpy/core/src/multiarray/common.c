@@ -890,5 +890,3 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
     }
 }
 
-
-
