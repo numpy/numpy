@@ -81,7 +81,11 @@ Implementation
 --------------
 
 The code to be changed is inside ``PyArray_GetArrayParamsFromObject`` and the
-internal ``discover_dimentions`` function. See `PR 14794`_.
+internal ``discover_dimensions`` function. The first implementation in `PR
+14794`_ caused a number of downstream library failures and was reverted before
+the release of 1.18. Subsequently downstream libraries fixed the places they
+were using ragged arrays. The reimplementation became `PR 15119`_ which was
+merged for the 1.19 release.
 
 Backward compatibility
 ----------------------
@@ -127,6 +131,7 @@ References and Footnotes
 .. _`issue 5303`: https://github.com/numpy/numpy/issues/5303
 .. _sequences: https://docs.python.org/3.7/glossary.html#term-sequence
 .. _`PR 14794`: https://github.com/numpy/numpy/pull/14794
+.. _`PR 15119`: https://github.com/numpy/numpy/pull/15119
 .. _`another library`: https://github.com/scikit-hep/awkward-array
 
 .. [0] ``np.ndarrays`` are not recursed into, rather their shape is used
