@@ -1,6 +1,6 @@
 # Colored log, requires Python 2.3 or up.
 import sys
-from distutils.log import *
+from distutils.log import *  # noqa: F403
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
 

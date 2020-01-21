@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # System imports
-from distutils.core import *
+from distutils.core import Extension, setup
 from distutils      import sysconfig
 
 # Third-party modules - we depend on numpy for everything
