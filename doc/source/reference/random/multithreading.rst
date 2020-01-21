@@ -19,24 +19,26 @@ seed will produce the same outputs.
 
 .. code-block:: ipython
 
-    from numpy.random import Generator, PCG64
+    from numpy.random import default_rng, PCG64
     import multiprocessing
     import concurrent.futures
     import numpy as np
 
     class MultithreadedRNG:
         def __init__(self, n, seed=None, threads=None):
-            rg = PCG64(seed)
+            bg = PCG64(seed)
             if threads is None:
                 threads = multiprocessing.cpu_count()
             self.threads = threads
 
-            self._random_generators = [rg]
-            last_rg = rg
+            self._random_generators = [bg]
+            last_bg = bg
             for _ in range(0, threads-1):
-                new_rg = last_rg.jumped()
-                self._random_generators.append(new_rg)
-                last_rg = new_rg
+                new_bg = last_bg.jumped()
+                self._random_generators.append(new_bg)
+                last_bg = new_bg
+            self._random_generators = [default_rng(bg) for bg in
+                                       self._random_generators]
 
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
@@ -61,6 +63,7 @@ seed will produce the same outputs.
             self.executor.shutdown(False)
 
 
+
 The multithreaded random number generator can be used to fill an array.
 The ``values`` attributes shows the zero-value before the fill and the
 random value after.
@@ -73,7 +76,7 @@ random value after.
 
     In [3]: mrng.fill()
         ...: print(mrng.values[-1])
-    3.296046120254392
+    -0.40807406258535955
 
 The time required to produce using multiple threads can be compared to
 the time required to generate using a single thread.
@@ -91,7 +94,7 @@ The single threaded call directly uses the BitGenerator.
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-        ...: rg = Generator(PCG64())
+        ...: rg = default_rng(PCG64())
         ...: %timeit rg.standard_normal(out=values)
 
     99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -102,7 +105,7 @@ that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = Generator(PCG64())
+    In [6]: rg = default_rng(PCG64())
         ...: %timeit rg.standard_normal(10000000)
 
     125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
