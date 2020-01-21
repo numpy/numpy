@@ -186,9 +186,8 @@ class TestExecCommand:
         with tempdir() as tmpdir:
             fn = "file"
             tmpfile = os.path.join(tmpdir, fn)
-            f = open(tmpfile, 'w')
-            f.write('Hello')
-            f.close()
+            with open(tmpfile, 'w') as f:
+                f.write('Hello')
 
             s, o = exec_command.exec_command(
                  '"%s" -c "f = open(\'%s\', \'r\'); f.close()"' %
