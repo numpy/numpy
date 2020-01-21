@@ -1319,7 +1319,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     delimiter = asstr(delimiter)
 
     class WriteWrap:
-        """Convert to unicode in py2 or to bytes on bytestream inputs.
+        """Convert to bytes on bytestream inputs.
 
         """
         def __init__(self, fh, encoding):
