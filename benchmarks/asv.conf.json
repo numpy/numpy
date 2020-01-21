@@ -42,7 +42,6 @@
     // list indicates to just test against the default (latest)
     // version.
     "matrix": {
-    	"six": [],
         "Cython": [],
     },
 
