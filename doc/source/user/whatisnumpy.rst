@@ -1,3 +1,5 @@
+.. _whatisnumpy:
+
 **************
 What is NumPy?
 **************

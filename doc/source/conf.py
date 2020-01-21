@@ -179,6 +179,7 @@ latex_elements = {
 latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
 % header
+\usepackage{xcolor}
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}

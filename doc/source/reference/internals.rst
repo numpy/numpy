@@ -1,3 +1,5 @@
+.. _numpy-internals:
+
 ***************
 NumPy internals
 ***************
