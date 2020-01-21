@@ -838,7 +838,7 @@ def npy_ctypes_check(cls):
             # # (..., _ctypes._CData, object)
             ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
-        return 'ctypes' in ctype_base.__module__
+        return '_ctypes' in ctype_base.__module__
     except Exception:
         return False
 

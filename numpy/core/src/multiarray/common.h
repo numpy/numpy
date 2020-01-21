@@ -235,7 +235,7 @@ npy_uint_alignment(int itemsize)
         default:
             break;
     }
-    
+
     return alignment;
 }
 
@@ -343,3 +343,4 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
 
 #endif
+
