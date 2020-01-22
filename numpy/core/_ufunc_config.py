@@ -3,12 +3,7 @@ Functions for changing global ufunc configuration
 
 This provides helpers which wrap `umath.geterrobj` and `umath.seterrobj`
 """
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc
 import contextlib
 
 from .overrides import set_module
@@ -307,8 +302,9 @@ def seterrcall(func):
     OrderedDict([('divide', 'log'), ('invalid', 'log'), ('over', 'log'), ('under', 'log')])
 
     """
-    if func is not None and not isinstance(func, collections_abc.Callable):
-        if not hasattr(func, 'write') or not isinstance(func.write, collections_abc.Callable):
+    if func is not None and not isinstance(func, collections.abc.Callable):
+        if (not hasattr(func, 'write') or
+                not isinstance(func.write, collections.abc.Callable)):
             raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()
