@@ -12,31 +12,27 @@ these requirements.
 This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
 using multiple threads.  Threads are long-lived so that repeated calls do not
 require any additional overheads from thread creation. The underlying
-BitGenerator is `PCG64` which is fast, has a long period and supports
-using `PCG64.jumped` to return a new generator while advancing the
-state. The random numbers generated are reproducible in the sense that the same
-seed will produce the same outputs.
+BitGenerator is `PCG64` is fast, has a long period and is seeded by quasi-independent
+seeds of a `~SeedSequence`.
+
+The random numbers generated are reproducible in the sense that the same
+seed will produce the same outputs, given that the number of threads does not change.
 
 .. code-block:: ipython
 
-    from numpy.random import Generator, PCG64
+    from numpy.random import Generator, PCG64, SeedSequence
     import multiprocessing
     import concurrent.futures
     import numpy as np
 
     class MultithreadedRNG:
         def __init__(self, n, seed=None, threads=None):
-            bg = PCG64(seed)
             if threads is None:
                 threads = multiprocessing.cpu_count()
             self.threads = threads
 
-            self._random_generators = [Generator(bg)]
-            last_bg = bg
-            for _ in range(0, threads-1):
-                new_bg = last_bg.jumped()
-                self._random_generators.append(Generator(new_bg))
-                last_bg = new_bg
+            seq = SeedSequence(seed)
+            self._random_generators = [Generator(PCG64(s)) for s in seq.spawn(threads)]
 
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
@@ -68,13 +64,13 @@ random value after.
 
 .. code-block:: ipython
 
-    In [2]: mrng = MultithreadedRNG(10000000, seed=0)
+    In [2]: mrng = MultithreadedRNG(10000000, seed=12345)
        ...: print(mrng.values[-1])
     Out[2]: 0.0
 
     In [3]: mrng.fill()
        ...: print(mrng.values[-1])
-    Out[3]: -0.40807406258535955
+    Out[3]: 2.4545724517479104
 
 The time required to produce using multiple threads can be compared to
 the time required to generate using a single thread.
@@ -97,8 +93,8 @@ The single threaded call directly uses the BitGenerator.
 
     Out[5]: 99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
-The gains are substantial and the scaling is reasonable even for large that
-are only moderately large.  The gains are even larger when compared to a call
+The gains are substantial and the scaling is reasonable even for arrays that
+are only moderately large. The gains are even larger when compared to a call
 that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
@@ -107,3 +103,11 @@ that does not use an existing array due to array creation overhead.
        ...: %timeit rg.standard_normal(10000000)
 
     Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+Note that if `threads` is not set by the user, it will be determined by the architecture
+
+.. code-block:: ipython
+    In [7]: # simulate the behavior for `threads=None`, if the machine had only one thread
+       ...: mrng = MultithreadedRNG(10000000, seed=12345, threads=1)
+       ...: print(mrng.values[-1])
+    Out[7]: 1.1800150052158556
