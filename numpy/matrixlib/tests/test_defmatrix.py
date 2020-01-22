@@ -1,9 +1,4 @@
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc
 
 import numpy as np
 from numpy import matrix, asmatrix, bmat
@@ -297,7 +292,7 @@ class TestMatrixReturn:
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
-            if isinstance(f, collections_abc.Callable):
+            if isinstance(f, collections.abc.Callable):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)

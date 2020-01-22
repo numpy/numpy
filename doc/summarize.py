@@ -6,12 +6,8 @@ Show a summary about which NumPy functions are documented and which are not.
 
 """
 import os, glob, re, sys, inspect, optparse
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc
+
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sphinxext'))
 from sphinxext.phantom_import import import_phantom_module
 
@@ -139,7 +135,9 @@ def get_undocumented(documented, module, module_name=None, skip=[]):
 
         if full_name in skip: continue
         if full_name.startswith('numpy.') and full_name[6:] in skip: continue
-        if not (inspect.ismodule(obj) or isinstance(obj, collections_abc.Callable) or inspect.isclass(obj)):
+        if not (inspect.ismodule(obj) or
+                isinstance(obj, collections.abc.Callable) or
+                inspect.isclass(obj)):
             continue
 
         if full_name not in documented:
