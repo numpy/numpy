@@ -2563,20 +2563,18 @@ object_arrtype_dealloc(PyObject *v)
  */
 
 #define _WORK(num)  \
-    if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) { \
-        PyTypeObject *sup; \
-        /* We are inheriting from a Python type as well so \
-           give it first dibs on conversion */ \
-        sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
-        /* Prevent recursion */ \
-        if (thisfunc != sup->tp_new) { \
-            robj = sup->tp_new(type, args, kwds); \
-            if (robj != NULL) goto finish;        \
-            if (PyTuple_GET_SIZE(args)!=1) return NULL; \
-            PyErr_Clear(); \
-        } \
-        /* now do default conversion */ \
-    }
+    assert(type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases) == 2)); \
+    /* We are inheriting from a Python type as well so \
+       give it first dibs on conversion */ \
+    PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
+    /* Prevent recursion */ \
+    if (thisfunc != sup->tp_new) { \
+        robj = sup->tp_new(type, args, kwds); \
+        if (robj != NULL) goto finish;        \
+        if (PyTuple_GET_SIZE(args) != 1) return NULL; \
+        PyErr_Clear(); \
+    } \
+    /* now do default conversion */
 
 #define _WORK1 _WORK(1)
 #define _WORKz _WORK(0)
@@ -2592,7 +2590,7 @@ object_arrtype_dealloc(PyObject *v)
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
  *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
  *         CLONGDOUBLE, STRING, UNICODE, OBJECT#
- * #work = 0,0,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
+ * #work = 0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
  * #default = 0*17,1*2,2#
  */
 
