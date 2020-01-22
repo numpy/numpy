@@ -45,7 +45,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         type_num = descr->type_num;
     }
     switch (type_num) {
-#define CASE(ut,lt) case NPY_##ut: return &(((Py##lt##ScalarObject *)scalar)->obval)
+#define CASE(ut,lt) case NPY_##ut: return &PyArrayScalar_VAL(scalar, lt)
         CASE(BOOL, Bool);
         CASE(BYTE, Byte);
         CASE(UBYTE, UByte);
@@ -73,7 +73,8 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         case NPY_UNICODE:
             return (void *)PyUnicode_AS_DATA(scalar);
         case NPY_VOID:
-            return ((PyVoidScalarObject *)scalar)->obval;
+            /* Note: no & needed here, so can't use CASE */
+            return PyArrayScalar_VAL(scalar, Void);
     }
 
     /*
@@ -81,14 +82,13 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
      * scalar it inherits from.
      */
 
-#define _CHK(cls) (PyObject_IsInstance(scalar, \
-            (PyObject *)&Py##cls##ArrType_Type))
-#define _OBJ(lt) &(((Py##lt##ScalarObject *)scalar)->obval)
-#define _IFCASE(cls) if _CHK(cls) return _OBJ(cls)
+#define _CHK(cls) PyObject_IsInstance(scalar, \
+            (PyObject *)&Py##cls##ArrType_Type)
+#define _IFCASE(cls) if (_CHK(cls)) return &PyArrayScalar_VAL(scalar, cls)
 
-    if _CHK(Number) {
-        if _CHK(Integer) {
-            if _CHK(SignedInteger) {
+    if (_CHK(Number)) {
+        if (_CHK(Integer)) {
+            if (_CHK(SignedInteger)) {
                 _IFCASE(Byte);
                 _IFCASE(Short);
                 _IFCASE(Int);
@@ -107,7 +107,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         }
         else {
             /* Inexact */
-            if _CHK(Floating) {
+            if (_CHK(Floating)) {
                 _IFCASE(Half);
                 _IFCASE(Float);
                 _IFCASE(Double);
@@ -122,10 +122,10 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         }
     }
     else if (_CHK(Bool)) {
-        return _OBJ(Bool);
+        return &PyArrayScalar_VAL(scalar, Bool);
     }
     else if (_CHK(Datetime)) {
-        return _OBJ(Datetime);
+        return &PyArrayScalar_VAL(scalar, Datetime);
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
@@ -135,7 +135,8 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
             return (void *)PyUnicode_AS_DATA(scalar);
         }
         if (_CHK(Void)) {
-            return ((PyVoidScalarObject *)scalar)->obval;
+            /* Note: no & needed here, so can't use _IFCASE */
+            return PyArrayScalar_VAL(scalar, Void);
         }
     }
     else {
@@ -156,7 +157,6 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     return (void *)memloc;
 #undef _IFCASE
-#undef _OBJ
 #undef _CHK
 }
 
