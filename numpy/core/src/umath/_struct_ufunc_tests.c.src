@@ -17,8 +17,10 @@
  * docs.python.org .
  */
 
-static void add_uint64_triplet(char **args, npy_intp *dimensions,
-                            npy_intp* steps, void* data)
+static void add_uint64_triplet(char **args,
+                               npy_intp const *dimensions,
+                               npy_intp const* steps,
+                               void* data)
 {
     npy_intp i;
     npy_intp is1=steps[0];

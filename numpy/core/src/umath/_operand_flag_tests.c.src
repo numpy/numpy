@@ -14,7 +14,7 @@ static PyMethodDef TestMethods[] = {
 
 
 static void
-inplace_add(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
+inplace_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void *data)
 {
     npy_intp i;
     npy_intp n = dimensions[0];

@@ -936,8 +936,8 @@ DEFINE_CAST(npy_bool,rational,rational y = make_rational_int(x);)
 DEFINE_CAST(rational,npy_bool,npy_bool y = rational_nonzero(x);)
 
 #define BINARY_UFUNC(name,intype0,intype1,outtype,exp) \
-    void name(char** args, npy_intp* dimensions, \
-              npy_intp* steps, void* data) { \
+    void name(char** args, npy_intp const *dimensions, \
+              npy_intp const *steps, void* data) { \
         npy_intp is0 = steps[0], is1 = steps[1], \
             os = steps[2], n = *dimensions; \
         char *i0 = args[0], *i1 = args[1], *o = args[2]; \
@@ -972,8 +972,8 @@ BINARY_UFUNC(gcd_ufunc,npy_int64,npy_int64,npy_int64,gcd(x,y))
 BINARY_UFUNC(lcm_ufunc,npy_int64,npy_int64,npy_int64,lcm(x,y))
 
 #define UNARY_UFUNC(name,type,exp) \
-    void rational_ufunc_##name(char** args, npy_intp* dimensions, \
-                               npy_intp* steps, void* data) { \
+    void rational_ufunc_##name(char** args, npy_intp const *dimensions, \
+                               npy_intp const *steps, void* data) { \
         npy_intp is = steps[0], os = steps[1], n = *dimensions; \
         char *i = args[0], *o = args[1]; \
         int k; \
@@ -996,7 +996,7 @@ UNARY_UFUNC(numerator,npy_int64,x.n)
 UNARY_UFUNC(denominator,npy_int64,d(x))
 
 static NPY_INLINE void
-rational_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps)
+rational_matrix_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     /* pointers to data for input and output arrays */
     char *ip1 = args[0];
@@ -1041,8 +1041,8 @@ rational_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps)
 
 
 static void
-rational_gufunc_matrix_multiply(char **args, npy_intp *dimensions,
-                                npy_intp *steps, void *NPY_UNUSED(func))
+rational_gufunc_matrix_multiply(char **args, npy_intp const *dimensions,
+                                npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /* outer dimensions counter */
     npy_intp N_;
@@ -1066,8 +1066,8 @@ rational_gufunc_matrix_multiply(char **args, npy_intp *dimensions,
 
 
 static void
-rational_ufunc_test_add(char** args, npy_intp* dimensions,
-                        npy_intp* steps, void* data) {
+rational_ufunc_test_add(char** args, npy_intp const *dimensions,
+                        npy_intp const *steps, void* data) {
     npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions;
     char *i0 = args[0], *i1 = args[1], *o = args[2];
     int k;
@@ -1082,8 +1082,8 @@ rational_ufunc_test_add(char** args, npy_intp* dimensions,
 
 
 static void
-rational_ufunc_test_add_rationals(char** args, npy_intp* dimensions,
-                        npy_intp* steps, void* data) {
+rational_ufunc_test_add_rationals(char** args, npy_intp const *dimensions,
+                        npy_intp const *steps, void* data) {
     npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions;
     char *i0 = args[0], *i1 = args[1], *o = args[2];
     int k;
