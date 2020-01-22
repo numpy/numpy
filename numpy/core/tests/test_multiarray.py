@@ -1,9 +1,4 @@
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc
 import tempfile
 import sys
 import shutil
@@ -7756,7 +7751,7 @@ class TestHashing:
 
     def test_collections_hashable(self):
         x = np.array([])
-        assert_(not isinstance(x, collections_abc.Hashable))
+        assert_(not isinstance(x, collections.abc.Hashable))
 
 
 class TestArrayPriority:

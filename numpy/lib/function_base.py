@@ -1,9 +1,4 @@
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc
 import functools
 import re
 import sys
@@ -613,7 +608,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not isinstance(item, collections_abc.Callable):
+        if not isinstance(item, collections.abc.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]
