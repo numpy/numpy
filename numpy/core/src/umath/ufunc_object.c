@@ -3502,11 +3502,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
         strides_copy[2] = strides[0];
 
         if (!masked) {
-            /* gh-15252: The signature of the inner loop considers `countptr`
-             * mutable. Inner loops aren't actually allowed to modify this
-             * though, so it's fine to cast it.
-             */
-            innerloop(dataptrs_copy, (npy_intp *)countptr,
+            innerloop(dataptrs_copy, countptr,
                       strides_copy, innerloopdata);
         }
         else {
