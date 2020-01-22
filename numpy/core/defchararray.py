@@ -1908,7 +1908,7 @@ class chararray(ndarray):
     unicode : bool, optional
         Are the array elements of type unicode (True) or string (False).
         Default is False.
-    buffer : int or str or bytes, optional
+    buffer : object exposing the buffer interface or str, optional
         Memory address of the start of the array data.  Default is None,
         in which case a new array is created.
     offset : int, optional
