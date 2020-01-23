@@ -7,8 +7,8 @@ by importing from the extension module.
 """
 
 from . import _multiarray_umath
-from numpy.core._multiarray_umath import *
-from numpy.core._multiarray_umath import (
+from ._multiarray_umath import *  # noqa: F403
+from ._multiarray_umath import (
     _UFUNC_API, _add_newdoc_ufunc, _ones_like
     )
 

@@ -3,7 +3,7 @@ import platform
 from os import path
 import sys
 import pytest
-from ctypes import *
+from ctypes import c_float, c_int, cast, pointer, POINTER
 from numpy.testing import assert_array_max_ulp
 
 runtest = sys.platform.startswith('linux') and (platform.machine() == 'x86_64')

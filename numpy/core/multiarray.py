@@ -14,8 +14,8 @@ import sys
 from . import overrides
 from . import _multiarray_umath
 import numpy as np
-from numpy.core._multiarray_umath import *
-from numpy.core._multiarray_umath import (
+from ._multiarray_umath import *  # noqa: F403
+from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
     _ARRAY_API, _monotonicity, _get_ndarray_c_version
     )

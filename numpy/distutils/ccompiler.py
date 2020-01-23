@@ -7,9 +7,14 @@ import time
 import subprocess
 from copy import copy
 from distutils import ccompiler
-from distutils.ccompiler import *
-from distutils.errors import DistutilsExecError, DistutilsModuleError, \
-                             DistutilsPlatformError, CompileError
+from distutils.ccompiler import (
+    compiler_class, gen_lib_options, get_default_compiler, new_compiler,
+    CCompiler
+)
+from distutils.errors import (
+    DistutilsExecError, DistutilsModuleError, DistutilsPlatformError,
+    CompileError, UnknownFileError
+)
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
