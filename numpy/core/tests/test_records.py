@@ -1,10 +1,10 @@
 import collections.abc
 import textwrap
 from os import path
+from pathlib import Path
 import pytest
 
 import numpy as np
-from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath,
@@ -313,7 +313,6 @@ class TestFromrecords:
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
 class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):

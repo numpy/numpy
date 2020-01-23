@@ -4744,7 +4744,7 @@ class MaskedArray(ndarray):
 
         >>> x = np.ma.array([1, 2, 3])
         >>> x.ids()
-        (166691080, 3083169284L) # may vary
+        (166691080, 3083169284) # may vary
 
         """
         if self._mask is nomask:
