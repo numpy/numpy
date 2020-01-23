@@ -11,16 +11,15 @@ these requirements.
 
 This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
 using multiple threads.  Threads are long-lived so that repeated calls do not
-require any additional overheads from thread creation. The underlying
-BitGenerator is `PCG64` is fast, has a long period and is seeded by quasi-independent
-seeds of a `~SeedSequence`.
+require any additional overheads from thread creation.
 
 The random numbers generated are reproducible in the sense that the same
-seed will produce the same outputs, given that the number of threads does not change.
+seed will produce the same outputs, given that the number of threads does not
+change.
 
 .. code-block:: ipython
 
-    from numpy.random import Generator, PCG64, SeedSequence
+    from numpy.random import default_rng, PCG64, SeedSequence
     import multiprocessing
     import concurrent.futures
     import numpy as np
@@ -32,7 +31,8 @@ seed will produce the same outputs, given that the number of threads does not ch
             self.threads = threads
 
             seq = SeedSequence(seed)
-            self._random_generators = [Generator(PCG64(s)) for s in seq.spawn(threads)]
+            self._random_generators = [default_rng(s)
+                                       for s in seq.spawn(threads)]
 
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
@@ -88,7 +88,7 @@ The single threaded call directly uses the BitGenerator.
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-       ...: rg = Generator(PCG64())
+       ...: rg = default_rng(PCG64())
        ...: %timeit rg.standard_normal(out=values)
 
     Out[5]: 99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -99,12 +99,13 @@ that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = Generator(PCG64())
+    In [6]: rg = default_rng(PCG64())
        ...: %timeit rg.standard_normal(10000000)
 
     Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
-Note that if `threads` is not set by the user, it will be determined by the architecture
+Note that if `threads` is not set by the user, it will be determined by
+`multiprocessing.cpu_count()`.
 
 .. code-block:: ipython
     In [7]: # simulate the behavior for `threads=None`, if the machine had only one thread
