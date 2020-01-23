@@ -1,7 +1,7 @@
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import (
-    long, basestring, os_fspath, contextlib_nullcontext, is_pathlib_path
+    long, os_fspath, contextlib_nullcontext, is_pathlib_path
 )
 from numpy.core.overrides import set_module
 
@@ -271,7 +271,7 @@ class memmap(ndarray):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
                 self.filename = filename.resolve()
-            elif hasattr(fid, "name") and isinstance(fid.name, basestring):
+            elif hasattr(fid, "name") and isinstance(fid.name, str):
                 # py3 returns int for TemporaryFile().name
                 self.filename = os.path.abspath(fid.name)
             # same as memmap copies (e.g. memmap + 1)

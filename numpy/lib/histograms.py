@@ -7,7 +7,6 @@ import operator
 import warnings
 
 import numpy as np
-from numpy.compat.py3k import basestring
 from numpy.core import overrides
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
@@ -383,7 +382,7 @@ def _get_bin_edges(a, bins, range, weights):
     n_equal_bins = None
     bin_edges = None
 
-    if isinstance(bins, basestring):
+    if isinstance(bins, str):
         bin_name = bins
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated

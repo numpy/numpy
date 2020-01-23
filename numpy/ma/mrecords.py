@@ -17,7 +17,6 @@ import sys
 import warnings
 
 import numpy as np
-from numpy.compat import basestring
 from numpy import (
         bool_, dtype, ndarray, recarray, array as narray
         )
@@ -303,7 +302,7 @@ class MaskedRecords(MaskedArray):
         _mask = ndarray.__getattribute__(self, '_mask')
         _data = ndarray.view(self, _localdict['_baseclass'])
         # We want a field
-        if isinstance(indx, basestring):
+        if isinstance(indx, str):
             # Make sure _sharedmask is True to propagate back to _fieldmask
             # Don't use _set_mask, there are some copies being made that
             # break propagation Don't force the mask to nomask, that wreaks
@@ -330,7 +329,7 @@ class MaskedRecords(MaskedArray):
 
         """
         MaskedArray.__setitem__(self, indx, value)
-        if isinstance(indx, basestring):
+        if isinstance(indx, str):
             self._mask[indx] = ma.getmaskarray(value)
 
     def __str__(self):

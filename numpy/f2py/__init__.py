@@ -87,7 +87,7 @@ def compile(source,
 
         args = ['-c', '-m', modulename, f.name]
 
-        if isinstance(extra_args, np.compat.basestring):
+        if isinstance(extra_args, str):
             is_posix = (os.name == 'posix')
             extra_args = shlex.split(extra_args, posix=is_posix)
 
