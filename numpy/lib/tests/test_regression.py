@@ -1,5 +1,4 @@
 import os
-import sys
 
 import numpy as np
 from numpy.testing import (

@@ -4,10 +4,9 @@ import operator
 import sys
 import warnings
 import numbers
-import contextlib
 
 import numpy as np
-from numpy.compat import pickle, basestring
+from numpy.compat import basestring
 from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,

@@ -2,7 +2,6 @@
 import sys
 import warnings
 import copy
-import binascii
 import textwrap
 
 from numpy.distutils.misc_util import mingw32

@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 from numpy.compat import unicode
 from numpy.testing import assert_, assert_equal, assert_array_equal

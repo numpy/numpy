@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import gc
 import pytest
 
