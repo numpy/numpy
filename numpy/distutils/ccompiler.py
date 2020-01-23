@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import types
 import shlex
 import time
 import subprocess

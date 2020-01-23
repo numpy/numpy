@@ -837,7 +837,6 @@ class TestPrintOptions:
         assert_raises(TypeError, np.set_printoptions, threshold=b'1')
 
 def test_unicode_object_array():
-    import sys
     expected = "array(['é'], dtype=object)"
     x = np.array([u'\xe9'], dtype=object)
     assert_equal(repr(x), expected)

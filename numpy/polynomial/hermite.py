@@ -58,7 +58,6 @@ See also
 `numpy.polynomial`
 
 """
-import warnings
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index

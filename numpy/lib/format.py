@@ -599,7 +599,7 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
-    except TypeError as e:
+    except TypeError:
         msg = "descr is not a valid dtype descriptor: {!r}"
         raise ValueError(msg.format(d['descr']))
 

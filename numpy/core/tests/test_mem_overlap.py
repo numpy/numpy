@@ -1,4 +1,3 @@
-import sys
 import itertools
 import pytest
 
