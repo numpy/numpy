@@ -3935,20 +3935,18 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         # point operations and was proposed in:
         # https://math.stackexchange.com/a/1798323 by Pedro Gimeno
         diff_x2_x1 = x2 - x1
-        r_above = x1 + diff_x2_x1 * weights_above
-        r_below = x2 - diff_x2_x1 * weights_below
 
-        # ensure axis with q-th is first
-        r_above = np.moveaxis(r_above, axis, 0)
-        r_below = np.moveaxis(r_below, axis, 0)
+        x1 = np.moveaxis(x1, axis, 0)
+        x2 = np.moveaxis(x2, axis, 0)
+
+        r_above = np.add(x1, diff_x2_x1 * weights_above, out=out)
+        r_below = np.subtract(
+            x2, diff_x2_x1 * weights_below, out=r_above,
+            where=weights_above < 0.5
+        )
 
         if zerod:
-            weights_above = weights_above.squeeze(0)
-            weights_below = weights_below.squeeze(0)
             r_above = r_above.squeeze(0)
-            r_below = r_below.squeeze(0)
-
-        np.copyto(r_above, r_below, where=weights_above < 0.5)
 
         if out is not None:
             out[...] = r_above
