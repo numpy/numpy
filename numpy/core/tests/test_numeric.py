@@ -2015,7 +2015,7 @@ class TestClip:
     def test_NaT_propagation(self, arr, amin, amax):
         # NOTE: the expected function spec doesn't
         # propagate NaT, but clip() now does
-        expected = np.minimum(np.maximum(a, amin), amax)
+        expected = np.minimum(np.maximum(arr, amin), amax)
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
