@@ -2562,23 +2562,20 @@ object_arrtype_dealloc(PyObject *v)
  *  memory from the sub-types memory allocator.
  */
 
-#define _WORK(num)  \
-    assert(type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases) == 2)); \
+#define _WORK(cls, num)  \
+    assert(cls.tp_bases && (PyTuple_GET_SIZE(cls.tp_bases) == 2)); \
     /* We are inheriting from a Python type as well so \
        give it first dibs on conversion */ \
-    PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
-    /* Prevent recursion */ \
-    if (thisfunc != sup->tp_new) { \
-        robj = sup->tp_new(type, args, kwds); \
-        if (robj != NULL) goto finish;        \
-        if (PyTuple_GET_SIZE(args) != 1) return NULL; \
-        PyErr_Clear(); \
-    } \
+    PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(cls.tp_bases, num); \
+    robj = sup->tp_new(type, args, kwds); \
+    if (robj != NULL) goto finish;        \
+    if (PyTuple_GET_SIZE(args) != 1) return NULL; \
+    PyErr_Clear(); \
     /* now do default conversion */
 
-#define _WORK1 _WORK(1)
-#define _WORKz _WORK(0)
-#define _WORK0
+#define _WORK1(cls) _WORK(cls, 1)
+#define _WORKz(cls) _WORK(cls, 0)
+#define _WORK0(cls)
 
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
@@ -2608,9 +2605,6 @@ static PyObject *
     PyObject *robj;
     PyArrayObject *arr;
     PyArray_Descr *typecode = NULL;
-#if (@work@ != 0) || (@default@ == 1)
-    void *thisfunc = (void *)@name@_arrtype_new;
-#endif
 #if !(@default@ == 2)
     int itemsize;
     void *dest, *src;
@@ -2620,7 +2614,7 @@ static PyObject *
      * allow base-class (if any) to do conversion
      * If successful, this will jump to finish:
      */
-    _WORK@work@
+    _WORK@work@(Py@Name@ArrType_Type)
 
     /* TODO: include type name in error message, which is not @name@ */
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
