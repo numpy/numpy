@@ -108,6 +108,7 @@ Note that if `threads` is not set by the user, it will be determined by
 `multiprocessing.cpu_count()`.
 
 .. code-block:: ipython
+
     In [7]: # simulate the behavior for `threads=None`, if the machine had only one thread
        ...: mrng = MultithreadedRNG(10000000, seed=12345, threads=1)
        ...: print(mrng.values[-1])
