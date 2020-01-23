@@ -88,7 +88,7 @@ The single threaded call directly uses the BitGenerator.
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-       ...: rg = default_rng(PCG64())
+       ...: rg = default_rng()
        ...: %timeit rg.standard_normal(out=values)
 
     Out[5]: 99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -99,7 +99,7 @@ that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = default_rng(PCG64())
+    In [6]: rg = default_rng()
        ...: %timeit rg.standard_normal(10000000)
 
     Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
