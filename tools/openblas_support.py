@@ -4,14 +4,10 @@ import glob
 import shutil
 import textwrap
 import platform
-try:
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-except:
-    #Python2
-    from urllib2 import urlopen, HTTPError
 
 from tempfile import mkstemp, gettempdir
+from urllib.request import urlopen
+from urllib.error import HTTPError
 import zipfile
 import tarfile
 
