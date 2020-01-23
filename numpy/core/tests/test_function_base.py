@@ -4,7 +4,6 @@ from numpy import (
     )
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
-    suppress_warnings
     )
 
 

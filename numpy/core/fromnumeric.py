@@ -6,7 +6,6 @@ import types
 import warnings
 
 import numpy as np
-from .. import VisibleDeprecationWarning
 from . import multiarray as mu
 from . import overrides
 from . import umath as um

@@ -1,7 +1,6 @@
 """
 Test scalar buffer interface adheres to PEP 3118
 """
-import sys
 import numpy as np
 import pytest
 

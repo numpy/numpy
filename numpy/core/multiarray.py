@@ -7,13 +7,10 @@ by importing from the extension module.
 """
 
 import functools
-import sys
 import warnings
-import sys
 
 from . import overrides
 from . import _multiarray_umath
-import numpy as np
 from ._multiarray_umath import *  # noqa: F403
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,

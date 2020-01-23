@@ -1,13 +1,9 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-import sys
-import platform
-import pytest
-
 import numpy as np
 from numpy.testing import (
-    assert_equal, assert_almost_equal, assert_raises, assert_warns,
+    assert_equal, assert_almost_equal, assert_warns,
     )
 
 class TestFromString:

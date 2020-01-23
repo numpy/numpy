@@ -1,18 +1,14 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-import os
 import fractions
 import platform
 
 import pytest
 import numpy as np
 
-from numpy.testing import (
-    run_module_suite,
-    assert_equal, assert_almost_equal, assert_raises, assert_warns,
-    dec
-)
+from numpy.testing import assert_equal, assert_raises
+
 
 class TestAsIntegerRatio:
     # derived in part from the cpython test "test_floatasratio"

@@ -4,11 +4,9 @@ to document how deprecations should eventually be turned into errors.
 
 """
 import datetime
-import sys
 import operator
 import warnings
 import pytest
-import shutil
 import tempfile
 
 import numpy as np

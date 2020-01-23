@@ -36,7 +36,6 @@ Example::
 """
 import os
 import sys
-import warnings
 import shutil
 import io
 from contextlib import closing
