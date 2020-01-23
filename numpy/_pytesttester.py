@@ -125,13 +125,6 @@ class PytestTester:
         import pytest
         import warnings
 
-        #FIXME This is no longer needed? Assume it was for use in tests.
-        # cap verbosity at 3, which is equivalent to the pytest '-vv' option
-        #from . import utils
-        #verbose = min(int(verbose), 3)
-        #utils.verbose = verbose
-        #
-
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
 
@@ -161,16 +154,6 @@ class PytestTester:
         pytest_args += [
             "-W ignore:the matrix subclass is not",
             ]
-
-        # Ignore python2.7 -3 warnings
-        pytest_args += [
-            r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:the commands module has been removed in Python 3\.0:DeprecationWarning",
-            r"-W ignore:The 'new' module has been removed in Python 3\.0:DeprecationWarning",
-            ]
-
 
         if doctests:
             raise ValueError("Doctests not supported")
