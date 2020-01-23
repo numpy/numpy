@@ -13,7 +13,6 @@ from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
-from numpy.compat import basestring
 from numpy.testing import suppress_warnings
 
 _check_fill_value = np.ma.core._check_fill_value
@@ -299,7 +298,7 @@ def _izip_fields(iterable):
     """
     for element in iterable:
         if (hasattr(element, '__iter__') and
-                not isinstance(element, basestring)):
+                not isinstance(element, str)):
             for f in _izip_fields(element):
                 yield f
         elif isinstance(element, np.void) and len(tuple(element)) == 1:
@@ -698,7 +697,7 @@ def append_fields(base, names, data, dtypes=None,
         if len(names) != len(data):
             msg = "The number of arrays does not match the number of names"
             raise ValueError(msg)
-    elif isinstance(names, basestring):
+    elif isinstance(names, str):
         names = [names, ]
         data = [data, ]
     #
@@ -1455,7 +1454,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
                 "'outer' or 'leftouter' (got '%s' instead)" % jointype
                 )
     # If we have a single key, put it in a tuple
-    if isinstance(key, basestring):
+    if isinstance(key, str):
         key = (key,)
 
     # Check the keys

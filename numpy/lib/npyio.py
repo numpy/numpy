@@ -23,7 +23,7 @@ from ._iotools import (
     )
 
 from numpy.compat import (
-    asbytes, asstr, asunicode, bytes, basestring, os_fspath, os_PathLike,
+    asbytes, asstr, asunicode, bytes, os_fspath, os_PathLike,
     pickle, contextlib_nullcontext
     )
 
@@ -918,7 +918,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     """
     # Type conversions for Py3 convenience
     if comments is not None:
-        if isinstance(comments, (basestring, bytes)):
+        if isinstance(comments, (str, bytes)):
             comments = [comments]
         comments = [_decode_line(x) for x in comments]
         # Compile regex for comments beforehand
@@ -1391,7 +1391,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = asstr(delimiter).join(map(asstr, fmt))
-        elif isinstance(fmt, basestring):
+        elif isinstance(fmt, str):
             n_fmt_chars = fmt.count('%')
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
             if n_fmt_chars == 1:
@@ -1747,7 +1747,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         if isinstance(fname, os_PathLike):
             fname = os_fspath(fname)
-        if isinstance(fname, basestring):
+        if isinstance(fname, str):
             fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
             fid_ctx = contextlib.closing(fid)
         else:
@@ -1889,7 +1889,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 if value not in entry:
                     entry.append(value)
         # We have a string : apply it to all entries
-        elif isinstance(user_missing_values, basestring):
+        elif isinstance(user_missing_values, str):
             user_value = user_missing_values.split(",")
             for entry in missing_values:
                 entry.extend(user_value)

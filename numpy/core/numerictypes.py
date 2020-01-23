@@ -391,7 +391,7 @@ def issubdtype(arg1, arg2):
         if not isinstance(arg2_orig, dtype):
             # weird deprecated behaviour, that tried to infer np.floating from
             # float, and similar less obvious things, such as np.generic from
-            # basestring
+            # str.
             mro = arg2.mro()
             arg2 = mro[1] if len(mro) > 1 else mro[0]
 
