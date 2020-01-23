@@ -108,14 +108,14 @@ class FCompiler(CCompiler):
 
     command_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None, False),
-        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None, False),
-        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None, False),
+        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', _shell_utils.NativeParser.split, False),
+        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', _shell_utils.NativeParser.split, False),
+        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', _shell_utils.NativeParser.split, False),
         version_cmd = ('exe.version_cmd', None, None, None, False),
-        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None, False),
-        linker_exe = ('exe.linker_exe', 'LD', 'ld', None, False),
-        archiver = (None, 'AR', 'ar', None, False),
-        ranlib = (None, 'RANLIB', 'ranlib', None, False),
+        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', _shell_utils.NativeParser.split, False),
+        linker_exe = ('exe.linker_exe', 'LD', 'ld', _shell_utils.NativeParser.split, False),
+        archiver = (None, 'AR', 'ar', _shell_utils.NativeParser.split, False),
+        ranlib = (None, 'RANLIB', 'ranlib', _shell_utils.NativeParser.split, False),
     )
 
     flag_vars = EnvironmentConfig(
@@ -307,35 +307,37 @@ class FCompiler(CCompiler):
                 raise ValueError(
                     "%s value %r is invalid in class %s" %
                     (name, value, self.__class__.__name__))
-        def set_exe(exe_key, f77=None, f90=None):
+        def set_exe(exe_key, f77=[None], f90=[None]):
             cmd = self.executables.get(exe_key, None)
             if not cmd:
                 return None
-            # Note that we get cmd[0] here if the environment doesn't
+            # Note that we get cmd here if the environment doesn't
             # have anything set
-            exe_from_environ = getattr(self.command_vars, exe_key)
-            if not exe_from_environ:
-                possibles = [f90, f77] + self.possible_executables
+            cmd_from_environ = getattr(self.command_vars, exe_key)
+            if cmd_from_environ is None or cmd_from_environ[0] is None:
+                possibles = [f90, f77] + [[p] for p in self.possible_executables]
             else:
-                possibles = [exe_from_environ] + self.possible_executables
+                possibles = [cmd_from_environ] + [[p] for p in self.possible_executables]
 
             seen = set()
             unique_possibles = []
             for e in possibles:
-                if e == '<F77>':
-                    e = f77
-                elif e == '<F90>':
-                    e = f90
-                if not e or e in seen:
+                if e[0] == '<F77>':
+                    e = f77 + e[1:]
+                elif e[0] == '<F90>':
+                    e = f90 + e[1:]
+                if e[0] is None or tuple(e) in seen:
                     continue
-                seen.add(e)
-                unique_possibles.append(e)
+                seen.add(tuple(e))
+                unique_possibles.append(e[:])
 
-            for exe in unique_possibles:
-                fc_exe = cached_find_executable(exe)
-                if fc_exe:
-                    cmd[0] = fc_exe
-                    return fc_exe
+            for pos_cmd in unique_possibles:
+                # resolve the binary
+                pos_cmd[0] = cached_find_executable(pos_cmd[0])
+                if pos_cmd[0] is not None:
+                    # TODO: this can result in repetition if pos_cmd == cmd_from_environ
+                    cmd[:1] = pos_cmd
+                    return cmd
             self.set_command(exe_key, None)
             return None
 
@@ -472,10 +474,8 @@ class FCompiler(CCompiler):
         fixflags = []
 
         if f77:
-            f77 = _shell_utils.NativeParser.split(f77)
             f77flags = self.flag_vars.f77
         if f90:
-            f90 = _shell_utils.NativeParser.split(f90)
             f90flags = self.flag_vars.f90
             freeflags = self.flag_vars.free
         # XXX Assuming that free format is default for f90 compiler.
@@ -488,7 +488,6 @@ class FCompiler(CCompiler):
         # should perhaps eventually be more thoroughly tested and more
         # robustly handled
         if fix:
-            fix = _shell_utils.NativeParser.split(fix)
             fixflags = self.flag_vars.fix + f90flags
 
         oflags, aflags, dflags = [], [], []
@@ -697,7 +696,7 @@ class FCompiler(CCompiler):
                 hook_name = hook_name[4:]
                 var = self.executables[hook_name]
                 if var:
-                    return var[0]
+                    return var
                 else:
                     return None
             elif hook_name.startswith('flags.'):
