@@ -6397,6 +6397,9 @@ class MaskedConstant(MaskedArray):
             # it's a subclass, or something is wrong, make it obvious
             return object.__repr__(self)
 
+    def __format__(self, format_spec):
+        return str(masked_print_option._display)
+
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.
         """
