@@ -46,14 +46,16 @@ generate a compressed approximation of an image. We'll use the ``face`` image fr
 
 .. note::
 
-    If you would rather use your own image, in order to transform this image into a
-    NumPy array that can be manipulated, you can use the ``imread`` function from the
-    `matplotlib.pyplot` submodule or, alternatively, the ``imread`` function from the
-    `imageio library <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.imread>`_. However,
-    if you do use another image, be aware that you'll likely need to adapt the steps below. For more
-    information on how images are treated when converted to NumPy arrays, see `A crash course on NumPy
-    for images <https://scikit-image.org/docs/dev/user_guide/numpy_images.html>`_ from the
-    ``scikit-image`` documentation.
+   If you prefer, you can use your own image as you work through this tutorial. In
+   order to transform your image into a NumPy array that can be manipulated, you can
+   use the ``imread`` function from the `matplotlib.pyplot` submodule. Alternatively,
+   you can use the ``imread`` function from the `imageio library
+   <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.imread>`_. Be aware
+   that if you use your own image, you'll likely need to adapt the steps below. For more
+   information on how images are treated when converted to NumPy arrays, see `A crash
+   course on NumPy for images
+   <https://scikit-image.org/docs/dev/user_guide/numpy_images.html>`_ from the
+   ``scikit-image`` documentation.
 
 Now, ``img`` is a NumPy array, as we can see when using the ``type`` function::
 
@@ -185,8 +187,8 @@ decomposed:
 .. note::
 
     If you are using your own image, this command might take a while to run,
-    depending on the size of your image and your hardware; don't worry, as this
-    is expected! The SVD can be a pretty intensive computation.
+    depending on the size of your image and your hardware. Don't worry, this
+    is normal! The SVD can be a pretty intensive computation.
    
 Let's check that this is what we expected::
 
@@ -234,9 +236,8 @@ As expected, you should see something like
     >>> linalg.norm(blue_array - U_blue @ Sigma_blue @ Vt_blue)
     9.183739693484683e-13
 
-(keep in mind that the actual result of this operation might be different
-depending on your architecture and linear algebra setup; however, you should
-see a small number.)
+(The actual result of this operation might be different depending on your
+architecture and linear algebra setup. Regardless, you should see a small number.)
 
 We could also have used the `numpy.allclose` function to make sure the
 reconstructed product is, in fact, *close* to our original matrix (the
@@ -253,7 +254,7 @@ To see if an approximation is reasonable, we can check the values in ``s_blue``:
 In the graph, we can see that although we have 768 singular values in
 ``s_blue``, most of those (after the 150th entry or so) are pretty small. So it
 might make sense to use only the information related to the first (say, 50)
-*singular values* to build a more economic approximation to our image.
+*singular values* to build a more economical approximation to our image.
 
 The idea is to consider all but the first ``k`` singular values in
 ``Sigma_blue`` (which are the same as in ``s_blue``) as zeros, keeping
@@ -400,7 +401,7 @@ You can see that we have selected only the first ``k`` components of the last
 axis for ``Sigma`` (this means that we have used only the first ``k`` columns
 of each of the three matrices in the stack), and that we have selected only the
 first ``k`` components in the second-to-last axis of ``Vt`` (this means we have
-selected, from every matrix in the stack ``Vt``, the first ``k`` rows only, and
+selected only the first ``k`` rows from every matrix in the stack ``Vt`` and
 all columns). If you are unfamiliar with the ellipsis syntax, it is a
 placeholder for other axes. For more details, see the documentation on
 :ref:`Indexing <basics.indexing>`.
