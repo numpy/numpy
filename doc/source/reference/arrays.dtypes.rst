@@ -179,15 +179,12 @@ Built-in Python types
     :class:`float`    :class:`float\_`
     :class:`complex`  :class:`cfloat`
     :class:`bytes`    :class:`bytes\_`
-    :class:`str`      :class:`bytes\_` (Python2) or :class:`unicode\_` (Python3)
+    :class:`str`      :class:`unicode\_`
     :class:`unicode`  :class:`unicode\_`
     :class:`buffer`   :class:`void`
     (all others)      :class:`object_`
     ================  ===============
 
-    Note that ``str`` refers to either null terminated bytes or unicode strings
-    depending on the Python version. In code targeting both Python 2 and 3
-    ``np.unicode_`` should be used as a dtype for strings.
     See :ref:`Note on string types<string-dtype-note>`.
 
     .. admonition:: Example

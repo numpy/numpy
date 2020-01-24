@@ -3000,7 +3000,7 @@ to.
     structure with base, ptr, len, and flags members. The
     :c:type:`PyArray_Chunk` structure is binary compatible with the
     Python's buffer object (through its len member on 32-bit platforms
-    and its ptr member on 64-bit platforms or in Python 2.5). On
+    and its ptr member on 64-bit platforms). On
     return, the base member is set to *obj* (or its base if *obj* is
     already a buffer object pointing to another object). If you need
     to hold on to the memory be sure to INCREF the base member. The

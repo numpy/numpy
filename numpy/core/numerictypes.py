@@ -69,11 +69,8 @@ Exported symbols include:
      |             clongfloat      (longcomplex)
      +-> flexible
      |   +-> character
-     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
-     |   |     unicode_                         (kind=U)    [Python 2]
-     |   |
-     |   |     bytes_   (string_)               (kind=S)    [Python 3]
-     |   |     str_     (unicode_)              (kind=U)    [Python 3]
+     |   |     bytes_   (string_)               (kind=S)
+     |   |     str_     (unicode_)              (kind=U)
      |   |
      |   \\-> void                              (kind=V)
      \\-> object_ (not used much)               (kind=O)

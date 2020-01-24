@@ -5213,15 +5213,13 @@ class TestRecord:
         assert_raises(ValueError, test_dtype_unicode)
 
     def test_fromarrays_unicode(self):
-        # A single name string provided to fromarrays() is allowed to be unicode
-        # on both Python 2 and 3:
+        # A single name string provided to fromarrays() is allowed to be unicode:
         x = np.core.records.fromarrays([[0], [1]], names=u'a,b', formats=u'i4,i4')
         assert_equal(x['a'][0], 0)
         assert_equal(x['b'][0], 1)
 
     def test_unicode_order(self):
-        # Test that we can sort with order as a unicode field name in both Python 2 and
-        # 3:
+        # Test that we can sort with order as a unicode field name
         name = u'b'
         x = np.array([1, 3, 2], dtype=[(name, int)])
         x.sort(order=name)
