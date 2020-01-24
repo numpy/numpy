@@ -164,7 +164,6 @@ def get_path_from_frame(frame, parent_path=None):
             # we're probably running setup.py as execfile("setup.py")
             # (likely we're building an egg)
             d = os.path.abspath('.')
-            # hmm, should we use sys.argv[0] like in __builtin__ case?
 
     if parent_path is not None:
         d = rel_path(d, parent_path)
