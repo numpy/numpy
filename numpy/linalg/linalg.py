@@ -37,13 +37,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.linalg')
 
 
-# For Python2/3 compatibility
-_N = b'N'
-_V = b'V'
-_A = b'A'
-_S = b'S'
-_L = b'L'
-
 fortran_int = intc
 
 

@@ -5,8 +5,10 @@
  */
 #include "typeinfo.h"
 
-/* In python 2, this is not exported from Python.h */
+#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM <= 0x07030000))
+/* PyPy issue 3160 */
 #include <structseq.h>
+#endif
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE

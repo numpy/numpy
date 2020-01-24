@@ -20,7 +20,7 @@ The routines that ``lapack_litemodule.c`` wraps are listed in
 properly. Assuming that you have an unpacked LAPACK source tree in
 ``~/LAPACK``, you generate the new routines in this directory with::
 
-$ python2 ./make_lite.py wrapped_routines ~/LAPACK
+$ python ./make_lite.py wrapped_routines ~/LAPACK
 
 This will grab the right routines, with dependencies, put them into the
 appropriate ``f2c_*.f`` files, run ``f2c`` over them, then do some scrubbing
