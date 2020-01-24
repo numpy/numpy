@@ -386,7 +386,7 @@ and
 
 should give you an image indistinguishable from the original one (although we
 may introduce floating point errors for this reconstruction. In fact, 
-is possible that you see a warning message saying "Clipping input data to the
+you might see a warning message saying "Clipping input data to the
 valid range for imshow with RGB data ([0..1] for floats or [0..255] for
 integers)." This is expected from the manipulation we just did on the original
 image.
