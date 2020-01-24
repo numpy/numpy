@@ -25,21 +25,23 @@ or in RST-based documentations::
 
     $ python refguide_check.py --rst docs
 """
-import sys
+import copy
+import doctest
+import glob
+import inspect
+import io
 import os
 import re
-import copy
-import inspect
-import warnings
-import doctest
-import tempfile
-import io
-import docutils.core
-from docutils.parsers.rst import directives
 import shutil
-import glob
-from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
+import sys
+import tempfile
+import warnings
+import docutils.core
 from argparse import ArgumentParser
+from contextlib import redirect_stderr
+from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
+
+from docutils.parsers.rst import directives
 from pkg_resources import parse_version
 
 import sphinx
@@ -812,39 +814,33 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
                 sys.stdout.flush()
 
     # Run tests, trying to restore global state afterward
-    old_printoptions = np.get_printoptions()
-    old_errstate = np.seterr()
-    old_stderr = sys.stderr
-    cwd = os.getcwd()
-    tmpdir = tempfile.mkdtemp()
-    sys.stderr = MyStderr()
-    try:
-        os.chdir(tmpdir)
+    with np.errstate(), np.printoptions(), redirect_stderr(MyStderr()):
+        cwd = os.getcwd()
+        tmpdir = tempfile.mkdtemp()
+        try:
+            os.chdir(tmpdir)
 
-        # try to ensure random seed is NOT reproducible
-        np.random.seed(None)
+            # try to ensure random seed is NOT reproducible
+            np.random.seed(None)
 
-        ns = {}
-        for t in tests:
-            # We broke the tests up into chunks to try to avoid PSEUDOCODE
-            # This has the unfortunate side effect of restarting the global
-            # namespace for each test chunk, so variables will be "lost" after
-            # a chunk. Chain the globals to avoid this
-            t.globs.update(ns)
-            t.filename = short_path(t.filename, cwd)
-            # Process our options
-            if any([SKIPBLOCK in ex.options for ex in t.examples]):
-                continue
-            fails, successes = runner.run(t, out=out, clear_globs=False)
-            if fails > 0:
-                success = False
-            ns = t.globs
-    finally:
-        sys.stderr = old_stderr
-        os.chdir(cwd)
-        shutil.rmtree(tmpdir)
-        np.set_printoptions(**old_printoptions)
-        np.seterr(**old_errstate)
+            ns = {}
+            for t in tests:
+                # We broke the tests up into chunks to try to avoid PSEUDOCODE
+                # This has the unfortunate side effect of restarting the global
+                # namespace for each test chunk, so variables will be "lost" after
+                # a chunk. Chain the globals to avoid this
+                t.globs.update(ns)
+                t.filename = short_path(t.filename, cwd)
+                # Process our options
+                if any([SKIPBLOCK in ex.options for ex in t.examples]):
+                    continue
+                fails, successes = runner.run(t, out=out, clear_globs=False)
+                if fails > 0:
+                    success = False
+                ns = t.globs
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmpdir)
 
     return success, output
 
