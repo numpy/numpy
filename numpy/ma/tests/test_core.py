@@ -447,12 +447,15 @@ class TestMaskedArray:
         assert_equal(copied.mask, [0, 0, 0])
         assert_equal(a.mask, [0, 1, 0])
 
-    def test_fstring(self):
-        # fstrings (PEP 498) are a SyntaxError in versions under Py 3.6.
-        # Seeing that as of 20200123, the atravis do not target versions under 3.6, so this is ok.
+    def test_format(self):
+        # Note: Python 3.6 and above fstring uses __format__, see PEP 498.
+        # Testing with underlying primitive.
         a = array([0, 1, 2], mask=[False, True, False])
-        assert_equal(f"{a}", "[0 -- 2]")
-        assert_equal(f"{masked}", "--")
+        assert_equal(format(a), "[0 -- 2]")
+        assert_equal(format(masked), "--")
+        assert_equal(format(masked, ""), "--")
+        assert_equal(format(masked, " >5"), "   --")
+        assert_equal(format(masked, " <5"), "--   ")
 
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])

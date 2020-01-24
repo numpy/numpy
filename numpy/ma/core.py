@@ -6386,7 +6386,7 @@ class MaskedConstant(MaskedArray):
             return object.__repr__(self)
 
     def __format__(self, format_spec):
-        return str(masked_print_option._display)
+        return format(str(masked_print_option._display), format_spec)
 
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.
