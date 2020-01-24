@@ -291,7 +291,7 @@ each of your experiments should give you a slightly better (or worse) image depe
 the value you choose.
 
 Just for good measure, to see what the original blue array looks like, you can
-do
+use
 
 ::
 
