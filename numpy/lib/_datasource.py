@@ -304,10 +304,7 @@ class DataSource:
         """Test if path is a net location.  Tests the scheme and netloc."""
 
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # BUG : URLs require a scheme string ('http://') to be used.
         #       www.google.com will fail.
@@ -324,14 +321,10 @@ class DataSource:
         Creates a copy of the file in the datasource cache.
 
         """
-        # We import these here because importing urllib2 is slow and
+        # We import these here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         upath = self.abspath(path)
 
@@ -406,10 +399,7 @@ class DataSource:
 
         """
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # TODO:  This should be more robust.  Handles case where path includes
         #        the destpath, but not other sub-paths. Failing case:
