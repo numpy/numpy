@@ -15,7 +15,7 @@ Before reading this tutorial, you should know a bit of Python. If you
 would like to refresh your memory, take a look at the `Python
 tutorial <https://docs.python.org/tutorial/>`__.
 
-If you wish to work the examples in this tutorial, you must also have
+If you want to be able to run the examples in this tutorial, you should also have
 `matplotlib <https://matplotlib.org/>`_ and `SciPy <https://scipy.org>`_ installed on your computer.
 
 **Learner profile**
