@@ -93,7 +93,7 @@ Furthermore, using the ``ndim`` property of this array, we can see that
     >>> img.ndim
     3
 
-Each dimension is also referred to as an `axis` on NumPy. Because of how ``imread``
+NumPy refers to each dimension as an `axis`. Because of how ``imread``
 works, the *first index in the 3rd axis* is the red pixel data for our image. We
 can access this by using the syntax
 
