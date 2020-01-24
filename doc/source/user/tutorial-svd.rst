@@ -424,7 +424,7 @@ distinguishing features from this image.
 **Final words**
 
 Of course, this is not the best method to *approximate* an image.
-However, there is in fact a result in linear algebra that says that the
+However, there is, in fact, a result in linear algebra that says that the
 approximation we built above is the best we can get to the original matrix in
 terms of the norm of the difference. For more information, see *G. H. Golub and
 C. F. Van Loan, Matrix Computations, Baltimore, MD, Johns Hopkins University
