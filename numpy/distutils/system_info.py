@@ -1742,7 +1742,7 @@ class blas_info(system_info):
                                       library_dirs=info['library_dirs'],
                                       extra_postargs=info.get('extra_link_args', []))
                     res = "blas"
-            except distutils.ccompiler.CompileError:
+            except (distutils.ccompiler.CompileError, distutils.ccompiler.LinkError):
                 res = None
         finally:
             shutil.rmtree(tmpdir)
