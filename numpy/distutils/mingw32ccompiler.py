@@ -108,6 +108,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         if msvcr_version:
             self.define_macro('__MSVCRT_VERSION__', '0x%04i' % msvcr_version)
 
+        # TODO can we cleanup gcc_version < 3? < 4?
+
         # MS_WIN64 should be defined when building for amd64 on windows,
         # but python headers define it only for MS compilers, which has all
         # kind of bad consequences, like using Py_ModuleInit4 instead of
@@ -118,6 +120,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                     compiler='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0 -Wall',
                     compiler_so='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0'
                                 ' -Wall -Wstrict-prototypes',
+                    compiler_cxx='g++',
                     linker_exe='gcc -g -mno-cygwin',
                     linker_so='gcc -g -mno-cygwin -shared')
             else:
@@ -125,6 +128,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                 self.set_executables(
                     compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
                     compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall -Wstrict-prototypes',
+                    compiler_cxx='g++',
                     linker_exe='gcc -g',
                     linker_so='gcc -g -shared')
         else:
@@ -133,6 +137,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                     compiler='gcc -mno-cygwin -O2 -w',
                     compiler_so='gcc -mno-cygwin -mdll -O2 -w'
                                 ' -Wstrict-prototypes',
+                    compiler_cxx='g++',
                     linker_exe='g++ -mno-cygwin',
                     linker_so='%s -mno-cygwin -mdll -static %s' %
                               (self.linker, entry_point))
@@ -141,17 +146,16 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                     compiler='gcc -mno-cygwin -O2 -Wall',
                     compiler_so='gcc -mno-cygwin -O2 -Wall'
                                 ' -Wstrict-prototypes',
+                    compiler_cxx='g++',
                     linker_exe='g++ -mno-cygwin',
                     linker_so='g++ -mno-cygwin -shared')
             else:
                 # gcc-4 series releases do not support -mno-cygwin option
                 self.set_executables(compiler='gcc -O2 -Wall',
                                      compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
+                                     compiler_cxx='g++',
                                      linker_exe='g++ ',
                                      linker_so='g++ -shared')
-        # added for python2.3 support
-        # we can't pass it through set_executables because pre 2.2 would fail
-        self.compiler_cxx = ['g++']
 
         # Maybe we should also append -mthreads, but then the finished dlls
         # need another dll (mingwm10.dll see Mingw32 docs) (-mthreads: Support

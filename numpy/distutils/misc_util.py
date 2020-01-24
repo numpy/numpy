@@ -318,6 +318,7 @@ def make_temp_file(suffix='', prefix='', text=True):
 # Hooks for colored terminal output.
 # See also https://web.archive.org/web/20100314204946/http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
+    # Can this be cleaned up?
     if sys.platform=='cygwin' and 'USE_COLOR' not in os.environ:
         # Avoid importing curses that causes illegal operation
         # with a message:
