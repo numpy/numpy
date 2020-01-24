@@ -86,12 +86,13 @@ def tarball_name(ftype='gztar'):
         Type of archive, default is 'gztar'.
 
     """
-    root = 'numpy-%s' % FULLVERSION
+    root = f'numpy-{FULLVERSION}'
     if ftype == 'gztar':
         return root + '.tar.gz'
     elif ftype == 'zip':
         return root + '.zip'
-    raise ValueError(f"Unknown type {ftype}")
+    raise ValueError(f"Unknown type {type}")
+
 
 @task
 def sdist(options):
