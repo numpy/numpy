@@ -30,12 +30,12 @@ class TestRealScalars:
 
     def test_scalar_cutoffs(self):
         # test that both the str and repr of np.float64 behaves
-        # like python floats in python3. Note that in python2
-        # the str has truncated digits, but we do not do this
+        # like python floats in python3.
         def check(v):
-            # we compare str to repr, to avoid python2 truncation behavior
+            assert_equal(str(np.float64(v)), str(v))
             assert_equal(str(np.float64(v)), repr(v))
             assert_equal(repr(np.float64(v)), repr(v))
+            assert_equal(repr(np.float64(v)), str(v))
 
         # check we use the same number of significant digits
         check(1.12345678901234567890)

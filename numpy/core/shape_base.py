@@ -2,6 +2,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
            'stack', 'vstack']
 
 import functools
+import itertools
 import operator
 import warnings
 
@@ -530,14 +531,7 @@ def _atleast_nd(a, ndim):
 
 
 def _accumulate(values):
-    # Helper function because Python 2.7 doesn't have
-    # itertools.accumulate
-    value = 0
-    accumulated = []
-    for v in values:
-        value += v
-        accumulated.append(value)
-    return accumulated
+    return list(itertools.accumulate(values))
 
 
 def _concatenate_shapes(shapes, axis):

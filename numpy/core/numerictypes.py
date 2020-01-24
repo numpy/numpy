@@ -313,9 +313,11 @@ def issubclass_(arg1, arg2):
     Examples
     --------
     >>> np.issubclass_(np.int32, int)
-    False # True on Python 2.7
+    False
     >>> np.issubclass_(np.int32, float)
     False
+    >>> np.issubclass_(np.float64, float)
+    True
 
     """
     try:
