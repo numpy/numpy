@@ -38,7 +38,7 @@ import tempfile
 import warnings
 import docutils.core
 from argparse import ArgumentParser
-from contextlib import redirect_stderr
+from contextlib import contextmanager, redirect_stderr
 from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
 
 from docutils.parsers.rst import directives
@@ -792,57 +792,47 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
                       verbose=verbose)
 
-    output = []
+    output = io.StringIO(newline='')
     success = True
-    def out(msg):
-        output.append(msg)
 
-    class MyStderr:
-        """
-        Redirect stderr to the current stdout
-        """
-        def write(self, msg):
-            if doctest_warnings:
-                sys.stdout.write(msg)
-            else:
-                out(msg)
+    # Redirect stderr to the stdout or output
+    tmp_stderr = sys.stdout if doctest_warnings else output
 
-        # a flush method is required when a doctest uses multiprocessing
-        # multiprocessing/popen_fork.py flushes sys.stderr
-        def flush(self):
-            if doctest_warnings:
-                sys.stdout.flush()
-
-    # Run tests, trying to restore global state afterward
-    with np.errstate(), np.printoptions(), redirect_stderr(MyStderr()):
+    @contextmanager
+    def temp_cwd():
         cwd = os.getcwd()
         tmpdir = tempfile.mkdtemp()
         try:
             os.chdir(tmpdir)
-
-            # try to ensure random seed is NOT reproducible
-            np.random.seed(None)
-
-            ns = {}
-            for t in tests:
-                # We broke the tests up into chunks to try to avoid PSEUDOCODE
-                # This has the unfortunate side effect of restarting the global
-                # namespace for each test chunk, so variables will be "lost" after
-                # a chunk. Chain the globals to avoid this
-                t.globs.update(ns)
-                t.filename = short_path(t.filename, cwd)
-                # Process our options
-                if any([SKIPBLOCK in ex.options for ex in t.examples]):
-                    continue
-                fails, successes = runner.run(t, out=out, clear_globs=False)
-                if fails > 0:
-                    success = False
-                ns = t.globs
+            yield tmpdir
         finally:
             os.chdir(cwd)
             shutil.rmtree(tmpdir)
 
-    return success, output
+    # Run tests, trying to restore global state afterward
+    cwd = os.getcwd()
+    with np.errstate(), np.printoptions(), temp_cwd() as tmpdir, \
+            redirect_stderr(tmp_stderr):
+        # try to ensure random seed is NOT reproducible
+        np.random.seed(None)
+
+        ns = {}
+        for t in tests:
+            # We broke the tests up into chunks to try to avoid PSEUDOCODE
+            # This has the unfortunate side effect of restarting the global
+            # namespace for each test chunk, so variables will be "lost" after
+            # a chunk. Chain the globals to avoid this
+            t.globs.update(ns)
+            t.filename = short_path(t.filename, cwd)
+            # Process our options
+            if any([SKIPBLOCK in ex.options for ex in t.examples]):
+                continue
+            fails, successes = runner.run(t, out=output.write, clear_globs=False)
+            if fails > 0:
+                success = False
+            ns = t.globs
+
+    return success, output.read()
 
 
 def check_doctests(module, verbose, ns=None,
@@ -904,7 +894,7 @@ def check_doctests(module, verbose, ns=None,
         if dots:
             output_dot('.' if success else 'F')
 
-        results.append((full_name, success, "".join(output)))
+        results.append((full_name, success, output))
 
         if HAVE_MATPLOTLIB:
             import matplotlib.pyplot as plt
@@ -1016,7 +1006,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
     if dots:
         output_dot('.' if success else 'F')
 
-    results.append((full_name, success, "".join(output)))
+    results.append((full_name, success, output))
 
     if HAVE_MATPLOTLIB:
         import matplotlib.pyplot as plt
