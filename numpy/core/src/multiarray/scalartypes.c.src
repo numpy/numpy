@@ -2541,10 +2541,6 @@ object_arrtype_dealloc(PyObject *v)
     PyErr_Clear(); \
     /* now do default conversion */
 
-#define _WORK1(cls) _WORK(cls, 1)
-#define _WORKz(cls) _WORK(cls, 0)
-#define _WORK0(cls)
-
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
@@ -2555,34 +2551,39 @@ object_arrtype_dealloc(PyObject *v)
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
  *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
  *         CLONGDOUBLE, STRING, UNICODE, OBJECT#
- * #work = 0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
- * #default = 0*17,1*2,2#
  */
 
-#define _NPY_UNUSED2_1
-#define _NPY_UNUSED2_z
-#define _NPY_UNUSED2_0 NPY_UNUSED
-#define _NPY_UNUSED1_0
-#define _NPY_UNUSED1_1
-#define _NPY_UNUSED1_2 NPY_UNUSED
+/* used as a pattern for testing token equality */
+#define _@TYPE@_IS_@TYPE@
+
+#if defined(_@TYPE@_IS_OBJECT)
+    #define _NPY_UNUSED_TYPE NPY_UNUSED
+    #define _NPY_UNUSED_KWDS NPY_UNUSED
+#elif defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_DOUBLE)
+    #define _NPY_UNUSED_TYPE
+    #define _NPY_UNUSED_KWDS
+#else
+    #define _NPY_UNUSED_TYPE
+    #define _NPY_UNUSED_KWDS NPY_UNUSED
+#endif
 
 static PyObject *
-@name@_arrtype_new(PyTypeObject *_NPY_UNUSED1_@default@(type), PyObject *args, PyObject *_NPY_UNUSED2_@work@(kwds))
+@name@_arrtype_new(PyTypeObject *_NPY_UNUSED_TYPE(type), PyObject *args, PyObject *_NPY_UNUSED_KWDS(kwds))
 {
     PyObject *obj = NULL;
     PyObject *robj;
     PyArrayObject *arr;
     PyArray_Descr *typecode = NULL;
-#if !(@default@ == 2)
-    int itemsize;
-    void *dest, *src;
-#endif
 
     /*
      * allow base-class (if any) to do conversion
      * If successful, this will jump to finish:
      */
-    _WORK@work@(Py@Name@ArrType_Type)
+#if defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING)
+    _WORK(Py@Name@ArrType_Type, 0)
+#elif defined(_@TYPE@_IS_DOUBLE)
+    _WORK(Py@Name@ArrType_Type, 1)
+#endif
 
     /* TODO: include type name in error message, which is not @name@ */
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
@@ -2597,18 +2598,18 @@ static PyObject *
      * PyArray_FromAny but not PyArray_Scalar
      */
     if (obj == NULL) {
-#if @default@ == 0
+#if defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_UNICODE)
+        robj = PyArray_Scalar(NULL, typecode, NULL);
+#elif defined(_@TYPE@_IS_OBJECT)
+        Py_INCREF(Py_None);
+        robj = Py_None;
+#else
         robj = PyArray_Scalar(NULL, typecode, NULL);
         if (robj == NULL) {
             Py_DECREF(typecode);
             return NULL;
         }
         memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
-#elif @default@ == 1
-        robj = PyArray_Scalar(NULL, typecode, NULL);
-#elif @default@ == 2
-        Py_INCREF(Py_None);
-        robj = Py_None;
 #endif
         Py_DECREF(typecode);
         goto finish;
@@ -2633,7 +2634,7 @@ finish:
      * PyArrayScalar at this point but the
      * remaining code assumes it is
      */
-#if @default@ == 2
+#if defined(_@TYPE@_IS_OBJECT)
     return robj;
 #else
     /* Normal return */
@@ -2648,6 +2649,7 @@ finish:
      */
 
     /* Need to allocate new type and copy data-area over */
+    int itemsize;
     if (type->tp_itemsize) {
         itemsize = PyBytes_GET_SIZE(robj);
     }
@@ -2661,27 +2663,27 @@ finish:
     }
     /* typecode will be NULL */
     typecode = PyArray_DescrFromType(NPY_@TYPE@);
-    dest = scalar_value(obj, typecode);
-    src = scalar_value(robj, typecode);
+    void *dest = scalar_value(obj, typecode);
+    void *src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
-#if @default@ == 0
-    *((npy_@name@ *)dest) = *((npy_@name@ *)src);
-#elif @default@ == 1 /* unicode and strings */
+#if defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_UNICODE)
     if (itemsize == 0) { /* unicode */
         itemsize = PyUnicode_GetLength(robj) * PyUnicode_KIND(robj);
     }
     memcpy(dest, src, itemsize);
-    /* @default@ == 2 won't get here */
+#else
+    *((npy_@name@ *)dest) = *((npy_@name@ *)src);
 #endif
     Py_DECREF(robj);
     return obj;
 #endif
 }
+#undef _@TYPE@_IS_@TYPE@
+
+#undef _NPY_UNUSED_TYPE
+#undef _NPY_UNUSED_KWDS
 /**end repeat**/
 
-#undef _WORK1
-#undef _WORKz
-#undef _WORK0
 #undef _WORK
 
 /**begin repeat
