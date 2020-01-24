@@ -195,7 +195,7 @@ Let's check that this is what we expected::
 
 Note that ``s_blue`` has a particular shape: it has only one dimension. This
 means that some linear algebra functions that expect 2d arrays might not work.
-For example, from the theory one might expect ``s_blue`` and ``Vt_blue`` to be
+For example, from the theory, one might expect ``s_blue`` and ``Vt_blue`` to be
 compatible for multiplication. However, this is not true as ``s_blue`` does not
 have a second axis. Executing
 
