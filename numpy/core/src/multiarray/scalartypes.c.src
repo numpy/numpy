@@ -1551,14 +1551,6 @@ gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
-/* This function matches the Python 2.7 PyBufferProcs.bf_getreadbuffer
- * interface, but no longer needs to. In the future we could consider
- * rewriting callers to use `gentype_getbuffer`, or inline the function body
- * at the caller.
- */
-static Py_ssize_t
-gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
-
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1581,8 +1573,9 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         PyObject *new;
         char *newmem;
 
-        gentype_getreadbuf(self, 0, (void **)&data);
         descr = PyArray_DescrFromScalar(self);
+        data = (void *)scalar_value(self, descr);
+
         newmem = PyObject_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
@@ -2448,31 +2441,6 @@ static PySequenceMethods voidtype_as_sequence = {
     0,                                           /* sq_inplace_repeat */
 };
 
-
-static Py_ssize_t
-gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    int numbytes;
-    PyArray_Descr *outcode;
-
-    if (segment != 0) {
-        PyErr_SetString(PyExc_SystemError,
-                "Accessing non-existent array segment");
-        return -1;
-    }
-
-    outcode = PyArray_DescrFromScalar(self);
-    numbytes = outcode->elsize;
-    *ptrptr = (void *)scalar_value(self, outcode);
-
-#ifndef Py_UNICODE_WIDE
-    if (outcode->type_num == NPY_UNICODE) {
-        numbytes >>= 1;
-    }
-#endif
-    Py_DECREF(outcode);
-    return numbytes;
-}
 
 static PyBufferProcs gentype_as_buffer = {
     gentype_getbuffer,                           /* bf_getbuffer */
