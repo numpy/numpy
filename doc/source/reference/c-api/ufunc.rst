@@ -255,15 +255,16 @@ Functions
 .. c:function:: int PyUFunc_GenericFunction( \
         PyUFuncObject* self, PyObject* args, PyObject* kwds, PyArrayObject** mps)
 
-    A generic ufunc call. The ufunc is passed in as *self*, the arguments
-    to the ufunc as *args* and *kwds*. The *mps* argument is an array of
-    :c:type:`PyArrayObject` pointers whose values are discarded and which
-    receive the converted input arguments as well as the ufunc outputs
-    when success is returned. The user is responsible for managing this
-    array and receives a new reference for each array in *mps*. The total
-    number of arrays in *mps* is given by *self* ->nin + *self* ->nout.
+    .. deprecated:: NumPy 1.19
 
-    Returns 0 on success, -1 on error.
+        Unless NumPy is made aware of an issue with this, this function
+        is scheduled for rapid removal without replacement.
+
+    Instead of this function ``PyObject_Call(ufunc, args, kwds)`` should be
+    used. The above function differs from this because it ignores support
+    for non-array, or array subclasses as inputs.
+    To ensure identical behaviour, it may be necessary to convert all inputs
+    using ``PyArray_FromAny(obj, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL)``.
 
 .. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
 
