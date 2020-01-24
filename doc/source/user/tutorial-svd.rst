@@ -353,7 +353,7 @@ you might use `numpy.dot` and `numpy.matmul` (or the ``@`` operator)
 interchangeably. However, for n-dimensional arrays, they work in very different
 ways. For more details, check the documentation `numpy.matmul`.
 
-Now, to build our approximation, we need first to make sure that our singular
+Now, to build our approximation, we first need to make sure that our singular
 values are ready for multiplication, so we build our ``Sigma`` matrix similarly
 to what we did before. The ``Sigma`` array must have dimensions
 ``(3, 768, 1024)``.
