@@ -299,7 +299,7 @@ use
 
 **Applying to all colors**
 
-Now, we want to do the same kind of operation, but to all three colors. Our
+Now we want to do the same kind of operation, but to all three colors. Our
 first instinct might be to repeat the same operation we did above to each color
 matrix individually. However, NumPy's `broadcasting <https://numpy.org/devdocs/user/basics.broadcasting.html>`_ takes care of this
 for us.
