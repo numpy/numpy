@@ -11,7 +11,7 @@ Tutorial: Linear algebra on n-dimensional arrays
 
 **Prerequisites**
 
-Before reading this tutorial you should know a bit of Python. If you
+Before reading this tutorial, you should know a bit of Python. If you
 would like to refresh your memory, take a look at the `Python
 tutorial <https://docs.python.org/tutorial/>`__.
 
@@ -437,4 +437,3 @@ Press, 1985*.
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
-
