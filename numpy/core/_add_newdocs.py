@@ -2025,25 +2025,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
     Examples
     --------
     >>> import ctypes
+    >>> x = np.array([[0, 1], [2, 3]], dtype=np.int32)
     >>> x
     array([[0, 1],
-           [2, 3]])
+           [2, 3]], dtype=int32)
     >>> x.ctypes.data
-    30439712
-    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
-    <ctypes.LP_c_long object at 0x01F01300>
-    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_long)).contents
-    c_long(0)
-    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong)).contents
-    c_longlong(4294967296L)
+    31962608 # may vary
+    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32))
+    <__main__.LP_c_uint object at 0x7ff2fc1fc200> # may vary
+    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32)).contents
+    c_uint(0)
+    >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_uint64)).contents
+    c_ulong(4294967296)
     >>> x.ctypes.shape
-    <numpy.core._internal.c_long_Array_2 object at 0x01FFD580>
-    >>> x.ctypes.shape_as(ctypes.c_long)
-    <numpy.core._internal.c_long_Array_2 object at 0x01FCE620>
+    <numpy.core._internal.c_long_Array_2 object at 0x7ff2fc1fce60> # may vary
     >>> x.ctypes.strides
-    <numpy.core._internal.c_long_Array_2 object at 0x01FCE620>
-    >>> x.ctypes.strides_as(ctypes.c_longlong)
-    <numpy.core._internal.c_longlong_Array_2 object at 0x01F01300>
+    <numpy.core._internal.c_long_Array_2 object at 0x7ff2fc1ff320> # may vary
 
     """))
 
