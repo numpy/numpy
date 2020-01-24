@@ -210,7 +210,7 @@ static int
     @type@ temp;  /* ensures alignment */
 
     if (PyArray_IsScalar(op, @kind@)) {
-        temp = ((Py@kind@ScalarObject *)op)->obval;
+        temp = PyArrayScalar_VAL(op, @kind@);
     }
     else {
         temp = (@type@)@func2@(op);
@@ -293,7 +293,7 @@ static int
     }
 
     if (PyArray_IsScalar(op, @kind@)){
-        temp = ((Py@kind@ScalarObject *)op)->obval;
+        temp = PyArrayScalar_VAL(op, @kind@);
     }
     else {
         if (op == Py_None) {
@@ -412,7 +412,7 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     }
 
     if (PyArray_IsScalar(op, LongDouble)) {
-        temp = ((PyLongDoubleScalarObject *)op)->obval;
+        temp = PyArrayScalar_VAL(op, LongDouble);
     }
     else {
         /* In case something funny happened in PyArray_IsScalar */

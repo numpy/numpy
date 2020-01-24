@@ -3181,19 +3181,19 @@ Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
     opt.exp_digits = -1;
 
     if (PyArray_IsScalar(obj, Half)) {
-        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        npy_half x = PyArrayScalar_VAL(obj, Half);
         return Dragon4_Positional_Half_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Float)) {
-        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        npy_float x = PyArrayScalar_VAL(obj, Float);
         return Dragon4_Positional_Float_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Double)) {
-        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        npy_double x = PyArrayScalar_VAL(obj, Double);
         return Dragon4_Positional_Double_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
-        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
         return Dragon4_Positional_LongDouble_opt(&x, &opt);
     }
 
@@ -3222,19 +3222,19 @@ Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
     opt.exp_digits = exp_digits;
 
     if (PyArray_IsScalar(obj, Half)) {
-        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        npy_half x = PyArrayScalar_VAL(obj, Half);
         return Dragon4_Scientific_Half_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Float)) {
-        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        npy_float x = PyArrayScalar_VAL(obj, Float);
         return Dragon4_Scientific_Float_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Double)) {
-        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        npy_double x = PyArrayScalar_VAL(obj, Double);
         return Dragon4_Scientific_Double_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
-        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
         return Dragon4_Scientific_LongDouble_opt(&x, &opt);
     }
 

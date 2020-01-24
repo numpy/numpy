@@ -378,7 +378,7 @@ gentype_format(PyObject *self, PyObject *args)
      *       because it throws away precision.
      */
     if (Py_TYPE(self) == &PyBoolArrType_Type) {
-        obj = PyBool_FromLong(((PyBoolScalarObject *)self)->obval);
+        obj = PyBool_FromLong(PyArrayScalar_VAL(self, Bool));
     }
     else if (PyArray_IsScalar(self, Integer)) {
 #if defined(NPY_PY3K)
@@ -967,7 +967,7 @@ static PyObject *
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-    return @name@type_@kind@_either(((Py@Name@ScalarObject *)self)->obval,
+    return @name@type_@kind@_either(PyArrayScalar_VAL(self, @Name@),
                                   TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
 }
 
@@ -975,7 +975,7 @@ static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
     PyObject *rstr, *istr, *ret;
-    npy_c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
+    npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
     TrimMode trim = TrimMode_DptZeros;
 
     if (npy_legacy_print_mode == 113) {
@@ -1039,7 +1039,7 @@ c@name@type_@kind@(PyObject *self)
 static PyObject *
 halftype_@kind@(PyObject *self)
 {
-    npy_half val = ((PyHalfScalarObject *)self)->obval;
+    npy_half val = PyArrayScalar_VAL(self, Half);
     float floatval = npy_half_to_float(val);
     float absval;
 
@@ -1438,7 +1438,7 @@ gentype_real_get(PyObject *self)
         return ret;
     }
     else if (PyArray_IsScalar(self, Object)) {
-        PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+        PyObject *obj = PyArrayScalar_VAL(self, Object);
         ret = PyObject_GetAttrString(obj, "real");
         if (ret != NULL) {
             return ret;
@@ -1463,7 +1463,7 @@ gentype_imag_get(PyObject *self)
         ret = PyArray_Scalar(ptr + typecode->elsize, typecode, NULL);
     }
     else if (PyArray_IsScalar(self, Object)) {
-        PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+        PyObject *obj = PyArrayScalar_VAL(self, Object);
         PyArray_Descr *newtype;
         ret = PyObject_GetAttrString(obj, "imag");
         if (ret == NULL) {
@@ -1884,7 +1884,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyObject_GetAttrString((PyObject *)self, "dtype");
     if (PyArray_IsScalar(self, Object)) {
-        mod = ((PyObjectScalarObject *)self)->obval;
+        mod = PyArrayScalar_VAL(self, Object);
         PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
     }
     else {
@@ -2612,7 +2612,7 @@ void_dealloc(PyVoidScalarObject *v)
 static void
 object_arrtype_dealloc(PyObject *v)
 {
-    Py_XDECREF(((PyObjectScalarObject *)v)->obval);
+    Py_XDECREF(PyArrayScalar_VAL(v, Object));
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -2705,7 +2705,7 @@ static PyObject *
             Py_DECREF(typecode);
             return NULL;
         }
-        memset(&((Py@Name@ScalarObject *)robj)->obval, 0, sizeof(npy_@name@));
+        memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
 #elif @default@ == 1
         robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
@@ -3091,7 +3091,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    return (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
+    return (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
 }
 /**end repeat**/
 
@@ -3102,7 +3102,7 @@ static npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
     if (x == -1) {
         x = -2;
     }
@@ -3113,7 +3113,7 @@ static npy_hash_t
 static npy_hash_t
 ulong_arrtype_hash(PyObject *obj)
 {
-    PyObject * l = PyLong_FromUnsignedLong(((PyULongScalarObject*)obj)->obval);
+    PyObject * l = PyLong_FromUnsignedLong(PyArrayScalar_VAL(obj, ULong));
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
@@ -3123,7 +3123,7 @@ ulong_arrtype_hash(PyObject *obj)
 static npy_hash_t
 int_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(((PyIntScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, Int));
     if (x == -1) {
         x = -2;
     }
@@ -3135,7 +3135,7 @@ int_arrtype_hash(PyObject *obj)
 static npy_hash_t
 long_arrtype_hash(PyObject *obj)
 {
-    PyObject * l = PyLong_FromLong(((PyLongScalarObject*)obj)->obval);
+    PyObject * l = PyLong_FromLong(PyArrayScalar_VAL(obj, Long));
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
@@ -3151,7 +3151,7 @@ static NPY_INLINE npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
     PyObject * l = PyLong_From@Word@LongLong(
-                                 ((Py@Char@LongLongScalarObject*)obj)->obval);
+                                 PyArrayScalar_VAL(obj, @Char@LongLong));
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
@@ -3167,7 +3167,7 @@ static NPY_INLINE npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
     if (x == -1) {
         x = -2;
     }
@@ -3178,7 +3178,7 @@ static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t y;
-    npy_longlong x = (((Py@name@ScalarObject *)obj)->obval);
+    npy_longlong x = (PyArrayScalar_VAL(obj, @name@));
 
     if ((x <= LONG_MAX)) {
         y = (npy_hash_t) x;
@@ -3211,7 +3211,7 @@ static npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashDouble((double) ((Py@name@ScalarObject *)obj)->obval);
+    return _Py_HashDouble((double) PyArrayScalar_VAL(obj, @name@));
 }
 
 /* borrowed from complex_hash */
@@ -3220,13 +3220,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
     hashreal = _Py_HashDouble((double)
-            (((PyC@name@ScalarObject *)obj)->obval).real);
+            PyArrayScalar_VAL(obj, C@name@).real);
 
     if (hashreal == -1) {
         return -1;
     }
     hashimag = _Py_HashDouble((double)
-            (((PyC@name@ScalarObject *)obj)->obval).imag);
+            PyArrayScalar_VAL(obj, C@name@).imag);
     if (hashimag == -1) {
         return -1;
     }
@@ -3241,13 +3241,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 static npy_hash_t
 half_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashDouble(npy_half_to_double(((PyHalfScalarObject *)obj)->obval));
+    return _Py_HashDouble(npy_half_to_double(PyArrayScalar_VAL(obj, Half)));
 }
 
 static npy_hash_t
 object_arrtype_hash(PyObject *obj)
 {
-    return PyObject_Hash(((PyObjectScalarObject *)obj)->obval);
+    return PyObject_Hash(PyArrayScalar_VAL(obj, Object));
 }
 
 /* we used to just hash the pointer */

@@ -1843,21 +1843,21 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     char str[1024];
 
     if (PyArray_IsScalar(obj, Half)) {
-        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        npy_half x = PyArrayScalar_VAL(obj, Half);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision,
                       npy_half_to_double(x));
     }
     else if (PyArray_IsScalar(obj, Float)) {
-        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        npy_float x = PyArrayScalar_VAL(obj, Float);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
     }
     else if (PyArray_IsScalar(obj, Double)) {
-        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        npy_double x = PyArrayScalar_VAL(obj, Double);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
         /* would be better to use lg, but not available in C90 */
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
-        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
         PyOS_snprintf(str, sizeof(str), "%.*Lg", precision, x);
     }
     else{
