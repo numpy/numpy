@@ -91,7 +91,7 @@ def tarball_name(ftype='gztar'):
         return root + '.tar.gz'
     elif ftype == 'zip':
         return root + '.zip'
-    raise ValueError("Unknown type %s" % type)
+    raise ValueError(f"Unknown type {ftype}")
 
 @task
 def sdist(options):
