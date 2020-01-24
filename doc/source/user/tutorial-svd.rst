@@ -385,7 +385,7 @@ and
     >>> plt.imshow(np.transpose(reconstructed, (1, 2, 0)))
 
 should give you an image indistinguishable from the original one (although we
-do possibly introduce floating point errors for this reconstruction; in fact, it
+may introduce floating point errors for this reconstruction. In fact, 
 is possible that you see a warning message saying "Clipping input data to the
 valid range for imshow with RGB data ([0..1] for floats or [0..255] for
 integers)." This is expected from the manipulation we just did on the original
