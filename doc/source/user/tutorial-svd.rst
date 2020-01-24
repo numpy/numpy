@@ -24,7 +24,7 @@ This tutorial is for people who have a basic understanding of linear
 algebra and arrays in NumPy and want to understand how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
-using for-loops), or if you wish to understand axis and shape properties for
+using for-loops), or if you want to understand axis and shape properties for
 n-dimensional arrays, this tutorial might be of help.
 
 **Learning Objectives**
