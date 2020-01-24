@@ -14,6 +14,9 @@ from numpy.testing import (
     assert_warns, HAS_REFCOUNT
     )
 
+from hypothesis import assume, given, strategies as st
+from hypothesis.extra import numpy as hynp
+
 
 class TestResize:
     def test_copies(self):
@@ -2017,6 +2020,68 @@ class TestClip:
         expected = np.minimum(np.maximum(arr, amin), amax)
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
+
+    @given(data=st.data(), shape=hynp.array_shapes())
+    def test_clip_property(self, data, shape):
+        """A property-based test using Hypothesis.
+
+        This aims for maximum generality: it could in principle generate *any*
+        valid inputs to np.clip, and in practice generates much more varied
+        inputs than human testers come up with.
+
+        Because many of the inputs have tricky dependencies - compatible dtypes
+        and mutually-broadcastable shapes - we use `st.data()` strategy draw
+        values *inside* the test function, from strategies we construct based
+        on previous values.  An alternative would be to define a custom strategy
+        with `@st.composite`, but until we have duplicated code inline is fine.
+
+        That accounts for most of the function; the actual test is just three
+        lines to calculate and compare actual vs expected results!
+        """
+        # Our base array and bounds should not need to be of the same type as
+        # long as they are all compatible - so we allow any int or float type.
+        dtype_strategy = hynp.integer_dtypes() | hynp.floating_dtypes()
+
+        # The following line is a total hack to disable the varied-dtypes
+        # component of this test, because result != expected if dtypes can vary.
+        dtype_strategy = st.just(data.draw(dtype_strategy))
+
+        # Generate an arbitrary array of the chosen shape and dtype
+        # This is the value that we clip.
+        arr = data.draw(hynp.arrays(dtype=dtype_strategy, shape=shape))
+
+        # Generate shapes for the bounds which can be broadcast with each other
+        # and with the base shape.  Below, we might decide to use scalar bounds,
+        # but it's clearer to generate these shapes unconditionally in advance.
+        in_shapes, result_shape = data.draw(
+            hynp.mutually_broadcastable_shapes(
+                num_shapes=2,
+                base_shape=shape,
+                # Commenting out the min_dims line allows zero-dimensional arrays,
+                # and zero-dimensional arrays containing NaN make the test fail.
+                min_dims=1  
+                            
+            )
+        )
+        amin = data.draw(
+            dtype_strategy.flatmap(hynp.from_dtype)
+            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[0])
+        )
+        amax = data.draw(
+            dtype_strategy.flatmap(hynp.from_dtype)
+            | hynp.arrays(dtype=dtype_strategy, shape=in_shapes[1])
+        )
+        # If we allow either bound to be a scalar `nan`, the test will fail -
+        # so we just "assume" that away (if it is, this raises a special
+        # exception and Hypothesis will try again with different inputs)
+        assume(not np.isscalar(amin) or not np.isnan(amin))
+        assume(not np.isscalar(amax) or not np.isnan(amax))
+
+        # Then calculate our result and expected result and check that they're
+        # equal!  See gh-12519 for discussion deciding on this property.
+        result = np.clip(arr, amin, amax)
+        expected = np.minimum(amax, np.maximum(arr, amin))
+        assert_array_equal(result, expected)
 
 
 class TestAllclose:
