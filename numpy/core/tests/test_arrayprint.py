@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 import gc
+from hypothesis import given
+from hypothesis.extra import numpy as hynp
 import pytest
 
 import numpy as np
@@ -392,6 +394,18 @@ class TestArray2String:
             np.array2string(a, max_line_width=5, legacy='1.13'),
             "[ 'xxxxx']"
         )
+
+    @given(hynp.from_dtype(np.dtype("U")))
+    def test_any_text(self, text):
+        # This test checks that, given any value that can be represented in an
+        # array of dtype("U") (i.e. unicode string), ...
+        a = np.array([text, text, text])
+        # casting a list of them to an array does not e.g. truncate the value
+        assert_equal(a[0], text)
+        # and that np.array2string puts a newline in the expected location
+        expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
+        result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
+        assert_equal(result, expected_repr)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_refcount(self):
