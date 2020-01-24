@@ -239,7 +239,7 @@ depending on your architecture and linear algebra setup; however, you should
 see a small number.)
 
 We could also have used the `numpy.allclose` function to make sure the
-reconstructed product is, in fact, *close* to our original matrix (that is, the
+reconstructed product is, in fact, *close* to our original matrix (the
 difference between the two arrays is small)::
 
     >>> np.allclose(blue_array, U_blue @ Sigma_blue @ Vt_blue)
