@@ -824,13 +824,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
         # try to ensure random seed is NOT reproducible
         np.random.seed(None)
 
-        ns = {}
         for t in tests:
-            # We broke the tests up into chunks to try to avoid PSEUDOCODE
-            # This has the unfortunate side effect of restarting the global
-            # namespace for each test chunk, so variables will be "lost" after
-            # a chunk. Chain the globals to avoid this
-            t.globs.update(ns)
             t.filename = short_path(t.filename, cwd)
             # Process our options
             if any([SKIPBLOCK in ex.options for ex in t.examples]):
@@ -838,7 +832,6 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
             fails, successes = runner.run(t, out=out, clear_globs=False)
             if fails > 0:
                 success = False
-            ns = t.globs
     finally:
         sys.stderr = old_stderr
         os.chdir(cwd)
@@ -947,26 +940,8 @@ def check_doctests_testfile(fname, verbose, ns=None,
     Notes
     -----
 
-    We also try to weed out pseudocode:
-    * We maintain a list of exceptions which signal pseudocode,
-    * We split the text file into "blocks" of code separated by empty lines
-      and/or intervening text.
-    * If a block contains a marker, the whole block is then assumed to be
-      pseudocode. It is then not being doctested.
-
-    The rationale is that typically, the text looks like this:
-
-    blah
-    <BLANKLINE>
-    >>> from numpy import some_module   # pseudocode!
-    >>> func = some_module.some_function
-    >>> func(42)                  # still pseudocode
-    146
-    <BLANKLINE>
-    blah
-    <BLANKLINE>
-    >>> 2 + 3        # real code, doctest it
-    5
+    If it's not appropriate to run a block of code, signal refguide to skip
+    testing that code by adding '#doctest: +SKIP' to the end of the line.
 
     """
     if ns is None:
@@ -981,40 +956,9 @@ def check_doctests_testfile(fname, verbose, ns=None,
     with open(fname, encoding='utf-8') as f:
         text = f.read()
 
-    PSEUDOCODE = set(['some_function', 'some_module', 'import example',
-                      'ctypes.CDLL',     # likely need compiling, skip it
-                      'integrate.nquad(func,'  # ctypes integrate tutotial
-    ])
-
-    # split the text into "blocks" and try to detect and omit pseudocode blocks.
     parser = doctest.DocTestParser()
-    good_parts = []
-    base_line_no = 0
-    for part in text.split('\n\n'):
-        try:
-            tests = parser.get_doctest(part, ns, fname, fname, base_line_no)
-        except ValueError as e:
-            if e.args[0].startswith('line '):
-                # fix line number since `parser.get_doctest` does not increment
-                # the reported line number by base_line_no in the error message
-                parts = e.args[0].split()
-                parts[1] = str(int(parts[1]) + base_line_no)
-                e.args = (' '.join(parts),) + e.args[1:]
-            raise
-        if any(word in ex.source for word in PSEUDOCODE
-                                 for ex in tests.examples):
-            # omit it
-            pass
-        else:
-            # `part` looks like a good code, let's doctest it
-            good_parts.append((part, base_line_no))
-        base_line_no += part.count('\n') + 2
-
-    # Reassemble the good bits and doctest them:
-    tests = []
-    for good_text, line_no in good_parts:
-        tests.append(parser.get_doctest(good_text, ns, fname, fname, line_no))
-    success, output = _run_doctests(tests, full_name, verbose,
+    tests = [parser.get_doctest(text, ns, fname, fname, 0)]
+    success, output = _run_doctests(test, full_name, verbose,
                                     doctest_warnings)
 
     if dots:
