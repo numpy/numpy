@@ -13,6 +13,7 @@
 #include "numpy/npy_math.h"
 
 #include "common.h"
+#include "ctors.h"
 #include "scalartypes.h"
 #include "mapping.h"
 
