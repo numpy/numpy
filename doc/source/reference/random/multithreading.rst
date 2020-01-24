@@ -19,7 +19,7 @@ change.
 
 .. code-block:: ipython
 
-    from numpy.random import default_rng, PCG64, SeedSequence
+    from numpy.random import default_rng, SeedSequence
     import multiprocessing
     import concurrent.futures
     import numpy as np
