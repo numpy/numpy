@@ -172,7 +172,7 @@ linear algebra, given a matrix :math:`A`, the following product can be computed:
 where :math:`U` and :math:`V^T` are square and :math:`\Sigma` is the same size
 as :math:`A`. :math:`\Sigma` is a diagonal matrix and contains the
 `singular values` of :math:`A`, organized from largest to smallest. These values
-are always non-negative, and can be used as an indicator of the "importance" of
+are always non-negative and can be used as an indicator of the "importance" of
 some features represented by the matrix :math:`A`.
 
 Let's see how this works in practice with ``blue_array`` as the matrix to be
