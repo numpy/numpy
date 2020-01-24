@@ -2635,7 +2635,7 @@ static PyObject *
             Py_DECREF(typecode);
             return NULL;
         }
-        memset(&PyArrayScalar_VAL(obj, @Name@), 0, sizeof(npy_@name@));
+        memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
 #elif @default@ == 1
         robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
