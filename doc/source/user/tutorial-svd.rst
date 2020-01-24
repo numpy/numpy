@@ -392,7 +392,7 @@ integers)." This is expected from the manipulation we just did on the original
 image.
 
 Now, to do the approximation, we must choose only the first ``k`` singular
-values for each color channel. This can be done by the following syntax::
+values for each color channel. This can be done using the following syntax::
 
     >>> approx_img = U @ Sigma[..., :k] @ Vt[..., :k, :]
 
