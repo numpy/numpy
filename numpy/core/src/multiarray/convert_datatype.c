@@ -255,11 +255,11 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             int ndim = 0;
                             npy_intp dims[NPY_MAXDIMS];
                             list = PyArray_ToList((PyArrayObject *)data_obj);
-                            result = PyArray_GetArrayParamsFromObject(
+                            result = PyArray_GetArrayParamsFromObject_int(
                                     list,
                                     retval,
                                     0, &dtype,
-                                    &ndim, dims, &arr, NULL);
+                                    &ndim, dims, &arr);
                             Py_DECREF(list);
                             Py_XDECREF(arr);
                             if (result < 0) {
