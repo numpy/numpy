@@ -4996,6 +4996,16 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 NPY_NO_EXPORT int
 PyUFunc_SetUsesArraysAsData(void **data, size_t i)
 {
+    /* NumPy 1.19, 2020-01-24 */
+    if (DEPRECATE(
+            "PyUFunc_SetUsesArraysAsData() C-API function is deprecated "
+            "and expected to be removed rapidly. If you are using it (i.e. see "
+            "this warning/error), please notify the NumPy developers. "
+            "It is currently assumed that this function is simply unused and "
+            "its removal will facilitate the implementation of better "
+            "approaches.") < 0) {
+        return -1;
+    }
     data[i] = (void*)PyUFunc_SetUsesArraysAsData;
     return 0;
 }
