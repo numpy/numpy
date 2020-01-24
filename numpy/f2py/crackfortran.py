@@ -2427,10 +2427,9 @@ def get_parameters(vars, global_params={}):
     selected_kind_re = re.compile(
         r'\bselected_(int|real)_kind\s*\(\s*(?P<value>.*)\s*\)', re.I)
     for n in param_names:
-        print("vars[n] = {}".format(vars[n]))
         if '=' in vars[n]:
             v = vars[n]['=']
-            print("v = {}".format(v))
+
             if islogical(vars[n]):
                 v = v.lower()
                 for repl in [
@@ -2439,6 +2438,7 @@ def get_parameters(vars, global_params={}):
                     # TODO: test .eq., .neq., etc replacements.
                 ]:
                     v = v.replace(*repl)
+
             v = kind_re.sub(r'kind("\1")', v)
             v = selected_int_kind_re.sub(r'selected_int_kind(\1)', v)
 
@@ -2447,14 +2447,17 @@ def get_parameters(vars, global_params={}):
             # then we may easily remove those specifiers.
             # However, it may be that the user uses other specifiers...(!)
             is_replaced = False
+
             if 'kindselector' in vars[n]:
+                # Remove kind specifier (including those defined
+                # by parameters)
                 if 'kind' in vars[n]['kindselector']:
                     orig_v_len = len(v)
                     v = v.replace('_' + vars[n]['kindselector']['kind'], '')
                     # Again, this will be true if even a single specifier
                     # has been replaced, see comment above.
                     is_replaced = len(v) < orig_v_len
-                    
+
             if not is_replaced:
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
@@ -2472,6 +2475,7 @@ def get_parameters(vars, global_params={}):
 
             if isdouble(vars[n]):
                 tt = list(v)
+                print(real16pattern.finditer(v))
                 for m in real16pattern.finditer(v):
                     tt[m.start():m.end()] = list(
                         v[m.start():m.end()].lower().replace('d', 'e'))
@@ -2483,21 +2487,31 @@ def get_parameters(vars, global_params={}):
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
 
-            # Identifying array parameters so that the eval expression
-            # below does not throw an Exception
-            if v:
-            #     # 1. check if delimiters match
-            #     if v[0:2] == '(\\' and v[-2:] == '//)':
-                    
-            #     # 2. check if dimensions match assigned values
-            if v[0] == '(':
-                v = v[2:-2]
+            param_is_array = False
+            for a in vars[n]['attrspec']:
+                if a[:9] == 'dimension':
+                    # Identifying array parameters so that the eval expression
+                    # below does not throw an Exception
+                    param_is_array = True
 
-            try:
-                params[n] = eval(v, g_params, params)
-            except Exception as msg:
-                params[n] = v
-                outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+            if param_is_array:
+                v = v.lstrip('(/').rstrip('/)').split(',')
+                # Maybe not the most efficient way...
+                v_eval = []
+                for item in v:
+                    try:
+                        v_eval.append(eval(item, g_params, params))
+                    except Exception as msg:
+                        v_eval.append(item)
+                        outmess('get_parameters: got "%s on %s\n' % (msg, repr(v)))
+                params[n] = v_eval.copy()
+            else:
+                try:
+                    params[n] = eval(v, g_params, params)
+                except Exception as msg:
+                    params[n] = v
+                    outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+
             if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
             nl = n.lower()
@@ -2536,8 +2550,10 @@ def analyzevars(block):
     global f90modulevars
 
     setmesstext(block)
+    print("MELISSA HERE: block = {}".format(block))
     implicitrules, attrrules = buildimplicitrules(block)
     vars = copy.copy(block['vars'])
+    print("MELISSA HERE: vars = {}".format(vars))
     if block['block'] == 'function' and block['name'] not in vars:
         vars[block['name']] = {}
     if '' in block['vars']:
