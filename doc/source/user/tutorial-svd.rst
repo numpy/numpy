@@ -290,7 +290,7 @@ Now, you can go ahead and repeat this experiment with other values of `k`, and
 each of your experiments should give you a slightly better (or worse) image depending on
 the value you choose.
 
-Just for good measure, to see how the original blue array looks like, you can
+Just for good measure, to see what the original blue array looks like, you can
 do
 
 ::
