@@ -1329,9 +1329,8 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
         /*
          * For LE, LT, GT, GE and a flexible self or other, we return
          * NotImplemented, which is the correct answer since the ufuncs do
-         * not in fact implement loops for those.  On python 3 this will
-         * get us the desired TypeError, but on python 2, one gets strange
-         * ordering, so we emit a warning.
+         * not in fact implement loops for those.  This will get us the
+         * desired TypeError.
          */
         Py_XDECREF(exc);
         Py_XDECREF(val);
@@ -1539,8 +1538,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          *     (MHvK, 2018-06-18: not sure about this, but it's what we have).
          *
          * However, for backwards compatibility, we cannot yet return arrays,
-         * so we raise warnings instead.  Furthermore, we warn on python2
-         * for LT, LE, GE, GT, since fall-back behaviour is poorly defined.
+         * so we raise warnings instead.
          */
         result = _failed_comparison_workaround(self, other, cmp_op);
     }
