@@ -178,7 +178,7 @@ def check_submodules():
             if 'path' in l:
                 p = l.split('=')[-1].strip()
                 if not os.path.exists(p):
-                    raise ValueError('Submodule %s missing' % p)
+                    raise ValueError(f'Submodule {p} missing')
 
 
     proc = subprocess.Popen(['git', 'submodule', 'status'],
@@ -187,7 +187,8 @@ def check_submodules():
     status = status.decode("ascii", "replace")
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
-            raise ValueError('Submodule not clean: %s' % line)
+            raise ValueError(f'Submodule not clean: {line}')
+            
 
 
 class concat_license_files():
