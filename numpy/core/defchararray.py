@@ -274,7 +274,7 @@ def str_len(a):
 
     See also
     --------
-    __builtin__.len
+    builtins.len
     """
     return _vec_string(a, integer, '__len__')
 
