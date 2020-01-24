@@ -276,7 +276,7 @@ Note that we had to use only the first ``k`` rows of ``Vt_blue``, since all
 other rows would be multiplied by the zeros corresponding to the singular
 values we eliminated from this approximation.
 
-To see if this approximation makes sense in our image, we must use a colormap
+To see if this approximation makes sense in our image, we should use a colormap
 from `matplotlib` corresponding to the color we wish to see in each
 individual image (otherwise, `matplotlib` will default to a colormap that does
 not correspond to the real data).
