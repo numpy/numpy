@@ -316,7 +316,7 @@ In our case,
     >>> img_array.shape
     (768, 1024, 3)
 
-so we need to permutate the axis on this array to make get a shape like
+so we need to permutate the axis on this array to get a shape like
 ``(3, 768, 1024)``. Fortunately, the `numpy.transpose` function can do that for
 us:
 
