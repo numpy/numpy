@@ -4,7 +4,6 @@ Implementation of optimized einsum.
 """
 import itertools
 
-from numpy.compat import basestring
 from numpy.core.multiarray import c_einsum
 from numpy.core.numeric import asanyarray, tensordot
 from numpy.core.overrides import array_function_dispatch
@@ -550,7 +549,7 @@ def _parse_einsum_input(operands):
     if len(operands) == 0:
         raise ValueError("No input operands")
 
-    if isinstance(operands[0], basestring):
+    if isinstance(operands[0], str):
         subscripts = operands[0].replace(" ", "")
         operands = [asanyarray(v) for v in operands[1:]]
 
@@ -820,7 +819,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     memory_limit = None
 
     # No optimization or a named path algorithm
-    if (path_type is False) or isinstance(path_type, basestring):
+    if (path_type is False) or isinstance(path_type, str):
         pass
 
     # Given an explicit path
@@ -828,7 +827,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         pass
 
     # Path tuple with memory limit
-    elif ((len(path_type) == 2) and isinstance(path_type[0], basestring) and
+    elif ((len(path_type) == 2) and isinstance(path_type[0], str) and
             isinstance(path_type[1], (int, float))):
         memory_limit = int(path_type[1])
         path_type = path_type[0]

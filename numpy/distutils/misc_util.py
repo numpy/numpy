@@ -32,7 +32,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.compat import basestring
 from numpy.compat import npy_load_module
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
@@ -450,7 +449,7 @@ def _get_f90_modules(source):
     return modules
 
 def is_string(s):
-    return isinstance(s, basestring)
+    return isinstance(s, str)
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """

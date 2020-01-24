@@ -5,7 +5,7 @@ __docformat__ = "restructuredtext en"
 
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode, bytes, basestring
+from numpy.compat import asbytes, asunicode, bytes
 
 
 def _decode_line(line, encoding=None):
@@ -175,7 +175,7 @@ class LineSplitter:
         self.comments = comments
 
         # Delimiter is a character
-        if (delimiter is None) or isinstance(delimiter, basestring):
+        if (delimiter is None) or isinstance(delimiter, str):
             delimiter = delimiter or None
             _handyman = self._delimited_splitter
         # Delimiter is a list of field widths
@@ -345,7 +345,7 @@ class NameValidator:
             if (nbfields is None):
                 return None
             names = []
-        if isinstance(names, basestring):
+        if isinstance(names, str):
             names = [names, ]
         if nbfields is not None:
             nbnames = len(names)
@@ -659,7 +659,7 @@ class StringConverter:
         if missing_values is None:
             self.missing_values = {''}
         else:
-            if isinstance(missing_values, basestring):
+            if isinstance(missing_values, str):
                 missing_values = missing_values.split(",")
             self.missing_values = set(list(missing_values) + [''])
         #
@@ -834,7 +834,7 @@ class StringConverter:
         else:
             if not np.iterable(missing_values):
                 missing_values = [missing_values]
-            if not all(isinstance(v, basestring) for v in missing_values):
+            if not all(isinstance(v, str) for v in missing_values):
                 raise TypeError("missing_values must be strings or unicode")
             self.missing_values.update(missing_values)
 
@@ -884,7 +884,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         nbfields = len(ndtype)
         if names is None:
             names = [''] * len(ndtype)
-        elif isinstance(names, basestring):
+        elif isinstance(names, str):
             names = names.split(",")
         names = validate(names, nbfields=nbfields, defaultfmt=defaultfmt)
         ndtype = np.dtype(dict(formats=ndtype, names=names))
@@ -892,7 +892,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         # Explicit names
         if names is not None:
             validate = NameValidator(**validationargs)
-            if isinstance(names, basestring):
+            if isinstance(names, str):
                 names = names.split(",")
             # Simple dtype: repeat to match the nb of names
             if ndtype.names is None:

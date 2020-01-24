@@ -35,7 +35,7 @@ from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
 from numpy import array as narray
 from numpy.lib.function_base import angle
 from numpy.compat import (
-    getargspec, formatargspec, long, basestring, unicode, bytes
+    getargspec, formatargspec, long, unicode, bytes
     )
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
@@ -456,7 +456,7 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
     else:
-        if isinstance(fill_value, basestring) and (ndtype.char not in 'OSVU'):
+        if isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
             # Note this check doesn't work if fill_value is not a scalar
             err_msg = "Cannot set fill value of string with array of dtype %s"
             raise TypeError(err_msg % ndtype)
@@ -781,9 +781,9 @@ def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
     return a
 
 def is_string_or_list_of_strings(val):
-    return (isinstance(val, basestring) or
+    return (isinstance(val, str) or
             (isinstance(val, list) and val and
-             builtins.all(isinstance(s, basestring) for s in val)))
+             builtins.all(isinstance(s, str) for s in val)))
 
 ###############################################################################
 #                                  Ufuncs                                     #
@@ -3300,7 +3300,7 @@ class MaskedArray(ndarray):
             raise MaskError('Cannot alter the masked element.')
         _data = self._data
         _mask = self._mask
-        if isinstance(indx, basestring):
+        if isinstance(indx, str):
             _data[indx] = value
             if _mask is nomask:
                 self._mask = _mask = make_mask_none(self.shape, self.dtype)

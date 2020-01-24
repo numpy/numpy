@@ -7,7 +7,6 @@ This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 import os
 import sys
 import warnings
-from numpy.compat import basestring
 import numpy as np
 
 from .utils import import_nose, suppress_warnings
@@ -212,7 +211,7 @@ class NoseTester:
         '''
         argv = [__file__, self.package_path, '-s']
         if label and label != 'full':
-            if not isinstance(label, basestring):
+            if not isinstance(label, str):
                 raise TypeError('Selection label should be a string')
             if label == 'fast':
                 label = 'not slow'
@@ -419,7 +418,7 @@ class NoseTester:
 
         _warn_opts = dict(develop=(Warning,),
                           release=())
-        if isinstance(raise_warnings, basestring):
+        if isinstance(raise_warnings, str):
             raise_warnings = _warn_opts[raise_warnings]
 
         with suppress_warnings("location") as sup:
