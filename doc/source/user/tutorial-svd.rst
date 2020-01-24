@@ -402,7 +402,7 @@ of each of the three matrices in the stack), and that we have selected only the
 first ``k`` components in the second-to-last axis of ``Vt`` (this means we have
 selected, from every matrix in the stack ``Vt``, the first ``k`` rows only, and
 all columns). If you are unfamiliar with the ellipsis syntax, it is a
-placeholder for other axes; for more details, see the documentation on
+placeholder for other axes. For more details, see the documentation on
 :ref:`Indexing <basics.indexing>`.
 
 Now,
