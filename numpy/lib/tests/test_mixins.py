@@ -80,7 +80,6 @@ _ALL_BINARY_OPERATORS = [
     operator.mul,
     operator.truediv,
     operator.floordiv,
-    # TODO: test div on Python 2, only
     operator.mod,
     divmod,
     pow,

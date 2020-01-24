@@ -423,10 +423,6 @@ class ABCPolyBase(abc.ABC):
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
-    def __div__(self, other):
-        # this can be removed when python 2 support is dropped.
-        return self.__floordiv__(other)
-
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
         # could return the first n elements of an infinite series.

@@ -262,9 +262,6 @@ def detect_runner():
             if module in _test_runners:
                 _test_runner_guess = module
                 break
-            if record[1].endswith("python2.6/unittest.py"):
-                _test_runner_guess = "unittest"
-                break
         else:
             _test_runner_guess = None
     return _test_runner_guess

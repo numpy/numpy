@@ -1556,7 +1556,11 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, True])
         assert_(test.fill_value == True)
 
-        # test = (a[0] == b)  # doesn't work in Python2
+        test = (a[0] == b)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (b == a[0])
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [True, False])
@@ -1584,7 +1588,11 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, True])
         assert_(test.fill_value == True)
 
-        # test = (a[0] != b)  # doesn't work in Python2
+        test = (a[0] != b)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (b != a[0])
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [True, False])
@@ -1613,7 +1621,11 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, True])
         assert_(test.fill_value == True)
 
-        # test = (a[0] == b)  # doesn't work in Python2
+        test = (a[0] == b)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (b == a[0])
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [True, False])
@@ -1642,7 +1654,11 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, True])
         assert_(test.fill_value == True)
 
-        # test = (a[0] != b)  # doesn't work in Python2
+        test = (a[0] != b)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (b != a[0])
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [True, False])
