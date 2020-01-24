@@ -43,7 +43,7 @@ def download_openblas(target, arch, ilp64):
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
     if arch in ('aarch64', 'ppc64le', 's390x'):
-        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-manylinux2014_{arch}
+        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-manylinux2014_{arch}'
         typ = 'tar.gz'
         typ = 'tar.gz'
     elif arch == 'darwin':
