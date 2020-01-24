@@ -360,7 +360,17 @@ deterministic by setting the random number seed before generating it.  Use
 either Python's ``random.seed(some_number)`` or NumPy's
 ``numpy.random.seed(some_number)``, depending on the source of random numbers.
 
+Alternatively, you can use `Hypothesis`_ to generate arbitrary data.
+Hypothesis manages both Python's and Numpy's random seeds for you, and
+provides a very concise and powerful way to describe data (including
+``hypothesis.extra.numpy``, e.g. for a set of mutually-broadcastable shapes).
+
+The advantages over random generation include tools to replay and share
+failures without requiring a fixed seed, reporting *minimal* examples for
+each failure, and better-than-naive-random techniques for triggering bugs.
+
 
 .. _nose: https://nose.readthedocs.io/en/latest/
 .. _pytest: https://pytest.readthedocs.io
 .. _parameterization: https://docs.pytest.org/en/latest/parametrize.html
+.. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
