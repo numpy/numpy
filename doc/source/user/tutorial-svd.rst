@@ -412,7 +412,7 @@ Now,
     >>> approx_img.shape
     (3, 768, 1024)
 
-which is not the right shape for showing the image. So, finally, reordering the
+which is not the right shape for showing the image. Finally, reordering the
 axes back to our original shape of (768, 1024, 3), we can see our approximation::
 
     >>> plt.imshow(np.transpose(approx_img, (1, 2, 0)))
