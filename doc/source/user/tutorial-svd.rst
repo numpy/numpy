@@ -418,7 +418,7 @@ axes back to our original shape of (768, 1024, 3), we can see our approximation:
     >>> plt.imshow(np.transpose(approx_img, (1, 2, 0)))
 
 Even though the image is not as sharp, using a small number of ``k`` singular
-values (compared to the original set of 768 values) we can recover many of the
+values (compared to the original set of 768 values), we can recover many of the
 distinguishing features from this image.
 
 **Final words**
