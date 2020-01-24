@@ -30,6 +30,14 @@ PyArray_New(
         PyTypeObject *, int nd, npy_intp const *,
         int, npy_intp const*, void *, int, int, PyObject *);
 
+NPY_NO_EXPORT int
+PyArray_GetArrayParamsFromObject_int(PyObject *op,
+         PyArray_Descr *requested_dtype,
+         npy_bool writeable,
+         PyArray_Descr **out_dtype,
+         int *out_ndim, npy_intp *out_dims,
+         PyArrayObject **out_arr);
+
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context);

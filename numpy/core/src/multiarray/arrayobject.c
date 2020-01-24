@@ -278,8 +278,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      * Get either an array object we can copy from, or its parameters
      * if there isn't a convenient array available.
      */
-    if (PyArray_GetArrayParamsFromObject(src_object, PyArray_DESCR(dest),
-                0, &dtype, &ndim, dims, &src, NULL) < 0) {
+    if (PyArray_GetArrayParamsFromObject_int(src_object,
+                PyArray_DESCR(dest), 0, &dtype, &ndim, dims, &src) < 0) {
         Py_DECREF(src_object);
         return -1;
     }

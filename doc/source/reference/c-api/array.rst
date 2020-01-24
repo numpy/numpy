@@ -550,73 +550,16 @@ From other objects
         PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, \
         PyArrayObject** out_arr, PyObject* context)
 
+    .. deprecated:: NumPy 1.19
+
+        Unless NumPy is made aware of an issue with this, this function
+        is scheduled for rapid removal without replacement.
+
+    .. versionchanged:: NumPy 1.19
+
+        `context` is never used. Its use results in an error.
+
     .. versionadded:: 1.6
-
-    Retrieves the array parameters for viewing/converting an arbitrary
-    PyObject* to a NumPy array. This allows the "innate type and shape"
-    of Python list-of-lists to be discovered without
-    actually converting to an array. PyArray_FromAny calls this function
-    to analyze its input.
-
-    In some cases, such as structured arrays and the :obj:`~numpy.class.__array__` interface,
-    a data type needs to be used to make sense of the object.  When
-    this is needed, provide a Descr for 'requested_dtype', otherwise
-    provide NULL. This reference is not stolen. Also, if the requested
-    dtype doesn't modify the interpretation of the input, out_dtype will
-    still get the "innate" dtype of the object, not the dtype passed
-    in 'requested_dtype'.
-
-    If writing to the value in 'op' is desired, set the boolean
-    'writeable' to 1.  This raises an error when 'op' is a scalar, list
-    of lists, or other non-writeable 'op'. This differs from passing
-    :c:data:`NPY_ARRAY_WRITEABLE` to PyArray_FromAny, where the writeable array may
-    be a copy of the input.
-
-    `context` is not used.
-
-    When success (0 return value) is returned, either out_arr
-    is filled with a non-NULL PyArrayObject and
-    the rest of the parameters are untouched, or out_arr is
-    filled with NULL, and the rest of the parameters are filled.
-
-    Typical usage:
-
-    .. code-block:: c
-
-        PyArrayObject *arr = NULL;
-        PyArray_Descr *dtype = NULL;
-        int ndim = 0;
-        npy_intp dims[NPY_MAXDIMS];
-
-        if (PyArray_GetArrayParamsFromObject(op, NULL, 1, &dtype,
-                                            &ndim, &dims, &arr, NULL) < 0) {
-            return NULL;
-        }
-        if (arr == NULL) {
-            /*
-            ... validate/change dtype, validate flags, ndim, etc ...
-             Could make custom strides here too */
-            arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
-                                        dims, NULL,
-                                        fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
-                                        NULL);
-            if (arr == NULL) {
-                return NULL;
-            }
-            if (PyArray_CopyObject(arr, op) < 0) {
-                Py_DECREF(arr);
-                return NULL;
-            }
-        }
-        else {
-            /*
-            ... in this case the other parameters weren't filled, just
-                validate and possibly copy arr itself ...
-            */
-        }
-        /*
-        ... use arr ...
-        */
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
