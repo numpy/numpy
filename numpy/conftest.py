@@ -3,6 +3,7 @@ Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
 
+import hypothesis
 import pytest
 import numpy
 
@@ -11,6 +12,12 @@ from numpy.core._multiarray_tests import get_fpu_mode
 
 _old_fpu_mode = None
 _collect_results = {}
+
+# See https://hypothesis.readthedocs.io/en/latest/settings.html
+hypothesis.settings.register_profile(
+    name="numpy-profile", deadline=None, print_blob=True,
+)
+hypothesis.settings.load_profile("numpy-profile")
 
 
 def pytest_configure(config):
