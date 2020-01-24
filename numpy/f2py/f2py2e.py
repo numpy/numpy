@@ -169,7 +169,7 @@ Extra options (only effective with -c):
 
 Version:     %s
 numpy Version: %s
-Requires:    Python 2.3 or higher.
+Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
 http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
