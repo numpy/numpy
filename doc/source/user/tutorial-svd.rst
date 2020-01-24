@@ -20,7 +20,7 @@ If you wish to work the examples in this tutorial, you must also have
 
 **Learner profile**
 
-This tutorial is aimed at people who have some basic prior knowledge of linear
+This tutorial is for people who have a basic understanding of linear
 algebra and arrays in NumPy and want to understand how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
