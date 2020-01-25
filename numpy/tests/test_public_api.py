@@ -94,18 +94,10 @@ def test_import_lazy_import(name):
     assert name in dir(np)
 
 
-@pytest.mark.parametrize('name', ['testing', 'Tester'])
-def test_dir_testing(name):
-    """
-    Test "dir" is not returning duplicate attribute for testing/Tester
-    """
-    exe = (sys.executable, '-c', "import numpy; numpy." + name)
-    result = subprocess.check_output(exe)
-    assert not result
-
-    # Make sure there is only one "testing/tester" in dir
-    attr_count = dir(np).count(name)
-    assert attr_count==1
+def test_dir_testing():
+    # Assert that output of dir has only one "testing/tester" attribute without duplicate
+    assert len(dir(np)) == len(set(dir(np)))
+    
 
 def test_numpy_linalg():
     bad_results = check_dir(np.linalg)
