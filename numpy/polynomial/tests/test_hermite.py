@@ -49,7 +49,7 @@ class TestArithmetic:
     def test_hermadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -59,7 +59,7 @@ class TestArithmetic:
     def test_hermsub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -80,7 +80,7 @@ class TestArithmetic:
             pol1 = [0]*i + [1]
             val1 = herm.hermval(self.x, pol1)
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 pol2 = [0]*j + [1]
                 val2 = herm.hermval(self.x, pol2)
                 pol3 = herm.hermmul(pol1, pol2)
@@ -91,7 +91,7 @@ class TestArithmetic:
     def test_hermdiv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = herm.hermadd(ci, cj)
@@ -102,7 +102,7 @@ class TestArithmetic:
     def test_hermpow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(herm.hermmul, [c]*j, np.array([1]))
                 res = herm.hermpow(c, j) 
@@ -127,7 +127,7 @@ class TestEvaluation:
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Hlist]
         for i in range(10):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = herm.hermval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

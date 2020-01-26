@@ -468,10 +468,10 @@ def _vander_nd(vander_fs, points, degrees):
     n_dims = len(vander_fs)
     if n_dims != len(points):
         raise ValueError(
-            "Expected {} dimensions of sample points, got {}".format(n_dims, len(points)))
+            f"Expected {n_dims} dimensions of sample points, got {len(points)}")
     if n_dims != len(degrees):
         raise ValueError(
-            "Expected {} dimensions of degrees, got {}".format(n_dims, len(degrees)))
+            f"Expected {n_dims} dimensions of degrees, got {len(degrees)}")
     if n_dims == 0:
         raise ValueError("Unable to guess a dtype or shape when no points are given")
 
@@ -786,12 +786,11 @@ def _deprecate_as_int(x, desc):
         else:
             if ix == x:
                 warnings.warn(
-                    "In future, this will raise TypeError, as {} will need to "
-                    "be an integer not just an integral float."
-                    .format(desc),
+                    f"In future, this will raise TypeError, as {desc} will "
+                    "need to be an integer not just an integral float.",
                     DeprecationWarning,
                     stacklevel=3
                 )
                 return ix
 
-        raise TypeError("{} must be an integer".format(desc))
+        raise TypeError(f"{desc} must be an integer")

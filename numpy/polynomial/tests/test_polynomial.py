@@ -47,7 +47,7 @@ class TestArithmetic:
     def test_polyadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -57,7 +57,7 @@ class TestArithmetic:
     def test_polysub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -75,7 +75,7 @@ class TestArithmetic:
     def test_polymul(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(i + j + 1)
                 tgt[i + j] += 1
                 res = poly.polymul([0]*i + [1], [0]*j + [1])
@@ -94,7 +94,7 @@ class TestArithmetic:
         # check rest.
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1, 2]
                 cj = [0]*j + [1, 2]
                 tgt = poly.polyadd(ci, cj)
@@ -105,7 +105,7 @@ class TestArithmetic:
     def test_polypow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(poly.polymul, [c]*j, np.array([1]))
                 res = poly.polypow(c, j) 
