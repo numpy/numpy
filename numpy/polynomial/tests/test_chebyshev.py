@@ -65,7 +65,7 @@ class TestArithmetic:
     def test_chebadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -75,7 +75,7 @@ class TestArithmetic:
     def test_chebsub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -93,7 +93,7 @@ class TestArithmetic:
     def test_chebmul(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(i + j + 1)
                 tgt[i + j] += .5
                 tgt[abs(i - j)] += .5
@@ -103,7 +103,7 @@ class TestArithmetic:
     def test_chebdiv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = cheb.chebadd(ci, cj)
@@ -114,7 +114,7 @@ class TestArithmetic:
     def test_chebpow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(cheb.chebmul, [c]*j, np.array([1]))
                 res = cheb.chebpow(c, j)
@@ -139,7 +139,7 @@ class TestEvaluation:
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Tlist]
         for i in range(10):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = cheb.chebval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

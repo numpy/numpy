@@ -1481,10 +1481,10 @@ class Polynomial(ABCPolyBase):
     @staticmethod
     def _repr_latex_term(i, arg_str, needs_parens):
         if needs_parens:
-            arg_str = r'\left({}\right)'.format(arg_str)
+            arg_str = rf"\left({arg_str}\right)"
         if i == 0:
             return '1'
         elif i == 1:
             return arg_str
         else:
-            return '{}^{{{}}}'.format(arg_str, i)
+            return f"{arg_str}^{{{i}}}"

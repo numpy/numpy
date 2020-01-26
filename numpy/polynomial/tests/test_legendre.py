@@ -49,7 +49,7 @@ class TestArithmetic:
     def test_legadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -59,7 +59,7 @@ class TestArithmetic:
     def test_legsub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -81,7 +81,7 @@ class TestArithmetic:
             pol1 = [0]*i + [1]
             val1 = leg.legval(self.x, pol1)
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 pol2 = [0]*j + [1]
                 val2 = leg.legval(self.x, pol2)
                 pol3 = leg.legmul(pol1, pol2)
@@ -92,7 +92,7 @@ class TestArithmetic:
     def test_legdiv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = leg.legadd(ci, cj)
@@ -103,7 +103,7 @@ class TestArithmetic:
     def test_legpow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(leg.legmul, [c]*j, np.array([1]))
                 res = leg.legpow(c, j) 
@@ -128,7 +128,7 @@ class TestEvaluation:
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Llist]
         for i in range(10):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = leg.legval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

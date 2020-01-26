@@ -49,7 +49,7 @@ class TestArithmetic:
     def test_hermeadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -59,7 +59,7 @@ class TestArithmetic:
     def test_hermesub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -80,7 +80,7 @@ class TestArithmetic:
             pol1 = [0]*i + [1]
             val1 = herme.hermeval(self.x, pol1)
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 pol2 = [0]*j + [1]
                 val2 = herme.hermeval(self.x, pol2)
                 pol3 = herme.hermemul(pol1, pol2)
@@ -91,7 +91,7 @@ class TestArithmetic:
     def test_hermediv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = herme.hermeadd(ci, cj)
@@ -102,7 +102,7 @@ class TestArithmetic:
     def test_hermepow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(herme.hermemul, [c]*j, np.array([1]))
                 res = herme.hermepow(c, j)
@@ -127,7 +127,7 @@ class TestEvaluation:
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Helist]
         for i in range(10):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = herme.hermeval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)
