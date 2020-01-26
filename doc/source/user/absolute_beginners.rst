@@ -1027,20 +1027,20 @@ argument. To find the unique rows, specify ``axis=0`` and for columns, specify
    [ 5  6  7  8]
    [ 9 10 11 12]]
 
-To get the unique rows, occurrence count, and index position, you can use::
+To get the unique rows, index position, and occurrence count, you can use::
 
-  >>> unique_rows, occurence_count, indices = np.unique(a_2d, axis=0,
+  >>> unique_rows, indices, occurence_count = np.unique(a_2d, axis=0,
   >>> return_counts=True, return_index=True)
   >>> print('Unique Rows: ', '\n', unique_rows)
-  >>> print('Occurrence Count:', '\n', occurence_count)
   >>> print('Indices: ', '\n', indices)
+  >>> print('Occurrence Count:', '\n', occurence_count)
   Unique Rows:
     [[ 1  2  3  4]
      [ 5  6  7  8]
      [ 9 10 11 12]]
-  Occurrence Count:
-    [0 1 2]
   Indices:
+    [0 1 2]
+  Occurrence Count:
     [2 1 1]
 
 To learn more about finding the unique elements in an array, see `unique`.
