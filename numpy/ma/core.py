@@ -287,10 +287,7 @@ def _extremum_fill_value(obj, extremum, extremum_name):
         try:
             return extremum[dtype]
         except KeyError:
-            raise TypeError(
-                "Unsuitable type {} for calculating {}."
-                .format(dtype, extremum_name)
-            )
+            raise TypeError(f"Unsuitable type {dtype} for calculating {extremum_name}.")
 
     dtype = _get_dtype_of(obj)
     return _recursive_fill_value(dtype, _scalar_fill_value)
@@ -897,7 +894,7 @@ class _MaskedUFunc:
         self.__name__ = ufunc.__name__
 
     def __str__(self):
-        return "Masked version of {}".format(self.f)
+        return f"Masked version of {self.f}"
 
 
 class _MaskedUnaryOperation(_MaskedUFunc):
@@ -3272,11 +3269,10 @@ class MaskedArray(ndarray):
                                 dout._fill_value.flat[0]).all():
                             warnings.warn(
                                 "Upon accessing multidimensional field "
-                                "{indx:s}, need to keep dimensionality "
+                                f"{indx!s}, need to keep dimensionality "
                                 "of fill_value at 0. Discarding "
                                 "heterogeneous fill_value and setting "
-                                "all to {fv!s}.".format(indx=indx,
-                                    fv=dout._fill_value[0]),
+                                f"all to {dout._fill_value[0]!s}.",
                                 stacklevel=2)
                         dout._fill_value = dout._fill_value.flat[0]
                 dout._isfield = True
@@ -3924,7 +3920,7 @@ class MaskedArray(ndarray):
             )
             return _legacy_print_templates[key] % parameters
 
-        prefix = 'masked_{}('.format(name)
+        prefix = f"masked_{name}("
 
         dtype_needed = (
             not np.core.arrayprint.dtype_is_implied(self.dtype) or
@@ -5867,13 +5863,13 @@ class MaskedArray(ndarray):
 
     def partition(self, *args, **kwargs):
         warnings.warn("Warning: 'partition' will ignore the 'mask' "
-                      "of the {}.".format(self.__class__.__name__),
+                      f"of the {self.__class__.__name__}.",
                       stacklevel=2)
         return super(MaskedArray, self).partition(*args, **kwargs)
 
     def argpartition(self, *args, **kwargs):
         warnings.warn("Warning: 'argpartition' will ignore the 'mask' "
-                      "of the {}.".format(self.__class__.__name__),
+                      f"of the {self.__class__.__name__}.",
                       stacklevel=2)
         return super(MaskedArray, self).argpartition(*args, **kwargs)
 
@@ -6433,7 +6429,7 @@ class MaskedConstant(MaskedArray):
             return super(MaskedConstant, self).__setattr__(attr, value)
         elif self is self.__singleton:
             raise AttributeError(
-                "attributes of {!r} are not writeable".format(self))
+                f"attributes of {self!r} are not writeable")
         else:
             # duplicate instance - we can end up here from __array_finalize__,
             # where we set the __class__ attribute
@@ -6538,8 +6534,8 @@ class _extrema_operation(_MaskedUFunc):
         if b is None:
             # 2016-04-13, 1.13.0
             warnings.warn(
-                "Single-argument form of np.ma.{0} is deprecated. Use "
-                "np.ma.{0}.reduce instead.".format(self.__name__),
+                f"Single-argument form of np.ma.{self.__name__} is deprecated. Use "
+                f"np.ma.{self.__name__}.reduce instead.",
                 DeprecationWarning, stacklevel=2)
             return self.reduce(a)
         return where(self.compare(a, b), a, b)
@@ -6552,11 +6548,9 @@ class _extrema_operation(_MaskedUFunc):
         if axis is np._NoValue and target.ndim > 1:
             # 2017-05-06, Numpy 1.13.0: warn on axis default
             warnings.warn(
-                "In the future the default for ma.{0}.reduce will be axis=0, "
-                "not the current None, to match np.{0}.reduce. "
-                "Explicitly pass 0 or None to silence this warning.".format(
-                    self.__name__
-                ),
+                f"In the future the default for ma.{self.__name__}.reduce will be axis=0, "
+                f"not the current None, to match np.{self.__name__}.reduce. "
+                "Explicitly pass 0 or None to silence this warning.",
                 MaskedArrayFutureWarning, stacklevel=2)
             axis = None
 
@@ -7895,10 +7889,8 @@ def asanyarray(a, dtype=None):
 def _pickle_warn(method):
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
-        "np.ma.{method} is deprecated, use pickle.{method} instead"
-            .format(method=method),
-        DeprecationWarning,
-        stacklevel=3)
+        f"np.ma.{method} is deprecated, use pickle.{method} instead",
+        DeprecationWarning, stacklevel=3)
 
 
 def fromfile(file, dtype=float, count=-1, sep=''):
