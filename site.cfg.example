@@ -85,7 +85,7 @@
 # These settings apply when they are not overridden in the sections below.
 # Note that the standard paths (e.g. `/usr/lib`) are not searched if you
 # override these settings, unless they are explicitly included.
-# The ``:`` is os.pathsep, which may vary on windows
+# The ``:`` is os.pathsep, which is ``;`` on windows
 #[DEFAULT]
 #library_dirs = /usr/local/lib64:/usr/local/lib:/usr/lib64:/usr/lib
 #include_dirs = /usr/local/include:/usr/include
