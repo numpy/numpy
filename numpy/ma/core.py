@@ -3269,7 +3269,7 @@ class MaskedArray(ndarray):
                                 dout._fill_value.flat[0]).all():
                             warnings.warn(
                                 "Upon accessing multidimensional field "
-                                f"{indx:s}, need to keep dimensionality "
+                                f"{indx!s}, need to keep dimensionality "
                                 "of fill_value at 0. Discarding "
                                 "heterogeneous fill_value and setting "
                                 f"all to {dout._fill_value[0]!s}.",
@@ -3914,7 +3914,10 @@ class MaskedArray(ndarray):
                 dtype=str(self.dtype)
             )
             is_structured = bool(self.dtype.names)
-            key = f"{'long' if is_long else 'short'}_{'flx' if is_structured else 'std'}"
+            key = '{}_{}'.format(
+                'long' if is_long else 'short',
+                'flx' if is_structured else 'std'
+            )
             return _legacy_print_templates[key] % parameters
 
         prefix = f"masked_{name}("
