@@ -6273,10 +6273,7 @@ def test_matmul_inplace():
     assert_raises(TypeError, a.__imatmul__, b)
     import operator
     assert_raises(TypeError, operator.imatmul, a, b)
-    # we avoid writing the token `exec` so as not to crash python 2's
-    # parser
-    exec_ = getattr(builtins, "exec")
-    assert_raises(TypeError, exec_, "a @= b", globals(), locals())
+    assert_raises(TypeError, exec, "a @= b", globals(), locals())
 
 def test_matmul_axes():
     a = np.arange(3*4*5).reshape(3, 4, 5)
