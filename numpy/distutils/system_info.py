@@ -38,6 +38,7 @@ The order of finding the locations of resources is the following:
  1. environment variable
  2. section in site.cfg
  3. DEFAULT section in site.cfg
+ 4. System default search paths (see ``default_*`` variables below).
 Only the first complete match is returned.
 
 Currently, the following classes are available, along with their section names:
