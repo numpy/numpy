@@ -2537,7 +2537,9 @@ object_arrtype_dealloc(PyObject *v)
     PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(cls.tp_bases, num); \
     robj = sup->tp_new(type, args, kwds); \
     if (robj != NULL) goto finish;        \
-    if (PyTuple_GET_SIZE(args) != 1) return NULL; \
+    if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) { \
+        return NULL; \
+    } \
     PyErr_Clear(); \
     /* now do default conversion */
 
@@ -2558,17 +2560,12 @@ object_arrtype_dealloc(PyObject *v)
 
 #if defined(_@TYPE@_IS_OBJECT)
     #define _NPY_UNUSED_TYPE NPY_UNUSED
-    #define _NPY_UNUSED_KWDS NPY_UNUSED
-#elif defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_DOUBLE)
-    #define _NPY_UNUSED_TYPE
-    #define _NPY_UNUSED_KWDS
 #else
     #define _NPY_UNUSED_TYPE
-    #define _NPY_UNUSED_KWDS NPY_UNUSED
 #endif
 
 static PyObject *
-@name@_arrtype_new(PyTypeObject *_NPY_UNUSED_TYPE(type), PyObject *args, PyObject *_NPY_UNUSED_KWDS(kwds))
+@name@_arrtype_new(PyTypeObject *_NPY_UNUSED_TYPE(type), PyObject *args, PyObject *kwds)
 {
     PyObject *obj = NULL;
     PyObject *robj;
@@ -2586,7 +2583,8 @@ static PyObject *
 #endif
 
     /* TODO: include type name in error message, which is not @name@ */
-    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
     }
     typecode = PyArray_DescrFromType(NPY_@TYPE@);
@@ -2699,8 +2697,8 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
-    /* TODO: include type name in error message, which is not @name@ */
-    if (!PyArg_ParseTuple(args, "|OO", &obj, &meta_obj)) {
+    char *kwnames[] = {"", "", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &obj, &meta_obj)) {
         return NULL;
     }
 
@@ -2753,12 +2751,13 @@ static PyObject *
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
-bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_UNUSED(kwds))
+bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
 {
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    if (!PyArg_ParseTuple(args, "|O:bool_", &obj)) {
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
         return NULL;
     }
     if (obj == NULL) {
@@ -2897,12 +2896,13 @@ NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
 };
 
 static PyObject *
-void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
+void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj, *arr;
     PyObject *new = NULL;
 
-    if (!PyArg_ParseTuple(args, "O:void", &obj)) {
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:void", kwnames, &obj)) {
         return NULL;
     }
     /*
