@@ -947,6 +947,14 @@ def check_doctests_testfile(fname, verbose, ns=None,
     Notes
     -----
 
+    refguide can be signalled to skip testing code by adding
+    ``#doctest: +SKIP`` to the end of the line. If the output varies or is
+    random, add ``# may vary`` or ``# random`` to the comment. for example
+
+    >>> plt.plot(...)  # doctest: +SKIP
+    >>> random.randint(0,10)
+    5 # random
+
     We also try to weed out pseudocode:
     * We maintain a list of exceptions which signal pseudocode,
     * We split the text file into "blocks" of code separated by empty lines
