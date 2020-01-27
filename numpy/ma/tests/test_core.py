@@ -448,14 +448,14 @@ class TestMaskedArray:
         assert_equal(a.mask, [0, 1, 0])
 
     def test_format(self):
-        # Note: Python 3.6 and above fstring uses __format__, see PEP 498.
-        # Testing with underlying primitive.
         a = array([0, 1, 2], mask=[False, True, False])
         assert_equal(format(a), "[0 -- 2]")
         assert_equal(format(masked), "--")
         assert_equal(format(masked, ""), "--")
-        assert_equal(format(masked, " >5"), "   --")
-        assert_equal(format(masked, " <5"), "--   ")
+
+        # Postponed from PR #15410, perhaps address in the future.
+        # assert_equal(format(masked, " >5"), "   --")
+        # assert_equal(format(masked, " <5"), "--   ")
 
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])
