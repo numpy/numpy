@@ -3287,12 +3287,14 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     meta = get_datetime_metadata_from_dtype(dtype);
-    Py_DECREF(dtype);
     if (meta == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
 
-    return convert_datetime_metadata_to_tuple(meta);
+    PyObject *res = convert_datetime_metadata_to_tuple(meta);
+    Py_DECREF(dtype);
+    return res;
 }
 
 /*
