@@ -153,6 +153,7 @@ class PytestTester:
         # When testing matrices, ignore their PendingDeprecationWarnings
         pytest_args += [
             "-W ignore:the matrix subclass is not",
+            "-W ignore:Importing from numpy.matlib is",
             ]
 
         if doctests:
