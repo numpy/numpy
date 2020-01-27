@@ -40,7 +40,6 @@ def get_ilp64():
     return "64_"
 
 def download_openblas(target, arch, ilp64):
-    MAC_VERSION = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
     if arch in ('aarch64', 'ppc64le', 's390x'):
@@ -48,6 +47,7 @@ def download_openblas(target, arch, ilp64):
         typ = 'tar.gz'
         typ = 'tar.gz'
     elif arch == 'darwin':
+        MAC_VERSION = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
         filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{MAC_VERSION}'
         typ = 'tar.gz'
     elif arch == 'windows':
