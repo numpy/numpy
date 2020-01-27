@@ -48,7 +48,7 @@ def download_openblas(target, arch, ilp64):
         typ = 'tar.gz'
         typ = 'tar.gz'
     elif arch == 'darwin':
-        MAC_VERSION = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
+        suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
         filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{MAC_VERSION}'
         typ = 'tar.gz'
     elif arch == 'windows':
