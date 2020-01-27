@@ -234,7 +234,7 @@ fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
   >>> np.empty(2)
-  array([1., 1.])  #may vary
+  array([3.14, 42.0])  # may vary
 
 You can create an array with a range of elements::
 
@@ -395,7 +395,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> numpy.reshape(a, newshape=(1,6), order='C')
+  >>> numpy.reshape(a, newshape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
@@ -623,7 +623,7 @@ Let's say you have this array:
 
 ::
 
-  >>> a = array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+  >>> a = np.array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 
 You can create a new array from a section of your array any time by specifying
 where you want to slice your array. ::
@@ -752,11 +752,11 @@ You can, of course, do more than just addition!
 ::
 
   >>> data - ones
-  array([0, 1])
+  array([0., 1.])
   >>> data * data
   array([1, 4])
   >>> data / data
-  array([1.0, 1.0])
+  array([1., 1.])
 
 .. image:: images/np_sub_mult_divide.png
 
@@ -874,7 +874,7 @@ represent them in NumPy. ::
   >>> data = np.array([[1, 2], [3, 4]])
   >>> data
   array([[1, 2],
-           [3, 4]])
+         [3, 4]])
 
 .. image:: images/np_create_matrix.png
 
@@ -917,7 +917,7 @@ arithmetic operators if you have two matrices that are the same size. ::
   >>> ones = np.array([[1, 1], [1, 1]])
   >>> data + ones
   array([[2, 3],
-           [4, 5]])
+         [4, 5]])
 
 .. image:: images/np_matrix_arithmetic.png
 
@@ -929,8 +929,8 @@ broadcast rules for the operation. ::
   >>> ones_row = np.array([[1, 1]])
   >>> data + ones_row
   array([[2, 3],
-           [4, 5],
-           [6, 7]])
+         [4, 5],
+         [6, 7]])
 
 .. image:: images/np_matrix_broadcasting.png
 
@@ -974,12 +974,12 @@ an array if you give them a tuple describing the dimensions of the matrix::
 
   >>> np.ones((3, 2))
   array([[1., 1.],
-           [1., 1.],
-           [1., 1.]])
+         [1., 1.],
+         [1., 1.]])
   >>> np.zeros((3, 2))
   array([[0., 0.],
-           [0., 0.],
-           [0., 0.]])
+         [0., 0.],
+         [0., 0.]])
   # a way to create repeatable series of random numbers
   >>> rng = np.random.default_rng(0)
   >>> rng.random()
@@ -1008,7 +1008,7 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
   >>> rng.integers(5, size=(2, 4))
   array([[2, 1, 1, 0],
-           [0, 0, 0, 4]])
+         [0, 0, 0, 4]])
 
 :ref:`Read more about random number generation here <numpyrandom>`.
 
@@ -1036,8 +1036,8 @@ To get the indices of unique values in a NumPy array (an array of first index
 positions of unique values in the array), just pass the ``return_index``
 argument in ``np.unique()`` as well as your array. ::
 
-  >>> indices_list = np.unique(a, return_index=True)
-  >>> print(indices_list[1])
+  >>> unique_values, indices_list = np.unique(a, return_index=True)
+  >>> print(indices_list)
   [ 0  2  3  4  5  6  7 12 13 14]
 
 You can pass the ``return_counts`` argument in ``np.unique()`` along with your
@@ -1081,10 +1081,10 @@ To get the unique rows, index position, and occurrence count, you can use::
      [ 9 10 11 12]]
   >>> print('Indices: ', '\n', indices)
   Indices:
-    [0 1 2]
+   [0 1 2]
   >>> print('Occurrence Count:', '\n', occurrence_count)
   Occurrence Count:
-    [2 1 1]
+   [2 1 1]
 
 To learn more about finding the unique elements in an array, see `unique`.
 
@@ -1108,11 +1108,11 @@ You simply need to pass in the new dimensions that you want for the matrix. ::
 
   >>> data.reshape(2, 3)
   array([[1, 2, 3],
-           [4, 5, 6]])
+         [4, 5, 6]])
   >>> data.reshape(3, 2)
   array([[1, 2],
-           [3, 4],
-           [5, 6]])
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_reshape.png
 
@@ -1405,9 +1405,10 @@ For example:
 
   In [3]: double??
   Out[3]: Signature: double(a)
-          Source:    def double(a):
-                        '''Return a * 2'''
-                        return a * 2
+          Source:
+          def double(a):
+              '''Return a * 2'''
+              return a * 2
           File:      ~/Desktop/<ipython-input-23-b5adf20be596>
           Type:      function
 
@@ -1616,7 +1617,7 @@ You can also save your array with the NumPy ``savetxt`` method. ::
 If you're using the command line, you can read your saved CSV any time with a
 command such as::
 
-  $cat np.csv
+  $ cat np.csv
   #  1,  2,  3,  4
   -2.58,0.43,-1.24,1.60
   0.99,1.17,0.94,-0.15
