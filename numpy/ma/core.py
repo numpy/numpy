@@ -6398,7 +6398,10 @@ class MaskedConstant(MaskedArray):
             return object.__repr__(self)
 
     def __format__(self, format_spec):
-        return format(str(masked_print_option._display), format_spec)
+        # Replace ndarray.__format__ with the default, which supports no format characters.
+        # Supporting format characters is unwise here, because we do not know what type
+        # the user was expecting - better to not guess.
+        return object.__format__(self, format_spec)
 
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.
