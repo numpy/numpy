@@ -984,8 +984,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
     # Arguably we dispatch on more arguments that we really should; see note in
     # _einsum_path_dispatcher for why.
-    for op in operands:
-        yield op
+    yield from operands
     yield out
 
 
