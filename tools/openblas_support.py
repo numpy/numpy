@@ -43,27 +43,27 @@ def download_openblas(target, arch, ilp64):
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
     if arch in ('aarch64', 'ppc64le', 's390x'):
-        filename = '{0}/openblas{1}-{2}-manylinux2014_{3}.tar.gz'.format(
-                        RACKSPACE, fnsuffix, OPENBLAS_LONG, arch)
+        suffix = f'manylinux2014_{arch}.tar.gz'
+        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
         typ = 'tar.gz'
     elif arch == 'darwin':
-        filename = '{0}/openblas{1}-{2}-macosx_10_9_x86_64-gf_1becaaa.tar.gz'.format(
-                        RACKSPACE, fnsuffix, OPENBLAS_LONG)
+        suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
+        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
     elif arch == 'windows':
         if IS_32BIT:
             suffix = 'win32-gcc_7_1_0.zip'
         else:
             suffix = 'win_amd64-gcc_7_1_0.zip'
-        filename = '{0}/openblas{1}-{2}-{3}'.format(RACKSPACE, fnsuffix, OPENBLAS_LONG, suffix)
+        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
     elif 'x86' in arch:
         if IS_32BIT:
             suffix = 'manylinux1_i686.tar.gz'
         else:
             suffix = 'manylinux1_x86_64.tar.gz'
-        filename = '{0}/openblas{1}-{2}-{3}'.format(RACKSPACE, fnsuffix, OPENBLAS_LONG, suffix)
+        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
     if not filename:
         return None
@@ -72,7 +72,7 @@ def download_openblas(target, arch, ilp64):
         with open(target, 'wb') as fid:
             fid.write(urlopen(filename).read())
     except HTTPError:
-        print('Could not download "%s"' % filename)
+        print(f'Could not download "{filename}"')
         return None
     return typ
 
@@ -208,10 +208,10 @@ def test_setup(arches):
             try:
                 target = setup_openblas(arch, ilp64)
             except:
-                print('Could not setup %s' % arch)
+                print(f'Could not setup {arch}')
                 raise
             if not target:
-                raise RuntimeError('Could not setup %s' % arch)
+                raise RuntimeError(f'Could not setup {arch}')
             print(target)
             if arch == 'windows':
                 if not target.endswith('.a'):

@@ -73,8 +73,7 @@ def process_pyx(fromfile, tofile):
         required_version = LooseVersion('0.29.14')
 
         if LooseVersion(cython_version) < required_version:
-            raise RuntimeError('Building {} requires Cython >= {}'.format(
-                VENDOR, required_version))
+            raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}')
         subprocess.check_call(
             [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
@@ -179,13 +178,13 @@ def process(path, fromfile, tofile, processor_function, hash_db):
     fulltopath = os.path.join(path, tofile)
     current_hash = get_hash(fullfrompath, fulltopath)
     if current_hash == hash_db.get(normpath(fullfrompath), None):
-        print('%s has not changed' % fullfrompath)
+        print(f'{fullfrompath} has not changed')
         return
 
     orig_cwd = os.getcwd()
     try:
         os.chdir(path)
-        print('Processing %s' % fullfrompath)
+        print(f'Processing {fullfrompath}')
         processor_function(fromfile, tofile)
     finally:
         os.chdir(orig_cwd)
