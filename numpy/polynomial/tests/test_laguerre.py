@@ -46,7 +46,7 @@ class TestArithmetic:
     def test_lagadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -56,7 +56,7 @@ class TestArithmetic:
     def test_lagsub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -77,7 +77,7 @@ class TestArithmetic:
             pol1 = [0]*i + [1]
             val1 = lag.lagval(self.x, pol1)
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 pol2 = [0]*j + [1]
                 val2 = lag.lagval(self.x, pol2)
                 pol3 = lag.lagmul(pol1, pol2)
@@ -88,7 +88,7 @@ class TestArithmetic:
     def test_lagdiv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = lag.lagadd(ci, cj)
@@ -99,7 +99,7 @@ class TestArithmetic:
     def test_lagpow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(lag.lagmul, [c]*j, np.array([1]))
                 res = lag.lagpow(c, j) 
@@ -124,7 +124,7 @@ class TestEvaluation:
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Llist]
         for i in range(7):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = lag.lagval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)

@@ -42,7 +42,7 @@ def assert_poly_almost_equal(p1, p2, msg=""):
         assert_(np.all(p1.window == p2.window))
         assert_almost_equal(p1.coef, p2.coef)
     except AssertionError:
-        msg = "Result: %s\nTarget: %s", (p1, p2)
+        msg = f"Result: {p1}\nTarget: {p2}"
         raise AssertionError(msg)
 
 
