@@ -741,9 +741,9 @@ You can add the arrays together with the plus sign.
 ::
 
   >>> data = np.array([1, 2])
-  >>> ones = np.ones(2)
+  >>> ones = np.ones(2, dtype=int)
   >>> data + ones
-  array([2., 3.])
+  array([2, 3])
 
 .. image:: images/np_data_plus_ones.png
 
@@ -752,11 +752,11 @@ You can, of course, do more than just addition!
 ::
 
   >>> data - ones
-  array([0., 1.])
+  array([0, 1])
   >>> data * data
   array([1, 4])
   >>> data / data
-  array([1., 1.])
+  array([1, 1])
 
 .. image:: images/np_sub_mult_divide.png
 
@@ -964,13 +964,14 @@ All you need to do is pass in the number of elements you want it to generate::
   >>> np.zeros(3)
   array([0., 0., 0.])
   # the simplest way to generate random numbers
-  >>> np.random.default_rng().random(3)
+  >>> rng = np.random.default_rng(0)
+  >>> rng.random(3)
   array([0.08419554, 0.01447087, 0.88581866])  # may vary
 
 .. image:: images/np_ones_zeros_random.png
 
 You can also use ``ones()``, ``zeros()``, and ``random()`` to create
-an array if you give them a tuple describing the dimensions of the matrix::
+a 2D array if you give them a tuple describing the dimensions of the matrix::
 
   >>> np.ones((3, 2))
   array([[1., 1.],
@@ -980,10 +981,10 @@ an array if you give them a tuple describing the dimensions of the matrix::
   array([[0., 0.],
          [0., 0.],
          [0., 0.]])
-  # a way to create repeatable series of random numbers
-  >>> rng = np.random.default_rng(0)
-  >>> rng.random()
-  0.6369616873214543
+  >>> rng.random((3, 2))
+  array([[0.01652764, 0.81327024],
+           [0.91275558, 0.60663578],
+           [0.72949656, 0.54362499]])  # may vary 
 
 .. image:: images/np_ones_zeros_matrix.png
 
@@ -1008,7 +1009,7 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
   >>> rng.integers(5, size=(2, 4))
   array([[2, 1, 1, 0],
-         [0, 0, 0, 4]])
+         [0, 0, 0, 4]])  # may vary
 
 :ref:`Read more about random number generation here <numpyrandom>`.
 
@@ -1072,18 +1073,15 @@ argument. To find the unique rows, specify ``axis=0`` and for columns, specify
 
 To get the unique rows, index position, and occurrence count, you can use::
 
-  >>> unique_rows, indices, occurrence_count = np.unique(a_2d, axis=0,
-  ...                           return_counts=True, return_index=True)
-  >>> print('Unique Rows: ', '\n', unique_rows)
-  Unique Rows:
+  >>> unique_rows, indices, occurrence_count = np.unique(
+  ...      a_2d, axis=0, return_counts=True, return_index=True)
+  >>> print(unique_rows)
     [[ 1  2  3  4]
      [ 5  6  7  8]
      [ 9 10 11 12]]
-  >>> print('Indices: ', '\n', indices)
-  Indices:
+  >>> print(indices)
    [0 1 2]
-  >>> print('Occurrence Count:', '\n', occurrence_count)
-  Occurrence Count:
+  >>> print(occurrence_count)
    [2 1 1]
 
 To learn more about finding the unique elements in an array, see `unique`.
@@ -1175,9 +1173,7 @@ If you start with this array::
 You can reverse the content in all of the rows and all of the columns with::
 
   >>> reversed_arr = np.flip(arr_2d)
-
-  >>> print('Reversed Array: \n', reversed_arr)
-  Reversed Array:
+  >>> print(reversed_arr)
     [[12 11 10  9]
      [ 8  7  6  5]
      [ 4  3  2  1]]
@@ -1185,9 +1181,7 @@ You can reverse the content in all of the rows and all of the columns with::
 You can easily reverse only the *rows* with::
 
   >>> reversed_arr_rows = np.flip(arr_2d, axis=0)
-
-  >>> print('Reversed Array: \n', reversed_arr_rows)
-  Reversed Array:
+  >>> print(reversed_arr_rows)
   [[ 9 10 11 12]
    [ 5  6  7  8]
    [ 1  2  3  4]]
@@ -1195,9 +1189,7 @@ You can easily reverse only the *rows* with::
 Or reverse only the *columns* with::
 
   >>> reversed_arr_columns = np.flip(arr_2d, axis=1)
-
-  >>> print('Reversed Array columns: \n', reversed_arr_columns)
-  Reversed Array columns:
+  >>> print(reversed_arr_columns)
     [[ 4  3  2  1]
      [ 8  7  6  5]
      [12 11 10  9]]
@@ -1206,9 +1198,7 @@ You can also reverse the contents of only one column or row. For example, you
 can reverse the contents of the row at index position 1 (the second row)::
 
   >>> arr_2d[1] = np.flip(arr_2d[1])
-
-  >>> print('Reversed Array: \n', arr_2d)
-  Reversed Array:
+  >>> print(arr_2d)
     [[ 1  2  3  4]
      [ 8  7  6  5]
      [ 9 10 11 12]]
@@ -1216,9 +1206,7 @@ can reverse the contents of the row at index position 1 (the second row)::
 You can also reverse the column at index position 1 (the second column)::
 
   >>> arr_2d[:,1] = np.flip(arr_2d[:,1])
-
-  >>> print('Reversed Array: \n', arr_2d)
-  Reversed Array:
+  >>> print(arr_2d)
     [[ 1 10  3  4]
      [ 8  7  6  5]
      [ 9  2 11 12]]
@@ -1565,17 +1553,17 @@ easiest way to do this is to use
   >>> x = pd.read_csv('music.csv', header=0).values
   >>> print(x)
   [['Billie Holiday' 'Jazz' 1300000 27000000]
-     ['Jimmie Hendrix' 'Rock' 2700000 70000000]
-     ['Miles Davis' 'Jazz' 1500000 48000000]
-     ['SIA' 'Pop' 2000000 74000000]]
+   ['Jimmie Hendrix' 'Rock' 2700000 70000000]
+   ['Miles Davis' 'Jazz' 1500000 48000000]
+   ['SIA' 'Pop' 2000000 74000000]]
 
   >>> # You can also simply select the columns you need:
   >>> x = pd.read_csv('music.csv', usecols=['Artist', 'Plays']).values
   >>> print(x)
   [['Billie Holiday' 27000000]
-     ['Jimmie Hendrix' 70000000]
-     ['Miles Davis' 48000000]
-     ['SIA' 74000000]]
+   ['Jimmie Hendrix' 70000000]
+   ['Miles Davis' 48000000]
+   ['SIA' 74000000]]
 
 .. image:: images/np_pandas.png
 
