@@ -94,6 +94,12 @@ def test_import_lazy_import(name):
     assert name in dir(np)
 
 
+def test_dir_testing():
+    """Assert that output of dir has only one "testing/tester"
+    attribute without duplicate"""
+    assert len(dir(np)) == len(set(dir(np)))
+    
+
 def test_numpy_linalg():
     bad_results = check_dir(np.linalg)
     assert bad_results == {}
