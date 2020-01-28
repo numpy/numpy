@@ -148,7 +148,7 @@ import platform
 
 from . import __version__
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -579,8 +579,8 @@ publicpattern = re.compile(
     beforethisafter % ('', 'public', 'public', '.*'), re.I), 'public'
 privatepattern = re.compile(
     beforethisafter % ('', 'private', 'private', '.*'), re.I), 'private'
-intrisicpattern = re.compile(
-    beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
+intrinsicpattern = re.compile(
+    beforethisafter % ('', 'intrinsic', 'intrinsic', '.*'), re.I), 'intrinsic'
 intentpattern = re.compile(beforethisafter % (
     '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
@@ -705,7 +705,7 @@ def crackline(line, reset=0):
     for pat in [dimensionpattern, externalpattern, intentpattern, optionalpattern,
                 requiredpattern,
                 parameterpattern, datapattern, publicpattern, privatepattern,
-                intrisicpattern,
+                intrinsicpattern,
                 endifpattern, endpattern,
                 formatpattern,
                 beginpattern, functionpattern, subroutinepattern,
@@ -900,6 +900,16 @@ def _resolvenameargspattern(line):
 
 
 def analyzeline(m, case, line):
+    """
+    Reads each line in the input file in sequence and updates global vars.
+
+    Effectively reads and collects information from the input file to the
+    global variable groupcache, a dictionary containing info about each part
+    of the fortran module.
+
+    At the end of analyzeline, information is filtered into the correct dict
+    keys, but parameter values and dimensions are not yet interpreted.
+    """
     global groupcounter, groupname, groupcache, grouplist, filepositiontext
     global currentfilename, f77modulename, neededinterface, neededmodule
     global expectbegin, gotnextfile, previous_context
@@ -1097,7 +1107,7 @@ def analyzeline(m, case, line):
         last_name = updatevars(typespec, selector, attr, edecl)
         if last_name is not None:
             previous_context = ('variable', last_name, groupcounter)
-    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrisic']:
+    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrinsic']:
         edecl = groupcache[groupcounter]['vars']
         ll = m.group('after').strip()
         i = ll.find('::')
@@ -1157,7 +1167,7 @@ def analyzeline(m, case, line):
                     else:
                         errmess('analyzeline: intent(callback) %s is already'
                                 ' in argument list' % (k))
-            if case in ['optional', 'required', 'public', 'external', 'private', 'intrisic']:
+            if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
                 edecl[k]['attrspec'].append(ap)
@@ -1533,10 +1543,18 @@ def markinnerspaces(line):
 
 
 def updatevars(typespec, selector, attrspec, entitydecl):
+    """
+    Returns last_name, the variable name without special chars, parenthesis
+        or dimension specifiers.
+
+    Alters groupcache to add the name, typespec, attrspec (and possibly value)
+    of current variable.
+    """
     global groupcache, groupcounter
 
     last_name = None
     kindselect, charselect, typename = cracktypespec(typespec, selector)
+    # Clean up outer commas, whitespace and undesired chars from attrspec
     if attrspec:
         attrspec = [x.strip() for x in markoutercomma(attrspec).split('@,@')]
         l = []
@@ -2487,16 +2505,15 @@ def get_parameters(vars, global_params={}):
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
 
+            # Identifying array parameters
             param_is_array = False
             for a in vars[n]['attrspec']:
                 if a[:9] == 'dimension':
-                    # Identifying array parameters so that the eval expression
-                    # below does not throw an Exception
                     param_is_array = True
 
             if param_is_array:
                 v = v.lstrip('(/').rstrip('/)').split(',')
-                # Maybe not the most efficient way...
+                # TODO Probably not the most efficient way...
                 v_eval = []
                 for item in v:
                     try:
@@ -2529,6 +2546,7 @@ def _eval_length(length, params):
         return '(*)'
     return _eval_scalar(length, params)
 
+
 _is_kind_number = re.compile(r'\d+_').match
 
 
@@ -2547,13 +2565,15 @@ def _eval_scalar(value, params):
 
 
 def analyzevars(block):
+    """
+    Sets correct dimension information for each variable/parameter
+    """
+
     global f90modulevars
 
     setmesstext(block)
-    print("MELISSA HERE: block = {}".format(block))
     implicitrules, attrrules = buildimplicitrules(block)
     vars = copy.copy(block['vars'])
-    print("MELISSA HERE: vars = {}".format(vars))
     if block['block'] == 'function' and block['name'] not in vars:
         vars[block['name']] = {}
     if '' in block['vars']:
@@ -2578,6 +2598,8 @@ def analyzevars(block):
 
     params = get_parameters(vars, get_useparameters(block))
 
+    # At this point, params are read and interpreted, but
+    # the params used to define vars are not yet parsed
     dep_matches = {}
     name_match = re.compile(r'\w[\w\d_$]*').match
     for v in list(vars.keys()):
@@ -2678,11 +2700,28 @@ def analyzevars(block):
             if dim and 'dimension' not in vars[n]:
                 vars[n]['dimension'] = []
                 for d in rmbadname([x.strip() for x in markoutercomma(dim).split('@,@')]):
+                    # d is the expression inside the dimension declaration
                     star = '*'
                     if d == ':':
                         star = ':'
                     if d in params:
+                        # the dimension for this variable depends on a
+                        # previously defined (scalar) parameter
                         d = str(params[d])
+                    # TODO certainly not the best way!
+                    # should maybe use regex (like in updatevars)
+                    if d[:d.find("(")] in params:
+                        # the dimension for this variable depends on a
+                        # previously defined (array) parameter
+                        dname = d[:d.find("(")]
+                        ddims = d[d.find("(")+1:d.find(")")]
+                        # FIXME this is not robust; only works if the
+                        # parameter array is defined with 1-based indexing
+                        if int(ddims)-1  < 0:
+                            outmess('analyzevars: parameter arrays must be 1-based indexed - (%s) \n' % repr(dname))
+                        ddims = "["+str(int(ddims)-1)+"]"
+                        d = dname+ddims
+
                     for p in list(params.keys()):
                         re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
                         m = re_1.match(d)
@@ -3277,6 +3316,7 @@ def crackfortran(files):
 
     outmess('Reading fortran codes...\n', 0)
     readfortrancode(files, crackline)
+
     outmess('Post-processing...\n', 0)
     usermodules = []
     postlist = postcrack(grouplist[0])

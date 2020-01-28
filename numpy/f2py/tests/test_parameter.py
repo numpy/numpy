@@ -18,7 +18,8 @@ class TestParameters(util.F2PyTest):
                _path('src', 'parameter', 'constant_both.f90'),
                _path('src', 'parameter', 'constant_compound.f90'),
                _path('src', 'parameter', 'constant_non_compound.f90'),
-               _path('src', 'parameter', 'constant_array_params.f90'),
+               _path('src', 'parameter', 'constant_array.f90'),
+               _path('src', 'parameter', 'constant_array_zero_indexed.f90'),
     ]
 
     @pytest.mark.slow
@@ -116,10 +117,17 @@ class TestParameters(util.F2PyTest):
         self.module.foo_sum(x)
         assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
 
-
-    def test_constant_param_array(self):
+    def test_constant_array(self):
         x = np.arange(3, dtype=np.float64)
         y = np.arange(5, dtype=np.float64)
-        self.module.foo_array(x, y)
+        z = self.module.foo_array(x, y)
         assert_equal(x, [0.0, 1./10, 2./10])
-        assert_equal(y, [0.0, 1.*10, 2.*10, 3.*10, 4.*10, 5.*10])
+        assert_equal(y, [0.0, 1.*10, 2.*10, 3.*10, 4.*10])
+        assert_equal(z, 18.0)
+
+    @pytest.mark.xfail
+    # No support for zero-based indexed parameter arrays
+    def test_constant_array_zero_indexed(self):
+        x = np.arange(3, dtype=np.float64)
+        self.module.foo_array_zero(x)
+        assert_equal(x, [0.0, 1./10, 2./10])
