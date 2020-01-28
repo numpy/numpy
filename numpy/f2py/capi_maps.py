@@ -147,11 +147,7 @@ c2buildvalue_map = {'double': 'd',
                     'complex_float': 'N',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
-                    'string': 'z'}
-
-if sys.version_info[0] >= 3:
-    # Bytes, not Unicode strings
-    c2buildvalue_map['string'] = 'y'
+                    'string': 'y'}
 
 if using_newcore:
     # c2buildvalue_map=???

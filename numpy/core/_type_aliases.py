@@ -203,22 +203,16 @@ def _set_up_aliases():
                   ('bool_', 'bool'),
                   ('bytes_', 'string'),
                   ('string_', 'string'),
+                  ('str_', 'unicode'),
                   ('unicode_', 'unicode'),
                   ('object_', 'object')]
-    if sys.version_info[0] >= 3:
-        type_pairs.extend([('str_', 'unicode')])
-    else:
-        type_pairs.extend([('str_', 'string')])
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
     to_remove = ['ulong', 'object', 'int', 'float',
-                 'complex', 'bool', 'string', 'datetime', 'timedelta']
-    if sys.version_info[0] >= 3:
-        to_remove.extend(['bytes', 'str'])
-    else:
-        to_remove.extend(['unicode', 'long'])
+                 'complex', 'bool', 'string', 'datetime', 'timedelta',
+                 'bytes', 'str']
 
     for t in to_remove:
         try:
@@ -267,11 +261,8 @@ _set_array_types()
 
 
 # Add additional strings to the sctypeDict
-_toadd = ['int', 'float', 'complex', 'bool', 'object']
-if sys.version_info[0] >= 3:
-    _toadd.extend(['str', 'bytes', ('a', 'bytes_')])
-else:
-    _toadd.extend(['string', ('str', 'string_'), 'unicode', ('a', 'string_')])
+_toadd = ['int', 'float', 'complex', 'bool', 'object',
+          'str', 'bytes', ('a', 'bytes_')]
 
 for name in _toadd:
     if isinstance(name, tuple):
