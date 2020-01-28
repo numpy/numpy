@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import sys, os, re
+import os
+import re
+import sys
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '2.2.0'

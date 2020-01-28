@@ -2,9 +2,10 @@
 """ Test printing of scalar types.
 
 """
-import code, sys
+import code
 import platform
 import pytest
+import sys
 
 from tempfile import TemporaryFile
 import numpy as np
