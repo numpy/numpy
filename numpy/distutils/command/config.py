@@ -2,11 +2,12 @@
 # try_compile call. try_run works but is untested for most of Fortran
 # compilers (they must define linker_exe first).
 # Pearu Peterson
-import os, signal
-import warnings
-import sys
+import os
+import signal
 import subprocess
+import sys
 import textwrap
+import warnings
 
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT

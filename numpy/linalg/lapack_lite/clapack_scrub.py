@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-import sys, os
+import os
 import re
+import sys
 from io import StringIO
 
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE

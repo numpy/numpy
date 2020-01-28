@@ -1,8 +1,9 @@
-import os, sys
+import os
 import pytest
-import warnings
 import shutil
 import subprocess
+import sys
+import warnings
 
 try:
     import cffi
