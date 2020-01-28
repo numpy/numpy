@@ -300,8 +300,7 @@ def reshape(a, newshape, order='C'):
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
     yield a
-    for c in choices:
-        yield c
+    yield from choices
     yield out
 
 

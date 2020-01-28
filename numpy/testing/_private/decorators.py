@@ -152,8 +152,7 @@ def skipif(skip_condition, msg=None):
             if skip_val():
                 raise SkipTest(get_msg(f, msg))
             else:
-                for x in f(*args, **kwargs):
-                    yield x
+                yield from f(*args, **kwargs)
 
         # Choose the right skipper to use when building the actual decorator.
         if nose.util.isgenerator(f):

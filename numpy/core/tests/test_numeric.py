@@ -954,8 +954,7 @@ class NIterError(Exception):
 
 class TestFromiter:
     def makegen(self):
-        for x in range(24):
-            yield x**2
+        return (x**2 for x in range(24))
 
     def test_types(self):
         ai32 = np.fromiter(self.makegen(), np.int32)
