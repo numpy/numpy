@@ -6389,7 +6389,15 @@ class MaskedConstant(MaskedArray):
         # Replace ndarray.__format__ with the default, which supports no format characters.
         # Supporting format characters is unwise here, because we do not know what type
         # the user was expecting - better to not guess.
-        return object.__format__(self, format_spec)
+        try:
+            return object.__format__(self, format_spec)
+        except Exception:
+            warnings.warn(
+                "Format strings passed to MaskedConstant are ignored, but in future may "
+                "error or produce different behavior",
+                FutureWarning, stacklevel=2
+            )
+            return object.__format__(self, "")
 
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.

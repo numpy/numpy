@@ -457,6 +457,12 @@ class TestMaskedArray:
         # assert_equal(format(masked, " >5"), "   --")
         # assert_equal(format(masked, " <5"), "--   ")
 
+        # instead we have....
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings("always")
+            assert_equal(format(masked, " >5"), "--")
+            assert_equal(len(w), 1, "Expected a FutureWarning for using format_spec with MaskedElement")
+
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])
         assert_equal(str(a), '[0 -- 2]')
