@@ -185,8 +185,8 @@ class format_parser:
         """convert input field names into a list and assign to the _names
         attribute """
 
-        if (names):
-            if (type(names) in [list, tuple]):
+        if names:
+            if type(names) in [list, tuple]:
                 pass
             elif isinstance(names, (str, unicode)):
                 names = names.split(',')
@@ -208,21 +208,23 @@ class format_parser:
         if _dup:
             raise ValueError("Duplicate field names: %s" % _dup)
 
-        if (titles):
+        if titles:
             self._titles = [n.strip() for n in titles[:self._nfields]]
         else:
             self._titles = []
             titles = []
 
-        if (self._nfields > len(titles)):
+        if self._nfields > len(titles):
             self._titles += [None] * (self._nfields - len(titles))
 
     def _createdescr(self, byteorder):
-        descr = sb.dtype({'names':self._names,
-                          'formats':self._f_formats,
-                          'offsets':self._offsets,
-                          'titles':self._titles})
-        if (byteorder is not None):
+        descr = sb.dtype({
+            'names': self._names,
+            'formats': self._f_formats,
+            'offsets': self._offsets,
+            'titles': self._titles,
+        })
+        if byteorder is not None:
             byteorder = _byteorderconv[byteorder[0]]
             descr = descr.newbyteorder(byteorder)
 
@@ -248,7 +250,7 @@ class record(nt.void):
         return super(record, self).__str__()
 
     def __getattribute__(self, attr):
-        if attr in ['setfield', 'getfield', 'dtype']:
+        if attr in ('setfield', 'getfield', 'dtype'):
             return nt.void.__getattribute__(self, attr)
         try:
             return nt.void.__getattribute__(self, attr)
@@ -273,7 +275,7 @@ class record(nt.void):
                     "attribute '%s'" % attr)
 
     def __setattr__(self, attr, val):
-        if attr in ['setfield', 'getfield', 'dtype']:
+        if attr in ('setfield', 'getfield', 'dtype'):
             raise AttributeError("Cannot set '%s' attribute" % attr)
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
@@ -531,8 +533,7 @@ class recarray(ndarray):
     def __repr__(self):
 
         repr_dtype = self.dtype
-        if (self.dtype.type is record
-                or (not issubclass(self.dtype.type, nt.void))):
+        if self.dtype.type is record or not issubclass(self.dtype.type, nt.void):
             # If this is a full record array (has numpy.record dtype),
             # or if it has a scalar (non-void) dtype with no records,
             # represent it using the rec.array function. Since rec.array
@@ -620,9 +621,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if formats is None and dtype is None:
         # go through each object in the list to see if it is an ndarray
         # and determine the formats.
-        formats = []
-        for obj in arrayList:
-            formats.append(obj.dtype)
+        formats = [obj.dtype for obj in arrayList]
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -745,7 +744,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     # NumPy 1.19.0, 2020-01-01
     shape = _deprecate_shape_0_as_None(shape)
 
-    if shape is None or shape == -1:
+    if shape in (None, -1):
         shape = (len(datastring) - offset) // itemsize
 
     _array = recarray(shape, descr, buf=datastring, offset=offset)
@@ -804,7 +803,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         ctx = open(os_fspath(fd), 'rb')
 
     with ctx as fd:
-        if (offset > 0):
+        if offset > 0:
             fd.seek(offset, 1)
         size = get_remaining_size(fd)
 
@@ -843,7 +842,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     """
 
     if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
-           (formats is None) and (dtype is None)):
+           formats is None and dtype is None):
         raise ValueError("Must define formats (or dtype) if object is "
                          "None, string, or an open file")
 
