@@ -285,8 +285,7 @@ def _izip_fields_flat(iterable):
     """
     for element in iterable:
         if isinstance(element, np.void):
-            for f in _izip_fields_flat(tuple(element)):
-                yield f
+            yield from _izip_fields_flat(tuple(element))
         else:
             yield element
 
@@ -299,11 +298,10 @@ def _izip_fields(iterable):
     for element in iterable:
         if (hasattr(element, '__iter__') and
                 not isinstance(element, str)):
-            for f in _izip_fields(element):
-                yield f
+            yield from _izip_fields(element)
         elif isinstance(element, np.void) and len(tuple(element)) == 1:
-            for f in _izip_fields(element):
-                yield f
+            # this statement is the same from the previous expression
+            yield from _izip_fields(element)
         else:
             yield element
 
@@ -657,8 +655,7 @@ def rename_fields(base, namemapper):
 def _append_fields_dispatcher(base, names, data, dtypes=None,
                               fill_value=None, usemask=None, asrecarray=None):
     yield base
-    for d in data:
-        yield d
+    yield from data
 
 
 @array_function_dispatch(_append_fields_dispatcher)
@@ -734,8 +731,7 @@ def append_fields(base, names, data, dtypes=None,
 
 def _rec_append_fields_dispatcher(base, names, data, dtypes=None):
     yield base
-    for d in data:
-        yield d
+    yield from data
 
 
 @array_function_dispatch(_rec_append_fields_dispatcher)

@@ -161,8 +161,7 @@ class Arrayterator:
 
         """
         for block in self:
-            for value in block.flat:
-                yield value
+            yield from block.flat
 
     @property
     def shape(self):

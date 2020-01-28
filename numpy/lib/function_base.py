@@ -492,8 +492,7 @@ def _piecewise_dispatcher(x, condlist, funclist, *args, **kw):
     yield x
     # support the undocumented behavior of allowing scalars
     if np.iterable(condlist):
-        for c in condlist:
-            yield c
+        yield from condlist
 
 
 @array_function_dispatch(_piecewise_dispatcher)
@@ -619,10 +618,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
 
 def _select_dispatcher(condlist, choicelist, default=None):
-    for c in condlist:
-        yield c
-    for c in choicelist:
-        yield c
+    yield from condlist
+    yield from choicelist
 
 
 @array_function_dispatch(_select_dispatcher)
@@ -767,8 +764,7 @@ def copy(a, order='K'):
 
 def _gradient_dispatcher(f, *varargs, axis=None, edge_order=None):
     yield f
-    for v in varargs:
-        yield v
+    yield from varargs
 
 
 @array_function_dispatch(_gradient_dispatcher)

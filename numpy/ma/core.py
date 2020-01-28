@@ -1800,8 +1800,7 @@ def flatten_mask(mask):
         try:
             for element in sequence:
                 if hasattr(element, '__iter__'):
-                    for f in _flatsequence(element):
-                        yield f
+                    yield from _flatsequence(element)
                 else:
                     yield element
         except TypeError:
@@ -2528,8 +2527,7 @@ def flatten_structured_array(a):
         """
         for elm in iter(iterable):
             if hasattr(elm, '__iter__'):
-                for f in flatten_sequence(elm):
-                    yield f
+                yield from flatten_sequence(elm)
             else:
                 yield elm
 
@@ -6215,8 +6213,7 @@ class mvoid(MaskedArray):
         "Defines an iterator for mvoid"
         (_data, _mask) = (self._data, self._mask)
         if _mask is nomask:
-            for d in _data:
-                yield d
+            yield from _data
         else:
             for (d, m) in zip(_data, _mask):
                 if m:

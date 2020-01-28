@@ -670,8 +670,7 @@ def _block_dispatcher(arrays):
     # tuple. Also, we know that list.__array_function__ will never exist.
     if type(arrays) is list:
         for subarrays in arrays:
-            for subarray in _block_dispatcher(subarrays):
-                yield subarray
+            yield from _block_dispatcher(subarrays)
     else:
         yield arrays
 

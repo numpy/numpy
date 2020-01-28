@@ -530,10 +530,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
 
 def _savez_dispatcher(file, *args, **kwds):
-    for a in args:
-        yield a
-    for v in kwds.values():
-        yield v
+    yield from args
+    yield from kwds.values()
 
 
 @array_function_dispatch(_savez_dispatcher)
@@ -619,10 +617,8 @@ def savez(file, *args, **kwds):
 
 
 def _savez_compressed_dispatcher(file, *args, **kwds):
-    for a in args:
-        yield a
-    for v in kwds.values():
-        yield v
+    yield from args
+    yield from kwds.values()
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
