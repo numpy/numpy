@@ -622,10 +622,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if formats is None and dtype is None:
         # go through each object in the list to see if it is an ndarray
         # and determine the formats.
-        formats = [
-            obj.dtype
-            for obj in arrayList
-        ]
+        formats = [obj.dtype for obj in arrayList]
 
     if dtype is not None:
         descr = sb.dtype(dtype)
