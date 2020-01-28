@@ -95,7 +95,8 @@ def test_import_lazy_import(name):
 
 
 def test_dir_testing():
-    # Assert that output of dir has only one "testing/tester" attribute without duplicate
+    """Assert that output of dir has only one "testing/tester"
+    attribute without duplicate"""
     assert len(dir(np)) == len(set(dir(np)))
     
 
