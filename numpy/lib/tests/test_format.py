@@ -535,8 +535,10 @@ dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
 # titles
 dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
                 'offsets': [1, 6], 'titles': ['aa', 'bb']})
+# empty
+dt6 = np.dtype({'names': [], 'formats': [], 'itemsize': 8})
 
-@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5])
+@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5, dt6])
 def test_load_padded_dtype(dt):
     arr = np.zeros(3, dt)
     for i in range(3):
