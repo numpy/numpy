@@ -2546,31 +2546,24 @@ object_arrtype_dealloc(PyObject *v)
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
- *         clongdouble, string, unicode, object#
+ *         clongdouble, string, unicode#
  * #Name = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
  *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
- *         CLongDouble, String, Unicode, Object#
+ *         CLongDouble, String, Unicode#
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
  *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
- *         CLONGDOUBLE, STRING, UNICODE, OBJECT#
+ *         CLONGDOUBLE, STRING, UNICODE#
  */
 
 /* used as a pattern for testing token equality */
 #define _@TYPE@_IS_@TYPE@
 
-#if defined(_@TYPE@_IS_OBJECT)
-    #define _NPY_UNUSED_TYPE NPY_UNUSED
-#else
-    #define _NPY_UNUSED_TYPE
-#endif
-
 static PyObject *
-@name@_arrtype_new(PyTypeObject *_NPY_UNUSED_TYPE(type), PyObject *args, PyObject *kwds)
+@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj = NULL;
     PyObject *robj;
     PyArrayObject *arr;
-    PyArray_Descr *typecode = NULL;
 
     /*
      * allow base-class (if any) to do conversion
@@ -2587,7 +2580,7 @@ static PyObject *
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
     }
-    typecode = PyArray_DescrFromType(NPY_@TYPE@);
+    PyArray_Descr *typecode = PyArray_DescrFromType(NPY_@TYPE@);
     if (typecode == NULL) {
         return NULL;
     }
@@ -2596,17 +2589,12 @@ static PyObject *
      * PyArray_FromAny but not PyArray_Scalar
      */
     if (obj == NULL) {
-#if defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_UNICODE)
-        robj = PyArray_Scalar(NULL, typecode, NULL);
-#elif defined(_@TYPE@_IS_OBJECT)
-        Py_INCREF(Py_None);
-        robj = Py_None;
-#else
         robj = PyArray_Scalar(NULL, typecode, NULL);
         if (robj == NULL) {
             Py_DECREF(typecode);
             return NULL;
         }
+#if !defined(_@TYPE@_IS_STRING) && !defined(_@TYPE@_IS_UNICODE)
         memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
 #endif
         Py_DECREF(typecode);
@@ -2615,7 +2603,6 @@ static PyObject *
 
     /*
      * It is expected at this point that robj is a PyArrayScalar
-     * (even for Object Data Type)
      */
     arr = (PyArrayObject *)PyArray_FromAny(obj, typecode,
                                     0, 0, NPY_ARRAY_FORCECAST, NULL);
@@ -2627,14 +2614,6 @@ static PyObject *
     Py_DECREF(arr);
 
 finish:
-    /*
-     * In OBJECT case, robj is no longer a
-     * PyArrayScalar at this point but the
-     * remaining code assumes it is
-     */
-#if defined(_@TYPE@_IS_OBJECT)
-    return robj;
-#else
     /* Normal return */
     if ((robj == NULL) || (Py_TYPE(robj) == type)) {
         return robj;
@@ -2674,15 +2653,29 @@ finish:
 #endif
     Py_DECREF(robj);
     return obj;
-#endif
 }
 #undef _@TYPE@_IS_@TYPE@
 
-#undef _NPY_UNUSED_TYPE
-#undef _NPY_UNUSED_KWDS
 /**end repeat**/
 
 #undef _WORK
+
+static PyObject *
+object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj = Py_None;
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
+        return NULL;
+    }
+    PyArray_Descr *typecode = PyArray_DescrFromType(NPY_OBJECT);
+    if (typecode == NULL) {
+        return NULL;
+    }
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(obj, typecode,
+                                    0, 0, NPY_ARRAY_FORCECAST, NULL);
+    return PyArray_Return(arr);
+}
 
 /**begin repeat
  * #name = datetime, timedelta#
