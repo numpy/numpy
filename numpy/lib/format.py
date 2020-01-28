@@ -295,7 +295,11 @@ def descr_to_dtype(descr):
         # subtype, will always have a shape descr[1]
         dt = descr_to_dtype(descr[0])
         return numpy.dtype((dt, descr[1]))
-    fields = []
+
+    titles = []
+    names = []
+    formats = []
+    offsets = []
     offset = 0
     for field in descr:
         if len(field) == 2:
@@ -309,14 +313,13 @@ def descr_to_dtype(descr):
         # Once support for blank names is removed, only "if name == ''" needed)
         is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
         if not is_pad:
-            fields.append((name, dt, offset))
-
+            title, name = name if isinstance(name, tuple) else (None, name)
+            titles.append(title)
+            names.append(name)
+            formats.append(dt)
+            offsets.append(offset)
         offset += dt.itemsize
 
-    names, formats, offsets = zip(*fields)
-    # names may be (title, names) tuples
-    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
-    titles, names = zip(*nametups)
     return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
                         'offsets': offsets, 'itemsize': offset})
 
