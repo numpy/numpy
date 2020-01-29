@@ -82,6 +82,7 @@ If you aren't already comfortable with reading tutorials that contain a lot of c
 you might not know how to interpret a code block that looks
 like this::
 
+  >>> a = np.arange(6)
   >>> a2 = a[np.newaxis, :]
   >>> a2.shape
   (1, 6)
@@ -233,6 +234,7 @@ fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
   >>> np.empty(2)
+  array([ 3.14, 42.  ])  # may vary
 
 You can create an array with a range of elements::
 
@@ -393,7 +395,8 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> numpy.reshape(a, newshape, order)
+  >>> numpy.reshape(a, newshape=(1, 6), order='C')
+  array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
 
@@ -441,7 +444,7 @@ For example, if you start with this array::
 
   >>> a = np.array([1, 2, 3, 4, 5, 6])
   >>> a.shape
- (6,)
+  (6,)
 
 You can use ``np.newaxis`` to add a new axis::
 
@@ -482,7 +485,7 @@ You can add an axis at index position 0 with::
 
   >>> c = np.expand_dims(a, axis=0)
   >>> c.shape
- (1, 6)
+  (1, 6)
 
 Find more information about :ref:`newaxis here <arrays.indexing>` and
 ``expand_dims`` at `expand_dims`.
@@ -620,12 +623,12 @@ Let's say you have this array:
 
 ::
 
-  array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+  >>> a = np.array([1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 
 You can create a new array from a section of your array any time by specifying
 where you want to slice your array. ::
 
-  >>> arr1 = np.array[3:8]
+  >>> arr1 = a[3:8]
   >>> arr1
   array([4, 5, 6, 7, 8])
 
@@ -677,7 +680,7 @@ run::
 
 If you wanted to split your array after the third and fourth column, you'd run::
 
-  >>> np.hsplit(array,(3, 4))
+  >>> np.hsplit(x, (3, 4))
   [array([[1, 2, 3],
           [13, 14, 15]]), array([[ 4],
           [16]]), array([[ 5, 6, 7, 8, 9, 10, 11, 12],
@@ -737,7 +740,10 @@ You can add the arrays together with the plus sign.
 
 ::
 
-  data + ones
+  >>> data = np.array([1, 2])
+  >>> ones = np.ones(2, dtype=int)
+  >>> data + ones
+  array([2, 3])
 
 .. image:: images/np_data_plus_ones.png
 
@@ -745,9 +751,12 @@ You can, of course, do more than just addition!
 
 ::
 
-  data - ones
-  data * data
-  data / data
+  >>> data - ones
+  array([0, 1])
+  >>> data * data
+  array([1, 4])
+  >>> data / data
+  array([1., 1.])
 
 .. image:: images/np_sub_mult_divide.png
 
@@ -788,7 +797,9 @@ or between arrays of two different sizes. For example, your array (we'll call it
 "data") might contain information about distance in miles but you want to
 convert the information to kilometers. You can perform this operation with::
 
+  >>> data = np.array([1.0, 2.0])
   >>> data * 1.6
+  array([1.6, 3.2])
 
 .. image:: images/np_multiply_broadcasting.png
 
@@ -815,8 +826,11 @@ result of multiplying the elements together, ``std`` to get the standard
 deviation, and more. ::
 
   >>> data.max()
+  2.0
   >>> data.min()
+  1.0
   >>> data.sum()
+  3.0
 
 .. image:: images/np_aggregation.png
 
@@ -857,23 +871,32 @@ Creating matrices
 You can pass Python lists of lists to create a 2-D array (or "matrix") to
 represent them in NumPy. ::
 
-  >>> np.array([[1, 2], [3, 4]])
+  >>> data = np.array([[1, 2], [3, 4]])
+  >>> data
+  array([[1, 2],
+         [3, 4]])
 
 .. image:: images/np_create_matrix.png
 
 Indexing and slicing operations are useful when you're manipulating matrices::
 
   >>> data[0, 1]
-  >>> data[1 : 3]
-  >>> data[0 : 2, 0]
+  2
+  >>> data[1:3]
+  array([[3, 4]])
+  >>> data[0:2, 0]
+  array([1, 3])
 
 .. image:: images/np_matrix_indexing.png
 
 You can aggregate matrices the same way you aggregated vectors::
 
   >>> data.max()
+  4
   >>> data.min()
+  1
   >>> data.sum()
+  10
 
 .. image:: images/np_matrix_aggregation.png
 
@@ -881,14 +904,20 @@ You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter::
 
   >>> data.max(axis=0)
+  array([3, 4])
   >>> data.max(axis=1)
+  array([2, 4])
 
 .. image:: images/np_matrix_aggregation_row.png
 
 Once you've created your matrices, you can add and multiply them using
 arithmetic operators if you have two matrices that are the same size. ::
 
+  >>> data = np.array([[1, 2], [3, 4]])
+  >>> ones = np.array([[1, 1], [1, 1]])
   >>> data + ones
+  array([[2, 3],
+         [4, 5]])
 
 .. image:: images/np_matrix_arithmetic.png
 
@@ -896,29 +925,31 @@ You can do these arithmetic operations on matrices of different sizes, but only
 if one matrix has only one column or one row. In this case, NumPy will use its
 broadcast rules for the operation. ::
 
+  >>> data = np.array([[1, 2], [3, 4], [5, 6]])
+  >>> ones_row = np.array([[1, 1]])
   >>> data + ones_row
+  array([[2, 3],
+         [4, 5],
+         [6, 7]])
 
 .. image:: images/np_matrix_broadcasting.png
 
 Be aware that when NumPy prints N-dimensional arrays, the last axis is looped
-over the fastest while the first axis is the slowest. That means that::
+over the fastest while the first axis is the slowest. For instance::
 
   >>> np.ones((4, 3, 2))
-
-Will print out like this::
-
   array([[[1., 1.],
           [1., 1.],
           [1., 1.]],
-
+  <BLANKLINE>
          [[1., 1.],
           [1., 1.],
           [1., 1.]],
-
+  <BLANKLINE>
          [[1., 1.],
           [1., 1.],
           [1., 1.]],
-
+  <BLANKLINE>
          [[1., 1.],
           [1., 1.],
           [1., 1.]]])
@@ -929,18 +960,31 @@ array. NumPy offers functions like ``ones()`` and ``zeros()``, and the
 All you need to do is pass in the number of elements you want it to generate::
 
   >>> np.ones(3)
+  array([1., 1., 1.])
   >>> np.zeros(3)
-  >>> np.random.random(3)  # the simplest way to generate random numbers
+  array([0., 0., 0.])
+  # the simplest way to generate random numbers
+  >>> rng = np.random.default_rng(0)
+  >>> rng.random(3)
+  array([0.08419554, 0.01447087, 0.88581866])
 
 .. image:: images/np_ones_zeros_random.png
 
 You can also use ``ones()``, ``zeros()``, and ``random()`` to create
-an array if you give them a tuple describing the dimensions of the matrix::
+a 2D array if you give them a tuple describing the dimensions of the matrix::
 
   >>> np.ones((3, 2))
+  array([[1., 1.],
+         [1., 1.],
+         [1., 1.]])
   >>> np.zeros((3, 2))
-  >>> rng = np.random.default_rng()  # the better way to generate random numbers
-  >>> rng.random()
+  array([[0., 0.],
+         [0., 0.],
+         [0., 0.]])
+  >>> rng.random((3, 2))
+  array([[0.01652764, 0.81327024],
+         [0.91275558, 0.60663578],
+         [0.72949656, 0.54362499]])  # may vary
 
 .. image:: images/np_ones_zeros_matrix.png
 
@@ -964,8 +1008,8 @@ that this is inclusive with NumPy) to high (exclusive). You can set
 You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
   >>> rng.integers(5, size=(2, 4))
-  array([[4, 0, 2, 1],
-         [3, 2, 2, 0]])
+  array([[2, 1, 1, 0],
+         [0, 0, 0, 4]])  # may vary
 
 :ref:`Read more about random number generation here <numpyrandom>`.
 
@@ -993,7 +1037,7 @@ To get the indices of unique values in a NumPy array (an array of first index
 positions of unique values in the array), just pass the ``return_index``
 argument in ``np.unique()`` as well as your array. ::
 
-  >>> indices_list = np.unique(a, return_index=True)
+  >>> unique_values, indices_list = np.unique(a, return_index=True)
   >>> print(indices_list)
   [ 0  2  3  4  5  6  7 12 13 14]
 
@@ -1029,19 +1073,16 @@ argument. To find the unique rows, specify ``axis=0`` and for columns, specify
 
 To get the unique rows, index position, and occurrence count, you can use::
 
-  >>> unique_rows, indices, occurence_count = np.unique(a_2d, axis=0,
-  >>> return_counts=True, return_index=True)
-  >>> print('Unique Rows: ', '\n', unique_rows)
-  >>> print('Indices: ', '\n', indices)
-  >>> print('Occurrence Count:', '\n', occurence_count)
-  Unique Rows:
-    [[ 1  2  3  4]
-     [ 5  6  7  8]
-     [ 9 10 11 12]]
-  Indices:
-    [0 1 2]
-  Occurrence Count:
-    [2 1 1]
+  >>> unique_rows, indices, occurrence_count = np.unique(
+  ...      a_2d, axis=0, return_counts=True, return_index=True)
+  >>> print(unique_rows)
+  [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+  >>> print(indices)
+  [0 1 2]
+  >>> print(occurrence_count)
+  [2 1 1]
 
 To learn more about finding the unique elements in an array, see `unique`.
 
@@ -1064,7 +1105,12 @@ different from your dataset. This is where the ``reshape`` method can be useful.
 You simply need to pass in the new dimensions that you want for the matrix. ::
 
   >>> data.reshape(2, 3)
+  array([[1, 2, 3],
+         [4, 5, 6]])
   >>> data.reshape(3, 2)
+  array([[1, 2],
+         [3, 4],
+         [5, 6]])
 
 .. image:: images/np_reshape.png
 
@@ -1127,21 +1173,15 @@ If you start with this array::
 You can reverse the content in all of the rows and all of the columns with::
 
   >>> reversed_arr = np.flip(arr_2d)
-
-  >>> print('Reversed Array: ')
   >>> print(reversed_arr)
-  Reversed Array:
-    [[12 11 10  9]
-     [ 8  7  6  5]
-     [ 4  3  2  1]]
+  [[12 11 10  9]
+   [ 8  7  6  5]
+   [ 4  3  2  1]]
 
 You can easily reverse only the *rows* with::
 
   >>> reversed_arr_rows = np.flip(arr_2d, axis=0)
-
-  >>> print('Reversed Array: ')
   >>> print(reversed_arr_rows)
-  Reversed Array:
   [[ 9 10 11 12]
    [ 5  6  7  8]
    [ 1  2  3  4]]
@@ -1149,35 +1189,27 @@ You can easily reverse only the *rows* with::
 Or reverse only the *columns* with::
 
   >>> reversed_arr_columns = np.flip(arr_2d, axis=1)
-
-  >>> print('Reversed Array columns: ')
   >>> print(reversed_arr_columns)
-    [[ 4  3  2  1]
-     [ 8  7  6  5]
-     [12 11 10  9]]
+  [[ 4  3  2  1]
+   [ 8  7  6  5]
+   [12 11 10  9]]
 
 You can also reverse the contents of only one column or row. For example, you
 can reverse the contents of the row at index position 1 (the second row)::
 
   >>> arr_2d[1] = np.flip(arr_2d[1])
-
-  >>> print('Reversed Array: ')
   >>> print(arr_2d)
-  Reversed Array:
-    [[ 1  2  3  4]
-     [ 5  6  7  8]
-     [ 9 10 11 12]]
+  [[ 1  2  3  4]
+   [ 8  7  6  5]
+   [ 9 10 11 12]]
 
 You can also reverse the column at index position 1 (the second column)::
 
   >>> arr_2d[:,1] = np.flip(arr_2d[:,1])
-
-  >>> print('Reversed Array: ')
   >>> print(arr_2d)
-  Reversed Array:
-    [[ 1 10  3  4]
-     [ 5  6  7  8]
-     [ 9  2 11 12]]
+  [[ 1 10  3  4]
+   [ 8  7  6  5]
+   [ 9  2 11 12]]
 
 Read more about reversing arrays at `flip`.
 
@@ -1251,21 +1283,21 @@ function that can help you access this information. This means that nearly any
 time you need more information, you can use ``help()`` to quickly find the
 information that you need.
 
-For example, ::
+For example::
 
   >>> help(max)
-
-Will return::
-
   Help on built-in function max in module builtins:
+  <BLANKLINE>
+  max(...)
+      max(iterable, *[, default=obj, key=func]) -> value
+      max(arg1, arg2, *args, *[, key=func]) -> value
+  <BLANKLINE>
+      With a single iterable argument, return its biggest item. The
+      default keyword-only argument specifies an object to return if
+      the provided iterable is empty.
+      With two or more arguments, return the largest argument.
+  <BLANKLINE>
 
-  max(...) max(iterable, *[, default=obj, key=func]) -> value max(arg1, arg2,
-  *args, *[, key=func]) -> value
-
-      With a single iterable argument, return its biggest item. The default
-      keyword-only argument specifies an object to return if the provided
-      iterable is empty. With two or more arguments, return the largest
-      argument.
 
 Because access to additional information is so useful, IPython uses the ``?``
 character as a shorthand for accessing this documentation along with other
@@ -1273,13 +1305,11 @@ relevant information. IPython is a command shell for interactive computing in
 multiple languages.
 `You can find more information about IPython here <https://ipython.org/>`_.
 
-For example, ::
+For example:
 
-  >>> max?
+.. code-block:: ipython
 
-Will return::
-
-  Docstring:
+  In [0]: max?
   max(iterable, *[, default=obj, key=func]) -> value
   max(arg1, arg2, *args, *[, key=func]) -> value
 
@@ -1295,13 +1325,12 @@ Let's say you create this array::
 
   >>> a = np.array([1, 2, 3, 4, 5, 6])
 
-Running ::
+Then you can obtain a lot of useful information (first details about ``a`` itself,
+followed by the docstring of ``ndarray`` of which ``a`` is an instance):
 
-  >>> a?
+.. code-block:: ipython
 
-Will return a lot of useful information (first details about ``a`` itself,
-followed by the docstring of ``ndarray`` of which ``a`` is an instance)::
-
+  In [1]: a?
   Type:            ndarray
   String form:     [1 2 3 4 5 6]
   Length:          6
@@ -1329,7 +1358,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance)::
   (for the __new__ method; see Notes below)
 
   shape : tuple of ints
-      Shape of created array.
+          Shape of created array.
   ...
 
 This also works for functions and other objects that **you** create. Just
@@ -1339,15 +1368,14 @@ remember to include a docstring with your function using a string literal
 For example, if you create this function::
 
   >>> def double(a):
-  >>>   '''Return a * 2'''
-  >>>   return a * 2
+  ...   '''Return a * 2'''
+  ...   return a * 2
 
-You can run::
+You can obtain information about the function:
 
-  >>> double?
+.. code-block:: ipython
 
-Which will return::
-
+  In [2]: double?
   Signature: double(a)
   Docstring: Return a * 2
   File:      ~/Desktop/<ipython-input-23-b5adf20be596>
@@ -1357,31 +1385,35 @@ You can reach another level of information by reading the source code of the
 object you're interested in. Using a double question mark (``??``) allows you to
 access the source code.
 
-For example, running::
+For example:
 
-  >>> double??
+.. code-block:: ipython
 
-Will return ::
-
+  In [3]: double??
   Signature: double(a)
-  Source:    def double(a):
-                '''Return a * 2'''
-                return a * 2
+  Source:
+  def double(a):
+      '''Return a * 2'''
+      return a * 2
   File:      ~/Desktop/<ipython-input-23-b5adf20be596>
   Type:      function
 
 If the object in question is compiled in a language other than Python, using
 ``??`` will return the same information as ``?``. You'll find this with a lot of
-built-in objects and types, for example::
+built-in objects and types, for example:
 
-  >>> len?
+.. code-block:: ipython
+
+  In [4]: len?
   Signature: len(obj, /)
   Docstring: Return the number of items in a container.
   Type:      builtin_function_or_method
 
-and ::
+and :
 
-  >>> len??
+.. code-block:: ipython
+
+  In [5]: len??
   Signature: len(obj, /)
   Docstring: Return the number of items in a container.
   Type:      builtin_function_or_method
@@ -1498,6 +1530,17 @@ Learn more about :ref:`input and output routines here <routines.io>`.
 Importing and exporting a CSV
 -----------------------------
 
+.. save a csv
+   
+   >>> with open('music.csv', 'w') as fid:
+   ...     n = fid.write('Artist,Genre,Listeners,Plays\n')
+   ...     n = fid.write('Billie Holiday,Jazz,1300000,27000000\n')
+   ...     n = fid.write('Jimmie Hendrix,Rock,2700000,70000000\n')
+   ...     n = fid.write('Miles Davis,Jazz,1500000,48000000\n')
+   ...     n = fid.write('SIA,Pop,2000000,74000000\n')
+   
+
+
 It's simple to read in a CSV that contains existing information. The best and
 easiest way to do this is to use
 `Pandas <https://pandas.pydata.org/getpandas.html>`_. ::
@@ -1505,10 +1548,20 @@ easiest way to do this is to use
   >>> import pandas as pd
 
   >>> # If all of your columns are the same type:
-  >>> x = pd.read_csv('music.csv').values
+  >>> x = pd.read_csv('music.csv', header=0).values
+  >>> print(x)
+  [['Billie Holiday' 'Jazz' 1300000 27000000]
+   ['Jimmie Hendrix' 'Rock' 2700000 70000000]
+   ['Miles Davis' 'Jazz' 1500000 48000000]
+   ['SIA' 'Pop' 2000000 74000000]]
 
   >>> # You can also simply select the columns you need:
-  >>> x = pd.read_csv('music.csv', columns=['float_colname_1', ...]).values
+  >>> x = pd.read_csv('music.csv', usecols=['Artist', 'Plays']).values
+  >>> print(x)
+  [['Billie Holiday' 27000000]
+   ['Jimmie Hendrix' 70000000]
+   ['Miles Davis' 48000000]
+   ['SIA' 74000000]]
 
 .. image:: images/np_pandas.png
 
@@ -1518,20 +1571,15 @@ array and then write the data frame to a CSV file with Pandas.
 
 If you created this array "a" ::
 
-  [[-2.58289208,  0.43014843, -1.24082018, 1.59572603],
-   [ 0.99027828, 1.17150989,  0.94125714, -0.14692469],
-   [ 0.76989341,  0.81299683, -0.95068423, 0.11769564],
-   [ 0.20484034,  0.34784527,  1.96979195, 0.51992837]]
+  >>> a = np.array([[-2.58289208,  0.43014843, -1.24082018, 1.59572603],
+  ...               [ 0.99027828, 1.17150989,  0.94125714, -0.14692469],
+  ...               [ 0.76989341,  0.81299683, -0.95068423, 0.11769564],
+  ...               [ 0.20484034,  0.34784527,  1.96979195, 0.51992837]])
 
 You could create a Pandas dataframe ::
 
   >>> df = pd.DataFrame(a)
   >>> print(df)
-
-**Output:**
-
-::
-
             0         1         2         3
   0 -2.582892  0.430148 -1.240820  1.595726
   1  0.990278  1.171510  0.941257 -0.146925
@@ -1544,7 +1592,7 @@ You can easily save your dataframe with::
 
 And read your CSV with::
 
-  >>> pd.read_csv('pd.csv')
+  >>> data = pd.read_csv('pd.csv')
 
 .. image:: images/np_readcsv.png
 
@@ -1555,7 +1603,7 @@ You can also save your array with the NumPy ``savetxt`` method. ::
 If you're using the command line, you can read your saved CSV any time with a
 command such as::
 
-  >>> cat np.csv
+  $ cat np.csv
   #  1,  2,  3,  4
   -2.58,0.43,-1.24,1.60
   0.99,1.17,0.94,-0.15
@@ -1584,15 +1632,17 @@ If you already have Matplotlib installed, you can import it with::
 
   >>> import matplotlib.pyplot as plt
 
-  >>> # If you're using Jupyter Notebook, you may also want to run the following
-  >>> line of code to display your code in the notebook:
+  # If you're using Jupyter Notebook, you may also want to run the following
+  # line of code to display your code in the notebook:
 
-  >>> %matplotlib inline
+  %matplotlib inline
 
 All you need to do to plot your values is run::
 
   >>> plt.plot(a)
-  >>> plt.show()
+
+  # If you are running from a command line, you may need to do this:
+  # >>> plt.show()
 
 .. plot:: user/plots/matplotlib1.py
    :align: center
@@ -1636,4 +1686,3 @@ For directions regarding installing Matplotlib, see the official
 -------------------------------------------------------
 
 *Image credits: Jay Alammar http://jalammar.github.io/*
-
