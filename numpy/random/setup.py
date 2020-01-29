@@ -52,6 +52,7 @@ def configuration(parent_package='', top_path=None):
     PCG64_DEFS = []
     # One can force emulated 128-bit arithmetic if one wants.
     #PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
+    depends = ['__init__.pxd', 'c_distributions.pxd']
 
     for gen in ['mt19937']:
         # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
@@ -63,7 +64,7 @@ def configuration(parent_package='', top_path=None):
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['_%s.pyx' % gen],
+                             depends=depends + ['_%s.pyx' % gen],
                              define_macros=defs,
                              )
     for gen in ['philox', 'pcg64', 'sfc64']:
@@ -76,8 +77,8 @@ def configuration(parent_package='', top_path=None):
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['_%s.pyx' % gen, '_bit_generator.pyx',
-                                      '_bit_generator.pxd'],
+                             depends=depends + ['_%s.pyx' % gen,
+                                   '_bit_generator.pyx', '_bit_generator.pxd'],
                              define_macros=_defs,
                              )
     for gen in ['_common', '_bit_generator']:
@@ -88,7 +89,7 @@ def configuration(parent_package='', top_path=None):
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
                              include_dirs=['.', 'src'],
-                             depends=['%s.pyx' % gen, '%s.pxd' % gen,],
+                             depends=depends + ['%s.pyx' % gen, '%s.pxd' % gen,],
                              define_macros=defs,
                              )
         config.add_data_files('{0}.pxd'.format(gen))
@@ -107,7 +108,7 @@ def configuration(parent_package='', top_path=None):
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              include_dirs=['.', 'src'],
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen],
+                             depends=depends + ['%s.pyx' % gen],
                              define_macros=defs,
                              )
     config.add_data_files('_bounded_integers.pxd')
@@ -120,10 +121,10 @@ def configuration(parent_package='', top_path=None):
                          libraries=EXTRA_LIBRARIES,
                          extra_compile_args=EXTRA_COMPILE_ARGS,
                          extra_link_args=EXTRA_LINK_ARGS,
-                         depends=['mtrand.pyx'],
+                         depends=depends + ['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
-    config.add_data_files('__init__.pxd')
+    config.add_data_files(*depends)
     return config
 
 
