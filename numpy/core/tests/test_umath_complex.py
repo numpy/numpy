@@ -541,7 +541,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
         else:
             assert_almost_equal(f(z1), z2)
 
-class TestComplexAVX(object):
+class TestSpecialComplexAVX(object):
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
@@ -567,3 +567,13 @@ class TestComplexAVX(object):
         assert_equal(np.abs(arr[::stride]), abs_true[::stride])
         with np.errstate(invalid='ignore'):
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
+
+class TestComplexAbsoluteAVX(object):
+    @pytest.mark.parametrize("arraysize", [1,2,3,4,5,6,7,8,9,10,11,13,15,17,18,19])
+    @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
+    @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
+    # test to ensure masking and strides work as intended in the AVX implementation
+    def test_array(self, arraysize, stride, astype):
+        arr = np.ones(arraysize, dtype=astype)
+        abs_true = np.ones(arraysize, dtype=arr.real.dtype)
+        assert_equal(np.abs(arr[::stride]), abs_true[::stride])
