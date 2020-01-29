@@ -756,7 +756,7 @@ You can, of course, do more than just addition!
   >>> data * data
   array([1, 4])
   >>> data / data
-  array([1, 1])
+  array([1., 1.])
 
 .. image:: images/np_sub_mult_divide.png
 
