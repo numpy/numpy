@@ -29,6 +29,10 @@ class ABCPolyBase(abc.ABC):
         Series coefficients in order of increasing degree, i.e.,
         ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``, where
         ``P_i`` is the basis polynomials of degree ``i``.
+        Please note that these are coefficients in the scaled
+        domain, and that to get coefficients from the data domain, you
+        should use ``ABCPolyBase.convert().coef``.
+
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
