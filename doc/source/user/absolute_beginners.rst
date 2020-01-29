@@ -234,7 +234,7 @@ fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
   >>> np.empty(2)
-  array([3.14, 42.0])  # may vary
+  array([ 3.14, 42.  ])  # may vary
 
 You can create an array with a range of elements::
 
