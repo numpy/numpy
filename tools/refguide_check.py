@@ -1200,8 +1200,6 @@ def main(argv):
                 sys.stderr.write('\n')
                 sys.stderr.flush()
 
-            all_dict, deprecated, others = get_all_dict(module)
-
     if args.rst:
         base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
         rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
