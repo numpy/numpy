@@ -2534,13 +2534,17 @@ object_arrtype_dealloc(PyObject *v)
     assert(cls.tp_bases && (PyTuple_GET_SIZE(cls.tp_bases) == 2)); \
     /* We are inheriting from a Python type as well so \
        give it first dibs on conversion */ \
-    PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(cls.tp_bases, num); \
-    robj = sup->tp_new(type, args, kwds); \
-    if (robj != NULL) goto finish;        \
-    if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) { \
-        return NULL; \
+    { \
+        PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(cls.tp_bases, num); \
+        PyObject *robj = sup->tp_new(type, args, kwds); \
+        if (robj != NULL) { \
+            return robj; \
+        }; \
+        if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) { \
+            return NULL; \
+        } \
+        PyErr_Clear(); \
     } \
-    PyErr_Clear(); \
     /* now do default conversion */
 
 /**begin repeat
@@ -2561,13 +2565,9 @@ object_arrtype_dealloc(PyObject *v)
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyObject *obj = NULL;
-    PyObject *robj;
-    PyArrayObject *arr;
-
     /*
      * allow base-class (if any) to do conversion
-     * If successful, this will jump to finish:
+     * If successful, this will return.
      */
 #if defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING)
     _WORK(Py@Name@ArrType_Type, 0)
@@ -2576,6 +2576,7 @@ static PyObject *
 #endif
 
     /* TODO: include type name in error message, which is not @name@ */
+    PyObject *obj = NULL;
     char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
@@ -2584,45 +2585,48 @@ static PyObject *
     if (typecode == NULL) {
         return NULL;
     }
-    /*
-     * typecode is new reference and stolen by
-     * PyArray_FromAny but not PyArray_Scalar
-     */
     if (obj == NULL) {
-        robj = PyArray_Scalar(NULL, typecode, NULL);
+        PyObject *robj = PyArray_Scalar(NULL, typecode, NULL);
+        Py_DECREF(typecode);
         if (robj == NULL) {
-            Py_DECREF(typecode);
             return NULL;
         }
 #if !defined(_@TYPE@_IS_STRING) && !defined(_@TYPE@_IS_UNICODE)
         memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
 #endif
-        Py_DECREF(typecode);
-        goto finish;
+        return robj;
     }
 
-    /*
-     * It is expected at this point that robj is a PyArrayScalar
-     */
-    arr = (PyArrayObject *)PyArray_FromAny(obj, typecode,
-                                    0, 0, NPY_ARRAY_FORCECAST, NULL);
-    if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
+    /* PyArray_FromAny steals a reference, reclaim it before it's gone */
+    Py_INCREF(typecode);
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
+            obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+    if (arr == NULL) {
+        Py_DECREF(typecode);
+        return NULL;
+    }
+    if (PyArray_NDIM(arr) > 0) {
+        Py_DECREF(typecode);
         return (PyObject *)arr;
     }
-    /* 0-d array */
-    robj = PyArray_ToScalar(PyArray_DATA(arr), arr);
+
+    /* Convert the 0-d array to a scalar*/
+    PyObject *robj = PyArray_ToScalar(PyArray_DATA(arr), arr);
     Py_DECREF(arr);
 
-finish:
-    /* Normal return */
-    if ((robj == NULL) || (Py_TYPE(robj) == type)) {
+    if (robj == NULL || Py_TYPE(robj) == type) {
+        Py_DECREF(typecode);
         return robj;
     }
 
     /*
-     * This return path occurs when the requested type is not created
-     * but another scalar object is created instead (i.e. when
-     * the base-class does the conversion in _WORK macro)
+     * `typecode` does not contain any subclass information, as it was thrown
+     * out by the call to `PyArray_DescrFromType` - we need to add this back.
+     *
+     * FIXME[gh-15467]: This branch is also hit for the "shadowed" builtin
+     * types like `longdouble` (which on platforms where they are the same size
+     * is shadowed by `double`), because `PyArray_FromAny` returns the
+     * shadowing type rather than the requested one.
      */
 
     /* Need to allocate new type and copy data-area over */
@@ -2633,14 +2637,13 @@ finish:
     else {
         itemsize = 0;
     }
-    obj = type->tp_alloc(type, itemsize);
-    if (obj == NULL) {
+    PyObject *new_obj = type->tp_alloc(type, itemsize);
+    if (new_obj == NULL) {
         Py_DECREF(robj);
+        Py_DECREF(typecode);
         return NULL;
     }
-    /* typecode will be NULL */
-    typecode = PyArray_DescrFromType(NPY_@TYPE@);
-    void *dest = scalar_value(obj, typecode);
+    void *dest = scalar_value(new_obj, typecode);
     void *src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
 #if defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_UNICODE)
@@ -2652,7 +2655,7 @@ finish:
     *((npy_@name@ *)dest) = *((npy_@name@ *)src);
 #endif
     Py_DECREF(robj);
-    return obj;
+    return new_obj;
 }
 #undef _@TYPE@_IS_@TYPE@
 
