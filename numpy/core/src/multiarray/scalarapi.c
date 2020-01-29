@@ -342,7 +342,14 @@ finish:
     if (PyArray_EquivTypes(outcode, typecode)) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
-            Py_DECREF(typecode); Py_DECREF(outcode);
+            /*
+             * Since the type is equivalent, and we haven't handed the array
+             * to anyone yet, let's fix the dtype to be what was requested,
+             * even if it is equivalent to what was passed in.
+             */
+            Py_SETREF(((PyArrayObject_fields *)r)->descr, outcode);
+            Py_DECREF(typecode);
+
             return (PyObject *)r;
         }
     }
