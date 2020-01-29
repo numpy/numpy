@@ -983,8 +983,8 @@ a 2D array if you give them a tuple describing the dimensions of the matrix::
          [0., 0.]])
   >>> rng.random((3, 2))
   array([[0.01652764, 0.81327024],
-           [0.91275558, 0.60663578],
-           [0.72949656, 0.54362499]])  # may vary 
+         [0.91275558, 0.60663578],
+         [0.72949656, 0.54362499]])  # may vary
 
 .. image:: images/np_ones_zeros_matrix.png
 
@@ -1076,13 +1076,13 @@ To get the unique rows, index position, and occurrence count, you can use::
   >>> unique_rows, indices, occurrence_count = np.unique(
   ...      a_2d, axis=0, return_counts=True, return_index=True)
   >>> print(unique_rows)
-    [[ 1  2  3  4]
-     [ 5  6  7  8]
-     [ 9 10 11 12]]
+  [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
   >>> print(indices)
-   [0 1 2]
+  [0 1 2]
   >>> print(occurrence_count)
-   [2 1 1]
+  [2 1 1]
 
 To learn more about finding the unique elements in an array, see `unique`.
 
@@ -1174,9 +1174,9 @@ You can reverse the content in all of the rows and all of the columns with::
 
   >>> reversed_arr = np.flip(arr_2d)
   >>> print(reversed_arr)
-    [[12 11 10  9]
-     [ 8  7  6  5]
-     [ 4  3  2  1]]
+  [[12 11 10  9]
+   [ 8  7  6  5]
+   [ 4  3  2  1]]
 
 You can easily reverse only the *rows* with::
 
@@ -1190,26 +1190,26 @@ Or reverse only the *columns* with::
 
   >>> reversed_arr_columns = np.flip(arr_2d, axis=1)
   >>> print(reversed_arr_columns)
-    [[ 4  3  2  1]
-     [ 8  7  6  5]
-     [12 11 10  9]]
+  [[ 4  3  2  1]
+   [ 8  7  6  5]
+   [12 11 10  9]]
 
 You can also reverse the contents of only one column or row. For example, you
 can reverse the contents of the row at index position 1 (the second row)::
 
   >>> arr_2d[1] = np.flip(arr_2d[1])
   >>> print(arr_2d)
-    [[ 1  2  3  4]
-     [ 8  7  6  5]
-     [ 9 10 11 12]]
+  [[ 1  2  3  4]
+   [ 8  7  6  5]
+   [ 9 10 11 12]]
 
 You can also reverse the column at index position 1 (the second column)::
 
   >>> arr_2d[:,1] = np.flip(arr_2d[:,1])
   >>> print(arr_2d)
-    [[ 1 10  3  4]
-     [ 8  7  6  5]
-     [ 9  2 11 12]]
+  [[ 1 10  3  4]
+   [ 8  7  6  5]
+   [ 9  2 11 12]]
 
 Read more about reversing arrays at `flip`.
 
@@ -1310,15 +1310,14 @@ For example:
 .. code-block:: ipython
 
   In [0]: max?
-  
-  Out[0]: max(iterable, *[, default=obj, key=func]) -> value
-          max(arg1, arg2, *args, *[, key=func]) -> value
+  max(iterable, *[, default=obj, key=func]) -> value
+  max(arg1, arg2, *args, *[, key=func]) -> value
 
-          With a single iterable argument, return its biggest item. The
-          default keyword-only argument specifies an object to return if
-          the provided iterable is empty.
-          With two or more arguments, return the largest argument.
-          Type:      builtin_function_or_method
+  With a single iterable argument, return its biggest item. The
+  default keyword-only argument specifies an object to return if
+  the provided iterable is empty.
+  With two or more arguments, return the largest argument.
+  Type:      builtin_function_or_method
 
 You can even use this notation for object methods and objects themselves.
 
@@ -1332,36 +1331,35 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
 .. code-block:: ipython
 
   In [1]: a?
+  Type:            ndarray
+  String form:     [1 2 3 4 5 6]
+  Length:          6
+  File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
+  Docstring:       <no docstring>
+  Class docstring:
+  ndarray(shape, dtype=float, buffer=None, offset=0,
+          strides=None, order=None)
 
-  Out[1]: Type:            ndarray
-          String form:     [1 2 3 4 5 6]
-          Length:          6
-          File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
-          Docstring:       <no docstring>
-          Class docstring:
-          ndarray(shape, dtype=float, buffer=None, offset=0,
-                  strides=None, order=None)
+  An array object represents a multidimensional, homogeneous array
+  of fixed-size items.  An associated data-type object describes the
+  format of each element in the array (its byte-order, how many bytes it
+  occupies in memory, whether it is an integer, a floating point number,
+  or something else, etc.)
 
-          An array object represents a multidimensional, homogeneous array
-          of fixed-size items.  An associated data-type object describes the
-          format of each element in the array (its byte-order, how many bytes it
-          occupies in memory, whether it is an integer, a floating point number,
-          or something else, etc.)
+  Arrays should be constructed using `array`, `zeros` or `empty` (refer
+  to the See Also section below).  The parameters given here refer to
+  a low-level method (`ndarray(...)`) for instantiating an array.
 
-          Arrays should be constructed using `array`, `zeros` or `empty` (refer
-          to the See Also section below).  The parameters given here refer to
-          a low-level method (`ndarray(...)`) for instantiating an array.
+  For more information, refer to the `numpy` module and examine the
+  methods and attributes of an array.
 
-          For more information, refer to the `numpy` module and examine the
-          methods and attributes of an array.
+  Parameters
+  ----------
+  (for the __new__ method; see Notes below)
 
-          Parameters
-          ----------
-          (for the __new__ method; see Notes below)
-
-          shape : tuple of ints
-              Shape of created array.
-          ...
+  shape : tuple of ints
+          Shape of created array.
+  ...
 
 This also works for functions and other objects that **you** create. Just
 remember to include a docstring with your function using a string literal
@@ -1378,10 +1376,10 @@ You can obtain information about the function:
 .. code-block:: ipython
 
   In [2]: double?
-  Out[2]: Signature: double(a)
-          Docstring: Return a * 2
-          File:      ~/Desktop/<ipython-input-23-b5adf20be596>
-          Type:      function
+  Signature: double(a)
+  Docstring: Return a * 2
+  File:      ~/Desktop/<ipython-input-23-b5adf20be596>
+  Type:      function
 
 You can reach another level of information by reading the source code of the
 object you're interested in. Using a double question mark (``??``) allows you to
@@ -1392,13 +1390,13 @@ For example:
 .. code-block:: ipython
 
   In [3]: double??
-  Out[3]: Signature: double(a)
-          Source:
-          def double(a):
-              '''Return a * 2'''
-              return a * 2
-          File:      ~/Desktop/<ipython-input-23-b5adf20be596>
-          Type:      function
+  Signature: double(a)
+  Source:
+  def double(a):
+      '''Return a * 2'''
+      return a * 2
+  File:      ~/Desktop/<ipython-input-23-b5adf20be596>
+  Type:      function
 
 If the object in question is compiled in a language other than Python, using
 ``??`` will return the same information as ``?``. You'll find this with a lot of
@@ -1407,18 +1405,18 @@ built-in objects and types, for example:
 .. code-block:: ipython
 
   In [4]: len?
-  Out[4]: Signature: len(obj, /)
-          Docstring: Return the number of items in a container.
-          Type:      builtin_function_or_method
+  Signature: len(obj, /)
+  Docstring: Return the number of items in a container.
+  Type:      builtin_function_or_method
 
 and :
 
 .. code-block:: ipython
 
   In [5]: len??
-  Out[5]: Signature: len(obj, /)
-          Docstring: Return the number of items in a container.
-          Type:      builtin_function_or_method
+  Signature: len(obj, /)
+  Docstring: Return the number of items in a container.
+  Type:      builtin_function_or_method
 
 have the same output because they were compiled in a programming language other
 than Python.
