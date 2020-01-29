@@ -1443,6 +1443,10 @@ class Polynomial(ABCPolyBase):
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
     attributes and methods listed in the `ABCPolyBase` documentation.
 
+    Please note that ``Polynomial.coef`` are coefficients in the scaled
+    domain, and that to get coefficients from the data domain, you
+    should use ``Polynomial.convert().coef``.
+
     Parameters
     ----------
     coef : array_like

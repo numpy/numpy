@@ -805,6 +805,10 @@ class ABCPolyBase(abc.ABC):
         specified and this will often result in a superior fit with less
         chance of ill conditioning.
 
+        Please note that ``Polynomial.coef`` are coefficients in the scaled
+        domain, and that to get coefficients from the data domain, you should
+        use ``Polynomial.convert().coef``.
+
         Parameters
         ----------
         x : array_like, shape (M,)
