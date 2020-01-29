@@ -2522,31 +2522,6 @@ object_arrtype_dealloc(PyObject *v)
     Py_TYPE(v)->tp_free(v);
 }
 
-/*
- * string and unicode inherit from Python Type first and so GET_ITEM
- * is different to get to the Python Type.
- *
- * ok is a work-around for a bug in complex_new that doesn't allocate
- *  memory from the sub-types memory allocator.
- */
-
-#define _WORK(cls, num)  \
-    assert(cls.tp_bases && (PyTuple_GET_SIZE(cls.tp_bases) == 2)); \
-    /* We are inheriting from a Python type as well so \
-       give it first dibs on conversion */ \
-    { \
-        PyTypeObject *sup = (PyTypeObject *)PyTuple_GET_ITEM(cls.tp_bases, num); \
-        PyObject *robj = sup->tp_new(type, args, kwds); \
-        if (robj != NULL) { \
-            return robj; \
-        }; \
-        if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) { \
-            return NULL; \
-        } \
-        PyErr_Clear(); \
-    } \
-    /* now do default conversion */
-
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
@@ -2565,14 +2540,25 @@ object_arrtype_dealloc(PyObject *v)
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    /*
-     * allow base-class (if any) to do conversion
-     * If successful, this will return.
-     */
-#if defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING)
-    _WORK(Py@Name@ArrType_Type, 0)
+    /* allow base-class (if any) to do conversion */
+#if defined(_@TYPE@_IS_UNICODE)
+    PyObject *from_superclass = PyUnicode_Type.tp_new(type, args, kwds);
+#elif defined(_@TYPE@_IS_STRING)
+    PyObject *from_superclass = PyBytes_Type.tp_new(type, args, kwds);
 #elif defined(_@TYPE@_IS_DOUBLE)
-    _WORK(Py@Name@ArrType_Type, 1)
+    PyObject *from_superclass = PyFloat_Type.tp_new(type, args, kwds);
+#endif
+#if defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_DOUBLE)
+    if (from_superclass == NULL) {
+        /* don't clear the exception unless numpy can handle the arguments */
+        if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) {
+            return NULL;
+        }
+        PyErr_Clear();
+    }
+    else {
+        return from_superclass;
+    }
 #endif
 
     /* TODO: include type name in error message, which is not @name@ */
@@ -2660,8 +2646,6 @@ static PyObject *
 #undef _@TYPE@_IS_@TYPE@
 
 /**end repeat**/
-
-#undef _WORK
 
 static PyObject *
 object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
