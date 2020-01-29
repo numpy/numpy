@@ -680,6 +680,14 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
+        def hermitian(mat):
+            axes = list(range(mat.ndim))
+            axes[-1], axes[-2] = axes[-2], axes[-1]
+            return np.conj(np.transpose(mat, axes=axes))
+        
+        assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
+        assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
+        assert_equal(np.sort(s)[..., ::-1], s)
         assert_(consistent_subclass(u, a))
         assert_(consistent_subclass(vt, a))
 
