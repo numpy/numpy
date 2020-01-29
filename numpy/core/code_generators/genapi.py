@@ -8,10 +8,11 @@ specified.
 """
 from numpy.distutils.conv_template import process_file as process_c_file
 
-import sys, os, re
 import hashlib
 import io
-
+import os
+import re
+import sys
 import textwrap
 
 from os.path import join

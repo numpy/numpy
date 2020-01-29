@@ -14,13 +14,15 @@ Pearu Peterson
 """
 __all__ = ['cpu']
 
-import sys, re, types
 import os
+import platform
+import re
+import sys
+import types
+import warnings
 
 from subprocess import getstatusoutput
 
-import warnings
-import platform
 
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:

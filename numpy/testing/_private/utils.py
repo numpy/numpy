@@ -1444,7 +1444,9 @@ def _assert_valid_refcount(op):
     """
     if not HAS_REFCOUNT:
         return True
-    import numpy as np, gc
+
+    import gc
+    import numpy as np
 
     b = np.arange(100*100).reshape(100, 100)
     c = b

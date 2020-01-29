@@ -1,7 +1,10 @@
 """ Functions for converting from DOS to UNIX line endings
 
 """
-import sys, re, os
+import os
+import re
+import sys
+
 
 def dos2unix(file):
     "Replace CRLF with LF in argument files.  Print names of changed files."

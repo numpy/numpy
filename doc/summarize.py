@@ -5,8 +5,12 @@ summarize.py
 Show a summary about which NumPy functions are documented and which are not.
 
 """
-import os, glob, re, sys, inspect, optparse
 import collections.abc
+import glob
+import inspect
+import optparse
+import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sphinxext'))
 from sphinxext.phantom_import import import_phantom_module
@@ -98,7 +102,11 @@ def check_numpy():
     documented = get_documented(glob.glob(SOURCE_DIR + '/*.rst'))
     undocumented = {}
 
-    import numpy, numpy.fft, numpy.linalg, numpy.random
+    import numpy
+    import numpy.fft
+    import numpy.linalg
+    import numpy.random
+
     for mod in [numpy, numpy.fft, numpy.linalg, numpy.random,
                 numpy.ctypeslib, numpy.emath, numpy.ma]:
         undocumented.update(get_undocumented(documented, mod, skip=SKIP_LIST))
