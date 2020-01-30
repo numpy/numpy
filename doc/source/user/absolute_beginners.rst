@@ -966,7 +966,7 @@ All you need to do is pass in the number of elements you want it to generate::
   # the simplest way to generate random numbers
   >>> rng = np.random.default_rng(0)
   >>> rng.random(3)
-  array([0.08419554, 0.01447087, 0.88581866])
+  array([0.63696169, 0.26978671, 0.04097352])
 
 .. image:: images/np_ones_zeros_random.png
 
