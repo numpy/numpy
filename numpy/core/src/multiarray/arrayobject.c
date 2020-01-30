@@ -478,9 +478,9 @@ array_dealloc(PyArrayObject *self)
      * on deallocation. On new versions of python the first version is
      * used to prevent potential problems with subclasses.
      * See: https://bugs.python.org/issue35983
-     * The new macros were added in Python 3.8
+     * The new macros were added in Python v3.8.0b1
      */
-#ifdef Py_TRASHCAN_BEGIN
+#ifdef Py_TRASHCAN_BEGIN  /* Available in Python >= v3.8.0b1 */
     Py_TRASHCAN_BEGIN(self, array_dealloc);
 #else
     Py_TRASHCAN_SAFE_BEGIN(self);
@@ -568,14 +568,14 @@ array_dealloc(PyArrayObject *self)
 static int
 array_traverse(PyArrayObject *self, visitproc visit, void *arg)
 {
-    /* Make sure we don't traverse the array before it is fully initialized */
-    if (PyArray_DATA(self) == NULL) {
-        return 0;
-    }
-
-    /* TODO: In principle descr can create a cycle, but as long as we only
-     *       traverse object arrays, there is not much reason to visit it.
+    /*
+     * Assert that traverse is only called after initialization finished,
+     * this is guaranteed since the GC cannot run between creation and
+     * finishing initialization.
      */
+    assert(PyArray_DATA(self) == NULL);
+
+    /* Note: If we add cyclic gc support to dtypes, should visit descr */
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_VISIT(((PyArrayObject_fields *)self)->base);
 
