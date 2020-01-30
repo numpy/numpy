@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 import warnings
+import numpy as np
 
 try:
     import cffi
@@ -42,10 +43,33 @@ else:
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 def test_cython(tmp_path):
-    examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
-    shutil.copytree(examples, tmp_path / '_examples')
-    subprocess.check_call([sys.executable, 'setup.py', 'build'],
-                          cwd=str(tmp_path / '_examples' / 'cython'))
+    srcdir = os.path.join(os.path.dirname(__file__), '..')
+    shutil.copytree(srcdir, tmp_path / 'random')
+    # build the examples and "install" them into a temporary directory
+    env = os.environ.copy()
+    subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
+                           '--prefix', tmp_path / 'installdir',
+                           '--single-version-externally-managed',
+                           '--record', tmp_path/ 'tmp_install_log.txt',
+                          ],
+                          cwd=str(tmp_path / 'random' / '_examples' / 'cython'),
+                          env=env)
+    # get the path to the so's
+    so1 = so2 = None
+    with open(tmp_path /'tmp_install_log.txt') as fid:
+        for line in fid:
+            if 'extending.' in line:
+                so1 = line.strip()
+            if 'extending_distributions' in line:
+                so2 = line.strip()
+    assert so1 is not None
+    assert so2 is not None
+    from importlib.machinery import ExtensionFileLoader 
+    extending = ExtensionFileLoader('extending', so1).load_module()
+    extending_distributions = ExtensionFileLoader('extending_distributions', so2).load_module()
+    values = extending_distributions.uniforms_ex(10, 'd')
+    assert values.shape == (10,)
+    assert values.dtype == np.float64
 
 @pytest.mark.skipif(numba is None or cffi is None,
                     reason="requires numba and cffi")
