@@ -252,6 +252,12 @@ cdef class RandomState:
 
         For more details, see `set_state`.
 
+        Parameters
+        ----------
+        legacy : bool, optional
+            Flag indicating to return a legacy tuple state when the BitGenerator
+            is MT19937, instead of a dict.
+
         Returns
         -------
         out : {tuple(str, ndarray of 624 uints, int, int, float), dict}
@@ -263,12 +269,8 @@ cdef class RandomState:
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
 
-            If `legacy` is False, or the BitGenerator is not NT19937, then
+            If `legacy` is False, or the BitGenerator is not MT19937, then
             state is returned as a dictionary.
-
-        legacy : bool
-            Flag indicating the return a legacy tuple state when the BitGenerator
-            is MT19937.
 
         See Also
         --------
