@@ -20,6 +20,7 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "lowlevel_strided_loops.h"
 #include "usertypes.h"
 #include "_datetime.h"
@@ -4357,6 +4358,17 @@ set_typeinfo(PyObject *dict)
 
     PyArray_Descr *dtype;
     PyObject *cobj, *key;
+
+    /*
+     * Override the base class for all types, eventually all of this logic
+     * should be defined on the class and inherited to the scalar.
+     * (NPY_HALF is the largest builtin one.)
+     */
+    for (i = 0; i <= NPY_HALF; i++) {
+        if (dtypemeta_wrap_legacy_descriptor(_builtin_descrs[i]) < 0) {
+            return -1;
+        }
+    }
 
     /*
      * Add cast functions for the new types
