@@ -2,58 +2,7 @@
 """
 This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
-include directories, etc.) in the system. Currently, the following
-classes are available:
-
-  atlas_info
-  atlas_threads_info
-  atlas_blas_info
-  atlas_blas_threads_info
-  lapack_atlas_info
-  lapack_atlas_threads_info
-  atlas_3_10_info
-  atlas_3_10_threads_info
-  atlas_3_10_blas_info,
-  atlas_3_10_blas_threads_info,
-  lapack_atlas_3_10_info
-  lapack_atlas_3_10_threads_info
-  flame_info
-  blas_info
-  lapack_info
-  openblas_info
-  openblas64__info
-  openblas_ilp64_info
-  blis_info
-  blas_opt_info       # usage recommended
-  lapack_opt_info     # usage recommended
-  blas_ilp64_opt_info    # usage recommended (general ILP64 BLAS)
-  lapack_ilp64_opt_info  # usage recommended (general ILP64 LAPACK)
-  blas_ilp64_plain_opt_info    # usage recommended (general ILP64 BLAS, no symbol suffix)
-  lapack_ilp64_plain_opt_info  # usage recommended (general ILP64 LAPACK, no symbol suffix)
-  blas64__opt_info    # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
-  lapack64__opt_info  # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
-  fftw_info,dfftw_info,sfftw_info
-  fftw_threads_info,dfftw_threads_info,sfftw_threads_info
-  djbfft_info
-  x11_info
-  lapack_src_info
-  blas_src_info
-  numpy_info
-  numarray_info
-  numpy_info
-  boost_python_info
-  agg2_info
-  wx_info
-  gdk_pixbuf_xlib_2_info
-  gdk_pixbuf_2_info
-  gdk_x11_2_info
-  gtkp_x11_2_info
-  gtkp_2_info
-  xft_info
-  freetype2_info
-  umfpack_info
-
-Usage:
+include directories, etc.) in the system. Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
   'lapack_src', 'blas_src', etc. For a complete list of allowed names,
@@ -81,19 +30,94 @@ The file 'site.cfg' is looked for in
 
 The first one found is used to get system configuration options The
 format is that used by ConfigParser (i.e., Windows .INI style). The
-section ALL has options that are the default for each section. The
-available sections are fftw, atlas, and x11. Appropriate defaults are
-used if nothing is specified.
+section ALL is not intended for general use.
+
+Appropriate defaults are used if nothing is specified.
 
 The order of finding the locations of resources is the following:
  1. environment variable
  2. section in site.cfg
- 3. ALL section in site.cfg
+ 3. DEFAULT section in site.cfg
+ 4. System default search paths (see ``default_*`` variables below).
 Only the first complete match is returned.
+
+Currently, the following classes are available, along with their section names:
+
+    Numeric_info:Numeric
+    _numpy_info:Numeric
+    _pkg_config_info:None
+    accelerate_info:accelerate
+    agg2_info:agg2
+    amd_info:amd
+    atlas_3_10_blas_info:atlas
+    atlas_3_10_blas_threads_info:atlas
+    atlas_3_10_info:atlas
+    atlas_3_10_threads_info:atlas
+    atlas_blas_info:atlas
+    atlas_blas_threads_info:atlas
+    atlas_info:atlas
+    atlas_threads_info:atlas
+    blas64__opt_info:ALL               # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
+    blas_ilp64_opt_info:ALL            # usage recommended (general ILP64 BLAS)
+    blas_ilp64_plain_opt_info:ALL      # usage recommended (general ILP64 BLAS, no symbol suffix)
+    blas_info:blas
+    blas_mkl_info:mkl
+    blas_opt_info:ALL                  # usage recommended
+    blas_src_info:blas_src
+    blis_info:blis
+    boost_python_info:boost_python
+    dfftw_info:fftw
+    dfftw_threads_info:fftw
+    djbfft_info:djbfft
+    f2py_info:ALL
+    fft_opt_info:ALL
+    fftw2_info:fftw
+    fftw3_info:fftw3
+    fftw_info:fftw
+    fftw_threads_info:fftw
+    flame_info:flame
+    freetype2_info:freetype2
+    gdk_2_info:gdk_2
+    gdk_info:gdk
+    gdk_pixbuf_2_info:gdk_pixbuf_2
+    gdk_pixbuf_xlib_2_info:gdk_pixbuf_xlib_2
+    gdk_x11_2_info:gdk_x11_2
+    gtkp_2_info:gtkp_2
+    gtkp_x11_2_info:gtkp_x11_2
+    lapack64__opt_info:ALL             # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
+    lapack_atlas_3_10_info:atlas
+    lapack_atlas_3_10_threads_info:atlas
+    lapack_atlas_info:atlas
+    lapack_atlas_threads_info:atlas
+    lapack_ilp64_opt_info:ALL          # usage recommended (general ILP64 LAPACK)
+    lapack_ilp64_plain_opt_info:ALL    # usage recommended (general ILP64 LAPACK, no symbol suffix)
+    lapack_info:lapack
+    lapack_mkl_info:mkl
+    lapack_opt_info:ALL                # usage recommended
+    lapack_src_info:lapack_src
+    mkl_info:mkl
+    numarray_info:numarray
+    numerix_info:numerix
+    numpy_info:numpy
+    openblas64__info:openblas64_
+    openblas64__lapack_info:openblas64_
+    openblas_clapack_info:openblas
+    openblas_ilp64_info:openblas_ilp64
+    openblas_ilp64_lapack_info:openblas_ilp64
+    openblas_info:openblas
+    openblas_lapack_info:openblas
+    sfftw_info:fftw
+    sfftw_threads_info:fftw
+    system_info:ALL
+    umfpack_info:umfpack
+    wx_info:wx
+    x11_info:x11
+    xft_info:xft
 
 Example:
 ----------
-[ALL]
+[DEFAULT]
+# default section
 library_dirs = /usr/lib:/usr/local/lib:/opt/lib
 include_dirs = /usr/include:/usr/local/include:/opt/include
 src_dirs = /usr/local/src:/opt/src
@@ -576,10 +600,14 @@ class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """
-    section = 'ALL'
     dir_env_var = None
-    search_static_first = 0  # XXX: disabled by default, may disappear in
-                            # future unless it is proved to be useful.
+    # XXX: search_static_first is disabled by default, may disappear in
+    # future unless it is proved to be useful.
+    search_static_first = 0
+    # The base-class section name is a random word "ALL" and is not really
+    # intended for general use. It cannot be None nor can it be DEFAULT as
+    # these break the ConfigParser. See gh-15338
+    section = 'ALL'
     saved_results = {}
 
     notfounderror = NotFoundError
