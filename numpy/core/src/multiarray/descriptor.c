@@ -1477,7 +1477,7 @@ _convert_from_any(PyObject *obj, int align)
         return _convert_from_dict(obj, align);
     }
     else if (PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError, "Object is an unrecognized array type");
+        PyErr_SetString(PyExc_TypeError, "Cannot construct a dtype from an array");
         return NULL;
     }
     else {
