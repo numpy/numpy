@@ -718,11 +718,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyObject *listobj;
     PyArray_Descr *res;
     PyObject *_numpy_internal;
-
-    if (!PyUnicode_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError, "Object needs to be a str");
-        return NULL;
-    }
+    assert(PyUnicode_Check(obj));
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
