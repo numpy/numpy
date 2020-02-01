@@ -573,7 +573,7 @@ array_traverse(PyArrayObject *self, visitproc visit, void *arg)
      * this is guaranteed since the GC cannot run between creation and
      * finishing initialization.
      */
-    assert(PyArray_DATA(self) == NULL);
+    assert(PyArray_DATA(self) != NULL);
 
     /* Note: If we add cyclic gc support to dtypes, should visit descr */
     PyArray_Descr *descr = PyArray_DESCR(self);
