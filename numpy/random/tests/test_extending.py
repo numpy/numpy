@@ -64,10 +64,14 @@ def test_cython(tmp_path):
                 so2 = line.strip()
     assert so1 is not None
     assert so2 is not None
+    # import the so's without adding the directory to sys.path
     from importlib.machinery import ExtensionFileLoader 
     extending = ExtensionFileLoader('extending', so1).load_module()
     extending_distributions = ExtensionFileLoader('extending_distributions', so2).load_module()
-    values = extending_distributions.uniforms_ex(10, 'd')
+
+    # actually test the cython c-extension
+    from numpy.random import PCG64
+    values = extending_distributions.uniforms_ex(PCG64(0), 10, 'd')
     assert values.shape == (10,)
     assert values.dtype == np.float64
 

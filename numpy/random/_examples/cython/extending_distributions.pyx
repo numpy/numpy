@@ -75,7 +75,7 @@ def uint10_uniforms(Py_ssize_t n):
     return randoms
 
 # cython example 3
-def uniforms_ex(Py_ssize_t n, dtype=np.float64):
+def uniforms_ex(bit_generator, Py_ssize_t n, dtype=np.float64):
     """
     Create an array of `n` uniformly distributed doubles via a "fill" function.
 
@@ -84,6 +84,7 @@ def uniforms_ex(Py_ssize_t n, dtype=np.float64):
 
     Parameters
     ----------
+    bit_generator: BitGenerator instance
     n: int
         Output vector length
     dtype: {str, dtype}, optional
@@ -95,25 +96,21 @@ def uniforms_ex(Py_ssize_t n, dtype=np.float64):
     cdef const char *capsule_name = "BitGenerator"
     cdef np.ndarray randoms
 
-    typedict = {'f': np.float32, 'd': np.float64, 'float64': np.float64,
-                'float32': np.float32, np.float32: np.float32,
-                np.float64: np.float64}
-    typ = typedict.get(dtype, None)
-    if not typ:
+    _dtype = np.dtype(dtype)
+    if _dtype.type not in (np.float32, np.float64):
         raise TypeError('Unsupported dtype "%r"' % dtype)
-    x = PCG64()
-    capsule = x.capsule
+    capsule = bit_generator.capsule
     # Optional check that the capsule if from a BitGenerator
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
     # Cast the pointer
     rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
-    randoms = np.empty(n, dtype=dtype)
-    if typ is np.float32:
-        with x.lock:
+    randoms = np.empty(n, dtype=_dtype)
+    if _dtype is np.float32:
+        with bit_generator.lock:
             random_standard_uniform_fill_f(rng, n, <float*>np.PyArray_DATA(randoms))
     else:
-        with x.lock:
+        with bit_generator.lock:
             random_standard_uniform_fill(rng, n, <double*>np.PyArray_DATA(randoms))
     return randoms
 
