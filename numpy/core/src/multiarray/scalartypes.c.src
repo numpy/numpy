@@ -387,45 +387,6 @@ format_@name@(@type@ val, npy_bool scientific,
 /**end repeat**/
 
 /*
- * over-ride repr and str of array-scalar strings and unicode to
- * remove NULL bytes and then call the corresponding functions
- * of string and unicode.
- */
-
-/**begin repeat
- * #name = string*2,unicode*2#
- * #form = (repr,str)*2#
- * #Name = String*2,Unicode*2#
- * #NAME = STRING*2,UNICODE*2#
- * #extra = AndSize*2,,#
- * #type = npy_char*2, Py_UNICODE*2#
- */
-static PyObject *
-@name@type_@form@(PyObject *self)
-{
-    const @type@ *dptr, *ip;
-    int len;
-    PyObject *new;
-    PyObject *ret;
-
-    ip = dptr = Py@Name@_AS_@NAME@(self);
-    len = Py@Name@_GET_SIZE(self);
-    dptr += len-1;
-    while(len > 0 && *dptr-- == 0) {
-        len--;
-    }
-    new = Py@Name@_From@Name@@extra@(ip, len);
-    if (new == NULL) {
-        return PyUString_FromString("");
-    }
-    ret = Py@Name@_Type.tp_@form@(new);
-    Py_DECREF(new);
-    return ret;
-}
-/**end repeat**/
-
-
-/*
  * Convert array of bytes to a string representation much like bytes.__repr__,
  * but convert all bytes (including ASCII) to the `\x00` notation with
  * uppercase hex codes (FF not ff).
@@ -3945,12 +3906,6 @@ initialize_numeric_types(void)
 
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
-
-    PyStringArrType_Type.tp_repr = stringtype_repr;
-    PyStringArrType_Type.tp_str = stringtype_str;
-
-    PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
-    PyUnicodeArrType_Type.tp_str = unicodetype_str;
 
     PyVoidArrType_Type.tp_methods = voidtype_methods;
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
