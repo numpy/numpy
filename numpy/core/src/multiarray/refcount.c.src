@@ -1,0 +1,373 @@
+/*
+ * This module corresponds to the `Special functions for NPY_OBJECT`
+ * section in the numpy reference for C-API.
+ */
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include "structmember.h"
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
+#include "iterators.h"
+
+#include "npy_config.h"
+#include "npy_pycompat.h"
+
+
+
+/**begin repeat
+ * #function = INCREF, XDECREF, CLEAR, VISIT#
+ * #context = "", "", "<ndarray.tp_clear>", "<ndarray.tp_traverse>"#
+ */
+
+#define INCREF 1
+#define XDECREF 2
+#define CLEAR 3
+#define VISIT 4
+
+/*
+ * Use macros to achieve the different behaviour and function signatures.
+ * HANDLE_ITEM_AT is the function applied to a single element.
+ * These macros handle a single Object, the _PyArray_Item_ function itself
+ * may be used on structured dtypes which can contain multiple objects.
+ */
+#if @function@ == INCREF
+    #define HANDLE_ITEM_AT(data) Py_XINCREF(*(data))
+#elif @function@ == XDECREF
+    #define HANDLE_ITEM_AT(data) Py_XDECREF(*(data))
+#elif @function@ == CLEAR
+    #define HANDLE_ITEM_AT(data) Py_XSETREF(*(data), Py_None)
+#elif @function@ == VISIT
+    #define HANDLE_ITEM_AT(data) Py_VISIT(*(data))
+#endif
+
+/* In case of an unaligned element, copy may be necessary. */
+#define HANDLE_ITEM_AT_UNALIGNED(data)          \
+    do {                                        \
+        PyObject *_tmp;                         \
+        NPY_COPY_PYOBJECT_PTR(&_tmp, data);     \
+        HANDLE_ITEM_AT(&_tmp);                  \
+        if (@function@ == CLEAR) {              \
+            /* copy the None into the array */  \
+            NPY_COPY_PYOBJECT_PTR(data, &_tmp); \
+        }                                       \
+    } while (0)
+
+
+/* The VISIT and CLEAR functions cannot return errors, so print them */
+#if (@function@ == VISIT) || (@function@ == CLEAR)
+    #define ERROR_RETURN                                            \
+        do {                                                        \
+            PyObject *_err_string = PyUString_FromString(@context@);\
+            if (_err_string) {                                      \
+                PyErr_WriteUnraisable(_err_string);                 \
+                Py_DECREF(_err_string);                             \
+            }                                                       \
+            else {                                                  \
+                PyErr_WriteUnraisable(Py_None);                     \
+            }                                                       \
+            /* Only Py_VISIT macro returns anything except 0 */     \
+            return 0;                                               \
+        } while (0)
+#else
+    #define ERROR_RETURN return -1
+#endif
+
+/*
+ * Function visiting all elements of object type within a given datatype.
+ * This is for structured dtypes and the inner function may be called
+ * recursively to visit all sub structures.
+ * If this is the VISIT function, it needs special arguments for Python
+ */
+NPY_NO_EXPORT int
+_PyArray_Item_@function@(
+    #if @function@ == VISIT
+        char *data, PyArray_Descr *descr, visitproc visit, void *arg)
+    #else
+        char *data, PyArray_Descr *descr)
+    #endif
+{
+    int retval = 0;
+
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+    if (descr->type_num == NPY_OBJECT) {
+        HANDLE_ITEM_AT_UNALIGNED(data);
+    }
+    else if (PyDataType_HASFIELDS(descr)) {
+        PyObject *key, *value, *title = NULL;
+        PyArray_Descr *new;
+        int offset;
+        Py_ssize_t pos = 0;
+
+        while (!retval &&
+                    PyDict_Next(descr->fields, &pos, &key, &value)) {
+            if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+                ERROR_RETURN;
+            }
+            /* Recursively call the item function on fields */
+            retval = _PyArray_Item_@function@(
+                #if @function@ == VISIT
+                    data + offset, new, visit, arg);
+                #else
+                    data + offset, new);
+                #endif
+        }
+    }
+    else if (PyDataType_HASSUBARRAY(descr)) {
+        int size, i, inner_elsize;
+
+        inner_elsize = descr->subarray->base->elsize;
+        if (inner_elsize == 0) {
+            /* There cannot be any elements, so return */
+            return 0;
+        }
+        /* Subarrays are always contiguous in memory */
+        size = descr->elsize / inner_elsize;
+
+        for (i = 0; i < size; i++){
+            /* Recursively call the item function on subarray elements */
+            retval = _PyArray_Item_@function@(
+                #if @function@ == VISIT
+                    data + i * inner_elsize, descr->subarray->base, visit, arg);
+                #else
+                    data + i * inner_elsize, descr->subarray->base);
+                #endif
+        }
+    }
+    else {
+        /* This path should not be reachable (user dtypes claiming to be
+         * Objects may reach it, but they are unsupported as of now).
+         */
+        assert(0);
+    }
+    return retval;
+}
+
+
+NPY_NO_EXPORT int
+_PyArray_@function@(
+    #if @function@ == VISIT
+        PyArrayObject *mp, visitproc visit, void *arg)
+    #else
+        PyArrayObject *mp)
+    #endif
+{
+    npy_intp i, n;
+    PyObject **data;
+    /*
+     * statically allocating it allows this function to not modify the
+     * reference count of the array for use during dealloc.
+     * (statically is not necessary as such)
+     */
+    PyArrayIterObject it;
+
+    if (!PyDataType_REFCHK(PyArray_DESCR(mp))) {
+        return 0;
+    }
+    if (PyArray_DESCR(mp)->type_num != NPY_OBJECT) {
+        PyArray_RawIterBaseInit(&it, mp);
+        while (it.index < it.size) {
+            _PyArray_Item_@function@(
+                #if @function@ == VISIT
+                    it.dataptr, PyArray_DESCR(mp), visit, arg);
+                #else
+                    it.dataptr, PyArray_DESCR(mp));
+                #endif
+            PyArray_ITER_NEXT(&it);
+        }
+        return 0;
+    }
+
+    if (PyArray_ISONESEGMENT(mp)) {
+        data = (PyObject **)PyArray_DATA(mp);
+        n = PyArray_SIZE(mp);
+        if (PyArray_ISALIGNED(mp)) {
+            for (i = 0; i < n; i++, data++) {
+                HANDLE_ITEM_AT(data);
+            }
+        }
+        else {
+            for (i = 0; i < n; i++, data++) {
+                HANDLE_ITEM_AT_UNALIGNED(data);
+            }
+        }
+    }
+    else {  /* handles misaligned data too */
+        PyArray_RawIterBaseInit(&it, mp);
+        while (it.index < it.size) {
+            data = (PyObject **)it.dataptr;
+            HANDLE_ITEM_AT_UNALIGNED(data);
+            PyArray_ITER_NEXT(&it);
+        }
+    }
+    return 0;
+}
+
+#undef HANDLE_ITEM_AT
+#undef HANDLE_ITEM_AT_UNALIGNED
+#undef ERROR_RETURN
+#undef INCREF
+#undef XDECREF
+#undef CLEAR
+#undef VISIT
+
+/**end repeat**/
+
+
+/*NUMPY_API
+ * XINCREF all objects in a single array item. This is complex for
+ * structured datatypes where the position of objects needs to be extracted.
+ * The function calls itself recursively for complex structured dtypes.
+ */
+NPY_NO_EXPORT void
+PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
+{
+    // Should return error value?
+    _PyArray_Item_INCREF(data, descr);
+    return;
+}
+
+
+/*NUMPY_API
+ *
+ * XDECREF all objects in a single array item. This is complex for
+ * structured datatypes where the position of objects needs to be extracted.
+ * The function calls itself recursively for complex structured dtypes.
+ */
+NPY_NO_EXPORT void
+PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
+{
+    // Should return error value?
+    _PyArray_Item_XDECREF(data, descr);
+    return;
+}
+
+
+/* Used for arrays of python objects to increment the reference count of */
+/* every python object in the array. */
+/*NUMPY_API
+  For object arrays, increment all internal references.
+*/
+NPY_NO_EXPORT int
+PyArray_INCREF(PyArrayObject *mp)
+{
+    return _PyArray_INCREF(mp);
+}
+
+
+/*NUMPY_API
+  Decrement all internal references for object arrays.
+  (or arrays with object fields)
+*/
+NPY_NO_EXPORT int
+PyArray_XDECREF(PyArrayObject *mp)
+{
+    return _PyArray_XDECREF(mp);
+}
+
+
+static void
+_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
+{
+    if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
+        if ((obj == Py_None) || (PyInt_Check(obj) && PyInt_AsLong(obj)==0)) {
+            return;
+        }
+        else {
+            PyObject *arr;
+            Py_INCREF(dtype);
+            arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
+                                       0, NULL, NULL, NULL,
+                                       0, NULL);
+            if (arr!=NULL) {
+                dtype->f->setitem(obj, optr, arr);
+            }
+            Py_XDECREF(arr);
+        }
+    }
+    if (dtype->type_num == NPY_OBJECT) {
+        Py_XINCREF(obj);
+        NPY_COPY_PYOBJECT_PTR(optr, &obj);
+    }
+    else if (PyDataType_HASFIELDS(dtype)) {
+        PyObject *key, *value, *title = NULL;
+        PyArray_Descr *new;
+        int offset;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+            if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+                return;
+            }
+            _fillobject(optr + offset, obj, new);
+        }
+    }
+    else if (PyDataType_HASSUBARRAY(dtype)) {
+        int size, i, inner_elsize;
+
+        inner_elsize = dtype->subarray->base->elsize;
+        if (inner_elsize == 0) {
+            /* There cannot be any elements, so return */
+            return;
+        }
+        /* Subarrays are always contiguous in memory */
+        size = dtype->elsize / inner_elsize;
+
+        /* Call _fillobject on each item recursively. */
+        for (i = 0; i < size; i++){
+            _fillobject(optr, obj, dtype->subarray->base);
+            optr += inner_elsize;
+        }
+    }
+    else {
+        /* This path should not be reachable. */
+        assert(0);
+    }
+    return;
+}
+
+
+/*NUMPY_API
+ * Assumes contiguous
+ */
+NPY_NO_EXPORT void
+PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
+{
+    npy_intp i,n;
+    n = PyArray_SIZE(arr);
+    if (PyArray_DESCR(arr)->type_num == NPY_OBJECT) {
+        PyObject **optr;
+        optr = (PyObject **)(PyArray_DATA(arr));
+        n = PyArray_SIZE(arr);
+        if (obj == NULL) {
+            for (i = 0; i < n; i++) {
+                *optr++ = NULL;
+            }
+        }
+        else {
+            for (i = 0; i < n; i++) {
+                Py_INCREF(obj);
+                *optr++ = obj;
+            }
+        }
+    }
+    else {
+        char *optr;
+        optr = PyArray_DATA(arr);
+        for (i = 0; i < n; i++) {
+            _fillobject(optr, obj, PyArray_DESCR(arr));
+            optr += PyArray_DESCR(arr)->elsize;
+        }
+    }
+}
