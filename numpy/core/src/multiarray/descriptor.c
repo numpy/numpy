@@ -1496,7 +1496,7 @@ _convert_from_any(PyObject *obj, int align)
             return ret;
         }
         Py_DECREF(ret);
-        PyErr_SetString(PyExc_TypeError, "data type not understood");
+        PyErr_Format(PyExc_TypeError, "Cannot interpret %R as a data type");
         return NULL;
     }
 }
