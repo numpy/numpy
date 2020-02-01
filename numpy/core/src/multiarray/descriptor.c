@@ -443,7 +443,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
                 PyErr_Format(PyExc_TypeError, 
-				"If a tuple, the first element of a field tuple must have two elements, has [%d] elements",
+				"If a tuple, the first element of a field tuple must have two elements, not %d",
 			       	PyTuple_GET_SIZE(name));
                 goto fail;
             }
