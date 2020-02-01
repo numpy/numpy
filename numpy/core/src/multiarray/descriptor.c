@@ -464,7 +464,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else {
-            PyErr_SetString(PyExc_TypeError, "First element of field tuple is neither a tuple nor base string");
+            PyErr_SetString(PyExc_TypeError, "First element of field tuple is neither a tuple nor str");
             goto fail;
         }
 
@@ -485,7 +485,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 Py_INCREF(name);
             }
             else {
-                PyErr_SetString(PyExc_TypeError, "Field names must be non-empty Unicode strings");
+                PyErr_SetString(PyExc_TypeError, "Field names must be non-empty strings");
                 goto fail;
             }
         }
@@ -729,7 +729,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyObject *_numpy_internal;
 
     if (!PyUnicode_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError, "Object needs to be a Unicode object");
+        PyErr_SetString(PyExc_TypeError, "Object needs to be a str");
         return NULL;
     }
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
