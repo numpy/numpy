@@ -483,7 +483,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 Py_INCREF(name);
             }
             else {
-                PyErr_SetString(PyExc_TypeError, "Field names must be non-empty Unicode strings");
+                PyErr_SetString(PyExc_TypeError, "Field names must be non-empty strings");
                 goto fail;
             }
         }
