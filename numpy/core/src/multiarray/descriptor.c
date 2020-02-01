@@ -432,7 +432,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
-            PyErr_Format(PyExc_TypeError, "Field elements must be 2-tuples, got %R", item);
+            PyErr_Format(PyExc_TypeError, "Field elements must be 2- or 3-tuples, got %R", item);
             goto fail;
         }
         PyObject *name = PyTuple_GET_ITEM(item, 0);
