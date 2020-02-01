@@ -251,7 +251,7 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
-        _report_generic_error();
+        PyErr_Format(PyExc_TypeError, "PyTuple must have size 2, got [%d]", PyTuple_GET_SIZE(obj));
         return NULL;
     }
     PyArray_Descr *type = _convert_from_any(PyTuple_GET_ITEM(obj, 0), align);
@@ -441,7 +441,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
-            _report_generic_error();
+            PyErr_Format(PyExc_TypeError, "Field elements must be 2-tuples, got %R", item);
             goto fail;
         }
         PyObject *name = PyTuple_GET_ITEM(item, 0);
@@ -451,18 +451,18 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
-                _report_generic_error();
+                PyErr_Format(PyExc_TypeError, "PyObject within tuple needs to be a 2-tuple, has [%d] elements", PyTuple_GET_SIZE(name));
                 goto fail;
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
             if (!PyBaseString_Check(name)) {
-                _report_generic_error();
+                PyErr_SetString(PyExc_TypeError, "Second element of PyObject within tuple needs to be a base string");
                 goto fail;
             }
         }
         else {
-            _report_generic_error();
+            PyErr_SetString(PyExc_TypeError, "First element of field tuple is neither a tuple nor base string");
             goto fail;
         }
 
@@ -483,7 +483,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 Py_INCREF(name);
             }
             else {
-                _report_generic_error();
+                PyErr_SetString(PyExc_TypeError, "Field names must be non-empty Unicode strings");
                 goto fail;
             }
         }
@@ -506,7 +506,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else {
-            _report_generic_error();
+            PyErr_Format(PyExc_TypeError, "Field elements must be tuples at most 3 elements, got %R", item);
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL)
@@ -727,7 +727,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyObject *_numpy_internal;
 
     if (!PyUnicode_Check(obj)) {
-        _report_generic_error();
+        PyErr_SetString(PyExc_TypeError, "Object needs to be a Unicode object");
         return NULL;
     }
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
@@ -1484,7 +1484,7 @@ _convert_from_any(PyObject *obj, int align)
         return _convert_from_dict(obj, align);
     }
     else if (PyArray_Check(obj)) {
-        _report_generic_error();
+        PyErr_SetString(PyExc_TypeError, "Object is an unrecognized array type");
         return NULL;
     }
     else {
