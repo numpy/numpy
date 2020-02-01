@@ -242,13 +242,9 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
-<<<<<<< HEAD
         PyErr_Format(PyExc_TypeError, 
-	        "Tuple must have size 2, but has size %d",
+	        "Tuple must have size 2, but has size %zd",
 	        PyTuple_GET_SIZE(obj));
-=======
-        PyErr_Format(PyExc_TypeError, "Tuple must have size 2, but has size %zd", PyTuple_GET_SIZE(obj));
->>>>>>> 303ce30f051070bc73307296faf02bdf7eb00fc5
         return NULL;
     }
     PyArray_Descr *type = _convert_from_any(PyTuple_GET_ITEM(obj, 0), align);
