@@ -1478,7 +1478,7 @@ def squeeze(a, axis=None):
     >>> x.shape
     (1, 1)
     >>> np.squeeze(x)
-    array(1234)
+    array(1234)  # 0d array
     >>> np.squeeze(x).shape
     ()
     >>> np.squeeze(x)[0]
