@@ -450,7 +450,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
             if (!PyBaseString_Check(name)) {
-                PyErr_SetString(PyExc_TypeError, "Second element of object within tuple needs to be a base string");
+                PyErr_SetString(PyExc_TypeError, "Field name must be a str");
                 goto fail;
             }
         }
