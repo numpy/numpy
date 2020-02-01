@@ -971,42 +971,26 @@ static PyObject *
 /**end repeat**/
 
 static PyNumberMethods gentype_as_number = {
-    (binaryfunc)gentype_add,                     /*nb_add*/
-    (binaryfunc)gentype_subtract,                /*nb_subtract*/
-    (binaryfunc)gentype_multiply,                /*nb_multiply*/
-    (binaryfunc)gentype_remainder,               /*nb_remainder*/
-    (binaryfunc)gentype_divmod,                  /*nb_divmod*/
-    (ternaryfunc)gentype_power,                  /*nb_power*/
-    (unaryfunc)gentype_negative,
-    (unaryfunc)gentype_positive,                 /*nb_pos*/
-    (unaryfunc)gentype_absolute,                 /*(unaryfunc)gentype_abs,*/
-    (inquiry)gentype_nonzero_number,             /*nb_nonzero*/
-    (unaryfunc)gentype_invert,                   /*nb_invert*/
-    (binaryfunc)gentype_lshift,                  /*nb_lshift*/
-    (binaryfunc)gentype_rshift,                  /*nb_rshift*/
-    (binaryfunc)gentype_and,                     /*nb_and*/
-    (binaryfunc)gentype_xor,                     /*nb_xor*/
-    (binaryfunc)gentype_or,                      /*nb_or*/
-    (unaryfunc)gentype_int,                      /*nb_int*/
-    0,                                           /*nb_reserved*/
-    (unaryfunc)gentype_float,                    /*nb_float*/
-    0,                                           /*inplace_add*/
-    0,                                           /*inplace_subtract*/
-    0,                                           /*inplace_multiply*/
-    0,                                           /*inplace_remainder*/
-    0,                                           /*inplace_power*/
-    0,                                           /*inplace_lshift*/
-    0,                                           /*inplace_rshift*/
-    0,                                           /*inplace_and*/
-    0,                                           /*inplace_xor*/
-    0,                                           /*inplace_or*/
-    (binaryfunc)gentype_floor_divide,            /*nb_floor_divide*/
-    (binaryfunc)gentype_true_divide,             /*nb_true_divide*/
-    0,                                           /*nb_inplace_floor_divide*/
-    0,                                           /*nb_inplace_true_divide*/
-    (unaryfunc)NULL,                             /*nb_index*/
-    0,                                           /*np_matmul*/
-    0,                                           /*np_inplace_matmul*/
+    .nb_add = (binaryfunc)gentype_add,
+    .nb_subtract = (binaryfunc)gentype_subtract,
+    .nb_multiply = (binaryfunc)gentype_multiply,
+    .nb_remainder = (binaryfunc)gentype_remainder,
+    .nb_divmod = (binaryfunc)gentype_divmod,
+    .nb_power = (ternaryfunc)gentype_power,
+    .nb_negative = (unaryfunc)gentype_negative,
+    .nb_positive = (unaryfunc)gentype_positive,
+    .nb_absolute = (unaryfunc)gentype_absolute,
+    .nb_bool = (inquiry)gentype_nonzero_number,
+    .nb_invert = (unaryfunc)gentype_invert,
+    .nb_lshift = (binaryfunc)gentype_lshift,
+    .nb_rshift = (binaryfunc)gentype_rshift,
+    .nb_and = (binaryfunc)gentype_and,
+    .nb_xor = (binaryfunc)gentype_xor,
+    .nb_or = (binaryfunc)gentype_or,
+    .nb_int = (unaryfunc)gentype_int,
+    .nb_float = (unaryfunc)gentype_float,
+    .nb_floor_divide = (binaryfunc)gentype_floor_divide,
+    .nb_true_divide = (binaryfunc)gentype_true_divide,
 };
 
 
@@ -2377,29 +2361,22 @@ fail:
 }
 
 static PyMappingMethods voidtype_as_mapping = {
-    (lenfunc)voidtype_length,                    /*mp_length*/
-    (binaryfunc)voidtype_subscript,              /*mp_subscript*/
-    (objobjargproc)voidtype_ass_subscript,       /*mp_ass_subscript*/
+    .mp_length = (lenfunc)voidtype_length,
+    .mp_subscript = (binaryfunc)voidtype_subscript,
+    .mp_ass_subscript = (objobjargproc)voidtype_ass_subscript,
 };
 
 
 static PySequenceMethods voidtype_as_sequence = {
-    (lenfunc)voidtype_length,                    /*sq_length*/
-    0,                                           /*sq_concat*/
-    0,                                           /*sq_repeat*/
-    (ssizeargfunc)voidtype_item,                 /*sq_item*/
-    0,                                           /*sq_slice*/
-    (ssizeobjargproc)voidtype_ass_item,          /*sq_ass_item*/
-    0,                                           /* ssq_ass_slice */
-    0,                                           /* sq_contains */
-    0,                                           /* sq_inplace_concat */
-    0,                                           /* sq_inplace_repeat */
+    .sq_length = (lenfunc)voidtype_length,
+    .sq_item = (ssizeargfunc)voidtype_item,
+    .sq_ass_item = (ssizeobjargproc)voidtype_ass_item,
 };
 
 
 static PyBufferProcs gentype_as_buffer = {
-    gentype_getbuffer,                           /* bf_getbuffer */
-    NULL,                                        /* bf_releasebuffer */
+    .bf_getbuffer = gentype_getbuffer,
+    /* release buffer not defined (see buffer.c) */
 };
 
 
@@ -2745,44 +2722,10 @@ bool_index(PyObject *a)
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
-    0,                                           /* nb_add */
-    0,                                           /* nb_subtract */
-    0,                                           /* nb_multiply */
-    0,                                           /* nb_remainder */
-    0,                                           /* nb_divmod */
-    0,                                           /* nb_power */
-    0,                                           /* nb_negative */
-    0,                                           /* nb_positive */
-    0,                                           /* nb_absolute */
-    (inquiry)bool_arrtype_nonzero,               /* nb_nonzero / nb_bool */
-    0,                                           /* nb_invert */
-    0,                                           /* nb_lshift */
-    0,                                           /* nb_rshift */
-    (binaryfunc)bool_arrtype_and,                /* nb_and */
-    (binaryfunc)bool_arrtype_xor,                /* nb_xor */
-    (binaryfunc)bool_arrtype_or,                 /* nb_or */
-    0,                                           /* nb_int */
-    0,                                           /* nb_reserved */
-    0,                                           /* nb_float */
-    /* Added in release 2.0 */
-    0,                                           /* nb_inplace_add */
-    0,                                           /* nb_inplace_subtract */
-    0,                                           /* nb_inplace_multiply */
-    0,                                           /* nb_inplace_remainder */
-    0,                                           /* nb_inplace_power */
-    0,                                           /* nb_inplace_lshift */
-    0,                                           /* nb_inplace_rshift */
-    0,                                           /* nb_inplace_and */
-    0,                                           /* nb_inplace_xor */
-    0,                                           /* nb_inplace_or */
-    /* Added in release 2.2 */
-    /* The following require the Py_TPFLAGS_HAVE_CLASS flag */
-    0,                                           /* nb_floor_divide */
-    0,                                           /* nb_true_divide */
-    0,                                           /* nb_inplace_floor_divide */
-    0,                                           /* nb_inplace_true_divide */
-    /* Added in release 2.5 */
-    0,                                           /* nb_index */
+    .nb_bool = (inquiry)bool_arrtype_nonzero,
+    .nb_and = (binaryfunc)bool_arrtype_and,
+    .nb_xor = (binaryfunc)bool_arrtype_xor,
+    .nb_or = (binaryfunc)bool_arrtype_or,
 };
 
 static PyObject *
@@ -3119,22 +3062,18 @@ object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 }
 
 static PySequenceMethods object_arrtype_as_sequence = {
-    (lenfunc)object_arrtype_length,              /*sq_length*/
-    (binaryfunc)object_arrtype_concat,           /*sq_concat*/
-    (ssizeargfunc)object_arrtype_repeat,         /*sq_repeat*/
-    0,                                           /*sq_item*/
-    0,                                           /*sq_slice*/
-    0,                                           /* sq_ass_item */
-    0,                                           /* sq_ass_slice */
-    (objobjproc)object_arrtype_contains,         /* sq_contains */
-    (binaryfunc)object_arrtype_inplace_concat,   /* sq_inplace_concat */
-    (ssizeargfunc)object_arrtype_inplace_repeat, /* sq_inplace_repeat */
+    .sq_length = (lenfunc)object_arrtype_length,
+    .sq_concat = (binaryfunc)object_arrtype_concat,
+    .sq_repeat = (ssizeargfunc)object_arrtype_repeat,
+    .sq_contains = (objobjproc)object_arrtype_contains,
+    .sq_inplace_concat = (binaryfunc)object_arrtype_inplace_concat,
+    .sq_inplace_repeat = (ssizeargfunc)object_arrtype_inplace_repeat,
 };
 
 static PyMappingMethods object_arrtype_as_mapping = {
-    (lenfunc)object_arrtype_length,
-    (binaryfunc)object_arrtype_subscript,
-    (objobjargproc)object_arrtype_ass_subscript,
+    .mp_length = (lenfunc)object_arrtype_length,
+    .mp_subscript = (binaryfunc)object_arrtype_subscript,
+    .mp_ass_subscript = (objobjargproc)object_arrtype_ass_subscript,
 };
 
 static int
@@ -3164,8 +3103,8 @@ object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
 }
 
 static PyBufferProcs object_arrtype_as_buffer = {
-    (getbufferproc)object_arrtype_getbuffer,
-    (releasebufferproc)object_arrtype_releasebuffer,
+    .bf_getbuffer = (getbufferproc)object_arrtype_getbuffer,
+    .bf_releasebuffer = (releasebufferproc)object_arrtype_releasebuffer,
 };
 
 static PyObject *
@@ -3269,9 +3208,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 
 
 static PyMappingMethods gentype_as_mapping = {
-    NULL,
-    (binaryfunc)gen_arrtype_subscript,
-    NULL
+    .mp_subscript = (binaryfunc)gen_arrtype_subscript,
 };
 
 

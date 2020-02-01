@@ -923,47 +923,43 @@ array_index(PyArrayObject *v)
 
 
 NPY_NO_EXPORT PyNumberMethods array_as_number = {
-    (binaryfunc)array_add,                      /*nb_add*/
-    (binaryfunc)array_subtract,                 /*nb_subtract*/
-    (binaryfunc)array_multiply,                 /*nb_multiply*/
-    (binaryfunc)array_remainder,                /*nb_remainder*/
-    (binaryfunc)array_divmod,                   /*nb_divmod*/
-    (ternaryfunc)array_power,                   /*nb_power*/
-    (unaryfunc)array_negative,                  /*nb_neg*/
-    (unaryfunc)array_positive,                  /*nb_pos*/
-    (unaryfunc)array_absolute,                  /*(unaryfunc)array_abs,*/
-    (inquiry)_array_nonzero,                    /*nb_nonzero*/
-    (unaryfunc)array_invert,                    /*nb_invert*/
-    (binaryfunc)array_left_shift,               /*nb_lshift*/
-    (binaryfunc)array_right_shift,              /*nb_rshift*/
-    (binaryfunc)array_bitwise_and,              /*nb_and*/
-    (binaryfunc)array_bitwise_xor,              /*nb_xor*/
-    (binaryfunc)array_bitwise_or,               /*nb_or*/
-    (unaryfunc)array_int,                       /*nb_int*/
-    0,                                          /*nb_reserved*/
-    (unaryfunc)array_float,                     /*nb_float*/
+    .nb_add = (binaryfunc)array_add,
+    .nb_subtract = (binaryfunc)array_subtract,
+    .nb_multiply = (binaryfunc)array_multiply,
+    .nb_remainder = (binaryfunc)array_remainder,
+    .nb_divmod = (binaryfunc)array_divmod,
+    .nb_power = (ternaryfunc)array_power,
+    .nb_negative = (unaryfunc)array_negative,
+    .nb_positive = (unaryfunc)array_positive,
+    .nb_absolute = (unaryfunc)array_absolute,
+    .nb_bool = (inquiry)_array_nonzero,
+    .nb_invert = (unaryfunc)array_invert,
+    .nb_lshift = (binaryfunc)array_left_shift,
+    .nb_rshift = (binaryfunc)array_right_shift,
+    .nb_and = (binaryfunc)array_bitwise_and,
+    .nb_xor = (binaryfunc)array_bitwise_xor,
+    .nb_or = (binaryfunc)array_bitwise_or,
 
-    /*
-     * This code adds augmented assignment functionality
-     * that was made available in Python 2.0
-     */
-    (binaryfunc)array_inplace_add,              /*nb_inplace_add*/
-    (binaryfunc)array_inplace_subtract,         /*nb_inplace_subtract*/
-    (binaryfunc)array_inplace_multiply,         /*nb_inplace_multiply*/
-    (binaryfunc)array_inplace_remainder,        /*nb_inplace_remainder*/
-    (ternaryfunc)array_inplace_power,           /*nb_inplace_power*/
-    (binaryfunc)array_inplace_left_shift,       /*nb_inplace_lshift*/
-    (binaryfunc)array_inplace_right_shift,      /*nb_inplace_rshift*/
-    (binaryfunc)array_inplace_bitwise_and,      /*nb_inplace_and*/
-    (binaryfunc)array_inplace_bitwise_xor,      /*nb_inplace_xor*/
-    (binaryfunc)array_inplace_bitwise_or,       /*nb_inplace_or*/
+    .nb_int = (unaryfunc)array_int,
+    .nb_float = (unaryfunc)array_float,
+    .nb_index = (unaryfunc)array_index,
 
-    (binaryfunc)array_floor_divide,             /*nb_floor_divide*/
-    (binaryfunc)array_true_divide,              /*nb_true_divide*/
-    (binaryfunc)array_inplace_floor_divide,     /*nb_inplace_floor_divide*/
-    (binaryfunc)array_inplace_true_divide,      /*nb_inplace_true_divide*/
-    (unaryfunc)array_index,                     /*nb_index */
+    .nb_inplace_add = (binaryfunc)array_inplace_add,
+    .nb_inplace_subtract = (binaryfunc)array_inplace_subtract,
+    .nb_inplace_multiply = (binaryfunc)array_inplace_multiply,
+    .nb_inplace_remainder = (binaryfunc)array_inplace_remainder,
+    .nb_inplace_power = (ternaryfunc)array_inplace_power,
+    .nb_inplace_lshift = (binaryfunc)array_inplace_left_shift,
+    .nb_inplace_rshift = (binaryfunc)array_inplace_right_shift,
+    .nb_inplace_and = (binaryfunc)array_inplace_bitwise_and,
+    .nb_inplace_xor = (binaryfunc)array_inplace_bitwise_xor,
+    .nb_inplace_or = (binaryfunc)array_inplace_bitwise_or,
 
-    (binaryfunc)array_matrix_multiply,          /*nb_matrix_multiply*/
-    (binaryfunc)array_inplace_matrix_multiply,  /*nb_inplace_matrix_multiply*/
+    .nb_floor_divide = (binaryfunc)array_floor_divide,
+    .nb_true_divide = (binaryfunc)array_true_divide,
+    .nb_inplace_floor_divide = (binaryfunc)array_inplace_floor_divide,
+    .nb_inplace_true_divide = (binaryfunc)array_inplace_true_divide,
+
+    .nb_matrix_multiply = (binaryfunc)array_matrix_multiply,
+    .nb_inplace_matrix_multiply = (binaryfunc)array_inplace_matrix_multiply,
 };

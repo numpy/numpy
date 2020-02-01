@@ -3229,16 +3229,7 @@ descr_nonzero(PyObject *NPY_UNUSED(self))
 }
 
 static PyNumberMethods descr_as_number = {
-    (binaryfunc)0,                          /* nb_add */
-    (binaryfunc)0,                          /* nb_subtract */
-    (binaryfunc)0,                          /* nb_multiply */
-    (binaryfunc)0,                          /* nb_remainder */
-    (binaryfunc)0,                          /* nb_divmod */
-    (ternaryfunc)0,                         /* nb_power */
-    (unaryfunc)0,                           /* nb_negative */
-    (unaryfunc)0,                           /* nb_positive */
-    (unaryfunc)0,                           /* nb_absolute */
-    (inquiry)descr_nonzero,                 /* nb_nonzero */
+    .nb_bool = (inquiry)descr_nonzero,
 };
 
 /*************************************************************************
