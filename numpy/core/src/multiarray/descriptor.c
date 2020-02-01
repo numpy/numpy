@@ -39,15 +39,6 @@
 
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
-/*
- * Generate a vague error message when a function returned NULL but forgot
- * to set an exception. We should aim to remove this eventually.
- */
-static void
-_report_generic_error(void) {
-    PyErr_SetString(PyExc_TypeError, "data type not understood");
-}
-
 static PyArray_Descr *
 _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
 
@@ -1505,7 +1496,7 @@ _convert_from_any(PyObject *obj, int align)
             return ret;
         }
         Py_DECREF(ret);
-        _report_generic_error();
+        PyErr_SetString(PyExc_TypeError, "data type not understood");
         return NULL;
     }
 }
