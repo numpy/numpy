@@ -499,7 +499,8 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else {
-            PyErr_Format(PyExc_TypeError, "Field elements must be tuples at most 3 elements, got %R", item);
+            PyErr_Format(PyExc_TypeError,
+                    "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL)
