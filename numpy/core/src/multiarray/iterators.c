@@ -1103,53 +1103,16 @@ static PyGetSetDef iter_getsets[] = {
 
 NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "numpy.flatiter",                           /* tp_name */
-    sizeof(PyArrayIterObject),                  /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)arrayiter_dealloc,              /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_reserved */
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    &iter_as_mapping,                           /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    (richcmpfunc)iter_richcompare,              /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    (iternextfunc)arrayiter_next,               /* tp_iternext */
-    iter_methods,                               /* tp_methods */
-    iter_members,                               /* tp_members */
-    iter_getsets,                               /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.flatiter",
+    .tp_basicsize = sizeof(PyArrayIterObject),
+    .tp_dealloc = (destructor)arrayiter_dealloc,
+    .tp_as_mapping = &iter_as_mapping,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_richcompare = (richcmpfunc)iter_richcompare,
+    .tp_iternext = (iternextfunc)arrayiter_next,
+    .tp_methods = iter_methods,
+    .tp_members = iter_members,
+    .tp_getset = iter_getsets,
 };
 
 /** END of Array Iterator **/
@@ -1552,53 +1515,15 @@ static PyMethodDef arraymultiter_methods[] = {
 
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "numpy.broadcast",                          /* tp_name */
-    sizeof(PyArrayMultiIterObject),             /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)arraymultiter_dealloc,          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_reserved */
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    (iternextfunc)arraymultiter_next,           /* tp_iternext */
-    arraymultiter_methods,                      /* tp_methods */
-    arraymultiter_members,                      /* tp_members */
-    arraymultiter_getsetlist,                   /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)0,                                /* tp_init */
-    0,                                          /* tp_alloc */
-    arraymultiter_new,                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.broadcast",
+    .tp_basicsize = sizeof(PyArrayMultiIterObject),
+    .tp_dealloc = (destructor)arraymultiter_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_iternext = (iternextfunc)arraymultiter_next,
+    .tp_methods = arraymultiter_methods,
+    .tp_members = arraymultiter_members,
+    .tp_getset = arraymultiter_getsetlist,
+    .tp_new = arraymultiter_new,
 };
 
 /*========================= Neighborhood iterator ======================*/
@@ -1873,50 +1798,8 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
 
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "numpy.neigh_internal_iter",                /* tp_name*/
-    sizeof(PyArrayNeighborhoodIterObject),      /* tp_basicsize*/
-    0,                                          /* tp_itemsize*/
-    (destructor)neighiter_dealloc,              /* tp_dealloc*/
-    0,                                          /* tp_print*/
-    0,                                          /* tp_getattr*/
-    0,                                          /* tp_setattr*/
-    0,                                          /* tp_reserved */
-    0,                                          /* tp_repr*/
-    0,                                          /* tp_as_number*/
-    0,                                          /* tp_as_sequence*/
-    0,                                          /* tp_as_mapping*/
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call*/
-    0,                                          /* tp_str*/
-    0,                                          /* tp_getattro*/
-    0,                                          /* tp_setattro*/
-    0,                                          /* tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags*/
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    (iternextfunc)0,                            /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)0,                                /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.neigh_internal_iter",
+    .tp_basicsize = sizeof(PyArrayNeighborhoodIterObject),
+    .tp_dealloc = (destructor)neighiter_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };

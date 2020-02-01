@@ -1781,56 +1781,28 @@ array_free(PyObject * v)
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "numpy.ndarray",                            /* tp_name */
-    NPY_SIZEOF_PYARRAYOBJECT,                   /* tp_basicsize */
-    0,                                          /* tp_itemsize */
+    .tp_name = "numpy.ndarray",
+    .tp_basicsize = NPY_SIZEOF_PYARRAYOBJECT,
     /* methods */
-    (destructor)array_dealloc,                  /* tp_dealloc */
-    (printfunc)NULL,                            /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_reserved */
-    (reprfunc)array_repr,                       /* tp_repr */
-    &array_as_number,                           /* tp_as_number */
-    &array_as_sequence,                         /* tp_as_sequence */
-    &array_as_mapping,                          /* tp_as_mapping */
+    .tp_dealloc = (destructor)array_dealloc,
+    .tp_repr = (reprfunc)array_repr,
+    .tp_as_number = &array_as_number,
+    .tp_as_sequence = &array_as_sequence,
+    .tp_as_mapping = &array_as_mapping,
     /*
      * The tp_hash slot will be set PyObject_HashNotImplemented when the
      * module is loaded.
      */
-    (hashfunc)0,                                /* tp_hash */
-    (ternaryfunc)0,                             /* tp_call */
-    (reprfunc)array_str,                        /* tp_str */
-    (getattrofunc)0,                            /* tp_getattro */
-    (setattrofunc)0,                            /* tp_setattro */
-    &array_as_buffer,                           /* tp_as_buffer */
-    (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE), /* tp_flags */
-    0,                                          /* tp_doc */
+    .tp_str = (reprfunc)array_str,
+    .tp_as_buffer = &array_as_buffer,
+    .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
 
-    (traverseproc)0,                            /* tp_traverse */
-    (inquiry)0,                                 /* tp_clear */
-    (richcmpfunc)array_richcompare,             /* tp_richcompare */
-    offsetof(PyArrayObject_fields, weakreflist), /* tp_weaklistoffset */
-    (getiterfunc)array_iter,                    /* tp_iter */
-    (iternextfunc)0,                            /* tp_iternext */
-    array_methods,                              /* tp_methods */
-    0,                                          /* tp_members */
-    array_getsetlist,                           /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)0,                                /* tp_init */
-    (allocfunc)array_alloc,                     /* tp_alloc */
-    (newfunc)array_new,                         /* tp_new */
-    (freefunc)array_free,                       /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_richcompare = (richcmpfunc)array_richcompare,
+    .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
+    .tp_iter = (getiterfunc)array_iter,
+    .tp_methods = array_methods,
+    .tp_getset = array_getsetlist,
+    .tp_alloc = (allocfunc)array_alloc,
+    .tp_new = (newfunc)array_new,
+    .tp_free = (freefunc)array_free,
 };

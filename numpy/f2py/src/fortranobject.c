@@ -426,21 +426,13 @@ fortran_repr(PyFortranObject *fp)
 
 PyTypeObject PyFortran_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "fortran",                    /*tp_name*/
-    sizeof(PyFortranObject),      /*tp_basicsize*/
-    0,                            /*tp_itemsize*/
-    /* methods */
-    (destructor)fortran_dealloc,  /*tp_dealloc*/
-    0,                            /*tp_print*/
-    (getattrfunc)fortran_getattr, /*tp_getattr*/
-    (setattrfunc)fortran_setattr, /*tp_setattr*/
-    0,                            /*tp_compare/tp_reserved*/
-    (reprfunc)fortran_repr,       /*tp_repr*/
-    0,                            /*tp_as_number*/
-    0,                            /*tp_as_sequence*/
-    0,                            /*tp_as_mapping*/
-    0,                            /*tp_hash*/
-    (ternaryfunc)fortran_call,    /*tp_call*/
+    .tp_name ="fortran",
+    .tp_basicsize = sizeof(PyFortranObject),
+    .tp_dealloc = (destructor)fortran_dealloc,
+    .tp_getattr = (getattrfunc)fortran_getattr,
+    .tp_setattr = (setattrfunc)fortran_setattr,
+    .tp_repr = (reprfunc)fortran_repr,
+    .tp_call = (ternaryfunc)fortran_call,
 };
 
 /************************* f2py_report_atexit *******************************/
