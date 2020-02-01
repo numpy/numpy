@@ -1438,7 +1438,9 @@ def squeeze(a, axis=None):
 
         Selects a subset of the single-dimensional entries in the
         shape. If an axis is selected with shape entry greater than
-        one, an error is raised.
+        one, an error is raised. Note that when applied to an array
+        `a` with one element and no axis argument, it returns a
+        wrapped scalar of no shape containing the element in `a`.
 
     Returns
     -------
@@ -1472,6 +1474,17 @@ def squeeze(a, axis=None):
     ValueError: cannot select an axis to squeeze out which has size not equal to one
     >>> np.squeeze(x, axis=2).shape
     (1, 3)
+    >>> x = np.array([[1234]])
+    >>> x.shape
+    (1, 1)
+    >>> np.squeeze(x)
+    array(1234)
+    >>> np.squeeze(x).shape
+    ()
+    >>> np.squeeze(x)[0]
+    Traceback (most recent call last):
+    ...
+    IndexError: too many indices for array
 
     """
     try:
