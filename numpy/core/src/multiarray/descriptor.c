@@ -1493,7 +1493,7 @@ _convert_from_any(PyObject *obj, int align)
             return ret;
         }
         Py_DECREF(ret);
-        PyErr_Format(PyExc_TypeError, "Cannot interpret %R as a data type", obj);
+        PyErr_Format(PyExc_TypeError, "Cannot interpret '%R' as a data type", obj);
         return NULL;
     }
 }
