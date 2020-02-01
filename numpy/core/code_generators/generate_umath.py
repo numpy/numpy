@@ -492,14 +492,14 @@ defdict = {
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.maximum'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(noobj),
+          TD(noobj, simd=[('avx512f', 'fd')]),
           TD(O, f='npy_ObjectMax')
           ),
 'minimum':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.minimum'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(noobj),
+          TD(noobj, simd=[('avx512f', 'fd')]),
           TD(O, f='npy_ObjectMin')
           ),
 'clip':
