@@ -242,9 +242,7 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
-        PyErr_Format(PyExc_TypeError, 
-	        "Tuple must have size 2, but has size %d",
-	        PyTuple_GET_SIZE(obj));
+        PyErr_Format(PyExc_TypeError, "Tuple must have size 2, but has size %zd", PyTuple_GET_SIZE(obj));
         return NULL;
     }
     PyArray_Descr *type = _convert_from_any(PyTuple_GET_ITEM(obj, 0), align);
@@ -434,9 +432,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
-            PyErr_Format(PyExc_TypeError, 
-			 "Field elements must be 2- or 3-tuples, got '%R'", 
-			 item);
+            PyErr_Format(PyExc_TypeError, "Field elements must be 2- or 3-tuples, got %R", item);
             goto fail;
         }
         PyObject *name = PyTuple_GET_ITEM(item, 0);
@@ -447,8 +443,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
                 PyErr_Format(PyExc_TypeError, 
-				"If a tuple, the first element of a field tuple must have \
-				two elements, not %d",
+				"If a tuple, the first element of a field tuple must have two elements, not %d",
 			       	PyTuple_GET_SIZE(name));
                 goto fail;
             }
@@ -460,9 +455,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else {
-            PyErr_SetString(PyExc_TypeError, 
-			            "First element of field tuple is \
-			            neither a tuple nor str");
+            PyErr_SetString(PyExc_TypeError, "First element of field tuple is neither a tuple nor str");
             goto fail;
         }
 
@@ -3226,7 +3219,16 @@ descr_nonzero(PyObject *NPY_UNUSED(self))
 }
 
 static PyNumberMethods descr_as_number = {
-    .nb_bool = (inquiry)descr_nonzero,
+    (binaryfunc)0,                          /* nb_add */
+    (binaryfunc)0,                          /* nb_subtract */
+    (binaryfunc)0,                          /* nb_multiply */
+    (binaryfunc)0,                          /* nb_remainder */
+    (binaryfunc)0,                          /* nb_divmod */
+    (ternaryfunc)0,                         /* nb_power */
+    (unaryfunc)0,                           /* nb_negative */
+    (unaryfunc)0,                           /* nb_positive */
+    (unaryfunc)0,                           /* nb_absolute */
+    (inquiry)descr_nonzero,                 /* nb_nonzero */
 };
 
 /*************************************************************************
@@ -3472,19 +3474,51 @@ static PyMappingMethods descr_as_mapping = {
 
 NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.dtype",
-    .tp_basicsize = sizeof(PyArray_Descr),
+    "numpy.dtype",                              /* tp_name */
+    sizeof(PyArray_Descr),                      /* tp_basicsize */
+    0,                                          /* tp_itemsize */
     /* methods */
-    .tp_dealloc = (destructor)arraydescr_dealloc,
-    .tp_repr = (reprfunc)arraydescr_repr,
-    .tp_as_number = &descr_as_number,
-    .tp_as_sequence = &descr_as_sequence,
-    .tp_as_mapping = &descr_as_mapping,
-    .tp_str = (reprfunc)arraydescr_str,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_richcompare = (richcmpfunc)arraydescr_richcompare,
-    .tp_methods = arraydescr_methods,
-    .tp_members = arraydescr_members,
-    .tp_getset = arraydescr_getsets,
-    .tp_new = arraydescr_new,
+    (destructor)arraydescr_dealloc,             /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+    (void *)0,                                  /* tp_reserved */
+    (reprfunc)arraydescr_repr,                  /* tp_repr */
+    &descr_as_number,                           /* tp_as_number */
+    &descr_as_sequence,                         /* tp_as_sequence */
+    &descr_as_mapping,                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    (reprfunc)arraydescr_str,                   /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    (richcmpfunc)arraydescr_richcompare,        /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    arraydescr_methods,                         /* tp_methods */
+    arraydescr_members,                         /* tp_members */
+    arraydescr_getsets,                         /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    0,                                          /* tp_init */
+    0,                                          /* tp_alloc */
+    arraydescr_new,                             /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+    0,                                          /* tp_version_tag */
 };
