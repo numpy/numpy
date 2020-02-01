@@ -1513,44 +1513,28 @@ static PyObject*
  *          cfloat, cdouble, clongdouble#
 **/
 static PyNumberMethods @name@_as_number = {
-    (binaryfunc)@name@_add,                     /*nb_add*/
-    (binaryfunc)@name@_subtract,                /*nb_subtract*/
-    (binaryfunc)@name@_multiply,                /*nb_multiply*/
-    (binaryfunc)@name@_remainder,               /*nb_remainder*/
-    (binaryfunc)@name@_divmod,                  /*nb_divmod*/
-    (ternaryfunc)@name@_power,                  /*nb_power*/
-    (unaryfunc)@name@_negative,
-    (unaryfunc)@name@_positive,                 /*nb_pos*/
-    (unaryfunc)@name@_absolute,                 /*nb_abs*/
-    (inquiry)@name@_bool,                       /*nb_bool*/
-    (unaryfunc)@name@_invert,                   /*nb_invert*/
-    (binaryfunc)@name@_lshift,                  /*nb_lshift*/
-    (binaryfunc)@name@_rshift,                  /*nb_rshift*/
-    (binaryfunc)@name@_and,                     /*nb_and*/
-    (binaryfunc)@name@_xor,                     /*nb_xor*/
-    (binaryfunc)@name@_or,                      /*nb_or*/
-    (unaryfunc)@name@_int,                      /*nb_int*/
-    (unaryfunc)0,                               /*nb_reserved*/
-    (unaryfunc)@name@_float,                    /*nb_float*/
-    0,                                          /*inplace_add*/
-    0,                                          /*inplace_subtract*/
-    0,                                          /*inplace_multiply*/
-    0,                                          /*inplace_remainder*/
-    0,                                          /*inplace_power*/
-    0,                                          /*inplace_lshift*/
-    0,                                          /*inplace_rshift*/
-    0,                                          /*inplace_and*/
-    0,                                          /*inplace_xor*/
-    0,                                          /*inplace_or*/
-    (binaryfunc)@name@_floor_divide,            /*nb_floor_divide*/
-    (binaryfunc)@name@_true_divide,             /*nb_true_divide*/
-    0,                                          /*nb_inplace_floor_divide*/
-    0,                                          /*nb_inplace_true_divide*/
-    (unaryfunc)NULL,                            /*nb_index*/
-#if PY_VERSION_HEX >= 0x03050000
-    0,                                          /*nb_matrix_multiply*/
-    0,                                          /*nb_inplace_matrix_multiply*/
-#endif
+    .nb_add = (binaryfunc)@name@_add,
+    .nb_subtract = (binaryfunc)@name@_subtract,
+    .nb_multiply = (binaryfunc)@name@_multiply,
+    .nb_remainder = (binaryfunc)@name@_remainder,
+    .nb_divmod = (binaryfunc)@name@_divmod,
+    .nb_power = (ternaryfunc)@name@_power,
+    .nb_negative = (unaryfunc)@name@_negative,
+    .nb_positive = (unaryfunc)@name@_positive,
+    .nb_absolute = (unaryfunc)@name@_absolute,
+    .nb_bool = (inquiry)@name@_bool,
+    .nb_invert = (unaryfunc)@name@_invert,
+    .nb_lshift = (binaryfunc)@name@_lshift,
+    .nb_rshift = (binaryfunc)@name@_rshift,
+    .nb_and = (binaryfunc)@name@_and,
+    .nb_xor = (binaryfunc)@name@_xor,
+    .nb_or = (binaryfunc)@name@_or,
+    .nb_int = (unaryfunc)@name@_int,
+    .nb_float = (unaryfunc)@name@_float,
+    .nb_floor_divide = (binaryfunc)@name@_floor_divide,
+    .nb_true_divide = (binaryfunc)@name@_true_divide,
+    /* TODO: This struct/initialization should not be split between files */
+    .nb_index = (unaryfunc)NULL,  /* set in add_scalarmath below */
 };
 /**end repeat**/
 
