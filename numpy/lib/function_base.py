@@ -3870,7 +3870,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             "'midpoint', or 'nearest'")
 
     n = np.array(False, dtype=bool)  # check for nan's flag
-    if indices.dtype == intp:  # take the points along axis
+    if np.issubdtype(indices.dtype, np.integer):  # take the points along axis
         # Check if the array contains any nan's
         if np.issubdtype(a.dtype, np.inexact):
             indices = concatenate((indices, [-1]))

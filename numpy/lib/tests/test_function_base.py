@@ -2967,6 +2967,16 @@ class TestQuantile:
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
 
+    def test_correct_quantile_value(self):
+        a = np.array([True])
+        tf_quant = np.quantile(True, False)
+        assert_equal(tf_quant, a[0])
+        assert_equal(type(tf_quant), a.dtype)
+        a = np.array([False, True, True])
+        quant_res = np.quantile(a, a)
+        assert_array_equal(quant_res, a)
+        assert_equal(a.dtype, quant_res.dtype)
+
     def test_fraction(self):
         # fractional input, integral quantile
         x = [Fraction(i, 2) for i in range(8)]
