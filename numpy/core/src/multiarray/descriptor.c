@@ -476,7 +476,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 Py_INCREF(name);
             }
             else {
-                PyErr_SetString(PyExc_TypeError, "Field names must be non-empty strings");
+                PyErr_SetString(PyExc_TypeError, "Field titles must be non-empty strings");
                 goto fail;
             }
         }
