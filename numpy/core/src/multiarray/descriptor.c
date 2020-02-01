@@ -251,7 +251,7 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
-        PyErr_Format(PyExc_TypeError, "PyTuple must have size 2, got [%d]", PyTuple_GET_SIZE(obj));
+        PyErr_Format(PyExc_TypeError, "Tuple must have size 2, but has size [%d]", PyTuple_GET_SIZE(obj));
         return NULL;
     }
     PyArray_Descr *type = _convert_from_any(PyTuple_GET_ITEM(obj, 0), align);
@@ -451,13 +451,15 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
-                PyErr_Format(PyExc_TypeError, "PyObject within tuple needs to be a 2-tuple, has [%d] elements", PyTuple_GET_SIZE(name));
+                PyErr_Format(PyExc_TypeError, 
+				"If a tuple, the first element of a field tuple must have two elements, has [%d] elements",
+			       	PyTuple_GET_SIZE(name));
                 goto fail;
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
             if (!PyBaseString_Check(name)) {
-                PyErr_SetString(PyExc_TypeError, "Second element of PyObject within tuple needs to be a base string");
+                PyErr_SetString(PyExc_TypeError, "Second element of object within tuple needs to be a base string");
                 goto fail;
             }
         }
