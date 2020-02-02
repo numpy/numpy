@@ -1574,7 +1574,7 @@ fail:
 
 }
 
-/*NUMPY_API
+/*
  * Retrieves the array parameters for viewing/converting an arbitrary
  * PyObject* to a NumPy array. This allows the "innate type and shape"
  * of Python list-of-lists to be discovered without
@@ -1629,16 +1629,14 @@ fail:
  *              validate and possibly copy arr itself ...
  *      }
  *      ... use arr ...
- * context is passed to PyArray_FromArrayAttr, which ignores it. Since this is
- * a NUMPY_API function, we cannot remove it.
  */
 NPY_NO_EXPORT int
-PyArray_GetArrayParamsFromObject(PyObject *op,
+PyArray_GetArrayParamsFromObject_int(PyObject *op,
                         PyArray_Descr *requested_dtype,
                         npy_bool writeable,
                         PyArray_Descr **out_dtype,
                         int *out_ndim, npy_intp *out_dims,
-                        PyArrayObject **out_arr, PyObject *context)
+                        PyArrayObject **out_arr)
 {
     PyObject *tmp;
 
@@ -1738,7 +1736,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
      *      this should be changed!
      */
     if (!writeable) {
-        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
+        tmp = PyArray_FromArrayAttr(op, requested_dtype, NULL);
         if (tmp != Py_NotImplemented) {
             *out_arr = (PyArrayObject *)tmp;
             return (*out_arr) == NULL ? -1 : 0;
@@ -1900,13 +1898,41 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     return -1;
 }
 
+
+/*NUMPY_API*/
+NPY_NO_EXPORT int
+PyArray_GetArrayParamsFromObject(PyObject *op,
+                                     PyArray_Descr *requested_dtype,
+                                     npy_bool writeable,
+                                     PyArray_Descr **out_dtype,
+                                     int *out_ndim, npy_intp *out_dims,
+                                     PyArrayObject **out_arr, PyObject *context)
+{
+    /* NumPy 1.19, 2020-01-24 */
+    if (DEPRECATE(
+            "PyArray_GetArrayParamsFromObject() C-API function is deprecated "
+            "and expected to be removed rapidly. If you are using it (i.e. see "
+            "this warning/error), please notify the NumPy developers. "
+            "As of now it is expected that any use case is served similarly "
+            "well by `PyArray_FromAny()` and this function is unused outside "
+            "of NumPy itself.") < 0) {
+        return -1;
+    }
+
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return -1;
+    }
+
+    return PyArray_GetArrayParamsFromObject_int(op,
+            requested_dtype, writeable, out_dtype, out_ndim, out_dims,
+            out_arr);
+}
+
+
 /*NUMPY_API
  * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
- *
- * context is passed to PyArray_GetArrayParamsFromObject, which passes it to
- * PyArray_FromArrayAttr, which raises if it is not NULL. Since this is a
- * NUMPY_API function, we cannot remove it.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -1921,10 +1947,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
 
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return NULL;
+    }
+
     /* Get either the array or its parameters if it isn't an array */
-    if (PyArray_GetArrayParamsFromObject(op, newtype,
-                        0, &dtype,
-                        &ndim, dims, &arr, context) < 0) {
+    if (PyArray_GetArrayParamsFromObject_int(op,
+                newtype, 0, &dtype, &ndim, dims, &arr) < 0) {
         Py_XDECREF(newtype);
         return NULL;
     }

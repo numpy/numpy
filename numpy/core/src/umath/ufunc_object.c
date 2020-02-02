@@ -3052,17 +3052,15 @@ fail:
     return retval;
 }
 
-/*UFUNC_API
- *
+/*
  * This generic function is called with the ufunc object, the arguments to it,
  * and an array of (pointers to) PyArrayObjects which are NULL.
  *
  * 'op' is an array of at least NPY_MAXARGS PyArrayObject *.
  */
-NPY_NO_EXPORT int
-PyUFunc_GenericFunction(PyUFuncObject *ufunc,
-                        PyObject *args, PyObject *kwds,
-                        PyArrayObject **op)
+static int
+PyUFunc_GenericFunction_int(PyUFuncObject *ufunc,
+        PyObject *args, PyObject *kwds, PyArrayObject **op)
 {
     int nin, nout;
     int i, nop;
@@ -3267,6 +3265,27 @@ fail:
 
     return retval;
 }
+
+
+/*UFUNC_API*/
+NPY_NO_EXPORT int
+PyUFunc_GenericFunction(PyUFuncObject *ufunc,
+        PyObject *args, PyObject *kwds, PyArrayObject **op)
+{
+    /* NumPy 1.19, 2020-01-24 */
+    if (DEPRECATE(
+            "PyUFunc_GenericFunction() C-API function is deprecated "
+            "and expected to be removed rapidly. If you are using it (i.e. see "
+            "this warning/error), please notify the NumPy developers. "
+            "As of now it is expected that any use case is served better by "
+            "the direct use of `PyObject_Call(ufunc, args, kwargs)`. "
+            "PyUFunc_GenericFunction function has slightly different "
+            "untested behaviour.") < 0) {
+        return -1;
+    }
+    return PyUFunc_GenericFunction_int(ufunc, args, kwds, op);
+}
+
 
 /*
  * Given the output type, finds the specified binary op.  The
@@ -4679,7 +4698,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return override;
     }
 
-    errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
+    errval = PyUFunc_GenericFunction_int(ufunc, args, kwds, mps);
     if (errval < 0) {
         return NULL;
     }
@@ -4973,6 +4992,16 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 NPY_NO_EXPORT int
 PyUFunc_SetUsesArraysAsData(void **data, size_t i)
 {
+    /* NumPy 1.19, 2020-01-24 */
+    if (DEPRECATE(
+            "PyUFunc_SetUsesArraysAsData() C-API function is deprecated "
+            "and expected to be removed rapidly. If you are using it (i.e. see "
+            "this warning/error), please notify the NumPy developers. "
+            "It is currently assumed that this function is simply unused and "
+            "its removal will facilitate the implementation of better "
+            "approaches.") < 0) {
+        return -1;
+    }
     data[i] = (void*)PyUFunc_SetUsesArraysAsData;
     return 0;
 }
