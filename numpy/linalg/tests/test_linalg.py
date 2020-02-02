@@ -1827,6 +1827,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
+@pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not
     # result to wrong results in float32 linear algebra.
