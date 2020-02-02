@@ -39,15 +39,6 @@
 
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
-/*
- * Generate a vague error message when a function returned NULL but forgot
- * to set an exception. We should aim to remove this eventually.
- */
-static void
-_report_generic_error(void) {
-    PyErr_SetString(PyExc_TypeError, "data type not understood");
-}
-
 static PyArray_Descr *
 _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
 
@@ -251,7 +242,9 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
-        _report_generic_error();
+        PyErr_Format(PyExc_TypeError, 
+	        "Tuple must have size 2, but has size %zd",
+	        PyTuple_GET_SIZE(obj));
         return NULL;
     }
     PyArray_Descr *type = _convert_from_any(PyTuple_GET_ITEM(obj, 0), align);
@@ -441,7 +434,9 @@ _convert_from_array_descr(PyObject *obj, int align)
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
-            _report_generic_error();
+            PyErr_Format(PyExc_TypeError, 
+			 "Field elements must be 2- or 3-tuples, got '%R'", 
+			 item);
             goto fail;
         }
         PyObject *name = PyTuple_GET_ITEM(item, 0);
@@ -451,18 +446,23 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
-                _report_generic_error();
+                PyErr_Format(PyExc_TypeError, 
+				"If a tuple, the first element of a field tuple must have "
+				"two elements, not %zd",
+			       	PyTuple_GET_SIZE(name));
                 goto fail;
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
             if (!PyBaseString_Check(name)) {
-                _report_generic_error();
+                PyErr_SetString(PyExc_TypeError, "Field name must be a str");
                 goto fail;
             }
         }
         else {
-            _report_generic_error();
+            PyErr_SetString(PyExc_TypeError, 
+			            "First element of field tuple is "
+			            "neither a tuple nor str");
             goto fail;
         }
 
@@ -483,7 +483,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 Py_INCREF(name);
             }
             else {
-                _report_generic_error();
+                PyErr_SetString(PyExc_TypeError, "Field titles must be non-empty strings");
                 goto fail;
             }
         }
@@ -506,7 +506,8 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else {
-            _report_generic_error();
+            PyErr_Format(PyExc_TypeError,
+                    "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL)
@@ -725,11 +726,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyObject *listobj;
     PyArray_Descr *res;
     PyObject *_numpy_internal;
-
-    if (!PyUnicode_Check(obj)) {
-        _report_generic_error();
-        return NULL;
-    }
+    assert(PyUnicode_Check(obj));
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
     if (_numpy_internal == NULL) {
         return NULL;
@@ -1484,7 +1481,7 @@ _convert_from_any(PyObject *obj, int align)
         return _convert_from_dict(obj, align);
     }
     else if (PyArray_Check(obj)) {
-        _report_generic_error();
+        PyErr_SetString(PyExc_TypeError, "Cannot construct a dtype from an array");
         return NULL;
     }
     else {
@@ -1503,7 +1500,7 @@ _convert_from_any(PyObject *obj, int align)
             return ret;
         }
         Py_DECREF(ret);
-        _report_generic_error();
+        PyErr_Format(PyExc_TypeError, "Cannot interpret '%R' as a data type", obj);
         return NULL;
     }
 }
