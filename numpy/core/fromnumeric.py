@@ -1445,7 +1445,7 @@ def squeeze(a, axis=None):
     squeezed : ndarray
         The input array, but with all or a subset of the
         dimensions of length 1 removed. This is always `a` itself
-        or a view into `a`.Note that if all axes are squeezed,
+        or a view into `a`. Note that if all axes are squeezed,
         the result is a 0d array and not a scalar.
 
     Raises
