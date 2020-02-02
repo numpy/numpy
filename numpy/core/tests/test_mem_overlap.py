@@ -725,6 +725,7 @@ class TestUFunc:
         a = np.arange(10000, dtype=np.int16)
         check(np.add, a, a[::-1], a)
 
+    @pytest.mark.slow
     def test_unary_gufunc_fuzz(self):
         shapes = [7, 13, 8, 21, 29, 32]
         gufunc = _umath_tests.euclidean_pdist
