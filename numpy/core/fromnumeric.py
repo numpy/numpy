@@ -1445,7 +1445,8 @@ def squeeze(a, axis=None):
     squeezed : ndarray
         The input array, but with all or a subset of the
         dimensions of length 1 removed. This is always `a` itself
-        or a view into `a`.
+        or a view into `a`. Note that if all axes are squeezed,
+        the result is a 0d array and not a scalar.
 
     Raises
     ------
@@ -1472,6 +1473,15 @@ def squeeze(a, axis=None):
     ValueError: cannot select an axis to squeeze out which has size not equal to one
     >>> np.squeeze(x, axis=2).shape
     (1, 3)
+    >>> x = np.array([[1234]])
+    >>> x.shape
+    (1, 1)
+    >>> np.squeeze(x)
+    array(1234)  # 0d array
+    >>> np.squeeze(x).shape
+    ()
+    >>> np.squeeze(x)[()]
+    1234
 
     """
     try:
