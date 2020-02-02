@@ -7161,6 +7161,7 @@ class TestNewBufferProtocol:
         a = np.empty((1,) * 32)
         self._check_roundtrip(a)
 
+    @pytest.mark.slow
     def test_error_too_many_dims(self):
         def make_ctype(shape, scalar_type):
             t = scalar_type
