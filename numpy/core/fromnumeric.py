@@ -1438,16 +1438,15 @@ def squeeze(a, axis=None):
 
         Selects a subset of the single-dimensional entries in the
         shape. If an axis is selected with shape entry greater than
-        one, an error is raised. Note that when applied to an array
-        `a` with one element and no axis argument, it returns a
-        wrapped scalar of no shape containing the element in `a`.
+        one, an error is raised.
 
     Returns
     -------
     squeezed : ndarray
         The input array, but with all or a subset of the
         dimensions of length 1 removed. This is always `a` itself
-        or a view into `a`.
+        or a view into `a`.Note that if all axes are squeezed,
+        the result is a 0d array and not a scalar.
 
     Raises
     ------
@@ -1481,10 +1480,8 @@ def squeeze(a, axis=None):
     array(1234)  # 0d array
     >>> np.squeeze(x).shape
     ()
-    >>> np.squeeze(x)[0]
-    Traceback (most recent call last):
-    ...
-    IndexError: too many indices for array
+    >>> np.squeeze(x)[()]
+    1234
 
     """
     try:
