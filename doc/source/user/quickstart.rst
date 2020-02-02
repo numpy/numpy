@@ -1374,7 +1374,13 @@ See :ref:`structured_arrays`.
 Linear Algebra
 ==============
 
-Work in progress. Basic linear algebra to be included here.
+Transpose-transpose of a matrix is an operator which flips a matrix over its diagonal, that is it switches the row and column indices of the matrix by producing another matrix denoted as AT
+
+Inverse(.inv)-For a square matrix A, the inverse is written A-1. When A is multiplied by A-1 the result is the identity matrix I. Non-square matrices do not have inverses.
+
+Trace - trace of a square matrix A is defined to be the sum of elements on the main diagonal (from the upper left to the lower right) of A. 
+
+numpy.linalg.eig - Compute the eigenvalues and right eigenvectors of a square array. 
 
 Simple Array Operations
 -----------------------
