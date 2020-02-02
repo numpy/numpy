@@ -461,8 +461,8 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         else {
             PyErr_SetString(PyExc_TypeError, 
-			            "First element of field tuple is \
-			            neither a tuple nor str");
+			            "First element of field tuple is "
+			            "neither a tuple nor str");
             goto fail;
         }
 
