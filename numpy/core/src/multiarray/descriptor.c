@@ -2417,7 +2417,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         }
         obj = PyUString_FromFormat("%c%d",self->kind, elsize);
     }
-    PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, 1));
+    PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(NOO)", obj, Py_False, Py_True));
 
     /*
      * Now return the state which is at least byteorder,
