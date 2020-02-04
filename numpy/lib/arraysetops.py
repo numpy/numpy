@@ -251,9 +251,9 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> u
     array([1, 2, 3, 4, 6])
     >>> indices
-    array([0, 1, 4, ..., 1, 2, 1])
+    array([0, 1, 4, 3, 1, 2, 1])
     >>> u[indices]
-    array([1, 2, 6, ..., 2, 3, 2])
+    array([1, 2, 6, 4, 2, 3, 2])
 
     """
     ar = np.asanyarray(ar)
