@@ -2290,6 +2290,7 @@ static void
 STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                   npy_intp n, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2304,6 +2305,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 {
     PyArray_Descr *descr;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2394,6 +2396,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
     PyArray_Descr *descr;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2475,6 +2478,7 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 {
     int itemsize;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2502,6 +2506,7 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 static void
 STRING_copyswap(char *dst, char *src, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2514,6 +2519,7 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
     int itemsize;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
