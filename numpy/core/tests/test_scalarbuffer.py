@@ -99,3 +99,21 @@ class TestScalarPEP3118:
         # Fails to create a PEP 3118 valid buffer
         assert_raises((ValueError, BufferError), memoryview, a[0])
 
+    @pytest.mark.parametrize('s', [
+        pytest.param("\x32\x32", id="ascii"),
+        pytest.param("\uFE0F\uFE0F", id="basic multilingual"),
+        pytest.param("\U0001f4bb\U0001f4bb", id="non-BMP"),
+    ])
+    def test_str_ucs4(self, s):
+        s = np.str_(s)  # only our subclass implements the buffer protocol
+
+        # all the same, characters always encode as ucs4
+        expected = dict(strides=(), itemsize=8, ndim=0, shape=(), format='2w')
+
+        v = memoryview(s)
+        assert self._as_dict(v) == expected
+
+        # integers of the paltform-appropriate endianness
+        code_points = np.frombuffer(v, dtype='i4')
+
+        assert_equal(code_points, [ord(c) for c in s])

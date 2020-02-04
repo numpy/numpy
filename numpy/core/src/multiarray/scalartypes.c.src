@@ -1650,7 +1650,6 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     Py_buffer view;
     const char *buffer;
     Py_ssize_t buflen;
-    int alloc = 0;
 
     /* Return a tuple of (callable object, arguments) */
     ret = PyTuple_New(2);
@@ -1658,20 +1657,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    if (PyArray_IsScalar(self, Unicode)) {
-        /* Unicode on Python 3 does not expose the buffer interface */
-        Py_ssize_t ucs4_len = PyUnicode_GetLength(self);
-        if (ucs4_len < 0) {
-            return NULL;
-        }
-        buflen = ucs4_len * 4;
-        alloc = 1;
-        buffer = PyUnicode_AsUCS4Copy(self);
-        if (buffer == NULL) {
-            return NULL;
-        }
-    }
-    else if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
+    if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
         buffer = view.buf;
         buflen = view.len;
         /*
@@ -1690,14 +1676,12 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 
     mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
-        ret = NULL;
-        goto fail;
+        return NULL;
     }
     obj = PyObject_GetAttrString(mod, "scalar");
     Py_DECREF(mod);
     if (obj == NULL) {
-        ret = NULL;
-        goto fail;
+        return NULL;
     }
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyObject_GetAttrString((PyObject *)self, "dtype");
@@ -1731,15 +1715,10 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         mod = PyBytes_FromStringAndSize(buffer, buflen);
         if (mod == NULL) {
             Py_DECREF(ret);
-            ret = NULL;
-            goto fail;
+            return NULL;
         }
         PyTuple_SET_ITEM(ret, 1,
                 Py_BuildValue("NN", obj, mod));
-    }
-fail:
-    if (alloc) {
-        PyMem_Free(buffer);
     }
     return ret;
 }
@@ -3660,6 +3639,7 @@ initialize_numeric_types(void)
     /**end repeat**/
 
     PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
+    PyUnicodeArrType_Type.tp_as_buffer = &gentype_as_buffer;
 
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
