@@ -3840,9 +3840,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     >>> x/4
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-    >>> x//4
-    array([0, 0, 0, 0, 1])
-
     """)
 
 add_newdoc('numpy.core.umath', 'frexp',
