@@ -1115,29 +1115,43 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         return NULL;
     }
     if (PyArray_HASFIELDS(self)) {
-        PyObject *res = NULL, *temp, *a, *b;
-        PyObject *key, *value, *temp2;
-        PyObject *op;
-        Py_ssize_t pos = 0;
         npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
 
-        op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
-        while (PyDict_Next(PyArray_DESCR(self)->fields, &pos, &key, &value)) {
-            if (NPY_TITLE_KEY(key, value)) {
-                continue;
-            }
-            a = array_subscript_asarray(self, key);
+        PyArray_Descr *self_descr = PyArray_DESCR(self);
+        PyArray_Descr *other_descr = PyArray_DESCR(other);
+
+        /* we checked the two dtypes should be castable so these should work */
+        if (!PyArray_HASFIELDS(other)) {
+            PyErr_SetString(PyExc_RuntimeError, "bug, should never happen.");
+            return NULL;
+        }
+
+        int field_count = PyTuple_GET_SIZE(self_descr->names);
+        if (field_count != PyTuple_GET_SIZE(other_descr->names)) {
+            PyErr_SetString(PyExc_RuntimeError, "bug, should never happen.");
+            return NULL;
+        }
+
+        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        PyObject *res = NULL;
+        for (int i = 0; i < field_count; ++i) {
+            PyObject *temp, *temp2;
+
+            PyObject *fieldname = PyTuple_GET_ITEM(self_descr->names, i);
+            PyObject *a = array_subscript_asarray(self, fieldname);
             if (a == NULL) {
                 Py_XDECREF(res);
                 return NULL;
             }
-            b = array_subscript_asarray(other, key);
+            fieldname = PyTuple_GET_ITEM(other_descr->names, i);
+            PyObject *b = array_subscript_asarray(other, fieldname);
             if (b == NULL) {
                 Py_XDECREF(res);
                 Py_DECREF(a);
                 return NULL;
             }
+
             temp = array_richcompare((PyArrayObject *)a,b,cmp_op);
             Py_DECREF(a);
             Py_DECREF(b);
@@ -1193,7 +1207,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 res = temp;
             }
             else {
-                temp2 = PyObject_CallFunction(op, "OO", res, temp);
+                PyObject *temp2 = PyObject_CallFunction(op, "OO", res, temp);
                 Py_DECREF(temp);
                 Py_DECREF(res);
                 if (temp2 == NULL) {

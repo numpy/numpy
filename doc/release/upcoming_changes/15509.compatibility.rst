@@ -1,0 +1,12 @@
+Disallow type-promotion of structured dtypes with different field names
+-----------------------------------------------------------------------
+Operations such as ``np.concatenate([a, b])`` and
+``np.promote_types(a.dtype, b.dtype)``  will now raise a ``TypeError`` if
+``a`` and ``b`` are structured arrays whose dtypes have different field names,
+orders, or offsets, even if the field types are castable. Such code should be
+modified to rename or re-order the fields, using ``.astype``,
+``numpy.lib.recfunctions.rename_fields`` or
+``numpy.lib.recfunctions.repack_fields`` depending on the desired behavior.
+Furthermore, ``np.can_cast`` now more consistently reports that structured
+dtypes with different field-names but castable field dtypes are castable.
+Previously some cases were overlooked.

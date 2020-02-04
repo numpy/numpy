@@ -1361,6 +1361,34 @@ class TestStructured:
         assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
 
+    def test_structured_cast_promotion_fieldorder(self):
+        # gh-15494
+        # dtypes with different field names are not promotable
+        A = ("a", "<i8")
+        B = ("b", "<i8")
+        ab = np.array([(1, 2)], dtype=[A, B])
+        ba = np.array([(1, 2)], dtype=[B, A])
+        assert_raises(TypeError, np.concatenate, ab, ba)
+        assert_raises(TypeError, np.result_type, ab.dtype, ba.dtype)
+        assert_raises(TypeError, np.promote_types, ab.dtype, ba.dtype)
+
+        # dtypes with same field names/order but different memory offsets
+        # are not promotable either.
+        assert_raises(TypeError, np.promote_types,
+                                 ab.dtype, ba[['a', 'b']].dtype)
+
+        # gh-13667
+        # dtypes with different fieldnames but castable field types are castable
+        assert_equal(np.can_cast(ab.dtype, ba.dtype), True)
+        assert_equal(ab.astype(ba.dtype).dtype, ba.dtype)
+        assert_equal(np.can_cast('f8,i8', [('f0', 'f8'), ('f1', 'i8')]), True)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'f8'), ('f0', 'i8')]), True)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'i8'), ('f0', 'f8')]), False)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'i8'), ('f0', 'f8')],
+                                 casting='unsafe'), True)
+
+        ab[:] = ba  # make sure assignment still works
+
 
 class TestBool:
     def test_test_interning(self):

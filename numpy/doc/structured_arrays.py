@@ -540,6 +540,22 @@ calling :func:`ndarray.item`::
  >>> scalar.item(), type(scalar.item())
  ((1, 4.0, 3.0), <class 'tuple'>)
 
+Casting and Type-Promotion of Structured Datatypes
+--------------------------------------------------
+
+A structured datatype can be cast to another structured datatype as long as the
+number of fields is the same and the fields of the source datatype can be cast
+to the field in the same respective position in the target datatype, for
+instance when using ``ndarray.astype`` or as tested by ``np.can_cast``.
+
+However, numpy is unable to perform type-promotion of a group of structured
+datatypes to a common structured datatype unless their field names, orders, and
+offsets match, even if they can be cast to each other. For instance, this
+applies when using ``np.promote_type``, ``np.result_type`` or functions which
+depend on these such as ``np.concatenate``, as it is ambiguous which field
+names or offsets to use in the promoted type. These functions will raise an
+error if there is no unambiguous promotion type.
+
 Viewing Structured Arrays Containing Objects
 --------------------------------------------
 
