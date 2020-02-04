@@ -1152,7 +1152,7 @@ class TestRegression:
         assert_(dat.argmax(1).info == 'jubba')
         assert_(dat.argmin(1).info == 'jubba')
         assert_(dat.argsort(1).info == 'jubba')
-        assert_(dat.astype(TestArray).info == 'jubba')
+        assert_(dat.astype(object).info == 'jubba')
         assert_(dat.byteswap().info == 'jubba')
         assert_(dat.clip(2, 7).info == 'jubba')
         assert_(dat.compress([0, 1, 1]).info == 'jubba')
