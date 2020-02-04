@@ -1399,13 +1399,24 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromType(NPY_BOOL);
     }
     else if (typ == &PyBytes_Type) {
+        /*
+         * TODO: This should be deprecated, and have special handling for
+         *       dtype=bytes/"S" in coercion: It should not rely on "S0".
+         */
         return PyArray_DescrFromType(NPY_STRING);
     }
     else if (typ == &PyUnicode_Type) {
+        /*
+         * TODO: This should be deprecated, and have special handling for
+         *       dtype=str/"U" in coercion: It should not rely on "U0".
+         */
         return PyArray_DescrFromType(NPY_UNICODE);
     }
     else if (typ == &PyMemoryView_Type) {
         return PyArray_DescrFromType(NPY_VOID);
+    }
+    else if (typ == &PyBaseObject_Type) {
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     else {
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
@@ -1424,6 +1435,12 @@ _convert_from_type(PyObject *obj) {
             return ret;
         }
         Py_DECREF(ret);
+
+        if (DEPRECATE("Converting a type/class not known to NumPy to a dtype "
+                      "currently always returns `np.dtype(object)`. This loses "
+                      "the type information and is deprecated.") < 0) {
+            return NULL;
+        }
 
         /* All other classes are treated as object */
         return PyArray_DescrFromType(NPY_OBJECT);

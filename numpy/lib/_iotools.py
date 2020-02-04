@@ -504,18 +504,23 @@ class StringConverter:
     """
     #
     _mapper = [(nx.bool_, str2bool, False),
-               (nx.integer, int, -1)]
+               (nx.int_, int, -1),]
 
     # On 32-bit systems, we need to make sure that we explicitly include
-    # nx.int64 since ns.integer is nx.int32.
-    if nx.dtype(nx.integer).itemsize < nx.dtype(nx.int64).itemsize:
+    # nx.int64 since ns.int_ is nx.int32.
+    if nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize:
         _mapper.append((nx.int64, int, -1))
 
-    _mapper.extend([(nx.floating, float, nx.nan),
-                    (nx.complexfloating, complex, nx.nan + 0j),
+    _mapper.extend([(nx.float64, float, nx.nan),
+                    (nx.complex128, complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
                     (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???')])
+                    (nx.string_, asbytes, '???'),
+                    # If a non-default dtype is passed, fall back to generic
+                    # ones (should only be used for the converter)
+                    (nx.integer, int, -1),
+                    (nx.floating, float, nx.nan),
+                    (nx.complexfloating, complex, nx.nan + 0j),])
 
     (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
 

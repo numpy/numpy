@@ -17,7 +17,8 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 import functools
 import sys
-from .numerictypes import string_, unicode_, integer, object_, bool_, character
+from .numerictypes import (
+    string_, unicode_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
@@ -276,7 +277,10 @@ def str_len(a):
     --------
     builtins.len
     """
-    return _vec_string(a, integer, '__len__')
+    # Note: __len__, etc. currently return ints, which are not C-integers.
+    # Generally intp would be expected for lengths, although int is sufficient
+    # due to the dtype itemsize limitation.
+    return _vec_string(a, int_, '__len__')
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -500,7 +504,7 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
+    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
@@ -710,7 +714,7 @@ def find(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'find', [sub, start] + _clean_args(end))
+        a, int_, 'find', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -739,7 +743,7 @@ def index(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'index', [sub, start] + _clean_args(end))
+        a, int_, 'index', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1199,7 +1203,7 @@ def rfind(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'rfind', [sub, start] + _clean_args(end))
+        a, int_, 'rfind', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1229,7 +1233,7 @@ def rindex(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'rindex', [sub, start] + _clean_args(end))
+        a, int_, 'rindex', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_just_dispatcher)
