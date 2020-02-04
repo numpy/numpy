@@ -8,8 +8,6 @@ import sys
 import subprocess
 import os
 
-import numpy as np
-
 from . import f2py2e
 from . import f2py_testing
 from . import diagnose

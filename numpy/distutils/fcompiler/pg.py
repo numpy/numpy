@@ -1,7 +1,7 @@
 # http://www.pgroup.com
 import sys
 
-from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
+from numpy.distutils.fcompiler import FCompiler
 from sys import platform
 from os.path import join, dirname, normpath
 

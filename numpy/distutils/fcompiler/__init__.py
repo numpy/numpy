@@ -19,7 +19,6 @@ __all__ = ['FCompiler', 'new_fcompiler', 'show_fcompilers',
 import os
 import sys
 import re
-import types
 
 from numpy.compat import open_latin1
 

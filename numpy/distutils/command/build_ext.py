@@ -13,11 +13,11 @@ from distutils.file_util import copy_file
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import filepath_from_subprocess_output
-from numpy.distutils.system_info import combine_paths, system_info
-from numpy.distutils.misc_util import filter_sources, has_f_sources, \
-    has_cxx_sources, get_ext_source_files, \
-    get_numpy_include_dirs, is_sequence, get_build_architecture, \
-    msvc_version
+from numpy.distutils.system_info import combine_paths
+from numpy.distutils.misc_util import (
+    filter_sources, get_ext_source_files, get_numpy_include_dirs,
+    has_cxx_sources, has_f_sources, is_sequence
+)
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
 

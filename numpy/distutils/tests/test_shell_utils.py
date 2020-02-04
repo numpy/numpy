@@ -1,6 +1,5 @@
 import pytest
 import subprocess
-import os
 import json
 import sys
 

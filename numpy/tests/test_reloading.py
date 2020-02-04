@@ -1,5 +1,3 @@
-import sys
-
 from numpy.testing import assert_raises, assert_, assert_equal
 from numpy.compat import pickle
 

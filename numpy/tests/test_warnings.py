@@ -2,7 +2,6 @@
 Tests which scan for certain occurrences in the code, they may not find
 all of these occurrences but should catch almost all.
 """
-import sys
 import pytest
 
 from pathlib import Path

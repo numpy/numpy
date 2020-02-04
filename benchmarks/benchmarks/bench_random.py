@@ -2,8 +2,6 @@ from .common import Benchmark
 
 import numpy as np
 
-from numpy.random import RandomState
-
 try:
     from numpy.random import Generator
 except ImportError:

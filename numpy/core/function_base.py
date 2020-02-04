@@ -4,8 +4,7 @@ import operator
 import types
 
 from . import numeric as _nx
-from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError, asanyarray, ndim)
+from .numeric import result_type, NaN, asanyarray, ndim
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 

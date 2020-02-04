@@ -1,6 +1,4 @@
-import pytest
-
-from numpy.testing import assert_, suppress_warnings
+from numpy.testing import assert_
 import numpy.distutils.fcompiler
 
 customizable_flags = [

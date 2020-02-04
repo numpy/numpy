@@ -392,7 +392,7 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info, dict_append
+    from numpy.distutils.system_info import get_info
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path

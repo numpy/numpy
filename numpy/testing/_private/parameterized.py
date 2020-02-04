@@ -31,7 +31,6 @@ either expressed or implied, of David Wolever.
 
 """
 import re
-import sys
 import inspect
 import warnings
 from functools import wraps

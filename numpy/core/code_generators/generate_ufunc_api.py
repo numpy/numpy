@@ -3,8 +3,7 @@ import genapi
 
 import numpy_api
 
-from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
+from genapi import TypeApi, FunctionApi
 
 h_template = r"""
 #ifdef _UMATHMODULE

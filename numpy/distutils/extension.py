@@ -6,7 +6,6 @@ modules in setup scripts.
 Overridden to support f2py.
 
 """
-import sys
 import re
 from distutils.extension import Extension as old_Extension
 

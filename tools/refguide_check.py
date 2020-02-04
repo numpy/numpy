@@ -27,7 +27,6 @@ or in RST-based documentations::
 """
 import copy
 import doctest
-import glob
 import inspect
 import io
 import os

@@ -177,7 +177,7 @@ from distutils.util import get_platform
 
 from numpy.distutils.exec_command import (
     find_executable, filepath_from_subprocess_output,
-    get_pythonexe)
+    )
 from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config

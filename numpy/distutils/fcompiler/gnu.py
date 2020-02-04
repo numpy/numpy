@@ -10,7 +10,6 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.system_info import system_info
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
