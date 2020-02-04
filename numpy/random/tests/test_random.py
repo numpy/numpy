@@ -792,9 +792,6 @@ class TestRandomDist:
         # tolerance on this test:
         np.testing.assert_array_almost_equal_nulp(actual, desired, nulp=30)
 
-    def test_pareto_expm1(self):
-        assert_(np.random.pareto(1e99) > 0.0) 
-
     def test_poisson(self):
         np.random.seed(self.seed)
         actual = np.random.poisson(lam=.123456789, size=(3, 2))

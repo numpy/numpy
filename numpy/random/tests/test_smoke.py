@@ -793,6 +793,10 @@ class TestDefaultRNG(RNG):
         # a deprecation cycle to move to a different function.
         assert_(isinstance(self.rg.bit_generator, PCG64))
 
+    def test_expm1(self):
+        np.random.default_rng(12345)
+        assert_(np.random.default_rng(1e99) > 0.0)) 
+
     def test_seed(self):
         np.random.default_rng()
         np.random.default_rng(None)
