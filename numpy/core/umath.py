@@ -8,9 +8,7 @@ by importing from the extension module.
 
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
-from ._multiarray_umath import (
-    _UFUNC_API, _add_newdoc_ufunc, _ones_like
-    )
+from ._multiarray_umath import _UFUNC_API, _add_newdoc_ufunc
 
 __all__ = [
     '_UFUNC_API', 'ERR_CALL', 'ERR_DEFAULT', 'ERR_IGNORE', 'ERR_LOG',

@@ -1,5 +1,4 @@
 import os
-import warnings
 from distutils.dist import Distribution
 
 __metaclass__ = type

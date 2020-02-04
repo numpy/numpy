@@ -6,7 +6,6 @@ Post-processes HTML and Latex files output by Sphinx.
 MODE is either 'html' or 'tex'.
 
 """
-import re
 import optparse
 import io
 

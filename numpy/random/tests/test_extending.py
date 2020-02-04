@@ -50,8 +50,8 @@ def test_cython(tmp_path):
 @pytest.mark.skipif(numba is None or cffi is None,
                     reason="requires numba and cffi")
 def test_numba():
-    from numpy.random._examples.numba import extending
+    from numpy.random._examples.numba import extending  # noqa: F401
 
 @pytest.mark.skipif(cffi is None, reason="requires cffi")
 def test_cffi():
-    from numpy.random._examples.cffi import extending
+    from numpy.random._examples.cffi import extending  # noqa: F401

@@ -1,5 +1,3 @@
-import os
-
 from .common import Benchmark
 
 import numpy as np

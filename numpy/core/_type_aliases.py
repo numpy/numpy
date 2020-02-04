@@ -23,7 +23,6 @@ and sometimes other mappings too.
 
 """
 import warnings
-import sys
 
 from numpy.compat import unicode
 from numpy._globals import VisibleDeprecationWarning

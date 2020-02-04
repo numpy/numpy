@@ -25,8 +25,6 @@ TODO
 import os
 import sys
 import shutil
-import subprocess
-import re
 import hashlib
 
 # The paver package needs to be installed to run tasks

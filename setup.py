@@ -458,8 +458,9 @@ def setup_package():
         # Raise errors for unsupported commands, improve help output, etc.
         run_build = parse_setuppy_commands()
 
-    from setuptools import setup
     if run_build:
+        # patches distutils, even though we don't use it
+        import setuptools  # noqa: F401
         from numpy.distutils.core import setup
         cwd = os.path.abspath(os.path.dirname(__file__))
         if not 'sdist' in sys.argv:
@@ -470,6 +471,7 @@ def setup_package():
         # Customize extension building
         cmdclass['build_clib'], cmdclass['build_ext'] = get_build_overrides()
     else:
+        from setuptools import setup
         # Version number is added to metadata inside configuration() if build
         # is run.
         metadata['version'] = get_version_info()[0]

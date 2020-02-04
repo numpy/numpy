@@ -2,7 +2,6 @@
 
 """
 import sys
-from importlib import import_module
 import pytest
 
 from numpy.testing import assert_equal
