@@ -369,7 +369,7 @@ times in UTC. By default, creating a datetime64 object from a string or
 printing it would convert from or to local time::
 
     # old behavior
-    >>> np.datetime64('2000-01-01T00:00:00') # doctest: +SKIP
+    >>> np.datetime64('2000-01-01T00:00:00')  # doctest: +SKIP
     numpy.datetime64('2000-01-01T00:00:00-0800')  # note the timezone offset -08:00
 
 A consensus of datetime64 users agreed that this behavior is undesirable
