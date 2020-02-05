@@ -23,7 +23,7 @@ defines several constants.
       >>> x[1] is ma.masked
       True
       >>> x[-1] = ma.masked
-      >>> x # doctest: +NORMALIZE_WHITESPACE
+      >>> x
       masked_array(data=[1, --, --],
                    mask=[False,  True,  True],
              fill_value=999999)
