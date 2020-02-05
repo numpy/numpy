@@ -725,6 +725,15 @@ cdef class RandomState:
 
         _dtype = np.dtype(dtype)
 
+        if not _dtype.isnative:
+            # numpy 1.17.0, 2019-05-28
+            warnings.warn('Providing a dtype with a non-native byteorder is '
+                          'not supported. If you require platform-independent '
+                          'byteorder, call byteswap when required.\nIn future '
+                          'version, providing byteorder will raise a '
+                          'ValueError', DeprecationWarning)
+            _dtype = _dtype.newbyteorder()
+
         # Implementation detail: the use a masked method to generate
         # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the slower but
@@ -750,11 +759,6 @@ cdef class RandomState:
             ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif _dtype == np.bool_:
             ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif not _dtype.isnative:
-            raise ValueError('Providing a dtype with a non-native byteorder '
-                             'is not supported. If you require '
-                             'platform-independent byteorder, call byteswap '
-                             'when required.')
         else:
             raise TypeError('Unsupported dtype %r for randint' % _dtype)
 

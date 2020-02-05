@@ -51,16 +51,6 @@ cdef extern from "numpy/random/distributions.h":
                                   np.npy_bool *out) nogil
 
 
-
-_integers_types = {'bool': (0, 2),
-                 'int8': (-2**7, 2**7),
-                 'int16': (-2**15, 2**15),
-                 'int32': (-2**31, 2**31),
-                 'int64': (-2**63, 2**63),
-                 'uint8': (0, 2**8),
-                 'uint16': (0, 2**16),
-                 'uint32': (0, 2**32),
-                 'uint64': (0, 2**64)}
 {{
 py:
 type_info = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000ULL'),
