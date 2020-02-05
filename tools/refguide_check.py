@@ -826,6 +826,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
                 success = False
             ns = t.globs
 
+    output.seek(0)
     return success, output.read()
 
 
