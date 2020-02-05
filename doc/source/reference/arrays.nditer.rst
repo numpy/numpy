@@ -220,20 +220,37 @@ produce identical results to the ones in the previous section.
     ...     print("%d <%d>" % (it[0], it.index), end=' ')
     ...     it.iternext()
     ...
-    0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
+    0 <0> True
+    1 <2> True
+    2 <4> True
+    3 <1> True
+    4 <3> True
+    5 <5> False
 
     >>> it = np.nditer(a, flags=['multi_index'])
     >>> while not it.finished:
     ...     print("%d <%s>" % (it[0], it.multi_index), end=' ')
     ...     it.iternext()
     ...
-    0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
+    0 <(0, 0)> True
+    1 <(0, 1)> True
+    2 <(0, 2)> True
+    3 <(1, 0)> True
+    4 <(1, 1)> True
+    5 <(1, 2)> False
 
     >>> with np.nditer(a, flags=['multi_index'], op_flags=['writeonly']) as it:
     ...     while not it.finished:
     ...         it[0] = it.multi_index[1] - it.multi_index[0]
     ...         it.iternext()
     ...
+    True
+    True
+    True
+    True
+    True
+    False
+
     >>> a
     array([[ 0,  1,  2],
            [-1,  0,  1]])
@@ -314,14 +331,14 @@ specified as an iterator flag.
     >>> a = np.arange(6).reshape(2,3) - 3
     >>> for x in np.nditer(a, op_flags=['readonly','copy'],
     ...                 op_dtypes=['complex128']):
-    ...     print(np.sqrt(x), end=' ')
+    ...     print(np.sqrt(x), end=' ') # doctest: +ELLIPSIS
     ...
-    1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
+    1.73205080...j 1.41421356...j 1j 0j (1+0j) (1.4142...+0j)
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['complex128']):
-    ...     print(np.sqrt(x), end=' ')
+    ...     print(np.sqrt(x), end=' ') # doctest: +ELLIPSIS
     ...
-    1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
+    1.7320508...j 1.4142135...j 1j 0j (1+0j) (1.414213...+0j)
 
 The iterator uses NumPy's casting rules to determine whether a specific
 conversion is permitted. By default, it enforces 'safe' casting. This means,
