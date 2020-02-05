@@ -261,7 +261,7 @@ cdef class Generator:
 
     def random(self, size=None, dtype=np.float64, out=None):
         """
-        random(size=None, dtype='d', out=None)
+        random(size=None, dtype=np.float64, out=None)
 
         Return random floats in the half-open interval [0.0, 1.0).
 
@@ -277,10 +277,9 @@ cdef class Generator:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+        dtype : dtype, optional
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -416,7 +415,7 @@ cdef class Generator:
 
     def standard_exponential(self, size=None, dtype=np.float64, method=u'zig', out=None):
         """
-        standard_exponential(size=None, dtype='d', method='zig', out=None)
+        standard_exponential(size=None, dtype=np.float64, method='zig', out=None)
 
         Draw samples from the standard exponential distribution.
 
@@ -430,9 +429,8 @@ cdef class Generator:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
         dtype : dtype, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         method : str, optional
             Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
             'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
@@ -470,7 +468,7 @@ cdef class Generator:
 
     def integers(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
         """
-        integers(low, high=None, size=None, dtype='int64', endpoint=False)
+        integers(low, high=None, size=None, dtype=np.int64, endpoint=False)
 
         Return random integers from `low` (inclusive) to `high` (exclusive), or
         if endpoint=True, `low` (inclusive) to `high` (inclusive). Replaces
@@ -495,11 +493,9 @@ cdef class Generator:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result. All dtypes are determined by their
-            name, i.e., 'int64', 'int', etc, so byteorder is not available
-            and a specific precision may have different C types depending
-            on the platform. The default value is `np.int_`.
+        dtype : dtype, optional
+            Desired dtype of the result. Byteorder must be native.
+            The default value is np.int64.
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
             default [low, high)
@@ -979,7 +975,7 @@ cdef class Generator:
     # Complicated, continuous distributions:
     def standard_normal(self, size=None, dtype=np.float64, out=None):
         """
-        standard_normal(size=None, dtype='d', out=None)
+        standard_normal(size=None, dtype=np.float64, out=None)
 
         Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
@@ -989,10 +985,9 @@ cdef class Generator:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+        dtype : dtype, optional
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -1045,7 +1040,6 @@ cdef class Generator:
             return double_fill(&random_standard_normal_fill, &self._bitgen, size, self.lock, out)
         elif _dtype == np.float32:
             return float_fill(&random_standard_normal_fill_f, &self._bitgen, size, self.lock, out)
-
         else:
             raise TypeError('Unsupported dtype %r for standard_normal' % _dtype)
 
@@ -1153,7 +1147,7 @@ cdef class Generator:
 
     def standard_gamma(self, shape, size=None, dtype=np.float64, out=None):
         """
-        standard_gamma(shape, size=None, dtype='d', out=None)
+        standard_gamma(shape, size=None, dtype=np.float64, out=None)
 
         Draw samples from a standard Gamma distribution.
 
@@ -1169,10 +1163,9 @@ cdef class Generator:
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
             a single value is returned if ``shape`` is a scalar.  Otherwise,
             ``np.array(shape).size`` samples are drawn.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+        dtype : dtype, optional
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is
             not None, it must have the same shape as the provided size and

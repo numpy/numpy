@@ -642,7 +642,7 @@ cdef class RandomState:
 
     def randint(self, low, high=None, size=None, dtype=int):
         """
-        randint(low, high=None, size=None, dtype='l')
+        randint(low, high=None, size=None, dtype=int)
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -669,10 +669,8 @@ cdef class RandomState:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
         dtype : dtype, optional
-            Desired dtype of the result. All dtypes are determined by their
-            name, i.e., 'int64', 'int', etc, so byteorder is not available
-            and a specific precision may have different C types depending
-            on the platform. The default value is `np.int_`.
+            Desired dtype of the result. Byteorder must be native.
+            The default value is int.
 
             .. versionadded:: 1.11.0
 
