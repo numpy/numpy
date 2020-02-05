@@ -405,9 +405,9 @@ create an archive of the documentation in the numpy/doc repo::
     make merge-doc
     # Now edit the ``index.html`` file in the repo to reflect the new content,
     # and commit the changes
-    git -C dist/merge commit -a "Add documentation for <version>"
+    git -C build/merge commit -am "Add documentation for <version>"
     # Push to numpy/doc repo
-    git -C push
+    git -C build/merge push
 
 
 Update PyPI
