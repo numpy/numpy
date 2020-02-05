@@ -4441,11 +4441,13 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
     if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
         goto err;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
+    Py_TYPE(&PyArrayDescr_Type) = &PyArrayDTypeMeta_Type;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         goto err;
     }

@@ -3470,6 +3470,7 @@ static PyMappingMethods descr_as_mapping = {
  *       correct name of the type is PyArrayDescr_Type.
  */
 NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {{{
+    /* The NULL represents `type`, this is set to DTypeMeta at import time */
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.dtype",
     .tp_basicsize = sizeof(PyArray_Descr),

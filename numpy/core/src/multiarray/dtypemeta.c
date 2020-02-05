@@ -230,13 +230,12 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
         PyVarObject_HEAD_INIT(NULL, 0)
         .tp_name = "numpy._DTypeMeta",
         .tp_basicsize = sizeof(PyArray_DTypeMeta),
-        /* methods */
         .tp_dealloc = (destructor)dtypemeta_dealloc,
         /* Types are garbage collected (see dtypemeta_is_gc documentation) */
         .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
         .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
         .tp_members = dtypemeta_members,
-        .tp_base = &PyType_Type,
+        .tp_base = NULL,  /* set to PyType_Type at import time */
         .tp_init = (initproc)dtypemeta_init,
         .tp_new = dtypemeta_new,
         .tp_is_gc = dtypemeta_is_gc,
