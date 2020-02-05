@@ -67,7 +67,8 @@ datetime type with generic units.
     array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64[D]')
 
     >>> np.array(['2001-01-01T12:00', '2002-02-03T13:56:03.172'], dtype='datetime64')
-    array(['2001-01-01T12:00:00.000-0600', '2002-02-03T13:56:03.172-0600'], dtype='datetime64[ms]')
+    array(['2001-01-01T12:00:00.000', '2002-02-03T13:56:03.172'],
+          dtype='datetime64[ms]')
 
 
 The datetime type works with many common NumPy functions, for
@@ -135,7 +136,7 @@ simple datetime calculations.
     numpy.datetime64('2009-01-21')
 
     >>> np.datetime64('2011-06-15T00:00') + np.timedelta64(12, 'h')
-    numpy.datetime64('2011-06-15T12:00-0500')
+    numpy.datetime64('2011-06-15T12:00')
 
     >>> np.timedelta64(1,'W') / np.timedelta64(1,'D')
     7.0
@@ -368,7 +369,7 @@ times in UTC. By default, creating a datetime64 object from a string or
 printing it would convert from or to local time::
 
     # old behavior
-    >>> np.datetime64('2000-01-01T00:00:00')
+    >>> np.datetime64('2000-01-01T00:00:00') # doctest: +SKIP
     numpy.datetime64('2000-01-01T00:00:00-0800')  # note the timezone offset -08:00
 
 A consensus of datetime64 users agreed that this behavior is undesirable
