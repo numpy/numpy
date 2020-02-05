@@ -786,30 +786,47 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
                       verbose=verbose)
 
-    output = io.StringIO(newline='')
+    output = []
     success = True
+    def out(msg):
+        output.append(msg)
 
-    # Redirect stderr to the stdout or output
-    tmp_stderr = sys.stdout if doctest_warnings else output
+    class MyStderr:
+        """
+        Redirect stderr to the current stdout
+        """
+        def write(self, msg):
+            if doctest_warnings:
+                sys.stdout.write(msg)
+            else:
+                out(msg)
+
+        # a flush method is required when a doctest uses multiprocessing
+        # multiprocessing/popen_fork.py flushes sys.stderr
+        def flush(self):
+            if doctest_warnings:
+                sys.stdout.flush()
+
 
     @contextmanager
-    def temp_cwd():
+    def temp_context():
         cwd = os.getcwd()
         tmpdir = tempfile.mkdtemp()
+        stderr = sys.stderr
+        sys.stderr = MyStderr()
         try:
             os.chdir(tmpdir)
             yield tmpdir
         finally:
             os.chdir(cwd)
+            sys.stderr = stderr
             shutil.rmtree(tmpdir)
 
     # Run tests, trying to restore global state afterward
     cwd = os.getcwd()
-    with np.errstate(), np.printoptions(), temp_cwd() as tmpdir, \
-            redirect_stderr(tmp_stderr):
+    with np.errstate(), np.printoptions(), temp_context():
         # try to ensure random seed is NOT reproducible
         np.random.seed(None)
-
         ns = {}
         for t in tests:
             # We broke the tests up into chunks to try to avoid PSEUDOCODE
@@ -821,12 +838,12 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
             # Process our options
             if any([SKIPBLOCK in ex.options for ex in t.examples]):
                 continue
-            fails, successes = runner.run(t, out=output.write, clear_globs=False)
+            fails, successes = runner.run(t, out=out, clear_globs=False)
             if fails > 0:
                 success = False
             ns = t.globs
 
-    return success, output.read()
+    return success, output
 
 
 def check_doctests(module, verbose, ns=None,
@@ -1008,7 +1025,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
     if dots:
         output_dot('.' if success else 'F')
 
-    results.append((full_name, success, output))
+    results.append((full_name, success, ''.join(output)))
 
     if HAVE_MATPLOTLIB:
         import matplotlib.pyplot as plt
