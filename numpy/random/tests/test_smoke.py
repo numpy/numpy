@@ -795,7 +795,7 @@ class TestDefaultRNG(RNG):
 
     def test_expm1(self):
         np.random.default_rng(12345)
-        assert_(np.random.default_rng(1e99) > 0.0)) 
+        assert_(np.random.default_rng(1e99) > 0.0)
 
     def test_seed(self):
         np.random.default_rng()
