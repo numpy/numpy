@@ -15,7 +15,6 @@ from libc.stdint cimport int64_t, uint64_t
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8,)
-from ._bounded_integers import _integers_types
 from ._mt19937 import MT19937 as _MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
@@ -724,17 +723,7 @@ cdef class RandomState:
             high = low
             low = 0
 
-        dt = np.dtype(dtype)
-        key = dt.name
-        if key not in _integers_types:
-            raise TypeError('Unsupported dtype "%s" for randint' % key)
-        if not dt.isnative:
-            # numpy 1.17.0, 2019-05-28
-            warnings.warn('Providing a dtype with a non-native byteorder is '
-                          'not supported. If you require platform-independent '
-                          'byteorder, call byteswap when required.\nIn future '
-                          'version, providing byteorder will raise a '
-                          'ValueError', DeprecationWarning)
+        _dtype = np.dtype(dtype)
 
         # Implementation detail: the use a masked method to generate
         # bounded uniform integers. Lemire's method is preferable since it is
@@ -743,24 +732,31 @@ cdef class RandomState:
         cdef bint _masked = True
         cdef bint _endpoint = False
 
-        if key == 'int32':
+        if _dtype == np.int32:
             ret = _rand_int32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int64':
+        elif _dtype == np.int64:
             ret = _rand_int64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int16':
+        elif _dtype == np.int16:
             ret = _rand_int16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int8':
+        elif _dtype == np.int8:
             ret = _rand_int8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint64':
+        elif _dtype == np.uint64:
             ret = _rand_uint64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint32':
+        elif _dtype == np.uint32:
             ret = _rand_uint32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint16':
+        elif _dtype == np.uint16:
             ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint8':
+        elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'bool':
+        elif _dtype == np.bool_:
             ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+        elif not _dtype.isnative:
+            raise ValueError('Providing a dtype with a non-native byteorder '
+                             'is not supported. If you require '
+                             'platform-independent byteorder, call byteswap '
+                             'when required.')
+        else:
+            raise TypeError('Unsupported dtype %r for randint' % _dtype)
 
         if size is None and dtype in (bool, int, np.compat.long):
             if np.array(ret).shape == ():
