@@ -17,7 +17,6 @@ from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8, _gen_mask)
-from ._bounded_integers import _integers_types
 from ._pcg64 import PCG64
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
@@ -262,7 +261,7 @@ cdef class Generator:
 
     def random(self, size=None, dtype=np.float64, out=None):
         """
-        random(size=None, dtype='d', out=None)
+        random(size=None, dtype=np.float64, out=None)
 
         Return random floats in the half-open interval [0.0, 1.0).
 
@@ -278,10 +277,9 @@ cdef class Generator:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+        dtype : dtype, optional
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -312,13 +310,13 @@ cdef class Generator:
 
         """
         cdef double temp
-        key = np.dtype(dtype).name
-        if key == 'float64':
+        _dtype = np.dtype(dtype)
+        if _dtype == np.float64:
             return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
-        elif key == 'float32':
+        elif _dtype == np.float32:
             return float_fill(&random_standard_uniform_fill_f, &self._bitgen, size, self.lock, out)
         else:
-            raise TypeError('Unsupported dtype "%s" for random' % key)
+            raise TypeError('Unsupported dtype %r for random' % _dtype)
 
     def beta(self, a, b, size=None):
         """
@@ -417,7 +415,7 @@ cdef class Generator:
 
     def standard_exponential(self, size=None, dtype=np.float64, method=u'zig', out=None):
         """
-        standard_exponential(size=None, dtype='d', method='zig', out=None)
+        standard_exponential(size=None, dtype=np.float64, method='zig', out=None)
 
         Draw samples from the standard exponential distribution.
 
@@ -431,9 +429,8 @@ cdef class Generator:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
         dtype : dtype, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         method : str, optional
             Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
             'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
@@ -454,24 +451,24 @@ cdef class Generator:
         >>> n = np.random.default_rng().standard_exponential((3, 8000))
 
         """
-        key = np.dtype(dtype).name
-        if key == 'float64':
+        _dtype = np.dtype(dtype)
+        if _dtype == np.float64:
             if method == u'zig':
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
             else:
                 return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
-        elif key == 'float32':
+        elif _dtype == np.float32:
             if method == u'zig':
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
             else:
                 return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
         else:
-            raise TypeError('Unsupported dtype "%s" for standard_exponential'
-                            % key)
+            raise TypeError('Unsupported dtype %r for standard_exponential'
+                            % _dtype)
 
     def integers(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
         """
-        integers(low, high=None, size=None, dtype='int64', endpoint=False)
+        integers(low, high=None, size=None, dtype=np.int64, endpoint=False)
 
         Return random integers from `low` (inclusive) to `high` (exclusive), or
         if endpoint=True, `low` (inclusive) to `high` (inclusive). Replaces
@@ -496,11 +493,9 @@ cdef class Generator:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result. All dtypes are determined by their
-            name, i.e., 'int64', 'int', etc, so byteorder is not available
-            and a specific precision may have different C types depending
-            on the platform. The default value is `np.int_`.
+        dtype : dtype, optional
+            Desired dtype of the result. Byteorder must be native.
+            The default value is np.int64.
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
             default [low, high)
@@ -559,39 +554,39 @@ cdef class Generator:
             high = low
             low = 0
 
-        dt = np.dtype(dtype)
-        key = dt.name
-        if key not in _integers_types:
-            raise TypeError('Unsupported dtype "%s" for integers' % key)
-        if not dt.isnative:
-            raise ValueError('Providing a dtype with a non-native byteorder '
-                             'is not supported. If you require '
-                             'platform-independent byteorder, call byteswap '
-                             'when required.')
+        _dtype = np.dtype(dtype)
 
         # Implementation detail: the old API used a masked method to generate
         # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the faster one.
         cdef bint _masked = False
 
-        if key == 'int32':
+        if _dtype == np.int32:
             ret = _rand_int32(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'int64':
+        elif _dtype == np.int64:
             ret = _rand_int64(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'int16':
+        elif _dtype == np.int16:
             ret = _rand_int16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'int8':
+        elif _dtype == np.int8:
             ret = _rand_int8(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'uint64':
+        elif _dtype == np.uint64:
             ret = _rand_uint64(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'uint32':
+        elif _dtype == np.uint32:
             ret = _rand_uint32(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'uint16':
+        elif _dtype == np.uint16:
             ret = _rand_uint16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'uint8':
+        elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
-        elif key == 'bool':
+        elif _dtype == np.bool_:
             ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
+        elif not _dtype.isnative:
+            raise ValueError('Providing a dtype with a non-native byteorder '
+                             'is not supported. If you require '
+                             'platform-independent byteorder, call byteswap '
+                             'when required.')
+        else:
+            raise TypeError('Unsupported dtype %r for integers' % _dtype)
+
 
         if size is None and dtype in (bool, int, np.compat.long):
             if np.array(ret).shape == ():
@@ -980,7 +975,7 @@ cdef class Generator:
     # Complicated, continuous distributions:
     def standard_normal(self, size=None, dtype=np.float64, out=None):
         """
-        standard_normal(size=None, dtype='d', out=None)
+        standard_normal(size=None, dtype=np.float64, out=None)
 
         Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
@@ -990,10 +985,9 @@ cdef class Generator:
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+        dtype : dtype, optional
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -1041,14 +1035,13 @@ cdef class Generator:
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
-        key = np.dtype(dtype).name
-        if key == 'float64':
+        _dtype = np.dtype(dtype)
+        if _dtype == np.float64:
             return double_fill(&random_standard_normal_fill, &self._bitgen, size, self.lock, out)
-        elif key == 'float32':
+        elif _dtype == np.float32:
             return float_fill(&random_standard_normal_fill_f, &self._bitgen, size, self.lock, out)
-
         else:
-            raise TypeError('Unsupported dtype "%s" for standard_normal' % key)
+            raise TypeError('Unsupported dtype %r for standard_normal' % _dtype)
 
     def normal(self, loc=0.0, scale=1.0, size=None):
         """
@@ -1154,7 +1147,7 @@ cdef class Generator:
 
     def standard_gamma(self, shape, size=None, dtype=np.float64, out=None):
         """
-        standard_gamma(shape, size=None, dtype='d', out=None)
+        standard_gamma(shape, size=None, dtype=np.float64, out=None)
 
         Draw samples from a standard Gamma distribution.
 
@@ -1170,10 +1163,9 @@ cdef class Generator:
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
             a single value is returned if ``shape`` is a scalar.  Otherwise,
             ``np.array(shape).size`` samples are drawn.
-        dtype : {str, dtype}, optional
-            Desired dtype of the result, either 'd' (or 'float64') or 'f'
-            (or 'float32'). All dtypes are determined by their name. The
-            default value is 'd'.
+        dtype : dtype, optional
+            Desired dtype of the result, only `float64` and `float32` are supported.
+            Byteorder must be native. The default value is np.float64.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is
             not None, it must have the same shape as the provided size and
@@ -1230,19 +1222,19 @@ cdef class Generator:
 
         """
         cdef void *func
-        key = np.dtype(dtype).name
-        if key == 'float64':
+        _dtype = np.dtype(dtype)
+        if _dtype == np.float64:
             return cont(&random_standard_gamma, &self._bitgen, size, self.lock, 1,
                         shape, 'shape', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         0.0, '', CONS_NONE,
                         out)
-        if key == 'float32':
+        if _dtype == np.float32:
             return cont_f(&random_standard_gamma_f, &self._bitgen, size, self.lock,
                           shape, 'shape', CONS_NON_NEGATIVE,
                           out)
         else:
-            raise TypeError('Unsupported dtype "%s" for standard_gamma' % key)
+            raise TypeError('Unsupported dtype %r for standard_gamma' % _dtype)
 
     def gamma(self, shape, scale=1.0, size=None):
         """
