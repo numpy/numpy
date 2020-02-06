@@ -2,26 +2,15 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <numpy/ndarraytypes.h>
 #include "structmember.h"
-
+#include "assert.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
-#include "numpy/arrayscalars.h"
-
-#include "npy_config.h"
-#include "npy_ctypes.h"
+#include <numpy/ndarraytypes.h>
 #include "npy_pycompat.h"
 
-#include "_datetime.h"
-#include "common.h"
-#include "alloc.h"
-#include "assert.h"
-
 #include "dtypemeta.h"
-#include "convert_datatype.h"
 
 
 static void
@@ -150,19 +139,24 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
 
     /*
-     * Note: we have no intention of cleaning this up, since this behaves
-     * identical to static type definition (see comment above).
-     * This is much cleaner for the legacy API, in the new API both ways
-     * should be possible.
-     * In particular our own DTypes can be true static declarations so that
-     * this function is only needed for legacy user dtypes.
+     * Note: we have no intention of freeing the memory again since this
+     * behaves identically to static type definition (see comment above).
+     * This is much cleaner for the legacy API, in the new API both static
+     * and heap types are possible.
+     * In particular our own DTypes can be true static declarations.
+     * However, this function remains necessary for legacy user dtypes.
      */
     char *tp_name = PyDataMem_NEW(100);
+    if (tp_name == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
     snprintf(tp_name, 100, "numpy.dtype[%s]",
              descr->typeobj->tp_name);
 
     PyArray_DTypeMeta *dtype_class = PyDataMem_NEW(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
+        PyDataMem_FREE(tp_name);
         return -1;
     }
     /*
