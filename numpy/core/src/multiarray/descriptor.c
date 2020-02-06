@@ -3149,72 +3149,41 @@ arraydescr_str(PyArray_Descr *dtype)
 static PyObject *
 arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {
-    PyArray_Descr *new = NULL;
-    PyObject *result = Py_NotImplemented;
-    if (!PyArray_DescrCheck(other)) {
-        new = _convert_from_any(other, 0);
-        if (new == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        new = (PyArray_Descr *)other;
-        Py_INCREF(new);
-    }
-    switch (cmp_op) {
-    case Py_LT:
-        if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new)) {
-            result = Py_True;
-        }
-        else {
-            result = Py_False;
-        }
-        break;
-    case Py_LE:
-        if (PyArray_CanCastTo(self, new)) {
-            result = Py_True;
-        }
-        else {
-            result = Py_False;
-        }
-        break;
-    case Py_EQ:
-        if (PyArray_EquivTypes(self, new)) {
-            result = Py_True;
-        }
-        else {
-            result = Py_False;
-        }
-        break;
-    case Py_NE:
-        if (PyArray_EquivTypes(self, new))
-            result = Py_False;
-        else
-            result = Py_True;
-        break;
-    case Py_GT:
-        if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self)) {
-            result = Py_True;
-        }
-        else {
-            result = Py_False;
-        }
-        break;
-    case Py_GE:
-        if (PyArray_CanCastTo(new, self)) {
-            result = Py_True;
-        }
-        else {
-            result = Py_False;
-        }
-        break;
-    default:
-        result = Py_NotImplemented;
+    PyArray_Descr *new = _convert_from_any(other, 0);
+    if (new == NULL) {
+        return NULL;
     }
 
-    Py_XDECREF(new);
-    Py_INCREF(result);
-    return result;
+    npy_bool ret;
+    switch (cmp_op) {
+    case Py_LT:
+        ret = !PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new);
+        Py_DECREF(new);
+        return PyBool_FromLong(ret);
+    case Py_LE:
+        ret = PyArray_CanCastTo(self, new);
+        Py_DECREF(new);
+        return PyBool_FromLong(ret);
+    case Py_EQ:
+        ret = PyArray_EquivTypes(self, new);
+        Py_DECREF(new);
+        return PyBool_FromLong(ret);
+    case Py_NE:
+        ret = !PyArray_EquivTypes(self, new);
+        Py_DECREF(new);
+        return PyBool_FromLong(ret);
+    case Py_GT:
+        ret = !PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self);
+        Py_DECREF(new);
+        return PyBool_FromLong(ret);
+    case Py_GE:
+        ret = PyArray_CanCastTo(new, self);
+        Py_DECREF(new);
+        return PyBool_FromLong(ret);
+    default:
+        Py_DECREF(new);
+        Py_RETURN_NOTIMPLEMENTED;
+    }
 }
 
 static int
