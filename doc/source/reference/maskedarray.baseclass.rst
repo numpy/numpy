@@ -1,5 +1,8 @@
 .. currentmodule:: numpy.ma
 
+.. for doctests
+   >>> import numpy as np
+   >>> from numpy import ma
 
 .. _numpy.ma.constants:
 
@@ -21,9 +24,9 @@ defines several constants.
       True
       >>> x[-1] = ma.masked
       >>> x
-      masked_array(data = [1 -- --],
-                   mask = [False  True  True],
-             fill_value = 999999)
+      masked_array(data=[1, --, --],
+                   mask=[False,  True,  True],
+             fill_value=999999)
 
 
 .. data:: nomask
