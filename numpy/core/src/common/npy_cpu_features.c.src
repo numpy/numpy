@@ -94,15 +94,21 @@ npy__cpu_cpuid(int reg[4], int func_id)
     __cpuid(reg, func_id);
 #elif defined(__GNUC__) || defined(__clang__)
     #if defined(NPY_CPU_X86) && defined(__PIC__)
-    // %ebx may be the PIC register
-        #define NPY__CPUID_ASM \
-            "xchg{l}\t{%%}ebx, %1\n\t" \
-            "cpuid\n\t"                \
-            "xchg{l}\t{%%}ebx, %1\n\t"
+        // %ebx may be the PIC register
+        __asm__("xchg{l}\t{%%}ebx, %1\n\t"
+                "cpuid\n\t"
+                "xchg{l}\t{%%}ebx, %1\n\t"
+                : "=a" (reg[0]), "=r" (reg[1]), "=c" (reg[2]),
+                  "=d" (reg[3])
+                : "a" (func_id), "c" (0)
+        );
     #else
-        #define NPY__CPUID_ASM "cpuid"
+        __asm__("cpuid\n\t"
+                : "=a" (reg[0]), "=b" (reg[1]), "=c" (reg[2]),
+                  "=d" (reg[3])
+                : "a" (func_id), "c" (0)
+        );
     #endif
-    __asm__(NPY__CPUID_ASM : "=a" (reg[0]), "=b" (reg[1]), "=c" (reg[2]), "=d" (reg[3]) : "a" (func_id), "c" (0) : );
 #else
     // TODO: handle other x86 compilers
     reg[0] = 0;
