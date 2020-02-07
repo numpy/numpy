@@ -110,8 +110,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
 
     if (PyArray_DescrCheck(dtypedescr)) {
         /* The dtype attribute is already a valid descriptor */
-        *newdescr = (PyArray_Descr *)dtypedescr;
-        return 1;
+        return (PyArray_Descr *)dtypedescr;
     }
 
     if (Py_EnterRecursiveCall(
@@ -133,7 +132,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
                   "`data_type.dtype` may need to be coerced using "
                   "`np.dtype(data_type.dtype)`. This will raise an error "
                   "in NumPy 1.19.") < 0) {
-        /* NumPy 1.17, 2019-05-16 */
+        /* NumPy 1.19, 2020-02-07 */
         Py_DECREF(newdescr);
         return NULL;
     }
