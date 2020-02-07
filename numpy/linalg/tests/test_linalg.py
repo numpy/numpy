@@ -1278,6 +1278,8 @@ class _TestNormGeneral(_TestNormBase):
         def _test(v):
             np.testing.assert_almost_equal(norm(v), 30 ** 0.5,
                                            decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, 'fro'), 30 ** 0.5,
+                                           decimal=self.dec)
             np.testing.assert_almost_equal(norm(v, inf), 4.0,
                                            decimal=self.dec)
             np.testing.assert_almost_equal(norm(v, -inf), 1.0,
@@ -1305,7 +1307,7 @@ class _TestNormGeneral(_TestNormBase):
         # Compare the use of `axis` with computing the norm of each row
         # or column separately.
         A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
-        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf, 'fro']:
             expected0 = [norm(A[:, k], ord=order) for k in range(A.shape[1])]
             assert_almost_equal(norm(A, ord=order, axis=0), expected0)
             expected1 = [norm(A[k, :], ord=order) for k in range(A.shape[0])]
@@ -1353,7 +1355,7 @@ class _TestNormGeneral(_TestNormBase):
                 shape_err.format(found.shape, expected_shape, None, None))
 
         # Vector norms.
-        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf, 'fro']:
             for k in range(A.ndim):
                 expected = norm(A, ord=order, axis=k)
                 found = norm(A, ord=order, axis=k, keepdims=True)
@@ -1481,9 +1483,7 @@ class _TestNorm2D(_TestNormBase):
         # Using `axis=<integer>` or passing in a 1-D array implies vector
         # norms are being computed, so also using `ord='fro'`
         # or `ord='nuc'` raises a ValueError.
-        assert_raises(ValueError, norm, A, 'fro', 0)
         assert_raises(ValueError, norm, A, 'nuc', 0)
-        assert_raises(ValueError, norm, [3, 4], 'fro', None)
         assert_raises(ValueError, norm, [3, 4], 'nuc', None)
 
         # Similarly, norm should raise an exception when ord is any finite

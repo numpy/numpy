@@ -2545,7 +2545,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord == 1:
             # special case for speedup
             return add.reduce(abs(x), axis=axis, keepdims=keepdims)
-        elif ord is None or ord == 2:
+        elif (ord is None or ord == 2 or ord in ('f', 'fro')):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))

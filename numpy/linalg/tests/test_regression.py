@@ -56,11 +56,6 @@ class TestRegression:
 
         assert_array_almost_equal(b, np.zeros((2, 2)))
 
-    def test_norm_vector_badarg(self):
-        # Regression for #786: Froebenius norm for vectors raises
-        # TypeError.
-        assert_raises(ValueError, linalg.norm, array([1., 2., 3.]), 'fro')
-
     def test_lapack_endian(self):
         # For bug #1482
         a = array([[5.7998084,  -2.1825367],
@@ -103,7 +98,10 @@ class TestRegression:
         assert_array_equal(norm, [0, 1])
         assert_(norm.dtype == np.dtype('float64'))
 
-        assert_raises(ValueError, linalg.norm, testvector, ord='fro')
+        norm = linalg.norm(testvector, ord='fro')
+        assert_array_equal(norm, [0, 1])
+        assert_(norm.dtype == np.dtype('float64'))
+
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
         assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
