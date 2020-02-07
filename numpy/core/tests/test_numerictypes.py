@@ -3,8 +3,7 @@ import itertools
 
 import pytest
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, IS_PYPY)
+from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
 
 # This is the structure of the table used for plain objects:
 #
@@ -452,11 +451,8 @@ class Test_sctype2char:
 
     def test_other_type(self):
         assert_equal(np.sctype2char(float), 'd')
-        assert_equal(np.sctype2char(object), 'O')
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.sctype2char(list), 'O')
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.sctype2char(np.ndarray), 'O')
+        assert_equal(np.sctype2char(list), 'O')
+        assert_equal(np.sctype2char(np.ndarray), 'O')
 
     def test_third_party_scalar_type(self):
         from numpy.core._rational_tests import rational

@@ -1436,13 +1436,13 @@ _convert_from_type(PyObject *obj) {
         }
         Py_DECREF(ret);
 
-        if (DEPRECATE("Converting a type/class not known to NumPy to a dtype "
-                      "currently always returns `np.dtype(object)`. This loses "
-                      "the type information and is deprecated.") < 0) {
-            return NULL;
-        }
-
-        /* All other classes are treated as object */
+        /*
+         * All other classes are treated as object. This can be convenient
+         * to convey an intention of using it for a specific python type
+         * and possibly allow future enforcement. It may make sense to
+         * only allow this only within `dtype=...` keyword argument context
+         * in the future.
+         */
         return PyArray_DescrFromType(NPY_OBJECT);
     }
 }

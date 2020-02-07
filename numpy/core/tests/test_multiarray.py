@@ -6456,7 +6456,7 @@ class TestRepeat:
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
 
 
-@pytest.mark.parametrize('dt', [float, object], ids=['float', 'object'])
+@pytest.mark.parametrize('dt', [float, Decimal], ids=['float', 'object'])
 class TestNeighborhoodIter:
     # Simple, 2d tests
     def test_simple2d(self, dt):

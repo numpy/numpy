@@ -548,7 +548,7 @@ def test_deprecate_ragged_arrays():
         np.array(arg)
 
 
-class TestAbstractDTypeCoercion(_DeprecationTestCase):
+class TestDTypeCoercion(_DeprecationTestCase):
     # 2020-02-06 1.19.0
     message = "Converting .* to a dtype .*is deprecated"
     deprecated_types = [
@@ -558,9 +558,6 @@ class TestAbstractDTypeCoercion(_DeprecationTestCase):
         np.integer, np.unsignedinteger, np.signedinteger,
         # character is a deprecated S1 special case:
         np.character,
-        # Test python types that do not map to a NumPy type cleanly
-        # (currenlty map to object)
-        type, list, tuple, dict,
     ]
 
     def test_dtype_coercion(self):
@@ -576,3 +573,7 @@ class TestAbstractDTypeCoercion(_DeprecationTestCase):
         for group in np.sctypes.values():
             for scalar_type in group:
                 self.assert_not_deprecated(np.dtype, args=(scalar_type,))
+
+        for scalar_type in [type, dict, list, tuple]:
+            # Typical python types are coerced to object currently:
+            self.assert_not_deprecated(np.dtype, args=(scalar_type,))
