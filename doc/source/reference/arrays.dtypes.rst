@@ -100,9 +100,9 @@ Sub-arrays always have a C-contiguous memory layout.
    >>> x[1]['grades']
    array([ 6.,  7.])
    >>> type(x[1])
-   <type 'numpy.void'>
+   <class 'numpy.void'>
    >>> type(x[1]['grades'])
-   <type 'numpy.ndarray'>
+   <class 'numpy.ndarray'>
 
 .. _arrays.dtypes.constructing:
 
@@ -411,7 +411,7 @@ Type strings
        an 8-bit unsigned integer:
 
        >>> dt = np.dtype({'names': ['r','g','b','a'],
-       ...                'formats': [uint8, uint8, uint8, uint8]})
+       ...                'formats': [np.uint8, np.uint8, np.uint8, np.uint8]})
 
        Data type with fields ``r`` and ``b`` (with the given titles),
        both being 8-bit unsigned integers, the first at byte position
@@ -442,7 +442,7 @@ Type strings
        and ``col3`` (integers at byte position 14):
 
        >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (float32, 10),
-           'col3': (int, 14)})
+       ...                'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
 
@@ -464,7 +464,7 @@ Type strings
        32-bit integer, whose first two bytes are interpreted as an integer
        via field ``real``, and the following two bytes via field ``imag``.
 
-       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)})
+       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)}))
 
        32-bit integer, which is interpreted as consisting of a sub-array
        of shape ``(4,)`` containing 8-bit integers:
