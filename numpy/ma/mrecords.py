@@ -13,7 +13,6 @@ and the masking of individual fields.
 #  first place, and then rename the invalid fields with a trailing
 #  underscore. Maybe we could just overload the parser function ?
 
-import sys
 import warnings
 
 import numpy as np

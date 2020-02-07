@@ -9,7 +9,7 @@ from os.path import join as pathjoin, isfile, dirname
 import subprocess
 
 import numpy as np
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_equal
 
 is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 

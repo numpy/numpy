@@ -103,7 +103,6 @@ def setup_openblas(arch=get_arch(), ilp64=get_ilp64()):
         return unpack_targz(tmp)
 
 def unpack_windows_zip(fname):
-    import sysconfig
     with zipfile.ZipFile(fname, 'r') as zf:
         # Get the openblas.a file, but not openblas.dll.a nor openblas.dev.a
         lib = [x for x in zf.namelist() if OPENBLAS_LONG in x and

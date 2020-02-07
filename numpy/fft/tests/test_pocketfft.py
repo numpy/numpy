@@ -5,7 +5,6 @@ from numpy.testing import (
         assert_array_equal, assert_raises, assert_allclose
         )
 import threading
-import sys
 import queue
 
 

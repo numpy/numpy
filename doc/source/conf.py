@@ -257,7 +257,6 @@ numpydoc_use_plots = True
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
 autosummary_generate = True
 
 # -----------------------------------------------------------------------------
@@ -381,7 +380,6 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 from pygments.lexers import CLexer
-from pygments import token
 import copy
 
 class NumPyLexer(CLexer):

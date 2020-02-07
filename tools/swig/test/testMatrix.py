@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 # System imports
-from   distutils.util import get_platform
-import os
 import sys
 import unittest
 

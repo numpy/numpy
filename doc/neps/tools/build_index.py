@@ -4,7 +4,6 @@ metadata is passed to Jinja for filling out `index.rst.tmpl`.
 """
 
 import os
-import sys
 import jinja2
 import glob
 import re

@@ -53,7 +53,6 @@ else:
 
 import sys
 import os
-import builtins
 
 # In case we are run from the source directory, we don't want to import the
 # project from there:

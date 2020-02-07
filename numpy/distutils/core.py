@@ -1,5 +1,5 @@
 import sys
-from distutils.core import Distribution, setup
+from distutils.core import Distribution
 
 if 'setuptools' in sys.modules:
     have_setuptools = True
@@ -25,7 +25,7 @@ from numpy.distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
      sdist, install_data, install_headers, install, bdist_rpm, \
      install_clib
-from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
+from numpy.distutils.misc_util import is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,

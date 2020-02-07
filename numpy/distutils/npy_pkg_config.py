@@ -375,7 +375,6 @@ def read_config(pkgname, dirs=None):
 # pkg-config simple emulator - useful for debugging, and maybe later to query
 # the system
 if __name__ == '__main__':
-    import sys
     from optparse import OptionParser
     import glob
 
