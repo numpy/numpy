@@ -158,7 +158,7 @@ Only one argument is passed into ``__array_module__``, a Python collection of
 unique array types passed into ``get_array_module``, i.e., all arguments with
 an ``__array_module__`` attribute.
 
-The special method should either return an namespace with an API matching
+The special method should either return a namespace with an API matching
 ``numpy``, or ``NotImplemented``, indicating that it does not know how to
 handle the operation:
 
@@ -366,7 +366,7 @@ We think it would be useful exercise to define "minimal" subset(s) of NumPy's
 API, omitting rarely used or non-recommended functionality. For example,
 minimal NumPy might include ``stack``, but not the other stacking functions
 ``column_stack``, ``dstack``, ``hstack`` and ``vstack``. This could clearly
-indicate to duck array authors and users want functionality is core and what
+indicate to duck array authors and users what functionality is core and what
 functionality they can skip.
 
 Support for requesting a restricted subset of NumPy's API would be a natural
