@@ -156,6 +156,14 @@ Array-scalar types
 
 Generic types
 
+    .. deprecated NumPy 1.19::
+
+        The use of generic types is deprecated. This is because it can be
+        unexpected in a context such as ``arr.astype(dtype=np.floating)``.
+        ``arr.astype(dtype=np.floating)`` which casts an array of ``float32``
+        to an array of ``float64``, even though ``float32`` is a subdtype of
+        ``np.floating``.
+
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
@@ -179,8 +187,7 @@ Built-in Python types
     :class:`float`    :class:`float\_`
     :class:`complex`  :class:`cfloat`
     :class:`bytes`    :class:`bytes\_`
-    :class:`str`      :class:`bytes\_` (Python2) or :class:`unicode\_` (Python3)
-    :class:`unicode`  :class:`unicode\_`
+    :class:`str`      :class:`str\_`
     :class:`buffer`   :class:`void`
     (all others)      :class:`object_`
     ================  ===============
@@ -195,6 +202,11 @@ Built-in Python types
        >>> dt = np.dtype(float)   # Python-compatible floating-point number
        >>> dt = np.dtype(int)     # Python-compatible integer
        >>> dt = np.dtype(object)  # Python object
+
+    .. note::
+
+        All other types map to ``object_`` for convenience. Code should expect
+        that such types may map to a specific (new) dtype in future the future.
 
 Types with ``.dtype``
 
