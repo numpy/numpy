@@ -418,7 +418,6 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     right_edges = left_edges + width
     extra_right_edges = right_edges + width # otherwise fp rounding can fill empty bins
     edges = np.unique((left_edges, right_edges, extra_right_edges)) + first_edge
-    # edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
 
     TOL = width/2
     widths = np.concatenate(([width], np.diff(edges)))
