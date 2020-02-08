@@ -2493,7 +2493,6 @@ def get_parameters(vars, global_params={}):
 
             if isdouble(vars[n]):
                 tt = list(v)
-                print(real16pattern.finditer(v))
                 for m in real16pattern.finditer(v):
                     tt[m.start():m.end()] = list(
                         v[m.start():m.end()].lower().replace('d', 'e'))
@@ -2520,7 +2519,7 @@ def get_parameters(vars, global_params={}):
                         v_eval.append(eval(item, g_params, params))
                     except Exception as msg:
                         v_eval.append(item)
-                        outmess('get_parameters: got "%s on %s\n' % (msg, repr(v)))
+                        outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
                 params[n] = v_eval.copy()
             else:
                 try:
