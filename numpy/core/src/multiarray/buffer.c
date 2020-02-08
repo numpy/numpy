@@ -832,11 +832,6 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     descr = PyArray_DescrFromScalar(self);
     view->buf = (void *)scalar_value(self, descr);
     elsize = descr->elsize;
-#ifndef Py_UNICODE_WIDE
-    if (descr->type_num == NPY_UNICODE) {
-        elsize >>= 1;
-    }
-#endif
     view->len = elsize;
     if (PyArray_IsScalar(self, Datetime) || PyArray_IsScalar(self, Timedelta)) {
         elsize = 1; /* descr->elsize,char is 8,'M', but we return 1,'B' */

@@ -71,7 +71,16 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         case NPY_STRING:
             return (void *)PyString_AS_STRING(scalar);
         case NPY_UNICODE:
-            return (void *)PyUnicode_AS_DATA(scalar);
+            /* lazy initialization, to reduce the memory used by string scalars */
+            if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
+                Py_UCS4 *raw_data = PyUnicode_AsUCS4Copy(scalar);
+                if (raw_data == NULL) {
+                    return NULL;
+                }
+                PyArrayScalar_VAL(scalar, Unicode) = raw_data;
+                return (void *)raw_data;
+            }
+            return PyArrayScalar_VAL(scalar, Unicode);
         case NPY_VOID:
             /* Note: no & needed here, so can't use CASE */
             return PyArrayScalar_VAL(scalar, Void);
@@ -319,21 +328,10 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
     memptr = scalar_value(scalar, typecode);
 
-#ifndef Py_UNICODE_WIDE
-    if (typecode->type_num == NPY_UNICODE) {
-        PyUCS2Buffer_AsUCS4((Py_UNICODE *)memptr,
-                (npy_ucs4 *)PyArray_DATA(r),
-                PyUnicode_GET_SIZE(scalar),
-                PyArray_ITEMSIZE(r) >> 2);
-    }
-    else
-#endif
-    {
-        memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
-        if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
-            /* Need to INCREF just the PyObject portion */
-            PyArray_Item_INCREF(memptr, typecode);
-        }
+    memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
+    if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
+        /* Need to INCREF just the PyObject portion */
+        PyArray_Item_INCREF(memptr, typecode);
     }
 
 finish:
@@ -568,10 +566,7 @@ PyArray_DescrFromScalar(PyObject *sc)
             descr->elsize = PyString_GET_SIZE(sc);
         }
         else if (type_num == NPY_UNICODE) {
-            descr->elsize = PyUnicode_GET_DATA_SIZE(sc);
-#ifndef Py_UNICODE_WIDE
-            descr->elsize <<= 1;
-#endif
+            descr->elsize = PyUnicode_GET_LENGTH(sc) * 4;
         }
         else {
             PyArray_Descr *dtype;
@@ -654,23 +649,30 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
     }
     if (type_num == NPY_UNICODE) {
-        PyObject *u, *args;
-        int byteorder;
+        /* we need the full string length here, else copyswap will write too
+           many bytes */
+        void *buff = PyArray_malloc(descr->elsize);
+        if (buff == NULL) {
+            return PyErr_NoMemory();
+        }
+        /* copyswap needs an array object, but only actually cares about the
+         * dtype
+         */
+        PyArrayObject_fields dummy_arr;
+        if (base == NULL) {
+            dummy_arr.descr = descr;
+            base = (PyObject *)&dummy_arr;
+        }
+        copyswap(buff, data, swap, base);
 
-#if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
-        byteorder = -1;
-#elif NPY_BYTE_ORDER == NPY_BIG_ENDIAN
-        byteorder = +1;
-#else
-        #error Endianness undefined ?
-#endif
-        if (swap) byteorder *= -1;
-
-        u = PyUnicode_DecodeUTF32(data, itemsize, NULL, &byteorder);
+        /* truncation occurs here */
+        PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buff, itemsize / 4);
+        PyArray_free(buff);
         if (u == NULL) {
             return NULL;
         }
-        args = Py_BuildValue("(O)", u);
+
+        PyObject *args = Py_BuildValue("(O)", u);
         if (args == NULL) {
             Py_DECREF(u);
             return NULL;

@@ -7854,6 +7854,34 @@ class TestBytestringArrayNonzero:
         assert_(a)
 
 
+class TestUnicodeEncoding:
+    """
+    Tests for encoding related bugs, such as UCS2 vs UCS4, round-tripping
+    issues, etc
+    """
+    def test_round_trip(self):
+        """ Tests that GETITEM, SETITEM, and PyArray_Scalar roundtrip """
+        # gh-15363
+        arr = np.zeros(shape=(), dtype="U1")
+        for i in range(1, sys.maxunicode + 1):
+            expected = chr(i)
+            arr[()] = expected
+            assert arr[()] == expected
+            assert arr.item() == expected
+
+    def test_assign_scalar(self):
+        # gh-3258
+        l = np.array(['aa', 'bb'])
+        l[:] = np.unicode_('cc')
+        assert_equal(l, ['cc', 'cc'])
+
+    def test_fill_scalar(self):
+        # gh-7227
+        l = np.array(['aa', 'bb'])
+        l.fill(np.unicode_('cc'))
+        assert_equal(l, ['cc', 'cc'])
+
+
 class TestUnicodeArrayNonzero:
 
     def test_empty_ustring_array_is_falsey(self):
