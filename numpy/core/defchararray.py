@@ -2679,25 +2679,6 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             itemsize = len(obj)
         shape = len(obj) // itemsize
 
-        if unicode:
-            if sys.maxunicode == 0xffff:
-                # On a narrow Python build, the buffer for Unicode
-                # strings is UCS2, which doesn't match the buffer for
-                # NumPy Unicode types, which is ALWAYS UCS4.
-                # Therefore, we need to convert the buffer.  On Python
-                # 2.6 and later, we can use the utf_32 codec.  Earlier
-                # versions don't have that codec, so we convert to a
-                # numerical array that matches the input buffer, and
-                # then use NumPy to convert it to UCS4.  All of this
-                # should happen in native endianness.
-                obj = obj.encode('utf_32')
-            else:
-                obj = str(obj)
-        else:
-            # Let the default Unicode -> string encoding (if any) take
-            # precedence.
-            obj = bytes(obj)
-
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)
 

@@ -130,27 +130,34 @@ PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type)
 {
     int itemsize;
-    PyObject *temp;
 
     if (string_type == NPY_STRING) {
-        if ((temp = PyObject_Str(obj)) == NULL) {
+        PyObject *temp = PyObject_Str(obj);
+        if (temp == NULL) {
+            return NULL;
+        }
+        /* assume that when we do the encoding elsewhere we'll use ASCII */
+        itemsize = PyUnicode_GetLength(temp);
+        Py_DECREF(temp);
+        if (itemsize < 0) {
+            return NULL;
+        }
+    }
+    else if (string_type == NPY_UNICODE) {
+        PyObject *temp = PyObject_Str(obj);
+        if (temp == NULL) {
             return NULL;
         }
         itemsize = PyUnicode_GetLength(temp);
-    }
-    else if (string_type == NPY_UNICODE) {
-        if ((temp = PyObject_Str(obj)) == NULL) {
+        Py_DECREF(temp);
+        if (itemsize < 0) {
             return NULL;
         }
-        itemsize = PyUnicode_GET_DATA_SIZE(temp);
-#ifndef Py_UNICODE_WIDE
-        itemsize <<= 1;
-#endif
+        itemsize *= 4;  /* convert UCS4 codepoints to bytes */
     }
     else {
         return NULL;
     }
-    Py_DECREF(temp);
     if (last_dtype != NULL &&
             last_dtype->type_num == string_type &&
             last_dtype->elsize >= itemsize) {
@@ -258,10 +265,11 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
     /* Check if it's a Unicode string */
     if (PyUnicode_Check(obj)) {
-        int itemsize = PyUnicode_GET_DATA_SIZE(obj);
-#ifndef Py_UNICODE_WIDE
-        itemsize <<= 1;
-#endif
+        int itemsize = PyUnicode_GetLength(obj);
+        if (itemsize < 0) {
+            goto fail;
+        }
+        itemsize *= 4;
 
         /*
          * If it's already a big enough unicode object,
