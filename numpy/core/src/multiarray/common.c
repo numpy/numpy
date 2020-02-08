@@ -121,6 +121,50 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     return res;
 }
 
+/*
+ * Get a suitable string dtype by calling `__str__`.
+ * For `np.bytes_`, this assumes an ASCII encoding.
+ */
+static PyArray_Descr *
+PyArray_DTypeFromObjectStringDiscovery(
+        PyObject *obj, PyArray_Descr *last_dtype, int string_type)
+{
+    int itemsize;
+    PyObject *temp;
+
+    if (string_type == NPY_STRING) {
+        if ((temp = PyObject_Str(obj)) == NULL) {
+            return NULL;
+        }
+        itemsize = PyUnicode_GetLength(temp);
+    }
+    else if (string_type == NPY_UNICODE) {
+        if ((temp = PyObject_Str(obj)) == NULL) {
+            return NULL;
+        }
+        itemsize = PyUnicode_GET_DATA_SIZE(temp);
+#ifndef Py_UNICODE_WIDE
+        itemsize <<= 1;
+#endif
+    }
+    else {
+        return NULL;
+    }
+    Py_DECREF(temp);
+    if (last_dtype != NULL &&
+            last_dtype->type_num == string_type &&
+            last_dtype->elsize >= itemsize) {
+        Py_INCREF(last_dtype);
+        return last_dtype;
+    }
+    PyArray_Descr *dtype = PyArray_DescrNewFromType(string_type);
+    if (dtype == NULL) {
+        return NULL;
+    }
+    dtype->elsize = itemsize;
+    return dtype;
+}
+
 NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_type)
@@ -158,38 +202,17 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             }
         }
         else {
-            int itemsize;
-            PyObject *temp;
-
-            if (string_type == NPY_STRING) {
-                if ((temp = PyObject_Str(obj)) == NULL) {
-                    goto fail;
-                }
-                itemsize = PyUnicode_GetLength(temp);
-            }
-            else if (string_type == NPY_UNICODE) {
-                if ((temp = PyObject_Str(obj)) == NULL) {
-                    goto fail;
-                }
-                itemsize = PyUnicode_GET_DATA_SIZE(temp);
-#ifndef Py_UNICODE_WIDE
-                itemsize <<= 1;
-#endif
-            }
-            else {
-                goto fail;
-            }
-            Py_DECREF(temp);
-            if (*out_dtype != NULL &&
-                    (*out_dtype)->type_num == string_type &&
-                    (*out_dtype)->elsize >= itemsize) {
-                return 0;
-            }
-            dtype = PyArray_DescrNewFromType(string_type);
+            dtype = PyArray_DTypeFromObjectStringDiscovery(
+                    obj, *out_dtype, string_type);
             if (dtype == NULL) {
                 goto fail;
             }
-            dtype->elsize = itemsize;
+
+            /* nothing to do, dtype is already correct */
+            if (dtype == *out_dtype){
+                Py_DECREF(dtype);
+                return 0;
+            }
         }
         goto promote_types;
     }
@@ -198,42 +221,19 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     dtype = _array_find_python_scalar_type(obj);
     if (dtype != NULL) {
         if (string_type) {
-            int itemsize;
-            PyObject *temp;
-
             /* dtype is not used in this (string discovery) branch */
             Py_DECREF(dtype);
-            dtype = NULL;
-
-            if (string_type == NPY_STRING) {
-                if ((temp = PyObject_Str(obj)) == NULL) {
-                    goto fail;
-                }
-                itemsize = PyUnicode_GetLength(temp);
-            }
-            else if (string_type == NPY_UNICODE) {
-                if ((temp = PyObject_Str(obj)) == NULL) {
-                    goto fail;
-                }
-                itemsize = PyUnicode_GET_DATA_SIZE(temp);
-#ifndef Py_UNICODE_WIDE
-                itemsize <<= 1;
-#endif
-            }
-            else {
-                goto fail;
-            }
-            Py_DECREF(temp);
-            if (*out_dtype != NULL &&
-                    (*out_dtype)->type_num == string_type &&
-                    (*out_dtype)->elsize >= itemsize) {
-                return 0;
-            }
-            dtype = PyArray_DescrNewFromType(string_type);
+            dtype = PyArray_DTypeFromObjectStringDiscovery(
+                    obj, *out_dtype, string_type);
             if (dtype == NULL) {
                 goto fail;
             }
-            dtype->elsize = itemsize;
+
+            /* nothing to do, dtype is already correct */
+            if (dtype == *out_dtype){
+                Py_DECREF(dtype);
+                return 0;
+            }
         }
         goto promote_types;
     }
