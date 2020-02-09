@@ -141,8 +141,9 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     /*
      * Note: we have no intention of freeing the memory again since this
      * behaves identically to static type definition (see comment above).
-     * This is much cleaner for the legacy API, in the new API both static
-     * and heap types are possible.
+     * This is seems cleaner for the legacy API, in the new API both static
+     * and heap types are possible (some difficulty arises from the fact that
+     * these are instances of DTypeMeta and not type).
      * In particular our own DTypes can be true static declarations.
      * However, this function remains necessary for legacy user dtypes.
      */
@@ -154,35 +155,49 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     snprintf(tp_name, 100, "numpy.dtype[%s]",
              descr->typeobj->tp_name);
 
-    PyArray_DTypeMeta *dtype_class = PyDataMem_NEW(sizeof(PyArray_DTypeMeta));
+    PyArray_DTypeMeta *dtype_class = malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
         PyDataMem_FREE(tp_name);
         return -1;
     }
     /*
-     * Initialize the struct fields similar to static code:
+     * Initialize the struct fields identically to static code by copying
+     * a prototype instances for everything except our own fields which
+     * vary between the DTypes.
+     * In particular any Object initialization must be strictly copied from
+     * the untouched prototype to avoid complexities (e.g. with PyPy).
+     * Any Type slots need to be fixed before PyType_Ready, although most
+     * will be inherited automatically there.
      */
-    /* Copy in np.dtype since it shares most things */
-    memcpy(dtype_class, &PyArrayDescr_Type, sizeof(PyArray_DTypeMeta));
-
-    /* Fix name, base, and __new__*/
+    static PyArray_DTypeMeta prototype = {
+        {{
+            PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
+            .tp_name = NULL,  /* set below */
+            .tp_basicsize = sizeof(PyArray_Descr),
+            .tp_flags = Py_TPFLAGS_DEFAULT,
+            .tp_base = &PyArrayDescr_Type,
+            .tp_new = (newfunc)legacy_dtype_default_new
+        },},
+        .is_legacy = 1,
+        .is_abstract = 0, /* this is a concrete DType */
+        /* Further fields are not common between DTypes */
+    };
+    memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
+    /* Fix name of the Type*/
     ((PyTypeObject *)dtype_class)->tp_name = tp_name;
-    ((PyTypeObject *)dtype_class)->tp_base = &PyArrayDescr_Type;
-    ((PyTypeObject *)dtype_class)->tp_new = (newfunc)legacy_dtype_default_new;
 
     /* Let python finish the initialization (probably unnecessary) */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
         return -1;
     }
 
-    /* np.dtype is not a concrete DType, this one is */
-    dtype_class->is_abstract = NPY_FALSE;
-
-    Py_INCREF(descr);  /* descr is a singleton that must survive, ensure. */
+    /*
+     * Fill DTypeMeta information that varies between DTypes, any variable
+     * type information would need to be set before PyType_Ready().
+     */
     dtype_class->singleton = descr;
     Py_INCREF(descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
-    dtype_class->is_legacy = NPY_TRUE;
     dtype_class->type_num = descr->type_num;
     dtype_class->type = descr->type;
     dtype_class->f = descr->f;
@@ -193,7 +208,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         /* Datetimes are flexible, but were not considered previously */
         dtype_class->is_flexible = NPY_TRUE;
     }
-    if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
+    else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->is_flexible = NPY_TRUE;
         dtype_class->itemsize = -1;  /* itemsize is not fixed */
     }
