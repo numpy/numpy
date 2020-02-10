@@ -31,6 +31,7 @@ from numpy.testing import (
     )
 from numpy.testing._private.utils import _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
+from numpy.lib.recfunctions import repack_fields
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -1365,7 +1366,7 @@ class TestStructured:
         # gh-15494
         # dtypes with different field names are not promotable
         A = ("a", "<i8")
-        B = ("b", "<i8")
+        B = ("b", ">i8")
         ab = np.array([(1, 2)], dtype=[A, B])
         ba = np.array([(1, 2)], dtype=[B, A])
         assert_raises(TypeError, np.concatenate, ab, ba)
@@ -1373,9 +1374,9 @@ class TestStructured:
         assert_raises(TypeError, np.promote_types, ab.dtype, ba.dtype)
 
         # dtypes with same field names/order but different memory offsets
-        # are not promotable either.
-        assert_raises(TypeError, np.promote_types,
-                                 ab.dtype, ba[['a', 'b']].dtype)
+        # and byte-order are promotable to packed nbo.
+        assert_equal(np.promote_types(ab.dtype, ba[['a', 'b']].dtype),
+                     repack_fields(ab.dtype.newbyteorder('N')))
 
         # gh-13667
         # dtypes with different fieldnames but castable field types are castable

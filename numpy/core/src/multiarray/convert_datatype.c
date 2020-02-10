@@ -11,6 +11,7 @@
 
 #include "npy_pycompat.h"
 #include "numpy/npy_math.h"
+#include "npy_import.h"
 
 #include "common.h"
 #include "ctors.h"
@@ -1143,7 +1144,8 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
      * Non-native-byte-order types are converted to native ones below, so we
      * can't quit early.
      */
-    if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
+    if (type1 == type2 && PyArray_ISNBO(type1->byteorder) &&
+            !PyDataType_HASFIELDS(type1)) {
         Py_INCREF(type1);
         return type1;
     }
@@ -1435,12 +1437,44 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
 
     if (PyDataType_HASFIELDS(type1) || PyDataType_HASFIELDS(type2)) {
-        if (!PyArray_EquivTypes(type1, type2)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "cannot promote structured types with non-equivalent fields");
+        if (!PyDataType_HASFIELDS(type1) || !PyDataType_HASFIELDS(type2)) {
+            PyErr_SetString(PyExc_TypeError, "invalid type promotion");
             return NULL;
         }
-        return ensure_dtype_nbo(type1);
+
+        int compatible = 0;
+        if (type1->names == type2->names) {
+            compatible = 1;
+        }
+        else {
+            compatible = PyObject_RichCompareBool(type1->names, type2->names,
+                                                  Py_EQ);
+            if (compatible == -1) {
+                PyErr_Clear();
+                return NULL;
+            }
+        }
+
+        if (compatible) {
+            static PyObject *repack_func = NULL;
+            npy_cache_import("numpy.lib.recfunctions", "repack_fields",
+                             &repack_func);
+            if (repack_func == NULL) {
+                return NULL;
+            }
+            type1 = (PyArray_Descr*)PyObject_CallFunction(repack_func,
+                                                          "Oii", type1, 0, 1);
+            if (type1 == NULL) {
+                return NULL;
+            }
+            PyArray_Descr *ret = PyArray_DescrNewByteorder(type1, NPY_NATIVE);
+            Py_DECREF(type1);
+            return ret;
+        }
+
+        PyErr_SetString(PyExc_TypeError, "cannot promote structured types "
+                                     "with different field names or orders");
+        return NULL;
     }
 
     /* For types equivalent up to endianness, can return either */
