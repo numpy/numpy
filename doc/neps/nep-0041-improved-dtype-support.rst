@@ -1,6 +1,6 @@
-=================================
-NEP 41 — Improved Datatye Support
-=================================
+==================================
+NEP 41 — Improved Datatype Support
+==================================
 
 :title: Improved Datatype Support
 :Author: Sebastian Berg
@@ -168,11 +168,16 @@ is in strong contrast with the need for datatypes such as:
 * ….
 
 Some of these are partially solved; for example unit capability is provided
-in ``astropy.units``, ``unyt``, or ``pint``. However, these have to subclass
-or wrap ``ndarray`` whereas special datatypes would provide a much more natural
-representation, and would immediately allow usage within tools such as
-``xarray`` [xarray_dtype_issue]_ or Dask.
-The need for these datatypes has also already led to the implementation of
+in ``astropy.units``, ``unyt``, or ``pint``. However, these have to be implemented
+as array objects, which means that they have to deal with container operations
+such as reshaping and how to work together with other array objects such as
+``xarray`` [xarray_dtype_issue]_ or ``Dask``.
+Implemented as a datatype, the concerns of the array object (container) and
+the data handling can be clearly separated.
+Thus a pure container, such as ``xarray`` or ``Dask`` should work with new
+datatypes without even knowing about their existence.
+
+The need for such datatypes has also already led to the implementation of
 ExtensionArrays inside pandas [pandas_extension_arrays]_.
 
 
@@ -335,7 +340,6 @@ Although it is possible that new DTypes will only be useful after Phase II
 is finished, this NEP proposes to start implementation in an incremental way.
 This means that in a first step the ``DType`` classes will be added, with
 all, or most, new exposed API points giving a ``PreliminaryDTypeAPIWarning``.
-This means starting the implementation further defined in NEP 42.
 
 This allows for smaller patches and further future changes. In these first
 steps no, or only very limited, new C-API shall be exposed.
@@ -353,9 +357,10 @@ UFunc machinery can be addressed.
 
 In particular the step of creating a C defined ``DTypeMeta`` class with its
 instances being ``DTypeClasses`` as mentioned above is a necessary first step
-with useful longterm semantics.
+with useful semantics.
 This ``DTypeMeta`` must thus be implemented before being widely used to
-restructure or enhance current code.
+restructure or enhance current code, thus we propose to proceed with mainly
+private additions to the DType classes.
 
 
 Backward compatibility
@@ -364,21 +369,54 @@ Backward compatibility
 While the actual backward compatibility impact is not yet fully clear,
 we anticipate, and accept the following changes:
 
-* ``PyArray_DescrCheck`` currently tests explicitly for being an instance of PyArray_Descr. The Macro is thus not backward compatible (it cannot work in new NumPy versions). This Macro is not used often, for example not even SciPy uses it. This will require an ABI breakage, to mitigate this new versions of legacy numpy (e.g. 1.14.x, etc.) will be released to include a macro that is compatible with newer NumPy versions. Thus, downstream will may be forced to recompile, but can do so with a single (old) NumPy version.
+* **Python API**:
+  * ``type(np.dtype("f8"))`` will be a subclass of ``np.dtype``, while right
+    now ``type(np.dtype("f8")) is np.dtype``.
+    Code should use ``isinstance`` checks, and in very rare cases may have to
+    be adapted to use it.
 
-* The array that is currently provided to some functions (such as cast functions), may not be provided anymore generally (unless easily available). For compatibility, a dummy array with the dtype information will be given instead. At least in some code paths, this is already the case.
+* **C-API**:
+    * In old versions of NumPy ``PyArray_DescrCheck`` is a macro which uses
+      ``type(dtype) is np.dtype``. When compiling against an old NumPy version,
+      the macro may have to be replaced with the corresponding
+      ``PyObject_IsInstance`` call. (If this is a problem, we could backport
+      fixing the macro)
 
-* The ``scalarkind`` slot and registration of scalar casting will be removed/ignored without replacement (it currently allows partial value based. The ``PyArray_ScalarKind`` function will continue to work for builtin types, but will not be used internally and be deprecated.
+   * The UFunc machinery changes will break *limited* parts of the current
+     implementation. Replacing e.g. the default ``TypeResolver`` is expected
+     to remain supported for a time, although optimized masked inner loop iteration
+     (which is not even used *within* numpy) is expected to not remain supported
+     and lead to errors instead.
 
-* The type of any dtype instance will not be ``dtype`` anymore, instead, it it will be a subclass of DType.
+* **dtype implementors (C-API)**:
+  * The array that is currently provided to some functions (such as cast functions),
+    may not be provided anymore generally.
+    For example ``PyArray_Descr->f->nonzero`` or ``PyArray_Descr->f->copyswapn``,
+    may instead receive a dummy array object with only some fields (mainly the
+    dtype), being valid.
+    At least in some code paths, a similar mechanism is already used.
 
-* Current user dtypes are specifically defined as instances of ``np.dtype``, the instance used when registered is typically not held on to, but at the very least its type and base would have to be exchanged/modified. This may mean that the user created Descriptor struct/object is only partially usable (it does not need to be used though, and is not for either ``rational`` or ``quaternion``)
+  * The ``scalarkind`` slot and registration of scalar casting will be
+     removed/ignored without replacement.
+     It currently allows partial value based casting.
+     The ``PyArray_ScalarKind`` function will continue to work for builtin types,
+     but will not be used internally and be deprecated.
 
-* The UFunc machinery changes will break *limited* parts of the current
-  implementation. Replacing e.g. the default ``TypeResolver`` is expected
-  to remain supported for a time, although optimized masked inner loop iteration
-  (which is not even used *within* numpy) is expected to not remain supported
-  and lead to errors instead.
+
+   * Current user dtypes are specifically defined as instances of ``np.dtype``.
+     The creation works by the user providing a prototype instance.
+     NumPy will need to modify at least the type during registration.
+     This has no effect for either ``rational`` or ``quaternion`` and mutation
+     of the structure seems unlikely after registration.
+
+Since there is a fairly large API surface concerning datatypes, further limitations
+or the limitation of a certain function to currently existing datatypes is
+likely to occur.
+For example current functions which currently use the type number as input
+should probably be replaced with functions taking DType classes instead
+in the long term.
+Although public, large parts of this C-API seems very rarely and possibly
+completely used by downstream projects.
 
 
 Discussion
