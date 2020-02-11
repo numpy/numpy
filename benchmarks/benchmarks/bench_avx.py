@@ -136,7 +136,7 @@ class LogisticRegression(Benchmark):
     def train(self, max_epoch):
         for epoch in range(max_epoch):
             z = np.matmul(self.X_train, self.W)
-            A = 1/ (1 + np.exp(-z)) #sigmoid(z)
+            A = 1 / (1 + np.exp(-z)) # sigmoid(z)
             loss = -np.mean(self.Y_train * np.log(A) + (1-self.Y_train) * np.log(1-A))
             dz = A - self.Y_train
             dw = (1/self.size) * np.matmul(self.X_train.T, dz)
@@ -149,9 +149,9 @@ class LogisticRegression(Benchmark):
         self.X_train = np.float32(np.random.rand(self.size,features))
         self.Y_train = np.float32(np.random.choice(2,self.size))
         # Initialize weights
-        self.W = np.float32(np.zeros((features,1)))
-        self.b = np.float32(np.zeros((1,1)))
+        self.W = np.zeros((features,1), dtype=np.float32)
+        self.b = np.zeros((1,1), dtype=np.float32)
         self.alpha = 0.1
 
     def time_train(self):
-        self.train(5000)
+        self.train(1000)
