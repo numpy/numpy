@@ -3469,23 +3469,24 @@ static PyMappingMethods descr_as_mapping = {
  * NOTE: Since this is a MetaClass, the name has Full appended here, the
  *       correct name of the type is PyArrayDescr_Type.
  */
-NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {{{
-    /* The NULL represents `type`, this is set to DTypeMeta at import time */
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.dtype",
-    .tp_basicsize = sizeof(PyArray_Descr),
-    .tp_dealloc = (destructor)arraydescr_dealloc,
-    .tp_repr = (reprfunc)arraydescr_repr,
-    .tp_as_number = &descr_as_number,
-    .tp_as_sequence = &descr_as_sequence,
-    .tp_as_mapping = &descr_as_mapping,
-    .tp_str = (reprfunc)arraydescr_str,
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_richcompare = (richcmpfunc)arraydescr_richcompare,
-    .tp_methods = arraydescr_methods,
-    .tp_members = arraydescr_members,
-    .tp_getset = arraydescr_getsets,
-    .tp_new = arraydescr_new,
+NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
+    {{
+        /* NULL represents `type`, this is set to DTypeMeta at import time */
+        PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "numpy.dtype",
+        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_dealloc = (destructor)arraydescr_dealloc,
+        .tp_repr = (reprfunc)arraydescr_repr,
+        .tp_as_number = &descr_as_number,
+        .tp_as_sequence = &descr_as_sequence,
+        .tp_as_mapping = &descr_as_mapping,
+        .tp_str = (reprfunc)arraydescr_str,
+        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+        .tp_richcompare = (richcmpfunc)arraydescr_richcompare,
+        .tp_methods = arraydescr_methods,
+        .tp_members = arraydescr_members,
+        .tp_getset = arraydescr_getsets,
+        .tp_new = arraydescr_new,
     },},
     .type_num = -1,
     .kind = '\0',
