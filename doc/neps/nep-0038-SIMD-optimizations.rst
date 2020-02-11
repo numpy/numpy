@@ -58,6 +58,7 @@ Recently, OpenCV moved to using `universal intrinsics`_ in the Hardware
 Abstraction Layer (HAL) which provided a nice abstraction for common shared
 Single Instruction Multiple Data (SIMD) constructs. This NEP proposes a similar
 mechanism for NumPy. There are three stages to using the mechanism:
+
 - Infrastructure is provided in the code for abstract intrinsics. The ufunc
   machinery will be extended using sets of these abstract intrinsics, so that
   a single ufunc will be expressed as a set of loops, going from a minimal to
@@ -79,7 +80,7 @@ proposed solution.
 The ufunc machinery already has the ability to select an optimal loop for
 specifically available CPU features at runtime, currently used for ``avx2``,
 ``fma`` and ``avx512f`` loops (in the generated ``__umath_generated.c`` file);
-universal intrinsices would extend the generated code to include more loop
+universal intrinsics would extend the generated code to include more loop
 variants.
 
 Usage and Impact
@@ -143,7 +144,7 @@ support for some architecture (typically the one of most interest to them),
 this comment is the beginning of a tutorial on how to do so:
 https://github.com/numpy/numpy/pull/13516#issuecomment-558859638
 
-As of this moment, NumPy has a number of ``avc512f`` and ``avx2`` and ``fma``
+As of this moment, NumPy has a number of ``avx512f`` and ``avx2`` and ``fma``
 SIMD loops for many ufuncs. These would likely be the first candidates
 to be ported to universal intrinsics. The expectation is that the new
 implementation may cause a regression in benchmarks, but not increase the
@@ -158,7 +159,8 @@ may be accepted as well. In rare cases, a single-platform only PR may be
 accepted, but it would have to be examined within the framework of preferring
 a solution using universal intrinsics.
 
-The subjective criterea for accepting new loops are:
+The subjective criteria for accepting new loops are:
+
 - correctness: the new code must not decrease accuracy by more than 1-3 ULPs
   even at edge points in the algorithm.
 - code bloat: both source code size and especially binary size of the compiled
@@ -196,8 +198,8 @@ architecture specific intrinsic. The code also supplies guard macros for
 compilation and runtime, so that the proper loops can be chosen.
 
 At compile time, the CPU is probed to determine which features are available.
-These are mapped into the CPU-architecture-specific dictionary
-``__cpu_features__``, the values are filled in at run-time by again probing
+These are mapped into the keys of a CPU-architecture-specific dictionary
+``__cpu_features__``. The values are filled in at run-time by again probing
 the CPU.
 
 Two new build options are available to ``runtests.py`` and ``setup.py build``.
@@ -273,6 +275,7 @@ Discussion on the mailing list mentioned `VOLK`_ which was added to
 the section on related work. The question of maintainability also was raised
 both on the mailing list and in `gh-15228`_ but not resolved. The open
 questions are:
+
 - If contributors want to leverage a specific SIMD instruction, will they be
   expected to add software implementation of this instruction for all other
   architectures too?
@@ -288,8 +291,9 @@ References and Footnotes
 
 .. _`build alternative loops`: https://github.com/numpy/numpy/blob/v1.17.4/numpy/core/code_generators/generate_umath.py#L50
 .. _`is chosen`: https://github.com/numpy/numpy/blob/v1.17.4/numpy/core/code_generators/generate_umath.py#L1038
-.. _`gh-11113"`: https://github.com/numpy/numpy/pull/11113
-.. _`gh-15228"`: https://github.com/numpy/numpy/pull/15228
+.. _`gh-11113`: https://github.com/numpy/numpy/pull/11113
+.. _`gh-15228`: https://github.com/numpy/numpy/pull/15228
+.. _`gh-13516`: https://github.com/numpy/numpy/pull/13516
 .. _`fast avx512 routines`: https://github.com/numpy/numpy/pulls?q=is%3Apr+avx512+is%3Aclosed
 
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see
