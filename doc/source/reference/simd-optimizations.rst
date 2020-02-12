@@ -1,131 +1,197 @@
-Enable multi-platform SIMD compiler optimizations
+******************
+SIMD Optimizations
+******************
 
-The new NumPy's infrastructure upgrade provides multi-platform and cross-architecture build options to effectively control of compiler optimizations that are mainly related to CPU features
+NumPy provides a set of macros that define `Universal Intrinsics`_, abstracting
+typical platform-specific intrinsics so SIMD code needs to be written only
+once. There are three layers:
 
-## Build options
+- Code is written using the universal intrinsic macros, with guards that
+  will enable use of the macros only when the compiler recognizes them.
+  In NumPy, these are used to construct multiple ufunc loops. Current policy is
+  to create three loops: One loop is the default and uses no intrinsics. One
+  uses the minimum intrinsics required on the architecture. And the thirs is
+  written using the maximum set of intrinsics possible.
+- At compile time, these macros are overlayed with the appropriate platform /
+  architecture intrinsics, and the three loops compiled.
+- At runtime import, the CPU is probed for the set of supported intrinsic
+  features. A mechanism is used to grab the pointer to the most appropriate
+  function, and this will be the one called.
 
-`--cpu-baseline` minimal set of required optimizations, default `"min"`
 
-`--cpu-dipsatch` dispatched set of additional optimizations, default `"max -xop -fma4"`
+Build options
+=============
+
+``--cpu-baseline`` minimal set of required optimizations, default `"min"`
+
+``--cpu-dipsatch`` dispatched set of additional optimizations, default `"max
+-xop -fma4"`
 
 Optimization names can be CPU features or group of features that gather several features or special options perform a series of procedures.
 
 The following tables show the current supported optimizations sorted from the lowest to the highest interest.
 
-#### `X86` - CPU feature names:
+``X86`` - CPU feature names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| Name       | Implies                                                      |
-| ---------- | ------------------------------------------------------------ |
-| `SSE`      | `NONE`                                                       |
-| `SSE2`     | `SSE`                                                        |
-| `SSE3`     | `SSE` `SSE2`                                                 |
-| `SSSE3`    | `SSE` `SSE2` `SSE3`                                          |
-| `SSE41`    | `SSE` `SSE2` `SSE3` `SSSE3`                                  |
-| `POPCNT`   | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41`                          |
-| `SSE42`    | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT`                 |
-| `AVX`      | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42`         |
-| `F16C`     | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`   |
-| `XOP`      | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`   |
-| `FMA4`     | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`   |
-| `FMA3`     | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX`   |
-| `AVX2`     | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C` `FMA3` |
-| `AVX512F`  | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C` `FMA3` `AVX2` |
-| `AVX512CD` | `SSE` `SSE2` `SSE3` `SSSE3` `SSE41` `POPCNT` `SSE42` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` |
+.. table::
+    :align: left
 
-#### `X86` - Group names:
+    ============  ===================================================================
+     Name          Implies                                                    
+    ============  ===================================================================
+    ``SSE``       ``NONE``                                                   
+    ``SSE2``      ``SSE``                                                    
+    ``SSE3``      ``SSE`` ``SSE2``                                           
+    ``SSSE3``     ``SSE`` ``SSE2`` ``SSE3``                                  
+    ``SSE41``     ``SSE`` ``SSE2`` ``SSE3`` ``SSE3``                         
+    ``POPCNT``    ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41``              
+    ``SSE42``     ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+    ``AVX``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42``                                                  
+    ``F16C``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42`` ``AVX``                                          
+    ``XOP``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42`` ``AVX``                                          
+    ``FMA4``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``    
+                  ``SSE42`` ``AVX``                                          
+    ``FMA3``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42`` ``AVX``                                          
+    ``AVX2``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3``                        
+    ``AVX512F``   ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2``               
+    ``AVX512CD``  ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
+                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2`` ``AVX512F``   
+    ============  ===================================================================
 
-| Name         | Gather                                           | Implies                                                      |
-| ------------ | ------------------------------------------------ | ------------------------------------------------------------ |
-| `AVX512_KNL` | `AVX512ER` `AVX512PF`                            | `SSE*` ` POPCNT` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` |
-| `AVX512_KNM` | `AVX5124FMAPS` ` AVX5124VNNIW` `AVX512VPOPCNTDQ` | `SSE*` ` POPCNT` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` ``AVX512_KNL`` |
-| `AVX512_SKX` | `AVX512VL` `AVX512BW` `AVX512DQ`                 | `SSE*` ` POPCNT` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` |
-| `AVX512_CLX` | `AVX512VNNI`                                     | `SSE*` ` POPCNT` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` ``AVX512_SKX`` |
-| `AVX512_CNL` | `AVX512IFM` `AVX512VBMI`                         | `SSE*` ` POPCNT` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` ``AVX512_SKX`` |
-| `AVX512_ICL` | `AVX512VBMI2` `AVX512BITALG`  `AVX512VPOPCNTDQ`  | `SSE*` ` POPCNT` `AVX` `F16C` `FMA3` `AVX2` `AVX512F` `AVX512CD` ``AVX512_SKX`` `AVX512_CLX` ``AVX512_CNL`` |
+``X86`` - Group names
+~~~~~~~~~~~~~~~~~~~~~
 
-#### `IBM/POWER` - CPU feature names:
+.. table::
+    :align: left
 
-| Name   | Implies      |
-| ------ | ------------ |
-| `VSX`  | `NONE`       |
-| `VSX2` | `VSX`        |
-| `VSX3` | `VSX` `VSX2` |
+    ==============  ================================== ============================================
+      Name          Gather                                            Implies                                                      
+    ==============  ================================== ============================================
+    ``AVX512_KNL``  ``AVX512ER`` ``AVX512PF``          ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
+                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` 
+    ``AVX512_KNM``  ``AVX5124FMAPS`` ``AVX5124VNNIW``  ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
+                    ``AVX512VPOPCNTDQ``                ``AVX2`` ``AVX512F`` ``AVX512CD``
+                                                       ``AVX512_KNL``
+    ``AVX512_SKX``  ``AVX512VL`` ``AVX512BW``          ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
+                    ``AVX512DQ``                       ``AVX2`` ``AVX512F`` ``AVX512CD``
+    ``AVX512_CLX``  ``AVX512VNNI``                     ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
+                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX`` 
+    ``AVX512_CNL``  ``AVX512IFM`` ``AVX512VBMI``       ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
+                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX`` 
+    ``AVX512_ICL``  ``AVX512VBMI2`` ``AVX512BITALG``   ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
+                    ``AVX512VPOPCNTDQ``                ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
+                                                       ``AVX512_CLX`` ``AVX512_CNL``
+    ==============  ================================== ============================================
 
-#### `ARM` - CPU feature names:
+``IBM/POWER``  - CPU feature names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| Name         | Implies                                             |
-| ------------ | --------------------------------------------------- |
-| `NEON`       | `NONE`                                              |
-| `NEON_FP16`  | `NEON`                                              |
-| `NEON_VFPV4` | `NEON` ``NEON_FP16``                                |
-| `ASIMD`      | `NEON` ``NEON_FP16`` `NEON_VFPV4`                   |
-| `ASIMDHP`    | `NEON` ``NEON_FP16`` `NEON_VFPV4` `ASIMD`           |
-| `ASIMDDP`    | `NEON` ``NEON_FP16`` `NEON_VFPV4` `ASIMD`           |
-| `ASIMDFHM`   | `NEON` ``NEON_FP16`` `NEON_VFPV4` `ASIMD` `ASIMDHP` |
+.. table::
+    :align: left
 
-#### Special options:
+    ============  =================
+     Name          Implies                                                    
+    ============  =================
+     ``VSX``      ``NONE``       
+     ``VSX2``     ``VSX``        
+     ``VSX3``     ``VSX`` ``VSX2``
+    ============  =================
 
-`NONE` : enable no features
+``ARM`` - CPU feature names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`NATIVE`:  fetch all CPU features and groups the current machine supports, this operation is based on the compiler flags (`-march=native, -xHost, /QxHost`)
+.. table::
+    :align: left
 
-`MIN`:  the safest features for wide range of users platforms, explained as following:
+    ===============  ================================================================
+     Name            Implies                                                    
+    ===============  ================================================================
+     ``NEON``        ``NONE``                                              
+     ``NEON_FP16``   ``NEON``                                              
+     ``NEON_VFPV4``  ``NEON`` ````NEON_FP16````                                
+     ``ASIMD``       ``NEON`` ````NEON_FP16```` ``NEON_VFPV4``                   
+     ``ASIMDHP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``           
+     ``ASIMDDP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``           
+     ``ASIMDFHM``    ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP`` 
+    ===============  ================================================================
 
-| For Arch                         | Returns                                 |
-| -------------------------------- | --------------------------------------- |
-| `x86`                            | `SSE` `SSE2`                            |
-| `x86` `64-bit mode`              | `SSE` `SSE2` `SSE3`                     |
-| `IBM/POWER` `big-endian mode`    | `NONE`                                  |
-| `IBM/POWER` `little-endian mode` | `VSX` `VSX2`                            |
-| `ARMHF`                          | `NONE`                                  |
-| `ARM64` `AARCH64`                | `NEON` `NEON_FP16` `NEON_VFPV4` `ASIMD` |
+Special options
+~~~~~~~~~~~~~~~
 
-`MAX:` fetch all CPU features and groups that supported by current platform and compiler build.
+``NONE``: enable no features
 
-`Operators -/+: ` add or sub features and options.
+``NATIVE``:  fetch all CPU features and groups the current machine supports,
+this operation is based on the compiler flags (``-march=native, -xHost,
+/QxHost``)
 
-#### Special cases:
+``MIN``: the safest features for wide range of users platforms, explained as
+following:
 
-#### 
+.. table::
+    :align: left
 
-#### Behaviors and Errors 
+    ======================================  =======================================
+     For Arch                               Returns                                 
+    ======================================  =======================================
+     ``x86``                                ``SSE`` ``SSE2``                            
+     ``x86`` ``64-bit mode``                ``SSE`` ``SSE2`` ``SSE3``                     
+     ``IBM/POWER`` ``big-endian mode``      ``NONE``                                  
+     ``IBM/POWER`` ``little-endian mode``   ``VSX`` ``VSX2``                            
+     ``ARMHF``                              ``NONE``                                  
+     ``ARM64`` ``AARCH64``                  ``NEON`` ``NEON_FP16`` ``NEON_VFPV4``
+                                            ``ASIMD`` 
+    ======================================  =======================================
 
-#### 
+``MAX``: fetch all CPU features and groups that supported by current platform
+and compiler build.
 
-#### Usage and Examples:
+``Operators ``-/+``: add or subtract features and options.
 
-#### 
+Special cases
+~~~~~~~~~~~~~
 
-#### Report and Trace:
+Behaviors and Errors 
+~~~~~~~~~~~~~~~~~~~~
 
-#### 
-
-
-
-## Understanding CPU Dispatching
-
-### The baseline:
-
-#### 
-
-#### Dispatcher:
-
-#### 
-
-#### Groups and Policies:
-
-#### 
-
-#### Examples:
-
-#### 
-
-#### Report and Trace:
-
-#### 
-
+Usage and Examples
+~~~~~~~~~~~~~~~~~~
 
 
-## References 
 
-#### 
+Report and Trace
+~~~~~~~~~~~~~~~~
+
+
+
+Understanding CPU Dispatching
+=============================
+
+The baseline
+~~~~~~~~~~~~
+
+
+Dispatcher
+~~~~~~~~~~
+
+
+Groups and Policies
+~~~~~~~~~~~~~~~~~~~
+
+
+
+Examples
+~~~~~~~~
+
+
+Report and Trace
+~~~~~~~~~~~~~~~~
+
+
+.. _`Universal Intrinsics`: https://numpy.org/neps/nep-0038-SIMD-optimizations.html
