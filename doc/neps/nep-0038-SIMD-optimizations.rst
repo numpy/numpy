@@ -197,15 +197,11 @@ Anyone writing a SIMD loop will use the ``npyv_load_u32`` macro instead of the
 architecture specific intrinsic. The code also supplies guard macros for
 compilation and runtime, so that the proper loops can be chosen.
 
-At compile time, the CPU is probed to determine which features are available.
-These are mapped into the keys of a CPU-architecture-specific dictionary
-``__cpu_features__``. The values are filled in at run-time by again probing
-the CPU.
-
-Two new build options are available to ``runtests.py`` and ``setup.py build``.
+Two new build options are available to ``runtests.py`` and ``setup.py build``,
+which pass them on to be used in ``build_ext`` and ``build_clib``.
 The absolute minimum required features to compile are defined by
-``--cpu-baseline``.  For instance, on ``x86_64`` this defaults to ``SSE3``. If
-this minimum is not met, build will fail. The
+``--cpu-baseline``.  For instance, on ``x86_64`` this defaults to ``SSE3``. The
+minimum features will be enabled if the compiler support it. The
 set of additional intrinsics that can be detected and used as sets of
 requirements to dispatch on are set by ``--cpu-dispatch``. For instance, on
 ``x86_64`` this defaults to ``[SSSE3, SSE41, POPCNT, SSE42, AVX, F16C, XOP,
@@ -213,7 +209,7 @@ FMA4, FMA3, AVX2, AVX512F, AVX512CD, AVX512_KNL, AVX512_KNM, AVX512_SKX,
 AVX512_CLX, AVX512_CNL, AVX512_ICL]``. These features are all mapped to a
 c-level boolean array ``npy__cpu_have``, and a c-level convenience function
 ``npy_cpu_have(int feature_id)`` queries this array, and the results are stored
-in ``__cpu_features__``.
+in ``__cpu_features__`` at runtime.
 
 When importing the ufuncs, the available compiled loops' required features are
 matched to the ones discovered. The loop with the best match is marked to be
