@@ -1223,8 +1223,10 @@ def eig(a):
            Hermitian (conjugate symmetric) array.
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
                (conjugate symmetric) array.
-    scipy.linalg.eig : Similar function in SciPy (but also solves the
-                       generalized eigenvalue problem).
+    scipy.linalg.eig : Similar function in SciPy that also solves the
+                       generalized eigenvalue problem.
+    scipy.linalg.schur : Best choice for unitary and other non-Hermitian
+                         normal matrices.
 
     Notes
     -----
@@ -1238,21 +1240,26 @@ def eig(a):
     the eigenvalues and eigenvectors of general square arrays.
 
     The number `w` is an eigenvalue of `a` if there exists a vector
-    `v` such that ``dot(a,v) = w * v``. Thus, the arrays `a`, `w`, and
-    `v` satisfy the equations ``dot(a[:,:], v[:,i]) = w[i] * v[:,i]``
+    `v` such that ``a @ v = w * v``. Thus, the arrays `a`, `w`, and
+    `v` satisfy the equations ``a @ v[:,i] = w[i] * v[:,i]``
     for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
     of the columns may be linearly dependent, although round-off error may
     obscure that fact. If the eigenvalues are all different, then theoretically
-    the eigenvectors are linearly independent. Likewise, the (complex-valued)
-    matrix of eigenvectors `v` is unitary if the matrix `a` is normal, i.e.,
-    if ``dot(a, a.H) = dot(a.H, a)``, where `a.H` denotes the conjugate
-    transpose of `a`.
+    the eigenvectors are linearly independent and `a` can be diagonalized by
+    a similarity transformation using `v`, i.e, ``inv(v) @ a @ v`` is diagonal.
+
+    For non-Hermitian normal matrices the SciPy function `scipy.linalg.schur`
+    is preferred because the matrix `v` is guaranteed to be unitary, which is
+    not the case when using `eig`. The Schur factorization produces an
+    upper triangular matrix rather than a diagonal matrix, but for normal
+    matrices only the diagonal of the upper triangular matrix is needed, the
+    rest is roundoff error.
 
     Finally, it is emphasized that `v` consists of the *right* (as in
     right-hand side) eigenvectors of `a`.  A vector `y` satisfying
-    ``dot(y.T, a) = z * y.T`` for some number `z` is called a *left*
+    ``y.T @ a = z * y.T`` for some number `z` is called a *left*
     eigenvector of `a`, and, in general, the left and right eigenvectors
     of a matrix are not necessarily the (perhaps conjugate) transposes
     of each other.
