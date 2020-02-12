@@ -38,31 +38,31 @@ The following tables show the current supported optimizations sorted from the lo
     :align: left
 
     ============  ===================================================================
-     Name          Implies                                                    
+     Name          Implies
     ============  ===================================================================
-    ``SSE``       ``NONE``                                                   
-    ``SSE2``      ``SSE``                                                    
-    ``SSE3``      ``SSE`` ``SSE2``                                           
-    ``SSSE3``     ``SSE`` ``SSE2`` ``SSE3``                                  
-    ``SSE41``     ``SSE`` ``SSE2`` ``SSE3`` ``SSE3``                         
-    ``POPCNT``    ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41``              
-    ``SSE42``     ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-    ``AVX``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42``                                                  
-    ``F16C``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42`` ``AVX``                                          
-    ``XOP``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42`` ``AVX``                                          
-    ``FMA4``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``    
-                  ``SSE42`` ``AVX``                                          
-    ``FMA3``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42`` ``AVX``                                          
-    ``AVX2``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3``                        
-    ``AVX512F``   ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2``               
-    ``AVX512CD``  ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``   
-                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2`` ``AVX512F``   
+    ``SSE``       ``NONE``
+    ``SSE2``      ``SSE``
+    ``SSE3``      ``SSE`` ``SSE2``
+    ``SSSE3``     ``SSE`` ``SSE2`` ``SSE3``
+    ``SSE41``     ``SSE`` ``SSE2`` ``SSE3`` ``SSE3``
+    ``POPCNT``    ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41``
+    ``SSE42``     ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+    ``AVX``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42``
+    ``F16C``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX``
+    ``XOP``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX``
+    ``FMA4``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX``
+    ``FMA3``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX``
+    ``AVX2``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3``
+    ``AVX512F``   ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2``
+    ``AVX512CD``  ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
+                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2`` ``AVX512F``
     ============  ===================================================================
 
 ``X86`` - Group names
@@ -72,19 +72,19 @@ The following tables show the current supported optimizations sorted from the lo
     :align: left
 
     ==============  ================================== ============================================
-      Name          Gather                                            Implies                                                      
+      Name          Gather                                            Implies
     ==============  ================================== ============================================
     ``AVX512_KNL``  ``AVX512ER`` ``AVX512PF``          ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` 
+                                                       ``AVX2`` ``AVX512F`` ``AVX512CD``
     ``AVX512_KNM``  ``AVX5124FMAPS`` ``AVX5124VNNIW``  ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
                     ``AVX512VPOPCNTDQ``                ``AVX2`` ``AVX512F`` ``AVX512CD``
                                                        ``AVX512_KNL``
     ``AVX512_SKX``  ``AVX512VL`` ``AVX512BW``          ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
                     ``AVX512DQ``                       ``AVX2`` ``AVX512F`` ``AVX512CD``
     ``AVX512_CLX``  ``AVX512VNNI``                     ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX`` 
+                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
     ``AVX512_CNL``  ``AVX512IFM`` ``AVX512VBMI``       ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX`` 
+                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
     ``AVX512_ICL``  ``AVX512VBMI2`` ``AVX512BITALG``   ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
                     ``AVX512VPOPCNTDQ``                ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
                                                        ``AVX512_CLX`` ``AVX512_CNL``
@@ -97,10 +97,10 @@ The following tables show the current supported optimizations sorted from the lo
     :align: left
 
     ============  =================
-     Name          Implies                                                    
+     Name          Implies
     ============  =================
-     ``VSX``      ``NONE``       
-     ``VSX2``     ``VSX``        
+     ``VSX``      ``NONE``
+     ``VSX2``     ``VSX``
      ``VSX3``     ``VSX`` ``VSX2``
     ============  =================
 
@@ -111,15 +111,15 @@ The following tables show the current supported optimizations sorted from the lo
     :align: left
 
     ===============  ================================================================
-     Name            Implies                                                    
+     Name            Implies
     ===============  ================================================================
-     ``NEON``        ``NONE``                                              
-     ``NEON_FP16``   ``NEON``                                              
-     ``NEON_VFPV4``  ``NEON`` ````NEON_FP16````                                
-     ``ASIMD``       ``NEON`` ````NEON_FP16```` ``NEON_VFPV4``                   
-     ``ASIMDHP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``           
-     ``ASIMDDP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``           
-     ``ASIMDFHM``    ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP`` 
+     ``NEON``        ``NONE``
+     ``NEON_FP16``   ``NEON``
+     ``NEON_VFPV4``  ``NEON`` ````NEON_FP16````
+     ``ASIMD``       ``NEON`` ````NEON_FP16```` ``NEON_VFPV4``
+     ``ASIMDHP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``
+     ``ASIMDDP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``
+     ``ASIMDFHM``    ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP``
     ===============  ================================================================
 
 Special options
@@ -138,15 +138,15 @@ following:
     :align: left
 
     ======================================  =======================================
-     For Arch                               Returns                                 
+     For Arch                               Returns
     ======================================  =======================================
-     ``x86``                                ``SSE`` ``SSE2``                            
-     ``x86`` ``64-bit mode``                ``SSE`` ``SSE2`` ``SSE3``                     
-     ``IBM/POWER`` ``big-endian mode``      ``NONE``                                  
-     ``IBM/POWER`` ``little-endian mode``   ``VSX`` ``VSX2``                            
-     ``ARMHF``                              ``NONE``                                  
+     ``x86``                                ``SSE`` ``SSE2``
+     ``x86`` ``64-bit mode``                ``SSE`` ``SSE2`` ``SSE3``
+     ``IBM/POWER`` ``big-endian mode``      ``NONE``
+     ``IBM/POWER`` ``little-endian mode``   ``VSX`` ``VSX2``
+     ``ARMHF``                              ``NONE``
      ``ARM64`` ``AARCH64``                  ``NEON`` ``NEON_FP16`` ``NEON_VFPV4``
-                                            ``ASIMD`` 
+                                            ``ASIMD``
     ======================================  =======================================
 
 ``MAX``: fetch all CPU features and groups that supported by current platform
@@ -157,7 +157,7 @@ and compiler build.
 Special cases
 ~~~~~~~~~~~~~
 
-Behaviors and Errors 
+Behaviors and Errors
 ~~~~~~~~~~~~~~~~~~~~
 
 Usage and Examples
@@ -195,3 +195,4 @@ Report and Trace
 
 
 .. _`Universal Intrinsics`: https://numpy.org/neps/nep-0038-SIMD-optimizations.html
+
