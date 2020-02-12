@@ -113,6 +113,7 @@ There are few explanations about anything other than those fundamental NumPy
 concepts. 
 
 Some examples of concepts that could be expanded:
+
 - Copies vs. Views;
 - BLAS and other linear algebra libraries; 
 - Fancy indexing.
