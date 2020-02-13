@@ -12,6 +12,9 @@ import warnings
 from . import overrides
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
+# These imports are needed for backward compatibility,
+# do not change them. issue gh-15518
+# _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
     _ARRAY_API, _monotonicity, _get_ndarray_c_version
