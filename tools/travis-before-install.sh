@@ -26,7 +26,7 @@ pip install -U virtualenv
 
 if [ -n "$USE_DEBUG" ]
 then
-  virtualenv --python=python3-dbg venv
+  virtualenv --python=$(which python3-dbg) venv
 else
   virtualenv --python=python venv
 fi
