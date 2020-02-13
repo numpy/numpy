@@ -425,6 +425,20 @@ Discussion
 See NEP 40 for a list of previous meetings, and discussions.
 
 
+References
+----------
+
+.. _pandas_extension_arrays: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#extension-types
+
+.. _xarray_dtype_issue: https://github.com/pydata/xarray/issues/1262
+
+.. _pygeos: https://github.com/caspervdw/pygeos
+
+.. _new_sort: https://github.com/numpy/numpy/pull/12945
+
+.. _PEP-384: https://www.python.org/dev/peps/pep-0384/
+
+
 Copyright
 ---------
 
