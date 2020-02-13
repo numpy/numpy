@@ -268,22 +268,38 @@ def unique(ar, return_index=False, return_inverse=False,
         # this removes the "axis1" or "axis2" prefix from the error message
         raise np.AxisError(axis, ar.ndim)
 
-    # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
-    ar = ar.reshape(orig_shape[0], -1)
-    ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
-    try:
-        consolidated = ar.view(dtype)
-    except TypeError:
-        # There's no good way to do this for object arrays, etc...
-        msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+    if ar.size > 0:
+        # Must reshape to a contiguous 2D array for this to work...
+        ar = ar.reshape(orig_shape[0], -1)
+        ar = np.ascontiguousarray(ar)
+
+        dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+
+        try:
+            consolidated = ar.view(dtype)
+        except TypeError:
+            # There's no good way to do this for object arrays, etc...
+            msg = 'The axis argument to unique is not supported for dtype {dt}'
+            raise TypeError(msg.format(dt=ar.dtype))
+
+        # there will be data, so the number of unique elements can be inferred
+        uniq_element_count = -1
+    else:
+        # if there's no elements (at least, one axis is 0), the reshaping and
+        # viewing doesn't work, but there's also no data, so those
+        # manipulations aren't needed to get right answer (everything
+        # empty). (This doesn't return directly because getting the correct
+        # shape and pieces of output is a little subtle.)
+        consolidated = ar
+        # no data means reshape cannot infer the number of unique elements, but
+        # the number is easy to 'compute' manually:
+        uniq_element_count = 0
 
     def reshape_uniq(uniq):
         uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(-1, *orig_shape[1:])
+        uniq = uniq.reshape(uniq_element_count, *orig_shape[1:])
         uniq = np.moveaxis(uniq, 0, axis)
         return uniq
 

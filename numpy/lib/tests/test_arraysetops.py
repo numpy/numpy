@@ -563,6 +563,34 @@ class TestUnique:
         result = np.array([[-0.0, 0.0]])
         assert_array_equal(unique(data, axis=0), result, msg)
 
+    def test_unique_axis_zeros(self):
+        # issue 15559
+        single_zero = np.empty(shape=(2, 0), dtype=np.int8)
+        uniq, idx, inv, cnt = unique(single_zero, axis=0, return_index=True,
+                                     return_inverse=True, return_counts=True)
+
+        assert_equal(uniq.dtype, single_zero.dtype)
+        msg = "Unique with shape=(2, 0) and axis=0 failed"
+        assert_array_equal(uniq, np.empty(shape=(0, 0)), msg)
+        msg = "Unique with shape=(2, 0) and axis=0 idx failed"
+        assert_array_equal(idx, np.empty(shape=(0,)), msg)
+        msg = "Unique with shape=(2, 0) and axis=0 inv failed"
+        assert_array_equal(inv, np.empty(shape=(0,)), msg)
+        msg = "Unique with shape=(2, 0) and axis=0 cnt failed"
+        assert_array_equal(cnt, np.empty(shape=(0,)), msg)
+
+        msg = "Unique with shape=(2, 0) and axis=1 failed"
+        assert_array_equal(unique(single_zero, axis=1), np.empty(shape=(2, 0)), msg)
+
+        shape = (0, 2, 0, 3, 0, 4, 0)
+        multiple_zeros = np.empty(shape=shape)
+        for axis in range(len(shape)):
+            expected_shape = list(shape)
+            expected_shape[axis] = 0
+
+            msg = "Unique with shape={} and axis={} failed".format(shape, axis)
+            assert_array_equal(unique(multiple_zeros, axis=axis), np.empty(shape=expected_shape), msg)
+
     def test_unique_masked(self):
         # issue 8664
         x = np.array([64, 0, 1, 2, 3, 63, 63, 0, 0, 0, 1, 2, 0, 63, 0], dtype='uint8')
@@ -627,3 +655,4 @@ class TestUnique:
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+
