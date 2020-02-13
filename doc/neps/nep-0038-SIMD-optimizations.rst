@@ -197,8 +197,8 @@ Anyone writing a SIMD loop will use the ``npyv_load_u32`` macro instead of the
 architecture specific intrinsic. The code also supplies guard macros for
 compilation and runtime, so that the proper loops can be chosen.
 
-Two new build options are available to ``runtests.py`` and ``setup.py build``,
-which pass them on to be used in ``build_ext`` and ``build_clib``.
+Two new build options are available to ``runtests.py`` and ``setup.py``:
+``--cpu-baseline`` and ``--cpu-dispatch``.
 The absolute minimum required features to compile are defined by
 ``--cpu-baseline``.  For instance, on ``x86_64`` this defaults to ``SSE3``. The
 minimum features will be enabled if the compiler support it. The
