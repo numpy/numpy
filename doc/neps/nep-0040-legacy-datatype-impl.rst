@@ -22,6 +22,11 @@ motivate the following proposals.
 Detailed Description
 --------------------
 
+This section describes some central concepts and provides a brief overview
+of the current implementation as well as a discussion.
+In many cases subsections will be split roughly to first describe the
+current implementation and then follow with an "Issues and Discussion" section.
+
 Parametric Datatypes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -62,103 +67,6 @@ numerical ones, which currently creates issues mainly in the implementation
 of universal functions.
 
 
-Dispatching of Universal Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Currently the dispatching of universal function (ufuncs) is limited for
-user defined dtypes.
-Typically, dispatching is done by finding the first loop for which all inputs can
-be cast to safely (see also the current implementation section).
-
-However, in some cases this is problematic and thus explicitly not allowed.
-For example the ``np.isnat`` function is currently only defined for
-datetime and timedelta.
-Even though integers are defined to be safely castable to timedelta.
-If this was not the case, calling
-``np.isnat(np.array("NaT", "timedelta64").astype("int64"))`` would currently
-return true, although the integer input array has no notion of "not a time".
-If a universal function, such as most function in ``scipy.special``, is only
-defined for ``float32`` and ``float64`` it will currently automatically
-cast a ``float16`` silently to ``float32`` (similarly for any integer input).
-This ensures successful execution, but allows a change in the output dtype
-when support for new data types is added to a ufunc.
-
-With respect to to user defined dtypes, dispatching works largely similar,
-however, it enforces an exact match of the datatypes (type numbers).
-Because the current method is separate and fairly slow, it will only match
-loops defined for datatypes already existing in the inputs.
-This can be a limitation: a function such as
-``rational_divide(int, int) -> rational`` can only work easily if the user
-calls it using ``rational_divide(int, int, dtype=rational)``.
-
-For NumPy datatypes the order in which loops are registered is currently important.
-However, this is only reliable if all loops are added when the ufunc is first defined.
-Additional loops added when a new user datatypes is imported
-must not be sensitive to the order in which imports occur.
-
-There are two main approaches to better define the type resolution for user
-defined types:
-
-1. Allow for user dtypes to directly influence the loop selection.
-   For example they may provide a function which return/select a loop
-   when there is no exact matching loop available.
-2. Define a total ordering of all implementations/loops, probably based on
-   "safe casting" semantics, or semantics similar to that.
-
-While option 2 may be less complex to reason about it remains to be seen
-whether it is sufficient for all (or most) use cases.
-
-
-Inner Loop and Error Handling in UFuncs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Once the correct implementation/loop is found, UFuncs currently mainly call
-a single *inner-loop function*, which may be called multiple times to do
-the full calculation.
-
-A main issue is that especially parametric datatypes require passing
-additional information to the inner-loop function to decide how to interpret
-the data.
-This is the reason why currently no universal functions for strings dtypes
-exist (although technically possible within NumPy itself).
-Note that it is currently possible to pass in the input array objects
-(which in turn hold the datatypes when no casting is necessary).
-However, the full array information should not be required and currently the
-arrays are passed in before any casting occurs.
-The feature is unused within NumPy and no known user exists.
-
-Another issue is the error reporting from within the inner-loop function.
-There exist currently two ways to do this:
-
-1. by setting a Python exception
-2. using the CPU floating point error flags.
-
-Both of these are checked before returning to the user.
-However, many integer functions currently can set neither of these errors,
-so that checking the floating point error flags is unnecessary overhead.
-On the other hand, there is no way to stop the iteration or pass out error
-information which does not use the floating point flags or requires to hold
-the Python global interpreter lock (GIL).
-
-It seems necessary to provide more control to authors of inner loop functions.
-This means allowing users to pass in and out information from the inner-loop
-function more easily, while *not* providing the input array objects.
-Most likely this will involve:
-
-* Allowing the execution of additional code before the first and after
-  the last inner-loop call.
-* Returning an integer value from the inner-loop to allow stopping the
-  iteration early and possibly propagate error information.
-* Possibly, to allow specialized inner-loop selections. For example currently
-  ``matmul`` and many reductions will execute optimized code for certain inputs.
-  It may make sense to allow selecting such optimized loops beforehand.
-  Allowing this may also help to bring casting (which uses this heavily) and
-  ufunc implementations closer.
-
-The issues surrounding the inner-loop functions have been discussed in some
-detail in the github issue 12518 [gh-12518]_.
-
-
 Value Based Casting
 ^^^^^^^^^^^^^^^^^^^
 
@@ -192,8 +100,8 @@ scalar value as exposed also through ``np.result_type``, the main importance
 is in the ufunc dispatching which currently relies on safe casting semantics.
 
 
-Issues
-""""""
+Issues and Discussion
+"""""""""""""""""""""
 
 There appears to be some agreement that the current method is
 not desirable for values that have a datatype,
@@ -253,13 +161,6 @@ These issues do not need to solved right away:
   This is problematic if multiple users independently decide to implement
   for example a DType for ``decimal.Decimal``.
 
-
-Current Implementation
-----------------------
-
-These sections give a very brief overview of the current implementation, it is
-not meant to be a comprehensive explanation, but a basic reference for further
-technical NEPs.
 
 Current ``dtype`` Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -425,17 +326,13 @@ is public.
 The only project known to do this is Astropy, which is willing to switch to
 a new API if NumPy were to remove the possibility to replace the TypeResolver.
 
-A second step necessary for parametric dtypes is currently performed within
-the ``TypeResolver``:
-i.e. the datetime and timedelta datatypes have to decide on the correct unit for
-the operation and output array.
-While this is part of the type resolution as of now,
-it can be seen as separate step, which finds the correct dtype instances.
-This separate step occurs only after deciding on the DType class
-(i.e. the type number in current NumPy).
+For user defined datatypes, the dispatching logic is similar,
+although separately implemented and limited (see discussion below).
 
-For user defined datatypes, the logic is similar, although separately
-implemented.
+
+Issues and Discussion
+"""""""""""""""""""""
+
 It is currently only possible for user defined functions to be found/resolved
 if any of the inputs (or the outputs) has the user datatype.
 For example ``fraction_divide(int, int) -> Fraction`` can be implemented
@@ -443,6 +340,119 @@ but the call ``fraction_divide(4, 5)`` will fail because the loop that
 includes the user datatype ``Fraction`` (as output) can only be found if any of
 the inputs is already a ``Fraction``.
 ``fraction_divide(4, 5, dtype=Fraction)`` can be made to work, but is inconvenient.
+
+Typically, dispatching is done by finding the first loop for which all inputs can
+be cast to safely (see also the current implementation section).
+However, in some cases this is problematic and thus explicitly not allowed.
+For example the ``np.isnat`` function is currently only defined for
+datetime and timedelta.
+Even though integers are defined to be safely castable to timedelta.
+If this was not the case, calling
+``np.isnat(np.array("NaT", "timedelta64").astype("int64"))`` would currently
+return true, although the integer input array has no notion of "not a time".
+If a universal function, such as most function in ``scipy.special``, is only
+defined for ``float32`` and ``float64`` it will currently automatically
+cast a ``float16`` silently to ``float32`` (similarly for any integer input).
+This ensures successful execution, but allows a change in the output dtype
+when support for new data types is added to a ufunc.
+
+In general the order in which loops are registered is important.
+However, this is only reliable if all loops are added when the ufunc is first defined.
+Additional loops added when a new user datatypes is imported
+must not be sensitive to the order in which imports occur.
+
+There are two main approaches to better define the type resolution for user
+defined types:
+
+1. Allow for user dtypes to directly influence the loop selection.
+   For example they may provide a function which return/select a loop
+   when there is no exact matching loop available.
+2. Define a total ordering of all implementations/loops, probably based on
+   "safe casting" semantics, or semantics similar to that.
+
+While option 2 may be less complex to reason about it remains to be seen
+whether it is sufficient for all (or most) use cases.
+
+
+Adjustment of Parametric output DTypes in UFuncs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A second step necessary for parametric dtypes is currently performed within
+the ``TypeResolver``:
+i.e. the datetime and timedelta datatypes have to decide on the correct unit for
+the operation and output array.
+This step also needs to double check that all casts can be performed safely,
+which by default means that they are "same kind" casts.
+
+Issues and Discussion
+"""""""""""""""""""""
+
+Fixing the correct output dtype is currently part of the type resolution.
+However, it is a distinct step and should probably be handled as such after
+the actual type/loop resolution has occurred.
+
+As such this step may move from the dispatching step (described above) to
+a more featured implementation specific code described below.
+
+
+DType specific Implementation of the UFunc
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once the correct implementation/loop is found, UFuncs currently mainly call
+a single *inner-loop function* which is written in C.
+This may be called multiple times to do the full calculation and it has
+little or no information about the current context.
+
+Issues and Discussion
+"""""""""""""""""""""
+
+A main issue is that especially parametric datatypes may require passing
+additional information to the inner-loop function to decide how to interpret
+the data.
+This is the reason why currently no universal functions for strings dtypes
+exist (although technically possible within NumPy itself).
+Note that it is currently possible to pass in the input array objects
+(which in turn hold the datatypes when no casting is necessary).
+However, the full array information should not be required and currently the
+arrays are passed in before any casting occurs.
+The feature is unused within NumPy and no known user exists.
+
+Another issue is the error reporting from within the inner-loop function.
+There exist currently two ways to do this:
+
+1. by setting a Python exception
+2. using the CPU floating point error flags.
+
+Both of these are checked before returning to the user.
+However, many integer functions currently can set neither of these errors,
+so that checking the floating point error flags is unnecessary overhead.
+On the other hand, there is no way to stop the iteration or pass out error
+information which does not use the floating point flags or requires to hold
+the Python global interpreter lock (GIL).
+
+It seems necessary to provide more control to authors of inner loop functions.
+This means allowing users to pass in and out information from the inner-loop
+function more easily, while *not* providing the input array objects.
+Most likely this will involve:
+
+* Allowing the execution of additional code before the first and after
+  the last inner-loop call.
+* Returning an integer value from the inner-loop to allow stopping the
+  iteration early and possibly propagate error information.
+* Possibly, to allow specialized inner-loop selections. For example currently
+  ``matmul`` and many reductions will execute optimized code for certain inputs.
+  It may make sense to allow selecting such optimized loops beforehand.
+  Allowing this may also help to bring casting (which uses this heavily) and
+  ufunc implementations closer.
+
+The issues surrounding the inner-loop functions have been discussed in some
+detail in the github issue 12518 [gh-12518]_.
+
+A related information is the notion of the "identity" necessary for reductions.
+This is currently defined once per ufunc for example as ``0``.
+However, this can only work for numerical datatypes.
+In general it should be possible to provide a dtype specific identity to the
+ufunc reduction.
 
 
 Datatype Discovery during Array Coercion
@@ -496,24 +506,6 @@ the normal discovery.
 
 
 
-Related Work
-------------
-
-* Julia has similar split of abstract and concrete types [julia-types]_. 
-
-* In Julia promotion can occur based on abstract types. If a promoter is
-  defined, it will cast the inputs and then Julia can then retry to find
-  an implementation with the new values [julia-promotion]_.
-
-* ``xnd-project`` (https://github.com/xnd-project) with ndtypes and gumath
-
-  * The ``xnd-project`` is similar to NumPy and defines data types as well
-    as the possibility to extend them. A major difference is that it does
-    not use promotion/casting within the ufuncs, but instead requires explicit
-    definition of ``int32 + float64 -> float64`` loops.
-
-
-
 Related Issues
 --------------
 
@@ -535,13 +527,32 @@ within NumPy are helpful, doing such additions could be an option even if
 they are not used by NumPy itself.
 
 
+Related Work
+------------
+
+* Julia types are an interesting blueprint for a type hierarchy, and define
+  abstract and concrete types [julia-types]_. 
+
+* In Julia promotion can occur based on abstract types. If a promoter is
+  defined, it will cast the inputs and then Julia can then retry to find
+  an implementation with the new values [julia-promotion]_.
+
+* ``xnd-project`` (https://github.com/xnd-project) with ndtypes and gumath
+
+  * The ``xnd-project`` is similar to NumPy and defines data types as well
+    as the possibility to extend them. A major difference is that it does
+    not use promotion/casting within the ufuncs, but instead requires explicit
+    definition of ``int32 + float64 -> float64`` loops.
+
+
+
 Discussion
 ----------
 
-The above document is based on various ideas, suggestions, and issues many
-of which have come up more than once.
-As such it is difficult to make a complete list of discussions, the following
-lists a subset of more recent ones:
+There have been many discussion about the current state and how a future
+datatype system may look like.
+It is difficult to provide a full list of these discussion, but
+the following provides a subset for more recent ones:
 
 * Draft on NEP by Stephan Hoyer after a developer meeting (was updated on the next developer meeting) https://hackmd.io/6YmDt_PgSVORRNRxHyPaNQ
 
@@ -569,32 +580,16 @@ lists a subset of more recent ones:
 
 
 
-References and Footnotes
-------------------------
-
-.. _pandas_extension_arrays: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#extension-types
-
-.. _xarray_dtype_issue: https://github.com/pydata/xarray/issues/1262
-
-.. _pygeos: https://github.com/caspervdw/pygeos
-
-.. _new_sort: https://github.com/numpy/numpy/pull/12945
+References
+----------
 
 .. _gh-12518: https://github.com/numpy/numpy/issues/12518
-
-.. _value_based: Value based promotion denotes the behaviour that NumPy will inspect the value of scalars (and 0 dimensional arrays) to decide what the output dtype should be. ``np.array(1)`` typically gives an "int64" array, but ``np.array([1], dtype="int8") + 1`` will retain the "int8" of the first array.
-
-.. _safe_casting: Safe casting denotes the concept that the value held by one dtype can be represented by another one without loss/change of information. Within current NumPy there are two slightly different usages. First, casting to string is considered safe, although it is not safe from a type perspective (it is safe in the sense that it cannot fail); this behaviour should be considered legacy. Second, int64 is considered to cast safely to float64 even though float64 cannot represent all int64 values correctly.
-
-.. _flexible_dtype: A parametric dtype is a dtype for which conversion is not always safely possible. This is for example the case for current string dtypes, which can have different lengths. It is also true for datetime64 due to its attached unit. A non-parametric dtype should always have a canonical representation (i.e. a float64 may be in non-native byteorder, but the default is native byte order and it is always a valid representation).
 
 .. _julia-types: https://docs.julialang.org/en/v1/manual/types/index.html#Abstract-Types-1
 
 .. _julia-promotion: https://docs.julialang.org/en/v1/manual/conversion-and-promotion/
 
-.. _PEP-384: https://www.python.org/dev/peps/pep-0384/
 
-.. _gh-12518: https://github.com/numpy/numpy/issues/12518
 
 Copyright
 ---------
