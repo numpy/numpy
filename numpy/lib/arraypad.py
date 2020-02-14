@@ -736,16 +736,22 @@ def pad(array, pad_width, mode='constant', **kwargs):
            [100, 100, 100, 100, 100, 100, 100],
            [100, 100, 100, 100, 100, 100, 100]])
     """
+
+    flagDict = {}
+    file = open("pad.txt", "a")
+
     array = np.asarray(array)
     pad_width = np.asarray(pad_width)
 
     if not pad_width.dtype.kind == 'i':
+        flagDict["pad0"] = "pad0"
         raise TypeError('`pad_width` must be of integral type.')
 
     # Broadcast to shape (array.ndim, 2)
     pad_width = _as_pairs(pad_width, array.ndim, as_index=True)
 
     if callable(mode):
+        flagDict["pad1"] = "pad1"
         # Old behavior: Use user-supplied function with np.apply_along_axis
         function = mode
         # Create a new zero padded array
@@ -753,6 +759,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
         # And apply along each axis
 
         for axis in range(padded.ndim):
+            flagDict["pad2"] = "pad2"
             # Iterate using ndindex as in apply_along_axis, but assuming that
             # function operates inplace on the padded array.
 
@@ -764,8 +771,12 @@ def pad(array, pad_width, mode='constant', **kwargs):
             inds = ndindex(view.shape[:-1])
             inds = (ind + (Ellipsis,) for ind in inds)
             for ind in inds:
+                flagDict["pad3"] = "pad3"
                 function(view[ind], pad_width[axis], axis, kwargs)
-
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         return padded
 
     # Make sure that no unsupported keywords were passed for the current mode
@@ -783,8 +794,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
     try:
         unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     except KeyError:
+        flagDict["pad4"] = "pad4"
         raise ValueError("mode '{}' is not supported".format(mode))
     if unsupported_kwargs:
+        flagDict["pad5"] = "pad5"
         raise ValueError("unsupported keyword arguments for mode '{}': {}"
                          .format(mode, unsupported_kwargs))
 
@@ -799,21 +812,27 @@ def pad(array, pad_width, mode='constant', **kwargs):
     axes = range(padded.ndim)
 
     if mode == "constant":
+        flagDict["pad6"] = "pad6"
         values = kwargs.get("constant_values", 0)
         values = _as_pairs(values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, values):
+            flagDict["pad7"] = "pad7"
             roi = _view_roi(padded, original_area_slice, axis)
             _set_pad_area(roi, axis, width_pair, value_pair)
 
     elif mode == "empty":
+        flagDict["pad8"] = "pad8"
         pass  # Do nothing as _pad_simple already returned the correct result
 
     elif array.size == 0:
+        flagDict["pad9"] = "pad9"
         # Only modes "constant" and "empty" can extend empty axes, all other
         # modes depend on `array` not being empty
         # -> ensure every empty axis is only "padded with 0"
         for axis, width_pair in zip(axes, pad_width):
+            flagDict["pad10"] = "pad10"
             if array.shape[axis] == 0 and any(width_pair):
+                flagDict["pad11"] = "pad11"
                 raise ValueError(
                     "can't extend empty axis {} using modes other than "
                     "'constant' or 'empty'".format(axis)
@@ -822,33 +841,49 @@ def pad(array, pad_width, mode='constant', **kwargs):
         # returned the correct result
 
     elif mode == "edge":
+        flagDict["pad12"] = "pad12"
         for axis, width_pair in zip(axes, pad_width):
+            flagDict["pad13"] = "pad13"
             roi = _view_roi(padded, original_area_slice, axis)
             edge_pair = _get_edges(roi, axis, width_pair)
             _set_pad_area(roi, axis, width_pair, edge_pair)
 
     elif mode == "linear_ramp":
+        flagDict["pad14"] = "pad14"
         end_values = kwargs.get("end_values", 0)
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, end_values):
+            flagDict["pad15"] = "pad15"
             roi = _view_roi(padded, original_area_slice, axis)
             ramp_pair = _get_linear_ramps(roi, axis, width_pair, value_pair)
             _set_pad_area(roi, axis, width_pair, ramp_pair)
 
     elif mode in stat_functions:
+        flagDict["pad16"] = "pad16"
         func = stat_functions[mode]
         length = kwargs.get("stat_length", None)
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
+            flagDict["pad17"] = "pad17"
             roi = _view_roi(padded, original_area_slice, axis)
             stat_pair = _get_stats(roi, axis, width_pair, length_pair, func)
             _set_pad_area(roi, axis, width_pair, stat_pair)
 
     elif mode in {"reflect", "symmetric"}:
+        flagDict["pad18"] = "pad18"
         method = kwargs.get("reflect_type", "even")
-        include_edge = True if mode == "symmetric" else False
+        
+        if mode == "symmetric":
+            flagDict["pad19"] = "pad19"
+            include_edge = True
+        else:
+            flagDict["pad20"] = "pad20"
+            include_edge = False
+            
         for axis, (left_index, right_index) in zip(axes, pad_width):
+            flagDict["pad21"] = "pad21"
             if array.shape[axis] == 1 and (left_index > 0 or right_index > 0):
+                flagDict["pad22"] = "pad22"
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
                 edge_pair = _get_edges(padded, axis, (left_index, right_index))
@@ -858,6 +893,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
             roi = _view_roi(padded, original_area_slice, axis)
             while left_index > 0 or right_index > 0:
+                flagDict["pad23"] = "pad23"
                 # Iteratively pad until dimension is filled with reflected
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
@@ -867,13 +903,20 @@ def pad(array, pad_width, mode='constant', **kwargs):
                 )
 
     elif mode == "wrap":
+        flagDict["pad24"] = "pad24"
         for axis, (left_index, right_index) in zip(axes, pad_width):
+            flagDict["pad25"] = "pad25"
             roi = _view_roi(padded, original_area_slice, axis)
             while left_index > 0 or right_index > 0:
+                flagDict["pad26"] = "pad26"
                 # Iteratively pad until dimension is filled with wrapped
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_wrap_both(
                     roi, axis, (left_index, right_index))
 
+    file.write("============================================\n")
+    for i in flagDict:
+        file.write(i+" ")
+    file.write("============================================\n")
     return padded
