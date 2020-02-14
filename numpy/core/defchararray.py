@@ -2668,19 +2668,30 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
     """
+
+    flagDict = {}
+    file = open("array.txt", "a")
+
     if isinstance(obj, (bytes, str)):
+        flagDict["array0"] = "array0"
         if unicode is None:
+            flagDict["array1"] = "array1"
             if isinstance(obj, str):
+                flagDict["array2"] = "array2"
                 unicode = True
             else:
+                flagDict["array3"] = "array3"
                 unicode = False
 
         if itemsize is None:
+            flagDict["array4"] = "array4"
             itemsize = len(obj)
         shape = len(obj) // itemsize
 
         if unicode:
+            flagDict["array5"] = "array5"
             if sys.maxunicode == 0xffff:
+                flagDict["array6"] = "array6"
                 # On a narrow Python build, the buffer for Unicode
                 # strings is UCS2, which doesn't match the buffer for
                 # NumPy Unicode types, which is ALWAYS UCS4.
@@ -2692,54 +2703,77 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 # should happen in native endianness.
                 obj = obj.encode('utf_32')
             else:
+                flagDict["array7"] = "array7"
                 obj = str(obj)
         else:
+            flagDict["array8"] = "array8"
             # Let the default Unicode -> string encoding (if any) take
             # precedence.
             obj = bytes(obj)
-
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)
 
     if isinstance(obj, (list, tuple)):
+        flagDict["array9"] = "array9"
         obj = numpy.asarray(obj)
 
     if isinstance(obj, ndarray) and issubclass(obj.dtype.type, character):
+        flagDict["array10"] = "array10"
         # If we just have a vanilla chararray, create a chararray
         # view around it.
         if not isinstance(obj, chararray):
+            flagDict["array11"] = "array11"
             obj = obj.view(chararray)
 
         if itemsize is None:
+            flagDict["array12"] = "array12"
             itemsize = obj.itemsize
             # itemsize is in 8-bit chars, so for Unicode, we need
             # to divide by the size of a single Unicode character,
             # which for NumPy is always 4
             if issubclass(obj.dtype.type, unicode_):
+                flagDict["array13"] = "array13"
                 itemsize //= 4
 
         if unicode is None:
+            flagDict["array14"] = "array14"
             if issubclass(obj.dtype.type, unicode_):
+                flagDict["array15"] = "array15"
                 unicode = True
             else:
+                flagDict["array16"] = "array16"
                 unicode = False
 
         if unicode:
+            flagDict["array17"] = "array17"
             dtype = unicode_
         else:
+            flagDict["array18"] = "array18"
             dtype = string_
 
         if order is not None:
+            flagDict["array19"] = "array19"
             obj = numpy.asarray(obj, order=order)
         if (copy or
                 (itemsize != obj.itemsize) or
                 (not unicode and isinstance(obj, unicode_)) or
                 (unicode and isinstance(obj, string_))):
+            flagDict["array20"] = "array20"
             obj = obj.astype((dtype, long(itemsize)))
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         return obj
 
     if isinstance(obj, ndarray) and issubclass(obj.dtype.type, object):
+        flagDict["array21"] = "array21"
         if itemsize is None:
+            flagDict["array22"] = "array22"
             # Since no itemsize was specified, convert the input array to
             # a list so the ndarray constructor will automatically
             # determine the itemsize for us.
@@ -2747,14 +2781,22 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             # Fall through to the default case
 
     if unicode:
+        flagDict["array23"] = "array23"
         dtype = unicode_
     else:
+        flagDict["array24"] = "array24"
         dtype = string_
 
     if itemsize is None:
+        flagDict["array25"] = "array25"
         val = narray(obj, dtype=dtype, order=order, subok=True)
     else:
+        flagDict["array26"] = "array26"
         val = narray(obj, dtype=(dtype, itemsize), order=order, subok=True)
+    file.write("============================================\n")
+    for i in flagDict:
+        file.write(i+" ")
+    file.write("============================================\n")
     return val.view(chararray)
 
 
