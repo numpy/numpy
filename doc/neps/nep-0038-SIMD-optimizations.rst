@@ -144,6 +144,8 @@ support for some architecture (typically the one of most interest to them),
 this comment is the beginning of a tutorial on how to do so:
 https://github.com/numpy/numpy/pull/13516#issuecomment-558859638
 
+.. _tradeoffs:
+
 As of this moment, NumPy has a number of ``avx512f`` and ``avx2`` and ``fma``
 SIMD loops for many ufuncs. These would likely be the first candidates
 to be ported to universal intrinsics. The expectation is that the new
@@ -168,6 +170,25 @@ The subjective criteria for accepting new loops are:
 - maintainability: how readable is the code
 - performance: benchmarks must show a significant performance boost
 
+.. _new-intrinsics:
+
+Adding a new intrinsic
+~~~~~~~~~~~~~~~~~~~~~~
+
+If a contributor wants to use a platform-specific SIMD instruction that is not
+yet supported as a universal intrinsic, then:
+
+1. If should be added as a universal intrinsic for all platforms
+2. If it does not have an equivalent instruction on other platforms (e.g.
+   ``_mm512_mask_i32gather_ps`` in ``AVX512``), then no universal intrinsic
+   should be added and a platform-specific ``ufunc`` or a short helper fuction
+   should be written instead. If such a helper function is used, it must be
+   wrapped with the feature macros, and a reasonable non-intrinsic fallback to
+   be used by default.
+
+We expect (2) to be the exception. The contributor and maintainers should
+consider whether that single-platform intrinsic is worth it compared to using
+the best available universal intrinsic based implementation.
 
 Reuse by other projects
 ```````````````````````
@@ -269,18 +290,15 @@ Discussion
 Most of the discussion took place on the PR `gh-15228`_ to accecpt this NEP.
 Discussion on the mailing list mentioned `VOLK`_ which was added to
 the section on related work. The question of maintainability also was raised
-both on the mailing list and in `gh-15228`_ but not resolved. The open
-questions are:
+both on the mailing list and in `gh-15228`_ and resolved as follows:
 
 - If contributors want to leverage a specific SIMD instruction, will they be
   expected to add software implementation of this instruction for all other
-  architectures too?
+  architectures too? (see the `new-intrinsics`_ part of the workflow).
 - On whom does the burden lie to verify the code and benchmarks for all
   architectures? What happens if adding a universal ufunc in place of
   architecture-specific code helps one architecture but harms performance
-  on another?
-
-The workflow section attempts to codify these concerns.
+  on another? (answered in the tradeoffs_ part of the workflow).
 
 References and Footnotes
 ------------------------
