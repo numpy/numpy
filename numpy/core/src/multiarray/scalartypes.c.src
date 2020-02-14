@@ -345,6 +345,10 @@ format_@name@(@type@ val, npy_bool scientific,
  * over-ride repr and str of array-scalar strings and unicode to
  * remove NULL bytes and then call the corresponding functions
  * of string and unicode.
+ * 
+ * FIXME:
+ *   is this really a good idea?
+ *   stop using Py_UNICODE here.
  */
 
 /**begin repeat
@@ -1094,11 +1098,6 @@ gentype_itemsize_get(PyObject *self)
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-#ifndef Py_UNICODE_WIDE
-    if (typecode->type_num == NPY_UNICODE) {
-        elsize >>= 1;
-    }
-#endif
     ret = PyInt_FromLong((long) elsize);
     Py_DECREF(typecode);
     return ret;
@@ -1658,12 +1657,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    if (PyArray_IsScalar(self, Unicode)) {
-        /* Unicode on Python 3 does not expose the buffer interface */
-        buffer = PyUnicode_AS_DATA(self);
-        buflen = PyUnicode_GET_DATA_SIZE(self);
-    }
-    else if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
+    if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
         buffer = view.buf;
         buflen = view.len;
         /*
@@ -1718,48 +1712,13 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         PyTuple_SET_ITEM(ret, 1, tup);
     }
     else {
-#ifndef Py_UNICODE_WIDE
-        /*
-         * We need to expand the buffer so that we always write
-         * UCS4 to disk for pickle of unicode scalars.
-         *
-         * This could be in a unicode_reduce function, but
-         * that would require re-factoring.
-         */
-        int alloc = 0;
-        char *tmp;
-        int newlen;
-
-        if (PyArray_IsScalar(self, Unicode)) {
-            tmp = PyArray_malloc(buflen*2);
-            if (tmp == NULL) {
-                Py_DECREF(ret);
-                return PyErr_NoMemory();
-            }
-            alloc = 1;
-            newlen = PyUCS2Buffer_AsUCS4((Py_UNICODE *)buffer,
-                    (npy_ucs4 *)tmp,
-                    buflen / 2, buflen / 2);
-            buflen = newlen*4;
-            buffer = tmp;
-        }
-#endif
         mod = PyBytes_FromStringAndSize(buffer, buflen);
         if (mod == NULL) {
             Py_DECREF(ret);
-#ifndef Py_UNICODE_WIDE
-            ret = NULL;
-            goto fail;
-#else
             return NULL;
-#endif
         }
         PyTuple_SET_ITEM(ret, 1,
                 Py_BuildValue("NN", obj, mod));
-#ifndef Py_UNICODE_WIDE
-fail:
-        if (alloc) PyArray_free((char *)buffer);
-#endif
     }
     return ret;
 }
@@ -2409,6 +2368,15 @@ object_arrtype_dealloc(PyObject *v)
     Py_TYPE(v)->tp_free(v);
 }
 
+static void
+unicode_arrtype_dealloc(PyObject *v)
+{
+    /* note: may be null if it was never requested */
+    PyMem_Free(PyArrayScalar_VAL(v, Unicode));
+    /* delegate to the base class */
+    PyUnicode_Type.tp_dealloc(v);
+}
+
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
@@ -2444,6 +2412,9 @@ static PyObject *
         PyErr_Clear();
     }
     else {
+#if defined(_@TYPE@_IS_UNICODE)
+        PyArrayScalar_VAL(from_superclass, Unicode) = NULL;
+#endif
         return from_superclass;
     }
 #endif
@@ -3666,6 +3637,9 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_richcompare = gentype_richcompare;
 
     /**end repeat**/
+
+    PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
+    PyUnicodeArrType_Type.tp_as_buffer = &gentype_as_buffer;
 
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
