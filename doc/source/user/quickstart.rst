@@ -1437,10 +1437,10 @@ To change the dimensions of an array, you can omit one of the sizes
 which will then be deduced automatically::
 
     >>> a = np.arange(30)
-    >>> a = a.reshape((2, -1, 3))  # -1 means "whatever is needed"
-    >>> a.shape
+    >>> b = a.reshape((2, -1, 3))  # -1 means "whatever is needed"
+    >>> b.shape
     (2, 5, 3)
-    >>> a
+    >>> b
     array([[[ 0,  1,  2],
             [ 3,  4,  5],
             [ 6,  7,  8],
