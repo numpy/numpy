@@ -23,7 +23,7 @@ See `here <https://numpy.org/devdocs/>`_ for the front page of the latest docs.
 The organization is quite confusing and illogical (e.g. user and developer docs
 are mixed). We propose the following:
 
-- Reorganizing the docs into the four categories mentioned in [1]_;
+- Reorganizing the docs into the four categories mentioned in [1]_, namely *Tutorials*, *How Tos*, *Reference Guide* and *Explanations* (more about this below).
 - Creating dedicated sections for Tutorials and How-Tos, including orientation
   on how to create new content;
 - Adding an Explanations section for key concepts and techniques that require
@@ -65,16 +65,17 @@ We propose to use those categories as the ones we use (for writing and
 reviewing) whenever we add a new documentation section.
 
 The reasoning for this is that it is clearer both for
-developers/documentation writers and to users where each information should go,
-and the scope and tone of each document. For example, if explanations are mixed
-with basic tutorials, beginners might be overwhelmed and alienated. On the other
-hand, if the reference guide contains basic how-tos, it might be difficult for
-experienced users to find the information they need, quickly.
+developers/documentation writers and to users where each piece of
+information should go, and the scope and tone of each document. For
+example, if explanations are mixed with basic tutorials, beginners
+might be overwhelmed and alienated. On the other hand, if the reference
+guide contains basic how-tos, it might be difficult for experienced
+users to find the information they need, quickly.
 
 Currently, there are many blogs and tutorials on the internet about NumPy or
 using NumPy. One of the issues with this is that if users search for this
-information and end up in an outdated (unofficial) tutorial before they find
-the current official documentation, they end up creating content that is
+information they may end up in an outdated (unofficial) tutorial before
+they find the current official documentation. This can be especially
 confusing, especially for beginners. Having a better infrastructure for the
 documentation also aims to solve this problem by giving users high-level,
 up-to-date official documentation that can be easily updated.
@@ -179,6 +180,33 @@ more explicit, as well as previewing some of the content in each section.
 Implementation
 ==============
 
+Currently, the `documentation for NumPy <https://numpy.org/devdocs/>`_ can be
+confusing, especially for beginners. Our proposal is to reorganize the docs in
+the following structure:
+
+- For users:
+    - Absolute Beginners Tutorial
+    - main Tutorials section
+    - How Tos for common tasks with NumPy
+    - Reference Guide (API Reference)
+    - Explanations
+    - F2Py Guide
+    - Glossary
+- For developers/contributors:
+    - Contributor's Guide
+    - Under-the-hood docs
+    - Building and extending the documentation
+    - Benchmarking 
+    - NumPy Enhancement Proposals
+- Meta information
+    - Reporting bugs
+    - Release Notes
+    - About NumPy
+    - License
+
+Ideas for follow-up
+-------------------
+
 Besides rewriting the current documentation to some extent, it would be ideal
 to have a technical infrastructure that would allow more contributions from the
 community. For example, if Jupyter Notebooks could be submitted as-is as
@@ -191,30 +219,7 @@ learning NumPy.
 
 It would also be interesting if the new structure for the documentation makes
 translations easier.
-
-Currently, the `documentation for NumPy <https://numpy.org/devdocs/>`_ can be
-confusing, especially for beginners. Our proposal is to reorganize the docs in
-the following structure:
-
-- For users:
-    - Absolute Beginners Tutorial
-    - main Tutorials section
-    - How To's for common tasks with NumPy
-    - Reference Guide
-    - Explanations
-    - F2Py Guide
-    - Glossary
-- For developers/contributors:
-    - Contributor's Guide
-    - Building and extending the documentation
-    - Benchmarking 
-    - NumPy Enhancement Proposals
-- Meta information
-    - Reporting bugs
-    - Release Notes
-    - About NumPy
-    - License
-
+      
 Discussion
 ==========
 
