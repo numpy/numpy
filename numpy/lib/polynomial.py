@@ -586,24 +586,32 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     >>> plt.show()
 
     """
+    flagDict = {}
+    file = open("polyfit.txt", "a")
     order = int(deg) + 1
     x = NX.asarray(x) + 0.0
     y = NX.asarray(y) + 0.0
 
     # check arguments.
     if deg < 0:
+        flagDict["poly0"] = "poly0"
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
+        flagDict["poly1"] = "poly1"
         raise TypeError("expected 1D vector for x")
     if x.size == 0:
+        flagDict["poly2"] = "poly2"
         raise TypeError("expected non-empty vector for x")
     if y.ndim < 1 or y.ndim > 2:
+        flagDict["poly3"] = "poly3"
         raise TypeError("expected 1D or 2D array for y")
     if x.shape[0] != y.shape[0]:
+        flagDict["poly4"] = "poly4"
         raise TypeError("expected x and y to have same length")
 
     # set rcond
     if rcond is None:
+        flagDict["poly5"] = "poly5"
         rcond = len(x)*finfo(x.dtype).eps
 
     # set up least squares equation for powers of x
@@ -612,15 +620,20 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     # apply weighting
     if w is not None:
+        flagDict["poly6"] = "poly6"
         w = NX.asarray(w) + 0.0
         if w.ndim != 1:
+            flagDict["poly7"] = "poly7"
             raise TypeError("expected a 1-d array for weights")
         if w.shape[0] != y.shape[0]:
+            flagDict["poly8"] = "poly8"
             raise TypeError("expected w and y to have the same length")
         lhs *= w[:, NX.newaxis]
         if rhs.ndim == 2:
+            flagDict["poly9"] = "poly9"
             rhs *= w[:, NX.newaxis]
         else:
+            flagDict["poly10"] = "poly10"
             rhs *= w
 
     # scale lhs to improve condition number and solve
@@ -631,18 +644,28 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
+        flagDict["poly11"] = "poly11"
         msg = "Polyfit may be poorly conditioned"
         warnings.warn(msg, RankWarning, stacklevel=4)
 
     if full:
+        flagDict["poly12"] = "poly12"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         return c, resids, rank, s, rcond
     elif cov:
+        flagDict["poly13"] = "poly13"
         Vbase = inv(dot(lhs.T, lhs))
         Vbase /= NX.outer(scale, scale)
         if cov == "unscaled":
+            flagDict["poly14"] = "poly14"
             fac = 1
         else:
+            flagDict["poly15"] = "poly15"
             if len(x) <= order:
+                flagDict["poly16"] = "poly16"
                 raise ValueError("the number of data points must exceed order "
                                  "to scale the covariance matrix")
             # note, this used to be: fac = resids / (len(x) - order - 2.0)
@@ -651,10 +674,25 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             # (see gh-11196 and gh-11197)
             fac = resids / (len(x) - order)
         if y.ndim == 1:
+            flagDict["poly17"] = "poly17"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             return c, Vbase * fac
         else:
+            flagDict["poly18"] = "poly18"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             return c, Vbase[:,:, NX.newaxis] * fac
     else:
+        flagDict["poly19"] = "poly19"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         return c
 
 
