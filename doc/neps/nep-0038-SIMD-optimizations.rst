@@ -178,7 +178,7 @@ Adding a new intrinsic
 If a contributor wants to use a platform-specific SIMD instruction that is not
 yet supported as a universal intrinsic, then:
 
-1. If should be added as a universal intrinsic for all platforms
+1. It should be added as a universal intrinsic for all platforms
 2. If it does not have an equivalent instruction on other platforms (e.g.
    ``_mm512_mask_i32gather_ps`` in ``AVX512``), then no universal intrinsic
    should be added and a platform-specific ``ufunc`` or a short helper fuction
