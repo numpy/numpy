@@ -97,9 +97,10 @@ stages:
         # manually link critical gfortran libraries
         ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
         ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
-        # manually symlink gfortran-4.9 to plain gfortran
-        # for f2py
-        ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
+        # Manually symlink gfortran-4.9 to plain gfortran for f2py.
+        # No longer needed after Feb 13 2020 as gfortran is already present
+        # and the attempted link errors. Keep this for future reference.
+        # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
       displayName: 'make gfortran available on mac os vm'
     # use the pre-built openblas binary that most closely
     # matches our MacOS wheel builds -- currently based
