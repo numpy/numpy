@@ -176,6 +176,8 @@ http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
 
 
 def scaninputline(inputline):
+    flagDict = {}
+    file = open("scan.txt", "a")
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
     f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
@@ -190,112 +192,174 @@ def scaninputline(inputline):
                'coutput': None,
                'f2py_wrapper_output': None}
     for l in inputline:
+        flagDict["scan0"] = "scan0"
         if l == '':
+            flagDict["scan1"] = "scan1"
             pass
         elif l == 'only:':
+            flagDict["scan2"] = "scan2"
             f = 0
         elif l == 'skip:':
+            flagDict["scan3"] = "scan3"
             f = -1
         elif l == ':':
+            flagDict["scan4"] = "scan4"
             f = 1
         elif l[:8] == '--debug-':
+            flagDict["scan5"] = "scan5"
             debug.append(l[8:])
         elif l == '--lower':
+            flagDict["scan6"] = "scan6"
             dolc = 1
         elif l == '--build-dir':
+            flagDict["scan7"] = "scan7"
             f6 = 1
         elif l == '--no-lower':
+            flagDict["scan8"] = "scan8"
             dolc = 0
         elif l == '--quiet':
+            flagDict["scan9"] = "scan9"
             verbose = 0
         elif l == '--verbose':
+            flagDict["scan10"] = "scan10"
             verbose += 1
         elif l == '--latex-doc':
+            flagDict["scan11"] = "scan11"
             dolatexdoc = 1
         elif l == '--no-latex-doc':
+            flagDict["scan12"] = "scan12"
             dolatexdoc = 0
         elif l == '--rest-doc':
+            flagDict["scan13"] = "scan13"
             dorestdoc = 1
         elif l == '--no-rest-doc':
+            flagDict["scan14"] = "scan14"
             dorestdoc = 0
         elif l == '--wrap-functions':
+            flagDict["scan15"] = "scan15"
             wrapfuncs = 1
         elif l == '--no-wrap-functions':
+            flagDict["scan16"] = "scan16"
             wrapfuncs = 0
         elif l == '--short-latex':
+            flagDict["scan17"] = "scan17"
             options['shortlatex'] = 1
         elif l == '--coutput':
+            flagDict["scan18"] = "scan18"
             f8 = 1
         elif l == '--f2py-wrapper-output':
+            flagDict["scan19"] = "scan19"
             f9 = 1
         elif l == '--f2cmap':
+            flagDict["scan20"] = "scan20"
             f10 = 1
         elif l == '--overwrite-signature':
+            flagDict["scan21"] = "scan21"
             options['h-overwrite'] = 1
         elif l == '-h':
+            flagDict["scan22"] = "scan22"
             f2 = 1
         elif l == '-m':
+            flagDict["scan23"] = "scan23"
             f3 = 1
         elif l[:2] == '-v':
+            flagDict["scan24"] = "scan24"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             print(f2py_version)
             sys.exit()
         elif l == '--show-compilers':
+            flagDict["scan25"] = "scan25"
             f5 = 1
         elif l[:8] == '-include':
+            flagDict["scan26"] = "scan26"
             cfuncs.outneeds['userincludes'].append(l[9:-1])
             cfuncs.userincludes[l[9:-1]] = '#include ' + l[8:]
         elif l[:15] in '--include_paths':
+            flagDict["scan27"] = "scan27"
             outmess(
                 'f2py option --include_paths is deprecated, use --include-paths instead.\n')
             f7 = 1
         elif l[:15] in '--include-paths':
+            flagDict["scan28"] = "scan28"
             f7 = 1
         elif l[0] == '-':
+            flagDict["scan29"] = "scan29"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
         elif f2:
+            flagDict["scan30"] = "scan30"
             f2 = 0
             signsfile = l
         elif f3:
+            flagDict["scan31"] = "scan31"
             f3 = 0
             modulename = l
         elif f6:
+            flagDict["scan32"] = "scan32"
             f6 = 0
             buildpath = l
         elif f7:
+            flagDict["scan33"] = "scan33"
             f7 = 0
             include_paths.extend(l.split(os.pathsep))
         elif f8:
+            flagDict["scan34"] = "scan34"
             f8 = 0
             options["coutput"] = l
         elif f9:
+            flagDict["scan25"] = "scan35"
             f9 = 0
             options["f2py_wrapper_output"] = l
         elif f10:
+            flagDict["scan36"] = "scan36"
             f10 = 0
             options["f2cmap_file"] = l
         elif f == 1:
+            flagDict["scan37"] = "scan37"
             try:
                 with open(l):
                     pass
                 files.append(l)
             except IOError as detail:
+                flagDict["scan38"] = "scan38"
                 errmess('IOError: %s. Skipping file "%s".\n' %
                         (str(detail), l))
         elif f == -1:
+            flagDict["scan39"] = "scan39"
             skipfuncs.append(l)
         elif f == 0:
+            flagDict["scan40"] = "scan40"
             onlyfuncs.append(l)
     if not f5 and not files and not modulename:
+        flagDict["scan41"] = "scan41"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         print(__usage__)
         sys.exit()
     if not os.path.isdir(buildpath):
+        flagDict["scan42"] = "scan42"
         if not verbose:
+            flagDict["scan43"] = "scan43"
             outmess('Creating build directory %s' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
+        flagDict["scan44"] = "scan44"
         signsfile = os.path.join(buildpath, signsfile)
     if signsfile and os.path.isfile(signsfile) and 'h-overwrite' not in options:
+        flagDict["scan45"] = "scan45"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         errmess(
             'Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n' % (signsfile))
         sys.exit()
@@ -303,16 +367,22 @@ def scaninputline(inputline):
     options['debug'] = debug
     options['verbose'] = verbose
     if dolc == -1 and not signsfile:
+        flagDict["scan46"] = "scan46"
         options['do-lower'] = 0
     else:
+        flagDict["scan47"] = "scan47"
         options['do-lower'] = dolc
     if modulename:
+        flagDict["scan48"] = "scan48"
         options['module'] = modulename
     if signsfile:
+        flagDict["scan49"] = "scan49"
         options['signsfile'] = signsfile
     if onlyfuncs:
+        flagDict["scan50"] = "scan50"
         options['onlyfuncs'] = onlyfuncs
     if skipfuncs:
+        flagDict["scan51"] = "scan51"
         options['skipfuncs'] = skipfuncs
     options['dolatexdoc'] = dolatexdoc
     options['dorestdoc'] = dorestdoc
@@ -320,6 +390,10 @@ def scaninputline(inputline):
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
     options.setdefault('f2cmap_file', None)
+    file.write("============================================\n")
+    for i in flagDict:
+        file.write(i+" ")
+    file.write("============================================\n")
     return files, options
 
 
