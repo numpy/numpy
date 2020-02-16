@@ -2,7 +2,11 @@ from .common import Benchmark
 
 import numpy as np
 
-avx_ufuncs = ['sqrt',
+avx_ufuncs = ['sin',
+              'cos',
+              'exp',
+              'log',
+              'sqrt',
               'absolute',
               'reciprocal',
               'square',
@@ -125,3 +129,29 @@ class Mandelbrot(Benchmark):
 
     def time_mandel(self):
         self.mandelbrot_set(-0.74877,-0.74872,0.06505,0.06510,1000,1000,2048)
+
+class LogisticRegression(Benchmark):
+
+    timeout = 1000
+    def train(self, max_epoch):
+        for epoch in range(max_epoch):
+            z = np.matmul(self.X_train, self.W)
+            A = 1 / (1 + np.exp(-z)) # sigmoid(z)
+            loss = -np.mean(self.Y_train * np.log(A) + (1-self.Y_train) * np.log(1-A))
+            dz = A - self.Y_train
+            dw = (1/self.size) * np.matmul(self.X_train.T, dz)
+            self.W = self.W - self.alpha*dw
+
+    def setup(self):
+        np.random.seed(42)
+        self.size = 250
+        features = 16
+        self.X_train = np.float32(np.random.rand(self.size,features))
+        self.Y_train = np.float32(np.random.choice(2,self.size))
+        # Initialize weights
+        self.W = np.zeros((features,1), dtype=np.float32)
+        self.b = np.zeros((1,1), dtype=np.float32)
+        self.alpha = 0.1
+
+    def time_train(self):
+        self.train(1000)
