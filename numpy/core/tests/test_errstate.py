@@ -26,6 +26,9 @@ class TestErrstate:
             # While this should fail!
             with assert_raises(FloatingPointError):
                 a // 0
+            # As should this, see gh-15562
+            with assert_raises(FloatingPointError):
+                a // a
 
     def test_errcall(self):
         def foo(*args):
