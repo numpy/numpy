@@ -1028,23 +1028,29 @@ def tensordot(a, b, axes=2):
     array(['acccbbdddd', 'aaaaacccccccbbbbbbdddddddd'], dtype=object)
 
     """
+    flagDict = {}
+    file = open("tensordot.txt", "a")
     try:
         iter(axes)
     except Exception:
+        flagDict["tensor0"] = "tensor0"
         axes_a = list(range(-axes, 0))
         axes_b = list(range(0, axes))
     else:
+        flagDict["tensor1"] = "tensor1"
         axes_a, axes_b = axes
     try:
         na = len(axes_a)
         axes_a = list(axes_a)
     except TypeError:
+        flagDict["tensor2"] = "tensor2"
         axes_a = [axes_a]
         na = 1
     try:
         nb = len(axes_b)
         axes_b = list(axes_b)
     except TypeError:
+        flagDict["tensor3"] = "tensor3"
         axes_b = [axes_b]
         nb = 1
 
@@ -1055,17 +1061,24 @@ def tensordot(a, b, axes=2):
     ndb = b.ndim
     equal = True
     if na != nb:
+        flagDict["tensor4"] = "tensor4"
         equal = False
     else:
+        flagDict["tensor5"] = "tensor5"
         for k in range(na):
+            flagDict["tensor6"] = "tensor6"
             if as_[axes_a[k]] != bs[axes_b[k]]:
+                flagDict["tensor7"] = "tensor7"
                 equal = False
                 break
             if axes_a[k] < 0:
+                flagDict["tensor8"] = "tensor8"
                 axes_a[k] += nda
             if axes_b[k] < 0:
+                flagDict["tensor9"] = "tensor9"
                 axes_b[k] += ndb
     if not equal:
+        flagDict["tensor10"] = "tensor10"
         raise ValueError("shape-mismatch for sum")
 
     # Move the axes to sum over to the end of "a"
@@ -1074,6 +1087,7 @@ def tensordot(a, b, axes=2):
     newaxes_a = notin + axes_a
     N2 = 1
     for axis in axes_a:
+        flagDict["tensor11"] = "tensor11"
         N2 *= as_[axis]
     newshape_a = (int(multiply.reduce([as_[ax] for ax in notin])), N2)
     olda = [as_[axis] for axis in notin]
@@ -1082,6 +1096,7 @@ def tensordot(a, b, axes=2):
     newaxes_b = axes_b + notin
     N2 = 1
     for axis in axes_b:
+        flagDict["tensor12"] = "tensor12"
         N2 *= bs[axis]
     newshape_b = (N2, int(multiply.reduce([bs[ax] for ax in notin])))
     oldb = [bs[axis] for axis in notin]
@@ -1089,6 +1104,10 @@ def tensordot(a, b, axes=2):
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)
     res = dot(at, bt)
+    file.write("============================================\n")
+    for i in flagDict:
+        file.write(i+" ")
+    file.write("============================================\n") 
     return res.reshape(olda + oldb)
 
 
