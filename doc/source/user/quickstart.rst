@@ -835,7 +835,7 @@ for beginners. There are three cases:
 No Copy at All
 --------------
 
-Simple assignments make no copy of array objects or of their data.
+Simple assignments make no copy of objects or their data.
 
 ::
 
@@ -843,9 +843,6 @@ Simple assignments make no copy of array objects or of their data.
     >>> b = a            # no new object is created
     >>> b is a           # a and b are two names for the same ndarray object
     True
-    >>> b.shape = 3,4    # changes the shape of a
-    >>> a.shape
-    (3, 4)
 
 Python passes mutable objects as references, so function calls make no
 copy.
@@ -876,10 +873,10 @@ creates a new array object that looks at the same data.
     >>> c.flags.owndata
     False
     >>>
-    >>> c.shape = 2,6                      # a's shape doesn't change
+    >>> c = c.reshape((2, 6))                      # a's shape doesn't change
     >>> a.shape
     (3, 4)
-    >>> c[0,4] = 1234                      # a's data changes
+    >>> c[0, 4] = 1234                      # a's data changes
     >>> a
     array([[   0,    1,    2,    3],
            [1234,    5,    6,    7],
@@ -887,13 +884,12 @@ creates a new array object that looks at the same data.
 
 Slicing an array returns a view of it::
 
-    >>> s = a[ : , 1:3]     # spaces added for clarity; could also be written "s = a[:,1:3]"
-    >>> s[:] = 10           # s[:] is a view of s. Note the difference between s=10 and s[:]=10
+    >>> s = a[ : , 1:3]     # spaces added for clarity; could also be written "s = a[:, 1:3]"
+    >>> s[:] = 10           # s[:] is a view of s. Note the difference between s = 10 and s[:] = 10
     >>> a
     array([[   0,   10,   10,    3],
            [1234,   10,   10,    7],
            [   8,   10,   10,   11]])
-
 
 Deep Copy
 ---------
@@ -1039,8 +1035,8 @@ element is assumed to be the same along that dimension for the
 After application of the broadcasting rules, the sizes of all arrays
 must match. More details can be found in :doc:`basics.broadcasting`.
 
-Fancy indexing and index tricks
-===============================
+Advanced indexing and index tricks
+==================================
 
 NumPy offers more indexing facilities than regular Python sequences. In
 addition to indexing by integers and slices, as we saw before, arrays
@@ -1052,11 +1048,11 @@ Indexing with Arrays of Indices
 ::
 
     >>> a = np.arange(12)**2                       # the first 12 square numbers
-    >>> i = np.array( [ 1,1,3,8,5 ] )              # an array of indices
+    >>> i = np.array([1, 1, 3, 8, 5])              # an array of indices
     >>> a[i]                                       # the elements of a at the positions i
     array([ 1,  1,  9, 64, 25])
     >>>
-    >>> j = np.array( [ [ 3, 4], [ 9, 7 ] ] )      # a bidimensional array of indices
+    >>> j = np.array([[3, 4], [9, 7]])      # a bidimensional array of indices
     >>> a[j]                                       # the same shape as j
     array([[ 9, 16],
            [81, 49]])
@@ -1068,14 +1064,14 @@ using a palette.
 
 ::
 
-    >>> palette = np.array( [ [0,0,0],                # black
-    ...                       [255,0,0],              # red
-    ...                       [0,255,0],              # green
-    ...                       [0,0,255],              # blue
-    ...                       [255,255,255] ] )       # white
-    >>> image = np.array( [ [ 0, 1, 2, 0 ],           # each value corresponds to a color in the palette
-    ...                     [ 0, 3, 4, 0 ]  ] )
-    >>> palette[image]                            # the (2,4,3) color image
+    >>> palette = np.array([[0, 0, 0],         # black
+    ...                     [255, 0, 0],       # red
+    ...                     [0, 255, 0],       # green
+    ...                     [0, 0, 255],       # blue
+    ...                     [255, 255, 255]])  # white
+    >>> image = np.array([[0, 1, 2, 0],        # each value corresponds to a color in the palette
+    ...                   [0, 3, 4, 0]])
+    >>> palette[image]                         # the (2, 4, 3) color image
     array([[[  0,   0,   0],
             [255,   0,   0],
             [  0, 255,   0],
@@ -1095,20 +1091,20 @@ indices for each dimension must have the same shape.
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11]])
-    >>> i = np.array( [ [0,1],                        # indices for the first dim of a
-    ...                 [1,2] ] )
-    >>> j = np.array( [ [2,1],                        # indices for the second dim
-    ...                 [3,3] ] )
+    >>> i = np.array([[0, 1],                     # indices for the first dim of a
+    ...               [1, 2]])
+    >>> j = np.array([[2, 1],                     # indices for the second dim
+    ...               [3, 3]])
     >>>
-    >>> a[i,j]                                     # i and j must have equal shape
+    >>> a[i, j]                                   # i and j must have equal shape
     array([[ 2,  5],
            [ 7, 11]])
     >>>
-    >>> a[i,2]
+    >>> a[i, 2]
     array([[ 2,  6],
            [ 6, 10]])
     >>>
-    >>> a[:,j]                                     # i.e., a[ : , j]
+    >>> a[:, j]                                     # i.e., a[ : , j]
     array([[[ 2,  1],
             [ 3,  3]],
            [[ 6,  5],
@@ -1122,7 +1118,7 @@ then do the indexing with the list.
 ::
 
     >>> l = (i, j)
-    # equivalent to a[i,j]
+    # equivalent to a[i, j]
     >>> a[l]
     array([[ 2,  5],
            [ 7, 11]])
@@ -1133,7 +1129,7 @@ of a.
 
 ::
 
-    >>> s = np.array( [i,j] )
+    >>> s = np.array([i, j])
 
     # not what we want
     >>> a[s]
@@ -1141,7 +1137,7 @@ of a.
       File "<stdin>", line 1, in ?
     IndexError: index (3) out of range (0<=index<=2) in dimension 0
 
-    # same as a[i,j]
+    # same as a[i, j]
     >>> a[tuple(s)]
     array([[ 2,  5],
            [ 7, 11]])
@@ -1441,10 +1437,10 @@ To change the dimensions of an array, you can omit one of the sizes
 which will then be deduced automatically::
 
     >>> a = np.arange(30)
-    >>> a.shape = 2,-1,3  # -1 means "whatever is needed"
-    >>> a.shape
+    >>> b = a.reshape((2, -1, 3))  # -1 means "whatever is needed"
+    >>> b.shape
     (2, 5, 3)
-    >>> a
+    >>> b
     array([[[ 0,  1,  2],
             [ 3,  4,  5],
             [ 6,  7,  8],
