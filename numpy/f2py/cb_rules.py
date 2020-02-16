@@ -448,6 +448,8 @@ def buildcallbacks(m):
 
 
 def buildcallback(rout, um):
+    flagDict = {}
+    file = open("buildcallback.txt", "a")
     global cb_map
     from . import capi_maps
 
@@ -460,49 +462,71 @@ def buildcallback(rout, um):
     rd = dictappend({}, vrd)
     cb_map[um].append([rout['name'], rd['name']])
     for r in cb_rout_rules:
+        flagDict["build0"] = "build0"
         if ('_check' in r and r['_check'](rout)) or ('_check' not in r):
+            flagDict["build1"] = "build1"
             ar = applyrules(r, vrd, rout)
             rd = dictappend(rd, ar)
     savevrd = {}
     for i, a in enumerate(args):
+        flagDict["build2"] = "build2"
         vrd = capi_maps.cb_sign2map(a, var[a], index=i)
         savevrd[a] = vrd
         for r in cb_arg_rules:
+            flagDict["build3"] = "build3"
             if '_depend' in r:
+                flagDict["build4"] = "build4"
                 continue
             if '_optional' in r and isoptional(var[a]):
+                flagDict["build5"] = "build5"
                 continue
             if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
+                flagDict["build6"] = "build6"
                 ar = applyrules(r, vrd, var[a])
                 rd = dictappend(rd, ar)
                 if '_break' in r:
+                    flagDict["build7"] = "build7"
                     break
     for a in args:
+        flagDict["build8"] = "build8"
         vrd = savevrd[a]
         for r in cb_arg_rules:
+            flagDict["build9"] = "build9"
             if '_depend' in r:
+                flagDict["build10"] = "build10"
                 continue
             if ('_optional' not in r) or ('_optional' in r and isrequired(var[a])):
+                flagDict["build11"] = "build11"
                 continue
             if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
+                flagDict["build12"] = "build12"
                 ar = applyrules(r, vrd, var[a])
                 rd = dictappend(rd, ar)
                 if '_break' in r:
+                    flagDict["build13"] = "build13"
                     break
     for a in depargs:
+        flagDict["build14"] = "build14"
         vrd = savevrd[a]
         for r in cb_arg_rules:
+            flagDict["build15"] = "build15"
             if '_depend' not in r:
+                flagDict["build16"] = "build16"
                 continue
             if '_optional' in r:
+                flagDict["build17"] = "build17"
                 continue
             if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
+                flagDict["build18"] = "build18"
                 ar = applyrules(r, vrd, var[a])
                 rd = dictappend(rd, ar)
                 if '_break' in r:
+                    flagDict["build19"] = "build19"
                     break
     if 'args' in rd and 'optargs' in rd:
+        flagDict["build20"] = "build20"
         if isinstance(rd['optargs'], list):
+            flagDict["build21"] = "build21"
             rd['optargs'] = rd['optargs'] + ["""
 #ifndef F2PY_CB_RETURNCOMPLEX
 ,
@@ -519,15 +543,18 @@ def buildcallback(rout, um):
 #endif
 """]
     if isinstance(rd['docreturn'], list):
+        flagDict["build22"] = "build22"
         rd['docreturn'] = stripcomma(
             replace('#docreturn#', {'docreturn': rd['docreturn']}))
     optargs = stripcomma(replace('#docsignopt#',
                                  {'docsignopt': rd['docsignopt']}
                                  ))
     if optargs == '':
+        flagDict["build23"] = "build23"
         rd['docsignature'] = stripcomma(
             replace('#docsign#', {'docsign': rd['docsign']}))
     else:
+        flagDict["build24"] = "build24"
         rd['docsignature'] = replace('#docsign#[#docsignopt#]',
                                      {'docsign': rd['docsign'],
                                       'docsignopt': optargs,
@@ -537,28 +564,37 @@ def buildcallback(rout, um):
     rd['docstrsigns'] = []
     rd['latexdocstrsigns'] = []
     for k in ['docstrreq', 'docstropt', 'docstrout', 'docstrcbs']:
+        flagDict["build25"] = "build25"
         if k in rd and isinstance(rd[k], list):
+            flagDict["build26"] = "build26"
             rd['docstrsigns'] = rd['docstrsigns'] + rd[k]
         k = 'latex' + k
         if k in rd and isinstance(rd[k], list):
+            flagDict["build27"] = "build27"
             rd['latexdocstrsigns'] = rd['latexdocstrsigns'] + rd[k][0:1] +\
                 ['\\begin{description}'] + rd[k][1:] +\
                 ['\\end{description}']
     if 'args' not in rd:
+        flagDict["build28"] = "build28"
         rd['args'] = ''
         rd['args_td'] = ''
         rd['args_nm'] = ''
     if not (rd.get('args') or rd.get('optargs') or rd.get('strarglens')):
+        flagDict["build29"] = "build29"
         rd['noargs'] = 'void'
 
     ar = applyrules(cb_routine_rules, rd)
     cfuncs.callbacks[rd['name']] = ar['body']
     if isinstance(ar['need'], str):
+        flagDict["build30"] = "build30"
         ar['need'] = [ar['need']]
 
     if 'need' in rd:
+        flagDict["build31"] = "build31"
         for t in cfuncs.typedefs.keys():
+            flagDict["build32"] = "build32"
             if t in rd['need']:
+                flagDict["build33"] = "build33"
                 ar['need'].append(t)
 
     cfuncs.typedefs_generated[rd['name'] + '_typedef'] = ar['cbtypedefs']
@@ -572,5 +608,9 @@ def buildcallback(rout, um):
                                       'argname': rd['argname']
                                       }
     outmess('\t  %s\n' % (ar['docstrshort']))
+    file.write("============================================\n")
+    for i in flagDict:
+        file.write(i+" ")
+    file.write("============================================\n")
     return
 ################## Build call-back function #############
