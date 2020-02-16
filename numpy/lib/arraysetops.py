@@ -261,6 +261,36 @@ def unique(ar, return_index=False, return_inverse=False,
         ret = _unique1d(ar, return_index, return_inverse, return_counts)
         return _unpack_tuple(ret)
 
+    if ar.size == 0:
+        # if there's no elements (at least one axis is 0), the reshaping and
+        # viewing doesn't work, but there's also no data, so those
+        # manipulations aren't needed to get right answer.
+
+        axis_len = ar.shape[axis]
+        if axis_len == 0:
+            # there's no elements along this axis, so there's no unique
+            # elements:
+            num_empties = return_index + return_inverse + return_counts
+            output = (ar,) + (np.array([], dtype=np.intp),) * num_empties
+        else:
+            # there are elements along this axis. Each element is empty, so
+            # there's a single unique example of this element
+            output_shape = list(ar.shape)
+            output_shape[axis] = 1
+
+            output = (np.empty(shape=output_shape, dtype=ar.dtype),)
+            if return_index:
+                # first index is the first occurance of an empty element
+                output += (np.array([0], dtype=np.intp),)
+            if return_inverse:
+                # all `ar` elements are equal to the 0th element of the output
+                output += (np.zeros(axis_len, dtype=np.intp),)
+            if return_counts:
+                # the empty element occurs `axis_len` times
+                output += (np.array([axis_len], dtype=np.intp),)
+
+        return _unpack_tuple(output)
+
     # axis was specified and not None
     try:
         ar = np.moveaxis(ar, axis, 0)
@@ -268,38 +298,22 @@ def unique(ar, return_index=False, return_inverse=False,
         # this removes the "axis1" or "axis2" prefix from the error message
         raise np.AxisError(axis, ar.ndim)
 
+    # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
+    ar = ar.reshape(orig_shape[0], -1)
+    ar = np.ascontiguousarray(ar)
+    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
-    if ar.size > 0:
-        # Must reshape to a contiguous 2D array for this to work...
-        ar = ar.reshape(orig_shape[0], -1)
-        ar = np.ascontiguousarray(ar)
-
-        dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
-
-        try:
-            consolidated = ar.view(dtype)
-        except TypeError:
-            # There's no good way to do this for object arrays, etc...
-            msg = 'The axis argument to unique is not supported for dtype {dt}'
-            raise TypeError(msg.format(dt=ar.dtype))
-
-        # there will be data, so the number of unique elements can be inferred
-        uniq_element_count = -1
-    else:
-        # if there's no elements (at least, one axis is 0), the reshaping and
-        # viewing doesn't work, but there's also no data, so those
-        # manipulations aren't needed to get right answer (everything
-        # empty). (This doesn't return directly because getting the correct
-        # shape and pieces of output is a little subtle.)
-        consolidated = ar
-        # no data means reshape cannot infer the number of unique elements, but
-        # the number is easy to 'compute' manually:
-        uniq_element_count = 0
+    try:
+        consolidated = ar.view(dtype)
+    except TypeError:
+        # There's no good way to do this for object arrays, etc...
+        msg = 'The axis argument to unique is not supported for dtype {dt}'
+        raise TypeError(msg.format(dt=ar.dtype))
 
     def reshape_uniq(uniq):
         uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(uniq_element_count, *orig_shape[1:])
+        uniq = uniq.reshape(-1, *orig_shape[1:])
         uniq = np.moveaxis(uniq, 0, axis)
         return uniq
 
