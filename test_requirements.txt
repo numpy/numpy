@@ -1,4 +1,4 @@
-cython==0.29.14
+cython==0.29.15
 hypothesis==5.3.0
 pytest==5.3.5
 pytz==2019.3
