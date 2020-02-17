@@ -329,6 +329,10 @@ def scaninputline(inputline):
                 files.append(l)
             except IOError as detail:
                 flagDict["scan38"] = "scan38"
+                file.write("============================================\n")
+                for i in flagDict:
+                    file.write(i+" ")
+                file.write("============================================\n")
                 errmess('IOError: %s. Skipping file "%s".\n' %
                         (str(detail), l))
         elif f == -1:
