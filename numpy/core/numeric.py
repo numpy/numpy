@@ -1079,6 +1079,10 @@ def tensordot(a, b, axes=2):
                 axes_b[k] += ndb
     if not equal:
         flagDict["tensor10"] = "tensor10"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise ValueError("shape-mismatch for sum")
 
     # Move the axes to sum over to the end of "a"
