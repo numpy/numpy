@@ -23,12 +23,12 @@ def get_arch():
         ret = 'windows'
     elif platform.system() == 'Darwin':
         ret = 'darwin'
-    elif 'x86' in platform.uname().machine:
-        # What do 32 bit machines report?
-        # If they are a docker, they report x86_64
-        ret = 'x86'
     else:
         ret = platform.uname().machine
+        # What do 32 bit machines report?
+        # If they are a docker, they report x86_64 or i686
+        if 'x86' in ret or ret == 'i686':
+            ret = 'x86'
     assert ret in ARCHITECTURES
     return ret
 
