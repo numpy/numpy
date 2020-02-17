@@ -2546,6 +2546,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
             axis = int(axis)
         except Exception:
             flagDict["norm9"] = "norm9"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             raise TypeError("'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 
@@ -2596,6 +2600,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 ord + 1
             except TypeError:
                 flagDict["norm17"] = "norm17"
+                file.write("============================================\n")
+                for i in flagDict:
+                    file.write(i+" ")
+                file.write("============================================\n")
                 raise ValueError("Invalid norm order for vectors.")
             absx = abs(x)
             absx **= ord
@@ -2613,6 +2621,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
         col_axis = normalize_axis_index(col_axis, nd)
         if row_axis == col_axis:
             flagDict["norm19"] = "norm19"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             raise ValueError('Duplicate axes given.')
         if ord == 2:
             flagDict["norm20"] = "norm20"
@@ -2652,6 +2664,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret = _multi_svd_norm(x, row_axis, col_axis, sum)
         else:
             flagDict["norm31"] = "norm31"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             raise ValueError("Invalid norm order for matrices.")
         if keepdims:
             flagDict["norm32"] = "norm32"
@@ -2665,6 +2681,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
         file.write("============================================\n")    
         return ret
     else:
+        flagDict["norm33"] = "norm33"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise ValueError("Improper number of dimensions to norm.")
 
 
