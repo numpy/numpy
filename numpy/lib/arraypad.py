@@ -745,6 +745,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     if not pad_width.dtype.kind == 'i':
         flagDict["pad0"] = "pad0"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise TypeError('`pad_width` must be of integral type.')
 
     # Broadcast to shape (array.ndim, 2)
@@ -795,9 +799,17 @@ def pad(array, pad_width, mode='constant', **kwargs):
         unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     except KeyError:
         flagDict["pad4"] = "pad4"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise ValueError("mode '{}' is not supported".format(mode))
     if unsupported_kwargs:
         flagDict["pad5"] = "pad5"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise ValueError("unsupported keyword arguments for mode '{}': {}"
                          .format(mode, unsupported_kwargs))
 
@@ -833,6 +845,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
             flagDict["pad10"] = "pad10"
             if array.shape[axis] == 0 and any(width_pair):
                 flagDict["pad11"] = "pad11"
+                file.write("============================================\n")
+                for i in flagDict:
+                    file.write(i+" ")
+                file.write("============================================\n")
                 raise ValueError(
                     "can't extend empty axis {} using modes other than "
                     "'constant' or 'empty'".format(axis)
