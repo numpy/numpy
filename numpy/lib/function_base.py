@@ -768,7 +768,7 @@ def _gradient_dispatcher(f, *varargs, axis=None, edge_order=None):
 
 
 @array_function_dispatch(_gradient_dispatcher)
-def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
+def gradient(f, *varargs, axis=None, edge_order=1):
     """
     Return the gradient of an N-dimensional array.
 
@@ -943,62 +943,83 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
             S0025-5718-1988-0935077-0/S0025-5718-1988-0935077-0.pdf>`_.
     """
     file = open("gradient.txt", "a")
+    flagDict = {}
 
     f = np.asanyarray(f)
     N = f.ndim  # number of dimensions
 
     if axis is None:
         axes = tuple(range(N))
-        flagList["gradient0"] = "gradient0"
+        flagDict["gradient0"] = "gradient0"
     else:
         axes = _nx.normalize_axis_tuple(axis, N)
-        flagList["gradient1"] = "gradient1"
+        flagDict["gradient1"] = "gradient1"
 
     len_axes = len(axes)
     n = len(varargs)
     if n == 0:
         # no spacing argument - use 1 in all axes
         dx = [1.0] * len_axes
-        flagList["gradient2"] = "gradient2"
+        flagDict["gradient2"] = "gradient2"
     elif n == 1 and np.ndim(varargs[0]) == 0:
         # single scalar for all axes
         dx = varargs * len_axes
-        flagList["gradient3"] = "gradient3"
+        flagDict["gradient3"] = "gradient3"
     elif n == len_axes:
         # scalar or 1d array for each axis
         dx = list(varargs)
-        flagList["gradient4"]="gradient4"
+        flagDict["gradient4"]="gradient4"
         for i, distances in enumerate(dx):
             distances = np.asanyarray(distances)
-            flagList["gradient5"]="gradient5"
+            flagDict["gradient5"]="gradient5"
             if distances.ndim == 0:
-                flagList["gradient6"]="gradient6"
+                flagDict["gradient6"]="gradient6"
                 continue
             elif distances.ndim != 1:
-                flagList["gradient7"]="gradient7"
+                flagDict["gradient7"]="gradient7"
+                file.write("============================================\n")
+                for i in flagDict:
+                    file.write(i+" ")
+                file.write("============================================\n")
+                file.close()
                 raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
-                flagList["gradient8"]="gradient8"
+                flagDict["gradient8"]="gradient8"
+                file.write("============================================\n")
+                for i in flagDict:
+                    file.write(i+" ")
+                file.write("============================================\n")
+                file.close()
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
             if np.issubdtype(distances.dtype, np.integer):
                 # Convert numpy integer types to float64 to avoid modular
                 # arithmetic in np.diff(distances).
-                flagList["gradient9"]="gradient9"
+                flagDict["gradient9"]="gradient9"
                 distances = distances.astype(np.float64)
             diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
             if (diffx == diffx[0]).all():
-                flagList["gradient10"]="gradient10"
+                flagDict["gradient10"]="gradient10"
                 diffx = diffx[0]
             dx[i] = diffx
     else:
-        flagList["gradient11"]="gradient11"
+        flagDict["gradient11"]="gradient11"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
+        file.close()
         raise TypeError("invalid number of arguments")
 
     if edge_order > 2:
-        flagList["gradient12"]="gradient12"
+        flagDict["gradient12"]="gradient12"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
+        file.close()
         raise ValueError("'edge_order' greater than 2 not supported")
 
     # use central differences on interior and one-sided differences on the
@@ -1014,31 +1035,36 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
 
     otype = f.dtype
     if otype.type is np.datetime64:
-        flagList["gradient13"]="gradient13"
+        flagDict["gradient13"]="gradient13"
         # the timedelta dtype with the same unit information
         otype = np.dtype(otype.name.replace('datetime', 'timedelta'))
         # view as timedelta to allow addition
         f = f.view(otype)
     elif otype.type is np.timedelta64:
-        flagList["gradient14"]="gradient14"
+        flagDict["gradient14"]="gradient14"
         pass
     elif np.issubdtype(otype, np.inexact):
-        flagList["gradient15"]="gradient15"
+        flagDict["gradient15"]="gradient15"
         pass
     else:
-        flagList["gradient16"]="gradient16"
+        flagDict["gradient16"]="gradient16"
         # All other types convert to floating point.
         # First check if f is a numpy integer type; if so, convert f to float64
         # to avoid modular arithmetic when computing the changes in f.
         if np.issubdtype(otype, np.integer):
-            flagList["gradient17"]="gradient17"
+            flagDict["gradient17"]="gradient17"
             f = f.astype(np.float64)
         otype = np.float64
 
     for axis, ax_dx in zip(axes, dx):
-        flagList["gradient18"]="gradient18"
+        flagDict["gradient18"]="gradient18"
         if f.shape[axis] < edge_order + 1:
-            flagList["gradient19"]="gradient19"
+            flagDict["gradient19"]="gradient19"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
+            file.close()
             raise ValueError(
                 "Shape of array too small to calculate a numerical gradient, "
                 "at least (edge_order + 1) elements are required.")
@@ -1055,10 +1081,10 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            flagList["gradient20"]="gradient20"
+            flagDict["gradient20"]="gradient20"
             out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
         else:
-            flagList["gradient21"]="gradient21"
+            flagDict["gradient21"]="gradient21"
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
             a = -(dx2)/(dx1 * (dx1 + dx2))
@@ -1073,7 +1099,7 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
-            flagList["gradient22"]="gradient22"
+            flagDict["gradient22"]="gradient22"
             slice1[axis] = 0
             slice2[axis] = 1
             slice3[axis] = 0
@@ -1090,18 +1116,18 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
 
         # Numerical differentiation: 2nd order edges
         else:
-            flagList["gradient23"]="gradient23"
+            flagDict["gradient23"]="gradient23"
             slice1[axis] = 0
             slice2[axis] = 0
             slice3[axis] = 1
             slice4[axis] = 2
             if uniform_spacing:
-                flagList["gradient24"]="gradient24"
+                flagDict["gradient24"]="gradient24"
                 a = -1.5 / ax_dx
                 b = 2. / ax_dx
                 c = -0.5 / ax_dx
             else:
-                flagList["gradient25"]="gradient25"
+                flagDict["gradient25"]="gradient25"
                 dx1 = ax_dx[0]
                 dx2 = ax_dx[1]
                 a = -(2. * dx1 + dx2)/(dx1 * (dx1 + dx2))
@@ -1115,12 +1141,12 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
             slice3[axis] = -2
             slice4[axis] = -1
             if uniform_spacing:
-                flagList["gradient26"]="gradient26"
+                flagDict["gradient26"]="gradient26"
                 a = 0.5 / ax_dx
                 b = -2. / ax_dx
                 c = 1.5 / ax_dx
             else:
-                flagList["gradient27"]="gradient27"
+                flagDict["gradient27"]="gradient27"
                 dx1 = ax_dx[-2]
                 dx2 = ax_dx[-1]
                 a = (dx2) / (dx1 * (dx1 + dx2))
@@ -1139,16 +1165,18 @@ def gradient(f, *varargs, axis=None, edge_order=1, flagList = {}):
 
     file.write("============================================\n")
     if len_axes == 1:
-        flagList["gradient28"]="gradient28"
-        for i in flagList:
+        flagDict["gradient28"]="gradient28"
+        for i in flagDict:
             file.write(i+" ")
         file.write("============================================\n")
+        file.close()
         return outvals[0]
     else:
-        flagList["gradient29"]="gradient29"
-        for i in flagList:
+        flagDict["gradient29"]="gradient29"
+        for i in flagDict:
             file.write(i+" ")
         file.write("============================================\n")
+        file.close()
         return outvals
 
 
