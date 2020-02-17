@@ -595,18 +595,38 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     # check arguments.
     if deg < 0:
         flagDict["poly0"] = "poly0"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         flagDict["poly1"] = "poly1"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise TypeError("expected 1D vector for x")
     if x.size == 0:
         flagDict["poly2"] = "poly2"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise TypeError("expected non-empty vector for x")
     if y.ndim < 1 or y.ndim > 2:
         flagDict["poly3"] = "poly3"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise TypeError("expected 1D or 2D array for y")
     if x.shape[0] != y.shape[0]:
         flagDict["poly4"] = "poly4"
+        file.write("============================================\n")
+        for i in flagDict:
+            file.write(i+" ")
+        file.write("============================================\n")
         raise TypeError("expected x and y to have same length")
 
     # set rcond
@@ -624,9 +644,17 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         w = NX.asarray(w) + 0.0
         if w.ndim != 1:
             flagDict["poly7"] = "poly7"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             raise TypeError("expected a 1-d array for weights")
         if w.shape[0] != y.shape[0]:
             flagDict["poly8"] = "poly8"
+            file.write("============================================\n")
+            for i in flagDict:
+                file.write(i+" ")
+            file.write("============================================\n")
             raise TypeError("expected w and y to have the same length")
         lhs *= w[:, NX.newaxis]
         if rhs.ndim == 2:
@@ -666,6 +694,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             flagDict["poly15"] = "poly15"
             if len(x) <= order:
                 flagDict["poly16"] = "poly16"
+                file.write("============================================\n")
+                for i in flagDict:
+                    file.write(i+" ")
+                file.write("============================================\n")
                 raise ValueError("the number of data points must exceed order "
                                  "to scale the covariance matrix")
             # note, this used to be: fac = resids / (len(x) - order - 2.0)
