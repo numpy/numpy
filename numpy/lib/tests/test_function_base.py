@@ -905,6 +905,8 @@ class TestGradient:
         assert_raises(ValueError, gradient, f_2d, x, np.ones(2))
         assert_raises(ValueError, gradient, f_2d, 1, np.ones(2))
         assert_raises(ValueError, gradient, f_2d, np.ones(2), np.ones(2))
+        # test to see if edge_order > 2 correctly gives valueError
+        assert_raises(ValueError, gradient, f_2d, edge_order=3)
         # wrong number of arguments
         assert_raises(TypeError, gradient, f_2d, x)
         assert_raises(TypeError, gradient, f_2d, x, axis=(0,1))
