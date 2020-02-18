@@ -3491,5 +3491,5 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
     .type_num = -1,
     .kind = '\0',
     .is_abstract = 1,
-    .is_flexible = 0,
+    .is_parametric = 0,
 };

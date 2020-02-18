@@ -82,11 +82,11 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
         PyObject *args, PyObject *kwargs)
 {
     /* TODO: This should allow endianess and possibly metadata */
-    if (self->is_flexible) {
-        /* reject flexible ones since we would need to get unit, etc. info */
+    if (self->is_parametric) {
+        /* reject parametric ones since we would need to get unit, etc. info */
         PyErr_Format(PyExc_TypeError,
-                "Preliminary-API: Flexible legacy DType '%S' can only be "
-                "instantiated using `np.dtype(...)`", self);
+                "Preliminary-API: Flexible/Parametric legacy DType '%S' can "
+                "only be instantiated using `np.dtype(...)`", self);
         return NULL;
     }
 
@@ -220,10 +220,10 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
-        dtype_class->is_flexible = NPY_TRUE;
+        dtype_class->is_parametric = NPY_TRUE;
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
-        dtype_class->is_flexible = NPY_TRUE;
+        dtype_class->is_parametric = NPY_TRUE;
         dtype_class->itemsize = -1;  /* itemsize is not fixed */
     }
 
@@ -240,11 +240,11 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
  */
 static PyMemberDef dtypemeta_members[] = {
         {"_abstract",
-                T_BYTE, offsetof(PyArray_DTypeMeta, is_abstract), READONLY, NULL},
+                T_BYTE, offsetof(PyArray_DTypeMeta, is_abstract),   READONLY, NULL},
         {"type",
                 T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
-        {"_flexible",
-                T_BYTE, offsetof(PyArray_DTypeMeta, is_flexible), READONLY, NULL},
+        {"_parametric",
+                T_BYTE, offsetof(PyArray_DTypeMeta, is_parametric), READONLY, NULL},
         {NULL, 0, 0, 0, NULL},
 };
 

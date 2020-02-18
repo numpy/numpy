@@ -1840,9 +1840,9 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
 
         /*
          * TODO: Update above comment as necessary.
-         * Most DTypes will have a singleton default instance, for the flexible
-         * legacy DTypes (bytes, string, void, datetime) this may be a pointer
-         * to the *prototype* instance?
+         * Most DTypes will have a singleton default instance, for the
+         * parametric legacy DTypes (bytes, string, void, datetime) this
+         * may be a pointer to the *prototype* instance?
          */
         PyArray_Descr *singleton;
         /*
@@ -1865,7 +1865,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         char type;
         /* flags describing data type */
         char flags;
-        npy_bool is_flexible;
+        npy_bool is_parametric;
         /* whether the DType can be instantiated (i.e. np.dtype cannot) */
         npy_bool is_abstract;
         /* number representing this type */

@@ -1094,12 +1094,27 @@ class TestFromDTypeAttribute:
 
 class TestDTypeClasses:
     @pytest.mark.parametrize("dtype", list(np.typecodes['All']) + [rational])
-    def test_dtypes_are_subclasses(self, dtype):
+    def test_basic_dtypes_subclass_properties(self, dtype):
+        # Note: Except for the isinstance and type checks, these attributes
+        #       are considered currently private and may change.
         dtype = np.dtype(dtype)
         assert isinstance(dtype, np.dtype)
         assert type(dtype) is not np.dtype
         assert type(dtype).__name__ == f"dtype[{dtype.type.__name__}]"
         assert type(dtype).__module__ == "numpy"
+        assert not type(dtype)._abstract
+
+        parametric = (np.void, np.str_, np.bytes_, np.datetime64, np.timedelta64)
+        if dtype.type not in parametric:
+            assert not type(dtype)._parametric
+            assert type(dtype)() is dtype
+        else:
+            assert type(dtype)._parametric
+            with assert_raises(TypeError):
+                type(dtype)()
+
+    def test_dtype_superclass(self):
+        assert np.dtype._abstract
 
 
 class TestFromCTypes:
