@@ -147,13 +147,27 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
      * In particular our own DTypes can be true static declarations.
      * However, this function remains necessary for legacy user dtypes.
      */
-    char *tp_name = PyDataMem_NEW(100);
+
+    const char *scalar_name = descr->typeobj->tp_name;
+    /*
+     * We have to take only the name, and ignore the module to get
+     * a reasonable __name__, since static types are limited in this regard
+     * (this is not ideal, but not a big issue in practice).
+     * This is what Python does to print __name__ for static types.
+     */
+    const char *dot = strrchr(scalar_name, '.');
+    if (dot) {
+        scalar_name = dot + 1;
+    }
+    ssize_t name_length = strlen(scalar_name) + 14;
+
+    char *tp_name = malloc(name_length);
     if (tp_name == NULL) {
         PyErr_NoMemory();
         return -1;
     }
-    snprintf(tp_name, 100, "numpy.dtype[%s]",
-             descr->typeobj->tp_name);
+
+    snprintf(tp_name, name_length, "numpy.dtype[%s]", scalar_name);
 
     PyArray_DTypeMeta *dtype_class = malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
@@ -176,7 +190,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             .tp_basicsize = sizeof(PyArray_Descr),
             .tp_flags = Py_TPFLAGS_DEFAULT,
             .tp_base = &PyArrayDescr_Type,
-            .tp_new = (newfunc)legacy_dtype_default_new
+            .tp_new = (newfunc)legacy_dtype_default_new,
         },},
         .is_legacy = 1,
         .is_abstract = 0, /* this is a concrete DType */

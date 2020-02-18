@@ -1091,6 +1091,17 @@ class TestFromDTypeAttribute:
         with pytest.raises(RecursionError):
             np.dtype(dt(1))
 
+
+class TestDTypeClasses:
+    @pytest.mark.parametrize("dtype", list(np.typecodes['All']) + [rational])
+    def test_dtypes_are_subclasses(self, dtype):
+        dtype = np.dtype(dtype)
+        assert isinstance(dtype, np.dtype)
+        assert type(dtype) is not np.dtype
+        assert type(dtype).__name__ == f"dtype[{dtype.type.__name__}]"
+        assert type(dtype).__module__ == "numpy"
+
+
 class TestFromCTypes:
 
     @staticmethod
