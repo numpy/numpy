@@ -1304,6 +1304,10 @@ class _TestNormGeneral(_TestNormBase):
         # Vector norms.
         # Compare the use of `axis` with computing the norm of each row
         # or column separately.
+        
+        # test axis type error
+        assert_raises(TypeError, norm, A, 0, 'axis')
+        
         A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
         for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
             expected0 = [norm(A[:, k], ord=order) for k in range(A.shape[1])]
