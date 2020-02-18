@@ -2501,32 +2501,35 @@ def norm(x, ord=None, axis=None, keepdims=False):
     (3.7416573867739413, 11.224972160321824)
 
     """
+
+    # numbered branches
+
     flagDict = {}
     file = open("norm.txt", "a")
     x = asarray(x)
 
-    if not issubclass(x.dtype.type, (inexact, object_)):
+    if not issubclass(x.dtype.type, (inexact, object_)): #1
         flagDict["norm0"] = "norm0"
         x = x.astype(float)
 
     # Immediately handle some default, simple, fast, and common cases.
-    if axis is None:
+    if axis is None: #2
         flagDict["norm1"] = "norm1"
         ndim = x.ndim
-        if ((ord is None) or
-            (ord in ('f', 'fro') and ndim == 2) or
-            (ord == 2 and ndim == 1)):
+        if ((ord is None) or #2
+            (ord in ('f', 'fro') and ndim == 2) or #3
+            (ord == 2 and ndim == 1)): #4
             flagDict["norm2"] = "norm2"
 
             x = x.ravel(order='K')
-            if isComplexType(x.dtype.type):
+            if isComplexType(x.dtype.type): #5
                 flagDict["norm3"] = "norm3"
                 sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
-            else:
+            else: #6
                 flagDict["norm4"] = "norm4"
                 sqnorm = dot(x, x)
             ret = sqrt(sqnorm)
-            if keepdims:
+            if keepdims: #7
                 flagDict["norm5"] = "norm5"
                 ret = ret.reshape(ndim*[1])
             file.write("============================================\n")
@@ -2537,10 +2540,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     # Normalize the `axis` argument to a tuple.
     nd = x.ndim
-    if axis is None:
+    if axis is None: #8
         flagDict["norm7"] = "norm7"
         axis = tuple(range(nd))
-    elif not isinstance(axis, tuple):
+    elif not isinstance(axis, tuple): #9
         flagDict["norm8"] = "norm8"
         try:
             axis = int(axis)
@@ -2553,31 +2556,31 @@ def norm(x, ord=None, axis=None, keepdims=False):
             raise TypeError("'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 
-    if len(axis) == 1:
+    if len(axis) == 1: #10
         flagDict["norm10"] = "norm10"
-        if ord == Inf:
+        if ord == Inf: #11
             flagDict["norm11"] = "norm11"
             file.write("============================================\n")
-            for i in flagDict:
+            for i in flagDict: 
                 file.write(i+" ")
             file.write("============================================\n")
             return abs(x).max(axis=axis, keepdims=keepdims)
-        elif ord == -Inf:
+        elif ord == -Inf: #12
             flagDict["norm12"] = "norm12"
             file.write("============================================\n")
             for i in flagDict:
                 file.write(i+" ")
             file.write("============================================\n")
             return abs(x).min(axis=axis, keepdims=keepdims)
-        elif ord == 0:
+        elif ord == 0: #13
             # Zero norm
             flagDict["norm13"] = "norm13"
             file.write("============================================\n")
-            for i in flagDict:
+            for i in flagDict: 
                 file.write(i+" ")
             file.write("============================================\n")
             return (x != 0).astype(x.real.dtype).sum(axis=axis, keepdims=keepdims)
-        elif ord == 1:
+        elif ord == 1: #14
             # special case for speedup
             flagDict["norm14"] = "norm14"
             file.write("============================================\n")
@@ -2585,16 +2588,16 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 file.write(i+" ")
             file.write("============================================\n")
             return add.reduce(abs(x), axis=axis, keepdims=keepdims)
-        elif ord is None or ord == 2:
+        elif ord is None or ord == 2: #15
             # special case for speedup
             flagDict["norm15"] = "norm15"
             s = (x.conj() * x).real
             file.write("============================================\n")
-            for i in flagDict:
+            for i in flagDict: 
                 file.write(i+" ")
             file.write("============================================\n")
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
-        else:
+        else: #16
             flagDict["norm16"] = "norm16"
             try:
                 ord + 1
@@ -2614,62 +2617,62 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 file.write(i+" ")
             file.write("============================================\n")
             return ret
-    elif len(axis) == 2:
+    elif len(axis) == 2: #17
         flagDict["norm18"] = "norm18"
         row_axis, col_axis = axis
         row_axis = normalize_axis_index(row_axis, nd)
         col_axis = normalize_axis_index(col_axis, nd)
-        if row_axis == col_axis:
+        if row_axis == col_axis: #18
             flagDict["norm19"] = "norm19"
             file.write("============================================\n")
             for i in flagDict:
                 file.write(i+" ")
             file.write("============================================\n")
             raise ValueError('Duplicate axes given.')
-        if ord == 2:
+        if ord == 2: #19
             flagDict["norm20"] = "norm20"
             ret =  _multi_svd_norm(x, row_axis, col_axis, amax)
-        elif ord == -2:
+        elif ord == -2: #20
             flagDict["norm21"] = "norm21"
             ret = _multi_svd_norm(x, row_axis, col_axis, amin)
-        elif ord == 1:
+        elif ord == 1: #21
             flagDict["norm22"] = "norm22"
-            if col_axis > row_axis:
+            if col_axis > row_axis: #22
                 flagDict["norm23"] = "norm23"
                 col_axis -= 1
             ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
-        elif ord == Inf:
+        elif ord == Inf: #23
             flagDict["norm6"] = "norm6"
-            if row_axis > col_axis:
+            if row_axis > col_axis: #24
                 flagDict["norm24"] = "norm24"
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
-        elif ord == -1:
+        elif ord == -1: #25
             flagDict["norm25"] = "norm25"
-            if col_axis > row_axis:
+            if col_axis > row_axis: #26
                 flagDict["norm26"] = "norm26"
                 col_axis -= 1
             ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
-        elif ord == -Inf:
+        elif ord == -Inf: #27
             flagDict["norm27"] = "norm27"
-            if row_axis > col_axis:
+            if row_axis > col_axis: #28
                 flagDict["norm28"] = "norm28"
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
-        elif ord in [None, 'fro', 'f']:
+        elif ord in [None, 'fro', 'f']: #29
             flagDict["norm29"] = "norm29"
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
-        elif ord == 'nuc':
+        elif ord == 'nuc': #30
             flagDict["norm30"] = "norm30"
             ret = _multi_svd_norm(x, row_axis, col_axis, sum)
-        else:
+        else: #31
             flagDict["norm31"] = "norm31"
             file.write("============================================\n")
             for i in flagDict:
                 file.write(i+" ")
             file.write("============================================\n")
             raise ValueError("Invalid norm order for matrices.")
-        if keepdims:
+        if keepdims: #32
             flagDict["norm32"] = "norm32"
             ret_shape = list(x.shape)
             ret_shape[axis[0]] = 1
@@ -2680,7 +2683,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             file.write(i+" ")
         file.write("============================================\n")    
         return ret
-    else:
+    else: #33
         flagDict["norm33"] = "norm33"
         file.write("============================================\n")
         for i in flagDict:
