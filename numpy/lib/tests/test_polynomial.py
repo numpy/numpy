@@ -135,6 +135,12 @@ class TestPolynomial:
         # test when size of x=0
         assert_raises(TypeError, np.polyfit, [], [], deg=0)
 
+        # test when w is not 1D
+        assert_raises(TypeError, np.polyfit, [1,2],[1,2],deg=0,  w=[[1,2],[1,2]])
+
+        #test when w is declared but not same lengt as Y
+        assert_raises(TypeError, np.polyfit, [1,2], [1,2],deg=0,w=[1,2,3])
+
 
         # check 1D case
         m, cov = np.polyfit(x, y+err, 2, cov=True)
