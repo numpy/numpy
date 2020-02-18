@@ -32,8 +32,17 @@ Importing the numpy c-extensions failed.
   1. Check that you expected to use Python%d.%d from "%s",
      and that you have no directories in your PATH or PYTHONPATH that can
      interfere with the Python and numpy version "%s" you're trying to use.
-  2. If (1) looks fine, you can open a new issue at
-     https://github.com/numpy/numpy/issues.  Please include details on:
+  2. If you have installed numpy within a virtual environment (using e.g.
+     conda, pipenv, virtualenv, etc.), please ensure that the environment is
+     activated. Re-check step 1 to verify that the paths and Python executable
+     are correct within the activated environment.
+  3. If you are using Python/numpy within an IDE (e.g. PyCharm, VSCode,
+     Spyder, etc.) please verify that the IDE has been properly configured.
+     If using numpy within a virtual environment, verify that the correct
+     environment has been activated within the IDE.
+  4. If the problem is not resolved by the above steps, you can open a new
+     issue at https://github.com/numpy/numpy/issues.  Please include details
+     on:
      - how you installed Python
      - how you installed numpy
      - your operating system
