@@ -28,34 +28,32 @@ stages:
 
 - stage: ComprehensiveTests
   jobs:
-  - job: Linux_Python_36_32bit_full_with_asserts
+  - job: Linux_Python_38_32bit_full_with_asserts
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - script: |
-            docker pull i386/ubuntu:bionic
-            docker run -v $(pwd):/numpy i386/ubuntu:bionic /bin/bash -c "cd numpy && \
-            apt-get -y update && \
-            apt-get -y install python3.6-dev python3-pip locales python3-certifi && \
-            locale-gen fr_FR && update-locale && \
-            apt-get -y install gfortran-5 wget && \
+            docker pull quay.io/pypa/manylinux2010_i686
+            docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
+            /bin/bash -xc "cd numpy && \
+            /opt/python/cp38-cp38/bin/python -mvenv venv &&\
+            source venv/bin/activate && \
             target=\$(python3 tools/openblas_support.py) && \
-            ls -lR \$target && \
             cp -r \$target/lib/* /usr/lib && \
             cp \$target/include/* /usr/include && \
-            python3 -m pip install --user --upgrade pip setuptools && \
-            python3 -m pip install --user -r test_requirements.txt && \
-            python3 -m pip install . && \
-            F77=gfortran-5 F90=gfortran-5 \
-            CFLAGS=-UNDEBUG python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            python3 -m pip install -r test_requirements.txt && \
+            echo CFLAGS \$CFLAGS && \
+            python3 -m pip install -v . && \
+            python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
-      displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
+      displayName: 'Run 32-bit multilinux2010 Docker Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.6-32 bit full Linux'
+        testRunTitle: 'Publish test results for Python 3.8-32 bit full Linux'
   - job: macOS
     pool:
       # NOTE: at time of writing, there is a danger
