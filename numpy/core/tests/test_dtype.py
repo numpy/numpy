@@ -1104,6 +1104,9 @@ class TestDTypeClasses:
         assert type(dtype).__module__ == "numpy"
         assert not type(dtype)._abstract
 
+        # the flexible dtypes and datetime/timedelta have additional parameters
+        # which are more than just storage information, these would need to be
+        # given when creating a dtype:
         parametric = (np.void, np.str_, np.bytes_, np.datetime64, np.timedelta64)
         if dtype.type not in parametric:
             assert not type(dtype)._parametric
@@ -1114,6 +1117,11 @@ class TestDTypeClasses:
                 type(dtype)()
 
     def test_dtype_superclass(self):
+        assert type(np.dtype) is not type
+        assert isinstance(np.dtype, type)
+
+        assert type(np.dtype).__name__ == "_DTypeMeta"
+        assert type(np.dtype).__module__ == "numpy"
         assert np.dtype._abstract
 
 

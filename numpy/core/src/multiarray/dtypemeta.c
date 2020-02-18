@@ -67,8 +67,8 @@ dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
     /*
      * We have to traverse the base class (if it is a HeapType).
      * PyType_Type will handle this logic for us.
-     * TODO: In the future, we may have to VISIT some python objects held,
-     *       however, only if we are a Py_TPFLAGS_HEAPTYPE.
+     * This function is currently not used, but may be necessary in the future
+     * when we implement HeapTypes (python/dynamically defined types).
      */
     assert(!type->is_legacy && (PyTypeObject *)type != &PyArrayDescr_Type);
     Py_VISIT(type->singleton);
@@ -90,7 +90,8 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
         return NULL;
     }
 
-    if (PyTuple_GET_SIZE(args) != 0) {
+    if (PyTuple_GET_SIZE(args) != 0 ||
+                (kwargs != NULL && PyDict_GET_SIZE(kwargs))) {
         PyErr_Format(PyExc_TypeError,
                 "currently only the no-argument instantiation is supported; "
                 "use `np.dtype` instead.");
