@@ -32,7 +32,7 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 
 import functools
 
-from numpy.core import asarray, zeros, swapaxes, conjugate, take, sqrt
+from numpy.core import asarray, zeros, empty, swapaxes, conjugate, take, sqrt
 from . import _pocketfft_internal as pfi
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
@@ -183,7 +183,19 @@ def fft(a, n=None, axis=-1, norm=None):
     inv_norm = 1
     if norm is not None and _unitary(norm):
         inv_norm = sqrt(n)
-    output = _raw_fft(a, n, axis, False, True, inv_norm)
+    # Fast-path for real-valued input
+    if a.dtype.kind != 'c':
+        output = empty(n, dtype=complex)
+        # Similar to scipy.fft._pocketfft.r2c
+        res = _raw_fft(a, n, axis, True, True, inv_norm)
+        output[:res.shape[0]] = res
+        # Output varies based on whether input is even/odd
+        if n % 2 == 0:
+            output[res.shape[0]:] = conjugate(res[1:-1][::-1])
+        else:
+            output[res.shape[0]:] = conjugate(res[1:][::-1])
+    else:
+        output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
 
 
