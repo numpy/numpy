@@ -10,7 +10,17 @@ kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
 class TestBasic:
+
+    # test with order of an array not None
+    def test_with_order_not_None(self):
+        A = np.array([['abc', u'Sigma \u03a3'],
+                    ['long   ', '0123456789']])
+        assert_equal(A.dtype.type, np.unicode_)
+        B = np.char.array(A, order='C')
+        assert_array_equal(B, A)
+
     def test_from_object_array(self):
+        
         A = np.array([['abc', 2],
                       ['long   ', '0123456789']], dtype='O')
         B = np.char.array(A)
