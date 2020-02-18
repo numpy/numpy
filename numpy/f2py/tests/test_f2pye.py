@@ -21,3 +21,10 @@ class TestScanInput:
             numpy.f2py.f2py2e.scaninputline(mock())
         assert_equal(pytest_wrapped_e.type, SystemExit)
 
+#Test for invalid input in build call back
+    def test_inpun2(self):
+        mock = unittest.mock.MagicMock()
+        mock.return_value = "h-overwrite"
+        with pytest.raises(TypeError) as pytest_wrapped_e:
+            numpy.f2py.f2py2e.cb_rules.buildcallback(["tstts"], ["oifnsf"])
+        assert_equal(pytest_wrapped_e.type, TypeError)
