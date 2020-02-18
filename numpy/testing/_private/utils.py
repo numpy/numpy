@@ -1609,6 +1609,12 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     AssertionError
         If one or more elements differ by more than `maxulp`.
 
+    Notes
+    -----
+    For computing the ULP difference, this API does not differentiate between
+    various representations of NAN (ULP difference between 0x7fc00000 and 0xffc00000
+    is zero.
+
     See Also
     --------
     assert_array_almost_equal_nulp : Compare two arrays relatively to their
@@ -1649,6 +1655,12 @@ def nulp_diff(x, y, dtype=None):
         number of representable floating point numbers between each item in x
         and y.
 
+    Notes
+    -----
+    For computing the ULP difference, this API does not differentiate between
+    various representations of NAN (ULP difference between 0x7fc00000 and 0xffc00000
+    is zero.
+
     Examples
     --------
     # By definition, epsilon is the smallest number such as 1 + eps != 1, so
@@ -1668,8 +1680,11 @@ def nulp_diff(x, y, dtype=None):
     if np.iscomplexobj(x) or np.iscomplexobj(y):
         raise NotImplementedError("_nulp not implemented for complex array")
 
-    x = np.array(x, dtype=t)
-    y = np.array(y, dtype=t)
+    x = np.array([x], dtype=t)
+    y = np.array([y], dtype=t)
+
+    x[np.isnan(x)] = np.nan
+    y[np.isnan(y)] = np.nan
 
     if not x.shape == y.shape:
         raise ValueError("x and y do not have the same shape: %s - %s" %
