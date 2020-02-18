@@ -124,6 +124,17 @@ class TestPolynomial:
         # degree + 1
         assert_raises(ValueError, np.polyfit,
                       [1], [1], deg=0, cov=True)
+        
+        # My test-cases:
+        # test when degree < 0
+        assert_raises(ValueError, np.polyfit, [1], [1], deg=-1, cov=True)
+
+        # test when x is not an 1D vector
+        assert_raises(TypeError, np.polyfit, [[1,2],[1,2]], [1], deg=0)
+
+        # test when size of x=0
+        assert_raises(TypeError, np.polyfit, [], [], deg=0)
+
 
         # check 1D case
         m, cov = np.polyfit(x, y+err, 2, cov=True)
