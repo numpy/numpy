@@ -10,8 +10,8 @@ from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from libc.stdint cimport uint16_t, uint64_t
 from numpy.random cimport bitgen_t
 from numpy.random import PCG64
-from numpy.random.c_distributions cimport (random_standard_uniform_fill,
-                                         random_standard_uniform_fill_f)
+from numpy.random.c_distributions cimport (
+      random_standard_uniform_fill, random_standard_uniform_fill_f)
 
 
 @cython.boundscheck(False)
