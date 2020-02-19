@@ -136,6 +136,198 @@ datatypes shall *not* change the behaviour of programs.
 For example ``common_dtype(a, b)`` must not be ``c`` unless ``a`` or ``b`` know
 that ``c`` exists.
 
+Examples
+^^^^^^^^
+
+Fixed, high precision math
+""""""""""""""""""""""""""
+
+A prime example, encompassing all the main concepts that can be expected
+(in a general sense) of a datatype, or fixed, but arbitrary precision
+numbers, such as defined by ``mpmath``::
+
+    >>> import mpmath as mp
+    >>> print(mp.dps)  # the current (default) precision
+    15
+
+NumPy should be able to construct a native, memory efficient array from
+a list of ``mpmath.mpf`` floating point objects::
+
+    >>> arr1 = np.array(mp.arange(3))  # (mp.arange returns a list)
+    >>> print(arr)  # Must find the correct precision from the objects:
+    array(['0.0', '1.0', '2.0'], dtype=mpf[dps=15])
+
+Although, we should also be able to specify the desired precision when
+creating the datatype for the array. Here, I use ``np.dtype[mp.mpf]``
+to find the DType class (the notation is not part of this NEP),
+which is then instantiated with the desired parameter.
+This could also be written as ``MpfDType`` class::
+
+    >>> arr2 = np.array([1, 2, 3], dtype=np.dtype[mp.mpf](dps=100))
+    >>> print(arr1 + arr2)
+    array(['0.0', '2.0', '4.0'], dtype=mpf[dps=100])
+
+The ``mpf`` datatype finds that the result of the operation should be the higher
+precision one of the two, so uses a precision of 100.
+Furthermore, we should be able to define casting, for example as in::
+
+    >>> np.can_cast(arr1.dtype, arr2.dtype, casting="safe")
+    True
+    >>> np.can_cast(arr2.dtype, arr1.dtype, casting="safe")
+    False
+    >>> np.can_cast(arr2.dtype, arr2.dtype, casting="same_kind")
+    True
+
+Casting from float is a probably always at least a ``same_kind`` cast, but
+in general, it is not safe::
+
+    >>> np.can_cast(np.float64, np.dtype[mp.mpf](dps=4), casting="safe")
+    False
+
+Since the a float64 has a higer precision than the ``mpf`` datatype with
+``dps=4``.
+Alternatively, we can say that::
+
+    >>> np.common_type(np.dtype[mp.mpf](dps=5), np.dtype[mp.mpf](dps=10))
+    np.dtype[mp.mpf](dps=10)
+
+And possibly even::
+
+    >>> np.common_type(np.dtype[mp.mpf](dps=5), np.float64)
+    np.dtype[mp.mpf](dps=16)  # equivalent precision to float64 (I believe)
+
+since ``np.float64`` can be cast to a ``np.dtype[mp.mpf](dps=16)`` safely.
+
+
+Unit on the Datatype
+""""""""""""""""""""
+
+There are different ways to define Units, depending on how the internal
+machinery would be organized, one way is to have a single Unit datatype
+for every existing numerical type.
+This will be written as ``Unit[float64]``, the unit itself is part of the
+DType instance ``Unit[float64]("m")`` us a ``float64`` with meters attached::
+
+    >>> meters = np.array([1, 2, 3], dtype=np.float64) * unit.m  # meters
+    >>> print(meters)
+    array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
+
+Note that units are a bit tricky, since it is debatable, whether::
+
+    >>> np.array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
+
+should be valid syntax (coercing the float scalars without a unit to meters).
+Once the array is created, math will work without any issue::
+
+    >>> meters * 2 * unit.seconds
+    array([2.0, 4.0, 6.0], dtype=Unit[float64]("ms"))
+
+Casting is not valid from one unit to the other, but can be between different
+scales of the same dimensionality (although this may usually be "unsafe")::
+
+    >>> meters.astype(Unit[float64]("s"))
+    TypeError: Cannot cast meters to seconds.
+    >>> meters.astype(Unit[float64]("km"))
+    >>> meters.astype(meters.dtype.to_cgs())
+
+The above notation may be somewhat clumsy, in some cases, and functions
+could be used to convert things otherwise.
+There may be ways to make these more convenient, but those must be left
+for future discussions::
+
+    >>> units.convert(meters, "km")
+    >>> units.to_cgs(meters)
+
+There are some open questions, for example whether additional methods
+on the array object could exist to simplify some of the notions, and how these
+would be implemented.
+
+The interaction with other scalars would likely be defined through::
+
+    >>> np.common_type(np.float64, Unit)
+    Unit[np.float64](unitless)
+
+
+Categoricals
+""""""""""""
+
+Categoricals are interesting in that the objects that can be put in may or
+may not be arbitrary.
+Also, we may want a fixed set of categories, or a datatype which can add new
+categories when necessary.
+The fixed categories (defined ahead of time) is the most straight forward
+categorical definition.
+(Categoricals are *hard*, since there are many approaches to them!)
+
+    >>> cat = Categorical(["eggs", "spam", "toast"])
+    >>> breakfast = array(["eggs", "spam", "eggs", "toast"], dtype=cat)
+
+Could store the array very efficiently, since it knows that there are only 3
+categories.
+Since a categorical in this sense knows almost nothing about the data stored
+in it, few operations makes, sense, although equality probably does:
+
+    >>> breakfast2 = array(["eggs", "eggs", "eggs", "eggs"], dtype=cat)
+    >>> breakfast == breakfast2
+    array[True, False, True, False])
+
+The categorical datatype would probably work much like a dictionary, no two
+items can be equal (checked on dtype creation), so that the equality operation
+above can be performed very efficiently.
+If the values define an order, the category labels (internally integers) could
+be ordered the same way to allow efficient sorting and comparisons.
+
+Whether or not casting is defined from one categorical with less to one with
+strictly more values defined, is something that the Categorical datatype would
+have to decide.
+
+Python Enums DType
+""""""""""""""""""
+
+An example for a more complex datatype, encompassing an additional concept
+would be a DType that could wrap ``enum.Enum``::
+
+    >>> class Breakfast(enum.Enum):
+    ...     spam, eggs, toast = 1, 2, '3'
+    >>> table = array([Breakfast.spam, Breakfast.eggs, Breakfast.toast], dtype=EnumDType(Breakfast))
+    >>> to_values(table)  # to_values is a ufunc here
+    array([1, 2, '3'], dtype=object)
+    >>> table[0]
+    <Breakfast.spam: 1>
+
+The following operations may be desirable but are *not* simply possible::
+
+    >>> table2 = np.array([Breakfast.spam, Breakfast.eggs])  # discover same dtype
+    >>> table == Breakfast.spam
+    array([True, False, False])
+
+To define these NumPy would need to find the correct Enum DType, which is
+unclear how it should be done, because the type associated with ``EnumDType``
+could be any ``Enum`` subclass.
+
+An alternative approach, which solves those issues, is to create the DTypes as::
+
+    >>> BreakfastDType = EnumDType(Breakfast)  # class factory
+    >>> issubclass(BreakfastDType, EnumDType)
+    True
+
+Where ``BreakfastDType`` is a subclass and not just an instance of ``EnumDType``.
+Which makes sense since also ``Enum`` is a class factory.
+
+However, it is yet to be decided whether even the second logic should be allowed.
+It would also be plausible, that the user has to use a new NumPy aware ``Enum``
+class to write code similar to the above.
+
+
+Simple Numerical Types
+""""""""""""""""""""""
+
+Of course a major point is to allow new, simple, numerical types to integrate
+better, especially into the ufunc machinery.
+For these types the definitions of things such as ``np.common_type`` and
+``np.can_cast`` are some of the most important things.
+These are very similar to the fixed precision example above, but generally
+simpler.
 
 
 Detailed Description
