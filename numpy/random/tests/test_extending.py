@@ -48,9 +48,9 @@ def test_cython(tmp_path):
     # build the examples and "install" them into a temporary directory
     env = os.environ.copy()
     subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
-                           '--prefix', tmp_path / 'installdir',
+                           '--prefix', str(tmp_path / 'installdir'),
                            '--single-version-externally-managed',
-                           '--record', tmp_path/ 'tmp_install_log.txt',
+                           '--record', str(tmp_path/ 'tmp_install_log.txt'),
                           ],
                           cwd=str(tmp_path / 'random' / '_examples' / 'cython'),
                           env=env)
