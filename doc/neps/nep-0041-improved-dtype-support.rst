@@ -175,7 +175,7 @@ Motivation and the Need for New User-Defined Datatypes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The current ecosystem has very few user defined datatypes using NumPy, the
-two most promient being: ``rational`` and ``quaternion``.
+two most prominent being: ``rational`` and ``quaternion``.
 These represent fairly simple datatypes which are not as strongly impacted
 but the current limitations.
 However, the number of currently available user defined datatypes
@@ -242,7 +242,7 @@ a list of ``mpmath.mpf`` floating point objects::
     array(['0.0', '1.0', '2.0'], dtype=mpf[dps=15])
 
 Although, we should also be able to specify the desired precision when
-creating the datatype for the array. Here, I use ``np.dtype[mp.mpf]``
+creating the datatype for the array. Here, we use ``np.dtype[mp.mpf]``
 to find the DType class (the notation is not part of this NEP),
 which is then instantiated with the desired parameter.
 This could also be written as ``MpfDType`` class::
@@ -300,7 +300,7 @@ categorical definition.
 Could store the array very efficiently, since it knows that there are only 3
 categories.
 Since a categorical in this sense knows almost nothing about the data stored
-in it, few operations makes, sense, although equality probably does:
+in it, few operations makes, sense, although equality does:
 
     >>> breakfast2 = array(["eggs", "eggs", "eggs", "eggs"], dtype=cat)
     >>> breakfast == breakfast2
@@ -310,11 +310,11 @@ The categorical datatype would probably work much like a dictionary, no two
 items can be equal (checked on dtype creation), so that the equality operation
 above can be performed very efficiently.
 If the values define an order, the category labels (internally integers) could
-be ordered the same way to allow efficient sorting and comparisons.
+be ordered the same way to allow efficient sorting and comparison.
 
 Whether or not casting is defined from one categorical with less to one with
 strictly more values defined, is something that the Categorical datatype would
-have to decide.
+need to decide. Both options should be valid.
 
 
 Python Enums DType
@@ -331,28 +331,26 @@ would be a DType that could wrap ``enum.Enum``::
     >>> table[0]
     <Breakfast.spam: 1>
 
-The following operations may be desirable but are *not* simply possible::
+The following operations may be desirable but are *not* straight forward::
 
     >>> table2 = np.array([Breakfast.spam, Breakfast.eggs])  # discover same dtype
     >>> table == Breakfast.spam
     array([True, False, False])
 
-To define these NumPy would need to find the correct Enum DType, which is
-unclear how it should be done, because the type associated with ``EnumDType``
-could be any ``Enum`` subclass.
+To define these NumPy would need to find the correct Enum DType.
+And it is unclear how that should be done, because the type associated with
+an ``EnumDType`` could be any ``Enum`` subclass.
 
 An alternative approach, which solves those issues, is to create the DTypes as::
 
-    >>> BreakfastDType = EnumDType(Breakfast)  # class factory
+    >>> BreakfastDType = EnumDType(Breakfast)  # class/DType factory
     >>> issubclass(BreakfastDType, EnumDType)
     True
 
 Where ``BreakfastDType`` is a subclass and not just an instance of ``EnumDType``.
 Which makes sense since also ``Enum`` is a class factory.
-
-However, it is yet to be decided whether even the second logic should be allowed.
-It would also be plausible, that the user has to use a new NumPy aware ``Enum``
-class to write code similar to the above.
+The Enum example is particularly complicated (it may be good to keep in mind,
+but it is likely that is would not be supported initially).
 
 
 Unit on the Datatype
