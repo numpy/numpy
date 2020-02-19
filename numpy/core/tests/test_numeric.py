@@ -2000,12 +2000,12 @@ class TestClip:
          np.array(np.nan),
          np.zeros(10, dtype=np.int32)),
     ])
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_clip_scalar_nan_propagation(self, arr, amin, amax):
         # enforcement of scalar nan propagation for comparisons
         # called through clip()
         expected = np.minimum(np.maximum(arr, amin), amax)
-        with assert_warns(DeprecationWarning):
-            actual = np.clip(arr, amin, amax)
+        actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
     @pytest.mark.xfail(reason="propagation doesn't match spec")
@@ -2014,6 +2014,7 @@ class TestClip:
          np.timedelta64('NaT'),
          np.zeros(10, dtype=np.int32)),
     ])
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_NaT_propagation(self, arr, amin, amax):
         # NOTE: the expected function spec doesn't
         # propagate NaT, but clip() now does
