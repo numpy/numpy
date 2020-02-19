@@ -2,15 +2,18 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -W
-SPHINXBUILD   = sphinx-build
+SPHINXOPTS    ?=
+SPHINXBUILD   ?= LANG=C sphinx-build
+
+# Internal variables
 SPHINXPROJ    = NumPyEnhancementProposals
 SOURCEDIR     = .
 BUILDDIR      = _build
+ALLSPHINXOPTS = -WT --keep-going -n -d $(SPHINXOPTS)
 
 # Put it first so that "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(ALLSPHINXOPTS) $(O)
 
 .PHONY: help Makefile index
 
