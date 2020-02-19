@@ -91,7 +91,7 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     }
 
     if (PyTuple_GET_SIZE(args) != 0 ||
-                (kwargs != NULL && PyDict_GET_SIZE(kwargs))) {
+                (kwargs != NULL && PyDict_Size(kwargs))) {
         PyErr_Format(PyExc_TypeError,
                 "currently only the no-argument instantiation is supported; "
                 "use `np.dtype` instead.");
