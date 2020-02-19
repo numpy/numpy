@@ -139,6 +139,23 @@ that ``c`` exists.
 Examples
 ^^^^^^^^
 
+
+Simple Numerical Types
+""""""""""""""""""""""
+
+Of course a major point is to allow new, simple, numerical types to integrate
+better, especially into the ufunc machinery.
+For these types the definitions of things such as ``np.common_type`` and
+``np.can_cast`` are some of the most important things.
+Having ``np.common_type``, it is (for the most part) possible to find
+the correct ufunc to execute, since most ufuncs – such as add – effectively
+only require ``np.result_type``::
+
+    >>> np.add(arr1, arr2).dtype == np.result_type(arr1, arr2)
+
+and ``np.result_type`` is largely identical to ``np.common_type``.
+
+
 Fixed, high precision math
 """"""""""""""""""""""""""
 
@@ -197,55 +214,6 @@ And possibly even::
     np.dtype[mp.mpf](dps=16)  # equivalent precision to float64 (I believe)
 
 since ``np.float64`` can be cast to a ``np.dtype[mp.mpf](dps=16)`` safely.
-
-
-Unit on the Datatype
-""""""""""""""""""""
-
-There are different ways to define Units, depending on how the internal
-machinery would be organized, one way is to have a single Unit datatype
-for every existing numerical type.
-This will be written as ``Unit[float64]``, the unit itself is part of the
-DType instance ``Unit[float64]("m")`` us a ``float64`` with meters attached::
-
-    >>> meters = np.array([1, 2, 3], dtype=np.float64) * unit.m  # meters
-    >>> print(meters)
-    array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
-
-Note that units are a bit tricky, since it is debatable, whether::
-
-    >>> np.array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
-
-should be valid syntax (coercing the float scalars without a unit to meters).
-Once the array is created, math will work without any issue::
-
-    >>> meters * 2 * unit.seconds
-    array([2.0, 4.0, 6.0], dtype=Unit[float64]("ms"))
-
-Casting is not valid from one unit to the other, but can be between different
-scales of the same dimensionality (although this may usually be "unsafe")::
-
-    >>> meters.astype(Unit[float64]("s"))
-    TypeError: Cannot cast meters to seconds.
-    >>> meters.astype(Unit[float64]("km"))
-    >>> meters.astype(meters.dtype.to_cgs())
-
-The above notation may be somewhat clumsy, in some cases, and functions
-could be used to convert things otherwise.
-There may be ways to make these more convenient, but those must be left
-for future discussions::
-
-    >>> units.convert(meters, "km")
-    >>> units.to_cgs(meters)
-
-There are some open questions, for example whether additional methods
-on the array object could exist to simplify some of the notions, and how these
-would be implemented.
-
-The interaction with other scalars would likely be defined through::
-
-    >>> np.common_type(np.float64, Unit)
-    Unit[np.float64](unitless)
 
 
 Categoricals
@@ -319,15 +287,66 @@ It would also be plausible, that the user has to use a new NumPy aware ``Enum``
 class to write code similar to the above.
 
 
-Simple Numerical Types
-""""""""""""""""""""""
 
-Of course a major point is to allow new, simple, numerical types to integrate
-better, especially into the ufunc machinery.
-For these types the definitions of things such as ``np.common_type`` and
-``np.can_cast`` are some of the most important things.
-These are very similar to the fixed precision example above, but generally
-simpler.
+Unit on the Datatype
+""""""""""""""""""""
+
+There are different ways to define Units, depending on how the internal
+machinery would be organized, one way is to have a single Unit datatype
+for every existing numerical type.
+This will be written as ``Unit[float64]``, the unit itself is part of the
+DType instance ``Unit[float64]("m")`` us a ``float64`` with meters attached::
+
+    >>> meters = np.array([1, 2, 3], dtype=np.float64) * unit.m  # meters
+    >>> print(meters)
+    array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
+
+Note that units are a bit tricky, since it is debatable, whether::
+
+    >>> np.array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
+
+should be valid syntax (coercing the float scalars without a unit to meters).
+Once the array is created, math will work without any issue::
+
+    >>> meters * 2 * unit.seconds
+    array([2.0, 4.0, 6.0], dtype=Unit[float64]("ms"))
+
+Casting is not valid from one unit to the other, but can be between different
+scales of the same dimensionality (although this may usually be "unsafe")::
+
+    >>> meters.astype(Unit[float64]("s"))
+    TypeError: Cannot cast meters to seconds.
+    >>> meters.astype(Unit[float64]("km"))
+    >>> meters.astype(meters.dtype.to_cgs())
+
+The above notation may be somewhat clumsy, in some cases, and functions
+could be used to convert things otherwise.
+There may be ways to make these more convenient, but those must be left
+for future discussions::
+
+    >>> units.convert(meters, "km")
+    >>> units.to_cgs(meters)
+
+There are some open questions, for example whether additional methods
+on the array object could exist to simplify some of the notions, and how these
+would be implemented.
+
+The interaction with other scalars would likely be defined through::
+
+    >>> np.common_type(np.float64, Unit)
+    Unit[np.float64](unitless)
+
+*The main interesting point about units is that it is obvious that ufuncs
+can be more involved than for simple numerical dtypes*.
+For every universal function, the statement above that::
+
+    >>> np.multiple(meters, seconds).dtype != np.result_type(meters, seconds)
+
+In fact ``np.result_type(meters, seconds)`` must error without context
+of the operation being done.
+This example highlights how the specific ufunc loop
+(loop with known, specific DTypes as inputs), has to be able to to make
+certain decisions, before the actual calculation can start.
 
 
 Detailed Description
