@@ -55,6 +55,37 @@ abs_ptrdiff(char *a, char *b)
     return (a > b) ? (a - b) : (b - a);
 }
 
+/*
+ * nomemoverlap - returns true if two strided arrays have an overlapping
+ * region in memory. ip_size/op_size = size of the arrays which can be negative
+ * indicating negative steps.
+ */
+static NPY_INLINE npy_bool
+nomemoverlap(char *ip,
+             npy_intp ip_size,
+             char *op,
+             npy_intp op_size)
+{
+    char *ip_start, *ip_end, *op_start, *op_end;
+    if (ip_size < 0) {
+        ip_start = ip + ip_size;
+        ip_end = ip;
+    }
+    else {
+        ip_start = ip;
+        ip_end = ip + ip_size;
+    }
+    if (op_size < 0) {
+        op_start = op + op_size;
+        op_end = op;
+    }
+    else {
+        op_start = op;
+        op_end = op + op_size;
+    }
+    return (ip_start > op_end) | (op_start > ip_end);
+}
+
 #define IS_BINARY_STRIDE_ONE(esize, vsize) \
     ((steps[0] == esize) && \
      (steps[1] == esize) && \
@@ -85,10 +116,12 @@ abs_ptrdiff(char *a, char *b)
  * We instead rely on i32gather/scatter_ps instructions which use a 32-bit index
  * element. The index needs to be < INT_MAX to avoid overflow. MAX_STEP_SIZE ensures this.
  */
-#define IS_BINARY_SMALL_STEPS \
+#define IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP \
     ((abs(steps[0]) < MAX_STEP_SIZE)  && \
      (abs(steps[1]) < MAX_STEP_SIZE)  && \
-     (abs(steps[2]) < MAX_STEP_SIZE))
+     (abs(steps[2]) < MAX_STEP_SIZE)  && \
+     (nomemoverlap(args[0], steps[0]*dimensions[0], args[2], steps[2]*dimensions[0])) && \
+     (nomemoverlap(args[1], steps[1]*dimensions[0], args[2], steps[2]*dimensions[0])))
 
 /*
  * output should be contiguous, can handle strided input data
@@ -252,7 +285,7 @@ static NPY_INLINE int
 run_binary_avx512f_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
-    if (IS_BINARY_SMALL_STEPS) {
+    if (IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
         AVX512F_@func@_@TYPE@(args, dimensions, steps);
         return 1;
     }
@@ -1942,7 +1975,7 @@ AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *s
     /*
      * Note: while generally indices are npy_intp, we ensure that our maximum index
      * will fit in an int32 as a precondition for this function via
-     * IS_BINARY_SMALL_STEPS
+     * IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP
      */
 
     npy_int32 index_ip1[@num_lanes@], index_ip2[@num_lanes@], index_op[@num_lanes@];
