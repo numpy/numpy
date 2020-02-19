@@ -223,6 +223,9 @@ translations easier.
 Discussion
 ==========
 
+Discussion around this NEP can be found on the NumPy mailing list:
+
+- https://mail.python.org/pipermail/numpy-discussion/2020-February/080419.html
 
 References and Footnotes
 ========================
