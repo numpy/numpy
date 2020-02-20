@@ -96,7 +96,6 @@ abs_ptrdiff(char *a, char *b)
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esize, vsize) \
     (steps[1] == (esize) && abs(steps[0]) < MAX_STEP_SIZE && \
-     (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
      ((abs_ptrdiff(args[1], args[0]) >= (vsize)) || \
       ((abs_ptrdiff(args[1], args[0]) == 0))))
 
