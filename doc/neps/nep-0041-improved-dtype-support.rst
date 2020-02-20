@@ -86,22 +86,24 @@ multiple development stages are required:
 
 * Phase II: Incrementally define or rework API
 
-  1. Create a new and easily extensible API for defining new datatypes
-     and related functionality.
+  * Create a new and easily extensible API for defining new datatypes
+    and related functionality.
 
-  2. Incrementally define all necessary functionality through the new API:
+  * Incrementally define all necessary functionality through the new API:
 
-     * Defining operations such as ``np.common_type``.
-     * Allowing to define casting between datatypes.
-     * Add functionality necessary to create a numpy array from Python scalars
-       (i.e. ``np.array(...)``).
-     * …
+    * Defining operations such as ``np.common_type``.
+    * Allowing to define casting between datatypes.
+    * Add functionality necessary to create a numpy array from Python scalars
+      (i.e. ``np.array(...)``).
+    * …
 
-  3. Restructure how universal functions functions to:
+  * Restructure how universal functions functions to:
 
     * make it possible to allow functions such as ``np.add`` to be extended by
       user defined datatypes such as Units.
+
     * allow efficient lookup for the correct implementation for user defined datatypes.
+
     * enable reuse of existing code: E.g. units should be able to use the normal
       math loops and add their additional logic.
 
@@ -194,24 +196,24 @@ but the current limitations.
 However, the number of currently available user defined datatypes
 is in strong contrast with the need for datatypes such as:
 
-* categorical types
+* int24, int2
 * bfloat16, used in deep learning
+* categorical types
 * physical units (such as meters)
 * extending e.g. integer dtypes to have a sentinel NA value
 * geometrical objects [pygeos]_
 * datatypes for tracing/automatic differentiation
-* high or arbitrary precision math
-* ….
+* high, fixed precision math
+* …
 
 Some of these are partially solved; for example unit capability is provided
-in ``astropy.units``, ``unyt``, or ``pint``. However, these have to be implemented
-as array objects, which means that they have to deal with container operations
-such as reshaping and how to work together with other array objects such as
-``xarray`` [xarray_dtype_issue]_ or ``Dask``.
-Implemented as a datatype, the concerns of the array object (container) and
-the data handling can be clearly separated.
-Thus a pure container, such as ``xarray`` or ``Dask`` should work with new
-datatypes without even knowing about their existence.
+in ``astropy.units``, ``unyt``, or ``pint``.
+However, it may be that they are better served with datatypes.
+Most of these datatypes, however, simply cannot be reasonably defined
+right now.
+An advantage of having such datatypes in NumPy is that they should integrate
+seamlessly with other array or array-like packages such as Pandas,
+``xarray`` or ``Dask``.
 
 The need for such datatypes has also already led to the implementation of
 ExtensionArrays inside pandas [pandas_extension_arrays]_.
