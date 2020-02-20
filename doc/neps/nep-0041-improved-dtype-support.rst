@@ -73,7 +73,12 @@ Similarly, Pandas has made a push into the same direction and undoubtedly
 the community would be best served if such new features could be common
 between NumPy, Pandas, and other projects.
 
-To address these issues in NumPy, multiple development stages are required:
+
+Plan to Approach this Refactor
+""""""""""""""""""""""""""""""
+
+To address these issues in NumPy and enable new datatypes,
+multiple development stages are required:
 
 * Phase I: Restructure and extend the datatype infrastructure 
 
@@ -126,6 +131,14 @@ easier to understand.
 Pushing forward with Phase I cleans up the concepts of the API to coincide
 with how Python is typically organized and unlocks the ability to improve
 parts of NumPy which currently are not extensible.
+
+The following picture gives another overview of the overall design idea.
+Note that this NEP only regards Phase I (shaded area),
+the rest encompasses Phase II and the design choices are up for discussion,
+however, it highlights that the DType class is the central, necessary concept:
+
+.. image:: _static/nep-0041-mindmap.svg
+
 
 
 Decisions
