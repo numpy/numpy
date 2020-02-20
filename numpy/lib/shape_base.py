@@ -269,8 +269,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     Apply a function to 1-D slices along the given axis.
 
-    Execute `func1d(a, *args)` where `func1d` operates on 1-D arrays and `a`
-    is a 1-D slice of `arr` along `axis`.
+    Execute `func1d(a, *args, **kwargs)` where `func1d` operates on 1-D arrays
+    and `a` is a 1-D slice of `arr` along `axis`.
 
     This is equivalent to (but faster than) the following use of `ndindex` and
     `s_`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of indices::
