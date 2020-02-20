@@ -284,7 +284,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     the scalar.
 
     This function handles NaN comparisons as if NaN was a "normal" number.
-    That is, no assertion is raised if both objects have NaNs in the same
+    That is, AssertionError is not raised if both objects have NaNs in the same
     positions.  This is in contrast to the IEEE standard on NaNs, which says
     that NaN compared to anything must return False.
 
