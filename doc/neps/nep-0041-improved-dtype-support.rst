@@ -137,7 +137,7 @@ Note that this NEP only regards Phase I (shaded area),
 the rest encompasses Phase II and the design choices are up for discussion,
 however, it highlights that the DType class is the central, necessary concept:
 
-.. image:: _static/nep-0041-mindmap.svg
+.. image:: _static/nep-0041-mindmap.png
 
 
 
