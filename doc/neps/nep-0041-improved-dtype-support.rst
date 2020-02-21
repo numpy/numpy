@@ -1,4 +1,4 @@
-==================================================
+=================================================
 NEP 41 — First step towards a new Datatype System
 =================================================
 
@@ -22,7 +22,7 @@ Examples are datatypes with unit information attached (such as meters) or
 categorical datatypes (fixed set of possible values).
 However, the current NumPy datatype API is too limited to allow the creation
 of these.
-This NEP is the first step to enable such growth, it will lead to 
+This NEP is the first step to enable such growth; it will lead to 
 a simpler development of new datatypes with the aim that in the future
 datatypes can be defined in Python instead of C.
 By refactoring our datatype API and improving its maintainability,
@@ -36,7 +36,7 @@ One of the main issues is the definition of typical functions
 To operate on parametric datatypes these functions need additional steps.
 For example when adding two strings of length four, the result is a string
 of length 8, which is different from the input.
-Similarly, a datatype which has as a physical unit, must calculate the new unit information:
+Similarly, a datatype which embeds a physical unit must calculate the new unit information:
 dividing a distance by a time results in a speed.
 A related major issue is that the current casting rules
 – the conversion between different datatypes –
@@ -61,7 +61,7 @@ datatypes:
   but is limited in scope for user defined and especially parametric datatypes.
 * There is a general issue that much of the logic is written in single functions
   instead of being split as methods on the datatype itself.
-* Int the current design datatypes cannot have methods that do not generalize
+* In the current design datatypes cannot have methods that do not generalize
   to other datatypes. For example a unit datatype cannot have a ``.to_si()`` method to
   easily find the datatype which would represent the same values in SI units.
 
@@ -128,7 +128,7 @@ final stable API.
 Some of the benefits of a large refactor may only take effect after the full
 deprecation of the current legacy implementation (i.e. larger code removals).
 However, these steps are necessary for improvements to many parts of the
-core NumPy API, and is expected to make the implementation generally
+core NumPy API, and are expected to make the implementation generally
 easier to understand.
 Pushing forward with Phase I cleans up the concepts of the API to coincide
 with how Python is typically organized and unlocks the ability to improve
@@ -146,9 +146,9 @@ however, it highlights that the DType class is the central, necessary concept:
 Decisions
 ---------
 
-Specifically, this NEP proposes to preliminary move ahead with the Phase
+Specifically, this NEP proposes to preliminarily move ahead with the Phase
 (see Implementation section).
-It also lays out the final design goals and establish some user facing design
+It also lays out the final design goals and establishes some user facing design
 decisions and considerations.
 No large incompatibilities are expected due to implementing the proposed full
 changes (including all Phases),
@@ -158,7 +158,7 @@ However, if incompatibilities become more extensive then expected,
 a major NumPy release is an acceptable solution, although even then
 the vast majority of users shall not be affected.
 A transition requiring large code adaptation, similar to the Python 2 to 3
-transition is not anticipated and not covered by this NEP.
+transition, is not anticipated and not covered by this NEP.
 
 By accepting this NEP, we accept the following things will happen now or
 as part of Phase II:
@@ -169,11 +169,11 @@ as part of Phase II:
 2. The current datatypes will be instances of these classes.
    All methods, which are currently defined on the instance, should instead be
    defined on the class. Storage information such as itemsize and byteorder
-   are stored on the instance. Making a DType a class, allows for DType
+   are stored on the instance. Making a DType a class allows for DType
    specific information to be stored more naturally.
 3. The current NumPy scalars will *not* be instances of datatypes.
 4. All new API provided to the user will hide implementation as much as
-   possible. The public API should be identical but may be more limited,
+   possible. The public API should be identical, but may be more limited,
    to the API used for the internal NumPy datatypes.
 5. The UFunc machinery will be changed to replace the current dispatching
    and type resolution system (part of Phase II).
@@ -389,7 +389,7 @@ should be valid syntax (coercing the float scalars without a unit to meters).
 Once the array is created, math will work without any issue::
 
     >>> meters * 2 * unit.seconds
-    array([2.0, 4.0, 6.0], dtype=Unit[float64]("ms"))
+    array([2.0, 4.0, 6.0], dtype=Unit[float64]("m s"))
 
 Casting is not valid from one unit to the other, but can be between different
 scales of the same dimensionality (although this may usually be "unsafe")::
@@ -432,7 +432,7 @@ certain decisions, before the actual calculation can start.
 Detailed Description
 --------------------
 
-The following sections details some of the design decisions above and gives
+This section details some of the design decisions above and gives
 more details on potential user datatype use cases motivating the need for
 these changes.
 Since datatype changes touch a large part of code and behaviours, NEP 40
@@ -444,11 +444,11 @@ Datatypes as Python Classes (1+2)
 
 The current NumPy datatypes are not full scale python classes.
 They are instead (prototype) instances of a single ``np.dtype`` class.
-Changing this, means that any special handling, e.g. for ``datetime``
-can be moved to the Datetime class instead of in monolithic general code
+Changing this means that any special handling, e.g. for ``datetime``
+can be moved to the Datetime class instead, away from monolithic general code
 (e.g. current ``PyArray_AdjustFlexibleDType``).
 
-The main API side effect of this, is that special method are not anymore
+The main API side effect of this is that special methods are not anymore
 housed on the dtype instances, but instead as methods on the class.
 This is the typical design pattern used in Python.
 Adding a new, natural point to store these methods and information, will
@@ -525,7 +525,7 @@ will be deprecated.
 
 A *possible* solution is to hide the implementation from the user and thus make
 it extensible in the future is to model the API after Python's stable
-API [PEP-384]:
+API [PEP-384]_:
 
 .. code-block:: C
 
@@ -600,9 +600,9 @@ This means that in a first step the ``DType`` classes will be added, with
 all, or most, new exposed API points giving a ``PreliminaryDTypeAPIWarning``.
 
 This allows for smaller patches and further future changes. In these first
-steps no, or only very limited, new C-API shall be exposed.
+steps, no or only very limited new C-API shall be exposed.
 The addition of new ``DTypes`` will then allow to address other changes
-more incremental:
+more incrementally:
 
 1. A new machinery for array coercion, with the goal of enabling user DTypes
    to behave in a full featured manner.
@@ -674,27 +674,27 @@ For example current functions which currently use the type number as input
 should probably be replaced with functions taking DType classes instead
 in the long term.
 Although public, large parts of this C-API seems very rarely and possibly
-completely used by downstream projects.
+never used by downstream projects.
 
 
 Discussion
 ----------
 
-See NEP 40 for a list of previous meetings, and discussions.
+See NEP 40 for a list of previous meetings and discussions.
 
 
 References
 ----------
 
-.. _pandas_extension_arrays: https://pandas.pydata.org/pandas-docs/stable/development/extending.html#extension-types
+.. [pandas_extension_arrays] https://pandas.pydata.org/pandas-docs/stable/development/extending.html#extension-types
 
 .. _xarray_dtype_issue: https://github.com/pydata/xarray/issues/1262
 
-.. _pygeos: https://github.com/caspervdw/pygeos
+.. [pygeos] https://github.com/caspervdw/pygeos
 
-.. _new_sort: https://github.com/numpy/numpy/pull/12945
+.. [new_sort] https://github.com/numpy/numpy/pull/12945
 
-.. _PEP-384: https://www.python.org/dev/peps/pep-0384/
+.. [PEP-384] https://www.python.org/dev/peps/pep-0384/
 
 
 Copyright
