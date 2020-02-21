@@ -67,11 +67,20 @@ We can see the image using the `matplotlib.pyplot.imshow` function::
     >>> import matplotlib.pyplot as plt
     >>> plt.imshow(img)
 
-.. image:: https://docs.scipy.org/doc/scipy/reference/_images/scipy-misc-face-1.png
+.. plot:: user/plot_face.py
+    :align: center
+    :include-source: 0
 
+.. note::
+
+   If you are executing the commands above in the IPython shell, it might be necessary to use the
+   command ``plt.show()`` to show the image window. 
+		     
 **Shape, axis and array properties**
 
-Note that, in linear algebra, the dimension of a vector refers to the number of entries in an array. In NumPy, it instead defines the number of axes. For example, a 1D array is a vector such as ``[1, 2, 3]``, a 2D array is a matrix, and so forth.
+Note that, in linear algebra, the dimension of a vector refers to the number of entries in an
+array. In NumPy, it instead defines the number of axes. For example, a 1D array is a vector
+such as ``[1, 2, 3]``, a 2D array is a matrix, and so forth.
 
 First, let's check for the shape of the data in our array. Since this image is
 two-dimensional (the pixels in the image form a rectangle), we might expect a
@@ -124,11 +133,16 @@ Since we are going to perform linear algebra operations on this data, it might
 be more interesting to have real numbers between 0 and 1 in each entry of the
 matrices to represent the RGB values. We can do that by setting
 
-    >>> img_array = img/255
+    >>> img_array = img / 255
 
-This operation, dividing an array by a scalar, works because of NumPy's `broadcasting
-<https://numpy.org/devdocs/user/basics.broadcasting.html>`_. You can check this by
-doing some tests; for example, inquiring about maximum and minimum values for this array::
+This operation, dividing an array by a scalar, works because of NumPy's `broadcasting`
+rules (see :ref:`array-broadcasting-in-numpy`). (Note that in real-world
+applications, it would be better to use, for example, the `img_as_float
+<https://scikit-image.org/docs/dev/api/skimage.util.html#skimage.util.img_as_float>`_
+utility function from ``scikit-image`).
+
+You can check that the above works by doing some tests; for example, inquiring about
+maximum and minimum values for this array::
 
     >>> img_array.max(), img_array.min()
     (1.0, 0.0)
@@ -138,32 +152,37 @@ or checking the type of data in the array::
     >>> img_array.dtype
     dtype('float64')
 
-**Operations on an axis**
-
-It is possible to use methods from linear algebra to approximate an existing set
-of data. Here, we will use the `SVD (Singular Value Decomposition) <https://en.wikipedia.org/wiki/Singular_value_decomposition>`_ to try to rebuild an image that uses
-less singular value information than the original one, while still retaining some
-of its features.
-
-.. note::
-
-    NumPy has a linear algebra module, `numpy.linalg`, that can be used to
-    perform the operations in this tutorial. However, the same functions can
-    also be found in `scipy.linalg`. For more information on this, and why we
-    choose to use the `scipy.linalg` module, check the `scipy.linalg Reference
-    <https://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html>`_.
-
-To proceed, import the linear algebra submodule from either NumPy or SciPy::
-
-    >>> from scipy import linalg
-
-To simplify, let's assign each color channel to a separate matrix::
+Note that we can assign each color channel to a separate matrix using the slice syntax::
 
     >>> red_array = img_array[:, :, 0]
     >>> green_array = img_array[:, :, 1]
     >>> blue_array = img_array[:, :, 2]
 
-In order to extract information from each matrix, we can use the SVD to obtain
+**Operations on an axis**
+
+It is possible to use methods from linear algebra to approximate an existing set
+of data. Here, we will use the `SVD (Singular Value Decomposition)
+<https://en.wikipedia.org/wiki/Singular_value_decomposition>`_ to try to rebuild an
+image that uses less singular value information than the original one, while still
+retaining some of its features.
+
+.. note::
+
+    We will use NumPy's linear algebra module, `numpy.linalg`, to
+    perform the operations in this tutorial. Most of the linear algebra
+    functions in this module can also be found in `scipy.linalg`, and
+    users are encouraged to use the `scipy` module for real-world
+    applications. However, it is currently not possible to apply linear
+    algebra operations to n-dimensional arrays using the `scipy.linalg`
+    module. For more information on this, check the
+    `scipy.linalg Reference
+    <https://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html>`_.
+
+To proceed, import the linear algebra submodule from NumPy::
+
+    >>> from numpy import linalg
+
+In order to extract information from a given matrix, we can use the SVD to obtain
 3 arrays which can be multiplied to obtain the original matrix. From the theory of
 linear algebra, given a matrix :math:`A`, the following product can be computed:
 
@@ -177,12 +196,43 @@ as :math:`A`. :math:`\Sigma` is a diagonal matrix and contains the
 are always non-negative and can be used as an indicator of the "importance" of
 some features represented by the matrix :math:`A`.
 
-Let's see how this works in practice with ``blue_array`` as the matrix to be
-decomposed:
+Let's see how this works in practice with just one matrix first. Note that
+according to the `colorimetry <https://en.wikipedia.org/wiki/Grayscale#Colorimetric_(perceptual_luminance-preserving)_conversion_to_grayscale>`_, it is possible to obtain a fairly reasonable grayscale version of our color image if we apply the formula
+
+.. math::
+
+   Y = 0.2126 R + 0.7152 G + 0.0722 B
+
+where :math:`Y` is the array representing the grayscale image, and :math:`R, G` and :math:`B` are the red, green and blue channel arrays we had originally. Notice we can use the ``@`` operator (the matrix multiplication operator for NumPy arrays, see `numpy.matmul`) for this:
+
+::
+   
+   >>> img_gray = img_array @ [0.2126, 0.7152, 0.0722]
+
+Now, ``img_gray`` has shape
 
 ::
 
-    >>> U_blue, s_blue, Vt_blue = linalg.svd(blue_array)
+   >>> img_gray.shape
+   (768, 1024)
+
+To see if this makes sense in our image, we should use a colormap from ``matplotlib``
+corresponding to the color we wish to see in out image (otherwise, ``matplotlib`` will
+default to a colormap that does not correspond to the real data).
+
+In our case, we are approximating the grayscale portion of the image, so we will use
+the colormap ``gray``::
+   
+   >>> plt.imshow(img_gray, cmap="gray")
+
+.. plot:: user/plot_gray.py
+    :align: center
+    :include-source: 0
+
+Now, applying the `linalg.svd` function to this matrix, we obtain the following decomposition:
+::
+
+    >>> U, s, Vt = linalg.svd(img_gray)
 
 .. note::
 
@@ -192,49 +242,48 @@ decomposed:
    
 Let's check that this is what we expected::
 
-    >>> U_blue.shape, s_blue.shape, Vt_blue.shape
+    >>> U.shape, s.shape, Vt.shape
     ((768, 768), (768,), (1024, 1024))
 
-Note that ``s_blue`` has a particular shape: it has only one dimension. This
+Note that ``s`` has a particular shape: it has only one dimension. This
 means that some linear algebra functions that expect 2d arrays might not work.
-For example, from the theory, one might expect ``s_blue`` and ``Vt_blue`` to be
-compatible for multiplication. However, this is not true as ``s_blue`` does not
+For example, from the theory, one might expect ``s`` and ``Vt`` to be
+compatible for multiplication. However, this is not true as ``s`` does not
 have a second axis. Executing
 
 ::
 
-    >>> s_blue @ Vt_blue
+    >>> s @ Vt
 
-results in a ``ValueError`` (note that the ``@`` operator performs matrix
-multiplication on NumPy arrays). This happens because having a one-dimensional
+results in a ``ValueError``. This happens because having a one-dimensional
 array for ``s``, in this case, is much more economic in practice than building a
 diagonal matrix with the same data. To reconstruct the original matrix, we can
-rebuild the diagonal matrix :math:`\Sigma` with the elements of ``s_blue`` in
+rebuild the diagonal matrix :math:`\Sigma` with the elements of ``s`` in
 its diagonal and with the appropriate dimensions for multiplying: in our case,
 :math:`\Sigma` should be 768x1024 since ``U`` is 768x768 and ``Vt`` is 1024x1024.
 
 ::
 
     >>> import numpy as np
-    >>> Sigma_blue = np.zeros((768, 1024))
+    >>> Sigma = np.zeros((768, 1024))
     >>> for i in range(768):
-    ...     Sigma_blue[i,i] = s_blue[i]
+    ...     Sigma[i, i] = s[i]
 
-Now, we want to check if the reconstructed ``U_blue @ Sigma_blue @ Vt_blue`` is
-close to the original ``blue_array`` matrix.
+Now, we want to check if the reconstructed ``U @ Sigma @ Vt`` is
+close to the original ``img_gray`` matrix.
 
 **Approximation**
 
 The `linalg` module includes a ``norm`` function, which
 computes the norm of a vector or matrix represented in a NumPy array. For
 example, from the SVD explanation above, we would expect the norm of the
-difference between ``blue_array`` and the reconstructed SVD product to be small.
+difference between ``img_gray`` and the reconstructed SVD product to be small.
 As expected, you should see something like
 
 ::
 
-    >>> linalg.norm(blue_array - U_blue @ Sigma_blue @ Vt_blue)
-    9.183739693484683e-13
+    >>> linalg.norm(img_gray - U @ Sigma @ Vt)
+    1.3926466851808837e-12
 
 (The actual result of this operation might be different depending on your
 architecture and linear algebra setup. Regardless, you should see a small number.)
@@ -243,22 +292,25 @@ We could also have used the `numpy.allclose` function to make sure the
 reconstructed product is, in fact, *close* to our original matrix (the
 difference between the two arrays is small)::
 
-    >>> np.allclose(blue_array, U_blue @ Sigma_blue @ Vt_blue)
+    >>> np.allclose(img_gray, U @ Sigma @ Vt)
     True
 
-To see if an approximation is reasonable, we can check the values in ``s_blue``::
+To see if an approximation is reasonable, we can check the values in ``s``::
 
-    >>> import matplotlib.pyplot as plt
-    >>> plt.plot(s_blue)
+    >>> plt.plot(s)
 
+.. plot:: user/plot_gray_svd.py
+    :align: center
+    :include-source: 0
+    
 In the graph, we can see that although we have 768 singular values in
-``s_blue``, most of those (after the 150th entry or so) are pretty small. So it
+``s``, most of those (after the 150th entry or so) are pretty small. So it
 might make sense to use only the information related to the first (say, 50)
 *singular values* to build a more economical approximation to our image.
 
 The idea is to consider all but the first ``k`` singular values in
-``Sigma_blue`` (which are the same as in ``s_blue``) as zeros, keeping
-``U_blue`` and ``Vt_blue`` intact, and computing the product of these matrices
+``Sigma`` (which are the same as in ``s``) as zeros, keeping
+``U`` and ``Vt`` intact, and computing the product of these matrices
 as the approximation.
 
 For example, if we choose 
@@ -271,38 +323,29 @@ we can build the approximation by doing
 
 ::
 
-    >>> approx_blue = U_blue @ Sigma_blue[:, :k] @ Vt_blue[:k,:]
+    >>> approx = U @ Sigma[:, :k] @ Vt[:k, :]
 
-Note that we had to use only the first ``k`` rows of ``Vt_blue``, since all
+Note that we had to use only the first ``k`` rows of ``Vt``, since all
 other rows would be multiplied by the zeros corresponding to the singular
 values we eliminated from this approximation.
 
-To see if this approximation makes sense in our image, we should use a colormap
-from `matplotlib` corresponding to the color we wish to see in each
-individual image (otherwise, `matplotlib` will default to a colormap that does
-not correspond to the real data).
+::
+   
+    >>> plt.imshow(approx, cmap="gray")
 
-In our case, we are approximating the blue portion of the image, so we will use
-the colormap ``Blues``::
-
-    >>> plt.imshow(approx_blue, cmap=plt.cm.Blues)
+.. plot:: user/plot_approx.py
+    :align: center
+    :include-source: 0
 
 Now, you can go ahead and repeat this experiment with other values of `k`, and
 each of your experiments should give you a slightly better (or worse) image depending on
 the value you choose.
 
-Just for good measure, to see what the original blue array looks like, you can
-use
-
-::
-
-    >>> plt.imshow(blue_array, cmap=plt.cm.Blues)
-
 **Applying to all colors**
 
 Now we want to do the same kind of operation, but to all three colors. Our
 first instinct might be to repeat the same operation we did above to each color
-matrix individually. However, NumPy's `broadcasting <https://numpy.org/devdocs/user/basics.broadcasting.html>`_ takes care of this
+matrix individually. However, NumPy's `broadcasting` takes care of this
 for us.
 
 If our array has more than two dimensions, then the SVD can be applied to all
@@ -321,7 +364,9 @@ so we need to permutate the axis on this array to get a shape like
 ``(3, 768, 1024)``. Fortunately, the `numpy.transpose` function can do that for
 us:
 
-``np.transpose(x, axes=(i, j, k))`` 
+::
+   
+   np.transpose(x, axes=(i, j, k))
 
 indicates that the axis will be reordered such that the final shape of the
 transposed array will be reordered according to the indices ``(i, j, k)``.
@@ -329,7 +374,7 @@ transposed array will be reordered according to the indices ``(i, j, k)``.
 Let's see how this goes for our array::
 
     >>> img_array_transposed = np.transpose(img_array, (2, 0, 1))
-    >>> img_array.shape
+    >>> img_array_transposed.shape
     (3, 768, 1024)
 
 Now we are ready to apply the SVD::
@@ -357,16 +402,17 @@ ways. For more details, check the documentation `numpy.matmul`.
 Now, to build our approximation, we first need to make sure that our singular
 values are ready for multiplication, so we build our ``Sigma`` matrix similarly
 to what we did before. The ``Sigma`` array must have dimensions
-``(3, 768, 1024)``.
+``(3, 768, 1024)``. In order to add the singular values to the diagonal of ``Sigma``,
+we will use the ``fill_diagonal`` function from NumPy, using each of the 3 rows in ``s``
+as the diagonal for each of the 3 matrices in ``Sigma``:
 
 ::
 
     >>> Sigma = np.zeros((3, 768, 1024))
     >>> for j in range(3):
-    ...     for i in range(768):
-    ...         Sigma[j, i, i] = s[j, i]
+    ...     np.fill_diagonal(Sigma[j, :, :], s[j, :])
 
-Now, if we wish to rebuild the full SVD (with no approximation), we could do
+Now, if we wish to rebuild the full SVD (with no approximation), we can do
 
 ::
 
@@ -385,11 +431,15 @@ and
 
     >>> plt.imshow(np.transpose(reconstructed, (1, 2, 0)))
 
+.. plot:: user/plot_reconstructed.py
+    :align: center
+    :include-source: 0
+    
 should give you an image indistinguishable from the original one (although we
 may introduce floating point errors for this reconstruction. In fact, 
-you might see a warning message saying "Clipping input data to the
+you might see a warning message saying `"Clipping input data to the
 valid range for imshow with RGB data ([0..1] for floats or [0..255] for
-integers)." This is expected from the manipulation we just did on the original
+integers)."` This is expected from the manipulation we just did on the original
 image.
 
 Now, to do the approximation, we must choose only the first ``k`` singular
@@ -414,10 +464,14 @@ Now,
     (3, 768, 1024)
 
 which is not the right shape for showing the image. Finally, reordering the
-axes back to our original shape of (768, 1024, 3), we can see our approximation::
+axes back to our original shape of ``(768, 1024, 3)``, we can see our approximation::
 
     >>> plt.imshow(np.transpose(approx_img, (1, 2, 0)))
 
+.. plot:: user/plot_final.py
+    :align: center
+    :include-source: 0
+    
 Even though the image is not as sharp, using a small number of ``k`` singular
 values (compared to the original set of 768 values), we can recover many of the
 distinguishing features from this image.
