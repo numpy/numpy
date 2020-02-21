@@ -129,8 +129,7 @@ nomemoverlap(char *ip,
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esize, vsize) \
     (steps[1] == (esize) && abs(steps[0]) < MAX_STEP_SIZE && \
-     ((abs_ptrdiff(args[1], args[0]) >= (vsize)) || \
-      ((abs_ptrdiff(args[1], args[0]) == 0))))
+     (nomemoverlap(args[1], steps[1]*dimensions[0], args[0], steps[0]*dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
     (steps[1] == (esize) && abs_ptrdiff(args[1], args[0]) >= (vsize) && \
