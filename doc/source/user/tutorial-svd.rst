@@ -139,7 +139,7 @@ This operation, dividing an array by a scalar, works because of NumPy's `broadca
 rules (see :ref:`array-broadcasting-in-numpy`). (Note that in real-world
 applications, it would be better to use, for example, the `img_as_float
 <https://scikit-image.org/docs/dev/api/skimage.util.html#skimage.util.img_as_float>`_
-utility function from ``scikit-image`).
+utility function from ``scikit-image``).
 
 You can check that the above works by doing some tests; for example, inquiring about
 maximum and minimum values for this array::
