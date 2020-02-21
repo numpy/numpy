@@ -1,4 +1,3 @@
-import platform
 import pytest
 import sysconfig
 
@@ -13,7 +12,8 @@ hosttype = sysconfig.get_config_var('HOST_GNU_TYPE')
 arm_softfloat = False if hosttype is None else hosttype.endswith('gnueabi')
 
 class TestErrstate:
-    @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
+    @pytest.mark.skipif(arm_softfloat,
+                        reason='platform/cpu issue with FPU (gh-413,-15562)')
     def test_invalid(self):
         with np.errstate(all='raise', under='ignore'):
             a = -np.arange(3)
