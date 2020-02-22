@@ -593,9 +593,9 @@ Each ``CastingImpl`` has a specific DType signature:
 ``CastingImpl[InputDtype, RequestedDtype]``.
 Additionally, it will have one more method::
 
-    adjust_descriptors(self, Tuple[DType] : input, casting="safe") -> Tuple[DType]
+    adjust_descriptors(self, Tuple[DType] : input) -> casting, Tuple[DType]
 
-(this method is common with the ufunc machineray, see NEP YY).
+(this method is common with the ufunc machineray, see NEP 43).
 Here, valid values for ``input`` are:
 
 * ``(input_dtype, None)``
@@ -611,13 +611,26 @@ The ``CastingImpl`` only defines the single step 2.
 If the returned datatypes differ from the provided ones, this means that additional
 casting steps are required for either input or output.
 
-This problem is solved by introducing one additional slot:
+The casting returned by ``adjust_descriptors`` and set on the CastingImpl as
+a maximum version should consist of safest cast which is allowed:
 
-* ``ADType.__within_dtype_castingimpl__ = CastingImpl[ADType, ADType]``
+* ``NPY_SAFE_CASTING``, ``NPY_SAME_KIND_CASTING``, ``NPY_UNSAFE_CASTING``
+* a ``NPY_CAST_IS_VIEW`` *flag*
 
-which must be capable of handle any remaining steps, typically byte swapping.
-Unlike the first ``CastingImpl``, it is an error if its ``adjust_dtype``
-function does not return the input unchanged (except filling in a ``None``).
+Where the current ``NPY_EQUIV_CASTING`` should be signalled by
+``NPY_SAFE_CASTING | NPY_CAST_IS_VIEW``. By returning this, the error
+message is given in a place with more information available, and new modes
+could be added in principle.
+(The general casting does not need to define ``CAST_IS_VIEW``.)
+
+**Casting between instances of the same DType:**
+
+One of the casting implementations added should define ``CastingImpl[DType, DType]``,
+this implementation must be capable of handling any remaining steps, such
+as byteswapping.
+If not implemented, the datatype may only have a singleton implementation.
+
+**Actual casting:**
 
 To provide the actual casting functionality, an additional method:
 
