@@ -114,22 +114,25 @@ nomemoverlap(char *ip,
  *    cross page boundaries.
  *
  * We instead rely on i32gather/scatter_ps instructions which use a 32-bit index
- * element. The index needs to be < INT_MAX to avoid overflow. MAX_STEP_SIZE ensures this.
+ * element. The index needs to be < INT_MAX to avoid overflow. MAX_STEP_SIZE
+ * ensures this. The condition also requires that the input and output arrays
+ * should have no overlap in memory.
  */
 #define IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP \
     ((abs(steps[0]) < MAX_STEP_SIZE)  && \
      (abs(steps[1]) < MAX_STEP_SIZE)  && \
      (abs(steps[2]) < MAX_STEP_SIZE)  && \
-     (nomemoverlap(args[0], steps[0]*dimensions[0], args[2], steps[2]*dimensions[0])) && \
-     (nomemoverlap(args[1], steps[1]*dimensions[0], args[2], steps[2]*dimensions[0])))
+     (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
+     (nomemoverlap(args[1], steps[1] * dimensions[0], args[2], steps[2] * dimensions[0])))
 
 /*
- * output should be contiguous, can handle strided input data
- * Input step should be smaller than MAX_STEP_SIZE for performance
+ * 1) Output should be contiguous, can handle strided input data
+ * 2) Input step should be smaller than MAX_STEP_SIZE for performance
+ * 3) Input and output arrays should have no overlap in memory
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esize, vsize) \
     (steps[1] == (esize) && abs(steps[0]) < MAX_STEP_SIZE && \
-     (nomemoverlap(args[1], steps[1]*dimensions[0], args[0], steps[0]*dimensions[0])))
+     (nomemoverlap(args[1], steps[1] * dimensions[0], args[0], steps[0] * dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
     (steps[1] == (esize) && abs_ptrdiff(args[1], args[0]) >= (vsize) && \
