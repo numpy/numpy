@@ -54,7 +54,7 @@ def configuration(parent_package='', top_path=None):
     PCG64_DEFS = []
     # One can force emulated 128-bit arithmetic if one wants.
     #PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
-    depends = ['__init__.pxd', 'c_distributions.pxd', '_bit_generator.pxd']
+    depends = ['__init__.pxd', 'c_distributions.pxd', 'bit_generator.pxd']
 
     # npyrandom - a library like npymath
     npyrandom_sources = [
@@ -96,10 +96,10 @@ def configuration(parent_package='', top_path=None):
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
                              depends=depends + [f'_{gen}.pyx',
-                                   '_bit_generator.pyx', '_bit_generator.pxd'],
+                                   'bit_generator.pyx', 'bit_generator.pxd'],
                              define_macros=_defs,
                              )
-    for gen in ['_common', '_bit_generator']:
+    for gen in ['_common', 'bit_generator']:
         # gen.pyx
         config.add_extension(gen,
                              sources=[f'{gen}.c'],

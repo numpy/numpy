@@ -114,7 +114,7 @@ def _coerce_to_uint32_array(x):
     Examples
     --------
     >>> import numpy as np
-    >>> from numpy.random._bit_generator import _coerce_to_uint32_array
+    >>> from numpy.random.bit_generator import _coerce_to_uint32_array
     >>> _coerce_to_uint32_array(12345)
     array([12345], dtype=uint32)
     >>> _coerce_to_uint32_array('12345')
