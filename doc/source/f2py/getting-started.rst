@@ -29,13 +29,12 @@ either by just in one command or step-by-step, some steps can be
 omitted or combined with others.
 
 Below I'll describe three typical approaches of using F2PY.
-The following `example Fortran 77 code`__ will be used for
-illustration:
+The following example Fortran 77 code will be used for
+illustration, save it as fib1.f:
 
 .. include:: fib1.f
    :literal:
 
-__ fib1.f
 
 The quick way
 ==============
@@ -242,13 +241,11 @@ directive defines special comment lines (starting with ``Cf2py``, for
 example) which are ignored by Fortran compilers but F2PY interprets
 them as normal lines.
 
-Here is shown a `modified version of the example Fortran code`__, saved
+Here is shown a modified version of the previous Fortran code, save it
 as ``fib3.f``:
 
 .. include:: fib3.f
    :literal:
-
-__ fib3.f
 
 Building the extension module can be now carried out in one command::
 
