@@ -29,3 +29,10 @@ If you are writing new C code, please follow the style described in
 Suggested ways to work on your development version (compile and run
 the tests without interfering with system packages) are described in
 ``doc/source/dev/development_environment.rst``.
+
+## Helping with Documentation
+
+Numpy is having well-written documentation. Maintaining the documentation’s accuracy takes a lot of effort.
+You can help with editing, and updating content, and your contributions are welcomed. Details about this are
+covered in [helping  with documentation](https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide)
+section.
