@@ -790,7 +790,7 @@ _loadtxt_chunksize = 50000
 
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
-            converters=None, skiprows=0, usecols=None, unpack=False,
+            converters=None, skiprows=0, skipcols=None, usecols=None, unpack=False,
             ndmin=0, encoding='bytes', max_rows=None):
     """
     Load data from a text file.
@@ -825,6 +825,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines, including comments; default: 0.
+    skipcols : int, optional
+        Skip the first `skipcols` lines; default: 0.
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
@@ -915,6 +917,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if delimiter is not None:
         delimiter = _decode_line(delimiter)
 
+    if skipcols is not None:
+        if not isinstance(skipcols, int):
+            raise TypeError(
+                "skipcols must be an int but an element of type %s " 
+                "was provided" % type(skipcols))
+
     user_converters = converters
 
     if encoding == 'bytes':
@@ -929,6 +937,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             usecols_as_list = list(usecols)
         except TypeError:
             usecols_as_list = [usecols]
+        if skipcols is not None:
+            raise ValueError(
+                        "Arguments for both skipcols and usecols were provided "
+                        "when numpy expected values for only one.")
         for col_idx in usecols_as_list:
             try:
                 opindex(col_idx)
@@ -1047,6 +1059,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 continue
             if usecols:
                 vals = [vals[j] for j in usecols]
+            if skipcols:
+                vals = vals[skipcols:]
             if len(vals) != N:
                 line_num = i + skiprows + 1
                 raise ValueError("Wrong number of columns at line %d"
@@ -1085,7 +1099,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = ''
             first_vals = []
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
-        N = len(usecols or first_vals)
+        N = len(usecols or first_vals) - (skipcols or 0)
 
         dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:
@@ -1106,6 +1120,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 except ValueError:
                     # Unused converter specified
                     continue
+            if skipcols:
+                i = i + skipcols
             if byte_converters:
                 # converters may use decode to workaround numpy's old behaviour,
                 # so encode the string again before passing to the user converter
