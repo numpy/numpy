@@ -6,15 +6,13 @@ import textwrap
 import platform
 
 from tempfile import mkstemp, gettempdir
-from urllib.request import urlopen
-from urllib.error import HTTPError
 import zipfile
 import tarfile
 
 OPENBLAS_V = 'v0.3.8'
 OPENBLAS_LONG = 'v0.3.5-605-gc815b8fb'  # the 0.3.5 is misleading
-BASE_LOC = ''
-RACKSPACE = 'https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com'
+BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
+BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86', 'ppc64le', 's390x']
 
 IS_32BIT = sys.maxsize < 2**32
@@ -40,40 +38,43 @@ def get_ilp64():
     return "64_"
 
 def download_openblas(target, arch, ilp64):
+    import urllib3
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
     if arch in ('aarch64', 'ppc64le', 's390x'):
         suffix = f'manylinux2014_{arch}.tar.gz'
-        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
+        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
         typ = 'tar.gz'
     elif arch == 'darwin':
         suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
-        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
+        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
     elif arch == 'windows':
         if IS_32BIT:
             suffix = 'win32-gcc_7_1_0.zip'
         else:
             suffix = 'win_amd64-gcc_7_1_0.zip'
-        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
+        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
     elif 'x86' in arch:
         if IS_32BIT:
-            suffix = 'manylinux1_i686.tar.gz'
+            suffix = 'manylinux2010_i686.tar.gz'
         else:
-            suffix = 'manylinux1_x86_64.tar.gz'
-        filename = f'{RACKSPACE}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
+            suffix = 'manylinux2010_x86_64.tar.gz'
+        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
     if not filename:
         return None
     print("Downloading:", filename, file=sys.stderr)
-    try:
-        with open(target, 'wb') as fid:
-            fid.write(urlopen(filename).read())
-    except HTTPError:
-        print(f'Could not download "{filename}"')
+    http = urllib3.PoolManager()
+    response = http.request('GET', filename)
+    if response.status != 200:
+        print(f'Could not download "{filename}"', file=sys.stderr)
         return None
+    print("Saving to file", file=sys.stderr)
+    with open(target, 'wb') as fid:
+        fid.write(response.data)
     return typ
 
 def setup_openblas(arch=get_arch(), ilp64=get_ilp64()):
