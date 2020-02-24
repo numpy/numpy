@@ -787,6 +787,33 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
+    def test_skipcols(self):
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=1)
+        assert_array_equal(x, a[:, 1:])
+
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=2)
+        assert_array_equal(x, a[:, 2])
+
+        #testing with non-ints
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        random_str="random str"
+        assert_raises_regex(
+            TypeError, 
+            "skipcols must be an int but an element of type %s " 
+            "was provided" % type(random_str),
+             np.loadtxt, c, skipcols=random_str)
+
     def test_usecols(self):
         a = np.array([[1, 2], [3, 4]], float)
         c = BytesIO()
