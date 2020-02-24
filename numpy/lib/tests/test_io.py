@@ -814,6 +814,17 @@ class TestLoadTxt(LoadTxtBase):
             "was provided" % type(random_str),
              np.loadtxt, c, skipcols=random_str)
 
+        #test that skipcols cannot be used in conjunction with usecols
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        assert_raises_regex(
+                    ValueError,
+                    "Arguments for both skipcols and usecols were provided "
+                    "when numpy expected values for only one.",
+                    np.loadtxt, c, skipcols=1, usecols=(1,))   
+
     def test_usecols(self):
         a = np.array([[1, 2], [3, 4]], float)
         c = BytesIO()
