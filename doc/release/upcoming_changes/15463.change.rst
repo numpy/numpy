@@ -1,0 +1,6 @@
+``numpy.random._bit_generator`` moved to ``numpy.random.bit_generator``
+-----------------------------------------------------------------------
+
+In order to expose `numpy.random.BitGenerator` and `numpy.random.SeedSequence`
+to cython, the ``_bitgenerator`` module is now public as
+`numpy.random.bit_generator`
