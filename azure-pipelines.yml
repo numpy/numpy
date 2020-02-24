@@ -39,10 +39,10 @@ stages:
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
+            python3 -m pip install urllib3 && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
             cp \$target/include/* /usr/include && \
-            yum install -y libgfortran-4.4.7 && \
             python3 -m pip install -r test_requirements.txt && \
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
@@ -105,6 +105,7 @@ stages:
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
     - script: |
+        python -mpip install urllib3
         target=$(python tools/openblas_support.py)
         ls -lR $target
         # manually link to appropriate system paths

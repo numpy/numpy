@@ -9,14 +9,6 @@ free -m
 df -h
 ulimit -a
 
-if [ -n "$DOWNLOAD_OPENBLAS" ]; then
-  pwd
-  ls -ltrh
-  target=$(python tools/openblas_support.py)
-  sudo cp -r $target/lib/* /usr/lib
-  sudo cp $target/include/* /usr/include
-fi
-
 mkdir builds
 pushd builds
 
@@ -49,6 +41,15 @@ pip install --upgrade pip
 # A specific version of cython is required, so we read the cython package
 # requirement using `grep cython test_requirements.txt` instead of simply
 # writing 'pip install setuptools wheel cython'.
-pip install setuptools wheel `grep cython test_requirements.txt`
+# urllib3 is needed for openblas_support
+pip install setuptools wheel urllib3 `grep cython test_requirements.txt`
+
+if [ -n "$DOWNLOAD_OPENBLAS" ]; then
+  pwd
+  target=$(python tools/openblas_support.py)
+  sudo cp -r $target/lib/* /usr/lib
+  sudo cp $target/include/* /usr/include
+fi
+
 
 if [ -n "$USE_ASV" ]; then pip install asv; fi
