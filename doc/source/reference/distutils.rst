@@ -121,7 +121,6 @@ install the C library, you just use the method `add_installed_library` instead o
 ``install_dir`` argument::
 
 .. for doctests
-
    >>> import numpy.distutils.misc_util
    >>> config = np.distutils.misc_util.Configuration(None, '', '.')
 
