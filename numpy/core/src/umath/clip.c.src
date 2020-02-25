@@ -31,17 +31,11 @@
 #define _NPY_HALF_MAX(a, b) (npy_half_isnan(a) || npy_half_ge(a, b) ? (a) : (b))
 
 /**begin repeat
- * #name = FLOAT, DOUBLE, LONGDOUBLE#
+ * #name = FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE##
  */
 #define _NPY_@name@_MIN(a, b) (npy_isnan(a) ? (a) : PyArray_MIN(a, b))
 #define _NPY_@name@_MAX(a, b) (npy_isnan(a) ? (a) : PyArray_MAX(a, b))
-/**end repeat**/
-
-/**begin repeat
- * #name = CFLOAT, CDOUBLE, CLONGDOUBLE#
- */
-#define _NPY_@name@_MIN(a, b) (npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CLT(a, b) ? (a) : (b))
-#define _NPY_@name@_MAX(a, b) (npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CGT(a, b) ? (a) : (b))
 /**end repeat**/
 
 /**begin repeat
