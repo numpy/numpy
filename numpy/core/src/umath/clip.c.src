@@ -82,7 +82,7 @@
     struct @type@ c; \
     c.real = _NPY_@name@_MIN(_NPY_@name@_MAX((x).real, (min).real), (max).real) \
     c.imag = _NPY_@name@_MIN(_NPY_@name@_MAX((x).imag, (min).imag), (max).imag) \
-    return c; \
+    c; \
     })
 
 /**end repeat**/
