@@ -136,18 +136,24 @@ NPY_NO_EXPORT void
         /* contiguous, branch to let the compiler optimize */
         if (is1 == sizeof(@type@) && os1 == sizeof(@type@)) {
             for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *(@type@ *)op1 = {_NPY_@name@_CLIP(*(@type@ *)(ip1).real, (min_val).real, (max_val).real), _NPY_@name@_CLIP(*(@type@ *)(ip1).imag, (min_val).imag, (max_val).imag)};
+                *(@type@ *)op1
+                &op1.[0] = _NPY_CLIP(*(@type@ *)(ip1).real, (min_val).real, (max_val).real);
+                &op1.[1] = _NPY_CLIP(*(@type@ *)(ip1).imag, (min_val).imag, (max_val).imag);
             }
         }
         else {
             for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *(@type@ *)op1.real = {_NPY_@name@_CLIP(*(@type@ *)(ip1).real, (min_val).real, (max_val).real), _NPY_@name@_CLIP(*(@type@ *)(ip1).imag, (min_val).imag, (max_val).imag)};
+              *(@type@ *)op1
+              &op1.[0] = _NPY_CLIP(*(@type@ *)(ip1).real, (min_val).real, (max_val).real);
+              &op1.[1] = _NPY_CLIP(*(@type@ *)(ip1).imag, (min_val).imag, (max_val).imag);
             }
         }
     }
     else {
         TERNARY_LOOP {
-            *(@type@ *)op1 = {_NPY_@name@_CLIP(*(@type@ *)(ip1).real, *(@type@ *)(ip2).real, *(@type@ *)(ip3).real), _NPY_@name@_CLIP(*(@type@ *)(ip1).real, *(@type@ *)(ip2).real, *(@type@ *)(ip3).real) };
+          *(@type@ *)op1
+          &op1.[0] = _NPY_CLIP(*(@type@ *)(ip1).real, (ip2).real, (ip3).real);
+          &op1.[1] = _NPY_CLIP(*(@type@ *)(ip1).imag, (ip2).imag, (ip3).imag);
         }
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
