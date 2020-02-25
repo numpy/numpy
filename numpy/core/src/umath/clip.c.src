@@ -136,18 +136,27 @@ NPY_NO_EXPORT void
         /* contiguous, branch to let the compiler optimize */
         if (is1 == sizeof(@type@) && os1 == sizeof(@type@)) {
             for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *(@type@ *)op1 = {1,1}
+              @type@ c;
+              c.real = 1
+              c.imag = 1
+              *(@type@ *)op1 = c
             }
         }
         else {
             for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
-                *(@type@ *)op1 = {1,1}
+              @type@ c;
+              c.real = 1
+              c.imag = 1
+              *(@type@ *)op1 = c
             }
         }
     }
     else {
         TERNARY_LOOP {
-            *(@type@ *)op1 = {1,1}
+            @type@ c;
+            c.real = 1
+            c.imag = 1
+            *(@type@ *)op1 = c
         }
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
