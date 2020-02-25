@@ -97,7 +97,7 @@
  *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_cfloat, npy_cdouble, npy_clongdouble
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_datetime, npy_timedelta#
  */
 
