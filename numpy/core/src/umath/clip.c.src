@@ -116,7 +116,6 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
-/**end repeat**/
 
 // special case for complex types
 
