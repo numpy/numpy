@@ -116,13 +116,16 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
-// special case for complex types
 /**end repeat**/
+
+// special case for complex types
 
 /**begin repeat
  *
- * #name = CFLOAT, CDOUBLE, CLONGDOUBLE
- * #type = npy_cfloat, npy_cdouble, npy_clongdouble
+ * #name = CFLOAT,
+ *         CDOUBLE, CLONGDOUBLE
+ * #type = npy_cfloat,
+ *         npy_cdouble, npy_clongdouble
  */
 
 #define _NPY_CLIP_C(x, min, max) \
