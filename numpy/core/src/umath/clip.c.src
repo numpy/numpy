@@ -121,7 +121,7 @@ NPY_NO_EXPORT void
  *         npy_cdouble, npy_clongdouble#
  */
 
-#define _NPY_CLIP_C(x, min, max) \
+#define _NPY_CLIP(x, min, max) \
     _NPY_@name@_MIN(_NPY_@name@_MAX((x), (min)), (max))
 
 NPY_NO_EXPORT void
