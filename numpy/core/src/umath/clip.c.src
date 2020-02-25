@@ -80,8 +80,12 @@
  *         npy_cdouble, npy_clongdouble#
  */
 
-#define _NPY_@name@_CLIP(x, min, max) \
-    {_NPY_@name@_MIN(_NPY_@name@_MAX((x).real, (min).real), (max).real), _NPY_@name@_MIN(_NPY_@name@_MAX((x).imag, (min).imag), (max).imag)}
+#define _NPY_@name@_CLIP(x, min, max) {\
+    struct @type@ c;
+    c.real = _NPY_@name@_MIN(_NPY_@name@_MAX((x).real, (min).real), (max).real)\
+    c.imag = _NPY_@name@_MIN(_NPY_@name@_MAX((x).imag, (min).imag), (max).imag)\
+    return c;
+    }
 
 /**end repeat**/
 
@@ -91,7 +95,7 @@
  *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *         LONG, ULONG, LONGLONG, ULONGLONG,
  *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT,CDOUBLE, CLONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE,
  *         DATETIME, TIMEDELTA#
  * #type = npy_bool,
  *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
