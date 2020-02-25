@@ -80,12 +80,10 @@
  *         npy_cdouble, npy_clongdouble#
  */
 
-#define _NPY_@name@_CLIP(x, min, max) {\
-    struct @type@ c;
-    c.real = _NPY_@name@_MIN(_NPY_@name@_MAX((x).real, (min).real), (max).real)\
-    c.imag = _NPY_@name@_MIN(_NPY_@name@_MAX((x).imag, (min).imag), (max).imag)\
-    return c;
-    }
+#define _NPY_@name@_CLIP(x, min, max) ( \
+    x.real = _NPY_@name@_MIN(_NPY_@name@_MAX((x).real, (min).real), (max).real)\
+    x.imag = _NPY_@name@_MIN(_NPY_@name@_MAX((x).imag, (min).imag), (max).imag)\
+)
 
 /**end repeat**/
 
