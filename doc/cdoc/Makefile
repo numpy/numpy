@@ -3,5 +3,8 @@ all: build
 build:
 	doxygen
 
-.PHONY: all build
+clean:
+	rm -rf build
+
+.PHONY: all build clean
 
