@@ -2039,6 +2039,9 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
 
+    If a complex array is given, the real and imaginary parts are clipped
+    independently.
+
     Equivalent to but faster than ``np.minimum(a_max, np.maximum(a, a_min))``.
 
     No check is performed to ensure ``a_min < a_max``.

@@ -4426,6 +4426,12 @@ class TestClip:
         expected = np.array([-1., np.nan, 0.5, 1., 0.25, np.nan])
         assert_array_equal(result, expected)
 
+    def test_complex(self):
+        val = np.array([0+7j, 1+6j, 2+5j, 3+4j])
+        result = val.clip(1+5j, 2+6j)
+        expected = np.array([1+6j, 1+6j, 2+5j, 2+5j])
+        assert_array_equal(result, expected)
+
 
 class TestCompress:
     def test_axis(self):
