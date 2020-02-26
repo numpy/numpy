@@ -387,6 +387,23 @@ run_unary_@isa@_sincos_FLOAT(char **args, npy_intp const *dimensions, npy_intp c
 
 /**end repeat**/
 
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE void
+AVX512F_exp_DOUBLE(npy_double *, npy_double *, const npy_intp n, const npy_intp stride);
+#endif
+static NPY_INLINE int
+run_unary_avx512f_exp_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), 64)) {
+        AVX512F_exp_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
 
 /**begin repeat
  * Float types
@@ -1695,6 +1712,22 @@ avx512_scalef_ps(__m512 poly, __m512 quadrant)
 {
     return _mm512_scalef_ps(poly, quadrant);
 }
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
+avx512_permute_x4var_pd(__m512d t0,
+                        __m512d t1,
+                        __m512d t2,
+                        __m512d t3,
+                        __m512i index)
+{
+
+    __mmask8 lut_mask = _mm512_cmp_epi64_mask(index, _mm512_set1_epi64(15),
+                                  _MM_CMPINT_GT);
+    __m512d res1 = _mm512_permutex2var_pd(t0, index, t1);
+    __m512d res2 = _mm512_permutex2var_pd(t2, index, t3);
+    return _mm512_mask_blend_pd(lut_mask, res1, res2);
+}
+
 /**begin repeat
  *  #vsub  = ps, pd#
  *  #type= npy_float, npy_double#
@@ -2653,6 +2686,154 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 }
 #endif
 /**end repeat**/
+
+/*
+ * Vectorized implementation of exp double using AVX512
+ * Reference: Tang, P.T.P., "Table-driven implementation of the
+ *  exponential function in IEEE floating-point
+ *  arithmetic," ACM Transactions on Mathematical
+ *  Software, vol. 15, pp. 144-157, 1989.
+ * 1) if x > mTH_max or x is INF; return INF (overflow)
+ * 2) if x < mTH_min; return 0.0f (underflow)
+ * 3) if abs(x) < mTH_nearzero; return 1.0f + x
+ * 4) Range reduction:
+ *    x = (32m + j)ln2 / 32 + r; r in [-ln2/64, ln2/64]
+ * 5) exp(r) - 1 is approximated by a polynomial function p(r)
+ *    exp(x) = 2^m(2^(j/32) + 2^(j/32)p(r));
+ */
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
+static NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F void
+AVX512F_exp_DOUBLE(npy_double * op,
+                npy_double * ip,
+                const npy_intp array_size,
+                const npy_intp steps)
+{
+    npy_intp num_remaining_elements = array_size;
+    const npy_intp stride = steps / sizeof(npy_double);
+    const npy_int num_lanes = 64 / sizeof(npy_double);
+    npy_int indexarr[8];
+    for (npy_int ii = 0; ii < 8; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+
+    __m512d InvLn2N = _mm512_set1_pd(NPY_INV_LN2_MUL_32);
+    __m512d mShift = _mm512_set1_pd(NPY_RINT_CVT_MAGIC);
+    __m512d mNegL1 = _mm512_set1_pd(NPY_TANG_NEG_L1);
+    __m512d mNegL2 = _mm512_set1_pd(NPY_TANG_NEG_L2);
+    __m512i mMod = _mm512_set1_epi64(0x1f);
+    __m512d mA1 = _mm512_set1_pd(NPY_TANG_A1);
+    __m512d mA2 = _mm512_set1_pd(NPY_TANG_A2);
+    __m512d mA3 = _mm512_set1_pd(NPY_TANG_A3);
+    __m512d mA4 = _mm512_set1_pd(NPY_TANG_A4);
+    __m512d mA5 = _mm512_set1_pd(NPY_TANG_A5);
+    __m512d mTH_nearzero = _mm512_set1_pd(0x1p-54);
+    __m512d mTH_max = _mm512_set1_pd(0x1.62e42fefa39efp+9);
+    __m512d mTH_min = _mm512_set1_pd(-0x1.74910d52d3053p+9);
+    __m512d mTH_inf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d zeros_d = _mm512_set1_pd(0.0f);
+    __m512d ones_d = _mm512_set1_pd(1.0f);
+    __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
+
+    __m512d mTable_top_0 = _mm512_loadu_pd(&(EXP_Table_top[0]));
+    __m512d mTable_top_1 = _mm512_loadu_pd(&(EXP_Table_top[8]));
+    __m512d mTable_top_2 = _mm512_loadu_pd(&(EXP_Table_top[8*2]));
+    __m512d mTable_top_3 = _mm512_loadu_pd(&(EXP_Table_top[8*3]));
+    __m512d mTable_tail_0 = _mm512_loadu_pd(&(EXP_Table_tail[0]));
+    __m512d mTable_tail_1 = _mm512_loadu_pd(&(EXP_Table_tail[8]));
+    __m512d mTable_tail_2 = _mm512_loadu_pd(&(EXP_Table_tail[8*2]));
+    __m512d mTable_tail_3 = _mm512_loadu_pd(&(EXP_Table_tail[8*3]));
+    
+    __mmask8 overflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
+    __mmask8 load_mask = avx512_get_full_load_mask_pd();
+    __mmask8 xmin_mask, xmax_mask, inf_mask, nan_mask, nearzero_mask;
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < num_lanes) {
+            load_mask = avx512_get_partial_load_mask_pd(num_remaining_elements,
+                                                      num_lanes);
+        }
+
+        __m512d x;
+        if (1 == stride) {
+            x = avx512_masked_load_pd(load_mask, ip);
+        }
+        else {
+            x = avx512_masked_gather_pd(zeros_d, ip, vindex, load_mask);
+        }
+
+        nan_mask = _mm512_cmp_pd_mask(x, x, _CMP_NEQ_UQ);
+        x = avx512_set_masked_lanes_pd(x, zeros_d, nan_mask);
+        xmax_mask = _mm512_cmp_pd_mask(x, mTH_max, _CMP_GT_OQ);
+        xmin_mask = _mm512_cmp_pd_mask(x, mTH_min, _CMP_LT_OQ);
+        inf_mask = _mm512_cmp_pd_mask(x, mTH_inf, _CMP_EQ_OQ);
+        __m512i x_abs = _mm512_and_epi64(_mm512_castpd_si512(x), 
+                                _mm512_set1_epi64(0x7FFFFFFFFFFFFFFF));
+        nearzero_mask = _mm512_cmp_pd_mask(_mm512_castsi512_pd(x_abs), 
+                                    mTH_nearzero, _CMP_LT_OQ);
+        nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
+        overflow_mask = _mm512_kor(overflow_mask, 
+                                _mm512_kxor(xmax_mask, inf_mask));
+        x = avx512_set_masked_lanes_pd(x, zeros_d,
+                        _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
+                            _mm512_kor(xmax_mask, nearzero_mask)));
+
+        /* z = x * 32/ln2 */
+        __m512d z = _mm512_mul_pd(x, InvLn2N);
+        
+        /* round to nearest */
+        __m512d kd = _mm512_add_pd(z, mShift);
+        __m512i ki = _mm512_castpd_si512(kd);
+        kd = _mm512_sub_pd(kd, mShift);
+
+        /* r = (x + kd*mNegL1) + kd*mNegL2 */
+        __m512d r1 = _mm512_fmadd_pd(kd, mNegL1, x);
+        __m512d r2 = _mm512_mul_pd(kd, mNegL2);
+        __m512d r = _mm512_add_pd(r1,r2);
+
+        /* Polynomial approximation for exp(r) - 1 */
+        __m512d q = _mm512_fmadd_pd(mA5, r, mA4);
+        q = _mm512_fmadd_pd(q, r, mA3);
+        q = _mm512_fmadd_pd(q, r, mA2);
+        q = _mm512_fmadd_pd(q, r, mA1);
+        q = _mm512_mul_pd(q, r);
+        __m512d p = _mm512_fmadd_pd(r, q, r2);;
+        p = _mm512_add_pd(r1, p);
+
+        /* Get 2^(j/32) from lookup table */
+        __m512i j = _mm512_and_epi64(ki, mMod);
+        __m512d top = avx512_permute_x4var_pd(mTable_top_0, mTable_top_1,
+                                  mTable_top_2, mTable_top_3, j);
+        __m512d tail = avx512_permute_x4var_pd(mTable_tail_0, mTable_tail_1,
+                                  mTable_tail_2, mTable_tail_3, j);
+
+        /* 
+         * s = top + tail;
+         * exp(x) = 2^m * (top + (tail + s * p)); 
+         */
+        __m512d s = _mm512_add_pd(top, tail);
+        __m512d res = _mm512_fmadd_pd(s, p, tail);
+        res = _mm512_add_pd(res, top);
+        res= _mm512_scalef_pd(res, _mm512_div_pd(kd, _mm512_set1_pd(32)));
+
+        /* return special cases */
+        res = avx512_set_masked_lanes_pd(res, _mm512_add_pd(x, ones_d), 
+                                        nearzero_mask);
+        res = avx512_set_masked_lanes_pd(res, _mm512_set1_pd(NPY_NAN), 
+                                        nan_mask);
+        res = avx512_set_masked_lanes_pd(res, mTH_inf, xmax_mask);
+        res = avx512_set_masked_lanes_pd(res, zeros_d, xmin_mask);
+
+        _mm512_mask_storeu_pd(op, load_mask, res);
+
+        ip += num_lanes * stride;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+    if (overflow_mask) {
+        npy_set_floatstatus_overflow();
+    }
+}
+#endif
 
 /**begin repeat
  * #TYPE = CFLOAT, CDOUBLE#
