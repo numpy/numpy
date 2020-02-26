@@ -825,8 +825,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines, including comments; default: 0.
-    skipcols : int, optional
-        Skip the first `skipcols` lines; default: 0.
+    skipcols : int or tuple with len 2, optional
+        When skipcols is a positive int, loadtxt will not load the first `skipcols` columns
+        When skipcols is a negative int, loadtxt will not load the last `skipcols` columns
+        When skipcols is a tuple, loadtxt will not load the first `skipcols[0]` columns or
+        Whe last `skipcols[1]` columns
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
