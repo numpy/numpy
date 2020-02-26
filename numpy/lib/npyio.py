@@ -918,11 +918,41 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         delimiter = _decode_line(delimiter)
 
     if skipcols is not None:
-        if not isinstance(skipcols, int):
-            raise TypeError(
-                "skipcols must be an int but an element of type %s " 
-                "was provided" % type(skipcols))
+        try:
+            skipcols_as_list = list(skipcols)
+        except TypeError:
+            skipcols_as_list = [skipcols]
 
+        for col_slice in skipcols_as_list:
+            try:
+                opindex(col_slice)
+            except TypeError as e:
+                e.args = (
+                    "skipcols must be an int or a sequence of ints but "
+                    "it contains at least one element of type %s" %
+                    type(col_slice),
+                    )
+                raise
+
+        if len(skipcols_as_list) not in (1, 2):
+            raise ValueError(
+                        "skipcols takes either an int or a seq of "
+                        "length 1 or 2 when an argument of length %d was provided" %
+                        len(skipcols_as_list)
+                        )
+
+        if len(skipcols_as_list) == 1:
+            if (skipcols_as_list[0] > 0):
+                skipcols_as_list = (skipcols, 0)
+            else:
+                skipcols_as_list = (0, skipcols)
+
+        #more convenient for slicing last elements of array
+        if skipcols_as_list[1] > 0:
+            skipcols_as_list[1] = -skipcols_as_list[1]
+
+        skipcols = skipcols_as_list
+    
     user_converters = converters
 
     if encoding == 'bytes':
@@ -933,14 +963,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
+        if skipcols is not None:
+            raise ValueError(
+                        "Arguments for both skipcols and usecols were provided "
+                        "when numpy expected values for only one")
         try:
             usecols_as_list = list(usecols)
         except TypeError:
             usecols_as_list = [usecols]
-        if skipcols is not None:
-            raise ValueError(
-                        "Arguments for both skipcols and usecols were provided "
-                        "when numpy expected values for only one.")
+
         for col_idx in usecols_as_list:
             try:
                 opindex(col_idx)
@@ -1055,12 +1086,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         line_iter = itertools.islice(line_iter, max_rows)
         for i, line in enumerate(line_iter):
             vals = split_line(line)
+
             if len(vals) == 0:
                 continue
             if usecols:
                 vals = [vals[j] for j in usecols]
-            if skipcols:
-                vals = vals[skipcols:]
+
             if len(vals) != N:
                 line_num = i + skiprows + 1
                 raise ValueError("Wrong number of columns at line %d"
@@ -1071,7 +1102,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
             # Then pack it according to the dtype's nesting
             items = pack_items(items, packing)
-            X.append(items)
+            
+            if isinstance(items, (np.dtype, int, float)):
+                X.append([items])
+            else:
+                X.append(items)
+
             if len(X) > chunk_size:
                 yield X
                 X = []
@@ -1099,7 +1135,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = ''
             first_vals = []
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
-        N = len(usecols or first_vals) - (skipcols or 0)
+
+        N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:
@@ -1120,8 +1157,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 except ValueError:
                     # Unused converter specified
                     continue
-            if skipcols:
-                i = i + skipcols
             if byte_converters:
                 # converters may use decode to workaround numpy's old behaviour,
                 # so encode the string again before passing to the user converter
@@ -1166,9 +1201,29 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Check correctness of the values of `ndmin`
     if ndmin not in [0, 1, 2]:
         raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
-    # Tweak the size and shape of the arrays - remove extraneous dimensions
+
+    #Tweak the size and shape of the arrays - remove extraneous dimensions
+    if np.squeeze(X).ndim > 1:
+        X = np.squeeze(X)
+    #remove the first `skipcols[0]` columns and last `skipcols[1]` columns          
+    if skipcols and X.ndim > 0:
+        #outlier case for 1D arrays
+        if X.ndim == 1:
+            if skipcols[1] != 0:
+                X = X[skipcols[0]:skipcols[1]]
+            else:
+                X = X[skipcols[0]:]
+        else:
+            if skipcols[1] != 0:
+                X = X[:, skipcols[0]:skipcols[1]]
+            else:
+                X = X[:, skipcols[0]:]
+
+    # Squeeze again in case removing columns has resulted in more extraneous dimensions
+
     if X.ndim > ndmin:
         X = np.squeeze(X)
+
     # and ensure we have the minimum number of dimensions asked for
     # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
     if X.ndim < ndmin:
