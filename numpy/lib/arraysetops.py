@@ -261,42 +261,45 @@ def unique(ar, return_index=False, return_inverse=False,
         ret = _unique1d(ar, return_index, return_inverse, return_counts)
         return _unpack_tuple(ret)
 
-    if ar.size == 0:
-        # if there's no elements (at least one axis is 0), the reshaping and
-        # viewing doesn't work, but there's also no data, so those
-        # manipulations aren't needed to get right answer.
-
-        axis_len = ar.shape[axis]
-        if axis_len == 0:
-            # there's no elements along this axis, so there's no unique
-            # elements:
-            num_empties = return_index + return_inverse + return_counts
-            output = (ar,) + (np.array([], dtype=np.intp),) * num_empties
-        else:
-            # there are elements along this axis. Each element is empty, so
-            # there's a single unique example of this element
-            output_shape = list(ar.shape)
-            output_shape[axis] = 1
-
-            output = (np.empty(shape=output_shape, dtype=ar.dtype),)
-            if return_index:
-                # first index is the first occurance of an empty element
-                output += (np.array([0], dtype=np.intp),)
-            if return_inverse:
-                # all `ar` elements are equal to the 0th element of the output
-                output += (np.zeros(axis_len, dtype=np.intp),)
-            if return_counts:
-                # the empty element occurs `axis_len` times
-                output += (np.array([axis_len], dtype=np.intp),)
-
-        return _unpack_tuple(output)
-
     # axis was specified and not None
     try:
         ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
         raise np.AxisError(axis, ar.ndim)
+
+    if ar.size == 0:
+        # if there's no elements (at least one axis is 0), the reshaping and
+        # viewing doesn't work, but there's also no data, so those
+        # manipulations aren't needed to get right answer.
+
+        axis_len = ar.shape[0]
+        if axis_len == 0:
+            # there's no elements along this axis, so there's no unique
+            # elements:
+            num_empties = return_index + return_inverse + return_counts
+            out = ar
+            extra_output = (np.array([], dtype=np.intp),) * num_empties
+        else:
+            # there are elements along this axis. Each element is empty, so
+            # there's a single unique example of this element
+            output_shape = list(ar.shape)
+            output_shape[0] = 1
+            out = np.empty(shape=output_shape, dtype=ar.dtype)
+
+            extra_output = ()
+            if return_index:
+                # first index is the first occurance of an empty element
+                extra_output += (np.zeros(1, dtype=np.intp),)
+            if return_inverse:
+                # all `ar` elements are equal to the 0th element of the output
+                extra_output += (np.zeros(axis_len, dtype=np.intp),)
+            if return_counts:
+                # the empty element occurs `axis_len` times
+                extra_output += (np.array([axis_len], dtype=np.intp),)
+
+        out = np.moveaxis(out, 0, axis)
+        return _unpack_tuple((out,) + extra_output)
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
