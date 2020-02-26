@@ -788,6 +788,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
     def test_skipcols(self):
+        #testing for positive ints
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
         c = BytesIO()
         np.savetxt(c, a)
@@ -802,6 +803,79 @@ class TestLoadTxt(LoadTxtBase):
         x = np.loadtxt(c, dtype=float, skipcols=2)
         assert_array_equal(x, a[:, 2])
 
+        #testing for negative ints
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=-1)
+        assert_array_equal(x, a[:, :-1])
+
+        #testing with tuples
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=(1, -1))
+        assert_array_equal(x, a[:, 1])
+
+        #testing with arrays
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=np.array((1, -1)))
+        assert_array_equal(x, a[:, 1])
+
+        #testing with array-like objects of len != 2
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        skipcols_test = (1, 2, 3)
+        assert_raises_regex(
+            ValueError,
+                "skipcols takes either an int or a seq of "
+                "length 1 or 2 when an argument of length %d was provided" %
+                len(skipcols_test),
+                np.loadtxt, c, skipcols=skipcols_test
+                        )
+
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        skipcols_test = (1, 2, 3)
+        assert_raises_regex(
+            ValueError,
+                "skipcols takes either an int or a seq of "
+                "length 1 or 2 when an argument of length %d was provided" %
+                len(skipcols_test),
+                np.loadtxt, c, skipcols=np.array((1, 2, 3))
+                        )
+
+        #testing that when (skipcols[0] + skipcols[1] > len(table)), it returns an empty array
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=4)
+        assert_array_equal(x, np.empty(shape=(2,0)))
+
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=4)
+        assert_array_equal(x, np.empty(shape=(2,0)))
+
+        a = np.array([[1, 2, 3], [3, 4, 5]], float)
+        c = BytesIO()
+        np.savetxt(c, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipcols=(2, -2))
+        assert_array_equal(x, np.empty(shape=(2,0)))
+
         #testing with non-ints
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
         c = BytesIO()
@@ -810,9 +884,24 @@ class TestLoadTxt(LoadTxtBase):
         random_str="random str"
         assert_raises_regex(
             TypeError, 
-            "skipcols must be an int but an element of type %s " 
-            "was provided" % type(random_str),
-             np.loadtxt, c, skipcols=random_str)
+                "skipcols must be an int or a sequence of ints but "
+                "it contains at least one element of type %s" %
+            type(random_str),
+            np.loadtxt, c, skipcols=random_str)
+
+        #testing with 1D outlier cases
+        c = TextIO()
+        c.write('1,2,3\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', skipcols=1)
+        assert_array_equal(x, np.array([2, 3]))
+
+        b = np.array([[1], [2], [3]])
+        c = BytesIO()
+        np.savetxt(c, b)
+        c.seek(0)
+        x = np.loadtxt(c, skipcols=1)
+        assert_array_equal(x, np.empty(shape=(3, 0)))
 
         #test that skipcols cannot be used in conjunction with usecols
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
@@ -822,7 +911,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_raises_regex(
                     ValueError,
                     "Arguments for both skipcols and usecols were provided "
-                    "when numpy expected values for only one.",
+                    "when numpy expected values for only one",
                     np.loadtxt, c, skipcols=1, usecols=(1,))   
 
     def test_usecols(self):
