@@ -10,7 +10,7 @@ import zipfile
 import tarfile
 
 OPENBLAS_V = 'v0.3.8'
-OPENBLAS_LONG = 'v0.3.5-605-gc815b8fb'  # the 0.3.5 is misleading
+OPENBLAS_LONG = 'v0.3.7-391-gddcbed66'  # the 0.3.7 is misleading
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86', 'ppc64le', 's390x']
