@@ -62,8 +62,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     if (PyArray_DATA(ret) != PyArray_DATA(self)) {
         Py_DECREF(ret);
         PyErr_SetString(PyExc_AttributeError,
-                        "Incompatible shape for this array; the in-memory " \
-                        "representation of the array would mutate. Use " \
+                        "Incompatible shape for in-place modifcation. Use "
                         "`.reshape()` to make a copy with the desired shape.");
         return -1;
     }
