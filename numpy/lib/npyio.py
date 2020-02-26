@@ -1095,6 +1095,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if usecols:
                 vals = [vals[j] for j in usecols]
 
+            if skipcols:
+                if skipcols[1] != 0:
+                    vals = vals[skipcols[0]:skipcols[1]]
+                else:
+                    vals = vals[skipcols[0]:]
+
             if len(vals) != N:
                 line_num = i + skiprows + 1
                 raise ValueError("Wrong number of columns at line %d"
@@ -1139,7 +1145,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             first_vals = []
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
-        N = len(usecols or first_vals)
+        N = len(usecols or first_vals) - (skipcols[0] - skipcols[1] if skipcols else 0)
+        if N <= 0:
+            if ndmin == 2:
+                return np.empty(shape=(0, 1), dtype=dtype)
+            else:
+                return np.empty(shape=(0), dtype=dtype)
 
         dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:
@@ -1206,24 +1217,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
 
     #Tweak the size and shape of the arrays - remove extraneous dimensions
-    if np.squeeze(X).ndim > 1:
-        X = np.squeeze(X)
-    #remove the first `skipcols[0]` columns and last `skipcols[1]` columns          
-    if skipcols and X.ndim > 0:
-        #outlier case for 1D arrays
-        if X.ndim == 1:
-            if skipcols[1] != 0:
-                X = X[skipcols[0]:skipcols[1]]
-            else:
-                X = X[skipcols[0]:]
-        else:
-            if skipcols[1] != 0:
-                X = X[:, skipcols[0]:skipcols[1]]
-            else:
-                X = X[:, skipcols[0]:]
-
-    # Squeeze again in case removing columns has resulted in more extraneous dimensions
-
     if X.ndim > ndmin:
         X = np.squeeze(X)
 

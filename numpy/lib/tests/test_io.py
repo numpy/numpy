@@ -860,21 +860,21 @@ class TestLoadTxt(LoadTxtBase):
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, skipcols=4)
-        assert_array_equal(x, np.empty(shape=(2,0)))
+        assert_array_equal(x, np.empty(shape=(0)))
 
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
         c = BytesIO()
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, skipcols=4)
-        assert_array_equal(x, np.empty(shape=(2,0)))
+        assert_array_equal(x, np.empty(shape=(0)))
 
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
         c = BytesIO()
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, skipcols=(2, -2))
-        assert_array_equal(x, np.empty(shape=(2,0)))
+        assert_array_equal(x, np.empty(shape=(0)))
 
         #testing with non-ints
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
@@ -889,6 +889,11 @@ class TestLoadTxt(LoadTxtBase):
             type(random_str),
             np.loadtxt, c, skipcols=random_str)
 
+        c = TextIO()
+        c.write('r,1,2,a\nn,3,4,d')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', skipcols=(1, -1))
+        assert_array_equal(x, np.array([[1, 2], [3, 4]]))
         #testing with 1D outlier cases
         c = TextIO()
         c.write('1,2,3\n')
@@ -901,7 +906,7 @@ class TestLoadTxt(LoadTxtBase):
         np.savetxt(c, b)
         c.seek(0)
         x = np.loadtxt(c, skipcols=1)
-        assert_array_equal(x, np.empty(shape=(3, 0)))
+        assert_array_equal(x, np.empty(shape=(0)))
 
         #test that skipcols cannot be used in conjunction with usecols
         a = np.array([[1, 2, 3], [3, 4, 5]], float)
