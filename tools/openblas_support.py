@@ -9,7 +9,7 @@ from tempfile import mkstemp, gettempdir
 import zipfile
 import tarfile
 
-OPENBLAS_V = 'v0.3.8'
+OPENBLAS_V = '0.3.9'
 OPENBLAS_LONG = 'v0.3.7-391-gddcbed66'  # the 0.3.7 is misleading
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
@@ -243,8 +243,11 @@ def test_version(expected_version, ilp64=get_ilp64()):
     get_config.restype=ctypes.c_char_p
     res = get_config()
     print('OpenBLAS get_config returned', str(res))
-    check_str = b'OpenBLAS %s' % expected_version[0].encode()
-    assert check_str in res
+    if not expected_version:
+        expected_version = OPENBLAS_V
+    check_str = b'OpenBLAS %s' % expected_version.encode()
+    print(check_str)
+    assert check_str in res, '%s not found in %s' %(expected_version, res)
     if ilp64:
         assert b"USE64BITINT" in res
     else:
@@ -257,10 +260,10 @@ if __name__ == '__main__':
                     'architecture')
     parser.add_argument('--test', nargs='*', default=None,
         help='Test different architectures. "all", or any of %s' % ARCHITECTURES)
-    parser.add_argument('--check_version', nargs=1, default=None,
+    parser.add_argument('--check_version', nargs='?', default='',
         help='Check provided OpenBLAS version string against available OpenBLAS')
     args = parser.parse_args()
-    if args.check_version is not None:
+    if args.check_version != '':
         test_version(args.check_version)
     elif args.test is None:
         print(setup_openblas())
