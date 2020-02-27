@@ -26,12 +26,14 @@ degree i.
 .. toctree::
    :maxdepth: 1
 
+   routines.polynomials.classes
    routines.polynomials.polynomial
    routines.polynomials.chebyshev
    routines.polynomials.hermite
    routines.polynomials.hermite_e
    routines.polynomials.laguerre
    routines.polynomials.legendre
+   routines.polynomials.polyutils
 
 
 .. toctree::
