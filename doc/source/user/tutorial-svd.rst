@@ -12,8 +12,7 @@ Tutorial: Linear algebra on n-dimensional arrays
 **Prerequisites**
 
 Before reading this tutorial, you should know a bit of Python. If you
-would like to refresh your memory, take a look at the `Python
-tutorial <https://docs.python.org/tutorial/>`__.
+would like to refresh your memory, take a look at the :doc:`Python tutorial <python:tutorial/index>`.
 
 If you want to be able to run the examples in this tutorial, you should also have
 `matplotlib <https://matplotlib.org/>`_ and `SciPy <https://scipy.org>`_ installed on your computer.
@@ -46,16 +45,7 @@ generate a compressed approximation of an image. We'll use the ``face`` image fr
 
 .. note::
 
-   If you prefer, you can use your own image as you work through this tutorial. In
-   order to transform your image into a NumPy array that can be manipulated, you can
-   use the ``imread`` function from the `matplotlib.pyplot` submodule. Alternatively,
-   you can use the ``imread`` function from the `imageio library
-   <https://imageio.readthedocs.io/en/stable/userapi.html#imageio.imread>`_. Be aware
-   that if you use your own image, you'll likely need to adapt the steps below. For more
-   information on how images are treated when converted to NumPy arrays, see `A crash
-   course on NumPy for images
-   <https://scikit-image.org/docs/dev/user_guide/numpy_images.html>`_ from the
-   ``scikit-image`` documentation.
+   If you prefer, you can use your own image as you work through this tutorial. In order to transform your image into a NumPy array that can be manipulated, you can use the ``imread`` function from the `matplotlib.pyplot` submodule. Alternatively, you can use the :func:`imageio.imread` function from the ``imageio`` library. Be aware that if you use your own image, you'll likely need to adapt the steps below. For more information on how images are treated when converted to NumPy arrays, see :std:doc:`user_guide/numpy_images` from the ``scikit-image`` documentation.
 
 Now, ``img`` is a NumPy array, as we can see when using the ``type`` function::
 
@@ -137,8 +127,7 @@ matrices to represent the RGB values. We can do that by setting
 
 This operation, dividing an array by a scalar, works because of NumPy's `broadcasting`
 rules (see :ref:`array-broadcasting-in-numpy`). (Note that in real-world
-applications, it would be better to use, for example, the `img_as_float
-<https://scikit-image.org/docs/dev/api/skimage.util.html#skimage.util.img_as_float>`_
+applications, it would be better to use, for example, the :func:`img_as_float <skimage.img_as_float>`
 utility function from ``scikit-image``).
 
 You can check that the above works by doing some tests; for example, inquiring about
@@ -174,9 +163,7 @@ retaining some of its features.
     users are encouraged to use the `scipy` module for real-world
     applications. However, it is currently not possible to apply linear
     algebra operations to n-dimensional arrays using the `scipy.linalg`
-    module. For more information on this, check the
-    `scipy.linalg Reference
-    <https://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html>`_.
+    module. For more information on this, check the :doc:`scipy.linalg Reference<scipy:tutorial/linalg>`.
 
 To proceed, import the linear algebra submodule from NumPy::
 
@@ -487,8 +474,8 @@ Press, 1985*.
 
 **Further reading**
 
--  `Python tutorial <https://docs.python.org/tutorial/>`__
+-  :doc:`Python tutorial <python:tutorial/index>`
 -  :ref:`reference`
--  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
+-  :doc:`SciPy Tutorial <scipy:tutorial/index>`
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
--  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
+-  `A matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
