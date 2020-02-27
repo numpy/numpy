@@ -1,7 +1,7 @@
 """
-===================================================
-Legendre Series (:mod: `numpy.polynomial.legendre`)
-===================================================
+==================================================
+Legendre Series (:mod:`numpy.polynomial.legendre`)
+==================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Legendre series, including a `Legendre` class that
