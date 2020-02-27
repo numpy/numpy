@@ -5,10 +5,6 @@ trigger:
     include:
       - master
       - maintenance/*
-variables:
-  # OpenBLAS_version should be updated
-  # to match numpy-wheels repo
-  OpenBLAS_version: 0.3.8
 
 stages:
 - stage: InitialTests
@@ -47,7 +43,7 @@ stages:
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
-            python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
+            python3 tools/openblas_support.py --check_version"
       displayName: 'Run 32-bit manylinux2010 Docker Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
@@ -138,7 +134,7 @@ stages:
       displayName: 'Run Refuide Check'
     - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
-    - bash: python tools/openblas_support.py --check_version $(OpenBLAS_version)
+    - bash: python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
     - task: PublishTestResults@2
       condition: succeededOrFailed()

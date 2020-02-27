@@ -97,7 +97,7 @@ run_test()
   export PYTHONWARNINGS=default
 
   if [ -n "$CHECK_BLAS" ]; then
-    $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
+    $PYTHON ../tools/openblas_support.py --check_version
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
