@@ -24,9 +24,10 @@ degree i.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   routines.polynomials.package
+   routines.polynomials.chebyshev
+
 
 .. toctree::
    :maxdepth: 2
