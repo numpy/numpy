@@ -225,14 +225,9 @@ _get_output_array_method(PyObject *obj, PyObject *method,
                          PyObject *input_method) {
     if (obj == (PyObject *)&PyArray_Type) {
         /*
-         * If the inputs do not wrap, Ellipsis indicates that no wrapping should
-         * be done (meaning that it cannot be converted to scalar). `None` is
-         * used to signal that the output is returned unchanged.
+         * If the inputs do not wrap, np.ndarray indicates that no reduction
+         * to scalar is done: the output will be of np.ndarray type.
          */
-        if (input_method != NULL) {
-            Py_INCREF(input_method);
-            return input_method;
-        }
         Py_RETURN_NONE;
     }
     if (obj != Py_None) {
@@ -832,9 +827,9 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
 {
     if ((obj == Py_None) || (obj == (PyObject *)&PyArray_Type)) {
         /*
-         * Translate None and Ellipsis to NULL. Both mean that we need to
-         * allocate the output array. Ellipsis indicates no conversion to
-         * before returning the output.
+         * Translate None and np.ndarray to NULL. Both mean that we need to
+         * allocate the output array. np.ndarray will force ndarray output
+         * (no wrapping will be done, especially not to scalar!).
          */
         return 0;
     }
@@ -4494,7 +4489,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             goto fail;
         }
     }
-    /* Check for Ellipsis in out to mean no reduction to scalar */
+    /* Check for np.ndarray in out to mean no reduction to scalar */
     if (out_obj == (PyObject *)&PyArray_Type) {
         out = NULL;
     }
@@ -4670,10 +4665,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         /* Find __array_wrap__ - note that these rules are different to the
          * normal ufunc path
          */
-        PyObject *wrap;
-        if (out != NULL) {
+        PyObject *wrap = NULL;
+        if (out != NULL || out_obj == (PyObject *)&PyArray_Type) {
+            /*
+             * If out is passed in, we do not use __array_wrap__. Also if
+             * out=np.ndarray, we do not wrap (and thus return an ndarray).
+             */
+            Py_INCREF(Py_None);
             wrap = Py_None;
-            Py_INCREF(wrap);
         }
         else if (Py_TYPE(op) != Py_TYPE(ret)) {
             wrap = PyObject_GetAttr(op, npy_um_str_array_wrap);
@@ -4682,20 +4681,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             }
             else if (!PyCallable_Check(wrap)) {
                 Py_DECREF(wrap);
-                wrap = NULL;
-            }
-        }
-        else {
-            /*
-             * Wrapping is not necessary due to the input array, but by default
-             * we will convert 0-D to scalar. `out=...` signals not to do that
-             * (which is signaled by setting wrap to None here).
-             */
-            if (out_obj == (PyObject *)&PyArray_Type) {
-                wrap = Py_None;
-                Py_INCREF(wrap);
-            }
-            else {
                 wrap = NULL;
             }
         }

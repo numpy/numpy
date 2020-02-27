@@ -165,52 +165,73 @@ class TestOut:
                 # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
 
-    def test_out_scalar_ellipsis_single_out(self):
-        # Test that ellipsis works as a sentinal to signal that output
+    def test_out_scalar_single_ndarray(self):
+        # Test that np.ndarray works as a sentinal to signal that output
         # should be an array.
-        assert isinstance(np.add(1, 1, out=...), np.ndarray)
-        assert isinstance(np.add(1, 1, ...), np.ndarray)
+        assert isinstance(np.add(1, 1, out=np.ndarray), np.ndarray)
+        assert isinstance(np.add(1, 1, np.ndarray), np.ndarray)
 
         assert isinstance(np.add(1, 1, None), np.generic)
 
-    @pytest.mark.parametrize("out1", [None, Ellipsis])
-    @pytest.mark.parametrize("out2", [None, Ellipsis, np._NoValue])
-    def test_out_scalar_ellipsis_multiple_out(self, out1, out2):
+    @pytest.mark.parametrize("out1", [None, np.ndarray])
+    @pytest.mark.parametrize("out2", [None, np.ndarray, np._NoValue])
+    def test_out_scalar_multiple_ndarray(self, out1, out2):
         if out2 is np._NoValue:
             res1, res2 = np.divmod(5, 6, out1)
         else:
             res1, res2 = np.divmod(5, 6, out1, out2)
 
         for out, res in zip([out1, out2], [res1, res2]):
-            if out is Ellipsis:
-                assert(isinstance(res, np.ndarray))
+            if out is np.ndarray:
+                assert isinstance(res, np.ndarray)
             else:
-                assert(isinstance(res, np.generic))
+                assert isinstance(res, np.generic)
 
-    @pytest.mark.parametrize("out1", [None, Ellipsis])
-    @pytest.mark.parametrize("out2", [None, Ellipsis])
-    def test_out_scalar_ellipsis_multiple_out_kwarg(self, out1, out2):
+    @pytest.mark.parametrize("out1", [None, np.ndarray])
+    @pytest.mark.parametrize("out2", [None, np.ndarray])
+    def test_out_scalar_multiple_ndarray_kwarg(self, out1, out2):
         res1, res2 = np.divmod(5, 6, out=(out1, out2))
 
         for out, res in zip([out1, out2], [res1, res2]):
-            if out is Ellipsis:
+            if out is np.ndarray:
                 assert(isinstance(res, np.ndarray))
             else:
                 assert(isinstance(res, np.generic))
 
-    def test_out_wrap_called_with_ellipsis(self):
-        # If the input wraps the output, we need to honor that even with
-        # Ellipsis
-        class myarray(np.ndarray):
-            @classmethod
-            def __array_wrap__(cls, other):
-                return other.view(cls)
+    def test_out_scalar_reduce(self):
+        assert isinstance(np.add.reduce(1.), np.generic)
 
-        arr = np.ones(()).view(myarray)
-        assert isinstance(np.add(arr, arr), myarray)
-        # And the interesting check:
-        assert isinstance(np.add(arr, arr, ...), myarray)
-        assert isinstance(np.add(arr, arr, out=...), myarray)
+        res = np.add.reduce(1., None, np.float64, np.ndarray)
+        assert type(res) is np.ndarray
+        res = np.add.reduce(1., out=np.ndarray)
+        assert type(res), np.ndarray
+
+    def test_out_wrap_not_called_with_ndarray(self):
+            # If the input wraps the output, we ignore that if np.ndarray is
+            # used to signal that an ndarray should be the output!
+            class myarray(np.ndarray):
+                @classmethod
+                def __array_wrap__(cls, other):
+                    return other.view(cls)
+
+            arr = np.ones(()).view(myarray)
+            assert isinstance(np.add(arr, arr), myarray)
+            assert isinstance(np.add.reduce(arr), myarray)
+            # And the interesting check:
+            assert type(np.add(arr, arr, np.ndarray)) is np.ndarray
+            assert type(np.add(arr, arr, out=np.ndarray)) is np.ndarray
+            # Same check for reduction:
+            res = np.add.reduce(arr, None, np.float64, np.ndarray)
+            assert type(res) is np.ndarray
+            res = np.add.reduce(arr, out=np.ndarray)
+            assert type(res) is np.ndarray
+
+            # test that out cannot be a subclass (as of now)
+            with assert_raises(TypeError):
+                np.add(arr, arr, out=myarray)
+
+            with assert_raises(TypeError):
+                np.add.reduce(arr, out=myarray)
 
 
 class TestComparisons:
