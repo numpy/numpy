@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('') {
       steps {
-        bat 'python runtests.py'
+        bat(script: 'python runtests.py', returnStatus: true, returnStdout: true)
       }
     }
 
