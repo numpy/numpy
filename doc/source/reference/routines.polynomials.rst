@@ -27,6 +27,7 @@ degree i.
    :maxdepth: 1
 
    routines.polynomials.chebyshev
+   routines.polynomials.hermite_e
 
 
 .. toctree::
