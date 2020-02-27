@@ -223,7 +223,7 @@ _find_array_method(PyObject *args, PyObject *method_name)
 static PyObject *
 _get_output_array_method(PyObject *obj, PyObject *method,
                          PyObject *input_method) {
-    if (obj == Py_Ellipsis) {
+    if (obj == (PyObject *)&PyArray_Type) {
         /*
          * If the inputs do not wrap, Ellipsis indicates that no wrapping should
          * be done (meaning that it cannot be converted to scalar). `None` is
@@ -830,7 +830,7 @@ fail:
 static int
 _set_out_array(PyObject *obj, PyArrayObject **store)
 {
-    if ((obj == Py_None) || (obj == Py_Ellipsis)) {
+    if ((obj == Py_None) || (obj == (PyObject *)&PyArray_Type)) {
         /*
          * Translate None and Ellipsis to NULL. Both mean that we need to
          * allocate the output array. Ellipsis indicates no conversion to
@@ -4495,7 +4495,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     /* Check for Ellipsis in out to mean no reduction to scalar */
-    if (out_obj == Py_Ellipsis) {
+    if (out_obj == (PyObject *)&PyArray_Type) {
         out = NULL;
     }
     else if (out_obj != NULL) {
@@ -4691,7 +4691,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
              * we will convert 0-D to scalar. `out=...` signals not to do that
              * (which is signaled by setting wrap to None here).
              */
-            if (out_obj == Py_Ellipsis) {
+            if (out_obj == (PyObject *)&PyArray_Type) {
                 wrap = Py_None;
                 Py_INCREF(wrap);
             }
