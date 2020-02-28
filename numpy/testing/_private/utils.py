@@ -530,7 +530,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         ...
     AssertionError:
     Arrays are not almost equal to 9 decimals
-    Mismatch: 50%
+    <BLANKLINE>
+    Mismatched elements: 1 / 2 (50%)
     Max absolute difference: 6.66669964e-09
     Max relative difference: 2.85715698e-09
      x: array([1.         , 2.333333333])
@@ -904,7 +905,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
         ...
     AssertionError:
     Arrays are not equal
-    Mismatch: 33.3%
+    <BLANKLINE>
+    Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference: 4.4408921e-16
     Max relative difference: 1.41357986e-16
      x: array([1.      , 3.141593,      nan])
@@ -987,7 +989,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         ...
     AssertionError:
     Arrays are not almost equal to 5 decimals
-    Mismatch: 33.3%
+    <BLANKLINE>
+    Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference: 6.e-05
     Max relative difference: 2.57136612e-05
      x: array([1.     , 2.33333,     nan])
@@ -999,6 +1002,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         ...
     AssertionError:
     Arrays are not almost equal to 5 decimals
+    <BLANKLINE>
     x and y nan location mismatch:
      x: array([1.     , 2.33333,     nan])
      y: array([1.     , 2.33333, 5.     ])
@@ -1086,7 +1090,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
         ...
     AssertionError:
     Arrays are not less-ordered
-    Mismatch: 33.3%
+    <BLANKLINE>
+    Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference: 1.
     Max relative difference: 0.5
      x: array([ 1.,  1., nan])
@@ -1097,7 +1102,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
         ...
     AssertionError:
     Arrays are not less-ordered
-    Mismatch: 50%
+    <BLANKLINE>
+    Mismatched elements: 1 / 2 (50%)
     Max absolute difference: 2.
     Max relative difference: 0.66666667
      x: array([1., 4.])
@@ -1108,6 +1114,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
         ...
     AssertionError:
     Arrays are not less-ordered
+    <BLANKLINE>
     (shapes (3,), (1,) mismatch)
      x: array([1., 2., 3.])
      y: array([4])
