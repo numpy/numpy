@@ -492,8 +492,8 @@ def _real_if_close_dispatcher(a, tol=None):
 @array_function_dispatch(_real_if_close_dispatcher)
 def real_if_close(a, tol=100):
     """
-    If complex input returns a real array if all complex parts of the 
-    input array are close to zero.
+    If input is complex with all complex parts close to zero, returns real
+    parts.
 
     "Close to zero" is defined as `tol` * (machine epsilon of the type for
     `a`).
