@@ -17,7 +17,7 @@ Abstract
 Datatypes in NumPy describe how to interpret each element in arrays.
 For the most part, NumPy provides the usual numerical types,
 as well as additional string and some datetime capabilities. 
-The growing Python community, however, has need for more more diverse datatypes.
+The growing Python community, however, has need for more diverse datatypes.
 Examples are datatypes with unit information attached (such as meters) or
 categorical datatypes (fixed set of possible values).
 However, the current NumPy datatype API is too limited to allow the creation
@@ -75,7 +75,7 @@ between NumPy, Pandas, and other projects.
 
 
 Plan to Approach this Refactor
-""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To address these issues in NumPy and enable new datatypes,
 multiple development stages are required:
@@ -104,7 +104,7 @@ multiple development stages are required:
 
     * allow efficient lookup for the correct implementation for user defined datatypes.
 
-    * enable reuse of existing code: E.g. units should be able to use the normal
+    * enable reuse of existing code, e.g. units should be able to use the normal
       math loops and add their additional logic.
 
 * Phase III: Growth of NumPy and Scientific Python Ecosystem capabilities:
