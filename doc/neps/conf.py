@@ -30,7 +30,10 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.imgmath',]
+extensions = [
+    'sphinx.ext.imgmath',
+    'sphinx.ext.intersphinx',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../source/_templates/']
@@ -218,3 +221,14 @@ texinfo_documents = [
      author, 'NumPyEnhancementProposals', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+# -----------------------------------------------------------------------------
+# Intersphinx configuration
+# -----------------------------------------------------------------------------
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'numpy': ('https://numpy.org/devdocs', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('https://matplotlib.org', None)
+}
+
