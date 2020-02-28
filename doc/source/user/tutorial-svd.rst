@@ -93,12 +93,12 @@ property of this NumPy array gives us a different result::
     >>> img.shape
     (768, 1024, 3)
 
-The output is a `tuple` with three elements, which means that this is a
-three-dimensional array. In fact, since this is a color image, and we have used
-the ``imread`` function to read it, the data is organized in three 2D arrays,
-representing color channels (in this case, red, green and blue - RGB). You can
-see this by looking at the shape above: it indicates that we have an array of 3
-matrices, each having shape 768x1024.
+The output is a :ref:`tuple <python:tut-tuples>` with three elements, which means
+that this is a three-dimensional array. In fact, since this is a color image, and
+we have used the ``imread`` function to read it, the data is organized in three 2D
+arrays, representing color channels (in this case, red, green and blue - RGB). You
+can see this by looking at the shape above: it indicates that we have an array of
+3 matrices, each having shape 768x1024.
 
 Furthermore, using the ``ndim`` property of this array, we can see that
 
@@ -139,7 +139,7 @@ matrices to represent the RGB values. We can do that by setting
     >>> img_array = img / 255
 
 This operation, dividing an array by a scalar, works because of NumPy's
-`broadcasting` rules (see :ref:`array-broadcasting-in-numpy`). (Note that in
+:ref:`broadcasting rules <array-broadcasting-in-numpy>`). (Note that in
 real-world applications, it would be better to use, for example, the
 :func:`img_as_float <skimage.img_as_float>` utility function from
 ``scikit-image``).
@@ -196,9 +196,10 @@ computed:
 
 where :math:`U` and :math:`V^T` are square and :math:`\Sigma` is the same size
 as :math:`A`. :math:`\Sigma` is a diagonal matrix and contains the
-`singular values` of :math:`A`, organized from largest to smallest. These values
-are always non-negative and can be used as an indicator of the "importance" of
-some features represented by the matrix :math:`A`.
+`singular values <https://en.wikipedia.org/wiki/Singular_value>`_ of :math:`A`,
+organized from largest to smallest. These values are always non-negative and can
+be used as an indicator of the "importance" of some features represented by the
+matrix :math:`A`.
 
 Let's see how this works in practice with just one matrix first. Note that
 according to `colorimetry <https://en.wikipedia.org/wiki/Grayscale#Colorimetric_(perceptual_luminance-preserving)_conversion_to_grayscale>`_,
