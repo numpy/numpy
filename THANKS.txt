@@ -1,4 +1,5 @@
 Travis Oliphant for the NumPy core, the NumPy guide, various
+
     bug-fixes and code contributions.
 Paul Dubois, who implemented the original Masked Arrays.
 Pearu Peterson for f2py, numpy.distutils and help with code
@@ -16,7 +17,7 @@ Travis Vaught for administration, community coordination and
 Joe Cooper, Jeff Strunk for administration.
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing.
-David Cooke for many code improvements including the auto-generated C-API,
+David Cooke, for many code improvements including the auto-generated C-API,
     and optimizations.
 Andrew Straw for help with the web-page, documentation, packaging and
     testing.
