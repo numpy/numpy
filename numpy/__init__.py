@@ -142,6 +142,7 @@ else:
     from . import compat
     from . import lib
     # FIXME: why have numpy.lib if everything is imported here??
+    # See gh-14454 for discussion.
     from .lib import *
 
     from . import linalg
