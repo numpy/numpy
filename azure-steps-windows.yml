@@ -9,10 +9,11 @@ steps:
 - script: python -m pip install -r test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 - powershell: |
-    $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
+    $pyversion = python -c "import sys; print(sys.version.split()[0])"
     Write-Host "Python Version: $pyversion"
-    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas$env:OPENBLAS_SUFFIX.a"
     Write-Host "target path: $target"
+    python -mpip install urllib3
     $openblas = python tools/openblas_support.py
     cp $openblas $target
   displayName: 'Download / Install OpenBLAS'

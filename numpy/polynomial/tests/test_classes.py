@@ -3,8 +3,6 @@
 This tests the convert and cast methods of all the polynomial classes.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import operator as op
 from numbers import Number
 
@@ -44,7 +42,7 @@ def assert_poly_almost_equal(p1, p2, msg=""):
         assert_(np.all(p1.window == p2.window))
         assert_almost_equal(p1.coef, p2.coef)
     except AssertionError:
-        msg = "Result: %s\nTarget: %s", (p1, p2)
+        msg = f"Result: {p1}\nTarget: {p2}"
         raise AssertionError(msg)
 
 
@@ -574,7 +572,7 @@ def test_ufunc_override(Poly):
 
 
 
-class TestLatexRepr(object):
+class TestLatexRepr:
     """Test the latex repr used by ipython """
 
     def as_latex(self, obj):
@@ -628,7 +626,7 @@ class TestLatexRepr(object):
 #
 
 
-class TestInterpolate(object):
+class TestInterpolate:
 
     def f(self, x):
         return x * (x - 1) * (x - 2)

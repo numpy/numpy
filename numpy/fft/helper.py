@@ -2,8 +2,6 @@
 Discrete Fourier Transforms - helper.py
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.compat import integer_types
 from numpy.core import integer, empty, arange, asarray, roll
 from numpy.core.overrides import array_function_dispatch, set_module

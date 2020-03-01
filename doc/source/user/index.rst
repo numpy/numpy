@@ -14,8 +14,10 @@ classes contained in the package, see the :ref:`reference`.
 
    setting-up
    quickstart
+   absolute_beginners
    basics
    misc
    numpy-for-matlab-users
+   tutorial-svd
    building
    c-info

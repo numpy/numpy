@@ -7,9 +7,6 @@ _is_basic_python_type(PyTypeObject *tp)
     return (
         /* Basic number types */
         tp == &PyBool_Type ||
-#if !defined(NPY_PY3K)
-        tp == &PyInt_Type ||
-#endif
         tp == &PyLong_Type ||
         tp == &PyFloat_Type ||
         tp == &PyComplex_Type ||
@@ -22,9 +19,6 @@ _is_basic_python_type(PyTypeObject *tp)
         tp == &PyFrozenSet_Type ||
         tp == &PyUnicode_Type ||
         tp == &PyBytes_Type ||
-#if !defined(NPY_PY3K)
-        tp == &PyString_Type ||
-#endif
 
         /* other builtins */
         tp == &PySlice_Type ||
@@ -50,25 +44,21 @@ _is_basic_python_type(PyTypeObject *tp)
  * there is no such attribute, and NULL with an exception on failure.
  */
 static NPY_INLINE PyObject *
-maybe_get_attr(PyObject *obj, char *name)
+maybe_get_attr(PyObject *obj, char const *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
     PyObject *res = (PyObject *)NULL;
 
     /* Attribute referenced by (char *)name */
     if (tp->tp_getattr != NULL) {
-        res = (*tp->tp_getattr)(obj, name);
+        res = (*tp->tp_getattr)(obj, (char *)name);
         if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
             PyErr_Clear();
         }
     }
     /* Attribute referenced by (PyObject *)name */
     else if (tp->tp_getattro != NULL) {
-#if defined(NPY_PY3K)
         PyObject *w = PyUnicode_InternFromString(name);
-#else
-        PyObject *w = PyString_InternFromString(name);
-#endif
         if (w == NULL) {
             return (PyObject *)NULL;
         }
@@ -91,7 +81,7 @@ maybe_get_attr(PyObject *obj, char *name)
  * In future, could be made more like _Py_LookupSpecial
  */
 static NPY_INLINE PyObject *
-PyArray_LookupSpecial(PyObject *obj, char *name)
+PyArray_LookupSpecial(PyObject *obj, char const *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
 
@@ -111,7 +101,7 @@ PyArray_LookupSpecial(PyObject *obj, char *name)
  * Kept for backwards compatibility. In future, we should deprecate this.
  */
 static NPY_INLINE PyObject *
-PyArray_LookupSpecial_OnInstance(PyObject *obj, char *name)
+PyArray_LookupSpecial_OnInstance(PyObject *obj, char const *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
 

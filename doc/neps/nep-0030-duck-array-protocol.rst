@@ -24,7 +24,7 @@ Detailed description
 NumPy's API, including array definitions, is implemented and mimicked in
 countless other projects. By definition, many of those arrays are fairly
 similar in how they operate to the NumPy standard. The introduction of
-``__array_function__`` allowed dispathing of functions implemented by several
+``__array_function__`` allowed dispatching of functions implemented by several
 of these projects directly via NumPy's API. This introduces a new requirement,
 returning the NumPy-like array itself, rather than forcing a coercion into a
 pure NumPy array.

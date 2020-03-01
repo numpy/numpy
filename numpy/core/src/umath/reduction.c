@@ -84,10 +84,12 @@ allocate_reduce_result(PyArrayObject *arr, const npy_bool *axis_flags,
  * The return value is a view into 'out'.
  */
 static PyArrayObject *
-conform_reduce_result(int ndim, const npy_bool *axis_flags,
+conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
                       PyArrayObject *out, int keepdims, const char *funcname,
                       int need_copy)
 {
+    int ndim = PyArray_NDIM(in);
+    npy_intp *shape_in = PyArray_DIMS(in);
     npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
     npy_intp *strides_out = PyArray_STRIDES(out);
     npy_intp *shape_out = PyArray_DIMS(out);
@@ -118,6 +120,16 @@ conform_reduce_result(int ndim, const npy_bool *axis_flags,
                     return NULL;
                 }
             }
+            else {
+                if (shape_out[idim] != shape_in[idim]) {
+                    PyErr_Format(PyExc_ValueError,
+                            "output parameter for reduction operation %s "
+                            "has a non-reduction dimension not equal to "
+                            "the input one.", funcname);
+                    return NULL;
+                }
+            }
+
         }
 
         Py_INCREF(out);
@@ -136,6 +148,13 @@ conform_reduce_result(int ndim, const npy_bool *axis_flags,
                 PyErr_Format(PyExc_ValueError,
                         "output parameter for reduction operation %s "
                         "does not have enough dimensions", funcname);
+                return NULL;
+            }
+            if (shape_out[idim_out] != shape_in[idim]) {
+                PyErr_Format(PyExc_ValueError,
+                        "output parameter for reduction operation %s "
+                        "has a non-reduction dimension not equal to "
+                        "the input one.", funcname);
                 return NULL;
             }
             strides[idim] = strides_out[idim_out];
@@ -240,7 +259,7 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
 
         /* Steal the dtype reference */
         Py_XDECREF(dtype);
-        result = conform_reduce_result(PyArray_NDIM(operand), axis_flags,
+        result = conform_reduce_result(operand, axis_flags,
                                        out, keepdims, funcname, need_copy);
     }
 

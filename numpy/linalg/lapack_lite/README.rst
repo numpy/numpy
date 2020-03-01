@@ -18,9 +18,9 @@ and is unlikely to ever be ported to python 3.
 The routines that ``lapack_litemodule.c`` wraps are listed in
 ``wrapped_routines``, along with a few exceptions that aren't picked up
 properly. Assuming that you have an unpacked LAPACK source tree in
-``~/LAPACK``, you generate the new routines in a directory ``new-lite/`` with::
+``~/LAPACK``, you generate the new routines in this directory with::
 
-$ python2 ./make_lite.py wrapped_routines ~/LAPACK new-lite/
+$ python ./make_lite.py wrapped_routines ~/LAPACK
 
 This will grab the right routines, with dependencies, put them into the
 appropriate ``f2c_*.f`` files, run ``f2c`` over them, then do some scrubbing

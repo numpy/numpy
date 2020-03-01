@@ -2,8 +2,6 @@
 Test the decorators from ``testing.decorators``.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import pytest
 
@@ -23,7 +21,7 @@ else:
 
 
 @pytest.mark.skipif(not HAVE_NOSE, reason="Needs nose")
-class TestNoseDecorators(object):
+class TestNoseDecorators:
     # These tests are run in a class for simplicity while still
     # getting a report on each, skipped or success.
 
@@ -108,8 +106,7 @@ class TestNoseDecorators(object):
     def test_skip_generators_hardcoded(self):
         @dec.knownfailureif(True, "This test is known to fail")
         def g1(x):
-            for i in range(x):
-                yield i
+            yield from range(x)
 
         try:
             for j in g1(10):
@@ -121,8 +118,7 @@ class TestNoseDecorators(object):
 
         @dec.knownfailureif(False, "This test is NOT known to fail")
         def g2(x):
-            for i in range(x):
-                yield i
+            yield from range(x)
             raise self.DidntSkipException('FAIL')
 
         try:
@@ -139,8 +135,7 @@ class TestNoseDecorators(object):
 
         @dec.knownfailureif(skip_tester, "This test is known to fail")
         def g1(x):
-            for i in range(x):
-                yield i
+            yield from range(x)
 
         try:
             skip_flag = 'skip me!'
@@ -153,8 +148,7 @@ class TestNoseDecorators(object):
 
         @dec.knownfailureif(skip_tester, "This test is NOT known to fail")
         def g2(x):
-            for i in range(x):
-                yield i
+            yield from range(x)
             raise self.DidntSkipException('FAIL')
 
         try:

@@ -5,9 +5,6 @@ Most of these functions were initially implemented by John Hunter for
 matplotlib.  They have been rewritten and extended for convenience.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import sys
 import itertools
 import numpy as np
 import numpy.ma as ma
@@ -16,11 +13,7 @@ from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
-from numpy.compat import basestring
 from numpy.testing import suppress_warnings
-
-if sys.version_info[0] < 3:
-    from future_builtins import zip
 
 _check_fill_value = np.ma.core._check_fill_value
 
@@ -292,8 +285,7 @@ def _izip_fields_flat(iterable):
     """
     for element in iterable:
         if isinstance(element, np.void):
-            for f in _izip_fields_flat(tuple(element)):
-                yield f
+            yield from _izip_fields_flat(tuple(element))
         else:
             yield element
 
@@ -305,12 +297,11 @@ def _izip_fields(iterable):
     """
     for element in iterable:
         if (hasattr(element, '__iter__') and
-                not isinstance(element, basestring)):
-            for f in _izip_fields(element):
-                yield f
+                not isinstance(element, str)):
+            yield from _izip_fields(element)
         elif isinstance(element, np.void) and len(tuple(element)) == 1:
-            for f in _izip_fields(element):
-                yield f
+            # this statement is the same from the previous expression
+            yield from _izip_fields(element)
         else:
             yield element
 
@@ -335,12 +326,7 @@ def _izip_records(seqarrays, fill_value=None, flatten=True):
     else:
         zipfunc = _izip_fields
 
-    if sys.version_info[0] >= 3:
-        zip_longest = itertools.zip_longest
-    else:
-        zip_longest = itertools.izip_longest
-
-    for tup in zip_longest(*seqarrays, fillvalue=fill_value):
+    for tup in itertools.zip_longest(*seqarrays, fillvalue=fill_value):
         yield tuple(zipfunc(tup))
 
 
@@ -438,7 +424,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         if seqdtype.names is None:
             seqdtype = np.dtype([('', seqdtype)])
         if not flatten or _zip_dtype((seqarrays,), flatten=True) == seqdtype:
-            # Minimal processing needed: just make sure everythng's a-ok
+            # Minimal processing needed: just make sure everything's a-ok
             seqarrays = seqarrays.ravel()
             # Find what type of array we must return
             if usemask:
@@ -669,8 +655,7 @@ def rename_fields(base, namemapper):
 def _append_fields_dispatcher(base, names, data, dtypes=None,
                               fill_value=None, usemask=None, asrecarray=None):
     yield base
-    for d in data:
-        yield d
+    yield from data
 
 
 @array_function_dispatch(_append_fields_dispatcher)
@@ -709,7 +694,7 @@ def append_fields(base, names, data, dtypes=None,
         if len(names) != len(data):
             msg = "The number of arrays does not match the number of names"
             raise ValueError(msg)
-    elif isinstance(names, basestring):
+    elif isinstance(names, str):
         names = [names, ]
         data = [data, ]
     #
@@ -746,8 +731,7 @@ def append_fields(base, names, data, dtypes=None,
 
 def _rec_append_fields_dispatcher(base, names, data, dtypes=None):
     yield base
-    for d in data:
-        yield d
+    yield from data
 
 
 @array_function_dispatch(_rec_append_fields_dispatcher)
@@ -1466,7 +1450,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
                 "'outer' or 'leftouter' (got '%s' instead)" % jointype
                 )
     # If we have a single key, put it in a tuple
-    if isinstance(key, basestring):
+    if isinstance(key, str):
         key = (key,)
 
     # Check the keys

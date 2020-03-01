@@ -227,11 +227,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 
     /* Obvious single-entry cases */
     if (0  /* to aid macros below */
-#if !defined(NPY_PY3K)
-            || PyInt_CheckExact(index)
-#else
             || PyLong_CheckExact(index)
-#endif
             || index == Py_None
             || PySlice_Check(index)
             || PyArray_Check(index)
@@ -481,11 +477,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
              *
              * Check for integers first, purely for performance
              */
-#if !defined(NPY_PY3K)
-            if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
-#else
             if (PyLong_CheckExact(obj) || !PyArray_Check(obj)) {
-#endif
                 npy_intp ind = PyArray_PyIntAsIntp(obj);
 
                 if (error_converting(ind)) {
@@ -1412,8 +1404,11 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         npy_intp offset;
 
         /* get the field offset and dtype */
-        tup = PyDict_GetItem(PyArray_DESCR(arr)->fields, ind);
-        if (tup == NULL){
+        tup = PyDict_GetItemWithError(PyArray_DESCR(arr)->fields, ind);
+        if (tup == NULL && PyErr_Occurred()) {
+            return 0;
+        }
+        else if (tup == NULL){
             PyObject *errmsg = PyUString_FromString("no field of name ");
             PyUString_Concat(&errmsg, ind);
             PyErr_SetObject(PyExc_ValueError, errmsg);
@@ -3340,61 +3335,9 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * to a[indexobj].flat but the latter gets to use slice syntax.
  */
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.mapiter",                            /* tp_name */
-    sizeof(PyArrayMapIterObject),               /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)arraymapiter_dealloc,           /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.mapiter",
+    .tp_basicsize = sizeof(PyArrayMapIterObject),
+    .tp_dealloc = (destructor)arraymapiter_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };

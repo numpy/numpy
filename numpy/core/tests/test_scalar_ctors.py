@@ -1,18 +1,14 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-from __future__ import division, absolute_import, print_function
-
-import sys
-import platform
 import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_equal, assert_almost_equal, assert_raises, assert_warns,
+    assert_equal, assert_almost_equal, assert_warns,
     )
 
-class TestFromString(object):
+class TestFromString:
     def test_floating(self):
         # Ticket #640, floats from string
         fsingle = np.single('1.234')
@@ -42,21 +38,41 @@ class TestFromString(object):
         flongdouble = assert_warns(RuntimeWarning, np.longdouble, '-1e10000')
         assert_equal(flongdouble, -np.inf)
 
-    @pytest.mark.skipif((sys.version_info[0] >= 3)
-                        or (sys.platform == "win32"
-                            and platform.architecture()[0] == "64bit"),
-                        reason="numpy.intp('0xff', 16) not supported on Py3 "
-                               "or 64 bit Windows")
-    def test_intp(self):
-        # Ticket #99
-        i_width = np.int_(0).nbytes*2 - 1
-        np.intp('0x' + 'f'*i_width, 16)
-        assert_raises(OverflowError, np.intp, '0x' + 'f'*(i_width+1), 16)
-        assert_raises(ValueError, np.intp, '0x1', 32)
-        assert_equal(255, np.intp('0xFF', 16))
+
+class TestExtraArgs:
+    def test_superclass(self):
+        # try both positional and keyword arguments
+        s = np.str_(b'\\x61', encoding='unicode-escape')
+        assert s == 'a'
+        s = np.str_(b'\\x61', 'unicode-escape')
+        assert s == 'a'
+
+        # previously this would return '\\xx'
+        with pytest.raises(UnicodeDecodeError):
+            np.str_(b'\\xx', encoding='unicode-escape')
+        with pytest.raises(UnicodeDecodeError):
+            np.str_(b'\\xx', 'unicode-escape')
+
+        # superclass fails, but numpy succeeds
+        assert np.bytes_(-2) == b'-2'
+
+    def test_datetime(self):
+        dt = np.datetime64('2000-01', ('M', 2))
+        assert np.datetime_data(dt) == ('M', 2)
+
+        with pytest.raises(TypeError):
+            np.datetime64('2000', garbage=True)
+
+    def test_bool(self):
+        with pytest.raises(TypeError):
+            np.bool(False, garbage=True)
+
+    def test_void(self):
+        with pytest.raises(TypeError):
+            np.void(b'test', garbage=True)
 
 
-class TestFromInt(object):
+class TestFromInt:
     def test_intp(self):
         # Ticket #99
         assert_equal(1024, np.intp(1024))

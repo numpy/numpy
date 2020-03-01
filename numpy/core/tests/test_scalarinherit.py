@@ -2,13 +2,13 @@
 """ Test printing of scalar types.
 
 """
-from __future__ import division, absolute_import, print_function
+import pytest
 
 import numpy as np
 from numpy.testing import assert_
 
 
-class A(object):
+class A:
     pass
 class B(A, np.float64):
     pass
@@ -23,7 +23,15 @@ class B0(np.float64, A):
 class C0(B0):
     pass
 
-class TestInherit(object):
+class HasNew:
+    def __new__(cls, *args, **kwargs):
+        return cls, args, kwargs
+
+class B1(np.float64, HasNew):
+    pass
+
+
+class TestInherit:
     def test_init(self):
         x = B(1.0)
         assert_(str(x) == '1.0')
@@ -38,8 +46,17 @@ class TestInherit(object):
         y = C0(2.0)
         assert_(str(y) == '2.0')
 
+    def test_gh_15395(self):
+        # HasNew is the second base, so `np.float64` should have priority
+        x = B1(1.0)
+        assert_(str(x) == '1.0')
 
-class TestCharacter(object):
+        # previously caused RecursionError!?
+        with pytest.raises(TypeError):
+            B1(1.0, 2.0)
+
+
+class TestCharacter:
     def test_char_radd(self):
         # GH issue 9620, reached gentype_add and raise TypeError
         np_s = np.string_('abc')

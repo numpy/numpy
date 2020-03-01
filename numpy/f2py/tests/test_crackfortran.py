@@ -1,7 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
-import pytest
-
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
 from numpy.f2py.crackfortran import markinnerspaces
@@ -55,3 +51,4 @@ class TestMarkinnerspaces():
     def test_multiple_relevant_spaces(self):
         assert_equal(markinnerspaces("a 'b c' 'd e'"), "a 'b@_@c' 'd@_@e'")
         assert_equal(markinnerspaces("a \"b c\" \"d e\""), "a \"b@_@c\" \"d@_@e\"")
+

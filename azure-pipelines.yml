@@ -8,7 +8,7 @@ trigger:
 variables:
   # OpenBLAS_version should be updated
   # to match numpy-wheels repo
-  OpenBLAS_version: 0.3.7
+  OpenBLAS_version: 0.3.8
 
 stages:
 - stage: InitialTests
@@ -28,33 +28,33 @@ stages:
 
 - stage: ComprehensiveTests
   jobs:
-  - job: Linux_Python_36_32bit_full_with_asserts
+  - job: Linux_Python_38_32bit_full_with_asserts
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - script: |
-            docker pull i386/ubuntu:bionic
-            docker run -v $(pwd):/numpy i386/ubuntu:bionic /bin/bash -c "cd numpy && \
-            apt-get -y update && \
-            apt-get -y install python3.6-dev python3-pip locales python3-certifi && \
-            locale-gen fr_FR && update-locale && \
-            apt-get -y install gfortran-5 wget && \
+            docker pull quay.io/pypa/manylinux2010_i686
+            docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
+            /bin/bash -xc "cd numpy && \
+            /opt/python/cp38-cp38/bin/python -mvenv venv &&\
+            source venv/bin/activate && \
+            python3 -m pip install urllib3 && \
             target=\$(python3 tools/openblas_support.py) && \
-            cp -r \$target/usr/local/lib/* /usr/lib && \
-            cp \$target/usr/local/include/* /usr/include && \
-            python3 -m pip install --user --upgrade pip setuptools && \
-            python3 -m pip install --user -r test_requirements.txt && \
-            python3 -m pip install . && \
-            F77=gfortran-5 F90=gfortran-5 \
-            CFLAGS=-UNDEBUG python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            cp -r \$target/lib/* /usr/lib && \
+            cp \$target/include/* /usr/include && \
+            python3 -m pip install -r test_requirements.txt && \
+            echo CFLAGS \$CFLAGS && \
+            python3 -m pip install -v . && \
+            python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
-      displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
+      displayName: 'Run 32-bit manylinux2010 Docker Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.6-32 bit full Linux'
+        testRunTitle: 'Publish test results for Python 3.8-32 bit full Linux'
   - job: macOS
     pool:
       # NOTE: at time of writing, there is a danger
@@ -65,13 +65,21 @@ stages:
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
       vmImage: macOS-10.14
+    strategy:
+      maxParallel: 2
+      matrix:
+          Python36:
+            PYTHON_VERSION: '3.6'
+          Python36-ILP64:
+            PYTHON_VERSION: '3.6'
+            NPY_USE_BLAS_ILP64: '1'
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
     # with version of Python selected
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.6'
+        versionSpec: $(PYTHON_VERSION)
         addToPath: true
         architecture: 'x64'
     # NOTE: do we have a compelling reason to use older / newer
@@ -88,18 +96,21 @@ stages:
         # manually link critical gfortran libraries
         ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
         ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
-        # manually symlink gfortran-4.9 to plain gfortran
-        # for f2py
-        ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
+        # Manually symlink gfortran-4.9 to plain gfortran for f2py.
+        # No longer needed after Feb 13 2020 as gfortran is already present
+        # and the attempted link errors. Keep this for future reference.
+        # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
       displayName: 'make gfortran available on mac os vm'
     # use the pre-built openblas binary that most closely
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
     - script: |
+        python -mpip install urllib3
         target=$(python tools/openblas_support.py)
+        ls -lR $target
         # manually link to appropriate system paths
-        cp $target/usr/local/lib/* /usr/local/lib/
-        cp $target/usr/local/include/* /usr/local/include/
+        cp $target/lib/* /usr/local/lib/
+        cp $target/include/* /usr/local/include/
       displayName: 'install pre-built openblas'
     - script: python -m pip install --upgrade pip setuptools wheel
       displayName: 'Install tools'
@@ -171,11 +182,13 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+            OPENBLAS_SUFFIX: '64_'
     steps:
     - template: azure-steps-windows.yml
   - job: Linux_PyPy3
     pool:
-      vmIMage: 'ubuntu-16.04'
+      vmIMage: 'ubuntu-18.04'
     steps:
     - script: source tools/pypy-test.sh
       displayName: 'Run PyPy3 Build / Tests'

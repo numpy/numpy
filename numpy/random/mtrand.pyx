@@ -15,7 +15,6 @@ from libc.stdint cimport int64_t, uint64_t
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8,)
-from ._bounded_integers import _integers_types
 from ._mt19937 import MT19937 as _MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
@@ -252,6 +251,12 @@ cdef class RandomState:
 
         For more details, see `set_state`.
 
+        Parameters
+        ----------
+        legacy : bool, optional
+            Flag indicating to return a legacy tuple state when the BitGenerator
+            is MT19937, instead of a dict.
+
         Returns
         -------
         out : {tuple(str, ndarray of 624 uints, int, int, float), dict}
@@ -263,12 +268,8 @@ cdef class RandomState:
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
 
-            If `legacy` is False, or the BitGenerator is not NT19937, then
+            If `legacy` is False, or the BitGenerator is not MT19937, then
             state is returned as a dictionary.
-
-        legacy : bool
-            Flag indicating the return a legacy tuple state when the BitGenerator
-            is MT19937.
 
         See Also
         --------
@@ -641,7 +642,7 @@ cdef class RandomState:
 
     def randint(self, low, high=None, size=None, dtype=int):
         """
-        randint(low, high=None, size=None, dtype='l')
+        randint(low, high=None, size=None, dtype=int)
 
         Return random integers from `low` (inclusive) to `high` (exclusive).
 
@@ -668,10 +669,8 @@ cdef class RandomState:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
         dtype : dtype, optional
-            Desired dtype of the result. All dtypes are determined by their
-            name, i.e., 'int64', 'int', etc, so byteorder is not available
-            and a specific precision may have different C types depending
-            on the platform. The default value is `np.int_`.
+            Desired dtype of the result. Byteorder must be native.
+            The default value is int.
 
             .. versionadded:: 1.11.0
 
@@ -722,17 +721,16 @@ cdef class RandomState:
             high = low
             low = 0
 
-        dt = np.dtype(dtype)
-        key = dt.name
-        if key not in _integers_types:
-            raise TypeError('Unsupported dtype "%s" for randint' % key)
-        if not dt.isnative:
+        _dtype = np.dtype(dtype)
+
+        if not _dtype.isnative:
             # numpy 1.17.0, 2019-05-28
             warnings.warn('Providing a dtype with a non-native byteorder is '
                           'not supported. If you require platform-independent '
                           'byteorder, call byteswap when required.\nIn future '
                           'version, providing byteorder will raise a '
                           'ValueError', DeprecationWarning)
+            _dtype = _dtype.newbyteorder()
 
         # Implementation detail: the use a masked method to generate
         # bounded uniform integers. Lemire's method is preferable since it is
@@ -741,24 +739,26 @@ cdef class RandomState:
         cdef bint _masked = True
         cdef bint _endpoint = False
 
-        if key == 'int32':
+        if _dtype == np.int32:
             ret = _rand_int32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int64':
+        elif _dtype == np.int64:
             ret = _rand_int64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int16':
+        elif _dtype == np.int16:
             ret = _rand_int16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int8':
+        elif _dtype == np.int8:
             ret = _rand_int8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint64':
+        elif _dtype == np.uint64:
             ret = _rand_uint64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint32':
+        elif _dtype == np.uint32:
             ret = _rand_uint32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint16':
+        elif _dtype == np.uint16:
             ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint8':
+        elif _dtype == np.uint8:
             ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'bool':
+        elif _dtype == np.bool_:
             ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+        else:
+            raise TypeError('Unsupported dtype %r for randint' % _dtype)
 
         if size is None and dtype in (bool, int, np.compat.long):
             if np.array(ret).shape == ():
@@ -1017,7 +1017,7 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The default value is 1.0.
+            less than or equal to high.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1053,7 +1053,14 @@ cdef class RandomState:
         If ``high`` < ``low``, the results are officially undefined
         and may eventually raise an error, i.e. do not rely on this
         function to behave when passed arguments satisfying that
-        inequality condition.
+        inequality condition. The ``high`` limit may be included in the
+        returned array of floats due to floating-point rounding in the
+        equation ``low + (high-low) * random_sample()``. For example:
+
+        >>> x = np.float32(5*0.99999999)
+        >>> x
+        5.0
+
 
         Examples
         --------
@@ -3356,7 +3363,6 @@ cdef class RandomState:
                 it = np.PyArray_MultiIterNew2(p_arr, n_arr)
                 randoms = <np.ndarray>np.empty(it.shape, int)
 
-            randoms_data = <long *>np.PyArray_DATA(randoms)
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)

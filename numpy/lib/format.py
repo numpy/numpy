@@ -161,10 +161,7 @@ alternatives, is described in the `"npy-format" NEP
 evolved with time and this document is more current.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy
-import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
@@ -215,10 +212,7 @@ def magic(major, minor):
         raise ValueError("major version must be 0 <= major < 256")
     if minor < 0 or minor > 255:
         raise ValueError("minor version must be 0 <= minor < 256")
-    if sys.version_info[0] < 3:
-        return MAGIC_PREFIX + chr(major) + chr(minor)
-    else:
-        return MAGIC_PREFIX + bytes([major, minor])
+    return MAGIC_PREFIX + bytes([major, minor])
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -236,10 +230,7 @@ def read_magic(fp):
     if magic_str[:-2] != MAGIC_PREFIX:
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
-    if sys.version_info[0] < 3:
-        major, minor = map(ord, magic_str[-2:])
-    else:
-        major, minor = magic_str[-2:]
+    major, minor = magic_str[-2:]
     return major, minor
 
 def _has_metadata(dt):
@@ -304,7 +295,11 @@ def descr_to_dtype(descr):
         # subtype, will always have a shape descr[1]
         dt = descr_to_dtype(descr[0])
         return numpy.dtype((dt, descr[1]))
-    fields = []
+
+    titles = []
+    names = []
+    formats = []
+    offsets = []
     offset = 0
     for field in descr:
         if len(field) == 2:
@@ -318,14 +313,13 @@ def descr_to_dtype(descr):
         # Once support for blank names is removed, only "if name == ''" needed)
         is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
         if not is_pad:
-            fields.append((name, dt, offset))
-
+            title, name = name if isinstance(name, tuple) else (None, name)
+            titles.append(title)
+            names.append(name)
+            formats.append(dt)
+            offsets.append(offset)
         offset += dt.itemsize
 
-    names, formats, offsets = zip(*fields)
-    # names may be (title, names) tuples
-    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
-    titles, names = zip(*nametups)
     return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
                         'offsets': offsets, 'itemsize': offset})
 
@@ -544,16 +538,11 @@ def _filter_header(s):
 
     """
     import tokenize
-    if sys.version_info[0] >= 3:
-        from io import StringIO
-    else:
-        from StringIO import StringIO
+    from io import StringIO
 
     tokens = []
     last_token_was_number = False
-    # adding newline as python 2.7.5 workaround
-    string = s + "\n"
-    for token in tokenize.generate_tokens(StringIO(string).readline):
+    for token in tokenize.generate_tokens(StringIO(s).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
@@ -563,8 +552,7 @@ def _filter_header(s):
         else:
             tokens.append(token)
         last_token_was_number = (token_type == tokenize.NUMBER)
-    # removing newline (see above) as python 2.7.5 workaround
-    return tokenize.untokenize(tokens)[:-1]
+    return tokenize.untokenize(tokens)
 
 
 def _read_array_header(fp, version):
@@ -614,7 +602,7 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
-    except TypeError as e:
+    except TypeError:
         msg = "descr is not a valid dtype descriptor: {!r}"
         raise ValueError(msg.format(d['descr']))
 
@@ -743,12 +731,10 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
         try:
             array = pickle.load(fp, **pickle_kwargs)
         except UnicodeError as err:
-            if sys.version_info[0] >= 3:
-                # Friendlier error message
-                raise UnicodeError("Unpickling a python object failed: %r\n"
-                                   "You may need to pass the encoding= option "
-                                   "to numpy.load" % (err,))
-            raise
+            # Friendlier error message
+            raise UnicodeError("Unpickling a python object failed: %r\n"
+                               "You may need to pass the encoding= option "
+                               "to numpy.load" % (err,))
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

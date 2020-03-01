@@ -34,11 +34,64 @@
 
 #define VECTOR_SIZE_BYTES 16
 
+/*
+ * MAX_STEP_SIZE is used to determine if we need to use SIMD version of the ufunc.
+ * Very large step size can be as slow as processing it using scalar. The
+ * value of 2097152 ( = 2MB) was chosen using 2 considerations:
+ * 1) Typical linux kernel page size is 4Kb, but sometimes it could also be 2MB
+ *    which is == 2097152 Bytes. For a step size as large as this, surely all
+ *    the loads/stores of gather/scatter instructions falls on 16 different pages
+ *    which one would think would slow down gather/scatter instructions.
+ * 2) It additionally satisfies MAX_STEP_SIZE*16/esize < NPY_MAX_INT32 which
+ *    allows us to use i32 version of gather/scatter (as opposed to the i64 version)
+ *    without problems (step larger than NPY_MAX_INT32*esize/16 would require use of
+ *    i64gather/scatter). esize = element size = 4/8 bytes for float/double.
+ */
+#define MAX_STEP_SIZE 2097152
+
 static NPY_INLINE npy_uintp
 abs_ptrdiff(char *a, char *b)
 {
     return (a > b) ? (a - b) : (b - a);
 }
+
+/*
+ * nomemoverlap - returns true if two strided arrays have an overlapping
+ * region in memory. ip_size/op_size = size of the arrays which can be negative
+ * indicating negative steps.
+ */
+static NPY_INLINE npy_bool
+nomemoverlap(char *ip,
+             npy_intp ip_size,
+             char *op,
+             npy_intp op_size)
+{
+    char *ip_start, *ip_end, *op_start, *op_end;
+    if (ip_size < 0) {
+        ip_start = ip + ip_size;
+        ip_end = ip;
+    }
+    else {
+        ip_start = ip;
+        ip_end = ip + ip_size;
+    }
+    if (op_size < 0) {
+        op_start = op + op_size;
+        op_end = op;
+    }
+    else {
+        op_start = op;
+        op_end = op + op_size;
+    }
+    return (ip_start > op_end) | (op_start > ip_end);
+}
+
+#define IS_BINARY_STRIDE_ONE(esize, vsize) \
+    ((steps[0] == esize) && \
+     (steps[1] == esize) && \
+     (steps[2] == esize) && \
+     (abs_ptrdiff(args[2], args[0]) >= vsize) && \
+     (abs_ptrdiff(args[2], args[1]) >= vsize))
 
 /*
  * stride is equal to element size and input and destination are equal or
@@ -52,13 +105,34 @@ abs_ptrdiff(char *a, char *b)
       ((abs_ptrdiff(args[1], args[0]) == 0))))
 
 /*
- * output should be contiguous, can handle strided input data
+ * Avoid using SIMD for very large step sizes for several reasons:
+ * 1) Supporting large step sizes requires use of i64gather/scatter_ps instructions,
+ *    in which case we need two i64gather instructions and an additional vinsertf32x8
+ *    instruction to load a single zmm register (since one i64gather instruction
+ *    loads into a ymm register). This is not ideal for performance.
+ * 2) Gather and scatter instructions can be slow when the loads/stores
+ *    cross page boundaries.
+ *
+ * We instead rely on i32gather/scatter_ps instructions which use a 32-bit index
+ * element. The index needs to be < INT_MAX to avoid overflow. MAX_STEP_SIZE
+ * ensures this. The condition also requires that the input and output arrays
+ * should have no overlap in memory.
+ */
+#define IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP \
+    ((abs(steps[0]) < MAX_STEP_SIZE)  && \
+     (abs(steps[1]) < MAX_STEP_SIZE)  && \
+     (abs(steps[2]) < MAX_STEP_SIZE)  && \
+     (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
+     (nomemoverlap(args[1], steps[1] * dimensions[0], args[2], steps[2] * dimensions[0])))
+
+/*
+ * 1) Output should be contiguous, can handle strided input data
+ * 2) Input step should be smaller than MAX_STEP_SIZE for performance
+ * 3) Input and output arrays should have no overlap in memory
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esize, vsize) \
-    (steps[1] == (esize) && \
-     (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
-     ((abs_ptrdiff(args[1], args[0]) >= (vsize)) || \
-      ((abs_ptrdiff(args[1], args[0]) == 0))))
+    (steps[1] == (esize) && abs(steps[0]) < MAX_STEP_SIZE && \
+     (nomemoverlap(args[1], steps[1] * dimensions[0], args[0], steps[0] * dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
     (steps[1] == (esize) && abs_ptrdiff(args[1], args[0]) >= (vsize) && \
@@ -125,9 +199,107 @@ abs_ptrdiff(char *a, char *b)
 
 /*
  *****************************************************************************
+ **                           CMPLX DISPATCHERS
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #TYPE = CFLOAT, CDOUBLE#
+ * #type= npy_float, npy_double#
+ * #esize = 8, 16#
+ */
+
+/**begin repeat1
+ *  #func = add, subtract, multiply#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps);
+#endif
+
+static NPY_INLINE int
+run_binary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+    if (IS_BINARY_STRIDE_ONE(@esize@, 64)) {
+        AVX512F_@func@_@TYPE@(args, dimensions, steps);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
+
+/**end repeat1**/
+
+/**begin repeat1
+ *  #func = square, absolute, conjugate#
+ *  #outsize = 1, 2, 1#
+ *  #max_stride = 2, 8, 8#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_@func@_@TYPE@(@type@*, @type@*, const npy_intp n, const npy_intp stride);
+#endif
+
+static NPY_INLINE int
+run_unary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+    if ((IS_OUTPUT_BLOCKABLE_UNARY((npy_uint)(@esize@/@outsize@), 64)) && (labs(steps[0]) < 2*@max_stride@*@esize@)) {
+        AVX512F_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0], steps[0]);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
+
+/**end repeat1**/
+/**end repeat**/
+
+/*
+ *****************************************************************************
  **                           FLOAT DISPATCHERS
  *****************************************************************************
  */
+
+/**begin repeat
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ * #EXISTS = 1, 1, 0#
+ */
+
+/**begin repeat1
+ *  #func = maximum, minimum#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
+static NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps);
+#endif
+
+static NPY_INLINE int
+run_binary_avx512f_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
+    if (IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
+        AVX512F_@func@_@TYPE@(args, dimensions, steps);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
+
+
+/**end repeat1**/
+/**end repeat**/
 
 /**begin repeat
  * #ISA = FMA, AVX512F#
@@ -153,7 +325,7 @@ static NPY_INLINE NPY_GCC_TARGET_@ISA@ void
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_unary_@isa@_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(@type@), @REGISTER_SIZE@)) {
@@ -179,7 +351,7 @@ static NPY_INLINE void
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
+run_unary_@isa@_@func@_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
@@ -200,7 +372,7 @@ static NPY_INLINE void
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_sincos_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps, NPY_TRIG_OP my_trig_op)
+run_unary_@isa@_sincos_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps, NPY_TRIG_OP my_trig_op)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
@@ -238,7 +410,7 @@ sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_@name@_simd_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (@check@(sizeof(@type@), VECTOR_SIZE_BYTES)) {
@@ -272,7 +444,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
@@ -328,7 +500,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && @simd@ && defined NPY_HAVE_SSE2_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
@@ -367,7 +539,7 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_@kind@_simd_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+run_@kind@_simd_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (steps[0] == sizeof(@type@) && steps[1] == 1 &&
@@ -403,7 +575,7 @@ sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+run_binary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
@@ -418,7 +590,7 @@ run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
 
 
 static NPY_INLINE int
-run_reduce_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+run_reduce_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
@@ -443,7 +615,7 @@ sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_unary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
@@ -1134,7 +1306,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         /* Order of operations important for MSVC 2015 */
         *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
-    assert((npy_uintp)n < (stride) || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
+    assert(n < stride || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
     if (i + 3 * stride <= n) {
         /* load the first elements */
         @vtype@ c1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
@@ -1525,9 +1697,17 @@ avx512_scalef_ps(__m512 poly, __m512 quadrant)
 }
 /**begin repeat
  *  #vsub  = ps, pd#
+ *  #type= npy_float, npy_double#
  *  #epi_vsub  = epi32, epi64#
  *  #vtype = __m512, __m512d#
+ *  #mask = __mmask16, __mmask8#
  *  #and_const = 0x7fffffff, 0x7fffffffffffffffLL#
+ *  #neg_mask = 0x80000000, 0x8000000000000000#
+ *  #perm_ = 0xb1, 0x55#
+ *  #cmpx_img_mask = 0xAAAA, 0xAA#
+ *  #cmpx_re_mask = 0x5555, 0x55#
+ *  #INF = NPY_INFINITYF, NPY_INFINITY#
+ *  #NAN = NPY_NANF, NPY_NAN#
  */
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
 avx512_abs_@vsub@(@vtype@ x)
@@ -1565,6 +1745,96 @@ avx512_trunc_@vsub@(@vtype@ x)
 {
     return _mm512_roundscale_@vsub@(x, 0x0B);
 }
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+avx512_hadd_@vsub@(const @vtype@ x)
+{
+    return _mm512_add_@vsub@(x, _mm512_permute_@vsub@(x, @perm_@));
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+avx512_hsub_@vsub@(const @vtype@ x)
+{
+    return _mm512_sub_@vsub@(x, _mm512_permute_@vsub@(x, @perm_@));
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+avx512_cabsolute_@vsub@(const @vtype@ x1,
+                        const @vtype@ x2,
+                        const __m512i re_indices,
+                        const __m512i im_indices)
+{
+    @vtype@ inf = _mm512_set1_@vsub@(@INF@);
+    @vtype@ nan = _mm512_set1_@vsub@(@NAN@);
+    @vtype@ x1_abs = avx512_abs_@vsub@(x1);
+    @vtype@ x2_abs = avx512_abs_@vsub@(x2);
+    @vtype@ re = _mm512_permutex2var_@vsub@(x1_abs, re_indices, x2_abs);
+    @vtype@ im = _mm512_permutex2var_@vsub@(x1_abs, im_indices , x2_abs);
+    /*
+     * If real or imag = INF, then convert it to inf + j*inf
+     * Handles: inf + j*nan, nan + j*inf
+     */
+    @mask@ re_infmask = _mm512_cmp_@vsub@_mask(re, inf, _CMP_EQ_OQ);
+    @mask@ im_infmask = _mm512_cmp_@vsub@_mask(im, inf, _CMP_EQ_OQ);
+    im = _mm512_mask_mov_@vsub@(im, re_infmask, inf);
+    re = _mm512_mask_mov_@vsub@(re, im_infmask, inf);
+
+    /*
+     * If real or imag = NAN, then convert it to nan + j*nan
+     * Handles: x + j*nan, nan + j*x
+     */
+    @mask@ re_nanmask = _mm512_cmp_@vsub@_mask(re, re, _CMP_NEQ_UQ);
+    @mask@ im_nanmask = _mm512_cmp_@vsub@_mask(im, im, _CMP_NEQ_UQ);
+    im = _mm512_mask_mov_@vsub@(im, re_nanmask, nan);
+    re = _mm512_mask_mov_@vsub@(re, im_nanmask, nan);
+
+    @vtype@ larger  = _mm512_max_@vsub@(re, im);
+    @vtype@ smaller = _mm512_min_@vsub@(im, re);
+
+    /*
+     * Calculate div_mask to prevent 0./0. and inf/inf operations in div
+     */
+    @mask@ zeromask = _mm512_cmp_@vsub@_mask(larger, _mm512_setzero_@vsub@(), _CMP_EQ_OQ);
+    @mask@ infmask = _mm512_cmp_@vsub@_mask(smaller, inf, _CMP_EQ_OQ);
+    @mask@ div_mask = _mm512_knot(_mm512_kor(zeromask, infmask));
+    @vtype@ ratio = _mm512_maskz_div_@vsub@(div_mask, smaller, larger);
+    @vtype@ hypot = _mm512_sqrt_@vsub@(_mm512_fmadd_@vsub@(
+                                        ratio, ratio, _mm512_set1_@vsub@(1.0f)));
+    return _mm512_mul_@vsub@(hypot, larger);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+avx512_conjugate_@vsub@(const @vtype@ x)
+{
+    /*
+     * __mm512_mask_xor_ps/pd requires AVX512DQ. We cast it to __m512i and
+     * use the xor_epi32/64 uinstruction instead. Cast is a zero latency instruction
+     */
+    __m512i cast_x = _mm512_cast@vsub@_si512(x);
+    __m512i res = _mm512_mask_xor_@epi_vsub@(cast_x, @cmpx_img_mask@,
+                                        cast_x, _mm512_set1_@epi_vsub@(@neg_mask@));
+    return _mm512_castsi512_@vsub@(res);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+avx512_cmul_@vsub@(@vtype@ x1, @vtype@ x2)
+{
+    // x1 = r1, i1
+    // x2 = r2, i2
+    @vtype@ x3  = _mm512_permute_@vsub@(x2, @perm_@);   // i2, r2
+    @vtype@ x12 = _mm512_mul_@vsub@(x1, x2);            // r1*r2, i1*i2
+    @vtype@ x13 = _mm512_mul_@vsub@(x1, x3);            // r1*i2, r2*i1
+    @vtype@ outreal = avx512_hsub_@vsub@(x12);          // r1*r2 - i1*i2, r1*r2 - i1*i2
+    @vtype@ outimg  = avx512_hadd_@vsub@(x13);          // r1*i2 + i1*r2, r1*i2 + i1*r2
+    return _mm512_mask_blend_@vsub@(@cmpx_img_mask@, outreal, outimg);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F @vtype@
+avx512_csquare_@vsub@(@vtype@ x)
+{
+    return avx512_cmul_@vsub@(x, x);
+}
+
 /**end repeat**/
 #endif
 
@@ -1671,6 +1941,101 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
 #endif
 /**end repeat**/
 
+/**begin repeat
+ * #type = npy_float, npy_double#
+ * #TYPE = FLOAT, DOUBLE#
+ * #num_lanes = 16, 8#
+ * #vsuffix = ps, pd#
+ * #mask = __mmask16, __mmask8#
+ * #vtype = __m512, __m512d#
+ * #scale = 4, 8#
+ * #vindextype = __m512i, __m256i#
+ * #vindexsize = 512, 256#
+ * #vindexload = _mm512_loadu_si512, _mm256_loadu_si256#
+ */
+
+/**begin repeat1
+ *  #func = maximum, minimum#
+ *  #vectorf = max, min#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_ip2 = steps[1]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_op = steps[2]/(npy_intp)sizeof(@type@);
+    const npy_intp array_size = dimensions[0];
+    npy_intp num_remaining_elements = array_size;
+    @type@* ip1 = (@type@*) args[0];
+    @type@* ip2 = (@type@*) args[1];
+    @type@* op  = (@type@*) args[2];
+
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP
+     */
+
+    npy_int32 index_ip1[@num_lanes@], index_ip2[@num_lanes@], index_op[@num_lanes@];
+    for (npy_int32 ii = 0; ii < @num_lanes@; ii++) {
+        index_ip1[ii] = ii*stride_ip1;
+        index_ip2[ii] = ii*stride_ip2;
+        index_op[ii] = ii*stride_op;
+    }
+    @vindextype@ vindex_ip1 = @vindexload@((@vindextype@*)&index_ip1[0]);
+    @vindextype@ vindex_ip2 = @vindexload@((@vindextype@*)&index_ip2[0]);
+    @vindextype@ vindex_op  = @vindexload@((@vindextype@*)&index_op[0]);
+    @vtype@ zeros_f = _mm512_setzero_@vsuffix@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype@ x1, x2;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
+        }
+        else {
+            x1 = avx512_masked_gather_@vsuffix@(zeros_f, ip1, vindex_ip1, load_mask);
+        }
+        if (stride_ip2 == 1) {
+            x2 = avx512_masked_load_@vsuffix@(load_mask, ip2);
+        }
+        else {
+            x2 = avx512_masked_gather_@vsuffix@(zeros_f, ip2, vindex_ip2, load_mask);
+        }
+
+        /*
+         * when only one of the argument is a nan, the maxps/maxpd instruction
+         * returns the second argument. The additional blend instruction fixes
+         * this issue to conform with NumPy behaviour.
+         */
+        @mask@ nan_mask = _mm512_cmp_@vsuffix@_mask(x1, x1, _CMP_NEQ_UQ);
+        @vtype@ out = _mm512_@vectorf@_@vsuffix@(x1, x2);
+        out = _mm512_mask_blend_@vsuffix@(nan_mask, out, x1);
+
+        if (stride_op == 1) {
+            _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
+        }
+        else {
+            /* scatter! */
+            _mm512_mask_i32scatter_@vsuffix@(op, load_mask, vindex_op, out, @scale@);
+        }
+
+        ip1 += @num_lanes@*stride_ip1;
+        ip2 += @num_lanes@*stride_ip2;
+        op += @num_lanes@*stride_op;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+#endif
+/**end repeat**/
+/**end repeat1**/
 
 /**begin repeat
  * #ISA = FMA, AVX512F#
@@ -1699,16 +2064,23 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                    const npy_intp array_size,
                    const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_intp num_remaining_elements = array_size;
     @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
 #if @replace_0_with_1@
     @mask@ inv_load_mask = @isa@_invert_mask_ps(load_mask);
 #endif
-    npy_int indexarr[16];
-    for (npy_int ii = 0; ii < 16; ii++) {
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+
+    npy_int32 indexarr[16];
+    for (npy_int32 ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
     }
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
@@ -1778,16 +2150,22 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                     const npy_intp array_size,
                     const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_double);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_double);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_double);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_double);
     npy_intp num_remaining_elements = array_size;
     @mask@ load_mask = @isa@_get_full_load_mask_pd();
 #if @replace_0_with_1@
     @mask@ inv_load_mask = @isa@_invert_mask_pd(load_mask);
 #endif
     @vtype@ ones_d = _mm@vsize@_set1_pd(1.0f);
-    npy_int indexarr[8];
-    for (npy_int ii = 0; ii < 8; ii++) {
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+    npy_int32 indexarr[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
         indexarr[ii] = ii*stride;
     }
     @vindextype@ vindex = @vindexload@((@vindextype@*)&indexarr[0]);
@@ -1856,7 +2234,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  * method: x* = x - y*PI/2, where y = rint(x*2/PI). x* \in [-PI/4, PI/4].
  * (3) Map cos(x) to (+/-)sine or (+/-)cosine of x* based on the quadrant k =
  * int(y).
- * (4) For elements outside that range, Cody-Waite reduction peforms poorly
+ * (4) For elements outside that range, Cody-Waite reduction performs poorly
  * leading to catastrophic cancellation. We compute cosine by calling glibc in
  * a scalar fashion.
  * (5) Vectorized implementation has a max ULP of 1.49 and performs at least
@@ -1874,8 +2252,8 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                    const npy_intp steps,
                    NPY_TRIG_OP my_trig_op)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_float large_number = 71476.0625f;
     if (my_trig_op == npy_compute_sin) {
         large_number = 117435.992f;
@@ -1905,8 +2283,14 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     @mask@ nan_mask, glibc_mask, sine_mask, negate_mask;
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
     npy_intp num_remaining_elements = array_size;
-    npy_int indexarr[16];
-    for (npy_int ii = 0; ii < 16; ii++) {
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+    npy_int32 indexarr[16];
+    for (npy_int32 ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
     }
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
@@ -2017,12 +2401,18 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                 const npy_intp array_size,
                 const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_float xmax = 88.72283935546875f;
     npy_float xmin = -103.97208404541015625f;
-    npy_int indexarr[16];
-    for (npy_int ii = 0; ii < 16; ii++) {
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+    npy_int32 indexarr[16];
+    for (npy_int32 ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
     }
 
@@ -2143,10 +2533,16 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                 const npy_intp array_size,
                 const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
-    npy_int indexarr[16];
-    for (npy_int ii = 0; ii < 16; ii++) {
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_OUTPUT_BLOCKABLE_UNARY
+     */
+    npy_int32 indexarr[16];
+    for (npy_int32 ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
     }
 
@@ -2255,6 +2651,184 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         npy_set_floatstatus_divbyzero();
     }
 }
+#endif
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = CFLOAT, CDOUBLE#
+ * #type = npy_float, npy_double#
+ * #num_lanes = 16, 8#
+ * #vsuffix = ps, pd#
+ * #epi_vsub  = epi32, epi64#
+ * #mask = __mmask16, __mmask8#
+ * #vtype = __m512, __m512d#
+ * #scale = 4, 8#
+ * #vindextype = __m512i, __m256i#
+ * #vindexload = _mm512_loadu_si512, _mm256_loadu_si256#
+ * #storemask = 0xFF, 0xF#
+ * #IS_FLOAT = 1, 0#
+ */
+
+/**begin repeat1
+ *  #func = add, subtract, multiply#
+ *  #vectorf = _mm512_add, _mm512_sub, avx512_cmul#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
+{
+    const npy_intp array_size = dimensions[0];
+    npy_intp num_remaining_elements = 2*array_size;
+    @type@* ip1 = (@type@*) args[0];
+    @type@* ip2 = (@type@*) args[1];
+    @type@* op  = (@type@*) args[2];
+
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype@ x1, x2;
+        x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
+        x2 = avx512_masked_load_@vsuffix@(load_mask, ip2);
+
+        @vtype@ out = @vectorf@_@vsuffix@(x1, x2);
+
+        _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
+
+        ip1 += @num_lanes@;
+        ip2 += @num_lanes@;
+        op += @num_lanes@;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+#endif
+/**end repeat1**/
+
+/**begin repeat1
+ *  #func = square, conjugate#
+ *  #vectorf = avx512_csquare, avx512_conjugate#
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_@func@_@TYPE@(@type@ * op,
+                      @type@ * ip,
+                      const npy_intp array_size,
+                      const npy_intp steps)
+{
+    npy_intp num_remaining_elements = 2*array_size;
+    const npy_intp stride_ip1 = steps/(npy_intp)sizeof(@type@)/2;
+
+     /*
+      * Note: while generally indices are npy_intp, we ensure that our maximum index
+      * will fit in an int32 as a precondition for this function via max_stride
+      */
+    npy_int32 index_ip1[16];
+    for (npy_int32 ii = 0; ii < @num_lanes@; ii=ii+2) {
+        index_ip1[ii] = ii*stride_ip1;
+        index_ip1[ii+1] = ii*stride_ip1 + 1;
+    }
+    @vindextype@ vindex = @vindexload@((@vindextype@*)index_ip1);
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+    @vtype@ zeros = _mm512_setzero_@vsuffix@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype@ x1;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask, ip);
+        }
+        else {
+            x1  = avx512_masked_gather_@vsuffix@(zeros, ip, vindex, load_mask);
+        }
+
+        @vtype@ out = @vectorf@_@vsuffix@(x1);
+
+        _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
+        op += @num_lanes@;
+        ip += @num_lanes@*stride_ip1;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+#endif
+/**end repeat1**/
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_AVX512F void
+AVX512F_absolute_@TYPE@(@type@ * op,
+                        @type@ * ip,
+                        const npy_intp array_size,
+                        const npy_intp steps)
+{
+    npy_intp num_remaining_elements = 2*array_size;
+    const npy_intp stride_ip1 = steps/(npy_intp)sizeof(@type@)/2;
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via max_stride
+     */
+    npy_int32 index_ip[32];
+    for (npy_int32 ii = 0; ii < 2*@num_lanes@; ii=ii+2) {
+        index_ip[ii] = ii*stride_ip1;
+        index_ip[ii+1] = ii*stride_ip1 + 1;
+    }
+    @vindextype@ vindex1 = @vindexload@((@vindextype@*)index_ip);
+    @vindextype@ vindex2 = @vindexload@((@vindextype@*)(index_ip+@num_lanes@));
+
+    @mask@ load_mask1 = avx512_get_full_load_mask_@vsuffix@();
+    @mask@ load_mask2 = avx512_get_full_load_mask_@vsuffix@();
+    @mask@ store_mask = avx512_get_full_load_mask_@vsuffix@();
+    @vtype@ zeros = _mm512_setzero_@vsuffix@();
+
+#if @IS_FLOAT@
+    __m512i re_index = _mm512_set_epi32(30,28,26,24,22,20,18,16,14,12,10,8,6,4,2,0);
+    __m512i im_index  = _mm512_set_epi32(31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1);
+#else
+    __m512i re_index = _mm512_set_epi64(14,12,10,8,6,4,2,0);
+    __m512i im_index  = _mm512_set_epi64(15,13,11,9,7,5,3,1);
+#endif
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask1 = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+            load_mask2 = 0x0000;
+            store_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements/2, @num_lanes@);
+        } else if (num_remaining_elements < 2*@num_lanes@) {
+            load_mask1 = avx512_get_full_load_mask_@vsuffix@();
+            load_mask2 = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements - @num_lanes@, @num_lanes@);
+            store_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements/2, @num_lanes@);
+        }
+        @vtype@ x1, x2;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask1, ip);
+            x2 = avx512_masked_load_@vsuffix@(load_mask2, ip+@num_lanes@);
+        }
+        else {
+            x1  = avx512_masked_gather_@vsuffix@(zeros, ip, vindex1, load_mask1);
+            x2  = avx512_masked_gather_@vsuffix@(zeros, ip, vindex2, load_mask2);
+        }
+
+        @vtype@ out = avx512_cabsolute_@vsuffix@(x1, x2, re_index, im_index);
+
+        _mm512_mask_storeu_@vsuffix@(op, store_mask, out);
+        op += @num_lanes@;
+        ip += 2*@num_lanes@*stride_ip1;
+        num_remaining_elements -= 2*@num_lanes@;
+    }
+    npy_clear_floatstatus_barrier((char*)op);
+}
+
 #endif
 /**end repeat**/
 

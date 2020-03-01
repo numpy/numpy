@@ -6,8 +6,9 @@ Quickstart tutorial
 
 .. testsetup::
 
-   import numpy as np
-   np.random.seed(1)
+   >>> import numpy as np
+   >>> import sys
+   >>> rg = np.random.default_rng(1)
 
 Prerequisites
 =============
@@ -19,6 +20,9 @@ tutorial <https://docs.python.org/tutorial/>`__.
 If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
 https://scipy.org/install.html for instructions.
+
+
+.. _quickstart.the-basics:
 
 The Basics
 ==========
@@ -88,13 +92,14 @@ An example
     >>> a.size
     15
     >>> type(a)
-    <type 'numpy.ndarray'>
+    <class 'numpy.ndarray'>
     >>> b = np.array([6, 7, 8])
     >>> b
     array([6, 7, 8])
     >>> type(b)
-    <type 'numpy.ndarray'>
+    <class 'numpy.ndarray'>
 
+.. _quickstart.array-creation:
 
 Array Creation
 --------------
@@ -117,13 +122,15 @@ from the type of the elements in the sequences.
     >>> b.dtype
     dtype('float64')
 
-A frequent error consists in calling ``array`` with multiple numeric
-arguments, rather than providing a single list of numbers as an
-argument.
+A frequent error consists in calling ``array`` with multiple arguments,
+rather than providing a single sequence as an argument.
 
 ::
 
     >>> a = np.array(1,2,3,4)    # WRONG
+    Traceback (most recent call last):
+    ...
+    ValueError: only 2 non-keyword arguments accepted
     >>> a = np.array([1,2,3,4])  # RIGHT
 
 ``array`` transforms sequences of sequences into two-dimensional arrays,
@@ -164,18 +171,20 @@ state of the memory. By default, the dtype of the created array is
            [ 0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.]])
     >>> np.ones( (2,3,4), dtype=np.int16 )                # dtype can also be specified
-    array([[[ 1, 1, 1, 1],
-            [ 1, 1, 1, 1],
-            [ 1, 1, 1, 1]],
-           [[ 1, 1, 1, 1],
-            [ 1, 1, 1, 1],
-            [ 1, 1, 1, 1]]], dtype=int16)
-    >>> np.empty( (2,3) )                                 # uninitialized, output may vary
-    array([[  3.73603959e-262,   6.02658058e-154,   6.55490914e-260],
+    array([[[1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]],
+    <BLANKLINE>
+           [[1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]]], dtype=int16)
+    >>> np.empty( (2,3) )                                 # uninitialized
+    array([[  3.73603959e-262,   6.02658058e-154,   6.55490914e-260],  # may vary
            [  5.30498948e-313,   3.14673309e-307,   1.00000000e+000]])
 
-To create sequences of numbers, NumPy provides a function analogous to
-``range`` that returns arrays instead of lists.
+To create sequences of numbers, NumPy provides the ``arange`` function
+which is analogous to the Python built-in ``range``, but returns an
+array.
 
 ::
 
@@ -206,8 +215,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.RandomState.rand`,
-    `numpy.random.RandomState.randn`,
+    `numpy.random.Generator.rand`,
+    `numpy.random.Generator.randn`,
     `fromfunction`,
     `fromfile`
 
@@ -254,16 +263,16 @@ If an array is too large to be printed, NumPy automatically skips the
 central part of the array and only prints the corners::
 
     >>> print(np.arange(10000))
-    [   0    1    2 ..., 9997 9998 9999]
+    [   0    1    2 ... 9997 9998 9999]
     >>>
     >>> print(np.arange(10000).reshape(100,100))
-    [[   0    1    2 ...,   97   98   99]
-     [ 100  101  102 ...,  197  198  199]
-     [ 200  201  202 ...,  297  298  299]
-     ...,
-     [9700 9701 9702 ..., 9797 9798 9799]
-     [9800 9801 9802 ..., 9897 9898 9899]
-     [9900 9901 9902 ..., 9997 9998 9999]]
+    [[   0    1    2 ...   97   98   99]
+     [ 100  101  102 ...  197  198  199]
+     [ 200  201  202 ...  297  298  299]
+     ...
+     [9700 9701 9702 ... 9797 9798 9799]
+     [9800 9801 9802 ... 9897 9898 9899]
+     [9900 9901 9902 ... 9997 9998 9999]]
 
 To disable this behaviour and force NumPy to print the entire array, you
 can change the printing options using ``set_printoptions``.
@@ -272,6 +281,8 @@ can change the printing options using ``set_printoptions``.
 
     >>> np.set_printoptions(threshold=sys.maxsize)       # sys module should be imported
 
+
+.. _quickstart.basic-operations:
 
 Basic Operations
 ----------------
@@ -300,9 +311,9 @@ elementwise in NumPy arrays. The matrix product can be performed using
 the ``@`` operator (in python >=3.5) or the ``dot`` function or method::
 
     >>> A = np.array( [[1,1],
-    ...             [0,1]] )
+    ...                [0,1]] )
     >>> B = np.array( [[2,0],
-    ...             [3,4]] )
+    ...                [3,4]] )
     >>> A * B                       # elementwise product
     array([[2, 0],
            [0, 4]])
@@ -319,19 +330,19 @@ existing array rather than create a new one.
 ::
 
     >>> a = np.ones((2,3), dtype=int)
-    >>> b = np.random.random((2,3))
+    >>> b = rg.random((2,3))
     >>> a *= 3
     >>> a
     array([[3, 3, 3],
            [3, 3, 3]])
     >>> b += a
     >>> b
-    array([[ 3.417022  ,  3.72032449,  3.00011437],
-           [ 3.30233257,  3.14675589,  3.09233859]])
+    array([[3.51182162, 3.9504637 , 3.14415961],
+           [3.94864945, 3.31183145, 3.42332645]])
     >>> a += b                  # b is not automatically converted to integer type
     Traceback (most recent call last):
-      ...
-    TypeError: Cannot cast ufunc add output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
+        ...
+    numpy.core._exceptions.UFuncTypeError: Cannot cast from dtype('float64') to dtype('int64')  # IGNORE_EXCEPTION_DETAIL
 
 When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
@@ -360,16 +371,16 @@ the array, are implemented as methods of the ``ndarray`` class.
 
 ::
 
-    >>> a = np.random.random((2,3))
+    >>> a = rg.random((2,3))
     >>> a
-    array([[ 0.18626021,  0.34556073,  0.39676747],
-           [ 0.53881673,  0.41919451,  0.6852195 ]])
+    array([[0.82770259, 0.40919914, 0.54959369],
+           [0.02755911, 0.75351311, 0.53814331]])
     >>> a.sum()
-    2.5718191614547998
+    3.1057109529998157
     >>> a.min()
-    0.1862602113776709
+    0.027559113243068367
     >>> a.max()
-    0.6852195003967595
+    0.8277025938204418
 
 By default, these operations apply to the array as though it were a list
 of numbers, regardless of its shape. However, by specifying the ``axis``
@@ -437,7 +448,7 @@ operate elementwise on an array, producing an array as output.
     `dot`,
     `floor`,
     `inner`,
-    `inv`,
+    `invert`,
     `lexsort`,
     `max`,
     `maximum`,
@@ -460,6 +471,8 @@ operate elementwise on an array, producing an array as output.
     `vectorize`,
     `where`
 
+.. _quickstart.indexing-slicing-and-iterating:
+
 Indexing, Slicing and Iterating
 -------------------------------
 
@@ -477,24 +490,27 @@ and other Python sequences.
     8
     >>> a[2:5]
     array([ 8, 27, 64])
-    >>> a[:6:2] = -1000    # equivalent to a[0:6:2] = -1000; from start to position 6, exclusive, set every 2nd element to -1000
+    # equivalent to a[0:6:2] = 1000;
+    # from start to position 6, exclusive, set every 2nd element to 1000
+    >>> a[:6:2] = 1000
     >>> a
-    array([-1000,     1, -1000,    27, -1000,   125,   216,   343,   512,   729])
+    array([1000,    1, 1000,   27, 1000,  125,  216,  343,  512,  729])
     >>> a[ : :-1]                                 # reversed a
-    array([  729,   512,   343,   216,   125, -1000,    27, -1000,     1, -1000])
+    array([  729,  512,  343,  216,  125, 1000,   27, 1000,    1, 1000])
     >>> for i in a:
     ...     print(i**(1/3.))
     ...
-    nan
+    9.999999999999998
     1.0
-    nan
+    9.999999999999998
     3.0
-    nan
-    5.0
-    6.0
-    7.0
-    8.0
-    9.0
+    9.999999999999998
+    4.999999999999999
+    5.999999999999999
+    6.999999999999999
+    7.999999999999999
+    8.999999999999998
+
 
 **Multidimensional** arrays can have one index per axis. These indices
 are given in a tuple separated by commas::
@@ -614,11 +630,11 @@ Changing the shape of an array
 
 An array has a shape given by the number of elements along each axis::
 
-    >>> a = np.floor(10*np.random.random((3,4)))
+    >>> a = np.floor(10*rg.random((3,4)))
     >>> a
-    array([[ 2.,  8.,  0.,  6.],
-           [ 4.,  5.,  1.,  1.],
-           [ 8.,  9.,  3.,  6.]])
+    array([[3., 7., 3., 4.],
+           [1., 4., 2., 2.],
+           [7., 2., 4., 9.]])
     >>> a.shape
     (3, 4)
 
@@ -627,19 +643,19 @@ following three commands all return a modified array, but do not change
 the original array::
 
     >>> a.ravel()  # returns the array, flattened
-    array([ 2.,  8.,  0.,  6.,  4.,  5.,  1.,  1.,  8.,  9.,  3.,  6.])
+    array([3., 7., 3., 4., 1., 4., 2., 2., 7., 2., 4., 9.])
     >>> a.reshape(6,2)  # returns the array with a modified shape
-    array([[ 2.,  8.],
-           [ 0.,  6.],
-           [ 4.,  5.],
-           [ 1.,  1.],
-           [ 8.,  9.],
-           [ 3.,  6.]])
+    array([[3., 7.],
+           [3., 4.],
+           [1., 4.],
+           [2., 2.],
+           [7., 2.],
+           [4., 9.]])
     >>> a.T  # returns the array, transposed
-    array([[ 2.,  4.,  8.],
-           [ 8.,  5.,  9.],
-           [ 0.,  1.,  3.],
-           [ 6.,  1.,  6.]])
+    array([[3., 1., 7.],
+           [7., 4., 2.],
+           [3., 2., 4.],
+           [4., 2., 9.]])
     >>> a.T.shape
     (4, 3)
     >>> a.shape
@@ -662,21 +678,21 @@ argument with a modified shape, whereas the
 itself::
 
     >>> a
-    array([[ 2.,  8.,  0.,  6.],
-           [ 4.,  5.,  1.,  1.],
-           [ 8.,  9.,  3.,  6.]])
+    array([[3., 7., 3., 4.],
+           [1., 4., 2., 2.],
+           [7., 2., 4., 9.]])
     >>> a.resize((2,6))
     >>> a
-    array([[ 2.,  8.,  0.,  6.,  4.,  5.],
-           [ 1.,  1.,  8.,  9.,  3.,  6.]])
+    array([[3., 7., 3., 4., 1., 4.],
+           [2., 2., 7., 2., 4., 9.]])
 
 If a dimension is given as -1 in a reshaping operation, the other
 dimensions are automatically calculated::
 
     >>> a.reshape(3,-1)
-    array([[ 2.,  8.,  0.,  6.],
-           [ 4.,  5.,  1.,  1.],
-           [ 8.,  9.,  3.,  6.]])
+    array([[3., 7., 3., 4.],
+           [1., 4., 2., 2.],
+           [7., 2., 4., 9.]])
 
 .. seealso::
 
@@ -685,27 +701,30 @@ dimensions are automatically calculated::
    `resize`,
    `ravel`
 
+
+.. _quickstart.stacking-arrays:
+
 Stacking together different arrays
 ----------------------------------
 
 Several arrays can be stacked together along different axes::
 
-    >>> a = np.floor(10*np.random.random((2,2)))
+    >>> a = np.floor(10*rg.random((2,2)))
     >>> a
-    array([[ 8.,  8.],
-           [ 0.,  0.]])
-    >>> b = np.floor(10*np.random.random((2,2)))
+    array([[9., 7.],
+           [5., 2.]])
+    >>> b = np.floor(10*rg.random((2,2)))
     >>> b
-    array([[ 1.,  8.],
-           [ 0.,  4.]])
+    array([[1., 9.],
+           [5., 1.]])
     >>> np.vstack((a,b))
-    array([[ 8.,  8.],
-           [ 0.,  0.],
-           [ 1.,  8.],
-           [ 0.,  4.]])
+    array([[9., 7.],
+           [5., 2.],
+           [1., 9.],
+           [5., 1.]])
     >>> np.hstack((a,b))
-    array([[ 8.,  8.,  1.,  8.],
-           [ 0.,  0.,  0.,  4.]])
+    array([[9., 7., 1., 9.],
+           [5., 2., 5., 1.]])
 
 The function `column_stack`
 stacks 1D arrays as columns into a 2D array. It is equivalent to
@@ -713,8 +732,8 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
 
     >>> from numpy import newaxis
     >>> np.column_stack((a,b))     # with 2D arrays
-    array([[ 8.,  8.,  1.,  8.],
-           [ 0.,  0.,  0.,  4.]])
+    array([[9., 7., 1., 9.],
+           [5., 2., 5., 1.]])
     >>> a = np.array([4.,2.])
     >>> b = np.array([3.,8.])
     >>> np.column_stack((a,b))     # returns a 2D array
@@ -732,8 +751,14 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
     array([[ 4.,  3.],
            [ 2.,  8.]])
 
-On the other hand, the function `ma.row_stack` is equivalent to `vstack`
-for any input arrays.
+On the other hand, the function `row_stack` is equivalent to `vstack`
+for any input arrays. In fact, `row_stack` is an alias for `vstack`::
+
+    >>> np.column_stack is np.hstack
+    False
+    >>> np.row_stack is np.vstack
+    True
+
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
@@ -776,24 +801,29 @@ array along its horizontal axis, either by specifying the number of
 equally shaped arrays to return, or by specifying the columns after
 which the division should occur::
 
-    >>> a = np.floor(10*np.random.random((2,12)))
+    >>> a = np.floor(10*rg.random((2,12)))
     >>> a
-    array([[ 9.,  5.,  6.,  3.,  6.,  8.,  0.,  7.,  9.,  7.,  2.,  7.],
-           [ 1.,  4.,  9.,  2.,  2.,  1.,  0.,  6.,  2.,  2.,  4.,  0.]])
-    >>> np.hsplit(a,3)   # Split a into 3
-    [array([[ 9.,  5.,  6.,  3.],
-           [ 1.,  4.,  9.,  2.]]), array([[ 6.,  8.,  0.,  7.],
-           [ 2.,  1.,  0.,  6.]]), array([[ 9.,  7.,  2.,  7.],
-           [ 2.,  2.,  4.,  0.]])]
-    >>> np.hsplit(a,(3,4))   # Split a after the third and the fourth column
-    [array([[ 9.,  5.,  6.],
-           [ 1.,  4.,  9.]]), array([[ 3.],
-           [ 2.]]), array([[ 6.,  8.,  0.,  7.,  9.,  7.,  2.,  7.],
-           [ 2.,  1.,  0.,  6.,  2.,  2.,  4.,  0.]])]
+    array([[6., 7., 6., 9., 0., 5., 4., 0., 6., 8., 5., 2.],
+           [8., 5., 5., 7., 1., 8., 6., 7., 1., 8., 1., 0.]])
+    # Split a into 3
+    >>> np.hsplit(a,3)
+    [array([[6., 7., 6., 9.],
+           [8., 5., 5., 7.]]), array([[0., 5., 4., 0.],
+           [1., 8., 6., 7.]]), array([[6., 8., 5., 2.],
+           [1., 8., 1., 0.]])]
+    # Split a after the third and the fourth column
+    >>> np.hsplit(a,(3,4))
+    [array([[6., 7., 6.],
+           [8., 5., 5.]]), array([[9.],
+           [7.]]), array([[0., 5., 4., 0., 6., 8., 5., 2.],
+           [1., 8., 6., 7., 1., 8., 1., 0.]])]
 
 `vsplit` splits along the vertical
 axis, and `array_split` allows
 one to specify along which axis to split.
+
+
+.. _quickstart.copies-and-views:
 
 Copies and Views
 ================
@@ -805,7 +835,7 @@ for beginners. There are three cases:
 No Copy at All
 --------------
 
-Simple assignments make no copy of array objects or of their data.
+Simple assignments make no copy of objects or their data.
 
 ::
 
@@ -813,9 +843,6 @@ Simple assignments make no copy of array objects or of their data.
     >>> b = a            # no new object is created
     >>> b is a           # a and b are two names for the same ndarray object
     True
-    >>> b.shape = 3,4    # changes the shape of a
-    >>> a.shape
-    (3, 4)
 
 Python passes mutable objects as references, so function calls make no
 copy.
@@ -826,9 +853,9 @@ copy.
     ...     print(id(x))
     ...
     >>> id(a)                           # id is a unique identifier of an object
-    148293216
+    148293216  # may vary
     >>> f(a)
-    148293216
+    148293216  # may vary
 
 View or Shallow Copy
 --------------------
@@ -846,10 +873,10 @@ creates a new array object that looks at the same data.
     >>> c.flags.owndata
     False
     >>>
-    >>> c.shape = 2,6                      # a's shape doesn't change
+    >>> c = c.reshape((2, 6))                      # a's shape doesn't change
     >>> a.shape
     (3, 4)
-    >>> c[0,4] = 1234                      # a's data changes
+    >>> c[0, 4] = 1234                      # a's data changes
     >>> a
     array([[   0,    1,    2,    3],
            [1234,    5,    6,    7],
@@ -857,13 +884,12 @@ creates a new array object that looks at the same data.
 
 Slicing an array returns a view of it::
 
-    >>> s = a[ : , 1:3]     # spaces added for clarity; could also be written "s = a[:,1:3]"
-    >>> s[:] = 10           # s[:] is a view of s. Note the difference between s=10 and s[:]=10
+    >>> s = a[ : , 1:3]     # spaces added for clarity; could also be written "s = a[:, 1:3]"
+    >>> s[:] = 10           # s[:] is a view of s. Note the difference between s = 10 and s[:] = 10
     >>> a
     array([[   0,   10,   10,    3],
            [1234,   10,   10,    7],
            [   8,   10,   10,   11]])
-
 
 Deep Copy
 ---------
@@ -917,7 +943,7 @@ Array Creation
     `ogrid`,
     `ones`,
     `ones_like`,
-    `r`,
+    `r_`,
     `zeros`,
     `zeros_like`
 Conversions
@@ -1009,8 +1035,8 @@ element is assumed to be the same along that dimension for the
 After application of the broadcasting rules, the sizes of all arrays
 must match. More details can be found in :doc:`basics.broadcasting`.
 
-Fancy indexing and index tricks
-===============================
+Advanced indexing and index tricks
+==================================
 
 NumPy offers more indexing facilities than regular Python sequences. In
 addition to indexing by integers and slices, as we saw before, arrays
@@ -1022,11 +1048,11 @@ Indexing with Arrays of Indices
 ::
 
     >>> a = np.arange(12)**2                       # the first 12 square numbers
-    >>> i = np.array( [ 1,1,3,8,5 ] )              # an array of indices
+    >>> i = np.array([1, 1, 3, 8, 5])              # an array of indices
     >>> a[i]                                       # the elements of a at the positions i
     array([ 1,  1,  9, 64, 25])
     >>>
-    >>> j = np.array( [ [ 3, 4], [ 9, 7 ] ] )      # a bidimensional array of indices
+    >>> j = np.array([[3, 4], [9, 7]])      # a bidimensional array of indices
     >>> a[j]                                       # the same shape as j
     array([[ 9, 16],
            [81, 49]])
@@ -1038,14 +1064,14 @@ using a palette.
 
 ::
 
-    >>> palette = np.array( [ [0,0,0],                # black
-    ...                       [255,0,0],              # red
-    ...                       [0,255,0],              # green
-    ...                       [0,0,255],              # blue
-    ...                       [255,255,255] ] )       # white
-    >>> image = np.array( [ [ 0, 1, 2, 0 ],           # each value corresponds to a color in the palette
-    ...                     [ 0, 3, 4, 0 ]  ] )
-    >>> palette[image]                            # the (2,4,3) color image
+    >>> palette = np.array([[0, 0, 0],         # black
+    ...                     [255, 0, 0],       # red
+    ...                     [0, 255, 0],       # green
+    ...                     [0, 0, 255],       # blue
+    ...                     [255, 255, 255]])  # white
+    >>> image = np.array([[0, 1, 2, 0],        # each value corresponds to a color in the palette
+    ...                   [0, 3, 4, 0]])
+    >>> palette[image]                         # the (2, 4, 3) color image
     array([[[  0,   0,   0],
             [255,   0,   0],
             [  0, 255,   0],
@@ -1065,20 +1091,20 @@ indices for each dimension must have the same shape.
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11]])
-    >>> i = np.array( [ [0,1],                        # indices for the first dim of a
-    ...                 [1,2] ] )
-    >>> j = np.array( [ [2,1],                        # indices for the second dim
-    ...                 [3,3] ] )
+    >>> i = np.array([[0, 1],                     # indices for the first dim of a
+    ...               [1, 2]])
+    >>> j = np.array([[2, 1],                     # indices for the second dim
+    ...               [3, 3]])
     >>>
-    >>> a[i,j]                                     # i and j must have equal shape
+    >>> a[i, j]                                   # i and j must have equal shape
     array([[ 2,  5],
            [ 7, 11]])
     >>>
-    >>> a[i,2]
+    >>> a[i, 2]
     array([[ 2,  6],
            [ 6, 10]])
     >>>
-    >>> a[:,j]                                     # i.e., a[ : , j]
+    >>> a[:, j]                                     # i.e., a[ : , j]
     array([[[ 2,  1],
             [ 3,  3]],
            [[ 6,  5],
@@ -1091,8 +1117,9 @@ then do the indexing with the list.
 
 ::
 
-    >>> l = [i,j]
-    >>> a[l]                                       # equivalent to a[i,j]
+    >>> l = (i, j)
+    # equivalent to a[i, j]
+    >>> a[l]
     array([[ 2,  5],
            [ 7, 11]])
 
@@ -1102,13 +1129,16 @@ of a.
 
 ::
 
-    >>> s = np.array( [i,j] )
-    >>> a[s]                                       # not what we want
+    >>> s = np.array([i, j])
+
+    # not what we want
+    >>> a[s]
     Traceback (most recent call last):
       File "<stdin>", line 1, in ?
     IndexError: index (3) out of range (0<=index<=2) in dimension 0
-    >>>
-    >>> a[tuple(s)]                                # same as a[i,j]
+
+    # same as a[i, j]
+    >>> a[tuple(s)]
     array([[ 2,  5],
            [ 7, 11]])
 
@@ -1125,20 +1155,22 @@ value of time-dependent series::
            [ 0.98935825,  0.41211849, -0.54402111, -0.99999021],
            [-0.53657292,  0.42016704,  0.99060736,  0.65028784],
            [-0.28790332, -0.96139749, -0.75098725,  0.14987721]])
-    >>>
-    >>> ind = data.argmax(axis=0)                  # index of the maxima for each series
+
+    # index of the maxima for each series
+    >>> ind = data.argmax(axis=0)
     >>> ind
     array([2, 0, 3, 1])
-    >>>
-    >>> time_max = time[ind]                       # times corresponding to the maxima
+
+    # times corresponding to the maxima
+    >>> time_max = time[ind]
     >>>
     >>> data_max = data[ind, range(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
-    >>>
+
     >>> time_max
     array([  82.5 ,   20.  ,  113.75,   51.25])
     >>> data_max
     array([ 0.98935825,  0.84147098,  0.99060736,  0.6569866 ])
-    >>>
+
     >>> np.all(data_max == data.max(axis=0))
     True
 
@@ -1224,7 +1256,6 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...
     ...     return divtime
     >>> plt.imshow(mandelbrot(400,400))
-    >>> plt.show()
 
 The second way of indexing with booleans is more similar to integer
 indexing; for each dimension of the array we give a 1D boolean array
@@ -1351,8 +1382,8 @@ See linalg.py in numpy folder for more.
     >>> import numpy as np
     >>> a = np.array([[1.0, 2.0], [3.0, 4.0]])
     >>> print(a)
-    [[ 1.  2.]
-     [ 3.  4.]]
+    [[1. 2.]
+     [3. 4.]]
 
     >>> a.transpose()
     array([[ 1.,  3.],
@@ -1406,10 +1437,10 @@ To change the dimensions of an array, you can omit one of the sizes
 which will then be deduced automatically::
 
     >>> a = np.arange(30)
-    >>> a.shape = 2,-1,3  # -1 means "whatever is needed"
-    >>> a.shape
+    >>> b = a.reshape((2, -1, 3))  # -1 means "whatever is needed"
+    >>> b.shape
     (2, 5, 3)
-    >>> a
+    >>> b
     array([[[ 0,  1,  2],
             [ 3,  4,  5],
             [ 6,  7,  8],
@@ -1431,11 +1462,15 @@ functions ``column_stack``, ``dstack``, ``hstack`` and ``vstack``,
 depending on the dimension in which the stacking is to be done. For
 example::
 
-    x = np.arange(0,10,2)                     # x=([0,2,4,6,8])
-    y = np.arange(5)                          # y=([0,1,2,3,4])
-    m = np.vstack([x,y])                      # m=([[0,2,4,6,8],
-                                              #     [0,1,2,3,4]])
-    xy = np.hstack([x,y])                     # xy =([0,2,4,6,8,0,1,2,3,4])
+    >>> x = np.arange(0,10,2)
+    >>> y = np.arange(5)
+    >>> m = np.vstack([x,y])
+    >>> m
+    array([[0, 2, 4, 6, 8],
+           [0, 1, 2, 3, 4]])
+    >>> xy = np.hstack([x,y])
+    >>> xy
+    array([0, 2, 4, 6, 8, 0, 1, 2, 3, 4])
 
 The logic behind those functions in more than two dimensions can be
 strange.
@@ -1448,7 +1483,7 @@ Histograms
 ----------
 
 The NumPy ``histogram`` function applied to an array returns a pair of
-vectors: the histogram of the array and the vector of bins. Beware:
+vectors: the histogram of the array and a vector of the bin edges. Beware:
 ``matplotlib`` also has a function to build histograms (called ``hist``,
 as in Matlab) that differs from the one in NumPy. The main difference is
 that ``pylab.hist`` plots the histogram automatically, while
@@ -1457,17 +1492,16 @@ that ``pylab.hist`` plots the histogram automatically, while
 .. plot::
 
     >>> import numpy as np
+    >>> rg = np.random.default_rng(1)
     >>> import matplotlib.pyplot as plt
     >>> # Build a vector of 10000 normal deviates with variance 0.5^2 and mean 2
     >>> mu, sigma = 2, 0.5
-    >>> v = np.random.normal(mu,sigma,10000)
+    >>> v = rg.normal(mu,sigma,10000)
     >>> # Plot a normalized histogram with 50 bins
     >>> plt.hist(v, bins=50, density=1)       # matplotlib version (plot)
-    >>> plt.show()
     >>> # Compute the histogram with numpy and then plot it
     >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
     >>> plt.plot(.5*(bins[1:]+bins[:-1]), n)
-    >>> plt.show()
 
 
 Further reading

@@ -1,20 +1,11 @@
 """A collection of functions designed to help I/O with ascii files.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __docformat__ = "restructuredtext en"
 
-import sys
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode, bytes, basestring
-
-if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object, str
-    unicode = str
-else:
-    from __builtin__ import bool, int, float, complex, object, unicode, str
+from numpy.compat import asbytes, asunicode, bytes
 
 
 def _decode_line(line, encoding=None):
@@ -63,40 +54,6 @@ def _is_bytes_like(obj):
     except (TypeError, ValueError):
         return False
     return True
-
-
-def _to_filehandle(fname, flag='r', return_opened=False):
-    """
-    Returns the filehandle corresponding to a string or a file.
-    If the string ends in '.gz', the file is automatically unzipped.
-
-    Parameters
-    ----------
-    fname : string, filehandle
-        Name of the file whose filehandle must be returned.
-    flag : string, optional
-        Flag indicating the status of the file ('r' for read, 'w' for write).
-    return_opened : boolean, optional
-        Whether to return the opening status of the file.
-    """
-    if _is_string_like(fname):
-        if fname.endswith('.gz'):
-            import gzip
-            fhd = gzip.open(fname, flag)
-        elif fname.endswith('.bz2'):
-            import bz2
-            fhd = bz2.BZ2File(fname)
-        else:
-            fhd = file(fname, flag)
-        opened = True
-    elif hasattr(fname, 'seek'):
-        fhd = fname
-        opened = False
-    else:
-        raise ValueError('fname must be a string or file handle')
-    if return_opened:
-        return fhd, opened
-    return fhd
 
 
 def has_nested_fields(ndtype):
@@ -173,7 +130,7 @@ def flatten_dtype(ndtype, flatten_base=False):
         return types
 
 
-class LineSplitter(object):
+class LineSplitter:
     """
     Object to split a string at a given delimiter or at given places.
 
@@ -210,14 +167,15 @@ class LineSplitter(object):
         return lambda input: [_.strip() for _ in method(input)]
     #
 
-    def __init__(self, delimiter=None, comments='#', autostrip=True, encoding=None):
+    def __init__(self, delimiter=None, comments='#', autostrip=True,
+                 encoding=None):
         delimiter = _decode_line(delimiter)
         comments = _decode_line(comments)
 
         self.comments = comments
 
         # Delimiter is a character
-        if (delimiter is None) or isinstance(delimiter, basestring):
+        if (delimiter is None) or isinstance(delimiter, str):
             delimiter = delimiter or None
             _handyman = self._delimited_splitter
         # Delimiter is a list of field widths
@@ -273,7 +231,7 @@ class LineSplitter(object):
         return self._handyman(_decode_line(line, self.encoding))
 
 
-class NameValidator(object):
+class NameValidator:
     """
     Object to validate a list of strings to use as field names.
 
@@ -387,7 +345,7 @@ class NameValidator(object):
             if (nbfields is None):
                 return None
             names = []
-        if isinstance(names, basestring):
+        if isinstance(names, str):
             names = [names, ]
         if nbfields is not None:
             nbnames = len(names)
@@ -496,7 +454,7 @@ class ConversionWarning(UserWarning):
     pass
 
 
-class StringConverter(object):
+class StringConverter:
     """
     Factory class for function transforming a string into another object
     (int, float).
@@ -701,7 +659,7 @@ class StringConverter(object):
         if missing_values is None:
             self.missing_values = {''}
         else:
-            if isinstance(missing_values, basestring):
+            if isinstance(missing_values, str):
                 missing_values = missing_values.split(",")
             self.missing_values = set(list(missing_values) + [''])
         #
@@ -876,7 +834,7 @@ class StringConverter(object):
         else:
             if not np.iterable(missing_values):
                 missing_values = [missing_values]
-            if not all(isinstance(v, basestring) for v in missing_values):
+            if not all(isinstance(v, str) for v in missing_values):
                 raise TypeError("missing_values must be strings or unicode")
             self.missing_values.update(missing_values)
 
@@ -926,7 +884,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         nbfields = len(ndtype)
         if names is None:
             names = [''] * len(ndtype)
-        elif isinstance(names, basestring):
+        elif isinstance(names, str):
             names = names.split(",")
         names = validate(names, nbfields=nbfields, defaultfmt=defaultfmt)
         ndtype = np.dtype(dict(formats=ndtype, names=names))
@@ -934,7 +892,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         # Explicit names
         if names is not None:
             validate = NameValidator(**validationargs)
-            if isinstance(names, basestring):
+            if isinstance(names, str):
                 names = names.split(",")
             # Simple dtype: repeat to match the nb of names
             if ndtype.names is None:
@@ -949,9 +907,10 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         elif ndtype.names is not None:
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
-            if ((ndtype.names == tuple("f%i" % i for i in range(len(ndtype.names)))) and
-                    (defaultfmt != "f%i")):
-                ndtype.names = validate([''] * len(ndtype.names), defaultfmt=defaultfmt)
+            numbered_names = tuple("f%i" % i for i in range(len(ndtype.names)))
+            if ((ndtype.names == numbered_names) and (defaultfmt != "f%i")):
+                ndtype.names = validate([''] * len(ndtype.names),
+                                        defaultfmt=defaultfmt)
             # Explicit initial names : just validate
             else:
                 ndtype.names = validate(ndtype.names, defaultfmt=defaultfmt)

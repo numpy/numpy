@@ -1,14 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
-import sys
-
 from numpy.testing import assert_raises, assert_, assert_equal
 from numpy.compat import pickle
 
-if sys.version_info[:2] >= (3, 4):
-    from importlib import reload
-else:
-    from imp import reload
+from importlib import reload
 
 def test_numpy_reloading():
     # gh-7844. Also check that relevant globals retain their identity.

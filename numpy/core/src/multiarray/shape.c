@@ -317,7 +317,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos = 0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
@@ -981,7 +981,7 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 
 /* See shape.h for parameters documentation */
 NPY_NO_EXPORT PyObject *
-build_shape_string(npy_intp n, npy_intp *vals)
+build_shape_string(npy_intp n, npy_intp const *vals)
 {
     npy_intp i;
     PyObject *ret, *tmp;

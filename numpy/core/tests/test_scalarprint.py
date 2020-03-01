@@ -2,17 +2,16 @@
 """ Test printing of scalar types.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import code, sys
+import code
 import platform
 import pytest
+import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, suppress_warnings
+from numpy.testing import assert_, assert_equal
 
-class TestRealScalars(object):
+class TestRealScalars:
     def test_str(self):
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]
@@ -32,12 +31,12 @@ class TestRealScalars(object):
 
     def test_scalar_cutoffs(self):
         # test that both the str and repr of np.float64 behaves
-        # like python floats in python3. Note that in python2
-        # the str has truncated digits, but we do not do this
+        # like python floats in python3.
         def check(v):
-            # we compare str to repr, to avoid python2 truncation behavior
+            assert_equal(str(np.float64(v)), str(v))
             assert_equal(str(np.float64(v)), repr(v))
             assert_equal(repr(np.float64(v)), repr(v))
+            assert_equal(repr(np.float64(v)), str(v))
 
         # check we use the same number of significant digits
         check(1.12345678901234567890)
@@ -84,10 +83,7 @@ class TestRealScalars(object):
             orig_stdout, orig_stderr = sys.stdout, sys.stderr
             sys.stdout, sys.stderr = fo, fe
 
-            # py2 code.interact sends irrelevant internal DeprecationWarnings
-            with suppress_warnings() as sup:
-                sup.filter(DeprecationWarning)
-                code.interact(local={'np': np}, readfunc=input_func, banner='')
+            code.interact(local={'np': np}, readfunc=input_func, banner='')
 
             sys.stdout, sys.stderr = orig_stdout, orig_stderr
 

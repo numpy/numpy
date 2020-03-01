@@ -11,8 +11,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.60 $"[10:-1]
 
 from . import __version__
@@ -21,7 +19,6 @@ f2py_version = __version__.version
 import copy
 import re
 import os
-import sys
 from .crackfortran import markoutercomma
 from . import cb_rules
 
@@ -149,11 +146,7 @@ c2buildvalue_map = {'double': 'd',
                     'complex_float': 'N',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
-                    'string': 'z'}
-
-if sys.version_info[0] >= 3:
-    # Bytes, not Unicode strings
-    c2buildvalue_map['string'] = 'y'
+                    'string': 'y'}
 
 if using_newcore:
     # c2buildvalue_map=???

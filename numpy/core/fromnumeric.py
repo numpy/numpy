@@ -1,14 +1,11 @@
 """Module containing non-deprecated functions borrowed from Numeric.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import types
 import warnings
 
 import numpy as np
-from .. import VisibleDeprecationWarning
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
@@ -303,8 +300,7 @@ def reshape(a, newshape, order='C'):
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
     yield a
-    for c in choices:
-        yield c
+    yield from choices
     yield out
 
 
@@ -1449,7 +1445,8 @@ def squeeze(a, axis=None):
     squeezed : ndarray
         The input array, but with all or a subset of the
         dimensions of length 1 removed. This is always `a` itself
-        or a view into `a`.
+        or a view into `a`. Note that if all axes are squeezed,
+        the result is a 0d array and not a scalar.
 
     Raises
     ------
@@ -1476,6 +1473,15 @@ def squeeze(a, axis=None):
     ValueError: cannot select an axis to squeeze out which has size not equal to one
     >>> np.squeeze(x, axis=2).shape
     (1, 3)
+    >>> x = np.array([[1234]])
+    >>> x.shape
+    (1, 1)
+    >>> np.squeeze(x)
+    array(1234)  # 0d array
+    >>> np.squeeze(x).shape
+    ()
+    >>> np.squeeze(x)[()]
+    1234
 
     """
     try:
@@ -2033,7 +2039,8 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
 
-    Equivalent to but faster than ``np.maximum(a_min, np.minimum(a, a_max))``.
+    Equivalent to but faster than ``np.minimum(a_max, np.maximum(a, a_min))``.
+
     No check is performed to ensure ``a_min < a_max``.
 
     Parameters

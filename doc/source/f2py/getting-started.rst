@@ -29,13 +29,12 @@ either by just in one command or step-by-step, some steps can be
 omitted or combined with others.
 
 Below I'll describe three typical approaches of using F2PY.
-The following `example Fortran 77 code`__ will be used for
-illustration:
+The following example Fortran 77 code will be used for
+illustration, save it as fib1.f:
 
 .. include:: fib1.f
    :literal:
 
-__ fib1.f
 
 The quick way
 ==============
@@ -54,17 +53,23 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   >>> import numpy
   >>> import fib1
-  >>> print fib1.fib.__doc__
-  fib - Function signature:
-    fib(a,[n])
-  Required arguments:
-    a : input rank-1 array('d') with bounds (n)
-  Optional arguments:
-    n := len(a) input int
+  >>> print(fib1.fib.__doc__)
+  fib(a,[n])
 
-  >>> a = numpy.zeros(8,'d')
+  Wrapper for ``fib``.
+
+  Parameters
+  ----------
+  a : input rank-1 array('d') with bounds (n)
+
+  Other Parameters
+  ----------------
+  n : input int, optional
+      Default: len(a)
+
+  >>> a = numpy.zeros(8, 'd')
   >>> fib1.fib(a)
-  >>> print a
+  >>> print(a)
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
 .. note::
@@ -76,22 +81,20 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   * One can use different values for optional ``n``::
 
-      >>> a1 = numpy.zeros(8,'d')
-      >>> fib1.fib(a1,6)
-      >>> print a1
+      >>> a1 = numpy.zeros(8, 'd')
+      >>> fib1.fib(a1, 6)
+      >>> print(a1)
       [ 0.  1.  1.  2.  3.  5.  0.  0.]
 
     but an exception is raised when it is incompatible with the input
     array ``a``::
 
-      >>> fib1.fib(a,10)
-      fib:n=10
+      >>> fib1.fib(a, 10)
       Traceback (most recent call last):
-        File "<stdin>", line 1, in ?
-      fib.error: (len(a)>=n) failed for 1st keyword n
+        File "<stdin>", line 1, in <module>
+      fib.error: (len(a)>=n) failed for 1st keyword n: fib:n=10
       >>>
 
-    This demonstrates one of the useful features in F2PY, that it,
     F2PY implements basic compatibility checks between related
     arguments in order to avoid any unexpected crashes.
 
@@ -105,9 +108,9 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     input array have no effect to the original argument, as
     demonstrated below::
 
-      >>> a = numpy.ones(8,'i')
+      >>> a = numpy.ones(8, 'i')
       >>> fib1.fib(a)
-      >>> print a
+      >>> print(a)
       [1 1 1 1 1 1 1 1]
 
     Clearly, this is not an expected behaviour. The fact that the
@@ -118,15 +121,15 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     the attributes of an input array so that any changes made by
     Fortran routine will be effective also in input argument. For example,
     if one specifies ``intent(inplace) a`` (see below, how), then
-    the example above would read:
+    the example above would read::
 
-      >>> a = numpy.ones(8,'i')
+      >>> a = numpy.ones(8, 'i')
       >>> fib1.fib(a)
-      >>> print a
+      >>> print(a)
       [  0.   1.   1.   2.   3.   5.   8.  13.]
 
     However, the recommended way to get changes made by Fortran
-    subroutine back to python is to use ``intent(out)`` attribute. It
+    subroutine back to Python is to use ``intent(out)`` attribute. It
     is more efficient and a cleaner solution.
 
   * The usage of ``fib1.fib`` in Python is very similar to using
@@ -193,15 +196,20 @@ one.
 In Python::
 
   >>> import fib2
-  >>> print fib2.fib.__doc__
-  fib - Function signature:
-    a = fib(n)
-  Required arguments:
-    n : input int
-  Return objects:
-    a : rank-1 array('d') with bounds (n)
+  >>> print(fib2.fib.__doc__)
+  a = fib(n)
 
-  >>> print fib2.fib(8)
+  Wrapper for ``fib``.
+
+  Parameters
+  ----------
+  n : input int
+
+  Returns
+  -------
+  a : rank-1 array('d') with bounds (n)
+
+  >>> print(fib2.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
 .. note::
@@ -213,8 +221,8 @@ In Python::
     rules out any surprises that we experienced with ``fib1.fib``.
 
   * Note that by default using single ``intent(out)`` also implies
-    ``intent(hide)``. Argument that has ``intent(hide)`` attribute
-    specified, will not be listed in the argument list of a wrapper
+    ``intent(hide)``. Arguments that have the ``intent(hide)`` attribute
+    specified will not be listed in the argument list of a wrapper
     function.
 
 The quick and smart way
@@ -233,13 +241,11 @@ directive defines special comment lines (starting with ``Cf2py``, for
 example) which are ignored by Fortran compilers but F2PY interprets
 them as normal lines.
 
-Here is shown a `modified version of the example Fortran code`__, saved
+Here is shown a modified version of the previous Fortran code, save it
 as ``fib3.f``:
 
 .. include:: fib3.f
    :literal:
-
-__ fib3.f
 
 Building the extension module can be now carried out in one command::
 
@@ -249,13 +255,18 @@ Notice that the resulting wrapper to ``FIB`` is as "smart" as in
 previous case::
 
   >>> import fib3
-  >>> print fib3.fib.__doc__
-  fib - Function signature:
-    a = fib(n)
-  Required arguments:
-    n : input int
-  Return objects:
-    a : rank-1 array('d') with bounds (n)
+  >>> print(fib3.fib.__doc__)
+  a = fib(n)
 
-  >>> print fib3.fib(8)
+  Wrapper for ``fib``.
+
+  Parameters
+  ----------
+  n : input int
+
+  Returns
+  -------
+  a : rank-1 array('d') with bounds (n)
+
+  >>> print(fib3.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]

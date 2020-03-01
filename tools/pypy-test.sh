@@ -6,24 +6,24 @@ set -o pipefail
 # Print expanded commands
 set -x
 
-sudo apt-get -yq update
-sudo apt-get -yq install libatlas-base-dev liblapack-dev gfortran-5
+sudo apt-get -yq install libatlas-base-dev liblapack-dev gfortran-5 python3-urllib3
 F77=gfortran-5 F90=gfortran-5 \
 
 # Download the proper OpenBLAS x64 precompiled library
-target=$(python tools/openblas_support.py)
+target=$(python3 tools/openblas_support.py)
+ls -lR "$target"
 echo getting OpenBLAS into $target
-export LD_LIBRARY_PATH=$target/usr/local/lib
-export LIB=$target/usr/local/lib
-export INCLUDE=$target/usr/local/include
+export LD_LIBRARY_PATH=$target/lib
+export LIB=$target/lib
+export INCLUDE=$target/include
 
 # Use a site.cfg to build with local openblas
 cat << EOF > site.cfg
 [openblas]
 libraries = openblas
-library_dirs = $target/usr/local/lib:$LIB
-include_dirs = $target/usr/local/lib:$LIB
-runtime_library_dirs = $target/usr/local/lib
+library_dirs = $target/lib:$LIB
+include_dirs = $target/lib:$LIB
+runtime_library_dirs = $target/lib
 EOF
 
 echo getting PyPy 3.6 nightly
@@ -35,7 +35,7 @@ pypy3/bin/pypy3 -m pip install --upgrade pip setuptools
 pypy3/bin/pypy3 -m pip install --user -r test_requirements.txt --no-warn-script-location
 
 echo
-echo pypy3 version 
+echo pypy3 version
 pypy3/bin/pypy3 -c "import sys; print(sys.version)"
 echo
 

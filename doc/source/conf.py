@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
-
-import sys, os, re
+import os
+import re
+import sys
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '2.2.0'
@@ -181,6 +181,7 @@ latex_elements = {
 latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
 % header
+\usepackage{xcolor}
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
@@ -238,7 +239,9 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('https://matplotlib.org', None)
+    'matplotlib': ('https://matplotlib.org', None),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
+    'skimage': ('https://scikit-image.org/docs/stable', None)
 }
 
 
@@ -256,7 +259,6 @@ numpydoc_use_plots = True
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
 autosummary_generate = True
 
 # -----------------------------------------------------------------------------
@@ -380,7 +382,6 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 from pygments.lexers import CLexer
-from pygments import token
 import copy
 
 class NumPyLexer(CLexer):

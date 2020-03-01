@@ -55,8 +55,6 @@ See Also
 `numpy.polynomial`
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
@@ -64,7 +62,6 @@ __all__ = [
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
     'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
-import warnings
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
@@ -1484,10 +1481,10 @@ class Polynomial(ABCPolyBase):
     @staticmethod
     def _repr_latex_term(i, arg_str, needs_parens):
         if needs_parens:
-            arg_str = r'\left({}\right)'.format(arg_str)
+            arg_str = rf"\left({arg_str}\right)"
         if i == 0:
             return '1'
         elif i == 1:
             return arg_str
         else:
-            return '{}^{{{}}}'.format(arg_str, i)
+            return f"{arg_str}^{{{i}}}"

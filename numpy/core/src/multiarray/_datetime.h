@@ -1,7 +1,7 @@
 #ifndef _NPY_PRIVATE__DATETIME_H_
 #define _NPY_PRIVATE__DATETIME_H_
 
-extern NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
+extern NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
 
 NPY_NO_EXPORT void
@@ -68,7 +68,7 @@ days_to_month_number(npy_datetime days);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
+parse_datetime_metadata_from_metastr(char const *metastr, Py_ssize_t len,
                                     PyArray_DatetimeMetaData *out_meta);
 
 
@@ -78,7 +78,7 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
  * contain its string length.
  */
 NPY_NO_EXPORT PyArray_Descr *
-parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len);
+parse_dtype_from_datetime_typestr(char const *typestr, Py_ssize_t len);
 
 /*
  * Converts a substring given by 'str' and 'len' into
@@ -88,7 +88,7 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT NPY_DATETIMEUNIT
-parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
+parse_datetime_unit_from_string(char const *str, Py_ssize_t len, char const *metastr);
 
 /*
  * Translate divisors into multiples of smaller units.
@@ -99,7 +99,7 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr);
  */
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
-                                    int den, char *metastr);
+                                    int den, char const *metastr);
 
 /*
  * Determines whether the 'divisor' metadata divides evenly into

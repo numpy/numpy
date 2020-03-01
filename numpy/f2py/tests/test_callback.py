@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import math
 import textwrap
 import sys
@@ -118,7 +116,7 @@ cf2py  intent(out) a
         r = t(self.module.func0._cpointer)
         assert_(r == 11, repr(r))
 
-        class A(object):
+        class A:
 
             def __call__(self):
                 return 7

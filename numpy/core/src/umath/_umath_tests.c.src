@@ -71,7 +71,7 @@ char *inner1d_signature = "(i),(i)->()";
  */
 
 static void
-@TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_inner1d(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_3
     npy_intp di = dimensions[0];
@@ -106,7 +106,7 @@ char *innerwt_signature = "(i),(i),(i)->()";
  */
 
 static void
-@TYPE@_innerwt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_innerwt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_4
     npy_intp di = dimensions[0];
@@ -143,7 +143,7 @@ char *matmul_signature = "(m?,n),(n,p?)->(m?,p?)";
  */
 
 static void
-@TYPE@_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_matrix_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /* no BLAS is available */
     INIT_OUTER_LOOP_3
@@ -212,7 +212,7 @@ char *cross1d_signature = "(3),(3)->(3)";
  *        out[n, 2] = in1[n, 0]*in2[n, 1] - in1[n, 1]*in2[n, 0]
  */
 static void
-@TYPE@_cross1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_cross1d(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_3
     npy_intp is1=steps[0], is2=steps[1], os = steps[2];
@@ -252,7 +252,7 @@ char *euclidean_pdist_signature = "(n,d)->(p)";
  */
 
 static void
-@TYPE@_euclidean_pdist(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_euclidean_pdist(char **args, npy_intp const *dimensions, npy_intp const *steps,
                        void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_2
@@ -308,7 +308,7 @@ char *cumsum_signature = "(i)->(i)";
 */
 
 static void
-@TYPE@_cumsum(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_cumsum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_2
     npy_intp di = dimensions[0];
@@ -586,7 +586,6 @@ static PyMethodDef UMath_TestsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_umath_tests",
@@ -598,31 +597,26 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__umath_tests(void) {
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC init_umath_tests(void) {
-#endif
     PyObject *m;
     PyObject *d;
     PyObject *version;
 
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_umath_tests", UMath_TestsMethods);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     import_array();
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
     import_ufunc();
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     d = PyModule_GetDict(m);
 
@@ -636,8 +630,8 @@ PyMODINIT_FUNC init_umath_tests(void) {
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
-        return RETVAL(NULL);
+        return NULL;
     }
 
-    return RETVAL(m);
+    return m;
 }

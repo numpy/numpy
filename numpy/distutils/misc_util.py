@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import re
 import sys
@@ -34,8 +32,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.distutils.compat import get_exception
-from numpy.compat import basestring
 from numpy.compat import npy_load_module
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
@@ -51,7 +47,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
            'get_num_build_jobs']
 
-class InstallableLib(object):
+class InstallableLib:
     """
     Container to hold information on an installable library.
 
@@ -168,7 +164,6 @@ def get_path_from_frame(frame, parent_path=None):
             # we're probably running setup.py as execfile("setup.py")
             # (likely we're building an egg)
             d = os.path.abspath('.')
-            # hmm, should we use sys.argv[0] like in __builtin__ case?
 
     if parent_path is not None:
         d = rel_path(d, parent_path)
@@ -453,7 +448,7 @@ def _get_f90_modules(source):
     return modules
 
 def is_string(s):
-    return isinstance(s, basestring)
+    return isinstance(s, str)
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """
@@ -728,7 +723,7 @@ def get_frame(level=0):
 
 ######################
 
-class Configuration(object):
+class Configuration:
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules',
@@ -926,18 +921,8 @@ class Configuration(object):
             else:
                 pn = dot_join(*([parent_name] + subpackage_name.split('.')[:-1]))
                 args = (pn,)
-                def fix_args_py2(args):
-                    if setup_module.configuration.__code__.co_argcount > 1:
-                        args = args + (self.top_path,)
-                    return args
-                def fix_args_py3(args):
-                    if setup_module.configuration.__code__.co_argcount > 1:
-                        args = args + (self.top_path,)
-                    return args
-                if sys.version_info[0] < 3:
-                    args = fix_args_py2(args)
-                else:
-                    args = fix_args_py3(args)
+                if setup_module.configuration.__code__.co_argcount > 1:
+                    args = args + (self.top_path,)
                 config = setup_module.configuration(*args)
             if config.name!=dot_join(parent_name, subpackage_name):
                 self.warn('Subpackage %r configuration returned as %r' % \
@@ -1972,9 +1957,8 @@ class Configuration(object):
                 try:
                     version_module = npy_load_module('_'.join(n.split('.')),
                                                      fn, info)
-                except ImportError:
-                    msg = get_exception()
-                    self.warn(str(msg))
+                except ImportError as e:
+                    self.warn(str(e))
                     version_module = None
                 if version_module is None:
                     continue
@@ -2246,10 +2230,7 @@ def get_info(pkgname, dirs=None):
     return info
 
 def is_bootstrapping():
-    if sys.version_info[0] >= 3:
-        import builtins
-    else:
-        import __builtin__ as builtins
+    import builtins
 
     try:
         builtins.__NUMPY_SETUP__
@@ -2345,6 +2326,43 @@ def generate_config_py(target):
                 return g.get(name, g.get(name + "_info", {}))
 
             def show():
+                """
+                Show libraries in the system on which NumPy was built.
+
+                Print information about various resources (libraries, library
+                directories, include directories, etc.) in the system on which
+                NumPy was built.
+
+                See Also
+                --------
+                get_include : Returns the directory containing NumPy C
+                              header files.
+
+                Notes
+                -----
+                Classes specifying the information to be printed are defined
+                in the `numpy.distutils.system_info` module.
+
+                Information may include:
+
+                * ``language``: language used to write the libraries (mostly
+                  C or f77)
+                * ``libraries``: names of libraries found in the system
+                * ``library_dirs``: directories containing the libraries
+                * ``include_dirs``: directories containing library header files
+                * ``src_dirs``: directories containing library source files
+                * ``define_macros``: preprocessor macros used by
+                  ``distutils.setup``
+
+                Examples
+                --------
+                >>> np.show_config()
+                blas_opt_info:
+                    language = c
+                    define_macros = [('HAVE_CBLAS', None)]
+                    libraries = ['openblas', 'openblas']
+                    library_dirs = ['/usr/local/lib']
+                """
                 for name,info_dict in globals().items():
                     if name[0] == "_" or type(info_dict) is not type({}): continue
                     print(name + ":")

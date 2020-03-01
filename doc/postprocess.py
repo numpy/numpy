@@ -6,9 +6,6 @@ Post-processes HTML and Latex files output by Sphinx.
 MODE is either 'html' or 'tex'.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import re
 import optparse
 import io
 
@@ -25,18 +22,14 @@ def main():
         p.error('unknown mode %s' % mode)
 
     for fn in args:
-        f = io.open(fn, 'r', encoding="utf-8")
-        try:
+        with io.open(fn, 'r', encoding="utf-8") as f:
             if mode == 'html':
                 lines = process_html(fn, f.readlines())
             elif mode == 'tex':
                 lines = process_tex(f.readlines())
-        finally:
-            f.close()
 
-        f = io.open(fn, 'w', encoding="utf-8")
-        f.write("".join(lines))
-        f.close()
+        with io.open(fn, 'w', encoding="utf-8") as f:
+            f.write("".join(lines))
 
 def process_html(fn, lines):
     return lines

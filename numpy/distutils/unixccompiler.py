@@ -2,20 +2,13 @@
 unixccompiler - can handle very long argument lists for ar.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 
-from distutils.errors import DistutilsExecError, CompileError
-from distutils.unixccompiler import *
+from distutils.errors import CompileError, DistutilsExecError, LibError
+from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.ccompiler import replace_method
-from numpy.distutils.compat import get_exception
 from numpy.distutils.misc_util import _commandline_dep_string
-
-if sys.version_info[0] < 3:
-    from . import log
-else:
-    from numpy.distutils import log
+from numpy.distutils import log
 
 # Note that UnixCCompiler._compile appeared in Python 2.3
 def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
@@ -56,8 +49,8 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     try:
         self.spawn(self.compiler_so + cc_args + [src, '-o', obj] + deps +
                    extra_postargs, display = display)
-    except DistutilsExecError:
-        msg = str(get_exception())
+    except DistutilsExecError as e:
+        msg = str(e)
         raise CompileError(msg)
 
     # add commandline flags to dependency file
@@ -128,8 +121,8 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             try:
                 self.spawn(self.ranlib + [output_filename],
                            display = display)
-            except DistutilsExecError:
-                msg = str(get_exception())
+            except DistutilsExecError as e:
+                msg = str(e)
                 raise LibError(msg)
     else:
         log.debug("skipping %s (up-to-date)", output_filename)

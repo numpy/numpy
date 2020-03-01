@@ -276,7 +276,7 @@ A total of 531 pull requests were merged for this release.
 * `#12696 <https://github.com/numpy/numpy/pull/12696>`__: BUG: Fix leak of void scalar buffer info
 * `#12698 <https://github.com/numpy/numpy/pull/12698>`__: DOC: improve comments in copycast_isaligned
 * `#12700 <https://github.com/numpy/numpy/pull/12700>`__: ENH: chain additional exception on ufunc method lookup error
-* `#12702 <https://github.com/numpy/numpy/pull/12702>`__: TST: Check FFT results for C/Fortran ordered and non contigous...
+* `#12702 <https://github.com/numpy/numpy/pull/12702>`__: TST: Check FFT results for C/Fortran ordered and non contiguous...
 * `#12704 <https://github.com/numpy/numpy/pull/12704>`__: TST: pin Azure brew version for stability
 * `#12709 <https://github.com/numpy/numpy/pull/12709>`__: TST: add ppc64le to Travis CI matrix
 * `#12713 <https://github.com/numpy/numpy/pull/12713>`__: BUG: loosen kwargs requirements in ediff1d
@@ -536,7 +536,7 @@ A total of 531 pull requests were merged for this release.
 * `#13503 <https://github.com/numpy/numpy/pull/13503>`__: ENH: Support object arrays in matmul
 * `#13504 <https://github.com/numpy/numpy/pull/13504>`__: DOC: Update links in PULL_REQUEST_TEMPLATE.md
 * `#13506 <https://github.com/numpy/numpy/pull/13506>`__: ENH: Add sparse option to np.core.numeric.indices
-* `#13507 <https://github.com/numpy/numpy/pull/13507>`__: BUG: np.array cleared errors occured in PyMemoryView_FromObject
+* `#13507 <https://github.com/numpy/numpy/pull/13507>`__: BUG: np.array cleared errors occurred in PyMemoryView_FromObject
 * `#13508 <https://github.com/numpy/numpy/pull/13508>`__: BUG: Removes ValueError for empty kwargs in arraymultiter_new
 * `#13518 <https://github.com/numpy/numpy/pull/13518>`__: MAINT: implement assert_array_compare without converting array...
 * `#13520 <https://github.com/numpy/numpy/pull/13520>`__: BUG: exp, log AVX loops do not use steps
@@ -643,7 +643,7 @@ A total of 531 pull requests were merged for this release.
 * `#13815 <https://github.com/numpy/numpy/pull/13815>`__: MAINT: Correct intrinsic use on Windows
 * `#13818 <https://github.com/numpy/numpy/pull/13818>`__: TST: Add tests for ComplexWarning in astype
 * `#13819 <https://github.com/numpy/numpy/pull/13819>`__: DOC: Fix documented default value of ``__array_priority__`` for...
-* `#13820 <https://github.com/numpy/numpy/pull/13820>`__: MAINT, DOC: Fix misspelled words in documetation.
+* `#13820 <https://github.com/numpy/numpy/pull/13820>`__: MAINT, DOC: Fix misspelled words in documentation.
 * `#13821 <https://github.com/numpy/numpy/pull/13821>`__: MAINT: core: Fix a compiler warning.
 * `#13830 <https://github.com/numpy/numpy/pull/13830>`__: MAINT: Update tox for supported Python versions
 * `#13832 <https://github.com/numpy/numpy/pull/13832>`__: MAINT: remove pcg32 BitGenerator
@@ -656,7 +656,7 @@ A total of 531 pull requests were merged for this release.
 * `#13849 <https://github.com/numpy/numpy/pull/13849>`__: DOC: np.random documentation cleanup and expansion.
 * `#13850 <https://github.com/numpy/numpy/pull/13850>`__: DOC: Update performance numbers
 * `#13851 <https://github.com/numpy/numpy/pull/13851>`__: MAINT: Update shippable.yml to remove Python 2 dependency
-* `#13855 <https://github.com/numpy/numpy/pull/13855>`__: BUG: Fix memory leak in dtype from dict contructor
+* `#13855 <https://github.com/numpy/numpy/pull/13855>`__: BUG: Fix memory leak in dtype from dict constructor
 * `#13856 <https://github.com/numpy/numpy/pull/13856>`__: MAINT: move location of bitgen.h
 * `#13858 <https://github.com/numpy/numpy/pull/13858>`__: BUG: do not force emulation of 128-bit arithmetic.
 * `#13859 <https://github.com/numpy/numpy/pull/13859>`__: DOC: Update performance numbers for PCG64

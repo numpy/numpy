@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import platform
 import pytest
@@ -8,7 +6,7 @@ import numpy as np
 # import the c-extension module directly since _arg is not exported via umath
 import numpy.core._multiarray_umath as ncu
 from numpy.testing import (
-    assert_raises, assert_equal, assert_array_equal, assert_almost_equal
+    assert_raises, assert_equal, assert_array_equal, assert_almost_equal, assert_array_max_ulp
     )
 
 # TODO: branch cuts (use Pauli code)
@@ -31,7 +29,7 @@ platform_skip = pytest.mark.skipif(xfail_complex_tests,
 
 
 
-class TestCexp(object):
+class TestCexp:
     def test_simple(self):
         check = check_complex_value
         f = np.exp
@@ -131,7 +129,7 @@ class TestCexp(object):
 
         check(f, np.nan, 0, np.nan, 0)
 
-class TestClog(object):
+class TestClog:
     def test_simple(self):
         x = np.array([1+0j, 1+2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
@@ -276,7 +274,7 @@ class TestClog(object):
                 assert_almost_equal(np.log(xa[i].conj()), ya[i].conj())
 
 
-class TestCsqrt(object):
+class TestCsqrt:
 
     def test_simple(self):
         # sqrt(1)
@@ -356,7 +354,7 @@ class TestCsqrt(object):
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
 
-class TestCpow(object):
+class TestCpow:
     def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
@@ -396,7 +394,7 @@ class TestCpow(object):
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
-class TestCabs(object):
+class TestCabs:
     def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
@@ -458,7 +456,7 @@ class TestCabs(object):
             ref = g(x[i], y[i])
             check_real_value(f, x[i], y[i], ref)
 
-class TestCarg(object):
+class TestCarg:
     def test_simple(self):
         check_real_value(ncu._arg, 1, 0, 0, False)
         check_real_value(ncu._arg, 0, 1, 0.5*np.pi, False)
@@ -542,3 +540,40 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
             assert_equal(f(z1), z2)
         else:
             assert_almost_equal(f(z1), z2)
+
+class TestSpecialComplexAVX(object):
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
+    def test_array(self, stride, astype):
+        arr = np.array([np.complex(np.nan , np.nan),
+                        np.complex(np.nan , np.inf),
+                        np.complex(np.inf , np.nan),
+                        np.complex(np.inf , np.inf),
+                        np.complex(0.     , np.inf),
+                        np.complex(np.inf , 0.),
+                        np.complex(0.     , 0.),
+                        np.complex(0.     , np.nan),
+                        np.complex(np.nan , 0.)], dtype=astype)
+        abs_true = np.array([np.nan, np.inf, np.inf, np.inf, np.inf, np.inf, 0., np.nan, np.nan], dtype=arr.real.dtype)
+        sq_true = np.array([np.complex(np.nan,  np.nan),
+                            np.complex(np.nan,  np.nan),
+                            np.complex(np.nan,  np.nan),
+                            np.complex(np.nan,  np.inf),
+                            np.complex(-np.inf, np.nan),
+                            np.complex(np.inf,  np.nan),
+                            np.complex(0.,     0.),
+                            np.complex(np.nan, np.nan),
+                            np.complex(np.nan, np.nan)], dtype=astype)
+        assert_equal(np.abs(arr[::stride]), abs_true[::stride])
+        with np.errstate(invalid='ignore'):
+            assert_equal(np.square(arr[::stride]), sq_true[::stride])
+
+class TestComplexAbsoluteAVX(object):
+    @pytest.mark.parametrize("arraysize", [1,2,3,4,5,6,7,8,9,10,11,13,15,17,18,19])
+    @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
+    @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
+    # test to ensure masking and strides work as intended in the AVX implementation
+    def test_array(self, arraysize, stride, astype):
+        arr = np.ones(arraysize, dtype=astype)
+        abs_true = np.ones(arraysize, dtype=arr.real.dtype)
+        assert_equal(np.abs(arr[::stride]), abs_true[::stride])

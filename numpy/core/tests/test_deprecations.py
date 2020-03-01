@@ -3,14 +3,10 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import datetime
-import sys
 import operator
 import warnings
 import pytest
-import shutil
 import tempfile
 
 import numpy as np
@@ -27,7 +23,7 @@ except ImportError:
     _has_pytz = False
 
 
-class _DeprecationTestCase(object):
+class _DeprecationTestCase:
     # Just as warning: warnings uses re.match, so the start of this message
     # must match.
     message = ''
@@ -137,7 +133,7 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.VisibleDeprecationWarning
 
 
-class TestNonTupleNDIndexDeprecation(object):
+class TestNonTupleNDIndexDeprecation:
     def test_basic(self):
         a = np.zeros((5, 5))
         with warnings.catch_warnings():
@@ -189,7 +185,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         assert_warns(FutureWarning, lambda: a == [])
 
     def test_void_dtype_equality_failures(self):
-        class NotArray(object):
+        class NotArray:
             def __array__(self):
                 raise TypeError
 
@@ -229,15 +225,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             struct = np.zeros(2, dtype="i4,i4")
             for arg2 in [struct, "a"]:
                 for f in [operator.lt, operator.le, operator.gt, operator.ge]:
-                    if sys.version_info[0] >= 3:
-                        # py3
-                        with warnings.catch_warnings() as l:
-                            warnings.filterwarnings("always")
-                            assert_raises(TypeError, f, arg1, arg2)
-                            assert_(not l)
-                    else:
-                        # py2
-                        assert_warns(DeprecationWarning, f, arg1, arg2)
+                    with warnings.catch_warnings() as l:
+                        warnings.filterwarnings("always")
+                        assert_raises(TypeError, f, arg1, arg2)
+                        assert_(not l)
 
 
 class TestDatetime64Timezone(_DeprecationTestCase):
@@ -334,15 +325,12 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
             'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
             'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
             ]
-        if sys.version_info[0] < 3:
-            deprecated_types.extend(['Unicode0', 'String0'])
-
         for dt in deprecated_types:
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
 
 
-class TestTestDeprecated(object):
+class TestTestDeprecated:
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
         test_case_instance.setup()
@@ -355,28 +343,6 @@ class TestTestDeprecated(object):
 
         test_case_instance.assert_deprecated(foo)
         test_case_instance.teardown()
-
-
-class TestClassicIntDivision(_DeprecationTestCase):
-    """
-    See #7949. Deprecate the numeric-style dtypes with -3 flag in python 2
-    if used for division
-    List of data types: https://docs.scipy.org/doc/numpy/user/basics.types.html
-    """
-    def test_int_dtypes(self):
-        #scramble types and do some mix and match testing
-        deprecated_types = [
-           'bool_', 'int_', 'intc', 'uint8', 'int8', 'uint64', 'int32', 'uint16',
-           'intp', 'int64', 'uint32', 'int16'
-            ]
-        if sys.version_info[0] < 3 and sys.py3kwarning:
-            import operator as op
-            dt2 = 'bool_'
-            for dt1 in deprecated_types:
-                a = np.array([1,2,3], dtype=dt1)
-                b = np.array([1,2,3], dtype=dt2)
-                self.assert_deprecated(op.div, args=(a,b))
-                dt2 = dt1
 
 
 class TestNonNumericConjugate(_DeprecationTestCase):
@@ -568,3 +534,16 @@ class TestNonZero(_DeprecationTestCase):
     def test_zerod(self):
         self.assert_deprecated(lambda: np.nonzero(np.array(0)))
         self.assert_deprecated(lambda: np.nonzero(np.array(1)))
+
+
+def test_deprecate_ragged_arrays():
+    # 2019-11-29 1.19.0
+    #
+    # NEP 34 deprecated automatic object dtype when creating ragged
+    # arrays. Also see the "ragged" tests in `test_multiarray`
+    #
+    # emits a VisibleDeprecationWarning
+    arg = [1, [2, 3]]
+    with assert_warns(np.VisibleDeprecationWarning):
+        np.array(arg)
+

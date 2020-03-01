@@ -77,7 +77,7 @@ Functions
         signature:
 
         .. c:function:: void loopfunc(
-                char** args, npy_intp* dimensions, npy_intp* steps, void* data)
+                char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
 
             *args*
 
@@ -108,8 +108,10 @@ Functions
             .. code-block:: c
 
                 static void
-                double_add(char **args, npy_intp *dimensions, npy_intp *steps,
-                   void *extra)
+                double_add(char **args,
+                           npy_intp const *dimensions,
+                           npy_intp const *steps,
+                           void *extra)
                 {
                     npy_intp i;
                     npy_intp is1 = steps[0], is2 = steps[1];
@@ -253,15 +255,16 @@ Functions
 .. c:function:: int PyUFunc_GenericFunction( \
         PyUFuncObject* self, PyObject* args, PyObject* kwds, PyArrayObject** mps)
 
-    A generic ufunc call. The ufunc is passed in as *self*, the arguments
-    to the ufunc as *args* and *kwds*. The *mps* argument is an array of
-    :c:type:`PyArrayObject` pointers whose values are discarded and which
-    receive the converted input arguments as well as the ufunc outputs
-    when success is returned. The user is responsible for managing this
-    array and receives a new reference for each array in *mps*. The total
-    number of arrays in *mps* is given by *self* ->nin + *self* ->nout.
+    .. deprecated:: NumPy 1.19
 
-    Returns 0 on success, -1 on error.
+        Unless NumPy is made aware of an issue with this, this function
+        is scheduled for rapid removal without replacement.
+
+    Instead of this function ``PyObject_Call(ufunc, args, kwds)`` should be
+    used. The above function differs from this because it ignores support
+    for non-array, or array subclasses as inputs.
+    To ensure identical behaviour, it may be necessary to convert all inputs
+    using ``PyArray_FromAny(obj, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL)``.
 
 .. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
 
@@ -311,37 +314,37 @@ functions stored in the functions member of the PyUFuncObject
 structure.
 
 .. c:function:: void PyUFunc_f_f_As_d_d( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_d_d( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_f_f( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_g_g( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_F_F_As_D_D( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_F_F( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_D_D( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_G_G( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_e_e( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_e_e_As_f_f( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_e_e_As_d_d( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
     Type specific, core 1-d functions for ufuncs where each
     calculation is obtained by calling a function taking one input
@@ -357,37 +360,37 @@ structure.
     C-function that takes double and returns double.
 
 .. c:function:: void PyUFunc_ff_f_As_dd_d( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_ff_f( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_dd_d( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_gg_g( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_FF_F_As_DD_D( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_DD_D( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_FF_F( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_GG_G( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_ee_e( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_ee_e_As_ff_f( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_ee_e_As_dd_d( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
     Type specific, core 1-d functions for ufuncs where each
     calculation is obtained by calling a function taking two input
@@ -400,10 +403,10 @@ structure.
     to use the underlying function that takes a different data type.
 
 .. c:function:: void PyUFunc_O_O( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
 .. c:function:: void PyUFunc_OO_O( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
     One-input, one-output, and two-input, one-output core 1-d functions
     for the :c:data:`NPY_OBJECT` data type. These functions handle reference
@@ -413,7 +416,7 @@ structure.
     PyObject *)`` for :c:func:`PyUFunc_OO_O`.
 
 .. c:function:: void PyUFunc_O_O_method( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
     This general purpose 1-d core function assumes that *func* is a string
     representing a method of the input object. For each
@@ -421,7 +424,7 @@ structure.
     and its *func* method is called returning the result to the output array.
 
 .. c:function:: void PyUFunc_OO_O_method( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
     This general purpose 1-d core function assumes that *func* is a
     string representing a method of the input object that takes one
@@ -431,7 +434,7 @@ structure.
     of *args*.
 
 .. c:function:: void PyUFunc_On_Om( \
-        char** args, npy_intp* dimensions, npy_intp* steps, void* func)
+        char** args, npy_intp const *dimensions, npy_intp const *steps, void* func)
 
     This is the 1-d core function used by the dynamic ufuncs created
     by umath.frompyfunc(function, nin, nout). In this case *func* is a

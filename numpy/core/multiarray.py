@@ -7,15 +7,15 @@ by importing from the extension module.
 """
 
 import functools
-import sys
 import warnings
-import sys
 
 from . import overrides
 from . import _multiarray_umath
-import numpy as np
-from numpy.core._multiarray_umath import *
-from numpy.core._multiarray_umath import (
+from ._multiarray_umath import *  # noqa: F403
+# These imports are needed for backward compatibility,
+# do not change them. issue gh-15518
+# _get_ndarray_c_version is semi-public, on purpose not added to __all__
+from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
     _ARRAY_API, _monotonicity, _get_ndarray_c_version
     )
@@ -33,7 +33,7 @@ __all__ = [
     'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
-    'int_asbuffer', 'interp', 'interp_complex', 'is_busday', 'lexsort',
+    'interp', 'interp_complex', 'is_busday', 'lexsort',
     'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
     'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
@@ -41,8 +41,6 @@ __all__ = [
     'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
-if sys.version_info.major < 3:
-    __all__ += ['newbuffer', 'getbuffer']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -911,8 +909,9 @@ def bincount(x, weights=None, minlength=None):
 
     >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: array cannot be safely cast to required type
+      ...
+    TypeError: Cannot cast array data from dtype('float64') to dtype('int64')
+    according to the rule 'safe'
 
     A possible use of ``bincount`` is to perform sums over
     variable-size chunks of an array, using the ``weights`` keyword.

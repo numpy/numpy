@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import numpy as np
@@ -19,7 +17,7 @@ zip_descr = np.lib.recfunctions._zip_descr
 zip_dtype = np.lib.recfunctions._zip_dtype
 
 
-class TestRecFunctions(object):
+class TestRecFunctions:
     # Misc tests
 
     def setup(self):
@@ -348,7 +346,7 @@ class TestRecFunctions(object):
         assert_equal(b[()], 3)
 
 
-class TestRecursiveFillFields(object):
+class TestRecursiveFillFields:
     # Test recursive_fill_fields.
     def test_simple_flexible(self):
         # Test recursive_fill_fields on flexible-array
@@ -371,7 +369,7 @@ class TestRecursiveFillFields(object):
         assert_equal(test, control)
 
 
-class TestMergeArrays(object):
+class TestMergeArrays:
     # Test merge_arrays
 
     def setup(self):
@@ -504,7 +502,7 @@ class TestMergeArrays(object):
         assert_equal(test, control)
 
 
-class TestAppendFields(object):
+class TestAppendFields:
     # Test append_fields
 
     def setup(self):
@@ -558,7 +556,7 @@ class TestAppendFields(object):
         assert_equal(test, control)
 
 
-class TestStackArrays(object):
+class TestStackArrays:
     # Test stack_arrays
     def setup(self):
         x = np.array([1, 2, ])
@@ -729,7 +727,7 @@ class TestStackArrays(object):
         assert_equal(res.mask, expected.mask)
 
 
-class TestJoinBy(object):
+class TestJoinBy:
     def setup(self):
         self.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
                                    np.arange(100, 110))),
@@ -772,7 +770,6 @@ class TestJoinBy(object):
 
     def test_join_subdtype(self):
         # tests the bug in https://stackoverflow.com/q/44769632/102441
-        from numpy.lib import recfunctions as rfn
         foo = np.array([(1,)],
                        dtype=[('key', int)])
         bar = np.array([(1, np.array([1,2,3]))],
@@ -895,7 +892,7 @@ class TestJoinBy(object):
         assert_equal(res.dtype, expected_dtype)
 
 
-class TestJoinBy2(object):
+class TestJoinBy2:
     @classmethod
     def setup(cls):
         cls.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
@@ -960,7 +957,7 @@ class TestJoinBy2(object):
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
-class TestAppendFieldsObj(object):
+class TestAppendFieldsObj:
     """
     Test append_fields with arrays containing objects
     """

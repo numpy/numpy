@@ -13,8 +13,6 @@ When adding a function, make sure to use the next integer not used as an index
 exception, so it should hopefully not get unnoticed).
 
 """
-from __future__ import division, absolute_import, print_function
-
 from code_generators.genapi import StealRef, NonNull
 
 # index, type

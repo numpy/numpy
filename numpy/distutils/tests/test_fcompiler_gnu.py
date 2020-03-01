@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from numpy.testing import assert_
 
 import numpy.distutils.fcompiler
@@ -30,7 +28,7 @@ gfortran_version_strings = [
     ('GNU Fortran (crosstool-NG 8a21ab48) 7.2.0', '7.2.0')
 ]
 
-class TestG77Versions(object):
+class TestG77Versions:
     def test_g77_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu')
         for vs, version in g77_version_strings:
@@ -43,7 +41,7 @@ class TestG77Versions(object):
             v = fc.version_match(vs)
             assert_(v is None, (vs, v))
 
-class TestGFortranVersions(object):
+class TestGFortranVersions:
     def test_gfortran_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
         for vs, version in gfortran_version_strings:

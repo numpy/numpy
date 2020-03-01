@@ -7,7 +7,7 @@ cf2py y = func(y)
 c
 cf2py intent(in,out,copy) x
       integer n,i
-      real*8 x(n)
+      real*8 x(n), func
       do i=1,n
          x(i) = func(x(i))
       end do

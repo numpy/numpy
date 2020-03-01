@@ -1012,7 +1012,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
 
         /* This steals the datetime_dtype reference */
         dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
-                                                0, 0, 0, dates_in);
+                                                0, 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }
@@ -1021,7 +1021,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     /* Make 'offsets' into an array */
     offsets = (PyArrayObject *)PyArray_FromAny(offsets_in,
                             PyArray_DescrFromType(NPY_INT64),
-                            0, 0, 0, offsets_in);
+                            0, 0, 0, NULL);
     if (offsets == NULL) {
         goto fail;
     }
@@ -1142,7 +1142,7 @@ array_busday_count(PyObject *NPY_UNUSED(self),
         /* This steals the datetime_dtype reference */
         dates_begin = (PyArrayObject *)PyArray_FromAny(dates_begin_in,
                                                 datetime_dtype,
-                                                0, 0, 0, dates_begin_in);
+                                                0, 0, 0, NULL);
         if (dates_begin == NULL) {
             goto fail;
         }
@@ -1165,7 +1165,7 @@ array_busday_count(PyObject *NPY_UNUSED(self),
         /* This steals the datetime_dtype reference */
         dates_end = (PyArrayObject *)PyArray_FromAny(dates_end_in,
                                                 datetime_dtype,
-                                                0, 0, 0, dates_end_in);
+                                                0, 0, 0, NULL);
         if (dates_end == NULL) {
             goto fail;
         }
@@ -1286,7 +1286,7 @@ array_is_busday(PyObject *NPY_UNUSED(self),
         /* This steals the datetime_dtype reference */
         dates = (PyArrayObject *)PyArray_FromAny(dates_in,
                                                 datetime_dtype,
-                                                0, 0, 0, dates_in);
+                                                0, 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }

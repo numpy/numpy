@@ -1,12 +1,9 @@
-from __future__ import division, absolute_import, print_function
-
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
     ndarray, sqrt, nextafter, stack
     )
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
-    suppress_warnings
     )
 
 
@@ -42,7 +39,7 @@ class PhysicalQuantity2(ndarray):
     __array_priority__ = 10
 
 
-class TestLogspace(object):
+class TestLogspace:
 
     def test_basic(self):
         y = logspace(0, 6)
@@ -92,7 +89,7 @@ class TestLogspace(object):
         assert_equal(ls, logspace(1.0, 7.0, 1))
 
 
-class TestGeomspace(object):
+class TestGeomspace:
 
     def test_basic(self):
         y = geomspace(1, 1e6)
@@ -222,7 +219,7 @@ class TestGeomspace(object):
         assert_raises(ValueError, geomspace, 0, 0)
 
 
-class TestLinspace(object):
+class TestLinspace:
 
     def test_basic(self):
         y = linspace(0, 10)
@@ -309,7 +306,7 @@ class TestLinspace(object):
         # Ensure that start/stop can be objects that implement
         # __array_interface__ and are convertible to numeric scalars
 
-        class Arrayish(object):
+        class Arrayish:
             """
             A generic object that supports the __array_interface__ and hence
             can in principle be converted to a numeric scalar, but is not

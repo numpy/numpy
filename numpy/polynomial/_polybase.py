@@ -6,8 +6,6 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import abc
 import numbers
 
@@ -279,18 +277,16 @@ class ABCPolyBase(abc.ABC):
             self.window = window
 
     def __repr__(self):
-        format = "%s(%s, domain=%s, window=%s)"
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
         window = repr(self.window)[6:-1]
         name = self.__class__.__name__
-        return format % (name, coef, domain, window)
+        return f"{name}({coef}, domain={domain}, window={window})"
 
     def __str__(self):
-        format = "%s(%s)"
         coef = str(self.coef)
         name = self.nickname
-        return format % (name, coef)
+        return f"{name}({coef})"
 
     @classmethod
     def _repr_latex_term(cls, i, arg_str, needs_parens):
@@ -299,9 +295,7 @@ class ABCPolyBase(abc.ABC):
                 "Subclasses must define either a basis name, or override "
                 "_repr_latex_term(i, arg_str, needs_parens)")
         # since we always add parens, we don't care if the expression needs them
-        return "{{{basis}}}_{{{i}}}({arg_str})".format(
-            basis=cls.basis_name, i=i, arg_str=arg_str
-        )
+        return f"{{{cls.basis_name}}}_{{{i}}}({arg_str})"
 
     @staticmethod
     def _repr_latex_scalar(x):
@@ -316,19 +310,15 @@ class ABCPolyBase(abc.ABC):
             term = 'x'
             needs_parens = False
         elif scale == 1:
-            term = '{} + x'.format(
-                self._repr_latex_scalar(off)
-            )
+            term = f"{self._repr_latex_scalar(off)} + x"
             needs_parens = True
         elif off == 0:
-            term = '{}x'.format(
-                self._repr_latex_scalar(scale)
-            )
+            term = f"{self._repr_latex_scalar(scale)}x"
             needs_parens = True
         else:
-            term = '{} + {}x'.format(
-                self._repr_latex_scalar(off),
-                self._repr_latex_scalar(scale)
+            term = (
+                f"{self._repr_latex_scalar(off)} + "
+                f"{self._repr_latex_scalar(scale)}x"
             )
             needs_parens = True
 
@@ -338,20 +328,20 @@ class ABCPolyBase(abc.ABC):
         for i, c in enumerate(self.coef):
             # prevent duplication of + and - signs
             if i == 0:
-                coef_str = '{}'.format(self._repr_latex_scalar(c))
+                coef_str = f"{self._repr_latex_scalar(c)}"
             elif not isinstance(c, numbers.Real):
-                coef_str = ' + ({})'.format(self._repr_latex_scalar(c))
+                coef_str = f" + ({self._repr_latex_scalar(c)})"
             elif not np.signbit(c):
-                coef_str = ' + {}'.format(self._repr_latex_scalar(c))
+                coef_str = f" + {self._repr_latex_scalar(c)}"
             else:
-                coef_str = ' - {}'.format(self._repr_latex_scalar(-c))
+                coef_str = f" - {self._repr_latex_scalar(-c)}"
 
             # produce the string for the term
             term_str = self._repr_latex_term(i, term, needs_parens)
             if term_str == '1':
                 part = coef_str
             else:
-                part = r'{}\,{}'.format(coef_str, term_str)
+                part = rf"{coef_str}\,{term_str}"
 
             if c == 0:
                 part = mute(part)
@@ -364,7 +354,7 @@ class ABCPolyBase(abc.ABC):
             # in case somehow there are no coefficients at all
             body = '0'
 
-        return r'$x \mapsto {}$'.format(body)
+        return rf"$x \mapsto {body}$"
 
 
 
@@ -425,17 +415,15 @@ class ABCPolyBase(abc.ABC):
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
-    def __div__(self, other):
-        # this can be removed when python 2 support is dropped.
-        return self.__floordiv__(other)
-
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
         # could return the first n elements of an infinite series.
         # It is hard to see where n would come from, though.
         if not isinstance(other, numbers.Number) or isinstance(other, bool):
-            form = "unsupported types for true division: '%s', '%s'"
-            raise TypeError(form % (type(self), type(other)))
+            raise TypeError(
+                f"unsupported types for true division: "
+                f"'{type(self)}', '{type(other)}'"
+            )
         return self.__floordiv__(other)
 
     def __floordiv__(self, other):

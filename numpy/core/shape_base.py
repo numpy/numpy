@@ -1,9 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
            'stack', 'vstack']
 
 import functools
+import itertools
 import operator
 import warnings
 
@@ -532,14 +531,7 @@ def _atleast_nd(a, ndim):
 
 
 def _accumulate(values):
-    # Helper function because Python 2.7 doesn't have
-    # itertools.accumulate
-    value = 0
-    accumulated = []
-    for v in values:
-        value += v
-        accumulated.append(value)
-    return accumulated
+    return list(itertools.accumulate(values))
 
 
 def _concatenate_shapes(shapes, axis):
@@ -678,8 +670,7 @@ def _block_dispatcher(arrays):
     # tuple. Also, we know that list.__array_function__ will never exist.
     if type(arrays) is list:
         for subarrays in arrays:
-            for subarray in _block_dispatcher(subarrays):
-                yield subarray
+            yield from _block_dispatcher(subarrays)
     else:
         yield arrays
 

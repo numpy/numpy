@@ -7,8 +7,6 @@ an array object, and when iterated it will return sub-arrays with at most
 a user-specified number of elements.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from operator import mul
 from functools import reduce
 
@@ -17,7 +15,7 @@ from numpy.compat import long
 __all__ = ['Arrayterator']
 
 
-class Arrayterator(object):
+class Arrayterator:
     """
     Buffered iterator for big arrays.
 
@@ -163,8 +161,7 @@ class Arrayterator(object):
 
         """
         for block in self:
-            for value in block.flat:
-                yield value
+            yield from block.flat
 
     @property
     def shape(self):

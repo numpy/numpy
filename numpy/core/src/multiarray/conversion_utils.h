@@ -37,7 +37,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
 NPY_NO_EXPORT PyObject *
-PyArray_IntTupleFromIntp(int len, npy_intp *vals);
+PyArray_IntTupleFromIntp(int len, npy_intp const *vals);
 
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);

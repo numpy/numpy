@@ -1,14 +1,26 @@
 >>> import callback
->>> print callback.foo.__doc__
-foo - Function signature:
-  r = foo(fun,[fun_extra_args])
-Required arguments:
-  fun : call-back function
-Optional arguments:
-  fun_extra_args := () input tuple
-Return objects:
-  r : float
-Call-back functions:
+>>> print(callback.foo.__doc__)
+r = foo(fun,[fun_extra_args])
+
+Wrapper for ``foo``.
+
+Parameters
+----------
+fun : call-back function
+
+Other Parameters
+----------------
+fun_extra_args : input tuple, optional
+    Default: ()
+
+Returns
+-------
+r : float
+
+Notes
+-----
+Call-back functions::
+
   def fun(i): return r
   Required arguments:
     i : input int
@@ -17,7 +29,7 @@ Call-back functions:
 
 >>> def f(i): return i*i
 ... 
->>> print callback.foo(f)     
+>>> print(callback.foo(f))
 110.0
->>> print callback.foo(lambda i:1)
+>>> print(callback.foo(lambda i:1))
 11.0

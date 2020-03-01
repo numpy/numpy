@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import re
 import os
 import sys
@@ -12,8 +10,6 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.compat import get_exception
-from numpy.distutils.system_info import system_info
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -415,8 +411,7 @@ class Gnu95FCompiler(GnuFCompiler):
                         break
                     h.update(block)
         text = base64.b32encode(h.digest())
-        if sys.version_info[0] >= 3:
-            text = text.decode('ascii')
+        text = text.decode('ascii')
         return text.rstrip('=')
 
     def _link_wrapper_lib(self, objects, output_dir, extra_dll_dir,
@@ -560,5 +555,5 @@ if __name__ == '__main__':
     print(customized_fcompiler('gnu').get_version())
     try:
         print(customized_fcompiler('g95').get_version())
-    except Exception:
-        print(get_exception())
+    except Exception as e:
+        print(e)

@@ -1,7 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
-import sys
 import numpy as np
 from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
@@ -16,7 +13,7 @@ from numpy.testing import (
 
 from numpy.compat import long
 
-class TestAtleast1d(object):
+class TestAtleast1d:
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -57,7 +54,7 @@ class TestAtleast1d(object):
         assert_(atleast_1d([[2, 3], [4, 5]]).shape == (2, 2))
 
 
-class TestAtleast2d(object):
+class TestAtleast2d:
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -96,7 +93,7 @@ class TestAtleast2d(object):
         assert_(atleast_2d([[[3, 1], [4, 5]], [[3, 5], [1, 2]]]).shape == (2, 2, 2))
 
 
-class TestAtleast3d(object):
+class TestAtleast3d:
     def test_0D_array(self):
         a = array(1)
         b = array(2)
@@ -128,7 +125,7 @@ class TestAtleast3d(object):
         assert_array_equal(res, desired)
 
 
-class TestHstack(object):
+class TestHstack:
     def test_non_iterable(self):
         assert_raises(TypeError, hstack, 1)
 
@@ -159,13 +156,11 @@ class TestHstack(object):
     def test_generator(self):
         with assert_warns(FutureWarning):
             hstack((np.arange(3) for _ in range(2)))
-        if sys.version_info.major > 2:
-            # map returns a list on Python 2
-            with assert_warns(FutureWarning):
-                hstack(map(lambda x: x, np.ones((3, 2))))
+        with assert_warns(FutureWarning):
+            hstack(map(lambda x: x, np.ones((3, 2))))
 
 
-class TestVstack(object):
+class TestVstack:
     def test_non_iterable(self):
         assert_raises(TypeError, vstack, 1)
 
@@ -205,7 +200,7 @@ class TestVstack(object):
             vstack((np.arange(3) for _ in range(2)))
 
 
-class TestConcatenate(object):
+class TestConcatenate:
     def test_returns_copy(self):
         a = np.eye(3)
         b = np.concatenate([a])
@@ -409,7 +404,7 @@ def test_stack():
     assert_array_equal(result, np.array([0, 1, 2]))
 
 
-class TestBlock(object):
+class TestBlock:
     @pytest.fixture(params=['block', 'force_concatenate', 'force_slicing'])
     def block(self, request):
         # blocking small arrays and large arrays go through different paths.
@@ -707,7 +702,7 @@ class TestBlock(object):
 
 
 def test_block_dispatcher():
-    class ArrayLike(object):
+    class ArrayLike:
         pass
     a = ArrayLike()
     b = ArrayLike()

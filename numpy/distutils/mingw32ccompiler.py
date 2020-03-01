@@ -7,8 +7,6 @@ Support code for building Python extensions on Windows.
     # 3. Force windows to use g77
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import subprocess
@@ -16,12 +14,8 @@ import re
 import textwrap
 
 # Overwrite certain distutils.ccompiler functions:
-import numpy.distutils.ccompiler
-
-if sys.version_info[0] < 3:
-    from . import log
-else:
-    from numpy.distutils import log
+import numpy.distutils.ccompiler  # noqa: F401
+from numpy.distutils import log
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)
@@ -32,8 +26,7 @@ import distutils.cygwinccompiler
 from distutils.version import StrictVersion
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
-from distutils.errors import (DistutilsExecError, CompileError,
-                              UnknownFileError)
+from distutils.errors import UnknownFileError
 from numpy.distutils.misc_util import (msvc_runtime_library,
                                        msvc_runtime_version,
                                        msvc_runtime_major,

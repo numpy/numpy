@@ -609,9 +609,6 @@ static PyNumberMethods pyrational_as_number = {
     pyrational_add,          /* nb_add */
     pyrational_subtract,     /* nb_subtract */
     pyrational_multiply,     /* nb_multiply */
-#if PY_MAJOR_VERSION < 3
-    pyrational_divide,       /* nb_divide */
-#endif
     pyrational_remainder,    /* nb_remainder */
     0,                       /* nb_divmod */
     0,                       /* nb_power */
@@ -625,27 +622,13 @@ static PyNumberMethods pyrational_as_number = {
     0,                       /* nb_and */
     0,                       /* nb_xor */
     0,                       /* nb_or */
-#if PY_MAJOR_VERSION < 3
-    0,                       /* nb_coerce */
-#endif
     pyrational_int,          /* nb_int */
-#if PY_MAJOR_VERSION < 3
-    pyrational_int,          /* nb_long */
-#else
     0,                       /* reserved */
-#endif
     pyrational_float,        /* nb_float */
-#if PY_MAJOR_VERSION < 3
-    0,                       /* nb_oct */
-    0,                       /* nb_hex */
-#endif
 
     0,                       /* nb_inplace_add */
     0,                       /* nb_inplace_subtract */
     0,                       /* nb_inplace_multiply */
-#if PY_MAJOR_VERSION < 3
-    0,                       /* nb_inplace_divide */
-#endif
     0,                       /* nb_inplace_remainder */
     0,                       /* nb_inplace_power */
     0,                       /* nb_inplace_lshift */
@@ -678,12 +661,7 @@ static PyGetSetDef pyrational_getset[] = {
 };
 
 static PyTypeObject PyRational_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                        /* ob_size */
-#endif
     "rational",                               /* tp_name */
     sizeof(PyRational),                       /* tp_basicsize */
     0,                                        /* tp_itemsize */
@@ -691,11 +669,7 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_print */
     0,                                        /* tp_getattr */
     0,                                        /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                        /* tp_reserved */
-#else
-    0,                                        /* tp_compare */
-#endif
     pyrational_repr,                          /* tp_repr */
     &pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */
@@ -962,8 +936,8 @@ DEFINE_CAST(npy_bool,rational,rational y = make_rational_int(x);)
 DEFINE_CAST(rational,npy_bool,npy_bool y = rational_nonzero(x);)
 
 #define BINARY_UFUNC(name,intype0,intype1,outtype,exp) \
-    void name(char** args, npy_intp* dimensions, \
-              npy_intp* steps, void* data) { \
+    void name(char** args, npy_intp const *dimensions, \
+              npy_intp const *steps, void* data) { \
         npy_intp is0 = steps[0], is1 = steps[1], \
             os = steps[2], n = *dimensions; \
         char *i0 = args[0], *i1 = args[1], *o = args[2]; \
@@ -998,8 +972,8 @@ BINARY_UFUNC(gcd_ufunc,npy_int64,npy_int64,npy_int64,gcd(x,y))
 BINARY_UFUNC(lcm_ufunc,npy_int64,npy_int64,npy_int64,lcm(x,y))
 
 #define UNARY_UFUNC(name,type,exp) \
-    void rational_ufunc_##name(char** args, npy_intp* dimensions, \
-                               npy_intp* steps, void* data) { \
+    void rational_ufunc_##name(char** args, npy_intp const *dimensions, \
+                               npy_intp const *steps, void* data) { \
         npy_intp is = steps[0], os = steps[1], n = *dimensions; \
         char *i = args[0], *o = args[1]; \
         int k; \
@@ -1022,7 +996,7 @@ UNARY_UFUNC(numerator,npy_int64,x.n)
 UNARY_UFUNC(denominator,npy_int64,d(x))
 
 static NPY_INLINE void
-rational_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps)
+rational_matrix_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     /* pointers to data for input and output arrays */
     char *ip1 = args[0];
@@ -1067,8 +1041,8 @@ rational_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps)
 
 
 static void
-rational_gufunc_matrix_multiply(char **args, npy_intp *dimensions,
-                                npy_intp *steps, void *NPY_UNUSED(func))
+rational_gufunc_matrix_multiply(char **args, npy_intp const *dimensions,
+                                npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /* outer dimensions counter */
     npy_intp N_;
@@ -1092,8 +1066,8 @@ rational_gufunc_matrix_multiply(char **args, npy_intp *dimensions,
 
 
 static void
-rational_ufunc_test_add(char** args, npy_intp* dimensions,
-                        npy_intp* steps, void* data) {
+rational_ufunc_test_add(char** args, npy_intp const *dimensions,
+                        npy_intp const *steps, void* data) {
     npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions;
     char *i0 = args[0], *i1 = args[1], *o = args[2];
     int k;
@@ -1108,8 +1082,8 @@ rational_ufunc_test_add(char** args, npy_intp* dimensions,
 
 
 static void
-rational_ufunc_test_add_rationals(char** args, npy_intp* dimensions,
-                        npy_intp* steps, void* data) {
+rational_ufunc_test_add_rationals(char** args, npy_intp const *dimensions,
+                        npy_intp const *steps, void* data) {
     npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions;
     char *i0 = args[0], *i1 = args[1], *o = args[2];
     int k;
@@ -1126,7 +1100,6 @@ PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "_rational_tests",
@@ -1138,16 +1111,8 @@ static struct PyModuleDef moduledef = {
     NULL,
     NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL m
 PyMODINIT_FUNC PyInit__rational_tests(void) {
-#else
-#define RETVAL
-PyMODINIT_FUNC init_rational_tests(void) {
-#endif
-
     PyObject *m = NULL;
     PyObject* numpy_str;
     PyObject* numpy;
@@ -1292,11 +1257,7 @@ PyMODINIT_FUNC init_rational_tests(void) {
     REGISTER_UFUNC_UNARY(sign)
 
     /* Create module */
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_rational_tests", module_methods);
-#endif
 
     if (!m) {
         goto fail;
@@ -1392,18 +1353,16 @@ PyMODINIT_FUNC init_rational_tests(void) {
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-    return RETVAL;
+    return m;
 
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _rational_tests module.");
     }
-#if defined(NPY_PY3K)
     if (m) {
         Py_DECREF(m);
         m = NULL;
     }
-#endif
-    return RETVAL;
+    return m;
 }

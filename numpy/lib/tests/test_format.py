@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 # doctest
 r''' Test the .npy file format.
 
@@ -537,8 +535,10 @@ dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
 # titles
 dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
                 'offsets': [1, 6], 'titles': ['aa', 'bb']})
+# empty
+dt6 = np.dtype({'names': [], 'formats': [], 'itemsize': 8})
 
-@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5])
+@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5, dt6])
 def test_load_padded_dtype(dt):
     arr = np.zeros(3, dt)
     for i in range(3):
@@ -550,10 +550,7 @@ def test_load_padded_dtype(dt):
 
 
 def test_python2_python3_interoperability():
-    if sys.version_info[0] >= 3:
-        fname = 'win64python2.npy'
-    else:
-        fname = 'python3.npy'
+    fname = 'win64python2.npy'
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
     data = np.load(path)
     assert_array_equal(data, np.ones(2))
@@ -563,13 +560,7 @@ def test_pickle_python2_python3():
     # Python 2 and Python 3 and vice versa
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
-    if sys.version_info[0] >= 3:
-        xrange = range
-    else:
-        import __builtin__
-        xrange = __builtin__.xrange
-
-    expected = np.array([None, xrange, u'\u512a\u826f',
+    expected = np.array([None, range, u'\u512a\u826f',
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
@@ -585,34 +576,30 @@ def test_pickle_python2_python3():
             else:
                 data = data_f
 
-            if sys.version_info[0] >= 3:
-                if encoding == 'latin1' and fname.startswith('py2'):
-                    assert_(isinstance(data[3], str))
-                    assert_array_equal(data[:-1], expected[:-1])
-                    # mojibake occurs
-                    assert_array_equal(data[-1].encode(encoding), expected[-1])
-                else:
-                    assert_(isinstance(data[3], bytes))
-                    assert_array_equal(data, expected)
+            if encoding == 'latin1' and fname.startswith('py2'):
+                assert_(isinstance(data[3], str))
+                assert_array_equal(data[:-1], expected[:-1])
+                # mojibake occurs
+                assert_array_equal(data[-1].encode(encoding), expected[-1])
             else:
+                assert_(isinstance(data[3], bytes))
                 assert_array_equal(data, expected)
 
-        if sys.version_info[0] >= 3:
-            if fname.startswith('py2'):
-                if fname.endswith('.npz'):
-                    data = np.load(path, allow_pickle=True)
-                    assert_raises(UnicodeError, data.__getitem__, 'x')
-                    data.close()
-                    data = np.load(path, allow_pickle=True, fix_imports=False,
-                                   encoding='latin1')
-                    assert_raises(ImportError, data.__getitem__, 'x')
-                    data.close()
-                else:
-                    assert_raises(UnicodeError, np.load, path,
-                                  allow_pickle=True)
-                    assert_raises(ImportError, np.load, path,
-                                  allow_pickle=True, fix_imports=False,
-                                  encoding='latin1')
+        if fname.startswith('py2'):
+            if fname.endswith('.npz'):
+                data = np.load(path, allow_pickle=True)
+                assert_raises(UnicodeError, data.__getitem__, 'x')
+                data.close()
+                data = np.load(path, allow_pickle=True, fix_imports=False,
+                               encoding='latin1')
+                assert_raises(ImportError, data.__getitem__, 'x')
+                data.close()
+            else:
+                assert_raises(UnicodeError, np.load, path,
+                              allow_pickle=True)
+                assert_raises(ImportError, np.load, path,
+                              allow_pickle=True, fix_imports=False,
+                              encoding='latin1')
 
 
 def test_pickle_disallow():

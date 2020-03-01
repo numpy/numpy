@@ -27,8 +27,6 @@ n = n-dimensional transform
 behavior.)
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
@@ -61,12 +59,11 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
 
     if a.shape[axis] != n:
         s = list(a.shape)
+        index = [slice(None)]*len(s)
         if s[axis] > n:
-            index = [slice(None)]*len(s)
             index[axis] = slice(0, n)
             a = a[tuple(index)]
         else:
-            index = [slice(None)]*len(s)
             index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)

@@ -1,8 +1,9 @@
-import os, sys
+import os
 import pytest
-import warnings
 import shutil
 import subprocess
+import sys
+import warnings
 
 try:
     import cffi
@@ -40,10 +41,8 @@ else:
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
-@pytest.mark.skipif(sys.platform == 'win32', reason="cmd too long on CI")
 def test_cython(tmp_path):
     examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
-    base = os.path.dirname(examples)
     shutil.copytree(examples, tmp_path / '_examples')
     subprocess.check_call([sys.executable, 'setup.py', 'build'],
                           cwd=str(tmp_path / '_examples' / 'cython'))
@@ -51,8 +50,8 @@ def test_cython(tmp_path):
 @pytest.mark.skipif(numba is None or cffi is None,
                     reason="requires numba and cffi")
 def test_numba():
-    from numpy.random._examples.numba import extending
+    from numpy.random._examples.numba import extending  # noqa: F401
 
 @pytest.mark.skipif(cffi is None, reason="requires cffi")
 def test_cffi():
-    from numpy.random._examples.cffi import extending
+    from numpy.random._examples.cffi import extending  # noqa: F401

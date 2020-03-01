@@ -49,8 +49,6 @@ Known bugs:
   because the messages are lost at some point.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['exec_command', 'find_executable']
 
 import os
@@ -76,10 +74,6 @@ def filepath_from_subprocess_output(output):
     # Another historical oddity
     if output[-1:] == '\n':
         output = output[:-1]
-    # stdio uses bytes in python 2, so to avoid issues, we simply
-    # remove all non-ascii characters
-    if sys.version_info < (3, 0):
-        output = output.encode('ascii', errors='replace')
     return output
 
 
@@ -91,10 +85,7 @@ def forward_bytes_to_stdout(val):
     The assumption is that the subprocess call already returned bytes in
     a suitable encoding.
     """
-    if sys.version_info.major < 3:
-        # python 2 has binary output anyway
-        sys.stdout.write(val)
-    elif hasattr(sys.stdout, 'buffer'):
+    if hasattr(sys.stdout, 'buffer'):
         # use the underlying binary output if there is one
         sys.stdout.buffer.write(val)
     elif hasattr(sys.stdout, 'encoding'):
@@ -306,11 +297,6 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
-
-    # stdio uses bytes in python 2, so to avoid issues, we simply
-    # remove all non-ascii characters
-    if sys.version_info < (3, 0):
-        text = text.encode('ascii', errors='replace')
 
     if use_tee and text:
         print(text)

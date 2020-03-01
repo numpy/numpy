@@ -1,10 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
 # Code common to build tools
 import sys
 import warnings
 import copy
-import binascii
 import textwrap
 
 from numpy.distutils.misc_util import mingw32
@@ -135,11 +132,6 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       # broken on OSX 10.11, make sure its not optimized away
-                       ("volatile int r = __builtin_cpu_supports", '"sse"',
-                        "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
-                       ("volatile int r = __builtin_cpu_supports", '"avx512f"',
-                        "stdio.h", "__BUILTIN_CPU_SUPPORTS_AVX512F"),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
@@ -246,9 +238,9 @@ def check_long_double_representation(cmd):
     # Disable multi-file interprocedural optimization in the Intel compiler on Linux
     # which generates intermediary object files and prevents checking the
     # float representation.
-    elif (sys.platform != "win32" 
-            and cmd.compiler.compiler_type.startswith('intel') 
-            and '-ipo' in cmd.compiler.cc_exe):        
+    elif (sys.platform != "win32"
+            and cmd.compiler.compiler_type.startswith('intel')
+            and '-ipo' in cmd.compiler.cc_exe):
         newcompiler = cmd.compiler.cc_exe.replace(' -ipo', '')
         cmd.compiler.set_executables(
             compiler=newcompiler,
@@ -313,32 +305,15 @@ def pyod(filename):
     We only implement enough to get the necessary information for long double
     representation, this is not intended as a compatible replacement for od.
     """
-    def _pyod2():
-        out = []
+    out = []
+    with open(filename, 'rb') as fid:
+        yo2 = [oct(o)[2:] for o in fid.read()]
+    for i in range(0, len(yo2), 16):
+        line = ['%07d' % int(oct(i)[2:])]
+        line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
+        out.append(" ".join(line))
+    return out
 
-        with open(filename, 'rb') as fid:
-            yo = [int(oct(int(binascii.b2a_hex(o), 16))) for o in fid.read()]
-        for i in range(0, len(yo), 16):
-            line = ['%07d' % int(oct(i))]
-            line.extend(['%03d' % c for c in yo[i:i+16]])
-            out.append(" ".join(line))
-        return out
-
-    def _pyod3():
-        out = []
-
-        with open(filename, 'rb') as fid:
-            yo2 = [oct(o)[2:] for o in fid.read()]
-        for i in range(0, len(yo2), 16):
-            line = ['%07d' % int(oct(i)[2:])]
-            line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
-            out.append(" ".join(line))
-        return out
-
-    if sys.version_info[0] < 3:
-        return _pyod2()
-    else:
-        return _pyod3()
 
 _BEFORE_SEQ = ['000', '000', '000', '000', '000', '000', '000', '000',
               '001', '043', '105', '147', '211', '253', '315', '357']

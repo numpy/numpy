@@ -1,15 +1,12 @@
 """
 Histogram-related functions
 """
-from __future__ import division, absolute_import, print_function
-
 import contextlib
 import functools
 import operator
 import warnings
 
 import numpy as np
-from numpy.compat.py3k import basestring
 from numpy.core import overrides
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
@@ -385,7 +382,7 @@ def _get_bin_edges(a, bins, range, weights):
     n_equal_bins = None
     bin_edges = None
 
-    if isinstance(bins, basestring):
+    if isinstance(bins, str):
         bin_name = bins
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
@@ -956,9 +953,9 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         Note the unusual interpretation of sample when an array_like:
 
         * When an array, each row is a coordinate in a D-dimensional space -
-          such as ``histogramgramdd(np.array([p1, p2, p3]))``.
+          such as ``histogramdd(np.array([p1, p2, p3]))``.
         * When an array_like, each element is the list of values for single
-          coordinate - such as ``histogramgramdd((X, Y, Z))``.
+          coordinate - such as ``histogramdd((X, Y, Z))``.
 
         The first form should be preferred.
 

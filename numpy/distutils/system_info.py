@@ -2,58 +2,7 @@
 """
 This file defines a set of system_info classes for getting
 information about various resources (libraries, library directories,
-include directories, etc.) in the system. Currently, the following
-classes are available:
-
-  atlas_info
-  atlas_threads_info
-  atlas_blas_info
-  atlas_blas_threads_info
-  lapack_atlas_info
-  lapack_atlas_threads_info
-  atlas_3_10_info
-  atlas_3_10_threads_info
-  atlas_3_10_blas_info,
-  atlas_3_10_blas_threads_info,
-  lapack_atlas_3_10_info
-  lapack_atlas_3_10_threads_info
-  flame_info
-  blas_info
-  lapack_info
-  openblas_info
-  openblas64__info
-  openblas_ilp64_info
-  blis_info
-  blas_opt_info       # usage recommended
-  lapack_opt_info     # usage recommended
-  blas_ilp64_opt_info    # usage recommended (general ILP64 BLAS)
-  lapack_ilp64_opt_info  # usage recommended (general ILP64 LAPACK)
-  blas_ilp64_plain_opt_info    # usage recommended (general ILP64 BLAS, no symbol suffix)
-  lapack_ilp64_plain_opt_info  # usage recommended (general ILP64 LAPACK, no symbol suffix)
-  blas64__opt_info    # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
-  lapack64__opt_info  # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
-  fftw_info,dfftw_info,sfftw_info
-  fftw_threads_info,dfftw_threads_info,sfftw_threads_info
-  djbfft_info
-  x11_info
-  lapack_src_info
-  blas_src_info
-  numpy_info
-  numarray_info
-  numpy_info
-  boost_python_info
-  agg2_info
-  wx_info
-  gdk_pixbuf_xlib_2_info
-  gdk_pixbuf_2_info
-  gdk_x11_2_info
-  gtkp_x11_2_info
-  gtkp_2_info
-  xft_info
-  freetype2_info
-  umfpack_info
-
-Usage:
+include directories, etc.) in the system. Usage:
     info_dict = get_info(<name>)
   where <name> is a string 'atlas','x11','fftw','lapack','blas',
   'lapack_src', 'blas_src', etc. For a complete list of allowed names,
@@ -81,19 +30,94 @@ The file 'site.cfg' is looked for in
 
 The first one found is used to get system configuration options The
 format is that used by ConfigParser (i.e., Windows .INI style). The
-section ALL has options that are the default for each section. The
-available sections are fftw, atlas, and x11. Appropriate defaults are
-used if nothing is specified.
+section ALL is not intended for general use.
+
+Appropriate defaults are used if nothing is specified.
 
 The order of finding the locations of resources is the following:
  1. environment variable
  2. section in site.cfg
- 3. ALL section in site.cfg
+ 3. DEFAULT section in site.cfg
+ 4. System default search paths (see ``default_*`` variables below).
 Only the first complete match is returned.
+
+Currently, the following classes are available, along with their section names:
+
+    Numeric_info:Numeric
+    _numpy_info:Numeric
+    _pkg_config_info:None
+    accelerate_info:accelerate
+    agg2_info:agg2
+    amd_info:amd
+    atlas_3_10_blas_info:atlas
+    atlas_3_10_blas_threads_info:atlas
+    atlas_3_10_info:atlas
+    atlas_3_10_threads_info:atlas
+    atlas_blas_info:atlas
+    atlas_blas_threads_info:atlas
+    atlas_info:atlas
+    atlas_threads_info:atlas
+    blas64__opt_info:ALL               # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
+    blas_ilp64_opt_info:ALL            # usage recommended (general ILP64 BLAS)
+    blas_ilp64_plain_opt_info:ALL      # usage recommended (general ILP64 BLAS, no symbol suffix)
+    blas_info:blas
+    blas_mkl_info:mkl
+    blas_opt_info:ALL                  # usage recommended
+    blas_src_info:blas_src
+    blis_info:blis
+    boost_python_info:boost_python
+    dfftw_info:fftw
+    dfftw_threads_info:fftw
+    djbfft_info:djbfft
+    f2py_info:ALL
+    fft_opt_info:ALL
+    fftw2_info:fftw
+    fftw3_info:fftw3
+    fftw_info:fftw
+    fftw_threads_info:fftw
+    flame_info:flame
+    freetype2_info:freetype2
+    gdk_2_info:gdk_2
+    gdk_info:gdk
+    gdk_pixbuf_2_info:gdk_pixbuf_2
+    gdk_pixbuf_xlib_2_info:gdk_pixbuf_xlib_2
+    gdk_x11_2_info:gdk_x11_2
+    gtkp_2_info:gtkp_2
+    gtkp_x11_2_info:gtkp_x11_2
+    lapack64__opt_info:ALL             # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
+    lapack_atlas_3_10_info:atlas
+    lapack_atlas_3_10_threads_info:atlas
+    lapack_atlas_info:atlas
+    lapack_atlas_threads_info:atlas
+    lapack_ilp64_opt_info:ALL          # usage recommended (general ILP64 LAPACK)
+    lapack_ilp64_plain_opt_info:ALL    # usage recommended (general ILP64 LAPACK, no symbol suffix)
+    lapack_info:lapack
+    lapack_mkl_info:mkl
+    lapack_opt_info:ALL                # usage recommended
+    lapack_src_info:lapack_src
+    mkl_info:mkl
+    numarray_info:numarray
+    numerix_info:numerix
+    numpy_info:numpy
+    openblas64__info:openblas64_
+    openblas64__lapack_info:openblas64_
+    openblas_clapack_info:openblas
+    openblas_ilp64_info:openblas_ilp64
+    openblas_ilp64_lapack_info:openblas_ilp64
+    openblas_info:openblas
+    openblas_lapack_info:openblas
+    sfftw_info:fftw
+    sfftw_threads_info:fftw
+    system_info:ALL
+    umfpack_info:umfpack
+    wx_info:wx
+    x11_info:x11
+    xft_info:xft
 
 Example:
 ----------
-[ALL]
+[DEFAULT]
+# default section
 library_dirs = /usr/lib:/usr/local/lib:/opt/lib
 include_dirs = /usr/include:/usr/local/include:/opt/include
 src_dirs = /usr/local/src:/opt/src
@@ -128,8 +152,6 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import re
@@ -140,12 +162,8 @@ import textwrap
 
 from glob import glob
 from functools import reduce
-if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError
-    from ConfigParser import RawConfigParser as ConfigParser
-else:
-    from configparser import NoOptionError
-    from configparser import RawConfigParser as ConfigParser
+from configparser import NoOptionError
+from configparser import RawConfigParser as ConfigParser
 # It seems that some people are importing ConfigParser from here so is
 # good to keep its class name. Use of RawConfigParser is needed in
 # order to be able to load path names with percent in them, like
@@ -159,11 +177,10 @@ from distutils.util import get_platform
 
 from numpy.distutils.exec_command import (
     find_executable, filepath_from_subprocess_output,
-    get_pythonexe)
+    )
 from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler as _customized_ccompiler
 from numpy.distutils import _shell_utils
 import distutils.ccompiler
@@ -267,32 +284,29 @@ if sys.platform == 'win32':
         default_include_dirs.extend(
             os.path.join(library_root, d) for d in _include_dirs)
 
-    if sys.version_info >= (3, 3):
-        # VCpkg is the de-facto package manager on windows for C/C++
-        # libraries. If it is on the PATH, then we append its paths here.
-        # We also don't re-implement shutil.which for Python 2.7 because
-        # vcpkg doesn't support MSVC 2008.
-        vcpkg = shutil.which('vcpkg')
-        if vcpkg:
-            vcpkg_dir = os.path.dirname(vcpkg)
-            if platform.architecture() == '32bit':
-                specifier = 'x86'
-            else:
-                specifier = 'x64'
+    # VCpkg is the de-facto package manager on windows for C/C++
+    # libraries. If it is on the PATH, then we append its paths here.
+    vcpkg = shutil.which('vcpkg')
+    if vcpkg:
+        vcpkg_dir = os.path.dirname(vcpkg)
+        if platform.architecture() == '32bit':
+            specifier = 'x86'
+        else:
+            specifier = 'x64'
 
-            vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
-            for vcpkg_root in [
-                os.path.join(vcpkg_installed, specifier + '-windows'),
-                os.path.join(vcpkg_installed, specifier + '-windows-static'),
-            ]:
-                add_system_root(vcpkg_root)
+        vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
+        for vcpkg_root in [
+            os.path.join(vcpkg_installed, specifier + '-windows'),
+            os.path.join(vcpkg_installed, specifier + '-windows-static'),
+        ]:
+            add_system_root(vcpkg_root)
 
-        # Conda is another popular package manager that provides libraries
-        conda = shutil.which('conda')
-        if conda:
-            conda_dir = os.path.dirname(conda)
-            add_system_root(os.path.join(conda_dir, '..', 'Library'))
-            add_system_root(os.path.join(conda_dir, 'Library'))
+    # Conda is another popular package manager that provides libraries
+    conda = shutil.which('conda')
+    if conda:
+        conda_dir = os.path.dirname(conda)
+        add_system_root(os.path.join(conda_dir, '..', 'Library'))
+        add_system_root(os.path.join(conda_dir, 'Library'))
 
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
@@ -582,14 +596,18 @@ class UmfpackNotFoundError(NotFoundError):
     the UMFPACK environment variable."""
 
 
-class system_info(object):
+class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """
-    section = 'ALL'
     dir_env_var = None
-    search_static_first = 0  # XXX: disabled by default, may disappear in
-                            # future unless it is proved to be useful.
+    # XXX: search_static_first is disabled by default, may disappear in
+    # future unless it is proved to be useful.
+    search_static_first = 0
+    # The base-class section name is a random word "ALL" and is not really
+    # intended for general use. It cannot be None nor can it be DEFAULT as
+    # these break the ConfigParser. See gh-15338
+    section = 'ALL'
     saved_results = {}
 
     notfounderror = NotFoundError
@@ -717,7 +735,7 @@ class system_info(object):
         return info
 
     def get_info(self, notfound_action=0):
-        """ Return a dictonary with items that are compatible
+        """ Return a dictionary with items that are compatible
             with numpy.distutils.setup keyword arguments.
         """
         flag = 0
@@ -2102,16 +2120,17 @@ class openblas_info(blas_info):
                 return None
 
         # Generate numpy.distutils virtual static library file
-        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        basename = self.__class__.__name__
+        tmpdir = os.path.join(os.getcwd(), 'build', basename)
         if not os.path.isdir(tmpdir):
             os.makedirs(tmpdir)
 
         info = {'library_dirs': [tmpdir],
-                'libraries': ['openblas'],
+                'libraries': [basename],
                 'language': 'f77'}
 
-        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
-        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        fake_lib_file = os.path.join(tmpdir, basename + '.fobjects')
+        fake_clib_file = os.path.join(tmpdir, basename + '.cobjects')
         with open(fake_lib_file, 'w') as f:
             f.write("\n".join(library_paths))
         with open(fake_clib_file, 'w') as f:
@@ -2147,8 +2166,6 @@ class openblas_info(blas_info):
             extra_args = info['extra_link_args']
         except Exception:
             extra_args = []
-        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
-            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)
@@ -2540,18 +2557,18 @@ class numerix_info(system_info):
             try:
                 import numpy  # noqa: F401
                 which = "numpy", "defaulted"
-            except ImportError:
-                msg1 = str(get_exception())
+            except ImportError as e:
+                msg1 = str(e)
                 try:
                     import Numeric  # noqa: F401
                     which = "numeric", "defaulted"
-                except ImportError:
-                    msg2 = str(get_exception())
+                except ImportError as e:
+                    msg2 = str(e)
                     try:
                         import numarray  # noqa: F401
                         which = "numarray", "defaulted"
-                    except ImportError:
-                        msg3 = str(get_exception())
+                    except ImportError as e:
+                        msg3 = str(e)
                         log.info(msg1)
                         log.info(msg2)
                         log.info(msg3)

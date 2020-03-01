@@ -1159,12 +1159,12 @@ fail:
 }
 
 
-/* 
+/*
  * Inner loop for unravel_index
  * order must be NPY_CORDER or NPY_FORTRANORDER
  */
 static int
-unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
+unravel_index_loop(int unravel_ndim, npy_intp const *unravel_dims,
                    npy_intp unravel_size, npy_intp count,
                    char *indices, npy_intp indices_stride,
                    npy_intp *coords, NPY_ORDER order)
@@ -1186,7 +1186,7 @@ unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
         }
         idx = idx_start;
         for (i = 0; i < unravel_ndim; ++i) {
-            /* 
+            /*
              * Using a local seems to enable single-divide optimization
              * but only if the / precedes the %
              */
@@ -1242,15 +1242,25 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
      */
     if (kwds) {
         PyObject *dims_item, *shape_item;
-        dims_item = PyDict_GetItemString(kwds, "dims");
-        shape_item = PyDict_GetItemString(kwds, "shape");
+        dims_item = _PyDict_GetItemStringWithError(kwds, "dims");
+        if (dims_item == NULL && PyErr_Occurred()){
+            return NULL;
+        }
+        shape_item = _PyDict_GetItemStringWithError(kwds, "shape");
+        if (shape_item == NULL && PyErr_Occurred()){
+            return NULL;
+        }
         if (dims_item != NULL && shape_item == NULL) {
             if (DEPRECATE("'shape' argument should be"
                           " used instead of 'dims'") < 0) {
                 return NULL;
             }
-            PyDict_SetItemString(kwds, "shape", dims_item);
-            PyDict_DelItemString(kwds, "dims");
+            if (PyDict_SetItemString(kwds, "shape", dims_item) < 0) {
+                return NULL;
+            }
+            if (PyDict_DelItemString(kwds, "dims") < 0) {
+                return NULL;
+            }
         }
     }
 
@@ -1429,25 +1439,33 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     if (PyGetSetDescr_TypePtr == NULL) {
         /* Get "subdescr" */
-        myobj = PyDict_GetItemString(tp_dict, "fields");
+        myobj = _PyDict_GetItemStringWithError(tp_dict, "fields");
+        if (myobj == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
         if (myobj != NULL) {
             PyGetSetDescr_TypePtr = Py_TYPE(myobj);
         }
     }
     if (PyMemberDescr_TypePtr == NULL) {
-        myobj = PyDict_GetItemString(tp_dict, "alignment");
+        myobj = _PyDict_GetItemStringWithError(tp_dict, "alignment");
+        if (myobj == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
         if (myobj != NULL) {
             PyMemberDescr_TypePtr = Py_TYPE(myobj);
         }
     }
     if (PyMethodDescr_TypePtr == NULL) {
-        myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
+        myobj = _PyDict_GetItemStringWithError(tp_dict, "newbyteorder");
+        if (myobj == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
         if (myobj != NULL) {
             PyMethodDescr_TypePtr = Py_TYPE(myobj);
         }
     }
 
-#if defined(NPY_PY3K)
     if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
         return NULL;
     }
@@ -1456,13 +1474,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (docstr == NULL) {
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyString_Type, &str)) {
-        return NULL;
-    }
-
-    docstr = PyString_AS_STRING(str);
-#endif
 
 #define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
 #define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)

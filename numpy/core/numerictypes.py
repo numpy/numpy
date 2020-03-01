@@ -79,10 +79,7 @@ Exported symbols include:
      \\-> object_ (not used much)               (kind=O)
 
 """
-from __future__ import division, absolute_import, print_function
-
 import types as _types
-import sys
 import numbers
 import warnings
 
@@ -122,11 +119,8 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object, str
-    unicode = str
-else:
-    from __builtin__ import bool, int, float, complex, object, unicode, str
+from builtins import bool, int, float, complex, object, str
+unicode = str
 
 
 # We use this later
@@ -319,9 +313,11 @@ def issubclass_(arg1, arg2):
     Examples
     --------
     >>> np.issubclass_(np.int32, int)
-    False # True on Python 2.7
+    False
     >>> np.issubclass_(np.int32, float)
     False
+    >>> np.issubclass_(np.float64, float)
+    True
 
     """
     try:
@@ -397,7 +393,7 @@ def issubdtype(arg1, arg2):
         if not isinstance(arg2_orig, dtype):
             # weird deprecated behaviour, that tried to infer np.floating from
             # float, and similar less obvious things, such as np.generic from
-            # basestring
+            # str.
             mro = arg2.mro()
             arg2 = mro[1] if len(mro) > 1 else mro[0]
 

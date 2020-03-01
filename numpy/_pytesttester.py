@@ -27,8 +27,6 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 
@@ -44,7 +42,7 @@ def _show_numpy_info():
     print("NumPy relaxed strides checking option:", relaxed_strides)
 
 
-class PytestTester(object):
+class PytestTester:
     """
     Pytest test runner.
 
@@ -127,13 +125,6 @@ class PytestTester(object):
         import pytest
         import warnings
 
-        #FIXME This is no longer needed? Assume it was for use in tests.
-        # cap verbosity at 3, which is equivalent to the pytest '-vv' option
-        #from . import utils
-        #verbose = min(int(verbose), 3)
-        #utils.verbose = verbose
-        #
-
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
 
@@ -162,20 +153,8 @@ class PytestTester(object):
         # When testing matrices, ignore their PendingDeprecationWarnings
         pytest_args += [
             "-W ignore:the matrix subclass is not",
+            "-W ignore:Importing from numpy.matlib is",
             ]
-
-        # Ignore python2.7 -3 warnings
-        pytest_args += [
-            r"-W ignore:sys\.exc_clear\(\) not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
-            r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
-            r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:the commands module has been removed in Python 3\.0:DeprecationWarning",
-            r"-W ignore:The 'new' module has been removed in Python 3\.0:DeprecationWarning",
-            ]
-
 
         if doctests:
             raise ValueError("Doctests not supported")

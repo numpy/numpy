@@ -43,7 +43,7 @@ New functions
   floating-point scalars unambiguously with control of rounding and padding.
 
 * ``PyArray_ResolveWritebackIfCopy`` and ``PyArray_SetWritebackIfCopyBase``,
-  new C-API functions useful in achieving PyPy compatibity.
+  new C-API functions useful in achieving PyPy compatibility.
 
 
 Deprecations

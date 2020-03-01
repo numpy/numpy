@@ -1,12 +1,9 @@
-from __future__ import division, absolute_import, print_function
-
 import os
-import warnings
 from distutils.dist import Distribution
 
 __metaclass__ = type
 
-class EnvironmentConfig(object):
+class EnvironmentConfig:
     def __init__(self, distutils_section='ALL', **kw):
         self._distutils_section = distutils_section
         self._conf_keys = kw

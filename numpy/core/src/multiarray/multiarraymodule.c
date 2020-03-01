@@ -161,7 +161,7 @@ PyArray_MultiplyList(npy_intp const *l1, int n)
  * Multiply a List of Non-negative numbers with over-flow detection.
  */
 NPY_NO_EXPORT npy_intp
-PyArray_OverflowMultiplyList(npy_intp *l1, int n)
+PyArray_OverflowMultiplyList(npy_intp const *l1, int n)
 {
     npy_intp prod = 1;
     int i;
@@ -1559,7 +1559,6 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     return ret;
 }
 
-
 #define STRIDING_OK(op, order) \
                 ((order) == NPY_ANYORDER || \
                  (order) == NPY_KEEPORDER || \
@@ -1601,7 +1600,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             dtype_obj = PyTuple_GET_ITEM(args, 1);
         }
         else if (kws) {
-            dtype_obj = PyDict_GetItem(kws, npy_ma_str_dtype);
+            dtype_obj = PyDict_GetItemWithError(kws, npy_ma_str_dtype);
+            if (dtype_obj == NULL && PyErr_Occurred()) {
+                return NULL;
+            }
             if (dtype_obj == NULL) {
                 dtype_obj = Py_None;
             }
@@ -1618,7 +1620,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         else {
             /* fast path for copy=False rest default (np.asarray) */
             PyObject * copy_obj, * order_obj, *ndmin_obj;
-            copy_obj = PyDict_GetItem(kws, npy_ma_str_copy);
+            copy_obj = PyDict_GetItemWithError(kws, npy_ma_str_copy);
+            if (copy_obj == NULL && PyErr_Occurred()) {
+                return NULL;
+            }
             if (copy_obj != Py_False) {
                 goto full_path;
             }
@@ -1627,14 +1632,20 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             /* order does not matter for contiguous 1d arrays */
             if (PyArray_NDIM((PyArrayObject*)op) > 1 ||
                 !PyArray_IS_C_CONTIGUOUS((PyArrayObject*)op)) {
-                order_obj = PyDict_GetItem(kws, npy_ma_str_order);
-                if (order_obj != Py_None && order_obj != NULL) {
+                order_obj = PyDict_GetItemWithError(kws, npy_ma_str_order);
+                if (order_obj == NULL && PyErr_Occurred()) {
+                    return NULL;
+                }
+                else if (order_obj != Py_None && order_obj != NULL) {
                     goto full_path;
                 }
             }
 
-            ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
-            if (ndmin_obj) {
+            ndmin_obj = PyDict_GetItemWithError(kws, npy_ma_str_ndmin);
+            if (ndmin_obj == NULL && PyErr_Occurred()) {
+                return NULL;
+            }
+            else if (ndmin_obj) {
                 long t = PyLong_AsLong(ndmin_obj);
                 if (error_converting(t)) {
                     goto clean_type;
@@ -1920,7 +1931,6 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             alloc = 1;
         }
         else {
-#if defined(NPY_PY3K)
             /* Backward compatibility with Python 2 NumPy pickles */
             if (PyUnicode_Check(obj)) {
                 tmpobj = PyUnicode_AsLatin1String(obj);
@@ -1934,8 +1944,6 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                     return NULL;
                 }
             }
-#endif
-
             if (!PyString_Check(obj)) {
                 PyErr_SetString(PyExc_TypeError,
                         "initializing object must be a string");
@@ -2020,11 +2028,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     if (count == -1) {
         return NULL;
     }
-#if defined(NPY_PY3K)
     return PyLong_FromSsize_t(count);
-#else
-    return PyInt_FromSsize_t(count);
-#endif
 }
 
 static PyObject *
@@ -2639,13 +2643,11 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         while (PyDict_Next(kwds, &pos, &key, &value)) {
             char *str = NULL;
 
-#if defined(NPY_PY3K)
             Py_XDECREF(str_key_obj);
             str_key_obj = PyUnicode_AsASCIIString(key);
             if (str_key_obj != NULL) {
                 key = str_key_obj;
             }
-#endif
 
             str = PyBytes_AsString(key);
 
@@ -3285,141 +3287,15 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     meta = get_datetime_metadata_from_dtype(dtype);
-    Py_DECREF(dtype);
     if (meta == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
 
-    return convert_datetime_metadata_to_tuple(meta);
+    PyObject *res = convert_datetime_metadata_to_tuple(meta);
+    Py_DECREF(dtype);
+    return res;
 }
-
-#if !defined(NPY_PY3K)
-static PyObject *
-new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    int size;
-
-    if (!PyArg_ParseTuple(args, "i:buffer", &size)) {
-        return NULL;
-    }
-    return PyBuffer_New(size);
-}
-
-static PyObject *
-buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
-{
-    PyObject *obj;
-    Py_ssize_t offset = 0, n;
-    Py_ssize_t size = Py_END_OF_BUFFER;
-    void *unused;
-    static char *kwlist[] = {"object", "offset", "size", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                "O|" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT ":get_buffer", kwlist,
-                &obj, &offset, &size)) {
-        return NULL;
-    }
-    if (PyObject_AsWriteBuffer(obj, &unused, &n) < 0) {
-        PyErr_Clear();
-        return PyBuffer_FromObject(obj, offset, size);
-    }
-    else {
-        return PyBuffer_FromReadWriteObject(obj, offset, size);
-    }
-}
-#endif
-
-#ifndef _MSC_VER
-#include <setjmp.h>
-#include <signal.h>
-jmp_buf _NPY_SIGSEGV_BUF;
-static void
-_SigSegv_Handler(int signum)
-{
-    longjmp(_NPY_SIGSEGV_BUF, signum);
-}
-#endif
-
-#define _test_code() { \
-        test = *((char*)memptr); \
-        if (!ro) { \
-            *((char *)memptr) = '\0'; \
-            *((char *)memptr) = test; \
-        } \
-        test = *((char*)memptr+size-1); \
-        if (!ro) { \
-            *((char *)memptr+size-1) = '\0'; \
-            *((char *)memptr+size-1) = test; \
-        } \
-    }
-
-static PyObject *
-as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
-{
-    PyObject *mem;
-    Py_ssize_t size;
-    npy_bool ro = NPY_FALSE, check = NPY_TRUE;
-    void *memptr;
-    static char *kwlist[] = {"mem", "size", "readonly", "check", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                "O" NPY_SSIZE_T_PYFMT "|O&O&:int_asbuffer", kwlist,
-                &mem, &size, PyArray_BoolConverter, &ro,
-                PyArray_BoolConverter, &check)) {
-        return NULL;
-    }
-    memptr = PyLong_AsVoidPtr(mem);
-    if (memptr == NULL) {
-        return NULL;
-    }
-    if (check) {
-        /*
-         * Try to dereference the start and end of the memory region
-         * Catch segfault and report error if it occurs
-         */
-        char test;
-        int err = 0;
-
-#ifdef _MSC_VER
-        __try {
-            _test_code();
-        }
-        __except(1) {
-            err = 1;
-        }
-#else
-        PyOS_sighandler_t _npy_sig_save;
-        _npy_sig_save = PyOS_setsig(SIGSEGV, _SigSegv_Handler);
-        if (setjmp(_NPY_SIGSEGV_BUF) == 0) {
-            _test_code();
-        }
-        else {
-            err = 1;
-        }
-        PyOS_setsig(SIGSEGV, _npy_sig_save);
-#endif
-        if (err) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot use memory location as a buffer.");
-            return NULL;
-        }
-    }
-
-
-#if defined(NPY_PY3K)
-    PyErr_SetString(PyExc_RuntimeError,
-            "XXX -- not implemented!");
-    return NULL;
-#else
-    if (ro) {
-        return PyBuffer_FromMemory(memptr, size);
-    }
-    return PyBuffer_FromReadWriteMemory(memptr, size);
-#endif
-}
-
-#undef _test_code
-
 
 /*
  * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
@@ -4001,11 +3877,6 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
             goto fail;
         }
     }
-#if !defined(NPY_PY3K)
-    else if (PyInt_Check(max_work_obj)) {
-        max_work = PyInt_AsSsize_t(max_work_obj);
-    }
-#endif
     else {
         PyErr_SetString(PyExc_ValueError, "max_work must be an integer");
         goto fail;
@@ -4229,17 +4100,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"is_busday",
         (PyCFunction)array_is_busday,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#if !defined(NPY_PY3K)
-    {"newbuffer",
-        (PyCFunction)new_buffer,
-        METH_VARARGS, NULL},
-    {"getbuffer",
-        (PyCFunction)buffer_buffer,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-#endif
-    {"int_asbuffer",
-        (PyCFunction)as_buffer,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"format_longfloat",
         (PyCFunction)format_longfloat,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4319,11 +4179,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     if (PyType_Ready(&PyBool_Type) < 0) {
         return -1;
     }
-#if !defined(NPY_PY3K)
-    if (PyType_Ready(&PyInt_Type) < 0) {
-        return -1;
-    }
-#endif
     if (PyType_Ready(&PyFloat_Type) < 0) {
         return -1;
     }
@@ -4374,27 +4229,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
         return -1;                                                      \
     }
 
-/*
- * In Py3K, int is no longer a fixed-width integer type, so don't
- * inherit numpy.int_ from it.
- */
-#if defined(NPY_PY3K)
-#define INHERIT_INT(child, parent2)                                     \
-    SINGLE_INHERIT(child, parent2);
-#else
-#define INHERIT_INT(child, parent2)                                     \
-    Py##child##ArrType_Type.tp_flags |= Py_TPFLAGS_INT_SUBCLASS;        \
-    DUAL_INHERIT(child, Int, parent2);
-#endif
-
-#if defined(NPY_PY3K)
-#define DUAL_INHERIT_COMPARE(child, parent1, parent2)
-#else
-#define DUAL_INHERIT_COMPARE(child, parent1, parent2)                   \
-    Py##child##ArrType_Type.tp_compare =                                \
-        Py##parent1##_Type.tp_compare;
-#endif
-
 #define DUAL_INHERIT2(child, parent1, parent2)                          \
     Py##child##ArrType_Type.tp_base = &Py##parent1##_Type;              \
     Py##child##ArrType_Type.tp_bases =                                  \
@@ -4402,7 +4236,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
                       &Py##parent2##ArrType_Type);                      \
     Py##child##ArrType_Type.tp_richcompare =                            \
         Py##parent1##_Type.tp_richcompare;                              \
-    DUAL_INHERIT_COMPARE(child, parent1, parent2)                       \
     Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;       \
     if (PyType_Ready(&Py##child##ArrType_Type) < 0) {                   \
         PyErr_Print();                                                  \
@@ -4415,20 +4248,9 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(Bool, Generic);
     SINGLE_INHERIT(Byte, SignedInteger);
     SINGLE_INHERIT(Short, SignedInteger);
-
-#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
-    INHERIT_INT(Int, SignedInteger);
-#else
     SINGLE_INHERIT(Int, SignedInteger);
-#endif
-
-    INHERIT_INT(Long, SignedInteger);
-
-#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
-    INHERIT_INT(LongLong, SignedInteger);
-#else
+    SINGLE_INHERIT(Long, SignedInteger);
     SINGLE_INHERIT(LongLong, SignedInteger);
-#endif
 
     /* Datetime doesn't fit in any category */
     SINGLE_INHERIT(Datetime, Generic);
@@ -4467,9 +4289,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 
 #undef SINGLE_INHERIT
 #undef DUAL_INHERIT
-#undef INHERIT_INT
 #undef DUAL_INHERIT2
-#undef DUAL_INHERIT_COMPARE
 
     /*
      * Clean up string and unicode array types so they act more like
@@ -4551,7 +4371,6 @@ intern_strings(void)
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_multiarray_umath",
@@ -4563,25 +4382,19 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__multiarray_umath(void) {
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC init_multiarray_umath(void) {
-#endif
     PyObject *m, *d, *s;
     PyObject *c_api;
 
+    /* Initialize CPU features */
+    if (npy_cpu_init() < 0) {
+        goto err;
+    }
+
     /* Create the module and add the functions */
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_multiarray_umath", array_module_methods);
-#endif
     if (!m) {
         goto err;
     }
@@ -4705,6 +4518,16 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
+    s = npy_cpu_features_dict();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_features__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+
     s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
     if (s == NULL) {
         goto err;
@@ -4766,12 +4589,12 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
-    return RETVAL(m);
+    return m;
 
  err:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
-    return RETVAL(NULL);
+    return NULL;
 }

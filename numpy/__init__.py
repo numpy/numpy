@@ -104,8 +104,6 @@ available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
 Exceptions to this rule are documented.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import warnings
 
@@ -159,11 +157,8 @@ else:
     # Make these accessible from numpy name-space
     # but not imported in from numpy import *
     # TODO[gh-6103]: Deprecate these
-    if sys.version_info[0] >= 3:
-        from builtins import bool, int, float, complex, object, str
-        unicode = str
-    else:
-        from __builtin__ import bool, int, float, complex, object, unicode, str
+    from builtins import bool, int, float, complex, object, str
+    unicode = str
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
@@ -220,7 +215,7 @@ else:
                                      "{!r}".format(__name__, attr))
 
         def __dir__():
-            return list(globals().keys()) + ['Tester', 'testing']
+            return list(globals().keys() | {'Tester', 'testing'})
 
     else:
         # We don't actually use this ourselves anymore, but I'm not 100% sure that

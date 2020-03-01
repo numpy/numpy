@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 import numpy as np
@@ -8,7 +6,7 @@ from numpy.testing import (
     )
 
 
-class TestTake(object):
+class TestTake:
     def test_simple(self):
         a = [[1, 2], [3, 4]]
         a_str = [[b'1', b'2'], [b'3', b'4']]
@@ -22,8 +20,9 @@ class TestTake(object):
                         'clip': {-1: 0, 4: 1}}
         # Currently all types but object, use the same function generation.
         # So it should not be necessary to test all. However test also a non
-        # refcounted struct on top of object.
-        types = int, object, np.dtype([('', 'i', 2)])
+        # refcounted struct on top of object, which has a size that hits the
+        # default (non-specialized) path.
+        types = int, object, np.dtype([('', 'i2', 3)])
         for t in types:
             # ta works, even if the array may be odd if buffer interface is used
             ta = np.array(a if np.issubdtype(t, np.number) else a_str, dtype=t)

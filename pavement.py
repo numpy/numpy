@@ -22,13 +22,9 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
-from __future__ import division, print_function
-
 import os
 import sys
 import shutil
-import subprocess
-import re
 import hashlib
 
 # The paver package needs to be installed to run tasks
@@ -88,12 +84,13 @@ def tarball_name(ftype='gztar'):
         Type of archive, default is 'gztar'.
 
     """
-    root = 'numpy-%s' % FULLVERSION
+    root = f'numpy-{FULLVERSION}'
     if ftype == 'gztar':
         return root + '.tar.gz'
     elif ftype == 'zip':
         return root + '.zip'
-    raise ValueError("Unknown type %s" % type)
+    raise ValueError(f"Unknown type {type}")
+
 
 @task
 def sdist(options):

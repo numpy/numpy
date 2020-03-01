@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
@@ -65,8 +63,7 @@ def test_broadcast_kwargs():
     x = np.arange(10)
     y = np.arange(10)
 
-    with assert_raises_regex(TypeError,
-                             r'broadcast_arrays\(\) got an unexpected keyword*'):
+    with assert_raises_regex(TypeError, 'got an unexpected keyword'):
         broadcast_arrays(x, y, dtype='float64')
 
 
@@ -356,14 +353,12 @@ def as_strided_writeable():
 
 class VerySimpleSubClass(np.ndarray):
     def __new__(cls, *args, **kwargs):
-        kwargs['subok'] = True
-        return np.array(*args, **kwargs).view(cls)
+        return np.array(*args, subok=True, **kwargs).view(cls)
 
 
 class SimpleSubClass(VerySimpleSubClass):
     def __new__(cls, *args, **kwargs):
-        kwargs['subok'] = True
-        self = np.array(*args, **kwargs).view(cls)
+        self = np.array(*args, subok=True, **kwargs).view(cls)
         self.info = 'simple'
         return self
 

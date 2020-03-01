@@ -5,11 +5,7 @@ The LooseVersion and StrictVersion classes that distutils provides don't
 work; they don't recognize anything like alpha/beta/rc/dev versions.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import re
-
-from numpy.compat import basestring
 
 
 __all__ = ['NumpyVersion']
@@ -116,10 +112,10 @@ class NumpyVersion():
         return vercmp
 
     def _compare(self, other):
-        if not isinstance(other, (basestring, NumpyVersion)):
+        if not isinstance(other, (str, NumpyVersion)):
             raise ValueError("Invalid object to compare with NumpyVersion.")
 
-        if isinstance(other, basestring):
+        if isinstance(other, str):
             other = NumpyVersion(other)
 
         vercmp = self._compare_version(other)

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import itertools
 
@@ -23,7 +21,7 @@ UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 
-class TestUfuncKwargs(object):
+class TestUfuncKwargs:
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
         assert_raises(TypeError, np.add, 1, 2, dtypex=int)
@@ -49,7 +47,7 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
 
 
-class TestUfuncGenericLoops(object):
+class TestUfuncGenericLoops:
     """Test generic loops.
 
     The loops to be tested are:
@@ -118,7 +116,7 @@ class TestUfuncGenericLoops(object):
         assert_equal(ys.dtype, output_dtype)
 
     # class to use in testing object method loops
-    class foo(object):
+    class foo:
         def conjugate(self):
             return np.bool_(1)
 
@@ -179,7 +177,7 @@ class TestUfuncGenericLoops(object):
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
-class TestUfunc(object):
+class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_(pickle.loads(pickle.dumps(np.sin,
@@ -1123,7 +1121,7 @@ class TestUfunc(object):
         assert_equal(np.logical_and.reduce(a), None)
 
     def test_object_comparison(self):
-        class HasComparisons(object):
+        class HasComparisons:
             def __eq__(self, other):
                 return '=='
 
@@ -1162,14 +1160,18 @@ class TestUfunc(object):
         # Twice reproduced also for tuples:
         np.add.accumulate(arr, out=arr)
         np.add.accumulate(arr, out=arr)
-        assert_array_equal(arr, np.array([[1]*i for i in [1, 3, 6, 10]]))
+        assert_array_equal(arr,
+                           np.array([[1]*i for i in [1, 3, 6, 10]], dtype=object),
+                          )
 
         # And the same if the axis argument is used
         arr = np.ones((2, 4), dtype=object)
         arr[0, :] = [[2] for i in range(4)]
         np.add.accumulate(arr, out=arr, axis=-1)
         np.add.accumulate(arr, out=arr, axis=-1)
-        assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
+        assert_array_equal(arr[0, :],
+                           np.array([[2]*i for i in [1, 3, 6, 10]], dtype=object),
+                          )
 
     def test_object_array_reduceat_inplace(self):
         # Checks that in-place reduceats work, see also gh-7465
@@ -1592,7 +1594,7 @@ class TestUfunc(object):
 
     def test_custom_array_like(self):
 
-        class MyThing(object):
+        class MyThing:
             __array_priority__ = 1000
 
             rmul_count = 0
@@ -1813,7 +1815,7 @@ class TestUfunc(object):
         assert_raises(TypeError, f, d, 0, keepdims="invalid", dtype="invalid",
                      out=None)
 
-        # invalid keyord
+        # invalid keyword
         assert_raises(TypeError, f, d, axis=0, dtype=None, invalid=0)
         assert_raises(TypeError, f, d, invalid=0)
         assert_raises(TypeError, f, d, 0, keepdims=True, invalid="invalid",
@@ -1887,6 +1889,23 @@ class TestUfunc(object):
         assert_equal(r0, r1)
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
+
+    @pytest.mark.parametrize('output_shape',
+                             [(), (1,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('f_reduce', [np.add.reduce, np.minimum.reduce])
+    def test_reduce_wrong_dimension_output(self, f_reduce, output_shape):
+        # Test that we're not incorrectly broadcasting dimensions.
+        # See gh-15144 (failed for np.add.reduce previously).
+        a = np.arange(12.).reshape(4, 3)
+        out = np.empty(output_shape, a.dtype)
+        assert_raises(ValueError, f_reduce, a, axis=0, out=out)
+        if output_shape != (1, 3):
+            assert_raises(ValueError, f_reduce, a, axis=0, out=out,
+                          keepdims=True)
+        else:
+            check = f_reduce(a, axis=0, out=out, keepdims=True)
+            assert_(check is out)
+            assert_array_equal(check, f_reduce(a, axis=0, keepdims=True))
 
     def test_no_doc_string(self):
         # gh-9337
@@ -1984,3 +2003,21 @@ def test_ufunc_noncontiguous(ufunc):
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+
+
+@pytest.mark.parametrize('ufunc', [np.sign, np.equal])
+def test_ufunc_warn_with_nan(ufunc):
+    # issue gh-15127
+    # test that calling certain ufuncs with a non-standard `nan` value does not
+    # emit a warning
+    # `b` holds a 64 bit signaling nan: the most significant bit of the
+    # significand is zero.
+    b = np.array([0x7ff0000000000001], 'i8').view('f8')
+    assert np.isnan(b)
+    if ufunc.nin == 1:
+        ufunc(b)
+    elif ufunc.nin == 2:
+        ufunc(b, b.copy())
+    else:
+        raise ValueError('ufunc with more than 2 inputs')
+

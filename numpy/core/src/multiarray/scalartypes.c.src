@@ -54,63 +54,9 @@ NPY_NO_EXPORT PyTypeObject PyTimeIntegerArrType_Type;
  *         Floating, ComplexFloating, Flexible, Character#
  */
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.@name@",                             /* tp_name*/
-    sizeof(PyObject),                           /* tp_basicsize*/
-    0,                                          /* tp_itemsize */
-    /* methods */
-    0,                                          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    0,                                          /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.@name@",
+    .tp_basicsize = sizeof(PyObject),
 };
 /**end repeat**/
 
@@ -226,20 +172,6 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 
 /**end repeat**/
 
-#if !defined(NPY_PY3K)
-/**begin repeat
- *
- * #name = divide#
- */
-static PyObject *
-gentype_@name@(PyObject *m1, PyObject *m2)
-{
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
-    return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
-}
-/**end repeat**/
-#endif
-
 /* Get a nested slot, or NULL if absent */
 #define GET_NESTED_SLOT(type, group, slot) \
     ((type)->group == NULL ? NULL : (type)->group->slot)
@@ -293,27 +225,6 @@ gentype_@name@(PyObject *m1)
 }
 /**end repeat**/
 
-#if !defined(NPY_PY3K)
-/**begin repeat
- *
- * #name = long, oct, hex#
- */
-static PyObject *
-gentype_@name@(PyObject *m1)
-{
-    PyObject *arr, *ret;
-
-    arr = PyArray_FromScalar(m1, NULL);
-    if (arr == NULL) {
-        return NULL;
-    }
-    ret = Py_TYPE(arr)->tp_as_number->nb_@name@(arr);
-    Py_DECREF(arr);
-    return ret;
-}
-/**end repeat**/
-#endif
-
 static int
 gentype_nonzero_number(PyObject *m1)
 {
@@ -324,11 +235,7 @@ gentype_nonzero_number(PyObject *m1)
     if (arr == NULL) {
         return -1;
     }
-#if defined(NPY_PY3K)
     ret = Py_TYPE(arr)->tp_as_number->nb_bool(arr);
-#else
-    ret = Py_TYPE(arr)->tp_as_number->nb_nonzero(arr);
-#endif
     Py_DECREF(arr);
     return ret;
 }
@@ -356,21 +263,9 @@ gentype_format(PyObject *self, PyObject *args)
     PyObject *format_spec;
     PyObject *obj, *ret;
 
-#if defined(NPY_PY3K)
     if (!PyArg_ParseTuple(args, "U:__format__", &format_spec)) {
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "O:__format__", &format_spec)) {
-        return NULL;
-    }
-
-    if (!PyUnicode_Check(format_spec) && !PyString_Check(format_spec)) {
-        PyErr_SetString(PyExc_TypeError,
-                "format must be a string");
-        return NULL;
-    }
-#endif
 
     /*
      * Convert to an appropriate Python type and call its format.
@@ -378,14 +273,10 @@ gentype_format(PyObject *self, PyObject *args)
      *       because it throws away precision.
      */
     if (Py_TYPE(self) == &PyBoolArrType_Type) {
-        obj = PyBool_FromLong(((PyBoolScalarObject *)self)->obval);
+        obj = PyBool_FromLong(PyArrayScalar_VAL(self, Bool));
     }
     else if (PyArray_IsScalar(self, Integer)) {
-#if defined(NPY_PY3K)
         obj = Py_TYPE(self)->tp_as_number->nb_int(self);
-#else
-        obj = Py_TYPE(self)->tp_as_number->nb_long(self);
-#endif
     }
     else if (PyArray_IsScalar(self, Floating)) {
         obj = Py_TYPE(self)->tp_as_number->nb_float(self);
@@ -454,6 +345,10 @@ format_@name@(@type@ val, npy_bool scientific,
  * over-ride repr and str of array-scalar strings and unicode to
  * remove NULL bytes and then call the corresponding functions
  * of string and unicode.
+ * 
+ * FIXME:
+ *   is this really a good idea?
+ *   stop using Py_UNICODE here.
  */
 
 /**begin repeat
@@ -967,7 +862,7 @@ static PyObject *
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-    return @name@type_@kind@_either(((Py@Name@ScalarObject *)self)->obval,
+    return @name@type_@kind@_either(PyArrayScalar_VAL(self, @Name@),
                                   TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
 }
 
@@ -975,7 +870,7 @@ static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
     PyObject *rstr, *istr, *ret;
-    npy_c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
+    npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
     TrimMode trim = TrimMode_DptZeros;
 
     if (npy_legacy_print_mode == 113) {
@@ -1039,7 +934,7 @@ c@name@type_@kind@(PyObject *self)
 static PyObject *
 halftype_@kind@(PyObject *self)
 {
-    npy_half val = ((PyHalfScalarObject *)self)->obval;
+    npy_half val = PyArrayScalar_VAL(self, Half);
     float floatval = npy_half_to_float(val);
     float absval;
 
@@ -1077,85 +972,29 @@ static PyObject *
     return npy_longdouble_to_PyLong(val);
 }
 
-#if !defined(NPY_PY3K)
-
-/**begin repeat1
- * #name = int, hex, oct#
- */
-static PyObject *
-@char@longdoubletype_@name@(PyObject *self)
-{
-    PyObject *ret;
-    PyObject *obj = @char@longdoubletype_long(self);
-    if (obj == NULL) {
-        return NULL;
-    }
-    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
-    Py_DECREF(obj);
-    return ret;
-}
-/**end repeat1**/
-
-#endif /* !defined(NPY_PY3K) */
-
 /**end repeat**/
 
 static PyNumberMethods gentype_as_number = {
-    (binaryfunc)gentype_add,                     /*nb_add*/
-    (binaryfunc)gentype_subtract,                /*nb_subtract*/
-    (binaryfunc)gentype_multiply,                /*nb_multiply*/
-#if !defined(NPY_PY3K)
-    (binaryfunc)gentype_divide,                  /*nb_divide*/
-#endif
-    (binaryfunc)gentype_remainder,               /*nb_remainder*/
-    (binaryfunc)gentype_divmod,                  /*nb_divmod*/
-    (ternaryfunc)gentype_power,                  /*nb_power*/
-    (unaryfunc)gentype_negative,
-    (unaryfunc)gentype_positive,                 /*nb_pos*/
-    (unaryfunc)gentype_absolute,                 /*(unaryfunc)gentype_abs,*/
-    (inquiry)gentype_nonzero_number,             /*nb_nonzero*/
-    (unaryfunc)gentype_invert,                   /*nb_invert*/
-    (binaryfunc)gentype_lshift,                  /*nb_lshift*/
-    (binaryfunc)gentype_rshift,                  /*nb_rshift*/
-    (binaryfunc)gentype_and,                     /*nb_and*/
-    (binaryfunc)gentype_xor,                     /*nb_xor*/
-    (binaryfunc)gentype_or,                      /*nb_or*/
-#if !defined(NPY_PY3K)
-    0,                                           /*nb_coerce*/
-#endif
-    (unaryfunc)gentype_int,                      /*nb_int*/
-#if defined(NPY_PY3K)
-    0,                                           /*nb_reserved*/
-#else
-    (unaryfunc)gentype_long,                     /*nb_long*/
-#endif
-    (unaryfunc)gentype_float,                    /*nb_float*/
-#if !defined(NPY_PY3K)
-    (unaryfunc)gentype_oct,                      /*nb_oct*/
-    (unaryfunc)gentype_hex,                      /*nb_hex*/
-#endif
-    0,                                           /*inplace_add*/
-    0,                                           /*inplace_subtract*/
-    0,                                           /*inplace_multiply*/
-#if !defined(NPY_PY3K)
-    0,                                           /*inplace_divide*/
-#endif
-    0,                                           /*inplace_remainder*/
-    0,                                           /*inplace_power*/
-    0,                                           /*inplace_lshift*/
-    0,                                           /*inplace_rshift*/
-    0,                                           /*inplace_and*/
-    0,                                           /*inplace_xor*/
-    0,                                           /*inplace_or*/
-    (binaryfunc)gentype_floor_divide,            /*nb_floor_divide*/
-    (binaryfunc)gentype_true_divide,             /*nb_true_divide*/
-    0,                                           /*nb_inplace_floor_divide*/
-    0,                                           /*nb_inplace_true_divide*/
-    (unaryfunc)NULL,                             /*nb_index*/
-#if PY_VERSION_HEX >= 0x03050000
-    0,                                           /*np_matmul*/
-    0,                                           /*np_inplace_matmul*/
-#endif
+    .nb_add = (binaryfunc)gentype_add,
+    .nb_subtract = (binaryfunc)gentype_subtract,
+    .nb_multiply = (binaryfunc)gentype_multiply,
+    .nb_remainder = (binaryfunc)gentype_remainder,
+    .nb_divmod = (binaryfunc)gentype_divmod,
+    .nb_power = (ternaryfunc)gentype_power,
+    .nb_negative = (unaryfunc)gentype_negative,
+    .nb_positive = (unaryfunc)gentype_positive,
+    .nb_absolute = (unaryfunc)gentype_absolute,
+    .nb_bool = (inquiry)gentype_nonzero_number,
+    .nb_invert = (unaryfunc)gentype_invert,
+    .nb_lshift = (binaryfunc)gentype_lshift,
+    .nb_rshift = (binaryfunc)gentype_rshift,
+    .nb_and = (binaryfunc)gentype_and,
+    .nb_xor = (binaryfunc)gentype_xor,
+    .nb_or = (binaryfunc)gentype_or,
+    .nb_int = (unaryfunc)gentype_int,
+    .nb_float = (unaryfunc)gentype_float,
+    .nb_floor_divide = (binaryfunc)gentype_floor_divide,
+    .nb_true_divide = (binaryfunc)gentype_true_divide,
 };
 
 
@@ -1246,11 +1085,7 @@ inttype_denominator_get(PyObject *self)
 static PyObject *
 gentype_data_get(PyObject *self)
 {
-#if defined(NPY_PY3K)
     return PyMemoryView_FromObject(self);
-#else
-    return PyBuffer_FromObject(self, 0, Py_END_OF_BUFFER);
-#endif
 }
 
 
@@ -1263,11 +1098,6 @@ gentype_itemsize_get(PyObject *self)
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-#ifndef Py_UNICODE_WIDE
-    if (typecode->type_num == NPY_UNICODE) {
-        elsize >>= 1;
-    }
-#endif
     ret = PyInt_FromLong((long) elsize);
     Py_DECREF(typecode);
     return ret;
@@ -1293,7 +1123,6 @@ gentype_sizeof(PyObject *self)
     return PyLong_FromSsize_t(nbytes);
 }
 
-#if PY_VERSION_HEX >= 0x03000000
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {
@@ -1307,17 +1136,6 @@ gentype_struct_free(PyObject *ptr)
     PyArray_free(arrif->shape);
     PyArray_free(arrif);
 }
-#else
-NPY_NO_EXPORT void
-gentype_struct_free(void *ptr, void *arg)
-{
-    PyArrayInterface *arrif = (PyArrayInterface *)ptr;
-    Py_DECREF((PyObject *)arg);
-    Py_XDECREF(arrif->descr);
-    PyArray_free(arrif->shape);
-    PyArray_free(arrif);
-}
-#endif
 
 static PyObject *
 gentype_struct_get(PyObject *self)
@@ -1438,7 +1256,7 @@ gentype_real_get(PyObject *self)
         return ret;
     }
     else if (PyArray_IsScalar(self, Object)) {
-        PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+        PyObject *obj = PyArrayScalar_VAL(self, Object);
         ret = PyObject_GetAttrString(obj, "real");
         if (ret != NULL) {
             return ret;
@@ -1463,7 +1281,7 @@ gentype_imag_get(PyObject *self)
         ret = PyArray_Scalar(ptr + typecode->elsize, typecode, NULL);
     }
     else if (PyArray_IsScalar(self, Object)) {
-        PyObject *obj = ((PyObjectScalarObject *)self)->obval;
+        PyObject *obj = PyArrayScalar_VAL(self, Object);
         PyArray_Descr *newtype;
         ret = PyObject_GetAttrString(obj, "imag");
         if (ret == NULL) {
@@ -1671,9 +1489,6 @@ gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
-static Py_ssize_t
-gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
-
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1696,8 +1511,9 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         PyObject *new;
         char *newmem;
 
-        gentype_getreadbuf(self, 0, (void **)&data);
         descr = PyArray_DescrFromScalar(self);
+        data = (void *)scalar_value(self, descr);
+
         newmem = PyObject_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
@@ -1831,9 +1647,7 @@ static PyObject *
 gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     PyObject *ret = NULL, *obj = NULL, *mod = NULL;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#endif
     const char *buffer;
     Py_ssize_t buflen;
 
@@ -1843,13 +1657,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-#if defined(NPY_PY3K)
-    if (PyArray_IsScalar(self, Unicode)) {
-        /* Unicode on Python 3 does not expose the buffer interface */
-        buffer = PyUnicode_AS_DATA(self);
-        buflen = PyUnicode_GET_DATA_SIZE(self);
-    }
-    else if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
+    if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
         buffer = view.buf;
         buflen = view.len;
         /*
@@ -1865,12 +1673,6 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-#else
-    if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-#endif
 
     mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
@@ -1884,7 +1686,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyObject_GetAttrString((PyObject *)self, "dtype");
     if (PyArray_IsScalar(self, Object)) {
-        PyObject *val = ((PyObjectScalarObject *)self)->obval;
+        PyObject *val = PyArrayScalar_VAL(self, Object);
         PyObject *tup = Py_BuildValue("NO", obj, val);
         if (tup == NULL) {
             return NULL;
@@ -1910,48 +1712,13 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         PyTuple_SET_ITEM(ret, 1, tup);
     }
     else {
-#ifndef Py_UNICODE_WIDE
-        /*
-         * We need to expand the buffer so that we always write
-         * UCS4 to disk for pickle of unicode scalars.
-         *
-         * This could be in a unicode_reduce function, but
-         * that would require re-factoring.
-         */
-        int alloc = 0;
-        char *tmp;
-        int newlen;
-
-        if (PyArray_IsScalar(self, Unicode)) {
-            tmp = PyArray_malloc(buflen*2);
-            if (tmp == NULL) {
-                Py_DECREF(ret);
-                return PyErr_NoMemory();
-            }
-            alloc = 1;
-            newlen = PyUCS2Buffer_AsUCS4((Py_UNICODE *)buffer,
-                    (npy_ucs4 *)tmp,
-                    buflen / 2, buflen / 2);
-            buflen = newlen*4;
-            buffer = tmp;
-        }
-#endif
         mod = PyBytes_FromStringAndSize(buffer, buflen);
         if (mod == NULL) {
             Py_DECREF(ret);
-#ifndef Py_UNICODE_WIDE
-            ret = NULL;
-            goto fail;
-#else
             return NULL;
-#endif
         }
         PyTuple_SET_ITEM(ret, 1,
                 Py_BuildValue("NN", obj, mod));
-#ifndef Py_UNICODE_WIDE
-fail:
-        if (alloc) PyArray_free((char *)buffer);
-#endif
     }
     return ret;
 }
@@ -2289,12 +2056,10 @@ static PyMethodDef gentype_methods[] = {
     {"round",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#if defined(NPY_PY3K)
     /* Hook for the round() builtin */
     {"__round__",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#endif
     /* For the format function */
     {"__format__",
         gentype_format,
@@ -2555,164 +2320,32 @@ fail:
 }
 
 static PyMappingMethods voidtype_as_mapping = {
-    (lenfunc)voidtype_length,                    /*mp_length*/
-    (binaryfunc)voidtype_subscript,              /*mp_subscript*/
-    (objobjargproc)voidtype_ass_subscript,       /*mp_ass_subscript*/
+    .mp_length = (lenfunc)voidtype_length,
+    .mp_subscript = (binaryfunc)voidtype_subscript,
+    .mp_ass_subscript = (objobjargproc)voidtype_ass_subscript,
 };
 
 
 static PySequenceMethods voidtype_as_sequence = {
-    (lenfunc)voidtype_length,                    /*sq_length*/
-    0,                                           /*sq_concat*/
-    0,                                           /*sq_repeat*/
-    (ssizeargfunc)voidtype_item,                 /*sq_item*/
-    0,                                           /*sq_slice*/
-    (ssizeobjargproc)voidtype_ass_item,          /*sq_ass_item*/
-    0,                                           /* ssq_ass_slice */
-    0,                                           /* sq_contains */
-    0,                                           /* sq_inplace_concat */
-    0,                                           /* sq_inplace_repeat */
+    .sq_length = (lenfunc)voidtype_length,
+    .sq_item = (ssizeargfunc)voidtype_item,
+    .sq_ass_item = (ssizeobjargproc)voidtype_ass_item,
 };
 
-
-static Py_ssize_t
-gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    int numbytes;
-    PyArray_Descr *outcode;
-
-    if (segment != 0) {
-        PyErr_SetString(PyExc_SystemError,
-                "Accessing non-existent array segment");
-        return -1;
-    }
-
-    outcode = PyArray_DescrFromScalar(self);
-    numbytes = outcode->elsize;
-    *ptrptr = (void *)scalar_value(self, outcode);
-
-#ifndef Py_UNICODE_WIDE
-    if (outcode->type_num == NPY_UNICODE) {
-        numbytes >>= 1;
-    }
-#endif
-    Py_DECREF(outcode);
-    return numbytes;
-}
-
-#if !defined(NPY_PY3K)
-static Py_ssize_t
-gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
-{
-    PyArray_Descr *outcode;
-
-    outcode = PyArray_DescrFromScalar(self);
-    if (lenp) {
-        *lenp = outcode->elsize;
-#ifndef Py_UNICODE_WIDE
-        if (outcode->type_num == NPY_UNICODE) {
-            *lenp >>= 1;
-        }
-#endif
-    }
-    Py_DECREF(outcode);
-    return 1;
-}
-
-static Py_ssize_t
-gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
-{
-    if (PyArray_IsScalar(self, String) ||
-            PyArray_IsScalar(self, Unicode)) {
-        return gentype_getreadbuf(self, segment, (void **)ptrptr);
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                "Non-character array cannot be interpreted "\
-                "as character buffer.");
-        return -1;
-    }
-}
-#endif /* !defined(NPY_PY3K) */
 
 static PyBufferProcs gentype_as_buffer = {
-#if !defined(NPY_PY3K)
-    gentype_getreadbuf,                          /* bf_getreadbuffer*/
-    NULL,                                        /* bf_getwritebuffer*/
-    gentype_getsegcount,                         /* bf_getsegcount*/
-    gentype_getcharbuf,                          /* bf_getcharbuffer*/
-#endif
-    gentype_getbuffer,                           /* bf_getbuffer */
-    NULL,                                        /* bf_releasebuffer */
+    .bf_getbuffer = gentype_getbuffer,
+    /* release buffer not defined (see buffer.c) */
 };
 
 
-#if defined(NPY_PY3K)
 #define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE
 #define LEAFFLAGS  Py_TPFLAGS_DEFAULT
-#else
-#define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES
-#define LEAFFLAGS  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES
-#endif
 
 NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.generic",                            /* tp_name*/
-    sizeof(PyObject),                           /* tp_basicsize*/
-    0,                                          /* tp_itemsize */
-    /* methods */
-    0,                                          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    0,                                          /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.generic",
+    .tp_basicsize = sizeof(PyObject),
 };
 
 static void
@@ -2731,183 +2364,163 @@ void_dealloc(PyVoidScalarObject *v)
 static void
 object_arrtype_dealloc(PyObject *v)
 {
-    Py_XDECREF(((PyObjectScalarObject *)v)->obval);
+    Py_XDECREF(PyArrayScalar_VAL(v, Object));
     Py_TYPE(v)->tp_free(v);
 }
 
-/*
- * string and unicode inherit from Python Type first and so GET_ITEM
- * is different to get to the Python Type.
- *
- * ok is a work-around for a bug in complex_new that doesn't allocate
- *  memory from the sub-types memory allocator.
- */
-
-#define _WORK(num)  \
-    if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) { \
-        PyTypeObject *sup; \
-        /* We are inheriting from a Python type as well so \
-           give it first dibs on conversion */ \
-        sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
-        /* Prevent recursion */ \
-        if (thisfunc != sup->tp_new) { \
-            robj = sup->tp_new(type, args, kwds); \
-            if (robj != NULL) goto finish;        \
-            if (PyTuple_GET_SIZE(args)!=1) return NULL; \
-            PyErr_Clear(); \
-        } \
-        /* now do default conversion */ \
-    }
-
-#define _WORK1 _WORK(1)
-#define _WORKz _WORK(0)
-#define _WORK0
+static void
+unicode_arrtype_dealloc(PyObject *v)
+{
+    /* note: may be null if it was never requested */
+    PyMem_Free(PyArrayScalar_VAL(v, Unicode));
+    /* delegate to the base class */
+    PyUnicode_Type.tp_dealloc(v);
+}
 
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
- *         clongdouble, string, unicode, object#
+ *         clongdouble, string, unicode#
  * #Name = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
  *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
- *         CLongDouble, String, Unicode, Object#
+ *         CLongDouble, String, Unicode#
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
  *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
- *         CLONGDOUBLE, STRING, UNICODE, OBJECT#
- * #work = 0,0,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
- * #default = 0*17,1*2,2#
+ *         CLONGDOUBLE, STRING, UNICODE#
  */
 
-#define _NPY_UNUSED2_1
-#define _NPY_UNUSED2_z
-#define _NPY_UNUSED2_0 NPY_UNUSED
-#define _NPY_UNUSED1_0
-#define _NPY_UNUSED1_1
-#define _NPY_UNUSED1_2 NPY_UNUSED
+/* used as a pattern for testing token equality */
+#define _@TYPE@_IS_@TYPE@
 
 static PyObject *
-@name@_arrtype_new(PyTypeObject *_NPY_UNUSED1_@default@(type), PyObject *args, PyObject *_NPY_UNUSED2_@work@(kwds))
+@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyObject *obj = NULL;
-    PyObject *robj;
-    PyArrayObject *arr;
-    PyArray_Descr *typecode = NULL;
-#if (@work@ != 0) || (@default@ == 1)
-    void *thisfunc = (void *)@name@_arrtype_new;
+    /* allow base-class (if any) to do conversion */
+#if defined(_@TYPE@_IS_UNICODE)
+    PyObject *from_superclass = PyUnicode_Type.tp_new(type, args, kwds);
+#elif defined(_@TYPE@_IS_STRING)
+    PyObject *from_superclass = PyBytes_Type.tp_new(type, args, kwds);
+#elif defined(_@TYPE@_IS_DOUBLE)
+    PyObject *from_superclass = PyFloat_Type.tp_new(type, args, kwds);
 #endif
-#if !(@default@ == 2)
-    int itemsize;
-    void *dest, *src;
+#if defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_DOUBLE)
+    if (from_superclass == NULL) {
+        /* don't clear the exception unless numpy can handle the arguments */
+        if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) {
+            return NULL;
+        }
+        PyErr_Clear();
+    }
+    else {
+#if defined(_@TYPE@_IS_UNICODE)
+        PyArrayScalar_VAL(from_superclass, Unicode) = NULL;
 #endif
-
-    /*
-     * allow base-class (if any) to do conversion
-     * If successful, this will jump to finish:
-     */
-    _WORK@work@
+        return from_superclass;
+    }
+#endif
 
     /* TODO: include type name in error message, which is not @name@ */
-    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+    PyObject *obj = NULL;
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
         return NULL;
     }
-    typecode = PyArray_DescrFromType(NPY_@TYPE@);
+    PyArray_Descr *typecode = PyArray_DescrFromType(NPY_@TYPE@);
     if (typecode == NULL) {
         return NULL;
     }
-    /*
-     * typecode is new reference and stolen by
-     * PyArray_FromAny but not PyArray_Scalar
-     */
     if (obj == NULL) {
-#if @default@ == 0
-        robj = PyArray_Scalar(NULL, typecode, NULL);
+        PyObject *robj = PyArray_Scalar(NULL, typecode, NULL);
+        Py_DECREF(typecode);
         if (robj == NULL) {
-            Py_DECREF(typecode);
             return NULL;
         }
-        memset(&((Py@Name@ScalarObject *)robj)->obval, 0, sizeof(npy_@name@));
-#elif @default@ == 1
-        robj = PyArray_Scalar(NULL, typecode, NULL);
-#elif @default@ == 2
-        Py_INCREF(Py_None);
-        robj = Py_None;
+#if !defined(_@TYPE@_IS_STRING) && !defined(_@TYPE@_IS_UNICODE)
+        memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
 #endif
-        Py_DECREF(typecode);
-        goto finish;
+        return robj;
     }
 
-    /*
-     * It is expected at this point that robj is a PyArrayScalar
-     * (even for Object Data Type)
-     */
-    arr = (PyArrayObject *)PyArray_FromAny(obj, typecode,
-                                    0, 0, NPY_ARRAY_FORCECAST, NULL);
-    if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
+    /* PyArray_FromAny steals a reference, reclaim it before it's gone */
+    Py_INCREF(typecode);
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
+            obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+    if (arr == NULL) {
+        Py_DECREF(typecode);
+        return NULL;
+    }
+    if (PyArray_NDIM(arr) > 0) {
+        Py_DECREF(typecode);
         return (PyObject *)arr;
     }
-    /* 0-d array */
-    robj = PyArray_ToScalar(PyArray_DATA(arr), arr);
+
+    /* Convert the 0-d array to a scalar*/
+    PyObject *robj = PyArray_ToScalar(PyArray_DATA(arr), arr);
     Py_DECREF(arr);
 
-finish:
-    /*
-     * In OBJECT case, robj is no longer a
-     * PyArrayScalar at this point but the
-     * remaining code assumes it is
-     */
-#if @default@ == 2
-    return robj;
-#else
-    /* Normal return */
-    if ((robj == NULL) || (Py_TYPE(robj) == type)) {
+    if (robj == NULL || Py_TYPE(robj) == type) {
+        Py_DECREF(typecode);
         return robj;
     }
 
     /*
-     * This return path occurs when the requested type is not created
-     * but another scalar object is created instead (i.e. when
-     * the base-class does the conversion in _WORK macro)
+     * `typecode` does not contain any subclass information, as it was thrown
+     * out by the call to `PyArray_DescrFromType` - we need to add this back.
+     *
+     * FIXME[gh-15467]: This branch is also hit for the "shadowed" builtin
+     * types like `longdouble` (which on platforms where they are the same size
+     * is shadowed by `double`), because `PyArray_FromAny` returns the
+     * shadowing type rather than the requested one.
      */
 
     /* Need to allocate new type and copy data-area over */
+    int itemsize;
     if (type->tp_itemsize) {
         itemsize = PyBytes_GET_SIZE(robj);
     }
     else {
         itemsize = 0;
     }
-    obj = type->tp_alloc(type, itemsize);
-    if (obj == NULL) {
+    PyObject *new_obj = type->tp_alloc(type, itemsize);
+    if (new_obj == NULL) {
         Py_DECREF(robj);
+        Py_DECREF(typecode);
         return NULL;
     }
-    /* typecode will be NULL */
-    typecode = PyArray_DescrFromType(NPY_@TYPE@);
-    dest = scalar_value(obj, typecode);
-    src = scalar_value(robj, typecode);
+    void *dest = scalar_value(new_obj, typecode);
+    void *src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
-#if @default@ == 0
-    *((npy_@name@ *)dest) = *((npy_@name@ *)src);
-#elif @default@ == 1 /* unicode and strings */
+#if defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_UNICODE)
     if (itemsize == 0) { /* unicode */
-#if PY_VERSION_HEX >= 0x03030000
         itemsize = PyUnicode_GetLength(robj) * PyUnicode_KIND(robj);
-#else
-        itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
-#endif
     }
     memcpy(dest, src, itemsize);
-    /* @default@ == 2 won't get here */
+#else
+    *((npy_@name@ *)dest) = *((npy_@name@ *)src);
 #endif
     Py_DECREF(robj);
-    return obj;
-#endif
+    return new_obj;
 }
+#undef _@TYPE@_IS_@TYPE@
+
 /**end repeat**/
 
-#undef _WORK1
-#undef _WORKz
-#undef _WORK0
-#undef _WORK
+static PyObject *
+object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj = Py_None;
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
+        return NULL;
+    }
+    PyArray_Descr *typecode = PyArray_DescrFromType(NPY_OBJECT);
+    if (typecode == NULL) {
+        return NULL;
+    }
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(obj, typecode,
+                                    0, 0, NPY_ARRAY_FORCECAST, NULL);
+    return PyArray_Return(arr);
+}
 
 /**begin repeat
  * #name = datetime, timedelta#
@@ -2922,8 +2535,8 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
-    /* TODO: include type name in error message, which is not @name@ */
-    if (!PyArg_ParseTuple(args, "|OO", &obj, &meta_obj)) {
+    char *kwnames[] = {"", "", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &obj, &meta_obj)) {
         return NULL;
     }
 
@@ -2976,12 +2589,13 @@ static PyObject *
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
-bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_UNUSED(kwds))
+bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
 {
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    if (!PyArg_ParseTuple(args, "|O:bool_", &obj)) {
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
         return NULL;
     }
     if (obj == NULL) {
@@ -3079,74 +2693,20 @@ bool_index(PyObject *a)
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
-    0,                                           /* nb_add */
-    0,                                           /* nb_subtract */
-    0,                                           /* nb_multiply */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_divide */
-#endif
-    0,                                           /* nb_remainder */
-    0,                                           /* nb_divmod */
-    0,                                           /* nb_power */
-    0,                                           /* nb_negative */
-    0,                                           /* nb_positive */
-    0,                                           /* nb_absolute */
-    (inquiry)bool_arrtype_nonzero,               /* nb_nonzero / nb_bool */
-    0,                                           /* nb_invert */
-    0,                                           /* nb_lshift */
-    0,                                           /* nb_rshift */
-    (binaryfunc)bool_arrtype_and,                /* nb_and */
-    (binaryfunc)bool_arrtype_xor,                /* nb_xor */
-    (binaryfunc)bool_arrtype_or,                 /* nb_or */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_coerce */
-#endif
-    0,                                           /* nb_int */
-#if defined(NPY_PY3K)
-    0,                                           /* nb_reserved */
-#else
-    0,                                           /* nb_long */
-#endif
-    0,                                           /* nb_float */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_oct */
-    0,                                           /* nb_hex */
-#endif
-    /* Added in release 2.0 */
-    0,                                           /* nb_inplace_add */
-    0,                                           /* nb_inplace_subtract */
-    0,                                           /* nb_inplace_multiply */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_inplace_divide */
-#endif
-    0,                                           /* nb_inplace_remainder */
-    0,                                           /* nb_inplace_power */
-    0,                                           /* nb_inplace_lshift */
-    0,                                           /* nb_inplace_rshift */
-    0,                                           /* nb_inplace_and */
-    0,                                           /* nb_inplace_xor */
-    0,                                           /* nb_inplace_or */
-    /* Added in release 2.2 */
-    /* The following require the Py_TPFLAGS_HAVE_CLASS flag */
-    0,                                           /* nb_floor_divide */
-    0,                                           /* nb_true_divide */
-    0,                                           /* nb_inplace_floor_divide */
-    0,                                           /* nb_inplace_true_divide */
-    /* Added in release 2.5 */
-    0,                                           /* nb_index */
+    .nb_bool = (inquiry)bool_arrtype_nonzero,
+    .nb_and = (binaryfunc)bool_arrtype_and,
+    .nb_xor = (binaryfunc)bool_arrtype_xor,
+    .nb_or = (binaryfunc)bool_arrtype_or,
 };
 
 static PyObject *
-void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
+void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj, *arr;
     PyObject *new = NULL;
 
-    if (!PyArg_ParseTuple(args, "O:void", &obj)) {
+    char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:void", kwnames, &obj)) {
         return NULL;
     }
     /*
@@ -3158,11 +2718,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             (PyArray_Check(obj) &&
                      PyArray_NDIM((PyArrayObject *)obj)==0 &&
                      PyArray_ISINTEGER((PyArrayObject *)obj))) {
-#if defined(NPY_PY3K)
         new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
-#else
-        new = Py_TYPE(obj)->tp_as_number->nb_long(obj);
-#endif
     }
     if (new && PyLong_Check(new)) {
         PyObject *ret;
@@ -3210,7 +2766,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    return (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
+    return (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
 }
 /**end repeat**/
 
@@ -3221,7 +2777,7 @@ static npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
     if (x == -1) {
         x = -2;
     }
@@ -3232,34 +2788,30 @@ static npy_hash_t
 static npy_hash_t
 ulong_arrtype_hash(PyObject *obj)
 {
-    PyObject * l = PyLong_FromUnsignedLong(((PyULongScalarObject*)obj)->obval);
+    PyObject * l = PyLong_FromUnsignedLong(PyArrayScalar_VAL(obj, ULong));
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
 }
 
-#if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
 static npy_hash_t
 int_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(((PyIntScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, Int));
     if (x == -1) {
         x = -2;
     }
     return x;
 }
-#endif
 
-#if defined(NPY_PY3K)
 static npy_hash_t
 long_arrtype_hash(PyObject *obj)
 {
-    PyObject * l = PyLong_FromLong(((PyLongScalarObject*)obj)->obval);
+    PyObject * l = PyLong_FromLong(PyArrayScalar_VAL(obj, Long));
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
 }
-#endif
 
 /**begin repeat
  * #char = ,u#
@@ -3270,7 +2822,7 @@ static NPY_INLINE npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
     PyObject * l = PyLong_From@Word@LongLong(
-                                 ((Py@Char@LongLongScalarObject*)obj)->obval);
+                                 PyArrayScalar_VAL(obj, @Char@LongLong));
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
@@ -3286,7 +2838,7 @@ static NPY_INLINE npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(((Py@name@ScalarObject *)obj)->obval);
+    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
     if (x == -1) {
         x = -2;
     }
@@ -3297,7 +2849,7 @@ static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t y;
-    npy_longlong x = (((Py@name@ScalarObject *)obj)->obval);
+    npy_longlong x = (PyArrayScalar_VAL(obj, @name@));
 
     if ((x <= LONG_MAX)) {
         y = (npy_hash_t) x;
@@ -3330,7 +2882,7 @@ static npy_hash_t
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashDouble((double) ((Py@name@ScalarObject *)obj)->obval);
+    return _Py_HashDouble((double) PyArrayScalar_VAL(obj, @name@));
 }
 
 /* borrowed from complex_hash */
@@ -3339,13 +2891,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
     hashreal = _Py_HashDouble((double)
-            (((PyC@name@ScalarObject *)obj)->obval).real);
+            PyArrayScalar_VAL(obj, C@name@).real);
 
     if (hashreal == -1) {
         return -1;
     }
     hashimag = _Py_HashDouble((double)
-            (((PyC@name@ScalarObject *)obj)->obval).imag);
+            PyArrayScalar_VAL(obj, C@name@).imag);
     if (hashimag == -1) {
         return -1;
     }
@@ -3360,13 +2912,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 static npy_hash_t
 half_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashDouble(npy_half_to_double(((PyHalfScalarObject *)obj)->obval));
+    return _Py_HashDouble(npy_half_to_double(PyArrayScalar_VAL(obj, Half)));
 }
 
 static npy_hash_t
 object_arrtype_hash(PyObject *obj)
 {
-    return PyObject_Hash(((PyObjectScalarObject *)obj)->obval);
+    return PyObject_Hash(PyArrayScalar_VAL(obj, Object));
 }
 
 /* we used to just hash the pointer */
@@ -3481,89 +3033,19 @@ object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 }
 
 static PySequenceMethods object_arrtype_as_sequence = {
-    (lenfunc)object_arrtype_length,              /*sq_length*/
-    (binaryfunc)object_arrtype_concat,           /*sq_concat*/
-    (ssizeargfunc)object_arrtype_repeat,         /*sq_repeat*/
-    0,                                           /*sq_item*/
-    0,                                           /*sq_slice*/
-    0,                                           /* sq_ass_item */
-    0,                                           /* sq_ass_slice */
-    (objobjproc)object_arrtype_contains,         /* sq_contains */
-    (binaryfunc)object_arrtype_inplace_concat,   /* sq_inplace_concat */
-    (ssizeargfunc)object_arrtype_inplace_repeat, /* sq_inplace_repeat */
+    .sq_length = (lenfunc)object_arrtype_length,
+    .sq_concat = (binaryfunc)object_arrtype_concat,
+    .sq_repeat = (ssizeargfunc)object_arrtype_repeat,
+    .sq_contains = (objobjproc)object_arrtype_contains,
+    .sq_inplace_concat = (binaryfunc)object_arrtype_inplace_concat,
+    .sq_inplace_repeat = (ssizeargfunc)object_arrtype_inplace_repeat,
 };
 
 static PyMappingMethods object_arrtype_as_mapping = {
-    (lenfunc)object_arrtype_length,
-    (binaryfunc)object_arrtype_subscript,
-    (objobjargproc)object_arrtype_ass_subscript,
+    .mp_length = (lenfunc)object_arrtype_length,
+    .mp_subscript = (binaryfunc)object_arrtype_subscript,
+    .mp_ass_subscript = (objobjargproc)object_arrtype_ass_subscript,
 };
-
-#if !defined(NPY_PY3K)
-static Py_ssize_t
-object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
-{
-    Py_ssize_t newlen;
-    int cnt;
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getsegcount == NULL ||
-            (cnt = (*pb->bf_getsegcount)(self->obval, &newlen)) != 1) {
-        return 0;
-    }
-    if (lenp) {
-        *lenp = newlen;
-    }
-    return cnt;
-}
-
-static Py_ssize_t
-object_arrtype_getreadbuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getreadbuffer == NULL ||
-            pb->bf_getsegcount == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected a readable buffer object");
-        return -1;
-    }
-    return (*pb->bf_getreadbuffer)(self->obval, segment, ptrptr);
-}
-
-static Py_ssize_t
-object_arrtype_getwritebuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getwritebuffer == NULL ||
-            pb->bf_getsegcount == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected a writeable buffer object");
-        return -1;
-    }
-    return (*pb->bf_getwritebuffer)(self->obval, segment, ptrptr);
-}
-
-static Py_ssize_t
-object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
-                          constchar **ptrptr)
-{
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getcharbuffer == NULL ||
-            pb->bf_getsegcount == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected a character buffer object");
-        return -1;
-    }
-    return (*pb->bf_getcharbuffer)(self->obval, segment, ptrptr);
-}
-#endif
 
 static int
 object_arrtype_getbuffer(PyObjectScalarObject *self, Py_buffer *view, int flags)
@@ -3592,14 +3074,8 @@ object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
 }
 
 static PyBufferProcs object_arrtype_as_buffer = {
-#if !defined(NPY_PY3K)
-    (readbufferproc)object_arrtype_getreadbuf,
-    (writebufferproc)object_arrtype_getwritebuf,
-    (segcountproc)object_arrtype_getsegcount,
-    (charbufferproc)object_arrtype_getcharbuf,
-#endif
-    (getbufferproc)object_arrtype_getbuffer,
-    (releasebufferproc)object_arrtype_releasebuffer,
+    .bf_getbuffer = (getbufferproc)object_arrtype_getbuffer,
+    .bf_releasebuffer = (releasebufferproc)object_arrtype_releasebuffer,
 };
 
 static PyObject *
@@ -3609,62 +3085,16 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 }
 
 NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.object_",                            /* tp_name*/
-    sizeof(PyObjectScalarObject),               /* tp_basicsize*/
-    0,                                          /* tp_itemsize */
-    (destructor)object_arrtype_dealloc,         /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    &object_arrtype_as_sequence,                /* tp_as_sequence */
-    &object_arrtype_as_mapping,                 /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    (ternaryfunc)object_arrtype_call,           /* tp_call */
-    0,                                          /* tp_str */
-    (getattrofunc)object_arrtype_getattro,      /* tp_getattro */
-    (setattrofunc)object_arrtype_setattro,      /* tp_setattro */
-    &object_arrtype_as_buffer,                  /* tp_as_buffer */
-    0,                                          /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.object_",
+    .tp_basicsize = sizeof(PyObjectScalarObject),
+    .tp_dealloc = (destructor)object_arrtype_dealloc,
+    .tp_as_sequence = &object_arrtype_as_sequence,
+    .tp_as_mapping = &object_arrtype_as_mapping,
+    .tp_call = (ternaryfunc)object_arrtype_call,
+    .tp_getattro = (getattrofunc)object_arrtype_getattro,
+    .tp_setattro = (setattrofunc)object_arrtype_setattro,
+    .tp_as_buffer = &object_arrtype_as_buffer,
 };
 
 static PyObject *
@@ -3693,13 +3123,8 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 
 #define NAME_bool "bool"
 #define NAME_void "void"
-#if defined(NPY_PY3K)
 #define NAME_string "bytes"
 #define NAME_unicode "str"
-#else
-#define NAME_string "string"
-#define NAME_unicode "unicode"
-#endif
 
 /**begin repeat
  * #name = bool, string, unicode, void#
@@ -3707,62 +3132,9 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
  * #ex = _,_,_,#
  */
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy." NAME_@name@ "@ex@",                /* tp_name*/
-    sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
-    0,                                          /* tp_itemsize */
-    0,                                          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    0,                                          /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy." NAME_@name@ "@ex@",
+    .tp_basicsize = sizeof(Py@NAME@ScalarObject),
 };
 /**end repeat**/
 
@@ -3796,72 +3168,18 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 #define _THIS_SIZE "256"
 #endif
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.@name@" _THIS_SIZE,                  /* tp_name*/
-    sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
-    0,                                          /* tp_itemsize */
-    0,                                          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    0,                                          /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.@name@" _THIS_SIZE,
+    .tp_basicsize = sizeof(Py@NAME@ScalarObject),
 };
+
 
 #undef _THIS_SIZE
 /**end repeat**/
 
 
 static PyMappingMethods gentype_as_mapping = {
-    NULL,
-    (binaryfunc)gen_arrtype_subscript,
-    NULL
+    .mp_subscript = (binaryfunc)gen_arrtype_subscript,
 };
 
 
@@ -3887,62 +3205,10 @@ static PyMappingMethods gentype_as_mapping = {
 #endif
 
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(0, 0)
-#else
-    PyObject_HEAD_INIT(0)
-    0,                                          /* ob_size */
-#endif
-    "numpy.@name@" _THIS_SIZE,                  /* tp_name*/
-    sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
-    0,                                          /* tp_itemsize*/
-    0,                                          /* tp_dealloc*/
-    0,                                          /* tp_print*/
-    0,                                          /* tp_getattr*/
-    0,                                          /* tp_setattr*/
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr*/
-    0,                                          /* tp_as_number*/
-    0,                                          /* tp_as_sequence*/
-    0,                                          /* tp_as_mapping*/
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call*/
-    0,                                          /* tp_str*/
-    0,                                          /* tp_getattro*/
-    0,                                          /* tp_setattro*/
-    0,                                          /* tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags*/
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    0,                                          /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.@name@" _THIS_SIZE,
+    .tp_basicsize = sizeof(Py@NAME@ScalarObject),
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };
 #undef _THIS_SIZE
 
@@ -4275,38 +3541,6 @@ initialize_casting_tables(void)
     }
 }
 
-#ifndef NPY_PY3K
-/*
- * In python2, the `float` and `complex` types still implement the obsolete
- * "tp_print" method, which uses CPython's float-printing routines to print the
- * float.  Numpy's float_/cfloat inherit from Python float/complex, but
- * override its tp_repr and tp_str methods. In order to avoid an inconsistency
- * with the inherited tp_print, we need to override it too.
- *
- * In python3 the tp_print method is reserved/unused.
- */
-static int
-doubletype_print(PyObject *o, FILE *fp, int flags)
-{
-    int ret;
-    PyObject *to_print;
-    if (flags & Py_PRINT_RAW) {
-        to_print = PyObject_Str(o);
-    }
-    else {
-        to_print = PyObject_Repr(o);
-    }
-
-    if (to_print == NULL) {
-        return -1;
-    }
-
-    ret = PyObject_Print(to_print, fp, Py_PRINT_RAW);
-    Py_DECREF(to_print);
-    return ret;
-}
-#endif
-
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
 static void init_basetypes(void);
@@ -4358,12 +3592,6 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
-#ifndef NPY_PY3K
-    PyDoubleArrType_Type.tp_print = &doubletype_print;
-    PyCDoubleArrType_Type.tp_print = &doubletype_print;
-#endif
-
-
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 
     PyStringArrType_Type.tp_alloc = NULL;
@@ -4410,6 +3638,9 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
+    PyUnicodeArrType_Type.tp_as_buffer = &gentype_as_buffer;
+
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
      *         half, float, longdouble, cfloat, clongdouble, void, object,
@@ -4441,20 +3672,14 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
-#if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyIntArrType_Type.tp_hash = int_arrtype_hash;
-#endif
 
-#if defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyLongArrType_Type.tp_hash = long_arrtype_hash;
-#endif
 
-#if (NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
-#endif
 
     /**begin repeat
      * #name = repr, str#
@@ -4497,14 +3722,7 @@ initialize_numeric_types(void)
      * does not return a normal Python type
      */
     @char@longdoubletype_as_number.nb_float = @char@longdoubletype_float;
-#if defined(NPY_PY3K)
     @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_long;
-#else
-    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_int;
-    @char@longdoubletype_as_number.nb_long = @char@longdoubletype_long;
-    @char@longdoubletype_as_number.nb_hex  = @char@longdoubletype_hex;
-    @char@longdoubletype_as_number.nb_oct  = @char@longdoubletype_oct;
-#endif
 
     Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
     Py@CHAR@LongDoubleArrType_Type.tp_repr = @char@longdoubletype_repr;

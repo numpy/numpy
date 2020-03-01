@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import gzip
 import os
@@ -9,6 +7,7 @@ import warnings
 import io
 import re
 import pytest
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
@@ -17,7 +16,7 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, Path
+from numpy.compat import asbytes, bytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -46,7 +45,6 @@ class TextIO(BytesIO):
         BytesIO.writelines(self, [asbytes(s) for s in lines])
 
 
-MAJVER, MINVER = sys.version_info[:2]
 IS_64BIT = sys.maxsize > 2**32
 try:
     import bz2
@@ -71,7 +69,7 @@ def strptime(s, fmt=None):
     return datetime(*time.strptime(s, fmt)[:3])
 
 
-class RoundtripTest(object):
+class RoundtripTest:
     def roundtrip(self, save_func, *args, **kwargs):
         """
         save_func : callable
@@ -318,7 +316,7 @@ class TestSavezLoad(RoundtripTest):
             assert_(fp.closed)
 
 
-class TestSaveTxt(object):
+class TestSaveTxt:
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
@@ -365,7 +363,6 @@ class TestSaveTxt(object):
         c.seek(0)
         assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
         v = a[['x', 'z']]
@@ -530,12 +527,10 @@ class TestSaveTxt(object):
         a = np.array([utf8], dtype=np.unicode_)
         # our gz wrapper support encoding
         suffixes = ['', '.gz']
-        # stdlib 2 versions do not support encoding
-        if MAJVER > 2:
-            if HAS_BZ2:
-                suffixes.append('.bz2')
-            if HAS_LZMA:
-                suffixes.extend(['.xz', '.lzma'])
+        if HAS_BZ2:
+            suffixes.append('.bz2')
+        if HAS_LZMA:
+            suffixes.extend(['.xz', '.lzma'])
         with tempdir() as tmpdir:
             for suffix in suffixes:
                 np.savetxt(os.path.join(tmpdir, 'test.csv' + suffix), a,
@@ -580,11 +575,11 @@ class TestSaveTxt(object):
     def test_large_zip(self):
         # The test takes at least 6GB of memory, writes a file larger than 4GB
         test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)])
+                               for i in range(800000)], dtype=object)
         with tempdir() as tmpdir:
             np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
 
-class LoadTxtBase(object):
+class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
         # Test that we can load data from a compressed file
         wanted = np.arange(6).reshape((2, 3))
@@ -601,18 +596,14 @@ class LoadTxtBase(object):
                         res = self.loadfunc(f)
                     assert_array_equal(res, wanted)
 
-    # Python2 .open does not support encoding
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(gzip.open, ('.gz',))
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
@@ -826,7 +817,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a[:, 1])
 
         # Testing with some crazy custom integer type
-        class CrazyInt(object):
+        class CrazyInt:
             def __index__(self):
                 return 1
 
@@ -1158,7 +1149,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
-class Testfromregex(object):
+class Testfromregex:
     def test_record(self):
         c = TextIO()
         c.write('1.312 foo\n1.534 bar\n4.444 qux')
@@ -2348,8 +2339,7 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_loadtxt(self):
         with temppath(suffix='.txt') as path:
@@ -2482,7 +2472,7 @@ def test_gzip_load():
 
 # These next two classes encode the minimal API needed to save()/load() arrays.
 # The `test_ducktyping` ensures they work correctly
-class JustWriter(object):
+class JustWriter:
     def __init__(self, base):
         self.base = base
 
@@ -2492,7 +2482,7 @@ class JustWriter(object):
     def flush(self):
         return self.base.flush()
 
-class JustReader(object):
+class JustReader:
     def __init__(self, base):
         self.base = base
 

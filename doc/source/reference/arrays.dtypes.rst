@@ -87,22 +87,22 @@ Sub-arrays always have a C-contiguous memory layout.
 
    >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
-   dtype('|U16')
+   dtype('<U16')
    >>> dt['grades']
-   dtype(('float64',(2,)))
+   dtype(('<f8', (2,)))
 
    Items of an array of this data type are wrapped in an :ref:`array
    scalar <arrays.scalars>` type that also has two fields:
 
    >>> x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
    >>> x[1]
-   ('John', [6.0, 7.0])
+   ('John', [6., 7.])
    >>> x[1]['grades']
-   array([ 6.,  7.])
+   array([6.,  7.])
    >>> type(x[1])
-   <type 'numpy.void'>
+   <class 'numpy.void'>
    >>> type(x[1]['grades'])
-   <type 'numpy.ndarray'>
+   <class 'numpy.ndarray'>
 
 .. _arrays.dtypes.constructing:
 
@@ -304,7 +304,7 @@ Type strings
    .. admonition:: Example
 
       >>> dt = np.dtype('uint32')   # 32-bit unsigned integer
-      >>> dt = np.dtype('Float64')  # 64-bit floating-point number
+      >>> dt = np.dtype('float64')  # 64-bit floating-point number
 
 .. index::
    triple: dtype; construction; from tuple
@@ -328,13 +328,14 @@ Type strings
     The first argument is any object that can be converted into a
     fixed-size data-type object. The second argument is the desired
     shape of this type. If the shape parameter is 1, then the
-    data-type object is equivalent to fixed dtype. If *shape* is a
-    tuple, then the new dtype defines a sub-array of the given shape.
+    data-type object used to be equivalent to fixed dtype. This behaviour is
+    deprecated since NumPy 1.17 and will raise an error in the future.
+    If *shape* is a tuple, then the new dtype defines a sub-array of the given
+    shape.
 
     .. admonition:: Example
 
        >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
-       >>> dt = np.dtype(('U10', 1))                 # 10-character string
        >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
 
 .. index::
@@ -411,7 +412,7 @@ Type strings
        an 8-bit unsigned integer:
 
        >>> dt = np.dtype({'names': ['r','g','b','a'],
-       ...                'formats': [uint8, uint8, uint8, uint8]})
+       ...                'formats': [np.uint8, np.uint8, np.uint8, np.uint8]})
 
        Data type with fields ``r`` and ``b`` (with the given titles),
        both being 8-bit unsigned integers, the first at byte position
@@ -441,8 +442,8 @@ Type strings
        byte position 0), ``col2`` (32-bit float at byte position 10),
        and ``col3`` (integers at byte position 14):
 
-       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (float32, 10),
-           'col3': (int, 14)})
+       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (np.float32, 10),
+       ...                'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
 
@@ -464,7 +465,7 @@ Type strings
        32-bit integer, whose first two bytes are interpreted as an integer
        via field ``real``, and the following two bytes via field ``imag``.
 
-       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)})
+       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)}))
 
        32-bit integer, which is interpreted as consisting of a sub-array
        of shape ``(4,)`` containing 8-bit integers:
