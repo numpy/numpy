@@ -141,8 +141,8 @@ else:
     from .core import *
     from . import compat
     from . import lib
-    # FIXME: why have numpy.lib if everything is imported here??
-    # See gh-14454 for discussion.
+    # NOTE: to be revisited following future namespace cleanup.
+    # See gh-14454 and gh-15672 for discussion.
     from .lib import *
 
     from . import linalg
