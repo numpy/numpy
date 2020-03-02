@@ -42,4 +42,8 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             PyArray_Descr *flex_dtype);
 
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypes_int(PyArray_Descr *type1, PyArray_Descr *type2,
+                         npy_bool *string_promotion);
+
 #endif

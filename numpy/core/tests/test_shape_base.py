@@ -258,7 +258,8 @@ class TestConcatenate:
         r = np.concatenate((a, b), axis=None)
         assert_equal(r.size, a.size + len(b))
         assert_equal(r.dtype, a.dtype)
-        r = np.concatenate((a, b, c), axis=None)
+        with assert_warns(DeprecationWarning):
+            r = np.concatenate((a, b, c), axis=None)
         d = array(['0.0', '1.0', '2.0', '3.0',
                    '0', '1', '2', 'x'])
         assert_array_equal(r, d)

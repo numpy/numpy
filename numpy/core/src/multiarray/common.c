@@ -12,6 +12,7 @@
 #include "usertypes.h"
 
 #include "common.h"
+#include "convert_datatype.h"
 #include "npy_buffer.h"
 
 #include "get_attr_string.h"
@@ -81,6 +82,12 @@ _array_find_python_scalar_type(PyObject *op)
  * PyArray_DTypeFromObject encountered a string type, and that the recursive
  * search must be restarted so that string representation lengths can be
  * computed for all scalar types.
+ *
+ * DEPRECATED NumPy 19.0, 2020-03
+ * The use of RETRY_WITH_STRING and RETRY_WITH_UNICODE is only necessary
+ * because promotion of numbers to strings was valid.  By deprecating promotion
+ * this path is effectively unnecessary.  Users have to provide dtype="U"
+ * instead.
  */
 #define RETRY_WITH_STRING 1
 #define RETRY_WITH_UNICODE 2
@@ -104,19 +111,33 @@ _array_find_python_scalar_type(PyObject *op)
 PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
 {
     int res;
+    npy_bool string_promotion = NPY_FALSE;
 
-    res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype, 0);
+    res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype,
+            0, &string_promotion);
     if (res == RETRY_WITH_STRING) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                                            out_dtype, NPY_STRING);
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype,
+                NPY_STRING, &string_promotion);
         if (res == RETRY_WITH_UNICODE) {
-            res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                                                out_dtype, NPY_UNICODE);
+            res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype,
+                    NPY_UNICODE, &string_promotion);
         }
     }
     else if (res == RETRY_WITH_UNICODE) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                                            out_dtype, NPY_UNICODE);
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype,
+                NPY_UNICODE, &string_promotion);
+    }
+    if (string_promotion) {
+        /* Deprecated NumPy 1.19, 2020-04 */
+        if (DEPRECATE(
+                "Creating an array from a mix of strings and numbers "
+                "is deprecated and will require specifying the datatype. "
+                "Use `np.array(..., dtype=object)` if you wish an object array "
+                "and `np.array(..., dtype='U')` or `np.array(..., dtype='S')` "
+                "if you wish string/bytes array respectively.") < 0){
+            Py_SETREF(*out_dtype, NULL);
+            return -1;
+        }
     }
     return res;
 }
@@ -174,7 +195,8 @@ PyArray_DTypeFromObjectStringDiscovery(
 
 NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_type)
+                              PyArray_Descr **out_dtype, int string_type,
+                              npy_bool *string_promotion)
 {
     int i, size;
     PyArray_Descr *dtype = NULL;
@@ -209,6 +231,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             }
         }
         else {
+            if (!PyArray_IsScalar(obj, Flexible)) {
+                *string_promotion = NPY_TRUE;
+            }
             dtype = PyArray_DTypeFromObjectStringDiscovery(
                     obj, *out_dtype, string_type);
             if (dtype == NULL) {
@@ -216,7 +241,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             }
 
             /* nothing to do, dtype is already correct */
-            if (dtype == *out_dtype){
+            if (dtype == *out_dtype) {
                 Py_DECREF(dtype);
                 return 0;
             }
@@ -232,6 +257,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             Py_DECREF(dtype);
             dtype = PyArray_DTypeFromObjectStringDiscovery(
                     obj, *out_dtype, string_type);
+            *string_promotion = NPY_TRUE;
             if (dtype == NULL) {
                 goto fail;
             }
@@ -453,8 +479,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
     /* Recursive call for each sequence item */
     for (i = 0; i < size; ++i) {
-        int res = PyArray_DTypeFromObjectHelper(objects[i], maxdims - 1,
-                                                out_dtype, string_type);
+        int res = PyArray_DTypeFromObjectHelper(objects[i],
+                maxdims - 1, out_dtype, string_type, string_promotion);
         if (res < 0) {
             Py_DECREF(seq);
             goto fail;
@@ -486,7 +512,9 @@ promote_types:
     }
     /* Do type promotion with 'out_dtype' */
     else {
-        PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
+        /* If string type is already set, this will not warn again. */
+        PyArray_Descr *res_dtype = PyArray_PromoteTypes_int(
+                dtype, *out_dtype, string_promotion);
         Py_DECREF(dtype);
         if (res_dtype == NULL) {
             goto fail;

@@ -1748,6 +1748,11 @@ PyArray_GetArrayParamsFromObject_int(PyObject *op,
             Py_INCREF(requested_dtype);
             *out_dtype = requested_dtype;
         }
+        else if (requested_dtype != NULL &&
+            PyDataType_ISDATETIME(requested_dtype)) {\
+            /* Convert to an object array for AdaptFlexibleDType */
+            *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
+        }
         else {
             *out_dtype = NULL;
             if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, out_dtype) < 0) {

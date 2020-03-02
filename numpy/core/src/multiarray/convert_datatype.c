@@ -1075,6 +1075,40 @@ ensure_dtype_nbo(PyArray_Descr *type)
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
+    npy_bool string_promotion = NPY_FALSE;
+    PyArray_Descr *res;
+    res = PyArray_PromoteTypes_int(type1, type2, &string_promotion);
+    if (string_promotion) {
+        /* Deprecated NumPy 1.19, 2020-04 */
+        if (DEPRECATE(
+                "Promotion of numbers and bools to strings is deprecated. "
+                "This will return an error in the future, manually use object "
+                "or the string datatype in the future.\n"
+                "For example you may need to cast using `arr.astype('U')` "
+                "before concatenating an array integers to an array of "
+                "strings.") < 0) {
+            Py_DECREF(res);
+            return NULL;
+        }
+    }
+    return res;
+}
+
+
+/**
+ * Same as PyArray_PromoteTypes, but returns whether a deprecated string
+ * promotion occured instead of giving a warning directly.
+ *
+ * @param type1
+ * @param type2
+ * @param string_promotion boolean flag returning True if a deprecated string
+ *                         promotion occured.
+ * @returns New descriptor or NULL on error.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypes_int(PyArray_Descr *type1, PyArray_Descr *type2,
+                         npy_bool *string_promotion)
+{
     int type_num1, type_num2, ret_type_num;
 
     /*
@@ -1192,6 +1226,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     switch (type_num1) {
         /* BOOL can convert to anything except datetime/void */
         case NPY_BOOL:
+            *string_promotion = NPY_TRUE;
             if (type_num2 == NPY_STRING || type_num2 == NPY_UNICODE) {
                 int char_size = 1;
                 if (type_num2 == NPY_UNICODE) {
@@ -1234,8 +1269,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                     return d;
                 }
             }
-            /* Allow NUMBER -> STRING */
+            /* Allow NUMBER (or bool) -> STRING */
             else if (PyTypeNum_ISNUMBER(type_num2)) {
+                /* Deprecated NumPy 1.19, 2020-04 */
+                *string_promotion = NPY_TRUE;
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
                 PyDataType_MAKEUNSIZED(temp);
@@ -1276,8 +1313,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                     return d;
                 }
             }
-            /* Allow NUMBER -> UNICODE */
+            /* Allow NUMBER (or bool) -> UNICODE */
             else if (PyTypeNum_ISNUMBER(type_num2)) {
+                /* Deprecated NumPy 1.19, 2020-04 */
+                *string_promotion = NPY_TRUE;
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
                 PyDataType_MAKEUNSIZED(temp);
@@ -1307,6 +1346,8 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         /* BOOL can convert to almost anything */
         case NPY_BOOL:
             if (type_num2 == NPY_STRING || type_num2 == NPY_UNICODE) {
+                /* Deprecated NumPy 1.19, 2020-04 */
+                *string_promotion = NPY_TRUE;
                 int char_size = 1;
                 if (type_num2 == NPY_UNICODE) {
                     char_size = 4;
@@ -1327,8 +1368,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_STRING:
-            /* Allow NUMBER -> STRING */
+            /* Allow NUMBER (or bool) -> STRING */
             if (PyTypeNum_ISNUMBER(type_num1)) {
+                /* Deprecated NumPy 1.19, 2020-03 */
+                *string_promotion = NPY_TRUE;
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
                 PyDataType_MAKEUNSIZED(temp);
@@ -1347,8 +1390,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_UNICODE:
-            /* Allow NUMBER -> UNICODE */
+            /* Allow NUMBER (or bool) -> UNICODE */
             if (PyTypeNum_ISNUMBER(type_num1)) {
+                /* Deprecated NumPy 1.19, 2020-04 */
+                *string_promotion = NPY_TRUE;
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
                 PyDataType_MAKEUNSIZED(temp);

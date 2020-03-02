@@ -3,7 +3,7 @@ import os
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, _assert_valid_refcount,
+    assert_raises, assert_warns, _assert_valid_refcount,
     )
 from numpy.compat import unicode
 
@@ -63,7 +63,10 @@ class TestRegression:
     def test_mem_string_concat(self):
         # Ticket #469
         x = np.array([])
-        np.append(x, 'asdasd\tasdasd')
+        # The internal concatenate with string is deprecated. The test
+        # can be deleted when the deprecation is finished.
+        with assert_warns(DeprecationWarning):
+            np.append(x, 'asdasd\tasdasd')
 
     def test_poly_div(self):
         # Ticket #553

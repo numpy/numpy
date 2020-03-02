@@ -784,7 +784,8 @@ class TestRegression:
         # Ticket #514
         s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         t = []
-        np.hstack((t, s))
+        with assert_warns(DeprecationWarning):
+            np.hstack((t, s))
 
     def test_arr_transpose(self):
         # Ticket #516

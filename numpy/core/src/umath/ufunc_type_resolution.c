@@ -124,17 +124,22 @@ raise_no_loop_found_error(
     if (dtypes_tup == NULL) {
         return -1;
     }
-    for (i = 0; i < ufunc->nargs; ++i) {
-        Py_INCREF(dtypes[i]);
-        PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
-    }
 
     /* produce an error object */
     exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
     Py_DECREF(dtypes_tup);
-    if (exc_value == NULL){
+    if (exc_value == NULL) {
         return -1;
     }
+    for (i = 0; i < ufunc->nargs; ++i) {
+        PyObject *tmp = Py_None;
+        if (dtypes[i] != NULL) {
+            tmp = (PyObject *)dtypes[i];
+        }
+        Py_INCREF(tmp);
+        PyTuple_SET_ITEM(dtypes_tup, i, tmp);
+    }
+
     PyErr_SetObject(exc_type, exc_value);
     Py_DECREF(exc_value);
 
@@ -358,13 +363,30 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
-        /* Input types are the result type */
-        out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
-        if (out_dtypes[0] == NULL) {
-            return -1;
+        /*
+         * Input types are the result type, however, disallow flexible
+         * (especially strings) since their ResultType is deprecated.
+         * NOTE: User dtypes could define this, but this path is expected
+         * to be a legacy fallback only in the future.
+         * Deprecated NumPy 1.19, 2020-03 in ResultType, once gone, this
+         * could be simplified or chain the error given by ResultType.
+         */
+        if (!PyArray_ISFLEXIBLE(operands[0]) &&
+                !PyArray_ISFLEXIBLE(operands[1])) {
+            out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
         }
-        out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
+        else {
+            /* Not doing anything will lead to a loop no found error. */
+            out_dtypes[0] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[0]);
+            out_dtypes[1] = PyArray_DESCR(operands[0]);
+            Py_INCREF(out_dtypes[1]);
+        }
     }
     else {
         PyObject *item;
@@ -517,6 +539,31 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
         }
         else {
+            int iop;
+            npy_bool has_flexible = 0;
+            npy_bool has_object = 0;
+            for (iop = 0; iop < ufunc->nin; iop++) {
+                if (PyArray_ISOBJECT(operands[iop])) {
+                    has_object = 1;
+                }
+                if (PyArray_ISFLEXIBLE(operands[iop])) {
+                    has_flexible = 1;
+                }
+            }
+            if (has_flexible && !has_object) {
+                /*
+                 * DEPRECATED NumPy 1.19, 2020-03 the following check is needed
+                 * to avoid the warning within ResultType. Effectively these
+                 * types could never promote for ufuncs, so disallow them.
+                 * We have to do this before PyArray_ResultType is called,
+                 * since it would give a spurious DeprecationWarning.
+                 */
+                PyErr_Format(PyExc_TypeError,
+                        "No loop matching the specified signature and "
+                        "casting was found for ufunc %s. Strings and other "
+                        "flexible datatypes are unsupported.", ufunc_name);
+                return -1;
+            }
             out_dtypes[0] = PyArray_ResultType(ufunc->nin, operands, 0, NULL);
         }
         if (out_dtypes[0] == NULL) {
