@@ -17,7 +17,7 @@ unless told otherwise. Some of the benchmarking features in
 development version of NumPy to your current Python environment.
 
 *Before beginning, ensure that* airspeed velocity *is installed.*
-By default, `asv` ships with support for anaconda and virtualenv.:
+By default, `asv` ships with support for anaconda and virtualenv::
 
     pip install asv
     pip install virtualenv
