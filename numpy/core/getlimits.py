@@ -300,12 +300,13 @@ class finfo:
     bits : int
         The number of bits occupied by the type.
     eps : float
-        The smallest representable positive number such that
-        ``1.0 + eps != 1.0``.  Type of `eps` is an appropriate floating
-        point type.
-    epsneg : floating point number of the appropriate type
-        The smallest representable positive number such that
-        ``1.0 - epsneg != 1.0``.
+        The difference between 1.0 and the next smallest representable float
+        larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
+        standard, ``eps = 2**-52``, approximately 2.22e-16.
+    epsneg : float
+        The difference between 1.0 and the next smallest representable float
+        less than 1.0. For example, for 64-bit binary floats in the IEEE-754
+        standard, ``epsneg = 2**-53``, approximately 1.11e-16.
     iexp : int
         The number of bits in the exponent portion of the floating point
         representation.
@@ -348,6 +349,8 @@ class finfo:
     --------
     MachAr : The implementation of the tests that produce this information.
     iinfo : The equivalent for integer data types.
+    spacing : The distance between a value and the nearest adjacent number
+    nextafter : The next floating point value after x1 towards x2
 
     Notes
     -----
