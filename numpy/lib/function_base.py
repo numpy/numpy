@@ -739,6 +739,10 @@ def copy(a, order='K', subok=False):
     arr : ndarray
         Array interpretation of `a`.
 
+    See Also
+    --------
+    ndarray.copy : Preferred method for creating an array copy
+
     Notes
     -----
     This is equivalent to:
