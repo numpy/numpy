@@ -302,11 +302,11 @@ class finfo:
     eps : float
         The difference between 1.0 and the next smallest representable float
         larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
-        standard, eps = :math:`2^{-52} \\approx` 2.22e-16
+        standard, ``eps = 2**-52``, approximately 2.22e-16
     epsneg : float
         The difference between 1.0 and the next smallest representable float
         less than 1.0. For example, for 64-bit binary floats in the IEEE-754
-        standard, eps = :math:`2^{-53} \\approx` 1.11e-16
+        standard, ``epsneg = 2**-53``, approximately 1.11e-16
     iexp : int
         The number of bits in the exponent portion of the floating point
         representation.
