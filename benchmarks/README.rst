@@ -17,7 +17,7 @@ unless told otherwise. Some of the benchmarking features in
 development version of NumPy to your current Python environment.
 
 *Before beginning, ensure that* airspeed velocity *is installed.*
-By default, `asv` ships with support for anaconda and virtualenv.
+By default, `asv` ships with support for anaconda and virtualenv.:
 
     pip install asv
     pip install virtualenv
@@ -26,7 +26,7 @@ After contributing new benchmarks, you should test them locally
 before submitting a pull request.
 
 To run all benchmarks, navigate to the root NumPy directory at
-the command line and execute:
+the command line and execute::
 
     python runtests.py --bench
 
