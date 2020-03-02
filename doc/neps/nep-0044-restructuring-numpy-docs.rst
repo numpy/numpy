@@ -5,9 +5,10 @@ NEP 44 — Restructuring the NumPy Documentation
 :Author: Ralf Gommers
 :Author: Melissa Mendonça
 :Author: Mars Lee
-:Status: Draft
+:Status: Accepted
 :Type: Process
 :Created: 2020-02-11
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2020-March/080467.html
 
 Abstract
 ========
