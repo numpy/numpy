@@ -273,6 +273,14 @@ class TestCopy:
         assert_(not a_fort_copy.flags.c_contiguous)
         assert_(a_fort_copy.flags.f_contiguous)
 
+    def test_subok(self):
+        mx = ma.ones(5)
+        # Default behavior
+        assert_(not ma.isMaskedArray(np.copy(mx)))
+        # Specified behavior
+        assert_(not ma.isMaskedArray(np.copy(mx), subok=False))
+        assert_(np.isMaskedArray(np.copy(mx, subok=True)))
+
 
 class TestAverage:
 
