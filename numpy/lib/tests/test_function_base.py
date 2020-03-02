@@ -275,11 +275,10 @@ class TestCopy:
 
     def test_subok(self):
         mx = ma.ones(5)
+        assert_(not ma.isMaskedArray(np.copy(mx, subok=False)))
+        assert_(ma.isMaskedArray(np.copy(mx, subok=True)))
         # Default behavior
         assert_(not ma.isMaskedArray(np.copy(mx)))
-        # Specified behavior
-        assert_(not ma.isMaskedArray(np.copy(mx), subok=False))
-        assert_(np.isMaskedArray(np.copy(mx, subok=True)))
 
 
 class TestAverage:
