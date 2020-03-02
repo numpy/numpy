@@ -38,14 +38,14 @@ basic steps for doing this in Python are well-documented and you can
 find more information in the documentation for Python itself available
 online at `www.python.org <https://www.python.org>`_ .
 
-In addition to the Python C-API, there is a full and rich C-API for
-NumPy allowing sophisticated manipulations on a C-level. However, for
-most applications, only a few API calls will typically be used. If all
-you need to do is extract a pointer to memory along with some shape
-information to pass to another calculation routine, then you will use
-very different calls, then if you are trying to create a new array-
-like type or add a new data type for ndarrays. This chapter documents
-the API calls and macros that are most commonly used.
+In addition to the Python C-API, there is a full and rich C-API for NumPy
+allowing sophisticated manipulations on a C-level. However, for most
+applications, only a few API calls will typically be used. For example, if you
+need to just extract a pointer to memory along with some shape information to
+pass to another calculation routine, then you will use very different calls
+than if you are trying to create a new array-like type or add a new data type
+for ndarrays. This chapter documents the API calls and macros that are most
+commonly used.
 
 
 Required subroutine
