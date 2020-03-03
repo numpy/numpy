@@ -32,9 +32,10 @@ the command line and execute::
 
 where ``--bench`` activates the benchmark suite instead of the
 test suite. This builds NumPy and runs  all available benchmarks
-defined in ``benchmarks/``.*(Note: this could take a while. Benchmarks
-often take longer to run than unit tests, and each benchmark is run
-multiple times to measure the distribution in execution times.)*
+defined in ``benchmarks/``.(Note: this could take a while. Each
+benchmark is run multiple times to measure the distribution in
+execution times.)
+
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
 
