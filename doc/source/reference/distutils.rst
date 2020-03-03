@@ -1,6 +1,3 @@
-.. for doctests
-   >>> with open('foo.c', 'w') as f: pass
-
 **********************************
 Packaging (:mod:`numpy.distutils`)
 **********************************
@@ -123,6 +120,7 @@ install the C library, you just use the method `add_installed_library` instead o
   .. hidden in a comment so as to be included in refguide but not rendered documentation
     >>> import numpy.distutils.misc_util
     >>> config = np.distutils.misc_util.Configuration(None, '', '.')
+    >>> with open('foo.c', 'w') as f: pass
 
   >>> config.add_installed_library('foo', sources=['foo.c'], install_dir='lib')
 
