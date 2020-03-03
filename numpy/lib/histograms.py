@@ -676,7 +676,7 @@ def _histogram_dispatcher(
 
 @array_function_dispatch(_histogram_dispatcher)
 def histogram(a, bins=10, range=None, normed=None, weights=None,
-              density=None):
+              relative_density=0, density=None):
     r"""
     Compute the histogram of a set of data.
 
@@ -729,6 +729,9 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
 
         Overrides the ``normed`` keyword if given.
 
+    relative_density : float, optional
+        Normalizes histogram to the given number regardless bin width.
+
     Returns
     -------
     hist : array
@@ -771,6 +774,9 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     2.4999999999999996
     >>> np.sum(hist * np.diff(bin_edges))
     1.0
+    >>> hist, bin_edges = np.histogram(a, relative_density=100)
+    >>> hist
+    array([20.,  0., 20.,  0.,  0., 20.,  0., 20.,  0., 20.])
 
     .. versionadded:: 1.11.0
 
@@ -787,6 +793,9 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     >>> plt.show()
 
     """
+    if relative_density < 0:
+        raise ValueError('Wrong value for "relative_density" parameter. '
+                         'Expected value more or equals to zero.')
     a, weights = _ravel_and_check_weights(a, weights)
 
     bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
@@ -899,6 +908,9 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
                     "In future passing both will result in an error.",
                     DeprecationWarning, stacklevel=3)
         normed = None
+
+    if relative_density > 0:
+        return relative_density*n/n.sum(), bin_edges
 
     if density:
         db = np.array(np.diff(bin_edges), float)
