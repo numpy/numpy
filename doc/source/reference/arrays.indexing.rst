@@ -426,18 +426,6 @@ with.
     array([[0, 1],
            [1, 1]])
 
-    But if ``rowsum`` would have two dimensions as well:
-
-    >>> rowsum = x.sum(-1, keepdims=True)
-    >>> rowsum.shape
-    (3, 1)
-    >>> x[rowsum <= 2, :]    # fails
-    IndexError: too many indices
-    >>> x[rowsum <= 2]
-    array([0, 1])
-
-    The last one giving only the first elements because of the extra dimension.
-    Compare ``rowsum.nonzero()`` to understand this example.
 
 Combining multiple Boolean indexing arrays or a Boolean with an integer
 indexing array can best be understood with the
