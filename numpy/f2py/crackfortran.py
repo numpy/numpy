@@ -2520,7 +2520,7 @@ def get_parameters(vars, global_params={}):
                     except Exception as msg:
                         v_eval.append(item)
                         outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
-                params[n] = v_eval.copy()
+                params[n] = v_eval
             else:
                 try:
                     params[n] = eval(v, g_params, params)
