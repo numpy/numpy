@@ -254,3 +254,33 @@ else:
 
     _sanity_check()
     del _sanity_check
+
+    def _mac_os_check():
+        """
+        Quick Sanity check for Mac OS look for accelerate build bugs. Testing numpy polyfit calls init_dgelsd(LAPACK)
+        """
+        try:
+            c = array([3., 2., 1.])
+            x = linspace(0, 2, 7)
+            y = polyval(c, x)
+            err = [1, -1, 1, -1, 1, -1, 1]
+            _ = polyfit(x, y + err, 2, cov=True)
+        except ValueError as err:
+            pass
+
+    import platform
+    if platform.system() == "Darwin":
+        with warnings.catch_warnings(record=True) as w:
+            _mac_os_check()
+            # Throw runtime error, if the test failed Check for warning and error_message
+            error_message = ""
+            if len(w) > 0:
+                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
+                msg = (
+                    "Polyfit sanity test emitted a warning, most likely due to using a buggy "
+                    "Accelerate backend. If you compiled yourself, see site.cfg.example for information. "
+                    "Otherwise report this to the vendor that provided NumPy.\n{}\n".format(
+                        error_message))
+                raise RuntimeError(msg)
+
+    del _mac_os_check
