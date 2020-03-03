@@ -4,7 +4,6 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 
 :title: Legacy Datatype Implementation in NumPy
 :Author: Sebastian Berg
-:Author: Add...
 :Status: Draft
 :Type: Informational
 :Created: 2019-07-17
@@ -15,33 +14,33 @@ Abstract
 
 As a preparation to further NumPy enhancement proposals 41, 42, and 43. This
 NEP details the current status of NumPy datatypes as of NumPy 1.18.
-It describes some of the technical aspects and concepts necessary to
-motivate the following proposals.
+It describes some of the technical aspects and concepts that
+motivated the other proposals.
 
 
 Detailed Description
 --------------------
 
 This section describes some central concepts and provides a brief overview
-of the current implementation as well as a discussion.
+of the current implementation of dtypes as well as a discussion.
 In many cases subsections will be split roughly to first describe the
 current implementation and then follow with an "Issues and Discussion" section.
 
 Parametric Datatypes
 ^^^^^^^^^^^^^^^^^^^^
 
-Some datatypes are inherently *parametric*, which is similar to the current
-notion of *flexible* data types.
-Currently, flexible is defined as a class ``np.flexible`` for scalars, which
-is a superclass for the data types of variable length (string, bytes,
-and void), this distinction is similarly exposed by the C-Macros
+Some datatypes are inherently *parametric*. All ``np.flexible`` scalar
+types are attached to parametric datatypes (string, bytes, and void).
+The class ``np.flexible`` for scalars is a superclass for the data types of
+variable length (string, bytes,
+and void). This distinction is similarly exposed by the C-Macros
 ``PyDataType_ISFLEXIBLE`` and ``PyTypeNum_ISFLEXIBLE``.
-For strings, ``"S8"`` can represent more strings than ``"S4"``.
+For instance, ``"S8"`` can represent longer strings than ``"S4"``.
 
-The basic numerical datatypes are naturally represented as not flexible and
-not parametric: Float64, Float32, etc. do have a byte order, but the described
+The basic numerical datatypes are not flexible (do not inherit from
+``npflexible``). Float64, Float32, etc. do have a byte order, but the described
 values are unaffected by it, and it is always possible to cast them to the
-native, canonical representation without loss of any information.
+native, canonical representation without any loss of information.
 
 The concept of flexibility can be generalized to parametric datatypes.
 For example the private ``AdaptFlexibleDType`` function also accepts the
@@ -58,12 +57,12 @@ Thus we have data types (mainly strings) with the properties that:
 2. Array coercion should be able to discover the exact dtype, such as for
    ``np.array(["str1", 123.], dtype="S")`` where NumPy discovers the
    resulting dtype as ``"S5"``.
-   (Without ``dtype="S"`` such behaviour is currently ill defined [gh-15327].)
+   (Without ``dtype="S"`` such behaviour is currently ill defined [gh-15327]_.)
    A form similar to ``dtype="S"`` is ``dtype="datetime64"`` which can
    discover the unit: ``np.array(["2017-02"], dtype="datetime64")``.
 
 This notion highlights that some datatypes are more complex than the basic
-numerical ones, which currently creates issues mainly in the implementation
+numerical ones, which is evident in the complicated output type discovery
 of universal functions.
 
 
@@ -72,9 +71,9 @@ Value Based Casting
 
 Casting is typically defined between two types:
 A type is considered to cast safely to a second type when the second type
-can represent all values of the first faithfully.
-However, NumPy currently NumPy may inspect the actual value to decide
-whether casting is safe or not [value_based]_.
+can represent all values of the first without loss of information.
+NumPy may inspect the actual value to decide
+whether casting is safe or not.
 
 This is useful for example in expressions such as::
 
@@ -111,15 +110,15 @@ However, any change of the datatype system and universal function dispatching
 must initially fully support the current behavior.
 A main difficulty is that for example the value ``156`` can be represented
 by ``np.uint8`` and ``np.int16``.
-It depends on the context which is considered the "minimal" representation
-(for ufuncs the context may be given by the loop order).
+The result depends on the "minimal" representation in the context of the
+conversion (for ufuncs the context may depend on the loop order).
 
 
 The Object Datatype
 ^^^^^^^^^^^^^^^^^^^
 
 The object datatype currently serves as a generic fallback for any value
-which is not representable otherwise.
+which is not otherwise representable.
 However, due to not having a well defined type, it has some issues,
 for example when an array is filled with Python sequences::
 
@@ -134,18 +133,17 @@ for example when an array is filled with Python sequences::
     >>> a
     array(list([1, [2]]), dtype=object)
 
-Further, without a well defined type, functions such as ``isnan()`` or ``conjugate()``
-do not necessarily work for example for an array holding decimal values since they cannot
-be specialized for :class:`decimal.Decimal`.
+Without a well defined type, functions such as ``isnan()`` or ``conjugate()``
+do not necessarily work, but can work for a :class:`decimal.Decimal`.
 To improve this situation it seems desirable to make it easy to create
 object dtypes that represent a specific python datatype and stores its object
-inside the array in form of pointers.
-Unlike most datatypes, Python objects require reference counting.
-This means that additional methods to increment/decrement references and
+inside the array in the form of pointer to python `PyOjbect`.
+Unlike most datatypes, Python objects require garbage collection.
+This means that additional methods to handle references and
 visit all objects must be defined.
 In practice, for most use cases it is sufficient to limit the creation of such
-datatypes so that all functionality related to Python references is private
-to NumPy.
+datatypes so that all functionality related to Python C-level references is
+private to NumPy.
 
 Creating NumPy datatypes that match builtin Python objects also creates a few problems
 that require more thoughts and discussion.
@@ -157,7 +155,7 @@ These issues do not need to solved right away:
   do not have.
 * Seamless integration probably requires that ``np.array(scalar)`` finds the
   correct DType automatically since some operations (such as indexing) are
-  always desired to return the scalar.
+  return the scalar instead of a 0D array.
   This is problematic if multiple users independently decide to implement
   for example a DType for ``decimal.Decimal``.
 
@@ -168,11 +166,12 @@ Current ``dtype`` Implementation
 Currently ``np.dtype`` is a Python class with its instances being the
 ``np.dtype(">float64")``, etc. instances.
 To set the actual behaviour of these instances, a prototype instance is stored
-globally and looked up based on the ``dtype.typenum``.
-This prototype instance is then copied (if necessary) and modified for
+globally and looked up based on the ``dtype.typenum``. The singleton is used
+where possible. Where required it is copied and modified, for instance to change
 endianess.
 For parametric datatypes (strings, void, datetime, and timedelta) additionally
-the string lengths, fields, or datetime unit needs to be set.
+the string lengths, fields, or datetime unit needs to be set, so they create
+another instance rather than using a singleton.
 All current datatypes within NumPy further support setting a metadata field
 during creation which can be set to an arbitrary dictionary value, but seems
 rarely used in practice (one recent and prominent user is h5py).
@@ -180,10 +179,11 @@ rarely used in practice (one recent and prominent user is h5py).
 Many datatype specific functions are defined within a C structure called
 :c:type:`PyArray_ArrFuncs`, which is part of each ``dtype`` instance and
 has a similarity to Pythons ``PyNumberMethods``.
-For user defined datatypes this structure is defined by the user, making
+For user defined datatypes this structure is exposed to the user, making
 ABI compatible changes changes impossible.
 This structure holds important information such as how to copy, cast,
-and provides functions, such as comparing elements, converting to bool, or sorting.
+and provides space for pointers to functions, such as comparing elements,
+converting to bool, or sorting.
 Since some of these functions are vectorized operations, operating on more than
 one element, they fit the model of ufuncs and do not need to be defined on the
 datatype in the future.
@@ -193,7 +193,8 @@ For example the ``np.clip`` function was previously implemented using
 Discussion and Issues
 """""""""""""""""""""
 
-A further issue with the current implementation is that, unlike methods,
+A further issue with the current implementation of the functions on the dtype
+is that, unlike methods,
 they are not passed an instance of the dtype when called.
 Instead, in many cases, the array which is being operated on is passed in
 and typically only used to extract the datatype again.
@@ -218,8 +219,8 @@ be deprecated.
 NumPy Scalars and Type Hierarchy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As a side note to the above datatype implementation, unlike the datatypes,
-the NumPy scalars currently do provide a type hierarchy, including abstract
+As a side note to the above datatype implementation: unlike the datatypes,
+the NumPy scalars currently **do** provide a type hierarchy, including abstract
 types such as ``np.inexact`` (see figure below).
 In fact, some control flow within NumPy currently uses
 ``issubclass(a.dtype.type, np.inexact)``.
@@ -254,7 +255,7 @@ The actual casting has two distinct parts:
 2. The generic casting code is provided by C functions which know how to
    cast aligned and contiguous memory from one dtype to another
    (both in native byte order).
-2. C-level functions can be registered to cast aligned and contiguous memory
+3. C-level functions can be registered to cast aligned and contiguous memory
    from one dtype to another.
    The function may be provided with both arrays (although the parameter
    is sometimes ``NULL`` for scalars).
@@ -288,11 +289,12 @@ indicate that a *view* is sufficient (and thus no cast is necessary).
 DType handling in Universal functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Universal functions are implemented as ufunc objects with an ordered
-list of datatype specific (based on the type number, not datatype instances)
-implementations:
+Universal functions are implemented as instances of the ``numpy.UFunc`` class
+with an ordered
+list of datatype specific (based on the dtype typecode character, not datatype
+instances) implementations, each with a signature and a function pointer.
 This list of implementations can be seen with ``ufunc.types`` where
-all implementations are listed with their C-style typecodes.
+all implementations are listed with their C-style typecode signatures.
 For example::
 
     >>> np.add.types
@@ -302,17 +304,17 @@ For example::
      'dd->d',
      ...]
 
-Each of these types is associated with a single inner-loop function defined
+Each of these signatures is associated with a single inner-loop function defined
 in C, which does the actual calculation, and may be called multiple times.
 
 The main step in finding the correct inner-loop function is to call a
 :c:type:`PyUFunc_TypeResolutionFunc` which recieves the input dtypes
 (in the form of the actual input arrays)
-and will find the full type signature to be executed.
+and will find the full type signature (including output dtype) to be executed.
 
 By default the ``TypeResolver`` is implemented by searching all of the implementations
-listed in ``ufunc.types`` in order and stopping if all inputs can be safely cast to fit to the
-current inner-loop function.
+listed in ``ufunc.types`` in order and stopping if all inputs can be safely
+cast to fit the signature.
 This means that if long (``l``) and double (``d``) arrays are added,
 numpy will find that the ``'dd->d'`` definition works
 (long can safely cast to double) and uses that.
@@ -334,23 +336,29 @@ Issues and Discussion
 """""""""""""""""""""
 
 It is currently only possible for user defined functions to be found/resolved
-if any of the inputs (or the outputs) has the user datatype.
-For example ``fraction_divide(int, int) -> Fraction`` can be implemented
-but the call ``fraction_divide(4, 5)`` will fail because the loop that
+if any of the inputs (or the outputs) has the user datatype, since it uses the
+`OO->O` signature.
+For example, given that a ufunc loop to implement ``fraction_divide(int, int)
+-> Fraction`` has been implemented, 
+the call ``fraction_divide(4, 5)`` (with no specific output dtype) will fail
+because the loop that
 includes the user datatype ``Fraction`` (as output) can only be found if any of
 the inputs is already a ``Fraction``.
 ``fraction_divide(4, 5, dtype=Fraction)`` can be made to work, but is inconvenient.
 
-Typically, dispatching is done by finding the first loop for which all inputs can
-be cast to safely (see also the current implementation section).
-However, in some cases this is problematic and thus explicitly not allowed.
+Typically, dispatching is done by finding the first loop that matches. A match
+is defined as: all inputs (and possibly outputs) can
+be cast safely to the signature typechars (see also the current implementation
+section).
+However, in some cases safe casting is problematic and thus explicitly not
+allowed.
 For example the ``np.isnat`` function is currently only defined for
-datetime and timedelta.
-Even though integers are defined to be safely castable to timedelta.
+datetime and timedelta,
+even though integers are defined to be safely castable to timedelta.
 If this was not the case, calling
 ``np.isnat(np.array("NaT", "timedelta64").astype("int64"))`` would currently
 return true, although the integer input array has no notion of "not a time".
-If a universal function, such as most function in ``scipy.special``, is only
+If a universal function, such as most functions in ``scipy.special``, is only
 defined for ``float32`` and ``float64`` it will currently automatically
 cast a ``float16`` silently to ``float32`` (similarly for any integer input).
 This ensures successful execution, but allows a change in the output dtype
@@ -379,8 +387,8 @@ Adjustment of Parametric output DTypes in UFuncs
 
 A second step necessary for parametric dtypes is currently performed within
 the ``TypeResolver``:
-i.e. the datetime and timedelta datatypes have to decide on the correct unit for
-the operation and output array.
+the datetime and timedelta datatypes have to decide on the correct parameter
+for the operation and output array.
 This step also needs to double check that all casts can be performed safely,
 which by default means that they are "same kind" casts.
 
@@ -392,21 +400,22 @@ However, it is a distinct step and should probably be handled as such after
 the actual type/loop resolution has occurred.
 
 As such this step may move from the dispatching step (described above) to
-a more featured implementation specific code described below.
+the implementation-specific code described below.
 
 
 DType specific Implementation of the UFunc
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once the correct implementation/loop is found, UFuncs currently mainly call
+Once the correct implementation/loop is found, UFuncs currently call
 a single *inner-loop function* which is written in C.
 This may be called multiple times to do the full calculation and it has
-little or no information about the current context.
+little or no information about the current context. It also has a void
+return value.
 
 Issues and Discussion
 """""""""""""""""""""
 
-A main issue is that especially parametric datatypes may require passing
+Parametric datatypes may require passing
 additional information to the inner-loop function to decide how to interpret
 the data.
 This is the reason why currently no universal functions for strings dtypes
@@ -446,11 +455,12 @@ Most likely this will involve:
   ufunc implementations closer.
 
 The issues surrounding the inner-loop functions have been discussed in some
-detail in the github issue 12518 [gh-12518]_.
+detail in the github issue gh-12518_ .
 
-A related information is the notion of the "identity" necessary for reductions.
-This is currently defined once per ufunc for example as ``0``.
-However, this can only work for numerical datatypes.
+Reductions use an "identity" value.
+This is currently defined once per ufunc, regardless of the ufunc dtype signature.
+For example  ``0`` is used for ``sum``, or ``math.inf`` for ``min``.
+This works well for numerical datatypes, but is not always appropriate for other dtypes.
 In general it should be possible to provide a dtype specific identity to the
 ufunc reduction.
 
@@ -462,18 +472,20 @@ When calling ``np.array(...)``, coercing general python object to a NumPy array,
 all objects need to be inspected to find the correct dtype.
 The input to ``np.array()`` are potentially nested Python sequences which hold
 the final elements as generic Python objects.
-NumPy has to unpack all nested sequences and then inspect the elements.
+NumPy has to unpack all the nested sequences and then inspect the elements.
 The final datatype is found by iterating all elements which will end up
 in the array and:
 
 1. discovering the dtype of the single element:
+
    * from array (or array like) or NumPy scalar using ``element.dtype``
    * using ``isinstance(..., float)`` for known Python types
      (note that these rules mean that subclasses are *currently* valid).
    * special rule for void datatypes to coerce tuples.
+
 2. Promoting the current dtype with the next elements dtype using
    ``np.promote_types``.
-3. If strings are found, the whole process is restarted (see also [gh15327]_),
+3. If strings are found, the whole process is restarted (see also [gh-15327]_),
    in a similar manner as if ``dtype="S"`` was given (see below).
 
 If ``dtype=...`` is given, this dtype is used unmodified, unless
@@ -509,7 +521,7 @@ the normal discovery.
 Related Issues
 --------------
 
-``np.save`` currently translates all extension dtypes to void dtypes.
+``np.save`` currently translates all user-defined dtypes to void dtypes.
 This means they cannot be stored using the ``npy`` format.
 This is not an issue for the python pickle protocol, although it may require
 some thought if we wish to ensure that such files can be loaded securely
@@ -549,34 +561,40 @@ Related Work
 Discussion
 ----------
 
-There have been many discussion about the current state and how a future
+There have been many discussion about the current state and what a future
 datatype system may look like.
-It is difficult to provide a full list of these discussion, but
+The full list of these discussion is long and some are lost to time,
 the following provides a subset for more recent ones:
 
 * Draft on NEP by Stephan Hoyer after a developer meeting (was updated on the next developer meeting) https://hackmd.io/6YmDt_PgSVORRNRxHyPaNQ
 
-* List of related documents gathered previously here https://hackmd.io/UVOtgj1wRZSsoNQCjkhq1g (TODO: Reduce to the most important ones):
+* List of related documents gathered previously here
+  https://hackmd.io/UVOtgj1wRZSsoNQCjkhq1g (TODO: Reduce to the most important
+  ones):
 
   * https://github.com/numpy/numpy/pull/12630
-
-    * Matti Picus NEP, discusses the technical side of subclassing  more from the side of ``ArrFunctions``
+    Matti Picus draft NEP, discusses the technical side of subclassing  more from
+    the side of ``ArrFunctions``
 
   * https://hackmd.io/ok21UoAQQmOtSVk6keaJhw and https://hackmd.io/s/ryTFaOPHE
-
-    * (2019-04-30) Proposals for subclassing implementation approach.
+    (2019-04-30) Proposals for subclassing implementation approach.
   
-  * Discussion about the calling convention of ufuncs and need for more powerful UFuncs: https://github.com/numpy/numpy/issues/12518
+  * Discussion about the calling convention of ufuncs and need for more
+    powerful UFuncs: https://github.com/numpy/numpy/issues/12518
 
-  * 2018-11-30 developer meeting notes: https://github.com/BIDS-numpy/docs/blob/master/meetings/2018-11-30-dev-meeting.md and subsequent draft for an NEP: https://hackmd.io/6YmDt_PgSVORRNRxHyPaNQ
+  * 2018-11-30 developer meeting notes:
+    https://github.com/BIDS-numpy/docs/blob/master/meetings/2018-11-30-dev-meeting.md
+    and subsequent draft for an NEP: https://hackmd.io/6YmDt_PgSVORRNRxHyPaNQ
 
-    * BIDS Meeting on November 30, 2018 and document by Stephan Hoyer about what numpy should provide and thoughts of how to get there. Meeting with Eric Wieser, Matti Pincus, Charles Harris, Tyler Reddy, Stéfan van der Walt, and Travis Oliphant.
-    * Important summaries of use cases.
+    BIDS Meeting on November 30, 2018 and document by Stephan Hoyer about
+    what numpy should provide and thoughts of how to get there. Meeting with
+    Eric Wieser, Matti Picus, Charles Harris, Tyler Reddy, Stéfan van der
+    Walt, and Travis Oliphant.
 
-  * SciPy 2018 brainstorming session: https://github.com/numpy/numpy/wiki/Dtype-Brainstorming
+  * SciPy 2018 brainstorming session with summaries of use cases:
+    https://github.com/numpy/numpy/wiki/Dtype-Brainstorming
 
-    * Good list of user stories/use cases.
-    * Lists some requirements and some ideas on implementations
+    Also lists some requirements and some ideas on implementations
 
 
 
@@ -584,10 +602,11 @@ References
 ----------
 
 .. _gh-12518: https://github.com/numpy/numpy/issues/12518
+.. [gh-15327] https://github.com/numpy/numpy/issues/12518
 
-.. _julia-types: https://docs.julialang.org/en/v1/manual/types/index.html#Abstract-Types-1
+.. [julia-types] https://docs.julialang.org/en/v1/manual/types/index.html#Abstract-Types-1
 
-.. _julia-promotion: https://docs.julialang.org/en/v1/manual/conversion-and-promotion/
+.. [julia-promotion] https://docs.julialang.org/en/v1/manual/conversion-and-promotion/
 
 
 
