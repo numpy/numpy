@@ -1,5 +1,9 @@
 .. _arrays.indexing:
 
+.. for doctests
+   >>> import numpy as np
+
+
 Indexing
 ========
 
@@ -265,7 +269,7 @@ understood with an example.
     one needs to select all elements *explicitly*. Using the method explained
     previously one could write:
 
-    >>> x = array([[ 0,  1,  2],
+    >>> x = np.array([[ 0,  1,  2],
     ...            [ 3,  4,  5],
     ...            [ 6,  7,  8],
     ...            [ 9, 10, 11]])
@@ -392,7 +396,7 @@ smaller than *x* it is identical to filling it with :const:`False`.
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
-    array([ 1.,  2.,  3.])
+    array([1.,  2.,  3.])
 
     Or wish to add a constant to all negative elements:
 
@@ -447,7 +451,7 @@ also supports boolean arrays and will work without any surprises.
     advanced integer index. Using the :func:`ix_` function this can be done
     with:
 
-    >>> x = array([[ 0,  1,  2],
+    >>> x = np.array([[ 0,  1,  2],
     ...            [ 3,  4,  5],
     ...            [ 6,  7,  8],
     ...            [ 9, 10, 11]])
