@@ -125,7 +125,7 @@ class TestParameters(util.F2PyTest):
         assert_equal(y, [0.0, 1.*10, 2.*10, 3.*10, 4.*10])
         assert_equal(z, 18.0)
 
-    @pytest.mark.xfail
+    @pytest.mark.xfail(reason="No support for zero-based indexed parameter arrays")
     # No support for zero-based indexed parameter arrays
     def test_constant_array_zero_indexed(self):
         x = np.arange(3, dtype=np.float64)
