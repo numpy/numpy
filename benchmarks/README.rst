@@ -16,7 +16,7 @@ unless told otherwise. Some of the benchmarking features in
 ``runtests.py``. To run the benchmarks, you do not need to install a
 development version of NumPy to your current Python environment.
 
-*Before beginning, ensure that* airspeed velocity *is installed.*
+Before beginning, ensure that *airspeed velocity* is installed.
 By default, `asv` ships with support for anaconda and virtualenv::
 
     pip install asv
@@ -31,7 +31,10 @@ the command line and execute::
     python runtests.py --bench
 
 where ``--bench`` activates the benchmark suite instead of the
-test suite. This builds NumPy and runs the benchmarks.
+test suite. This builds NumPy and runs  all available benchmarks
+defined in ``benchmarks/``.*(Note: this could take a while. Benchmarks
+often take longer to run than unit tests, and each benchmark is run
+multiple times to measure the distribution in execution times.)*
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
 
@@ -55,12 +58,9 @@ have results saved for future comparison you can run ASV commands
 (record results and generate HTML)::
 
     cd benchmarks
-    asv run --skip-existing-commits --steps 10 ALL
+    asv run HEAD
     asv publish
     asv preview
-
-ASV will report that it is running a server. Using any browser,
-you can review the results by navigating to http://127.0.0.1:8080. 
 
 More on how to use ``asv`` can be found in `ASV documentation`_
 Command-line help is available as usual via ``asv --help`` and
