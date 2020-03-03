@@ -59,7 +59,7 @@ have results saved for future comparison you can run ASV commands
 (record results and generate HTML)::
 
     cd benchmarks
-    asv run HEAD
+    asv run -n -e --python=same
     asv publish
     asv preview
 
