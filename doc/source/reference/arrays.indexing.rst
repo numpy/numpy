@@ -396,7 +396,7 @@ smaller than *x* it is identical to filling it with :const:`False`.
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
-    array([1.,  2.,  3.])
+    array([1., 2., 3.])
 
     Or wish to add a constant to all negative elements:
 
