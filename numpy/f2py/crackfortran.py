@@ -2516,10 +2516,12 @@ def get_parameters(vars, global_params={}):
                 v_eval = []
                 for item in v:
                     try:
-                        v_eval.append(eval(item, g_params, params))
+                        #v_eval.append(eval(item, g_params, params))
+                        item = eval(item, g_params, params)
                     except Exception as msg:
                         v_eval.append(item)
                         outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+                    v_eval.append(item)
                 params[n] = v_eval
             else:
                 try:
