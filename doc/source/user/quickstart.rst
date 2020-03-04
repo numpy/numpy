@@ -141,8 +141,8 @@ so on.
 
     >>> b = np.array([(1.5,2,3), (4,5,6)])
     >>> b
-    array([[1.5,  2. ,  3. ],
-           [4. ,  5. ,  6. ]])
+    array([[1.5, 2. , 3. ],
+           [4. , 5. , 6. ]])
 
 The type of the array can also be explicitly specified at creation time:
 
