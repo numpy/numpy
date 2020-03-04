@@ -26,6 +26,9 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
+#if defined( __arm__ ) || defined(__aarch64__)
+#include <arm_neon.h>
+#endif
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
@@ -3124,7 +3127,31 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
+#if defined( __arm__ ) || defined(__aarch64__)
+    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
+    {
+        const int8_t __attribute__ ((aligned (16))) xr[8] = {-7,-6,-5,-4,-3,-2,-1,0};
+        uint8x8_t mask_and = vdup_n_u8(0x80);
+        int8x8_t mask_shift = vld1_s8(xr);
+        uint8x8_t lo = vget_low_u8(input);
+        uint8x8_t hi = vget_high_u8(input);
 
+        lo = vand_u8(lo, mask_and);
+        lo = vshl_u8(lo, mask_shift);
+        hi = vand_u8(hi, mask_and);
+        hi = vshl_u8(hi, mask_shift);
+
+        lo = vpadd_u8(lo,lo);
+        lo = vpadd_u8(lo,lo);
+        lo = vpadd_u8(lo,lo);
+
+        hi = vpadd_u8(hi,hi);
+        hi = vpadd_u8(hi,hi);
+        hi = vpadd_u8(hi,hi);
+
+        return ((hi[0] << 8) | (lo[0] & 0xFF));
+    }
+#endif
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
 
 static int
@@ -3133,9 +3160,11 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
 
 {
     npy_intp i = 0;
+    printf("enter here.\n");
     /* memcmp like logical_and on i386 is maybe slower for small arrays */
 #ifdef NPY_HAVE_SSE2_INTRINSICS
     const __m128i zero = _mm_setzero_si128();
+    printf("enter sse.\n");
     for (; i < n - (n % 32); i+=32) {
         __m128i d1 = _mm_loadu_si128((__m128i*)&ip[i]);
         __m128i d2 = _mm_loadu_si128((__m128i*)&ip[i + 16]);
@@ -3145,6 +3174,20 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
             break;
         }
     }
+#else
+    #if defined( __arm__ ) || defined(__aarch64__)
+        printf("enter neon.\n");
+        uint8x16_t zero = vdupq_n_u8(0);
+        for(; i < n - (n % 32); i+=32) {
+            uint8x16_t d1 = vld1q_u8((char *)&ip[i]);
+            uint8x16_t d2 = vld1q_u8((char *)&ip[i + 16]);
+            d1 = vceqq_u8(d1, zero);
+            d2 = vceqq_u8(d2, zero);
+            if(_mm_movemask_epi8_neon(vminq_u8(d1, d2)) != 0xFFFF) {
+                break;
+            }
+        }
+    #endif
 #endif
     for (; i < n; i++) {
         if (ip[i]) {
