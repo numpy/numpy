@@ -83,10 +83,6 @@ class TestFlags:
     def setup(self):
         self.a = np.arange(10)
 
-    def test_myargmax(self):
-        d = np.zeros(10000,dtype = bool)
-        print("result",np.argmax(d))
-
     def test_writeable(self):
         mydict = locals()
         self.a.flags.writeable = False
