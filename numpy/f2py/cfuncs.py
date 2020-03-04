@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 C declarations, CPP macros, and C functions for f2py2e.

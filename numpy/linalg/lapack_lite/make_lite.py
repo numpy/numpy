@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Usage: make_lite.py <wrapped_routines_file> <lapack_dir>
 

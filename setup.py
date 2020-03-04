@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ NumPy is the fundamental package for array computing with Python.
 
 It provides:

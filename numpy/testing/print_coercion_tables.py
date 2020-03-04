@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Prints type-coercion tables for the built-in NumPy types
 
 """
