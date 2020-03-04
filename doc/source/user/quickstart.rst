@@ -1112,7 +1112,7 @@ indices for each dimension must have the same shape.
            [[10,  9],
             [11, 11]]])
 
-In Python, ``arr[i, j]`` is exactly the same as ``arr[(i, j)]`` - so naturally, we can put ``i`` and ``j`` in a ``tuple`` and
+In Python, ``arr[i, j]`` is exactly the same as ``arr[(i, j)]``---so naturally, we can put ``i`` and ``j`` in a ``tuple`` and
 then do the indexing with that.
 
 ::
