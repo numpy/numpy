@@ -201,7 +201,7 @@ of elements that we want, instead of the step::
 
     >>> from numpy import pi
     >>> np.linspace( 0, 2, 9 )                 # 9 numbers from 0 to 2
-    array([0.  , 0.25, 0.5 , 0.75, 1.  , 1.25, 1.5 , 1.75,  2.  ])
+    array([0.  , 0.25, 0.5 , 0.75, 1.  , 1.25, 1.5 , 1.75, 2.  ])
     >>> x = np.linspace( 0, 2*pi, 100 )        # useful to evaluate function at lots of points
     >>> f = np.sin(x)
 
