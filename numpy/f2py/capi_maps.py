@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
