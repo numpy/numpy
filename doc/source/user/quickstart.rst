@@ -167,9 +167,9 @@ state of the memory. By default, the dtype of the created array is
 ::
 
     >>> np.zeros( (3,4) )
-    array([[0.,  0.,  0.,  0.],
-           [0.,  0.,  0.,  0.],
-           [0.,  0.,  0.,  0.]])
+    array([[0., 0., 0., 0.],
+           [0., 0., 0., 0.],
+           [0., 0., 0., 0.]])
     >>> np.ones( (2,3,4), dtype=np.int16 )                # dtype can also be specified
     array([[[1, 1, 1, 1],
             [1, 1, 1, 1],
