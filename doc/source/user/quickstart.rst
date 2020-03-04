@@ -141,8 +141,8 @@ so on.
 
     >>> b = np.array([(1.5,2,3), (4,5,6)])
     >>> b
-    array([[ 1.5,  2. ,  3. ],
-           [ 4. ,  5. ,  6. ]])
+    array([[1.5,  2. ,  3. ],
+           [4. ,  5. ,  6. ]])
 
 The type of the array can also be explicitly specified at creation time:
 
@@ -150,8 +150,8 @@ The type of the array can also be explicitly specified at creation time:
 
     >>> c = np.array( [ [1,2], [3,4] ], dtype=complex )
     >>> c
-    array([[ 1.+0.j,  2.+0.j],
-           [ 3.+0.j,  4.+0.j]])
+    array([[1.+0.j, 2.+0.j],
+           [3.+0.j, 4.+0.j]])
 
 Often, the elements of an array are originally unknown, but its size is
 known. Hence, NumPy offers several functions to create
@@ -167,9 +167,9 @@ state of the memory. By default, the dtype of the created array is
 ::
 
     >>> np.zeros( (3,4) )
-    array([[ 0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.]])
+    array([[0.,  0.,  0.,  0.],
+           [0.,  0.,  0.,  0.],
+           [0.,  0.,  0.,  0.]])
     >>> np.ones( (2,3,4), dtype=np.int16 )                # dtype can also be specified
     array([[[1, 1, 1, 1],
             [1, 1, 1, 1],
@@ -191,7 +191,7 @@ array.
     >>> np.arange( 10, 30, 5 )
     array([10, 15, 20, 25])
     >>> np.arange( 0, 2, 0.3 )                 # it accepts float arguments
-    array([ 0. ,  0.3,  0.6,  0.9,  1.2,  1.5,  1.8])
+    array([0. ,  0.3,  0.6,  0.9,  1.2,  1.5,  1.8])
 
 When ``arange`` is used with floating point arguments, it is generally
 not possible to predict the number of elements obtained, due to the
@@ -201,7 +201,7 @@ of elements that we want, instead of the step::
 
     >>> from numpy import pi
     >>> np.linspace( 0, 2, 9 )                 # 9 numbers from 0 to 2
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ,  1.25,  1.5 ,  1.75,  2.  ])
+    array([0.  ,  0.25,  0.5 ,  0.75,  1.  ,  1.25,  1.5 ,  1.75,  2.  ])
     >>> x = np.linspace( 0, 2*pi, 100 )        # useful to evaluate function at lots of points
     >>> f = np.sin(x)
 
@@ -339,10 +339,10 @@ existing array rather than create a new one.
     >>> b
     array([[3.51182162, 3.9504637 , 3.14415961],
            [3.94864945, 3.31183145, 3.42332645]])
-    >>> a += b                  # b is not automatically converted to integer type
+    >>> a += b                  # b is not automatically converted to integer type # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
-    numpy.core._exceptions.UFuncTypeError: Cannot cast from dtype('float64') to dtype('int64')  # IGNORE_EXCEPTION_DETAIL
+    numpy.core._exceptions.UFuncTypeError: Cannot cast from dtype('float64') to dtype('int64')
 
 When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
@@ -839,7 +839,9 @@ Simple assignments make no copy of objects or their data.
 
 ::
 
-    >>> a = np.arange(12)
+    >>> a = np.array([[ 0,  1,  2,  3],
+    ...               [ 4,  5,  6,  7],
+    ...               [ 8,  9, 10, 11]])
     >>> b = a            # no new object is created
     >>> b is a           # a and b are two names for the same ndarray object
     True
@@ -1132,7 +1134,7 @@ of a.
     >>> s = np.array([i, j])
 
     # not what we want
-    >>> a[s]
+    >>> a[s] # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       File "<stdin>", line 1, in ?
     IndexError: index (3) out of range (0<=index<=2) in dimension 0
