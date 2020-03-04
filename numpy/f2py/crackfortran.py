@@ -1847,7 +1847,9 @@ def get_useparameters(block, param_map=None):
                     (usename, block.get('name')))
             continue
         mvars = f90modulevars[usename]
+        print(f"In get_useparameters: mvars = {mvars}")
         params = get_parameters(mvars)
+        print(f"In get_useparameters: params = {params}")
         if not params:
             continue
         # XXX: apply mapping
@@ -2565,18 +2567,11 @@ def get_parameters(vars, global_params={}):
                     param_is_array = True
 
             if param_is_array:
-                v = v.lstrip('(/').rstrip('/)').split(',')
-                # TODO Probably not the most efficient way...
-                v_eval = []
-                for item in v:
-                    try:
-                        #v_eval.append(eval(item, g_params, params))
-                        item = eval(item, g_params, params)
-                    except Exception as msg:
-                        v_eval.append(item)
-                        outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
-                    v_eval.append(item)
-                params[n] = v_eval
+                # Building a callable object with the
+                # values of the parameter array to support
+                # non-zero-based indexing.
+                # params[n] in this case is a dict
+                params[n] = param_eval(n, vars[n], v, g_params, params)
             else:
                 try:
                     params[n] = eval(v, g_params, params)
@@ -2619,6 +2614,7 @@ def _eval_scalar(value, params):
     return value
 
 
+
 def analyzevars(block):
     """
     Sets correct dimension information for each variable/parameter
@@ -2652,7 +2648,8 @@ def analyzevars(block):
             svars.append(n)
 
     params = get_parameters(vars, get_useparameters(block))
-
+    print(f"In analyzevars, after get_parameters: params = {params}")
+    
     # At this point, params are read and interpreted, but
     # the params used to define vars are not yet parsed
     dep_matches = {}
@@ -2760,23 +2757,32 @@ def analyzevars(block):
                     if d == ':':
                         star = ':'
                     if d in params:
+
+                        print(f"params = {params}")
+                        print(f"d = {d}")
                         # the dimension for this variable depends on a
                         # previously defined (scalar) parameter
                         d = str(params[d])
+
+                    #############################################
                     # TODO certainly not the best way!
                     # should maybe use regex (like in updatevars)
                     if d[:d.find("(")] in params:
+                        print(f"params = {params}")
+                        print(f"d = {d}")
                         # the dimension for this variable depends on a
                         # previously defined (array) parameter
                         dname = d[:d.find("(")]
-                        ddims = d[d.find("(")+1:d.find(")")]
+                        ddims = int(d[d.find("(")+1:d.rfind(")")])
+                        print(f"dname = {dname}")
+                        print(f"ddims = {ddims}")
                         # FIXME this is not robust; only works if the
                         # parameter array is defined with 1-based indexing
-                        if int(ddims)-1  < 0:
-                            outmess('analyzevars: parameter arrays must be 1-based indexed - (%s) \n' % repr(dname))
-                        ddims = "["+str(int(ddims)-1)+"]"
-                        d = dname+ddims
-
+                        print(f"params[dname] = {params[dname]}")
+                        d = str(params[dname][ddims])
+                        print(f"d after evaluation: {d}")
+                    #############################################
+                    
                     for p in list(params.keys()):
                         re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
                         m = re_1.match(d)
@@ -2991,6 +2997,35 @@ def analyzevars(block):
     return vars
 
 analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z', re.I)
+
+
+def param_eval(n, varsn, v, g_params, params):
+    # Creates a callable object for each parameter to be
+    # evaluated later.
+    for a in varsn['attrspec']:
+        if a[:9] == 'dimension':
+            dimrange = a[9:].lstrip('(').rstrip(')').split(':')
+            dimrange = range(int(dimrange[0]), int(dimrange[1])+1)
+    
+    v = v.lstrip('(/').rstrip('/)').split(',')
+    v_eval = []
+    for item in v:
+        try:
+            item = eval(item, g_params, params)
+        except Exception as msg:
+            v_eval.append(item)
+            outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+        v_eval.append(item)
+
+    # create dictionary of param values
+    param_dict = dict([])
+    for i in range(len(dimrange)):
+        param_dict[dimrange[i]] = v_eval[i]
+
+    return param_dict
+
+
+#def _eval_param(n, d, v_eval, dimrange): 
 
 
 def expr2name(a, block, args=[]):
