@@ -39,6 +39,7 @@ stages:
             apt-get -y install python3.6-dev python3-pip locales python3-certifi && \
             locale-gen fr_FR && update-locale && \
             apt-get -y install gfortran-5 wget && \
+            python3 -m pip install urllib3 && \
             target=\$(python3 tools/openblas_support.py) && \
             ls -lR \$target && \
             cp -r \$target/lib/* /usr/lib && \
@@ -106,6 +107,7 @@ stages:
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
     - script: |
+        python -mpip install urllib3
         target=$(python tools/openblas_support.py)
         ls -lR $target
         # manually link to appropriate system paths

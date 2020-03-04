@@ -13,6 +13,7 @@ steps:
     Write-Host "Python Version: $pyversion"
     $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas$env:OPENBLAS_SUFFIX.a"
     Write-Host "target path: $target"
+    python -mpip install urllib3
     $openblas = python tools/openblas_support.py
     cp $openblas $target
   displayName: 'Download / Install OpenBLAS'

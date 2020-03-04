@@ -17,9 +17,10 @@ import zipfile
 import tarfile
 
 OPENBLAS_V = 'v0.3.7'
-OPENBLAS_LONG = 'v0.3.7'
+OPENBLAS_LONG = 'v0.3.7-391-gddcbed66'
 BASE_LOC = ''
-RACKSPACE = 'https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com'
+RACKSPACE = ('https://anaconda.org/multibuild-wheels-staging/'
+             'openblas-libs/{}/download'.format( OPENBLAS_LONG))
 ARCHITECTURES = ['', 'windows', 'darwin', 'arm', 'x86', 'ppc64']
 
 IS_32BIT = sys.maxsize < 2**32
@@ -50,6 +51,7 @@ def get_ilp64():
     return "64_"
 
 def download_openblas(target, arch, ilp64):
+    import urllib3
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
     if arch == 'arm':
@@ -89,12 +91,13 @@ def download_openblas(target, arch, ilp64):
     if not filename:
         return None
     print("Downloading:", filename, file=sys.stderr)
-    try:
-        with open(target, 'wb') as fid:
-            fid.write(urlopen(filename).read())
-    except HTTPError:
-        print('Could not download "%s"' % filename)
+    http = urllib3.PoolManager()
+    response = http.request('GET', filename)
+    if response.status != 200:
+        print('Could not download "{}"'.format(filename), file=sys.stderr)
         return None
+    with open(target, 'wb') as fid:
+        fid.write(response.data)
     return typ
 
 def setup_openblas(arch=get_arch(), ilp64=get_ilp64()):
