@@ -1112,8 +1112,8 @@ indices for each dimension must have the same shape.
            [[10,  9],
             [11, 11]]])
 
-Naturally, we can put ``i`` and ``j`` in a sequence (say a list) and
-then do the indexing with the list.
+Naturally, we can put ``i`` and ``j`` in a sequence (say a tuple) and
+then do the indexing with the tuple.
 
 ::
 
