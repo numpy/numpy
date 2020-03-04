@@ -31,6 +31,10 @@ By refactoring our datatype API and improving its maintainability,
 future development will become possible, not only for external user datatypes,
 but also within NumPy.
 
+
+Motivation and Scope
+--------------------
+
 One of the main issues with the current API is the definition of typical
 functions such as addition and multiplication for parametric datatypes (ones
 that in addition to a base type require an additional parameter such as strings
@@ -64,7 +68,6 @@ datatypes:
   to other datatypes. For example a unit datatype cannot have a ``.to_si()`` method to
   easily find the datatype which would represent the same values in SI units.
 
-
 The large need to solve these issues has driven the scientific community
 to create work-arounds in multiple projects implementing physical units as an
 array-like
@@ -73,83 +76,9 @@ Similarly, Pandas has made a push into the same direction and undoubtedly
 the community would be best served if such new features could be common
 between NumPy, Pandas, and other projects.
 
-Plan to Approach this Refactor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To address these issues in NumPy and enable new datatypes,
-multiple development stages are required:
-
-* Phase I: Restructure and extend the datatype infrastructure
-
-  * Organize Datatypes like normal Python classes [`PR 15508`]_
-
-* Phase II: Incrementally define or rework API
-
-  * Create a new and easily extensible API for defining new datatypes
-    and related functionality.
-
-  * Incrementally define all necessary functionality through the new API:
-
-    * Defining operations such as ``np.common_type``.
-    * Allowing to define casting between datatypes.
-    * Add functionality necessary to create a numpy array from Python scalars
-      (i.e. ``np.array(...)``).
-    * …
-
-  * Restructure how universal functions functions to:
-
-    * make it possible to allow a `~numpy.ufunc` such as ``np.add`` to be
-      extended by user defined datatypes such as Units.
-
-    * allow efficient lookup for the correct implementation for user defined
-      datatypes.
-
-    * enable reuse of existing code. Units should be able to use the
-      normal math loops and add additional logic to determine output type.
-
-* Phase III: Growth of NumPy and Scientific Python Ecosystem capabilities:
-
-  * Cleanup of legacy behaviour where it is considered buggy or undesirable.
-  * Provide a path to define new datatypes from Python.
-  * Assist the community in creating types such as Units or Categoricals
-  * Allow strings to be used in functions such as ``np.equal`` or ``np.add``.
-  * Remove legacy code paths within NumPy to improve long term maintainability
-
-This document serves as a basis for phase I and provides the vision and
-motivation for the full project.
-While of limited use to the end user, the first step involves a conceptional
-cleanup of the current datatype system. It provides a more "pythonic" datatype
-Python type object, with a clear class heirarchy.
-
-The second phase is the incremental creation of all APIs necessary to define
-fully featured datatypes and reorganization of the NumPy datatype system.
-Phase I concerns mainly private APIs, while phase II is expected to include
-a slow creation of a *preliminary* public API which will develop into the
-final stable API.
-
-Some of the benefits of a large refactor may only become evident after the full
-deprecation of the current legacy implementation (i.e. larger code removals).
-However, these steps are necessary for improvements to many parts of the
-core NumPy API, and are expected to make the implementation generally
-easier to understand.
-Pushing forward with Phase I cleans up the concepts of the API to coincide
-with how Python is typically organized and unlocks the ability to improve
-parts of NumPy which currently are not extensible.
-
-The following picture gives another overview of the overall design idea.
-Note that this NEP only regards Phase I (shaded area),
-the rest encompasses Phase II and the design choices are up for discussion,
-however, it highlights that the DType datatype class is the central, necessary
-concept:
-
-.. image:: _static/nep-0041-mindmap.svg
-
-
-Design Principles
-^^^^^^^^^^^^^^^^^
-
-Scope and Motivation
---------------------
+Scope
+^^^^^
 
 This NEP proposes to move ahead with Phase I (see Implementation section),
 and start approaching Phase II without the creation of any new public API.
@@ -201,8 +130,8 @@ For example ``common_dtype(a, b)`` must not be ``c`` unless ``a`` or ``b`` know
 that ``c`` exists.
 
 
-Motivation and the Need for New User-Defined Datatypes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+User Impact
+-----------
 
 The current ecosystem has very few user defined datatypes using NumPy, the
 two most prominent being: ``rational`` and ``quaternion``.
@@ -219,7 +148,6 @@ However, we have identified a need for datatypes such as:
 * datatypes for tracing/automatic differentiation
 * high, fixed precision math
 
-
 Some of these are partially solved; for example unit capability is provided
 in ``astropy.units``, ``unyt``, or ``pint``, as `numpy.ndarray` subclasses.
 However, it would be more natural for them to be datatypes instead.
@@ -231,6 +159,11 @@ seamlessly with other array or array-like packages such as Pandas,
 
 The need for such datatypes has also already led to the implementation of
 ExtensionArrays inside pandas [pandas_extension_arrays]_.
+
+The long term user impact of implementing this NEP will be to allow both
+the growth of the whole ecosystem by having new datatypes, as well as
+consolidating implementation of such datatypes within NumPy to achieve
+a better interoperability.
 
 
 Examples
@@ -408,6 +341,7 @@ This example highlights how the specific ufunc loop
 certain decisions before the actual calculation can start.
 
 
+
 Detailed Description
 --------------------
 
@@ -537,6 +471,82 @@ description of the current implementation and its issues):
 
 Implementation
 --------------
+
+
+Plan to Approach for the Full Refactor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To address these issues in NumPy and enable new datatypes,
+multiple development stages are required:
+
+* Phase I: Restructure and extend the datatype infrastructure
+
+  * Organize Datatypes like normal Python classes [`PR 15508`]_
+
+* Phase II: Incrementally define or rework API
+
+  * Create a new and easily extensible API for defining new datatypes
+    and related functionality.
+
+  * Incrementally define all necessary functionality through the new API:
+
+    * Defining operations such as ``np.common_type``.
+    * Allowing to define casting between datatypes.
+    * Add functionality necessary to create a numpy array from Python scalars
+      (i.e. ``np.array(...)``).
+    * …
+
+  * Restructure how universal functions functions to:
+
+    * make it possible to allow a `~numpy.ufunc` such as ``np.add`` to be
+      extended by user defined datatypes such as Units.
+
+    * allow efficient lookup for the correct implementation for user defined
+      datatypes.
+
+    * enable reuse of existing code. Units should be able to use the
+      normal math loops and add additional logic to determine output type.
+
+* Phase III: Growth of NumPy and Scientific Python Ecosystem capabilities:
+
+  * Cleanup of legacy behaviour where it is considered buggy or undesirable.
+  * Provide a path to define new datatypes from Python.
+  * Assist the community in creating types such as Units or Categoricals
+  * Allow strings to be used in functions such as ``np.equal`` or ``np.add``.
+  * Remove legacy code paths within NumPy to improve long term maintainability
+
+This document serves as a basis for phase I and provides the vision and
+motivation for the full project.
+While of limited use to the end user, the first step involves a conceptional
+cleanup of the current datatype system. It provides a more "pythonic" datatype
+Python type object, with a clear class heirarchy.
+
+The second phase is the incremental creation of all APIs necessary to define
+fully featured datatypes and reorganization of the NumPy datatype system.
+Phase I concerns mainly private APIs, while phase II is expected to include
+a slow creation of a *preliminary* public API which will develop into the
+final stable API.
+
+Some of the benefits of a large refactor may only become evident after the full
+deprecation of the current legacy implementation (i.e. larger code removals).
+However, these steps are necessary for improvements to many parts of the
+core NumPy API, and are expected to make the implementation generally
+easier to understand.
+Pushing forward with Phase I cleans up the concepts of the API to coincide
+with how Python is typically organized and unlocks the ability to improve
+parts of NumPy which currently are not extensible.
+
+The following picture gives another overview of the overall design idea.
+Note that this NEP only regards Phase I (shaded area),
+the rest encompasses Phase II and the design choices are up for discussion,
+however, it highlights that the DType datatype class is the central, necessary
+concept:
+
+.. image:: _static/nep-0041-mindmap.svg
+
+
+First steps directly related to this NEP
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The required changes necessary to NumPy are massive and touch a large part
 of the code base.
