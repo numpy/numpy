@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 r"""
 Look for escape sequences deprecated in Python 3.6.
 

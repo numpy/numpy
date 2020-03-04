@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 takes templated file .xxx.src and produces .xxx file  where .xxx is
 .i or .c or .h, using the following template rules
