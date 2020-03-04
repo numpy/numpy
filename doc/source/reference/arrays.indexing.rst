@@ -1,8 +1,7 @@
-.. _arrays.indexing:
-
 .. for doctests
    >>> import numpy as np
 
+.. _arrays.indexing:
 
 Indexing
 ========
