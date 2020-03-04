@@ -166,7 +166,7 @@ state of the memory. By default, the dtype of the created array is
 
 ::
 
-    >>> np.zeros( (3,4) )
+    >>> np.zeros((3, 4))
     array([[0., 0., 0., 0.],
            [0., 0., 0., 0.],
            [0., 0., 0., 0.]])
