@@ -2715,7 +2715,7 @@ def analyzevars(block):
                         # the dimension for this variable depends on a
                         # previously defined (array) parameter
                         dname = d[:d.find("(")]
-                        ddims = d[d.find("(")+1:d.find(")")]
+                        ddims = d[d.find("(")+1:d.rfind(")")]
                         # FIXME this is not robust; only works if the
                         # parameter array is defined with 1-based indexing
                         if int(ddims)-1  < 0:
