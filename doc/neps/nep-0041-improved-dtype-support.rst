@@ -142,46 +142,58 @@ however, it highlights that the DType class is the central, necessary concept:
 .. image:: _static/nep-0041-mindmap.png
 
 
+Design Principles
+^^^^^^^^^^^^^^^^^
 
-Decisions
----------
 
-Specifically, this NEP proposes to preliminarily move ahead with the Phase
-(see Implementation section).
-It also lays out the final design goals and establishes some user facing design
-decisions and considerations.
-No large incompatibilities are expected due to implementing the proposed full
-changes (including all Phases),
-ideally only requiring minor changes in downstream libraries on a similar scale
-to other updates in the recent past.
-However, if incompatibilities become more extensive then expected,
-a major NumPy release is an acceptable solution, although even then
-the vast majority of users shall not be affected.
-A transition requiring large code adaptation, similar to the Python 2 to 3
-transition, is not anticipated and not covered by this NEP.
 
-By accepting this NEP, we accept the following things will happen now or
-as part of Phase II:
+Scope and Motivation
+--------------------
+
+Specifically, this NEP proposes to move ahead with Phase I (see Implementation section),
+and start approaching Phase II without the creation of any new public API.
+Initially, this will have little or no effect on users, but provides the
+necessary ground work for incrementally addressing all parts of Phase II with
+exact details being decided in followup NEPs.
+
+The implementation of this NEP and the following changes in Phase II are
+expected to create small incompatibilities (see backward compatibility
+section).
+However, a transition requiring large code adaption is not anticipated and not within
+scope.
+
+Specifically, this NEP makes the following design choices (more details
+in below sections):
 
 1. Each basic datatype should be a class with most logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
    slots: ``type(np.dtype("f8"))`` should be a subclass of ``np.dtype``.
+
 2. The current datatypes will be instances of these classes.
    All methods, which are currently defined on the instance, should instead be
    defined on the class. Storage information such as itemsize and byteorder
    are stored on the instance. Making a DType a class allows for DType
    specific information to be stored more naturally.
+
 3. The current NumPy scalars will *not* be instances of datatypes.
-4. All new API provided to the user will hide implementation as much as
-   possible. The public API should be identical, but may be more limited,
-   to the API used for the internal NumPy datatypes.
+
+With detailed technical decisions being followed up in NEP 42.
+
+Further, the public API will be designed in a way that is extensible in the future:
+
+4. All new API provided to the user will hide implementation as much as possible
+   and be extensible.
+
+The changes to the datatype system in Phase II must include a large refactor of the
+UFunc machinery, which will be further defined in NEP 43:
+
 5. The UFunc machinery will be changed to replace the current dispatching
    and type resolution system (part of Phase II).
    The old system should be *mostly* supported as a legacy version for some time.
    This should thus not affect most users, but is a necessary large refactor.
    
 Additionally, as a general design principle, the addition of new user defined
-datatypes shall *not* change the behaviour of programs.
+datatypes will *not* change the behaviour of programs.
 For example ``common_dtype(a, b)`` must not be ``c`` unless ``a`` or ``b`` know
 that ``c`` exists.
 
@@ -332,42 +344,6 @@ strictly more values defined, is something that the Categorical datatype would
 need to decide. Both options should be valid.
 
 
-Python Enums DType
-""""""""""""""""""
-
-An example for a more complex datatype, encompassing an additional concept
-would be a DType that could wrap ``enum.Enum``::
-
-    >>> class Breakfast(enum.Enum):
-    ...     spam, eggs, toast = 1, 2, '3'
-    >>> table = array([Breakfast.spam, Breakfast.eggs, Breakfast.toast], dtype=EnumDType(Breakfast))
-    >>> to_values(table)  # to_values is a ufunc here
-    array([1, 2, '3'], dtype=object)
-    >>> table[0]
-    <Breakfast.spam: 1>
-
-The following operations may be desirable but are *not* straight forward::
-
-    >>> table2 = np.array([Breakfast.spam, Breakfast.eggs])  # discover same dtype
-    >>> table == Breakfast.spam
-    array([True, False, False])
-
-To define these NumPy would need to find the correct Enum DType.
-And it is unclear how that should be done, because the type associated with
-an ``EnumDType`` could be any ``Enum`` subclass.
-
-An alternative approach, which solves those issues, is to create the DTypes as::
-
-    >>> BreakfastDType = EnumDType(Breakfast)  # class/DType factory
-    >>> issubclass(BreakfastDType, EnumDType)
-    True
-
-Where ``BreakfastDType`` is a subclass and not just an instance of ``EnumDType``.
-Which makes sense since also ``Enum`` is a class factory.
-The Enum example is particularly complicated (it may be good to keep in mind,
-but it is likely that is would not be supported initially).
-
-
 Unit on the Datatype
 """"""""""""""""""""
 
@@ -377,7 +353,8 @@ for every existing numerical type.
 This will be written as ``Unit[float64]``, the unit itself is part of the
 DType instance ``Unit[float64]("m")`` us a ``float64`` with meters attached::
 
-    >>> meters = np.array([1, 2, 3], dtype=np.float64) * unit.m  # meters
+    >>> from astropy import units
+    >>> meters = np.array([1, 2, 3], dtype=np.float64) * units.m  # meters
     >>> print(meters)
     array([1.0, 2.0, 3.0], dtype=Unit[float64]("m"))
 
@@ -388,8 +365,8 @@ Note that units are a bit tricky, since it is debatable, whether::
 should be valid syntax (coercing the float scalars without a unit to meters).
 Once the array is created, math will work without any issue::
 
-    >>> meters * 2 * unit.seconds
-    array([2.0, 4.0, 6.0], dtype=Unit[float64]("m s"))
+    >>> meters / (2 * unit.seconds)
+    array([0.5, 1.0, 1.5], dtype=Unit[float64]("m/s"))
 
 Casting is not valid from one unit to the other, but can be between different
 scales of the same dimensionality (although this may usually be "unsafe")::
@@ -414,7 +391,7 @@ would be implemented.
 The interaction with other scalars would likely be defined through::
 
     >>> np.common_type(np.float64, Unit)
-    Unit[np.float64](unitless)
+    Unit[np.float64](dimensionless)
 
 *The main interesting point about units is that it is obvious that ufuncs
 can be more involved than for simple numerical dtypes*.
@@ -550,29 +527,6 @@ a later step in the implementation to reduce the complexity of the initial
 implementation.
 
 
-Python level interface (general vision)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-While a Python interface is a second step, it is a main feature of this NEP
-to enable a Python interface and work towards it.
-For example, it is a specific long term design goal that the definition
-of a Unit datatype should be possible from within Python.
-Note that a Unit datatype can reuse much existing functionality, but needs
-to add additional logic to it.
-
-One approach, or additional API may be to allow defining new dtypes using type annotations:
-
-.. code-block:: python
-
-    @np.dtype
-    class Coordinate:
-       x: np.float64
-       y: np.float64
-       z: np.float64
-
-to largely replace current structured datatypes.
-
-
 C-API Changes to the UFunc Machinery (5)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -607,7 +561,7 @@ more incrementally:
 1. A new machinery for array coercion, with the goal of enabling user DTypes
    to behave in a full featured manner.
 2. The replacement or wrapping of the current casting machinery.
-3. Incremental redifinition of the current ``ArrFunctions`` slots into
+3. Incremental redefinition of the current ``ArrFunctions`` slots into
    DType method slots.
 
 Parallel to these, after step 1. is finished, the Phase II of revising the
