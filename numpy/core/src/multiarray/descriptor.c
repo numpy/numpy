@@ -1439,7 +1439,7 @@ _convert_from_type(PyObject *obj) {
         /*
          * All other classes are treated as object. This can be convenient
          * to convey an intention of using it for a specific python type
-         * and possibly allow future enforcement. It may make sense to
+         * and possibly allow converting to a new type-specific dtype in the future. It may make sense to
          * only allow this only within `dtype=...` keyword argument context
          * in the future.
          */
