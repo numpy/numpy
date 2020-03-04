@@ -342,136 +342,8 @@ certain decisions before the actual calculation can start.
 
 
 
-Detailed Description
---------------------
-
-This section details some of the design decisions above and gives
-more details.
-Since datatype changes touch a large part of code and behaviours, NEP 40
-reviews some of the concepts, issues, and the current implementation.
-
-
-Datatypes as Python Classes (1 + 2)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The current NumPy datatypes are not full scale python classes.
-They are instead (prototype) instances of a single ``np.dtype`` class.
-Changing this means that any special handling, e.g. for ``datetime``
-can be moved to the Datetime DType class instead, away from monolithic general
-code (e.g. current ``PyArray_AdjustFlexibleDType``).
-
-The main API side effect of this is that special methods move
-from the dtype instances to class methods on the class.
-This is the typical design pattern used in Python.
-Adding a new, pythonic point to store these methods and information, will
-allow us to further refine the API and allow it to grow in the future.
-The current API cannot be extended due to how it is exposed publically.
-
-The most prominent visible side effect of this will be that
-``type(np.dtype(np.float64))``
-will not be ``np.dtype`` anymore. However, ``isinstance`` will return the
-correct value.
-This will also add the ability to use ``isinstance(dtype, np.Float64)``
-thus removing the need to use ``dtype.kind``, ``dtype.char``, or ``dtype.type``
-to do this check.
-
-If DTypes were full scale Python classes, the question of subclassing arises.
-Inheritance, however, appears problematic and a complexity best avoided
-(at least initially) for container datatypes.
-Since a class hierarchy and subclass order provides value, phase I will allow
-the creation of *abstract* datatypes.
-An example for an abstract datatype would be ``np.Floating``,
-representing any floating point number.
-These can serve the same purpose as Python's abstract base classes.
-
-
-Scalars should not be instances of the datatypes (3)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For simple datatypes such as ``float64`` (see also below), it seems
-tempting that the instance of a ``np.dtype("float64")`` can be the scalar.
-This idea may be even more appealing due to the fact that scalars,
-rather than datatypes, currently define a useful type hierarchy.
-
-However, we have specifically decided against this for a number of reasons.
-First, the above described new datatypes would be instances of DType
-classes.
-Making these instances themselves classes, while possible, adds an additional
-complexity that users need to understand.
-Second, while the simple NumPy scalars such as ``float64`` may be such instances,
-it should be possible to create datatypes for Python objects without enforcing
-NumPy as a dependency. However
-Python objects that do not depend on NumPy cannot be instances of a NumPy DType.
-Third, there is a mismatch between the methods and attributes which are useful
-for scalars and datatypes. For instance ``to_float()`` makes sense for a scalar
-but not for a datatype, and byte order is currently only defined for a datatype.
-
-Overall, it seem rather than reducing the complexity, i.e. by merging
-the two distinct type hierarchies, making scalars instances of DTypes would
-add complexity for the user and make the implementation more complex.
-
-A possible future path may be to instead simplify the current NumPy scalars to
-be much simpler objects which largely derived their behaviour from the datatypes.
-
-C-API for creating new Datatypes (4)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The current C-API with which users can create new datatypes
-is limited in scope, and requires use of "private" structures. This means
-the API is not extensible: no new members can be added to the structure
-without losing binary compatibility.
-This has already limited the inclusion of new sorting methods into
-NumPy [new_sort]_.
-
-The new version shall thus replace the current ``ArrFuncs`` structure used
-to define new datatypes.
-Datatypes that currently exist and are defined using these slots will be
-supported during a deprecation period.
-
-A *possible* solution is to hide the implementation from the user and thus make
-it extensible in the future is to model the API after Python's stable
-API [PEP-384]_:
-
-.. code-block:: C
-
-    static struct PyArrayMethodDef slots[] = {
-        {NPY_dt_method, method_implementation},
-        ...,
-        {0, NULL}
-    }
-
-    typedef struct{
-      PyTypeObject *typeobj;  /* type of python scalar */
-      ...;
-      PyType_Slot *slots;
-    } PyArrayDTypeMeta_Spec;
-
-    PyObject* PyArray_InitDTypeMetaFromSpec(
-            PyArray_DTypeMeta *user_dtype, PyArrayDTypeMeta_Spec *dtype_spec);
-
-The C-side slots should be designed to mirror Python side methods
-such as ``dtype.__dtype_method__``, although the exposure to Python may be
-a later step in the implementation to reduce the complexity of the initial
-implementation.
-
-
-C-API Changes to the UFunc Machinery (5)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Proposed changes to the UFunc machinery will be part of NEP 43.
-However, the following changes will be necessary (see NEP 40 for a detailed
-description of the current implementation and its issues):
-
-* The current UFunc type resolution must be adapted to allow better control
-  for user dtypes as well as resolve current inconsistencies.
-* The inner-loop used in UFuncs must be expanded to include a return value.
-  Further, error reporting must be improved, and passing in dtype-specific
-  information enabled.
-
-
 Implementation
 --------------
-
 
 Plan to Approach for the Full Refactor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -635,6 +507,136 @@ For example functions which use the type number as input
 should be replaced with functions taking DType classes instead.
 Although public, large parts of this C-API seems very rarely and possibly
 never used by downstream projects.
+
+
+
+
+Detailed Description
+--------------------
+
+This section details some of the design decisions above and gives
+more details.
+Since datatype changes touch a large part of code and behaviours, NEP 40
+reviews some of the concepts, issues, and the current implementation.
+
+
+Datatypes as Python Classes (1 + 2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The current NumPy datatypes are not full scale python classes.
+They are instead (prototype) instances of a single ``np.dtype`` class.
+Changing this means that any special handling, e.g. for ``datetime``
+can be moved to the Datetime DType class instead, away from monolithic general
+code (e.g. current ``PyArray_AdjustFlexibleDType``).
+
+The main API side effect of this is that special methods move
+from the dtype instances to class methods on the class.
+This is the typical design pattern used in Python.
+Adding a new, pythonic point to store these methods and information, will
+allow us to further refine the API and allow it to grow in the future.
+The current API cannot be extended due to how it is exposed publically.
+
+The most prominent visible side effect of this will be that
+``type(np.dtype(np.float64))``
+will not be ``np.dtype`` anymore. However, ``isinstance`` will return the
+correct value.
+This will also add the ability to use ``isinstance(dtype, np.Float64)``
+thus removing the need to use ``dtype.kind``, ``dtype.char``, or ``dtype.type``
+to do this check.
+
+If DTypes were full scale Python classes, the question of subclassing arises.
+Inheritance, however, appears problematic and a complexity best avoided
+(at least initially) for container datatypes.
+Since a class hierarchy and subclass order provides value, phase I will allow
+the creation of *abstract* datatypes.
+An example for an abstract datatype would be ``np.Floating``,
+representing any floating point number.
+These can serve the same purpose as Python's abstract base classes.
+
+
+Scalars should not be instances of the datatypes (3)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For simple datatypes such as ``float64`` (see also below), it seems
+tempting that the instance of a ``np.dtype("float64")`` can be the scalar.
+This idea may be even more appealing due to the fact that scalars,
+rather than datatypes, currently define a useful type hierarchy.
+
+However, we have specifically decided against this for a number of reasons.
+First, the above described new datatypes would be instances of DType
+classes.
+Making these instances themselves classes, while possible, adds an additional
+complexity that users need to understand.
+Second, while the simple NumPy scalars such as ``float64`` may be such instances,
+it should be possible to create datatypes for Python objects without enforcing
+NumPy as a dependency. However
+Python objects that do not depend on NumPy cannot be instances of a NumPy DType.
+Third, there is a mismatch between the methods and attributes which are useful
+for scalars and datatypes. For instance ``to_float()`` makes sense for a scalar
+but not for a datatype, and byte order is currently only defined for a datatype.
+
+Overall, it seem rather than reducing the complexity, i.e. by merging
+the two distinct type hierarchies, making scalars instances of DTypes would
+add complexity for the user and make the implementation more complex.
+
+A possible future path may be to instead simplify the current NumPy scalars to
+be much simpler objects which largely derived their behaviour from the datatypes.
+
+C-API for creating new Datatypes (4)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The current C-API with which users can create new datatypes
+is limited in scope, and requires use of "private" structures. This means
+the API is not extensible: no new members can be added to the structure
+without losing binary compatibility.
+This has already limited the inclusion of new sorting methods into
+NumPy [new_sort]_.
+
+The new version shall thus replace the current ``ArrFuncs`` structure used
+to define new datatypes.
+Datatypes that currently exist and are defined using these slots will be
+supported during a deprecation period.
+
+A *possible* solution is to hide the implementation from the user and thus make
+it extensible in the future is to model the API after Python's stable
+API [PEP-384]_:
+
+.. code-block:: C
+
+    static struct PyArrayMethodDef slots[] = {
+        {NPY_dt_method, method_implementation},
+        ...,
+        {0, NULL}
+    }
+
+    typedef struct{
+      PyTypeObject *typeobj;  /* type of python scalar */
+      ...;
+      PyType_Slot *slots;
+    } PyArrayDTypeMeta_Spec;
+
+    PyObject* PyArray_InitDTypeMetaFromSpec(
+            PyArray_DTypeMeta *user_dtype, PyArrayDTypeMeta_Spec *dtype_spec);
+
+The C-side slots should be designed to mirror Python side methods
+such as ``dtype.__dtype_method__``, although the exposure to Python may be
+a later step in the implementation to reduce the complexity of the initial
+implementation.
+
+
+C-API Changes to the UFunc Machinery (5)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Proposed changes to the UFunc machinery will be part of NEP 43.
+However, the following changes will be necessary (see NEP 40 for a detailed
+description of the current implementation and its issues):
+
+* The current UFunc type resolution must be adapted to allow better control
+  for user dtypes as well as resolve current inconsistencies.
+* The inner-loop used in UFuncs must be expanded to include a return value.
+  Further, error reporting must be improved, and passing in dtype-specific
+  information enabled.
+
 
 
 Discussion
