@@ -35,6 +35,12 @@ but also within NumPy.
 Motivation and Scope
 --------------------
 
+Motivation
+^^^^^^^^^^
+
+See also the user impact section for examples of what should be enabled
+by the proposed changes in the long run.
+
 One of the main issues with the current API is the definition of typical
 functions such as addition and multiplication for parametric datatypes (ones
 that in addition to a base type require an additional parameter such as strings
@@ -164,7 +170,6 @@ The long term user impact of implementing this NEP will be to allow both
 the growth of the whole ecosystem by having new datatypes, as well as
 consolidating implementation of such datatypes within NumPy to achieve
 a better interoperability.
-
 
 Examples
 ^^^^^^^^
