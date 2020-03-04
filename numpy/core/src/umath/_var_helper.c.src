@@ -1,0 +1,110 @@
+/**
+ * This module provides the inner loops for the var helper function ufunc
+ */
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "Python.h"
+
+#include "numpy/halffloat.h"
+#include "numpy/npy_math.h"
+#include "numpy/ndarraytypes.h"
+#include "numpy/npy_common.h"
+#include "numpy/utils.h"
+
+#define INIT_OUTER_LOOP \
+    npy_intp dN = *dimensions++;\
+    npy_intp N_;                \
+    npy_intp s0 = *steps++;     \
+    npy_intp s1 = *steps++;     \
+    npy_intp s2 = *steps++;     \
+    npy_intp s3 = *steps++;
+
+#define BEGIN_OUTER_LOOP      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3) {
+
+#define END_OUTER_LOOP  }
+
+NPY_NO_EXPORT void
+HALF__var_helper(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1 = steps[0];
+    npy_intp is2 = steps[1];
+    BEGIN_OUTER_LOOP
+        char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];
+        float S1 = 0, S2 = 0;
+        for (i = 0; i < di; i++, ip1 += is1, ip2 += is2) {
+            const float x = npy_half_to_float(*(npy_half *)ip1) -
+                            npy_half_to_float(*(npy_half *)ip2);
+            S1 += x;
+            S2 += x * x;
+        }
+        *(npy_half *)op1 = npy_float_to_half(S1);
+        *(npy_half *)op2 = npy_float_to_half(S2);
+    END_OUTER_LOOP
+}
+
+/**begin repeat
+ *
+ * #name = FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_float, npy_double, npy_longdouble#
+ */
+
+NPY_NO_EXPORT void
+@name@__var_helper(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1 = steps[0];
+    npy_intp is2 = steps[1];
+    BEGIN_OUTER_LOOP
+        char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];
+        @type@ S1 = 0, S2 = 0;
+        for (i = 0; i < di; i++, ip1 += is1, ip2 += is2) {
+            const @type@ x = *(@type@ *)ip1 - *(@type@ *)ip2;
+            S1 += x;
+            S2 += x * x;
+        }
+        *(@type@ *)op1 = S1;
+        *(@type@ *)op2 = S2;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #name = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #type = npy_float, npy_double, npy_longdouble#
+ */
+
+NPY_NO_EXPORT void
+@name@__var_helper(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1 = steps[0];
+    npy_intp is2 = steps[1];
+    BEGIN_OUTER_LOOP
+        char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];
+        @type@ S1_re = 0, S1_im = 0, S2 = 0;
+        for (i = 0; i < di; i++, ip1 += is1, ip2 += is2) {
+            const @type@ re = *(@type@ *)ip1 - *(@type@ *)ip2;
+            const @type@ im = *((@type@ *)ip1 + 1) - *((@type@ *)ip2 + 1);
+            S1_re += re;
+            S1_im += im;
+            S2 += re * re + im * im;
+        }
+        *(@type@ *)op1 = S1_re;
+        *((@type@ *)op1 + 1)= S1_im;
+        *(@type@ *)op2 = S2;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/

@@ -938,6 +938,20 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
+'_var_helper':
+    Ufunc(2, 2, None,
+          "returns the sum of differences and sum of squared differences",
+          None,
+          [TypeDescription('e', None, 'ee', 'ee'),
+          TypeDescription('f', None, 'ff', 'ff'),
+          TypeDescription('d', None, 'dd', 'dd'),
+          TypeDescription('g', None, 'gg', 'gg'),
+          TypeDescription('F', None, 'FF', 'Ff'),
+          TypeDescription('D', None, 'DD', 'Dd'),
+          TypeDescription('G', None, 'GG', 'Gg'),
+          ],
+          signature='(i),(i)->(),()',
+          ),
 }
 
 def indent(st, spaces):
@@ -1144,6 +1158,7 @@ def make_code(funcdict, filename):
     #include "loops.h"
     #include "matmul.h"
     #include "clip.h"
+    #include "_var_helper.h"
     %s
 
     static int

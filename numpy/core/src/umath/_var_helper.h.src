@@ -1,0 +1,14 @@
+#ifndef _NPY_UMATH__VAR_HELPER_H_
+#define _NPY_UMATH__VAR_HELPER_H_
+
+
+/**begin repeat
+ *
+ * #name = HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ */
+NPY_NO_EXPORT void
+@name@__var_helper(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+#endif
