@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 """
-summarize.py
-
 Show a summary about which NumPy functions are documented and which are not.
 
 """
 import collections.abc
 import glob
 import inspect
-import optparse
 import os
 import sys
 
@@ -59,13 +56,13 @@ ctypeslib ctypeslib.test
 """.split()
 
 def main():
-    p = optparse.OptionParser(__doc__)
-    p.add_option("-c", "--columns", action="store", type="int", dest="cols",
-                 default=3, help="Maximum number of columns")
-    options, args = p.parse_args()
+    import argparse
 
-    if len(args) != 0:
-        p.error('Wrong number of arguments')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-c", "--columns", type=int, default=3,
+        help="Maximum number of columns (default: %(default)d)")
+    args = parser.parse_args()
 
     # prepare
     fn = os.path.join(CUR_DIR, 'dump.xml')
@@ -90,13 +87,13 @@ def main():
             print("--- %s\n" % filename)
         last_filename = filename
         print(" ** ", section)
-        print(format_in_columns(sorted(names), options.cols))
+        print(format_in_columns(sorted(names), args.columns))
         print("\n")
 
     print("")
     print("Undocumented")
     print("============\n")
-    print(format_in_columns(sorted(undocumented.keys()), options.cols))
+    print(format_in_columns(sorted(undocumented.keys()), args.columns))
 
 def check_numpy():
     documented = get_documented(glob.glob(SOURCE_DIR + '/*.rst'))
