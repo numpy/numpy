@@ -191,7 +191,7 @@ array.
     >>> np.arange( 10, 30, 5 )
     array([10, 15, 20, 25])
     >>> np.arange( 0, 2, 0.3 )                 # it accepts float arguments
-    array([0. ,  0.3,  0.6,  0.9,  1.2,  1.5,  1.8])
+    array([0. , 0.3, 0.6, 0.9, 1.2, 1.5, 1.8])
 
 When ``arange`` is used with floating point arguments, it is generally
 not possible to predict the number of elements obtained, due to the
@@ -1136,7 +1136,7 @@ of a.
     # not what we want
     >>> a[s] # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-      File "<stdin>", line 1, in ?
+      ...
     IndexError: index (3) out of range (0<=index<=2) in dimension 0
 
     # same as a[i, j]
