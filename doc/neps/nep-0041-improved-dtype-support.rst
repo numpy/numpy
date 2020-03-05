@@ -167,6 +167,7 @@ the growth of the whole ecosystem by having such new datatypes, as well as
 consolidating implementation of such datatypes within NumPy to achieve
 a better interoperability.
 
+
 Examples
 ^^^^^^^^
 
@@ -538,20 +539,22 @@ allow us to further refine the API and allow it to grow in the future.
 The current API cannot be extended due to how it is exposed publically.
 
 The most prominent visible side effect of this will be that
-``type(np.dtype(np.float64))``
-will not be ``np.dtype`` anymore. However, ``isinstance`` will return the
-correct value.
-This will also add the ability to use ``isinstance(dtype, np.Float64)``
+``type(np.dtype(np.float64))`` will not be ``np.dtype`` anymore.
+However, ``isinstance`` will return the correct value.
+This will also add the ability to use ``isinstance(dtype, np.dtype[float64])``
 thus removing the need to use ``dtype.kind``, ``dtype.char``, or ``dtype.type``
 to do this check.
 
 If DTypes were full scale Python classes, the question of subclassing arises.
 Inheritance, however, appears problematic and a complexity best avoided
 (at least initially) for container datatypes.
+Further, subclasses may be more interesting for the interoperatbility for
+example with GPU backends (CuPy) storing additional methods related to the
+GPU rather than as a mechanism to define new datatypes.
 Since a class hierarchy and subclass order provides value, phase I will allow
 the creation of *abstract* datatypes.
-An example for an abstract datatype would be ``np.Floating``,
-representing any floating point number.
+An example for an abstract datatype would be the datatype equivalent of
+``np.floating``, representing any floating point number.
 These can serve the same purpose as Python's abstract base classes.
 
 
@@ -568,13 +571,16 @@ First, the above described new datatypes would be instances of DType
 classes.
 Making these instances themselves classes, while possible, adds an additional
 complexity that users need to understand.
+It would also mean that scalars must have storage information (such as byteorder)
+which is generally unnecessary and currently is not used.
 Second, while the simple NumPy scalars such as ``float64`` may be such instances,
 it should be possible to create datatypes for Python objects without enforcing
-NumPy as a dependency. However
-Python objects that do not depend on NumPy cannot be instances of a NumPy DType.
+NumPy as a dependency.
+However, Python objects that do not depend on NumPy cannot be instances of a NumPy DType.
 Third, there is a mismatch between the methods and attributes which are useful
 for scalars and datatypes. For instance ``to_float()`` makes sense for a scalar
-but not for a datatype, and byte order is currently only defined for a datatype.
+but not for a datatype and ``newbyteorder`` is not useful on a scalar (or has
+a different meaning).
 
 Overall, it seem rather than reducing the complexity, i.e. by merging
 the two distinct type hierarchies, making scalars instances of DTypes would
@@ -598,7 +604,7 @@ to define new datatypes.
 Datatypes that currently exist and are defined using these slots will be
 supported during a deprecation period.
 
-A *possible* solution is to hide the implementation from the user and thus make
+The most likely solution is to hide the implementation from the user and thus make
 it extensible in the future is to model the API after Python's stable
 API [PEP-384]_:
 
@@ -620,7 +626,7 @@ API [PEP-384]_:
             PyArray_DTypeMeta *user_dtype, PyArrayDTypeMeta_Spec *dtype_spec);
 
 The C-side slots should be designed to mirror Python side methods
-such as ``dtype.__dtype_method__``, although the exposure to Python may be
+such as ``dtype.__dtype_method__``, although the exposure to Python is
 a later step in the implementation to reduce the complexity of the initial
 implementation.
 
@@ -637,6 +643,8 @@ description of the current implementation and its issues):
 * The inner-loop used in UFuncs must be expanded to include a return value.
   Further, error reporting must be improved, and passing in dtype-specific
   information enabled.
+  This requires the modification of the inner-loop function signature and
+  addition of new hooks called before and after the inner-loop is used.
 
 
 
