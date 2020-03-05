@@ -15,7 +15,7 @@ Abstract
 --------
 
 `Datatypes <data-type-objects-dtype>` in NumPy describe how to interpret each
-element in arrays. NumPy provides ``int`` ``float``, and ``complex`` numerical
+element in arrays. NumPy provides ``int``, ``float``, and ``complex`` numerical
 types, as well as string, datetime, and structured (or `~numpy.recarray`)
 datatype capabilities.  The growing Python community, however, has need for
 more diverse datatypes.
@@ -35,17 +35,15 @@ but also within NumPy.
 Motivation and Scope
 --------------------
 
+See also the user impact section for examples of what kind of new datatypes
+will be enabled by the proposed changes in the long run.
+
 Motivation
 ^^^^^^^^^^
 
-See also the user impact section for examples of what should be enabled
-by the proposed changes in the long run.
-
 One of the main issues with the current API is the definition of typical
-functions such as addition and multiplication for parametric datatypes (ones
-that in addition to a base type require an additional parameter such as strings
-which need a length or datetime which need a qualifier) require additional
-steps to determine the output type.
+functions such as addition and multiplication for parametric datatypes
+(compare also NEP 40) require additional steps to determine the output type.
 For example when adding two strings of length four, the result is a string
 of length 8, which is different from the input.
 Similarly, a datatype which embeds a physical unit must calculate the new unit
@@ -55,12 +53,12 @@ A related difficulty is that the current casting rules
 cannot describe casting for such parametric datatypes implemented outside of NumPy.
 
 For user defined datatypes, these extra steps are not accessible, but also
-within NumPy it requires increased complexity. The concerns of different
-datatypes are not well separated.
-This burden is exacerbated by the exposure of internal structures,
-limiting such things as additional sorting methods.
+within NumPy they require increased complexity.
+In general the concerns of different datatypes are not well separated.
+This burden is exacerbated by the exposure of internal C structures,
+limiting for example the addition of new sorting methods.
 
-Thus, there are many factors which limit the creation of new user defined
+Currently there are many factors which limit the creation of new user defined
 datatypes:
 
 * Creating casting rules for parametric user types is either impossible
@@ -76,21 +74,22 @@ datatypes:
 
 The large need to solve these issues has driven the scientific community
 to create work-arounds in multiple projects implementing physical units as an
-array-like
-class instead of a datatype, which would be a more natural solution.
-Similarly, Pandas has made a push into the same direction and undoubtedly
+array-like class instead of a datatype, which would generalize better across
+multiple array-likes (Dask, pandas, etc.).
+Already, Pandas has made a push into the same direction with its
+extension arrays [pandas_extension_arrays]_ and undoubtedly
 the community would be best served if such new features could be common
 between NumPy, Pandas, and other projects.
-
 
 Scope
 ^^^^^
 
 This NEP proposes to move ahead with Phase I (see Implementation section),
-and start approaching Phase II without the creation of any new public API.
+and start working on Phase II without the creation of new public API or
+using private, underscored names which must be changed in the future.
 Initially, this will have little or no effect on users, but provides the
 necessary ground work for incrementally addressing all parts of Phase II with
-exact details being decided in followup NEPs.
+details being decided in followup NEPs or discussions.
 
 The implementation of this NEP and the following changes in Phase II are
 expected to create small incompatibilities (see backward compatibility
@@ -98,13 +97,13 @@ section).
 However, a transition requiring large code adaption is not anticipated and not within
 scope.
 
-Specifically, this NEP makes the following design choices (more details
-in below sections):
+Specifically, this NEP makes the following design choices, which are discussed
+in more details in the detailed description section:
 
 1. Each datatype will be a class instance of a DType class, with most of the
    datatype-specific logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
-   slots: ``type(np.dtype("f8"))`` should be a subclass of ``np.dtype``.
+   slots. In short ``type(np.dtype("f8"))`` will be a subclass of ``np.dtype``.
 
 2. All the methods which are currently defined on the instance, should instead
    be defined on the class. Storage information such as itemsize and byteorder
@@ -112,15 +111,16 @@ in below sections):
    specific information to be stored more naturally.
 
 3. The current NumPy scalars will *not* change, they will not be instances of
-    datatypes.
+   datatypes. This will also be true for new datatypes, scalars will not be
+   instances of a dtype (although ``isinstance(scalar, dtype)`` may be defined).
 
 With detailed technical decisions being followed up in NEP 42.
 
 Further, the public API will be designed in a way that is extensible in the future:
 
 4. All new API functions provided to the user will hide implementation details
-    as much as possible. The public API should be identical, more limited, version of
-    the API used for the internal NumPy datatypes.
+   as much as possible. The public API should be an identical, but limited,
+   version of the API used for the internal NumPy datatypes.
 
 The changes to the datatype system in Phase II must include a large refactor of the
 UFunc machinery, which will be further defined in NEP 43:
@@ -128,7 +128,6 @@ UFunc machinery, which will be further defined in NEP 43:
 5. The UFunc machinery will be changed to replace the current dispatching
    and type resolution system (part of Phase II).
    The old system should be *mostly* supported as a legacy version for some time.
-   This should thus not affect most users, but is a necessary large refactor.
 
 Additionally, as a general design principle, the addition of new user defined
 datatypes will *not* change the behaviour of programs.
@@ -145,9 +144,10 @@ These represent fairly simple datatypes which are not strongly impacted
 by the current limitations.
 However, we have identified a need for datatypes such as:
 
-* int24, int2
+* int2, int24
 * bfloat16, used in deep learning
 * categorical types
+* new, better datetime representations
 * physical units (such as meters)
 * extending e.g. integer dtypes to have a sentinel NA value
 * geometrical objects [pygeos]_
@@ -156,18 +156,14 @@ However, we have identified a need for datatypes such as:
 
 Some of these are partially solved; for example unit capability is provided
 in ``astropy.units``, ``unyt``, or ``pint``, as `numpy.ndarray` subclasses.
-However, it would be more natural for them to be datatypes instead.
 Most of these datatypes, however, simply cannot be reasonably defined
 right now.
 An advantage of having such datatypes in NumPy is that they should integrate
 seamlessly with other array or array-like packages such as Pandas,
-``xarray`` or ``Dask``.
-
-The need for such datatypes has also already led to the implementation of
-ExtensionArrays inside pandas [pandas_extension_arrays]_.
+``xarray``, or ``Dask``.
 
 The long term user impact of implementing this NEP will be to allow both
-the growth of the whole ecosystem by having new datatypes, as well as
+the growth of the whole ecosystem by having such new datatypes, as well as
 consolidating implementation of such datatypes within NumPy to achieve
 a better interoperability.
 
@@ -436,7 +432,7 @@ all, or most, new exposed API points giving a ``PreliminaryDTypeAPIWarning``.
 
 This allows for smaller patches and further future changes. In these first
 steps, only a very limited new C-API will be exposed to allow writing tests,
-with no expectation that early adaptors will begin using it.
+with no expectation that early adopters will begin using it.
 The addition of ``DType`` will then enable addressing other changes
 more incrementally:
 
