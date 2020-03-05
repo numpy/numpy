@@ -1399,13 +1399,24 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromType(NPY_BOOL);
     }
     else if (typ == &PyBytes_Type) {
+        /*
+         * TODO: This should be deprecated, and have special handling for
+         *       dtype=bytes/"S" in coercion: It should not rely on "S0".
+         */
         return PyArray_DescrFromType(NPY_STRING);
     }
     else if (typ == &PyUnicode_Type) {
+        /*
+         * TODO: This should be deprecated, and have special handling for
+         *       dtype=str/"U" in coercion: It should not rely on "U0".
+         */
         return PyArray_DescrFromType(NPY_UNICODE);
     }
     else if (typ == &PyMemoryView_Type) {
         return PyArray_DescrFromType(NPY_VOID);
+    }
+    else if (typ == &PyBaseObject_Type) {
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     else {
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
@@ -1425,7 +1436,13 @@ _convert_from_type(PyObject *obj) {
         }
         Py_DECREF(ret);
 
-        /* All other classes are treated as object */
+        /*
+         * All other classes are treated as object. This can be convenient
+         * to convey an intention of using it for a specific python type
+         * and possibly allow converting to a new type-specific dtype in the future. It may make sense to
+         * only allow this only within `dtype=...` keyword argument context
+         * in the future.
+         */
         return PyArray_DescrFromType(NPY_OBJECT);
     }
 }

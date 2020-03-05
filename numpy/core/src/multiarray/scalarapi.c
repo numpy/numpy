@@ -433,23 +433,59 @@ PyArray_DescrFromTypeObject(PyObject *type)
     if ((type == (PyObject *) &PyNumberArrType_Type) ||
             (type == (PyObject *) &PyInexactArrType_Type) ||
             (type == (PyObject *) &PyFloatingArrType_Type)) {
+        if (DEPRECATE("Converting `np.inexact` or `np.floating` to "
+                      "a dtype is deprecated. The current result is `float64` "
+                      "which is not strictly correct.") < 0) {
+            return NULL;
+        }
         typenum = NPY_DOUBLE;
     }
     else if (type == (PyObject *)&PyComplexFloatingArrType_Type) {
+        if (DEPRECATE("Converting `np.complex` to a dtype is deprecated. "
+                      "The current result is `complex128` which is not "
+                      "strictly correct.") < 0) {
+            return NULL;
+        }
         typenum = NPY_CDOUBLE;
     }
     else if ((type == (PyObject *)&PyIntegerArrType_Type) ||
             (type == (PyObject *)&PySignedIntegerArrType_Type)) {
+        if (DEPRECATE("Converting `np.integer` or `np.signedinteger` to "
+                      "a dtype is deprecated. The current result is "
+                      "`np.dtype(np.int_)` which is not strictly correct. "
+                      "Note that the result depends on the system. To ensure "
+                      "stable results use may want to use `np.int64` or "
+                      "`np.int32`.") < 0) {
+            return NULL;
+        }
         typenum = NPY_LONG;
     }
     else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type) {
+        if (DEPRECATE("Converting `np.unsignedinteger` to a dtype is "
+                      "deprecated. The current result is `np.dtype(np.uint)` "
+                      "which is not strictly correct. Note that the result "
+                      "depends on the system. To ensure stable results you may "
+                      "want to use `np.uint64` or `np.uint32`.") < 0) {
+            return NULL;
+        }
         typenum = NPY_ULONG;
     }
     else if (type == (PyObject *) &PyCharacterArrType_Type) {
+        if (DEPRECATE("Converting `np.character` to a dtype is deprecated. "
+                      "The current result is `np.dtype(np.str_)` "
+                      "which is not strictly correct. Note that `np.character` "
+                      "is generally deprecated and 'S1' should be used.") < 0) {
+            return NULL;
+        }
         typenum = NPY_STRING;
     }
     else if ((type == (PyObject *) &PyGenericArrType_Type) ||
             (type == (PyObject *) &PyFlexibleArrType_Type)) {
+        if (DEPRECATE("Converting `np.generic` to a dtype is "
+                      "deprecated. The current result is `np.dtype(np.void)` "
+                      "which is not strictly correct.") < 0) {
+            return NULL;
+        }
         typenum = NPY_VOID;
     }
 
@@ -559,6 +595,9 @@ PyArray_DescrFromScalar(PyObject *sc)
     }
 
     descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
+    if (descr == NULL) {
+        return NULL;
+    }
     if (PyDataType_ISUNSIZED(descr)) {
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
