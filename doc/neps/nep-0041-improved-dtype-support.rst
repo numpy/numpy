@@ -364,9 +364,9 @@ multiple development stages are required:
 * Phase II: Incrementally define or rework API
 
   * Create a new and easily extensible API for defining new datatypes
-    and related functionality.
+    and related functionality. (NEP 42)
 
-  * Incrementally define all necessary functionality through the new API:
+  * Incrementally define all necessary functionality through the new API (NEP 42):
 
     * Defining operations such as ``np.common_type``.
     * Allowing to define casting between datatypes.
@@ -374,7 +374,7 @@ multiple development stages are required:
       (i.e. ``np.array(...)``).
     * …
 
-  * Restructure how universal functions functions to:
+  * Restructure how universal functions functions to (NEP 43):
 
     * make it possible to allow a `~numpy.ufunc` such as ``np.add`` to be
       extended by user defined datatypes such as Units.
@@ -397,7 +397,7 @@ This document serves as a basis for phase I and provides the vision and
 motivation for the full project.
 While of limited use to the end user, the first step involves a conceptional
 cleanup of the current datatype system. It provides a more "pythonic" datatype
-Python type object, with a clear class heirarchy.
+Python type object, with a clear class hierarchy.
 
 The second phase is the incremental creation of all APIs necessary to define
 fully featured datatypes and reorganization of the NumPy datatype system.
