@@ -17,7 +17,7 @@ import zipfile
 import tarfile
 
 OPENBLAS_V = 'v0.3.7'
-OPENBLAS_LONG = 'v0.3.7-391-gddcbed66'
+OPENBLAS_LONG = 'v0.3.5-605-gc815b8fb'
 BASE_LOC = ''
 RACKSPACE = ('https://anaconda.org/multibuild-wheels-staging/'
              'openblas-libs/{}/download'.format( OPENBLAS_LONG))
