@@ -267,7 +267,7 @@ have a second axis. Executing
 
     >>> s @ Vt
     Traceback (most recent call last):
-    ...
+      ...
     ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 1024 is different from 768)
 
 results in a ``ValueError``. This happens because having a one-dimensional
