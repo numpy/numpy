@@ -59,14 +59,11 @@ class MinMax(Benchmark):
         np.max(self.d)
 
 class ArgMinMax(Benchmark):
-    params = [np.float32, np.float64, np.intp, bool]
+    params = [np.float32, bool]
     param_names = ['dtype']
 
     def setup(self, dtype):
         self.d = np.zeros(200000, dtype=dtype)
-
-    def time_argmin(self, dtype):
-        np.argmin(self.d)
 
     def time_argmax(self, dtype):
         np.argmax(self.d)
