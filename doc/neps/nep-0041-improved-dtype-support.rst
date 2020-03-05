@@ -84,20 +84,24 @@ between NumPy, Pandas, and other projects.
 Scope
 ^^^^^
 
-This NEP proposes to move ahead with Phase I (see Implementation section),
-and start working on Phase II without the creation of new public API or
-using private, underscored names which must be changed in the future.
-Initially, this will have little or no effect on users, but provides the
-necessary ground work for incrementally addressing all parts of Phase II with
-details being decided in followup NEPs or discussions.
+This NEP proposes to move ahead with the necessary creation of new dtype
+subclasses (see Phase I Implementation section),
+and start working on implementing current functionality within the new context
+Within the context of this NEP all development will be fully private API or
+use preliminary underscored names which must be changed in the future.
+Most of the internal and public API choices are part of a second Phase
+and will be discussed in more detail in the following NEPs 42 and 43.
+The initial implementation of this NEP will have little or no effect on users,
+but provides the necessary ground work for incrementally addressing the
+full rework.
 
-The implementation of this NEP and the following changes in Phase II are
-expected to create small incompatibilities (see backward compatibility
-section).
-However, a transition requiring large code adaption is not anticipated and not within
-scope.
+The implementation of this NEP and leading up to a large rework of how
+datatypes are defined in NumPy is expected to create small incompatibilities
+(see backward compatibility section).
+However, a transition requiring large code adaption is not anticipated and not
+within scope.
 
-Specifically, this NEP makes the following design choices, which are discussed
+Specifically, this NEP makes the following design choices which are discussed
 in more details in the detailed description section:
 
 1. Each datatype will be a class instance of a DType class, with most of the
@@ -106,8 +110,8 @@ in more details in the detailed description section:
    slots. In short ``type(np.dtype("f8"))`` will be a subclass of ``np.dtype``.
 
 2. All the methods which are currently defined on the instance, should instead
-   be defined on the class. Storage information such as itemsize and byteorder
-   are stored on the instance. Making a DType a class allows for DType
+   be defined on the class. While storage information such as itemsize and byteorder
+   remain part of the instance. Making a DType a class allows for DType
    specific information to be stored more naturally.
 
 3. The current NumPy scalars will *not* change, they will not be instances of
@@ -144,15 +148,15 @@ These represent fairly simple datatypes which are not strongly impacted
 by the current limitations.
 However, we have identified a need for datatypes such as:
 
-* int2, int24
 * bfloat16, used in deep learning
 * categorical types
-* new, better datetime representations
 * physical units (such as meters)
-* extending e.g. integer dtypes to have a sentinel NA value
-* geometrical objects [pygeos]_
 * datatypes for tracing/automatic differentiation
 * high, fixed precision math
+* specifialized integer types such as int2, int24
+* new, better datetime representations
+* extending e.g. integer dtypes to have a sentinel NA value
+* geometrical objects [pygeos]_
 
 Some of these are partially solved; for example unit capability is provided
 in ``astropy.units``, ``unyt``, or ``pint``, as `numpy.ndarray` subclasses.
@@ -334,7 +338,7 @@ The interaction with other scalars would likely be defined through::
 Ufunc output datatype determination can be more involved than for simple
 numerical dtypes since there is no "universal" output type::
 
-    >>> np.multiple(meters, seconds).dtype != np.result_type(meters, seconds)
+    >>> np.multiply(meters, seconds).dtype != np.result_type(meters, seconds)
 
 In fact ``np.result_type(meters, seconds)`` must error without context
 of the operation being done.
@@ -347,8 +351,8 @@ certain decisions before the actual calculation can start.
 Implementation
 --------------
 
-Plan to Approach for the Full Refactor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Plan to Approach the Full Refactor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To address these issues in NumPy and enable new datatypes,
 multiple development stages are required:
@@ -447,8 +451,8 @@ Parallel to these, after step 1. is finished, Phase II of revising the
 UFunc machinery can be started.
 
 In particular the step of creating a C defined ``DTypeMeta`` class with its
-instances being ``DTypeClasses`` as mentioned above is a necessary first step
-with useful semantics.
+instances being ``DTypeClasses`` is a necessary first step to add the ability
+of storing custom slots on the datatype in C.
 This ``DTypeMeta`` must thus be implemented before being widely used to
 restructure or enhance current code, thus we propose to proceed with mainly
 private additions to the DType classes.
@@ -540,7 +544,8 @@ The current API cannot be extended due to how it is exposed publically.
 
 The most prominent visible side effect of this will be that
 ``type(np.dtype(np.float64))`` will not be ``np.dtype`` anymore.
-However, ``isinstance`` will return the correct value.
+Instead it will be a subclass of ``np.dtype`` meaning that
+``isinstance(np.dtype(np.float64), np.dtype)`` will remain true.
 This will also add the ability to use ``isinstance(dtype, np.dtype[float64])``
 thus removing the need to use ``dtype.kind``, ``dtype.char``, or ``dtype.type``
 to do this check.
