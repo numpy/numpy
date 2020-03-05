@@ -646,6 +646,10 @@ description of the current implementation and its issues):
   This requires the modification of the inner-loop function signature and
   addition of new hooks called before and after the inner-loop is used.
 
+An important goal for any changes to the universal functions will be to
+allow the reuse of existing loops.
+It should be easy for a new units datatype to fall back to existing math
+functions after handling the unit related computations.
 
 
 Discussion
