@@ -10,6 +10,17 @@ NEP 41 — First step towards a new Datatype System
 :Created: 2020-02-03
 
 
+.. note::
+
+    This NEP is part of a series of NEPs encompassing first information
+    about the previous dtype implementation and issues with it in NEP 40.
+    NEP 41 (this document) then provides an overview and generic design
+    choices for the refactor.  
+    Further NEPs 42 and 43 go into the technical dtypes of the datatype
+    and universal function related internal and external API changes.
+    In some cases it may be necessary to consult the other NEPs for a full
+    picture of the desired changes and why these changes are necessary.
+
 
 Abstract
 --------
@@ -130,8 +141,9 @@ Further, the public API will be designed in a way that is extensible in the futu
 The changes to the datatype system in Phase II must include a large refactor of the
 UFunc machinery, which will be further defined in NEP 43:
 
-4. The UFunc machinery will be changed to replace the current dispatching
-   and type resolution system (part of Phase II).
+4. To enable all of the desired functionality for new user defined datatypes,
+   the UFunc machinery will be changed to replace the current dispatching
+   and type resolution system.
    The old system should be *mostly* supported as a legacy version for some time.
 
 Additionally, as a general design principle, the addition of new user defined
