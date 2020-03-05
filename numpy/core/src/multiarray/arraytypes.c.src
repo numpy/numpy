@@ -26,7 +26,7 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
-#if defined( __arm__ ) || defined(__aarch64__)
+#if defined( __arm__ )
 #include <arm_neon.h>
 #endif
 #ifdef NPY_HAVE_SSE2_INTRINSICS
