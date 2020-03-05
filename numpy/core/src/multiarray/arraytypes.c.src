@@ -3127,7 +3127,7 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-#if defined( __arm__ ) || defined(__aarch64__)
+#if defined( __arm__ )
     int32_t _mm_movemask_epi8_neon(uint8x16_t input)
     {
         const int8_t __attribute__ ((aligned (16))) xr[8] = {-7,-6,-5,-4,-3,-2,-1,0};
