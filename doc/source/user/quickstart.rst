@@ -141,8 +141,8 @@ so on.
 
     >>> b = np.array([(1.5,2,3), (4,5,6)])
     >>> b
-    array([[ 1.5,  2. ,  3. ],
-           [ 4. ,  5. ,  6. ]])
+    array([[1.5, 2. , 3. ],
+           [4. , 5. , 6. ]])
 
 The type of the array can also be explicitly specified at creation time:
 
@@ -150,8 +150,8 @@ The type of the array can also be explicitly specified at creation time:
 
     >>> c = np.array( [ [1,2], [3,4] ], dtype=complex )
     >>> c
-    array([[ 1.+0.j,  2.+0.j],
-           [ 3.+0.j,  4.+0.j]])
+    array([[1.+0.j, 2.+0.j],
+           [3.+0.j, 4.+0.j]])
 
 Often, the elements of an array are originally unknown, but its size is
 known. Hence, NumPy offers several functions to create
@@ -166,10 +166,10 @@ state of the memory. By default, the dtype of the created array is
 
 ::
 
-    >>> np.zeros( (3,4) )
-    array([[ 0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.]])
+    >>> np.zeros((3, 4))
+    array([[0., 0., 0., 0.],
+           [0., 0., 0., 0.],
+           [0., 0., 0., 0.]])
     >>> np.ones( (2,3,4), dtype=np.int16 )                # dtype can also be specified
     array([[[1, 1, 1, 1],
             [1, 1, 1, 1],
@@ -191,7 +191,7 @@ array.
     >>> np.arange( 10, 30, 5 )
     array([10, 15, 20, 25])
     >>> np.arange( 0, 2, 0.3 )                 # it accepts float arguments
-    array([ 0. ,  0.3,  0.6,  0.9,  1.2,  1.5,  1.8])
+    array([0. , 0.3, 0.6, 0.9, 1.2, 1.5, 1.8])
 
 When ``arange`` is used with floating point arguments, it is generally
 not possible to predict the number of elements obtained, due to the
@@ -201,7 +201,7 @@ of elements that we want, instead of the step::
 
     >>> from numpy import pi
     >>> np.linspace( 0, 2, 9 )                 # 9 numbers from 0 to 2
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ,  1.25,  1.5 ,  1.75,  2.  ])
+    array([0.  , 0.25, 0.5 , 0.75, 1.  , 1.25, 1.5 , 1.75, 2.  ])
     >>> x = np.linspace( 0, 2*pi, 100 )        # useful to evaluate function at lots of points
     >>> f = np.sin(x)
 
@@ -252,6 +252,7 @@ matrices and tridimensionals as lists of matrices.
     [[[ 0  1  2  3]
       [ 4  5  6  7]
       [ 8  9 10 11]]
+    <BLANKLINE>
      [[12 13 14 15]
       [16 17 18 19]
       [20 21 22 23]]]
@@ -304,7 +305,7 @@ created and filled with the result.
     >>> 10*np.sin(a)
     array([ 9.12945251, -9.88031624,  7.4511316 , -2.62374854])
     >>> a<35
-    array([ True, True, False, False])
+    array([ True,  True, False, False])
 
 Unlike in many matrix languages, the product operator ``*`` operates
 elementwise in NumPy arrays. The matrix product can be performed using
@@ -342,7 +343,7 @@ existing array rather than create a new one.
     >>> a += b                  # b is not automatically converted to integer type
     Traceback (most recent call last):
         ...
-    numpy.core._exceptions.UFuncTypeError: Cannot cast from dtype('float64') to dtype('int64')  # IGNORE_EXCEPTION_DETAIL
+    numpy.core._exceptions.UFuncTypeError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
 
 When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
@@ -356,7 +357,7 @@ as upcasting).
     'float64'
     >>> c = a+b
     >>> c
-    array([ 1.        ,  2.57079633,  4.14159265])
+    array([1.        , 2.57079633, 4.14159265])
     >>> c.dtype.name
     'float64'
     >>> d = np.exp(c*1j)
@@ -419,12 +420,12 @@ operate elementwise on an array, producing an array as output.
     >>> B
     array([0, 1, 2])
     >>> np.exp(B)
-    array([ 1.        ,  2.71828183,  7.3890561 ])
+    array([1.        , 2.71828183, 7.3890561 ])
     >>> np.sqrt(B)
-    array([ 0.        ,  1.        ,  1.41421356])
+    array([0.        , 1.        , 1.41421356])
     >>> C = np.array([2., -1., 4.])
     >>> np.add(B, C)
-    array([ 2.,  0.,  6.])
+    array([2., 0., 6.])
 
 .. seealso::
 
@@ -496,7 +497,7 @@ and other Python sequences.
     >>> a
     array([1000,    1, 1000,   27, 1000,  125,  216,  343,  512,  729])
     >>> a[ : :-1]                                 # reversed a
-    array([  729,  512,  343,  216,  125, 1000,   27, 1000,    1, 1000])
+    array([ 729,  512,  343,  216,  125, 1000,   27, 1000,    1, 1000])
     >>> for i in a:
     ...     print(i**(1/3.))
     ...
@@ -737,19 +738,19 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
     >>> a = np.array([4.,2.])
     >>> b = np.array([3.,8.])
     >>> np.column_stack((a,b))     # returns a 2D array
-    array([[ 4., 3.],
-           [ 2., 8.]])
+    array([[4., 3.],
+           [2., 8.]])
     >>> np.hstack((a,b))           # the result is different
-    array([ 4., 2., 3., 8.])
+    array([4., 2., 3., 8.])
     >>> a[:,newaxis]               # this allows to have a 2D columns vector
-    array([[ 4.],
-           [ 2.]])
+    array([[4.],
+           [2.]])
     >>> np.column_stack((a[:,newaxis],b[:,newaxis]))
-    array([[ 4.,  3.],
-           [ 2.,  8.]])
+    array([[4., 3.],
+           [2., 8.]])
     >>> np.hstack((a[:,newaxis],b[:,newaxis]))   # the result is the same
-    array([[ 4.,  3.],
-           [ 2.,  8.]])
+    array([[4., 3.],
+           [2., 8.]])
 
 On the other hand, the function `row_stack` is equivalent to `vstack`
 for any input arrays. In fact, `row_stack` is an alias for `vstack`::
@@ -839,7 +840,9 @@ Simple assignments make no copy of objects or their data.
 
 ::
 
-    >>> a = np.arange(12)
+    >>> a = np.array([[ 0,  1,  2,  3],
+    ...               [ 4,  5,  6,  7],
+    ...               [ 8,  9, 10, 11]])
     >>> b = a            # no new object is created
     >>> b is a           # a and b are two names for the same ndarray object
     True
@@ -1076,6 +1079,7 @@ using a palette.
             [255,   0,   0],
             [  0, 255,   0],
             [  0,   0,   0]],
+    <BLANKLINE>
            [[  0,   0,   0],
             [  0,   0, 255],
             [255, 255, 255],
@@ -1107,8 +1111,10 @@ indices for each dimension must have the same shape.
     >>> a[:, j]                                     # i.e., a[ : , j]
     array([[[ 2,  1],
             [ 3,  3]],
+    <BLANKLINE>
            [[ 6,  5],
             [ 7,  7]],
+    <BLANKLINE>
            [[10,  9],
             [11, 11]]])
 
@@ -1134,8 +1140,8 @@ of a.
     # not what we want
     >>> a[s]
     Traceback (most recent call last):
-      File "<stdin>", line 1, in ?
-    IndexError: index (3) out of range (0<=index<=2) in dimension 0
+      File "<stdin>", line 1, in <module>
+    IndexError: index 3 is out of bounds for axis 0 with size 3
 
     # same as a[i, j]
     >>> a[tuple(s)]
@@ -1148,7 +1154,7 @@ value of time-dependent series::
     >>> time = np.linspace(20, 145, 5)                 # time scale
     >>> data = np.sin(np.arange(20)).reshape(5,4)      # 4 time-dependent series
     >>> time
-    array([  20.  ,   51.25,   82.5 ,  113.75,  145.  ])
+    array([ 20.  ,  51.25,  82.5 , 113.75, 145.  ])
     >>> data
     array([[ 0.        ,  0.84147098,  0.90929743,  0.14112001],
            [-0.7568025 , -0.95892427, -0.2794155 ,  0.6569866 ],
@@ -1167,9 +1173,9 @@ value of time-dependent series::
     >>> data_max = data[ind, range(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
 
     >>> time_max
-    array([  82.5 ,   20.  ,  113.75,   51.25])
+    array([ 82.5 ,  20.  , 113.75,  51.25])
     >>> data_max
-    array([ 0.98935825,  0.84147098,  0.99060736,  0.6569866 ])
+    array([0.98935825, 0.84147098, 0.99060736, 0.6569866 ])
 
     >>> np.all(data_max == data.max(axis=0))
     True
@@ -1301,8 +1307,11 @@ and c::
     >>> ax,bx,cx = np.ix_(a,b,c)
     >>> ax
     array([[[2]],
+    <BLANKLINE>
            [[3]],
+    <BLANKLINE>
            [[4]],
+    <BLANKLINE>
            [[5]]])
     >>> bx
     array([[[8],
@@ -1317,12 +1326,15 @@ and c::
     array([[[42, 34, 50, 66, 26],
             [27, 22, 32, 42, 17],
             [22, 18, 26, 34, 14]],
+    <BLANKLINE>
            [[43, 35, 51, 67, 27],
             [28, 23, 33, 43, 18],
             [23, 19, 27, 35, 15]],
+    <BLANKLINE>
            [[44, 36, 52, 68, 28],
             [29, 24, 34, 44, 19],
             [24, 20, 28, 36, 16]],
+    <BLANKLINE>
            [[45, 37, 53, 69, 29],
             [30, 25, 35, 45, 20],
             [25, 21, 29, 37, 17]]])
@@ -1346,12 +1358,15 @@ and then use it as::
     array([[[15, 14, 16, 18, 13],
             [12, 11, 13, 15, 10],
             [11, 10, 12, 14,  9]],
+    <BLANKLINE>
            [[16, 15, 17, 19, 14],
             [13, 12, 14, 16, 11],
             [12, 11, 13, 15, 10]],
+    <BLANKLINE>
            [[17, 16, 18, 20, 15],
             [14, 13, 15, 17, 12],
             [13, 12, 14, 16, 11]],
+    <BLANKLINE>
            [[18, 17, 19, 21, 16],
             [15, 14, 16, 18, 13],
             [14, 13, 15, 17, 12]]])
@@ -1386,8 +1401,8 @@ See linalg.py in numpy folder for more.
      [3. 4.]]
 
     >>> a.transpose()
-    array([[ 1.,  3.],
-           [ 2.,  4.]])
+    array([[1., 3.],
+           [2., 4.]])
 
     >>> np.linalg.inv(a)
     array([[-2. ,  1. ],
@@ -1395,8 +1410,8 @@ See linalg.py in numpy folder for more.
 
     >>> u = np.eye(2) # unit 2x2 matrix; "eye" represents "I"
     >>> u
-    array([[ 1.,  0.],
-           [ 0.,  1.]])
+    array([[1., 0.],
+           [0., 1.]])
     >>> j = np.array([[0.0, -1.0], [1.0, 0.0]])
 
     >>> j @ j        # matrix product
@@ -1412,8 +1427,8 @@ See linalg.py in numpy folder for more.
            [ 4.]])
 
     >>> np.linalg.eig(j)
-    (array([ 0.+1.j,  0.-1.j]), array([[ 0.70710678+0.j        ,  0.70710678-0.j        ],
-           [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]]))
+    (array([0.+1.j, 0.-1.j]), array([[0.70710678+0.j        , 0.70710678-0.j        ],
+           [0.        -0.70710678j, 0.        +0.70710678j]]))
 
 ::
 
@@ -1446,6 +1461,7 @@ which will then be deduced automatically::
             [ 6,  7,  8],
             [ 9, 10, 11],
             [12, 13, 14]],
+    <BLANKLINE>
            [[15, 16, 17],
             [18, 19, 20],
             [21, 22, 23],
