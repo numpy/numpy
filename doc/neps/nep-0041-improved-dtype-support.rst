@@ -483,10 +483,16 @@ we anticipate, and accept the following changes:
    * The UFunc machinery changes will break *limited* parts of the current
      implementation. Replacing e.g. the default ``TypeResolver`` is expected
      to remain supported for a time, although optimized masked inner loop iteration
-     (which is not even used *within* numpy) is expected to not remain supported
+     (which is not even used *within* NumPy) is expected to not remain supported
      and lead to errors instead.
 
-* **dtype implementors (C-API) and direct dtype access**:
+   * All current functions defined on the dtypes currently, such as
+     ``PyArray_Descr->f->nonzero``, will move to a new home and recieve new
+     ways to access them.
+     This means that in the long run some (rare) lowlevel access code will
+     have to be changed to use the new API.
+
+* **dtype implementors (C-API)**:
 
   * The array that is currently provided to some functions (such as cast functions),
     may not be provided anymore generally.
