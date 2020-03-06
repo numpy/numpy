@@ -1937,7 +1937,8 @@ class TestMultiDot:
         C = np.random.random((6, 2))
 
         out = np.zeros((6, 2))
-        multi_dot([A, B, C], out=out)
+        ret = multi_dot([A, B, C], out=out)
+        assert out is ret
         assert_almost_equal(out, A.dot(B).dot(C))
         assert_almost_equal(out, np.dot(A, np.dot(B, C)))
 
@@ -1946,7 +1947,8 @@ class TestMultiDot:
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
         out = np.zeros((6, 6))
-        multi_dot([A, B], out=out)
+        ret = multi_dot([A, B], out=out)
+        assert out is ret
         assert_almost_equal(out, A.dot(B))
         assert_almost_equal(out, np.dot(A, B))
 
@@ -1958,7 +1960,8 @@ class TestMultiDot:
         C = np.random.random((6, 2))
         D = np.random.random((2, 1))
         out = np.zeros((6, 1))
-        multi_dot([A, B, C, D], out=out)
+        ret = multi_dot([A, B, C, D], out=out)
+        assert out is ret
         assert_almost_equal(out, A.dot(B).dot(C).dot(D))
 
     def test_dynamic_programming_logic(self):
