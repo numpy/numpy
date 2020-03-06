@@ -464,7 +464,7 @@ def _build_import_library_amd64():
 
     # generate import library from this symbol list
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
-    return subprocess.call(cmd)
+    subprocess.check_call(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
