@@ -59,11 +59,11 @@ libfile, deffile = parse_cmd()"""
         deffile = None
     return libfile, deffile
 
-def getnm(nm_cmd = ['nm', '-Cs', 'python%s.lib' % py_ver]):
+def getnm(nm_cmd=['nm', '-Cs', 'python%s.lib' % py_ver], shell=True):
     """Returns the output of nm_cmd via a pipe.
 
 nm_output = getnam(nm_cmd = 'nm -Cs py_lib')"""
-    f = subprocess.Popen(nm_cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
+    f = subprocess.Popen(nm_cmd, shell=shell, stdout=subprocess.PIPE, universal_newlines=True)
     nm_output = f.stdout.read()
     f.stdout.close()
     return nm_output
@@ -107,7 +107,7 @@ if __name__ == '__main__':
         deffile = sys.stdout
     else:
         deffile = open(deffile, 'w')
-    nm_cmd = [str(DEFAULT_NM), str(libfile)]
-    nm_output = getnm(nm_cmd)
+    nm_cmd = DEFAULT_NM.split() + [str(libfile)]
+    nm_output = getnm(nm_cmd, shell=False)
     dlist, flist = parse_nm(nm_output)
     output_def(dlist, flist, DEF_HEADER, deffile)

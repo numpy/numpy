@@ -64,8 +64,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
-                                 stdout=subprocess.PIPE)
+            p = subprocess.Popen(
+                    ['gcc', '-dumpversion'], stdout=subprocess.PIPE)
             out_string = p.stdout.read()
             p.stdout.close()
             result = re.search(r'(\d+\.\d+)', out_string)
@@ -499,15 +499,18 @@ def _build_import_library_x86():
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix, 'libs', def_name)
-    nm_cmd = '%s %s' % (lib2def.DEFAULT_NM, lib_file)
-    nm_output = lib2def.getnm(nm_cmd)
+    nm_output = lib2def.getnm(
+            lib2def.DEFAULT_NM.split() + [lib_file], shell=False)
     dlist, flist = lib2def.parse_nm(nm_output)
     lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
 
     dll_name = find_python_dll ()
-    args = (dll_name, def_file, out_file)
-    cmd = 'dlltool --dllname "%s" --def "%s" --output-lib "%s"' % args
-    status = os.system(cmd)
+
+    cmd = ["dlltool",
+           "--dllname", dll_name,
+           "--def", def_file,
+           "--output-lib", out_file]
+    status = subprocess.call(cmd)
     # for now, fail silently
     if status:
         log.warn('Failed to build import library for gcc. Linking will fail.')
