@@ -31,7 +31,7 @@ wget -q http://buildbot.pypy.org/nightly/py3.6/pypy-c-jit-latest-linux64.tar.bz2
 mkdir -p pypy3
 (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
 pypy3/bin/pypy3 -mensurepip
-pypy3/bin/pypy3 -m pip install --upgrade pip setuptools
+pypy3/bin/pypy3 -m pip install --upgrade pip setuptools wheel
 pypy3/bin/pypy3 -m pip install --user -r test_requirements.txt --no-warn-script-location
 
 echo
@@ -43,6 +43,5 @@ pypy3/bin/pypy3 runtests.py --debug-info --show-build-log -v -- -rsx \
       --junitxml=junit/test-results.xml --durations 10
 
 echo Make sure the correct openblas has been linked in
-
-pypy3/bin/pip install .
+pypy3/bin/pypy3 -mpip install --no-build-isolation .
 pypy3/bin/pypy3 tools/openblas_support.py --check_version
