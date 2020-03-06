@@ -499,7 +499,7 @@ def _build_import_library_x86():
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix, 'libs', def_name)
     nm_output = lib2def.getnm(
-            lib2def.DEFAULT_NM.split() + [lib_file], shell=False)
+            lib2def.DEFAULT_NM + [lib_file], shell=False)
     dlist, flist = lib2def.parse_nm(nm_output)
     with open(def_file, 'w') as fid:
         lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, fid)

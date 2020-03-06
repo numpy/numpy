@@ -22,7 +22,7 @@ __version__ = '0.1a'
 
 py_ver = "%d%d" % tuple(sys.version_info[:2])
 
-DEFAULT_NM = 'nm -Cs'
+DEFAULT_NM = ['nm', '-Cs']
 
 DEF_HEADER = """LIBRARY         python%s.dll
 ;CODE           PRELOAD MOVEABLE DISCARDABLE
@@ -76,7 +76,6 @@ def parse_nm(nm_output):
 symbols and flist for the list of function symbols.
 
 dlist, flist = parse_nm(nm_output)"""
-    import pdb;pdb.set_trace()
     data = DATA_RE.findall(nm_output)
     func = FUNC_RE.findall(nm_output)
 
@@ -111,7 +110,7 @@ if __name__ == '__main__':
         deffile = sys.stdout
     else:
         deffile = open(deffile, 'w')
-    nm_cmd = DEFAULT_NM.split() + [str(libfile)]
+    nm_cmd = DEFAULT_NM + [str(libfile)]
     nm_output = getnm(nm_cmd, shell=False)
     dlist, flist = parse_nm(nm_output)
     output_def(dlist, flist, DEF_HEADER, deffile)
