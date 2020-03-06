@@ -278,8 +278,8 @@ def find_python_dll():
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):
-    st = subprocess.Popen(["objdump.exe", "-p", dll], stdout=subprocess.PIPE)
-    return st.stdout.readlines()
+    st = subprocess.check_output(["objdump.exe", "-p", dll])
+    return st.split(b'\n')
 
 def generate_def(dll, dfile):
     """Given a dll file location,  get all its exported symbols and dump them
@@ -304,15 +304,14 @@ def generate_def(dll, dfile):
     if len(syms) == 0:
         log.warn('No symbols found in %s' % dll)
 
-    d = open(dfile, 'w')
-    d.write('LIBRARY        %s\n' % os.path.basename(dll))
-    d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
-    d.write(';DATA          PRELOAD SINGLE\n')
-    d.write('\nEXPORTS\n')
-    for s in syms:
-        #d.write('@%d    %s\n' % (s[0], s[1]))
-        d.write('%s\n' % s[1])
-    d.close()
+    with open(dfile, 'w') as d:
+        d.write('LIBRARY        %s\n' % os.path.basename(dll))
+        d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
+        d.write(';DATA          PRELOAD SINGLE\n')
+        d.write('\nEXPORTS\n')
+        for s in syms:
+            #d.write('@%d    %s\n' % (s[0], s[1]))
+            d.write('%s\n' % s[1])
 
 def find_dll(dll_name):
 
@@ -465,7 +464,7 @@ def _build_import_library_amd64():
 
     # generate import library from this symbol list
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
-    subprocess.Popen(cmd)
+    return subprocess.call(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
