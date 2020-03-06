@@ -61,15 +61,15 @@ np.import_array()
 
 DECIMAL_RE = re.compile(r'[0-9]+')
 
-cdef uint32_t DEFAULT_POOL_SIZE = 4  # Appears also in docstring for pool_size
-cdef uint32_t INIT_A = 0x43b0d7e5
-cdef uint32_t MULT_A = 0x931e8875
-cdef uint32_t INIT_B = 0x8b51f9dd
-cdef uint32_t MULT_B = 0x58f38ded
-cdef uint32_t MIX_MULT_L = 0xca01f9dd
-cdef uint32_t MIX_MULT_R = 0x4973f715
-cdef uint32_t XSHIFT = np.dtype(np.uint32).itemsize * 8 // 2
-cdef uint32_t MASK32 = 0xFFFFFFFF
+DEF DEFAULT_POOL_SIZE = 4  # Appears also in docstring for pool_size
+DEF INIT_A = 0x43b0d7e5
+DEF MULT_A = 0x931e8875
+DEF INIT_B = 0x8b51f9dd
+DEF MULT_B = 0x58f38ded
+DEF MIX_MULT_L = 0xca01f9dd
+DEF MIX_MULT_R = 0x4973f715
+DEF XSHIFT = 16
+DEF MASK32 = 0xFFFFFFFF
 
 def _int_to_uint32_array(n):
     arr = []
@@ -159,13 +159,13 @@ def _coerce_to_uint32_array(x):
 cdef uint32_t hashmix(uint32_t value, uint32_t * hash_const):
     # We are modifying the multiplier as we go along, so it is input-output
     value ^= hash_const[0]
-    hash_const[0] *= MULT_A
+    hash_const[0] *= <uint32_t>MULT_A
     value *=  hash_const[0]
     value ^= value >> XSHIFT
     return value
 
 cdef uint32_t mix(uint32_t x, uint32_t y):
-    cdef uint32_t result = (MIX_MULT_L * x - MIX_MULT_R * y)
+    cdef uint32_t result = (<uint32_t>MIX_MULT_L * x - <uint32_t>MIX_MULT_R * y)
     result ^= result >> XSHIFT
     return result
 
@@ -431,7 +431,7 @@ cdef class SeedSequence():
         for i_dst in range(n_words):
             data_val = next(src_cycle)
             data_val ^= hash_const
-            hash_const *= MULT_B
+            hash_const *= <uint32_t>MULT_B
             data_val *= hash_const
             data_val ^= data_val >> XSHIFT
             state[i_dst] = data_val
