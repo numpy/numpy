@@ -278,8 +278,8 @@ def find_python_dll():
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):
-    st = subprocess.Popen(["objdump.exe", "-p", dll], stdout=subprocess.PIPE)
-    return st.stdout.readlines()
+    st = subprocess.check_output(["objdump.exe", "-p", dll])
+    return st.split(b'\n')
 
 def generate_def(dll, dfile):
     """Given a dll file location,  get all its exported symbols and dump them
@@ -304,15 +304,14 @@ def generate_def(dll, dfile):
     if len(syms) == 0:
         log.warn('No symbols found in %s' % dll)
 
-    d = open(dfile, 'w')
-    d.write('LIBRARY        %s\n' % os.path.basename(dll))
-    d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
-    d.write(';DATA          PRELOAD SINGLE\n')
-    d.write('\nEXPORTS\n')
-    for s in syms:
-        #d.write('@%d    %s\n' % (s[0], s[1]))
-        d.write('%s\n' % s[1])
-    d.close()
+    with open(dfile, 'w') as d:
+        d.write('LIBRARY        %s\n' % os.path.basename(dll))
+        d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
+        d.write(';DATA          PRELOAD SINGLE\n')
+        d.write('\nEXPORTS\n')
+        for s in syms:
+            #d.write('@%d    %s\n' % (s[0], s[1]))
+            d.write('%s\n' % s[1])
 
 def find_dll(dll_name):
 
@@ -465,7 +464,7 @@ def _build_import_library_amd64():
 
     # generate import library from this symbol list
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
-    subprocess.Popen(cmd)
+    return subprocess.call(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
@@ -502,7 +501,8 @@ def _build_import_library_x86():
     nm_output = lib2def.getnm(
             lib2def.DEFAULT_NM.split() + [lib_file], shell=False)
     dlist, flist = lib2def.parse_nm(nm_output)
-    lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
+    with open(def_file, 'w') as fid:
+        lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, fid)
 
     dll_name = find_python_dll ()
 
@@ -510,8 +510,7 @@ def _build_import_library_x86():
            "--dllname", dll_name,
            "--def", def_file,
            "--output-lib", out_file]
-    status = subprocess.call(cmd)
-    # for now, fail silently
+    status = subprocess.check_output(cmd)
     if status:
         log.warn('Failed to build import library for gcc. Linking will fail.')
     return
@@ -544,6 +543,8 @@ if sys.platform == 'win32':
         # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0
         # on Windows XP:
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
+        # Python 3.7 uses 1415, but get_build_version returns 140 ??
+        _MSVCRVER_TO_FULLVER['140'] = "14.15.26726.0"
         if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
             major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".", 2)
             _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
