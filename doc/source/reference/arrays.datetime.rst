@@ -103,6 +103,8 @@ because the moment of time is still being represented exactly.
     >>> np.datetime64('2005') == np.datetime64('2005-01-01')
     True
 
+    >>> np.datetime64('2010-03-14T15') == np.datetime64('2010-03-14T15:00:00.00')
+    True
 
 Datetime and Timedelta Arithmetic
 =================================
