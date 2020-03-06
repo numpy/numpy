@@ -730,7 +730,7 @@ def copy(a, order='K', subok=False):
         arguments.)
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise the
-        returned array will be forced to be a base-class array (default).
+        returned array will be forced to be a base-class array (defaults to False).
 
         .. versionadded:: 1.19.0
 
