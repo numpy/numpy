@@ -1929,6 +1929,38 @@ class TestMultiDot:
         # the result should be a scalar
         assert_equal(multi_dot([A1d, B, C, D1d]).shape, ())
 
+    def test_basic_function_with_three_arguments_with_out_argument(self):
+        # multi_dot with three arguments uses a fast hand coded algorithm to
+        # determine the optimal order. Therefore test it separately.
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+        C = np.random.random((6, 2))
+
+        out = np.zeros((6, 2))
+        multi_dot([A, B, C], out=out)
+        assert_almost_equal(out, A.dot(B).dot(C))
+        assert_almost_equal(out, np.dot(A, np.dot(B, C)))
+
+    def test_basic_function_with_two_arguments_with_out_argument(self):
+        # separate code path with two arguments
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+        out = np.zeros((6, 6))
+        multi_dot([A, B], out=out)
+        assert_almost_equal(out, A.dot(B))
+        assert_almost_equal(out, np.dot(A, B))
+
+    def test_basic_function_with_dynamic_programing_optimization_with_out_argument(self):
+        # multi_dot with four or more arguments uses the dynamic programing
+        # optimization and therefore deserve a separate
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+        C = np.random.random((6, 2))
+        D = np.random.random((2, 1))
+        out = np.zeros((6, 1))
+        multi_dot([A, B, C, D], out=out)
+        assert_almost_equal(out, A.dot(B).dot(C).dot(D))
+
     def test_dynamic_programming_logic(self):
         # Test for the dynamic programming part
         # This test is directly taken from Cormen page 376.
