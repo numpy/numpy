@@ -61,10 +61,6 @@ When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
 datetime type with generic units.
 
-For backwards compatibility, datetime64 still parses timezone offsets,
-which it handles by converting to UTC. However, the resulting datetime
-is timezone naive.
-
 .. admonition:: Example
 
     >>> np.array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64')
@@ -105,6 +101,14 @@ because the moment of time is still being represented exactly.
 
     >>> np.datetime64('2010-03-14T15') == np.datetime64('2010-03-14T15:00:00.00')
     True
+
+.. deprecated:: 1.11.0
+
+  NumPy does not use timezones. For backwards compatibility, datetime64
+  still parses timezone offsets, which it handles by converting to
+  UTC. This behaviour is deprecated and will raise an error in the
+  future.
+
 
 Datetime and Timedelta Arithmetic
 =================================
