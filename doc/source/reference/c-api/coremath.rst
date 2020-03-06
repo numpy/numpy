@@ -250,9 +250,9 @@ To use the core math library in your own extension, you need to add the npymath
 compile and link options to your extension in your setup.py:
 
         .. hidden in a comment so as to be included in refguide but not rendered documentation
-          >>> import numpy.distutils.misc_util
-          >>> config = np.distutils.misc_util.Configuration(None, '', '.')
-          >>> with open('foo.c', 'w') as f: pass
+                >>> import numpy.distutils.misc_util
+                >>> config = np.distutils.misc_util.Configuration(None, '', '.')
+                >>> with open('foo.c', 'w') as f: pass
 
         >>> from numpy.distutils.misc_util import get_info
         >>> info = get_info('npymath')
