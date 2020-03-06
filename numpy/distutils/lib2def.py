@@ -67,7 +67,8 @@ nm_output = getnm(nm_cmd = 'nm -Cs py_lib')"""
                          stderr=subprocess.PIPE, universal_newlines=True)
     nm_output, nm_err = p.communicate()
     if p.returncode != 0:
-        raise RuntimeError(f'failed to run "{" ".join(nm_cmd)}": "{nm_err}"')
+        raise RuntimeError('failed to run "%s": "%s"' % (
+                                     ' '.join(nm_cmd), nm_err))
     return nm_output
 
 def parse_nm(nm_output):
