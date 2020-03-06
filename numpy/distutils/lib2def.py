@@ -63,9 +63,9 @@ def getnm(nm_cmd=['nm', '-Cs', 'python%s.lib' % py_ver], shell=True):
     """Returns the output of nm_cmd via a pipe.
 
 nm_output = getnam(nm_cmd = 'nm -Cs py_lib')"""
-    f = subprocess.Popen(nm_cmd, shell=shell, stdout=subprocess.PIPE, universal_newlines=True)
-    nm_output = f.stdout.read()
-    f.stdout.close()
+    p = subprocess.Popen(nm_cmd, shell=shell, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, universal_newlines=True)
+    nm_output, nm_err = p.communicate()
     return nm_output
 
 def parse_nm(nm_output):
