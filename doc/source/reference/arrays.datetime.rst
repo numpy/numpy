@@ -104,7 +104,7 @@ because the moment of time is still being represented exactly.
 
 .. deprecated:: 1.11.0
 
-  NumPy does not use timezones. For backwards compatibility, datetime64
+  NumPy does not store timezone information. For backwards compatibility, datetime64
   still parses timezone offsets, which it handles by converting to
   UTC. This behaviour is deprecated and will raise an error in the
   future.
@@ -368,4 +368,3 @@ Some examples::
     weekmask = "Mon Tue Wed Thu Fri"
     # any amount of whitespace is allowed; abbreviations are case-sensitive.
     weekmask = "MonTue Wed  Thu\tFri"
-
