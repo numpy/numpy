@@ -551,7 +551,7 @@ For a simple example, consider taking the sum of all elements in an array.
 
     >>> a = np.arange(24).reshape(2,3,4)
     >>> b = np.array(0)
-    >>> with np.nditer([a, b], flags=['reduce_ok', 'external_loop'],
+    >>> with np.nditer([a, b], flags=['reduce_ok'],
     ...                     op_flags=[['readonly'], ['readwrite']]) as it:
     ...     for x,y in it:
     ...         y[...] += x
@@ -569,7 +569,7 @@ sums along the last axis of `a`.
 .. admonition:: Example
 
     >>> a = np.arange(24).reshape(2,3,4)
-    >>> it = np.nditer([a, None], flags=['reduce_ok', 'external_loop'],
+    >>> it = np.nditer([a, None], flags=['reduce_ok'],
     ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...             op_axes=[None, [0,1,-1]])
     >>> with it:
@@ -603,7 +603,7 @@ buffering.
 .. admonition:: Example
 
     >>> a = np.arange(24).reshape(2,3,4)
-    >>> it = np.nditer([a, None], flags=['reduce_ok', 'external_loop',
+    >>> it = np.nditer([a, None], flags=['reduce_ok',
     ...                                  'buffered', 'delay_bufalloc'],
     ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...             op_axes=[None, [0,1,-1]])
@@ -655,7 +655,7 @@ Here's how this looks.
     ...
     >>> def sum_squares_py(arr, axis=None, out=None):
     ...     axeslist = axis_to_axeslist(axis, arr.ndim)
-    ...     it = np.nditer([arr, out], flags=['reduce_ok', 'external_loop',
+    ...     it = np.nditer([arr, out], flags=['reduce_ok',
     ...                                       'buffered', 'delay_bufalloc'],
     ...                 op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...                 op_axes=[None, axeslist],
