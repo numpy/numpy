@@ -64,10 +64,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            p = subprocess.Popen(
-                    ['gcc', '-dumpversion'], stdout=subprocess.PIPE)
-            out_string = p.stdout.read()
-            p.stdout.close()
+            try:
+                out_string  = subprocess.check_output(['gcc', '-dumpversion'])
+            except (OSError, CalledProcessError):
+                out_string = ""  # ignore failures to match old behavior
             result = re.search(r'(\d+\.\d+)', out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))
