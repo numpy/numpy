@@ -1868,8 +1868,7 @@ class Configuration(object):
         """Return path's SVN revision number.
         """
         try:
-            output = subprocess.check_output(
-                ['svnversion'], shell=True, cwd=path)
+            output = subprocess.check_output(['svnversion'], cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
@@ -1899,7 +1898,7 @@ class Configuration(object):
         """
         try:
             output = subprocess.check_output(
-                ['hg identify --num'], shell=True, cwd=path)
+                ['hg', 'identify', '--num'], cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
