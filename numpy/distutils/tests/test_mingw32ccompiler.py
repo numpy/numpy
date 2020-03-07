@@ -20,11 +20,11 @@ def test_build_import():
         pytest.skip("'nm.exe' not on path, is mingw installed?")
     supported = out[out.find(b'supported targets:'):]
     if sys.maxsize < 2**32 and b'pe-i386' not in supported:
-            raise ValueError("'nm.exe' found but it does not support 32-bit"
-                             "dlls when using 32-bit python")
+        raise ValueError("'nm.exe' found but it does not support 32-bit "
+                         "dlls when using 32-bit python")
     elif b'pe-x86-64' not in supported:
-            raise ValueError("'nm.exe' found but it does not support 64-bit"
-                             "dlls when using 64-bit python")
+        raise ValueError("'nm.exe' found but it does not support 64-bit "
+                         "dlls when using 64-bit python")
     # Hide the import library to force a build
     has_import_lib, fullpath = mingw32ccompiler._check_for_import_lib()
     if has_import_lib: 
