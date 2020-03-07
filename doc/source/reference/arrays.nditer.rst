@@ -218,21 +218,21 @@ produce identical results to the ones in the previous section.
     >>> it = np.nditer(a, flags=['f_index'])
     >>> while not it.finished:
     ...     print("%d <%d>" % (it[0], it.index), end=' ')
-    ...     it.iternext()
+    ...     is_not_finished = it.iternext()
     ...
     0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
 
     >>> it = np.nditer(a, flags=['multi_index'])
     >>> while not it.finished:
     ...     print("%d <%s>" % (it[0], it.multi_index), end=' ')
-    ...     it.iternext()
+    ...     is_not_finished = it.iternext()
     ...
     0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> with np.nditer(a, flags=['multi_index'], op_flags=['writeonly']) as it:
     ...     while not it.finished:
     ...         it[0] = it.multi_index[1] - it.multi_index[0]
-    ...         it.iternext()
+    ...         is_not_finished = it.iternext()
     ...
     >>> a
     array([[ 0,  1,  2],
@@ -316,12 +316,13 @@ specified as an iterator flag.
     ...                 op_dtypes=['complex128']):
     ...     print(np.sqrt(x), end=' ')
     ...
-    1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
+    1.7320508075688772j 1.4142135623730951j 1j 0j (1+0j) (1.4142135623730951+0j)
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['complex128']):
     ...     print(np.sqrt(x), end=' ')
     ...
-    1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
+    1.7320508075688772j 1.4142135623730951j 1j 0j (1+0j) (1.4142135623730951+0j)
+
 
 The iterator uses NumPy's casting rules to determine whether a specific
 conversion is permitted. By default, it enforces 'safe' casting. This means,
@@ -405,8 +406,8 @@ which includes the input shapes to help diagnose the problem.
     ...     print("%d:%d" % (x,y), end=' ')
     ...
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: operands could not be broadcast together with shapes (2) (2,3)
+    ...
+    ValueError: operands could not be broadcast together with shapes (2,) (2,3)
 
 Iterator-Allocated Output Arrays
 --------------------------------
@@ -482,9 +483,9 @@ reasons.
 
     >>> square(np.arange(6).reshape(2,3), out=b)
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File "<stdin>", line 4, in square
-    ValueError: non-broadcastable output operand with shape (3) doesn't match the broadcast shape (2,3)
+      ...
+    ValueError: non-broadcastable output operand with shape (3,) doesn't
+    match the broadcast shape (2,3)
 
 Outer Product Iteration
 -----------------------
