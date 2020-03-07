@@ -169,8 +169,8 @@ imported from Python. It will contain a method for each subroutine in
 add (zadd, cadd, dadd, sadd). The docstring of each method contains
 information about how the module method may be called::
 
-    >>> import add
-    >>> print add.zadd.__doc__
+    >>> import add # doctest: +SKIP
+    >>> print add.zadd.__doc__ # doctest: +SKIP
     zadd - Function signature:
       zadd(a,b,c,n)
     Required arguments:
@@ -192,7 +192,7 @@ about the semantics of the arguments (such that C is an output and n
 should really match the array sizes), it is possible to abuse this
 function in ways that can cause Python to crash. For example::
 
-    >>> add.zadd([1,2,3], [1,2], [3,4], 1000)
+    >>> add.zadd([1,2,3], [1,2], [3,4], 1000) # doctest: +SKIP
 
 will cause a program crash on most systems. Under the covers, the
 lists are being converted to proper arrays but then the underlying add
@@ -247,8 +247,8 @@ by compiling both ``add.f95`` and ``add.pyf``::
 
 The new interface has docstring::
 
-    >>> import add
-    >>> print add.zadd.__doc__
+    >>> import add # doctest: +SKIP
+    >>> print add.zadd.__doc__ # doctest: +SKIP
     zadd - Function signature:
       c = zadd(a,b)
     Required arguments:
@@ -259,7 +259,7 @@ The new interface has docstring::
 
 Now, the function can be called in a much more robust way::
 
-    >>> add.zadd([1,2,3],[4,5,6])
+    >>> add.zadd([1,2,3],[4,5,6]) # doctest: +SKIP
     array([ 5.+0.j,  7.+0.j,  9.+0.j])
 
 Notice the automatic conversion to the correct format that occurred.
