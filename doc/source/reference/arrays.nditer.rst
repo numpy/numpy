@@ -737,11 +737,11 @@ as our native Python/NumPy code did.
 
 .. admonition:: Example
 
-    >>> from sum_squares import sum_squares_cy
+    >>> from sum_squares import sum_squares_cy # doctest: +SKIP
     >>> a = np.arange(6).reshape(2,3)
-    >>> sum_squares_cy(a)
+    >>> sum_squares_cy(a) # doctest: +SKIP
     array(55.0)
-    >>> sum_squares_cy(a, axis=-1)
+    >>> sum_squares_cy(a, axis=-1) # doctest: +SKIP
     array([  5.,  50.])
 
 Doing a little timing in IPython shows that the reduced overhead and
@@ -749,18 +749,18 @@ memory allocation of the Cython inner loop is providing a very nice
 speedup over both the straightforward Python code and an expression
 using NumPy's built-in sum function.::
 
-    >>> a = np.random.rand(1000,1000)
+    >>> a = np.random.rand(1000,1000) # doctest: +SKIP
 
-    >>> timeit sum_squares_py(a, axis=-1)
+    >>> timeit sum_squares_py(a, axis=-1)  # doctest: +SKIP
     10 loops, best of 3: 37.1 ms per loop
 
-    >>> timeit np.sum(a*a, axis=-1)
+    >>> timeit np.sum(a*a, axis=-1) # doctest: +SKIP
     10 loops, best of 3: 20.9 ms per loop
 
-    >>> timeit sum_squares_cy(a, axis=-1)
+    >>> timeit sum_squares_cy(a, axis=-1) # doctest: +SKIP
     100 loops, best of 3: 11.8 ms per loop
 
-    >>> np.all(sum_squares_cy(a, axis=-1) == np.sum(a*a, axis=-1))
+    >>> np.all(sum_squares_cy(a, axis=-1) == np.sum(a*a, axis=-1)) # doctest: +SKIP
     True
 
     >>> np.all(sum_squares_py(a, axis=-1) == np.sum(a*a, axis=-1))
