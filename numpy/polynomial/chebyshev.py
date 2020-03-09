@@ -3,8 +3,6 @@
 Chebyshev Series (:mod:`numpy.polynomial.chebyshev`)
 ====================================================
 
-Objects for dealing with Chebyshev series.
-
 This module provides a number of objects (mostly functions) useful for
 dealing with Chebyshev series, including a `Chebyshev` class that
 encapsulates the usual arithmetic operations.  (General information
