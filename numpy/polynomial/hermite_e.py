@@ -1,9 +1,7 @@
 """
-====================================================
-Hermite_e Series (:mod:`numpy.polynomial.hermite_e`)
-====================================================
-
-Objects for dealing with Hermite_e series.
+===================================================================
+HermiteE Series, "Probabilists" (:mod:`numpy.polynomial.hermite_e`)
+===================================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Hermite_e series, including a `HermiteE` class that
