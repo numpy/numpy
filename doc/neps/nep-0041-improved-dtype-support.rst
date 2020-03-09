@@ -129,7 +129,7 @@ within scope.
 Specifically, this NEP makes the following design choices which are discussed
 in more details in the detailed description section:
 
-1. Each datatype will be a class instance of a DType class, with most of the
+1. Each datatype will be an instance of a subclass of ``np.dtype``, with most of the
    datatype-specific logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
    slots. In short, for ``f = np.dtype("f8")``, ``isinstance(f, np.dtype)`` will remain true, but ``type(f)`` will be a subclass of ``np.dtype`` rather than just ``np.dtype`` itself.
