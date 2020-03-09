@@ -308,6 +308,8 @@ def _read_config_imp(filenames, dirs=None):
     # the path of pkgname. This requires the package to be imported to work
     if not 'pkgdir' in vars and "pkgname" in vars:
         pkgname = vars["pkgname"]
+        if pkgname == "numpy.core" and pkgname not in sys.modules:
+            import numpy.core  # noqa: F401
         if not pkgname in sys.modules:
             raise ValueError("You should import %s to get information on %s" %
                              (pkgname, meta["name"]))
@@ -375,63 +377,78 @@ def read_config(pkgname, dirs=None):
 # pkg-config simple emulator - useful for debugging, and maybe later to query
 # the system
 if __name__ == '__main__':
-    from optparse import OptionParser
+    import argparse
     import glob
 
-    parser = OptionParser()
-    parser.add_option("--cflags", dest="cflags", action="store_true",
-                      help="output all preprocessor and compiler flags")
-    parser.add_option("--libs", dest="libs", action="store_true",
-                      help="output all linker flags")
-    parser.add_option("--use-section", dest="section",
-                      help="use this section instead of default for options")
-    parser.add_option("--version", dest="version", action="store_true",
-                      help="output version")
-    parser.add_option("--atleast-version", dest="min_version",
-                      help="Minimal version")
-    parser.add_option("--list-all", dest="list_all", action="store_true",
-                      help="Minimal version")
-    parser.add_option("--define-variable", dest="define_variable",
-                      help="Replace variable with the given value")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "pkg_name", nargs="?",
+        help="Name of the package (should match the name of the .ini file, "
+             "without the extension, e.g. mlib for the file mlib.ini). "
+             "This file is searched in the following directories: "
+             "'numpy/core/lib/npy-pkg-config', '.' or (if set) the "
+             "environment variable NPY_PKG_CONFIG_PATH")
+    parser.add_argument(
+        "--cflags", action="store_true",
+        help="output all preprocessor and compiler flags")
+    parser.add_argument(
+        "--libs", action="store_true", help="output all linker flags")
+    parser.add_argument(
+        "--use-section", dest="section", default="default",
+        help="use this section instead of default for options")
+    parser.add_argument(
+        "--version", action="store_true", help="output version")
+    parser.add_argument(
+        "--atleast-version", dest="min_version", help="minimal version")
+    parser.add_argument(
+        "--list-all", action="store_true",
+        help="list all *.ini files in the current directory; "
+             "all other options are ignored")
+    parser.add_argument(
+        "--define-variable", metavar='KEY=VALUE',
+        help="replace variable with the given value")
+    args = parser.parse_args()
 
-    (options, args) = parser.parse_args(sys.argv)
+    pkg_name = args.pkg_name
 
-    if len(args) < 2:
-        raise ValueError("Expect package name on the command line:")
-
-    if options.list_all:
+    if args.list_all:
+        # TODO: consider searching same directories as pkg_name below?
         files = glob.glob("*.ini")
+        if not files:
+            parser.exit(1, "no *.ini files found in current directory\n")
+        errors = 0
         for f in files:
-            info = read_config(f)
-            print("%s\t%s - %s" % (info.name, info.name, info.description))
+            try:
+                info = read_config(f[:-4])
+                print("%s\t%s - %s" % (info.name, info.name, info.description))
+            except ValueError as e:
+                errors += 1
+                print('Error reading %s: %s' % (f, e))
+        parser.exit(errors)
 
-    pkg_name = args[1]
+    if pkg_name is None:
+        parser.error('pkg-name required')
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
         info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
     else:
         info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.'])
 
-    if options.section:
-        section = options.section
-    else:
-        section = "default"
-
-    if options.define_variable:
-        m = re.search(r'([\S]+)=([\S]+)', options.define_variable)
+    if args.define_variable:
+        m = re.search(r'([\S]+)=([\S]+)', args.define_variable)
         if not m:
-            raise ValueError("--define-variable option should be of "
-                             "the form --define-variable=foo=bar")
+            parser.error(
+                "--define-variable option should be of the form foo=bar")
         else:
             name = m.group(1)
             value = m.group(2)
         info.vars[name] = value
 
-    if options.cflags:
-        print(info.cflags(section))
-    if options.libs:
-        print(info.libs(section))
-    if options.version:
+    if args.cflags:
+        print(info.cflags(args.section))
+    if args.libs:
+        print(info.libs(args.section))
+    if args.version:
         print(info.version)
-    if options.min_version:
-        print(info.version >= options.min_version)
+    if args.min_version:
+        print(info.version >= args.min_version)

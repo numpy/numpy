@@ -2945,27 +2945,29 @@ def dict_append(d, **kws):
 
 
 def parseCmdLine(argv=(None,)):
-    import optparse
-    parser = optparse.OptionParser("usage: %prog [-v] [info objs]")
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
-                      default=False,
-                      help='be verbose and print more messages')
+    import argparse
 
-    opts, args = parser.parse_args(args=argv[1:])
-    return opts, args
+    parser = argparse.ArgumentParser()
+    parser.add_argument('objs', nargs='*', help='info objects')
+    parser.add_argument(
+        '-v', '--verbose', action='store_true',
+        help='be verbose and print more messages')
+
+    args = parser.parse_args(args=argv[1:])
+    return args
 
 
 def show_all(argv=None):
     import inspect
     if argv is None:
         argv = sys.argv
-    opts, args = parseCmdLine(argv)
-    if opts.verbose:
+    args = parseCmdLine(argv)
+    if args.verbose:
         log.set_threshold(log.DEBUG)
     else:
         log.set_threshold(log.INFO)
     show_only = []
-    for n in args:
+    for n in args.objs:
         if n[-5:] != '_info':
             n = n + '_info'
         show_only.append(n)
