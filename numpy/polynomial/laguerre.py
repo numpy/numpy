@@ -3,8 +3,6 @@
 Laguerre Series (:mod:`numpy.polynomial.laguerre`)
 ==================================================
 
-Objects for dealing with Laguerre series.
-
 This module provides a number of objects (mostly functions) useful for
 dealing with Laguerre series, including a `Laguerre` class that
 encapsulates the usual arithmetic operations.  (General information
