@@ -131,13 +131,13 @@ in more details in the detailed description section:
 1. Each datatype will be a class instance of a DType class, with most of the
    datatype-specific logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
-   slots. In short ``type(np.dtype("f8"))`` will be a subclass of ``np.dtype``.
+   slots. In short, for ``f = np.dtype("f8")``, ``isinstance(f, np.dtype)`` will remain true, but ``type(f)`` will be a subclass of ``np.dtype`` rather than just ``np.dtype`` itself.
    All the methods which are currently stored on the instance, should instead
    be defined on the class as is normal in Python.
    Storage information such as itemsize and byteorder can differ between
    different dtype instances (e.g. "S3" vs. "S8") and will remain part of the instance.
    This means that in the long run the current lowlevel access to dtype methods
-   will be removed (see ``ArrFunctions`` in NEP 40).
+   will be removed (see ``PyArray_ArrFuncs`` in NEP 40).
 
 2. The current NumPy scalars will *not* change, they will not be instances of
    datatypes. This will also be true for new datatypes, scalars will not be
@@ -179,7 +179,7 @@ However, we have identified a need for datatypes such as:
 * physical units (such as meters)
 * datatypes for tracing/automatic differentiation
 * high, fixed precision math
-* specifialized integer types such as int2, int24
+* specialized integer types such as int2, int24
 * new, better datetime representations
 * extending e.g. integer dtypes to have a sentinel NA value
 * geometrical objects [pygeos]_
@@ -214,7 +214,7 @@ only require ``np.result_type``::
 
     >>> np.add(arr1, arr2).dtype == np.result_type(arr1, arr2)
 
-and ``np.result_type`` is largely identical to ``np.common_type``.
+and `~numpy.result_type` is largely identical to `~numpy.common_type`.
 
 
 Fixed, high precision math
@@ -230,8 +230,8 @@ simulations. For instance ``mpmath`` defines a precision::
 NumPy should be able to construct a native, memory-efficient array from
 a list of ``mpmath.mpf`` floating point objects::
 
-    >>> arr1 = np.array(mp.arange(3))  # (mp.arange returns a list)
-    >>> print(arr)  # Must find the correct precision from the objects:
+    >>> arr_15_dps = np.array(mp.arange(3))  # (mp.arange returns a list)
+    >>> print(arr_15_dps)  # Must find the correct precision from the objects:
     array(['0.0', '1.0', '2.0'], dtype=mpf[dps=15])
 
 We should also be able to specify the desired precision when
@@ -240,19 +240,19 @@ to find the DType class (the notation is not part of this NEP),
 which is then instantiated with the desired parameter.
 This could also be written as ``MpfDType`` class::
 
-    >>> arr2 = np.array([1, 2, 3], dtype=np.dtype[mp.mpf](dps=100))
-    >>> print(arr1 + arr2)
+    >>> arr_100_dps = np.array([1, 2, 3], dtype=np.dtype[mp.mpf](dps=100))
+    >>> print(arr_15_dps + arr_100_dps)
     array(['0.0', '2.0', '4.0'], dtype=mpf[dps=100])
 
 The ``mpf`` datatype can decide that the result of the operation should be the
 higher precision one of the two, so uses a precision of 100.
 Furthermore, we should be able to define casting, for example as in::
 
-    >>> np.can_cast(arr1.dtype, arr2.dtype, casting="safe")
+    >>> np.can_cast(arr_15_dps.dtype, arr_100_dps.dtype, casting="safe")
     True
-    >>> np.can_cast(arr2.dtype, arr1.dtype, casting="safe")
-    False
-    >>> np.can_cast(arr2.dtype, arr2.dtype, casting="same_kind")
+    >>> np.can_cast(arr_100_dps.dtype, arr_15_dps.dtype, casting="safe")
+    False  # loses precision
+    >>> np.can_cast(arr_100_dps.dtype, arr_100_dps.dtype, casting="same_kind")
     True
 
 Casting from float is a probably always at least a ``same_kind`` cast, but
@@ -628,7 +628,7 @@ without losing binary compatibility.
 This has already limited the inclusion of new sorting methods into
 NumPy [new_sort]_.
 
-The new version shall thus replace the current ``ArrFuncs`` structure used
+The new version shall thus replace the current ``PyArray_ArrFuncs`` structure used
 to define new datatypes.
 Datatypes that currently exist and are defined using these slots will be
 supported during a deprecation period.
