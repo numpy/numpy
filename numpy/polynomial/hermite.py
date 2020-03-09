@@ -1,9 +1,7 @@
 """
-================================================
-Hermite Series (:mod:`numpy.polynomial.hermite`)
-================================================
-
-Objects for dealing with Hermite series.
+==============================================================
+Hermite Series, "Physicists" (:mod:`numpy.polynomial.hermite`)
+==============================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Hermite series, including a `Hermite` class that
