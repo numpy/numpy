@@ -63,7 +63,7 @@ of length 8, which is different from the input.
 Similarly, a datatype which embeds a physical unit must calculate the new unit
 information: dividing a distance by a time results in a speed.
 A related difficulty is that the :ref:`current casting rules <_ufuncs.casting>`
-– the conversion between different datatypes –
+-- the conversion between different datatypes --
 cannot describe casting for such parametric datatypes implemented outside of NumPy.
 
 This additional functionality for supporting parametric datatypes introduces
@@ -71,7 +71,8 @@ increased complexity within NumPy itself,
 and furthermore is not available to external user-defined datatypes.
 In general the concerns of different datatypes are not well well-encapsulated.
 This burden is exacerbated by the exposure of internal C structures,
-limiting for example the addition of new sorting methods [new_sort]_.
+limiting the addition of new fields
+(for example to support new sorting methods [new_sort]_).
 
 Currently there are many factors which limit the creation of new user-defined
 datatypes:
@@ -132,8 +133,9 @@ in more details in the detailed description section:
    datatype-specific logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
    slots. In short, for ``f = np.dtype("f8")``, ``isinstance(f, np.dtype)`` will remain true, but ``type(f)`` will be a subclass of ``np.dtype`` rather than just ``np.dtype`` itself.
-   All the methods which are currently stored on the instance, should instead
-   be defined on the class as is normal in Python.
+   The ``PyArray_ArrFuncs`` which are currently stored as a pointer on the instance,
+   should instead be stored on the class as typically done in Python.
+   In the future these may correspond to python side dunder methods.
    Storage information such as itemsize and byteorder can differ between
    different dtype instances (e.g. "S3" vs. "S8") and will remain part of the instance.
    This means that in the long run the current lowlevel access to dtype methods
@@ -141,15 +143,16 @@ in more details in the detailed description section:
 
 2. The current NumPy scalars will *not* change, they will not be instances of
    datatypes. This will also be true for new datatypes, scalars will not be
-   instances of a dtype (although ``isinstance(scalar, dtype)`` may be defined).
+   instances of a dtype (although ``isinstance(scalar, dtype)`` may be made
+   to return ``True`` when appropriate).
 
-With detailed technical decisions being followed up in NEP 42.
+Detailed technical decisions to follow in NEP 42.
 
 Further, the public API will be designed in a way that is extensible in the future:
 
-3. All new API functions provided to the user will hide implementation details
+3. All new C-API functions provided to the user will hide implementation details
    as much as possible. The public API should be an identical, but limited,
-   version of the API used for the internal NumPy datatypes.
+   version of the C-API used for the internal NumPy datatypes.
 
 The changes to the datatype system in Phase II must include a large refactor of the
 UFunc machinery, which will be further defined in NEP 43:
@@ -190,7 +193,7 @@ Most of these datatypes, however, simply cannot be reasonably defined
 right now.
 An advantage of having such datatypes in NumPy is that they should integrate
 seamlessly with other array or array-like packages such as Pandas,
-``xarray``, or ``Dask``.
+``xarray`` [xarray_dtype_issue]_, or ``Dask``.
 
 The long term user impact of implementing this NEP will be to allow both
 the growth of the whole ecosystem by having such new datatypes, as well as
@@ -201,15 +204,20 @@ better interoperability.
 Examples
 ^^^^^^^^
 
+The following examples represent future user-defined datatypes we wish to enable.
+These datatypes are not part the NEP and choices (e.g. choice of casting rules)
+are possibilities we wish to enable and do not represent recommendations.
+
 Simple Numerical Types
 """"""""""""""""""""""
 
 Mainly used where memory is a consideration, lower-precision numeric types
-such as ``bfloat16`` are common in other computational frameworks.
+such as :ref:```bfloat16`` <https://en.wikipedia.org/wiki/Bfloat16_floating-point_format>`
+are common in other computational frameworks.
 For these types the definitions of things such as ``np.common_type`` and
 ``np.can_cast`` are some of the most important interfaces. Once they
 support ``np.common_type``, it is (for the most part) possible to find
-the correct ufunc loop to call, since most ufuncs – such as add – effectively
+the correct ufunc loop to call, since most ufuncs -- such as add -- effectively
 only require ``np.result_type``::
 
     >>> np.add(arr1, arr2).dtype == np.result_type(arr1, arr2)
@@ -500,8 +508,7 @@ are not yet fully clear, we anticipate, and accept the following changes:
    * The UFunc machinery changes will break *limited* parts of the current
      implementation. Replacing e.g. the default ``TypeResolver`` is expected
      to remain supported for a time, although optimized masked inner loop iteration
-     (which is not even used *within* NumPy) is expected to not remain supported
-     and lead to errors instead.
+     (which is not even used *within* NumPy) will no longer be supported.
 
    * All functions currently defined on the dtypes, such as
      ``PyArray_Descr->f->nonzero``, will be defined and accessed differently.
@@ -531,7 +538,7 @@ are not yet fully clear, we anticipate, and accept the following changes:
      of the structure seems unlikely after registration.
 
 Since there is a fairly large API surface concerning datatypes, further changes
-or the limitation of a certain function to currently existing datatypes is
+or the limitation certain function to currently existing datatypes is
 likely to occur.
 For example functions which use the type number as input
 should be replaced with functions taking DType classes instead.
