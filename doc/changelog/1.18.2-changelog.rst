@@ -1,16 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.18.2 Release Notes
-==========================
-
-This small elease contains a fix for a performance regression in numpy/random
-and several bug/maintenance updates.
-
-The Python versions supported in this release are 3.5-3.8. Downstream
-developers should use Cython >= 0.29.15 for Python 3.8 support and OpenBLAS >=
-3.7 to avoid errors on the Skylake architecture.
-
 
 Contributors
 ============
@@ -23,7 +10,6 @@ names contributed a patch for the first time.
 * Matti Picus
 * Sebastian Berg
 * przemb +
-
 
 Pull requests merged
 ====================
