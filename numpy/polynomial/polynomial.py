@@ -3,8 +3,6 @@
 Power Series (:mod:`numpy.polynomial.polynomial`)
 =================================================
 
-Objects for dealing with polynomials.
-
 This module provides a number of objects (mostly functions) useful for
 dealing with polynomials, including a `Polynomial` class that
 encapsulates the usual arithmetic operations.  (General information
