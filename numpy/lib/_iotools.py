@@ -699,12 +699,12 @@ class StringConverter:
             # We're still here so we can now return the new value
             return new_value
 
-        except ValueError:
+        except ValueError as e:
             if value.strip() in self.missing_values:
                 if not self._status:
                     self._checked = False
                 return self.default
-            raise ValueError("Cannot convert string '%s'" % value)
+            raise ValueError("Cannot convert string '%s'" % value) from e
     #
 
     def __call__(self, value):
@@ -735,17 +735,17 @@ class StringConverter:
         self._checked = True
         try:
             return self._strict_call(value)
-        except ValueError:
+        except ValueError as e:
             # Raise an exception if we locked the converter...
             if self._locked:
                 errmsg = "Converter is locked and cannot be upgraded"
-                raise ConverterLockError(errmsg)
+                raise ConverterLockError(errmsg) from e
             _statusmax = len(self._mapper)
             # Complains if we try to upgrade by the maximum
             _status = self._status
             if _status == _statusmax:
                 errmsg = "Could not find a valid conversion function"
-                raise ConverterError(errmsg)
+                raise ConverterError(errmsg) from e
             elif _status < _statusmax - 1:
                 _status += 1
             (self.type, self.func, default) = self._mapper[_status]
@@ -764,18 +764,18 @@ class StringConverter:
         try:
             for _m in value:
                 _strict_call(_m)
-        except ValueError:
+        except ValueError as e:
             # Raise an exception if we locked the converter...
             if self._locked:
                 errmsg = "Converter is locked and cannot be upgraded"
-                raise ConverterLockError(errmsg)
+                raise ConverterLockError(errmsg) from e
             _statusmax = len(self._mapper)
             # Complains if we try to upgrade by the maximum
             _status = self._status
             if _status == _statusmax:
                 raise ConverterError(
                     "Could not find a valid conversion function"
-                    )
+                    ) from e
             elif _status < _statusmax - 1:
                 _status += 1
             (self.type, self.func, default) = self._mapper[_status]
