@@ -4,7 +4,8 @@ NEP 41 — First step towards a new Datatype System
 
 :title: Improved Datatype Support
 :Author: Sebastian Berg
-:Author: Add...
+:Author: Stéfan van der Walt
+:Author: Matti Picus
 :Status: Draft
 :Type: Standard Track
 :Created: 2020-02-03
@@ -132,7 +133,8 @@ in more details in the detailed description section:
 1. Each datatype will be an instance of a subclass of ``np.dtype``, with most of the
    datatype-specific logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
-   slots. In short, for ``f = np.dtype("f8")``, ``isinstance(f, np.dtype)`` will remain true, but ``type(f)`` will be a subclass of ``np.dtype`` rather than just ``np.dtype`` itself.
+   slots. In short, for ``f = np.dtype("f8")``, ``isinstance(f, np.dtype)`` will remain true,
+   but ``type(f)`` will be a subclass of ``np.dtype`` rather than just ``np.dtype`` itself.
    The ``PyArray_ArrFuncs`` which are currently stored as a pointer on the instance (as ``PyArray_Descr->f``),
    should instead be stored on the class as typically done in Python.
    In the future these may correspond to python side dunder methods.
@@ -344,12 +346,12 @@ Once the array is created, math will work without any issue::
     array([0.5, 1.0, 1.5], dtype=Unit[float64]("m/s"))
 
 Casting is not valid from one unit to the other, but can be valid between
-different
-scales of the same dimensionality (although this may be "unsafe")::
+different scales of the same dimensionality (although this may be "unsafe")::
 
     >>> meters.astype(Unit[float64]("s"))
     TypeError: Cannot cast meters to seconds.
     >>> meters.astype(Unit[float64]("km"))
+    >>> # Convert to centimeter-gram-second (cgs) units:
     >>> meters.astype(meters.dtype.to_cgs())
 
 The above notation is somewhat clumsy. Functions
@@ -362,7 +364,7 @@ for future discussions::
 
 There are some open questions. For example, whether additional methods
 on the array object could exist to simplify some of the notions, and how these
-would percolate from the datatype to the ndarray.
+would percolate from the datatype to the ``ndarray``.
 
 The interaction with other scalars would likely be defined through::
 
@@ -709,7 +711,20 @@ References
 
 .. [PR 15508] https://github.com/numpy/numpy/pull/15508
 
+
 Copyright
 ---------
 
 This document has been placed in the public domain.
+
+
+Acknowledgments
+---------------
+
+The effort to create new datatypes for NumPy has been discussed for several
+years in many different contexts and settings, making it impossible to list everyone involved.
+We would like to thank especially Stephan Hoyer, Nathaniel Smith, and Eric Wieser
+for repeated in-depth discussion about datatype design.
+We are very grateful for the community input in reviewing and revising this
+NEP and would like to thank especially Ross Barnowski and Ralf Gommers.
+
