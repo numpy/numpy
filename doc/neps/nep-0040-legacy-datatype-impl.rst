@@ -104,7 +104,7 @@ Issues and Discussion
 
 There appears to be some agreement that the current method is
 not desirable for values that have a datatype,
-but may useful for pure python integers or floats as in the first
+but may be useful for pure python integers or floats as in the first
 example.
 However, any change of the datatype system and universal function dispatching
 must initially fully support the current behavior.
@@ -119,7 +119,7 @@ The Object Datatype
 
 The object datatype currently serves as a generic fallback for any value
 which is not otherwise representable.
-However, due to not having a well defined type, it has some issues,
+However, due to not having a well-defined type, it has some issues,
 for example when an array is filled with Python sequences::
 
     >>> l = [1, [2]]
@@ -133,15 +133,15 @@ for example when an array is filled with Python sequences::
     >>> a
     array(list([1, [2]]), dtype=object)
 
-Without a well defined type, functions such as ``isnan()`` or ``conjugate()``
+Without a well-defined type, functions such as ``isnan()`` or ``conjugate()``
 do not necessarily work, but can work for a :class:`decimal.Decimal`.
 To improve this situation it seems desirable to make it easy to create
-object dtypes that represent a specific python datatype and stores its object
-inside the array in the form of pointer to python `PyOjbect`.
+``object`` dtypes that represent a specific Python datatype and stores its object
+inside the array in the form of pointer to python ``PyObject``.
 Unlike most datatypes, Python objects require garbage collection.
 This means that additional methods to handle references and
 visit all objects must be defined.
-In practice, for most use cases it is sufficient to limit the creation of such
+In practice, for most use-cases it is sufficient to limit the creation of such
 datatypes so that all functionality related to Python C-level references is
 private to NumPy.
 
@@ -176,19 +176,19 @@ All current datatypes within NumPy further support setting a metadata field
 during creation which can be set to an arbitrary dictionary value, but seems
 rarely used in practice (one recent and prominent user is h5py).
 
-Many datatype specific functions are defined within a C structure called
+Many datatype-specific functions are defined within a C structure called
 :c:type:`PyArray_ArrFuncs`, which is part of each ``dtype`` instance and
-has a similarity to Pythons ``PyNumberMethods``.
-For user defined datatypes this structure is exposed to the user, making
-ABI compatible changes changes impossible.
-This structure holds important information such as how to copy, cast,
+has a similarity to Python's ``PyNumberMethods``.
+For user-defined datatypes this structure is exposed to the user, making
+ABI-compatible changes changes impossible.
+This structure holds important information such as how to copy or cast,
 and provides space for pointers to functions, such as comparing elements,
 converting to bool, or sorting.
 Since some of these functions are vectorized operations, operating on more than
 one element, they fit the model of ufuncs and do not need to be defined on the
 datatype in the future.
 For example the ``np.clip`` function was previously implemented using
-``PyArray_ArrFuncs`` and is now implemented as ufuncs.
+``PyArray_ArrFuncs`` and is now implemented as a ufunc.
 
 Discussion and Issues
 """""""""""""""""""""
@@ -202,12 +202,12 @@ A future API should likely stop passing in the full array object.
 Since it will be necessary to fall back to the old definitions for
 backward compatibility, the array object may not be available.
 However, passing a "fake" array in which mainly the datatype is defined
-is probably be a sufficient workaround
+is probably a sufficient workaround
 (see backward compatibility; alignment information may sometimes also be desired).
 
 Although not extensively used outside of NumPy itself, the currently
 ``PyArray_Descr`` is a public structure.
-This is especially also true for the ``ArrFunctions`` structure stored in
+This is especially also true for the ``PyArray_ArrFuncs`` structure stored in
 the ``f`` field.
 Due to compatibility they may need to remain supported for a very long time,
 with the possibility of replacing them by functions that dispatch to a newer API.
@@ -220,7 +220,7 @@ NumPy Scalars and Type Hierarchy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As a side note to the above datatype implementation: unlike the datatypes,
-the NumPy scalars currently **do** provide a type hierarchy, including abstract
+the NumPy scalars currently **do** provide a type hierarchy, consisting of abstract
 types such as ``np.inexact`` (see figure below).
 In fact, some control flow within NumPy currently uses
 ``issubclass(a.dtype.type, np.inexact)``.
@@ -231,7 +231,7 @@ In fact, some control flow within NumPy currently uses
    documentation. Some aliases such as ``np.intp`` are excluded. Datetime
    and timedelta are not shown.
 
-NumPy scalars try to mimic zero dimensional arrays with a fixed datatype.
+NumPy scalars try to mimic zero-dimensional arrays with a fixed datatype.
 For the numerical (and unicode) datatypes, they are further limited to
 native byte order.
 
@@ -243,8 +243,8 @@ One of the main features which datatypes need to support is casting between one
 another using ``arr.astype(new_dtype, casting="unsafe")``, or during execution
 of ufuncs with different types (such as adding integer and floating point numbers).
 
-Casting tables determine whether casting is possible or not.
-However, these cannot handle the parametric dtypes such as strings.
+Casting tables determine whether it is possible to cast from one specific type to another.
+However, generic casting rules cannot handle the parametric dtypes such as strings.
 The logic for parametric datatypes is defined mainly in ``PyArray_CanCastTo``
 and currently cannot be customized for user defined datatypes.
 
@@ -264,7 +264,7 @@ The actual casting has two distinct parts:
    on the datatype which is cast, or in a dictionary when casting to a user
    defined datatype.
 
-When casting (small) buffers will be used when necessary to ensure
+When casting, (small) buffers are used when necessary to ensure
 contiguity, alignment or native byte order.
 In this case first ``copyswapn`` is called to and ensures that the cast function
 can handle the input.
@@ -276,10 +276,10 @@ that handles the cast and is used for example during the buffered iteration used
 by ufuncs.
 This is the mechanism that is always used for user defined datatypes.
 For most dtypes defined within NumPy itself, more specialized code is used to
-find define a function to do the actual cast
+find a function to do the actual cast
 (defined by the private ``PyArray_GetDTypeTransferFunction``).
 This mechanism replaces most of the above mechanism and provides much faster
-casts for for example when the inputs are not contiguous in memory.
+casts for example when the inputs are not contiguous in memory.
 However, it cannot be extended by user defined datatypes.
 
 Related to casting, we currently have a ``PyArray_EquivTypes`` function which
@@ -308,9 +308,9 @@ Each of these signatures is associated with a single inner-loop function defined
 in C, which does the actual calculation, and may be called multiple times.
 
 The main step in finding the correct inner-loop function is to call a
-:c:type:`PyUFunc_TypeResolutionFunc` which recieves the input dtypes
-(in the form of the actual input arrays)
-and will find the full type signature (including output dtype) to be executed.
+:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from 
+the provided input arrays
+and will determine the full type signature (including output dtype) to be executed.
 
 By default the ``TypeResolver`` is implemented by searching all of the implementations
 listed in ``ufunc.types`` in order and stopping if all inputs can be safely
@@ -403,7 +403,7 @@ As such this step may move from the dispatching step (described above) to
 the implementation-specific code described below.
 
 
-DType specific Implementation of the UFunc
+DType-specific Implementation of the UFunc
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the correct implementation/loop is found, UFuncs currently call
@@ -418,7 +418,7 @@ Issues and Discussion
 Parametric datatypes may require passing
 additional information to the inner-loop function to decide how to interpret
 the data.
-This is the reason why currently no universal functions for strings dtypes
+This is the reason why currently no universal functions for ``string`` dtypes
 exist (although technically possible within NumPy itself).
 Note that it is currently possible to pass in the input array objects
 (which in turn hold the datatypes when no casting is necessary).
@@ -461,19 +461,19 @@ Reductions use an "identity" value.
 This is currently defined once per ufunc, regardless of the ufunc dtype signature.
 For example  ``0`` is used for ``sum``, or ``math.inf`` for ``min``.
 This works well for numerical datatypes, but is not always appropriate for other dtypes.
-In general it should be possible to provide a dtype specific identity to the
+In general it should be possible to provide a dtype-specific identity to the
 ufunc reduction.
 
 
 Datatype Discovery during Array Coercion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When calling ``np.array(...)``, coercing general python object to a NumPy array,
+When calling ``np.array(...)`` to coerce a general Python object to a NumPy array,
 all objects need to be inspected to find the correct dtype.
 The input to ``np.array()`` are potentially nested Python sequences which hold
 the final elements as generic Python objects.
 NumPy has to unpack all the nested sequences and then inspect the elements.
-The final datatype is found by iterating all elements which will end up
+The final datatype is found by iterating over all elements which will end up
 in the array and:
 
 1. discovering the dtype of the single element:
@@ -529,13 +529,13 @@ without the possibility of executing malicious code
 (i.e. without the ``allow_pickle=True`` keyword argument).
 
 The additional existence of masked arrays and especially masked datatypes
-within Pandas has the interesting implications of interoperability.
+within Pandas has interesting implications for interoperability.
 Since mask information is often stored separately, its handling requires
 support by the container (array) object.
 NumPy itself does not provide such support, and is not expected to add it
 in the foreseeable future.
-However, if in the interest of interoperability additions to the datatypes
-within NumPy are helpful, doing such additions could be an option even if
+However, if such additions to the datatypes within NumPy would improve
+interoperability they could be considered even if
 they are not used by NumPy itself.
 
 
@@ -561,12 +561,12 @@ Related Work
 Discussion
 ----------
 
-There have been many discussion about the current state and what a future
+There have been many discussions about the current state and what a future
 datatype system may look like.
 The full list of these discussion is long and some are lost to time,
 the following provides a subset for more recent ones:
 
-* Draft on NEP by Stephan Hoyer after a developer meeting (was updated on the next developer meeting) https://hackmd.io/6YmDt_PgSVORRNRxHyPaNQ
+* Draft NEP by Stephan Hoyer after a developer meeting (was updated on the next developer meeting) https://hackmd.io/6YmDt_PgSVORRNRxHyPaNQ
 
 * List of related documents gathered previously here
   https://hackmd.io/UVOtgj1wRZSsoNQCjkhq1g (TODO: Reduce to the most important
