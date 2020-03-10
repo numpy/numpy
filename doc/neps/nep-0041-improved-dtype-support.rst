@@ -133,7 +133,7 @@ in more details in the detailed description section:
    datatype-specific logic being implemented
    as special methods on the class. In the C-API, these correspond to specific
    slots. In short, for ``f = np.dtype("f8")``, ``isinstance(f, np.dtype)`` will remain true, but ``type(f)`` will be a subclass of ``np.dtype`` rather than just ``np.dtype`` itself.
-   The ``PyArray_ArrFuncs`` which are currently stored as a pointer on the instance,
+   The ``PyArray_ArrFuncs`` which are currently stored as a pointer on the instance (as ``PyArray_Descr->f``),
    should instead be stored on the class as typically done in Python.
    In the future these may correspond to python side dunder methods.
    Storage information such as itemsize and byteorder can differ between
@@ -475,7 +475,7 @@ API:
 1. New machinery for array coercion, with the goal of enabling user DTypes
    with appropriate class methods.
 2. The replacement or wrapping of the current casting machinery.
-3. Incremental redefinition of the current ``ArrFunctions`` slots into
+3. Incremental redefinition of the current ``PyArray_ArrFuncs`` slots into
    DType method slots.
 
 At this point, no or only very limited new public API will be added and
@@ -569,7 +569,7 @@ This is the typical design pattern used in Python.
 Organizing these methods and information in a more Pythonic way provides a
 solid foundation for refining and extending the API in the future.
 The current API cannot be extended due to how it is exposed publically.
-This means for example that the methods currently stored in ``ArrFunctions``
+This means for example that the methods currently stored in ``PyArray_ArrFuncs``
 on each datatype (see NEP 40) will be defined differently in the future and
 deprecated in the long run.
 
