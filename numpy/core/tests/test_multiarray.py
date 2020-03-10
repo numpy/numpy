@@ -5507,6 +5507,39 @@ class TestStats:
                 res = _var(mat, axis=axis)
                 assert_almost_equal(res, tgt)
 
+    @pytest.mark.parametrize(('complex_dtype', 'ndec'), (
+        ('complex64', 6),
+        ('complex128', 7),
+        ('clongdouble', 7),
+    ))
+    def test_var_complex_values(self, complex_dtype, ndec):
+        # Test fast-paths for every builtin complex type
+        for axis in [0, 1, None]:
+            mat = self.cmat.copy().astype(complex_dtype)
+            msqr = _mean(mat * mat.conj(), axis=axis)
+            mean = _mean(mat, axis=axis)
+            tgt = msqr - mean * mean.conjugate()
+            res = _var(mat, axis=axis)
+            assert_almost_equal(res, tgt, decimal=ndec)
+
+    def test_var_dimensions(self):
+        # _var paths for complex number introduce additions on views that
+        # increase dimensions. Ensure this generalizes to higher dims
+        mat = np.stack([self.cmat]*3)
+        for axis in [0, 1, 2, -1, None]:
+            msqr = _mean(mat * mat.conj(), axis=axis)
+            mean = _mean(mat, axis=axis)
+            tgt = msqr - mean * mean.conjugate()
+            res = _var(mat, axis=axis)
+            assert_almost_equal(res, tgt)
+
+    def test_var_complex_byteorder(self):
+        # Test that var fast-path does not cause failures for complex arrays
+        # with non-native byteorder
+        cmat = self.cmat.copy().astype('complex128')
+        cmat_swapped = cmat.astype(cmat.dtype.newbyteorder())
+        assert_almost_equal(cmat.var(), cmat_swapped.var())
+
     def test_std_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
