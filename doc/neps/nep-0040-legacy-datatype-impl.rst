@@ -9,6 +9,19 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 :Created: 2019-07-17
 
 
+.. note::
+
+    This NEP is part of a series of NEPs encompassing first information
+    about the previous dtype implementation and issues with it in NEP 40
+    (this document).
+    NEP 41 then provides an overview and generic design choices for the refactor.
+    Further NEPs 42 and 43 go into the technical details of the datatype
+    and universal function related internal and external API changes.
+    In some cases it may be necessary to consult the other NEPs for a full
+    picture of the desired changes and why these changes are necessary.
+
+
+
 Abstract
 --------
 
@@ -16,6 +29,8 @@ As a preparation to further NumPy enhancement proposals 41, 42, and 43. This
 NEP details the current status of NumPy datatypes as of NumPy 1.18.
 It describes some of the technical aspects and concepts that
 motivated the other proposals.
+For more general information most readers should begin by reading NEP 41
+and use this document only as a reference or for additional details.
 
 
 Detailed Description
@@ -32,21 +47,26 @@ Parametric Datatypes
 Some datatypes are inherently *parametric*. All ``np.flexible`` scalar
 types are attached to parametric datatypes (string, bytes, and void).
 The class ``np.flexible`` for scalars is a superclass for the data types of
-variable length (string, bytes,
-and void). This distinction is similarly exposed by the C-Macros
+variable length (string, bytes, and void).
+This distinction is similarly exposed by the C-Macros
 ``PyDataType_ISFLEXIBLE`` and ``PyTypeNum_ISFLEXIBLE``.
+This flexibility generalizes to the set of values which can be represented
+inside the array.
 For instance, ``"S8"`` can represent longer strings than ``"S4"``.
+The parametric string datatype thus also limits the values inside the array
+to a subset (or subtype) of all values which can be represented by string
+scalars.
 
 The basic numerical datatypes are not flexible (do not inherit from
-``npflexible``). Float64, Float32, etc. do have a byte order, but the described
+``np.flexible``). ``float64``, ``float32``, etc. do have a byte order, but the described
 values are unaffected by it, and it is always possible to cast them to the
 native, canonical representation without any loss of information.
 
 The concept of flexibility can be generalized to parametric datatypes.
 For example the private ``AdaptFlexibleDType`` function also accepts the
 naive datetime dtype as input to find the correct time unit.
-The datetime dtype is thus parametric not in the storage, but instead in
-what the stored value represents.
+The datetime dtype is thus parametric not in the size of its storage,
+but instead in what the stored value represents.
 Currently ``np.can_cast("datetime64[s]", "datetime64[ms]", casting="safe")``
 returns true, although it is unclear that this is desired or generalizes
 to possible future data types such as physical units.
@@ -55,9 +75,9 @@ Thus we have data types (mainly strings) with the properties that:
 
 1. Casting is not always safe (``np.can_cast("S8", "S4")``)
 2. Array coercion should be able to discover the exact dtype, such as for
-   ``np.array(["str1", 123.], dtype="S")`` where NumPy discovers the
+   ``np.array(["str1", 12.34], dtype="S")`` where NumPy discovers the
    resulting dtype as ``"S5"``.
-   (Without ``dtype="S"`` such behaviour is currently ill defined [gh-15327]_.)
+   (If the dtype argument is ommitted the behaviour is currently ill defined [gh-15327]_.)
    A form similar to ``dtype="S"`` is ``dtype="datetime64"`` which can
    discover the unit: ``np.array(["2017-02"], dtype="datetime64")``.
 
@@ -92,11 +112,15 @@ so that replacing ``5`` with ``np.int64(5)`` or ``np.array(5, dtype="int64")``
 will lead to the same results, and thus ignores the existing datatype.
 The same logic also applies to floating point scalars, which are allowed to
 lose precision.
-The behavior is not used when both inputs are scalars.
+The behavior is not used when both inputs are scalars, so that
+``5 + np.int8(5)`` returns the default integer size (32 or 64-bit) and not
+an ``np.int8``.
 
-Although, the above behavior is defined in terms of casting the a given
-scalar value as exposed also through ``np.result_type``, the main importance
-is in the ufunc dispatching which currently relies on safe casting semantics.
+While the behaviour is defined in terms of casting and exposed by
+``np.result_type`` it is mainly important for universal functions
+(such as ``np.add`` in the above examples).
+Universal functions currently rely on safe casting semantics to decide which
+loop should be used, and thus what the output datatype will be.
 
 
 Issues and Discussion
@@ -169,9 +193,10 @@ To set the actual behaviour of these instances, a prototype instance is stored
 globally and looked up based on the ``dtype.typenum``. The singleton is used
 where possible. Where required it is copied and modified, for instance to change
 endianess.
-For parametric datatypes (strings, void, datetime, and timedelta) additionally
-the string lengths, fields, or datetime unit needs to be set, so they create
-another instance rather than using a singleton.
+
+Parametric datatypes (strings, void, datetime, and timedelta) must store
+additional information such as string lengths, fields, or datetime units --
+new instances of these types are created instead of relying on a singleton.
 All current datatypes within NumPy further support setting a metadata field
 during creation which can be set to an arbitrary dictionary value, but seems
 rarely used in practice (one recent and prominent user is h5py).
@@ -227,7 +252,7 @@ In fact, some control flow within NumPy currently uses
 
 .. figure:: _static/nep-0040_dtype-hierarchy.png
 
-   **Figure:** Hierarchy of type objects reproduced from the reference
+   **Figure:** Hierarchy of NumPy scalar types reproduced from the reference
    documentation. Some aliases such as ``np.intp`` are excluded. Datetime
    and timedelta are not shown.
 
@@ -255,7 +280,7 @@ The actual casting has two distinct parts:
 2. The generic casting code is provided by C functions which know how to
    cast aligned and contiguous memory from one dtype to another
    (both in native byte order).
-3. C-level functions can be registered to cast aligned and contiguous memory
+   These C-level functions can be registered to cast aligned and contiguous memory
    from one dtype to another.
    The function may be provided with both arrays (although the parameter
    is sometimes ``NULL`` for scalars).
@@ -264,12 +289,9 @@ The actual casting has two distinct parts:
    on the datatype which is cast, or in a dictionary when casting to a user
    defined datatype.
 
-When casting, (small) buffers are used when necessary to ensure
-contiguity, alignment or native byte order.
-In this case first ``copyswapn`` is called to and ensures that the cast function
-can handle the input.
 Generally NumPy will thus perform casting as chain of the three functions
-``in_copyswapn -> castfunc -> out_copyswapn``.
+``in_copyswapn -> castfunc -> out_copyswapn`` using (small) buffers between
+these steps.
 
 The above multiple functions are wrapped into a single function (with metadata)
 that handles the cast and is used for example during the buffered iteration used
@@ -284,15 +306,17 @@ However, it cannot be extended by user defined datatypes.
 
 Related to casting, we currently have a ``PyArray_EquivTypes`` function which
 indicate that a *view* is sufficient (and thus no cast is necessary).
+This function is used multiple places and should probably be part of
+a redesigned casting API.
 
 
 DType handling in Universal functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Universal functions are implemented as instances of the ``numpy.UFunc`` class
-with an ordered
-list of datatype specific (based on the dtype typecode character, not datatype
-instances) implementations, each with a signature and a function pointer.
+with an ordered-list of datatype-specific
+(based on the dtype typecode character, not datatype instances) implementations,
+each with a signature and a function pointer.
 This list of implementations can be seen with ``ufunc.types`` where
 all implementations are listed with their C-style typecode signatures.
 For example::
@@ -361,8 +385,10 @@ return true, although the integer input array has no notion of "not a time".
 If a universal function, such as most functions in ``scipy.special``, is only
 defined for ``float32`` and ``float64`` it will currently automatically
 cast a ``float16`` silently to ``float32`` (similarly for any integer input).
-This ensures successful execution, but allows a change in the output dtype
+This ensures successful execution, but may lead to a change in the output dtype
 when support for new data types is added to a ufunc.
+When a ``float16`` loop is added, the output datatype will currently change
+from ``float32`` to ``float16`` without a warning.
 
 In general the order in which loops are registered is important.
 However, this is only reliable if all loops are added when the ufunc is first defined.
