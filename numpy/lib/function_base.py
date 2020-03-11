@@ -708,12 +708,12 @@ def select(condlist, choicelist, default=0):
     return result
 
 
-def _copy_dispatcher(a, order=None):
+def _copy_dispatcher(a, order=None, subok=None):
     return (a,)
 
 
 @array_function_dispatch(_copy_dispatcher)
-def copy(a, order='K'):
+def copy(a, order='K', subok=False):
     """
     Return an array copy of the given object.
 
@@ -728,11 +728,20 @@ def copy(a, order='K'):
         as possible. (Note that this function and :meth:`ndarray.copy` are very
         similar, but have different default values for their order=
         arguments.)
+    subok : bool, optional
+        If True, then sub-classes will be passed-through, otherwise the
+        returned array will be forced to be a base-class array (defaults to False).
+
+        .. versionadded:: 1.19.0
 
     Returns
     -------
     arr : ndarray
         Array interpretation of `a`.
+
+    See Also
+    --------
+    ndarray.copy : Preferred method for creating an array copy
 
     Notes
     -----
@@ -757,7 +766,7 @@ def copy(a, order='K'):
     False
 
     """
-    return array(a, order=order, copy=True)
+    return array(a, order=order, subok=subok, copy=True)
 
 # Basic operations
 
