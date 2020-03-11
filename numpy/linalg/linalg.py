@@ -15,6 +15,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'LinAlgError', 'multi_dot']
 
 import functools
+import numbers
 import operator
 import warnings
 
@@ -2560,13 +2561,15 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+        elif ord in ('f', 'fro'):
+            raise ValueError("Cannot compute Frobenius norm for vectors, "
+                             "vectors only support integer norm orders. For "
+                             "example for the L2 norm use ord=2 instead")
+        elif ord is 'nuc':
+            raise ValueError("Nuclear norm is not supported for vectors")
+        elif not isinstance(ord, numbers.Integral):
+            raise ValueError("Invalid norm order for vectors.")
         else:
-            if ord in ('f', 'fro'):
-                raise ValueError("Cannot compute Frobenius norm for vectors, vectors only support integer norm orders. For example for the L2 norm use ord=2 instead")
-            try:
-                ord + 1
-            except TypeError:
-                raise ValueError("Invalid norm order for vectors.")
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
