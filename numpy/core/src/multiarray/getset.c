@@ -88,6 +88,8 @@ array_shape_set(PyArrayObject *self, PyObject *val)
         }
     }
     else {
+        /* Free old dimensions and strides */
+        npy_free_cache_dim_array(self);        
         ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
