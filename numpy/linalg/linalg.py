@@ -2562,7 +2562,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
         else:
             if ord in ('f', 'fro'):
-                raise TypeError("Cannot compute Frobenius norm for vectors, vectors only support integer norm orders. For example for the L2 norm use ord=2 instead")
+                raise ValueError("Cannot compute Frobenius norm for vectors, vectors only support integer norm orders. For example for the L2 norm use ord=2 instead")
             try:
                 ord + 1
             except TypeError:
