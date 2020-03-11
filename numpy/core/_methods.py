@@ -31,10 +31,6 @@ if nt.dtype(nt.longdouble) != nt.dtype(nt.double):
     _complex_to_float.update({
         nt.dtype(nt.clongdouble) : nt.dtype(nt.longdouble),
     })
-# Add reverse-endian types
-_complex_to_float.update({
-    k.newbyteorder() : v.newbyteorder() for k, v in _complex_to_float.items()
-})
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
 # small reductions
