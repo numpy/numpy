@@ -2431,6 +2431,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
     The Frobenius norm is given by [1]_:
 
         :math:`||A||_F = [\\sum_{i,j} abs(a_{i,j})^2]^{1/2}`
+        
+    As mentioned in the table above, the Frobenius norm is only 
+    defined for 2-dimensional matrices. It is not defined for
+    vectors.
 
     The nuclear norm is the sum of the singular values.
 
