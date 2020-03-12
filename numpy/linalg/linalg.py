@@ -15,7 +15,6 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'LinAlgError', 'multi_dot']
 
 import functools
-import numbers
 import operator
 import warnings
 
