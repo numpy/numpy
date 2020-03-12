@@ -1071,8 +1071,8 @@ class TestRandomDist(object):
 
     @pytest.mark.slow
     def test_dirichlet_moderately_small_alpha(self):
-        # Use alpha.max() < 1 to trigger stick breaking code path
-        alpha = np.array([0.2, 0.4, 0.3])
+        # Use alpha.max() < 0.1 to trigger stick breaking code path
+        alpha = np.array([0.02, 0.04, 0.03])
         exact_mean = alpha / alpha.sum()
         random = Generator(MT19937(self.seed))
         sample = random.dirichlet(alpha, size=20000000)
