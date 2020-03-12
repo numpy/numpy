@@ -2434,6 +2434,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     The nuclear norm is the sum of the singular values.
 
+    Both the Frobenius and nuclear norm orders are only defined for
+    matrices and raise a ValueError when ``x.ndim != 2``.
+
     References
     ----------
     .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*,
@@ -2556,11 +2559,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+        # None of the str-type keywords for ord ('fro', 'nuc') 
+        # are valid for vectors
+        elif isinstance(ord, str):
+            raise ValueError(f"Invalid norm order '{ord}' for vectors")
         else:
-            try:
-                ord + 1
-            except TypeError:
-                raise ValueError("Invalid norm order for vectors.")
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
