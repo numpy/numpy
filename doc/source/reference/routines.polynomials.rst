@@ -1,15 +1,17 @@
+.. _routines.polynomial:
+
 Polynomials
 ***********
 
 Polynomials in NumPy can be *created*, *manipulated*, and even *fitted* using
-the :doc:`routines.polynomials.classes`
+the :doc:`convenience classes <routines.polynomials.classes>`
 of the `numpy.polynomial` package, introduced in NumPy 1.4.
 
 Prior to NumPy 1.4, `numpy.poly1d` was the class of choice and it is still
 available in order to maintain backward compatibility.
 However, the newer Polynomial package is more complete than `numpy.poly1d`
 and its convenience classes are better behaved in the numpy environment.
-Therefore Polynomial is recommended for new coding.
+Therefore :mod:`numpy.polynomial` is recommended for new coding.
 
 Transition notice
 -----------------
@@ -22,9 +24,17 @@ degree i.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   routines.polynomials.package
+   routines.polynomials.classes
+   routines.polynomials.polynomial
+   routines.polynomials.chebyshev
+   routines.polynomials.hermite
+   routines.polynomials.hermite_e
+   routines.polynomials.laguerre
+   routines.polynomials.legendre
+   routines.polynomials.polyutils
+
 
 .. toctree::
    :maxdepth: 2
