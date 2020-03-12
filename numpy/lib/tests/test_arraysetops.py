@@ -563,6 +563,12 @@ class TestUnique:
         result = np.array([[-0.0, 0.0]])
         assert_array_equal(unique(data, axis=0), result, msg)
 
+    @pytest.mark.parametrize("axis", [0, -1])
+    def test_unique_1d_with_axis(self, axis):
+        x = np.array([4, 3, 2, 3, 2, 1, 2, 2])
+        uniq = unique(x, axis=axis)
+        assert_array_equal(uniq, [1, 2, 3, 4])
+
     def test_unique_axis_zeros(self):
         # issue 15559
         single_zero = np.empty(shape=(2, 0), dtype=np.int8)

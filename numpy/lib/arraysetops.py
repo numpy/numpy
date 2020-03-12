@@ -270,20 +270,33 @@ def unique(ar, return_index=False, return_inverse=False,
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
-    ar = ar.reshape(orig_shape[0], -1)
+    ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
     dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
+    # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
+    # data type with `m` fields where each field has the data type of `ar`.
+    # In the following, we create the array `consolidated`, which has
+    # shape `(n,)` with data type `dtype`.
     try:
-        consolidated = ar.view(dtype)
+        if ar.shape[1] > 0:
+            consolidated = ar.view(dtype)
+        else:
+            # If ar.shape[1] == 0, then dtype will be `np.dtype([])`, which is
+            # a data type with itemsize 0, and the call `ar.view(dtype)` will
+            # fail.  Instead, we'll use `np.empty` to explicitly create the
+            # array with shape `(len(ar),)`.  Because `dtype` in this case has
+            # itemsize 0, the total size of the result is still 0 bytes.
+            consolidated = np.empty(len(ar), dtype=dtype)
     except TypeError:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
         raise TypeError(msg.format(dt=ar.dtype))
 
     def reshape_uniq(uniq):
+        n = len(uniq)
         uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(-1, *orig_shape[1:])
+        uniq = uniq.reshape(n, *orig_shape[1:])
         uniq = np.moveaxis(uniq, 0, axis)
         return uniq
 
@@ -783,4 +796,3 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
-
