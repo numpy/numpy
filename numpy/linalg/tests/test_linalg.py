@@ -1480,11 +1480,12 @@ class _TestNorm2D(_TestNormBase):
 
         # Using `axis=<integer>` or passing in a 1-D array implies vector
         # norms are being computed, so also using `ord='fro'`
-        # or `ord='nuc'` raises a ValueError.
+        # or `ord='nuc'` or any other string raises a ValueError.
         assert_raises(ValueError, norm, A, 'fro', 0)
         assert_raises(ValueError, norm, A, 'nuc', 0)
         assert_raises(ValueError, norm, [3, 4], 'fro', None)
         assert_raises(ValueError, norm, [3, 4], 'nuc', None)
+        assert_raises(ValueError, norm, [3, 4], 'test', None)
 
         # Similarly, norm should raise an exception when ord is any finite
         # number other than 1, 2, -1 or -2 when computing matrix norms.
