@@ -2431,11 +2431,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
     The Frobenius norm is given by [1]_:
 
         :math:`||A||_F = [\\sum_{i,j} abs(a_{i,j})^2]^{1/2}`
-        
-    Both the Frobenius and nuclear norm orders are only defined for
-    matrices and raise a ValueError when `x.ndim != 2`.
 
     The nuclear norm is the sum of the singular values.
+
+    Both the Frobenius and nuclear norm orders are only defined for
+    matrices and raise a ValueError when ``x.ndim != 2``.
 
     References
     ----------
