@@ -2561,10 +2561,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
-        elif ord in ('f', 'fro', 'nuc'):
+        elif isinstance(ord, str):
             raise ValueError(f"Invalid norm order '{ord}' for vectors")
-        elif not isinstance(ord, numbers.Integral):
-            raise ValueError("Invalid norm order for vectors.")
         else:
             absx = abs(x)
             absx **= ord
