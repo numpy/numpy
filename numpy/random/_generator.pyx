@@ -4157,38 +4157,36 @@ cdef class Generator:
         i = 0
         totsize = np.PyArray_SIZE(val_arr)
 
-        # Small alpha case: Use stick-breaking approach with beta
-        # random variates (RVs).
+        # Select one of the following two algorithms for the generation
+        #  of Dirichlet random variates (RVs)
         #
-        # This approach prevents NaNs resulting from 0/0 that may
-        # occur when using the standard approach of generating
-        # dirichlet RVs via normalisation of a vector of gamma RVs
+        # A) Small alpha case: Use the stick-breaking approach with beta
+        #    random variates (RVs).
+        # B) Standard case: Perform unit normalisation of a vector
+        #    of gamma random variates
         #
-        # In the standard approach each alpha value is used as the
-        # shape parameter of a gamma distribution. If all the alpha
-        # values are sufficiently small, there is a high probability
-        # that all the gamma variates will be 0. When that happens,
-        # the normalization process ends up computing 0/0, giving nan.
-        #
-        # The stick-breaking algorithm does not use divisions, so that
-        # a situation in which 0/0 has to be computed cannot occur.
-        #
-        # The algorithm is slower than the standard approach as
+        # A) prevents NaNs resulting from 0/0 that may occur in B)
+        # when all values in the vector ':math:\\alpha' are smaller
+        # than 1, then there is a nonzero probability that all
+        # generated gamma RVs will be 0. When that happens, the
+        # normalization process ends up computing 0/0, giving nan. A)
+        # does not use divisions, so that a situation in which 0/0 has
+        # to be computed cannot occur. A) is slower than B) as
         # generation of beta RVs is slower than generation of gamma
-        # RVs.
-        #
-        # The switch from the standard to the stick-breaking algorithm
-        # is made whenever the maximum of all alpha values is smaller
-        # than a threshold `t`. The threshold is chosen such that for
-        # `alpha.max() >= t` the probability that all gamma variates
-        # will be zero is neglegible.
-        #
-        # Formally for a given threshold `t` this probability can be
-        # bounded by `gammainc(t, d)` where `gammainc` is the
-        # regularized incomplete gamma function and `d` is the
-        # smallest positive floating point number that can be
-        # represented with a given precision.
-        if alpha_arr.max() < 0.1:
+        # RVs. A) is selected whenever `alpha.max() < t`, where `t <
+        # 1` is a threshold that controls the probability of
+        # generating a NaN value when B) is used. For a given
+        # threshold `t` this probability can be bounded by
+        # `gammainc(t, d)` where `gammainc` is the regularized
+        # incomplete gamma function and `d` is the smallest positive
+        # floating point number that can be represented with a given
+        # precision. For the chosen threshold `t=0.1` this probability
+        # is smaller than `1.8e-31` for double precision floating
+        # point numbers.
+
+        if k > 0 & alpha_arr.max() < 0.1:
+            # Small alpha case: Use stick-breaking approach with beta
+            # random variates (RVs).
             with self.lock, nogil:
                 while i < totsize:
                     acc = 1.
@@ -4200,9 +4198,9 @@ cdef class Generator:
                     val_data[i + k + 1] = acc
                     i = i + k
 
-        # Standard case: Unit normalisation of a vector of gamma random
-        # variates
         else:
+            # Standard case: Unit normalisation of a vector of gamma random
+            # variates
             with self.lock, nogil:
                 while i < totsize:
                     acc = 0.
