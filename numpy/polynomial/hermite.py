@@ -1,5 +1,7 @@
 """
-Objects for dealing with Hermite series.
+==============================================================
+Hermite Series, "Physicists" (:mod:`numpy.polynomial.hermite`)
+==============================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Hermite series, including a `Hermite` class that
@@ -7,51 +9,66 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+.. autosummary::
+   :toctree: generated/
+
+   Hermite
+
 Constants
 ---------
-- `hermdomain` -- Hermite series default domain, [-1,1].
-- `hermzero` -- Hermite series that evaluates identically to 0.
-- `hermone` -- Hermite series that evaluates identically to 1.
-- `hermx` -- Hermite series for the identity map, ``f(x) = x``.
+.. autosummary::
+   :toctree: generated/
+
+   hermdomain
+   hermzero
+   hermone
+   hermx
 
 Arithmetic
 ----------
-- `hermadd` -- add two Hermite series.
-- `hermsub` -- subtract one Hermite series from another.
-- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
-- `hermmul` -- multiply two Hermite series.
-- `hermdiv` -- divide one Hermite series by another.
-- `hermpow` -- raise a Hermite series to a positive integer power.
-- `hermval` -- evaluate a Hermite series at given points.
-- `hermval2d` -- evaluate a 2D Hermite series at given points.
-- `hermval3d` -- evaluate a 3D Hermite series at given points.
-- `hermgrid2d` -- evaluate a 2D Hermite series on a Cartesian product.
-- `hermgrid3d` -- evaluate a 3D Hermite series on a Cartesian product.
+.. autosummary::
+   :toctree: generated/
+
+   hermadd
+   hermsub
+   hermmulx
+   hermmul
+   hermdiv
+   hermpow
+   hermval
+   hermval2d
+   hermval3d
+   hermgrid2d
+   hermgrid3d
 
 Calculus
 --------
-- `hermder` -- differentiate a Hermite series.
-- `hermint` -- integrate a Hermite series.
+.. autosummary::
+   :toctree: generated/
+
+   hermder
+   hermint
 
 Misc Functions
 --------------
-- `hermfromroots` -- create a Hermite series with specified roots.
-- `hermroots` -- find the roots of a Hermite series.
-- `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
-- `hermvander2d` -- Vandermonde-like matrix for 2D power series.
-- `hermvander3d` -- Vandermonde-like matrix for 3D power series.
-- `hermgauss` -- Gauss-Hermite quadrature, points and weights.
-- `hermweight` -- Hermite weight function.
-- `hermcompanion` -- symmetrized companion matrix in Hermite form.
-- `hermfit` -- least-squares fit returning a Hermite series.
-- `hermtrim` -- trim leading coefficients from a Hermite series.
-- `hermline` -- Hermite series of given straight line.
-- `herm2poly` -- convert a Hermite series to a polynomial.
-- `poly2herm` -- convert a polynomial to a Hermite series.
+.. autosummary::
+   :toctree: generated/
 
-Classes
--------
-- `Hermite` -- A Hermite series class.
+   hermfromroots
+   hermroots
+   hermvander
+   hermvander2d
+   hermvander3d
+   hermgauss
+   hermweight
+   hermcompanion
+   hermfit
+   hermtrim
+   hermline
+   herm2poly
+   poly2herm
 
 See also
 --------

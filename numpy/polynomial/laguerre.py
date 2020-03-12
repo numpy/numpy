@@ -1,5 +1,7 @@
 """
-Objects for dealing with Laguerre series.
+==================================================
+Laguerre Series (:mod:`numpy.polynomial.laguerre`)
+==================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Laguerre series, including a `Laguerre` class that
@@ -7,51 +9,66 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+.. autosummary::
+   :toctree: generated/
+
+   Laguerre
+
 Constants
 ---------
-- `lagdomain` -- Laguerre series default domain, [-1,1].
-- `lagzero` -- Laguerre series that evaluates identically to 0.
-- `lagone` -- Laguerre series that evaluates identically to 1.
-- `lagx` -- Laguerre series for the identity map, ``f(x) = x``.
+.. autosummary::
+   :toctree: generated/
+
+   lagdomain
+   lagzero
+   lagone
+   lagx
 
 Arithmetic
 ----------
-- `lagadd` -- add two Laguerre series.
-- `lagsub` -- subtract one Laguerre series from another.
-- `lagmulx` -- multiply a Laguerre series in ``P_i(x)`` by ``x``.
-- `lagmul` -- multiply two Laguerre series.
-- `lagdiv` -- divide one Laguerre series by another.
-- `lagpow` -- raise a Laguerre series to a positive integer power.
-- `lagval` -- evaluate a Laguerre series at given points.
-- `lagval2d` -- evaluate a 2D Laguerre series at given points.
-- `lagval3d` -- evaluate a 3D Laguerre series at given points.
-- `laggrid2d` -- evaluate a 2D Laguerre series on a Cartesian product.
-- `laggrid3d` -- evaluate a 3D Laguerre series on a Cartesian product.
+.. autosummary::
+   :toctree: generated/
+
+   lagadd
+   lagsub
+   lagmulx
+   lagmul
+   lagdiv
+   lagpow
+   lagval
+   lagval2d
+   lagval3d
+   laggrid2d
+   laggrid3d
 
 Calculus
 --------
-- `lagder` -- differentiate a Laguerre series.
-- `lagint` -- integrate a Laguerre series.
+.. autosummary::
+   :toctree: generated/
+
+   lagder
+   lagint
 
 Misc Functions
 --------------
-- `lagfromroots` -- create a Laguerre series with specified roots.
-- `lagroots` -- find the roots of a Laguerre series.
-- `lagvander` -- Vandermonde-like matrix for Laguerre polynomials.
-- `lagvander2d` -- Vandermonde-like matrix for 2D power series.
-- `lagvander3d` -- Vandermonde-like matrix for 3D power series.
-- `laggauss` -- Gauss-Laguerre quadrature, points and weights.
-- `lagweight` -- Laguerre weight function.
-- `lagcompanion` -- symmetrized companion matrix in Laguerre form.
-- `lagfit` -- least-squares fit returning a Laguerre series.
-- `lagtrim` -- trim leading coefficients from a Laguerre series.
-- `lagline` -- Laguerre series of given straight line.
-- `lag2poly` -- convert a Laguerre series to a polynomial.
-- `poly2lag` -- convert a polynomial to a Laguerre series.
+.. autosummary::
+   :toctree: generated/
 
-Classes
--------
-- `Laguerre` -- A Laguerre series class.
+   lagfromroots
+   lagroots
+   lagvander
+   lagvander2d
+   lagvander3d
+   laggauss
+   lagweight
+   lagcompanion
+   lagfit
+   lagtrim
+   lagline
+   lag2poly
+   poly2lag
 
 See also
 --------

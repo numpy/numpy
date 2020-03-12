@@ -1,5 +1,7 @@
 """
-Objects for dealing with Chebyshev series.
+====================================================
+Chebyshev Series (:mod:`numpy.polynomial.chebyshev`)
+====================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Chebyshev series, including a `Chebyshev` class that
@@ -7,57 +9,75 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+
+.. autosummary::
+   :toctree: generated/
+
+   Chebyshev
+
+
 Constants
 ---------
-- `chebdomain` -- Chebyshev series default domain, [-1,1].
-- `chebzero` -- (Coefficients of the) Chebyshev series that evaluates
-  identically to 0.
-- `chebone` -- (Coefficients of the) Chebyshev series that evaluates
-  identically to 1.
-- `chebx` -- (Coefficients of the) Chebyshev series for the identity map,
-  ``f(x) = x``.
+
+.. autosummary::
+   :toctree: generated/
+
+   chebdomain
+   chebzero
+   chebone
+   chebx
 
 Arithmetic
 ----------
-- `chebadd` -- add two Chebyshev series.
-- `chebsub` -- subtract one Chebyshev series from another.
-- `chebmulx` -- multiply a Chebyshev series in ``P_i(x)`` by ``x``.
-- `chebmul` -- multiply two Chebyshev series.
-- `chebdiv` -- divide one Chebyshev series by another.
-- `chebpow` -- raise a Chebyshev series to a positive integer power.
-- `chebval` -- evaluate a Chebyshev series at given points.
-- `chebval2d` -- evaluate a 2D Chebyshev series at given points.
-- `chebval3d` -- evaluate a 3D Chebyshev series at given points.
-- `chebgrid2d` -- evaluate a 2D Chebyshev series on a Cartesian product.
-- `chebgrid3d` -- evaluate a 3D Chebyshev series on a Cartesian product.
+
+.. autosummary::
+   :toctree: generated/
+
+   chebadd
+   chebsub
+   chebmulx
+   chebmul
+   chebdiv
+   chebpow
+   chebval
+   chebval2d
+   chebval3d
+   chebgrid2d
+   chebgrid3d
 
 Calculus
 --------
-- `chebder` -- differentiate a Chebyshev series.
-- `chebint` -- integrate a Chebyshev series.
+
+.. autosummary::
+   :toctree: generated/
+
+   chebder
+   chebint
 
 Misc Functions
 --------------
-- `chebfromroots` -- create a Chebyshev series with specified roots.
-- `chebroots` -- find the roots of a Chebyshev series.
-- `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
-- `chebvander2d` -- Vandermonde-like matrix for 2D power series.
-- `chebvander3d` -- Vandermonde-like matrix for 3D power series.
-- `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
-- `chebweight` -- Chebyshev weight function.
-- `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
-- `chebfit` -- least-squares fit returning a Chebyshev series.
-- `chebpts1` -- Chebyshev points of the first kind.
-- `chebpts2` -- Chebyshev points of the second kind.
-- `chebtrim` -- trim leading coefficients from a Chebyshev series.
-- `chebline` -- Chebyshev series representing given straight line.
-- `cheb2poly` -- convert a Chebyshev series to a polynomial.
-- `poly2cheb` -- convert a polynomial to a Chebyshev series.
-- `chebinterpolate` -- interpolate a function at the Chebyshev points.
 
-Classes
--------
-- `Chebyshev` -- A Chebyshev series class.
+.. autosummary::
+   :toctree: generated/
+
+   chebfromroots
+   chebroots
+   chebvander
+   chebvander2d
+   chebvander3d
+   chebgauss
+   chebweight
+   chebcompanion
+   chebfit
+   chebpts1
+   chebpts2
+   chebtrim
+   chebline
+   cheb2poly
+   poly2cheb
+   chebinterpolate
 
 See also
 --------
