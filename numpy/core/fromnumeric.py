@@ -252,7 +252,7 @@ def reshape(a, newshape, order='C'):
      >>> c.shape = (20)
      Traceback (most recent call last):
         ...
-     AttributeError: Incompatible shape for in-place modifcation. Use
+     AttributeError: Incompatible shape for in-place modification. Use
      `.reshape()` to make a copy with the desired shape.
 
     The `order` keyword gives the index ordering both for *fetching* the values

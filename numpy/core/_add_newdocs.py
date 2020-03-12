@@ -2314,7 +2314,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     >>> np.zeros((4,2))[::2].shape = (-1,)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    AttributeError: Incompatible shape for in-place modifcation. Use
+    AttributeError: Incompatible shape for in-place modification. Use
     `.reshape()` to make a copy with the desired shape.
 
     See Also
