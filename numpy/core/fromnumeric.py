@@ -252,7 +252,8 @@ def reshape(a, newshape, order='C'):
      >>> c.shape = (20)
      Traceback (most recent call last):
         ...
-     AttributeError: incompatible shape for a non-contiguous array
+     AttributeError: Incompatible shape for in-place modification. Use
+     `.reshape()` to make a copy with the desired shape.
 
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
