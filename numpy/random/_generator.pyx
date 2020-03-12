@@ -4184,7 +4184,7 @@ cdef class Generator:
         # is smaller than `1.8e-31` for double precision floating
         # point numbers.
 
-        if (k > 0) & (alpha_arr.max() < 0.1):
+        if (k > 0) and (alpha_arr.max() < 0.1):
             # Small alpha case: Use stick-breaking approach with beta
             # random variates (RVs).
             with self.lock, nogil:
