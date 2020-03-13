@@ -289,7 +289,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
             extra_output = ()
             if return_index:
-                # first index is the first occurance of an empty element
+                # first index is the first occurrence of an empty element
                 extra_output += (np.zeros(1, dtype=np.intp),)
             if return_inverse:
                 # all `ar` elements are equal to the 0th element of the output
