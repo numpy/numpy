@@ -1058,6 +1058,10 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                 tmp_fun = fun; /* built-in function */
                 Py_INCREF(tmp_fun);
                 tot = maxnofargs;
+                if (PyCFunction_Check(fun)) {
+                    /* In case the function has a co_argcount (like on PyPy) */
+                    di = 0;
+                }
                 if (xa != NULL)
                     tot += PyTuple_Size((PyObject *)xa);
             }
