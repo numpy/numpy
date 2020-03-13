@@ -2647,6 +2647,8 @@ def multi_dot(arrays, out=None):
         conditions are not met, an exception is raised, instead of attempting
         to be flexible.
 
+        .. versionadded:: 1.19.0
+
     Returns
     -------
     output : ndarray
