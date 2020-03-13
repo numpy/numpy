@@ -2610,12 +2610,12 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 # multi_dot
 
-def _multidot_dispatcher(arrays, out=None):
+def _multidot_dispatcher(arrays, *, out=None):
     return (arrays, out)
 
 
 @array_function_dispatch(_multidot_dispatcher)
-def multi_dot(arrays, out=None):
+def multi_dot(arrays, *, out=None):
     """
     Compute the dot product of two or more arrays in a single function call,
     while automatically selecting the fastest evaluation order.
