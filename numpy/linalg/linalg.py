@@ -2643,7 +2643,7 @@ def multi_dot(arrays, out=None):
         Output argument. This must have the exact kind that would be returned
         if it was not used. In particular, it must have the right type, must be
         C-contiguous, and its dtype must be the dtype that would be returned
-        for `dot(a,b)`. This is a performance feature. Therefore, if these
+        for `dot(a, b)`. This is a performance feature. Therefore, if these
         conditions are not met, an exception is raised, instead of attempting
         to be flexible.
 
