@@ -90,6 +90,11 @@ void Array2::resize(int nrows, int ncols, long* data)
   }
 }
 
+void Array2::resize(int nrows, int ncols)
+{
+  resize(nrows, ncols, nullptr);
+}
+
 // Set item accessor
 Array1 & Array2::operator[](int i)
 {
