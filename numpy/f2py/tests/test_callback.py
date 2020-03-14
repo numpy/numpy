@@ -63,7 +63,8 @@ cf2py  intent(out) a
     def test_all(self, name):
         self.check_function(name)
 
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.xfail(IS_PYPY,
+                       reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_docstring(self):
         expected = textwrap.dedent("""\
         a = t(fun,[fun_extra_args])

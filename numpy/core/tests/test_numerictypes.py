@@ -486,7 +486,8 @@ def test_issctype(rep, expected):
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.xfail(IS_PYPY,
+                   reason="PyPy cannot modify tp_doc after PyType_Ready")
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:

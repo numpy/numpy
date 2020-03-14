@@ -20,7 +20,8 @@ class TestMixed(util.F2PyTest):
         assert_(self.module.foo_fixed.bar12() == 12)
         assert_(self.module.foo_free.bar13() == 13)
 
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.xfail(IS_PYPY,
+                       reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_docstring(self):
         expected = textwrap.dedent("""\
         a = bar11()

@@ -78,6 +78,7 @@ cf2py    intent(out) ts
        end
     """
 
+    @pytest.mark.slow
     @pytest.mark.parametrize('name', 't0,t1,t5,s0,s1,s5,ss'.split(','))
     def test_all(self, name):
         self.check_function(getattr(self.module, name), name)
