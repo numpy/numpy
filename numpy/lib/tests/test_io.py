@@ -1,4 +1,5 @@
 import sys
+import gc
 import gzip
 import os
 import threading
@@ -288,11 +289,9 @@ class TestSavezLoad(RoundtripTest):
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
-            # collector, so we catch the warnings.  Because ResourceWarning
-            # is unknown in Python < 3.x, we take the easy way out and
-            # catch all warnings.
+            # collector, so we catch the warnings.
             with suppress_warnings() as sup:
-                sup.filter(Warning)  # TODO: specify exact message
+                sup.filter(ResourceWarning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
