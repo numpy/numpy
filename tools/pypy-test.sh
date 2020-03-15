@@ -6,6 +6,7 @@ set -o pipefail
 # Print expanded commands
 set -x
 
+sudo apt-get -yq update
 sudo apt-get -yq install libatlas-base-dev liblapack-dev gfortran-5 python3-urllib3
 F77=gfortran-5 F90=gfortran-5 \
 
