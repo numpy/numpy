@@ -57,6 +57,20 @@ class TestPolynomial:
         assert_equal(np.polydiv(np.poly1d([1, 0, -1]), np.poly1d([1, 1])),
                      (np.poly1d([1., -1.]), np.poly1d([0.])))
 
+    def test_poly1d_rops(self):
+        """
+        Check that binary operations between poly1d and arrays return poly1d
+        objects
+        """
+        p = np.poly1d([1, 2, 3])
+        a = np.array([3, 2, 1])
+        assert_(isinstance(a + p, np.poly1d))
+        assert_(isinstance(a - p, np.poly1d))
+        assert_(isinstance(a * p, np.poly1d))
+        # Quotient and remainder
+        for val in a / p:
+            assert_(isinstance(val, np.poly1d))
+
     def test_poly1d_misc(self):
         p = np.poly1d([1., 2, 3])
         assert_equal(np.asarray(p), np.array([1., 2., 3.]))

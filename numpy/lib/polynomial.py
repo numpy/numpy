@@ -1107,6 +1107,9 @@ class poly1d:
     """
     __hash__ = None
 
+    # Ensure rops with poly1d objects return poly1d objects
+    __array_priority__ = 10.0
+
     @property
     def coeffs(self):
         """ The polynomial coefficients """
