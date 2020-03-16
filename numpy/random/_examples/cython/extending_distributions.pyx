@@ -96,21 +96,22 @@ def uniforms_ex(bit_generator, Py_ssize_t n, dtype=np.float64):
     cdef const char *capsule_name = "BitGenerator"
     cdef np.ndarray randoms
 
-    _dtype = np.dtype(dtype)
-    if _dtype.type not in (np.float32, np.float64):
-        raise TypeError('Unsupported dtype "%r"' % dtype)
     capsule = bit_generator.capsule
     # Optional check that the capsule if from a BitGenerator
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
     # Cast the pointer
     rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
+
+    _dtype = np.dtype(dtype)
     randoms = np.empty(n, dtype=_dtype)
     if _dtype == np.float32:
         with bit_generator.lock:
             random_standard_uniform_fill_f(rng, n, <float*>np.PyArray_DATA(randoms))
-    else:
+    elif _dtype == np.float64:
         with bit_generator.lock:
             random_standard_uniform_fill(rng, n, <double*>np.PyArray_DATA(randoms))
+    else:
+        raise TypeError('Unsupported dtype %r for random' % _dtype)
     return randoms
 
