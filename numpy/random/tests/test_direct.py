@@ -127,7 +127,7 @@ def gauss_from_uint(x, n, bits):
     return gauss[:n]
 
 def test_seedsequence():
-    from numpy.random._bit_generator import (ISeedSequence,
+    from numpy.random.bit_generator import (ISeedSequence,
                                             ISpawnableSeedSequence,
                                             SeedlessSeedSequence)
 

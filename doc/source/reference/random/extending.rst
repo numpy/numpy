@@ -47,9 +47,18 @@ struct.
 .. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
     :language: cython
     :start-after: example 2
+    :end-before: example 3
 
-See :ref:`extending_cython_example` for a complete working example including a
-minimal setup and cython files.
+Cython can be used to directly access the functions in
+``numpy/random/c_distributions.pxd``. This requires linking with the
+``npyrandom`` library located in ``numpy/random/lib``.
+
+.. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
+    :language: cython
+    :start-after: example 3
+
+See :ref:`extending_cython_example` for the complete listings of these examples
+and a minimal ``setup.py`` to build the c-extension modules.
 
 CFFI
 ====

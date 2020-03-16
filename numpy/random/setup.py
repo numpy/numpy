@@ -35,8 +35,10 @@ def configuration(parent_package='', top_path=None):
     config.add_data_dir('_examples')
 
     EXTRA_LINK_ARGS = []
-    # Math lib
-    EXTRA_LIBRARIES = ['m'] if os.name != 'nt' else []
+    EXTRA_LIBRARIES = ['npyrandom']
+    if os.name != 'nt':
+        # Math lib
+        EXTRA_LIBRARIES.append('m')
     # Some bit generators exclude GCC inlining
     EXTRA_COMPILE_ARGS = ['-U__GNUC_GNU_INLINE__']
 
@@ -52,78 +54,88 @@ def configuration(parent_package='', top_path=None):
     PCG64_DEFS = []
     # One can force emulated 128-bit arithmetic if one wants.
     #PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
+    depends = ['__init__.pxd', 'c_distributions.pxd', 'bit_generator.pxd']
 
-    for gen in ['mt19937']:
-        # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
-        config.add_extension('_{0}'.format(gen),
-                             sources=['_{0}.c'.format(gen),
-                                      'src/{0}/{0}.c'.format(gen),
-                                      'src/{0}/{0}-jump.c'.format(gen)],
-                             include_dirs=['.', 'src', join('src', gen)],
-                             libraries=EXTRA_LIBRARIES,
-                             extra_compile_args=EXTRA_COMPILE_ARGS,
-                             extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['_%s.pyx' % gen],
-                             define_macros=defs,
-                             )
-    for gen in ['philox', 'pcg64', 'sfc64']:
-        # gen.pyx, src/gen/gen.c
-        _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
-        config.add_extension('_{0}'.format(gen),
-                             sources=['_{0}.c'.format(gen),
-                                      'src/{0}/{0}.c'.format(gen)],
-                             include_dirs=['.', 'src', join('src', gen)],
-                             libraries=EXTRA_LIBRARIES,
-                             extra_compile_args=EXTRA_COMPILE_ARGS,
-                             extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['_%s.pyx' % gen, '_bit_generator.pyx',
-                                      '_bit_generator.pxd'],
-                             define_macros=_defs,
-                             )
-    for gen in ['_common', '_bit_generator']:
-        # gen.pyx
-        config.add_extension(gen,
-                             sources=['{0}.c'.format(gen)],
-                             libraries=EXTRA_LIBRARIES,
-                             extra_compile_args=EXTRA_COMPILE_ARGS,
-                             extra_link_args=EXTRA_LINK_ARGS,
-                             include_dirs=['.', 'src'],
-                             depends=['%s.pyx' % gen, '%s.pxd' % gen,],
-                             define_macros=defs,
-                             )
-        config.add_data_files('{0}.pxd'.format(gen))
-    other_srcs = [
+    # npyrandom - a library like npymath
+    npyrandom_sources = [
         'src/distributions/logfactorial.c',
         'src/distributions/distributions.c',
         'src/distributions/random_mvhg_count.c',
         'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
+    config.add_installed_library('npyrandom',
+        sources=npyrandom_sources,
+        install_dir='lib',
+        build_info={
+            'include_dirs' : [],  # empty list required for creating npyrandom.h
+            'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+        })
+
+    for gen in ['mt19937']:
+        # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
+        config.add_extension(f'_{gen}',
+                             sources=[f'_{gen}.c',
+                                      f'src/{gen}/{gen}.c',
+                                      f'src/{gen}/{gen}-jump.c'],
+                             include_dirs=['.', 'src', join('src', gen)],
+                             libraries=EXTRA_LIBRARIES,
+                             extra_compile_args=EXTRA_COMPILE_ARGS,
+                             extra_link_args=EXTRA_LINK_ARGS,
+                             depends=depends + [f'_{gen}.pyx'],
+                             define_macros=defs,
+                             )
+    for gen in ['philox', 'pcg64', 'sfc64']:
+        # gen.pyx, src/gen/gen.c
+        _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
+        config.add_extension(f'_{gen}',
+                             sources=[f'_{gen}.c',
+                                      f'src/{gen}/{gen}.c'],
+                             include_dirs=['.', 'src', join('src', gen)],
+                             libraries=EXTRA_LIBRARIES,
+                             extra_compile_args=EXTRA_COMPILE_ARGS,
+                             extra_link_args=EXTRA_LINK_ARGS,
+                             depends=depends + [f'_{gen}.pyx',
+                                   'bit_generator.pyx', 'bit_generator.pxd'],
+                             define_macros=_defs,
+                             )
+    for gen in ['_common', 'bit_generator']:
+        # gen.pyx
+        config.add_extension(gen,
+                             sources=[f'{gen}.c'],
+                             libraries=EXTRA_LIBRARIES,
+                             extra_compile_args=EXTRA_COMPILE_ARGS,
+                             extra_link_args=EXTRA_LINK_ARGS,
+                             include_dirs=['.', 'src'],
+                             depends=depends + [f'{gen}.pyx', f'{gen}.pxd',],
+                             define_macros=defs,
+                             )
+        config.add_data_files('{gen}.pxd')
     for gen in ['_generator', '_bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
-                             sources=['{0}.c'.format(gen)] + other_srcs,
+                             sources=[f'{gen}.c'],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              include_dirs=['.', 'src'],
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen],
+                             depends=depends + [f'{gen}.pyx'],
                              define_macros=defs,
                              )
     config.add_data_files('_bounded_integers.pxd')
     config.add_extension('mtrand',
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
-                                  'src/distributions/logfactorial.c',
-                                  'src/distributions/distributions.c'],
+                                  'src/distributions/distributions.c',
+                                 ],
                          include_dirs=['.', 'src', 'src/legacy'],
-                         libraries=EXTRA_LIBRARIES,
+                         libraries=['m'] if os.name != 'nt' else [],
                          extra_compile_args=EXTRA_COMPILE_ARGS,
                          extra_link_args=EXTRA_LINK_ARGS,
-                         depends=['mtrand.pyx'],
+                         depends=depends + ['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
-    config.add_data_files('__init__.pxd')
+    config.add_data_files(*depends)
     return config
 
 
