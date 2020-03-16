@@ -131,6 +131,8 @@ class Mandelbrot(Benchmark):
         self.mandelbrot_set(-0.74877,-0.74872,0.06505,0.06510,1000,1000,2048)
 
 class LogisticRegression(Benchmark):
+    param_names = ['dtype']
+    params = [np.float32, np.float64]
 
     timeout = 1000
     def train(self, max_epoch):
@@ -142,16 +144,16 @@ class LogisticRegression(Benchmark):
             dw = (1/self.size) * np.matmul(self.X_train.T, dz)
             self.W = self.W - self.alpha*dw
 
-    def setup(self):
+    def setup(self, dtype):
         np.random.seed(42)
         self.size = 250
         features = 16
-        self.X_train = np.float32(np.random.rand(self.size,features))
-        self.Y_train = np.float32(np.random.choice(2,self.size))
+        self.X_train = np.random.rand(self.size,features).astype(dtype)
+        self.Y_train = np.random.choice(2,self.size).astype(dtype)
         # Initialize weights
-        self.W = np.zeros((features,1), dtype=np.float32)
-        self.b = np.zeros((1,1), dtype=np.float32)
+        self.W = np.zeros((features,1), dtype=dtype)
+        self.b = np.zeros((1,1), dtype=dtype)
         self.alpha = 0.1
 
-    def time_train(self):
+    def time_train(self, dtype):
         self.train(1000)
