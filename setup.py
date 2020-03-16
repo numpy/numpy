@@ -449,6 +449,10 @@ def setup_package():
         entry_points={
             'console_scripts': f2py_cmds
         },
+        extras_require={
+            "doc": ["sphinx>=2.2.0", "ipython", "matplotlib", "scipy"],
+            "test": ["pytest", "hypothesis"],
+        },
     )
 
     if "--force" in sys.argv:
