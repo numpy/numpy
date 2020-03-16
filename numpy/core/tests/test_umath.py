@@ -214,6 +214,16 @@ class TestAdd:
         a['a'] = -1
         assert_equal(a['b'].sum(), 0)
 
+    def test_upcast_to_intp(self):
+        for i in [8, 16, 32]:
+            dtype = np.dtype("int" + str(i))
+            if np.iinfo(dtype).bits >= np.iinfo(np.intp).bits:
+                continue
+
+            arr = np.array([np.iinfo(dtype).max, 1], dtype)
+            arr_upcast = np.array([np.iinfo(dtype).max, 1], np.intp)
+
+            assert_equal(arr.sum(), arr_upcast.sum())
 
 class TestDivision:
     def test_division_int(self):
