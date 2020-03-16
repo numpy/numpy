@@ -106,7 +106,7 @@ def uniforms_ex(bit_generator, Py_ssize_t n, dtype=np.float64):
     # Cast the pointer
     rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
     randoms = np.empty(n, dtype=_dtype)
-    if _dtype is np.float32:
+    if _dtype == np.float32:
         with bit_generator.lock:
             random_standard_uniform_fill_f(rng, n, <float*>np.PyArray_DATA(randoms))
     else:
