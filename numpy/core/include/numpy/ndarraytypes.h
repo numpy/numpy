@@ -1820,10 +1820,12 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
+    typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
+            struct _PyArray_DTypeMeta *cls, PyObject *obj);
+
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
-     * make DTypes available in Python at which point we will probably want
-     * them to be.
+     * make DTypes available in Python at which point they will be heap types.
      * Since we also wish to add fields to the DType class, this looks like
      * a typical instance definition, but with PyHeapTypeObject instead of
      * only the PyObject_HEAD.
@@ -1870,6 +1872,9 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          * NOTE: We could make a copy to detect changes to `f`.
          */
         PyArray_ArrFuncs *f;
+
+        /* DType methods, these could be moved into its own struct */
+        discover_descr_from_pyobject_function *discover_descr_from_pyobject;
     } PyArray_DTypeMeta;
 
     #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))

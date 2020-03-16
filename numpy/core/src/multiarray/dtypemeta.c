@@ -11,7 +11,7 @@
 #include "npy_pycompat.h"
 
 #include "dtypemeta.h"
-
+#include "array_coercion.h"
 
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
@@ -103,6 +103,17 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     Py_INCREF(self->singleton);
     return (PyObject *)self->singleton;
 }
+
+
+static PyArray_Descr *
+nonparametric_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *NPY_UNUSED(obj))
+{
+    /* Note: This is expected to be changed into a classmethod instead */
+    Py_INCREF(cls->singleton);
+    return cls->singleton;
+}
+
 
 /**
  * This function takes a PyArray_Descr and replaces its base class with
@@ -227,6 +238,17 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;
+    }
+    else {
+        /* nonparametric case */
+        dtype_class->discover_descr_from_pyobject = (
+                nonparametric_discover_descr_from_pyobject);
+    }
+
+    if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
+            PyTypeNum_ISUSERDEF(dtype_class->type_num)) < 0) {
+        Py_DECREF(dtype_class);
+        return -1;
     }
 
     /* Finally, replace the current class of the descr */

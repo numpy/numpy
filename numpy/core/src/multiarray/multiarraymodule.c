@@ -3975,6 +3975,31 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return PyInt_FromLong(axis);
 }
 
+
+static PyObject *
+_discover_array_parameters(PyObject *NPY_UNUSED(self),
+        PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"obj", "dtype", NULL};
+
+    PyObject * obj;
+    PyArray_Descr * fixed_descriptor = NULL;
+    PyObject *out_dtype = NULL, *out_descriptor = NULL;
+    int out_dims;
+    int max_dims = NPY_MAXDIMS;
+    npy_bool use_minimal;
+    npy_intp shape[NPY_MAXDIMS];
+
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "O|$O&:_discover_array_parameters", kwlist,
+            &obj, PyArray_DescrConverter, &fixed_descriptor)) {
+        return NULL;
+    }
+
+    return NULL;
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4151,6 +4176,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
+    {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,

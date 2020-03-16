@@ -129,7 +129,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 
 /*
  * This function returns a dtype based on flex_dtype and the values in
- * data_dtype and data_obj. It also calls Py_DECREF on the flex_dtype. If the
+ * data_dtype and data_obj. It also calls Py_DECREF on the flex_dtype. AdaptFlIf the
  * flex_dtype is not flexible, it returns it as-is.
  *
  * Usually, if data_obj is not an array, dtype should be the result

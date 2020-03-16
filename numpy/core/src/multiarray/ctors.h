@@ -30,6 +30,10 @@ PyArray_New(
         PyTypeObject *, int nd, npy_intp const *,
         int, npy_intp const*, void *, int, int, PyObject *);
 
+static PyObject *
+_array_from_array_like(PyObject *op,
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context);
+
 NPY_NO_EXPORT int
 PyArray_GetArrayParamsFromObject_int(PyObject *op,
          PyArray_Descr *requested_dtype,

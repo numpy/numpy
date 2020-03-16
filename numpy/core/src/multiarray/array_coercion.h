@@ -3,6 +3,12 @@
 
 #include <numpy/ndarraytypes.h>
 
+
+NPY_NO_EXPORT int
+_PyArray_MapPyTypeToDType(
+        PyArray_DTypeMeta *DType, PyTypeObject *pytype, npy_bool userdef);
+
+
 /*
  * We do not want to coerce arrays many times unless absolutely necessary.
  * The same goes for sequences, so everything we have seen, we will have
