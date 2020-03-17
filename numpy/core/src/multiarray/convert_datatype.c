@@ -213,13 +213,17 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                 case NPY_HALF:
                 case NPY_FLOAT:
                 case NPY_DOUBLE:
-                case NPY_LONGDOUBLE:
                     size = 32;
+                    break;
+                case NPY_LONGDOUBLE:
+                    size = 48;
                     break;
                 case NPY_CFLOAT:
                 case NPY_CDOUBLE:
+                    size = 2 * 32;
+                    break;
                 case NPY_CLONGDOUBLE:
-                    size = 64;
+                    size = 2 * 48;
                     break;
                 case NPY_OBJECT:
                     size = 64;
