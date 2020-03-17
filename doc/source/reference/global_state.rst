@@ -32,31 +32,31 @@ Madvise Hugepage on Linux
 -------------------------
 
 When working with very large arrays on modern Linux kernels,
-you can experience a significant speedup when transparent
-hugepage is enabled.
-The current system policy for transparent hugepages can be 
-seen by::
+you can experience a significant speedup when
+`transparent hugepage <https://www.kernel.org/doc/html/latest/admin-guide/mm/transhuge.html>`_
+is used.
+The current system policy for transparent hugepages can be seen by::
 
     cat /sys/kernel/mm/transparent_hugepage/enabled
 
-on most kernels.  When set to ``madvise`` NumPy will typically
-use hugepages for a performance boost. This behaviour can
-be set through the environment variable::
+When set to ``madvise`` NumPy will typically use hugepages for a performance
+boost. This behaviour can be modified by setting the environment variable::
 
     NUMPY_MADVISE_HUGEPAGE=0
 
-or ``1`` for enabling it. When not set, the default is to use
-madvise on Kernels 4.6 and newer. These kernels presumably
-experience a large speedup when set.
+or setting it to ``1`` to always enable it. When not set, the default
+is to use madvise on Kernels 4.6 and newer. These kernels presumably
+experience a large speedup with hugepage support.
 This flag is checked at import time.
 
 
-Interoperability
-===============
+Interoperability-Related Options
+================================
 
 The array function protocol which allows array-like objects to
 hook into the NumPy API is currently enabled by default.
-It can be disabled using::
+This option exists since NumPy 1.16 and is enabled by default since
+NumPy 1.17. It can be disabled using::
 
     NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
 
@@ -64,8 +64,8 @@ See also :py:meth:`numpy.class.__array_function__` for more information.
 This flag is checked at import time.
 
 
-Debugging
-=========
+Debugging-Related Options
+=========================
 
 Relaxed Strides Checking
 ------------------------
@@ -82,4 +82,4 @@ debug option can be interesting for testing code written
 in C which iterates through arrays that may or may not be
 contiguous in memory.
 Most users will have no reason to change these, for details
-please see the :ref:`memory layout <memory-layout>`_ documentation.
+please see the `memory layout <memory-layout>`_ documentation.
