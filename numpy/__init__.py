@@ -286,3 +286,24 @@ else:
                         error_message))
                 raise RuntimeError(msg)
     del _mac_os_check
+
+    # We usually use madvise hugepages support, but on some old kernels it
+    # is slow and thus better avoided.
+    # Specifically kernel version 4.6 had a bug fix which probably fixed this:
+    # https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
+    import os
+    use_hugepage = os.environ.get("NUMPY_MADVISE_HUGEPAGE", None)
+    if sys.platform == "linux" and use_hugepage is None:
+        use_hugepage = 1
+        kernel_version = os.uname().release.split(".")[:2]
+        kernel_version = tuple(int(v) for v in kernel_version)
+        if kernel_version < (4, 6):
+            use_hugepage = 0
+    elif use_hugepage is None:
+        # This is not Linux, so it should not matter, just enable anyway
+        use_hugepage = 1
+    else:
+        use_hugepage = int(use_hugepage)
+
+    # Note that this will currently only make a difference on Linux
+    core.multiarray._multiarray_umath._set_madvise_hugepage(use_hugepage)

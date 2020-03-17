@@ -34,6 +34,7 @@
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 /* Internal APIs */
+#include "alloc.h"
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
@@ -3971,6 +3972,7 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return PyInt_FromLong(axis);
 }
 
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4159,6 +4161,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
+    {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
+        METH_O, "Toggle and return madvise hugepage (no OS support check)."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
