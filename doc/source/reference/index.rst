@@ -22,6 +22,7 @@ For learning how to use NumPy, see also :ref:`user`.
    constants
    ufuncs
    routines
+   global_state
    distutils
    distutils_guide
    c-api/index
