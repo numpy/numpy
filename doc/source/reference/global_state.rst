@@ -1,24 +1,24 @@
-.. _globale_state:
+.. _global_state:
 
 ************
 Global State
 ************
 
-NumPy has a few startup time, compile, or runtime options
+NumPy has a few import-time, compile-time, or runtime options
 which change the global behaviour.
 Most of these are related to performance or for debugging
 purposes and will not be interesting to the vast majority
 of users.
 
 
-Performance Related Options
+Performance-Related Options
 ===========================
 
 Number of Threads used for Linear Algebra
 -----------------------------------------
 
 NumPy itself is normally intentionally limited to a single thread
-during function calls, however it does support multiple python
+during function calls, however it does support multiple Python
 threads running at the same time.
 Note that for performant linear algebra NumPy uses a BLAS backend
 such as OpenBLAS or MKL, which may use multiple threads that may
@@ -34,13 +34,13 @@ Madvise Hugepage on Linux
 When working with very large arrays on modern Linux kernels,
 you can experience a significant speedup when transparent
 hugepage is enabled.
-This may always be the case or may use ``madvise`` option as
+The current system policy for transparent hugepages can be 
 seen by::
 
     cat /sys/kernel/mm/transparent_hugepage/enabled
 
 on most kernels.  When set to ``madvise`` NumPy will typically
-use enable hugepages for a performance boost. This behaviour can
+use hugepages for a performance boost. This behaviour can
 be set through the environment variable::
 
     NUMPY_MADVISE_HUGEPAGE=0
@@ -51,7 +51,7 @@ experience a large speedup when set.
 This flag is checked at import time.
 
 
-Interpoerabilty
+Interoperability
 ===============
 
 The array function protocol which allows array-like objects to
@@ -60,7 +60,7 @@ It can be disabled using::
 
     NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
 
-See also `class.__array_function__` for more information.
+See also :py:meth:`numpy.class.__array_function__` for more information.
 This flag is checked at import time.
 
 
@@ -70,7 +70,7 @@ Debugging
 Relaxed Strides Checking
 ------------------------
 
-The *compile* time environment variables::
+The *compile-time* environment variables::
 
     NPY_RELAXED_STRIDES_DEBUG=0
     NPY_RELAXED_STRIDES_CHECKING=1
@@ -82,4 +82,4 @@ debug option can be interesting for testing code written
 in C which iterates through arrays that may or may not be
 contiguous in memory.
 Most users will have no reason to change these, for details
-please see the `memory layout <memory-layout>`_ documentation.
+please see the :ref:`memory layout <memory-layout>`_ documentation.
