@@ -65,7 +65,6 @@ Edit pavement.py and setup.py as detailed in HOWTO_RELEASE::
 
 Sanity check::
 
-    $ python runtests.py -m "full"  # NumPy < 1.17 only
     $ python3 runtests.py -m "full"
 
 Push this release directly onto the end of the maintenance branch. This
@@ -182,9 +181,9 @@ Add another ``REL`` commit to the numpy maintenance branch, which resets the
 
 Create release notes for next release and edit them to set the version::
 
-    $ cp doc/release/template.rst doc/release/1.14.6-notes.rst
-    $ gvim doc/release/1.14.6-notes.rst
-    $ git add doc/release/1.14.6-notes.rst
+    $ cp doc/source/release/template.rst doc/source/release/1.14.6-notes.rst
+    $ gvim doc/source/release/1.14.6-notes.rst
+    $ git add doc/source/release/1.14.6-notes.rst
 
 Add new release notes to the documentation release list::
 
@@ -295,6 +294,15 @@ python-announce-list is BCC so that replies will not be sent to that list.
 Post-Release Tasks
 ------------------
 
-Forward port the documentation changes ``doc/release/1.14.5-notes.rst``,
-``doc/changelog/1.14.5-changelog.rst`` and add the release note to
-``doc/source/release.rst``.
+Checkout master and forward port the documentation changes::
+
+    $ git checkout -b update-after-1.14.5-release
+    $ git checkout maintenance/1.14.x doc/source/release/1.14.5-notes.rst
+    $ git checkout maintenance/1.14.x doc/changelog/1.14.5-changelog.rst
+    $ gvim doc/source/release.rst  # Add link to new notes
+    $ git add doc/changelog/1.14.5-changelog.rst doc/source/release/1.14.5-notes.rst
+    $ git status  # check status before commit
+    $ git commit -a -m"REL: Update master after 1.14.5 release."
+    $ git push origin HEAD
+
+Go to github and make a PR.
