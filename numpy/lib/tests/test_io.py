@@ -570,7 +570,7 @@ class TestSaveTxt:
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.skipif(IS_PYPY,
-         reason="GC problems after test, even after multiple gc.collect calls")
+         reason="GC problems after test, gc.collect does not help. see gh-15775")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
