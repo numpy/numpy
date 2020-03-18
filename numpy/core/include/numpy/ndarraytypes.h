@@ -1839,18 +1839,20 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         PyHeapTypeObject super;
 
         /*
-         * TODO: Update above comment as necessary.
          * Most DTypes will have a singleton default instance, for the
          * parametric legacy DTypes (bytes, string, void, datetime) this
          * may be a pointer to the *prototype* instance?
          */
         PyArray_Descr *singleton;
         /*
-         * Is this DType created using the old API?
-         * TODO: For now this mostly exists for possible assertions,
-         *       we may not need it.
+         * Is this DType created using the old API? This exists mainly to
+         * allow for assertions in paths specific to wrapping legacy types.
          */
-        npy_bool is_legacy;
+        npy_bool legacy;
+        /* The values stored by a parametric datatype depend on its instance */
+        npy_bool parametric;
+        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
+        npy_bool abstract;
 
         /*
          * The following fields replicate the most important dtype information.
@@ -1865,20 +1867,11 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         char type;
         /* flags describing data type */
         char flags;
-        npy_bool is_parametric;
-        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
-        npy_bool is_abstract;
         /* number representing this type */
         int type_num;
         /*
-         * itemsize of this type, -1 if variable. Use npy_intp, even though it
-         * is effectively limited to int due to other public API.
-         */
-        npy_intp itemsize;
-        /*
          * Point to the original ArrFuncs.
-         * TODO: If we wanted to do, we could make a copy to detect changes.
-         *       However, I doubt that is necessary.
+         * NOTE: We could make a copy to detect changes to `f`.
          */
         PyArray_ArrFuncs *f;
     } PyArray_DTypeMeta;

@@ -15,17 +15,17 @@
 
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
-    /*
-     * PyType_Type asserts Py_TPFLAGS_HEAPTYPE as well. Do not rely on
-     * a python debug build though.
-     */
+    /* Do not accidentally delete a statically defined DType: */
     assert(((PyTypeObject *)self)->tp_flags & Py_TPFLAGS_HEAPTYPE);
+
     Py_XDECREF(self->scalar_type);
+    Py_XDECREF(self->singleton);
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
 static PyObject *
-dtypemeta_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+dtypemeta_new(PyTypeObject *NPY_UNUSED(type),
+        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
     PyErr_SetString(PyExc_TypeError,
             "Preliminary-API: Cannot subclass DType.");
@@ -33,10 +33,11 @@ dtypemeta_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static int
-dtypemeta_init(PyTypeObject *type, PyObject *args, PyObject *kwds)
+dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
+        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
     PyErr_SetString(PyExc_TypeError,
-            "Preliminary-API: Cannot initialize DType class.");
+            "Preliminary-API: Cannot __init__ DType class.");
     return -1;
 }
 
@@ -46,8 +47,8 @@ dtypemeta_init(PyTypeObject *type, PyObject *args, PyObject *kwds)
  *
  * Python Type objects are either statically created (typical C-Extension type)
  * or HeapTypes (typically created in Python).
- * HeapTypes have the Py_TPFLAGS_HEAPTYPE flag, and are garbage collected, our
- * DTypeMeta instances (`np.dtype` and its subclasses) *may* be HeapTypes
+ * HeapTypes have the Py_TPFLAGS_HEAPTYPE flag and are garbage collected.
+ * Our DTypeMeta instances (`np.dtype` and its subclasses) *may* be HeapTypes
  * if the Py_TPFLAGS_HEAPTYPE flag is set (they are created from Python).
  * They are not for legacy DTypes or np.dtype itself.
  *
@@ -67,10 +68,12 @@ dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
     /*
      * We have to traverse the base class (if it is a HeapType).
      * PyType_Type will handle this logic for us.
-     * This function is currently not used, but may be necessary in the future
-     * when we implement HeapTypes (python/dynamically defined types).
+     * This function is currently not used, but will probably be necessary
+     * in the future when we implement HeapTypes (python/dynamically
+     * defined types). It should be revised at that time.
      */
-    assert(!type->is_legacy && (PyTypeObject *)type != &PyArrayDescr_Type);
+    assert(0);
+    assert(!type->legacy && (PyTypeObject *)type != &PyArrayDescr_Type);
     Py_VISIT(type->singleton);
     Py_VISIT(type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
@@ -82,7 +85,7 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
         PyObject *args, PyObject *kwargs)
 {
     /* TODO: This should allow endianess and possibly metadata */
-    if (self->is_parametric) {
+    if (self->parametric) {
         /* reject parametric ones since we would need to get unit, etc. info */
         PyErr_Format(PyExc_TypeError,
                 "Preliminary-API: Flexible/Parametric legacy DType '%S' can "
@@ -193,8 +196,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             .tp_base = &PyArrayDescr_Type,
             .tp_new = (newfunc)legacy_dtype_default_new,
         },},
-        .is_legacy = 1,
-        .is_abstract = 0, /* this is a concrete DType */
+        .legacy = 1,
+        .abstract = 0, /* this is a concrete DType */
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
@@ -217,15 +220,13 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->type = descr->type;
     dtype_class->f = descr->f;
     dtype_class->kind = descr->kind;
-    dtype_class->itemsize = descr->elsize;
 
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
-        dtype_class->is_parametric = NPY_TRUE;
+        dtype_class->parametric = NPY_TRUE;
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
-        dtype_class->is_parametric = NPY_TRUE;
-        dtype_class->itemsize = -1;  /* itemsize is not fixed */
+        dtype_class->parametric = NPY_TRUE;
     }
 
     /* Finally, replace the current class of the descr */
@@ -240,29 +241,29 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
  * preliminary (the flags should also return bools).
  */
 static PyMemberDef dtypemeta_members[] = {
-        {"_abstract",
-                T_BYTE, offsetof(PyArray_DTypeMeta, is_abstract),   READONLY, NULL},
-        {"type",
-                T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
-        {"_parametric",
-                T_BYTE, offsetof(PyArray_DTypeMeta, is_parametric), READONLY, NULL},
-        {NULL, 0, 0, 0, NULL},
+    {"_abstract",
+        T_BYTE, offsetof(PyArray_DTypeMeta, abstract), READONLY, NULL},
+    {"type",
+        T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
+    {"_parametric",
+        T_BYTE, offsetof(PyArray_DTypeMeta, parametric), READONLY, NULL},
+    {NULL, 0, 0, 0, NULL},
 };
 
 
 NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
-        PyVarObject_HEAD_INIT(NULL, 0)
-        .tp_name = "numpy._DTypeMeta",
-        .tp_basicsize = sizeof(PyArray_DTypeMeta),
-        .tp_dealloc = (destructor)dtypemeta_dealloc,
-        /* Types are garbage collected (see dtypemeta_is_gc documentation) */
-        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-        .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
-        .tp_members = dtypemeta_members,
-        .tp_base = NULL,  /* set to PyType_Type at import time */
-        .tp_init = (initproc)dtypemeta_init,
-        .tp_new = dtypemeta_new,
-        .tp_is_gc = dtypemeta_is_gc,
-        .tp_traverse = (traverseproc)dtypemeta_traverse,
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "numpy._DTypeMeta",
+    .tp_basicsize = sizeof(PyArray_DTypeMeta),
+    .tp_dealloc = (destructor)dtypemeta_dealloc,
+    /* Types are garbage collected (see dtypemeta_is_gc documentation) */
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+    .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
+    .tp_members = dtypemeta_members,
+    .tp_base = NULL,  /* set to PyType_Type at import time */
+    .tp_init = (initproc)dtypemeta_init,
+    .tp_new = dtypemeta_new,
+    .tp_is_gc = dtypemeta_is_gc,
+    .tp_traverse = (traverseproc)dtypemeta_traverse,
 };
 
