@@ -18,6 +18,7 @@
 #include "lowlevel_strided_loops.h"
 #include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
+#include "npy_simd_data.h"
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
