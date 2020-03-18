@@ -411,7 +411,7 @@ class TestIsSubDType:
         assert not np.issubdtype(np.str_, 'void')
         # for the following the correct spellings are
         # np.integer, np.floating, or np.complexfloating respectively:
-        assert not np.issubdtype(np.int32, int)
+        assert not np.issubdtype(np.int8, int)  # np.int8 is never np.int_
         assert not np.issubdtype(np.float32, float)
         assert not np.issubdtype(np.complex64, complex)
         assert not np.issubdtype(np.float32, "float")
@@ -424,7 +424,7 @@ class TestIsSubDType:
         assert np.issubdtype(np.str_, str)
         assert np.issubdtype(np.int64, 'int64')
         assert np.issubdtype(np.void, 'void')
-        assert np.issubdtype(np.int32, np.integer)
+        assert np.issubdtype(np.int8, np.integer)
         assert np.issubdtype(np.float32, np.floating)
         assert np.issubdtype(np.complex64, np.complexfloating)
         assert np.issubdtype(np.float64, "float")
