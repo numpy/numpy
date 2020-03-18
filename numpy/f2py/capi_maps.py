@@ -318,7 +318,6 @@ def getstrlength(var):
 
 
 def getarrdims(a, var, verbose=0):
-    global depargs
     ret = {}
     if isstring(var) and not isarray(var):
         ret['dims'] = getstrlength(var)
@@ -514,7 +513,6 @@ def sign2map(a, var):
     varrfromat
     intent
     """
-    global lcb_map, cb_map
     out_a = a
     if isintent_out(var):
         for k in var['intent']:
