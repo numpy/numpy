@@ -73,7 +73,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
         npy_intp *_dimensions = npy_alloc_cache_dim(2 * nd);
         if (_dimensions == NULL) {
             Py_DECREF(ret);
-            PyErr_SetString(PyExc_MemoryError,"");
+            PyErr_NoMemory();
             return -1;
         }
         /* Free old dimensions and strides */
