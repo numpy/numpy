@@ -1,5 +1,5 @@
-``issubdtype`` more consistent/restrictive
-----------------------------------------------
+``issubdtype`` no longer interprets ``float`` as ``np.floating``
+----------------------------------------------------------------
 
 `numpy.issubdtype` had a FutureWarning since NumPy 1.14 which
 has expired now. This means that certain input where the second
