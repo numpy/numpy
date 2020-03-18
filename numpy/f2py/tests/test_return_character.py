@@ -3,6 +3,8 @@ import pytest
 from numpy import array
 from numpy.testing import assert_
 from . import util
+import platform
+IS_S390X = platform.machine() == 's390x'
 
 
 class TestReturnCharacter(util.F2PyTest):
@@ -78,7 +80,7 @@ cf2py    intent(out) ts
        end
     """
 
-    @pytest.mark.slow
+    @pytest.mark.xfail(IS_S390X, reason="calback returns ' '")
     @pytest.mark.parametrize('name', 't0,t1,t5,s0,s1,s5,ss'.split(','))
     def test_all(self, name):
         self.check_function(getattr(self.module, name), name)
@@ -137,7 +139,7 @@ module f90_return_char
 end module f90_return_char
     """
 
-    @pytest.mark.slow
+    @pytest.mark.xfail(IS_S390X, reason="calback returns ' '")
     @pytest.mark.parametrize('name', 't0,t1,t5,ts,s0,s1,s5,ss'.split(','))
     def test_all(self, name):
         self.check_function(getattr(self.module.f90_return_char, name), name)
