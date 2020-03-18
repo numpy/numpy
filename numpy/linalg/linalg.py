@@ -2180,11 +2180,14 @@ def lstsq(a, b, rcond="warn"):
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation.
 
+    .. versionchanged:: 1.19
+       Can now operate on stacks of matrices
+
     Parameters
     ----------
-    a : (M, N) array_like
+    a : (..., M, N) array_like
         "Coefficient" matrix.
-    b : {(M,), (M, K)} array_like
+    b : {(M,), (..., M, K)} array_likey
         Ordinate or "dependent variable" values. If `b` is two-dimensional,
         the least-squares solution is calculated for each of the `K` columns
         of `b`.
@@ -2203,17 +2206,26 @@ def lstsq(a, b, rcond="warn"):
 
     Returns
     -------
-    x : {(N,), (N, K)} ndarray
+    x : {(N,), (..., N, K)} ndarray
         Least-squares solution. If `b` is two-dimensional,
         the solutions are in the `K` columns of `x`.
-    residuals : {(1,), (K,), (0,)} ndarray
+    residuals : {(), (..., K,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
-        ``b - a*x``.
-        If the rank of `a` is < N or M <= N, this is an empty array.
-        If `b` is 1-dimensional, this is a (1,) shape array.
+        ``b - a @ x``.
+        Where the rank of `a` is < N, this is filled with NaN.
+        If `b` is 1-dimensional, this is a 0d array.
         Otherwise the shape is (K,).
+
+        .. versionchanged:: 1.19.0
+            This no longer returns a ``(0,)``-shaped array if no residuals are
+            computed, instead returning `NaN`.
+            For well-determined problems with ``rank == N == M``, this is now
+            an array of zeros.
+            When ``b`` is a 1d array, this is now a 0d array rather than a
+            ``(1,)``-shaped array.
+
     rank : int
-        Rank of matrix `a`.
+        Rank of `a`. Note that this is at most ``min(M, N)``.
     s : (min(M, N),) ndarray
         Singular values of `a`.
 
@@ -2314,12 +2326,7 @@ def lstsq(a, b, rcond="warn"):
     # remove the axis we added
     if is_1d:
         x = x.squeeze(axis=-1)
-        # we probably should squeeze resids too, but we can't
-        # without breaking compatibility.
-
-    # as documented
-    if rank != n or m <= n:
-        resids = array([], result_real_t)
+        resids = resids.squeeze(axis=-1)
 
     # coerce output arrays
     s = s.astype(result_real_t, copy=False)
