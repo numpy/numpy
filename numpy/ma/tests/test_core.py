@@ -458,7 +458,8 @@ class TestMaskedArray:
         # assert_equal(format(masked, " <5"), "--   ")
 
         # Expect a FutureWarning for using format_spec with MaskedElement
-        with_format_string = assert_warns(FutureWarning, format, masked, " >5")
+        with assert_warns(FutureWarning):
+            with_format_string = format(masked, " >5")
         assert_equal(with_format_string, "--")
 
     def test_str_repr(self):

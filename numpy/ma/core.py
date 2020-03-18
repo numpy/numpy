@@ -6391,7 +6391,7 @@ class MaskedConstant(MaskedArray):
         # the user was expecting - better to not guess.
         try:
             return object.__format__(self, format_spec)
-        except Exception:
+        except TypeError:
             warnings.warn(
                 "Format strings passed to MaskedConstant are ignored, but in future may "
                 "error or produce different behavior",
