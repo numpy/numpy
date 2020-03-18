@@ -44,7 +44,7 @@ arguments may be forwarded to the target embedded by ``runtests.py`` by passing
 the extra arguments after a bare ``--``. For example, to run a test method with
 the ``--pdb`` flag forwarded to the target, run the following::
 
-    $ python runtests.py -t numpy/tests/test_scripts.py:test_f2py -- --pdb
+    $ python runtests.py -t numpy/tests/test_scripts.py::test_f2py -- --pdb
 
 When using pytest as a target (the default), you can
 `match test names using python operators`_ by passing the ``-k`` argument to pytest::
