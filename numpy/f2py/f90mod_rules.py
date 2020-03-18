@@ -85,7 +85,6 @@ fgetdims2_sa = """\
 
 
 def buildhooks(pymod):
-    global fgetdims1, fgetdims2
     from . import rules
     ret = {'f90modhooks': [], 'initf90modhooks': [], 'body': [],
            'need': ['F_FUNC', 'arrayobject.h'],

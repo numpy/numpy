@@ -1156,7 +1156,7 @@ def buildcfuncs():
 ############ Auxiliary functions for sorting needs ###################
 
 def append_needs(need, flag=1):
-    global outneeds, needs
+    # This function modifies the contents of the global `outneeds` dict.
     if isinstance(need, list):
         for n in need:
             append_needs(n, flag)
@@ -1223,7 +1223,7 @@ def append_needs(need, flag=1):
 
 
 def get_needs():
-    global outneeds, needs
+    # This function modifies the contents of the global `outneeds` dict.
     res = {}
     for n in outneeds.keys():
         out = []
