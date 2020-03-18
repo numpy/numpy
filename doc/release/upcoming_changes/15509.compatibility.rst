@@ -1,12 +1,15 @@
-Disallow type-promotion of structured dtypes with different field names
------------------------------------------------------------------------
-Operations such as ``np.concatenate([a, b])`` and
-``np.promote_types(a.dtype, b.dtype)``  will now raise a ``TypeError`` if
-``a`` and ``b`` are structured arrays whose dtypes have different field names,
-even if the field types are castable, and if the field names are the same it will
-promote to a "packed" memory layout with native endianness. Code which now
-fails should be modified to rename the fields, using ``.astype`` or
-``numpy.lib.recfunctions.rename_fields`` depending on the desired behavior.
-Furthermore, ``np.can_cast`` now more consistently reports that structured
-dtypes with different field-names but castable field dtypes are castable.
-Previously some cases were overlooked.
+Changes to type-promotion and casting of structured dtypes
+----------------------------------------------------------
+Type-promotion of structured dtypes, such as in operations such as
+``np.concatenate([a, b])`` and ``np.promote_types(a.dtype, b.dtype)``, now
+requires that the field names and orders of the two dtypes are the same, and
+that the respective fields are promotable. This will promote to a "packed"
+memory layout with native endianness with each respective field promoted.  A
+``TypeError`` will now be raised if the dtypes have different field names.
+Code which now fails should be modified to rename the fields, using ``.astype``
+or ``numpy.lib.recfunctions.rename_fields`` depending on the desired behavior.
+
+Casting between structured dtypes, and methods like ``np.can_cast`` and
+``.astype``,  now more consistently require that the two dtypes have the same
+number of fields and that the respective fields can be cast, and act without
+regard to the field names.  Previously some cases were overlooked.

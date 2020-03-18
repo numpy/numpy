@@ -546,15 +546,18 @@ Casting and Type-Promotion of Structured Datatypes
 A structured datatype can be cast to another structured datatype as long as the
 number of fields is the same and the fields of the source datatype can be cast
 to the field in the same respective position in the target datatype, for
-instance when using ``ndarray.astype`` or as tested by ``np.can_cast``.
+instance when using ``ndarray.astype`` or as tested by ``np.can_cast``. The
+field names do not affect casting.
 
 A pair of structured datatypes can be promoted to a common type as long as their
-field names and order match exactly, but their field offsets may differ. The
-promoted type will be a structured datatype with packed fields with the same
-names and order converted to native endianness.  For instance, this applies
-when using ``np.promote_type``, ``np.result_type`` or functions which depend on
-these such as ``np.concatenate``. These functions will raise an error if the
-field names differ.
+field names and order match exactly, though their field offsets may differ, and
+as long as the field datatypes at the same field-positions are promotable. The
+promoted type will be a structured datatype with packed native-endianness
+fields with the same names and order and whose datatype are the respective
+promoted types. For instance, this applies when using ``np.promote_type``,
+``np.result_type`` or functions which depend on these such as
+``np.concatenate``. These functions will raise an error if the field names
+differ.
 
 Viewing Structured Arrays Containing Objects
 --------------------------------------------

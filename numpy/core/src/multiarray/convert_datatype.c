@@ -1437,44 +1437,15 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
 
     if (PyDataType_HASFIELDS(type1) || PyDataType_HASFIELDS(type2)) {
-        if (!PyDataType_HASFIELDS(type1) || !PyDataType_HASFIELDS(type2)) {
-            PyErr_SetString(PyExc_TypeError, "invalid type promotion");
+        static PyObject *promote_fields_func = NULL;
+        npy_cache_import("numpy.core._internal", "_promote_fields",
+                         &promote_fields_func);
+        if (promote_fields_func == NULL) {
             return NULL;
         }
 
-        int compatible = 0;
-        if (type1->names == type2->names) {
-            compatible = 1;
-        }
-        else {
-            compatible = PyObject_RichCompareBool(type1->names, type2->names,
-                                                  Py_EQ);
-            if (compatible == -1) {
-                PyErr_Clear();
-                return NULL;
-            }
-        }
-
-        if (compatible) {
-            static PyObject *repack_func = NULL;
-            npy_cache_import("numpy.lib.recfunctions", "repack_fields",
-                             &repack_func);
-            if (repack_func == NULL) {
-                return NULL;
-            }
-            type1 = (PyArray_Descr*)PyObject_CallFunction(repack_func,
-                                                          "Oii", type1, 0, 1);
-            if (type1 == NULL) {
-                return NULL;
-            }
-            PyArray_Descr *ret = PyArray_DescrNewByteorder(type1, NPY_NATIVE);
-            Py_DECREF(type1);
-            return ret;
-        }
-
-        PyErr_SetString(PyExc_TypeError, "cannot promote structured types "
-                                     "with different field names or orders");
-        return NULL;
+        return (PyArray_Descr*)PyObject_CallFunction(promote_fields_func,
+                                                     "OO", type1, type2);
     }
 
     /* For types equivalent up to endianness, can return either */

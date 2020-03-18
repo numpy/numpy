@@ -9,7 +9,7 @@ import re
 import sys
 import platform
 
-from .multiarray import dtype, array, ndarray
+from .multiarray import dtype, array, ndarray, promote_types
 try:
     import ctypes
 except ImportError:
@@ -397,6 +397,27 @@ def _copy_fields(ary):
     copy_dtype = {'names': dt.names,
                   'formats': [dt.fields[name][0] for name in dt.names]}
     return array(ary, dtype=copy_dtype, copy=True)
+
+def _promote_fields(dt1, dt2):
+    """ Perform type promotion for two structured dtypes.
+
+    Parameters
+    ----------
+    dt1 : structured dtype
+        First dtype.
+    dt2 : structured dtype
+        Second dtype.
+
+    Returns
+    -------
+    out : dtype
+        The promoted dtype
+    """
+    if (dt1.names is None or dt2.names is None) or dt1.names != dt2.names:
+        raise TypeError("invalid type promotion")
+
+    return dtype([(name, promote_types(dt1[name], dt2[name]))
+                  for name in dt1.names])
 
 def _getfield_is_safe(oldtype, newtype, offset):
     """ Checks safety of getfield for object arrays.

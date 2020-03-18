@@ -1390,6 +1390,25 @@ class TestStructured:
 
         ab[:] = ba  # make sure assignment still works
 
+        # tests of type-promotion of corresponding fields
+        dt1 = np.dtype([("", "i4")])
+        dt2 = np.dtype([("", "i8")])
+        assert_equal(np.promote_types(dt1, dt2), np.dtype([('f0', 'i8')]))
+        assert_equal(np.promote_types(dt2, dt1), np.dtype([('f0', 'i8')]))
+        assert_raises(TypeError, np.promote_types, dt1, np.dtype([("", "V3")]))
+        assert_equal(np.promote_types('i4,f8', 'i8,f4'),
+                     np.dtype([('f0', 'i8'), ('f1', 'f8')]))
+        # test nested case
+        dt1nest = np.dtype([("", dt1)])
+        dt2nest = np.dtype([("", dt2)])
+        assert_equal(np.promote_types(dt1nest, dt2nest),
+                     np.dtype([('f0', np.dtype([('f0', 'i8')]))]))
+
+        # note that offsets are lost when promoting:
+        dt = np.dtype({'names': ['x'], 'formats': ['i4'], 'offsets': [8]})
+        a = np.ones(3, dtype=dt)
+        assert_equal(np.concatenate([a, a]).dtype, np.dtype([('x', 'i4')]))
+
 
 class TestBool:
     def test_test_interning(self):
