@@ -1,6 +1,9 @@
 import numpy as np
 from numpy.testing import assert_array_equal
 from . import util
+from numpy.f2py import crackfortran
+import tempfile
+import textwrap
 
 
 class TestNoSpace(util.F2PyTest):
@@ -33,3 +36,53 @@ class TestNoSpace(util.F2PyTest):
         self.module.subc([w, k])
         assert_array_equal(k, w + 1)
         assert self.module.t0(23) == b'2'
+
+class TestPublicPrivate():
+    def test_defaultPrivate(self, tmp_path):
+        f_path = tmp_path / "mod.f90"
+        with f_path.open('w') as ff:
+            ff.write(textwrap.dedent("""\
+            module foo
+              private
+              integer :: a
+              public :: setA
+              integer :: b
+            contains
+              subroutine setA(v)
+                integer, intent(in) :: v
+                a = v
+              end subroutine setA
+            end module foo
+            """))
+        mod = crackfortran.crackfortran([str(f_path)])
+        assert len(mod) == 1
+        mod = mod[0]
+        assert 'private' in mod['vars']['a']['attrspec']
+        assert 'public' not in mod['vars']['a']['attrspec']
+        assert 'private' in mod['vars']['b']['attrspec']
+        assert 'public' not in mod['vars']['b']['attrspec']
+        assert 'private' not in mod['vars']['seta']['attrspec']
+        assert 'public' in mod['vars']['seta']['attrspec']
+
+    def test_defaultPublic(self, tmp_path):
+        f_path = tmp_path / "mod.f90"
+        with f_path.open('w') as ff:
+            ff.write(textwrap.dedent("""\
+            module foo
+              public
+              integer, private :: a
+              public :: setA
+            contains
+              subroutine setA(v)
+                integer, intent(in) :: v
+                a = v
+              end subroutine setA
+            end module foo
+            """))
+        mod = crackfortran.crackfortran([str(f_path)])
+        assert len(mod) == 1
+        mod = mod[0]
+        assert 'private' in mod['vars']['a']['attrspec']
+        assert 'public' not in mod['vars']['a']['attrspec']
+        assert 'private' not in mod['vars']['seta']['attrspec']
+        assert 'public' in mod['vars']['seta']['attrspec']
