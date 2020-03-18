@@ -436,7 +436,6 @@ cb_map = {}
 
 
 def buildcallbacks(m):
-    global cb_map
     cb_map[m['name']] = []
     for bi in m['body']:
         if bi['block'] == 'interface':
@@ -448,7 +447,6 @@ def buildcallbacks(m):
 
 
 def buildcallback(rout, um):
-    global cb_map
     from . import capi_maps
 
     outmess('\tConstructing call-back function "cb_%s_in_%s"\n' %
