@@ -1033,6 +1033,8 @@ cfuncs[
     'try_pyarr_from_complex_double'] = 'static int try_pyarr_from_complex_double(PyObject* obj,complex_double* v) {\n    TRYCOMPLEXPYARRAYTEMPLATE(double,\'D\');\n}\n'
 
 needs['create_cb_arglist'] = ['CFUNCSMESS', 'PRINTPYOBJERR', 'MINMAX']
+
+# create the list of arguments to be used when calling back to python
 cfuncs['create_cb_arglist'] = """\
 static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofargs,const int nofoptargs,int *nofargs,PyTupleObject **args,const char *errmess) {
     PyObject *tmp = NULL;
@@ -1058,6 +1060,10 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                 tmp_fun = fun; /* built-in function */
                 Py_INCREF(tmp_fun);
                 tot = maxnofargs;
+                if (PyCFunction_Check(fun)) {
+                    /* In case the function has a co_argcount (like on PyPy) */
+                    di = 0;
+                }
                 if (xa != NULL)
                     tot += PyTuple_Size((PyObject *)xa);
             }

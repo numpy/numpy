@@ -9,8 +9,8 @@ from . import util
 
 class TestReturnReal(util.F2PyTest):
 
-    def check_function(self, t):
-        if t.__doc__.split()[0] in ['t0', 't4', 's0', 's4']:
+    def check_function(self, t, tname):
+        if tname in ['t0', 't4', 's0', 's4']:
             err = 1e-5
         else:
             err = 0.0
@@ -32,7 +32,7 @@ class TestReturnReal(util.F2PyTest):
         assert_(abs(t(array([234], 'B')) - 234.) <= err)
         assert_(abs(t(array([234], 'f')) - 234.) <= err)
         assert_(abs(t(array([234], 'd')) - 234.) <= err)
-        if t.__doc__.split()[0] in ['t0', 't4', 's0', 's4']:
+        if tname in ['t0', 't4', 's0', 's4']:
             assert_(t(1e200) == t(1e300))  # inf
 
         #assert_raises(ValueError, t, array([234], 'S1'))
@@ -88,10 +88,9 @@ end interface
 end python module c_ext_return_real
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name', 't4,t8,s4,s8'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module, name))
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF77ReturnReal(TestReturnReal):
@@ -143,10 +142,9 @@ cf2py    intent(out) td
        end
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name', 't0,t4,t8,td,s0,s4,s8,sd'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module, name))
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF90ReturnReal(TestReturnReal):
@@ -202,7 +200,6 @@ module f90_return_real
 end module f90_return_real
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name', 't0,t4,t8,td,s0,s4,s8,sd'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module.f90_return_real, name))
+        self.check_function(getattr(self.module.f90_return_real, name), name)

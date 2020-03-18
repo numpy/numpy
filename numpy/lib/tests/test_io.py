@@ -1,4 +1,5 @@
 import sys
+import gc
 import gzip
 import os
 import threading
@@ -276,8 +277,6 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    #FIXME: Is this still true?
-    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -290,17 +289,18 @@ class TestSavezLoad(RoundtripTest):
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
-            # collector, so we catch the warnings.  Because ResourceWarning
-            # is unknown in Python < 3.x, we take the easy way out and
-            # catch all warnings.
+            # collector, so we catch the warnings.
             with suppress_warnings() as sup:
-                sup.filter(Warning)  # TODO: specify exact message
+                sup.filter(ResourceWarning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
                         msg = "Failed to load data from a file: %s" % e
                         raise AssertionError(msg)
+                    finally:
+                        if IS_PYPY:
+                            gc.collect()
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -568,8 +568,9 @@ class TestSaveTxt:
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason="large files cause problems")
+    @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
+    @pytest.mark.skipif(IS_PYPY,
+         reason="GC problems after test, gc.collect does not help. see gh-15775")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
