@@ -2710,10 +2710,10 @@ AVX512F_exp_DOUBLE(npy_double * op,
                 const npy_intp steps)
 {
     npy_intp num_remaining_elements = array_size;
-    const npy_intp stride = steps / sizeof(npy_double);
-    const npy_int num_lanes = 64 / sizeof(npy_double);
-    npy_int indexarr[8];
-    for (npy_int ii = 0; ii < 8; ii++) {
+    const npy_intp stride = steps / (npy_intp)sizeof(npy_double);
+    const npy_int num_lanes = 64 / (npy_intp)sizeof(npy_double);
+    npy_int32 indexarr[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
         indexarr[ii] = ii*stride;
     }
 
@@ -2735,12 +2735,12 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __m512d ones_d = _mm512_set1_pd(1.0f);
     __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
 
-    __m512d mTable_top_0 = _mm512_loadu_pd(&(EXP_Table_top[0]));
-    __m512d mTable_top_1 = _mm512_loadu_pd(&(EXP_Table_top[8]));
+    __m512d mTable_top_0 = _mm512_loadu_pd(&(EXP_Table_top[8*0]));
+    __m512d mTable_top_1 = _mm512_loadu_pd(&(EXP_Table_top[8*1]));
     __m512d mTable_top_2 = _mm512_loadu_pd(&(EXP_Table_top[8*2]));
     __m512d mTable_top_3 = _mm512_loadu_pd(&(EXP_Table_top[8*3]));
-    __m512d mTable_tail_0 = _mm512_loadu_pd(&(EXP_Table_tail[0]));
-    __m512d mTable_tail_1 = _mm512_loadu_pd(&(EXP_Table_tail[8]));
+    __m512d mTable_tail_0 = _mm512_loadu_pd(&(EXP_Table_tail[8*0]));
+    __m512d mTable_tail_1 = _mm512_loadu_pd(&(EXP_Table_tail[8*1]));
     __m512d mTable_tail_2 = _mm512_loadu_pd(&(EXP_Table_tail[8*2]));
     __m512d mTable_tail_3 = _mm512_loadu_pd(&(EXP_Table_tail[8*3]));
     
