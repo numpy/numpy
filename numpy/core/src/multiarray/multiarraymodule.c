@@ -1583,7 +1583,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_SetString(PyExc_ValueError,
-                        "only 2 non-keyword arguments accepted");
+                        "only 2 non-keyword arguments accepted in np.array.");
         return NULL;
     }
 
