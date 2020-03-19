@@ -8428,3 +8428,10 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', -1)
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
+
+def test_empty_view():
+    a = np.zeros((100, 100, 0))
+    b = a[1:]
+    assert a.size == 0
+    assert b.size == 0
+    assert a.ctypes.data == b.ctypes.data
