@@ -1015,6 +1015,12 @@ class TestCreation:
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
 
+    def test_array_from_zero_size(self):
+        # issue gh-15753
+        a = np.array([], dtype=np.int64).reshape([0, 1000, 1000, 1000, 1000])
+        b = np.isnan(a)
+        assert b.size == 0
+
     def _ragged_creation(self, seq):
         # without dtype=object, the ragged object should raise
         with assert_warns(np.VisibleDeprecationWarning):
