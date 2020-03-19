@@ -912,23 +912,38 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                     npy_index_info *indices, int index_num, int ensure_array) {
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp new_shape[NPY_MAXDIMS];
+    npy_intp *self_dims = PyArray_DIMS(self);
     int i, j;
     int new_dim = 0;
     int orig_dim = 0;
     char *data_ptr = PyArray_BYTES(self);
+    int is_empty = 0;
 
     /* for slice parsing */
     npy_intp start, stop, step, n_steps;
+
+    /*
+     * prevent ptr + offset going beyond the end of the memory on empty arrays,
+     * which would be undefined behaviour according to the C99 spec paragraph
+     * 6.5.6 http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
+     */
+    for (i=0; i < PyArray_NDIM(self); i++) {
+        if (self_dims[i] == 0) {
+            is_empty = 1;
+        }
+    }
 
     for (i=0; i < index_num; i++) {
         switch (indices[i].type) {
             case HAS_INTEGER:
                 if ((check_and_adjust_index(&indices[i].value,
-                                PyArray_DIMS(self)[orig_dim], orig_dim,
+                                self_dims[orig_dim], orig_dim,
                                 NULL)) < 0) {
                     return -1;
                 }
-                data_ptr += PyArray_STRIDE(self, orig_dim) * indices[i].value;
+                if (is_empty == 0) {
+                    data_ptr += PyArray_STRIDE(self, orig_dim) * indices[i].value;
+                }
 
                 new_dim += 0;
                 orig_dim += 1;
@@ -936,14 +951,14 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
             case HAS_ELLIPSIS:
                 for (j=0; j < indices[i].value; j++) {
                     new_strides[new_dim] = PyArray_STRIDE(self, orig_dim);
-                    new_shape[new_dim] = PyArray_DIMS(self)[orig_dim];
+                    new_shape[new_dim] = self_dims[orig_dim];
                     new_dim += 1;
                     orig_dim += 1;
                 }
                 break;
             case HAS_SLICE:
                 if (NpySlice_GetIndicesEx(indices[i].object,
-                                          PyArray_DIMS(self)[orig_dim],
+                                          self_dims[orig_dim],
                                           &start, &stop, &step, &n_steps) < 0) {
                     return -1;
                 }
@@ -954,7 +969,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                     start = 0;
                 }
 
-                data_ptr += PyArray_STRIDE(self, orig_dim) * start;
+                if (is_empty ==0) {
+                    data_ptr += PyArray_STRIDE(self, orig_dim) * start;
+                }
                 new_strides[new_dim] = PyArray_STRIDE(self, orig_dim) * step;
                 new_shape[new_dim] = n_steps;
                 new_dim += 1;

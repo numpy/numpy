@@ -981,7 +981,10 @@ PyArray_NewFromDescr_int(
         }
     }
 
-    /* Check dimensions and multiply them to nbytes */
+    /*
+     * Check dimensions and multiply them to nbytes
+     * Do this although we only need nbytes if data == NULL for the error check
+     */
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
