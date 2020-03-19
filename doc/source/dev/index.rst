@@ -198,6 +198,13 @@ Pull requests (PRs) that modify code should either have new tests, or modify exi
 tests to fail before the PR and pass afterwards. You should :ref:`run the tests
 <development-environment>` before pushing a PR.
 
+Running NumPy's test suite locally requires some additional packages, such as
+``pytest`` and ``hypothesis``. The additional testing dependencies are listed
+in ``test_requirements.txt`` in the top-level directory, and can conveniently
+be installed with::
+
+    pip install -r test_requirements.txt
+
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
@@ -230,6 +237,11 @@ Requirements
 
 `Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
 the documentation. Matplotlib, SciPy, and IPython are also required.
+
+These additional dependencies for building the documentation are listed in
+``doc_requirements.txt`` and can be conveniently installed with::
+
+    pip install -r doc_requirements.txt
 
 The numpy documentation also depends on the
 `numpydoc <https://numpydoc.readthedocs.io/en/latest/>`__ sphinx extension
