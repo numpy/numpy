@@ -1509,6 +1509,21 @@ def removespaces(expr):
 
 
 def markinnerspaces(line):
+    """
+    The function replace all spaces in the input variable line which are 
+    surrounded with quotation marks, with the triplet "@_@".
+
+    For instance, for the input "a 'b c'" the function returns "a 'b@_@c'"
+
+    Parameters
+    ----------
+    line : str
+
+    Returns
+    -------
+    str
+
+    """  
     l = ''
     f = 0
     cc = '\''
@@ -1520,10 +1535,10 @@ def markinnerspaces(line):
             continue
         if f == 0 and c in ['\'', '"']:
             cc = c
-        if c == cc:
-            f = f + 1
-        elif c == cc:
-            f = f - 1
+        if c == cc and f == 0:
+            f = 1
+        elif c == cc and f == 1:
+            f = 0
         elif c == ' ' and f == 1:
             l = l + '@_@'
             continue
