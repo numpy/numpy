@@ -825,11 +825,9 @@ PyArray_NewFromDescr_int(
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
-         * Could probably just allocate a few bytes here. -- Chuck
-         * Note: always sync this with calls to PyDataMem_UserFREE
          */
         if (nbytes == 0) {
-            nbytes = descr->elsize ? descr->elsize : 1;
+            nbytes = 1;
         }
         /*
          * It is bad to have uninitialized OBJECT pointers
