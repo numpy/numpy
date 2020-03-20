@@ -435,7 +435,6 @@ class TestRegression:
     def test_lexsort_zerolen_custom_strides(self):
         # Ticket #14228
         xs = np.array([], dtype='i8')
-        assert xs.strides == (8,)
         assert np.lexsort((xs,)).shape[0] == 0 # Works
 
         xs.strides = (16,)
@@ -918,10 +917,12 @@ class TestRegression:
         # Ticket #658
         np.indices((0, 3, 4)).T.reshape(-1, 3)
 
+    NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
+
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous,
     # 0-sized reshape itself is tested elsewhere.
-    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+    @pytest.mark.skipif(NPY_RELAXED_STRIDES_CHECKING,
                         reason="Using relaxed stride checking")
     def test_copy_detection_corner_case2(self):
         # Ticket #771: strides are not set correctly when reshaping 0-sized

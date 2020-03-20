@@ -985,13 +985,17 @@ PyArray_NewFromDescr_int(
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
+#if !NPY_RELAXED_STRIDES_CHECKING
+        /* To avoid invoking undefined behavior in C, we need to ensure that
+         * pointer arithmetic of the form `data + sum_i{(shape[i] - 1)*strides[i]}`
+         * is valid. One easy way to do this is to set `strides[i] == 0`, but
+         * we can only do this if relaxed stride checking is enabled.
+         * When's it not, all we can control is the allocation size of `data`,
+         * which needs to be the product of the non-zero strides */
         if (dim == 0) {
-            /*
-             * Compare to PyArray_OverflowMultiplyList that
-             * returns 0 in this case.
-             */
             continue;
         }
+#endif
 
         if (dim < 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -1074,10 +1078,9 @@ PyArray_NewFromDescr_int(
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
-         * Could probably just allocate a few bytes here. -- Chuck
          */
         if (nbytes == 0) {
-            nbytes = descr->elsize ? descr->elsize : 1;
+            nbytes = 1;
         }
         /*
          * It is bad to have uninitialized OBJECT pointers
@@ -4152,7 +4155,22 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
                     int inflag, int *objflags)
 {
     int i;
+
 #if NPY_RELAXED_STRIDES_CHECKING
+    npy_bool empty = 0;
+    for (i = 0; i < nd; i++) {
+        if (dims[i] == 0) {
+            empty = 1;
+            break;
+        }
+    }
+    /* Arrays with no contents can have all their strides set to zero, which
+     * ensures the ->data of views of the empty array always point within the
+     * base aray's one-byte allocation. */
+    if (empty) {
+        itemsize = 0;
+    }
+
     npy_bool not_cf_contig = 0;
     npy_bool nod = 0; /* A dim != 1 was found */
 
