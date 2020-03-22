@@ -1678,7 +1678,7 @@ class TestMethods:
         assert_raises(ValueError, lambda: a.transpose(0, 0))
         assert_raises(ValueError, lambda: a.transpose(0, 1, 2))
 
-    def test_sort(self):
+        def test_sort(self):
         # test ordering for floats and complex containing nans. It is only
         # necessary to check the less-than comparison, so sorts that
         # only follow the insertion sort path are sufficient. We only
@@ -1696,145 +1696,6 @@ class TestMethods:
         a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
-
-        # all c scalar sorts use the same code with different types
-        # so it suffices to run a quick check with one type. The number
-        # of sorted items must be greater than ~50 to check the actual
-        # algorithm because quick and merge sort fall over to insertion
-        # sort for small arrays.
-        # Test unsigned dtypes and nonnegative numbers
-        for dtype in [np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32, np.float64, np.longdouble]:
-            a = np.arange(101, dtype=dtype)
-            b = a[::-1].copy()
-            for kind in self.sort_kinds:
-                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
-                c = a.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
-                c = b.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
-
-        # Test signed dtypes and negative numbers as well
-        for dtype in [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble]:
-            a = np.arange(-50, 51, dtype=dtype)
-            b = a[::-1].copy()
-            for kind in self.sort_kinds:
-                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
-                c = a.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
-                c = b.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
-
-        # test complex sorts. These use the same code as the scalars
-        # but the compare function differs.
-        ai = a*1j + 1
-        bi = b*1j + 1
-        for kind in self.sort_kinds:
-            msg = "complex sort, real part == 1, kind=%s" % kind
-            c = ai.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-            c = bi.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-        ai = a + 1j
-        bi = b + 1j
-        for kind in self.sort_kinds:
-            msg = "complex sort, imag part == 1, kind=%s" % kind
-            c = ai.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-            c = bi.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-
-        # test sorting of complex arrays requiring byte-swapping, gh-5441
-        for endianness in '<>':
-            for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
-                c = arr.copy()
-                c.sort()
-                msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
-                assert_equal(c, arr, msg)
-
-        # test string sorts.
-        s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)])
-        b = a[::-1].copy()
-        for kind in self.sort_kinds:
-            msg = "string sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
-        # test unicode sorts.
-        s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
-        b = a[::-1].copy()
-        for kind in self.sort_kinds:
-            msg = "unicode sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
-        # test object array sorts.
-        a = np.empty((101,), dtype=object)
-        a[:] = list(range(101))
-        b = a[::-1]
-        for kind in ['q', 'h', 'm']:
-            msg = "object sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
-        # test record array sorts.
-        dt = np.dtype([('f', float), ('i', int)])
-        a = np.array([(i, i) for i in range(101)], dtype=dt)
-        b = a[::-1]
-        for kind in ['q', 'h', 'm']:
-            msg = "object sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
-        # test datetime64 sorts.
-        a = np.arange(0, 101, dtype='datetime64[D]')
-        b = a[::-1]
-        for kind in ['q', 'h', 'm']:
-            msg = "datetime64 sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
-        # test timedelta64 sorts.
-        a = np.arange(0, 101, dtype='timedelta64[D]')
-        b = a[::-1]
-        for kind in ['q', 'h', 'm']:
-            msg = "timedelta64 sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
 
         # check axis handling. This should be the same for all type
         # specific sorts, so we only check it for one type and one kind
@@ -1866,10 +1727,128 @@ class TestMethods:
             def __lt__(self, other):
                 return True
 
-        a = np.array([Boom()]*100, dtype=object)
+        a = np.array([Boom()] * 100, dtype=object)
         for kind in self.sort_kinds:
             msg = "bogus comparison object sort, kind=%s" % kind
             c.sort(kind=kind)
+
+
+    # all c scalar sorts use the same code with different types
+    # so it suffices to run a quick check with one type. The number
+    # of sorted items must be greater than ~50 to check the actual
+    # algorithm because quick and merge sort fall over to insertion
+    # sort for small arrays.
+
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32, np.float64,
+                                       np.longdouble])
+    def test_sort_unsigned(self, dtype):
+        a = np.arange(101, dtype=dtype)
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    @pytest.mark.parametrize('dtype',
+                             [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble])
+    def test_sort_signed(self, dtype):
+        a = np.arange(-50, 51, dtype=dtype)
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    @pytest.mark.parametrize('dtype',
+                             [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble])
+    @pytest.mark.parametrize('message, factor, number', [('real', 1j, 1), ('imag', 1, 1j)])
+    def test_sort_complex(self, message, factor, number, dtype):
+        # test complex sorts. These use the same code as the scalars
+        # but the compare function differs.
+        a = np.arange(-50, 51, dtype=dtype)
+        b = a[::-1].copy()
+        ai = a * factor + number
+        bi = b * factor + number
+        for kind in self.sort_kinds:
+            msg = "complex sort, " + message + " part == 1, kind=%s" % kind
+            c = ai.copy()
+            c.sort(kind=kind)
+            assert_equal(c, ai, msg)
+            c = bi.copy()
+            c.sort(kind=kind)
+            assert_equal(c, ai, msg)
+
+    def test_sort_complex_byte_swapping(self):
+        # test sorting of complex arrays requiring byte-swapping, gh-5441
+        for endianness in '<>':
+            for dt in np.typecodes['Complex']:
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
+                c = arr.copy()
+                c.sort()
+                msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
+                assert_equal(c, arr, msg)
+
+    @pytest.mark.parametrize('message, s, dtype',  [('string', 'aaaaaaaa', 'str'),('unicode', 'aaaaaaaa', np.unicode_)])
+    def test_sort_string(self, message, s, dtype):
+        a = np.array([s + chr(i) for i in range(101)], dtype = dtype)
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = message + " sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    @pytest.mark.parametrize('message, dtype', [('datetime64', 'datetime64[D]'), ('timedelta64', 'timedelta64[D]')])
+    def test_sort_time(self, message, dtype):
+        # test datetime64 and timedelta64 sorts.
+        a = np.arange(0, 101, dtype=dtype)
+        b = a[::-1]
+        for kind in ['q', 'h', 'm']:
+            msg = message + "sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    def test_sort_object(self):
+        # test object array sorts.
+        a = np.empty((101,), dtype=object)
+        a[:] = list(range(101))
+        b = a[::-1]
+        for kind in ['q', 'h', 'm']:
+            msg = "object sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # test record array sorts.
+        dt = np.dtype([('f', float), ('i', int)])
+        a = np.array([(i, i) for i in range(101)], dtype=dt)
+        b = a[::-1]
+        for kind in ['q', 'h', 'm']:
+            msg = "object sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
 
     def test_void_sort(self):
         # gh-8210 - previously segfaulted
