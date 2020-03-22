@@ -1697,42 +1697,6 @@ class TestMethods:
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
-        # check axis handling. This should be the same for all type
-        # specific sorts, so we only check it for one type and one kind
-        a = np.array([[3, 2], [1, 0]])
-        b = np.array([[1, 0], [3, 2]])
-        c = np.array([[2, 3], [0, 1]])
-        d = a.copy()
-        d.sort(axis=0)
-        assert_equal(d, b, "test sort with axis=0")
-        d = a.copy()
-        d.sort(axis=1)
-        assert_equal(d, c, "test sort with axis=1")
-        d = a.copy()
-        d.sort()
-        assert_equal(d, c, "test sort with default axis")
-
-        # check axis handling for multidimensional empty arrays
-        a = np.array([])
-        a.shape = (3, 2, 1, 0)
-        for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array sort with axis={0}'.format(axis)
-            assert_equal(np.sort(a, axis=axis), a, msg)
-        msg = 'test empty array sort with axis=None'
-        assert_equal(np.sort(a, axis=None), a.ravel(), msg)
-
-        # test generic class with bogus ordering,
-        # should not segfault.
-        class Boom:
-            def __lt__(self, other):
-                return True
-
-        a = np.array([Boom()] * 100, dtype=object)
-        for kind in self.sort_kinds:
-            msg = "bogus comparison object sort, kind=%s" % kind
-            c.sort(kind=kind)
-
-
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
@@ -1847,6 +1811,46 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
             c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    def test_sort_axis(self):
+        # check axis handling. This should be the same for all type
+        # specific sorts, so we only check it for one type and one kind
+        a = np.array([[3, 2], [1, 0]])
+        b = np.array([[1, 0], [3, 2]])
+        c = np.array([[2, 3], [0, 1]])
+        d = a.copy()
+        d.sort(axis=0)
+        assert_equal(d, b, "test sort with axis=0")
+        d = a.copy()
+        d.sort(axis=1)
+        assert_equal(d, c, "test sort with axis=1")
+        d = a.copy()
+        d.sort()
+        assert_equal(d, c, "test sort with default axis")
+
+    def test_sort_size_0(self):
+        # check axis handling for multidimensional empty arrays
+        a = np.array([])
+        a.shape = (3, 2, 1, 0)
+        for axis in range(-a.ndim, a.ndim):
+            msg = 'test empty array sort with axis={0}'.format(axis)
+            assert_equal(np.sort(a, axis=axis), a, msg)
+        msg = 'test empty array sort with axis=None'
+        assert_equal(np.sort(a, axis=None), a.ravel(), msg)
+
+    def test_sort_bad_ordering(self):
+        # test generic class with bogus ordering,
+        # should not segfault.
+        class Boom:
+            def __lt__(self, other):
+                return True
+
+        a = np.array([Boom()] * 100, dtype=object)
+        for kind in self.sort_kinds:
+            msg = "bogus comparison object sort, kind=%s" % kind
+            c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
