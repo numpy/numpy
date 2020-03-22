@@ -4270,10 +4270,10 @@ def delete(arr, obj, axis=None):
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
+        # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
-        axis = -1
-
-    if ndim == 0:
+        axis = ndim - 1
+    elif ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
@@ -4282,8 +4282,8 @@ def delete(arr, obj, axis=None):
             return wrap(arr)
         else:
             return arr.copy(order=arrorder)
-
-    axis = normalize_axis_index(axis, ndim)
+    else:
+        axis = normalize_axis_index(axis, ndim)
 
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
@@ -4344,6 +4344,7 @@ def delete(arr, obj, axis=None):
     # After removing the special handling of booleans and out of
     # bounds values, the conversion to the array can be removed.
     if obj.dtype == bool:
+        # 2012-10-11, NumPy 1.8
         warnings.warn("in the future insert will treat boolean arrays and "
                       "array-likes as boolean index instead of casting it "
                       "to integer", FutureWarning, stacklevel=3)
@@ -4381,7 +4382,7 @@ def delete(arr, obj, axis=None):
         # Test if there are out of bound indices, this is deprecated
         inside_bounds = (obj < N) & (obj >= -N)
         if not inside_bounds.all():
-            # 2013-09-24, 1.9
+            # 2013-09-24, NumPy 1.9
             warnings.warn(
                 "in the future out of bounds indices will raise an error "
                 "instead of being ignored by `numpy.delete`.",
@@ -4389,6 +4390,7 @@ def delete(arr, obj, axis=None):
             obj = obj[inside_bounds]
         positive_indices = obj >= 0
         if not positive_indices.all():
+            # 2013-04-11, NumPy 1.8
             warnings.warn(
                 "in the future negative indices will not be ignored by "
                 "`numpy.delete`.", FutureWarning, stacklevel=3)
@@ -4510,6 +4512,7 @@ def insert(arr, obj, values, axis=None):
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
+        # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
         axis = ndim - 1
     elif ndim == 0:
@@ -4531,12 +4534,13 @@ def insert(arr, obj, values, axis=None):
 
     if isinstance(obj, slice):
         # turn it into a range object
-        indices = arange(*obj.indices(N), **{'dtype': intp})
+        indices = arange(*obj.indices(N), dtype=intp)
     else:
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
             # See also delete
+            # 2012-10-11, NumPy 1.8
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
