@@ -388,35 +388,7 @@ def issubdtype(arg1, arg2):
     if not issubclass_(arg1, generic):
         arg1 = dtype(arg1).type
     if not issubclass_(arg2, generic):
-        arg2_orig = arg2
         arg2 = dtype(arg2).type
-        if not isinstance(arg2_orig, dtype):
-            # weird deprecated behaviour, that tried to infer np.floating from
-            # float, and similar less obvious things, such as np.generic from
-            # str.
-            mro = arg2.mro()
-            arg2 = mro[1] if len(mro) > 1 else mro[0]
-
-            def type_repr(x):
-                """ Helper to produce clear error messages """
-                if not isinstance(x, type):
-                    return repr(x)
-                elif issubclass(x, generic):
-                    return "np.{}".format(x.__name__)
-                else:
-                    return x.__name__
-
-            # 1.14, 2017-08-01
-            warnings.warn(
-                "Conversion of the second argument of issubdtype from `{raw}` "
-                "to `{abstract}` is deprecated. In future, it will be treated "
-                "as `{concrete} == np.dtype({raw}).type`.".format(
-                    raw=type_repr(arg2_orig),
-                    abstract=type_repr(arg2),
-                    concrete=type_repr(dtype(arg2_orig).type)
-                ),
-                FutureWarning, stacklevel=2
-            )
 
     return issubclass(arg1, arg2)
 
