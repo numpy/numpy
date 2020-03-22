@@ -1678,7 +1678,7 @@ class TestMethods:
         assert_raises(ValueError, lambda: a.transpose(0, 0))
         assert_raises(ValueError, lambda: a.transpose(0, 1, 2))
 
-        def test_sort(self):
+    def test_sort(self):
         # test ordering for floats and complex containing nans. It is only
         # necessary to check the less-than comparison, so sorts that
         # only follow the insertion sort path are sufficient. We only
