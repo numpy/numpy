@@ -1731,8 +1731,7 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-    @pytest.mark.parametrize('dtype',
-                             [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble])
+    @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.longdouble])
     @pytest.mark.parametrize('message, factor, number', [('real', 1j, 1), ('imag', 1, 1j)])
     def test_sort_complex(self, message, factor, number, dtype):
         # test complex sorts. These use the same code as the scalars
