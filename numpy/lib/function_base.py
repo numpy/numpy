@@ -4272,9 +4272,8 @@ def delete(arr, obj, axis=None):
             arr = arr.ravel()
         # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
-        axis = -1
-
-    if ndim == 0:
+        axis = ndim - 1
+    elif ndim == 0:
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
@@ -4283,8 +4282,8 @@ def delete(arr, obj, axis=None):
             return wrap(arr)
         else:
             return arr.copy(order=arrorder)
-
-    axis = normalize_axis_index(axis, ndim)
+    else:
+        axis = normalize_axis_index(axis, ndim)
 
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
