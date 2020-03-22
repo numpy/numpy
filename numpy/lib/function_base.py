@@ -4270,6 +4270,7 @@ def delete(arr, obj, axis=None):
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
+        # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
         axis = -1
 
@@ -4510,6 +4511,7 @@ def insert(arr, obj, values, axis=None):
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
+        # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
         axis = ndim - 1
     elif ndim == 0:
