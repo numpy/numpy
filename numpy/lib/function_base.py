@@ -4533,7 +4533,7 @@ def insert(arr, obj, values, axis=None):
 
     if isinstance(obj, slice):
         # turn it into a range object
-        indices = arange(*obj.indices(N), **{'dtype': intp})
+        indices = arange(*obj.indices(N), dtype=intp)
     else:
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
