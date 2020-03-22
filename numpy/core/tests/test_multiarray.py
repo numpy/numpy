@@ -1773,20 +1773,6 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-    @pytest.mark.parametrize('message, dtype', [('datetime64', 'datetime64[D]'), ('timedelta64', 'timedelta64[D]')])
-    def test_sort_time(self, message, dtype):
-        # test datetime64 and timedelta64 sorts.
-        a = np.arange(0, 101, dtype=dtype)
-        b = a[::-1]
-        for kind in ['q', 'h', 'm']:
-            msg = message + "sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
     def test_sort_object(self):
         # test object array sorts.
         a = np.empty((101,), dtype=object)
@@ -1800,13 +1786,28 @@ class TestMethods:
             c = b.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
-
+            
+    def test_sort_structured(self):
         # test record array sorts.
         dt = np.dtype([('f', float), ('i', int)])
         a = np.array([(i, i) for i in range(101)], dtype=dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
             msg = "object sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    @pytest.mark.parametrize('message, dtype', [('datetime64', 'datetime64[D]'), ('timedelta64', 'timedelta64[D]')])
+    def test_sort_time(self, message, dtype):
+        # test datetime64 and timedelta64 sorts.
+        a = np.arange(0, 101, dtype=dtype)
+        b = a[::-1]
+        for kind in ['q', 'h', 'm']:
+            msg = message + "sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
