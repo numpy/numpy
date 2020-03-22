@@ -4273,15 +4273,6 @@ def delete(arr, obj, axis=None):
         # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
         axis = ndim - 1
-    elif ndim == 0:
-        # 2013-09-24, 1.9
-        warnings.warn(
-            "in the future the special handling of scalars will be removed "
-            "from delete and raise an error", DeprecationWarning, stacklevel=3)
-        if wrap:
-            return wrap(arr)
-        else:
-            return arr.copy(order=arrorder)
     else:
         axis = normalize_axis_index(axis, ndim)
 
@@ -4515,17 +4506,6 @@ def insert(arr, obj, values, axis=None):
         # needed for np.matrix, which is still not 1d after being ravelled
         ndim = arr.ndim
         axis = ndim - 1
-    elif ndim == 0:
-        # 2013-09-24, 1.9
-        warnings.warn(
-            "in the future the special handling of scalars will be removed "
-            "from insert and raise an error", DeprecationWarning, stacklevel=3)
-        arr = arr.copy(order=arrorder)
-        arr[...] = values
-        if wrap:
-            return wrap(arr)
-        else:
-            return arr
     else:
         axis = normalize_axis_index(axis, ndim)
     slobj = [slice(None)]*ndim
