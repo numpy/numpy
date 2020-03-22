@@ -605,6 +605,10 @@ class TestEinsum:
                      [[[1,  3], [3,  9], [5, 15], [7, 21]],
                      [[8, 16], [16, 32], [24, 48], [32, 64]]])
 
+        # Ensure explicitly setting out=None does not cause an error
+        # see issue gh-15776 and issue gh-15256
+        assert_equal(np.einsum('i,j', [1], [2], out=None), [[2]])
+
     def test_subscript_range(self):
         # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
         # when creating a subscript from arrays
