@@ -1738,8 +1738,10 @@ class TestMethods:
         # but the compare function differs.
         a = np.arange(-50, 51, dtype=dtype)
         b = a[::-1].copy()
-        ai = a * factor + number
-        bi = b * factor + number
+        ai = (a * (1+1j)).astype(dtype)
+        bi = (b * (1+1j)).astype(dtype)
+        setattr(ai, part, 1)
+        setattr(bi, part, 1)
         for kind in self.sort_kinds:
             msg = "complex sort, " + message + " part == 1, kind=%s" % kind
             c = ai.copy()
