@@ -807,7 +807,6 @@ class TestDelete:
         # NOTE: The cast should be removed after warning phase for bools
         if not isinstance(indices, (slice, int, long, np.integer)):
             indices = np.asarray(indices, dtype=np.intp)
-            indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
         xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
@@ -825,10 +824,10 @@ class TestDelete:
     def test_fancy(self):
         # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            assert_raises(DeprecationWarning, delete, self.a, [100])
-            assert_raises(DeprecationWarning, delete, self.a, [-100])
+        with pytest.raises(IndexError):
+            delete(self.a, [100])
+        with pytest.raises(IndexError):
+            delete(self.a, [-100])
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', category=FutureWarning)
             self._check_inverse_of_slicing([0, -1, 2, 2])

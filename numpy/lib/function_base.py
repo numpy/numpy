@@ -4379,23 +4379,6 @@ def delete(arr, obj, axis=None):
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
-        # Test if there are out of bound indices, this is deprecated
-        inside_bounds = (obj < N) & (obj >= -N)
-        if not inside_bounds.all():
-            # 2013-09-24, NumPy 1.9
-            warnings.warn(
-                "in the future out of bounds indices will raise an error "
-                "instead of being ignored by `numpy.delete`.",
-                DeprecationWarning, stacklevel=3)
-            obj = obj[inside_bounds]
-        positive_indices = obj >= 0
-        if not positive_indices.all():
-            # 2013-04-11, NumPy 1.8
-            warnings.warn(
-                "in the future negative indices will not be ignored by "
-                "`numpy.delete`.", FutureWarning, stacklevel=3)
-            obj = obj[positive_indices]
-
         keep[obj, ] = False
         slobj[axis] = keep
         new = arr[tuple(slobj)]
