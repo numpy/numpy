@@ -21,7 +21,7 @@ import builtins
 from decimal import Decimal
 
 import numpy as np
-from numpy.compat import strchar, unicode
+from numpy.compat import strchar
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
@@ -1457,12 +1457,12 @@ class TestZeroSizeFlexible:
         assert_equal(zs.itemsize, 0)
         zs = self._zeros(10, np.void)
         assert_equal(zs.itemsize, 0)
-        zs = self._zeros(10, unicode)
+        zs = self._zeros(10, str)
         assert_equal(zs.itemsize, 0)
 
     def _test_sort_partition(self, name, kinds, **kwargs):
         # Previously, these would all hang
-        for dt in [bytes, np.void, unicode]:
+        for dt in [bytes, np.void, str]:
             zs = self._zeros(10, dt)
             sort_method = getattr(zs, name)
             sort_func = getattr(np, name)
@@ -1484,13 +1484,13 @@ class TestZeroSizeFlexible:
 
     def test_resize(self):
         # previously an error
-        for dt in [bytes, np.void, unicode]:
+        for dt in [bytes, np.void, str]:
             zs = self._zeros(10, dt)
             zs.resize(25)
             zs.resize((10, 10))
 
     def test_view(self):
-        for dt in [bytes, np.void, unicode]:
+        for dt in [bytes, np.void, str]:
             zs = self._zeros(10, dt)
 
             # viewing as itself should be allowed
@@ -1505,7 +1505,7 @@ class TestZeroSizeFlexible:
 
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            for dt in [bytes, np.void, unicode]:
+            for dt in [bytes, np.void, str]:
                 zs = self._zeros(10, dt)
                 p = pickle.dumps(zs, protocol=proto)
                 zs2 = pickle.loads(p)
@@ -4449,7 +4449,7 @@ class TestPutmask:
         assert_equal(x[mask], np.array(val, T))
 
     def test_ip_types(self):
-        unchecked_types = [bytes, unicode, np.void]
+        unchecked_types = [bytes, str, np.void]
 
         x = np.random.random(1000)*100
         mask = x < 40
@@ -4503,7 +4503,7 @@ class TestTake:
         assert_array_equal(x.take(ind, axis=0), x)
 
     def test_ip_types(self):
-        unchecked_types = [bytes, unicode, np.void]
+        unchecked_types = [bytes, str, np.void]
 
         x = np.random.random(24)*100
         x.shape = 2, 3, 4

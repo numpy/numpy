@@ -153,13 +153,12 @@ else:
     from . import ma
     from . import matrixlib as _mat
     from .matrixlib import *
-    from .compat import long
 
     # Make these accessible from numpy name-space
     # but not imported in from numpy import *
     # TODO[gh-6103]: Deprecate these
     from builtins import bool, int, float, complex, object, str
-    unicode = str
+    from .compat import long, unicode
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits

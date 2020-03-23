@@ -11,7 +11,6 @@ from numpy.core import (
     bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
     greater_equal, shape, reshape, arange, sin, sqrt, transpose
 )
-from numpy.compat import long
 
 
 class container:
@@ -195,9 +194,6 @@ class container:
 
     def __int__(self):
         return self._scalarfunc(int)
-
-    def __long__(self):
-        return self._scalarfunc(long)
 
     def __hex__(self):
         return self._scalarfunc(hex)

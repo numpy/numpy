@@ -11,7 +11,6 @@ from numpy.testing import (
     assert_raises_regex, assert_warns
     )
 
-from numpy.compat import long
 
 class TestAtleast1d:
     def test_0D_array(self):
@@ -49,7 +48,6 @@ class TestAtleast1d:
         """
         assert_(atleast_1d(3).shape == (1,))
         assert_(atleast_1d(3j).shape == (1,))
-        assert_(atleast_1d(long(3)).shape == (1,))
         assert_(atleast_1d(3.0).shape == (1,))
         assert_(atleast_1d([[2, 3], [4, 5]]).shape == (2, 2))
 
