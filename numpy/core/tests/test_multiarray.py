@@ -1709,7 +1709,7 @@ class TestMethods:
         a = np.arange(101, dtype=dtype)
         b = a[::-1].copy()
         for kind in self.sort_kinds:
-            msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
+            msg = "scalar sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
