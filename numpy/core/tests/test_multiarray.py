@@ -1736,7 +1736,6 @@ class TestMethods:
     def test_sort_complex(self, part, dtype):
         # test complex sorts. These use the same code as the scalars
         # but the compare function differs.
-        # but the compare function differs.
         cdtype = {
             np.single: np.csingle,
             np.double: np.cdouble,
