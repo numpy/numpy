@@ -1743,7 +1743,7 @@ class TestMethods:
         setattr(ai, part, 1)
         setattr(bi, part, 1)
         for kind in self.sort_kinds:
-            msg = "complex sort, %s part == 1, kind=%s" % (kind, part)
+            msg = "complex sort, %s part == 1, kind=%s" % (part, kind)
             c = ai.copy()
             c.sort(kind=kind)
             assert_equal(c, ai, msg)
