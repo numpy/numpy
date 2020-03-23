@@ -834,11 +834,15 @@ class TestDelete:
             delete(self.a, [100])
         with pytest.raises(IndexError):
             delete(self.a, [-100])
+
+        self._check_inverse_of_slicing([0, -1, 2, 2])
+
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', category=FutureWarning)
-            self._check_inverse_of_slicing([0, -1, 2, 2])
             obj = np.array([True, False, False], dtype=bool)
             self._check_inverse_of_slicing(obj)
+            # _check_inverse_of_slicing operates on two arrays, so warns twice
+            assert len(w) == 2
             assert_(w[0].category is FutureWarning)
             assert_(w[1].category is FutureWarning)
 
