@@ -1761,12 +1761,12 @@ class TestMethods:
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
                 assert_equal(c, arr, msg)
 
-    @pytest.mark.parametrize('message, s, dtype',  [('string', 'aaaaaaaa', 'str'),('unicode', 'aaaaaaaa', np.unicode_)])
-    def test_sort_string(self, message, s, dtype):
+    @pytest.mark.parametrize('s, dtype',  [('aaaaaaaa', 'str'),('aaaaaaaa', np.unicode_)])
+    def test_sort_string(self, s, dtype):
         a = np.array([s + chr(i) for i in range(101)], dtype = dtype)
         b = a[::-1].copy()
         for kind in self.sort_kinds:
-            msg = message + " sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1780,7 +1780,7 @@ class TestMethods:
         a[:] = list(range(101))
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
-            msg = "object sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1794,7 +1794,7 @@ class TestMethods:
         a = np.array([(i, i) for i in range(101)], dtype=dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
-            msg = "object sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1802,13 +1802,13 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-    @pytest.mark.parametrize('message, dtype', [('datetime64', 'datetime64[D]'), ('timedelta64', 'timedelta64[D]')])
-    def test_sort_time(self, message, dtype):
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    def test_sort_time(self, dtype):
         # test datetime64 and timedelta64 sorts.
         a = np.arange(0, 101, dtype=dtype)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
-            msg = message + "sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1851,7 +1851,7 @@ class TestMethods:
 
         a = np.array([Boom()] * 100, dtype=object)
         for kind in self.sort_kinds:
-            msg = "bogus comparison object sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
