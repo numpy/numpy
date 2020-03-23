@@ -6392,6 +6392,7 @@ class MaskedConstant(MaskedArray):
         try:
             return object.__format__(self, format_spec)
         except TypeError:
+            # 2020-03-23, NumPy 1.19.0
             warnings.warn(
                 "Format strings passed to MaskedConstant are ignored, but in future may "
                 "error or produce different behavior",
