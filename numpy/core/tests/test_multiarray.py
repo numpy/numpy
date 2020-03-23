@@ -1766,7 +1766,7 @@ class TestMethods:
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
                 assert_equal(c, arr, msg)
 
-    @pytest.mark.parametrize('s, dtype', [np.bytes_, np.unicode_])
+    @pytest.mark.parametrize('dtype', [np.bytes_, np.unicode_])
     def test_sort_string(self, dtype):
         # np.array will perform the encoding to bytes for us in the bytes test
         a = np.array(['aaaaaaaa' + chr(i) for i in range(101)], dtype=dtype)
