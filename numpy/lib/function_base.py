@@ -4369,14 +4369,6 @@ def delete(arr, obj, axis=None):
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
-        if not np.can_cast(obj, intp, 'same_kind'):
-            # obj.size = 1 special case always failed and would just
-            # give superfluous warnings.
-            # 2013-09-24, 1.9
-            warnings.warn(
-                "using a non-integer array as obj in delete will result in an "
-                "error in the future", DeprecationWarning, stacklevel=3)
-            obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
         # Test if there are out of bound indices, this is deprecated
@@ -4588,13 +4580,6 @@ def insert(arr, obj, values, axis=None):
         return new
     elif indices.size == 0 and not isinstance(obj, np.ndarray):
         # Can safely cast the empty list to intp
-        indices = indices.astype(intp)
-
-    if not np.can_cast(indices, intp, 'same_kind'):
-        # 2013-09-24, 1.9
-        warnings.warn(
-            "using a non-integer array as obj in insert will result in an "
-            "error in the future", DeprecationWarning, stacklevel=3)
         indices = indices.astype(intp)
 
     indices[indices < 0] += N

@@ -544,6 +544,12 @@ class TestInsert:
         b = np.insert(a, [0, 2], val)
         assert_array_equal(b[[0, 3]], np.array(val, dtype=b.dtype))
 
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([1.0, 2.0]), [10, 20])
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([], dtype=float), [])
+
 
 class TestAmax:
 
@@ -867,6 +873,12 @@ class TestDelete:
         # same ordering as 'k' and NOT become C ordered
         assert_equal(m.flags.c_contiguous, k.flags.c_contiguous)
         assert_equal(m.flags.f_contiguous, k.flags.f_contiguous)
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([1.0, 2.0]))
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([], dtype=float))
 
 
 class TestGradient:
