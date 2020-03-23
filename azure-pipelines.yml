@@ -218,18 +218,34 @@ stages:
             OPENBLAS_SUFFIX: '64_'
     steps:
     - template: azure-steps-windows.yml
-  - job: Linux_PyPy3
+  # - job: Linux_PyPy3
+  #  pool:
+  #    vmIMage: 'ubuntu-18.04'
+  #  steps:
+  #  - script: source tools/pypy-test.sh
+  #    displayName: 'Run PyPy3 Build / Tests'
+  #  - task: PublishTestResults@2
+  #    condition: succeededOrFailed()
+  #    inputs:
+  #      testResultsFiles: '**/test-*.xml'
+  #      testRunTitle: 'Publish test results for PyPy3'
+  #      failTaskOnFailedTests: true
+  - job: Linux_18_04
     pool:
-      vmIMage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-18.04'
     steps:
-    - script: source tools/pypy-test.sh
-      displayName: 'Run PyPy3 Build / Tests'
+    - script: |
+            python3 -m pip install --user --upgrade pip setuptools
+            python3 -m pip install --user -r test_requirements.txt
+            CPPFLAGS='' F77=gfortran-5 F90=gfortran-5 \
+            python3 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run Linux 18.04 Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
         testResultsFiles: '**/test-*.xml'
-        testRunTitle: 'Publish test results for PyPy3'
         failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for gcc 4.8'
   - job: Linux_gcc48
     pool:
       vmImage: 'ubuntu-18.04'
