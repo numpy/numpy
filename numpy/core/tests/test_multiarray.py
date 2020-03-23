@@ -1736,10 +1736,16 @@ class TestMethods:
     def test_sort_complex(self, part, dtype):
         # test complex sorts. These use the same code as the scalars
         # but the compare function differs.
+        # but the compare function differs.
+        cdtype = {
+            np.single: np.csingle,
+            np.double: np.cdouble,
+            np.longdouble: np.clongdouble,
+        }[dtype]
         a = np.arange(-50, 51, dtype=dtype)
         b = a[::-1].copy()
-        ai = (a * (1+1j)).astype(dtype)
-        bi = (b * (1+1j)).astype(dtype)
+        ai = (a * (1+1j)).astype(cdtype)
+        bi = (b * (1+1j)).astype(cdtype)
         setattr(ai, part, 1)
         setattr(bi, part, 1)
         for kind in self.sort_kinds:
