@@ -4368,7 +4368,7 @@ def delete(arr, obj, axis=None):
 
         if obj.dtype == bool:
             if obj.shape != (N,):
-                raise ValueError('boolean array argument obj to insert '
+                raise ValueError('boolean array argument obj to delete '
                                  'must be one dimensional and match the axis '
                                  'length of {}'.format(N))
 
