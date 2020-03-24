@@ -319,11 +319,10 @@ class TestExpandDims:
 
 class TestArraySplit:
 
-
     def test_two_dimensional_two_integer_remainder_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
-        res = array_split(matrix, [3, 3], 0, True)
+        res = array_split(matrix, [3, 3], (0, 1))
         desired = [
             [[0, 1],
             [4, 5]],
@@ -341,7 +340,7 @@ class TestArraySplit:
     def test_two_dimensional_two_integer_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
-        res = array_split(matrix, [4, 2], 0, True)
+        res = array_split(matrix, [4, 2], (0, 1))
         desired = [
             [[0, 1]],
             [[2, 3]],
@@ -357,7 +356,7 @@ class TestArraySplit:
     def test_two_dimensional_two_indices_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
-        res = array_split(matrix, [[2], [2, 3]], 0, True)
+        res = array_split(matrix, [[2], [2, 3]], (0, 1))
         desired = [
             [[0, 1], [4, 5]],
             [[2], [6]],
@@ -372,7 +371,7 @@ class TestArraySplit:
     def test_two_dimensional_one_index_one_integer_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
-        res = array_split(matrix, [2, [2, 3]], 0, True)
+        res = array_split(matrix, [2, [2, 3]], (0, 1))
         desired = [
             [[0, 1], [4, 5]],
             [[2], [6]],
@@ -384,10 +383,37 @@ class TestArraySplit:
 
         compare_results(res, desired)
 
+    def test_three_dimensional_three_integer_split(self):
+        three_dimensional_array = np.reshape(np.arange(27), (3, 3, 3))
+
+        res = array_split(three_dimensional_array, [3, 3, 3], (0, 1, 2))
+        desired = [
+            [[[0]]], [[[1]]], [[[2]]], [[[3]]], [[[4]]], [[[5]]], [[[6]]], [[[7]]], [[[8]]],
+            [[[9]]], [[[10]]], [[[11]]], [[[12]]], [[[13]]], [[[14]]], [[[15]]], [[[16]]], [[[17]]],
+            [[[18]]], [[[19]]], [[[20]]], [[[21]]], [[[22]]], [[[23]]], [[[24]]], [[[25]]], [[[26]]]
+         ]
+
+        compare_results(res, desired)
+
+    def test_three_dimensional_axis_order(self):
+        three_dimensional_array = np.reshape(np.arange(8), (2, 2, 2))
+
+        res = array_split(three_dimensional_array, [2, 2, 2], (0, 1, 2))
+        desired = [
+            [[[0]]], [[[1]]],
+            [[[2]]], [[[3]]],
+            [[[4]]], [[[5]]],
+            [[[6]]], [[[7]]]
+        ]
+
+        compare_results(res, three_dimensional_array)
+
+
+
     def test_two_dimensional_input_guard(self):
         matrix = np.reshape(np.arange(16), (4, 4))
-        assert_raises(ValueError, array_split, matrix, 1, two_dimensional=True)
-        assert_raises(ValueError, array_split, matrix, [1], two_dimensional=True)
+        assert_raises(ValueError, array_split, matrix, 1, (0, 1))
+        assert_raises(ValueError, array_split, matrix, [1], (0, 1))
 
     def test_integer_0_split(self):
         a = np.arange(10)
@@ -540,7 +566,7 @@ class TestSplit:
     def test_equal_two_dimensional_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
-        res = split(matrix, [4, 2], 0, True)
+        res = split(matrix, [4, 2], (0, 1))
         desired = [
             [[0, 1]],
             [[2, 3]],
@@ -553,7 +579,7 @@ class TestSplit:
         ]
         compare_results(res, desired)
 
-        res = split(matrix, [2, 2], 0, True)
+        res = split(matrix, [2, 2], (0, 1))
         desired = [
             [[0, 1], [4, 5]],
             [[2, 3], [6, 7]],
@@ -564,10 +590,10 @@ class TestSplit:
 
     def test_unequal_two_dimensional_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
-        assert_raises(ValueError, split, matrix, [3, 2], two_dimensional=True)
-        assert_raises(ValueError, split, matrix, [2, 3], two_dimensional=True)
-        assert_raises(ValueError, split, matrix, [2], two_dimensional=True)
-        assert_raises(ValueError, split, matrix, 3, two_dimensional=True)
+        assert_raises(ValueError, split, matrix, [3, 2], (0, 1))
+        assert_raises(ValueError, split, matrix, [2, 3], (0, 1))
+        assert_raises(ValueError, split, matrix, [2], (0, 1))
+        assert_raises(ValueError, split, matrix, 3, (0, 1))
 
 
 class TestColumnStack:
