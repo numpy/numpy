@@ -395,21 +395,6 @@ class TestArraySplit:
 
         compare_results(res, desired)
 
-    def test_three_dimensional_axis_order(self):
-        three_dimensional_array = np.reshape(np.arange(8), (2, 2, 2))
-
-        res = array_split(three_dimensional_array, [2, 2, 2], (0, 1, 2))
-        desired = [
-            [[[0]]], [[[1]]],
-            [[[2]]], [[[3]]],
-            [[[4]]], [[[5]]],
-            [[[6]]], [[[7]]]
-        ]
-
-        compare_results(res, three_dimensional_array)
-
-
-
     def test_two_dimensional_input_guard(self):
         matrix = np.reshape(np.arange(16), (4, 4))
         assert_raises(ValueError, array_split, matrix, 1, (0, 1))
