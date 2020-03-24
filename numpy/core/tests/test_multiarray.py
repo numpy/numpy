@@ -16,14 +16,7 @@ from contextlib import contextmanager
 
 from numpy.compat import pickle
 
-try:
-    import pathlib
-except ImportError:
-    try:
-        import pathlib2 as pathlib
-    except ImportError:
-        pathlib = None
-
+import pathlib
 import builtins
 from decimal import Decimal
 
@@ -4680,14 +4673,12 @@ class TestIO:
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
-    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
     def test_roundtrip_pathlib(self):
         p = pathlib.Path(self.filename)
         self.x.tofile(p)
         y = np.fromfile(p, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
-    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
     def test_roundtrip_dump_pathlib(self):
         p = pathlib.Path(self.filename)
         self.x.dump(p)
