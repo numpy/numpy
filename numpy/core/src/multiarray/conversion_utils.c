@@ -1036,7 +1036,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
              * an exception by leaving newtype unset.
              */
             if (itemsize == 4 || itemsize == 8) {
-                int ret = 0;
                 /* 2012-02-04, 1.7, not sure when this can be removed */
                 /* 2020-03-24, 1.19, fixed to appear when not in a pickle context */
                 if (DEPRECATE("DType strings 'O4' and 'O8' are "
