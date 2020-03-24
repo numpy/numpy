@@ -509,12 +509,11 @@ class TestInsert:
                      insert(a, 1, a[:, 2, :], axis=1))
 
     def test_0d(self):
-        # This is an error in the future
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(insert(a, [], 2, axis=0), np.array(2))
-            assert_(w[0].category is DeprecationWarning)
+        with pytest.raises(np.AxisError):
+            insert(a, [], 2, axis=0)
+        with pytest.raises(TypeError):
+            insert(a, [], 2, axis="nonsense")
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -543,6 +542,12 @@ class TestInsert:
         val = [(4, 'd')] * 2
         b = np.insert(a, [0, 2], val)
         assert_array_equal(b[[0, 3]], np.array(val, dtype=b.dtype))
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([1.0, 2.0]), [10, 20])
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([], dtype=float), [])
 
 
 class TestAmax:
@@ -807,7 +812,6 @@ class TestDelete:
         # NOTE: The cast should be removed after warning phase for bools
         if not isinstance(indices, (slice, int, long, np.integer)):
             indices = np.asarray(indices, dtype=np.intp)
-            indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
         xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
@@ -825,15 +829,19 @@ class TestDelete:
     def test_fancy(self):
         # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            assert_raises(DeprecationWarning, delete, self.a, [100])
-            assert_raises(DeprecationWarning, delete, self.a, [-100])
+        with pytest.raises(IndexError):
+            delete(self.a, [100])
+        with pytest.raises(IndexError):
+            delete(self.a, [-100])
+
+        self._check_inverse_of_slicing([0, -1, 2, 2])
+
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', category=FutureWarning)
-            self._check_inverse_of_slicing([0, -1, 2, 2])
             obj = np.array([True, False, False], dtype=bool)
             self._check_inverse_of_slicing(obj)
+            # _check_inverse_of_slicing operates on two arrays, so warns twice
+            assert len(w) == 2
             assert_(w[0].category is FutureWarning)
             assert_(w[1].category is FutureWarning)
 
@@ -843,10 +851,10 @@ class TestDelete:
 
     def test_0d(self):
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(delete(a, [], axis=0), a)
-            assert_(w[0].category is DeprecationWarning)
+        with pytest.raises(np.AxisError):
+            delete(a, [], axis=0)
+        with pytest.raises(TypeError):
+            delete(a, [], axis="nonsense")
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -867,6 +875,12 @@ class TestDelete:
         # same ordering as 'k' and NOT become C ordered
         assert_equal(m.flags.c_contiguous, k.flags.c_contiguous)
         assert_equal(m.flags.f_contiguous, k.flags.f_contiguous)
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([1.0, 2.0]))
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([], dtype=float))
 
 
 class TestGradient:

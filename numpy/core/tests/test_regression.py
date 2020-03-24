@@ -1408,6 +1408,11 @@ class TestRegression:
                      dtype='U')
         assert_raises(UnicodeEncodeError, np.array, a, 'S4')
 
+    def test_unicode_to_string_cast_error(self):
+        # gh-15790
+        a = np.array([u'\x80'] * 129, dtype='U3')
+        assert_raises(UnicodeEncodeError, np.array, a, 'S')
+
     def test_mixed_string_unicode_array_creation(self):
         a = np.array(['1234', u'123'])
         assert_(a.itemsize == 16)
@@ -2481,4 +2486,3 @@ class TestRegression:
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
-

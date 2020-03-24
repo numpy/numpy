@@ -312,6 +312,7 @@ typedef struct {
     NpyAuxData *wrappeddata, *todata, *fromdata;
     npy_intp src_itemsize, dst_itemsize;
     char *bufferin, *bufferout;
+    npy_bool init_dest, out_needs_api;
 } _align_wrap_data;
 
 /* transfer data free function */
@@ -372,6 +373,9 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
         }
     }
 
+    newdata->init_dest = d->init_dest;
+    newdata->out_needs_api = d->out_needs_api;
+
     return (NpyAuxData *)newdata;
 }
 
@@ -391,12 +395,17 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
             *todata = d->todata,
             *fromdata = d->fromdata;
     char *bufferin = d->bufferin, *bufferout = d->bufferout;
+    npy_bool init_dest = d->init_dest, out_needs_api = d->out_needs_api;
 
     for(;;) {
         if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
             tobuffer(bufferin, inner_src_itemsize, src, src_stride,
                                     NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
                                     src_itemsize, todata);
+            if (init_dest) {
+                memset(bufferout, 0,
+                        dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
+            }
             wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
                                     NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
                                     inner_src_itemsize, wrappeddata);
@@ -406,56 +415,16 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
             N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
             src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
             dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
+            if (out_needs_api && PyErr_Occurred()) {
+                return;
+            }
         }
         else {
             tobuffer(bufferin, inner_src_itemsize, src, src_stride, N,
                                             src_itemsize, todata);
-            wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize, N,
-                                            inner_src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize, N,
-                                            dst_itemsize, fromdata);
-            return;
-        }
-    }
-}
-
-static void
-_strided_to_strided_contig_align_wrap_init_dest(char *dst, npy_intp dst_stride,
-                        char *src, npy_intp src_stride,
-                        npy_intp N, npy_intp src_itemsize,
-                        NpyAuxData *data)
-{
-    _align_wrap_data *d = (_align_wrap_data *)data;
-    PyArray_StridedUnaryOp *wrapped = d->wrapped,
-            *tobuffer = d->tobuffer,
-            *frombuffer = d->frombuffer;
-    npy_intp inner_src_itemsize = d->src_itemsize,
-             dst_itemsize = d->dst_itemsize;
-    NpyAuxData *wrappeddata = d->wrappeddata,
-            *todata = d->todata,
-            *fromdata = d->fromdata;
-    char *bufferin = d->bufferin, *bufferout = d->bufferout;
-
-    for(;;) {
-        if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
-            tobuffer(bufferin, inner_src_itemsize, src, src_stride,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    src_itemsize, todata);
-            memset(bufferout, 0, dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
-            wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    inner_src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    dst_itemsize, fromdata);
-            N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
-            src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
-            dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
-        }
-        else {
-            tobuffer(bufferin, inner_src_itemsize, src, src_stride, N,
-                                            src_itemsize, todata);
-            memset(bufferout, 0, dst_itemsize*N);
+            if (init_dest) {
+                memset(bufferout, 0, dst_itemsize*N);
+            }
             wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize, N,
                                             inner_src_itemsize, wrappeddata);
             frombuffer(dst, dst_stride, bufferout, dst_itemsize, N,
@@ -477,6 +446,7 @@ _strided_to_strided_contig_align_wrap_init_dest(char *dst, npy_intp dst_stride,
  * wrapped - contig to contig transfer function being wrapped
  * wrappeddata - data for wrapped
  * init_dest - 1 means to memset the dest buffer to 0 before calling wrapped.
+ * out_needs_api - if NPY_TRUE, check for (and break on) Python API errors.
  *
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
@@ -487,6 +457,7 @@ wrap_aligned_contig_transfer_function(
             PyArray_StridedUnaryOp *frombuffer, NpyAuxData *fromdata,
             PyArray_StridedUnaryOp *wrapped, NpyAuxData *wrappeddata,
             int init_dest,
+            int out_needs_api,
             PyArray_StridedUnaryOp **out_stransfer,
             NpyAuxData **out_transferdata)
 {
@@ -519,14 +490,11 @@ wrap_aligned_contig_transfer_function(
     data->bufferin = (char *)data + basedatasize;
     data->bufferout = data->bufferin +
                 NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_itemsize;
+    data->init_dest = (npy_bool) init_dest;
+    data->out_needs_api = (npy_bool) out_needs_api;
 
     /* Set the function and data */
-    if (init_dest) {
-        *out_stransfer = &_strided_to_strided_contig_align_wrap_init_dest;
-    }
-    else {
-        *out_stransfer = &_strided_to_strided_contig_align_wrap;
-    }
+    *out_stransfer = &_strided_to_strided_contig_align_wrap;
     *out_transferdata = (NpyAuxData *)data;
 
     return NPY_SUCCEED;
@@ -1171,6 +1139,7 @@ get_datetime_to_unicode_transfer_function(int aligned,
                         frombuffer, fromdata,
                         caststransfer, castdata,
                         PyDataType_FLAGCHK(str_dtype, NPY_NEEDS_INIT),
+                        *out_needs_api,
                         out_stransfer, out_transferdata) != NPY_SUCCEED) {
         NPY_AUXDATA_FREE(castdata);
         NPY_AUXDATA_FREE(todata);
@@ -1293,6 +1262,7 @@ get_unicode_to_datetime_transfer_function(int aligned,
                         frombuffer, fromdata,
                         caststransfer, castdata,
                         PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
+                        *out_needs_api,
                         out_stransfer, out_transferdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
         NPY_AUXDATA_FREE(castdata);
@@ -1613,6 +1583,7 @@ get_cast_transfer_function(int aligned,
                             frombuffer, fromdata,
                             caststransfer, castdata,
                             PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
+                            *out_needs_api,
                             out_stransfer, out_transferdata) != NPY_SUCCEED) {
             NPY_AUXDATA_FREE(castdata);
             NPY_AUXDATA_FREE(todata);
