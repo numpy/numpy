@@ -618,3 +618,12 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_not_deprecated(round, args=(scalar,))
             self.assert_not_deprecated(round, args=(scalar, 0))
             self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
+
+
+class TestDtypeStrings(_DeprecationTestCase):
+    # attempted but failed 2012-02-04, NumPy 1.7
+    # succeeded 2020-03-34, NumPy 1.19
+    def test_o4_o8(self):
+        self.assert_deprecated(np.dtype, args=('O4',))
+        self.assert_deprecated(np.dtype, args=('O8',))
+

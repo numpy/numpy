@@ -915,18 +915,6 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 }
 
 
-/**
- * WARNING: This flag is a bad idea, but was the only way to both
- *   1) Support unpickling legacy pickles with object types.
- *   2) Deprecate (and later disable) usage of O4 and O8
- *
- * The key problem is that the pickled representation unpickles by
- * directly calling the dtype constructor, which has no way of knowing
- * that it is in an unpickle context instead of a normal context without
- * evil global state like we create here.
- */
-NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
-
 /*NUMPY_API
  * Typestr converter
  */
@@ -1049,14 +1037,11 @@ PyArray_TypestrConvert(int itemsize, int gentype)
              */
             if (itemsize == 4 || itemsize == 8) {
                 int ret = 0;
-                if (evil_global_disable_warn_O4O8_flag) {
-                    /* 2012-02-04, 1.7, not sure when this can be removed */
-                    ret = DEPRECATE("DType strings 'O4' and 'O8' are "
-                            "deprecated because they are platform "
-                            "specific. Use 'O' instead");
-                }
-
-                if (ret == 0) {
+                /* 2012-02-04, 1.7, not sure when this can be removed */
+                /* 2020-03-24, 1.19, fixed to appear when not in a pickle context */
+                if (DEPRECATE("DType strings 'O4' and 'O8' are "
+                              "deprecated because they are platform "
+                              "specific. Use 'O' instead") == 0) {
                     newtype = NPY_OBJECT;
                 }
             }

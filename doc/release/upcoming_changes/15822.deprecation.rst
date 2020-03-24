@@ -1,0 +1,4 @@
+``np.dtype('O4')`` and ``np.dtype('O8')`` are deprecated
+--------------------------------------------------------
+These are aliases for ``np.dtype("O")``, and were intended to be deprecated
+in NumPy 1.7, but the message was not emitted properly.
