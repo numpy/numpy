@@ -6385,6 +6385,21 @@ class MaskedConstant(MaskedArray):
             # it's a subclass, or something is wrong, make it obvious
             return object.__repr__(self)
 
+    def __format__(self, format_spec):
+        # Replace ndarray.__format__ with the default, which supports no format characters.
+        # Supporting format characters is unwise here, because we do not know what type
+        # the user was expecting - better to not guess.
+        try:
+            return object.__format__(self, format_spec)
+        except TypeError:
+            # 2020-03-23, NumPy 1.19.0
+            warnings.warn(
+                "Format strings passed to MaskedConstant are ignored, but in future may "
+                "error or produce different behavior",
+                FutureWarning, stacklevel=2
+            )
+            return object.__format__(self, "")
+
     def __reduce__(self):
         """Override of MaskedArray's __reduce__.
         """
