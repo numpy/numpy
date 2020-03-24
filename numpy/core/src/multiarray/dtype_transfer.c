@@ -398,7 +398,8 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
     npy_bool init_dest = d->init_dest, out_needs_api = d->out_needs_api;
 
     for(;;) {
-        /* The caller does not know if a previous call resulted in a Python
+        /*
+         * The caller does not know if a previous call resulted in a Python
          * exception. Much of the Python API is unsafe while an exception is in
          * flight, so just skip all the work. Someone higher in the call stack
          * will check for errors and propagate them.
