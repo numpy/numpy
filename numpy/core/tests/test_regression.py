@@ -1412,6 +1412,8 @@ class TestRegression:
         # gh-15790
         a = np.array([u'\x80'] * 129, dtype='U3')
         assert_raises(UnicodeEncodeError, np.array, a, 'S')
+        b = a.reshape(3, 43)[:-1, :-1]
+        assert_raises(UnicodeEncodeError, np.array, b, 'S')
 
     def test_mixed_string_unicode_array_creation(self):
         a = np.array(['1234', u'123'])
