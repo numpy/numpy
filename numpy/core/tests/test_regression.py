@@ -1506,10 +1506,7 @@ class TestRegression:
                 test_type(t)
 
     def test_buffer_hashlib(self):
-        try:
-            from hashlib import md5
-        except ImportError:
-            from md5 import new as md5
+        from hashlib import md5
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
