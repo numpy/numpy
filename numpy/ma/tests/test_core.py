@@ -447,6 +447,21 @@ class TestMaskedArray:
         assert_equal(copied.mask, [0, 0, 0])
         assert_equal(a.mask, [0, 1, 0])
 
+    def test_format(self):
+        a = array([0, 1, 2], mask=[False, True, False])
+        assert_equal(format(a), "[0 -- 2]")
+        assert_equal(format(masked), "--")
+        assert_equal(format(masked, ""), "--")
+
+        # Postponed from PR #15410, perhaps address in the future.
+        # assert_equal(format(masked, " >5"), "   --")
+        # assert_equal(format(masked, " <5"), "--   ")
+
+        # Expect a FutureWarning for using format_spec with MaskedElement
+        with assert_warns(FutureWarning):
+            with_format_string = format(masked, " >5")
+        assert_equal(with_format_string, "--")
+
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])
         assert_equal(str(a), '[0 -- 2]')
