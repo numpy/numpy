@@ -50,7 +50,7 @@ def nep_metadata():
             raise RuntimeError(
                 f'Title for NEP {nr} does not start with "NEP {nr} — " '
                 '(note that — here is a special, enlongated dash). Got: '
-                f'    "{tags["Title"]}"')
+                f'    {tags["Title"]!r}')
 
         if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
             if not 'Resolution' in tags:

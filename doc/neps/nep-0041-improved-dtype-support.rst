@@ -160,7 +160,7 @@ Further, the public API will be designed in a way that is extensible in the futu
    version of the C-API used for the internal NumPy datatypes.
 
 The datatype system may be targeted to work with NumPy arrays,
-for example by providing strided-loops, but should avoid using the array-object.
+for example by providing strided-loops, but should avoid direct interactions with the array-object (typically `np.ndarray` instances).
 Instead, the design principle will be that the array-object is a consumer
 of the datatype.
 While only a guiding principle, this may allow splitting the datatype system
@@ -737,4 +737,3 @@ We would like to thank especially Stephan Hoyer, Nathaniel Smith, and Eric Wiese
 for repeated in-depth discussion about datatype design.
 We are very grateful for the community input in reviewing and revising this
 NEP and would like to thank especially Ross Barnowski and Ralf Gommers.
-
