@@ -59,11 +59,17 @@ def configuration(parent_package='', top_path=None):
                 return []
             return [all_sources[0]]
 
+    # AIX needs to be told to not use the extra underscore '_'
+    # Note: this setting is actually dependent on the fortran compiler behavior
+    # used to build liblapack.a (xlf does not append!, maybe gfortran does)
+    # Better way to establish liblapack.a definition is needed.
+    defs = [('NO_APPEND_FORTRAN', None)] if sys.platform[:3] == "aix" else []
     config.add_extension(
         'lapack_lite',
         sources=['lapack_litemodule.c', get_lapack_lite_sources],
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
+        define_macros=defs,
     )
 
     # umath_linalg module
@@ -73,7 +79,9 @@ def configuration(parent_package='', top_path=None):
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
         libraries=['npymath'],
+        define_macros=defs,
     )
+
     return config
 
 if __name__ == '__main__':
