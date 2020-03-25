@@ -809,9 +809,6 @@ class TestDelete:
         a_del = delete(self.a, indices)
         nd_a_del = delete(self.nd_a, indices, axis=1)
         msg = 'Delete failed for obj: %r' % indices
-        # NOTE: The cast should be removed after warning phase for bools
-        if not isinstance(indices, (slice, int, long, np.integer)):
-            indices = np.asarray(indices, dtype=np.intp)
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
         xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
@@ -827,7 +824,6 @@ class TestDelete:
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
-        # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
         with pytest.raises(IndexError):
             delete(self.a, [100])
@@ -836,14 +832,17 @@ class TestDelete:
 
         self._check_inverse_of_slicing([0, -1, 2, 2])
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=FutureWarning)
-            obj = np.array([True, False, False], dtype=bool)
-            self._check_inverse_of_slicing(obj)
-            # _check_inverse_of_slicing operates on two arrays, so warns twice
-            assert len(w) == 2
-            assert_(w[0].category is FutureWarning)
-            assert_(w[1].category is FutureWarning)
+        self._check_inverse_of_slicing([True, False, False, True, False])
+
+        # not legal, indexing with these would change the dimension
+        with pytest.raises(ValueError):
+            delete(self.a, True)
+        with pytest.raises(ValueError):
+            delete(self.a, False)
+
+        # not enough items
+        with pytest.raises(ValueError):
+            delete(self.a, [False]*4)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
