@@ -784,7 +784,7 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order='K', subok=False, ndmin=0)
+    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
 
     Create an array.
 
