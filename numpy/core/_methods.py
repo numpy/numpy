@@ -63,7 +63,7 @@ def _count_reduce_items(arr, axis):
         axis = (axis,)
     items = 1
     for ax in axis:
-        items *= arr.shape[ax]
+        items *= arr.shape[mu.normalize_axis_index(ax, arr.ndim)]
     return items
 
 # Numpy 1.17.0, 2019-02-24
