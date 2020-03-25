@@ -761,8 +761,8 @@ def array_split(ary, indices_or_sections, axis=0):
 
     >>> x = np.reshape(np.arange(16), (4, 4))
     >>> np.array_split(x, [3, 3], (0, 1))
-        [array([[0, 1]),
-        array([4, 5]]),
+        [array([[0, 1],
+                [4, 5]]),
         array([[2], [6]]),
         array([[3], [7]]),
         array([[8, 9]]),
@@ -792,7 +792,7 @@ def array_split(ary, indices_or_sections, axis=0):
             raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
 
         # Verify there is an index or section for every axis.
-        if len(indices_or_sections) is not len(axis):
+        if len(indices_or_sections) != len(axis):
             raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
 
         sub_matrices = [ary]
@@ -919,7 +919,7 @@ def split(ary, indices_or_sections, axis=0):
      array([], dtype=float64)]
 
     >>> x = np.reshape(np.arange(16), (4, 4))
-    >>> np.split(x, [4, 2], 0, True)
+    >>> np.split(x, [4, 2], (0, 1))
     [array([[0, 1]]),
     array([[2, 3]]),
     array([[4, 5]]),
@@ -928,7 +928,6 @@ def split(ary, indices_or_sections, axis=0):
     array([[10, 11]]),
     array([[12, 13]]),
     array([[14, 15]])]
-
     """
 
     def verify_equal_division(indices_or_sections, axis):
@@ -948,7 +947,7 @@ def split(ary, indices_or_sections, axis=0):
         except TypeError:
             raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
 
-        if len(indices_or_sections) is not len(axis):
+        if len(indices_or_sections) != len(axis):
             raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
 
         for i in range(len(axis)):
