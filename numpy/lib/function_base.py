@@ -4207,12 +4207,17 @@ def delete(arr, obj, axis=None):
     Parameters
     ----------
     arr : array_like
-      Input array.
+        Input array.
     obj : slice, int or array of ints
-      Indicate indices of sub-arrays to remove along the specified axis.
+        Indicate indices of sub-arrays to remove along the specified axis.
+
+        .. versionchanged:: 1.19.0
+            Boolean indices are now treated as a mask of elements to remove,
+            rather than being cast to the integers 0 and 1.
+
     axis : int, optional
-      The axis along which to delete the subarray defined by `obj`.
-      If `axis` is None, `obj` is applied to the flattened array.
+        The axis along which to delete the subarray defined by `obj`.
+        If `axis` is None, `obj` is applied to the flattened array.
 
     Returns
     -------
@@ -4330,19 +4335,8 @@ def delete(arr, obj, axis=None):
         else:
             return new
 
-    _obj = obj
-    obj = np.asarray(obj)
-    # After removing the special handling of booleans and out of
-    # bounds values, the conversion to the array can be removed.
-    if obj.dtype == bool:
-        # 2012-10-11, NumPy 1.8
-        warnings.warn("in the future insert will treat boolean arrays and "
-                      "array-likes as boolean index instead of casting it "
-                      "to integer", FutureWarning, stacklevel=3)
-        obj = obj.astype(intp)
-    if isinstance(_obj, (int, long, integer)):
+    if isinstance(obj, (int, integer)) and not isinstance(obj, bool):
         # optimization for a single value
-        obj = obj.item()
         if (obj < -N or obj >= N):
             raise IndexError(
                 "index %i is out of bounds for axis %i with "
@@ -4358,11 +4352,23 @@ def delete(arr, obj, axis=None):
         slobj2[axis] = slice(obj+1, None)
         new[tuple(slobj)] = arr[tuple(slobj2)]
     else:
+        _obj = obj
+        obj = np.asarray(obj)
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
-        keep = ones(N, dtype=bool)
 
-        keep[obj, ] = False
+        if obj.dtype == bool:
+            if obj.shape != (N,):
+                raise ValueError('boolean array argument obj to delete '
+                                 'must be one dimensional and match the axis '
+                                 'length of {}'.format(N))
+
+            # optimization, the other branch is slower
+            keep = ~obj
+        else:
+            keep = ones(N, dtype=bool)
+            keep[obj,] = False
+
         slobj[axis] = keep
         new = arr[tuple(slobj)]
 
