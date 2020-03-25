@@ -1582,8 +1582,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                          "ndmin", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
-        PyErr_SetString(PyExc_ValueError,
-                        "only 2 non-keyword arguments accepted");
+        PyErr_Format(PyExc_TypeError,
+                     "array() takes from 1 to 2 positional arguments but "
+                     "%zd were given", PyTuple_GET_SIZE(args));
         return NULL;
     }
 
