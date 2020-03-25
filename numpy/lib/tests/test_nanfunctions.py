@@ -848,6 +848,12 @@ class TestNanFunctions_Percentile:
                 warnings.simplefilter('always')
                 assert_equal(np.nanpercentile(mat, 40, axis=axis), np.zeros([]))
                 assert_(len(w) == 0)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            assert_equal(np.nanpercentile(mat, 40), np.nan)
+            assert_equal(np.nanpercentile(mat, [40, ]), [np.nan, ])
+            assert_equal(np.nanpercentile(mat, [40, 40]), [np.nan, np.nan])
+            assert_(len(w) != 0)
 
     def test_scalar(self):
         assert_equal(np.nanpercentile(0., 100), 0.)
