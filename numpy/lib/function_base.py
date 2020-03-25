@@ -4212,7 +4212,7 @@ def delete(arr, obj, axis=None):
         Indicate indices of sub-arrays to remove along the specified axis.
 
         .. versionchanged:: 1.19.0
-            Boolean indices are now treated as as mask of elements to remove,
+            Boolean indices are now treated as a mask of elements to remove,
             rather than being cast to the integers 0 and 1.
 
     axis : int, optional
