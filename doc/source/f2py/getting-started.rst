@@ -52,8 +52,8 @@ module ``fib1.so`` (see ``-m`` flag) to the current directory. Now, in
 Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
 
   >>> import numpy
-  >>> import fib1 # doctest: +SKIP
-  >>> print(fib1.fib.__doc__) # doctest: +SKIP
+  >>> import fib1
+  >>> print(fib1.fib.__doc__)
   fib(a,[n])
 
   Wrapper for ``fib``.
@@ -68,8 +68,8 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
       Default: len(a)
 
   >>> a = numpy.zeros(8, 'd')
-  >>> fib1.fib(a) # doctest: +SKIP
-  >>> print(a) # doctest: +SKIP
+  >>> fib1.fib(a)
+  >>> print(a)
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
 .. note::
@@ -82,14 +82,14 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
   * One can use different values for optional ``n``::
 
       >>> a1 = numpy.zeros(8, 'd')
-      >>> fib1.fib(a1, 6) # doctest: +SKIP
-      >>> print(a1) # doctest: +SKIP
+      >>> fib1.fib(a1, 6)
+      >>> print(a1)
       [ 0.  1.  1.  2.  3.  5.  0.  0.]
 
     but an exception is raised when it is incompatible with the input
     array ``a``::
 
-      >>> fib1.fib(a, 10) # doctest: +SKIP
+      >>> fib1.fib(a, 10)
       Traceback (most recent call last):
         File "<stdin>", line 1, in <module>
       fib.error: (len(a)>=n) failed for 1st keyword n: fib:n=10
@@ -109,8 +109,8 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     demonstrated below::
 
       >>> a = numpy.ones(8, 'i')
-      >>> fib1.fib(a) # doctest: +SKIP
-      >>> print(a) # doctest: +SKIP
+      >>> fib1.fib(a)
+      >>> print(a)
       [1 1 1 1 1 1 1 1]
 
     Clearly, this is not an expected behaviour. The fact that the
@@ -124,8 +124,8 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     the example above would read::
 
       >>> a = numpy.ones(8, 'i')
-      >>> fib1.fib(a) # doctest: +SKIP
-      >>> print(a) # doctest: +SKIP
+      >>> fib1.fib(a)
+      >>> print(a)
       [  0.   1.   1.   2.   3.   5.   8.  13.]
 
     However, the recommended way to get changes made by Fortran
@@ -195,8 +195,8 @@ one.
 
 In Python::
 
-  >>> import fib2 # doctest: +SKIP
-  >>> print(fib2.fib.__doc__) # doctest: +SKIP
+  >>> import fib2
+  >>> print(fib2.fib.__doc__)
   a = fib(n)
 
   Wrapper for ``fib``.
@@ -209,7 +209,7 @@ In Python::
   -------
   a : rank-1 array('d') with bounds (n)
 
-  >>> print(fib2.fib(8)) # doctest: +SKIP
+  >>> print(fib2.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
 .. note::
@@ -254,8 +254,8 @@ Building the extension module can be now carried out in one command::
 Notice that the resulting wrapper to ``FIB`` is as "smart" as in
 previous case::
 
-  >>> import fib3 # doctest: +SKIP
-  >>> print(fib3.fib.__doc__) # doctest: +SKIP
+  >>> import fib3
+  >>> print(fib3.fib.__doc__)
   a = fib(n)
 
   Wrapper for ``fib``.
@@ -268,5 +268,5 @@ previous case::
   -------
   a : rank-1 array('d') with bounds (n)
 
-  >>> print(fib3.fib(8)) # doctest: +SKIP
+  >>> print(fib3.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]
