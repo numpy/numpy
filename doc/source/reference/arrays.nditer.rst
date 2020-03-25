@@ -28,7 +28,7 @@ using the standard Python iterator interface.
     >>> for x in np.nditer(a):
     ...     print(x, end=' ')
     ...
-    0 1 2 3 4 5 
+    0 1 2 3 4 5
 
 An important thing to be aware of for this iteration is that the order
 is chosen to match the memory layout of the array instead of using a
@@ -44,12 +44,12 @@ of that transpose in C order.
     >>> for x in np.nditer(a.T):
     ...     print(x, end=' ')
     ...
-    0 1 2 3 4 5 
+    0 1 2 3 4 5
 
     >>> for x in np.nditer(a.T.copy(order='C')):
     ...     print(x, end=' ')
     ...
-    0 3 1 4 2 5 
+    0 3 1 4 2 5
 
 The elements of both `a` and `a.T` get traversed in the same order,
 namely the order they are stored in memory, whereas the elements of
@@ -72,11 +72,11 @@ order='C' for C order and order='F' for Fortran order.
     >>> for x in np.nditer(a, order='F'):
     ...     print(x, end=' ')
     ...
-    0 3 1 4 2 5 
+    0 3 1 4 2 5
     >>> for x in np.nditer(a.T, order='C'):
     ...     print(x, end=' ')
     ...
-    0 3 1 4 2 5 
+    0 3 1 4 2 5
 
 .. _nditer-context-manager:
 
@@ -146,12 +146,12 @@ elements each.
     >>> for x in np.nditer(a, flags=['external_loop']):
     ...     print(x, end=' ')
     ...
-    [0 1 2 3 4 5] 
+    [0 1 2 3 4 5]
 
     >>> for x in np.nditer(a, flags=['external_loop'], order='F'):
     ...     print(x, end=' ')
     ...
-    [0 3] [1 4] [2 5] 
+    [0 3] [1 4] [2 5]
 
 Tracking an Index or Multi-Index
 --------------------------------
@@ -173,13 +173,13 @@ progression of the index:
     >>> for x in it:
     ...     print("%d <%d>" % (x, it.index), end=' ')
     ...
-    0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5> 
+    0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
 
     >>> it = np.nditer(a, flags=['multi_index'])
     >>> for x in it:
     ...     print("%d <%s>" % (x, it.multi_index), end=' ')
     ...
-    0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)> 
+    0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> with np.nditer(a, flags=['multi_index'], op_flags=['writeonly']) as it:
     ...     for x in it:
@@ -220,14 +220,14 @@ produce identical results to the ones in the previous section.
     ...     print("%d <%d>" % (it[0], it.index), end=' ')
     ...     is_not_finished = it.iternext()
     ...
-    0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5> 
+    0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
 
     >>> it = np.nditer(a, flags=['multi_index'])
     >>> while not it.finished:
     ...     print("%d <%s>" % (it[0], it.multi_index), end=' ')
     ...     is_not_finished = it.iternext()
     ...
-    0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)> 
+    0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> with np.nditer(a, flags=['multi_index'], op_flags=['writeonly']) as it:
     ...     while not it.finished:
@@ -259,12 +259,12 @@ is enabled.
     >>> for x in np.nditer(a, flags=['external_loop'], order='F'):
     ...     print(x, end=' ')
     ...
-    [0 3] [1 4] [2 5] 
+    [0 3] [1 4] [2 5]
 
     >>> for x in np.nditer(a, flags=['external_loop','buffered'], order='F'):
     ...     print(x, end=' ')
     ...
-    [0 3 1 4 2 5] 
+    [0 3 1 4 2 5]
 
 Iterating as a Specific Data Type
 ---------------------------------
@@ -316,12 +316,12 @@ specified as an iterator flag.
     ...                 op_dtypes=['complex128']):
     ...     print(np.sqrt(x), end=' ')
     ...
-    1.7320508075688772j 1.4142135623730951j 1j 0j (1+0j) (1.4142135623730951+0j) 
+    1.7320508075688772j 1.4142135623730951j 1j 0j (1+0j) (1.4142135623730951+0j)
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['complex128']):
     ...     print(np.sqrt(x), end=' ')
     ...
-    1.7320508075688772j 1.4142135623730951j 1j 0j (1+0j) (1.4142135623730951+0j) 
+    1.7320508075688772j 1.4142135623730951j 1j 0j (1+0j) (1.4142135623730951+0j)
 
 
 The iterator uses NumPy's casting rules to determine whether a specific
@@ -346,7 +346,7 @@ complex to float.
     ...                 casting='same_kind'):
     ...     print(x, end=' ')
     ...
-    0.0 1.0 2.0 3.0 4.0 5.0 
+    0.0 1.0 2.0 3.0 4.0 5.0
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['int32'], casting='same_kind'):
     ...     print(x, end=' ')
@@ -393,7 +393,7 @@ a two dimensional array together.
     >>> for x, y in np.nditer([a,b]):
     ...     print("%d:%d" % (x,y), end=' ')
     ...
-    0:0 1:1 2:2 0:3 1:4 2:5 
+    0:0 1:1 2:2 0:3 1:4 2:5
 
 When a broadcasting error occurs, the iterator raises an exception
 which includes the input shapes to help diagnose the problem.
@@ -406,9 +406,8 @@ which includes the input shapes to help diagnose the problem.
     ...     print("%d:%d" % (x,y), end=' ')
     ...
     Traceback (most recent call last):
-      ...
-    ValueError: operands could not be broadcast together with shapes (2,) (2,3) 
-
+    ...
+    ValueError: operands could not be broadcast together with shapes (2,) (2,3)
 
 Iterator-Allocated Output Arrays
 --------------------------------
@@ -478,9 +477,9 @@ reasons.
 
     >>> b = np.zeros((3,))
     >>> square([1,2,3], out=b)
-    array([1., 4., 9.])
+    array([ 1.,  4.,  9.])
     >>> b
-    array([1., 4., 9.])
+    array([ 1.,  4.,  9.])
 
     >>> square(np.arange(6).reshape(2,3), out=b)
     Traceback (most recent call last):
@@ -530,10 +529,8 @@ Everything to do with the outer product is handled by the iterator setup.
     >>> result
     array([[[ 0,  0,  0,  0],
             [ 0,  0,  0,  0]],
-    <BLANKLINE>
            [[ 0,  1,  2,  3],
             [ 4,  5,  6,  7]],
-    <BLANKLINE>
            [[ 0,  2,  4,  6],
             [ 8, 10, 12, 14]]])
 
@@ -672,9 +669,9 @@ Here's how this looks.
     ...
     >>> a = np.arange(6).reshape(2,3)
     >>> sum_squares_py(a)
-    array(55.)
+    array(55.0)
     >>> sum_squares_py(a, axis=-1)
-    array([ 5., 50.])
+    array([  5.,  50.])
 
 To Cython-ize this function, we replace the inner loop (y[...] += x*x) with
 Cython code that's specialized for the float64 dtype. With the
