@@ -1,7 +1,6 @@
 import pytest
 
 from numpy import array
-from numpy.compat import long
 from numpy.testing import assert_, assert_raises
 from . import util
 
@@ -18,7 +17,6 @@ class TestReturnLogical(util.F2PyTest):
         assert_(t(1j) == 1)
         assert_(t(234) == 1)
         assert_(t(234.6) == 1)
-        assert_(t(long(234)) == 1)
         assert_(t(234.6 + 3j) == 1)
         assert_(t('234') == 1)
         assert_(t('aaa') == 1)

@@ -834,7 +834,7 @@ General check of Python Type
 .. c:function:: PyArray_IsPythonScalar(op)
 
     Evaluates true if *op* is a builtin Python scalar object (int,
-    float, complex, str, unicode, long, bool).
+    float, complex, bytes, str, long, bool).
 
 .. c:function:: PyArray_IsAnyScalar(op)
 

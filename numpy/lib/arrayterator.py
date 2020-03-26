@@ -10,8 +10,6 @@ a user-specified number of elements.
 from operator import mul
 from functools import reduce
 
-from numpy.compat import long
-
 __all__ = ['Arrayterator']
 
 
@@ -108,7 +106,7 @@ class Arrayterator:
             if slice_ is Ellipsis:
                 fixed.extend([slice(None)] * (dims-length+1))
                 length = len(fixed)
-            elif isinstance(slice_, (int, long)):
+            elif isinstance(slice_, int):
                 fixed.append(slice(slice_, slice_+1, 1))
             else:
                 fixed.append(slice_)

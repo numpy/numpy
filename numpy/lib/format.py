@@ -166,7 +166,7 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    isfileobj, long, os_fspath, pickle
+    isfileobj, os_fspath, pickle
     )
 
 
@@ -594,7 +594,7 @@ def _read_array_header(fp, version):
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-            not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
+            not numpy.all([isinstance(x, int) for x in d['shape']])):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):

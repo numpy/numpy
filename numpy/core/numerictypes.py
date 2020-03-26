@@ -83,7 +83,6 @@ import types as _types
 import numbers
 import warnings
 
-from numpy.compat import bytes, long
 from numpy.core.multiarray import (
         typeinfo, ndarray, array, empty, dtype, datetime_data,
         datetime_as_string, busday_offset, busday_count, is_busday,
@@ -119,8 +118,8 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str
-unicode = str
+from builtins import bool, int, float, complex, object, str, bytes
+from numpy.compat import long, unicode
 
 
 # We use this later

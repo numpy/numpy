@@ -40,7 +40,7 @@ from collections import Counter, OrderedDict
 from . import numeric as sb
 from . import numerictypes as nt
 from numpy.compat import (
-    isfileobj, bytes, long, unicode, os_fspath, contextlib_nullcontext
+    isfileobj, os_fspath, contextlib_nullcontext
 )
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
@@ -188,7 +188,7 @@ class format_parser:
         if names:
             if type(names) in [list, tuple]:
                 pass
-            elif isinstance(names, (str, unicode)):
+            elif isinstance(names, str):
                 names = names.split(',')
             else:
                 raise NameError("illegal input names %s" % repr(names))
@@ -703,7 +703,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         shape = _deprecate_shape_0_as_None(shape)
         if shape is None:
             shape = len(recList)
-        if isinstance(shape, (int, long)):
+        if isinstance(shape, int):
             shape = (shape,)
         if len(shape) > 1:
             raise ValueError("Can only deal with 1-d array.")
@@ -792,7 +792,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     if shape is None:
         shape = (-1,)
-    elif isinstance(shape, (int, long)):
+    elif isinstance(shape, int):
         shape = (shape,)
 
     if isfileobj(fd):

@@ -1,7 +1,7 @@
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import (
-    long, os_fspath, contextlib_nullcontext, is_pathlib_path
+    os_fspath, contextlib_nullcontext, is_pathlib_path
 )
 from numpy.core.overrides import set_module
 
@@ -242,7 +242,7 @@ class memmap(ndarray):
                 for k in shape:
                     size *= k
 
-            bytes = long(offset + size*_dbytes)
+            bytes = int(offset + size*_dbytes)
 
             if mode in ('w+', 'r+') and flen < bytes:
                 fid.seek(bytes - 1, 0)

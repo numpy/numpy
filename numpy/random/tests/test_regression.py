@@ -3,7 +3,6 @@ from numpy.testing import (
     assert_, assert_array_equal, assert_raises,
     )
 from numpy import random
-from numpy.compat import long
 import numpy as np
 
 
@@ -47,13 +46,6 @@ class TestRegression:
         freq = np.sum(rvsn == 2) / float(N)
         msg = "Frequency was %f, should be < 0.23" % freq
         assert_(freq < 0.23, msg)
-
-    def test_permutation_longs(self):
-        np.random.seed(1234)
-        a = np.random.permutation(12)
-        np.random.seed(1234)
-        b = np.random.permutation(long(12))
-        assert_array_equal(a, b)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
