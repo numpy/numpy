@@ -728,8 +728,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
     }
     else if (used_ndim > PyArray_NDIM(self)) {
         PyErr_Format(PyExc_IndexError,
-                     "array has %"NPY_INTP_FMT
-                     "-dimension, but %d were indexed",
+                     "too many indices for array: "
+                     "array has %d-dimension, but %d were indexed",
                      PyArray_NDIM(self),
                      used_ndim);
         goto failed_building_indices;
