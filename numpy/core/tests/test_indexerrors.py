@@ -119,7 +119,7 @@ class TestIndexErrors:
         assert_raises_regex(
                 IndexError,
                 "too many indices for array: "
-                "array has 2-dimension, but 5 were indexed",
+                "array is 2-dimensional, but 5 were indexed",
                 lambda: a[index])
 
     def test_methods(self):
