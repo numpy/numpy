@@ -121,6 +121,7 @@ RST_SKIPLIST = [
     'c-info.ufunc-tutorial.rst',
     'c-info.python-as-glue.rst',
     'f2py.getting-started.rst',
+    'arrays.nditer.cython.rst',
 ]
 
 # these names are not required to be present in ALL despite being in
