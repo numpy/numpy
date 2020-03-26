@@ -120,7 +120,7 @@ RST_SKIPLIST = [
     'doc/source/release',
     'c-info.ufunc-tutorial.rst',
     'c-info.python-as-glue.rst',
-    'getting-started.rst',
+    'f2py.getting-started.rst',
 ]
 
 # these names are not required to be present in ALL despite being in
