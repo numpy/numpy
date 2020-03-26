@@ -727,8 +727,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
     }
     else if (used_ndim > PyArray_NDIM(self)) {
-        PyErr_SetString(PyExc_IndexError,
-                        "too many indices for array");
+        PyErr_Format(PyExc_IndexError,
+                     "too many indices for array: "
+                     "array is %d-dimensional, but %d were indexed",
+                     PyArray_NDIM(self),
+                     used_ndim);
         goto failed_building_indices;
     }
     else if (index_ndim == 0) {
