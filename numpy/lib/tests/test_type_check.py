@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.compat import long
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises
     )
@@ -86,7 +85,6 @@ class TestIsscalar:
         assert_(not np.isscalar([3]))
         assert_(not np.isscalar((3,)))
         assert_(np.isscalar(3j))
-        assert_(np.isscalar(long(10)))
         assert_(np.isscalar(4.0))
 
 

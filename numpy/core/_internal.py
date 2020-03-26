@@ -9,7 +9,6 @@ import re
 import sys
 import platform
 
-from numpy.compat import unicode
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
@@ -365,7 +364,7 @@ def _newnames(datatype, order):
     """
     oldnames = datatype.names
     nameslist = list(oldnames)
-    if isinstance(order, (str, unicode)):
+    if isinstance(order, str):
         order = [order]
     seen = set()
     if isinstance(order, (list, tuple)):

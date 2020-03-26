@@ -24,7 +24,7 @@ from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.core.overrides import set_module
 from numpy.core import overrides
-from numpy.compat import asbytes, long
+from numpy.compat import asbytes
 import numpy
 
 __all__ = [
@@ -340,7 +340,7 @@ def multiply(a, i):
     i_arr = numpy.asarray(i)
     if not issubclass(i_arr.dtype.type, integer):
         raise ValueError("Can only multiply by integers")
-    out_size = _get_num_chars(a_arr) * max(long(i_arr.max()), 0)
+    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
 
@@ -450,7 +450,7 @@ def center(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -995,7 +995,7 @@ def ljust(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -1265,7 +1265,7 @@ def rjust(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -1733,7 +1733,7 @@ def zfill(a, width):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
 
@@ -1952,10 +1952,10 @@ class chararray(ndarray):
         else:
             dtype = string_
 
-        # force itemsize to be a Python long, since using NumPy integer
+        # force itemsize to be a Python int, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
         # strings in the new array.
-        itemsize = long(itemsize)
+        itemsize = int(itemsize)
 
         if isinstance(buffer, str):
             # unicode objects do not have the buffer interface
@@ -2720,7 +2720,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 (itemsize != obj.itemsize) or
                 (not unicode and isinstance(obj, unicode_)) or
                 (unicode and isinstance(obj, string_))):
-            obj = obj.astype((dtype, long(itemsize)))
+            obj = obj.astype((dtype, int(itemsize)))
         return obj
 
     if isinstance(obj, ndarray) and issubclass(obj.dtype.type, object):

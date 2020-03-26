@@ -13,7 +13,6 @@ from numpy.polynomial import (
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
-from numpy.compat import long
 from numpy.polynomial.polyutils import RankWarning
 
 #
@@ -315,7 +314,7 @@ def test_truediv(Poly):
         s = stype(5)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
-    for stype in (int, long, float):
+    for stype in (int, float):
         s = stype(5)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)

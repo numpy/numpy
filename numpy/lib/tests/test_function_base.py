@@ -21,7 +21,6 @@ from numpy.lib import (
     select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
     )
 
-from numpy.compat import long
 
 def get_mat(n):
     data = np.arange(n)

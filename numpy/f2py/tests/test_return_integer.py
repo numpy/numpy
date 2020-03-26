@@ -1,7 +1,6 @@
 import pytest
 
 from numpy import array
-from numpy.compat import long
 from numpy.testing import assert_, assert_raises
 from . import util
 
@@ -11,7 +10,6 @@ class TestReturnInteger(util.F2PyTest):
     def check_function(self, t, tname):
         assert_(t(123) == 123, repr(t(123)))
         assert_(t(123.6) == 123)
-        assert_(t(long(123)) == 123)
         assert_(t('123') == 123)
         assert_(t(-123) == -123)
         assert_(t([123]) == 123)

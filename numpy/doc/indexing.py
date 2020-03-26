@@ -372,8 +372,7 @@ exceptions (assigning complex to floats or ints): ::
  >>> x[1]
  1
  >>> x[1] = 1.2j
- <type 'exceptions.TypeError'>: can't convert complex to long; use
- long(abs(z))
+ TypeError: can't convert complex to int
 
 
 Unlike some of the references (such as array and mask indices)
