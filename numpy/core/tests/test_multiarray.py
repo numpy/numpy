@@ -5489,6 +5489,12 @@ class TestStats:
         # of float32.
         assert_(_mean(np.ones(100000, dtype='float16')) == 1)
 
+    def test_mean_axis_error(self):
+        # Ensure that AxisError is raised instead of IndexError when axis is
+        # out of bounds, see gh-15817.
+        with assert_raises(np.core._exceptions.AxisError):
+            np.arange(10).mean(axis=2)
+
     def test_var_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
@@ -5530,6 +5536,12 @@ class TestStats:
         cmat = self.cmat.copy().astype('complex128')
         cmat_swapped = cmat.astype(cmat.dtype.newbyteorder())
         assert_almost_equal(cmat.var(), cmat_swapped.var())
+
+    def test_var_axis_error(self):
+        # Ensure that AxisError is raised instead of IndexError when axis is
+        # out of bounds, see gh-15817.
+        with assert_raises(np.core._exceptions.AxisError):
+            np.arange(10).var(axis=2)
 
     def test_std_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
