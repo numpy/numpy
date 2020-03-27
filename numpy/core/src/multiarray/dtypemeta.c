@@ -107,11 +107,16 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
 
 static PyArray_Descr *
 nonparametric_discover_descr_from_pyobject(
-        PyArray_DTypeMeta *cls, PyObject *NPY_UNUSED(obj))
+        PyArray_DTypeMeta *cls, PyObject *obj)
 {
-    /* Note: This is expected to be changed into a classmethod instead */
-    Py_INCREF(cls->singleton);
-    return cls->singleton;
+    /* If the object is of the correct scalar type return our singleton */
+    if (Py_TYPE(obj) == cls->scalar_type) {
+        Py_INCREF(cls->singleton);
+        return cls->singleton;
+    }
+    /* Otherwise, it may also be a list so use normal machinery to find out */
+    Py_INCREF(Py_NotImplemented);
+    return (PyArray_Descr*)Py_NotImplemented;
 }
 
 

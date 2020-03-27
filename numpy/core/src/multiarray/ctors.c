@@ -52,9 +52,6 @@
 typedef int (*next_element)(void **, void *, PyArray_Descr *, void *);
 typedef int (*skip_separator)(void **, const char *, void *);
 
-static PyObject *
-_array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context);
 
 static npy_bool
 string_is_fully_read(char const* start, char const* end) {
@@ -1518,7 +1515,7 @@ fail:
  *          or NULL with an error set. (A new reference to Py_NotImplemented
  *          is returned.)
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
         PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context) {
     PyObject* tmp;
