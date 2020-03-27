@@ -33,6 +33,7 @@ jobs:
             pip install cython
             pip install .
             pip install scipy
+            pip install pandas
 
       - run:
           name: create release notes
