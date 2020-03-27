@@ -1,0 +1,4 @@
+f2py supports reading access type attributes from derived type statements
+-------------------------------------------------------------------------
+As a result, one does not need to use `public` or `private` statements to
+specify derived type access properties.
