@@ -21,7 +21,7 @@ experience at first. Be assured that the task becomes easier with
 practice, and you may be surprised at how simple the C-code can be to
 understand. Even if you don't think you can write C-code from scratch,
 it is much easier to understand and modify already-written source code
-then create it *de novo*.
+than create it *de novo*.
 
 Python extensions are especially straightforward to understand because
 they all have a very similar structure. Admittedly, NumPy is not a
