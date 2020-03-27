@@ -51,6 +51,11 @@ jobs:
             SPHINXOPTS=-q make -e html
 
       - run:
+          name: run doctests on documentation
+          command: |
+            . venv/bin/activate
+            python tools/refguide_check.py --rst
+      - run:
           name: build neps
           command: |
             . venv/bin/activate
