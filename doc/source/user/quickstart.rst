@@ -147,8 +147,8 @@ rather than providing a single sequence as an argument.
 
     >>> a = np.array(1,2,3,4)    # WRONG
     Traceback (most recent call last):
-    ...
-    ValueError: only 2 non-keyword arguments accepted
+      ...
+    TypeError: array() takes from 1 to 2 positional arguments but 4 were given
     >>> a = np.array([1,2,3,4])  # RIGHT
 
 ``array`` transforms sequences of sequences into two-dimensional arrays,

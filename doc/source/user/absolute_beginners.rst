@@ -1576,6 +1576,10 @@ If you created this array "a" ::
   ...               [ 0.76989341,  0.81299683, -0.95068423, 0.11769564],
   ...               [ 0.20484034,  0.34784527,  1.96979195, 0.51992837]])
 
+.. for doctests
+   The continuous integration truncates dataframe display without this setting.
+   >>> pd.set_option('max_columns', 10)
+
 You could create a Pandas dataframe ::
 
   >>> df = pd.DataFrame(a)
