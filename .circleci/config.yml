@@ -48,6 +48,7 @@ jobs:
           name: run doctests on documentation
           command: |
             . venv/bin/activate
+            (cd doc ; git submodule update --init)
             python tools/refguide_check.py --rst
 
       - run:
@@ -55,7 +56,6 @@ jobs:
           command: |
             . venv/bin/activate
             cd doc
-            git submodule update --init
             SPHINXOPTS=-q make -e html
 
       - run:
