@@ -43,6 +43,13 @@ jobs:
             VERSION=$(python -c "import setup; print(setup.VERSION)")
             towncrier --version $VERSION --yes
             ./tools/ci/test_all_newsfragments_used.py
+
+      - run:
+          name: run doctests on documentation
+          command: |
+            . venv/bin/activate
+            python tools/refguide_check.py --rst
+
       - run:
           name: build devdocs
           command: |
@@ -51,11 +58,6 @@ jobs:
             git submodule update --init
             SPHINXOPTS=-q make -e html
 
-      - run:
-          name: run doctests on documentation
-          command: |
-            . venv/bin/activate
-            python tools/refguide_check.py --rst
       - run:
           name: build neps
           command: |
