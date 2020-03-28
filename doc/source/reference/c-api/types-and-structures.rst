@@ -378,6 +378,9 @@ PyArrayDescr_Type and PyArray_Descr
         The shape (always C-style contiguous) of the sub-array as a Python
         tuple.
 
+    The memory will be deallocated internally with ``PyArray_free``, so it
+    must be allocated with ``PyArray_malloc``.
+
 
 .. c:member:: PyObject *PyArray_Descr.fields
 
