@@ -8,6 +8,7 @@ import operator
 import warnings
 import pytest
 import tempfile
+import re
 
 import numpy as np
 from numpy.testing import (
@@ -546,6 +547,22 @@ def test_deprecate_ragged_arrays():
     arg = [1, [2, 3]]
     with assert_warns(np.VisibleDeprecationWarning):
         np.array(arg)
+
+
+class TestToString(_DeprecationTestCase):
+    # 2020-03-06 1.19.0
+    message = re.escape("tostring() is deprecated. Use tobytes() instead.")
+
+    def test_tostring(self):
+        arr = np.array(list(b"test\xFF"), dtype=np.uint8)
+        self.assert_deprecated(arr.tostring)
+
+    def test_tostring_matches_tobytes(self):
+        arr = np.array(list(b"test\xFF"), dtype=np.uint8)
+        b = arr.tobytes()
+        with assert_warns(DeprecationWarning):
+            s = arr.tostring()
+        assert s == b
 
 
 class TestDTypeCoercion(_DeprecationTestCase):

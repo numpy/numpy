@@ -566,6 +566,23 @@ array_tobytes(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_ToString(self, order);
 }
 
+static PyObject *
+array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    NPY_ORDER order = NPY_CORDER;
+    static char *kwlist[] = {"order", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:tostring", kwlist,
+                                     PyArray_OrderConverter, &order)) {
+        return NULL;
+    }
+    /* 2020-03-30, NumPy 1.19 */
+    if (DEPRECATE("tostring() is deprecated. Use tobytes() instead.") < 0) {
+        return NULL;
+    }
+    return PyArray_ToString(self, order);
+}
+
 
 /* This should grow an order= keyword to be consistent
  */
@@ -2844,7 +2861,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_tolist,
         METH_VARARGS, NULL},
     {"tostring",
-        (PyCFunction)array_tobytes,
+        (PyCFunction)array_tostring,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)array_trace,
