@@ -8,10 +8,14 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
+#include <numpy/arrayscalars.h>
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "dtypemeta.h"
+#include "_datetime.h"
 #include "array_coercion.h"
+
 
 static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
@@ -117,6 +121,72 @@ nonparametric_discover_descr_from_pyobject(
     /* Otherwise, it may also be a list so use normal machinery to find out */
     Py_INCREF(Py_NotImplemented);
     return (PyArray_Descr*)Py_NotImplemented;
+}
+
+
+
+static PyArray_Descr *
+string_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj)
+{
+    /*
+     * Stings are somewhat broken, as they try to convert everything to string
+     * unless it happens to be an array or an object already.
+     */
+    if (PyArray_Check(obj)) {
+        Py_INCREF(Py_None);
+        return (PyArray_Descr *)Py_None;
+    }
+    if (!PyBytes_Check(obj) && !PyUnicode_Check(obj)) {
+        Py_INCREF(Py_None);
+        return (PyArray_Descr *)Py_None;
+    }
+    return PyArray_DTypeFromObjectStringDiscovery(obj, NULL, cls->type_num);
+}
+
+
+static PyArray_Descr *
+void_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj)
+{
+    /*
+     * NOTE: This causes an unnecessary two pass algorithm, since we only
+     * check promotion of the actual descriptor. It would be nicer to
+     * separate out the structured-void type, since it has different behaviour
+     * in many places, and thus should be its own DType (and scalar)
+     */
+    if (PyObject_TypeCheck(obj, &PyVoidArrType_Type)) {
+        /*
+         * The function actually just gets the `.dtype` attribute and puts it
+         * into a new object (for void only though).
+         */
+        PyArray_Descr *descr = ((PyVoidScalarObject *)obj)->descr;
+        Py_INCREF(descr);
+        return descr;
+    }
+
+    return string_discover_descr_from_pyobject(cls, obj);
+}
+
+
+static PyArray_Descr *
+discover_datetime_and_timedelta_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj) {
+    if (PyArray_IsScalar(obj, Datetime) ||
+            PyArray_IsScalar(obj, Timedelta)) {
+        PyArray_DatetimeMetaData *meta;
+        PyArray_Descr *descr = PyArray_DescrFromScalar(obj);
+        meta = get_datetime_metadata_from_dtype(descr);
+        if (meta == NULL) {
+            return NULL;
+        }
+        PyArray_Descr *new_descr = create_datetime_dtype(cls->type_num, meta);
+        Py_DECREF(descr);
+        return new_descr;
+    }
+    else {
+        return find_object_datetime_type(obj, cls->type_num);
+    }
 }
 
 
@@ -240,9 +310,19 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
         dtype_class->parametric = NPY_TRUE;
+        dtype_class->discover_descr_from_pyobject = (
+                discover_datetime_and_timedelta_from_pyobject);
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;
+        if (descr->type_num == NPY_VOID) {
+            dtype_class->discover_descr_from_pyobject = (
+                    void_discover_descr_from_pyobject);
+        }
+        else {
+            dtype_class->discover_descr_from_pyobject = (
+                    string_discover_descr_from_pyobject);
+        }
     }
     else {
         /* nonparametric case */

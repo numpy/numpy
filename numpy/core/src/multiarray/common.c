@@ -125,7 +125,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
  * Get a suitable string dtype by calling `__str__`.
  * For `np.bytes_`, this assumes an ASCII encoding.
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type)
 {

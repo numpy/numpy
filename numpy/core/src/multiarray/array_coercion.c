@@ -350,7 +350,6 @@ npy_new_coercion_cache(
 NPY_NO_EXPORT void
 npy_free_coercion_cache(coercion_cache_obj *next) {
     /* We only need to check from the last used cache pos */
-    int cache_pos = 0;
     while (next != NULL) {
         coercion_cache_obj *current = next;
         next = current->next;
@@ -377,7 +376,7 @@ handle_promotion(
          * datatype.
          */
         // TODO: Need to fix up this whole branch eventually!
-        if (fixed_DType->is_parametric || !fixed_DType->is_legacy) {
+        if (fixed_DType->parametric || !fixed_DType->legacy) {
             PyErr_SetString(PyExc_SystemError,
                     "internal NumPy error, hit a code path which is not yet "
                     "implemented, but that should be unreachable at this time.");
@@ -692,7 +691,6 @@ PyArray_DiscoverDTypeAndShape(
      * to handle caching better.
      */
     enum _dtype_discovery_flags flags = 0;
-    PyArray_Descr *found_descr;
 
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
             obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
