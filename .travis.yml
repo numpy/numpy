@@ -105,7 +105,7 @@ jobs:
       os: linux
       arch: ppc64le
       env:
-       # use ppc64le OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
@@ -113,15 +113,16 @@ jobs:
       os: linux
       arch: s390x
       env:
-       # use s390x OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
+       - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
     - python: 3.7
       os: linux
       arch: aarch64
       env:
-       # use ppc64le OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
