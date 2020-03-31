@@ -597,8 +597,6 @@ class ndenumerate:
     def __iter__(self):
         return self
 
-    next = __next__
-
 
 @set_module('numpy')
 class ndindex:
@@ -664,8 +662,6 @@ class ndindex:
         """
         next(self._it)
         return self._it.multi_index
-
-    next = __next__
 
 
 # You can do all this with slice() plus a few special objects,
