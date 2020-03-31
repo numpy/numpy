@@ -7,6 +7,9 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
+PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
+
+NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
 
 NPY_NO_EXPORT int

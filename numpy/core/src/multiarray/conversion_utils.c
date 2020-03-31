@@ -137,6 +137,20 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     return NPY_SUCCEED;
 }
 
+/*
+ * Like PyArray_IntpConverter, but leaves `seq` untouched if `None` is passed
+ * rather than treating `None` as `()`.
+ */
+NPY_NO_EXPORT int
+PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
+{
+    if (obj == Py_None) {
+        return NPY_SUCCEED;
+    }
+
+    return PyArray_IntpConverter(obj, seq);
+}
+
 /*NUMPY_API
  * Get buffer chunk from object
  *
