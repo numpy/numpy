@@ -167,8 +167,9 @@ class TestIntpConverter:
         assert self.conv(()) == ()
 
     def test_none(self):
-        # gh-15886: could deprecate this
-        assert self.conv(None) == ()
+        # once the warning expires, this will raise TypeError
+        with pytest.warns(DeprecationWarning):
+            assert self.conv(None) == ()
 
     def test_float(self):
         with pytest.raises(TypeError):
