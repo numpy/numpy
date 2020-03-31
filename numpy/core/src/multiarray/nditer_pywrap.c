@@ -17,6 +17,7 @@
 #include "npy_pycompat.h"
 #include "alloc.h"
 #include "common.h"
+#include "conversion_utils.h"
 #include "ctors.h"
 
 /* Functions not part of the public NumPy C API */
@@ -748,7 +749,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     int oa_ndim = -1;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
-    PyArray_Dims itershape = {NULL, 0};
+    PyArray_Dims itershape = {NULL, -1};
     int buffersize = 0;
 
     if (self->iter != NULL) {
@@ -765,7 +766,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     npyiter_order_converter, &order,
                     PyArray_CastingConverter, &casting,
                     &op_axes_in,
-                    PyArray_IntpConverter, &itershape,
+                    PyArray_OptionalIntpConverter, &itershape,
                     &buffersize)) {
         npy_free_cache_dim_obj(itershape);
         return -1;
@@ -800,7 +801,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    if (itershape.len > 0) {
+    if (itershape.len != -1) {
         if (oa_ndim == -1) {
             oa_ndim = itershape.len;
             memset(op_axes, 0, sizeof(op_axes[0]) * nop);
@@ -811,10 +812,6 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                         "of entries equal to the iterator ndim");
             goto fail;
         }
-    }
-    else if (itershape.ptr != NULL) {
-        npy_free_cache_dim_obj(itershape);
-        itershape.ptr = NULL;
     }
 
     self->iter = NpyIter_AdvancedNew(nop, op, flags, order, casting, op_flags,

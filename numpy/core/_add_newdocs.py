@@ -152,7 +152,7 @@ add_newdoc('numpy.core', 'flatiter', ('copy',
 
 add_newdoc('numpy.core', 'nditer',
     """
-    nditer(op, flags=None, op_flags=None, op_dtypes=None, order='K', casting='safe', op_axes=None, itershape=(), buffersize=0)
+    nditer(op, flags=None, op_flags=None, op_dtypes=None, order='K', casting='safe', op_axes=None, itershape=None, buffersize=0)
 
     Efficient multi-dimensional iterator object to iterate over arrays.
     To get started using this object, see the
