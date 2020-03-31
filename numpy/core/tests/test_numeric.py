@@ -1201,6 +1201,17 @@ class TestNonzero:
         a = np.array([[0, 0, 1], [1, 0, 1]])
         assert_equal(np.count_nonzero(a, axis=()), a.astype(bool))
 
+    def test_countnonzero_keepdims(self):
+        a = np.array([[0, 0, 1, 0],
+                      [0, 3, 5, 0],
+                      [7, 9, 2, 0]])
+        assert_equal(np.count_nonzero(a, axis=0, keepdims=True),
+                     [[1, 2, 3, 0]])
+        assert_equal(np.count_nonzero(a, axis=1, keepdims=True),
+                     [[1], [2], [3]])
+        assert_equal(np.count_nonzero(a, keepdims=True),
+                     [[6]])
+
     def test_array_method(self):
         # Tests that the array method
         # call to nonzero works
