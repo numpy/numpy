@@ -2689,12 +2689,14 @@ def test_0d_iter():
     assert_equal(i.ndim, 0)
     assert_equal(len(i), 1)
 
-    i = nditer(np.arange(5), ['multi_index'], [['readonly']], op_axes=[()], itershape=())
+    i = nditer(np.arange(5), ['multi_index'], [['readonly']],
+               op_axes=[()], itershape=())
     assert_equal(i.ndim, 0)
     assert_equal(len(i), 1)
 
     # passing an itershape alone is not enough, the op_axes are also needed
-    assert_raises(ValueError, nditer, np.arange(5), ['multi_index'], [['readonly']], itershape=())
+    with assert_raises(ValueError):
+        nditer(np.arange(5), ['multi_index'], [['readonly']], itershape=())
 
     # Test a more complex buffered casting case (same as another test above)
     sdt = [('a', 'f4'), ('b', 'i8'), ('c', 'c8', (2, 3)), ('d', 'O')]
