@@ -3641,6 +3641,8 @@ cdef class Generator:
         cdef int64_t ni
         cdef np.broadcast it
 
+        if np.ndim(pvals) != 1:
+            raise ValueError("pvals must be 1d array")
         d = len(pvals)
         on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
         parr = <np.ndarray>np.PyArray_FROM_OTF(

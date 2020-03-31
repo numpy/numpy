@@ -4198,6 +4198,8 @@ cdef class RandomState:
         cdef long *mnix
         cdef long ni
 
+        if np.ndim(pvals) != 1:
+            raise ValueError("pvals must be 1d array")
         d = len(pvals)
         parr = <np.ndarray>np.PyArray_FROM_OTF(
             pvals, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
