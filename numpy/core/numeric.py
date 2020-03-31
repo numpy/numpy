@@ -384,7 +384,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     return res
 
 
-def _count_nonzero_dispatcher(a, axis=None, *, keepdims=False):
+def _count_nonzero_dispatcher(a, axis=None, *, keepdims=None):
     return (a,)
 
 
