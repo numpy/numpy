@@ -3537,10 +3537,9 @@ cdef class Generator:
             # approximately zero or when the covariance is not positive-semidefinite
             _factor = u * np.sqrt(abs(s))
         else:
-            _factor = np.sqrt(s)[:, None] * vh
+            _factor = u * np.sqrt(s)
 
-        x = np.dot(x, _factor)
-        x += mean
+        x = mean + x @ _factor.T
         x.shape = tuple(final_shape)
         return x
 
