@@ -1211,8 +1211,8 @@ PyArray_NewFromDescrAndBase(
  *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
  *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
  * dtype     - If not NULL, overrides the data type of the result.
- * ndim      - If not 0 and dims not NULL, overrides the shape of the result.
- * dims      - If not NULL and ndim not 0, overrides the shape of the result.
+ * ndim      - If not -1, overrides the shape of the result.
+ * dims      - If ndim is not -1, overrides the shape of the result.
  * subok     - If 1, use the prototype's array subtype, otherwise
  *             always create a base-class array.
  *
@@ -1225,7 +1225,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 {
     PyObject *ret = NULL;
 
-    if (dims == NULL) {
+    if (ndim == -1) {
         ndim = PyArray_NDIM(prototype);
         dims = PyArray_DIMS(prototype);
     }
@@ -1322,7 +1322,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
                      PyArray_Descr *dtype, int subok)
 {
-    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, 0, NULL, subok);
+    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, -1, NULL, subok);
 }
 
 /*NUMPY_API
