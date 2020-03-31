@@ -244,7 +244,7 @@ else:
 
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
-                  verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
+                  verbose=1, names=('ACTUAL', 'DESIRED'), precision=8):
     msg = ['\n' + header]
     if err_msg:
         if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
@@ -252,26 +252,32 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
         else:
             msg.append(err_msg)
     if verbose:
-        for i, a in enumerate(arrays):
+        from numpy.core import get_printoptions, printoptions, inf
+        options = get_printoptions()
+        if verbose > 1:
+            # Use get/update to avoid overwriting a custom formatter.
+            options.update(threshold=inf)
+        with printoptions(**options):
+            for i, a in enumerate(arrays):
+                if isinstance(a, ndarray):
+                    # Precision is only needed if the objects are ndarrays.
+                    r_func = partial(array_repr, precision=precision)
+                else:
+                    r_func = repr
 
-            if isinstance(a, ndarray):
-                # precision argument is only needed if the objects are ndarrays
-                r_func = partial(array_repr, precision=precision)
-            else:
-                r_func = repr
-
-            try:
-                r = r_func(a)
-            except Exception as exc:
-                r = '[repr failed for <{}>: {}]'.format(type(a).__name__, exc)
-            if r.count('\n') > 3:
-                r = '\n'.join(r.splitlines()[:3])
-                r += '...'
-            msg.append(' %s: %s' % (names[i], r))
+                try:
+                    r = r_func(a)
+                except Exception as exc:
+                    r = '[repr failed for <{}>: {}]'.format(type(a).__name__,
+                                                            exc)
+                if verbose < 2 and r.count('\n') > 3:
+                    r = '\n'.join(r.splitlines()[:3])
+                    r += '...'
+                msg.append(' %s: %s' % (names[i], r))
     return '\n'.join(msg)
 
 
-def assert_equal(actual, desired, err_msg='', verbose=True):
+def assert_equal(actual, desired, err_msg='', verbose=1):
     """
     Raises an AssertionError if two objects are not equal.
 
@@ -296,8 +302,9 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
         The expected object.
     err_msg : str, optional
         The error message to be printed in case of failure.
-    verbose : bool, optional
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
@@ -469,7 +476,7 @@ def print_assert_equal(test_string, actual, desired):
         raise AssertionError(msg.getvalue())
 
 
-def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
+def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=1):
     """
     Raises an AssertionError if two items are not equal up to desired
     precision.
@@ -498,8 +505,9 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         Desired precision, default is 7.
     err_msg : str, optional
         The error message to be printed in case of failure.
-    verbose : bool, optional
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
@@ -595,7 +603,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         raise AssertionError(_build_err_msg())
 
 
-def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
+def assert_approx_equal(actual, desired, significant=7, err_msg='', verbose=1):
     """
     Raises an AssertionError if two items are not equal up to significant
     digits.
@@ -619,8 +627,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         Desired precision, default is 7.
     err_msg : str, optional
         The error message to be printed in case of failure.
-    verbose : bool, optional
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
@@ -694,7 +703,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         raise AssertionError(msg)
 
 
-def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
+def assert_array_compare(comparison, x, y, err_msg='', verbose=1,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -848,7 +857,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         raise ValueError(msg)
 
 
-def assert_array_equal(x, y, err_msg='', verbose=True):
+def assert_array_equal(x, y, err_msg='', verbose=1):
     """
     Raises an AssertionError if two array_like objects are not equal.
 
@@ -870,8 +879,9 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
         The desired, expected object.
     err_msg : str, optional
         The error message to be printed in case of failure.
-    verbose : bool, optional
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
@@ -931,7 +941,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
                          verbose=verbose, header='Arrays are not equal')
 
 
-def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
+def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=1):
     """
     Raises an AssertionError if two objects are not equal up to desired
     precision.
@@ -962,8 +972,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         Desired precision, default is 6.
     err_msg : str, optional
       The error message to be printed in case of failure.
-    verbose : bool, optional
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
@@ -1044,7 +1055,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
              precision=decimal)
 
 
-def assert_array_less(x, y, err_msg='', verbose=True):
+def assert_array_less(x, y, err_msg='', verbose=1):
     """
     Raises an AssertionError if two array_like objects are not ordered by less
     than.
@@ -1067,8 +1078,9 @@ def assert_array_less(x, y, err_msg='', verbose=True):
       The larger object to compare.
     err_msg : string
       The error message to be printed in case of failure.
-    verbose : bool
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
@@ -1471,7 +1483,7 @@ def _assert_valid_refcount(op):
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
-                    err_msg='', verbose=True):
+                    err_msg='', verbose=1):
     """
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
@@ -1496,8 +1508,9 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         If True, NaNs will compare equal.
     err_msg : str, optional
         The error message to be printed in case of failure.
-    verbose : bool, optional
-        If True, the conflicting values are appended to the error message.
+    verbose : int, optional
+        If non-zero, the conflicting values are appended to the error message,
+        and if greater than 1, no array truncation takes place.
 
     Raises
     ------
