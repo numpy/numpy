@@ -711,6 +711,26 @@ class StringConverter:
         return self._callingfunction(value)
     #
 
+    def _do_upgrade(self):
+        # Raise an exception if we locked the converter...
+        if self._locked:
+            errmsg = "Converter is locked and cannot be upgraded"
+            raise ConverterLockError(errmsg)
+        _statusmax = len(self._mapper)
+        # Complains if we try to upgrade by the maximum
+        _status = self._status
+        if _status == _statusmax:
+            errmsg = "Could not find a valid conversion function"
+            raise ConverterError(errmsg)
+        elif _status < _statusmax - 1:
+            _status += 1
+        self.type, self.func, default = self._mapper[_status]
+        self._status = _status
+        if self._initial_default is not None:
+            self.default = self._initial_default
+        else:
+            self.default = default
+
     def upgrade(self, value):
         """
         Find the best converter for a given string, and return the result.
@@ -736,24 +756,7 @@ class StringConverter:
         try:
             return self._strict_call(value)
         except ValueError:
-            # Raise an exception if we locked the converter...
-            if self._locked:
-                errmsg = "Converter is locked and cannot be upgraded"
-                raise ConverterLockError(errmsg)
-            _statusmax = len(self._mapper)
-            # Complains if we try to upgrade by the maximum
-            _status = self._status
-            if _status == _statusmax:
-                errmsg = "Could not find a valid conversion function"
-                raise ConverterError(errmsg)
-            elif _status < _statusmax - 1:
-                _status += 1
-            (self.type, self.func, default) = self._mapper[_status]
-            self._status = _status
-            if self._initial_default is not None:
-                self.default = self._initial_default
-            else:
-                self.default = default
+            self._do_upgrade()
             return self.upgrade(value)
 
     def iterupgrade(self, value):
@@ -765,25 +768,7 @@ class StringConverter:
             for _m in value:
                 _strict_call(_m)
         except ValueError:
-            # Raise an exception if we locked the converter...
-            if self._locked:
-                errmsg = "Converter is locked and cannot be upgraded"
-                raise ConverterLockError(errmsg)
-            _statusmax = len(self._mapper)
-            # Complains if we try to upgrade by the maximum
-            _status = self._status
-            if _status == _statusmax:
-                raise ConverterError(
-                    "Could not find a valid conversion function"
-                    )
-            elif _status < _statusmax - 1:
-                _status += 1
-            (self.type, self.func, default) = self._mapper[_status]
-            if self._initial_default is not None:
-                self.default = self._initial_default
-            else:
-                self.default = default
-            self._status = _status
+            self._do_upgrade()
             self.iterupgrade(value)
 
     def update(self, func, default=None, testing_value=None,
