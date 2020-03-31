@@ -686,6 +686,12 @@ class TestZeroRank:
         y[()] = 6
         assert_equal(x[()], 6)
 
+        # strides and shape must be the same length
+        with pytest.raises(ValueError):
+            np.ndarray((2,), strides=())
+        with pytest.raises(ValueError):
+            np.ndarray((), strides=(2,))
+
     def test_output(self):
         x = np.array(2)
         assert_raises(ValueError, np.add, x, [1], x)
