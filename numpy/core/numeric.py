@@ -448,7 +448,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     array([[2],
            [3]])
     """
-    if axis is None:
+    if axis is None and not keepdims:
         return multiarray.count_nonzero(a)
 
     a = asanyarray(a)
