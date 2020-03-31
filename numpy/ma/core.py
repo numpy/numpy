@@ -2699,8 +2699,6 @@ class MaskedIterator:
                 return masked
         return d
 
-    next = __next__
-
 
 class MaskedArray(ndarray):
     """
