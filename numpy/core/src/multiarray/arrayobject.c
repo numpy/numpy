@@ -41,6 +41,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "arraytypes.h"
 #include "scalartypes.h"
 #include "arrayobject.h"
+#include "conversion_utils.h"
 #include "ctors.h"
 #include "methods.h"
 #include "descriptor.h"
@@ -1624,7 +1625,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     PyArray_Descr *descr = NULL;
     int itemsize;
     PyArray_Dims dims = {NULL, 0};
-    PyArray_Dims strides = {NULL, 0};
+    PyArray_Dims strides = {NULL, -1};
     PyArray_Chunk buffer;
     npy_longlong offset = 0;
     NPY_ORDER order = NPY_CORDER;
@@ -1645,7 +1646,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      PyArray_BufferConverter,
                                      &buffer,
                                      &offset,
-                                     &PyArray_IntpConverter,
+                                     &PyArray_OptionalIntpConverter,
                                      &strides,
                                      &PyArray_OrderConverter,
                                      &order)) {
@@ -1660,7 +1661,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     itemsize = descr->elsize;
 
-    if (strides.ptr != NULL) {
+    if (strides.len != -1) {
         npy_intp nb, off;
         if (strides.len != dims.len) {
             PyErr_SetString(PyExc_ValueError,
