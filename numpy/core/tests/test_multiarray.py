@@ -356,6 +356,11 @@ class TestAttributes:
         a.strides = 1
         a[::2].strides = 2
 
+        # test 0d
+        arr_0d = np.array(0)
+        arr_0d.strides = ()
+        assert_raises(TypeError, set_strides, arr_0d, None)
+
     def test_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = np.empty((3, 2, 1), t)

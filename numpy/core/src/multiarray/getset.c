@@ -13,6 +13,7 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "conversion_utils.h"
 #include "ctors.h"
 #include "scalartypes.h"
 #include "descriptor.h"
@@ -110,7 +111,7 @@ array_strides_get(PyArrayObject *self)
 static int
 array_strides_set(PyArrayObject *self, PyObject *obj)
 {
-    PyArray_Dims newstrides = {NULL, 0};
+    PyArray_Dims newstrides = {NULL, -1};
     PyArrayObject *new;
     npy_intp numbytes = 0;
     npy_intp offset = 0;
@@ -123,8 +124,8 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
                 "Cannot delete array strides");
         return -1;
     }
-    if (!PyArray_IntpConverter(obj, &newstrides) ||
-        newstrides.ptr == NULL) {
+    if (!PyArray_OptionalIntpConverter(obj, &newstrides) ||
+        newstrides.len == -1) {
         PyErr_SetString(PyExc_TypeError, "invalid strides");
         return -1;
     }
