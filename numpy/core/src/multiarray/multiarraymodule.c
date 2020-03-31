@@ -1856,14 +1856,15 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     NPY_ORDER order = NPY_KEEPORDER;
     PyArrayObject *ret = NULL;
     int subok = 1;
-    PyArray_Dims shape = {NULL, 0};
+    /* -1 is a special value meaning "not specified" */
+    PyArray_Dims shape = {NULL, -1};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:empty_like", kwlist,
                 &PyArray_Converter, &prototype,
                 &PyArray_DescrConverter2, &dtype,
                 &PyArray_OrderConverter, &order,
                 &subok,
-                &PyArray_IntpConverter, &shape)) {
+                &PyArray_OptionalIntpConverter, &shape)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
