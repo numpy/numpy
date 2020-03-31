@@ -2,10 +2,4 @@
 ------------------------------------------------
 The parameter ``keepdims`` was added to `numpy.count_nonzero`. The
 parameter has the same meaning as it does in reduction functions such
-as `numpy.sum` or `numpy.mean`.  When an ``axis`` argument is given,
-the slice along that dimension (or dimensions, if ``axis`` is a tuple
-with length greater than one) is reduced to a single number in the
-output.  Normally this means the shape of the output array has fewer
-dimensions than the input.  When ``keepdims=True`` is used, the output
-array has the same number of dimensions as the input, and the lengths
-of the reduced dimensions are one.
+as `numpy.sum` or `numpy.mean`.
