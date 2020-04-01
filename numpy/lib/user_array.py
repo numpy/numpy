@@ -227,6 +227,10 @@ class container:
         ""
         return self.array.tostring()
 
+    def tobytes(self):
+        ""
+        return self.array.tobytes()
+
     def byteswap(self):
         ""
         return self._rc(self.array.byteswap())
