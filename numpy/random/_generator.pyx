@@ -3641,12 +3641,12 @@ cdef class Generator:
         cdef int64_t ni
         cdef np.broadcast it
 
-        if np.ndim(pvals) != 1:
-            raise ValueError("pvals must be 1d array")
         d = len(pvals)
         on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
         parr = <np.ndarray>np.PyArray_FROM_OTF(
             pvals, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        if np.PyArray_NDIM(parr) != 1:
+            raise ValueError("pvals must be 1d array")
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
