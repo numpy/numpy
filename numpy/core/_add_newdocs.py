@@ -152,6 +152,8 @@ add_newdoc('numpy.core', 'flatiter', ('copy',
 
 add_newdoc('numpy.core', 'nditer',
     """
+    nditer(op, flags=None, op_flags=None, op_dtypes=None, order='K', casting='safe', op_axes=None, itershape=None, buffersize=0)
+
     Efficient multi-dimensional iterator object to iterate over arrays.
     To get started using this object, see the
     :ref:`introductory guide to array iteration <arrays.nditer>`.
@@ -784,7 +786,7 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order='K', subok=False, ndmin=0)
+    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
 
     Create an array.
 
@@ -3930,8 +3932,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """))
 
 
-tobytesdoc = """
-    a.{name}(order='C')
+add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
+    a.tobytes(order='C')
 
     Construct Python bytes containing the raw data bytes in the array.
 
@@ -3941,11 +3943,11 @@ tobytesdoc = """
     unless the F_CONTIGUOUS flag in the array is set, in which case it
     means 'Fortran' order.
 
-    {deprecated}
+    .. versionadded:: 1.9.0
 
     Parameters
     ----------
-    order : {{'C', 'F', None}}, optional
+    order : {'C', 'F', None}, optional
         Order of the data for multidimensional arrays:
         C, Fortran, or the same as for the original array.
 
@@ -3964,18 +3966,19 @@ tobytesdoc = """
     >>> x.tobytes('F')
     b'\\x00\\x00\\x02\\x00\\x01\\x00\\x03\\x00'
 
-    """
+    """))
 
-add_newdoc('numpy.core.multiarray', 'ndarray',
-           ('tostring', tobytesdoc.format(name='tostring',
-                                          deprecated=
-                                          'This function is a compatibility '
-                                          'alias for tobytes. Despite its '
-                                          'name it returns bytes not '
-                                          'strings.')))
-add_newdoc('numpy.core.multiarray', 'ndarray',
-           ('tobytes', tobytesdoc.format(name='tobytes',
-                                         deprecated='.. versionadded:: 1.9.0')))
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring', r"""
+    a.tostring(order='C')
+
+    A compatibility alias for `tobytes`, with exactly the same behavior.
+
+    Despite its name, it returns `bytes` not `str`\ s.
+
+    .. deprecated:: 1.19.0
+    """))
+
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
     """

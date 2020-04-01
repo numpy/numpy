@@ -229,21 +229,21 @@ def _hist_bin_fd(x, range):
 def _hist_bin_auto(x, range):
     """
     Histogram bin estimator that uses the minimum width of the
-    Freedman-Diaconis and Sturges estimators if the FD bandwidth is non zero
-    and the Sturges estimator if the FD bandwidth is 0.
+    Freedman-Diaconis and Sturges estimators if the FD bin width is non-zero.
+    If the bin width from the FD estimator is 0, the Sturges estimator is used.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
     variance. The Sturges estimator is quite good for small (<1000) datasets
-    and is the default in the R language. This method gives good off the shelf
+    and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
     .. versionchanged:: 1.15.0
     If there is limited variance the IQR can be 0, which results in the
     FD bin width being 0 too. This is not a valid bin width, so
     ``np.histogram_bin_edges`` chooses 1 bin instead, which may not be optimal.
-    If the IQR is 0, it's unlikely any variance based estimators will be of
-    use, so we revert to the sturges estimator, which only uses the size of the
+    If the IQR is 0, it's unlikely any variance-based estimators will be of
+    use, so we revert to the Sturges estimator, which only uses the size of the
     dataset in its calculation.
 
     Parameters

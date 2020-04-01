@@ -1201,6 +1201,17 @@ class TestNonzero:
         a = np.array([[0, 0, 1], [1, 0, 1]])
         assert_equal(np.count_nonzero(a, axis=()), a.astype(bool))
 
+    def test_countnonzero_keepdims(self):
+        a = np.array([[0, 0, 1, 0],
+                      [0, 3, 5, 0],
+                      [7, 9, 2, 0]])
+        assert_equal(np.count_nonzero(a, axis=0, keepdims=True),
+                     [[1, 2, 3, 0]])
+        assert_equal(np.count_nonzero(a, axis=1, keepdims=True),
+                     [[1], [2], [3]])
+        assert_equal(np.count_nonzero(a, keepdims=True),
+                     [[6]])
+
     def test_array_method(self):
         # Tests that the array method
         # call to nonzero works
@@ -2457,7 +2468,7 @@ class TestLikeFuncs:
                 (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
                 (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
                      ]
-        self.shapes = [(5,), (5,6,), (5,6,7,)]
+        self.shapes = [(), (5,), (5,6,), (5,6,7,)]
 
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:

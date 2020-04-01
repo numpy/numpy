@@ -475,9 +475,7 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([0., 1., 2.])")
 
     def test_0d_arrays(self):
-        unicode = type(u'')
-
-        assert_equal(unicode(np.array(u'café', '<U4')), u'café')
+        assert_equal(str(np.array(u'café', '<U4')), u'café')
 
         assert_equal(repr(np.array('café', '<U4')),
                      "array('café', dtype='<U4')")

@@ -1,7 +1,6 @@
 import pytest
 
 from numpy import array
-from numpy.compat import long
 from numpy.testing import assert_, assert_raises
 from . import util
 
@@ -15,7 +14,7 @@ class TestReturnComplex(util.F2PyTest):
             err = 0.0
         assert_(abs(t(234j) - 234.0j) <= err)
         assert_(abs(t(234.6) - 234.6) <= err)
-        assert_(abs(t(long(234)) - 234.0) <= err)
+        assert_(abs(t(234) - 234.0) <= err)
         assert_(abs(t(234.6 + 3j) - (234.6 + 3j)) <= err)
         #assert_( abs(t('234')-234.)<=err)
         #assert_( abs(t('234.6')-234.6)<=err)

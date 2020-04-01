@@ -2699,8 +2699,6 @@ class MaskedIterator:
                 return masked
         return d
 
-    next = __next__
-
 
 class MaskedArray(ndarray):
     """
@@ -4327,17 +4325,6 @@ class MaskedArray(ndarray):
             raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
 
-    def __long__(self):
-        """
-        Convert to long.
-        """
-        if self.size > 1:
-            raise TypeError("Only length-1 arrays can be converted "
-                            "to Python scalars")
-        elif self._mask:
-            raise MaskError('Cannot convert masked element to a Python long.')
-        return long(self.item())
-
     @property
     def imag(self):
         """
@@ -5954,10 +5941,17 @@ class MaskedArray(ndarray):
         return result.tolist()
 
     def tostring(self, fill_value=None, order='C'):
+        r"""
+        A compatibility alias for `tobytes`, with exactly the same behavior.
+
+        Despite its name, it returns `bytes` not `str`\ s.
+
+        .. deprecated:: 1.19.0
         """
-        This function is a compatibility alias for tobytes. Despite its name it
-        returns bytes not strings.
-        """
+        # 2020-03-30, Numpy 1.19.0
+        warnings.warn(
+            "tostring() is deprecated. Use tobytes() instead.",
+            DeprecationWarning, stacklevel=2)
 
         return self.tobytes(fill_value, order=order)
 

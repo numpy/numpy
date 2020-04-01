@@ -10,7 +10,8 @@ import zipfile
 import tarfile
 
 OPENBLAS_V = '0.3.9'
-OPENBLAS_LONG = 'v0.3.7-391-gddcbed66'  # the 0.3.7 is misleading
+# Temporary build of OpenBLAS to test a fix for dynamic detection of CPU
+OPENBLAS_LONG = 'v0.3.7-527-g79fd006c'  # the 0.3.7 is misleading
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86', 'ppc64le', 's390x']

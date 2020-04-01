@@ -125,7 +125,6 @@ Conversion
 
    MaskedArray.__float__
    MaskedArray.__int__
-   MaskedArray.__long__
 
    MaskedArray.view
    MaskedArray.astype

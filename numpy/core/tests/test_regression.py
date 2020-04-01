@@ -15,7 +15,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.testing._private.utils import _no_tracing
-from numpy.compat import asbytes, asunicode, long, pickle
+from numpy.compat import asbytes, asunicode, pickle
 
 try:
     RecursionError
@@ -1504,7 +1504,7 @@ class TestRegression:
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, int, np.compat.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int):
                 test_type(t)
 
     def test_buffer_hashlib(self):
@@ -1803,7 +1803,6 @@ class TestRegression:
         a = np.array(0, dtype=object)
         a[()] = a
         assert_raises(RecursionError, int, a)
-        assert_raises(RecursionError, long, a)
         assert_raises(RecursionError, float, a)
         a[()] = None
 
@@ -1829,7 +1828,6 @@ class TestRegression:
         b = np.array(0, dtype=object)
         a[()] = b
         assert_equal(int(a), int(0))
-        assert_equal(long(a), long(0))
         assert_equal(float(a), float(0))
 
     def test_object_array_self_copy(self):

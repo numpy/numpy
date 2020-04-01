@@ -1749,10 +1749,12 @@ def setattrspec(decl, attr, force=0):
         decl['attrspec'].append(attr)
     elif attr == 'automatic' and 'static' not in decl['attrspec']:
         decl['attrspec'].append(attr)
-    elif attr == 'public' and 'private' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
-    elif attr == 'private' and 'public' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
+    elif attr == 'public':
+        if 'private' not in decl['attrspec']:
+            decl['attrspec'].append(attr)
+    elif attr == 'private':
+        if 'public' not in decl['attrspec']:
+            decl['attrspec'].append(attr)
     else:
         decl['attrspec'].append(attr)
     return decl

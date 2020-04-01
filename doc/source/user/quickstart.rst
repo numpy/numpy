@@ -21,6 +21,24 @@ If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
 https://scipy.org/install.html for instructions.
 
+**Learner profile**
+
+This tutorial is intended as a quick overview of 
+algebra and arrays in NumPy and want to understand how n-dimensional
+(:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
+you don't know how to apply common functions to n-dimensional arrays (without
+using for-loops), or if you want to understand axis and shape properties for
+n-dimensional arrays, this tutorial might be of help.
+
+**Learning Objectives**
+
+After this tutorial, you should be able to:
+
+- Understand the difference between one-, two- and n-dimensional arrays in
+  NumPy;
+- Understand how to apply some linear algebra operations to n-dimensional
+  arrays without using for-loops;
+- Understand axis and shape properties for n-dimensional arrays.
 
 .. _quickstart.the-basics:
 
@@ -129,8 +147,8 @@ rather than providing a single sequence as an argument.
 
     >>> a = np.array(1,2,3,4)    # WRONG
     Traceback (most recent call last):
-    ...
-    ValueError: only 2 non-keyword arguments accepted
+      ...
+    TypeError: array() takes from 1 to 2 positional arguments but 4 were given
     >>> a = np.array([1,2,3,4])  # RIGHT
 
 ``array`` transforms sequences of sequences into two-dimensional arrays,
