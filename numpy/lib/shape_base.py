@@ -5,7 +5,7 @@ from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, array, asanyarray
     )
 from numpy.core.fromnumeric import reshape, transpose
-from numpy.core.multiarray import normalize_axis_index
+from numpy.core.multiarray import normalize_axis_index, empty
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
 from numpy.core.numeric import normalize_axis_tuple
@@ -753,35 +753,22 @@ def array_split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
-
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
     >>> x = np.arange(7.0)
     >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.]), array([5.,  6.])]
-
+    [array([0.,  1.,  2.]), array([3.,  4.]), array([5.,  6.])]
     >>> x = np.reshape(np.arange(16), (4, 4))
     >>> np.array_split(x, [3, 3], (0, 1))
-        [array([[0, 1],
-                [4, 5]]),
-        array([[2], [6]]),
-        array([[3], [7]]),
-        array([[8, 9]]),
-        array([[10]]),
-        array([[11]]),
-        array([[12, 13]]),
-        array([[14]]),
-        array([[15]])]
-
-    >>> x = np.reshape(np.arange(8), (2, 2, 2))
-    >>> np.array_split(x, [2, 2, 2], (0, 1, 2))
-        [array([[[0]]]),
-        array([[[1]]]),
-        array([[[2]]]),
-        array([[[3]]]),
-        array([[[4]]]),
-        array([[[5]]]),
-        array([[[6]]]),
-        array([[[7]]])]
+    array([
+        [array([[0, 1]]),
+         array([[2, 3]])],
+        [array([[4, 5]]),
+         array([[6, 7]])],
+        [array([[8, 9]]),
+         array([[10, 11]])],
+        [array([[12, 13]]),
+         array([[14, 15]])]
+    ], dtype=object)
     """
     # If axis is a tuple, assume an N-dimensional split.
     if isinstance(axis, tuple):
@@ -795,17 +782,35 @@ def array_split(ary, indices_or_sections, axis=0):
         if len(indices_or_sections) != len(axis):
             raise ValueError('Axis is a tuple, so indices_or_sections must be of the same length as axis.')
 
+        # Create a list that will store the size of the resulting split per axis.
+        dimensions = []
         sub_matrices = [ary]
 
         for i in range(len(axis)):
-            res = []
+            splitter = indices_or_sections[i]
+            try:
+                # The array will be split by indices for this axis, so the resulting size will be
+                # the amount of indices + 1.
+                dimensions.append(len(splitter) + 1)
+            except TypeError:
+                # The array will be split in N parts for this axis, so the resulting size
+                # will be N.
+                dimensions.append(splitter)
 
+            res = []
             for element in sub_matrices:
                 res.extend(array_split(element, indices_or_sections[i], axis[i]))
 
             sub_matrices = res
 
-        return sub_matrices
+        # Create an object array that will hold the sub-matrices resulting from the split.
+        object_array = empty(len(sub_matrices), dtype=object)
+
+        for i, sub_matrix in enumerate(sub_matrices):
+            object_array[i] = sub_matrix
+
+        # Reshape the object array to reflect the split per axis.
+        return object_array.reshape(tuple(dimensions))
 
     try:
         Ntotal = ary.shape[axis]
@@ -877,7 +882,7 @@ def split(ary, indices_or_sections, axis=0):
 
     Returns
     -------
-    sub-arrays : list of ndarrays
+    sub-arrays : list or object array of ndarrays
         A list of sub-arrays as views into `ary`.
 
     Raises
@@ -909,7 +914,6 @@ def split(ary, indices_or_sections, axis=0):
     >>> x = np.arange(9.0)
     >>> np.split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.,  8.])]
-
     >>> x = np.arange(8.0)
     >>> np.split(x, [3, 5, 6, 10])
     [array([0.,  1.,  2.]),
@@ -917,17 +921,18 @@ def split(ary, indices_or_sections, axis=0):
      array([5.]),
      array([6.,  7.]),
      array([], dtype=float64)]
-
     >>> x = np.reshape(np.arange(16), (4, 4))
     >>> np.split(x, [4, 2], (0, 1))
-    [array([[0, 1]]),
-    array([[2, 3]]),
-    array([[4, 5]]),
-    array([[6, 7]]),
-    array([[8, 9]]),
-    array([[10, 11]]),
-    array([[12, 13]]),
-    array([[14, 15]])]
+    array([
+        [array([[0, 1]]),
+         array([[2, 3]])],
+        [array([[4, 5]]),
+         array([[6, 7]])],
+        [array([[8, 9]]),
+         array([[10, 11]])],
+        [array([[12, 13]]),
+         array([[14, 15]])]
+    ], dtype=object)
     """
 
     def verify_equal_division(indices_or_sections, axis):

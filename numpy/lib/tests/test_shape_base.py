@@ -323,77 +323,98 @@ class TestArraySplit:
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = array_split(matrix, [3, 3], (0, 1))
-        desired = [
-            [[0, 1],
-            [4, 5]],
-            [[2], [6]],
-            [[3], [7]],
-            [[8, 9]],
-            [[10]],
-            [[11]],
-            [[12, 13]],
-            [[14]],
-            [[15]]
-        ]
-        compare_results(res, desired)
+        desired = np.empty(9, dtype=object)
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2], [6]])
+        desired[2] = np.array([[3], [7]])
+        desired[3] = np.array([[8, 9]])
+        desired[4] = np.array([[10]])
+        desired[5] = np.array([[11]])
+        desired[6] = np.array([[12, 13]])
+        desired[7] = np.array([[14]])
+        desired[8] = np.array([[15]])
+        desired = np.reshape(desired, (3, 3))
+
+        print(res)
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
 
     def test_two_dimensional_two_integer_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = array_split(matrix, [4, 2], (0, 1))
-        desired = [
-            [[0, 1]],
-            [[2, 3]],
-            [[4, 5]],
-            [[6, 7]],
-            [[8, 9]],
-            [[10, 11]],
-            [[12, 13]],
-            [[14, 15]]
-        ]
-        compare_results(res, desired)
+        desired = np.empty(8, dtype=object)
+        desired[0] = np.array([[0, 1]])
+        desired[1] = np.array([[2, 3]])
+        desired[2] = np.array([[4, 5]])
+        desired[3] = np.array([[6, 7]])
+        desired[4] = np.array([[8, 9]])
+        desired[5] = np.array([[10, 11]])
+        desired[6] = np.array([[12, 13]])
+        desired[7] = np.array([[14, 15]])
+        desired = np.reshape(desired, (4, 2))
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
 
     def test_two_dimensional_two_indices_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = array_split(matrix, [[2], [2, 3]], (0, 1))
-        desired = [
-            [[0, 1], [4, 5]],
-            [[2], [6]],
-            [[3], [7]],
-            [[8,  9], [12, 13]],
-            [[10], [14]],
-            [[11], [15]]
-        ]
 
-        compare_results(res, desired)
+        desired = np.empty(6, dtype=object)
 
-    def test_two_dimensional_one_index_one_integer_split(self):
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2], [6]])
+        desired[2] = np.array([[3], [7]])
+        desired[3] = np.array([[8, 9], [12, 13]])
+        desired[4] = np.array([[10], [14]])
+        desired[5] = np.array([[11], [15]])
+
+        desired = np.reshape(desired, (2, 3))
+
+        assert (res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
+
+    def test_two_dimensional_one_indexlist_one_integer_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = array_split(matrix, [2, [2, 3]], (0, 1))
-        desired = [
-            [[0, 1], [4, 5]],
-            [[2], [6]],
-            [[3], [7]],
-            [[8,  9], [12, 13]],
-            [[10], [14]],
-            [[11], [15]]
-        ]
+        desired = np.empty(6, dtype=object)
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2], [6]])
+        desired[2] = np.array([[3], [7]])
+        desired[3] = np.array([[8, 9], [12, 13]])
+        desired[4] = np.array([[10], [14]])
+        desired[5] = np.array([[11], [15]])
+        desired = np.reshape(desired, (2, 3))
 
-        compare_results(res, desired)
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
 
     def test_three_dimensional_three_integer_split(self):
         three_dimensional_array = np.reshape(np.arange(27), (3, 3, 3))
 
         res = array_split(three_dimensional_array, [3, 3, 3], (0, 1, 2))
-        desired = [
-            [[[0]]], [[[1]]], [[[2]]], [[[3]]], [[[4]]], [[[5]]], [[[6]]], [[[7]]], [[[8]]],
-            [[[9]]], [[[10]]], [[[11]]], [[[12]]], [[[13]]], [[[14]]], [[[15]]], [[[16]]], [[[17]]],
-            [[[18]]], [[[19]]], [[[20]]], [[[21]]], [[[22]]], [[[23]]], [[[24]]], [[[25]]], [[[26]]]
-         ]
 
-        compare_results(res, desired)
+        desired = np.empty(27, dtype=object)
+        for i in range(27):
+            desired[i] = np.array([[[i]]])
+        desired = np.reshape(desired, (3, 3, 3))
+
+        assert (res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
 
     def test_two_dimensional_input_guard(self):
         matrix = np.reshape(np.arange(16), (4, 4))
@@ -552,26 +573,34 @@ class TestSplit:
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = split(matrix, [4, 2], (0, 1))
-        desired = [
-            [[0, 1]],
-            [[2, 3]],
-            [[4, 5]],
-            [[6, 7]],
-            [[8, 9]],
-            [[10, 11]],
-            [[12, 13]],
-            [[14, 15]]
-        ]
-        compare_results(res, desired)
+        desired = np.empty(8, dtype=object)
+        desired[0] = np.array([[0, 1]])
+        desired[1] = np.array([[2, 3]])
+        desired[2] = np.array([[4, 5]])
+        desired[3] = np.array([[6, 7]])
+        desired[4] = np.array([[8, 9]])
+        desired[5] = np.array([[10, 11]])
+        desired[6] = np.array([[12, 13]])
+        desired[7] = np.array([[14, 15]])
+        desired = np.reshape(desired, (4, 2))
+
+        assert(res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
 
         res = split(matrix, [2, 2], (0, 1))
-        desired = [
-            [[0, 1], [4, 5]],
-            [[2, 3], [6, 7]],
-            [[8, 9], [12, 13]],
-            [[10, 11], [14, 15]]
-        ]
-        compare_results(res, desired)
+        desired = np.empty(4, dtype=object)
+        desired[0] = np.array([[0, 1], [4, 5]])
+        desired[1] = np.array([[2, 3], [6, 7]])
+        desired[2] = np.array([[8, 9], [12, 13]])
+        desired[3] = np.array([[10, 11], [14, 15]])
+        desired = np.reshape(desired, (2, 2))
+
+        assert (res.shape == desired.shape)
+
+        for i, element in enumerate(res):
+            compare_results(element, desired[i])
 
     def test_unequal_two_dimensional_split(self):
         matrix = np.reshape(np.arange(16), (4, 4))
