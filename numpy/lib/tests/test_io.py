@@ -13,6 +13,7 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
+from multiprocessing import Process
 
 import numpy as np
 import numpy.ma as ma
@@ -569,16 +570,20 @@ class TestSaveTxt:
             assert_equal(s.read(), b"%f\n" % 1.)
 
     @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
-    @pytest.mark.skipif(IS_PYPY,
-         reason="GC problems after test, gc.collect does not help. see gh-15775")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        # The test takes at least 6GB of memory, writes a file larger than 4GB
-        test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)], dtype=object)
-        with tempdir() as tmpdir:
-            np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip():
+            # The test takes at least 6GB of memory, writes a file larger than 4GB
+            test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
+                                   for i in range(800000)], dtype=object)
+            with tempdir() as tmpdir:
+                np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        p = Process(target=check_large_zip)
+        p.start()
+        p.join()
+        assert p.exitcode == 0
 
 class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
