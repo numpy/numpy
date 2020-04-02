@@ -22,7 +22,7 @@ We're in the process of updating our descriptions of other activities and roles.
 If you are interested in these other activities, please contact us!
 You can do this via
 the `numpy-discussion mailing list <https://mail.python.org/mailman/listinfo/numpy-discussion>`__,
-or on `GitHub <https://github.com/numpy/numpy>`_ (open an issue or comment on a
+or on `GitHub <https://github.com/numpy/numpy>`__ (open an issue or comment on a
 relevant issue). These are our preferred communication channels (open source is open
 by nature!), however if you prefer to discuss in private first, please reach out to
 our community coordinators at `numpy-team@googlegroups.com` or `numpy-team.slack.com`
