@@ -595,8 +595,46 @@ def _deprecate_shape_0_as_None(shape):
 
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """ create a record array from a (flat) list of arrays
+    """Create a record array from a (flat) list of arrays
 
+    Parameters
+    ----------
+    arrayList : sequence
+        Iterable container of array-like objects (such as lists, tuples,
+        and ndarrays).
+    dtype : data-type, optional
+        valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        shape of each array.
+    formats : str or list of str, optional
+        The format description, either specified as a string with
+        comma-separated format descriptions in the form ``'f8, i4, a5'``, or
+        a list of format description strings  in the form
+        ``['f8', 'i4', 'a5']``.
+    names : str or list/tuple of str, optional
+        The field names, either specified as a comma-separated string in the
+        form ``'col1, col2, col3'``, or as a list or tuple of strings in the
+        form ``['col1', 'col2', 'col3']``.
+        An empty list can be used, in that case default field names
+        ('f0', 'f1', ...) are used.
+    titles : sequence, optional
+        Sequence of title strings. An empty list can be used to leave titles
+        out.
+    aligned : bool, optional
+        If True, align the fields by padding as the C-compiler would.
+        Default is False.
+    byteorder : str, optional
+        If specified, all the fields will be changed to the
+        provided byte-order.  Otherwise, the default byte-order is
+        used. For all available string specifiers, see `dtype.newbyteorder`.
+
+
+    Returns
+    -------
+    record array consisting of given arrayList columns.
+
+    Examples
+    --------
     >>> x1=np.array([1,2,3,4])
     >>> x2=np.array(['a','dd','xyz','12'])
     >>> x3=np.array([1.1,2,3,4])
