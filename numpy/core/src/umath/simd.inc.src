@@ -396,12 +396,14 @@ static NPY_INLINE int
 run_unary_avx512f_exp_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), 64)) {
         AVX512F_exp_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
         return 1;
     }
     else
         return 0;
+#endif
 #endif
     return 0;
 }
@@ -2703,6 +2705,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  *    exp(x) = 2^m(2^(j/32) + 2^(j/32)p(r));
  */
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
+#if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
 static NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F void
 AVX512F_exp_DOUBLE(npy_double * op,
                 npy_double * ip,
@@ -2834,6 +2837,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         npy_set_floatstatus_overflow();
     }
 }
+#endif
 #endif
 
 /**begin repeat
