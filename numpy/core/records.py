@@ -792,7 +792,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """ create a (read-only) record array from binary data contained in
+    """Create a (read-only) record array from binary data contained in
     a string"""
 
     if dtype is None and formats is None:
@@ -827,10 +827,47 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    If file is a string or a path-like object then that file is opened,
-    else it is assumed to be a file object. The file object must
-    support random access (i.e. it must have tell and seek methods).
+    
+    Parameters
+    ----------
+    fd : str or file type
+        If file is a string or a path-like object then that file is opened,
+        else it is assumed to be a file object. The file object must
+        support random access (i.e. it must have tell and seek methods).
+    dtype : data-type, optional
+        valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        shape of each array.
+    offset : optional
+    formats : str or list of str, optional
+        The format description, either specified as a string with
+        comma-separated format descriptions in the form ``'f8, i4, a5'``, or
+        a list of format description strings  in the form
+        ``['f8', 'i4', 'a5']``. If not specified, format will be
+        auto-detected.
+    names : str or list/tuple of str, optional
+        The field names, either specified as a comma-separated string in the
+        form ``'col1, col2, col3'``, or as a list or tuple of strings in the
+        form ``['col1', 'col2', 'col3']``.
+        An empty list can be used, in that case default field names
+        ('f0', 'f1', ...) are used.
+    titles : sequence, optional
+        Sequence of title strings. An empty list can be used to leave titles
+        out.
+    aligned : bool, optional
+        If True, align the fields by padding as the C-compiler would.
+        Default is False.
+    byteorder : str, optional
+        If specified, all the fields will be changed to the
+        provided byte-order.  Otherwise, the default byte-order is
+        used. For all available string specifiers, see `dtype.newbyteorder`.
 
+    Returns
+    -------
+    record array consisting of given recList rows.
+
+    Examples
+    --------
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')
     >>> a[5] = (0.5,10,'abcde')
