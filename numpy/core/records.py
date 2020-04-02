@@ -695,20 +695,46 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
-    """ create a recarray from a list of records in text form
+    """Create a recarray from a list of records in text form.
+        
+    Parameters
+    ----------
+    recList : sequence
+        data in the same field may be heterogeneous - they will be promoted
+        to the highest data type.
+    dtype : data-type, optional
+        valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        shape of each array.
+    formats : str or list of str, optional
+        The format description, either specified as a string with
+        comma-separated format descriptions in the form ``'f8, i4, a5'``, or
+        a list of format description strings  in the form
+        ``['f8', 'i4', 'a5']``. If not specified, format will be
+        auto-detected.
+    names : str or list/tuple of str, optional
+        The field names, either specified as a comma-separated string in the
+        form ``'col1, col2, col3'``, or as a list or tuple of strings in the
+        form ``['col1', 'col2', 'col3']``.
+        An empty list can be used, in that case default field names
+        ('f0', 'f1', ...) are used.
+    titles : sequence, optional
+        Sequence of title strings. An empty list can be used to leave titles
+        out.
+    aligned : bool, optional
+        If True, align the fields by padding as the C-compiler would.
+        Default is False.
+    byteorder : str, optional
+        If specified, all the fields will be changed to the
+        provided byte-order.  Otherwise, the default byte-order is
+        used. For all available string specifiers, see `dtype.newbyteorder`.
 
-        The data in the same field can be heterogeneous, they will be promoted
-        to the highest data type.  This method is intended for creating
-        smaller record arrays.  If used to create large array without formats
-        defined
+    Returns
+    -------
+    record array consisting of given recList rows.
 
-        r=fromrecords([(2,3.,'abc')]*100000)
-
-        it can be slow.
-
-        If formats is None, then this will auto-detect formats. Use list of
-        tuples rather than list of lists for faster processing.
-
+    Examples
+    --------
     >>> r=np.core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
     ... names='col1,col2,col3')
     >>> print(r[0])
