@@ -578,6 +578,7 @@ class TestSaveTxt:
                                    for i in range(800000)], dtype=object)
             with tempdir() as tmpdir:
                 np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
         p = Process(target=check_large_zip)
         p.start()
         p.join()
