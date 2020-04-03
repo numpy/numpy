@@ -605,7 +605,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     dtype : data-type, optional
         valid dtype for all arrays
     shape : int or tuple of ints, optional
-        shape of each array.
+        Shape of the resulting array. If not provided, inferred from ``arrayList[0]``.
     formats : str or list of str, optional
         The format description, either specified as a string with
         comma-separated format descriptions in the form ``'f8, i4, a5'``, or
