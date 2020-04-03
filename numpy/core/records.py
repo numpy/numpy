@@ -605,10 +605,12 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     dtype : data-type, optional
         valid dtype for all arrays
     shape : int or tuple of ints, optional
-        Shape of the resulting array. If not provided, inferred from ``arrayList[0]``.
+        Shape of the resulting array. If not provided, inferred from
+        ``arrayList[0]``.
     formats, names, titles, aligned, byteorder :
-        If `dtype` is ``None``, these arguments are passed to `numpy.format_parser` to construct a dtype.
-        See that function for detailed documentation.
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
 
 
     Returns
@@ -700,11 +702,13 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     shape : int or tuple of ints, optional
         shape of each array.
     formats, names, titles, aligned, byteorder :
-        If `dtype` is ``None``, these arguments are passed to `numpy.format_parser` to construct a dtype.
-        See that function for detailed documentation.
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
 
-        If both `formats` and `dtype` are None, then this will auto-detect formats. Use list of
-        tuples rather than list of lists for faster processing.
+        If both `formats` and `dtype` are None, then this will auto-detect
+        formats. Use list of tuples rather than list of lists for faster
+        processing.
 
     Returns
     -------
@@ -817,8 +821,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     offset : optional
         Position in the file to start reading from.
     formats, names, titles, aligned, byteorder :
-        If `dtype` is ``None``, these arguments are passed to `numpy.format_parser` to construct a dtype.
-        See that function for detailed documentation
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation
 
     Returns
     -------
