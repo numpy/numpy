@@ -818,7 +818,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         valid dtype for all arrays
     shape : int or tuple of ints, optional
         shape of each array.
-    offset : optional
+    offset : int, optional
         Position in the file to start reading from.
     formats, names, titles, aligned, byteorder :
         If `dtype` is ``None``, these arguments are passed to
