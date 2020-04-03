@@ -91,8 +91,8 @@ stages:
         architecture: 'x64'
     # NOTE: do we have a compelling reason to use older / newer
     # versions of Xcode toolchain for testing?
-    - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
-      displayName: 'select Xcode version'
+    - script: clang --version
+      displayName: 'report clang version'
     # NOTE: might be better if we could avoid installing
     # two C compilers, but with homebrew looks like we're
     # now stuck getting the full gcc toolchain instead of
