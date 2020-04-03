@@ -158,10 +158,11 @@ base offset itself is a multiple of `self.itemsize`. Understanding
 
 .. note::
 
-    Points (1) and (2) are not yet applied by default. Beginning with
-    NumPy 1.8.0, they are applied consistently only if the environment
-    variable ``NPY_RELAXED_STRIDES_CHECKING=1`` was defined when NumPy
-    was built. Eventually this will become the default.
+    Points (1) and (2) can currently be disabled by the compile time
+    environmental variable ``NPY_RELAXED_STRIDES_CHECKING=0``.
+    No users should have to do this. ``NPY_RELAXED_STRIDES_DEBUG=1``
+    can be used to help find errors when incorrectly relying on the strides
+    in C-extension code (see below warning).
 
     You can check whether this option was enabled when your NumPy was
     built by looking at the value of ``np.ones((10,1),
