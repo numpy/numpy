@@ -702,7 +702,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     formats, names, titles, aligned, byteorder :
         If `dtype` is ``None``, these arguments are passed to `numpy.format_parser` to construct a dtype.
         See that function for detailed documentation.
-        If formats is None, then this will auto-detect formats. Use list of
+
+        If both `formats` and `dtype` are None, then this will auto-detect formats. Use list of
         tuples rather than list of lists for faster processing.
 
     Returns
