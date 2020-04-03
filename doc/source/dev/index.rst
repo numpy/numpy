@@ -1,3 +1,5 @@
+.. _devindex:
+
 #####################
 Contributing to NumPy
 #####################
