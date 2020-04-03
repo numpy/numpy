@@ -34,15 +34,23 @@ def nep_metadata():
             tags = [match.groups() for match in tags if match is not None]
             tags = {tag[0]: tag[1] for tag in tags}
 
-            # We could do a clever regexp, but for now just assume the title is
-            # the second line of the document
-            tags['Title'] = lines[1].strip()
+            # The title should be the first line after a line containing only
+            # * or = signs.
+            for i, line in enumerate(lines[:-1]):
+                chars = set(line.rstrip())
+                if len(chars) == 1 and ("=" in chars or "*" in chars):
+                    break
+            else:
+                raise RuntimeError("Unable to find NEP title.")
+
+            tags['Title'] = lines[i+1].strip()
             tags['Filename'] = source
 
         if not tags['Title'].startswith(f'NEP {nr} — '):
             raise RuntimeError(
                 f'Title for NEP {nr} does not start with "NEP {nr} — " '
-                '(note that — here is a special, enlongated dash)')
+                '(note that — here is a special, enlongated dash). Got: '
+                f'    {tags["Title"]!r}')
 
         if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
             if not 'Resolution' in tags:
