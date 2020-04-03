@@ -2082,11 +2082,13 @@ class TestMsort:
         A = np.array([[0.44567325, 0.79115165, 0.54900530],
                       [0.36844147, 0.37325583, 0.96098397],
                       [0.64864341, 0.52929049, 0.39172155]])
+        A_sorted = np.array([[0.36844147, 0.37325583, 0.39172155],
+                            [0.44567325, 0.52929049, 0.54900530],
+                            [0.64864341, 0.79115165, 0.96098397]])
         assert_almost_equal(
-            msort(A),
-            np.array([[0.36844147, 0.37325583, 0.39172155],
-                      [0.44567325, 0.52929049, 0.54900530],
-                      [0.64864341, 0.79115165, 0.96098397]]))
+            msort(A),A_sorted)
+        assert_almost_equal(
+            msort(A, reverse=True), np.flip(A_sorted, axis=0))
 
 
 class TestMeshgrid:
@@ -3312,5 +3314,13 @@ class TestSortComplex:
         a = np.array([2 + 3j, 1 - 2j, 1 - 3j, 2 + 1j], dtype='D')
         expected = np.array([1 - 3j, 1 - 2j, 2 + 1j, 2 + 3j], dtype='D')
         actual = np.sort_complex(a)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+    def test_sort_complex_reverse(self):
+        # sort_complex() with reverse=True
+        a = np.array([2 + 3j, 1 - 2j, 1 - 3j, 2 + 1j], dtype='D')
+        expected = np.array([2 + 3j, 2 + 1j, 1 - 2j, 1 - 3j], dtype='D')
+        actual = np.sort_complex(a, reverse=True)
         assert_equal(actual, expected)
         assert_equal(actual.dtype, expected.dtype)

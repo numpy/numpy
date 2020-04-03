@@ -1512,19 +1512,21 @@ def unwrap(p, discont=pi, axis=-1):
     return up
 
 
-def _sort_complex(a):
+def _sort_complex(a, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_complex)
-def sort_complex(a):
+def sort_complex(a, reverse=False):
     """
     Sort a complex array using the real part first, then the imaginary part.
 
     Parameters
     ----------
     a : array_like
-        Input array
+        Input array.
+    reverse : bool, optional
+        If this is set to True, sort will be done in descending order.
 
     Returns
     -------
@@ -1533,15 +1535,20 @@ def sort_complex(a):
 
     Examples
     --------
-    >>> np.sort_complex([5, 3, 6, 2, 1])
+    >>> a = np.array([5, 3, 6, 2, 1])
+    >>> np.sort_complex(a)
     array([1.+0.j, 2.+0.j, 3.+0.j, 5.+0.j, 6.+0.j])
+    >>> np.sort_complex(a, reverse=True)
+    array([6.+0.j, 5.+0.j, 3.+0.j, 2.+0.j, 1.+0.j])
 
-    >>> np.sort_complex([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
+    >>> a = np.array([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
+    >>> np.sort_complex(a)
     array([1.+2.j,  2.-1.j,  3.-3.j,  3.-2.j,  3.+5.j])
+    >>> np.sort_complex(a, reverse=True)
+    array([3.+5.j,  3.-2.j,  3.-3.j,  2.-1.j, 1.+2.j])
 
     """
-    b = array(a, copy=True)
-    b.sort()
+    b = np.sort(a, reverse=reverse)
     if not issubclass(b.dtype.type, _nx.complexfloating):
         if b.dtype.char in 'bhBH':
             return b.astype('F')
@@ -3305,12 +3312,12 @@ def sinc(x):
     return sin(y)/y
 
 
-def _msort_dispatcher(a):
+def _msort_dispatcher(a, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_msort_dispatcher)
-def msort(a):
+def msort(a, reverse=False):
     """
     Return a copy of an array sorted along the first axis.
 
@@ -3318,6 +3325,8 @@ def msort(a):
     ----------
     a : array_like
         Array to be sorted.
+    reverse : bool, optional
+        If this is set to True, sort will be done in descending order.
 
     Returns
     -------
@@ -3334,8 +3343,7 @@ def msort(a):
 
     """
     b = array(a, subok=True, copy=True)
-    b.sort(0)
-    return b
+    return np.sort(b, axis=0, reverse=reverse)
 
 
 def _ureduce(a, func, **kwargs):

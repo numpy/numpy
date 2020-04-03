@@ -653,12 +653,12 @@ def transpose(a, axes=None):
     return _wrapfunc(a, 'transpose', axes)
 
 
-def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _partition_dispatcher(a, kth, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_partition_dispatcher)
-def partition(a, kth, axis=-1, kind='introselect', order=None):
+def partition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
     """
     Return a partitioned copy of an array.
 
@@ -693,6 +693,8 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         field can be specified as a string.  Not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    reverse : bool, optional
+        If this is set to True, partition will be done in descending order.
 
     Returns
     -------
@@ -734,9 +736,10 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     >>> a = np.array([3, 4, 2, 1])
     >>> np.partition(a, 3)
     array([2, 1, 3, 4])
-
     >>> np.partition(a, (1, 3))
     array([1, 2, 3, 4])
+    >>> np.partition(a, 3, reverse=True)
+    array([3, 4, 2, 1])
 
     """
     if axis is None:
@@ -745,16 +748,28 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
+
+    if reverse:
+        a = np.flip(a, axis=axis)
+        if isinstance(kth, int): 
+            kth = a.shape[axis] - kth - 1
+        else: 
+            kth = list(map(lambda i: a.shape[axis] - i - 1, kth))
+
     a.partition(kth, axis=axis, kind=kind, order=order)
+ 
+    if reverse:
+        a = np.flip(a, axis=axis)
+
     return a
 
 
-def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_argpartition_dispatcher)
-def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+def argpartition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
     """
     Perform an indirect partition along the given axis using the
     algorithm specified by the `kind` keyword. It returns an array of
@@ -785,7 +800,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         field can be specified as a string, and not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
-
+    reverse : bool, optional
+        If this is set to True, argpartition will be done in descending order.
+    
     Returns
     -------
     index_array : ndarray, int
@@ -815,10 +832,8 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     array([2, 1, 3, 4])
     >>> x[np.argpartition(x, (1, 3))]
     array([1, 2, 3, 4])
-
-    >>> x = [3, 4, 2, 1]
-    >>> np.array(x)[np.argpartition(x, 3)]
-    array([2, 1, 3, 4])
+    >>> np.array(x)[np.argpartition(x, 3, reverse=True)]
+    array([3, 4, 2, 1])
 
     Multi-dimensional array:
 
@@ -829,15 +844,36 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
            [1, 1, 3]])
 
     """
-    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+    if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
+        a = asanyarray(a).flatten()
+        axis = -1
+    else:
+        a = asanyarray(a).copy(order="K")
 
+    if reverse:
+        a = np.flip(a, axis=axis)
+        if isinstance(kth, int): 
+            kth = a.shape[axis] - kth - 1
+        else: 
+            kth = list(map(lambda i: a.shape[axis] - i - 1, kth))
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None):
+    index_array = _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+ 
+    if reverse:
+        flip_index = lambda i: index_array.shape[axis] - i - 1
+        vectorized_flip_index = np.vectorize(flip_index)
+        index_array = vectorized_flip_index(index_array)
+        index_array = np.flip(index_array, axis=axis)
+
+    return index_array
+
+def _sort_dispatcher(a, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None):
+def sort(a, axis=-1, kind=None, order=None, reverse=False):
     """
     Return a sorted copy of an array.
 
@@ -853,6 +889,9 @@ def sort(a, axis=-1, kind=None, order=None):
         and 'mergesort' use timsort or radix sort under the covers and, in general,
         the actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
+    reverse : bool, optional
+        If this is set to True, `a` will be sorted in descending order. It is done
+        by flipping `a` before and after sort.
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
@@ -958,6 +997,8 @@ def sort(a, axis=-1, kind=None, order=None):
            [1, 3]])
     >>> np.sort(a, axis=None)     # sort the flattened array
     array([1, 1, 3, 4])
+    >>> np.sort(a, axis=None, reverse=True)  # sort in descending order
+    array([4, 3, 1, 1])
     >>> np.sort(a, axis=0)        # sort along the first axis
     array([[1, 1],
            [3, 4]])
@@ -988,16 +1029,24 @@ def sort(a, axis=-1, kind=None, order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
+
+    if reverse:
+        a = np.flip(a, axis=axis)
+
     a.sort(axis=axis, kind=kind, order=order)
+
+    if reverse:
+        a = np.flip(a, axis=axis)
+
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None):
+def _argsort_dispatcher(a, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None):
+def argsort(a, axis=-1, kind=None, order=None, reverse=False):
     """
     Returns the indices that would sort an array.
 
@@ -1026,6 +1075,8 @@ def argsort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    reverse : bool, optional
+        If this is set to True, argsort will be done in descending order.
 
     Returns
     -------
@@ -1058,6 +1109,8 @@ def argsort(a, axis=-1, kind=None, order=None):
     >>> x = np.array([3, 1, 2])
     >>> np.argsort(x)
     array([1, 2, 0])
+    >>> np.argsort(x, reverse=True)
+    array([0, 2, 1])
 
     Two-dimensional array:
 
@@ -1104,7 +1157,18 @@ def argsort(a, axis=-1, kind=None, order=None):
     array([0, 1])
 
     """
-    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+    if reverse:
+        a = np.flip(a, axis=axis)
+    
+    index_array = _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+
+    if reverse:
+        flip_index = lambda i: index_array.shape[axis] - i - 1
+        vectorized_flip_index = np.vectorize(flip_index)
+        index_array = vectorized_flip_index(index_array)
+        index_array = np.flip(index_array, axis)
+
+    return index_array
 
 
 def _argmax_dispatcher(a, axis=None, out=None):
@@ -1269,12 +1333,12 @@ def argmin(a, axis=None, out=None):
     return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
-def _searchsorted_dispatcher(a, v, side=None, sorter=None):
+def _searchsorted_dispatcher(a, v, side=None, sorter=None, reverse=None):
     return (a, v, sorter)
 
 
 @array_function_dispatch(_searchsorted_dispatcher)
-def searchsorted(a, v, side='left', sorter=None):
+def searchsorted(a, v, side='left', sorter=None, reverse=False):
     """
     Find indices where elements should be inserted to maintain order.
 
@@ -1306,6 +1370,9 @@ def searchsorted(a, v, side='left', sorter=None):
     sorter : 1-D array_like, optional
         Optional array of integer indices that sort array a into ascending
         order. They are typically the result of argsort.
+    reverse : bool, optional
+        If this is set to True, input array must be sorted in descending order,
+        otherwise `sorter` must be an array of indices that sort it in descending order.
 
         .. versionadded:: 1.7.0
 
@@ -1334,13 +1401,33 @@ def searchsorted(a, v, side='left', sorter=None):
     --------
     >>> np.searchsorted([1,2,3,4,5], 3)
     2
+    >>> np.searchsorted([5,4,3,2,1], 4, reverse=True)
+    1
     >>> np.searchsorted([1,2,3,4,5], 3, side='right')
     3
     >>> np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3])
     array([0, 5, 1, 2])
 
     """
-    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
+
+    if reverse:
+        a = np.flip(a)
+        if sorter is not None: 
+             flip_index = lambda i: len(a) - i - 1
+             vectorized_flip_index = np.vectorize(flip_index)
+             sorter = vectorized_flip_index(sorter)
+             sorter = np.filp(sorter)
+        if side.startswith('l'): side = 'r'
+        elif side.startswith('r'): side = 'l'
+        
+    indices = _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
+
+    if reverse:
+        flip_index = lambda i: len(a) - i
+        vectorized_flip_index = np.vectorize(flip_index)
+        indices = vectorized_flip_index(indices)
+
+    return indices 
 
 
 def _resize_dispatcher(a, new_shape):

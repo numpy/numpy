@@ -1777,6 +1777,19 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
+        # test string sorts with reverse parameter.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(101)])
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = "string sort, kind=%s, reverse=True" % kind
+            c = a.copy()
+            c = np.sort(c, kind=kind, reverse=True)
+            assert_equal(c, b, msg)
+            c = b.copy()
+            c = np.sort(c, kind=kind, reverse=True)
+            assert_equal(c, b, msg)
+
         # test unicode sorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
@@ -1854,6 +1867,17 @@ class TestMethods:
         d = a.copy()
         d.sort()
         assert_equal(d, c, "test sort with default axis")
+
+        # check axis handling with reverse parameter
+        a = np.array([[0, 1], [2, 3]])
+        b = np.array([[2, 3], [0, 1]])
+        c = np.array([[1, 0], [3, 2]])
+        d = np.sort(a, axis=0, reverse=True)
+        assert_equal(d, b, "test sort with reverse=True and axis=0")
+        d = np.sort(a, axis=1, reverse=True)
+        assert_equal(d, c, "test sort with reverse=True and axis=1")
+        d = np.sort(a, reverse=True)
+        assert_equal(d, c, "test sort with reverse=True and default axis")
 
         # check axis handling for multidimensional empty arrays
         a = np.array([])
@@ -2029,6 +2053,17 @@ class TestMethods:
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
+        # test string argsorts with reverse=True.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(101)])
+        b = a[::-1].copy()
+        r = np.arange(101)
+        rr = r[::-1]
+        for kind in self.sort_kinds:
+            msg = "string argsort, kind=%s, reverse=True" % kind
+            assert_equal(np.argsort(a, kind=kind, reverse=True), rr, msg)
+            assert_equal(np.argsort(b, kind=kind, reverse=True), r, msg)
+
         # test unicode argsorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
@@ -2158,6 +2193,14 @@ class TestMethods:
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
+        # check double with reverse=True
+        a = np.array([np.nan, 1, 1, 0])
+        msg = "Test real searchsorted with nans, side='l', reverse=True"
+        b = np.searchsorted(a, a, side='l', reverse=True)
+        assert_equal(b, np.array([0, 1, 1, 3]), msg)
+        msg = "Test real searchsorted with nans, side='r', reverse=True"
+        b = np.searchsorted(a, a, side='r', reverse=True)
+        assert_equal(b, np.array([1, 3, 3, 4]), msg)
 
         # Check 0 elements
         a = np.ones(0)
@@ -2633,6 +2676,14 @@ class TestMethods:
                     msg="kth %d, %r not greater equal %d" % (k, d[k:], d[k]))
             prev = k + 1
 
+    def assert_partitioned_desc(self, d, kth):
+        prev = 0
+        for k in np.sort(kth):
+            assert_array_less(d[k+1:], d[k], err_msg='kth %d' % k)
+            assert_((d[prev:k] >= d[k]).all(),
+                    msg="kth %d, %r not greater equal %d" % (k, d[k:], d[k]))
+            prev = k + 1
+
     def test_partition_iterative(self):
             d = np.arange(17)
             kth = (0, 1, 2, 429, 231)
@@ -2701,6 +2752,21 @@ class TestMethods:
             for i in range(d0.shape[1]):
                 self.assert_partitioned(p[:, i], kth)
 
+            # test reverse
+            d = np.arange(20)
+            kth = 5
+            self.assert_partitioned_desc(np.partition(d, kth, reverse=True), [kth])
+            kth = [2, 5, 10]
+            self.assert_partitioned_desc(np.partition(d, kth, reverse=True), kth)
+            d = d.reshape((4, 5))
+            kth = [1, 0]
+            p = np.partition(d, kth=kth, axis=0, reverse=True)
+            for i in range(d.shape[1]):
+                self.assert_partitioned_desc(p[:, i], kth)
+            p = np.partition(d, kth, axis=1, reverse=True)
+            for i in range(d1.shape[0]):
+                self.assert_partitioned_desc(p[i,:], kth)
+
     def test_partition_cdtype(self):
         d = np.array([('Galahad', 1.7, 38), ('Arthur', 1.8, 41),
                    ('Lancelot', 1.9, 38)],
@@ -2747,9 +2813,19 @@ class TestMethods:
 
     def test_argpartition_gh5524(self):
         #  A test for functionality of argpartition on lists.
-        d = [6,7,3,2,9,0]
-        p = np.argpartition(d,1)
-        self.assert_partitioned(np.array(d)[p],[1])
+        d = [6, 7, 3, 2, 9, 0]
+        p = np.argpartition(d, 1)
+        self.assert_partitioned(np.array(d)[p], [1])
+
+    def test_argpartition_reverse(self):
+        #  Test argpatition with reverse=True.
+        d = [6, 7, 3, 2, 9, 0]
+        kth = 1
+        p = np.argpartition(d, kth, reverse=True)
+        self.assert_partitioned_desc(np.array(d)[p], [kth])
+        kth = [4, 1, 5]
+        p = np.argpartition(d, kth, reverse=True)
+        self.assert_partitioned_desc(np.array(d)[p], kth)
 
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
