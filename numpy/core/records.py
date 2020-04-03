@@ -157,8 +157,7 @@ class format_parser:
     def __init__(self, formats, names, titles, aligned=False, byteorder=None):
         self._parseFormats(formats, aligned)
         self._setfieldnames(names, titles)
-        self._createdescr(byteorder)
-        self.dtype = self._descr
+        self._createdtype(byteorder)
 
     def _parseFormats(self, formats, aligned=False):
         """ Parse the field formats """
@@ -217,8 +216,8 @@ class format_parser:
         if self._nfields > len(titles):
             self._titles += [None] * (self._nfields - len(titles))
 
-    def _createdescr(self, byteorder):
-        descr = sb.dtype({
+    def _createdtype(self, byteorder):
+        dtype = sb.dtype({
             'names': self._names,
             'formats': self._f_formats,
             'offsets': self._offsets,
@@ -226,9 +225,10 @@ class format_parser:
         })
         if byteorder is not None:
             byteorder = _byteorderconv[byteorder[0]]
-            descr = descr.newbyteorder(byteorder)
+            dtype = dtype.newbyteorder(byteorder)
 
-        self._descr = descr
+        self.dtype = dtype
+
 
 class record(nt.void):
     """A data-type scalar that allows field access as attribute lookup.
@@ -432,7 +432,7 @@ class recarray(ndarray):
         if dtype is not None:
             descr = sb.dtype(dtype)
         else:
-            descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+            descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
         if buf is None:
             self = ndarray.__new__(subtype, shape, (record, descr), order=order)
@@ -625,11 +625,9 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     if dtype is not None:
         descr = sb.dtype(dtype)
-        _names = descr.names
     else:
-        parsed = format_parser(formats, names, titles, aligned, byteorder)
-        _names = parsed._names
-        descr = parsed._descr
+        descr = format_parser(formats, names, titles, aligned, byteorder).dtype
+    _names = descr.names
 
     # Determine shape from data-type.
     if len(descr) != len(arrayList):
@@ -694,7 +692,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     if dtype is not None:
         descr = sb.dtype((record, dtype))
     else:
-        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+        descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
     try:
         retval = sb.array(recList, dtype=descr)
@@ -737,7 +735,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     if dtype is not None:
         descr = sb.dtype(dtype)
     else:
-        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+        descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
     itemsize = descr.itemsize
 
@@ -810,7 +808,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         if dtype is not None:
             descr = sb.dtype(dtype)
         else:
-            descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+            descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
         itemsize = descr.itemsize
 
@@ -851,7 +849,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         dtype = sb.dtype(dtype)
     elif formats is not None:
         dtype = format_parser(formats, names, titles,
-                              aligned, byteorder)._descr
+                              aligned, byteorder).dtype
     else:
         kwds = {'formats': formats,
                 'names': names,
