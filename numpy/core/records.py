@@ -617,6 +617,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         form ``['col1', 'col2', 'col3']``.
         An empty list can be used, in that case default field names
         ('f0', 'f1', ...) are used.
+        In the event that dtype is specified, names is ignored in favor of the
+        dtype labels.
     titles : sequence, optional
         Sequence of title strings. An empty list can be used to leave titles
         out.
@@ -644,6 +646,17 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
+    
+    >>> x1 = np.array([1,2,3,4])
+    >>> x2 = np.array(['a','dd','xyz','12'])
+    >>> x3 = np.array([1.1,2,3,4])
+    >>> r = np.core.records.fromarrays(
+            [x1, x2, x3], names='d,e,f',
+            dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c',np.float32)]))
+    >>> r # names is ignored in favor of dtype
+    rec.array([(1, b'a', 1.1), (2, b'dd', 2. ), (3, b'xyz', 3. ),
+           (4, b'12', 4. )],
+          dtype=[('a', '<i4'), ('b', 'S3'), ('c', '<f4')])
     """
 
     arrayList = [sb.asarray(x) for x in arrayList]
@@ -696,7 +709,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
     """Create a recarray from a list of records in text form.
-        
+
     Parameters
     ----------
     recList : sequence
@@ -718,6 +731,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         form ``['col1', 'col2', 'col3']``.
         An empty list can be used, in that case default field names
         ('f0', 'f1', ...) are used.
+        In the event that dtype is specified, names is ignored in favor of the
+        dtype labels.
     titles : sequence, optional
         Sequence of title strings. An empty list can be used to leave titles
         out.
@@ -827,7 +842,6 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    
     Parameters
     ----------
     fd : str or file type
@@ -851,6 +865,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         form ``['col1', 'col2', 'col3']``.
         An empty list can be used, in that case default field names
         ('f0', 'f1', ...) are used.
+        In the event that dtype is specified, names is ignored in favor of the
+        dtype labels.
     titles : sequence, optional
         Sequence of title strings. An empty list can be used to leave titles
         out.
