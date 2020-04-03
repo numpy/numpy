@@ -160,7 +160,8 @@ Further, the public API will be designed in a way that is extensible in the futu
    version of the C-API used for the internal NumPy datatypes.
 
 The datatype system may be targeted to work with NumPy arrays,
-for example by providing strided-loops, but should avoid direct interactions with the array-object (typically `np.ndarray` instances).
+for example by providing strided-loops, but should avoid direct
+interactions with the array-object (typically `np.ndarray` instances).
 Instead, the design principle will be that the array-object is a consumer
 of the datatype.
 While only a guiding principle, this may allow splitting the datatype system
