@@ -701,7 +701,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         shape of each array.
     formats, names, titles, aligned, byteorder :
         If `dtype` is ``None``, these arguments are passed to `numpy.format_parser` to construct a dtype.
-        See that function for detailed documentation
+        See that function for detailed documentation.
 
     Returns
     -------
