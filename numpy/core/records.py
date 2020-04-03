@@ -606,29 +606,9 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         valid dtype for all arrays
     shape : int or tuple of ints, optional
         Shape of the resulting array. If not provided, inferred from ``arrayList[0]``.
-    formats : str or list of str, optional
-        The format description, either specified as a string with
-        comma-separated format descriptions in the form ``'f8, i4, a5'``, or
-        a list of format description strings  in the form
-        ``['f8', 'i4', 'a5']``.
-    names : str or list/tuple of str, optional
-        The field names, either specified as a comma-separated string in the
-        form ``'col1, col2, col3'``, or as a list or tuple of strings in the
-        form ``['col1', 'col2', 'col3']``.
-        An empty list can be used, in that case default field names
-        ('f0', 'f1', ...) are used.
-        In the event that dtype is specified, names is ignored in favor of the
-        dtype labels.
-    titles : sequence, optional
-        Sequence of title strings. An empty list can be used to leave titles
-        out.
-    aligned : bool, optional
-        If True, align the fields by padding as the C-compiler would.
-        Default is False.
-    byteorder : str, optional
-        If specified, all the fields will be changed to the
-        provided byte-order.  Otherwise, the default byte-order is
-        used. For all available string specifiers, see `dtype.newbyteorder`.
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to `numpy.format_parser` to construct a dtype.
+        See that function for detailed documentation.
 
 
     Returns
