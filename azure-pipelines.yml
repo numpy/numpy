@@ -76,6 +76,7 @@ stages:
             PYTHON_VERSION: '3.6'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
+            USE_XCODE_10: '1'
           Accelerate:
             PYTHON_VERSION: '3.6'
             USE_OPENBLAS: '0'
@@ -89,9 +90,10 @@ stages:
         versionSpec: $(PYTHON_VERSION)
         addToPath: true
         architecture: 'x64'
-    # NOTE: do we have a compelling reason to use older / newer
-    # versions of Xcode toolchain for testing?
-    - script: clang --version
+    - script: |
+        set -xe
+        [ -n "$USE_XCODE_10" ] && /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+        clang --version
       displayName: 'report clang version'
     # NOTE: might be better if we could avoid installing
     # two C compilers, but with homebrew looks like we're
