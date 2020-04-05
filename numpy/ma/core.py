@@ -2753,6 +2753,52 @@ class MaskedArray(ndarray):
         in any order (either C-, Fortran-contiguous, or even discontiguous),
         unless a copy is required, in which case it will be C-contiguous.
 
+    Examples
+    --------
+
+    The ``mask`` can be initialized with an array of boolean values
+    with the same shape as ``data``.
+
+    >>> data = np.arange(6).reshape((2, 3))
+    >>> np.ma.MaskedArray(data, mask=[[False, True, False],
+    ...                               [False, False, True]])
+    masked_array(
+      data=[[0, --, 2],
+            [3, 4, --]],
+      mask=[[False,  True, False],
+            [False, False,  True]],
+      fill_value=999999)
+
+    Alternatively, the ``mask`` can be initialized to homogeneous boolean
+    array with the same shape as ``data`` by passing in a scalar
+    boolean value:
+
+    >>> np.ma.MaskedArray(data, mask=False)
+    masked_array(
+      data=[[0, 1, 2],
+            [3, 4, 5]],
+      mask=[[False, False, False],
+            [False, False, False]],
+      fill_value=999999)
+
+    >>> np.ma.MaskedArray(data, mask=True)
+    masked_array(
+      data=[[--, --, --],
+            [--, --, --]],
+      mask=[[ True,  True,  True],
+            [ True,  True,  True]],
+      fill_value=999999,
+      dtype=int64)
+
+    .. note::
+        The recommended practice for initializing ``mask`` with a scalar
+        boolean value is to use ``True``/``False`` rather than
+        ``np.True_``/``np.False_``. The reason is :attr:`nomask`
+        is represented internally as ``np.False_``.
+
+        >>> np.False_ is np.ma.nomask
+        True
+
     """
 
     __array_priority__ = 15

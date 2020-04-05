@@ -1242,6 +1242,17 @@ class TestRandomDist:
         assert_raises(ValueError, random.multivariate_normal, mean, cov,
                       check_valid='raise', method='eigh')
 
+        # check degenerate samples from singular covariance matrix
+        cov = [[1, 1], [1, 1]]
+        if method in ('svd', 'eigh'):
+            samples = random.multivariate_normal(mean, cov, size=(3, 2),
+                                                 method=method)
+            assert_array_almost_equal(samples[..., 0], samples[..., 1],
+                                      decimal=6)
+        else:
+            assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
+                          method='cholesky')
+
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
         with suppress_warnings() as sup:
             random.multivariate_normal(mean, cov, method=method)
@@ -1258,6 +1269,19 @@ class TestRandomDist:
                       mu, np.empty((3, 2)))
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
+
+    @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
+    def test_multivariate_normal_basic_stats(self, method):
+        random = Generator(MT19937(self.seed))
+        n_s = 1000
+        mean = np.array([1, 2])
+        cov = np.array([[2, 1], [1, 2]])
+        s = random.multivariate_normal(mean, cov, size=(n_s,), method=method)
+        s_center = s - mean
+        cov_emp = (s_center.T @ s_center) / (n_s - 1)
+        # these are pretty loose and are only designed to detect major errors
+        assert np.all(np.abs(s_center.mean(-2)) < 0.1)
+        assert np.all(np.abs(cov_emp - cov) < 0.2)
 
     def test_negative_binomial(self):
         random = Generator(MT19937(self.seed))
