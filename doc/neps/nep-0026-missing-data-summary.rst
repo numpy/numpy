@@ -5,7 +5,7 @@ NEP 26 — Summary of Missing Data NEPs and discussion
 :Author: Mark Wiebe <mwwiebe@gmail.com>, Nathaniel J. Smith <njs@pobox.com>
 :Status: Deferred
 :Type: Standards Track
-:Created: 2012-04-22
+:Created: 2012-04-22 (added references: 2020-04-06)
 
 *Context*: this NEP was written as summary of the large number of discussions
 and proposals (`NEP 12`_, `NEP 24`_, `NEP 25`_), regarding missing data
@@ -717,6 +717,16 @@ implementation strategy for NA dtypes.
 A further discussion overview page can be found at:
 https://github.com/njsmith/numpy/wiki/NA-discussion-status
 
+Additional References (2020):
+--------------------
+
+In 2018 Wes McKinney demonstrates, that sentinel values are actually less performant than bitmasks (contrary to popular belief also expressed here):
+https://wesmckinney.com/blog/bitmaps-vs-sentinel-values/
+
+In a follow-up Pasha Stetsenko optimizes the code for sentinel values by Wes McKinney, allowing them to perform similarly (but not better):
+https://github.com/st-pasha/microbench-nas/blob/master/README.md
+
+Note that the bitmasks used by Wes McKinnely are tightly packed and can not store additional information like "degree of missingness" mentioned as possible advantages of masks. For more details check out the Apache Arrow project, where this method is used.
 
 Copyright
 ---------
