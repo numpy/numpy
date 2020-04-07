@@ -764,6 +764,19 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
+    Note that, NumPy will not copy ragged object arrays:
+
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.copy(np.array([a, [a, a]], dtype=object))
+
+    Any updates on b changes a:
+
+    >>> b[0][0] = 10
+    >>> np.alltrue(b[0] == a)
+    True
+    >>> np.alltrue(b[1][0] == a)
+    True
+
     """
     return array(a, order=order, subok=subok, copy=True)
 
