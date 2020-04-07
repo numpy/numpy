@@ -39,22 +39,36 @@ def test_repr_roundtrip():
     assert_equal(np.longdouble(repr(o)), o, "repr was %s" % repr(o))
 
 
-def test_unicode():
-    np.longdouble(u"1.2")
-
-
-def test_string():
-    np.longdouble("1.2")
-
-
-def test_bytes():
-    np.longdouble(b"1.2")
-
-
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_repr_roundtrip_bytes():
     o = 1 + LD_INFO.eps
     assert_equal(np.longdouble(repr(o).encode("ascii")), o)
+
+
+@pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
+@pytest.mark.parametrize("strtype", (np.str_, np.bytes_, str, bytes))
+def test_array_and_stringlike_roundtrip(strtype):
+    """
+    Test that string representations of long-double roundtrip both
+    for array casting and scalar coercion, see also gh-15608.
+    """
+    o = 1 + LD_INFO.eps
+
+    if strtype in (np.bytes_, bytes):
+        o_str = strtype(repr(o).encode("ascii"))
+    else:
+        o_str = strtype(repr(o))
+
+    # Test that `o` is correctly coerced from the string-like
+    assert o == np.longdouble(o_str)
+
+    # Test that arrays also roundtrip correctly:
+    o_strarr = np.asarray([o] * 3, dtype=strtype)
+    assert (o == o_strarr.astype(np.longdouble)).all()
+
+    # And array coercion and casting to string give the same as scalar repr:
+    assert (o_strarr == o_str).all()
+    assert (np.asarray([o] * 3).astype(strtype) == o_str).all()
 
 
 def test_bogus_string():
