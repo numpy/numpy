@@ -652,6 +652,8 @@ class TestSpecialFloats:
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
+            assert_raises(FloatingPointError, np.exp, np.float64(800.))
+            assert_raises(FloatingPointError, np.exp, np.float64(1E19))
 
     def test_log_values(self):
         with np.errstate(all='ignore'):
