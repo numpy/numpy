@@ -65,7 +65,7 @@ values are unaffected by it, and it is always possible to cast them to the
 native, canonical representation without any loss of information.
 
 The concept of flexibility can be generalized to parametric datatypes.
-For example the private ``AdaptFlexibleDType`` function also accepts the
+For example the private ``PyArray_AdaptFlexibleDType`` function also accepts the
 naive datetime dtype as input to find the correct time unit.
 The datetime dtype is thus parametric not in the size of its storage,
 but instead in what the stored value represents.
