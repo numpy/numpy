@@ -775,6 +775,7 @@ def copy(a, order='K', subok=False):
 
     To copy the elements as well, use `copy.deepcopy`:
 
+    >>> import copy
     >>> c = copy.deepcopy(a)
     >>> c[0] is a[0]
     False
