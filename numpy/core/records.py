@@ -634,8 +634,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x2 = np.array(['a','dd','xyz','12'])
     >>> x3 = np.array([1.1,2,3,4])
     >>> r = np.core.records.fromarrays(
-...         [x1, x2, x3],
-...         dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c',np.float32)]))
+    ...     [x1, x2, x3],
+    ...     dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c',np.float32)]))
     >>> r
     rec.array([(1, b'a', 1.1), (2, b'dd', 2. ), (3, b'xyz', 3. ),
                (4, b'12', 4. )],
@@ -711,7 +711,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     Returns
     -------
-    record array consisting of given recList rows.
+    np.recarray
+        record array consisting of given recList rows.
 
     Examples
     --------
@@ -826,7 +827,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     Returns
     -------
-    record array consisting of data enclosed in file.
+    np.recarray
+        record array consisting of data enclosed in file.
 
     Examples
     --------
