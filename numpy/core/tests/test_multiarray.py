@@ -1719,7 +1719,8 @@ class TestMethods:
             assert_equal(c, a, msg)
 
     @pytest.mark.parametrize('dtype',
-                             [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble])
+                             [np.int8, np.int16, np.int32, np.int64, np.float16,
+                              np.float32, np.float64, np.longdouble])
     def test_sort_signed(self, dtype):
         a = np.arange(-50, 51, dtype=dtype)
         b = a[::-1].copy()
