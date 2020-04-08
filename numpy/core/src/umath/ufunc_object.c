@@ -3615,12 +3615,8 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     /* Get the identity */
     identity = _get_identity(ufunc, &reorderable);
-    if (identity == NULL) {
-        return NULL;
-    }
-
-    if(initial != identity){
-        return NULL; // we are suppose to throw an error here?
+    if (identity == NULL || initial != identity) {
+        return NULL; //is this returning an error or do we have to break it up
     }
 
     /* Get the initial value */
