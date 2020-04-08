@@ -825,7 +825,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     Returns
     -------
-    record array consisting of given recList rows.
+    record array consisting of data enclosed in file.
 
     Examples
     --------
