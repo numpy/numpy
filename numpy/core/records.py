@@ -615,7 +615,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     Returns
     -------
-    record array consisting of given arrayList columns.
+    np.recarray
+        Record array consisting of given arrayList columns.
 
     Examples
     --------
