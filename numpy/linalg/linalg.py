@@ -2173,7 +2173,7 @@ def lstsq(a, b, rcond="warn"):
     Return the least-squares solution to a linear matrix equation.
 
     Computes the vector x that approximatively solves the equation
-    :math:`a x=b`. The equation may be under-, well-, or over-determined
+    ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
