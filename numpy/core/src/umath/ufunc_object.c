@@ -3615,8 +3615,8 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     /* Get the identity */
     identity = _get_identity(ufunc, &reorderable);
-    if (identity == NULL || initial != identity) {
-        return NULL; //is this returning an error or do we have to break it up
+    if (identity == NULL) {
+        return NULL;
     }
 
     /* Get the initial value */
@@ -3632,6 +3632,8 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             initial = Py_None;
             Py_INCREF(initial);
         }
+    } else if(initial != identity){
+        return NULL;
     } else {
         Py_DECREF(identity);
         Py_INCREF(initial);  /* match the reference count in the if above */
