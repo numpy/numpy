@@ -1703,7 +1703,8 @@ class TestMethods:
     # algorithm because quick and merge sort fall over to insertion
     # sort for small arrays.
 
-    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32, np.float64,
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64,
+                                       np.float16, np.float32, np.float64,
                                        np.longdouble])
     def test_sort_unsigned(self, dtype):
         a = np.arange(101, dtype=dtype)
