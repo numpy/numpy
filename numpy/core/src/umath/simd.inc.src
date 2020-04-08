@@ -2699,9 +2699,10 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  * 1) if x > mTH_max or x is INF; return INF (overflow)
  * 2) if x < mTH_min; return 0.0f (underflow)
  * 3) if abs(x) < mTH_nearzero; return 1.0f + x
- * 4) Range reduction:
+ * 4) if x is Nan; return Nan
+ * 5) Range reduction:
  *    x = (32m + j)ln2 / 32 + r; r in [-ln2/64, ln2/64]
- * 5) exp(r) - 1 is approximated by a polynomial function p(r)
+ * 6) exp(r) - 1 is approximated by a polynomial function p(r)
  *    exp(x) = 2^m(2^(j/32) + 2^(j/32)p(r));
  */
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
