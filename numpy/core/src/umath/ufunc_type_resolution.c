@@ -550,7 +550,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     has_flexible = 1;
                 }
             }
-            if (has_flexible && !has_object) {
+            if (NPY_UNLIKELY(has_flexible && !has_object)) {
                 /*
                  * DEPRECATED NumPy 1.19, 2020-03 the following check is needed
                  * to avoid the warning within ResultType. Effectively these
@@ -558,11 +558,11 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                  * We have to do this before PyArray_ResultType is called,
                  * since it would give a spurious DeprecationWarning.
                  */
-                PyErr_Format(PyExc_TypeError,
-                        "No loop matching the specified signature and "
-                        "casting was found for ufunc %s. Strings and other "
-                        "flexible datatypes are unsupported.", ufunc_name);
-                return -1;
+                for (iop = 0; iop < ufunc->nin; iop++) {
+                    out_dtypes[iop] = PyArray_DESCR(operands[iop]);
+                    Py_INCREF(out_dtypes[iop]);
+                }
+                return raise_no_loop_found_error(ufunc, out_dtypes);
             }
             out_dtypes[0] = PyArray_ResultType(ufunc->nin, operands, 0, NULL);
         }

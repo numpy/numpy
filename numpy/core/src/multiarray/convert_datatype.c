@@ -1090,6 +1090,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             Py_DECREF(res);
             return NULL;
         }
+        return res;
     }
     return res;
 }

@@ -138,6 +138,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
             Py_SETREF(*out_dtype, NULL);
             return -1;
         }
+        return res;
     }
     return res;
 }
