@@ -599,8 +599,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     Parameters
     ----------
-    arrayList : sequence
-        Iterable container of array-like objects (such as lists, tuples,
+    arrayList : list or tuple
+        List of array-like objects (such as lists, tuples,
         and ndarrays).
     dtype : data-type, optional
         valid dtype for all arrays
