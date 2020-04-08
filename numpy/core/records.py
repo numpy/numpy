@@ -634,7 +634,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x3 = np.array([1.1,2,3,4])
     >>> r = np.core.records.fromarrays(
 ...         [x1, x2, x3], names='d,e,f',
-            dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c',np.float32)]))
+...         dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c',np.float32)]))
     >>> r # names is ignored in favor of dtype
     rec.array([(1, b'a', 1.1), (2, b'dd', 2. ), (3, b'xyz', 3. ),
            (4, b'12', 4. )],
