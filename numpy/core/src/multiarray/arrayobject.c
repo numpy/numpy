@@ -528,6 +528,11 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
+        else if (PyDataType_HASDESTRUCTOR(fa->descr)) {
+            fa->descr->f->destruct(fa->data,
+                                   PyArray_NBYTES(self) / fa->descr->elsize,
+                                   fa);
+        }
         npy_free_cache(fa->data, PyArray_NBYTES(self));
     }
 

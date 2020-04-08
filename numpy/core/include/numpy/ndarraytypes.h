@@ -434,6 +434,8 @@ typedef int  (PyArray_FastTakeFunc)(void *dest, void *src, npy_intp *indarray,
                                        npy_intp nindarray, npy_intp n_outer,
                                        npy_intp m_middle, npy_intp nelem,
                                        NPY_CLIPMODE clipmode);
+typedef int (PyArray_ConstructFunc)(void *, npy_intp, void *);
+typedef void (PyArray_DestructFunc)(void *, npy_intp, void *);
 
 typedef struct {
         npy_intp *ptr;
@@ -550,6 +552,19 @@ typedef struct {
          */
         PyArray_ArgFunc *argmin;
 
+
+        /*
+         * Function to construct elements
+         * Can be NULL
+         */
+        PyArray_ConstructFunc *construct;
+
+        /*
+         * Function to destroy elements
+         * Can be NULL
+         */
+        PyArray_DestructFunc *destruct;
+
 } PyArray_ArrFuncs;
 
 /* The item must be reference counted when it is inserted or extracted. */
@@ -587,6 +602,12 @@ typedef struct {
 
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
+
+#define PyDataType_HASCONSTRUCTOR(dtype) \
+        ((dtype)->f->construct != NULL)
+
+#define PyDataType_HASDESTRUCTOR(dtype) \
+        ((dtype)->f->destruct != NULL)
 
 typedef struct _PyArray_Descr {
         PyObject_HEAD

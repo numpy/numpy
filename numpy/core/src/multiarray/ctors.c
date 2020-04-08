@@ -1092,6 +1092,17 @@ PyArray_NewFromDescr_int(
         if (data == NULL) {
             return raise_memory_error(fa->nd, fa->dimensions, descr);
         }
+
+        /*
+         * Call the user's constructor function to initialize the array.
+         */
+        if (PyDataType_HASCONSTRUCTOR(descr)) {
+            if (descr->f->construct(data, nbytes / descr->elsize, fa)) {
+                npy_free_cache(fa->data, nbytes);
+                goto fail;
+            }
+        }
+
         fa->flags |= NPY_ARRAY_OWNDATA;
 
     }
