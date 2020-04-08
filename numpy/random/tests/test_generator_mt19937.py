@@ -1297,6 +1297,11 @@ class TestRandomDist:
             assert_raises(ValueError, random.negative_binomial, 100,
                           [np.nan] * 10)
 
+    def test_negative_binomial_p0_exception(self):
+        # Verify that p=0 raises an exception.
+        with assert_raises(ValueError):
+            x = random.negative_binomial(1, 0)
+
     def test_noncentral_chisquare(self):
         random = Generator(MT19937(self.seed))
         actual = random.noncentral_chisquare(df=5, nonc=5, size=(3, 2))
