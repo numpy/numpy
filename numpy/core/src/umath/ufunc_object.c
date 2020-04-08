@@ -3619,6 +3619,10 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
+    if(initial != identity){
+        return NULL; // we are suppose to throw an error here?
+    }
+
     /* Get the initial value */
     if (initial == NULL || initial == NoValue) {
         initial = identity;
