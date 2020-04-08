@@ -638,7 +638,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> r # names is ignored in favor of dtype
     rec.array([(1, b'a', 1.1), (2, b'dd', 2. ), (3, b'xyz', 3. ),
                (4, b'12', 4. )],
-          dtype=[('a', '<i4'), ('b', 'S3'), ('c', '<f4')])
+              dtype=[('a', '<i4'), ('b', 'S3'), ('c', '<f4')])
     """
 
     arrayList = [sb.asarray(x) for x in arrayList]
