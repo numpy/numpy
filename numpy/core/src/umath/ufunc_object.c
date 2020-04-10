@@ -3632,7 +3632,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             initial = Py_None;
             Py_INCREF(initial);
         }
-    } else if(PY_TYPE(initial) != PY_TYPE(identity)) {
+    } else if(Py_TYPE(initial) != Py_TYPE(identity)) {
         PyErr_Format(PyExc_TypeError,
                     "initial type does not match the array type");
         return NULL;
