@@ -3,6 +3,7 @@ import warnings
 import itertools
 import platform
 import pytest
+import math
 from decimal import Decimal
 
 import numpy as np
@@ -11,7 +12,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_warns, HAS_REFCOUNT
+    assert_warns, assert_array_max_ulp, HAS_REFCOUNT
     )
 
 from hypothesis import assume, given, strategies as st
@@ -139,6 +140,51 @@ class TestNonarrayArgs:
         arr = [1.56, 72.54, 6.35, 3.25]
         tgt = [1.6, 72.5, 6.4, 3.2]
         assert_equal(np.around(arr, decimals=1), tgt)
+        s = np.float64(1.)
+        assert_(isinstance(s.round(), np.float64))
+        assert_equal(s.round(), 1.)
+
+    @pytest.mark.parametrize('dtype', [
+        np.int8, np.int16, np.int32, np.int64,
+        np.uint8, np.uint16, np.uint32, np.uint64,
+        np.float16, np.float32, np.float64,
+    ])
+    def test_dunder_round(self, dtype):
+        s = dtype(1)
+        assert_(isinstance(round(s), int))
+        assert_(isinstance(round(s, None), int))
+        assert_(isinstance(round(s, ndigits=None), int))
+        assert_equal(round(s), 1)
+        assert_equal(round(s, None), 1)
+        assert_equal(round(s, ndigits=None), 1)
+
+    @pytest.mark.parametrize('val, ndigits', [
+        pytest.param(2**31 - 1, -1,
+            marks=pytest.mark.xfail(reason="Out of range of int32")
+        ),
+        (2**31 - 1, 1-math.ceil(math.log10(2**31 - 1))),
+        (2**31 - 1, -math.ceil(math.log10(2**31 - 1)))
+    ])
+    def test_dunder_round_edgecases(self, val, ndigits):
+        assert_equal(round(val, ndigits), round(np.int32(val), ndigits))
+
+    def test_dunder_round_accuracy(self):
+        f = np.float64(5.1 * 10**73)
+        assert_(isinstance(round(f, -73), np.float64))
+        assert_array_max_ulp(round(f, -73), 5.0 * 10**73)
+        assert_(isinstance(round(f, ndigits=-73), np.float64))
+        assert_array_max_ulp(round(f, ndigits=-73), 5.0 * 10**73)
+
+        i = np.int64(501)
+        assert_(isinstance(round(i, -2), np.int64))
+        assert_array_max_ulp(round(i, -2), 500)
+        assert_(isinstance(round(i, ndigits=-2), np.int64))
+        assert_array_max_ulp(round(i, ndigits=-2), 500)
+
+    @pytest.mark.xfail(raises=AssertionError, reason="gh-15896")
+    def test_round_py_consistency(self):
+        f = 5.1 * 10**73
+        assert_equal(round(np.float64(f), -73), round(f, -73))
 
     def test_searchsorted(self):
         arr = [-8, -5, -1, 3, 6, 10]
