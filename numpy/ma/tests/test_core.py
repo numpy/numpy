@@ -48,6 +48,7 @@ from numpy.ma.core import (
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
 from numpy.compat import pickle
+from numpy.polynomial import Polynomial, polynomial
 
 pi = np.pi
 
@@ -1918,7 +1919,15 @@ class TestMaskedArrayAttributes:
         m.dtype = np.dtype('f4,i4')
         assert_equal(m.dtype, np.dtype('f4,i4'))
         assert_equal(m._mask, np.ma.nomask)
-
+    
+    def test_with_polynomial(self):
+        # check after initializing polynomial with masked_array, the array is 
+        # still correctly masked
+        c = masked_array([1.0, -1.0, 2], mask=[0, 1, 0])
+        p = Polynomial(c)
+        expected = np.array([1, np.nan, 2])
+        assert_equal(p.coef, expected)
+        
 
 class TestFillingValues:
 

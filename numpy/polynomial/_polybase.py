@@ -261,8 +261,26 @@ class ABCPolyBase(abc.ABC):
         return other
 
     def __init__(self, coef, domain=None, window=None):
-        [coef] = pu.as_series([coef], trim=False)
-        self.coef = coef
+        if isinstance(coef, np.ma.core.MaskedArray):
+            # this is a temporary solution for initializing Polynomial
+            # with masked arrays, as the expected behavior for 
+            # __array_finialize__ function in np.ma.core.MaskedArray has not
+            # yet been decided.
+            #
+            # for now just check if the coef is a MaskedArray, just make 
+            # self.coef as the correctly masked array, with the masked value 
+            # be converted to np.nan
+            lst = []
+            for i in range(len(coef)):
+                if isinstance(coef[i], np.ma.core.MaskedConstant):
+                    lst.append(np.nan)
+                else:
+                    lst.append(coef[i])
+            masked_ndarray = np.array(lst)
+            self.coef = masked_ndarray
+        else:
+            [coef] = pu.as_series([coef], trim=False)
+            self.coef = coef
 
         if domain is not None:
             [domain] = pu.as_series([domain], trim=False)
