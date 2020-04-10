@@ -27,6 +27,8 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
+    config.addinivalue_line("markers",
+        "slow_pypy: Tests that are very slow on pypy.")
 
 
 def pytest_addoption(parser):
