@@ -1549,6 +1549,58 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 }
 /**end repeat**/
 
+
+/**begin repeat
+ * #name = integer, floating, complexfloating#
+ * #complex = 0, 0, 1#
+ */
+static PyObject *
+@name@type_dunder_round(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"ndigits", NULL};
+    PyObject *ndigits = Py_None;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:__round__", kwlist, &ndigits)) {
+        return NULL;
+    }
+
+#if @complex@
+    if (DEPRECATE("The Python built-in `round` is deprecated for complex "
+                  "scalars, and will raise a `TypeError` in a future release. "
+                  "Use `np.round` or `scalar.round` instead.") < 0) {
+        return NULL;
+    }
+#endif
+    
+    PyObject *tup;
+    if (ndigits == Py_None) {
+        tup = PyTuple_Pack(0);
+    }
+    else {
+        tup = PyTuple_Pack(1, ndigits);
+    }
+
+    if (tup == NULL) {
+        return NULL;
+    }
+
+    PyObject *obj = gentype_round(self, tup, NULL);
+    Py_DECREF(tup);
+    if (obj == NULL) {
+        return NULL;
+    }
+
+#if !@complex@
+    if (ndigits == Py_None) {
+        PyObject *ret = PyNumber_Long(obj);
+        Py_DECREF(obj);
+        return ret;
+    }
+#endif
+    
+    return obj;
+}
+/**end repeat**/
+
 static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
@@ -2056,10 +2108,6 @@ static PyMethodDef gentype_methods[] = {
     {"round",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    /* Hook for the round() builtin */
-    {"__round__",
-        (PyCFunction)gentype_round,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     /* For the format function */
     {"__format__",
         gentype_format,
@@ -2126,6 +2174,18 @@ static PyMethodDef @name@type_methods[] = {
         (PyCFunction)@name@_complex,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}
+};
+/**end repeat**/
+
+/**begin repeat
+ * #name = integer,floating, complexfloating#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* Hook for the round() builtin */
+    {"__round__",
+        (PyCFunction)@name@type_dunder_round,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 /**end repeat**/
 
@@ -3655,8 +3715,8 @@ initialize_numeric_types(void)
     /**end repeat**/
 
     /**begin repeat
-     * #name = cfloat, clongdouble#
-     * #NAME = CFloat, CLongDouble#
+     * #name = cfloat, clongdouble, floating, integer, complexfloating#
+     * #NAME = CFloat, CLongDouble, Floating, Integer, ComplexFloating#
      */
 
     Py@NAME@ArrType_Type.tp_methods = @name@type_methods;
