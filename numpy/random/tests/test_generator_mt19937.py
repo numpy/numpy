@@ -115,6 +115,12 @@ class TestMultinomial:
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
+    def test_multidimensional_pvals(self):
+        assert_raises(ValueError, random.multinomial, 10, [[0, 1]])
+        assert_raises(ValueError, random.multinomial, 10, [[0], [1]])
+        assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
+        assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
+
 
 class TestMultivariateHypergeometric:
 
