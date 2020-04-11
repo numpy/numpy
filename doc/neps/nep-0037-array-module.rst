@@ -58,7 +58,7 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
 
    - **Array creation** routines (e.g., ``np.arange`` and those in
      ``np.random``) need some other mechanism for indicating what type of
-     arrays to create. `NEP 36 <https://github.com/numpy/numpy/pull/14715>`_
+     arrays to create. `NEP 35 <https://numpy.org/neps/nep-0035-array-creation-dispatch-with-array-function.html>`_
      proposed adding optional ``like=`` arguments to functions without
      existing array arguments. However, we still lack any mechanism to
      override methods on objects, such as those needed by
@@ -439,7 +439,7 @@ input arguments:
     class ArrayModule:
         def __init__(self, prefer_gpu):
             self.prefer_gpu = prefer_gpu
-        
+
         def __getattr__(self, name):
             import base_module
             base_func = getattr(base_module, name)
