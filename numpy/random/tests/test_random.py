@@ -92,6 +92,12 @@ class TestMultinomial(object):
         assert_raises(TypeError, np.random.multinomial, 1, p,
                       float(1))
 
+    def test_multidimensional_pvals(self):
+        assert_raises(ValueError, np.random.multinomial, 10, [[0, 1]])
+        assert_raises(ValueError, np.random.multinomial, 10, [[0], [1]])
+        assert_raises(ValueError, np.random.multinomial, 10, [[[0], [1]], [[1], [0]]])
+        assert_raises(ValueError, np.random.multinomial, 10, np.array([[0, 1], [1, 0]]))
+
 
 class TestSetState(object):
     def setup(self):
