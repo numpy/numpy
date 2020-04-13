@@ -41,7 +41,7 @@
 #include "reduction.h"
 #include "mem_overlap.h"
 
-#include "convert_datatype.h"
+//#include "convert_datatype.h"
 
 #include "ufunc_object.h"
 #include "override.h"
@@ -3643,7 +3643,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     /*make sure the types are castable*/
     PyArrayObject *initialArray = (PyArrayObject*) PyArray_FROM_O(initial);
     PyArrayObject *identityArray = (PyArrayObject*) PyArray_FROM_O(identity);
-    if(PyArrayCanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(identityArray))) {
+    if(PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(identityArray))) {
         PyErr_Format(PyExc_TypeError,
                     "initial type %s does not match the array type %s",
                     "type1","type2");
