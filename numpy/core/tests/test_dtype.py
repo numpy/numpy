@@ -151,6 +151,14 @@ class TestRecord:
         b = np.dtype([('yo', int)])
         assert_dtype_equal(a, b)
 
+    def test_metadata_in_descr(self):
+        """Test whether dtype with metadata can be restored from descr."""
+        a = np.dtype([('a', 'S8')])
+        a_meta = np.dtype([('a', ('S8', {'msg': 'Hello'}))])
+        assert_dtype_equal(a, a_meta)
+
+        assert_dtype_equal(a_meta, np.dtype(a_meta.descr))
+
     def test_different_names(self):
         # In theory, they may hash the same (collision) ?
         a = np.dtype([('yo', int)])

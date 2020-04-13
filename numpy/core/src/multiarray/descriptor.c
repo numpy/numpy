@@ -238,6 +238,20 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
     return 0;
 }
 
+// This function checks if val == {'name': any tuple}.
+// See gh-2865, issue #8235 for details
+inline npy_bool _check_if_size_1_and_contains_name_and_tuple(PyObject* val) {
+    npy_bool is_ok = PyDict_Size(val) == 1;
+    if (is_ok) {
+        PyObject* name = PyUnicode_FromString("name");
+        if (!name) return 1;
+        is_ok = (PyDict_Contains(val, name) == 1) &&
+                PyTuple_Check(PyDict_GetItem(val, name));
+        Py_DECREF(name);
+    }
+    return is_ok;
+}
+
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
@@ -284,7 +298,18 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         return type;
     }
-    else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
+    // val might be dict, but metadata is NULL;
+    // skip if vall = {'name': any tuple}; see gh-2865
+    else if ((PyDict_Check(val) || PyDictProxy_Check(val))
+             && !_check_if_size_1_and_contains_name_and_tuple(val)) {
+        // if metadata is NULL, just create a new dictionary
+        if (!type->metadata) {
+            type->metadata = PyDict_New();
+            if (type->metadata == NULL) {
+                Py_DECREF(type);
+                return NULL;
+            }
+        }
         /* Assume it's a metadata dictionary */
         if (PyDict_Merge(type->metadata, val, 0) == -1) {
             Py_DECREF(type);
