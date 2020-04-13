@@ -362,6 +362,11 @@ default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 so_ext = get_shared_lib_extension()
 
 
+def is_symlink_to_accelerate(filename):
+    return (sys.platform == 'darwin' and os.path.islink(filename) and
+            'Accelerate' in os.path.realpath(filename))
+
+
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
     1) System-wide directory (directory-location of this module)
@@ -875,17 +880,26 @@ class system_info:
             exts.append('.dylib')
         return exts
 
-    def check_libs(self, lib_dirs, libs, opt_libs=[]):
+    def check_libs(self, lib_dirs, libs, opt_libs=[], filefilter=None):
         """If static or shared libraries are available then return
         their info dictionary.
 
         Checks for all libraries as shared libraries first, then
         static (or vice versa if self.search_static_first is True).
+
+        `filefilter` is an optional callable, with signature
+
+            def filefilter(filename: str) -> bool
+
+        If provided, the library files that are found are passed to the
+        function, and if the function returns False, that library file is
+        skipped.
         """
         exts = self.library_extensions()
         info = None
         for ext in exts:
-            info = self._check_libs(lib_dirs, libs, opt_libs, [ext])
+            info = self._check_libs(lib_dirs, libs, opt_libs, [ext],
+                                    filefilter=filefilter)
             if info is not None:
                 break
         if not info:
@@ -907,7 +921,19 @@ class system_info:
 
         return info
 
-    def _find_lib(self, lib_dir, lib, exts):
+    def _find_lib(self, lib_dir, lib, exts, filefilter=None):
+        """
+        `filefilter` is an optional callable, with signature
+
+            def filefilter(filename: str) -> bool
+
+        If provided, the library files that are found are passed to the
+        function, and if the function returns False, that library file is
+        skipped.
+        """
+        # This is the method that actually *uses* filefilter instead of just
+        # passing it on to another method.
+
         assert is_string(lib_dir)
         # under windows first try without 'lib' prefix
         if sys.platform == 'win32':
@@ -919,9 +945,13 @@ class system_info:
             for prefix in lib_prefixes:
                 p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
-                    break
+                    assert len(p) == 1
+                    # p[0] is the full path to the binary library file.
+                    if filefilter is None or filefilter(p[0]):
+                        break
+                    else:
+                        p = []
             if p:
-                assert len(p) == 1
                 # ??? splitext on p[0] would do this for cygwin
                 # doesn't seem correct
                 if ext == '.dll.a':
@@ -929,15 +959,15 @@ class system_info:
                 if ext == '.lib':
                     lib = prefix + lib
                 return lib
-
         return False
 
-    def _find_libs(self, lib_dirs, libs, exts):
+    def _find_libs(self, lib_dirs, libs, exts, filefilter=None):
         # make sure we preserve the order of libs, as it can be important
         found_dirs, found_libs = [], []
         for lib in libs:
             for lib_dir in lib_dirs:
-                found_lib = self._find_lib(lib_dir, lib, exts)
+                found_lib = self._find_lib(lib_dir, lib, exts,
+                                           filefilter=filefilter)
                 if found_lib:
                     found_libs.append(found_lib)
                     if lib_dir not in found_dirs:
@@ -945,7 +975,7 @@ class system_info:
                     break
         return found_dirs, found_libs
 
-    def _check_libs(self, lib_dirs, libs, opt_libs, exts):
+    def _check_libs(self, lib_dirs, libs, opt_libs, exts, filefilter=None):
         """Find mandatory and optional libs in expected paths.
 
         Missing optional libraries are silently forgotten.
@@ -953,10 +983,12 @@ class system_info:
         if not is_sequence(lib_dirs):
             lib_dirs = [lib_dirs]
         # First, try to find the mandatory libraries
-        found_dirs, found_libs = self._find_libs(lib_dirs, libs, exts)
+        found_dirs, found_libs = self._find_libs(lib_dirs, libs, exts,
+                                                 filefilter=filefilter)
         if len(found_libs) > 0 and len(found_libs) == len(libs):
             # Now, check for optional libraries
-            opt_found_dirs, opt_found_libs = self._find_libs(lib_dirs, opt_libs, exts)
+            opt_found_dirs, opt_found_libs = self._find_libs(
+                lib_dirs, opt_libs, exts, filefilter=filefilter)
             found_libs.extend(opt_found_libs)
             for lib_dir in opt_found_dirs:
                 if lib_dir not in found_dirs:
@@ -1440,7 +1472,9 @@ class lapack_info(system_info):
 
         opt = self.get_option_single('lapack_libs', 'libraries')
         lapack_libs = self.get_libs(opt, self._lib_names)
-        info = self.check_libs(lib_dirs, lapack_libs, [])
+        info = self.check_libs(lib_dirs, lapack_libs, [],
+                               filefilter=lambda fname:
+                                   not is_symlink_to_accelerate(fname))
         if info is None:
             return
         info['language'] = 'f77'
@@ -1954,7 +1988,9 @@ class blas_info(system_info):
         lib_dirs = self.get_lib_dirs()
         opt = self.get_option_single('blas_libs', 'libraries')
         blas_libs = self.get_libs(opt, self._lib_names)
-        info = self.check_libs(lib_dirs, blas_libs, [])
+        info = self.check_libs(lib_dirs, blas_libs, [],
+                               filefilter=lambda fname:
+                                   not is_symlink_to_accelerate(fname))
         if info is None:
             return
         else:
