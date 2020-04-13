@@ -2611,7 +2611,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
 # multi_dot
 
 def _multidot_dispatcher(arrays, *, out=None):
-    return tuple(arrays) + (out,)
+    yield from arrays
+    yield out
 
 
 @array_function_dispatch(_multidot_dispatcher)
