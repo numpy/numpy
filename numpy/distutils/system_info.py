@@ -1684,8 +1684,8 @@ def get_atlas_version(**config):
 
 class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
-    # List of all known BLAS libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'accelerate', 'lapack']
+    # List of all known LAPACK libraries, in the default order
+    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
 
     def _calc_info_mkl(self):
@@ -1857,7 +1857,7 @@ class lapack64__opt_info(lapack_ilp64_opt_info):
 class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
+    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
 
     def _calc_info_mkl(self):
