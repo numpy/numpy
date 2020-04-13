@@ -3642,10 +3642,9 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     
     /*make sure the types are castable*/
     PyArrayObject *initialArray = (PyArrayObject*) PyArray_FROM_O(initial);
-    PyArrayObject *identityArray = (PyArrayObject*) PyArray_FROM_O(identity);
-    if(PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(identityArray))) {
+    if(PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(arr))) {
         PyErr_Format(PyExc_TypeError,
-                    "initial type %s does not match the array type %s",
+                    "initial type %R does not match the array type %R",
                     Py_Type(initial),Py_Type(identity));
         return NULL;
     }
@@ -4470,8 +4469,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", 
-                                         reduceat_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
                                          &op,
                                          &obj_ind,
                                          &axes_in,
