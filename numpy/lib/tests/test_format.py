@@ -978,5 +978,5 @@ def test_metadata_dtype(dt, fail, has_metadata):
         from numpy.lib.format import _has_metadata
         assert_array_equal(arr, arr2)
         assert _has_metadata(arr.dtype)
-        assert _has_metadata(arr2.dtype) or not has_metadata
+        assert _has_metadata(arr2.dtype) == has_metadata
 
