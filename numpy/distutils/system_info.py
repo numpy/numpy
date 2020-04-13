@@ -363,8 +363,9 @@ so_ext = get_shared_lib_extension()
 
 
 def is_symlink_to_accelerate(filename):
+    accelpath = '/System/Library/Frameworks/Accelerate.framework'
     return (sys.platform == 'darwin' and os.path.islink(filename) and
-            'Accelerate' in os.path.realpath(filename))
+            os.path.realpath(filename).startswith(accelpath))
 
 
 def get_standard_file(fname):
