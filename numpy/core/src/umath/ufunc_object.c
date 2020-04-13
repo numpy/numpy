@@ -41,6 +41,8 @@
 #include "reduction.h"
 #include "mem_overlap.h"
 
+#include "convert_datatype.h"
+
 #include "ufunc_object.h"
 #include "override.h"
 #include "npy_import.h"
