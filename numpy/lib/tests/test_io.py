@@ -15,6 +15,9 @@ from datetime import datetime
 import locale
 from multiprocessing import Process
 
+from hypothesis import given, strategies as st
+from hypothesis.extra import numpy as hynp
+
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
@@ -184,6 +187,43 @@ class TestSaveLoad(RoundtripTest):
         assert_equal(self.arr[0], self.arr_reloaded)
         assert_equal(self.arr[0].dtype, self.arr_reloaded.dtype)
         assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
+
+    @given(
+        # We're checking that np.save / np.load round-trip our arrays, so the
+        # most important thing to generate is *unusual* arrays.
+        arr=hynp.arrays(
+            # We want a wide variety of array shapes, so we'll use a mixture
+            # of "normal" shapes (1-3 dimensions, side length 1-5) and "weird"
+            # shapes which permit zero-dimensional arrays and side length zero.
+            shape=hynp.array_shapes() | hynp.array_shapes(min_dims=0, min_side=0),
+            # And we'll allow both scalar and possibly-recursive structured
+            # dtypes, so long as all the leaf types are scalar dtypes too.
+            # No objects here, so pickles etc. shouldn't be a problem...
+            dtype=hynp.array_dtypes(subtype_strategy=hynp.scalar_dtypes()),
+        ),
+        # Because the generated arrays will never have `object` dtype, these
+        # keyword arguments should not affect the results.  We therefore allow
+        # them to vary in case non-default values trigger a bug.
+        save_kwds=st.fixed_dictionaries(
+            {"allow_pickle": st.booleans(), "fix_imports": st.booleans()}
+        ),
+        load_kwds=st.fixed_dictionaries(
+            {
+                "encoding": st.sampled_from(["ASCII", "latin1", "bytes"]),
+                "mmap_mode": st.sampled_from([None, "r", "r+", "c"]),
+            }
+        ),
+    )
+    def test_roundtrip_property(self, arr, save_kwds, load_kwds):
+        RoundtripTest.roundtrip(
+            self,
+            np.save,
+            arr,
+            file_on_disk=load_kwds["mmap_mode"] is not None,
+            save_kwds=save_kwds,
+            load_kwds=load_kwds,
+        )
+        np.testing.assert_array_equal(arr, self.arr)
 
 
 class TestSavezLoad(RoundtripTest):
