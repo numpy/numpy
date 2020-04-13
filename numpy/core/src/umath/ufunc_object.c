@@ -3632,14 +3632,21 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             initial = Py_None;
             Py_INCREF(initial);
         }
-    } else if(Py_TYPE(initial) != Py_TYPE(identity)) {
-        PyErr_Format(PyExc_TypeError,
-                    "initial type %s does not match the array type %s",
-                    initial->ob_type->tp_name,identity->ob_type->tp_name);
-        return NULL;
     } else {
         Py_DECREF(identity);
         Py_INCREF(initial);  /* match the reference count in the if above */
+    }
+
+    
+    /*make sure the types are castable*/
+    PyArrayObject *initialArray = (PyArrayObject) *initial
+    PyArrayObject *identityArray = (PyArrayObject) *identity
+
+    if(PyArray_CanCastTo(initialArray->descr,identityArray->descr)) {
+        PyErr_Format(PyExc_TypeError,
+                    "initial type %s does not match the array type %s",
+                    initialArray->descr->kind,identityArray->descr->kind);
+        return NULL;
     }
 
     /* Get the reduction dtype */
