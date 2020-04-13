@@ -238,18 +238,20 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
     return 0;
 }
 
-// This function checks if val == {'name': any tuple}.
-// See gh-2865, issue #8235 for details
-inline npy_bool _check_if_size_1_and_contains_name_and_tuple(PyObject* val) {
-    npy_bool is_ok = PyDict_Size(val) == 1;
-    if (is_ok) {
-        PyObject* name = PyUnicode_FromString("name");
-        if (!name) return 1;
-        is_ok = (PyDict_Contains(val, name) == 1) &&
-                PyTuple_Check(PyDict_GetItem(val, name));
-        Py_DECREF(name);
+// This function checks if val is mistyped dict of inherited dtype,
+// e.g val = {key: tuple of size >= 2}; see gh-2865, issue #8235 for details
+static inline npy_bool
+_is_mistyped_inherited_type_dict(PyObject* val)
+{
+    npy_bool is_mistyped = PyDict_Size(val) > 0;
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+
+    while(PyDict_Next(val, &pos, &key, &value)) {
+        is_mistyped = is_mistyped && PyTuple_Check(value) &&
+                      (PyTuple_GET_SIZE(value) >= 2);
     }
-    return is_ok;
+    return is_mistyped;
 }
 
 static PyArray_Descr *
@@ -299,9 +301,10 @@ _convert_from_tuple(PyObject *obj, int align)
         return type;
     }
     // val might be dict, but metadata is NULL;
-    // skip if vall = {'name': any tuple}; see gh-2865
+    // skip if val is mistyped dict of inherited dtype,
+    // e.g val = {key: tuple of size >= 2}; see gh-2865
     else if ((PyDict_Check(val) || PyDictProxy_Check(val))
-             && !_check_if_size_1_and_contains_name_and_tuple(val)) {
+             && !_is_mistyped_inherited_type_dict(val)) {
         // if metadata is NULL, just create a new dictionary
         if (!type->metadata) {
             type->metadata = PyDict_New();
