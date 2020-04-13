@@ -3639,12 +3639,12 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     
     /*make sure the types are castable*/
-    PyObject *check1 = PyArray_FROM_O(initial);
-    PyObject *check2 = PyArray_FROM_O(identity);
-    if(check1 == check2) {
+    PyArrayObject *initialArray = (PyArrayObject*) PyArray_FROM_O(initial);
+    PyArrayObject *identityArray = (PyArrayObject*) PyArray_FROM_O(identity);
+    if(PyArrayCanCastTo(&initialArray->descr,&identityArray->descr)) {
         PyErr_Format(PyExc_TypeError,
                     "initial type %s does not match the array type %s",
-                    "typ1","type2");
+                    "type1","type2");
         return NULL;
     }
 
