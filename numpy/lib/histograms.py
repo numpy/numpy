@@ -207,7 +207,7 @@ def _hist_bin_fd(x, range):
     than the standard deviation, so it is less accurate, especially for
     long tailed distributions.
 
-    If the IQR is 0, this function returns 1 for the number of bins.
+    If the IQR is 0, this function returns 0 for the bin width.
     Binwidth is inversely proportional to the cube root of data size
     (asymptotically optimal).
 

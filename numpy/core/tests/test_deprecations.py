@@ -594,3 +594,27 @@ class TestDTypeCoercion(_DeprecationTestCase):
         for scalar_type in [type, dict, list, tuple]:
             # Typical python types are coerced to object currently:
             self.assert_not_deprecated(np.dtype, args=(scalar_type,))
+
+
+class BuiltInRoundComplexDType(_DeprecationTestCase):
+    # 2020-03-31 1.19.0
+    deprecated_types = [np.csingle, np.cdouble, np.clongdouble]
+    not_deprecated_types = [
+        np.int8, np.int16, np.int32, np.int64,
+        np.uint8, np.uint16, np.uint32, np.uint64,
+        np.float16, np.float32, np.float64,
+    ]
+
+    def test_deprecated(self):
+        for scalar_type in self.deprecated_types:
+            scalar = scalar_type(0)
+            self.assert_deprecated(round, args=(scalar,))
+            self.assert_deprecated(round, args=(scalar, 0))
+            self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
+    
+    def test_not_deprecated(self):
+        for scalar_type in self.not_deprecated_types:
+            scalar = scalar_type(0)
+            self.assert_not_deprecated(round, args=(scalar,))
+            self.assert_not_deprecated(round, args=(scalar, 0))
+            self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})

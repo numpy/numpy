@@ -396,6 +396,7 @@ Miscellanea
    ma.allequal
    ma.allclose
    ma.apply_along_axis
+   ma.apply_over_axes
    ma.arange
    ma.choose
    ma.ediff1d

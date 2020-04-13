@@ -1,8 +1,10 @@
+.. _NEP41:
+
 =================================================
 NEP 41 — First step towards a new Datatype System
 =================================================
 
-:title: Improved Datatype Support
+:title: First step towards a new Datatype System
 :Author: Sebastian Berg
 :Author: Stéfan van der Walt
 :Author: Matti Picus
@@ -14,7 +16,8 @@ NEP 41 — First step towards a new Datatype System
 .. note::
 
     This NEP is part of a series of NEPs encompassing first information
-    about the previous dtype implementation and issues with it in NEP 40.
+    about the previous dtype implementation and issues with it in
+    `NEP 40 <NEP40>`_.
     NEP 41 (this document) then provides an overview and generic design
     choices for the refactor.
     Further NEPs 42 and 43 go into the technical details of the datatype
@@ -58,12 +61,12 @@ Motivation
 
 One of the main issues with the current API is the definition of typical
 functions such as addition and multiplication for parametric datatypes
-(see also NEP 40) which require additional steps to determine the output type.
+(see also `NEP 40 <NEP40>`_) which require additional steps to determine the output type.
 For example when adding two strings of length 4, the result is a string
 of length 8, which is different from the input.
 Similarly, a datatype which embeds a physical unit must calculate the new unit
 information: dividing a distance by a time results in a speed.
-A related difficulty is that the :ref:`current casting rules <_ufuncs.casting>`
+A related difficulty is that the :ref:`current casting rules <ufuncs.casting>`
 -- the conversion between different datatypes --
 cannot describe casting for such parametric datatypes implemented outside of NumPy.
 
@@ -141,7 +144,7 @@ in more details in the detailed description section:
    Storage information such as itemsize and byteorder can differ between
    different dtype instances (e.g. "S3" vs. "S8") and will remain part of the instance.
    This means that in the long run the current lowlevel access to dtype methods
-   will be removed (see ``PyArray_ArrFuncs`` in NEP 40).
+   will be removed (see ``PyArray_ArrFuncs`` in `NEP 40 <NEP40>`_).
 
 2. The current NumPy scalars will *not* change, they will not be instances of
    datatypes. This will also be true for new datatypes, scalars will not be
@@ -155,6 +158,14 @@ Further, the public API will be designed in a way that is extensible in the futu
 3. All new C-API functions provided to the user will hide implementation details
    as much as possible. The public API should be an identical, but limited,
    version of the C-API used for the internal NumPy datatypes.
+
+The datatype system may be targeted to work with NumPy arrays,
+for example by providing strided-loops, but should avoid direct
+interactions with the array-object (typically `np.ndarray` instances).
+Instead, the design principle will be that the array-object is a consumer
+of the datatype.
+While only a guiding principle, this may allow splitting the datatype system
+or even the NumPy datatypes into their own project which NumPy depends on.
 
 The changes to the datatype system in Phase II must include a large refactor of the
 UFunc machinery, which will be further defined in NEP 43:
@@ -572,7 +583,7 @@ Organizing these methods and information in a more Pythonic way provides a
 solid foundation for refining and extending the API in the future.
 The current API cannot be extended due to how it is exposed publically.
 This means for example that the methods currently stored in ``PyArray_ArrFuncs``
-on each datatype (see NEP 40) will be defined differently in the future and
+on each datatype (see `NEP 40 <NEP40>`_) will be defined differently in the future and
 deprecated in the long run.
 
 The most prominent visible side effect of this will be that
@@ -673,7 +684,7 @@ C-API Changes to the UFunc Machinery (4)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Proposed changes to the UFunc machinery will be part of NEP 43.
-However, the following changes will be necessary (see NEP 40 for a detailed
+However, the following changes will be necessary (see `NEP 40 <NEP40>`_ for a detailed
 description of the current implementation and its issues):
 
 * The current UFunc type resolution must be adapted to allow better control
@@ -693,7 +704,7 @@ functions after handling the unit related computations.
 Discussion
 ----------
 
-See NEP 40 for a list of previous meetings and discussions.
+See `NEP 40 <NEP40>`_ for a list of previous meetings and discussions.
 
 
 References
@@ -701,7 +712,7 @@ References
 
 .. [pandas_extension_arrays] https://pandas.pydata.org/pandas-docs/stable/development/extending.html#extension-types
 
-.. _xarray_dtype_issue: https://github.com/pydata/xarray/issues/1262
+.. [xarray_dtype_issue] https://github.com/pydata/xarray/issues/1262
 
 .. [pygeos] https://github.com/caspervdw/pygeos
 
@@ -727,4 +738,3 @@ We would like to thank especially Stephan Hoyer, Nathaniel Smith, and Eric Wiese
 for repeated in-depth discussion about datatype design.
 We are very grateful for the community input in reviewing and revising this
 NEP and would like to thank especially Ross Barnowski and Ralf Gommers.
-
