@@ -67,7 +67,7 @@ class TestGeneric:
     def test_masked_all_with_dtype_str(self):
         # Test masked_all works with nested array with dtype of an 'object'
         # refers to issue #15895
-        my_dtype = np.dtype([('b', [('c', object)], (1,))])
+        my_dtype = np.dtype([('b', ([('c', object)], (1,)))])
         a = np.ma.masked_all((1,), my_dtype)
 
         assert_equal(type(a['b']), np.ma.core.MaskedArray)
