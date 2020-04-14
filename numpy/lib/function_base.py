@@ -1429,6 +1429,11 @@ def angle(z, deg=False):
     arctan2
     absolute
 
+    Notes
+    -----
+    Although the angle of the complex number 0 is undefined, ``numpy.angle(0)``
+    returns the value 0.
+
     Examples
     --------
     >>> np.angle([1.0, 1.0j, 1+1j])               # in radians
