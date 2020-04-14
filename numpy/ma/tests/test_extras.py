@@ -64,18 +64,6 @@ class TestGeneric:
         control = array([[(1, (1, 1))]], mask=[[(1, (1, 1))]], dtype=dt)
         assert_equal(test, control)
 
-    def test_masked_all_with_dtype_str(self):
-        # Test masked_all works with nested array with dtype of an 'object'
-        # refers to issue #15895
-        my_dtype = np.dtype([('b', [('c', object)], (1,))])
-        a = np.ma.masked_all((1,), my_dtype)
-
-        assert_equal(type(a['b']), np.ma.core.MaskedArray)
-        assert_equal(type(a['b']['c']), np.ma.core.MaskedArray)
-        assert_equal(len(a['b']['c']), 1)
-        assert_equal(a['b']['c'].shape, (1, 1))
-        assert_equal(a['b']['c']._fill_value.shape, np.empty((), object))
-
     def test_masked_all_like(self):
         # Tests masked_all
         # Standard dtype
