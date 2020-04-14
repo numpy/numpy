@@ -567,11 +567,19 @@ class TestUfunc:
         assert_equal(np.sum(np.ones((2, 3, 5), dtype=np.int64), axis=(0, 2), initial=2),
                      [12, 12, 12])
 
+        # array-valued initial
+        assert_equal(np.sum(np.ones((2, 3, 5), dtype=np.int64), axis=(0, 2),
+                            initial=np.array([1, 2, 3])),
+                     [13, 14, 15])
+
+
     def test_sum_where(self):
         # More extensive tests done in test_reduction_with_where.
         assert_equal(np.sum([[1., 2.], [3., 4.]], where=[True, False]), 4.)
         assert_equal(np.sum([[1., 2.], [3., 4.]], axis=0, initial=5.,
                             where=[True, False]), [9., 5.])
+        assert_equal(np.sum([[1., 2.], [3., 4.]], axis=0, initial=[5., 10.],
+                            where=[True, False]), [9., 10.])
 
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
@@ -1150,8 +1158,13 @@ class TestUfunc:
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
         assert_equal(np.array([1], dtype=object).sum(initial=1), 2)
+
+        # 0d array containing a list
+        initial = np.array(None)
+        initial[()] = [0]
+
         assert_equal(np.array([[1], [2, 3]], dtype=object)
-                     .sum(initial=[0], where=[False, True]), [0, 2, 3])
+                     .sum(initial=initial, where=[False, True]), [0, 2, 3])
 
     def test_object_array_accumulate_inplace(self):
         # Checks that in-place accumulates work, see also gh-7402
@@ -1372,6 +1385,9 @@ class TestUfunc:
         assert_equal(np.minimum.reduce([], initial=np.inf), np.inf)
         assert_equal(np.maximum.reduce([], initial=-np.inf), -np.inf)
 
+        # But should fail for the integers which cannot represent infinity
+        assert_raises(TypeError, np.minimum.reduce, [0], initial=np.inf)
+
         # Random tests
         assert_equal(np.minimum.reduce([5], initial=4), 4)
         assert_equal(np.maximum.reduce([4], initial=5), 5)
@@ -1408,11 +1424,16 @@ class TestUfunc:
         # Check we do not overwrite elements of a internally.
         assert_array_equal(a, a_copy)
 
-    @pytest.mark.parametrize(('axis', 'where'),
-                             ((0, np.array([True, False, True])),
-                              (1, [True, True, False]),
-                              (None, True)))
-    @pytest.mark.parametrize('initial', (-np.inf, 5.))
+    @pytest.mark.parametrize(('axis', 'where', 'initial'), (
+        (0, np.array([True, False, True]), -np.inf),
+        (0, np.array([True, False, True]), 5.0),
+        (0, np.array([True, False, True]), np.array([-np.inf, 0.0, 5.0])),
+        (1, [True, True, False], -np.inf),
+        (1, [True, True, False], 5.0),
+        (1, [True, True, False], np.array([-np.inf, 0.0, 5.0])),
+        (None, True, -np.inf),
+        (None, True, 5.0),
+    ))
     def test_reduction_with_where_and_initial(self, axis, where, initial):
         a = np.arange(9.).reshape(3, 3)
         a_copy = a.copy()

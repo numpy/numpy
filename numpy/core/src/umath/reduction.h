@@ -130,8 +130,8 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
  *               with size one.
  * subok       : If true, the result uses the subclass of operand, otherwise
  *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_InitializeReduceResult is used, otherwise
- *               this value is used to initialize the result to
+ * identity    : If NULL, PyArray_InitializeReduceResult is used, otherwise
+ *               this array is broadcast to initialize the result to
  *               the reduction's unit.
  * loop        : The loop which does the reduction.
  * data        : Data which is passed to the inner loop.
@@ -148,7 +148,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       npy_bool *axis_flags, int reorderable,
                       int keepdims,
                       int subok,
-                      PyObject *identity,
+                      PyArrayObject *identity,
                       PyArray_ReduceLoopFunc *loop,
                       void *data, npy_intp buffersize, const char *funcname,
                       int errormask);

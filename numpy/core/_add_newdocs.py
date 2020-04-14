@@ -4741,14 +4741,18 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         the result will broadcast correctly against the original `arr`.
 
         .. versionadded:: 1.7.0
-    initial : scalar, optional
+    initial : array_like, optional
         The value with which to start the reduction.
         If the ufunc has no identity or the dtype is object, this defaults
         to None - otherwise it defaults to ufunc.identity.
         If ``None`` is given, the first element of the reduction is used,
         and an error is thrown if the reduction is empty.
+        If an array, this is broadcast against the result.
 
         .. versionadded:: 1.15.0
+
+        .. versionchanged:: 1.19.0
+            Passing an array is now supported.
 
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
