@@ -2743,8 +2743,7 @@ def _multi_dot_three(A, B, C):
 
     if cost1 < cost2:
         return dot(dot(A, B), C)
-    else:
-        return dot(A, dot(B, C))
+    return dot(A, dot(B, C))
 
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
