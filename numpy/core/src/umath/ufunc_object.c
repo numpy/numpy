@@ -3645,7 +3645,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     if(initial != Py_None && !PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(arr))) {
         PyErr_Format(PyExc_TypeError,
                     "initial type %R does not match the array type %R",
-                    Py_TYPE(initial),Py_TYPE(arr));
+                    Py_TYPE(initial),PyArray_TYPE(arr));
         return NULL;
     }
 
