@@ -171,8 +171,11 @@ class PytestTester:
         if label == "fast":
             # not importing at the top level to avoid circular import of module
             from numpy.testing import IS_PYPY
-            pytest_args += ["-m", "not slow and not slow_pypy"] \
-                           if IS_PYPY else ["-m", "not slow"]
+            if IS_PYPY:
+                pytest_args += ["-m", "not slow and not slow_pypy"]
+            else:
+                pytest_args += ["-m", "not slow"]
+
         elif label != "full":
             pytest_args += ["-m", label]
 
