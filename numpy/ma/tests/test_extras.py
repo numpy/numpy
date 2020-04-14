@@ -74,6 +74,7 @@ class TestGeneric:
         assert_equal(type(a['b']['c']), np.ma.core.MaskedArray)
         assert_equal(len(a['b']['c']), 1)
         assert_equal(a['b']['c'].shape, (1, 1))
+        assert_equal(a['b']['c']._fill_value.shape, np.empty((), object))
 
     def test_masked_all_like(self):
         # Tests masked_all

@@ -3321,7 +3321,8 @@ class MaskedArray(ndarray):
                         # only initialize to empty array if it dout does not 
                         # have ._fill_value before. If it has, do not change 
                         # the original behavior
-                        dout._fill_value = np.array([], dtype)
+                        dout._fill_value = np.empty((), dtype)
+                        dout._fill_value[()] = self._fill_value[indx]
                 dout._isfield = True
             # Update the mask if needed
             if mout is not nomask:
