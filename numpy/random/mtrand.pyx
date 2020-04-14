@@ -882,6 +882,14 @@ cdef class RandomState:
         array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'], # random
               dtype='<U11')
 
+        Array-like value is internally converted to a ndarray so if you
+        want to preserve original values, convert it yourself first using
+        dtype object:
+
+        >>> l = [True, False]
+        >>> arr = np.array(l, dtype=object)
+        >>> np.random.choice(arr)
+        True # random
         """
 
         # Format and Verify input
