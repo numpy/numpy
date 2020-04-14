@@ -365,11 +365,12 @@ def repmat(a, m, n):
     a = asanyarray(a)
     ndim = a.ndim
     if ndim == 0:
-        origrows, origcols = (1, 1)
+        shape = (1, 1)
     elif ndim == 1:
-        origrows, origcols = (1, a.shape[0])
+        shape = (1, a.shape[0])
     else:
-        origrows, origcols = a.shape
+        shape = a.shape
+    origrows, origcols = shape
     rows = origrows * m
     cols = origcols * n
     c = a.reshape(1, a.size).repeat(m, 0).reshape(rows, origcols).repeat(n, 0)
