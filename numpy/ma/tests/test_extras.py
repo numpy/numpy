@@ -64,18 +64,27 @@ class TestGeneric:
         control = array([[(1, (1, 1))]], mask=[[(1, (1, 1))]], dtype=dt)
         assert_equal(test, control)
 
-    def test_masked_all_with_dtype_str(self):
+    def test_masked_all_with_object_nested(self):
         # Test masked_all works with nested array with dtype of an 'object'
         # refers to issue #15895
         my_dtype = np.dtype([('b', ([('c', object)], (1,)))])
-        a = np.ma.masked_all((1,), my_dtype)
+        masked_arr = np.ma.masked_all((1,), my_dtype)
 
-        assert_equal(type(a['b']), np.ma.core.MaskedArray)
-        assert_equal(type(a['b']['c']), np.ma.core.MaskedArray)
-        assert_equal(len(a['b']['c']), 1)
-        assert_equal(a['b']['c'].shape, (1, 1))
-        assert_equal(a['b']['c']._fill_value.shape, ())
-``
+        assert_equal(type(masked_arr['b']), np.ma.core.MaskedArray)
+        assert_equal(type(masked_arr['b']['c']), np.ma.core.MaskedArray)
+        assert_equal(len(masked_arr['b']['c']), 1)
+        assert_equal(masked_arr['b']['c'].shape, (1, 1))
+        assert_equal(masked_arr['b']['c']._fill_value.shape, ())
+    
+    def test_masked_all_with_object(self):
+        # same test above except that the array si not nested
+        my_dtype = np.dtype([('b', (object, (1,)))])
+        masked_arr = np.ma.masked_all((1,), my_dtype)
+
+        assert_equal(type(masked_arr['b']), np.ma.core.MaskedArray)
+        assert_equal(len(masked_arr['b']), 1)
+        assert_equal(masked_arr['b'].shape, (1, 1))
+        assert_equal(masked_arr['b']._fill_value.shape, ())
 
     def test_masked_all_like(self):
         # Tests masked_all

@@ -3316,13 +3316,10 @@ class MaskedArray(ndarray):
                                 "heterogeneous fill_value and setting "
                                 f"all to {dout._fill_value[0]!s}.",
                                 stacklevel=2)
-                        dout._fill_value = dout._fill_value.flat[0]
-                    elif not hasattr(dout._fill_value, 'ndim'):
-                        # only initialize to empty array if it dout does not 
-                        # have ._fill_value before. If it has, do not change 
-                        # the original behavior
-                        dout._fill_value = np.empty((), dtype)
-                        dout._fill_value[()] = self._fill_value[indx]
+                    # need to use squeeze to ensure the result is an array 
+                    # not a scalar. If the _fill_value is like a str type,
+                    # then just make sure we turn the _fill_value to a 0d array
+                    dout._fill_value = dout._fill_value.flat[0:1].squeeze(axis=0)
                 dout._isfield = True
             # Update the mask if needed
             if mout is not nomask:
