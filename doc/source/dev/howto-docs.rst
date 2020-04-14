@@ -34,13 +34,13 @@ Current vision for the documentation: NEP 44
 --------------------------------------------
 
 Recently, the NumPy community approved a *NumPy Enhancement Proposal (NEP)*
-about documentation. You can read it `here
+about documentation, `NEP 44 - Restructuring the NumPy Documentation
 <https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
 
 **Where is the documentation?**
 
-The main page for the :ref:`NumPy Documentation <manual>` lists several
-categories. The documents mentioned there live in different places.
+The main page for the :ref:`NumPy Documentation <numpy_docs_mainpage>` lists
+several categories. The documents mentioned there live in different places.
 
 - **Tutorials, How-Tos, Explanations:** These documents are stored in the NumPy
   source code tree, which means that in order to add them to the official
