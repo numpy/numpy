@@ -271,10 +271,8 @@ def default_fill_value(obj):
 
     """
     def _scalar_fill_value(dtype):
-        if dtype.kind in 'Mm':
-            return default_filler.get(dtype.str[1:], '?')
-        else:
-            return default_filler.get(dtype.kind, '?')
+        v = dtype.str[1:] if dtype.kind in 'Mm' else dtype.kind
+        return default_filler.get(v, '?')
 
     dtype = _get_dtype_of(obj)
     return _recursive_fill_value(dtype, _scalar_fill_value)
