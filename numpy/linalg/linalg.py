@@ -170,8 +170,7 @@ def _to_native_byte_order(*arrays):
             ret.append(arr)
     if len(ret) == 1:
         return ret[0]
-    else:
-        return ret
+    return ret
 
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
@@ -182,8 +181,7 @@ def _fastCopyAndTranspose(type, *arrays):
             cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
     if len(cast_arrays) == 1:
         return cast_arrays[0]
-    else:
-        return cast_arrays
+    return cast_arrays
 
 def _assert_2d(*arrays):
     for a in arrays:
