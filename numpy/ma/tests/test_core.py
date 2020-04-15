@@ -1247,27 +1247,41 @@ class TestMaskedArrayArithmetic:
 
     def test_minmax_dtypes(self):
         # Additional tests on max/min for non-standard float and complex dtypes
-        (x, _, a10, m1, _, xm, _, _, _, _) = self.d
+        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        a10 = 10.
+        an10 = -10.0
+        m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        xm = masked_array(x, mask=m1)
+        xm.set_fill_value(1e+20)
+        float_dtypes = [np.half, np.single, np.double,
+                        np.longdouble, np.cfloat, np.cdouble, np.clongdouble]
+        for float_dtype in float_dtypes:
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
+                         float_dtype(a10))
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).min(),
+                         float_dtype(an10))
+
+        assert_equal(xm.min(), an10)
         assert_equal(xm.max(), a10)
-        assert_equal(masked_array(x, mask=m1, dtype=np.half).max(), np.half(a10))
-        assert_equal(masked_array(x, mask=m1, dtype=np.single).max(), np.single(a10))
-        assert_equal(masked_array(x, mask=m1, dtype=np.double).max(), np.double(a10))
-        assert_equal(masked_array(x, mask=m1, dtype=np.longdouble).max(), np.longdouble(a10))
-        assert_equal(masked_array(x, mask=m1, dtype=np.cfloat).max(), np.cfloat(a10))
-        assert_equal(masked_array(x, mask=m1, dtype=np.cdouble).max(), np.cdouble(a10))
-        assert_equal(masked_array(x, mask=m1, dtype=np.clongdouble).max(), np.clongdouble(a10))
-        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.single)
-        assert_equal(ym.min(), np.single(2e20))
-        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.double)
-        assert_equal(ym.min(), np.double(2e20))
-        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.longdouble)
-        assert_equal(ym.min(), np.longdouble(2e20))
-        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.cfloat)
-        assert_equal(ym.min(), np.cfloat(2e20))
-        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.cdouble)
-        assert_equal(ym.min(), np.cdouble(2e20))
-        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.clongdouble)
-        assert_equal(ym.min(), np.clongdouble(2e20))
+
+        # Non-complex type only test
+        for float_dtype in float_dtypes[:4]:
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
+                         float_dtype(a10))
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).min(),
+                         float_dtype(an10))
+
+        # Complex types only test
+        for float_dtype in float_dtypes[-3:]:
+            ym = masked_array([1e20+1j, 1e20-2j, 1e20-1j], mask=[0, 1, 0],
+                          dtype=float_dtype)
+            assert_equal(ym.min(), float_dtype(1e20-1j))
+            assert_equal(ym.max(), float_dtype(1e20+1j))
+
+            zm = masked_array([np.inf+2j, np.inf+3j, -np.inf-1j], mask=[0, 1, 0],
+                              dtype=float_dtype)
+            assert_equal(zm.min(), float_dtype(-np.inf-1j))
+            assert_equal(zm.max(), float_dtype(np.inf+2j))
 
     def test_addsumprod(self):
         # Tests add, sum, product.

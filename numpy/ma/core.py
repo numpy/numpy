@@ -193,10 +193,16 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
 
 float_types_list = [np.half, np.single, np.double, np.longdouble,
                     np.csingle, np.cdouble, np.clongdouble]
+complex_filler = np.array([np.inf+0j, -np.inf-0j])
+complex_filler.imag = np.array([np.inf, -np.inf])
 max_filler = ntypes._minvals
-max_filler.update([(k, -np.inf) for k in float_types_list])
+max_filler.update([(k, -np.inf) for k in float_types_list[:4]])
+max_filler.update([(k, complex_filler[0]) for k in float_types_list[-3:]])
+
 min_filler = ntypes._maxvals
-min_filler.update([(k, +np.inf) for k in float_types_list])
+min_filler.update([(k,  +np.inf) for k in float_types_list[:4]])
+max_filler.update([(k, complex_filler[1]) for k in float_types_list[-3:]])
+
 del float_types_list
 
 def _recursive_fill_value(dtype, f):
