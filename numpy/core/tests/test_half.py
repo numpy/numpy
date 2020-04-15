@@ -337,6 +337,9 @@ class TestHalf:
         assert_equal(np.nextafter(a_f16[0], -hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], -hinf), a_f16[:-1])
 
+        assert_equal(np.nextafter(hinf, a_f16), a_f16[-1])
+        assert_equal(np.nextafter(-hinf, a_f16), -a_f16[-1])
+
         # switch to negatives
         a |= 0x8000
 
@@ -346,6 +349,9 @@ class TestHalf:
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
         assert_equal(np.nextafter(a_f16[:-1], -hinf), a_f16[1:])
+
+        assert_equal(np.nextafter(hinf, a_f16), -a_f16[-1])
+        assert_equal(np.nextafter(-hinf, a_f16), a_f16[-1])
 
     def test_half_ufuncs(self):
         """Test the various ufuncs"""
