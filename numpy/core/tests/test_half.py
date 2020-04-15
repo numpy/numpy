@@ -487,8 +487,6 @@ class TestHalf:
             assert_raises_fpe('invalid', np.divide, float16(np.inf), float16(np.inf))
             assert_raises_fpe('invalid', np.spacing, float16(np.inf))
             assert_raises_fpe('invalid', np.spacing, float16(np.nan))
-            assert_raises_fpe('invalid', np.nextafter, float16(np.inf), float16(0))
-            assert_raises_fpe('invalid', np.nextafter, float16(-np.inf), float16(0))
             assert_raises_fpe('invalid', np.nextafter, float16(0), float16(np.nan))
 
             # These should not raise
@@ -498,6 +496,8 @@ class TestHalf:
             np.spacing(float16(-65504))
             np.nextafter(float16(65504), float16(-np.inf))
             np.nextafter(float16(-65504), float16(np.inf))
+            np.nextafter(float16(np.inf), float16(0))
+            np.nextafter(float16(-np.inf), float16(0))
             float16(2**-14)/float16(2**10)
             float16(-2**-14)/float16(2**10)
             float16(2**-14+2**-23)/float16(2)

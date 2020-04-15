@@ -115,7 +115,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
 {
     npy_half ret;
 
-    if (!npy_half_isfinite(x) || npy_half_isnan(y)) {
+    if (npy_half_isnan(x) || npy_half_isnan(y)) {
 #if NPY_HALF_GENERATE_INVALID
         npy_set_floatstatus_invalid();
 #endif
