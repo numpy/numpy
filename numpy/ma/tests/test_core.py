@@ -48,7 +48,7 @@ from numpy.ma.core import (
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
 from numpy.compat import pickle
-from numpy.polynomial import Polynomial, polynomial
+from numpy.polynomial import Polynomial
 
 pi = np.pi
 
