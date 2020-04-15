@@ -264,7 +264,7 @@ class ABCPolyBase(abc.ABC):
         if isinstance(coef, np.ma.core.MaskedArray):
             # this is a temporary solution for initializing Polynomial
             # with masked arrays, as the expected behavior for 
-            # __array_finialize__ function in np.ma.core.MaskedArray has not
+            # __array_finalize__ function in np.ma.core.MaskedArray has not
             # yet been decided.
             #
             # for now just check if the coef is a MaskedArray, just make 
