@@ -18,6 +18,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "ctors.h"
 
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
@@ -174,20 +175,11 @@ conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
 
-    /* TODO: use PyArray_NewFromDescrAndBase here once multiarray and umath
-     *       are merged
-     */
-    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(
+    ret = (PyArrayObject_fields *)PyArray_NewFromDescrAndBase(
             &PyArray_Type, dtype,
             ndim, shape, strides, PyArray_DATA(out),
-            PyArray_FLAGS(out), NULL);
+            PyArray_FLAGS(out), NULL, (PyObject *)out);
     if (ret == NULL) {
-        return NULL;
-    }
-
-    Py_INCREF(out);
-    if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)out) < 0) {
-        Py_DECREF(ret);
         return NULL;
     }
 
