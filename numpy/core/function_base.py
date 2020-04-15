@@ -110,13 +110,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     >>> plt.show()
 
     """
-    try:
-        num = operator.index(num)
-    except TypeError:
-        raise TypeError(
-            "object of type {} cannot be safely interpreted as an integer."
-                .format(type(num)))
-
+    num = operator.index(num)
     if num < 0:
         raise ValueError("Number of samples, %s, must be non-negative." % num)
     div = (num - 1) if endpoint else num
