@@ -18,6 +18,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "ctors.h"
 
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
@@ -88,14 +89,13 @@ conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
                       PyArrayObject *out, int keepdims, const char *funcname,
                       int need_copy)
 {
-    int ndim = PyArray_NDIM(in);
-    npy_intp *shape_in = PyArray_DIMS(in);
-    npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
-    npy_intp *strides_out = PyArray_STRIDES(out);
-    npy_intp *shape_out = PyArray_DIMS(out);
-    int idim, idim_out, ndim_out = PyArray_NDIM(out);
-    PyArray_Descr *dtype;
-    PyArrayObject_fields *ret;
+    /* unpack shape information */
+    int const ndim = PyArray_NDIM(in);
+    npy_intp const *shape_in = PyArray_DIMS(in);
+
+    int const ndim_out = PyArray_NDIM(out);
+    npy_intp const *strides_out = PyArray_STRIDES(out);
+    npy_intp const *shape_out = PyArray_DIMS(out);
 
     /*
      * If the 'keepdims' parameter is true, do a simpler validation and
@@ -110,7 +110,7 @@ conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
             return NULL;
         }
 
-        for (idim = 0; idim < ndim; ++idim) {
+        for (int idim = 0; idim < ndim; ++idim) {
             if (axis_flags[idim]) {
                 if (shape_out[idim] != 1) {
                     PyErr_Format(PyExc_ValueError,
@@ -137,8 +137,9 @@ conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
     }
 
     /* Construct the strides and shape */
-    idim_out = 0;
-    for (idim = 0; idim < ndim; ++idim) {
+    npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
+    int idim_out = 0;
+    for (int idim = 0; idim < ndim; ++idim) {
         if (axis_flags[idim]) {
             strides[idim] = 0;
             shape[idim] = 1;
@@ -171,31 +172,20 @@ conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
     }
 
     /* Allocate the view */
-    dtype = PyArray_DESCR(out);
+    PyArray_Descr *dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
 
-    /* TODO: use PyArray_NewFromDescrAndBase here once multiarray and umath
-     *       are merged
-     */
-    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(
+    PyArrayObject_fields *ret = (PyArrayObject_fields *)PyArray_NewFromDescrAndBase(
             &PyArray_Type, dtype,
             ndim, shape, strides, PyArray_DATA(out),
-            PyArray_FLAGS(out), NULL);
+            PyArray_FLAGS(out), NULL, (PyObject *)out);
     if (ret == NULL) {
         return NULL;
     }
 
-    Py_INCREF(out);
-    if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)out) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
     if (need_copy) {
-        PyArrayObject *ret_copy;
-
-        ret_copy = (PyArrayObject *)PyArray_NewLikeArray(
-            (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0);
+        PyArrayObject *ret_copy = (PyArrayObject *)PyArray_NewLikeArray(
+                (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0);
         if (ret_copy == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -208,7 +198,6 @@ conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
         }
 
         if (PyArray_SetWritebackIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
-            Py_DECREF(ret);
             Py_DECREF(ret_copy);
             return NULL;
         }
