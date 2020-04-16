@@ -13,7 +13,7 @@ import numpy as np
 from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
-from numpy.core.multiarray import packbits, unpackbits
+from numpy.core.multiarray import packbits, unpackbits, normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core._internal import recursive
 from ._iotools import (
@@ -257,7 +257,6 @@ class NpzFile(Mapping):
                 return self.zip.read(key)
         else:
             raise KeyError("%s is not a file in the archive" % key)
-
 
     # deprecate the python 2 dict apis that we supported by accident in
     # python 3. We forgot to implement itervalues() at all in earlier
@@ -784,6 +783,162 @@ def _getconv(dtype):
     else:
         return asstr
 
+
+def skip(skipcols):
+    r"""
+    Helper function for the `usecols` parameter of `loadtxt` and `genfromtxt`.
+
+    The parameter `usecols` of `loadtxt` and `genfromtxt` allows the user to
+    select specific columns from the text file.  This `skip` function provides
+    a simple way for the user to specify the columns that should be *skipped*
+    instead of the columns that should be used.
+
+    Parameters
+    ----------
+    skipcols : int or sequence of ints
+        The indices of the columns to be skipped.
+
+    Returns
+    -------
+    f : function
+        Returns a function with the signature::
+
+            def f(n: int) -> List[int]
+
+        that may be passed to the functions `numpy.loadtxt` and
+        `numpy.genfromtxt`.  The function is a closure that "rememebers"
+        the list of columns that were passed to `skip`.  The function
+        returns ``list(range(n))`` with the values from `skipcols` removed.
+
+    Examples
+    --------
+    >>> from numpy.lib.npyio import skip
+    >>> s = " 0  1  2  3  4  5\n10 11 12 13 14 15\n20 21 22 23 24 25"
+    >>> print(s)
+     0  1  2  3  4  5
+    10 11 12 13 14 15
+    20 21 22 23 24 25
+
+    Use `skip` to skip the second column (column index 1) and the last
+    column (column index -1).
+
+    >>> np.loadtxt(s.splitlines(), dtype=int, usecols=skip([1, -1]))
+    array([[ 0,  2,  3,  4],
+           [10, 12, 13, 14],
+           [20, 22, 23, 24]])
+
+    To see what `skip` actually does, call the returned function with
+    ``n = 6``:
+
+    >>> skip([1, -1])(6)
+    [0, 2, 3, 4]
+    """
+    try:
+        skipcols = list(skipcols)
+    except TypeError:
+        # Presumably skipcols is an int, so wrap it in a list.
+        skipcols = [skipcols]
+
+    # Check that the values in skipcols are, in fact, ints.
+    # (We can check the types, but we can't check the actual values until
+    # we know how many columns are in the file.)
+    for c in skipcols:
+        try:
+            opindex(c)
+        except TypeError as e:
+            e.args = (f'skipcols must be an int or a sequence of ints but '
+                      f'it contains at least one element of type '
+                      f'{type(c)}',)
+            raise
+
+    def skipper(n):
+        normed_skipcols = []
+        for c in skipcols:
+            try:
+                newc = normalize_axis_index(c, n)
+            except np.AxisError:
+                raise IndexError(f'skip column index {c} out of range for '
+                                 f'file with {n} columns') from None
+            normed_skipcols.append(newc)
+
+        usecols = [c for c in range(n) if c not in normed_skipcols]
+        return usecols
+
+    return skipper
+
+
+def _normalize_usecols_to_list(usecols, n):
+    """
+    Convert the argument passed in `usecols` to a list of column indices.
+
+    This function is used in `loadtxt` and `genfromtxt` to process the
+    `usecols` argument.  The function converts `usecols` to a list of int.
+
+    Parameters
+    ----------
+    usecols : int, sequence of int, slice or callable
+        If `usecols` is a callable, it must have signature::
+
+            f(n: int) -> List[int]
+
+    n : int
+        The actual number of fields found in the file.
+
+    Examples
+    --------
+    >>> _normalize_usecols_to_list([1, 2, -1], 10)
+    [1, 2, -1]
+    >>> _normalize_usecols_to_list(3, 10)
+    [3]
+    >>> _normalize_usecols_to_list(slice(1, 10, 2), 10)
+    [1, 3, 5, 7, 9]
+    >>> normalize_usecols_to_list(lambda n: list(range(n // 2)), 10)
+    [0, 1, 2, 3, 4]
+    """
+    if isinstance(usecols, slice):
+        return list(range(n)[usecols])
+
+    func = False
+    if callable(usecols):
+        usecols = usecols(n)
+        func = True
+
+    try:
+        usecols = list(usecols)
+    except TypeError:
+        # Attempt to convert to list failed, so the only remaining option
+        # is that usecols is an integer.
+        usecols = [usecols]
+
+    result = []
+    for c in usecols:
+        try:
+            c = opindex(c)
+        except TypeError as e:
+            if func:
+                e.args = (f"usecols must be an int or a sequence of ints but "
+                          f"the function provided returned a value that "
+                          f"contains at least one element of type "
+                          f"{type(c)}",)
+            else:
+                e.args = (f"usecols must be an int or a sequence of ints but "
+                          f"it contains at least one element of type "
+                          f"{type(c)}",)
+            raise
+        try:
+            newc = normalize_axis_index(c, n)
+        except np.AxisError:
+            msg = f'column index {c} out of range for file with {n} columns'
+            if func:
+                func_premessage = ("error in the values returned by the "
+                                   "callable passed to 'usecols': ")
+                msg = func_premessage + msg
+            raise IndexError(msg) from None
+        result.append(newc)
+
+    return result
+
+
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
 
@@ -792,7 +947,7 @@ _loadtxt_chunksize = 50000
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
             ndmin=0, encoding='bytes', max_rows=None):
-    """
+    r"""
     Load data from a text file.
 
     Each row in the text file must have the same number of values.
@@ -825,15 +980,21 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines, including comments; default: 0.
-    usecols : int or sequence, optional
+    usecols : int, sequence of ints, slice, or callable, optional
         Which columns to read, with 0 being the first. For example,
-        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
+        ``usecols=(1,4,5)`` will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
+        See the Notes for details on the possible values for this
+        parameter.
 
         .. versionchanged:: 1.11.0
             When a single column has to be read it is possible to use
             an integer instead of a tuple. E.g ``usecols = 3`` reads the
             fourth column the same way as ``usecols = (3,)`` would.
+
+        .. versionchanged:: 1.19.0
+            `usecols` accepts a slice or a callable.
+
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
@@ -881,27 +1042,94 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     The strings produced by the Python float.hex method can be used as
     input for floats.
 
+    The parameter `usecols` provides several options for selecting the
+    columns from the file.  By default, all the columns are read.  Giving
+    a sequence of ints specifies the specific columns to be read.  The
+    values may be negative, as in normal Python indexing.  For example,::
+
+        usecols=[0, -1]
+
+    selects the first and last columns.  `usecols` may also be a slice;
+    for example,::
+
+        usecols=slice(0, None, 2)
+
+    selects every other column starting with the first.  Note that NumPy
+    provides the object `numpy.s_` that allows the creation of slice
+    objects using index notation, so that example may be written::
+
+        usecols=np.s_[::2]
+
+    `usecols` also accepts a callable function, with signature::
+
+        f(n: int) -> List[int]
+
+    The function will be passed the number of columns found in the file,
+    and it must return the column indices to be read.  This is the most
+    general option for `usecols`.  With this option, for example, one can
+    specify that the first half of the columns should be read (regardless
+    of how many columns are in the file) by giving::
+
+        usecols=lambda n: list(range(n // 2))
+
+    A common requirement is to *skip* a specific set of columns.  NumPy
+    provides the function `numpy.lib.npyio.skip` that creates a callable
+    to make this easy.  For example, to skip just the second and third
+    columns, use::
+
+        usecols=skip([1, 2])
+
+    More examples of the various options for `usecols` are given below.
+
     Examples
     --------
     >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO(u"0 1\\n2 3")
+    >>> c = StringIO("0 1\n2 3")
     >>> np.loadtxt(c)
     array([[0., 1.],
            [2., 3.]])
 
-    >>> d = StringIO(u"M 21 72\\nF 35 58")
+    >>> d = StringIO("M 21 72\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
     array([(b'M', 21, 72.), (b'F', 35, 58.)],
           dtype=[('gender', 'S1'), ('age', '<i4'), ('weight', '<f4')])
 
-    >>> c = StringIO(u"1,0,2\\n3,0,4")
+    >>> c = StringIO("1,0,2\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([1., 3.])
     >>> y
     array([2., 4.])
 
+    This example gives a slice to `usecols` to select every other column,
+    starting with the first.
+
+    >>> f = StringIO("1 0 2 7 2 3\n3 0 4 8 3 4\n5 0 6 9 4 5")
+    >>> np.loadtxt(f, dtype=int, usecols=slice(1, None, 2))
+    array([[0, 7, 3],
+           [0, 8, 4],
+           [0, 9, 5]])
+
+    This example passes a callable to `usecols` that selects the first half
+    of the columns.
+
+    >>> f = StringIO("1 0 2 7 2 3\n3 0 4 8 3 4\n5 0 6 9 4 5")
+    >>> np.loadtxt(f, dtype=int, usecols=lambda n: list(range(n // 2)))
+    array([[1, 0, 2],
+           [3, 0, 4],
+           [5, 0, 6]])
+
+    The `skip` function from `numpy.lib.npyio` provides a convenient way to
+    specify a set of columns to be skipped.  In this example, we skip the
+    second column (index 1) and the last column (index -1).
+
+    >>> from numpy.lib.npyio import skip
+    >>> f = StringIO("1 0 2 7 2 3\n3 0 4 8 3 4\n5 0 6 9 4 5")
+    >>> np.loadtxt(f, dtype=int, usecols=skip([1, -1]))
+    array([[1, 2, 7, 2],
+           [3, 4, 8, 3],
+           [5, 6, 9, 4]])
     """
     # Type conversions for Py3 convenience
     if comments is not None:
@@ -922,25 +1150,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = True
     else:
         byte_converters = False
-
-    if usecols is not None:
-        # Allow usecols to be a single int or a sequence of ints
-        try:
-            usecols_as_list = list(usecols)
-        except TypeError:
-            usecols_as_list = [usecols]
-        for col_idx in usecols_as_list:
-            try:
-                opindex(col_idx)
-            except TypeError as e:
-                e.args = (
-                    "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type %s" %
-                    type(col_idx),
-                    )
-                raise
-        # Fall back to existing code
-        usecols = usecols_as_list
 
     fown = False
     try:
@@ -1001,7 +1210,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     def pack_items(self, items, packing):
         """Pack items into nested lists based on re-packing info."""
         if packing is None:
-            return items[0]
+            if len(items) == 0:
+                return items
+            else:
+                return items[0]
         elif packing is tuple:
             return tuple(items)
         elif packing is list:
@@ -1045,7 +1257,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             vals = split_line(line)
             if len(vals) == 0:
                 continue
-            if usecols:
+            if usecols is not None:
                 vals = [vals[j] for j in usecols]
             if len(vals) != N:
                 line_num = i + skiprows + 1
@@ -1084,8 +1296,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
-        N = len(usecols or first_vals)
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname,
+                          stacklevel=2)
+
+        if usecols is not None:
+            usecols = _normalize_usecols_to_list(usecols, len(first_vals))
+            N = len(usecols)
+        else:
+            N = len(first_vals)
 
         dtype_types, packing = flatten_dtype_internal(dtype)
         if len(dtype_types) > 1:

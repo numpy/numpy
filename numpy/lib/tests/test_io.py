@@ -18,6 +18,7 @@ from multiprocessing import Process
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
+from numpy.lib.npyio import skip
 from numpy.compat import asbytes, bytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
@@ -861,6 +862,67 @@ class TestLoadTxt(LoadTxtBase):
             '^usecols must be.*%s' % type(bogus_idx),
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
+
+    @pytest.mark.parametrize('slc, cols', [(np.s_[1::2], [1, 3]),
+                                           (np.s_[::-1], [3, 2, 1, 0]),
+                                           (np.s_[100:], [])])
+    def test_usecols_slice(self, slc, cols):
+        c = TextIO()
+        c.write('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int)
+        c.seek(0)
+        y = np.loadtxt(c, dtype=int, usecols=slc)
+        assert_equal(y, x[:, cols])
+
+    @pytest.mark.parametrize('func, cols',
+                             [(lambda n: list(range(n // 2)), [0, 1]),
+                              (lambda n: [0] + list(range(2, n)), [0, 2, 3]),
+                              (lambda n: 1, 1)])
+    def test_usecols_callable(self, func, cols):
+        c = TextIO()
+        c.write('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int)
+        c.seek(0)
+        y = np.loadtxt(c, dtype=int, usecols=func)
+        assert_equal(y, x[:, cols])
+
+    @pytest.mark.parametrize('func, exc', [(lambda n: [0.0], TypeError),
+                                           (lambda n: [0, 99], IndexError)])
+    def test_usecols_bad_callable(self, func, exc):
+        c = TextIO()
+        c.write('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        c.seek(0)
+        with assert_raises(exc):
+            np.loadtxt(c, dtype=int, usecols=func)
+
+    @pytest.mark.parametrize('skipcols, cols', [([1], [0, 2, 3]),
+                                                (1, [0, 2, 3]),
+                                                ([0, -1], [1, 2]),
+                                                ([], [0, 1, 2, 3]),
+                                                ([0, 1, 2, 3], [])])
+    def test_usecols_skip(self, skipcols, cols):
+        c = TextIO()
+        c.write('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int)
+        c.seek(0)
+        y = np.loadtxt(c, dtype=int, usecols=skip(skipcols))
+        assert_equal(y, x[:, cols])
+
+    @pytest.mark.parametrize('skipcols', [[0.0], 0.0, ["plate of shrimp"]])
+    def test_bad_skip(self, skipcols):
+        with assert_raises(TypeError):
+            skip(skipcols)
+
+    @pytest.mark.parametrize('skipcols', [[0, 99], 99, [-5]])
+    def test_usecols_bad_skip(self, skipcols):
+        c = TextIO()
+        c.write('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        c.seek(0)
+        with assert_raises(IndexError):
+            np.loadtxt(c, dtype=int, usecols=skip(skipcols))
 
     def test_fancy_dtype(self):
         c = TextIO()
