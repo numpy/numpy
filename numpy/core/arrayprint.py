@@ -845,8 +845,6 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         # performance and PyPy friendliness, we break the cycle:
         recurser = None
 
-
-
 def _none_or_positive_arg(x, name):
     if x is None:
         return -1
