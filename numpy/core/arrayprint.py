@@ -695,7 +695,7 @@ def array2string(a, max_line_width=None, precision=None,
 def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     needs_wrap = len(line) + len(word) > line_width
     if legacy != '1.13':
-        s# don't wrap lines if it won't help
+        # don't wrap lines if it won't help
         if len(line) <= len(next_line_prefix):
             needs_wrap = False
 
@@ -705,6 +705,27 @@ def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     line += word
     return s, line
 
+
+def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
+    """
+    Extends line with nicely formatted (possibly multi-line) string ``word``.
+    """
+    if legacy == '1.13':
+        return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
+
+    words = word.splitlines()
+    line_length = len(line)
+    s, line = _extendLine(
+        s, line, words[0], line_width, next_line_prefix, legacy)
+    for word in words[1::]:
+        s += line.rstrip() + '\n'
+        if line_length + len(word) > line_width \
+                and line_length > len(next_line_prefix):
+            line = next_line_prefix + word
+        else:
+            line = line_length*' ' + word
+
+    return s, line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
@@ -758,7 +779,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line = hanging_indent
             for i in range(leading_items):
                 word = recurser(index + (i,), next_hanging_indent, next_width)
-                s, line = _extendLine(
+                s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
@@ -772,7 +793,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
-                s, line = _extendLine(
+                s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
@@ -780,7 +801,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                 # width of the separator is not considered on 1.13
                 elem_width = curr_width
             word = recurser(index + (-1,), next_hanging_indent, next_width)
-            s, line = _extendLine(
+            s, line = _extendLine_pretty(
                 s, line, word, elem_width, hanging_indent, legacy)
 
             s += line
@@ -823,6 +844,8 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         # requires gc to collect (gh-10620). To avoid this problem, for
         # performance and PyPy friendliness, we break the cycle:
         recurser = None
+
+
 
 def _none_or_positive_arg(x, name):
     if x is None:
