@@ -395,6 +395,37 @@ class TestArray2String:
             "[ 'xxxxx']"
         )
 
+    def test_multiline_repr(self):
+        class MultiLine:
+            def __repr__(self):
+                return "Line 1\nLine 2"
+
+        a = np.array([[None, MultiLine()], [MultiLine(), None]])
+
+        assert_equal(
+            np.array2string(a),
+            '[[None Line 1\n'
+            '       Line 2]\n'
+            ' [Line 1\n'
+            '  Line 2 None]]'
+        )
+        assert_equal(
+            np.array2string(a, max_line_width=5),
+            '[[None\n'
+            '  Line 1\n'
+            '  Line 2]\n'
+            ' [Line 1\n'
+            '  Line 2\n'
+            '  None]]'
+        )
+        assert_equal(
+            np.array_repr(a),
+            'array([[None, Line 1\n'
+            '              Line 2],\n'
+            '       [Line 1\n'
+            '        Line 2, None]], dtype=object)'
+        )
+
     @given(hynp.from_dtype(np.dtype("U")))
     def test_any_text(self, text):
         # This test checks that, given any value that can be represented in an
