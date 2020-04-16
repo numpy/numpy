@@ -109,7 +109,7 @@ This is useful for example in expressions such as::
 In this expression, the python value (which originally has no datatype) is
 represented as an ``int8`` or ``int16`` (the smallest possible data type).
 
-NumPy currently does this even for NumPy scalars and zero dimensional arrays,
+NumPy currently does this even for NumPy scalars and zero-dimensional arrays,
 so that replacing ``5`` with ``np.int64(5)`` or ``np.array(5, dtype="int64")``
 in the above expression will lead to the same results, and thus ignores the
 existing datatype. The same logic also applies to floating point scalars,
