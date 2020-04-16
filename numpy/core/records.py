@@ -629,9 +629,9 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> r.a
     array([1, 2, 3, 4])
     
-    >>> x1 = np.array([1,2,3,4])
-    >>> x2 = np.array(['a','dd','xyz','12'])
-    >>> x3 = np.array([1.1,2,3,4])
+    >>> x1 = np.array([1, 2, 3, 4])
+    >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
+    >>> x3 = np.array([1.1, 2, 3,4])
     >>> r = np.core.records.fromarrays(
     ...     [x1, x2, x3],
     ...     dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c', np.float32)]))
