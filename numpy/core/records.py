@@ -612,7 +612,6 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         `numpy.format_parser` to construct a dtype. See that function for
         detailed documentation.
 
-
     Returns
     -------
     np.recarray
