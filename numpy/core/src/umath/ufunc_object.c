@@ -3622,7 +3622,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
     /* Get the initial value */
-    if (initial == NULL || initial == NoValue) {
+    if (initial == NULL || initial == NoValue) { //if initial has no value
         initial = identity;
 
         /*
@@ -3634,19 +3634,14 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             initial = Py_None;
             Py_INCREF(initial);
         }
-    } else {
+    } else { //if initial has a value
         Py_DECREF(identity);
         Py_INCREF(initial);  /* match the reference count in the if above */
-    }
 
-    
-    /*make sure the types are castable*/
-    if(initial != Py_None && PyArray_SIZE(arr) != 0) { //if initial has a value and the arr is filled
-        PyArrayObject *initialArray = (PyArrayObject*) (initial); //cast initial to an array
+        /* check castable values */
+        PyArrayObject *initialArray = (PyArrayObject*) PyArray_FROM_O(initial); //cast initial to an array
         if(!PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(arr))) { //check the types
-            PyErr_Format(PyExc_TypeError,
-                        "initial type %R does not match the array type %R",
-                        Py_TYPE(initial),PyArray_TYPE(arr));
+            PyErr_SetString(PyExc_TypeError,"initial datatype does not match array type!");
             return NULL;
         }
     }
