@@ -1939,6 +1939,42 @@ class TestUfunc:
             pass  # ok, just not implemented
 
 
+    def test_initial_types(self):
+        py_arr1 = [-10.0,20.0,30.0,-25.0]
+        py_arr2 = [-10,20,30,-25]
+        np_arr1 = np.array(py_arr1)
+        np_arr2 = np.array(py_arr2)
+
+
+        assert_equal( np_arr1.min(initial=np.inf) , -25.0)
+        assert_equal( np_arr1.min(initial=-np.inf) , -np.inf)
+        assert_equal( np_arr1.min(initial=None) , -25.0)
+        assert_equal( np_arr1.max(initial=np.inf) , np.inf)
+        assert_equal( np_arr1.max(initial=-np.inf) , 30.0)
+        assert_equal( np_arr1.max(initial=None) , 30.0)
+
+        assert_equal( np.min([-10.0,20.0,30.0,-25.0],initial=np.inf) , -25.0)
+        assert_equal( np.min([-10.0,20.0,30.0,-25.0],initial=-np.inf) , -np.inf)
+        assert_equal( np.min([-10.0,20.0,30.0,-25.0],initial=None) , -25.0)
+        assert_equal( np.max([-10.0,20.0,30.0,-25.0],initial=np.inf) , np.inf)
+        assert_equal( np.max([-10.0,20.0,30.0,-25.0],initial=-np.inf) , 30.0)
+        assert_equal( np.max([-10.0,20.0,30.0,-25.0],initial=None) , 30.0)
+
+        assert_raises(TypeError,np_arr2.min,initial=np.inf)
+        assert_raises(TypeError,np_arr2.min,initial=-np.inf)
+        assert_raises(TypeError,np_arr1.min,initial='a')
+        assert_raises(TypeError,np_arr2.max,initial=np.inf)
+        assert_raises(TypeError,np_arr2.max,initial=-np.inf)
+        assert_raises(TypeError,np_arr1.max,initial='a')
+
+        assert_raises(TypeError,np.min,py_arr2,initial=np.inf)
+        assert_raises(TypeError,np.min,py_arr2,initial=-np.inf)
+        assert_raises(TypeError,np.min,py_arr1,initial='a')
+        assert_raises(TypeError,np.max,py_arr2,initial=np.inf)
+        assert_raises(TypeError,np.max,py_arr2,initial=-np.inf)
+        assert_raises(TypeError,np.max,py_arr1,initial='a')
+
+
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
 def test_ufunc_types(ufunc):
