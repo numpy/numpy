@@ -6824,7 +6824,18 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True, fill_value
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
 def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
-    "Function version of the eponymous method."
+    """
+    Return a sorted copy of the masked array.
+
+    Equivalent to creating a copy of the array
+    and applying the  MaskedArray ``sort()`` method.
+
+    Refer to ``MaskedArray.sort`` for the full documentation
+
+    See Also
+    --------
+    MaskedArray.sort : equivalent method
+    """
     a = np.array(a, copy=True, subok=True)
     if axis is None:
         a = a.flatten()
@@ -6836,7 +6847,6 @@ def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
     else:
         a.sort(axis=axis, kind=kind, order=order)
     return a
-sort.__doc__ = MaskedArray.sort.__doc__
 
 
 def compressed(x):
