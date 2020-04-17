@@ -1564,6 +1564,16 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
     /* Now we can check the axis */
     nd = PyArray_NDIM(mps[0]);
+    /*
+    * Special case letting axis={-1,0} slip through for scalars,
+    * for backwards compatibility reasons.
+    */
+    if (nd == 0 && (axis == 0 || axis == -1)) {
+        /* TODO: can we deprecate this? */
+    }
+    else if (check_and_adjust_axis(&axis, nd) < 0) {
+        goto fail;
+    }
     if ((nd == 0) || (PyArray_SIZE(mps[0]) <= 1)) {
         /* empty/single element case */
         ret = (PyArrayObject *)PyArray_NewFromDescr(
@@ -1578,9 +1588,6 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             *((npy_intp *)(PyArray_DATA(ret))) = 0;
         }
         goto finish;
-    }
-    if (check_and_adjust_axis(&axis, nd) < 0) {
-        goto fail;
     }
 
     for (i = 0; i < n; i++) {
