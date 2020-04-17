@@ -116,9 +116,6 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
     npy_half ret;
 
     if (npy_half_isnan(x) || npy_half_isnan(y)) {
-#if NPY_HALF_GENERATE_INVALID
-        npy_set_floatstatus_invalid();
-#endif
         ret = NPY_HALF_NAN;
     } else if (npy_half_eq_nonan(x, y)) {
         ret = x;
