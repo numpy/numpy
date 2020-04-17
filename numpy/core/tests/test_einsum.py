@@ -27,7 +27,7 @@ class TestEinsum:
                           optimize=do_opt)
 
             # order parameter must be a valid order
-            assert_raises(TypeError, np.einsum, "", 0, order='W',
+            assert_raises(ValueError, np.einsum, "", 0, order='W',
                           optimize=do_opt)
 
             # casting parameter must be a valid casting

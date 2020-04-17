@@ -1,6 +1,8 @@
 """
 Tests for numpy/core/src/multiarray/conversion_utils.c
 """
+import re
+
 import pytest
 
 import numpy as np
@@ -11,6 +13,11 @@ class StringConverterTestCase:
     allow_bytes = True
     case_insensitive = True
     exact_match = False
+
+    def _check_value_error(self, val):
+        pattern = r'\(got {}\)'.format(re.escape(repr(val)))
+        with pytest.raises(ValueError, match=pattern) as exc:
+            self.conv(val)
 
     def _check(self, val, expected):
         assert self.conv(val) == expected
@@ -23,8 +30,8 @@ class StringConverterTestCase:
 
         if len(val) != 1:
             if self.exact_match:
-                with pytest.raises(ValueError):
-                    self.conv(val[:1])
+                self._check_value_error(val[:1])
+                self._check_value_error(val + '\0')
             else:
                 assert self.conv(val[:1]) == expected
 
@@ -35,11 +42,28 @@ class StringConverterTestCase:
                 assert self.conv(val.upper()) == expected
         else:
             if val != val.lower():
-                with pytest.raises(ValueError):
-                    self.conv(val.lower())
+                self._check_value_error(val.lower())
             if val != val.upper():
-                with pytest.raises(ValueError):
-                    self.conv(val.upper())
+                self._check_value_error(val.upper())
+
+    def test_wrong_type(self):
+        # common cases which apply to all the below
+        with pytest.raises(TypeError):
+            self.conv({})
+        with pytest.raises(TypeError):
+            self.conv([])
+
+    def test_wrong_value(self):
+        # nonsense strings
+        self._check_value_error('')
+        self._check_value_error('\N{greek small letter pi}')
+
+        if self.allow_bytes:
+            self._check_value_error(b'')
+            # bytes which can't be converted to strings via utf8
+            self._check_value_error(b"\xFF")
+        if self.exact_match:
+            self._check_value_error("there's no way this is supported")
 
 
 class TestByteorderConverter(StringConverterTestCase):
@@ -94,6 +118,14 @@ class TestOrderConverter(StringConverterTestCase):
         self._check('f', 'NPY_FORTRANORDER')
         self._check('a', 'NPY_ANYORDER')
         self._check('k', 'NPY_KEEPORDER')
+
+    def test_flatten_invalid_order(self):
+        # invalid after gh-14596
+        with pytest.raises(ValueError):
+            self.conv('Z')
+        for order in [False, True, 0, 8]:
+            with pytest.raises(TypeError):
+                self.conv(order)
 
 
 class TestClipmodeConverter(StringConverterTestCase):
