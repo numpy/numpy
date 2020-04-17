@@ -3638,11 +3638,13 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         Py_DECREF(identity);
         Py_INCREF(initial);  /* match the reference count in the if above */
 
-        /* check castable values */
-        PyArrayObject *initialArray = (PyArrayObject*) PyArray_FROM_O(initial); //cast initial to an array
-        if(!PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(arr))) { //check the types
-            PyErr_SetString(PyExc_TypeError,"initial datatype does not match array type!");
-            return NULL;
+        /* check if castable values */
+        if(initial != Py_None && PyArray_SIZE(arr) != 0) {
+            PyArrayObject *initialArray = (PyArrayObject*) PyArray_FROM_O(initial); //cast initial to an array
+            if(!PyArray_CanCastTo(PyArray_DESCR(initialArray),PyArray_DESCR(arr))) { //check the types
+                PyErr_SetString(PyExc_TypeError,"initial datatype does not match array datatype!");
+                return NULL;
+            }
         }
     }
 
