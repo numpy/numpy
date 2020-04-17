@@ -294,9 +294,9 @@ In effect, the slice is converted to an index array
 np.array([[1,2]]) (shape (1,2)) that is broadcast with the index array
 to produce a resultant array of shape (3,2).
 
-This is equivalent to: ::
+This is equivalent to::
 
- >>> y[np.array([[0],[2],[4]]),np.array([[1,2]])]
+ >>> y[np.array([[0], [2], [4]]), np.array([[1, 2]])]
  array([[ 1,  2],
         [15, 16],
         [29, 30]])
