@@ -340,6 +340,11 @@ class TestHalf:
         assert_equal(np.nextafter(hinf, a_f16), a_f16[-1])
         assert_equal(np.nextafter(-hinf, a_f16), -a_f16[-1])
 
+        assert_equal(np.nextafter(hinf, hinf), hinf)
+        assert_equal(np.nextafter(hinf, -hinf), a_f16[-1])
+        assert_equal(np.nextafter(-hinf, hinf), -a_f16[-1])
+        assert_equal(np.nextafter(-hinf, -hinf), -hinf)
+
         # switch to negatives
         a |= 0x8000
 
