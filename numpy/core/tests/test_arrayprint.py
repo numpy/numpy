@@ -426,6 +426,33 @@ class TestArray2String:
             '        Line 2, None]], dtype=object)'
         )
 
+        class MultiLineLong:
+            def __repr__(self):
+                return "Line 1\nLooooooooooongestLine2\nLongerLine 3"
+
+        a = np.array([[None, MultiLineLong()], [MultiLineLong(), None]])
+        assert_equal(
+            repr(a),
+            'array([[None, Line 1\n'
+            '              LooooooooooongestLine2\n'
+            '              LongerLine 3          ],\n'
+            '       [Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          , None]], dtype=object)'
+        )
+        assert_equal(
+            np.array_repr(a, 20),
+            'array([[None,\n'
+            '        Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          ],\n'
+            '       [Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          ,\n'
+            '        None]],\n'
+            '      dtype=object)'
+        )
+
     def test_nested_array_repr(self):
         a = np.empty((2, 2), dtype=object)
         a[0, 0] = np.eye(2)

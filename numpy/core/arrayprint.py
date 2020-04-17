@@ -710,20 +710,27 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
     """
     Extends line with nicely formatted (possibly multi-line) string ``word``.
     """
-    if legacy == '1.13':
+    words = word.splitlines()
+    if len(words) == 1 or legacy == '1.13':
         return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
 
-    words = word.splitlines()
     line_length = len(line)
-    s, line = _extendLine(
-        s, line, words[0], line_width, next_line_prefix, legacy)
+    max_word_length = max(len(word) for word in words)
+    if line_length + max_word_length > line_width and \
+            len(line) > len(next_line_prefix):
+        s += line.rstrip() + '\n'
+        line = next_line_prefix + words[0]
+        indent = next_line_prefix
+    else:
+        line += words[0]
+        indent = line_length*' '
+
     for word in words[1::]:
         s += line.rstrip() + '\n'
-        if line_length + len(word) > line_width \
-                and line_length > len(next_line_prefix):
-            line = next_line_prefix + word
-        else:
-            line = line_length*' ' + word
+        line = indent + word
+
+    suffix_length = max_word_length-len(words[-1])
+    line += suffix_length*' '
 
     return s, line
 
