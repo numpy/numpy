@@ -1938,6 +1938,114 @@ getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
     return ret;
 }
 
+static PyObject *
+run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    char byteorder;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_ByteorderConverter, &byteorder)) {
+        return NULL;
+    }
+    switch (byteorder) {
+        case NPY_BIG: return PyUnicode_FromString("NPY_BIG");
+        case NPY_LITTLE: return PyUnicode_FromString("NPY_LITTLE");
+        case NPY_NATIVE: return PyUnicode_FromString("NPY_NATIVE");
+        case NPY_SWAP: return PyUnicode_FromString("NPY_SWAP");
+        case NPY_IGNORE: return PyUnicode_FromString("NPY_IGNORE");
+    }
+    return PyInt_FromLong(byteorder);
+}
+
+static PyObject *
+run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    NPY_SORTKIND kind;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_SortkindConverter, &kind)) {
+        return NULL;
+    }
+    switch (kind) {
+        case NPY_QUICKSORT: return PyUnicode_FromString("NPY_QUICKSORT");
+        case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
+        case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
+    }
+    return PyInt_FromLong(kind);
+}
+
+static PyObject *
+run_selectkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    NPY_SELECTKIND kind;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_SelectkindConverter, &kind)) {
+        return NULL;
+    }
+    switch (kind) {
+        case NPY_INTROSELECT: return PyUnicode_FromString("NPY_INTROSELECT");
+    }
+    return PyInt_FromLong(kind);
+}
+
+static PyObject *
+run_searchside_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    NPY_SEARCHSIDE side;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_SearchsideConverter, &side)) {
+        return NULL;
+    }
+    switch (side) {
+        case NPY_SEARCHLEFT: return PyUnicode_FromString("NPY_SEARCHLEFT");
+        case NPY_SEARCHRIGHT: return PyUnicode_FromString("NPY_SEARCHRIGHT");
+    }
+    return PyInt_FromLong(side);
+}
+
+static PyObject *
+run_order_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    NPY_ORDER order;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_OrderConverter, &order)) {
+        return NULL;
+    }
+    switch (order) {
+        case NPY_ANYORDER: return PyUnicode_FromString("NPY_ANYORDER");
+        case NPY_CORDER: return PyUnicode_FromString("NPY_CORDER");
+        case NPY_FORTRANORDER: return PyUnicode_FromString("NPY_FORTRANORDER");
+        case NPY_KEEPORDER: return PyUnicode_FromString("NPY_KEEPORDER");
+    }
+    return PyInt_FromLong(order);
+}
+
+static PyObject *
+run_clipmode_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    NPY_CLIPMODE mode;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_ClipmodeConverter, &mode)) {
+        return NULL;
+    }
+    switch (mode) {
+        case NPY_CLIP: return PyUnicode_FromString("NPY_CLIP");
+        case NPY_WRAP: return PyUnicode_FromString("NPY_WRAP");
+        case NPY_RAISE: return PyUnicode_FromString("NPY_RAISE");
+    }
+    return PyInt_FromLong(mode);
+}
+
+static PyObject *
+run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    NPY_CASTING casting;
+    if (!PyArg_ParseTuple(args, "O&", PyArray_CastingConverter, &casting)) {
+        return NULL;
+    }
+    switch (casting) {
+        case NPY_NO_CASTING: return PyUnicode_FromString("NPY_NO_CASTING");
+        case NPY_EQUIV_CASTING: return PyUnicode_FromString("NPY_EQUIV_CASTING");
+        case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
+        case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
+        case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+    }
+    return PyInt_FromLong(casting);
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -2088,6 +2196,27 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS , NULL},
     {"get_struct_alignments",
         get_struct_alignments,
+        METH_VARARGS, NULL},
+    {"run_byteorder_converter",
+        run_byteorder_converter,
+        METH_VARARGS, NULL},
+    {"run_sortkind_converter",
+        run_sortkind_converter,
+        METH_VARARGS, NULL},
+    {"run_selectkind_converter",
+        run_selectkind_converter,
+        METH_VARARGS, NULL},
+    {"run_searchside_converter",
+        run_searchside_converter,
+        METH_VARARGS, NULL},
+    {"run_order_converter",
+        run_order_converter,
+        METH_VARARGS, NULL},
+    {"run_clipmode_converter",
+        run_clipmode_converter,
+        METH_VARARGS, NULL},
+    {"run_casting_converter",
+        run_casting_converter,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
