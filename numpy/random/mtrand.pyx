@@ -884,7 +884,7 @@ cdef class RandomState:
 
         Array-like value is internally converted to a ndarray so if you
         want to preserve original values, convert it yourself first using
-        dtype object:
+        ``object`` dtype:
 
         >>> l = [True, False]
         >>> arr = np.array(l, dtype=object)
