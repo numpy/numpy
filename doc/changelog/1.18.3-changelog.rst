@@ -1,0 +1,24 @@
+
+Contributors
+============
+
+A total of 6 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Max Balandat +
+* @Mibu287 +
+* Pan Jan +
+* Sebastian Berg
+* @panpiort8 +
+
+Pull requests merged
+====================
+
+A total of 5 pull requests were merged for this release.
+
+* `#15916 <https://github.com/numpy/numpy/pull/15916>`__: BUG: Fix eigh and cholesky methods of numpy.random.multivariate_normal
+* `#15929 <https://github.com/numpy/numpy/pull/15929>`__: BUG,MAINT: Remove incorrect special case in string to number...
+* `#15930 <https://github.com/numpy/numpy/pull/15930>`__: BUG: Guarantee array is in valid state after memory error occurs...
+* `#15954 <https://github.com/numpy/numpy/pull/15954>`__: BUG: Check that `pvals` is 1D in `_generator.multinomial`.
+* `#16017 <https://github.com/numpy/numpy/pull/16017>`__: BUG: Alpha parameter must be 1D in `generator.dirichlet`
