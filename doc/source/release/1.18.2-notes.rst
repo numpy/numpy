@@ -4,7 +4,7 @@
 NumPy 1.18.2 Release Notes
 ==========================
 
-This small elease contains a fix for a performance regression in numpy/random
+This small release contains a fix for a performance regression in numpy/random
 and several bug/maintenance updates.
 
 The Python versions supported in this release are 3.5-3.8. Downstream
