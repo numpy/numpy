@@ -291,9 +291,10 @@ Index arrays may be combined with slices. For example: ::
         [29, 30]])
 
 In effect, the slice and index array operation are independent.
-The slice operation extracts the 1st and 3rd columns in y,
-followed by the index array operation which extracts the 0th, 2nd
-and 4th rows from the sliced array.
+The slice operation extracts columns with index 1 and 2,
+(i.e. the 2nd and 3rd columns),
+followed by the index array operation which extracts rows with 
+index 0, 2 and 4 (i.e the first, 3rd and 5th rows).
 
 This is equivalent to::
 
