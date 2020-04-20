@@ -348,6 +348,8 @@ existing array rather than create a new one.
 
 ::
 
+    >>> from numpy.random import default_rng
+    >>> rg = default_rng()
     >>> a = np.ones((2,3), dtype=int)
     >>> b = rg.random((2,3))
     >>> a *= 3
