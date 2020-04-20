@@ -135,8 +135,8 @@ memory block can be accessed by some combination of the indices.
 
 .. note::
 
-    `Contiguous arrays` and `single-segment arrays` are synonymous. They have been
-    used interchangeably in the numpy docs and have the same meaning.
+    `Contiguous arrays` and `single-segment arrays` are synonymous
+    and are used interchangeably throughout the documentation.
 
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
