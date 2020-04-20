@@ -285,14 +285,23 @@ Combining index arrays with slices
 
 Index arrays may be combined with slices. For example: ::
 
- >>> y[np.array([0,2,4]),1:3]
+ >>> y[np.array([0, 2, 4]), 1:3]
  array([[ 1,  2],
         [15, 16],
         [29, 30]])
 
-In effect, the slice is converted to an index array
-np.array([[1,2]]) (shape (1,2)) that is broadcast with the index array
-to produce a resultant array of shape (3,2).
+In effect, the slice and index array operation are independent.
+The slice operation extracts columns with index 1 and 2,
+(i.e. the 2nd and 3rd columns),
+followed by the index array operation which extracts rows with 
+index 0, 2 and 4 (i.e the first, third and fifth rows).
+
+This is equivalent to::
+
+ >>> y[:, 1:3][np.array([0, 2, 4]), :]
+ array([[ 1,  2],
+        [15, 16],
+        [29, 30]])
 
 Likewise, slicing can be combined with broadcasted boolean indices: ::
 
