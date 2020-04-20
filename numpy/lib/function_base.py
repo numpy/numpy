@@ -764,8 +764,8 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
-    Note that ``np.copy`` will not copy object elements within
-    arrays:
+    Note that ``np.copy`` is a shallow copy and will not
+    copy object elements within arrays:
 
     >>> obj = dict()
     >>> a = np.array([obj], dtype=object)
