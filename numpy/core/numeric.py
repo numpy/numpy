@@ -1226,12 +1226,12 @@ def rollaxis(a, axis, start=0):
     a : ndarray
         Input array.
     axis : int
-        The axis to roll backwards. The positions of the other axes do not
+        The axis to be rolled. The positions of the other axes do not
         change relative to one another.
     start : int, optional
-        The axis is moved until it lies before this position. The default
-        value is 0. If `axis == start`, the input array remains the same. 
-
+        When ``start <= axis``, the axis is rolled back until it lies in
+        this position. When ``start > axis``, the axis is rolled until it
+        lies before this position.
 
     Returns
     -------
