@@ -37,6 +37,11 @@ class ABCPolyBase(abc.ABC):
     window : (2,) array_like, optional
         Window, see domain for its use. The default value is the
         derived class window.
+    symbol : str, optional
+        Symbol used to represent the independent variable in string 
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a non-empty string, the first character of which
+        is an alphabetical character. Default value is 'x'.
 
     Attributes
     ----------
@@ -46,6 +51,8 @@ class ABCPolyBase(abc.ABC):
         Domain that is mapped to window.
     window : (2,) ndarray
         Window that domain is mapped to.
+    symbol : str
+        Symbol representing the independent variable.
 
     Class Attributes
     ----------------
@@ -287,7 +294,7 @@ class ABCPolyBase(abc.ABC):
             return other.coef
         return other
 
-    def __init__(self, coef, domain=None, window=None):
+    def __init__(self, coef, domain=None, window=None, symbol='x'):
         [coef] = pu.as_series([coef], trim=False)
         self.coef = coef
 
@@ -302,6 +309,15 @@ class ABCPolyBase(abc.ABC):
             if len(window) != 2:
                 raise ValueError("Window has wrong number of elements.")
             self.window = window
+
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a non-empty string")
+
+        if len(symbol) < 1:
+            raise ValueError("Symbol must be a non-empty string")
+
+        if not symbol[0].isalpha():
+            raise ValueError("First character of symbol must be non-numeric")
 
     def __repr__(self):
         coef = repr(self.coef)[6:-1]
