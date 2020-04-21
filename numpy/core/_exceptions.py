@@ -98,13 +98,14 @@ class _UFuncInputCastingError(_UFuncCastingError):
         return (
             "Input of ufunc {}({}, {}) resolved to the {}({}, {}) loop," 
             " but np.can_cast(np.{}, np.{}, casting='{}') is False"
-        ).format(self.ufunc.__name__,
-                 ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
-                 to_outs,
-                 self.ufunc.__name__,
-                 ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
-                 from_outs,
-                 self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
+        ).format(
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
+            to_outs,
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
+            from_outs,
+            self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
         )
 
 
@@ -126,13 +127,14 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         return (
             "Output of ufunc {}({}, {}) resolved to the {}({}, {}) loop," 
             " but np.can_cast(np.{}, np.{}, casting='{}') is False"
-        ).format(self.ufunc.__name__,
-                 ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
-                 to_outs,
-                 self.ufunc.__name__,
-                 ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
-                 from_outs,
-                 self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
+        ).format(
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
+            to_outs,
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
+            from_outs,
+            self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
         )
 
 
