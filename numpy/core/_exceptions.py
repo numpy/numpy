@@ -96,8 +96,8 @@ class _UFuncInputCastingError(_UFuncCastingError):
             to_outs = "out={}".format(self.to[-1])
             
         return (
-            "Input of ufunc {}({}, {}) resolved to the {}({}, {}) loop," 
-            " but np.can_cast(np.{}, np.{}, casting='{}') is False"
+            "Input of ufunc {}({}, {}) resolved to the {}({}, {}) loop, " 
+            "but np.can_cast(np.{}, np.{}, casting='{}') is False"
         ).format(
             self.ufunc.__name__,
             ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
@@ -125,8 +125,8 @@ class _UFuncOutputCastingError(_UFuncCastingError):
             to_outs = "out={}".format(self.to[-1])
             
         return (
-            "Output of ufunc {}({}, {}) resolved to the {}({}, {}) loop," 
-            " but np.can_cast(np.{}, np.{}, casting='{}') is False"
+            "Output of ufunc {}({}, {}) resolved to the {}({}, {}) loop, " 
+            "but np.can_cast(np.{}, np.{}, casting='{}') is False"
         ).format(
             self.ufunc.__name__,
             ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
