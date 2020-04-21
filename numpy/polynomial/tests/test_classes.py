@@ -570,56 +570,6 @@ def test_ufunc_override(Poly):
     assert_raises(TypeError, np.add, x, p)
 
 
-
-class TestLatexRepr:
-    """Test the latex repr used by ipython """
-
-    def as_latex(self, obj):
-        # right now we ignore the formatting of scalars in our tests, since
-        # it makes them too verbose. Ideally, the formatting of scalars will
-        # be fixed such that tests below continue to pass
-        obj._repr_latex_scalar = lambda x: str(x)
-        try:
-            return obj._repr_latex_()
-        finally:
-            del obj._repr_latex_scalar
-
-    def test_simple_polynomial(self):
-        # default input
-        p = Polynomial([1, 2, 3])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,x + 3.0\,x^{2}$')
-
-        # translated input
-        p = Polynomial([1, 2, 3], domain=[-2, 0])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(1.0 + x\right) + 3.0\,\left(1.0 + x\right)^{2}$')
-
-        # scaled input
-        p = Polynomial([1, 2, 3], domain=[-0.5, 0.5])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(2.0x\right) + 3.0\,\left(2.0x\right)^{2}$')
-
-        # affine input
-        p = Polynomial([1, 2, 3], domain=[-1, 0])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(1.0 + 2.0x\right) + 3.0\,\left(1.0 + 2.0x\right)^{2}$')
-
-    def test_basis_func(self):
-        p = Chebyshev([1, 2, 3])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{T}_{0}(x) + 2.0\,{T}_{1}(x) + 3.0\,{T}_{2}(x)$')
-        # affine input - check no surplus parens are added
-        p = Chebyshev([1, 2, 3], domain=[-1, 0])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{T}_{0}(1.0 + 2.0x) + 2.0\,{T}_{1}(1.0 + 2.0x) + 3.0\,{T}_{2}(1.0 + 2.0x)$')
-
-    def test_multichar_basis_func(self):
-        p = HermiteE([1, 2, 3])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{He}_{0}(x) + 2.0\,{He}_{1}(x) + 3.0\,{He}_{2}(x)$')
-
-
 #
 # Test class method that only exists for some classes
 #
