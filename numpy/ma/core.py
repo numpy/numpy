@@ -272,13 +272,16 @@ def default_fill_value(obj):
             return default_filler.get(dtype.kind, '?')
 
     dtype = _get_dtype_of(obj)
-    return _recursive_fill_value(dtype, _scalar_fill_value)
+   return _recursive_fill_value(dtype, _scalar_fill_value)
 
 
 def _extremum_fill_value(obj, extremum, extremum_name):
 
     def _scalar_fill_value(dtype):
         try:
+            extremum_value = extremum[dtype]
+            if extremum_value is None:
+                raise KeyError()
             return extremum[dtype]
         except KeyError as e:
             raise TypeError(
