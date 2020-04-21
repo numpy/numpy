@@ -148,7 +148,7 @@ import platform
 
 from . import __version__
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The enviroment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -579,8 +579,8 @@ publicpattern = re.compile(
     beforethisafter % ('', 'public', 'public', '.*'), re.I), 'public'
 privatepattern = re.compile(
     beforethisafter % ('', 'private', 'private', '.*'), re.I), 'private'
-intrisicpattern = re.compile(
-    beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
+intrinsicpattern = re.compile(
+    beforethisafter % ('', 'intrinsic', 'intrinsic', '.*'), re.I), 'intrinsic'
 intentpattern = re.compile(beforethisafter % (
     '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
@@ -705,7 +705,7 @@ def crackline(line, reset=0):
     for pat in [dimensionpattern, externalpattern, intentpattern, optionalpattern,
                 requiredpattern,
                 parameterpattern, datapattern, publicpattern, privatepattern,
-                intrisicpattern,
+                intrinsicpattern,
                 endifpattern, endpattern,
                 formatpattern,
                 beginpattern, functionpattern, subroutinepattern,
@@ -1107,7 +1107,7 @@ def analyzeline(m, case, line):
         last_name = updatevars(typespec, selector, attr, edecl)
         if last_name is not None:
             previous_context = ('variable', last_name, groupcounter)
-    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrisic']:
+    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrinsic']:
         edecl = groupcache[groupcounter]['vars']
         ll = m.group('after').strip()
         i = ll.find('::')
@@ -1167,7 +1167,7 @@ def analyzeline(m, case, line):
                     else:
                         errmess('analyzeline: intent(callback) %s is already'
                                 ' in argument list' % (k))
-            if case in ['optional', 'required', 'public', 'external', 'private', 'intrisic']:
+            if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
                 edecl[k]['attrspec'].append(ap)
@@ -1847,9 +1847,7 @@ def get_useparameters(block, param_map=None):
                     (usename, block.get('name')))
             continue
         mvars = f90modulevars[usename]
-        print(f"In get_useparameters: mvars = {mvars}")
         params = get_parameters(mvars)
-        print(f"In get_useparameters: params = {params}")
         if not params:
             continue
         # XXX: apply mapping
@@ -2560,24 +2558,7 @@ def get_parameters(vars, global_params={}):
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
 
-            # Identifying array parameters
-            param_is_array = False
-            for a in vars[n]['attrspec']:
-                if a[:9] == 'dimension':
-                    param_is_array = True
-
-            if param_is_array:
-                # Building a callable object with the
-                # values of the parameter array to support
-                # non-zero-based indexing.
-                # params[n] in this case is a dict
-                params[n] = param_eval(n, vars[n], v, g_params, params)
-            else:
-                try:
-                    params[n] = eval(v, g_params, params)
-                except Exception as msg:
-                    params[n] = v
-                    outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+            params[n] = param_eval(n, vars[n], v, g_params, params)
 
             if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
@@ -2614,7 +2595,6 @@ def _eval_scalar(value, params):
     return value
 
 
-
 def analyzevars(block):
     """
     Sets correct dimension information for each variable/parameter
@@ -2648,8 +2628,6 @@ def analyzevars(block):
             svars.append(n)
 
     params = get_parameters(vars, get_useparameters(block))
-    print(f"In analyzevars, after get_parameters: params = {params}")
-    
     # At this point, params are read and interpreted, but
     # the params used to define vars are not yet parsed
     dep_matches = {}
@@ -2757,32 +2735,13 @@ def analyzevars(block):
                     if d == ':':
                         star = ':'
                     if d in params:
-
-                        print(f"params = {params}")
-                        print(f"d = {d}")
                         # the dimension for this variable depends on a
                         # previously defined (scalar) parameter
                         d = str(params[d])
-
-                    #############################################
-                    # TODO certainly not the best way!
-                    # should maybe use regex (like in updatevars)
                     if d[:d.find("(")] in params:
-                        print(f"params = {params}")
-                        print(f"d = {d}")
                         # the dimension for this variable depends on a
                         # previously defined (array) parameter
-                        dname = d[:d.find("(")]
-                        ddims = int(d[d.find("(")+1:d.rfind(")")])
-                        print(f"dname = {dname}")
-                        print(f"ddims = {ddims}")
-                        # FIXME this is not robust; only works if the
-                        # parameter array is defined with 1-based indexing
-                        print(f"params[dname] = {params[dname]}")
-                        d = str(params[dname][ddims])
-                        print(f"d after evaluation: {d}")
-                    #############################################
-                    
+                        d = param_parse(d, params)
                     for p in list(params.keys()):
                         re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
                         m = re_1.match(d)
@@ -3000,32 +2959,81 @@ analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z', re.I)
 
 
 def param_eval(n, varsn, v, g_params, params):
-    # Creates a callable object for each parameter to be
-    # evaluated later.
-    for a in varsn['attrspec']:
-        if a[:9] == 'dimension':
-            dimrange = a[9:].lstrip('(').rstrip(')').split(':')
-            dimrange = range(int(dimrange[0]), int(dimrange[1])+1)
-    
-    v = v.lstrip('(/').rstrip('/)').split(',')
-    v_eval = []
-    for item in v:
-        try:
-            item = eval(item, g_params, params)
-        except Exception as msg:
+    # Creates a dictionary of indices and values for each parameter in a
+    # parameter array to be evaluated later.
+    #
+    # WARNING: It is not possible to initialize multidimensional array
+    # parameters e.g. dimension(-3:1, 4, 3:5) at this point. This is because in
+    # Fortran initialization through array constructor requires the RESHAPE
+    # intrinsic function. Since the right-hand side of the parameter declaration
+    # is not executed in f2py, but rather at the compiled c/fortran extension, later, it is not possible
+    # to execute a reshape of a parameter array.
+    # One issue remains: if the user wants to access the array parameter from python,
+    # we should either
+    # 1) allow them to access the parameter array using python standard indexing (which
+    #    is often incompatible with the original fortran indexing)
+    # 2) allow the parameter array to be accessed in python as a dictionary with fortran
+    #    indices as keys
+    # We are choosing 2 for now.
+    if any(a[:9] == 'dimension' for a in varsn['attrspec']):
+        # This is an array parameter.
+        # First, we parse the dimension information
+        a = [item[9:] for item in varsn['attrspec'] if item[:9] == 'dimension'][0]
+        dimrange = a.lstrip('(').rstrip(')')
+        dimrange = dimrange.split(',')
+        if len(dimrange) == 1:
+            # e.g. dimension(2) or dimension(-1:1)
+            dimrange = dimrange[0].split(':')
+            # now, dimrange is a list of 1 or 2 elements
+            if len(dimrange) == 1:
+                dimrange = range(1, int(dimrange[0])+1)
+            else:
+                dimrange = range(int(dimrange[0]), int(dimrange[1])+1)
+        else:
+            print(n)
+            raise Exception('param_eval: multidimensional array parameters not supported: %s\n' % repr(n))
+
+        # Parse parameter value
+        v = v.lstrip('(/').rstrip('/)').split(',')
+        v_eval = []
+        for item in v:
+            try:
+                item = eval(item, g_params, params)
+            except Exception as msg:
+                v_eval.append(item)
+                outmess('param_eval: got "%s" on %s\n' % (msg, repr(item)))
             v_eval.append(item)
-            outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
-        v_eval.append(item)
 
-    # create dictionary of param values
-    param_dict = dict([])
-    for i in range(len(dimrange)):
-        param_dict[dimrange[i]] = v_eval[i]
+        p = dict([])
+        for i in range(len(dimrange)):
+            p[dimrange[i]] = v_eval[i]
+    else:
+        try:
+            p = eval(v, g_params, params)
+        except Exception as msg:
+            p = v
+            outmess('param_eval: got "%s" on %s\n' % (msg, repr(v)))
+    return p
 
-    return param_dict
 
-
-#def _eval_param(n, d, v_eval, dimrange): 
+def param_parse(d, params):
+    # Recursively parse array parameter dimensions
+    dname = d[:d.find("(")]
+    ddims = d[d.find("(") + 1:d.rfind(")")]
+    if '(' in ddims:
+        # this dimension expression is an array element
+        if ddims[:ddims.find("(")] in params:
+            # this dimension expression is also a parameter;
+            # parse it recursively
+            index = int(param_parse(ddims, params))
+    else:
+        # Reached the bottom of the recursion
+        if ddims in params:
+            index = params[ddims]
+        else:
+            # ddims is a scalar. this means we should just parse it.
+            index = int(ddims)
+    return str(params[dname][index])
 
 
 def expr2name(a, block, args=[]):
@@ -3406,7 +3414,6 @@ def crackfortran(files):
 
     outmess('Reading fortran codes...\n', 0)
     readfortrancode(files, crackline)
-
     outmess('Post-processing...\n', 0)
     usermodules = []
     postlist = postcrack(grouplist[0])

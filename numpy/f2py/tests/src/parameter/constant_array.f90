@@ -14,3 +14,17 @@ subroutine foo_array(x, y, z)
 
   return
 end subroutine
+
+subroutine foo_array_any_index(x, y)
+  implicit none
+  integer, parameter :: dp = selected_real_kind(15)
+  integer, parameter, dimension(-1:1) :: myparamarray = (/ 6, 3, 1 /)
+  integer, parameter, dimension(2) :: nested = (/ 2, 0 /)
+  integer, parameter :: dim = 2
+  real(dp), intent(in) :: x(myparamarray(-1))
+  real(dp), intent(out) :: y(nested(1), myparamarray(nested(dim)))
+
+  y = reshape(x, (/nested(1), myparamarray(nested(2))/))
+
+  return
+end subroutine

@@ -1,8 +1,10 @@
 import os
 import pytest
+import tempfile
 
 import numpy as np
 from numpy.testing import assert_raises, assert_equal
+import numpy.f2py
 
 from . import util
 
@@ -19,7 +21,6 @@ class TestParameters(util.F2PyTest):
                _path('src', 'parameter', 'constant_compound.f90'),
                _path('src', 'parameter', 'constant_non_compound.f90'),
                _path('src', 'parameter', 'constant_array.f90'),
-               _path('src', 'parameter', 'constant_array_zero_indexed.f90'),
     ]
 
     @pytest.mark.slow
@@ -125,9 +126,25 @@ class TestParameters(util.F2PyTest):
         assert_equal(y, [0.0, 1.*10, 2.*10, 3.*10, 4.*10])
         assert_equal(z, 18.0)
 
-    @pytest.mark.xfail(reason="No support for zero-based indexed parameter arrays")
-    # No support for zero-based indexed parameter arrays
-    def test_constant_array_zero_indexed(self):
-        x = np.arange(3, dtype=np.float64)
-        self.module.foo_array_zero(x)
-        assert_equal(x, [0.0, 1./10, 2./10])
+    def test_constant_array_any_index(self):
+        x = np.arange(6, dtype=np.float64)
+        y = self.module.foo_array_any_index(x)
+        assert_equal(y, x.reshape((2,3), order='F'))
+
+    def test_constant_array_multidimensional(self):
+        #No support for multidimensional parameter arrays
+        code = b"""
+        subroutine foo_multidimensional_array(x)
+        implicit none
+        integer:: i
+        integer, parameter:: dp = selected_real_kind(15)
+        integer, dimension(0:4, 3:5, 2), parameter:: y = reshape((/ (i, i=1, 30) /), shape = (/ 5, 3, 2 /))
+        real(dp), intent(inout):: x(5, 3, 2)
+        x = dble(y)
+        return
+        end subroutine
+        """
+        fsource = tempfile.NamedTemporaryFile(delete=False)
+        fsource.write(code)
+        fsource.close()
+        assert_raises(Exception, numpy.f2py.run_main, ['-m','test_multidimensional_array', fsource.name])
