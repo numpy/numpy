@@ -8,7 +8,6 @@ Quickstart tutorial
 
    >>> import numpy as np
    >>> import sys
-   >>> rg = np.random.default_rng(1)
 
 Prerequisites
 =============
@@ -348,8 +347,7 @@ existing array rather than create a new one.
 
 ::
 
-    >>> from numpy.random import default_rng
-    >>> rg = default_rng()
+    >>> rg = np.random.default_rng(1)
     >>> a = np.ones((2,3), dtype=int)
     >>> b = rg.random((2,3))
     >>> a *= 3
