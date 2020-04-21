@@ -49,8 +49,8 @@ class build_clib(old_build_clib):
         if self.parallel:
             try:
                 self.parallel = int(self.parallel)
-            except ValueError:
-                raise ValueError("--parallel/-j argument must be an integer")
+            except ValueError as e:
+                raise ValueError("--parallel/-j argument must be an integer") from e
         old_build_clib.finalize_options(self)
         self.set_undefined_options('build',
                                         ('parallel', 'parallel'),
