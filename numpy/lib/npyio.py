@@ -884,7 +884,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     Examples
     --------
     >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO(u"0 1\n2 3")
+    >>> c = StringIO("0 1\n2 3")
     >>> np.loadtxt(c)
     array([[0., 1.],
            [2., 3.]])
