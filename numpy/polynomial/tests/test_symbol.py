@@ -39,3 +39,22 @@ class TestInit:
         """
         p = poly.Polynomial(self.c, symbol=symbol)
         assert_equal(p.symbol, symbol)
+
+
+class TestNumericOperations:
+    """
+    Test numeric operators to ensure that
+
+        1. Polynomial objects with different symbols cannot be combined
+        2. The symbol is preserved by the operation
+    """
+    p = poly.Polynomial([1, 2, 3], symbol='z')
+
+    def test_neg(self):
+        n = -self.p
+        assert_equal(n.symbol, 'z')
+
+    def test_add_same_symbol(self):
+        other = poly.Polynomial([3, 2, 1], symbol='z')
+        out = self.p + other
+        assert_equal(out.symbol, 'z')
