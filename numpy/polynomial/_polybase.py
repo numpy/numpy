@@ -319,6 +319,8 @@ class ABCPolyBase(abc.ABC):
         if not symbol[0].isalpha():
             raise ValueError("First character of symbol must be non-numeric")
 
+        self.symbol = symbol
+
     def __repr__(self):
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
