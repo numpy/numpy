@@ -328,7 +328,8 @@ class ABCPolyBase(abc.ABC):
         domain = repr(self.domain)[6:-1]
         window = repr(self.window)[6:-1]
         name = self.__class__.__name__
-        return f"{name}({coef}, domain={domain}, window={window})"
+        return (f"{name}({coef}, domain={domain}, window={window}, "
+                f"symbol='{self.symbol}')")
 
     def __format__(self, fmt_str):
         if fmt_str == '':
