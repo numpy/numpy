@@ -889,7 +889,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([[0., 1.],
            [2., 3.]])
 
-    >>> d = StringIO(u"M 21 72\nF 35 58")
+    >>> d = StringIO("M 21 72\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
     array([(b'M', 21, 72.), (b'F', 35, 58.)],
