@@ -4195,7 +4195,7 @@ cdef class Generator:
                                         alpha_csum_data[j + 1])
                         val_data[i + j] = acc * v
                         acc *= (1. - v)
-                    val_data[i + k + 1] = acc
+                    val_data[i + k - 1] = acc
                     i = i + k
 
         else:
