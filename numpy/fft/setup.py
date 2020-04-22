@@ -11,7 +11,7 @@ def configuration(parent_package='',top_path=None):
     # Configure pocketfft_internal
     config.add_extension('_pocketfft_internal',
                          sources=['_pocketfft.c'],
-                         define_macros=defs
+                         define_macros=defs,
                          )
 
     return config
