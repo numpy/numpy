@@ -452,6 +452,11 @@ class TestRegression:
         xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 2
 
+    def test_lexsort_invalid_axis(self):
+        assert_raises(np.AxisError, np.lexsort, (np.arange(1),), axis=2)
+        assert_raises(np.AxisError, np.lexsort, (np.array([]),), axis=1)
+        assert_raises(np.AxisError, np.lexsort, (np.array(1),), axis=10)
+
     def test_lexsort_zerolen_element(self):
         dt = np.dtype([])  # a void dtype with no fields
         xs = np.empty(4, dt)
