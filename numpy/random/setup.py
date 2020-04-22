@@ -110,7 +110,7 @@ def configuration(parent_package='', top_path=None):
                              depends=depends + [f'{gen}.pyx', f'{gen}.pxd',],
                              define_macros=defs,
                              )
-        config.add_data_files('{gen}.pxd')
+        config.add_data_files(f'{gen}.pxd')
     for gen in ['_generator', '_bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
