@@ -1,3 +1,4 @@
+import sys
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -5,9 +6,12 @@ def configuration(parent_package='',top_path=None):
 
     config.add_data_dir('tests')
 
+    # AIX needs to be told to use large file support - at all times
+    defs = [('_LARGE_FILES', None)] if sys.platform[:3] == "aix" else []
     # Configure pocketfft_internal
     config.add_extension('_pocketfft_internal',
-                         sources=['_pocketfft.c']
+                         sources=['_pocketfft.c'],
+                         define_macros=defs,
                          )
 
     return config
