@@ -312,32 +312,50 @@ class TestFormat:
 class TestRepr:
     def test_polynomial_str(self):
         res = repr(poly.Polynomial([0, 1]))
-        tgt = 'Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_chebyshev_str(self):
         res = repr(poly.Chebyshev([0, 1]))
-        tgt = 'Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_legendre_repr(self):
         res = repr(poly.Legendre([0, 1]))
-        tgt = 'Legendre([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Legendre([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_hermite_repr(self):
         res = repr(poly.Hermite([0, 1]))
-        tgt = 'Hermite([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Hermite([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_hermiteE_repr(self):
         res = repr(poly.HermiteE([0, 1]))
-        tgt = 'HermiteE([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "HermiteE([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_laguerre_repr(self):
         res = repr(poly.Laguerre([0, 1]))
-        tgt = 'Laguerre([0., 1.], domain=[0, 1], window=[0, 1])'
+        tgt = (
+            "Laguerre([0., 1.], domain=[0, 1], window=[0, 1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
 
