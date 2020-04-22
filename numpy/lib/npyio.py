@@ -895,7 +895,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([(b'M', 21, 72.), (b'F', 35, 58.)],
           dtype=[('gender', 'S1'), ('age', '<i4'), ('weight', '<f4')])
 
-    >>> c = StringIO(u"1,0,2\n3,0,4")
+    >>> c = StringIO("1,0,2\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([1., 3.])
