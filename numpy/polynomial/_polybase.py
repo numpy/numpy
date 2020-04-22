@@ -291,6 +291,8 @@ class ABCPolyBase(abc.ABC):
                 raise TypeError("Domains differ")
             elif not np.all(self.window == other.window):
                 raise TypeError("Windows differ")
+            elif self.symbol != other.symbol:
+                raise ValueError("Polynomial symbols differ")
             return other.coef
         return other
 
@@ -488,6 +490,7 @@ class ABCPolyBase(abc.ABC):
         ret['coef'] = self.coef.copy()
         ret['domain'] = self.domain.copy()
         ret['window'] = self.window.copy()
+        ret['symbol'] = self.symbol.copy()
         return ret
 
     def __setstate__(self, dict):
@@ -509,7 +512,7 @@ class ABCPolyBase(abc.ABC):
     # Numeric properties.
 
     def __neg__(self):
-        return self.__class__(-self.coef, self.domain, self.window)
+        return self.__class__(-self.coef, self.domain, self.window, self.symbol)
 
     def __pos__(self):
         return self
@@ -520,7 +523,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __sub__(self, other):
         othercoef = self._get_coefficients(other)
@@ -528,7 +531,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._sub(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __mul__(self, other):
         othercoef = self._get_coefficients(other)
@@ -536,7 +539,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._mul(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
@@ -569,13 +572,13 @@ class ABCPolyBase(abc.ABC):
             raise
         except Exception:
             return NotImplemented
-        quo = self.__class__(quo, self.domain, self.window)
-        rem = self.__class__(rem, self.domain, self.window)
+        quo = self.__class__(quo, self.domain, self.window, self.symbol)
+        rem = self.__class__(rem, self.domain, self.window, self.symbol)
         return quo, rem
 
     def __pow__(self, other):
         coef = self._pow(self.coef, other, maxpower=self.maxpower)
-        res = self.__class__(coef, self.domain, self.window)
+        res = self.__class__(coef, self.domain, self.window, self.symbol)
         return res
 
     def __radd__(self, other):
@@ -583,21 +586,21 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __rsub__(self, other):
         try:
             coef = self._sub(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __rmul__(self, other):
         try:
             coef = self._mul(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __rdiv__(self, other):
         # set to __floordiv__ /.
@@ -627,8 +630,8 @@ class ABCPolyBase(abc.ABC):
             raise
         except Exception:
             return NotImplemented
-        quo = self.__class__(quo, self.domain, self.window)
-        rem = self.__class__(rem, self.domain, self.window)
+        quo = self.__class__(quo, self.domain, self.window, self.symbol)
+        rem = self.__class__(rem, self.domain, self.window, self.symbol)
         return quo, rem
 
     def __eq__(self, other):
@@ -636,7 +639,8 @@ class ABCPolyBase(abc.ABC):
                np.all(self.domain == other.domain) and
                np.all(self.window == other.window) and
                (self.coef.shape == other.coef.shape) and
-               np.all(self.coef == other.coef))
+               np.all(self.coef == other.coef) and
+               (self.symbol == other.symbol))
         return res
 
     def __ne__(self, other):
@@ -655,7 +659,7 @@ class ABCPolyBase(abc.ABC):
             Copy of self.
 
         """
-        return self.__class__(self.coef, self.domain, self.window)
+        return self.__class__(self.coef, self.domain, self.window, self.symbol)
 
     def degree(self):
         """The degree of the series.
@@ -716,7 +720,7 @@ class ABCPolyBase(abc.ABC):
 
         """
         coef = pu.trimcoef(self.coef, tol)
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def truncate(self, size):
         """Truncate series to length `size`.
@@ -745,7 +749,7 @@ class ABCPolyBase(abc.ABC):
             coef = self.coef
         else:
             coef = self.coef[:isize]
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def convert(self, domain=None, kind=None, window=None):
         """Convert series to a different kind and/or domain and/or window.
@@ -782,7 +786,7 @@ class ABCPolyBase(abc.ABC):
             domain = kind.domain
         if window is None:
             window = kind.window
-        return self(kind.identity(domain, window=window))
+        return self(kind.identity(domain, window=window, symbol=self.symbol))
 
     def mapparms(self):
         """Return the mapping parameters.
@@ -844,7 +848,7 @@ class ABCPolyBase(abc.ABC):
         else:
             lbnd = off + scl*lbnd
         coef = self._int(self.coef, m, k, lbnd, 1./scl)
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def deriv(self, m=1):
         """Differentiate.
@@ -866,7 +870,7 @@ class ABCPolyBase(abc.ABC):
         """
         off, scl = self.mapparms()
         coef = self._der(self.coef, m, scl)
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def roots(self):
         """Return the roots of the series polynomial.
@@ -917,7 +921,7 @@ class ABCPolyBase(abc.ABC):
 
     @classmethod
     def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None):
+        window=None, symbol='x'):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
@@ -998,13 +1002,13 @@ class ABCPolyBase(abc.ABC):
         res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
         if full:
             [coef, status] = res
-            return cls(coef, domain=domain, window=window), status
+            return cls(coef, domain=domain, window=window, symbol=symbol), status
         else:
             coef = res
-            return cls(coef, domain=domain, window=window)
+            return cls(coef, domain=domain, window=window, symbol=symbol)
 
     @classmethod
-    def fromroots(cls, roots, domain=[], window=None):
+    def fromroots(cls, roots, domain=[], window=None, symbol='x'):
         """Return series instance that has the specified roots.
 
         Returns a series representing the product
@@ -1042,10 +1046,10 @@ class ABCPolyBase(abc.ABC):
         off, scl = pu.mapparms(domain, window)
         rnew = off + scl*roots
         coef = cls._fromroots(rnew) / scl**deg
-        return cls(coef, domain=domain, window=window)
+        return cls(coef, domain=domain, window=window, symbol=symbol)
 
     @classmethod
-    def identity(cls, domain=None, window=None):
+    def identity(cls, domain=None, window=None, symbol='x'):
         """Identity function.
 
         If ``p`` is the returned series, then ``p(x) == x`` for all
@@ -1075,10 +1079,10 @@ class ABCPolyBase(abc.ABC):
             window = cls.window
         off, scl = pu.mapparms(window, domain)
         coef = cls._line(off, scl)
-        return cls(coef, domain, window)
+        return cls(coef, domain, window, symbol)
 
     @classmethod
-    def basis(cls, deg, domain=None, window=None):
+    def basis(cls, deg, domain=None, window=None, symbol='x'):
         """Series basis polynomial of degree `deg`.
 
         Returns the series representing the basis polynomial of degree `deg`.
@@ -1114,7 +1118,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window)
+        return cls([0]*ideg + [1], domain, window, symbol)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):
