@@ -56,7 +56,13 @@ class TestInit:
         assert_equal(pt.symbol, 't')
 
 
-class TestUnaryOperators:
+class TestNumericOperations:
+    """
+    Test numeric operators to ensure that
+
+        1. Polynomial objects with different symbols cannot be combined
+        2. The symbol is preserved by the operation
+    """
     p = poly.Polynomial([1, 2, 3], symbol='z')
 
     def test_neg(self):
