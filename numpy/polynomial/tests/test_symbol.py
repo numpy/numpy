@@ -26,6 +26,7 @@ class TestInit:
         with pytest.raises(exception):
             p = poly.Polynomial(self.c, symbol=bad_input)
 
+    # TODO: Add support for latex symbols, e.g. symbol='\\beta'
     @pytest.mark.parametrize('symbol', (
         'x',
         'x_1',
