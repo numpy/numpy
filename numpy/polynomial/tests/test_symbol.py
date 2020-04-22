@@ -16,10 +16,12 @@ class TestInit:
         p = poly.Polynomial(self.c)
         assert_equal(p.symbol, 'x')
 
-    def test_symbol_None(self):
-        with pytest.raises(TypeError):
-            p = poly.Polynomial(self.c, symbol=None)
-
-    def test_symbol_empty(self):
-        with pytest.raises(ValueError):
-            p = poly.Polynomial(self.c, symbol='')
+    @pytest.mark.parametrize(('bad_input', 'exception'), (
+        ('', ValueError),
+        ('3', ValueError),
+        (None, TypeError),
+        (1, TypeError),
+    ))
+    def test_symbol_bad_input(self, bad_input, exception):
+        with pytest.raises(exception):
+            p = poly.Polynomial(self.c, symbol=bad_input)
