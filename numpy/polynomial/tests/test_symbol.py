@@ -25,3 +25,16 @@ class TestInit:
     def test_symbol_bad_input(self, bad_input, exception):
         with pytest.raises(exception):
             p = poly.Polynomial(self.c, symbol=bad_input)
+
+    @pytest.mark.parametrize('symbol', (
+        'x',
+        'x_1',
+        'A',
+        'xyz',
+    ))
+    def test_valid_symbols(self, symbol):
+        """
+        Values for symbol that should pass input validation.
+        """
+        p = poly.Polynomial(self.c, symbol=symbol)
+        assert_equal(p.symbol, symbol)
