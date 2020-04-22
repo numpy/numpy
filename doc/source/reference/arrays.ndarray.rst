@@ -133,6 +133,11 @@ Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 single-segment, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
 
+.. note::
+
+    `Contiguous arrays` and `single-segment arrays` are synonymous
+    and are used interchangeably throughout the documentation.
+
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
