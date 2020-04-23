@@ -40,6 +40,14 @@ class TestInit:
         p = poly.Polynomial(self.c, symbol=symbol)
         assert_equal(p.symbol, symbol)
 
+    def test_property(self):
+        """
+        'symbol' attribute is read only.
+        """
+        p = poly.Polynomial(self.c, symbol='x')
+        with pytest.raises(AttributeError):
+            p.symbol = 'z'
+
     def test_change_symbol(self):
         p = poly.Polynomial(self.c, symbol='y')
         # Create new polynomial from p with different symbol

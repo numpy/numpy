@@ -107,6 +107,10 @@ class ABCPolyBase(abc.ABC):
     _use_unicode = not os.name == 'nt'
 
     @property
+    def symbol(self):
+        return self._symbol
+
+    @property
     @abc.abstractmethod
     def domain(self):
         pass
@@ -312,6 +316,7 @@ class ABCPolyBase(abc.ABC):
                 raise ValueError("Window has wrong number of elements.")
             self.window = window
 
+        # Validation for symbol
         if not isinstance(symbol, str):
             raise TypeError("Symbol must be a non-empty string")
 
@@ -321,7 +326,7 @@ class ABCPolyBase(abc.ABC):
         if not symbol[0].isalpha():
             raise ValueError("First character of symbol must be non-numeric")
 
-        self.symbol = symbol
+        self._symbol = symbol
 
     def __repr__(self):
         coef = repr(self.coef)[6:-1]
