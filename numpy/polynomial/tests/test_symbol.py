@@ -58,9 +58,14 @@ class TestUnaryOperators:
         out = self.p * 10
         assert_equal(out.symbol, 'z')
 
+    def test_rscalarmul(self):
+        out = 10 * self.p
+        assert_equal(out.symbol, 'z')
+
     def test_pow(self):
         out = self.p ** 3
         assert_equal(out.symbol, 'z')
+
 
 @pytest.mark.parametrize('rhs',(
     poly.Polynomial([4, 5, 6], symbol='z'),
@@ -87,5 +92,21 @@ class TestBinaryOperatorsSameSymbol:
 
     def test_divmod(self, rhs):
         for out in divmod(self.p, rhs):
+            assert_equal(out.symbol, 'z')
+
+    def test_radd(self, rhs):
+        out = rhs + self.p
+        assert_equal(out.symbol, 'z')
+
+    def test_rsub(self, rhs):
+        out = rhs - self.p
+        assert_equal(out.symbol, 'z')
+
+    def test_rmul(self, rhs):
+        out = rhs * self.p
+        assert_equal(out.symbol, 'z')
+
+    def test_rdivmod(self, rhs):
+        for out in divmod(rhs, self.p):
             assert_equal(out.symbol, 'z')
 
