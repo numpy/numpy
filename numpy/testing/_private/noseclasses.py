@@ -210,7 +210,7 @@ class NumpyDoctest(npd.Doctest):
         # starting Python and executing "import numpy as np", and,
         # for SciPy packages, an additional import of the local
         # package (so that scipy.linalg.basic.py's doctests have an
-        # implicit "from scipy import linalg" as well.
+        # implicit "from scipy import linalg" as well).
         #
         # Note: __file__ allows the doctest in NoseTester to run
         # without producing an error

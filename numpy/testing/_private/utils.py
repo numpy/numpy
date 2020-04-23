@@ -1620,7 +1620,7 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     -----
     For computing the ULP difference, this API does not differentiate between
     various representations of NAN (ULP difference between 0x7fc00000 and 0xffc00000
-    is zero.
+    is zero).
 
     See Also
     --------
@@ -1666,7 +1666,7 @@ def nulp_diff(x, y, dtype=None):
     -----
     For computing the ULP difference, this API does not differentiate between
     various representations of NAN (ULP difference between 0x7fc00000 and 0xffc00000
-    is zero.
+    is zero).
 
     Examples
     --------

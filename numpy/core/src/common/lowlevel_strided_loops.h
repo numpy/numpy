@@ -638,7 +638,7 @@ npy_bswap8_unaligned(char * x)
  *
  * Here is example code for a single array:
  *
- *      if (PyArray_TRIVIALLY_ITERABLE(self) {
+ *      if (PyArray_TRIVIALLY_ITERABLE(self)) {
  *          char *data;
  *          npy_intp count, stride;
  *
@@ -656,7 +656,7 @@ npy_bswap8_unaligned(char * x)
  *
  * Here is example code for a pair of arrays:
  *
- *      if (PyArray_TRIVIALLY_ITERABLE_PAIR(a1, a2) {
+ *      if (PyArray_TRIVIALLY_ITERABLE_PAIR(a1, a2)) {
  *          char *data1, *data2;
  *          npy_intp count, stride1, stride2;
  *
