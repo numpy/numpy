@@ -33,7 +33,7 @@ def get_arch():
         ret = 'arm';
     elif 'aarch64' in os.uname()[-1]:
         ret = 'arm';
-    elif 'x86' in os.uname()[-1]:
+    elif 'x86' in os.uname()[-1] or os.uname()[-1] == 'i686':
         ret = 'x86'
     elif 'ppc64' in os.uname()[-1]:
         ret = 'ppc64'
