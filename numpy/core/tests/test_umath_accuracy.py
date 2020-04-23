@@ -3,7 +3,7 @@ import platform
 from os import path
 import sys
 import pytest
-from ctypes import c_float, c_int, cast, pointer, POINTER
+from ctypes import c_longlong, c_double, c_float, c_int, cast, pointer, POINTER
 from numpy.testing import assert_array_max_ulp
 from numpy.core._multiarray_umath import __cpu_features__
 
@@ -16,10 +16,15 @@ platform_skip = pytest.mark.skipif(not runtest,
 
 # convert string to hex function taken from:
 # https://stackoverflow.com/questions/1592158/convert-hex-to-float #
-def convert(s):
+def convert(s, datatype="np.float32"):
     i = int(s, 16)                   # convert from hex to a Python int
-    cp = pointer(c_int(i))           # make this into a c integer
-    fp = cast(cp, POINTER(c_float))  # cast the int pointer to a float pointer
+    if (datatype == "np.float64"):
+        cp = pointer(c_longlong(i))           # make this into a c long long integer
+        fp = cast(cp, POINTER(c_double))  # cast the int pointer to a double pointer
+    else:
+        cp = pointer(c_int(i))           # make this into a c integer
+        fp = cast(cp, POINTER(c_float))  # cast the int pointer to a float pointer
+
     return fp.contents.value         # dereference the pointer, get the float
 
 str_to_float = np.vectorize(convert)
@@ -45,8 +50,8 @@ class TestAccuracy:
                     npfunc = getattr(np, filename.split('-')[3])
                     for datatype in np.unique(data['type']):
                         data_subset = data[data['type'] == datatype]
-                        inval  = np.array(str_to_float(data_subset['input'].astype(str)), dtype=eval(datatype))
-                        outval = np.array(str_to_float(data_subset['output'].astype(str)), dtype=eval(datatype))
+                        inval  = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
+                        outval = np.array(str_to_float(data_subset['output'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         perm = np.random.permutation(len(inval))
                         inval = inval[perm]
                         outval = outval[perm]

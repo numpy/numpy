@@ -792,7 +792,7 @@ _loadtxt_chunksize = 50000
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
             ndmin=0, encoding='bytes', max_rows=None):
-    """
+    r"""
     Load data from a text file.
 
     Each row in the text file must have the same number of values.
@@ -884,24 +884,35 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     Examples
     --------
     >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO(u"0 1\\n2 3")
+    >>> c = StringIO("0 1\n2 3")
     >>> np.loadtxt(c)
     array([[0., 1.],
            [2., 3.]])
 
-    >>> d = StringIO(u"M 21 72\\nF 35 58")
+    >>> d = StringIO("M 21 72\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
     array([(b'M', 21, 72.), (b'F', 35, 58.)],
           dtype=[('gender', 'S1'), ('age', '<i4'), ('weight', '<f4')])
 
-    >>> c = StringIO(u"1,0,2\\n3,0,4")
+    >>> c = StringIO("1,0,2\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([1., 3.])
     >>> y
     array([2., 4.])
 
+    This example shows how `converters` can be used to convert a field
+    with a trailing minus sign into a negative number.
+
+    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
+    >>> def conv(fld):
+    ...     return -float(fld[:-1]) if fld.endswith(b'-') else float(fld)
+    ...
+    >>> np.loadtxt(s, converters={0: conv, 1: conv})
+    array([[ 10.01, -31.25],
+           [ 19.22,  64.31],
+           [-17.57,  63.94]])
     """
     # Type conversions for Py3 convenience
     if comments is not None:

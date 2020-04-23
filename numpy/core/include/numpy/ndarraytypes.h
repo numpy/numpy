@@ -1448,9 +1448,8 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * checking of correctness when working with these objects in C.
  */
 
-#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || \
-                             PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
-                             PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
+#define PyArray_ISONESEGMENT(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
+                                 PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
 
 #define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) && \
                              (!PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)))
