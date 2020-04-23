@@ -774,7 +774,7 @@ def copy(a, order='K', subok=False):
     array([1, 'm', list([10, 3, 4])], dtype=object)
 
     To ensure all elements within an ``object`` array are copied,
-    use `copy.deepcopy`::
+    use `copy.deepcopy`:
 
     >>> import copy
     >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
