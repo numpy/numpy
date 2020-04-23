@@ -777,9 +777,13 @@ def copy(a, order='K', subok=False):
     use `copy.deepcopy`::
 
     >>> import copy
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
     >>> c = copy.deepcopy(a)
-    >>> c[0] is a[0]
-    False
+    >>> c[2][0] = 10
+    >>> c
+    array([1, 'm', list([10, 3, 4])], dtype=object)
+    >>> a
+    array([1, 'm', list([2, 3, 4])], dtype=object)
 
     """
     return array(a, order=order, subok=subok, copy=True)
