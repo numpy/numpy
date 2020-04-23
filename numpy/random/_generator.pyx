@@ -4182,6 +4182,11 @@ cdef class Generator:
         if (k > 0) and (alpha_arr.max() < 0.1):
             # Small alpha case: Use stick-breaking approach with beta
             # random variates (RVs).
+            alpha_csum = np.cumsum(alpha[::-1])[::-1]
+            alpha_csum_arr = <np.ndarray>np.PyArray_FROM_OTF(alpha_csum,
+                np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            alpha_csum_data = <double*>np.PyArray_DATA(alpha_csum_arr)
+
             with self.lock, nogil:
                 while i < totsize:
                     acc = 1.
