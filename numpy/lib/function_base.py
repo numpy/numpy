@@ -767,11 +767,11 @@ def copy(a, order='K', subok=False):
     Note that ``np.copy`` is a shallow copy and will not
     copy object elements within arrays:
 
-    >>> obj = dict()
-    >>> a = np.array([obj], dtype=object)
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
     >>> b = np.copy(a)
-    >>> b[0] is a[0]
-    True
+    >>> b[2][0] = 10
+    >>> a
+    array([1, 'm', list([10, 3, 4])], dtype=object)
 
     To ensure all elements within an ``object`` array are copied,
     use `copy.deepcopy`::
