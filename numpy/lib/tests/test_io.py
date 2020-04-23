@@ -18,6 +18,7 @@ from multiprocessing import Process
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
+from numpy.lib.npyio import skip
 from numpy.compat import asbytes, bytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
@@ -637,9 +638,7 @@ class LoadTxtBase:
 
     def test_converters_decode(self):
         # test converters that decode strings
-        c = TextIO()
-        c.write(b'\xcf\x96')
-        c.seek(0)
+        c = TextIO(b'\xcf\x96')
         x = self.loadfunc(c, dtype=np.unicode_,
                           converters={0: lambda x: x.decode('UTF-8')})
         a = np.array([b'\xcf\x96'.decode('UTF-8')])
@@ -669,16 +668,12 @@ class TestLoadTxt(LoadTxtBase):
         np.lib.npyio._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
-        c = TextIO()
-        c.write('1 2\n3 4')
-        c.seek(0)
+        c = TextIO('1 2\n3 4')
         x = np.loadtxt(c, dtype=[('x', np.int32), ('y', np.int32)])
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         assert_array_equal(x, a)
 
-        d = TextIO()
-        d.write('M 64.0 75.0\nF 25.0 60.0')
-        d.seek(0)
+        d = TextIO('M 64.0 75.0\nF 25.0 60.0')
         mydescriptor = {'names': ('gender', 'age', 'weight'),
                         'formats': ('S1', 'i4', 'f4')}
         b = np.array([('M', 64.0, 75.0),
@@ -687,10 +682,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(y, b)
 
     def test_array(self):
-        c = TextIO()
-        c.write('1 2\n3 4')
-
-        c.seek(0)
+        c = TextIO('1 2\n3 4')
         x = np.loadtxt(c, dtype=int)
         a = np.array([[1, 2], [3, 4]], int)
         assert_array_equal(x, a)
@@ -701,33 +693,25 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
     def test_1D(self):
-        c = TextIO()
-        c.write('1\n2\n3\n4\n')
-        c.seek(0)
+        c = TextIO('1\n2\n3\n4\n')
         x = np.loadtxt(c, dtype=int)
         a = np.array([1, 2, 3, 4], int)
         assert_array_equal(x, a)
 
-        c = TextIO()
-        c.write('1,2,3,4\n')
-        c.seek(0)
+        c = TextIO('1,2,3,4\n')
         x = np.loadtxt(c, dtype=int, delimiter=',')
         a = np.array([1, 2, 3, 4], int)
         assert_array_equal(x, a)
 
     def test_missing(self):
-        c = TextIO()
-        c.write('1,2,3,,5\n')
-        c.seek(0)
+        c = TextIO('1,2,3,,5\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        converters={3: lambda s: int(s or - 999)})
         a = np.array([1, 2, 3, -999, 5], int)
         assert_array_equal(x, a)
 
     def test_converters_with_usecols(self):
-        c = TextIO()
-        c.write('1,2,3,,5\n6,7,8,9,10\n')
-        c.seek(0)
+        c = TextIO('1,2,3,,5\n6,7,8,9,10\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        converters={3: lambda s: int(s or - 999)},
                        usecols=(1, 3,))
@@ -735,60 +719,46 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
     def test_comments_unicode(self):
-        c = TextIO()
-        c.write('# comment\n1,2,3,5\n')
-        c.seek(0)
+        c = TextIO('# comment\n1,2,3,5\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        comments=u'#')
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
     def test_comments_byte(self):
-        c = TextIO()
-        c.write('# comment\n1,2,3,5\n')
-        c.seek(0)
+        c = TextIO('# comment\n1,2,3,5\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        comments=b'#')
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
     def test_comments_multiple(self):
-        c = TextIO()
-        c.write('# comment\n1,2,3\n@ comment2\n4,5,6 // comment3')
-        c.seek(0)
+        c = TextIO('# comment\n1,2,3\n@ comment2\n4,5,6 // comment3')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        comments=['#', '@', '//'])
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
     def test_comments_multi_chars(self):
-        c = TextIO()
-        c.write('/* comment\n1,2,3,5\n')
-        c.seek(0)
+        c = TextIO('/* comment\n1,2,3,5\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        comments='/*')
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
         # Check that '/*' is not transformed to ['/', '*']
-        c = TextIO()
-        c.write('*/ comment\n1,2,3,5\n')
-        c.seek(0)
+        c = TextIO('*/ comment\n1,2,3,5\n')
         assert_raises(ValueError, np.loadtxt, c, dtype=int, delimiter=',',
                       comments='/*')
 
     def test_skiprows(self):
-        c = TextIO()
-        c.write('comment\n1,2,3,5\n')
-        c.seek(0)
+        c = TextIO('comment\n1,2,3,5\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        skiprows=1)
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
-        c = TextIO()
-        c.write('# comment\n1,2,3,5\n')
-        c.seek(0)
+        c = TextIO('# comment\n1,2,3,5\n')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        skiprows=1)
         a = np.array([1, 2, 3, 5], int)
@@ -863,10 +833,59 @@ class TestLoadTxt(LoadTxtBase):
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
 
-    def test_fancy_dtype(self):
-        c = TextIO()
-        c.write('1,2,3.0\n4,5,6.0\n')
+    @pytest.mark.parametrize('slc, cols', [(np.s_[1::2], [1, 3]),
+                                           (np.s_[::-1], [3, 2, 1, 0]),
+                                           (np.s_[100:], [])])
+    def test_usecols_slice(self, slc, cols):
+        c = TextIO('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        x = np.loadtxt(c, dtype=int)
         c.seek(0)
+        y = np.loadtxt(c, dtype=int, usecols=slc)
+        assert_equal(y, x[:, cols])
+
+    @pytest.mark.parametrize('func, cols',
+                             [(lambda n: list(range(n // 2)), [0, 1]),
+                              (lambda n: [0] + list(range(2, n)), [0, 2, 3]),
+                              (lambda n: 1, 1)])
+    def test_usecols_callable(self, func, cols):
+        c = TextIO('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        x = np.loadtxt(c, dtype=int)
+        c.seek(0)
+        y = np.loadtxt(c, dtype=int, usecols=func)
+        assert_equal(y, x[:, cols])
+
+    @pytest.mark.parametrize('func, exc', [(lambda n: [0.0], TypeError),
+                                           (lambda n: [0, 99], IndexError)])
+    def test_usecols_bad_callable(self, func, exc):
+        c = TextIO('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        with assert_raises(exc):
+            np.loadtxt(c, dtype=int, usecols=func)
+
+    @pytest.mark.parametrize('skipcols, cols', [([1], [0, 2, 3]),
+                                                (1, [0, 2, 3]),
+                                                ([0, -1], [1, 2]),
+                                                ([], [0, 1, 2, 3]),
+                                                ([0, 1, 2, 3], [])])
+    def test_usecols_skip(self, skipcols, cols):
+        c = TextIO('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        x = np.loadtxt(c, dtype=int)
+        c.seek(0)
+        y = np.loadtxt(c, dtype=int, usecols=skip(skipcols))
+        assert_equal(y, x[:, cols])
+
+    @pytest.mark.parametrize('skipcols', [[0.0], 0.0, ["plate of shrimp"]])
+    def test_bad_skip(self, skipcols):
+        with assert_raises(TypeError):
+            skip(skipcols)
+
+    @pytest.mark.parametrize('skipcols', [[0, 99], 99, [-5]])
+    def test_usecols_bad_skip(self, skipcols):
+        c = TextIO('1 2 3 4\n11 12 13 14\n21 22 23 24')
+        with assert_raises(IndexError):
+            np.loadtxt(c, dtype=int, usecols=skip(skipcols))
+
+    def test_fancy_dtype(self):
+        c = TextIO('1,2,3.0\n4,5,6.0\n')
         dt = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         x = np.loadtxt(c, dtype=dt, delimiter=',')
         a = np.array([(1, (2, 3.0)), (4, (5, 6.0))], dt)
@@ -939,17 +958,13 @@ class TestLoadTxt(LoadTxtBase):
 
     def test_uint64_type(self):
         tgt = (9223372043271415339, 9223372043271415853)
-        c = TextIO()
-        c.write("%s %s" % tgt)
-        c.seek(0)
+        c = TextIO("%s %s" % tgt)
         res = np.loadtxt(c, dtype=np.uint64)
         assert_equal(res, tgt)
 
     def test_int64_type(self):
         tgt = (-9223372036854775807, 9223372036854775807)
-        c = TextIO()
-        c.write("%s %s" % tgt)
-        c.seek(0)
+        c = TextIO("%s %s" % tgt)
         res = np.loadtxt(c, dtype=np.int64)
         assert_equal(res, tgt)
 
@@ -959,8 +974,7 @@ class TestLoadTxt(LoadTxtBase):
         tgt = np.logspace(-10, 10, 5).astype(np.float32)
         tgt = np.hstack((tgt, -tgt)).astype(float)
         inp = '\n'.join(map(float.hex, tgt))
-        c = TextIO()
-        c.write(inp)
+        c = TextIO(inp)
         for dt in [float, np.float32]:
             c.seek(0)
             res = np.loadtxt(c, dtype=dt)
@@ -968,9 +982,7 @@ class TestLoadTxt(LoadTxtBase):
 
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
-        c = TextIO()
-        c.write("%s %s" % tgt)
-        c.seek(0)
+        c = TextIO("%s %s" % tgt)
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
 
@@ -1002,9 +1014,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(data, [[1, 21], [3, 42]])
 
     def test_empty_field_after_tab(self):
-        c = TextIO()
-        c.write('1 \t2 \t3\tstart \n4\t5\t6\t  \n7\t8\t9.5\t')
-        c.seek(0)
+        c = TextIO('1 \t2 \t3\tstart \n4\t5\t6\t  \n7\t8\t9.5\t')
         dt = {'names': ('x', 'y', 'z', 'comment'),
               'formats': ('<i4', '<i4', '<f4', '|S8')}
         x = np.loadtxt(c, dtype=dt, delimiter='\t')
@@ -1023,9 +1033,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(c, np.array([72.,  58.]))
 
     def test_ndmin_keyword(self):
-        c = TextIO()
-        c.write('1,2,3\n4,5,6')
-        c.seek(0)
+        c = TextIO('1,2,3\n4,5,6')
         assert_raises(ValueError, np.loadtxt, c, ndmin=3)
         c.seek(0)
         assert_raises(ValueError, np.loadtxt, c, ndmin=1.5)
@@ -1034,9 +1042,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]])
         assert_array_equal(x, a)
 
-        d = TextIO()
-        d.write('0,1,2')
-        d.seek(0)
+        d = TextIO('0,1,2')
         x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=2)
         assert_(x.shape == (1, 3))
         d.seek(0)
@@ -1046,9 +1052,7 @@ class TestLoadTxt(LoadTxtBase):
         x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=0)
         assert_(x.shape == (3,))
 
-        e = TextIO()
-        e.write('0\n1\n2')
-        e.seek(0)
+        e = TextIO('0\n1\n2')
         x = np.loadtxt(e, dtype=int, delimiter=',', ndmin=2)
         assert_(x.shape == (3, 1))
         e.seek(0)
@@ -1074,18 +1078,14 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(res, np.arange(10))
 
     def test_bad_line(self):
-        c = TextIO()
-        c.write('1 2 3\n4 5 6\n2 3')
-        c.seek(0)
+        c = TextIO('1 2 3\n4 5 6\n2 3')
 
         # Check for exception and that exception contains line number
         assert_raises_regex(ValueError, "3", np.loadtxt, c)
 
     def test_none_as_string(self):
         # gh-5155, None should work as string when format demands it
-        c = TextIO()
-        c.write('100,foo,200\n300,None,400')
-        c.seek(0)
+        c = TextIO('100,foo,200\n300,None,400')
         dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
@@ -1108,35 +1108,27 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, np.array(x, dtype="S"))
 
     def test_max_rows(self):
-        c = TextIO()
-        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
-        c.seek(0)
+        c = TextIO('1,2,3,5\n4,5,7,8\n2,1,4,5')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        max_rows=1)
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
     def test_max_rows_with_skiprows(self):
-        c = TextIO()
-        c.write('comments\n1,2,3,5\n4,5,7,8\n2,1,4,5')
-        c.seek(0)
+        c = TextIO('comments\n1,2,3,5\n4,5,7,8\n2,1,4,5')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        skiprows=1, max_rows=1)
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
-        c = TextIO()
-        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
-        c.seek(0)
+        c = TextIO('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        skiprows=1, max_rows=2)
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
         assert_array_equal(x, a)
 
     def test_max_rows_with_read_continuation(self):
-        c = TextIO()
-        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
-        c.seek(0)
+        c = TextIO('1,2,3,5\n4,5,7,8\n2,1,4,5')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        max_rows=2)
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
@@ -1147,21 +1139,17 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
     def test_max_rows_larger(self):
-        #test max_rows > num rows
-        c = TextIO()
-        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
-        c.seek(0)
+        # test max_rows > num rows
+        c = TextIO('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
         x = np.loadtxt(c, dtype=int, delimiter=',',
                        skiprows=1, max_rows=6)
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
+
 class Testfromregex:
     def test_record(self):
-        c = TextIO()
-        c.write('1.312 foo\n1.534 bar\n4.444 qux')
-        c.seek(0)
-
+        c = TextIO('1.312 foo\n1.534 bar\n4.444 qux')
         dt = [('num', np.float64), ('val', 'S3')]
         x = np.fromregex(c, r"([0-9.]+)\s+(...)", dt)
         a = np.array([(1.312, 'foo'), (1.534, 'bar'), (4.444, 'qux')],
@@ -1169,10 +1157,7 @@ class Testfromregex:
         assert_array_equal(x, a)
 
     def test_record_2(self):
-        c = TextIO()
-        c.write('1312 foo\n1534 bar\n4444 qux')
-        c.seek(0)
-
+        c = TextIO('1312 foo\n1534 bar\n4444 qux')
         dt = [('num', np.int32), ('val', 'S3')]
         x = np.fromregex(c, r"(\d+)\s+(...)", dt)
         a = np.array([(1312, 'foo'), (1534, 'bar'), (4444, 'qux')],
@@ -1180,10 +1165,7 @@ class Testfromregex:
         assert_array_equal(x, a)
 
     def test_record_3(self):
-        c = TextIO()
-        c.write('1312 foo\n1534 bar\n4444 qux')
-        c.seek(0)
-
+        c = TextIO('1312 foo\n1534 bar\n4444 qux')
         dt = [('num', np.float64)]
         x = np.fromregex(c, r"(\d+)\s+...", dt)
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
