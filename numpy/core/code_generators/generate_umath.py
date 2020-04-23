@@ -702,6 +702,7 @@ defdict = {
           None,
           TD('e', f='exp', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
+          TD('d', simd=[('avx512f', 'd')]),
           TD('fdg' + cmplx, f='exp'),
           TD(P, f='exp'),
           ),
