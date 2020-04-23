@@ -40,6 +40,11 @@ class TestInit:
         p = poly.Polynomial(self.c, symbol=symbol)
         assert_equal(p.symbol, symbol)
 
+    def test_change_symbol(self):
+        p = poly.Polynomial(self.c, symbol='y')
+        # Create new polynomial from p with different symbol
+        pt = poly.Polynomial(p, symbol='t')
+        assert_equal(pt.symbol, 't')
 
 class TestNumericOperations:
     """
