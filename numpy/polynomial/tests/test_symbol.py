@@ -4,7 +4,7 @@ Tests related to the ``symbol`` attribute of the ABCPolyBase class.
 
 import pytest
 import numpy.polynomial as poly
-from numpy.polynomial._polybase import ABCPolyBase
+from numpy.core import array
 from numpy.testing import assert_equal, assert_raises
 
 class TestInit:
@@ -46,20 +46,46 @@ class TestInit:
         pt = poly.Polynomial(p, symbol='t')
         assert_equal(pt.symbol, 't')
 
-class TestNumericOperations:
-    """
-    Test numeric operators to ensure that
 
-        1. Polynomial objects with different symbols cannot be combined
-        2. The symbol is preserved by the operation
-    """
+class TestUnaryOperators:
     p = poly.Polynomial([1, 2, 3], symbol='z')
 
     def test_neg(self):
         n = -self.p
         assert_equal(n.symbol, 'z')
 
-    def test_add_same_symbol(self):
-        other = poly.Polynomial([3, 2, 1], symbol='z')
-        out = self.p + other
+    def test_scalarmul(self):
+        out = self.p * 10
         assert_equal(out.symbol, 'z')
+
+    def test_pow(self):
+        out = self.p ** 3
+        assert_equal(out.symbol, 'z')
+
+@pytest.mark.parametrize('rhs',(
+    poly.Polynomial([4, 5, 6], symbol='z'),
+    array([4, 5, 6]),
+))
+class TestBinaryOperatorsSameSymbol:
+    """
+    Ensure symbol is preserved for numeric operations on polynomials with
+    the same symbol
+    """
+    p = poly.Polynomial([1, 2, 3], symbol='z')
+
+    def test_add(self, rhs):
+        out = self.p + rhs
+        assert_equal(out.symbol, 'z')
+
+    def test_sub(self, rhs):
+        out = self.p - rhs
+        assert_equal(out.symbol, 'z')
+
+    def test_polymul(self, rhs):
+        out = self.p * rhs
+        assert_equal(out.symbol, 'z')
+
+    def test_divmod(self, rhs):
+        for out in divmod(self.p, rhs):
+            assert_equal(out.symbol, 'z')
+
