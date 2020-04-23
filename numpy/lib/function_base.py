@@ -773,7 +773,8 @@ def copy(a, order='K', subok=False):
     >>> b[0] is a[0]
     True
 
-    To copy the elements as well, use `copy.deepcopy`:
+    To ensure all elements within an ``object`` array are copied,
+    use `copy.deepcopy`::
 
     >>> import copy
     >>> c = copy.deepcopy(a)
