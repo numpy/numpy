@@ -54,13 +54,8 @@ class TestInit:
         pt = poly.Polynomial(p, symbol='t')
         assert_equal(pt.symbol, 't')
 
-class TestNumericOperations:
-    """
-    Test numeric operators to ensure that
 
-        1. Polynomial objects with different symbols cannot be combined
-        2. The symbol is preserved by the operation
-    """
+class TestUnaryOperators:
     p = poly.Polynomial([1, 2, 3], symbol='z')
 
     def test_neg(self):
@@ -78,7 +73,6 @@ class TestNumericOperations:
     def test_pow(self):
         out = self.p ** 3
         assert_equal(out.symbol, 'z')
-
 
 @pytest.mark.parametrize('rhs',(
     poly.Polynomial([4, 5, 6], symbol='z'),
