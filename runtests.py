@@ -125,7 +125,7 @@ def main(argv):
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
-                        help="Arguments to pass to Nose, Python or shell")
+                        help="Arguments to pass to Nose, asv, Python or shell")
     args = parser.parse_args(argv)
 
     if args.durations < 0:
@@ -162,8 +162,10 @@ def main(argv):
         site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
 
     extra_argv = args.args[:]
-    if extra_argv and extra_argv[0] == '--':
-        extra_argv = extra_argv[1:]
+    if not args.bench:
+        # extra_argv may also lists selected benchmarks
+        if extra_argv and extra_argv[0] == '--':
+            extra_argv = extra_argv[1:]
 
     if args.python:
         # Debugging issues with warnings is much easier if you can see them
@@ -220,13 +222,21 @@ def main(argv):
 
     if args.bench:
         # Run ASV
-        items = extra_argv
+        for i, v in enumerate(extra_argv):
+            if v.startswith("--"):
+                items = extra_argv[:i]
+                if v == "--":
+                    i += 1  # skip '--' indicating further are passed on.
+                bench_args = extra_argv[i:]
+                break
+        else:
+            items = extra_argv
+            bench_args = []
+
         if args.tests:
             items += args.tests
         if args.submodule:
             items += [args.submodule]
-
-        bench_args = []
         for a in items:
             bench_args.extend(['--bench', a])
 
