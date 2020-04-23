@@ -54,7 +54,6 @@ class TestInit:
         pt = poly.Polynomial(p, symbol='t')
         assert_equal(pt.symbol, 't')
 
-
 class TestNumericOperations:
     """
     Test numeric operators to ensure that
