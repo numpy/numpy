@@ -74,6 +74,7 @@ class TestUnaryOperators:
         out = self.p ** 3
         assert_equal(out.symbol, 'z')
 
+
 @pytest.mark.parametrize('rhs',(
     poly.Polynomial([4, 5, 6], symbol='z'),
     array([4, 5, 6]),
@@ -116,7 +117,6 @@ class TestBinaryOperatorsSameSymbol:
     def test_rdivmod(self, rhs):
         for out in divmod(rhs, self.p):
             assert_equal(out.symbol, 'z')
-
 
 class TestBinaryOperatorsDifferentSymbol:
     """
