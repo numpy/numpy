@@ -171,3 +171,29 @@ class TestExtraMethods:
     def test_deriv(self):
         other = self.p.deriv()
         assert_equal(other.symbol, 'z')
+
+#
+# Class methods that result in new polynomial class instances
+#
+
+
+def test_fit():
+    x, y = (range(10),)*2
+    p = poly.Polynomial.fit(x, y, deg=1, symbol='z')
+    assert_equal(p.symbol, 'z')
+
+
+def test_froomroots():
+    roots = [-2, 2]
+    p = poly.Polynomial.fromroots(roots, symbol='z')
+    assert_equal(p.symbol, 'z')
+
+
+def test_identity():
+    p = poly.Polynomial.identity(domain=[-1, 1], window=[5, 20], symbol='z')
+    assert_equal(p.symbol, 'z')
+
+
+def test_basis():
+    p = poly.Polynomial.basis(3, symbol='z')
+    assert_equal(p.symbol, 'z')
