@@ -193,8 +193,8 @@ def as_series(alist, trim=True):
     else:
         try:
             dtype = np.common_type(*arrays)
-        except Exception:
-            raise ValueError("Coefficient arrays have no common type")
+        except Exception as e:
+            raise ValueError("Coefficient arrays have no common type") from e
         ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
     return ret
 
@@ -777,7 +777,7 @@ def _deprecate_as_int(x, desc):
     """
     try:
         return operator.index(x)
-    except TypeError:
+    except TypeError as e:
         # Numpy 1.17.0, 2019-03-11
         try:
             ix = int(x)
@@ -793,4 +793,4 @@ def _deprecate_as_int(x, desc):
                 )
                 return ix
 
-        raise TypeError(f"{desc} must be an integer")
+        raise TypeError(f"{desc} must be an integer") from e
