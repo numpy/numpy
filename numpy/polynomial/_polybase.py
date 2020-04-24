@@ -261,8 +261,16 @@ class ABCPolyBase(abc.ABC):
         return other
 
     def __init__(self, coef, domain=None, window=None):
-        [coef] = pu.as_series([coef], trim=False)
-        self.coef = coef
+        if isinstance(coef, ABCPolyBase):
+            self.__setstate__(coef.__getstate__())
+            if self.__class__ is not coef.__class__:
+                raise TypeError(
+                    f'To create an instance of {self.__class__} from {coef}, '
+                    f'please see the convert method'
+                )
+        else:
+            [coef] = pu.as_series([coef], trim=False)
+            self.coef = coef
 
         if domain is not None:
             [domain] = pu.as_series([domain], trim=False)
