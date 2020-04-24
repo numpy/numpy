@@ -1231,7 +1231,8 @@ def rollaxis(a, axis, start=0):
     start : int, optional
         When ``start <= axis``, the axis is rolled back until it lies in
         this position. When ``start > axis``, the axis is rolled until it
-        lies before this position.
+        lies before this position. The following table describes how negative
+        values of ``start`` are interpreted:
 
         .. table::
            :align: left
