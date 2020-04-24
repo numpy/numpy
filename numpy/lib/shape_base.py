@@ -372,8 +372,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # invoke the function on the first item
     try:
         ind0 = next(inds)
-    except StopIteration:
-        raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
+    except StopIteration as e:
+        raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0') from None
     res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
 
     # build a buffer for storing evaluations of func1d.

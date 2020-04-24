@@ -417,9 +417,9 @@ def _get_bin_edges(a, bins, range, weights):
     elif np.ndim(bins) == 0:
         try:
             n_equal_bins = operator.index(bins)
-        except TypeError:
+        except TypeError as e:
             raise TypeError(
-                '`bins` must be an integer, a string, or an array')
+                '`bins` must be an integer, a string, or an array') from e
         if n_equal_bins < 1:
             raise ValueError('`bins` must be positive, when an integer')
 

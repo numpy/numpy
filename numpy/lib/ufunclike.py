@@ -188,9 +188,9 @@ def isposinf(x, out=None):
     is_inf = nx.isinf(x)
     try:
         signbit = ~nx.signbit(x)
-    except TypeError:
+    except TypeError as e:
         raise TypeError('This operation is not supported for complex values '
-                        'because it would be ambiguous.')
+                        'because it would be ambiguous.') from e
     else:
         return nx.logical_and(is_inf, signbit, out)
 
@@ -259,8 +259,8 @@ def isneginf(x, out=None):
     is_inf = nx.isinf(x)
     try:
         signbit = nx.signbit(x)
-    except TypeError:
+    except TypeError as e:
         raise TypeError('This operation is not supported for complex values '
-                        'because it would be ambiguous.')
+                        'because it would be ambiguous.') from e
     else:
         return nx.logical_and(is_inf, signbit, out)
