@@ -3026,7 +3026,7 @@ Other conversions
 
     .. code-block:: c
 
-        #define error_converting(x) (((x) == -1) && PyErr_Occurred()
+        #define error_converting(x) (((x) == -1) && PyErr_Occurred())
 
 .. c:function:: npy_intp PyArray_PyIntAsIntp(PyObject* op)
 
