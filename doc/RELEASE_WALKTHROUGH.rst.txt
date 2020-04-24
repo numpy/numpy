@@ -1,4 +1,5 @@
-This file contains a walkthrough of the NumPy 1.14.5 release on Linux.
+This file contains a walkthrough of the NumPy 1.14.5 release on Linux, modified
+for building on azure and uploading to anaconda.org
 The commands can be copied into the command line, but be sure to
 replace 1.14.5 by the correct version.
 
@@ -92,7 +93,7 @@ Build wheels
 ------------
 
 Trigger the wheels build by pointing the numpy-wheels repository at this
-commit. The numpy-wheels repository is cloned from
+commit. This can take up to an hour. The numpy-wheels repository is cloned from
 `<https://github.com/MacPython/numpy-wheels>`_. Start with a pull as the repo
 may have been accessed and changed by someone else and a push will fail::
 
@@ -103,13 +104,27 @@ may have been accessed and changed by someone else and a push will fail::
 
 Edit the ``azure/posix.yml`` and ``azure/windows.yml`` files to make sure they
 have the correct version, and put in the commit hash for the ``REL`` commit
-created above for ``BUILD_COMMIT``. Push and, if you are on a fork of the repo,
-merge the branch.
+created above for ``BUILD_COMMIT``, see an _example::
 
-Check if all the needed wheels have been built and
-uploaded before proceeding. There should currently be 22 of them at
-`<https://anaconda.org/multibuild-wheels-staging/numpy>`_, 4 for Mac, 8 for
-Windows, and 10 for Linux.  Note that sometimes builds, like tests, fail for
+    $ gvim azure/posix.yml azure/windows.yml
+    $ git commit -a
+    $ git push upstream HEAD
+
+Push and, if you are on a fork of the repo, merge the branch.
+
+Now wait. If you get nervous at the amount of time taken -- the builds can take
+a while -- you can check the build progress by following the links
+provided at `<https://github.com/MacPython/numpy-wheels>`_ to check the 
+build status. Check if all the needed wheels have been built and
+uploaded before proceeding. There should currently be 21 of them at
+`<https://anaconda.org/multibuild-wheels-staging/numpy/files>`_, 3 for Mac, 6
+for Windows, and 12 for Linux.
+Note that sometimes builds, like tests, fail for unrelated reasons and you will
+need to restart them.
+
+.. example_: https://github.com/MacPython/numpy-wheels/pull/80/commits/cbf4af4
+
+Note that sometimes builds, like tests, fail for
 unrelated reasons and you will need to restart them.
 
 Download wheels

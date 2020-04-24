@@ -1,4 +1,4 @@
-This file gives an overview of what is necessary to build binary releases forattr(cf.name()) = cf;
+This file gives an overview of what is necessary to build binary releases for
 NumPy.
 
 Current build and release info
@@ -362,13 +362,17 @@ In that repository edit the files:
 - ``azure/windows.yml``.
 
 In both cases, set the ``BUILD_COMMIT`` variable to the current release tag -
-e.g. ``v1.19.0``.
+e.g. ``v1.19.0``::
+
+    $ gvim azure/posix.yml azure/windows.yml
+    $ git commit -a
+    $ git push upstream HEAD
 
 Make sure that the release tag has been pushed.
 
 Trigger a build by pushing a commit of your edits to the repository. Note that
-you can do this on a branch, but it must be pushed to the
-``MacPython/numpy-wheels`` repository before the uploads will happen since only
+you can do this on a branch, but it must be pushed upstream to the
+``MacPython/numpy-wheels`` repository to trigger uploads since only
 that repo has the appropriate tokens to allow uploads.
 
 The wheels, once built, appear at https://anaconda.org/multibuild-wheels-staging/numpy
