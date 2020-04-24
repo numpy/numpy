@@ -14,6 +14,7 @@ from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
 from numpy.polynomial.polyutils import RankWarning
+from numpy.polynomial._polybase import ABCPolyBase
 
 #
 # fixtures
@@ -598,3 +599,31 @@ class TestInterpolate:
             for t in range(0, deg + 1):
                 p = Chebyshev.interpolate(powx, deg, domain=[0, 2], args=(t,))
                 assert_almost_equal(p(x), powx(x, t), decimal=12)
+
+
+#
+# Test constructing polynomial instances from other polynomials
+#
+
+
+class TestInitFromPoly:
+    p = Polynomial([1, 2, 3]) 
+
+    def test_coef_not_poly_instance(self):
+        p2 = Polynomial(self.p)
+        assert_(not isinstance(p2.coef[0], ABCPolyBase))
+
+    def test_new_domain(self):
+        new_domain = np.array([-2, 2])
+        p2 = Polynomial(self.p, domain=new_domain)
+        assert_equal(self.p.coef, p2.coef)
+        assert_equal(p2.domain, new_domain)
+
+    def test_new_window(self):
+        new_window = np.array([-10, 10])
+        p2 = Polynomial(self.p, window=new_window)
+        assert_equal(self.p.coef, p2.coef)
+        assert_equal(p2.window, new_window)
+
+    def test_polynomial_conversion_disallowed(self):
+        assert_raises(TypeError, Chebyshev, self.p)
