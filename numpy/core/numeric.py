@@ -1835,24 +1835,24 @@ def isscalar(element):
     +--------------------------------------+---------------+-------------------+
     | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
     +======================================+===============+===================+
-    | PEP 3141 numeric objects (including | ``True`` | ``True`` |
-    | builtins)                           |          |          |
+    | PEP 3141 numeric objects (including  | ``True``      | ``True``          |
+    | builtins)                            |               |                   |
     +--------------------------------------+---------------+-------------------+
     | builtin string and buffer objects    | ``True``      | ``True``          |
     +--------------------------------------+---------------+-------------------+
-    | other builtin objects, like  | ``False`` | ``True`` |
-    | `pathlib.Path`, `Exception`, |           |          |
-    | the result of `re.compile`   |           |          |
+    | other builtin objects, like          | ``False``     | ``True``          |
+    | `pathlib.Path`, `Exception`,         |               |                   |
+    | the result of `re.compile`           |               |                   |
     +--------------------------------------+---------------+-------------------+
-    | third-party objects like   | ``False`` | ``True`` |
-    | `matplotlib.figure.Figure` |           |          |
+    | third-party objects like             | ``False``     | ``True``          |
+    | `matplotlib.figure.Figure`           |               |                   |
     +--------------------------------------+---------------+-------------------+
     | zero-dimensional numpy arrays        | ``False``     | ``True``          |
     +--------------------------------------+---------------+-------------------+
     | other numpy arrays                   | ``False``     | ``False``         |
     +--------------------------------------+---------------+-------------------+
-    | `list`, `tuple`, and other sequence | ``False`` | ``False`` |
-    | objects                             |           |           |
+    | `list`, `tuple`, and other sequence  | ``False``     | ``False``         |
+    | objects                              |               |                   |
     +--------------------------------------+---------------+-------------------+
 
     Examples
