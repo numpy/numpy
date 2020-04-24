@@ -622,8 +622,8 @@ def matrix_power(a, n):
 
     try:
         n = operator.index(n)
-    except TypeError:
-        raise TypeError("exponent must be an integer")
+    except TypeError as e:
+        raise TypeError("exponent must be an integer") from e
 
     # Fall back on dot for object arrays. Object arrays are not supported by
     # the current implementation of matmul using einsum
@@ -2540,8 +2540,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
     elif not isinstance(axis, tuple):
         try:
             axis = int(axis)
-        except Exception:
-            raise TypeError("'axis' must be None, an integer or a tuple of integers")
+        except Exception as e:
+            raise TypeError("'axis' must be None, an integer or a tuple of integers") from e
         axis = (axis,)
 
     if len(axis) == 1:
