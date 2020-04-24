@@ -278,6 +278,34 @@ def test_array_astype_warning(t):
     a = np.array(10, dtype=np.complex_)
     assert_warns(np.ComplexWarning, a.astype, t)
 
+@pytest.mark.parametrize(["dtype", "out_dtype"],
+        [(np.bytes_, np.bool_),
+         (np.unicode, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?"))])
+def test_string_to_boolean_cast(dtype, out_dtype):
+    """
+    Currently, for `astype` strings are cast to booleans effectively by
+    calling `bool(int(string)`. This is not consistent (see gh-9875) and
+    will eventually be deprecated.
+    """
+    arr = np.array(["10", "10\0\0\0", "0\0\0", "0"], dtype=dtype)
+    expected = np.array([True, True, False, False], dtype=out_dtype)
+    assert_array_equal(arr.astype(out_dtype), expected)
+
+@pytest.mark.parametrize(["dtype", "out_dtype"],
+        [(np.bytes_, np.bool_),
+         (np.unicode, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?"))])
+def test_string_to_boolean_cast_errors(dtype, out_dtype):
+    """
+    These currently error out, since cast to integers fails, but should not
+    error out in the future.
+    """
+    for invalid in ["False", "True", "", "\0", "non-empty"]:
+        arr = np.array([invalid], dtype=dtype)
+        with assert_raises(ValueError):
+            arr.astype(out_dtype)
+
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
 
