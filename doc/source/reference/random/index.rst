@@ -169,8 +169,8 @@ What's New or Different
 * All BitGenerators in numpy use `SeedSequence` to convert seeds into
   initialized states.
 * The addition of an ``axis`` keyword argument to methods such as 
-  `Generator.choice` and `Generator.shuffle` improves support for 
-  sampling from and shuffling multi-dimensional arrays.
+  `Generator.choice`, `Generator.permutation`,  and `Generator.shuffle` 
+  improves support for sampling from and shuffling multi-dimensional arrays.
 
 See :ref:`new-or-different` for a complete list of improvements and
 differences from the traditional ``Randomstate``.
