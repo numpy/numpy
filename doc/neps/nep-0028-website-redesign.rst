@@ -131,7 +131,7 @@ Possible options for static site generators
    Unlike the previous options, Docusaurus doesn't come with themes, and thus we
    would not want to use this for our landing page. This is an excellent docs
    option written in React. Docusaurus natively has support for i18n (via
-   Crowdin_, document versioning, and document search.
+   Crowdin_), document versioning, and document search.
 
 Both Jekyll and Hugo are excellent options that should be supported into the
 future and are good choices for NumPy. Docusaurus has several bonus features

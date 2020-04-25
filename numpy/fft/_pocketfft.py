@@ -524,8 +524,8 @@ def hfft(a, n=None, axis=-1, norm=None):
     domain and is real in the frequency domain. So here it's `hfft` for
     which you must supply the length of the result if it is to be odd.
 
-    * even: ``ihfft(hfft(a, 2*len(a) - 2) == a``, within roundoff error,
-    * odd: ``ihfft(hfft(a, 2*len(a) - 1) == a``, within roundoff error.
+    * even: ``ihfft(hfft(a, 2*len(a) - 2)) == a``, within roundoff error,
+    * odd: ``ihfft(hfft(a, 2*len(a) - 1)) == a``, within roundoff error.
 
     The correct interpretation of the hermitian input depends on the length of
     the original data, as given by `n`. This is because each input shape could
@@ -604,8 +604,8 @@ def ihfft(a, n=None, axis=-1, norm=None):
     domain and is real in the frequency domain. So here it's `hfft` for
     which you must supply the length of the result if it is to be odd:
 
-    * even: ``ihfft(hfft(a, 2*len(a) - 2) == a``, within roundoff error,
-    * odd: ``ihfft(hfft(a, 2*len(a) - 1) == a``, within roundoff error.
+    * even: ``ihfft(hfft(a, 2*len(a) - 2)) == a``, within roundoff error,
+    * odd: ``ihfft(hfft(a, 2*len(a) - 1)) == a``, within roundoff error.
 
     Examples
     --------

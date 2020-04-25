@@ -1655,7 +1655,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When the variables are named (either by a flexible dtype or with `names`,
+    * When the variables are named (either by a flexible dtype or with `names`),
       there must not be any header in the file (else a ValueError
       exception is raised).
     * Individual values are not stripped of spaces by default.

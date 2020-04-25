@@ -214,7 +214,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 /*
    Check to see if this key in the dictionary is the "title"
    entry of the tuple (i.e. a duplicate dictionary entry in the fields
-   dict.
+   dict).
 */
 
 static NPY_INLINE int

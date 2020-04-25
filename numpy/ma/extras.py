@@ -811,7 +811,7 @@ def compress_nd(x, axis=None):
     ----------
     x : array_like, MaskedArray
         The array to operate on. If not a MaskedArray instance (or if no array
-        elements are masked, `x` is interpreted as a MaskedArray with `mask`
+        elements are masked), `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
         Which dimensions to suppress slices from can be configured with this

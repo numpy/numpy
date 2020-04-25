@@ -159,7 +159,7 @@ Glossary
 
    field
        In a :term:`structured data type`, each sub-type is called a `field`.
-       The `field` has a name (a string), a type (any valid dtype, and
+       The `field` has a name (a string), a type (any valid dtype), and
        an optional `title`. See :ref:`arrays.dtypes`
 
    Fortran order

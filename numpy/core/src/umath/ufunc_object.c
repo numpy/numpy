@@ -2926,7 +2926,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /*
      * The first nop strides are for the inner loop (but only can
-     * copy them after removing the core axes
+     * copy them after removing the core axes)
      */
     memcpy(inner_strides, NpyIter_GetInnerStrideArray(iter),
                                     NPY_SIZEOF_INTP * nop);

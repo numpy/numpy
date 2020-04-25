@@ -802,7 +802,7 @@ class matrix(N.ndarray):
         -------
         ret : matrix object
             If `self` is non-singular, `ret` is such that ``ret * self`` ==
-            ``self * ret`` == ``np.matrix(np.eye(self[0,:].size)`` all return
+            ``self * ret`` == ``np.matrix(np.eye(self[0,:].size))`` all return
             ``True``.
 
         Raises
