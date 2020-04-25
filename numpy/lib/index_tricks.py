@@ -369,7 +369,9 @@ class AxisConcatenator:
                             trans1d = int(vec[2])
                         continue
                     except Exception as e:
-                        raise ValueError("unknown special directive {!r}".format(item)) from e
+                        raise ValueError(
+                            "unknown special directive {!r}".format(item)
+                        ) from e
                 try:
                     axis = int(item)
                     continue
