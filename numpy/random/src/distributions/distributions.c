@@ -1337,6 +1337,14 @@ uint64_t random_bounded_uint64(bitgen_t *bitgen_state, uint64_t off,
     return off;
   } else if (rng <= 0xFFFFFFFFUL) {
     /* Call 32-bit generator if range in 32-bit. */
+    if (rng == 0xFFFFFFFFUL) {
+      /*
+       * The 32-bit Lemire method does not handle rng=0xFFFFFFFF, so we'll
+       * call next_uint32 directly.  This also works when use_masked is True,
+       * so we handle both cases here.
+       */
+      return off + (uint64_t) next_uint32(bitgen_state);
+    }
     if (use_masked) {
       return off + buffered_bounded_masked_uint32(bitgen_state, rng, mask, NULL,
                                                   NULL);
@@ -1450,22 +1458,34 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
       out[i] = off;
     }
   } else if (rng <= 0xFFFFFFFFUL) {
-    uint32_t buf = 0;
-    int bcnt = 0;
-
     /* Call 32-bit generator if range in 32-bit. */
-    if (use_masked) {
-      /* Smallest bit mask >= max */
-      uint64_t mask = gen_mask(rng);
 
+    /*
+     * The 32-bit Lemire method does not handle rng=0xFFFFFFFF, so we'll
+     * call next_uint32 directly.  This also works when use_masked is True,
+     * so we handle both cases here.
+     */
+    if (rng == 0xFFFFFFFFUL) {
       for (i = 0; i < cnt; i++) {
-        out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
-                                                      &bcnt, &buf);
+        out[i] = off + (uint64_t) next_uint32(bitgen_state);
       }
     } else {
-      for (i = 0; i < cnt; i++) {
-        out[i] = off +
-                 buffered_bounded_lemire_uint32(bitgen_state, rng, &bcnt, &buf);
+      uint32_t buf = 0;
+      int bcnt = 0;
+
+      if (use_masked) {
+        /* Smallest bit mask >= max */
+        uint64_t mask = gen_mask(rng);
+
+        for (i = 0; i < cnt; i++) {
+          out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
+                                                        &bcnt, &buf);
+        }
+      } else {
+        for (i = 0; i < cnt; i++) {
+          out[i] = off +
+                   buffered_bounded_lemire_uint32(bitgen_state, rng, &bcnt, &buf);
+        }
       }
     }
   } else if (rng == 0xFFFFFFFFFFFFFFFFULL) {
