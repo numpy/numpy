@@ -3297,6 +3297,10 @@ class MaskedArray(ndarray):
                 if self._fill_value is not None:
                     dout._fill_value = self._fill_value[indx]
 
+                    # Something like gh-15895 has happened if this check fails.
+                    # _fill_value should always be an ndarray.
+                    if not isinstance(dout._fill_value, np.ndarray):
+                        raise RuntimeError('Internal NumPy error.')
                     # If we're indexing a multidimensional field in a
                     # structured array (such as dtype("(2,)i2,(2,)i1")),
                     # dimensionality goes up (M[field].ndim == M.ndim +
@@ -3304,7 +3308,7 @@ class MaskedArray(ndarray):
                     # M[field] but problematic for M[field].fill_value
                     # which should have shape () to avoid breaking several
                     # methods. There is no great way out, so set to
-                    # first element.  See issue #6723.
+                    # first element. See issue #6723.
                     if dout._fill_value.ndim > 0:
                         if not (dout._fill_value ==
                                 dout._fill_value.flat[0]).all():
@@ -3315,7 +3319,10 @@ class MaskedArray(ndarray):
                                 "heterogeneous fill_value and setting "
                                 f"all to {dout._fill_value[0]!s}.",
                                 stacklevel=2)
-                        dout._fill_value = dout._fill_value.flat[0]
+                        # Need to use `.flat[0:1].squeeze(...)` instead of just
+                        # `.flat[0]` to ensure the result is a 0d array and not
+                        # a scalar.
+                        dout._fill_value = dout._fill_value.flat[0:1].squeeze(axis=0)
                 dout._isfield = True
             # Update the mask if needed
             if mout is not nomask:
