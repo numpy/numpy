@@ -313,7 +313,7 @@ The following works in the current draft implementation::
 For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs in an array with default
 missing value support, an unmasked Inf or NaN will be produced. To
-mask those values, a further 'a[np.logical_not(a.isfinite(a)] = np.NA'
+mask those values, a further 'a[np.logical_not(a.isfinite(a))] = np.NA'
 can achieve that. For the bitpattern approach, the parameterized
 dtype('NA[f8,InfNan]') described in a later section can be used to get
 these semantics without the extra manipulation.

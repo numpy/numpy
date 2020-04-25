@@ -72,7 +72,7 @@ class, that points to the data in the original.
 There are other points in the use of ndarrays where we need such views,
 such as copying arrays (``c_arr.copy()``), creating ufunc output arrays
 (see also :ref:`array-wrap`), and reducing methods (like
-``c_arr.mean()``.
+``c_arr.mean()``).
 
 Relationship of view casting and new-from-template
 --------------------------------------------------
