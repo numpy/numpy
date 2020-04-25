@@ -77,7 +77,7 @@ class TestGeneric:
         assert_equal(masked_arr['b']['c']._fill_value.shape, ())
     
     def test_masked_all_with_object(self):
-        # same test above except that the array si not nested
+        # same as above except that the array is not nested
         my_dtype = np.dtype([('b', (object, (1,)))])
         masked_arr = np.ma.masked_all((1,), my_dtype)
 
