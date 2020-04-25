@@ -114,3 +114,14 @@ And in more detail:
   rg.random(out=existing[:2])
   print(existing)
 
+* Optional ``axis`` argument for methods like `~.Generator.choice` and
+  `~.Generator.shuffle` to control which axis an operation is performed
+  over for higher-dimensional arrays.
+
+.. ipython:: python
+
+  a = np.arange(12).reshape((3, 4))
+  a
+  rg.choice(a, axis=1, size=2)
+  rg.shuffle(a, axis=1)        # Shuffle in-place
+  a
