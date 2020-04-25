@@ -100,26 +100,29 @@ stages:
     # now stuck getting the full gcc toolchain instead of
     # just pulling in gfortran
     - script: |
+        set -xe
         # same version of gfortran as the wheel builds
-        brew install gcc49
-        # manually link critical gfortran libraries
-        ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
-        ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
+        curl -L https://github.com/fxcoudert/gfortran-for-macOS/releases/download/4.9.0/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
+        hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
+        sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
+        otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
         # Manually symlink gfortran-4.9 to plain gfortran for f2py.
         # No longer needed after Feb 13 2020 as gfortran is already present
         # and the attempted link errors. Keep this for future reference.
         # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
-      displayName: 'make gfortran available on mac os vm'
+      displayName: 'make libgfortran available on mac os for openblas'
     # use the pre-built openblas binary that most closely
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
     - script: |
+        set -xe
         python -m pip install urllib3
         target=$(python tools/openblas_support.py)
         ls -lR $target
         # manually link to appropriate system paths
-        cp $target/lib/* /usr/local/lib/
+        cp $target/lib/lib* /usr/local/lib/
         cp $target/include/* /usr/local/include/
+        otool -L /usr/local/lib/libopenblas*
       displayName: 'install pre-built openblas'
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python -m pip install --upgrade pip setuptools wheel
