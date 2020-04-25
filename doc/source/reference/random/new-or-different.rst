@@ -69,18 +69,18 @@ And in more detail:
   from  numpy.random import Generator, PCG64
   import numpy.random
   rg = Generator(PCG64())
-  %timeit rg.standard_normal(100000)
-  %timeit numpy.random.standard_normal(100000)
+  %timeit -n 1 rg.standard_normal(100000)
+  %timeit -n 1 numpy.random.standard_normal(100000)
 
 .. ipython:: python
 
-  %timeit rg.standard_exponential(100000)
-  %timeit numpy.random.standard_exponential(100000)
+  %timeit -n 1 rg.standard_exponential(100000)
+  %timeit -n 1 numpy.random.standard_exponential(100000)
 
 .. ipython:: python
 
-  %timeit rg.standard_gamma(3.0, 100000)
-  %timeit numpy.random.standard_gamma(3.0, 100000)
+  %timeit -n 1 rg.standard_gamma(3.0, 100000)
+  %timeit -n 1 numpy.random.standard_gamma(3.0, 100000)
 
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
   to produce either single or double prevision uniform random variables for
