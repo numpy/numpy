@@ -110,8 +110,6 @@ created above for ``BUILD_COMMIT``, see an _example::
     $ git commit -a
     $ git push upstream HEAD
 
-Push and, if you are on a fork of the repo, merge the branch.
-
 Now wait. If you get nervous at the amount of time taken -- the builds can take
 a while -- you can check the build progress by following the links
 provided at `<https://github.com/MacPython/numpy-wheels>`_ to check the 
