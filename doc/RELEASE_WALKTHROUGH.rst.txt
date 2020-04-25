@@ -117,13 +117,11 @@ build status. Check if all the needed wheels have been built and
 uploaded before proceeding. There should currently be 21 of them at
 `<https://anaconda.org/multibuild-wheels-staging/numpy/files>`_, 3 for Mac, 6
 for Windows, and 12 for Linux.
-Note that sometimes builds, like tests, fail for unrelated reasons and you will
-need to restart them.
 
 .. example_: https://github.com/MacPython/numpy-wheels/pull/80/commits/cbf4af4
 
-Note that sometimes builds, like tests, fail for
-unrelated reasons and you will need to restart them.
+Note that sometimes builds, like tests, fail for unrelated reasons and
+you will need to restart them.
 
 Download wheels
 ---------------
