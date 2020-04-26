@@ -2459,9 +2459,10 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             ellipsis = 1;
         }
         else {
-            long s = PyLong_AsLong(item);
+            item = PyNumber_Index(item);
             /* Subscript */
-            if(!PyErr_Occurred()) {
+            if(item != NULL) {
+                long s = PyLong_AsLong(item);
                 npy_bool bad_input = 0;
 
                 if (subindex + 1 >= subsize) {
