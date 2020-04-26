@@ -2459,10 +2459,9 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             ellipsis = 1;
         }
         else {
-            item = PyNumber_Index(item);
-            /* Subscript */
-            if(item != NULL) {
-                long s = PyLong_AsLong(item);
+            npy_intp s = PyArray_PyIntAsIntp(item);
+            if (!PyErr_Occurred()) {
+                /* Subscript */
                 npy_bool bad_input = 0;
 
                 if (subindex + 1 >= subsize) {
@@ -2492,15 +2491,16 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                     return -1;
                 }
             }
-            /* Invalid */
             else {
+                /* Invalid */
                 PyErr_SetString(PyExc_ValueError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
                 Py_DECREF(obj);
                 return -1;
             }
-        }        
+        }
+        
     }
 
     Py_DECREF(obj);
