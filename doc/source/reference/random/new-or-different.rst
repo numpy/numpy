@@ -52,17 +52,7 @@ And in more detail:
   methods which are 2-10 times faster than NumPy's default implementation in
   `~.Generator.standard_normal`, `~.Generator.standard_exponential` or
   `~.Generator.standard_gamma`.
-* `~.Generator.integers` is now the canonical way to generate integer
-  random numbers from a discrete uniform distribution. The ``rand`` and
-  ``randn`` methods are only available through the legacy `~.RandomState`.
-  This replaces both ``randint`` and the deprecated ``random_integers``.
-* The Box-Muller method used to produce NumPy's normals is no longer available.
-* All bit generators can produce doubles, uint64s and
-  uint32s via CTypes (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).
-  This allows these bit generators to be used in numba.
-* The bit generators can be used in downstream projects via
-  Cython.
-
+   
 
 .. ipython:: python
 
@@ -82,6 +72,17 @@ And in more detail:
   %timeit -n 1 rg.standard_gamma(3.0, 100000)
   %timeit -n 1 numpy.random.standard_gamma(3.0, 100000)
 
+
+* `~.Generator.integers` is now the canonical way to generate integer
+  random numbers from a discrete uniform distribution. The ``rand`` and
+  ``randn`` methods are only available through the legacy `~.RandomState`.
+  This replaces both ``randint`` and the deprecated ``random_integers``.
+* The Box-Muller method used to produce NumPy's normals is no longer available.
+* All bit generators can produce doubles, uint64s and
+  uint32s via CTypes (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).
+  This allows these bit generators to be used in numba.
+* The bit generators can be used in downstream projects via
+  Cython.
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
   to produce either single or double prevision uniform random variables for
   select distributions
