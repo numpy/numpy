@@ -6,6 +6,8 @@
 #include <intrin.h>
 #endif
 
+#include <assert.h>
+
 /* Inline generators for internal use */
 static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint32(bitgen_state->state);
@@ -1149,6 +1151,8 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
    */
   const uint64_t rng_excl = rng + 1;
 
+  assert(rng != 0xFFFFFFFFFFFFFFFFULL);
+
 #if __SIZEOF_INT128__
   /* 128-bit uint available (e.g. GCC/clang). `m` is the __uint128_t scaled
    * integer. */
@@ -1239,6 +1243,8 @@ static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
   uint64_t m;
   uint32_t leftover;
 
+  assert(rng != 0xFFFFFFFFUL);
+
   /* Generate a scaled random number. */
   m = ((uint64_t)next_uint32(bitgen_state)) * rng_excl;
 
@@ -1272,6 +1278,8 @@ static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
 
   uint32_t m;
   uint16_t leftover;
+
+  assert(rng != 0xFFFFU);
 
   /* Generate a scaled random number. */
   m = ((uint32_t)buffered_uint16(bitgen_state, bcnt, buf)) * rng_excl;
@@ -1307,6 +1315,9 @@ static NPY_INLINE uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
 
   uint16_t m;
   uint8_t leftover;
+
+  assert(rng != 0xFFU);
+
 
   /* Generate a scaled random number. */
   m = ((uint16_t)buffered_uint8(bitgen_state, bcnt, buf)) * rng_excl;
