@@ -1835,6 +1835,18 @@ add_newdoc('numpy.core.umath', 'left_shift',
     >>> np.left_shift(5, [1,2,3])
     array([10, 20, 40])
 
+    Note: As explained in :ref:`Casting Rules <ufuncs.casting>`, if a ufunc
+    does not have a core loop implementation for the input types provided,
+    it will cast one or more inputs to a different type.  This may lead to
+    an unexpected result in some cases.
+
+    >>> np.left_shift(np.array([255], dtype='u1'), np.array([1], dtype='u1'))
+    array([254], dtype=uint8)
+    >>> np.left_shift(np.array([255], dtype='u1'), np.array([1], dtype='i1'))
+    array([510], dtype=int16)
+    >>> np.left_shift(np.uint8(255), 1)
+    510
+
     """)
 
 add_newdoc('numpy.core.umath', 'less',
