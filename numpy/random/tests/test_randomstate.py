@@ -350,6 +350,8 @@ class TestRandint:
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
+    @pytest.mark.skipif(np.iinfo('l').max < 2**32,
+                        reason='Cannot test with 32-bit C long')
     def test_repeatability_32bit_boundary_broadcasting(self):
         desired = np.array([[[3992670689, 2438360420, 2557845020],
                              [4107320065, 4142558326, 3216529513],
