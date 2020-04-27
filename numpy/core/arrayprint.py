@@ -714,22 +714,21 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
     if len(words) == 1 or legacy == '1.13':
         return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
 
-    line_length = len(line)
     max_word_length = max(len(word) for word in words)
-    if line_length + max_word_length > line_width and \
-            len(line) > len(next_line_prefix):
+    if (len(line) + max_word_length > line_width and
+            len(line) > len(next_line_prefix)):
         s += line.rstrip() + '\n'
         line = next_line_prefix + words[0]
         indent = next_line_prefix
     else:
+        indent = len(line)*' '
         line += words[0]
-        indent = line_length*' '
 
     for word in words[1::]:
         s += line.rstrip() + '\n'
         line = indent + word
 
-    suffix_length = max_word_length-len(words[-1])
+    suffix_length = max_word_length - len(words[-1])
     line += suffix_length*' '
 
     return s, line
