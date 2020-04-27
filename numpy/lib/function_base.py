@@ -764,8 +764,11 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
-    Note that ``np.copy`` is a shallow copy and will not
-    copy object elements within arrays:
+    Note that np.copy is a shallow copy and will not copy object
+    elements within arrays. This is mainly important for arrays
+    containing python objects. The new array will contain the
+    same object which may lead to surprises if that object can
+    be modified (is mutable):
 
     >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
     >>> b = np.copy(a)
