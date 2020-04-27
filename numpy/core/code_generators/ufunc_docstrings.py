@@ -1835,9 +1835,9 @@ add_newdoc('numpy.core.umath', 'left_shift',
     >>> np.left_shift(5, [1,2,3])
     array([10, 20, 40])
 
-    Note: The dtype of the second argument may change the dtype of the first
-    argument (see :ref:`Casting Rules <ufuncs.casting>`) and lead to unexpected
-    results in some cases.
+    Note that the dtype of the second argument may change the dtype of the
+    result and can lead to unexpected results in some cases (see
+    :ref:`Casting Rules <ufuncs.casting>`):
 
     >>> np.left_shift(np.array([255], dtype='u1'), np.array([1], dtype='u1'))
     array([254], dtype=uint8)
