@@ -214,9 +214,19 @@ Another frequently asked question is "How do I debug C code inside NumPy?".
 The easiest way to do this is to first write a Python script that invokes the C
 code whose execution you want to debug. For instance ``mytest.py``::
 
-    from numpy import linspace
+    import numpy as np
     x = np.arange(5)
     np.empty_like(x)
+
+The next thing to do is to obtain the correct version of for gdb(often the default
+on Linux), which owns the embedded Python interpreter version higher than 3.6.
+To see which version of Python is embedded inside your gdb, do the following::
+
+    (gdb) python
+    >import sys
+    >print(sys.version_info)
+    >end
+    sys.version_info(major=3, minor=7, micro=0, releaselevel='final', serial=0)
 
 Now, you can run::
 
@@ -228,10 +238,14 @@ And then in the debugger::
     (gdb) run
 
 The execution will now stop at the corresponding C function and you can step
-through it as usual.  With the Python extensions for gdb installed (often the
-default on Linux), a number of useful Python-specific commands are available.
+through it as usual. A number of useful Python-specific commands are available.
 For example to see where in the Python code you are, use ``py-list``.  For more
-details, see `DebuggingWithGdb`_.
+details, see `DebuggingWithGdb`_. Here lists the most commonly used commands::
+
+    list- List specified function or line
+    next- Step program, proceeding through subroutine calls
+    step- Continue program being debugged, after signal or breakpoint
+    print- Print value of expression EXP
 
 Instead of plain ``gdb`` you can of course use your favourite
 alternative debugger; run it on the python binary with arguments
