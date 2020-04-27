@@ -1839,12 +1839,10 @@ add_newdoc('numpy.core.umath', 'left_shift',
     result and can lead to unexpected results in some cases (see
     :ref:`Casting Rules <ufuncs.casting>`):
 
-    >>> np.left_shift(np.array([255], dtype='u1'), np.array([1], dtype='u1'))
-    array([254], dtype=uint8)
-    >>> np.left_shift(np.array([255], dtype='u1'), np.array([1], dtype='i1'))
-    array([510], dtype=int16)
-    >>> np.left_shift(np.uint8(255), 1)
-    510
+    >>> a = np.left_shift(np.uint8(255), np.uint8(1)); print(a, type(a))
+    254 <class 'numpy.uint8'> # as expected
+    >>> b = np.left_shift(np.uint8(255), 1); print(b, type(b))
+    510 <class 'numpy.int64'> # unexpected
 
     """)
 
