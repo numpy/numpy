@@ -4125,6 +4125,7 @@ cdef class Generator:
 
         cdef np.npy_intp k, totsize, i, j
         cdef np.ndarray alpha_arr, val_arr, alpha_csum_arr
+        cdef double csum
         cdef double *alpha_data
         cdef double *alpha_csum_data
         cdef double *val_data
