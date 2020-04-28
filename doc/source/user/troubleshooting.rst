@@ -19,16 +19,16 @@ see the following error message::
     Importing the numpy c-extensions failed. This error can happen for
     different reasons, often due to issues with your setup.
 
-The error has a few additional information to help you trouble shoot:
+The error also has additional information to help you troubleshoot:
 
 * Your Python version
 * Your NumPy version
 
 Please check both of these carefully to see if they are what you expect.
 You may need to check your ``PATH`` or ``PYTHONPATH`` environment variables
-(see "Check Environment Variables" below).
+(see `Check Environment Variables`_ below).
 
-The following sections list commonly reported issues depending on your Setup.
+The following sections list commonly reported issues depending on your setup.
 If you have an issue/solution that you think should appear please open a
 NumPy issue so that it will be added.
 
@@ -71,10 +71,10 @@ The solution will be to either::
 
     sudo apt-get install libatlas-base-dev
 
-to install the missing libraries expected by the self compiled NumPy
+to install the missing libraries expected by the self-compiled NumPy
 (ATLAS is a possible provider of linear algebra).
 
-*Alternatively* use the NumPy provided by raspian. In which case run::
+*Alternatively* use the NumPy provided by Raspbian. In which case run::
 
     pip3 uninstall numpy  # remove previously installed version
     apt install python3-numpy
@@ -123,4 +123,3 @@ following in python::
 
 This may mainly help you if you are not running the python and/or NumPy
 version you are expecting to run.
-
