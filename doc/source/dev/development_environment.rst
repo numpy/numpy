@@ -218,7 +218,7 @@ code whose execution you want to debug. For instance ``mytest.py``::
     x = np.arange(5)
     np.empty_like(x)
 
-The next thing to do is to obtain the correct version of for gdb(often the default
+The next thing to do is to obtain the correct version of for gdb (often the default
 on Linux), which owns the embedded Python interpreter version higher than 3.6.
 To see which version of Python is embedded inside your gdb, do the following::
 
