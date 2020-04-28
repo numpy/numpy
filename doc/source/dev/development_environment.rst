@@ -240,7 +240,7 @@ And then in the debugger::
 The execution will now stop at the corresponding C function and you can step
 through it as usual. A number of useful Python-specific commands are available.
 For example to see where in the Python code you are, use ``py-list``.  For more
-details, see `DebuggingWithGdb`_. Here lists the most commonly used commands::
+details, see `DebuggingWithGdb`_. Here are some commonly used commands::
 
     list- List specified function or line
     next- Step program, proceeding through subroutine calls
