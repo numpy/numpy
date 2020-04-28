@@ -32,7 +32,7 @@ installed.
 
 We have compiled some common reasons and troubleshooting tips at:
 
-    https://numpy.org/devdocs/user/troubleshooting.html
+    https://numpy.org/devdocs/user/troubleshooting-importerror.html
 
 Please note and check the following:
 

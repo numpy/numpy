@@ -1,11 +1,11 @@
-***************
-Troubleshooting
-***************
+***************************
+Troubleshooting ImportError
+***************************
 
 .. note::
 
-    Since this information may be updated regularly, please refer to the
-    most up to date version in the development version of the documentation.
+    Since this information may be updated regularly, please ensure you are
+    viewing the most `up-to-date version <https://numpy.org/devdocs/user/troubleshooting-importerror.html>`_.
 
 
 ImportError
