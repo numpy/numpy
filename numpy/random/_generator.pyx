@@ -4183,10 +4183,17 @@ cdef class Generator:
         if (k > 0) and (alpha_arr.max() < 0.1):
             # Small alpha case: Use stick-breaking approach with beta
             # random variates (RVs).
-            alpha_csum = np.cumsum(alpha[::-1])[::-1]
-            alpha_csum_arr = <np.ndarray>np.PyArray_FROM_OTF(alpha_csum,
-                np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            # alpha_csum_data will hold the cumulative sum, right to
+            # left, of alpha_arr.
+            # Use a numpy array for memory management only.  We could just as
+            # well have malloc'd alpha_csum_data.  alpha_arr is a C-contiguous
+            # double array, therefore so is alpha_csum_arr.
+            alpha_csum_arr = np.empty_like(alpha_arr)
             alpha_csum_data = <double*>np.PyArray_DATA(alpha_csum_arr)
+            csum = 0.0
+            for j in range(k - 1, -1, -1):
+                csum += alpha_data[j]
+                alpha_csum_data[j] = csum
 
             with self.lock, nogil:
                 while i < totsize:
