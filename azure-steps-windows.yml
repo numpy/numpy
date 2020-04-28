@@ -9,13 +9,17 @@ steps:
 - script: python -m pip install -r test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 - powershell: |
-    $pyversion = python -c "import sys; print(sys.version.split()[0])"
-    Write-Host "Python Version: $pyversion"
-    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas$env:OPENBLAS_SUFFIX.a"
-    Write-Host "target path: $target"
-    python -mpip install urllib3
-    $openblas = python tools/openblas_support.py
-    cp $openblas $target
+    $ErrorActionPreference = "Stop"
+    # Download and get the path to "openblas.a". We cannot copy it
+    # to $PYTHON_EXE's directory since that is on a different drive which
+    # mingw does not like. Instead copy it to a directory and set OPENBLAS,
+    # since OPENBLAS will be picked up by the openblas discovery
+    python -m pip  install urllib3
+    $target = $(python tools/openblas_support.py)
+    mkdir openblas
+    echo Copying $target to openblas
+    cp $target openblas
+    echo "##vso[task.setvariable variable=OPENBLAS]$pwd\openblas"
   displayName: 'Download / Install OpenBLAS'
 
 - powershell: |
