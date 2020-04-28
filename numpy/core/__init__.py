@@ -40,7 +40,7 @@ Please note and check the following:
   * The NumPy version is: "%s"
 
 and make sure that they are the versions you expect.
-Please carefully study the above linked wiki page for further help.
+Please carefully study the documentation linked above for further help.
 
 Original error was: %s
 """ % (sys.version_info[0], sys.version_info[1], sys.executable,
