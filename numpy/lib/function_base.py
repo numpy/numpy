@@ -766,7 +766,7 @@ def copy(a, order='K', subok=False):
 
     Note that np.copy is a shallow copy and will not copy object
     elements within arrays. This is mainly important for arrays
-    containing python objects. The new array will contain the
+    containing Python objects. The new array will contain the
     same object which may lead to surprises if that object can
     be modified (is mutable):
 
