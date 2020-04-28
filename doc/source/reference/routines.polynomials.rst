@@ -9,8 +9,9 @@ of the `numpy.polynomial` package, introduced in NumPy 1.4.
 
 Prior to NumPy 1.4, `numpy.poly1d` was the class of choice and it is still
 available in order to maintain backward compatibility.
-However, the newer Polynomial package is more complete than `numpy.poly1d`
-and its convenience classes are better behaved in the numpy environment.
+However, the newer `polynomial package <numpy.polynomial>` is more complete
+than `numpy.poly1d` and its convenience classes are better behaved in the
+numpy environment.
 Therefore :mod:`numpy.polynomial` is recommended for new coding.
 
 Transition notice
