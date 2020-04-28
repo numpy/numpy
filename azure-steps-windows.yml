@@ -44,7 +44,7 @@ steps:
   displayName: 'Build NumPy'
 - bash: |
     pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
-    pip download -d destination --only-binary --no-deps numpy==1.14
+    pip download -d destination --only-binary :all: --no-deps numpy==1.14
     cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
     ls $target
   displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
