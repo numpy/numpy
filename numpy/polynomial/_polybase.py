@@ -15,7 +15,16 @@ from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
 
-class ABCPolyBase(abc.ABC):
+class ABCPolyBaseProperties(abc.ABC, type):
+    @property
+    def domain(cls):
+        return cls._domain
+
+    @property
+    def window(cls):
+        return cls._window
+
+class ABCPolyBase(metaclass=ABCPolyBaseProperties):
     """An abstract base class for immutable series classes.
 
     ABCPolyBase provides the standard Python numerical methods
@@ -114,12 +123,22 @@ class ABCPolyBase(abc.ABC):
     @property
     @abc.abstractmethod
     def domain(self):
-        pass
+        return self._domain
+
+    @domain.setter
+    @abc.abstractmethod
+    def domain(self, domain):
+        self._domain = domain
 
     @property
     @abc.abstractmethod
     def window(self):
-        pass
+        return self._window
+
+    @window.setter
+    @abc.abstractmethod
+    def window(self, window):
+        self._window = window
 
     @property
     @abc.abstractmethod
@@ -309,13 +328,13 @@ class ABCPolyBase(abc.ABC):
             [domain] = pu.as_series([domain], trim=False)
             if len(domain) != 2:
                 raise ValueError("Domain has wrong number of elements.")
-            self.domain = domain
+            self._domain = domain
 
         if window is not None:
             [window] = pu.as_series([window], trim=False)
             if len(window) != 2:
                 raise ValueError("Window has wrong number of elements.")
-            self.window = window
+            self._window = window
 
         # Validation for symbol
         try:

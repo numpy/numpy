@@ -1653,6 +1653,6 @@ class Legendre(ABCPolyBase):
     _fromroots = staticmethod(legfromroots)
 
     # Virtual properties
-    domain = np.array(legdomain)
-    window = np.array(legdomain)
+    _domain = np.array(legdomain)
+    _window = np.array(legdomain)
     basis_name = 'P'

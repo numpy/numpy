@@ -2070,6 +2070,6 @@ class Chebyshev(ABCPolyBase):
         return cls(coef, domain=domain)
 
     # Virtual properties
-    domain = np.array(chebdomain)
-    window = np.array(chebdomain)
+    _domain = np.array(chebdomain)
+    _window = np.array(chebdomain)
     basis_name = 'T'

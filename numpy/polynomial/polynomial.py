@@ -1506,8 +1506,8 @@ class Polynomial(ABCPolyBase):
     _fromroots = staticmethod(polyfromroots)
 
     # Virtual properties
-    domain = np.array(polydomain)
-    window = np.array(polydomain)
+    _domain = np.array(polydomain)
+    _window = np.array(polydomain)
     basis_name = None
 
     @classmethod

@@ -1692,6 +1692,6 @@ class Hermite(ABCPolyBase):
     _fromroots = staticmethod(hermfromroots)
 
     # Virtual properties
-    domain = np.array(hermdomain)
-    window = np.array(hermdomain)
+    _domain = np.array(hermdomain)
+    _window = np.array(hermdomain)
     basis_name = 'H'
