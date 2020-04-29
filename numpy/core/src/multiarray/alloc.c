@@ -50,6 +50,13 @@ static cache_bucket dimcache[NBUCKETS_DIM];
 static int _madvise_hugepage = 1;
 
 
+/*
+ * This function enables or disables the use of `MADV_HUGEPAGE` on Linux
+ * by modifying the global static `_madvise_hugepage`.
+ * It returns the previous value of `_madvise_hugepage`.
+ *
+ * It is exposed to Python as `np.core.multiarray._set_madvise_hugepage`.
+ */
 NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 {

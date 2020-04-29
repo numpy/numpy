@@ -3972,7 +3972,6 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return PyInt_FromLong(axis);
 }
 
-
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4162,7 +4161,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
-        METH_O, "Toggle and return madvise hugepage (no OS support check)."},
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

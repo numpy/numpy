@@ -4391,6 +4391,14 @@ add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     and then throwing away the ufunc.
     """)
 
+add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
+    """
+    _set_madvise_hugepage(enabled: bool) -> bool
+
+    Set  or unset use of ``madvise (2)`` MADV_HUGEPAGE support when
+    allocating the array data. Returns the previously set value.
+    See `global_state` for more information.
+    """)
 
 add_newdoc('numpy.core._multiarray_tests', 'format_float_OSprintf_g',
     """

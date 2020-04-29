@@ -306,4 +306,4 @@ else:
         use_hugepage = int(use_hugepage)
 
     # Note that this will currently only make a difference on Linux
-    core.multiarray._multiarray_umath._set_madvise_hugepage(use_hugepage)
+    core.multiarray._set_madvise_hugepage(use_hugepage)
