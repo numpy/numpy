@@ -621,6 +621,8 @@ class TestLogAddExp2(_FilterInvalids):
     def test_reduce(self):
         assert_equal(np.logaddexp2.identity, -np.inf)
         assert_equal(np.logaddexp2.reduce([]), -np.inf)
+        assert_equal(np.logaddexp2.reduce([-np.inf]), -np.inf)
+        assert_equal(np.logaddexp2.reduce([-np.inf, 0]), 0)
 
 
 class TestLog:
