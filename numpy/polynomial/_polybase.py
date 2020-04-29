@@ -15,7 +15,7 @@ from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
 
-class ABCPolyBaseProperties(abc.ABC, type):
+class ABCPolyBaseMeta(abc.ABC, type):
     @property
     def domain(cls):
         return cls._domain
@@ -24,7 +24,7 @@ class ABCPolyBaseProperties(abc.ABC, type):
     def window(cls):
         return cls._window
 
-class ABCPolyBase(metaclass=ABCPolyBaseProperties):
+class ABCPolyBase(metaclass=ABCPolyBaseMeta):
     """An abstract base class for immutable series classes.
 
     ABCPolyBase provides the standard Python numerical methods
