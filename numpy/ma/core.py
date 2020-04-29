@@ -284,7 +284,10 @@ def _extremum_fill_value(obj, extremum, extremum_name):
 
     def _scalar_fill_value(dtype):
         try:
-            return extremum[dtype]
+            extremum_value = extremum[dtype]
+            if extremum_value is None:
+                raise KeyError()
+            return extremum_value
         except KeyError:
             raise TypeError(f"Unsuitable type {dtype} for calculating {extremum_name}.")
 
@@ -5688,12 +5691,17 @@ class MaskedArray(ndarray):
 
         _mask = self._mask
         newmask = _check_mask_axis(_mask, axis, **kwargs)
-        if fill_value is None:
-            fill_value = minimum_fill_value(self)
+        if is_masked(self):
+            values = self.data[~_mask]
+            if values.size == 0:
+                return masked
+        else:
+            values = self.data
+        max_val = values.max()
         # No explicit output
         if out is None:
-            result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
+            result = self.data.min(axis=axis, out=out, initial=max_val,
+                              where=~_mask, **kwargs).view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -5704,7 +5712,8 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(fill_value).min(axis=axis, out=out, **kwargs)
+        result = self.data.min(axis=axis, out=out, initial=max_val,
+                               where=~_mask, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:

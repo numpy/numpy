@@ -2150,6 +2150,15 @@ class TestFillingValues:
         assert_equal(test.dtype, a.dtype)
         assert_equal(test[0], np.full(3, maximum_fill_value(a['value'])))
 
+    def test_extremum_fill_value_raises_type_error(self):
+        a = np.void(1)
+
+        with assert_raises(TypeError):
+            minimum_fill_value(a)
+
+        with assert_raises(TypeError):
+            maximum_fill_value(a)
+
     def test_fillvalue_individual_fields(self):
         # Test setting fill_value on individual fields
         ndtype = [('a', int), ('b', int)]
