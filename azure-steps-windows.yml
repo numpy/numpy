@@ -9,13 +9,21 @@ steps:
 - script: python -m pip install -r test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 - powershell: |
-    $pyversion = python -c "import sys; print(sys.version.split()[0])"
-    Write-Host "Python Version: $pyversion"
-    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas$env:OPENBLAS_SUFFIX.a"
-    Write-Host "target path: $target"
-    python -mpip install urllib3
-    $openblas = python tools/openblas_support.py
-    cp $openblas $target
+    $ErrorActionPreference = "Stop"
+    # Download and get the path to "openblas.a". We cannot copy it
+    # to $PYTHON_EXE's directory since that is on a different drive which
+    # mingw does not like. Instead copy it to a directory and set OPENBLAS,
+    # since OPENBLAS will be picked up by the openblas discovery
+    python -m pip  install urllib3
+    $target = $(python tools/openblas_support.py)
+    mkdir openblas
+    echo Copying $target to openblas/openblas$env:OPENBLAS_SUFFIX.a
+    cp $target openblas/openblas$env:OPENBLAS_SUFFIX.a
+    If ( Test-Path env:NPY_USE_BLAS_ILP64 ){
+        echo "##vso[task.setvariable variable=OPENBLAS64_]$pwd\openblas"
+    } else {
+        echo "##vso[task.setvariable variable=OPENBLAS]$pwd\openblas"
+    }
   displayName: 'Download / Install OpenBLAS'
 
 - powershell: |
@@ -32,7 +40,7 @@ steps:
         refreshenv
     }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
-    pip wheel -v -v -v --wheel-dir=dist .
+    pip wheel -v -v -v --no-build-isolation --no-use-pep517 --wheel-dir=dist .
 
     ls dist -r | Foreach-Object {
         pip install $_.FullName
@@ -40,7 +48,7 @@ steps:
   displayName: 'Build NumPy'
 - bash: |
     pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
-    pip download -d destination --only-binary --no-deps numpy==1.14
+    pip download -d destination --only-binary :all: --no-deps numpy==1.14
     cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
     ls $target
   displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
