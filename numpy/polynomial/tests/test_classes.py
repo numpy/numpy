@@ -570,6 +570,39 @@ def test_ufunc_override(Poly):
     assert_raises(TypeError, np.add, x, p)
 
 
+class TestDomainWindowValidation:
+    """
+    Test validation when attempting to set either window or domain
+    parameters.
+    """
+    coefs = [1, 2, 3]
+
+    def test_class_domain_window_readonly(self, Poly):
+        with pytest.raises(AttributeError):
+            Poly.domain = [-1, 1]
+
+    @pytest.mark.parametrize('bad_dw', (
+        [0, 10, 100],   # domain/window must have len==2
+        'foo',          # domain/window must be array-like
+    ))
+    def test_constructor_bad_domain_window(self, Poly, bad_dw):
+        with pytest.raises(ValueError):
+            Poly(self.coefs, window=bad_dw)
+        with pytest.raises(ValueError):
+            Poly(self.coefs, domain=bad_dw)
+
+    @pytest.mark.parametrize('bad_dw', (
+        [0, 10, 100],   # domain/window must have len==2
+        'foo',          # domain/window must be array-like
+    ))
+    def test_setter_bad_domain_window(self, Poly, bad_dw):
+        p = Poly(self.coefs)
+        with pytest.raises(ValueError):
+            p.domain = bad_dw
+        with pytest.raises(ValueError):
+            p.window = bad_dw
+
+
 #
 # Test class method that only exists for some classes
 #
