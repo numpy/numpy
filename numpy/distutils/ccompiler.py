@@ -471,6 +471,12 @@ def CCompiler_customize(self, dist, need_cxx=0):
     platform-specific customization, as well as optionally remove a flag
     to suppress spurious warnings in case C++ code is being compiled.
 
+    It also removes debug info flags that set by sysconfig vars,
+    only if they weren't part of the environment vars CFLAGS and CPPFLAGS,
+    since debugging symbols increasing the binary size of NumPy to
+    over 600%, and it also makes parameter 'debug' that provided by `compile()
+    is useless.
+
     Parameters
     ----------
     dist : object
@@ -496,6 +502,19 @@ def CCompiler_customize(self, dist, need_cxx=0):
     # See FCompiler.customize for suggested usage.
     log.info('customize %s' % (self.__class__.__name__))
     customize_compiler(self)
+
+    env_flags = os.environ.get('CFLAGS', '')
+    if need_cxx:
+        env_flags += os.environ.get('CPPFLAGS', '')
+    try:
+        # Debug info flags are always set by the default set of sysconfig vars,
+        # we exclude them if they weren't part of the environment vars CFLAGS and CPPFLAGS.
+        self.compiler_so = list(filter(lambda f: f not in (
+            '-g', '-g1', '-g2', '/debug', '/Zi'
+        ) or f in env_flags, self.compiler_so))
+    except AttributeError:
+        pass
+
     if need_cxx:
         # In general, distutils uses -Wstrict-prototypes, but this option is
         # not valid for C++ code, only for C.  Remove it if it's there to

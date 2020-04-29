@@ -357,7 +357,10 @@ def build_project(args):
                 '-Werror=unused-function',
             ])
             env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
+
+    cmd += ["build"]
     if args.debug or args.gcov:
+        cmd += ["--debug"]
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
         env['FOPT'] = '-O0 -ggdb'
@@ -371,7 +374,6 @@ def build_project(args):
             env['LDSHARED'] = cvars['LDSHARED'] + ' --coverage'
             env['LDFLAGS'] = " ".join(cvars['LDSHARED'].split()[1:]) + ' --coverage'
 
-    cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
     if args.debug_info:
