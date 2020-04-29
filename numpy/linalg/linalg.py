@@ -2613,12 +2613,13 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 # multi_dot
 
-def _multidot_dispatcher(arrays):
-    return arrays
+def _multidot_dispatcher(arrays, *, out=None):
+    yield from arrays
+    yield out
 
 
 @array_function_dispatch(_multidot_dispatcher)
-def multi_dot(arrays):
+def multi_dot(arrays, *, out=None):
     """
     Compute the dot product of two or more arrays in a single function call,
     while automatically selecting the fastest evaluation order.
@@ -2642,6 +2643,15 @@ def multi_dot(arrays):
         If the first argument is 1-D it is treated as row vector.
         If the last argument is 1-D it is treated as column vector.
         The other arguments must be 2-D.
+    out : ndarray, optional
+        Output argument. This must have the exact kind that would be returned
+        if it was not used. In particular, it must have the right type, must be
+        C-contiguous, and its dtype must be the dtype that would be returned
+        for `dot(a, b)`. This is a performance feature. Therefore, if these
+        conditions are not met, an exception is raised, instead of attempting
+        to be flexible.
+
+        .. versionadded:: 1.19.0
 
     Returns
     -------
@@ -2699,7 +2709,7 @@ def multi_dot(arrays):
     if n < 2:
         raise ValueError("Expecting at least two arrays.")
     elif n == 2:
-        return dot(arrays[0], arrays[1])
+        return dot(arrays[0], arrays[1], out=out)
 
     arrays = [asanyarray(a) for a in arrays]
 
@@ -2715,10 +2725,10 @@ def multi_dot(arrays):
 
     # _multi_dot_three is much faster than _multi_dot_matrix_chain_order
     if n == 3:
-        result = _multi_dot_three(arrays[0], arrays[1], arrays[2])
+        result = _multi_dot_three(arrays[0], arrays[1], arrays[2], out=out)
     else:
         order = _multi_dot_matrix_chain_order(arrays)
-        result = _multi_dot(arrays, order, 0, n - 1)
+        result = _multi_dot(arrays, order, 0, n - 1, out=out)
 
     # return proper shape
     if ndim_first == 1 and ndim_last == 1:
@@ -2729,7 +2739,7 @@ def multi_dot(arrays):
         return result
 
 
-def _multi_dot_three(A, B, C):
+def _multi_dot_three(A, B, C, out=None):
     """
     Find the best order for three arrays and do the multiplication.
 
@@ -2745,9 +2755,9 @@ def _multi_dot_three(A, B, C):
     cost2 = a1b0 * c1 * (a0 + b1c0)
 
     if cost1 < cost2:
-        return dot(dot(A, B), C)
+        return dot(dot(A, B), C, out=out)
     else:
-        return dot(A, dot(B, C))
+        return dot(A, dot(B, C), out=out)
 
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
@@ -2791,10 +2801,14 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     return (s, m) if return_costs else s
 
 
-def _multi_dot(arrays, order, i, j):
+def _multi_dot(arrays, order, i, j, out=None):
     """Actually do the multiplication with the given order."""
     if i == j:
+        # the initial call with non-None out should never get here
+        assert out is None
+
         return arrays[i]
     else:
         return dot(_multi_dot(arrays, order, i, order[i, j]),
-                   _multi_dot(arrays, order, order[i, j] + 1, j))
+                   _multi_dot(arrays, order, order[i, j] + 1, j),
+                   out=out)
