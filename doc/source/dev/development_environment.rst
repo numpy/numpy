@@ -221,7 +221,7 @@ To see which version of Python is embedded inside your gdb, do the following::
     >end
     sys.version_info(major=3, minor=7, micro=0, releaselevel='final', serial=0)
 
-then you need to write a Python script that invokes the C code whose execution
+Next you need to write a Python script that invokes the C code whose execution
 you want to debug. For instance ``mytest.py``::
 
     import numpy as np
