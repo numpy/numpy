@@ -242,10 +242,10 @@ through it as usual. A number of useful Python-specific commands are available.
 For example to see where in the Python code you are, use ``py-list``.  For more
 details, see `DebuggingWithGdb`_. Here are some commonly used commands:
 
-   - *list*: List specified function or line.
-   - *next*: Step program, proceeding through subroutine calls.
-   - *step*: Continue program being debugged, after signal or breakpoint.
-   - *print*: Print value of expression EXP.
+   - ``list``: List specified function or line.
+   - ``next``: Step program, proceeding through subroutine calls.
+   - ``step``: Continue program being debugged, after signal or breakpoint.
+   - ``print``: Print value of expression EXP.
 
 Instead of plain ``gdb`` you can of course use your favourite
 alternative debugger; run it on the python binary with arguments
