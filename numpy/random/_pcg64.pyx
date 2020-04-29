@@ -38,7 +38,7 @@ cdef double pcg64_double(void* st) nogil:
 
 cdef class PCG64(BitGenerator):
     """
-    PCG64(seed_seq=None)
+    PCG64(seed=None)
 
     BitGenerator for the PCG-64 pseudo-random number generator.
 
