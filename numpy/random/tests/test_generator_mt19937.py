@@ -1103,6 +1103,31 @@ class TestRandomDist:
                                   size=(3, 2))
         assert_array_almost_equal(non_contig, contig)
 
+    def test_dirichlet_small_alpha(self):
+        eps = 1.0e-9  # 1.0e-10 -> runtime x 10; 1e-11 -> runtime x 200, etc.
+        alpha = eps * np.array([1., 1.0e-3])
+        random = Generator(MT19937(self.seed))
+        actual = random.dirichlet(alpha, size=(3, 2))
+        expected = np.array([
+            [[1., 0.],
+             [1., 0.]],
+            [[1., 0.],
+             [1., 0.]],
+            [[1., 0.],
+             [1., 0.]]
+        ])
+        assert_array_almost_equal(actual, expected, decimal=15)
+
+    @pytest.mark.slow
+    def test_dirichlet_moderately_small_alpha(self):
+        # Use alpha.max() < 0.1 to trigger stick breaking code path
+        alpha = np.array([0.02, 0.04, 0.03])
+        exact_mean = alpha / alpha.sum()
+        random = Generator(MT19937(self.seed))
+        sample = random.dirichlet(alpha, size=20000000)
+        sample_mean = sample.mean(axis=0)
+        assert_allclose(sample_mean, exact_mean, rtol=1e-3)
+
     def test_exponential(self):
         random = Generator(MT19937(self.seed))
         actual = random.exponential(1.1234, size=(3, 2))
