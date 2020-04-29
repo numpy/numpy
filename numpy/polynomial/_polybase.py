@@ -128,6 +128,9 @@ class ABCPolyBase(metaclass=ABCPolyBaseProperties):
     @domain.setter
     @abc.abstractmethod
     def domain(self, domain):
+        [domain] = pu.as_series([domain], trim=False)
+        if len(domain) != 2:
+            raise ValueError("Domain has wrong number of elements.")
         self._domain = domain
 
     @property
@@ -138,6 +141,9 @@ class ABCPolyBase(metaclass=ABCPolyBaseProperties):
     @window.setter
     @abc.abstractmethod
     def window(self, window):
+        [window] = pu.as_series([window], trim=False)
+        if len(window) != 2:
+            raise ValueError("Window has wrong number of elements.")
         self._window = window
 
     @property
@@ -325,16 +331,10 @@ class ABCPolyBase(metaclass=ABCPolyBaseProperties):
         self.coef = coef
 
         if domain is not None:
-            [domain] = pu.as_series([domain], trim=False)
-            if len(domain) != 2:
-                raise ValueError("Domain has wrong number of elements.")
-            self._domain = domain
+            self.domain = domain
 
         if window is not None:
-            [window] = pu.as_series([window], trim=False)
-            if len(window) != 2:
-                raise ValueError("Window has wrong number of elements.")
-            self._window = window
+            self.window = window
 
         # Validation for symbol
         try:
