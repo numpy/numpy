@@ -16,7 +16,7 @@ help you decide which kind of content you'll write, as well as give you some
 tips and instructions for submitting it to the official NumPy documentation
 (that is, the documentation that ships with NumPy and lives on the
 :ref:`official project pages <numpy_docs_mainpage>`). Keep in mind that if you
-don't want to do this, writing a tutorial on your own blog, creating a youtube
+don't want to do this, writing a tutorial on your own blog, creating a YouTube
 video or answering questions on social media or Stack Overflow are also great
 contributions!
 
@@ -60,6 +60,10 @@ If you are writing a tutorial or how-to, we encourage you to use real images and
 data (provided they are appropriately licensed and available). This makes the
 material more engaging for readers, and choosing the right data can add
 pedagogical value to your content.
+
+*Note: currently we cannot easily use data in other packages (except, e.g., from
+SciPy or Matplotlib). We plan to create a dedicated datasets package, but that's
+not ready yet - please discuss with us if you have data sources in mind.*
 
 Creating new content
 --------------------
