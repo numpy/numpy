@@ -167,8 +167,8 @@ class TestRegression:
         try:
             try:
                 np.who({'foo': np.array(1)})
-            except Exception:
-                raise AssertionError("ticket #1243")
+            except Exception as e:
+                raise AssertionError("ticket #1243") from e
         finally:
             sys.stdout.close()
             sys.stdout = oldstdout
