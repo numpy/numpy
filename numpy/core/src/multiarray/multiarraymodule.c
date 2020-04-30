@@ -2460,8 +2460,8 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
         }
         else {
             npy_intp s = PyArray_PyIntAsIntp(item);
+            /* Subscript */
             if (!PyErr_Occurred()) {
-                /* Subscript */
                 npy_bool bad_input = 0;
 
                 if (subindex + 1 >= subsize) {
@@ -2490,10 +2490,10 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                     Py_DECREF(obj);
                     return -1;
                 }
-            }
+            }                
+            /* Invalid */
             else {
-                /* Invalid */
-                PyErr_SetString(PyExc_ValueError,
+                PyErr_SetString(PyExc_TypeError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
                 Py_DECREF(obj);

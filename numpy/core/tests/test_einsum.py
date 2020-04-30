@@ -93,6 +93,10 @@ class TestEinsum:
                 a = np.ones((3, 3, 4, 5, 6))
                 b = np.ones((3, 4, 5))
                 np.einsum('aabcb,abc', a, b)
+            
+            #do not accept bools in subscript list
+            assert_raises(TypeError, np.einsum, np.arange(6).reshape(2, 3), 
+                          [False, True], [True, False], optimize=do_opt)
 
     def test_einsum_views(self):
         # pass-through
@@ -272,6 +276,13 @@ class TestEinsum:
             assert_equal(np.einsum("ii", a, optimize=do_opt),
                          np.trace(a).astype(dtype))
             assert_equal(np.einsum(a, [0, 0], optimize=do_opt),
+                         np.trace(a).astype(dtype))
+
+            #ticket #15961: should accept numpy int64 type in subscript list
+            np_array = np.asarray([0, 0])
+            assert_equal(np.einsum(a, np_array, optimize=do_opt),
+                         np.trace(a).astype(dtype))
+            assert_equal(np.einsum(a, list(np_array), optimize=do_opt),
                          np.trace(a).astype(dtype))
 
         # multiply(a, b)

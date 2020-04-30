@@ -3,6 +3,7 @@ Implementation of optimized einsum.
 
 """
 import itertools
+import operator
 
 from numpy.core.multiarray import c_einsum
 from numpy.core.numeric import asanyarray, tensordot
@@ -576,7 +577,7 @@ def _parse_einsum_input(operands):
             for s in sub:
                 if s is Ellipsis:
                     subscripts += "..."
-                elif isinstance(s, int):
+                elif isinstance(operator.index(s), int) and not isinstance(s, bool):
                     subscripts += einsum_symbols[s]
                 else:
                     raise TypeError("For this input type lists must contain "
@@ -589,7 +590,7 @@ def _parse_einsum_input(operands):
             for s in output_list:
                 if s is Ellipsis:
                     subscripts += "..."
-                elif isinstance(s, int):
+                elif isinstance(operator.index(s), int) and not isinstance(s, bool):
                     subscripts += einsum_symbols[s]
                 else:
                     raise TypeError("For this input type lists must contain "
