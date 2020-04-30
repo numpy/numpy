@@ -17,7 +17,7 @@ NEP 41 — First step towards a new Datatype System
 
     This NEP is part of a series of NEPs encompassing first information
     about the previous dtype implementation and issues with it in
-    `NEP 40 <NEP40>`_.
+    :ref:`NEP 40 <NEP40>`.
     NEP 41 (this document) then provides an overview and generic design
     choices for the refactor.
     Further NEPs 42 and 43 go into the technical details of the datatype
@@ -29,7 +29,7 @@ NEP 41 — First step towards a new Datatype System
 Abstract
 --------
 
-`Datatypes <data-type-objects-dtype>` in NumPy describe how to interpret each
+:ref:`Datatypes <arrays.dtypes>` in NumPy describe how to interpret each
 element in arrays. NumPy provides ``int``, ``float``, and ``complex`` numerical
 types, as well as string, datetime, and structured datatype capabilities.
 The growing Python community, however, has need for more diverse datatypes.
@@ -61,7 +61,8 @@ Motivation
 
 One of the main issues with the current API is the definition of typical
 functions such as addition and multiplication for parametric datatypes
-(see also `NEP 40 <NEP40>`_) which require additional steps to determine the output type.
+(see also :ref:`NEP 40 <NEP40>`)
+which require additional steps to determine the output type.
 For example when adding two strings of length 4, the result is a string
 of length 8, which is different from the input.
 Similarly, a datatype which embeds a physical unit must calculate the new unit
@@ -144,7 +145,8 @@ in more details in the detailed description section:
    Storage information such as itemsize and byteorder can differ between
    different dtype instances (e.g. "S3" vs. "S8") and will remain part of the instance.
    This means that in the long run the current lowlevel access to dtype methods
-   will be removed (see ``PyArray_ArrFuncs`` in `NEP 40 <NEP40>`_).
+   will be removed (see ``PyArray_ArrFuncs`` in
+   :ref:`NEP 40 <NEP40>`).
 
 2. The current NumPy scalars will *not* change, they will not be instances of
    datatypes. This will also be true for new datatypes, scalars will not be
@@ -225,7 +227,7 @@ Simple Numerical Types
 """"""""""""""""""""""
 
 Mainly used where memory is a consideration, lower-precision numeric types
-such as :ref:```bfloat16`` <https://en.wikipedia.org/wiki/Bfloat16_floating-point_format>`
+such as `bfloat16 <https://en.wikipedia.org/wiki/Bfloat16_floating-point_format>`_
 are common in other computational frameworks.
 For these types the definitions of things such as ``np.common_type`` and
 ``np.can_cast`` are some of the most important interfaces. Once they
@@ -583,7 +585,8 @@ Organizing these methods and information in a more Pythonic way provides a
 solid foundation for refining and extending the API in the future.
 The current API cannot be extended due to how it is exposed publically.
 This means for example that the methods currently stored in ``PyArray_ArrFuncs``
-on each datatype (see `NEP 40 <NEP40>`_) will be defined differently in the future and
+on each datatype (see :ref:`NEP 40 <NEP40>`)
+will be defined differently in the future and
 deprecated in the long run.
 
 The most prominent visible side effect of this will be that
@@ -684,8 +687,9 @@ C-API Changes to the UFunc Machinery (4)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Proposed changes to the UFunc machinery will be part of NEP 43.
-However, the following changes will be necessary (see `NEP 40 <NEP40>`_ for a detailed
-description of the current implementation and its issues):
+However, the following changes will be necessary
+(see :ref:`NEP 40 <NEP40>`
+for a detailed description of the current implementation and its issues):
 
 * The current UFunc type resolution must be adapted to allow better control
   for user-defined dtypes as well as resolve current inconsistencies.
@@ -704,7 +708,8 @@ functions after handling the unit related computations.
 Discussion
 ----------
 
-See `NEP 40 <NEP40>`_ for a list of previous meetings and discussions.
+See :ref:`NEP 40 <NEP40>`
+for a list of previous meetings and discussions.
 
 
 References
