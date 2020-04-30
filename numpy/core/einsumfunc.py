@@ -577,11 +577,13 @@ def _parse_einsum_input(operands):
             for s in sub:
                 if s is Ellipsis:
                     subscripts += "..."
-                elif isinstance(operator.index(s), int) and not isinstance(s, bool):
-                    subscripts += einsum_symbols[s]
                 else:
-                    raise TypeError("For this input type lists must contain "
-                                    "either int or Ellipsis")
+                    try:
+                        s = operator.index(s)
+                    except TypeError as e:
+                        raise TypeError("For this input type lists must contain "
+                                        "either int or Ellipsis")
+                    subscripts += einsum_symbols[s]
             if num != last:
                 subscripts += ","
 
@@ -590,11 +592,13 @@ def _parse_einsum_input(operands):
             for s in output_list:
                 if s is Ellipsis:
                     subscripts += "..."
-                elif isinstance(operator.index(s), int) and not isinstance(s, bool):
-                    subscripts += einsum_symbols[s]
                 else:
-                    raise TypeError("For this input type lists must contain "
-                                    "either int or Ellipsis")
+                    try:
+                        s = operator.index(s)
+                    except TypeError as e:
+                        raise TypeError("For this input type lists must contain "
+                                        "either int or Ellipsis")
+                    subscripts += einsum_symbols[s]
     # Check for proper "->"
     if ("-" in subscripts) or (">" in subscripts):
         invalid = (subscripts.count("-") > 1) or (subscripts.count(">") > 1)
