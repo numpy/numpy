@@ -16,7 +16,8 @@ NEP 40 — Legacy Datatype Implementation in NumPy
     This NEP is part of a series of NEPs encompassing first information
     about the previous dtype implementation and issues with it in NEP 40
     (this document).
-    `NEP 41 <NEP41>`_ then provides an overview and generic design choices for the refactor.
+    :ref:`NEP 41 <NEP41>` then provides an overview and generic design choices
+    for the refactor.
     Further NEPs 42 and 43 go into the technical details of the datatype
     and universal function related internal and external API changes.
     In some cases it may be necessary to consult the other NEPs for a full
@@ -31,7 +32,7 @@ As a preparation to further NumPy enhancement proposals 41, 42, and 43. This
 NEP details the current status of NumPy datatypes as of NumPy 1.18.
 It describes some of the technical aspects and concepts that
 motivated the other proposals.
-For more general information most readers should begin by reading `NEP 41 <NEP41>`_
+For more general information most readers should begin by reading :ref:`NEP 41 <NEP41>`
 and use this document only as a reference or for additional details.
 
 
