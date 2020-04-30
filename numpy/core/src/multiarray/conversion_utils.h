@@ -3,6 +3,29 @@
 
 #include <numpy/ndarraytypes.h>
 
+/**
+ * Helper to implement PyArg_Parse* converters. This handles conversion
+ * of bytes, and produces appropriate error messages.
+ *
+ * out:
+ *     the pointer to read the argument into
+ * str_func:
+ *     A function that takes a utf8 string and a length. Outputs the parsed
+ *     argument into its last argument, and should return -1 on failure.
+ * name:
+ *     A name describing this argument, to use in error messages
+ * message:
+ *     Prepended after `name` with a space when populating ValueErrors. Should
+ *     include a description of what values are legal.
+ */
+NPY_NO_EXPORT int
+convert_with_str_parser(
+    PyObject *object,
+    void *out,
+    int (*str_func)(char const*, Py_ssize_t, void*),
+    char const *name,
+    char const *message);
+
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 

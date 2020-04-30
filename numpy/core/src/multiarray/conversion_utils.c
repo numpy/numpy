@@ -322,8 +322,8 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
     return NPY_SUCCEED;
 }
 
-static int
-string_converter_helper(
+NPY_NO_EXPORT int
+convert_with_str_parser(
     PyObject *object,
     void *out,
     int (*str_func)(char const*, Py_ssize_t, void*),
@@ -410,7 +410,7 @@ static int byteorder_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_ByteorderConverter(PyObject *obj, char *endian)
 {
-    return string_converter_helper(
+    return convert_with_str_parser(
         obj, (void *)endian, byteorder_parser, "byteorder", "not recognized");
 }
 
@@ -465,7 +465,7 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     if (obj == Py_None) {
         return NPY_SUCCEED;
     }
-    return string_converter_helper(
+    return convert_with_str_parser(
         obj, (void *)sortkind, sortkind_parser, "sort kind",
         "must be one of 'quick', 'heap', or 'stable'");
 }
@@ -489,7 +489,7 @@ static int selectkind_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 {
-    return string_converter_helper(
+    return convert_with_str_parser(
         obj, (void *)selectkind, selectkind_parser, "select kind",
         "must be 'introselect'");
 }
@@ -520,7 +520,7 @@ static int searchside_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_SearchsideConverter(PyObject *obj, void *addr)
 {
-    return string_converter_helper(
+    return convert_with_str_parser(
         obj, addr, searchside_parser, "search side",
         "must be 'left' or 'right'");
 }
@@ -562,7 +562,7 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     if (object == Py_None) {
         return NPY_SUCCEED;
     }
-    return string_converter_helper(
+    return convert_with_str_parser(
         object, (void *)val, order_parser, "order",
         "must be one of 'C', 'F', 'A', or 'K'");
 }
@@ -601,7 +601,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
     }
 
     else if (PyBytes_Check(object) || PyUnicode_Check(object)) {
-        return string_converter_helper(
+        return convert_with_str_parser(
             object, (void *)val, clipmode_parser, "clipmode",
             "must be one of 'clip', 'raise', or 'wrap'");
     }
@@ -718,7 +718,7 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 {
-    return string_converter_helper(
+    return convert_with_str_parser(
         obj, (void *)casting, casting_parser, "casting",
             "must be one of 'no', 'equiv', 'safe', "
             "'same_kind', or 'unsafe'");
