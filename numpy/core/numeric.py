@@ -2279,12 +2279,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         return cond[()]  # Flatten 0d arrays to scalars
 
 
-def _array_equal_dispatcher(a1, a2):
+def _array_equal_dispatcher(a1, a2, equal_nan=None):
     return (a1, a2)
 
 
 @array_function_dispatch(_array_equal_dispatcher)
-def array_equal(a1, a2):
+def array_equal(a1, a2, equal_nan=False):
     """
     True if two arrays have the same shape and elements, False otherwise.
 
@@ -2323,7 +2323,14 @@ def array_equal(a1, a2):
         return False
     if a1.shape != a2.shape:
         return False
-    return bool(asarray(a1 == a2).all())
+    if not equal_nan:
+        return bool(asarray(a1 == a2).all())
+    # Handling NaN values if equal_nan is True
+    a1nan, a2nan = isnan(a1), isnan(a2)
+    # NaN's occur at different locations
+    if not all(a1nan == a2nan):
+        return False
+    return bool(asarray(a1[~a1nan] == a2[~a2nan]).all())
 
 
 def _array_equiv_dispatcher(a1, a2):
