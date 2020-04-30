@@ -14,24 +14,40 @@ platform_skip = pytest.mark.skipif(not runtest,
                                    reason="avoid testing inconsistent platform "
                                    "library implementations")
 
-# convert string to hex function taken from:
-# https://stackoverflow.com/questions/1592158/convert-hex-to-float #
-def convert(s, datatype="np.float32"):
-    i = int(s, 16)                   # convert from hex to a Python int
-    if (datatype == "np.float64"):
-        cp = pointer(c_longlong(i))           # make this into a c long long integer
-        fp = cast(cp, POINTER(c_double))  # cast the int pointer to a double pointer
-    else:
-        cp = pointer(c_int(i))           # make this into a c integer
-        fp = cast(cp, POINTER(c_float))  # cast the int pointer to a float pointer
 
-    return fp.contents.value         # dereference the pointer, get the float
+def from_hex(s, dtype):
+    barr = bytearray.fromhex(s[2:])
+    barr.reverse()
+    return np.frombuffer(barr, dtype=dtype)[0]
 
-str_to_float = np.vectorize(convert)
+
+def to_hex(x):
+    barr = bytearray(x)
+    barr.reverse()
+    return "0x" + barr.hex()
+
+
+def data_from_file(input_path):
+    with open(input_path, 'r') as input_file:
+        for line in input_file:
+            if not line.strip() or line[0] == '#':
+                continue
+            if '#' in line:
+                line = line[:line.index('#')]
+
+            name, dtype_str, ulperr, arg_hex, exp_hex = line.strip().split(' ')
+            dtype = getattr(np, dtype_str[3:])
+            ulperr = int(ulperr)
+            arg = from_hex(arg_hex, dtype)
+            exp = from_hex(exp_hex, dtype)
+            yield name, ulperr, arg, exp
+
+
 files = ['umath-validation-set-exp',
          'umath-validation-set-log',
          'umath-validation-set-sin',
          'umath-validation-set-cos']
+
 
 class TestAccuracy:
     @platform_skip
@@ -39,27 +55,23 @@ class TestAccuracy:
         with np.errstate(all='ignore'):
             for filename in files:
                 data_dir = path.join(path.dirname(__file__), 'data')
-                filepath = path.join(data_dir, filename)
-                with open(filepath) as fid:
-                    file_without_comments = (r for r in fid if not r[0] in ('$', '#'))
-                    data = np.genfromtxt(file_without_comments,
-                                         dtype=('|S39','|S39','|S39',int),
-                                         names=('type','input','output','ulperr'),
-                                         delimiter=',',
-                                         skip_header=1)
-                    npfunc = getattr(np, filename.split('-')[3])
-                    for datatype in np.unique(data['type']):
-                        data_subset = data[data['type'] == datatype]
-                        inval  = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
-                        outval = np.array(str_to_float(data_subset['output'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
-                        perm = np.random.permutation(len(inval))
-                        inval = inval[perm]
-                        outval = outval[perm]
-                        maxulperr = data_subset['ulperr'].max()
-                        assert_array_max_ulp(npfunc(inval), outval, maxulperr)
+                input_path = path.join(data_dir, filename)
+                func_name = filename.split('-')[-1]
+                ufunc = getattr(np, func_name)
+                for name, ulperr, arg, exp in data_from_file(input_path):
+                    act = ufunc(arg)
+                    try:
+                        assert_array_max_ulp(act, exp, maxulp=ulperr)
+                    except:
+                        raise AssertionError(
+                            f"\n{name}:   {to_hex(arg)} ({arg})\n"
+                            f"Received: {to_hex(act)} ({act})\n"
+                            f"Expected: {to_hex(exp)} ({exp})\n"
+                            "Received value insufficiently close to expected value."
+                        )
 
     def test_ignore_nan_ulperror(self):
         # Ignore ULP differences between various NAN's
-        nan1_f32 = np.array(str_to_float('0xffffffff'), dtype=np.float32)
-        nan2_f32 = np.array(str_to_float('0x7fddbfbf'), dtype=np.float32)
+        nan1_f32 = from_hex('0xffffffff', dtype=np.float32)
+        nan2_f32 = from_hex('0x7fddbfbf', dtype=np.float32)
         assert_array_max_ulp(nan1_f32, nan2_f32, 0)

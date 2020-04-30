@@ -50,6 +50,6 @@ with open(args.input_file, 'r') as input_file:
             exp = dtype(mpfunc(arg))
             name = args.funcname+str(i+1).zfill(3)
             output_file.write(
-                "{} {} {} {} {} # {} -> {}\n".format(
+                "{} {} {} {} {}  # {} -> {}\n".format(
                     name, args.dtype, args.ulperror, to_hex(arg),
                     to_hex(exp), arg, exp))
