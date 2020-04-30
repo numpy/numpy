@@ -4,14 +4,16 @@ import mpmath
 
 parser = argparse.ArgumentParser(
     description="Update umath data. "
-                "Input file can only contain lines of format described in README "
-                "possibly without `name` entry. "
-                "Script can change `name` entries to guarantee their uniqueness.")
+                "Input file can only contain lines of format described "
+                "in README possibly without `name` entry. Script can change "
+                "`name` entries to guarantee their uniqueness.")
 parser.add_argument('-i', '--input_file', type=str, required=True,
                     help="Name of data file.")
-parser.add_argument('-f', '--funcname', required=True, help="Name of mpmath function used to generate data.")
+parser.add_argument('-f', '--funcname', required=True,
+                    help="Name of mpmath function used to generate data.")
 parser.add_argument('-o', '--output_file', type=str, required=True,
-                    help="Name of output file. Should be of the form umath-validation-set-<funcname>")
+                    help="Name of output file. Should be of the form "
+                         "umath-validation-set-<funcname>")
 
 args = parser.parse_args()
 

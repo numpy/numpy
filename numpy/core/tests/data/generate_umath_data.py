@@ -2,18 +2,21 @@ import numpy as np
 import argparse
 import mpmath
 
-parser = argparse.ArgumentParser(description='Generate umath data. '
-                                             'Input file can only contain hex numbers in separate rows, '
-                                             'empty lines and lines starting with "#" (comments)')
+parser = argparse.ArgumentParser(
+    description='Generate umath data. '
+                'Input file can only contain hex numbers in separate rows, '
+                'empty lines and lines starting with "#" (comments).')
 parser.add_argument('-i', '--input_file', type=str, required=True,
-                    help="Name of file with inputs used to generate test data")
-parser.add_argument('-f', '--funcname', required=True, help="Name of mpmath function used to generate data.")
+                    help="Name of file with inputs used to generate test data.")
+parser.add_argument('-f', '--funcname', required=True,
+                    help="Name of mpmath function used to generate data.")
 parser.add_argument('-o', '--output_file', type=str, required=True,
-                    help="Name of output file. Should be of the form umath-validation-set-<funcname>")
+                    help="Name of output file. Should be of the form "
+                         "umath-validation-set-<funcname>.")
 parser.add_argument('--dtype', type=str, required=True,
                     help="dtype of data")
-parser.add_argument('--ulperror', type=int, default=2,
-                    help="dtype of data")
+parser.add_argument('--ulperror', type=int, default=2)
+
 args = parser.parse_args()
 
 
