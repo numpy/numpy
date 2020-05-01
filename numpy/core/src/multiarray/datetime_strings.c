@@ -20,7 +20,7 @@
 #include "npy_pycompat.h"
 
 #include "numpy/arrayscalars.h"
-#include "methods.h"
+#include "convert_datatype.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
 

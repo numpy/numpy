@@ -21,7 +21,6 @@
 #include "shape.h"
 #include "npy_buffer.h"
 #include "lowlevel_strided_loops.h"
-#include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "array_assign.h"
@@ -2181,42 +2180,9 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
     /* Raise an error if the casting rule isn't followed */
     if (!PyArray_CanCastArrayTo(arr, newtype, casting)) {
-        PyObject *errmsg;
-        PyArray_Descr *arr_descr = NULL;
-        PyObject *arr_descr_repr = NULL;
-        PyObject *newtype_repr = NULL;
-
         PyErr_Clear();
-        errmsg = PyUString_FromString("Cannot cast array data from ");
-        arr_descr = PyArray_DESCR(arr);
-        if (arr_descr == NULL) {
-            Py_DECREF(newtype);
-            Py_DECREF(errmsg);
-            return NULL;
-        }
-        arr_descr_repr = PyObject_Repr((PyObject *)arr_descr);
-        if (arr_descr_repr == NULL) {
-            Py_DECREF(newtype);
-            Py_DECREF(errmsg);
-            return NULL;
-        }
-        PyUString_ConcatAndDel(&errmsg, arr_descr_repr);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        newtype_repr = PyObject_Repr((PyObject *)newtype);
-        if (newtype_repr == NULL) {
-            Py_DECREF(newtype);
-            Py_DECREF(errmsg);
-            return NULL;
-        }
-        PyUString_ConcatAndDel(&errmsg, newtype_repr);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
-
-        Py_DECREF(newtype);
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(arr), newtype, casting, PyArray_NDIM(arr) == 0);
         return NULL;
     }
 

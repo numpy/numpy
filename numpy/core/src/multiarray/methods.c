@@ -789,24 +789,6 @@ array_setscalar(PyArrayObject *self, PyObject *args)
     }
 }
 
-NPY_NO_EXPORT const char *
-npy_casting_to_string(NPY_CASTING casting)
-{
-    switch (casting) {
-        case NPY_NO_CASTING:
-            return "'no'";
-        case NPY_EQUIV_CASTING:
-            return "'equiv'";
-        case NPY_SAFE_CASTING:
-            return "'safe'";
-        case NPY_SAME_KIND_CASTING:
-            return "'same_kind'";
-        case NPY_UNSAFE_CASTING:
-            return "'unsafe'";
-        default:
-            return "<unknown>";
-    }
-}
 
 static PyObject *
 array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -876,19 +858,8 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return (PyObject *)ret;
     }
     else {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot cast array from ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(self)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)dtype));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(self), dtype, casting, PyArray_NDIM(self) == 0);
         Py_DECREF(dtype);
         return NULL;
     }
