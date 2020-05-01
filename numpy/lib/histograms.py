@@ -1050,8 +1050,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
             try:
                 edges[i] = np.linspace(smin, smax, bins[i] + 1)
             except TypeError:
-                bins[i] = int(bins[i])
-                edges[i] = np.linspace(smin, smax, bins[i] + 1)
+                raise TypeError("bins[i] must be an integer")
                 
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
