@@ -1,5 +1,5 @@
-Remove handling of extra argument to ``__array__``
+Remove handling of extra argument to `__array__`
 Update the documentation for `__array__` interface behaviour 
 --------------------------------------------------
-Earlier the ``__array__`` documentation said:
-If a class (ndarray subclass or not) having the ``__array__`` method is used as the output object of an ufunc, results will be written to the object returned by ``__array__``. However the behaviour of ``__array__``did not support it, the documentation was modified to avoid confusion.
+Earlier the `__array__` documentation said:
+If a class (ndarray subclass or not) having the `__array__` method is used as the output object of an ufunc, results will be written to the object returned by `__array__` However the behaviour of `__array__` did not support it, the documentation was modified to avoid confusion.
