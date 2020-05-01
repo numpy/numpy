@@ -1,4 +1,3 @@
-Remove handling of extra argument to `__array__`
 Update the documentation for `__array__` interface behaviour 
 --------------------------------------------------
 Earlier the `__array__` documentation said:
