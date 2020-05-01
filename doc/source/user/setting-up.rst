@@ -7,3 +7,4 @@ Setting up
 
    whatisnumpy
    install
+   troubleshooting-importerror
