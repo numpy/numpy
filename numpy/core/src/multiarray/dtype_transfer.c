@@ -2773,7 +2773,10 @@ get_decsrcref_fields_transfer_function(int aligned,
     _single_field_transfer *fields;
 
     names = src_dtype->names;
-    names_size = PyTuple_GET_SIZE(src_dtype->names);
+    if(src_dtype->names != NULL)
+        names_size = PyTuple_GET_SIZE(src_dtype->names);
+    else
+        names_size = 0;
 
     field_count = names_size;
     structsize = sizeof(_field_transfer_data) +
