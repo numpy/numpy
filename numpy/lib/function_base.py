@@ -2026,7 +2026,7 @@ class vectorize:
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
-        self._ufunc = None    # Caching to improve default performance
+        self._ufunc = {}    # Caching to improve default performance
 
         if doc is None:
             self.__doc__ = pyfunc.__doc__
@@ -2091,14 +2091,22 @@ class vectorize:
 
         if self.otypes is not None:
             otypes = self.otypes
-            nout = len(otypes)
 
-            # Note logic here: We only *use* self._ufunc if func is self.pyfunc
-            # even though we set self._ufunc regardless.
-            if func is self.pyfunc and self._ufunc is not None:
-                ufunc = self._ufunc
+            # self._ufunc is a dictionary whose keys are the number of
+            # arguments (i.e. len(args)) and whose values are ufuncs created
+            # by frompyfunc. len(args) can be different for different calls if
+            # self.pyfunc has parameters with default values.  We only use the
+            # cache when func is self.pyfunc, which occurs when the call uses
+            # only positional arguments and no arguments are excluded.
+
+            nin = len(args)
+            nout = len(self.otypes)
+            if func is not self.pyfunc or nin not in self._ufunc:
+                ufunc = frompyfunc(func, nin, nout)
             else:
-                ufunc = self._ufunc = frompyfunc(func, len(args), nout)
+                ufunc = None  # We'll get it from self._ufunc
+            if func is self.pyfunc:
+                ufunc = self._ufunc.setdefault(nin, ufunc)
         else:
             # Get number of outputs and output types by calling the function on
             # the first entries of args.  We also cache the result to prevent
