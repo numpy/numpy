@@ -28,25 +28,21 @@ except ImportError as exc:
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
 
-Importing the numpy c-extensions failed.
-- Try uninstalling and reinstalling numpy.
-- If you have already done that, then:
-  1. Check that you expected to use Python%d.%d from "%s",
-     and that you have no directories in your PATH or PYTHONPATH that can
-     interfere with the Python and numpy version "%s" you're trying to use.
-  2. If (1) looks fine, you can open a new issue at
-     https://github.com/numpy/numpy/issues.  Please include details on:
-     - how you installed Python
-     - how you installed numpy
-     - your operating system
-     - whether or not you have multiple versions of Python installed
-     - if you built from source, your compiler versions and ideally a build log
+Importing the numpy C-extensions failed. This error can happen for
+many reasons, often due to issues with your setup or how NumPy was
+installed.
 
-- If you're working with a numpy git repository, try `git clean -xdf`
-  (removes all files not under version control) and rebuild numpy.
+We have compiled some common reasons and troubleshooting tips at:
 
-Note: this error has many possible causes, so please don't comment on
-an existing issue about this - open a new one instead.
+    https://numpy.org/devdocs/user/troubleshooting-importerror.html
+
+Please note and check the following:
+
+  * The Python version is: Python%d.%d from "%s"
+  * The NumPy version is: "%s"
+
+and make sure that they are the versions you expect.
+Please carefully study the documentation linked above for further help.
 
 Original error was: %s
 """ % (sys.version_info[0], sys.version_info[1], sys.executable,
