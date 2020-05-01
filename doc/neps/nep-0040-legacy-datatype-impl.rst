@@ -180,8 +180,8 @@ These issues do not need to solved right away:
   scalars behave much like NumPy arrays, a feature that general Python objects
   do not have.
 * Seamless integration probably requires that ``np.array(scalar)`` finds the
-  correct DType automatically since some operations (such as indexing) are
-  return the scalar instead of a 0D array.
+  correct DType automatically since some operations (such as indexing) return
+  the scalar instead of a 0D array.
   This is problematic if multiple users independently decide to implement
   for example a DType for ``decimal.Decimal``.
 
@@ -207,7 +207,7 @@ Many datatype-specific functions are defined within a C structure called
 :c:type:`PyArray_ArrFuncs`, which is part of each ``dtype`` instance and
 has a similarity to Python's ``PyNumberMethods``.
 For user-defined datatypes this structure is exposed to the user, making
-ABI-compatible changes changes impossible.
+ABI-compatible changes impossible.
 This structure holds important information such as how to copy or cast,
 and provides space for pointers to functions, such as comparing elements,
 converting to bool, or sorting.

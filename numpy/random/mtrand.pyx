@@ -848,6 +848,11 @@ cdef class RandomState:
         randint, shuffle, permutation
         Generator.choice: which should be used in new code
 
+        Notes
+        -----
+        Sampling random rows from a 2-D array is not possible with this function,
+        but is possible with `Generator.choice` through its ``axis`` keyword.
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:

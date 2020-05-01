@@ -2758,11 +2758,6 @@ class TestMethods:
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-    def test_flatten_invalid_order(self):
-        # invalid after gh-14596
-        for order in ['Z', 'c', False, True, 0, 8]:
-            x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
-            assert_raises(ValueError, x.flatten, {"order": order})
 
     @pytest.mark.parametrize('func', (np.dot, np.matmul))
     def test_arr_mult(self, func):

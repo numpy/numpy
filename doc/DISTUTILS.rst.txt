@@ -345,7 +345,7 @@ expression, '<...>' will be replaced first with item1, and then with
 item2, and so forth until N repeats are accomplished. Once a named
 repeat specification has been introduced, the same repeat rule may be
 used **in the current block** by referring only to the name
-(i.e. <rule1>.
+(i.e. <rule1>).
 
 
 Short repeat rule

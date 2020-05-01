@@ -52,6 +52,27 @@ And in more detail:
   methods which are 2-10 times faster than NumPy's default implementation in
   `~.Generator.standard_normal`, `~.Generator.standard_exponential` or
   `~.Generator.standard_gamma`.
+   
+
+.. ipython:: python
+
+  from  numpy.random import Generator, PCG64
+  import numpy.random
+  rg = Generator(PCG64())
+  %timeit -n 1 rg.standard_normal(100000)
+  %timeit -n 1 numpy.random.standard_normal(100000)
+
+.. ipython:: python
+
+  %timeit -n 1 rg.standard_exponential(100000)
+  %timeit -n 1 numpy.random.standard_exponential(100000)
+
+.. ipython:: python
+
+  %timeit -n 1 rg.standard_gamma(3.0, 100000)
+  %timeit -n 1 numpy.random.standard_gamma(3.0, 100000)
+
+
 * `~.Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. The ``rand`` and
   ``randn`` methods are only available through the legacy `~.RandomState`.
@@ -62,26 +83,6 @@ And in more detail:
   This allows these bit generators to be used in numba.
 * The bit generators can be used in downstream projects via
   Cython.
-
-
-.. ipython:: python
-
-  from  numpy.random import Generator, PCG64
-  import numpy.random
-  rg = Generator(PCG64())
-  %timeit rg.standard_normal(100000)
-  %timeit numpy.random.standard_normal(100000)
-
-.. ipython:: python
-
-  %timeit rg.standard_exponential(100000)
-  %timeit numpy.random.standard_exponential(100000)
-
-.. ipython:: python
-
-  %timeit rg.standard_gamma(3.0, 100000)
-  %timeit numpy.random.standard_gamma(3.0, 100000)
-
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
   to produce either single or double prevision uniform random variables for
   select distributions

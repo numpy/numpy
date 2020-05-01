@@ -6,6 +6,8 @@
 #include <intrin.h>
 #endif
 
+#include <assert.h>
+
 /* Inline generators for internal use */
 static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint32(bitgen_state->state);
@@ -1149,6 +1151,8 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
    */
   const uint64_t rng_excl = rng + 1;
 
+  assert(rng != 0xFFFFFFFFFFFFFFFFULL);
+
 #if __SIZEOF_INT128__
   /* 128-bit uint available (e.g. GCC/clang). `m` is the __uint128_t scaled
    * integer. */
@@ -1239,6 +1243,8 @@ static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
   uint64_t m;
   uint32_t leftover;
 
+  assert(rng != 0xFFFFFFFFUL);
+
   /* Generate a scaled random number. */
   m = ((uint64_t)next_uint32(bitgen_state)) * rng_excl;
 
@@ -1272,6 +1278,8 @@ static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
 
   uint32_t m;
   uint16_t leftover;
+
+  assert(rng != 0xFFFFU);
 
   /* Generate a scaled random number. */
   m = ((uint32_t)buffered_uint16(bitgen_state, bcnt, buf)) * rng_excl;
@@ -1308,6 +1316,9 @@ static NPY_INLINE uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
   uint16_t m;
   uint8_t leftover;
 
+  assert(rng != 0xFFU);
+
+
   /* Generate a scaled random number. */
   m = ((uint16_t)buffered_uint8(bitgen_state, bcnt, buf)) * rng_excl;
 
@@ -1337,6 +1348,14 @@ uint64_t random_bounded_uint64(bitgen_t *bitgen_state, uint64_t off,
     return off;
   } else if (rng <= 0xFFFFFFFFUL) {
     /* Call 32-bit generator if range in 32-bit. */
+    if (rng == 0xFFFFFFFFUL) {
+      /*
+       * The 32-bit Lemire method does not handle rng=0xFFFFFFFF, so we'll
+       * call next_uint32 directly.  This also works when use_masked is True,
+       * so we handle both cases here.
+       */
+      return off + (uint64_t) next_uint32(bitgen_state);
+    }
     if (use_masked) {
       return off + buffered_bounded_masked_uint32(bitgen_state, rng, mask, NULL,
                                                   NULL);
@@ -1450,22 +1469,34 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
       out[i] = off;
     }
   } else if (rng <= 0xFFFFFFFFUL) {
-    uint32_t buf = 0;
-    int bcnt = 0;
-
     /* Call 32-bit generator if range in 32-bit. */
-    if (use_masked) {
-      /* Smallest bit mask >= max */
-      uint64_t mask = gen_mask(rng);
 
+    /*
+     * The 32-bit Lemire method does not handle rng=0xFFFFFFFF, so we'll
+     * call next_uint32 directly.  This also works when use_masked is True,
+     * so we handle both cases here.
+     */
+    if (rng == 0xFFFFFFFFUL) {
       for (i = 0; i < cnt; i++) {
-        out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
-                                                      &bcnt, &buf);
+        out[i] = off + (uint64_t) next_uint32(bitgen_state);
       }
     } else {
-      for (i = 0; i < cnt; i++) {
-        out[i] = off +
-                 buffered_bounded_lemire_uint32(bitgen_state, rng, &bcnt, &buf);
+      uint32_t buf = 0;
+      int bcnt = 0;
+
+      if (use_masked) {
+        /* Smallest bit mask >= max */
+        uint64_t mask = gen_mask(rng);
+
+        for (i = 0; i < cnt; i++) {
+          out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
+                                                        &bcnt, &buf);
+        }
+      } else {
+        for (i = 0; i < cnt; i++) {
+          out[i] = off +
+                   buffered_bounded_lemire_uint32(bitgen_state, rng, &bcnt, &buf);
+        }
       }
     }
   } else if (rng == 0xFFFFFFFFFFFFFFFFULL) {

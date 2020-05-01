@@ -520,6 +520,44 @@ class TestIntegers:
 
             assert_array_equal(val, val_bc)
 
+    @pytest.mark.parametrize(
+        'bound, expected',
+        [(2**32 - 1, np.array([517043486, 1364798665, 1733884389, 1353720612,
+                               3769704066, 1170797179, 4108474671])),
+         (2**32, np.array([517043487, 1364798666, 1733884390, 1353720613,
+                           3769704067, 1170797180, 4108474672])),
+         (2**32 + 1, np.array([517043487, 1733884390, 3769704068, 4108474673,
+                               1831631863, 1215661561, 3869512430]))]
+    )
+    def test_repeatability_32bit_boundary(self, bound, expected):
+        for size in [None, len(expected)]:
+            random = Generator(MT19937(1234))
+            x = random.integers(bound, size=size)
+            assert_equal(x, expected if size is not None else expected[0])
+
+    def test_repeatability_32bit_boundary_broadcasting(self):
+        desired = np.array([[[1622936284, 3620788691, 1659384060],
+                             [1417365545,  760222891, 1909653332],
+                             [3788118662,  660249498, 4092002593]],
+                            [[3625610153, 2979601262, 3844162757],
+                             [ 685800658,  120261497, 2694012896],
+                             [1207779440, 1586594375, 3854335050]],
+                            [[3004074748, 2310761796, 3012642217],
+                             [2067714190, 2786677879, 1363865881],
+                             [ 791663441, 1867303284, 2169727960]],
+                            [[1939603804, 1250951100,  298950036],
+                             [1040128489, 3791912209, 3317053765],
+                             [3155528714,   61360675, 2305155588]],
+                            [[ 817688762, 1335621943, 3288952434],
+                             [1770890872, 1102951817, 1957607470],
+                             [3099996017,  798043451,   48334215]]])
+        for size in [None, (5, 3, 3)]:
+            random = Generator(MT19937(12345))
+            x = random.integers([[-1], [0], [1]],
+                                [2**32 - 1, 2**32, 2**32 + 1],
+                                size=size)
+            assert_array_equal(x, desired if size is not None else desired[0])
+
     def test_int64_uint64_broadcast_exceptions(self, endpoint):
         configs = {np.uint64: ((0, 2**65), (-1, 2**62), (10, 9), (0, 0)),
                    np.int64: ((0, 2**64), (-(2**64), 2**62), (10, 9), (0, 0),
@@ -1064,6 +1102,31 @@ class TestRandomDist:
         contig = random.dirichlet(np.ascontiguousarray(alpha),
                                   size=(3, 2))
         assert_array_almost_equal(non_contig, contig)
+
+    def test_dirichlet_small_alpha(self):
+        eps = 1.0e-9  # 1.0e-10 -> runtime x 10; 1e-11 -> runtime x 200, etc.
+        alpha = eps * np.array([1., 1.0e-3])
+        random = Generator(MT19937(self.seed))
+        actual = random.dirichlet(alpha, size=(3, 2))
+        expected = np.array([
+            [[1., 0.],
+             [1., 0.]],
+            [[1., 0.],
+             [1., 0.]],
+            [[1., 0.],
+             [1., 0.]]
+        ])
+        assert_array_almost_equal(actual, expected, decimal=15)
+
+    @pytest.mark.slow
+    def test_dirichlet_moderately_small_alpha(self):
+        # Use alpha.max() < 0.1 to trigger stick breaking code path
+        alpha = np.array([0.02, 0.04, 0.03])
+        exact_mean = alpha / alpha.sum()
+        random = Generator(MT19937(self.seed))
+        sample = random.dirichlet(alpha, size=20000000)
+        sample_mean = sample.mean(axis=0)
+        assert_allclose(sample_mean, exact_mean, rtol=1e-3)
 
     def test_exponential(self):
         random = Generator(MT19937(self.seed))

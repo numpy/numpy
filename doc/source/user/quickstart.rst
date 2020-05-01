@@ -760,7 +760,7 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
            [2., 8.]])
     >>> np.hstack((a,b))           # the result is different
     array([4., 2., 3., 8.])
-    >>> a[:,newaxis]               # this allows to have a 2D columns vector
+    >>> a[:,newaxis]               # view `a` as a 2D column vector
     array([[4.],
            [2.]])
     >>> np.column_stack((a[:,newaxis],b[:,newaxis]))
