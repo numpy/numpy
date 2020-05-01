@@ -1273,6 +1273,83 @@ class TestVectorize:
         r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
 
+    def test_keywords_with_otypes_order1(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: invalid number of arguments`.
+
+        import math
+
+        def foo(x, y=1.0):
+            return y*math.floor(x)
+
+        f = vectorize(foo, otypes=[float])
+        r1 = f(np.arange(3.0), 1.0)
+        r2 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order2(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: non-broadcastable output operand with shape ()
+        # doesn't match the broadcast shape (3,)`.
+
+        import math
+
+        def foo(x, y=1.0):
+            return y*math.floor(x)
+
+        f = vectorize(foo, otypes=[float])
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), 1.0)
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order3(self):
+        # gh-1620: The third call of f would crash with
+        # `ValueError: invalid number of arguments`.
+
+        import math
+
+        def foo(x, y=1.0):
+            return y*math.floor(x)
+
+        f = vectorize(foo, otypes=[float])
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), y=1.0)
+        r3 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+        assert_array_equal(r1, r3)
+
+    def test_keywords_with_otypes_several_kwd_args1(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+
+        import math
+
+        def foo(x, y=1.0, z=0.0):
+            return y*math.floor(x) + z
+
+        f = vectorize(foo, otypes=[float])
+        r1 = f(10.4, z=100)
+        r2 = f(10.4, y=-1)
+        r3 = f(10.4)
+        assert_equal(r1, foo(10.4, z=100))
+        assert_equal(r2, foo(10.4, y=-1))
+        assert_equal(r3, foo(10.4))
+
+    def test_keywords_with_otypes_several_kwd_args2(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+
+        import math
+
+        def foo(x, y=1.0, z=0.0):
+            return y*math.floor(x) + z
+
+        f = vectorize(foo, otypes=[float])
+        r1 = f(z=100, x=10.4, y=-1)
+        r2 = f(1, 2, 3)
+        assert_equal(r1, foo(z=100, x=10.4, y=-1))
+        assert_equal(r2, foo(1, 2, 3))
+
     def test_keywords_no_func_code(self):
         # This needs to test a function that has keywords but
         # no func_code attribute, since otherwise vectorize will
