@@ -640,6 +640,16 @@ class TestExp:
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.exp(yf), xf)
 
+    def test_exp_strides(self):
+        np.random.seed(42)
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        sizes = np.arange(2,100)
+        for ii in sizes:
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=709.1,size=ii))
+            y_true = np.exp(x_f64)
+            for jj in strides:
+                assert_array_almost_equal_nulp(np.exp(x_f64[::jj]), y_true[::jj], nulp=2)
+
 class TestSpecialFloats:
     def test_exp_values(self):
         x = [np.nan,  np.nan, np.inf, 0.]
@@ -652,6 +662,8 @@ class TestSpecialFloats:
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
+            assert_raises(FloatingPointError, np.exp, np.float64(800.))
+            assert_raises(FloatingPointError, np.exp, np.float64(1E19))
 
     def test_log_values(self):
         with np.errstate(all='ignore'):

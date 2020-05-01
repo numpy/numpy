@@ -8,10 +8,10 @@ NEP 41 — First step towards a new Datatype System
 :Author: Sebastian Berg
 :Author: Stéfan van der Walt
 :Author: Matti Picus
-:Status: Draft
+:Status: Accepted
 :Type: Standard Track
 :Created: 2020-02-03
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2020-April/080573.html and https://mail.python.org/pipermail/numpy-discussion/2020-March/080495.html
 
 .. note::
 
@@ -601,11 +601,21 @@ Inheritance, however, appears problematic and a complexity best avoided
 Further, subclasses may be more interesting for interoperability for
 example with GPU backends (CuPy) storing additional methods related to the
 GPU rather than as a mechanism to define new datatypes.
-A class hierarchy does provides value, this may be achieved by
+A class hierarchy does provides value, and one can be achieved by
 allowing the creation of *abstract* datatypes.
 An example for an abstract datatype would be the datatype equivalent of
 ``np.floating``, representing any floating point number.
 These can serve the same purpose as Python's abstract base classes.
+
+This NEP chooses to duplicate the scalar hierarchy fully or in part.
+The main reason is to uncouple the implementation of the DType and scalar.
+To add a DType to NumPy, in theory the scalar will not need to be
+modified or know about NumPy. Also note that the categorical DType as
+currently implemented in pandas does not have a scalar correspondence
+making it less straight forward to rely on scalars to implement behaviour.
+While DType and Scalar describe the same concept/type (e.g. an `int64`),
+it seems practical to split out the information and functionality necessary
+for numpy into the DType class.
 
 
 Scalars should not be instances of the datatypes (2)
@@ -705,6 +715,13 @@ Discussion
 ----------
 
 See `NEP 40 <NEP40>`_ for a list of previous meetings and discussions.
+
+Additional discussion around this specific NEP has occured on both
+the mailing list and the pull request:
+
+* `Mailing list discussion <https://mail.python.org/pipermail/numpy-discussion/2020-March/080481.html>`_
+* `NEP 41 pull request <https://github.com/numpy/numpy/pull/15506>`_
+* `Pull request thread on Dtype hierarchy and Scalars <https://github.com/numpy/numpy/pull/15506#discussion_r390016298>`_
 
 
 References

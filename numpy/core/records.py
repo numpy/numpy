@@ -595,8 +595,30 @@ def _deprecate_shape_0_as_None(shape):
 
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """ create a record array from a (flat) list of arrays
+    """Create a record array from a (flat) list of arrays
 
+    Parameters
+    ----------
+    arrayList : list or tuple
+        List of array-like objects (such as lists, tuples,
+        and ndarrays).
+    dtype : data-type, optional
+        valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        Shape of the resulting array. If not provided, inferred from
+        ``arrayList[0]``.
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
+
+    Returns
+    -------
+    np.recarray
+        Record array consisting of given arrayList columns.
+
+    Examples
+    --------
     >>> x1=np.array([1,2,3,4])
     >>> x2=np.array(['a','dd','xyz','12'])
     >>> x3=np.array([1.1,2,3,4])
@@ -606,6 +628,17 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
+    
+    >>> x1 = np.array([1, 2, 3, 4])
+    >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
+    >>> x3 = np.array([1.1, 2, 3,4])
+    >>> r = np.core.records.fromarrays(
+    ...     [x1, x2, x3],
+    ...     dtype=np.dtype([('a', np.int32), ('b', 'S3'), ('c', np.float32)]))
+    >>> r
+    rec.array([(1, b'a', 1.1), (2, b'dd', 2. ), (3, b'xyz', 3. ),
+               (4, b'12', 4. )],
+              dtype=[('a', '<i4'), ('b', 'S3'), ('c', '<f4')])
     """
 
     arrayList = [sb.asarray(x) for x in arrayList]
@@ -655,20 +688,33 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
 def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
                 titles=None, aligned=False, byteorder=None):
-    """ create a recarray from a list of records in text form
+    """Create a recarray from a list of records in text form.
 
-        The data in the same field can be heterogeneous, they will be promoted
-        to the highest data type.  This method is intended for creating
-        smaller record arrays.  If used to create large array without formats
-        defined
+    Parameters
+    ----------
+    recList : sequence
+        data in the same field may be heterogeneous - they will be promoted
+        to the highest data type.
+    dtype : data-type, optional
+        valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        shape of each array.
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
 
-        r=fromrecords([(2,3.,'abc')]*100000)
+        If both `formats` and `dtype` are None, then this will auto-detect
+        formats. Use list of tuples rather than list of lists for faster
+        processing.
 
-        it can be slow.
+    Returns
+    -------
+    np.recarray
+        record array consisting of given recList rows.
 
-        If formats is None, then this will auto-detect formats. Use list of
-        tuples rather than list of lists for faster processing.
-
+    Examples
+    --------
     >>> r=np.core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
     ... names='col1,col2,col3')
     >>> print(r[0])
@@ -726,7 +772,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """ create a (read-only) record array from binary data contained in
+    """Create a (read-only) record array from binary data contained in
     a string"""
 
     if dtype is None and formats is None:
@@ -761,10 +807,30 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    If file is a string or a path-like object then that file is opened,
-    else it is assumed to be a file object. The file object must
-    support random access (i.e. it must have tell and seek methods).
+    Parameters
+    ----------
+    fd : str or file type
+        If file is a string or a path-like object then that file is opened,
+        else it is assumed to be a file object. The file object must
+        support random access (i.e. it must have tell and seek methods).
+    dtype : data-type, optional
+        valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        shape of each array.
+    offset : int, optional
+        Position in the file to start reading from.
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation
 
+    Returns
+    -------
+    np.recarray
+        record array consisting of data enclosed in file.
+
+    Examples
+    --------
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')
     >>> a[5] = (0.5,10,'abcde')

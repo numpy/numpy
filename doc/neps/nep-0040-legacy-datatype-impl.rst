@@ -65,7 +65,7 @@ values are unaffected by it, and it is always possible to cast them to the
 native, canonical representation without any loss of information.
 
 The concept of flexibility can be generalized to parametric datatypes.
-For example the private ``AdaptFlexibleDType`` function also accepts the
+For example the private ``PyArray_AdaptFlexibleDType`` function also accepts the
 naive datetime dtype as input to find the correct time unit.
 The datetime dtype is thus parametric not in the size of its storage,
 but instead in what the stored value represents.
@@ -109,11 +109,11 @@ This is useful for example in expressions such as::
 In this expression, the python value (which originally has no datatype) is
 represented as an ``int8`` or ``int16`` (the smallest possible data type).
 
-NumPy currently does this even for NumPy scalars and zero dimensional arrays,
+NumPy currently does this even for NumPy scalars and zero-dimensional arrays,
 so that replacing ``5`` with ``np.int64(5)`` or ``np.array(5, dtype="int64")``
-will lead to the same results, and thus ignores the existing datatype.
-The same logic also applies to floating point scalars, which are allowed to
-lose precision.
+in the above expression will lead to the same results, and thus ignores the
+existing datatype. The same logic also applies to floating-point scalars,
+which are allowed to lose precision.
 The behavior is not used when both inputs are scalars, so that
 ``5 + np.int8(5)`` returns the default integer size (32 or 64-bit) and not
 an ``np.int8``.
@@ -180,8 +180,8 @@ These issues do not need to solved right away:
   scalars behave much like NumPy arrays, a feature that general Python objects
   do not have.
 * Seamless integration probably requires that ``np.array(scalar)`` finds the
-  correct DType automatically since some operations (such as indexing) are
-  return the scalar instead of a 0D array.
+  correct DType automatically since some operations (such as indexing) return
+  the scalar instead of a 0D array.
   This is problematic if multiple users independently decide to implement
   for example a DType for ``decimal.Decimal``.
 
@@ -207,7 +207,7 @@ Many datatype-specific functions are defined within a C structure called
 :c:type:`PyArray_ArrFuncs`, which is part of each ``dtype`` instance and
 has a similarity to Python's ``PyNumberMethods``.
 For user-defined datatypes this structure is exposed to the user, making
-ABI-compatible changes changes impossible.
+ABI-compatible changes impossible.
 This structure holds important information such as how to copy or cast,
 and provides space for pointers to functions, such as comparing elements,
 converting to bool, or sorting.

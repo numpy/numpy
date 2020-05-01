@@ -52,8 +52,8 @@ class build_ext (old_build_ext):
         if self.parallel:
             try:
                 self.parallel = int(self.parallel)
-            except ValueError:
-                raise ValueError("--parallel/-j argument must be an integer")
+            except ValueError as e:
+                raise ValueError("--parallel/-j argument must be an integer") from e
 
         # Ensure that self.include_dirs and self.distribution.include_dirs
         # refer to the same list object. finalize_options will modify

@@ -125,6 +125,7 @@ numpy/core/include/numpy/multiarray_api.txt
 numpy/core/include/numpy/ufunc_api.txt
 numpy/core/lib/
 numpy/core/src/common/npy_binsearch.h
+numpy/core/src/common/npy_cpu_features.c
 numpy/core/src/common/npy_partition.h
 numpy/core/src/common/npy_sort.h
 numpy/core/src/common/templ_common.h
