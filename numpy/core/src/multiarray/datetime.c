@@ -22,9 +22,9 @@
 
 #include "common.h"
 #include "numpy/arrayscalars.h"
-#include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+#include "convert_datatype.h"
 
 /*
  * Computes the python `ret, d = divmod(d, unit)`.

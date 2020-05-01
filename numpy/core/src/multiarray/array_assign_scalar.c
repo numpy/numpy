@@ -203,19 +203,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     /* Check the casting rule */
     if (!can_cast_scalar_to(src_dtype, src_data,
                             PyArray_DESCR(dst), casting)) {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot cast scalar from ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)src_dtype));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(dst)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        npy_set_invalid_cast_error(
+                src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
         return -1;
     }
 

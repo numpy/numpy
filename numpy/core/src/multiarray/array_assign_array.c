@@ -305,19 +305,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     /* Check the casting rule */
     if (!PyArray_CanCastTypeTo(PyArray_DESCR(src),
                                 PyArray_DESCR(dst), casting)) {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot cast scalar from ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(src)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(dst)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(src), PyArray_DESCR(dst), casting, NPY_FALSE);
         goto fail;
     }
 

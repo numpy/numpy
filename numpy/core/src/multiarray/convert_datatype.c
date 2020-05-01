@@ -985,6 +985,54 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
     return PyArray_CanCastTypeTo(from, to, casting);
 }
 
+
+NPY_NO_EXPORT const char *
+npy_casting_to_string(NPY_CASTING casting)
+{
+    switch (casting) {
+        case NPY_NO_CASTING:
+            return "'no'";
+        case NPY_EQUIV_CASTING:
+            return "'equiv'";
+        case NPY_SAFE_CASTING:
+            return "'safe'";
+        case NPY_SAME_KIND_CASTING:
+            return "'same_kind'";
+        case NPY_UNSAFE_CASTING:
+            return "'unsafe'";
+        default:
+            return "<unknown>";
+    }
+}
+
+
+/**
+ * Helper function to set a useful error when casting is not possible.
+ *
+ * @param src_dtype
+ * @param dst_dtype
+ * @param casting
+ * @param scalar Whether this was a "scalar" cast (includes 0-D array with
+ *               PyArray_CanCastArrayTo result).
+ */
+NPY_NO_EXPORT void
+npy_set_invalid_cast_error(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        NPY_CASTING casting, npy_bool scalar)
+{
+    char *msg;
+
+    if (!scalar) {
+        msg = "Cannot cast array data from %R to %R according to the rule %s";
+    }
+    else {
+        msg = "Cannot cast scalar from %R to %R according to the rule %s";
+    }
+    PyErr_Format(PyExc_TypeError,
+            msg, src_dtype, dst_dtype, npy_casting_to_string(casting));
+}
+
+
 /*NUMPY_API
  * See if array scalars can be cast.
  *
