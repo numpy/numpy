@@ -2292,6 +2292,8 @@ def array_equal(a1, a2, equal_nan=False):
     ----------
     a1, a2 : array_like
         Input arrays.
+    equal_nan : bool
+        Whether to compare NaN's as equal.
 
     Returns
     -------
@@ -2315,7 +2317,11 @@ def array_equal(a1, a2, equal_nan=False):
     False
     >>> np.array_equal([1, 2], [1, 4])
     False
-
+    >>> a = np.array([1, np.nan])
+    >>> np.array_equal(a, a)
+    False
+    >>> np.array_equal(a, a, equal_nan=True)
+    True
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
