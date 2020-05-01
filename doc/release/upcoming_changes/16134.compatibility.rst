@@ -1,0 +1,8 @@
+Same kind casting in concatenate with ``axis=None``
+---------------------------------------------------
+Unlike most `~numpy.concatenate` calls, when no axis
+was given (the ravelled arrays being concatenated)
+previously "unsafe" casting was used.
+This is now deprecated and "same kind" casting will be
+used by default. The new ``casting`` keyword argument
+can be used to retain the old behaviour.
