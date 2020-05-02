@@ -1,16 +1,3 @@
-==========================
-NumPy 1.18.4 Release Notes
-==========================
-
-This is that last planned release in the 1.18.x series. It reverts the
-``bool("0")`` behavior introduced in 1.18.3 and fixes a bug in
-``Generator.integers``. There is also improved help in the error message
-emitted when numpy import fails due to a link to a new troubleshooting section
-in the documentation that is now included. 
-
-The Python versions supported in this release are 3.5-3.8. Downstream
-developers should use Cython >= 0.29.15 for Python 3.8 support and OpenBLAS >=
-3.7 to avoid errors on the Skylake architecture.
 
 Contributors
 ============
