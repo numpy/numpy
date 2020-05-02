@@ -1,3 +1,5 @@
+.. _devindex:
+
 #####################
 Contributing to NumPy
 #####################
@@ -284,6 +286,7 @@ The rest of the story
    style_guide
    releasing
    governance/index
+   howto-docs
 
 NumPy-specific workflow is in :ref:`numpy-development-workflow
 <development-workflow>`.
