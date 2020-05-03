@@ -2334,9 +2334,10 @@ def array_equal(a1, a2, equal_nan=False):
     # Handling NaN values if equal_nan is True
     a1nan, a2nan = isnan(a1), isnan(a2)
     # NaN's occur at different locations
-    if not all(a1nan == a2nan):
+    if not (a1nan == a2nan).all():
         return False
-    return bool(asarray(a1[~a1nan] == a2[~a2nan]).all())
+    # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
+    return bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
 
 
 def _array_equiv_dispatcher(a1, a2):

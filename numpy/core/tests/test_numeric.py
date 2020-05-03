@@ -1452,12 +1452,16 @@ class TestArrayComparisons:
         a2 = np.array([1, np.nan, 2])
         a3 = np.array([1, 2, np.inf])
 
-        # equal_nan=False by default for backwards compatibility
+        # equal_nan=False by default
         assert_(not np.array_equal(a1, a1))
         assert_(np.array_equal(a1, a1, equal_nan=True))
         assert_(not np.array_equal(a1, a2, equal_nan=True))
         # nan's not conflated with inf's
         assert_(not np.array_equal(a1, a3, equal_nan=True))
+        # 0-D arrays
+        a = np.array(np.nan)
+        assert_(not np.array_equal(a, a))
+        assert_(np.array_equal(a, a, equal_nan=True))
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
