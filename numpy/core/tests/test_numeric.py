@@ -1462,6 +1462,14 @@ class TestArrayComparisons:
         a = np.array(np.nan)
         assert_(not np.array_equal(a, a))
         assert_(np.array_equal(a, a, equal_nan=True))
+        # Non-float dtype - equal_nan should have no effect
+        a = np.array([1, 2, 3], dtype=int)
+        assert_(np.array_equal(a, a))
+        assert_(np.array_equal(a, a, equal_nan=True))
+        # Multi-dimensional array
+        a = np.array([[0, 1], [np.nan, 1]])
+        assert_(not np.array_equal(a, a))
+        assert_(np.array_equal(a, a, equal_nan=True))
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
