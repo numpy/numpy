@@ -2295,6 +2295,8 @@ def array_equal(a1, a2, equal_nan=False):
     equal_nan : bool
         Whether to compare NaN's as equal.
 
+    .. versionadded:: 1.19.0
+
     Returns
     -------
     b : bool
