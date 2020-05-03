@@ -49,13 +49,22 @@ Using Python from ``conda`` (Anaconda)
 
 Please make sure that you have activated your conda environment.
 See also the `conda user-guide <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#activating-an-environment>`_.
+If you use an external editor/development environment it will have to be set
+up correctly.  See below for solutions for some common setups.
 
-
-Using Anaconda/conda Python within PyCharm
-------------------------------------------
+Using PyCharm with Anaconda/conda Python
+----------------------------------------
 
 There are fairly common issues when using PyCharm together with Anaconda,
 please see the `PyCharm support <https://www.jetbrains.com/help/pycharm/conda-support-creating-conda-virtual-environment.html>`_
+
+Using VSCode with Anaconda/conda Python (or environments)
+---------------------------------------------------------
+
+A commonly reported issue is related to the environment activation within
+VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/python/environments>`_
+for information on how to correctly set up VSCode with virtual environments
+or conda.
 
 
 Raspberry Pi
