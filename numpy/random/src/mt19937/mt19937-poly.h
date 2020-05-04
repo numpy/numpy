@@ -1,3 +1,11 @@
+/*
+ * 2**128 step polynomial produced using the file mt19937-generate-jump-poly.c
+ * (randomgen) which is a modified version of minipoly_mt19937.c as distributed
+ * in http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/JUMP/jump_ahead_1.02.tar.gz
+ *
+ * These files are not part of NumPy.
+ */
+
 static const char * poly =
 "0001000111110111011100100010101111000000010100100101000001110111100010101000110100101001011001010"
 "1110101101100101011100101101011001110011100011110100001000001011100101100010100000010011101110011"
