@@ -2293,7 +2293,9 @@ def array_equal(a1, a2, equal_nan=False):
     a1, a2 : array_like
         Input arrays.
     equal_nan : bool
-        Whether to compare NaN's as equal.
+        Whether to compare NaN's as equal. If the dtype of a1 and a2 is
+        complex, values will be considered equal if either the real or the
+        imaginary component of a given value is ``nan``.
 
     .. versionadded:: 1.19.0
 
@@ -2323,6 +2325,16 @@ def array_equal(a1, a2, equal_nan=False):
     >>> np.array_equal(a, a)
     False
     >>> np.array_equal(a, a, equal_nan=True)
+    True
+
+    When ``equal_nan`` is True, complex values with nan components are
+    considered equal if either the real *or* the imaginary components are nan.
+
+    >>> a = np.array([1 + 1j])
+    >>> b = a.copy()
+    >>> a.real = np.nan
+    >>> b.imag = np.nan
+    >>> np.array_equal(a, b, equal_nan=True)
     True
     """
     try:

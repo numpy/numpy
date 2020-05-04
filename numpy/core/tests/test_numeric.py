@@ -1470,6 +1470,11 @@ class TestArrayComparisons:
         a = np.array([[0, 1], [np.nan, 1]])
         assert_(not np.array_equal(a, a))
         assert_(np.array_equal(a, a, equal_nan=True))
+        # Complex values
+        a, b = [np.array([1 + 1j])]*2
+        a.real, b.imag = np.nan, np.nan
+        assert_(not np.array_equal(a, b, equal_nan=False))
+        assert_(np.array_equal(a, b, equal_nan=True))
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
