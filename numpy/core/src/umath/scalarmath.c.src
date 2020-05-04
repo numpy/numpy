@@ -285,7 +285,11 @@ static void
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
     @type@ mod;
 
-    *out = npy_divmod@c@(a, b, &mod);
+    if (!b) {
+        *out = a / b;
+    } else {
+        *out = npy_divmod@c@(a, b, &mod);
+    }
 }
 
 
@@ -318,7 +322,11 @@ static void
 half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out) {
     npy_half mod;
 
-    *out = npy_half_divmod(a, b, &mod);
+    if (!b) {
+        *out = a / b;
+    } else {
+        *out = npy_half_divmod(a, b, &mod);
+    }
 }
 
 

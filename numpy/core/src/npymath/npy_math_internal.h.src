@@ -625,6 +625,39 @@ NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 }
 
 /*
+ * Wrapper function for remainder edge cases
+ * Internally calls npy_divmod*
+ */
+NPY_INPLACE @type@
+npy_remainder@c@(@type@ a, @type@ b)
+{
+    @type@ mod;
+    if (!b) {
+        mod = npy_fmod@c@(a, b);
+        npy_set_floatstatus_invalid();
+    } else {
+        npy_divmod@c@(a, b, &mod);
+    }
+    return mod;
+}
+
+NPY_INPLACE @type@
+npy_floor_divide@c@(@type@ a, @type@ b) {
+    @type@ div, mod;
+    if (!b) {
+        div = a / b;
+        if (!a) {
+            npy_set_floatstatus_invalid();
+        } else {
+            npy_set_floatstatus_divbyzero();
+        }
+    } else {
+        div = npy_divmod@c@(a, b, &mod);
+    }
+    return div;
+}
+
+/*
  * Python version of divmod.
  *
  * The implementation is mostly copied from cpython 3.5.
@@ -637,9 +670,14 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     mod = npy_fmod@c@(a, b);
 
     if (!b) {
+        div = a / b;
+        npy_set_floatstatus_invalid();
+        if (a) {
+            npy_set_floatstatus_divbyzero();
+        }
         /* If b == 0, return result of fmod. For IEEE is nan */
         *modulus = mod;
-        return mod;
+        return div;
     }
 
     /* a - mod should be very nearly an integer multiple of b */

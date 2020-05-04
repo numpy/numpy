@@ -276,6 +276,10 @@ class TestModulus:
         # Check nans, inf
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
+            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
+            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -290,6 +294,9 @@ class TestModulus:
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
+                for op in [floordiv_and_mod, divmod]:
+                    div, mod = op(fone, fzer)
+                    assert_(np.isinf(div)) and assert_(np.isnan(mod))
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927
