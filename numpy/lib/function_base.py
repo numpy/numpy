@@ -3256,7 +3256,6 @@ def kaiser(M, beta):
     >>> plt.show()
 
     """
-    from numpy.dual import i0
     if M == 1:
         return np.array([1.])
     n = arange(0, M)

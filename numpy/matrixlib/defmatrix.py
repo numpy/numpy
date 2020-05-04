@@ -829,9 +829,9 @@ class matrix(N.ndarray):
         """
         M, N = self.shape
         if M == N:
-            from numpy.dual import inv as func
+            from numpy.linalg import inv as func
         else:
-            from numpy.dual import pinv as func
+            from numpy.linalg import pinv as func
         return asmatrix(func(self))
 
     @property

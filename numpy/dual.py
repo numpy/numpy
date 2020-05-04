@@ -10,6 +10,14 @@ NumPy.
 .. _Scipy : https://www.scipy.org
 
 """
+import warnings
+
+
+warnings.warn('The module numpy.dual is deprecated.  Instead of using dual, '
+              'use the functions directly from numpy or scipy.',
+              category=DeprecationWarning,
+              stacklevel=2)
+
 # This module should be used for functions both in numpy and scipy if
 #  you want to use the numpy version if available but the scipy version
 #  otherwise.
