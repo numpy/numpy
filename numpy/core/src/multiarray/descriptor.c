@@ -2427,12 +2427,19 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         obj = (PyObject *)self->typeobj;
         Py_INCREF(obj);
     }
-    else {
+    else if (self->type_num != NPY_OBJECT) {
+        /* NOTE: Longdouble is platform dependent and thus a bit problematic */
         elsize = self->elsize;
         if (self->type_num == NPY_UNICODE) {
             elsize >>= 2;
         }
         obj = PyUString_FromFormat("%c%d",self->kind, elsize);
+    }
+    else {
+        /*
+         * Unlike other types, the size of O depends on the system.
+         */
+        obj = PyUString_FromString("O");
     }
     PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(NOO)", obj, Py_False, Py_True));
 
