@@ -187,11 +187,9 @@ void mt19937_jump_state(mt19937_state *state, const char *jump_str) {
   pf = (unsigned long *)calloc(P_SIZE, sizeof(unsigned long));
 
   for (i = MEXP - 1; i > -1; i--) {
-    if (jump_str[i] == '1')
+    if (jump_str[(MEXP - 1) - i] == '1')
       set_coef(pf, i, 1);
   }
-  /* TODO: Should generate the next set and start from 0, but doesn't matter ??
-   */
   if (state->pos >= N) {
     state->pos = 0;
   }
