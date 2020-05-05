@@ -51,6 +51,70 @@ is preferred over the ``chebfit`` function from the
 See `routines.polynomials.classes` for a more detailed introduction to the
 polynomial convenience classes.
 
+Convenience Classes
+===================
+
+The following listing the various constants and methods common to the all of
+the classes representing the various kinds of polynomials. In the following,
+the term ``Poly`` represents any one of the convenience classes (e.g.
+``Polynomial``, ``Chebyshev``, ``Hermite``, etc.) while the lowercase ``p``
+represents an **instance**.
+
+Constants
+---------
+
+- ``Poly.domain``     -- Default domain
+- ``Poly.window``     -- Default window
+- ``Poly.basis_name`` -- String used to represent the basis
+- ``Poly.maxpower``   -- Maximum value ``n`` such that ``p(x)**n`` is allowed
+                         (default = 100)
+- ``Poly.nickname``   -- String used in printing
+
+Creation
+--------
+
+Methods for creating polynomial instances.
+
+- ``Poly.basis(degree)``    -- Basis polynomial of given degree
+- ``Poly.identity()         -- Polynomial ``p`` where ``p(x) = x`` for all 
+                               ``x``
+- ``Poly.fit(x, y, deg)     -- Polynomial of degree ``deg`` with coefficients 
+                               determined by the least-squares fit to data 
+                               ``x``, ``y``
+- ``Poly.fromroots(roots)`` -- Polynomial with specified roots
+- ``p.copy()``              -- Create a copy of ``p``
+
+Conversion
+----------
+
+Methods for converting a polynomial instance of one kind to another.
+
+- ``p.cast(Poly)``    -- Convert ``p`` to instance of kind ``Poly``
+- ``p.convert(Poly)`` -- Convert ``p`` to instance of kind ``Poly`` or map
+                         between domain and window
+
+Calculus
+--------
+- ``p.deriv()`` -- Take the derivative of ``p``
+- ``p.integ()`` -- Integrate ``p``
+
+Validation
+----------
+- ``Poly.has_samecoef(p1, p2)``   -- Check if coefficients match
+- ``Poly.has_samedomain(p1, p2)`` -- Check if domains match
+- ``Poly.has_sametype(p1, p2)``   -- Check if types match
+- ``Poly.has_samewindow(p1, p2)`` -- Check if windows match
+
+Misc
+----
+- ``p.linspace`` -- Return ``x, p(x)`` at equally-spaced points in domain
+- ``p.mapparms`` -- Return the parameters for the linear mapping between
+                      ``domain`` and ``window``.
+- ``p.roots``    -- Return the roots of `p`.
+- ``p.trim``     -- Remove trailing coefficients.
+- ``p.cutdeg(degree)`` -- Truncate p to given degree
+- ``p.truncate(size)`` -- Truncate p to given size
+
 """
 from .polynomial import Polynomial
 from .chebyshev import Chebyshev
