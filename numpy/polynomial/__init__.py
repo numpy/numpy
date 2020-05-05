@@ -12,6 +12,45 @@ all operations on polynomials, including evaluation at an argument, are
 implemented as operations on the coefficients.  Additional (module-specific)
 information can be found in the docstring for the module of interest.
 
+This package provides *convenience classes* for each of six different kinds
+of polynomials::
+
+         ============    ================
+         Name            Provides
+         ============    ================
+         Polynomial      Power series
+         Chebyshev       Chebyshev series
+         Legendre        Legendre series
+         Laguerre        Laguerre series
+         Hermite         Hermite series
+         HermiteE        HermiteE series
+         ============    ================
+
+These *convenience classes* provide a consistent interface for creating,
+manipulating, and fitting data with polynomials of different bases, and are the
+preferred way for interacting with polynomials. The convenience classes are
+available from `numpy.polynomial`, eliminating the need to navigate to the
+corresponding submodules, e.g. ``np.polynomial.Polynomial``
+or ``np.polynomial.Chebyshev`` instead of 
+``np.polynomial.polynomial.Polynomial`` or 
+``np.polynomial.chebyshev.Chebyshev``, respectively.
+It is strongly recommended that the class-based interface is used instead of
+functions from individual submodules for the sake of consistency and brevity.
+For example, to fit a Chebyshev polynomial with degree ``1`` to data given
+by arrays ``xdata`` and ``ydata``, the ``fit`` class method::
+
+    >>> from numpy.polynomial import Chebyshev
+    >>> c = Chebyshev.fit(xdata, ydata, deg=1)
+
+is preferred over the ``chebfit`` function from the 
+`numpy.polynomial.chebyshev` module::
+
+    >>> from numpy.polynomial.chebyshev import chebfit
+    >>> c = chebfit(xdata, ydata, deg=1)
+
+See `routines.polynomials.classes` for a more detailed introduction to the
+polynomial convenience classes.
+
 """
 from .polynomial import Polynomial
 from .chebyshev import Chebyshev
