@@ -90,6 +90,8 @@ can't be mixed in arithmetic::
     >>> p1 == p2
     False
     >>> p1 + p2
+    Traceback (most recent call last):
+        ...
     TypeError: Domains differ
 
 See the documentation for the
