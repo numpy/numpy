@@ -30,13 +30,13 @@ Quick Reference
 
 The following table highlights some of the main differences between the
 legacy polynomial module and the polynomial package for common tasks.
-The `~numpy.polynomial.Polynomial` class is imported for brevity::
+The `~numpy.polynomial.polynomial.Polynomial` class is imported for brevity::
 
     from numpy.polynomial import Polynomial
 
 
 +------------------------+------------------------------+---------------------------------------+
-|  How to...             | Legacy (`numpy.poly1d`)      | `numpy.polynomial`                    |
+|  **How to...**         | Legacy (`numpy.poly1d`)      | `numpy.polynomial`                    |
 +------------------------+------------------------------+---------------------------------------+
 | Create a               | ``p = np.poly1d([1, 2, 3])`` | ``p = Polynomial([3, 2, 1])``         |
 | polynomial object      |                              |                                       |
@@ -56,8 +56,8 @@ Transition Guide
 ~~~~~~~~~~~~~~~~
 
 There are significant differences between ``numpy.lib.polynomial`` and
-the the polynomial package, `numpy.polynomial`.
-The most significant differences is the ordering of the coefficients for the
+`numpy.polynomial`.
+The most significant difference is the ordering of the coefficients for the
 polynomial expressions.
 The  various routines in `numpy.polynomial` all
 deal with series whose coefficients go from degree zero upward,
@@ -67,19 +67,18 @@ correspond to degree, i.e., ``coef[i]`` is the coefficient of the term of
 degree *i*.
 
 Though the difference in convention may be confusing, it is straightforward to
-convert from the old-style polynomial API to the new.
+convert from the legacy polynomial API to the new.
 For example, the following demonstrates how you would convert a `numpy.poly1d`
 instance representing the expression :math:`x^{2} + 2x + 3` to a
 `~numpy.polynomial.polynomial.Polynomial` instance representing the same
 expression::
 
-    >>> c = [1, 2, 3]                          # x**2 +2*x + 3
-    >>> p1d = np.poly1d(c)                     # Legacy
-    >>> p = np.polynomial.Polynomial(c[::-1])
+    >>> p1d = np.poly1d([1, 2, 3])
+    >>> p = np.polynomial.Polynomial(p1d.coef[::-1])
 
 In addition to the ``coef`` attribute, polynomials from the polynomial
-package also have ``domain`` and ``window`` attributes that define any
-particular polynomial instance. These attributes are most relevant when
+package also have ``domain`` and ``window`` attributes.
+These attributes are most relevant when
 polynomials to data, though it should be noted that polynomials with
 different ``domain`` and ``window`` attributes are not considered equal, and
 can't be mixed in arithmetic::
@@ -94,16 +93,16 @@ can't be mixed in arithmetic::
     TypeError: Domains differ
 
 See the documentation for the
-`convenience classes <routines.polynomials.classes>` for further details on
+`convenience classes <routines.polynomials.classes>`_ for further details on
 the ``domain`` and ``window`` attributes.
 
 Another major difference bewteen the legacy polynomial module and the
-polynomial package is polynomial fitting. In the legacy code, fitting was
+polynomial package is polynomial fitting. In the old module, fitting was
 done via the `~numpy.polyfit` function. In the polynomial package, the
-`Polynomial.fit` classmethod is preferred. For example, consider a simple
-linear fit to the following data:
+`~numpy.polynomial.polynomial.Polynomial.fit`_ class method is preferred. For
+example, consider a simple linear fit to the following data:
 
-.. ipython::
+.. ipython:: python
 
     rg = np.random.default_rng()
     x = np.arange(10)
@@ -112,24 +111,24 @@ linear fit to the following data:
 With the legacy polynomial module, a linear fit (i.e. polynomial of degree 1)
 could be applied to these data with `~numpy.polyfit`:
 
-.. ipython::
+.. ipython:: python
 
     np.polyfit(x, y, deg=1)
 
-With the new polynomial API, the `~numpy.polynomial.polynomial.Polynomial.fit`
+With the new polynomial API, the `~numpy.polynomial.polynomial.Polynomial.fit`_
 class method is preferred:
 
-.. ipython::
+.. ipython:: python
 
     p_fitted = np.polynomial.Polynomial.fit(x, y, deg=1)
     p_fitted
 
-Note that the coefficients are given *in scaled domain* defined by the linear
-mapping between the ``window`` and ``domain``.
+Note that the coefficients are given *in the scaled domain* defined by the
+linear mapping between the ``window`` and ``domain``.
 `~numpy.polynomial.polynomial.Polynomial.convert` can be used to get the
 coefficients in the unscaled data domain.
 
-.. ipython::
+.. ipython:: python
 
     p_fitted.convert()
 
@@ -149,8 +148,8 @@ with polynomials regardless of their type.
 
    routines.polynomials.classes
 
-Documentation pertaining to specific functions defined for each kind of the
-kinds of polynomials can be found in the corresponding module documentation:
+Documentation pertaining to specific functions defined for each kind of
+polynomial individually can be found in the corresponding module documentation:
 
 .. toctree::
    :maxdepth: 1
