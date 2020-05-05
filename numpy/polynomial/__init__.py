@@ -13,10 +13,10 @@ implemented as operations on the coefficients.  Additional (module-specific)
 information can be found in the docstring for the module of interest.
 
 This package provides *convenience classes* for each of six different kinds
-of polynomials::
+of polynomials:
 
          ============    ================
-         Name            Provides
+         **Name**        **Provides**
          ============    ================
          Polynomial      Power series
          Chebyshev       Chebyshev series
@@ -27,29 +27,30 @@ of polynomials::
          ============    ================
 
 These *convenience classes* provide a consistent interface for creating,
-manipulating, and fitting data with polynomials of different bases, and are the
-preferred way for interacting with polynomials. The convenience classes are
-available from `numpy.polynomial`, eliminating the need to navigate to the
-corresponding submodules, e.g. ``np.polynomial.Polynomial``
-or ``np.polynomial.Chebyshev`` instead of 
+manipulating, and fitting data with polynomials of different bases.
+The convenience classes are the preferred interface for the `~numpy.polynomial`
+package, and are available from the `numpy.polynomial` namespace.
+This eliminates the need to
+navigate to the corresponding submodules, e.g. ``np.polynomial.Polynomial``
+or ``np.polynomial.Chebyshev`` instead of
 ``np.polynomial.polynomial.Polynomial`` or 
 ``np.polynomial.chebyshev.Chebyshev``, respectively.
-It is strongly recommended that the class-based interface is used instead of
-functions from individual submodules for the sake of consistency and brevity.
+The classes provide a more consistent and concise interface than the
+type-specific functions defined in the submodules for each type of polynomial.
 For example, to fit a Chebyshev polynomial with degree ``1`` to data given
-by arrays ``xdata`` and ``ydata``, the ``fit`` class method::
+by arrays ``xdata`` and ``ydata``, the 
+`~chebyshev.Chebyshev.fit` class method::
 
     >>> from numpy.polynomial import Chebyshev
     >>> c = Chebyshev.fit(xdata, ydata, deg=1)
 
-is preferred over the ``chebfit`` function from the 
+is preferred over the `chebyshev.chebfit` function from the 
 `numpy.polynomial.chebyshev` module::
 
     >>> from numpy.polynomial.chebyshev import chebfit
     >>> c = chebfit(xdata, ydata, deg=1)
 
-See `routines.polynomials.classes` for a more detailed introduction to the
-polynomial convenience classes.
+See :doc:`routines.polynomials.classes` for more details.
 
 Convenience Classes
 ===================
@@ -58,7 +59,7 @@ The following listing the various constants and methods common to the all of
 the classes representing the various kinds of polynomials. In the following,
 the term ``Poly`` represents any one of the convenience classes (e.g.
 ``Polynomial``, ``Chebyshev``, ``Hermite``, etc.) while the lowercase ``p``
-represents an **instance**.
+represents an **instance** of a polynomial class.
 
 Constants
 ---------
@@ -66,8 +67,7 @@ Constants
 - ``Poly.domain``     -- Default domain
 - ``Poly.window``     -- Default window
 - ``Poly.basis_name`` -- String used to represent the basis
-- ``Poly.maxpower``   -- Maximum value ``n`` such that ``p(x)**n`` is allowed
-                         (default = 100)
+- ``Poly.maxpower``   -- Maximum value ``n`` such that ``p**n`` is allowed
 - ``Poly.nickname``   -- String used in printing
 
 Creation
@@ -76,12 +76,10 @@ Creation
 Methods for creating polynomial instances.
 
 - ``Poly.basis(degree)``    -- Basis polynomial of given degree
-- ``Poly.identity()         -- Polynomial ``p`` where ``p(x) = x`` for all 
-                               ``x``
-- ``Poly.fit(x, y, deg)     -- Polynomial of degree ``deg`` with coefficients 
-                               determined by the least-squares fit to data 
-                               ``x``, ``y``
-- ``Poly.fromroots(roots)`` -- Polynomial with specified roots
+- ``Poly.identity()``       -- ``p`` where ``p(x) = x`` for all ``x``
+- ``Poly.fit(x, y, deg)``   -- ``p`` of degree ``deg`` with coefficients 
+  determined by the least-squares fit to the data ``x``, ``y``
+- ``Poly.fromroots(roots)`` -- ``p`` with specified roots
 - ``p.copy()``              -- Create a copy of ``p``
 
 Conversion
@@ -91,7 +89,7 @@ Methods for converting a polynomial instance of one kind to another.
 
 - ``p.cast(Poly)``    -- Convert ``p`` to instance of kind ``Poly``
 - ``p.convert(Poly)`` -- Convert ``p`` to instance of kind ``Poly`` or map
-                         between domain and window
+  between ``domain`` and ``window``
 
 Calculus
 --------
@@ -107,11 +105,11 @@ Validation
 
 Misc
 ----
-- ``p.linspace`` -- Return ``x, p(x)`` at equally-spaced points in domain
-- ``p.mapparms`` -- Return the parameters for the linear mapping between
-                      ``domain`` and ``window``.
-- ``p.roots``    -- Return the roots of `p`.
-- ``p.trim``     -- Remove trailing coefficients.
+- ``p.linspace()`` -- Return ``x, p(x)`` at equally-spaced points in ``domain``
+- ``p.mapparms()`` -- Return the parameters for the linear mapping between
+  ``domain`` and ``window``.
+- ``p.roots()``    -- Return the roots of `p`.
+- ``p.trim()``     -- Remove trailing coefficients.
 - ``p.cutdeg(degree)`` -- Truncate p to given degree
 - ``p.truncate(size)`` -- Truncate p to given size
 
