@@ -1,13 +1,19 @@
 """
-Aliases for functions which may be accelerated by Scipy.
+.. deprecated:: 1.20
 
-Scipy_ can be built to use accelerated or otherwise improved libraries
+*This module is deprecated.  Instead of importing functions from*
+``numpy.dual``, *the functions should be imported directly from NumPy
+or SciPy*.
+
+Aliases for functions which may be accelerated by SciPy.
+
+SciPy_ can be built to use accelerated or otherwise improved libraries
 for FFTs, linear algebra, and special functions. This module allows
 developers to transparently support these accelerated functions when
-scipy is available but still support users who have only installed
+SciPy is available but still support users who have only installed
 NumPy.
 
-.. _Scipy : https://www.scipy.org
+.. _SciPy : https://www.scipy.org
 
 """
 import warnings
