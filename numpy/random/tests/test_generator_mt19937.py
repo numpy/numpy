@@ -507,7 +507,7 @@ class TestIntegers:
                 val = random.integers(0, 6 - endpoint, size=1000, endpoint=endpoint,
                                  dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.md5(val).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
@@ -2383,11 +2383,17 @@ def test_jumped(config):
     mt19937 = MT19937(seed)
     # Burn step
     mt19937.random_raw(steps)
-    md5 = hashlib.md5(mt19937.state["state"]["key"])
-    assert md5.hexdigest() == config["initial"]["key_md5"]
+    key = mt19937.state["state"]["key"]
+    if sys.byteorder == 'big':
+        key = key.byteswap()
+    md5 = hashlib.md5(key)
     assert mt19937.state["state"]["pos"] == config["initial"]["pos"]
+    assert md5.hexdigest() == config["initial"]["key_md5"]
 
     jumped = mt19937.jumped()
-    md5 = hashlib.md5(jumped.state["state"]["key"])
-    assert md5.hexdigest() == config["jumped"]["key_md5"]
+    key = jumped.state["state"]["key"]
+    if sys.byteorder == 'big':
+        key = key.byteswap()
+    md5 = hashlib.md5(key)
     assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
+    assert md5.hexdigest() == config["jumped"]["key_md5"]

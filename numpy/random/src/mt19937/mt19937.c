@@ -1,6 +1,5 @@
 #include "mt19937.h"
 #include "mt19937-jump.h"
-#include "mt19937-poly.h"
 
 void mt19937_seed(mt19937_state *state, uint32_t seed) {
   int pos;
@@ -104,4 +103,4 @@ extern inline uint32_t mt19937_next32(mt19937_state *state);
 
 extern inline double mt19937_next_double(mt19937_state *state);
 
-void mt19937_jump(mt19937_state *state) { mt19937_jump_state(state, poly); }
+void mt19937_jump(mt19937_state *state) { mt19937_jump_state(state); }
