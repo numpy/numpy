@@ -774,6 +774,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     multiarray_deps = [
+            join('src', 'multiarray', 'abstractdtypes.h'),
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
@@ -826,6 +827,7 @@ def configuration(parent_package='',top_path=None):
             ] + npysort_sources + npymath_sources
 
     multiarray_src = [
+            join('src', 'multiarray', 'abstractdtypes.c'),
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),

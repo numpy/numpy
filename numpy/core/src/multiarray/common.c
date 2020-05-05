@@ -44,34 +44,9 @@ _array_find_python_scalar_type(PyObject *op)
     else if (PyComplex_Check(op)) {
         return PyArray_DescrFromType(NPY_CDOUBLE);
     }
-    else if (PyInt_Check(op)) {
-        /* bools are a subclass of int */
-        if (PyBool_Check(op)) {
-            return PyArray_DescrFromType(NPY_BOOL);
-        }
-        else {
-            return  PyArray_DescrFromType(NPY_LONG);
-        }
-    }
     else if (PyLong_Check(op)) {
-        /* check to see if integer can fit into a longlong or ulonglong
-           and return that --- otherwise return object */
-        if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
-            PyErr_Clear();
-        }
-        else {
-            return PyArray_DescrFromType(NPY_LONGLONG);
-        }
-
-        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1)
-            && PyErr_Occurred()){
-            PyErr_Clear();
-        }
-        else {
-            return PyArray_DescrFromType(NPY_ULONGLONG);
-        }
-
-        return PyArray_DescrFromType(NPY_OBJECT);
+        return PyArray_PyIntAbstractDType.discover_descr_from_pyobject(
+                    &PyArray_PyIntAbstractDType, op);
     }
     return NULL;
 }

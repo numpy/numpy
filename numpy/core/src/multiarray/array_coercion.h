@@ -27,6 +27,9 @@ PyArray_DiscoverDTypeAndShape(
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
         PyArray_Descr **out_descr);
 
+NPY_NO_EXPORT int
+PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
+        PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType);
 
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
@@ -41,6 +44,7 @@ NPY_NO_EXPORT int npy_new_coercion_cache(
 
 /* Frees the coercion cache object. */
 NPY_NO_EXPORT void npy_free_coercion_cache(coercion_cache_obj *first);
+
 
 
 #endif  /* _NPY_ARRAY_COERCION_H */

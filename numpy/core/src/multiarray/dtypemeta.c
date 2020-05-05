@@ -141,25 +141,15 @@ string_discover_descr_from_pyobject(
 
 static PyArray_Descr *
 void_discover_descr_from_pyobject(
-        PyArray_DTypeMeta *cls, PyObject *obj)
+        PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
 {
-    /*
-     * NOTE: This causes an unnecessary two pass algorithm, since we only
-     * check promotion of the actual descriptor. It would be nicer to
-     * separate out the structured-void type, since it has different behaviour
-     * in many places, and thus should be its own DType (and scalar)
-     */
-    if (PyObject_TypeCheck(obj, &PyVoidArrType_Type)) {
-        /*
-         * The function actually just gets the `.dtype` attribute and puts it
-         * into a new object (for void only though).
-         */
-        PyArray_Descr *descr = ((PyVoidScalarObject *)obj)->descr;
-        Py_INCREF(descr);
-        return descr;
+    if (PyArray_IsScalar(obj, Void)) {
+        PyVoidScalarObject *void_obj = (PyVoidScalarObject *)obj;
+        Py_INCREF(void_obj->descr);
+        return void_obj->descr;
     }
-
-    return string_discover_descr_from_pyobject(cls, obj);
+    Py_INCREF(Py_NotImplemented);
+    return (PyArray_Descr *)Py_NotImplemented;
 }
 
 
@@ -181,6 +171,21 @@ discover_datetime_and_timedelta_from_pyobject(
     else {
         return find_object_datetime_type(obj, cls->type_num);
     }
+}
+
+
+static PyArray_Descr *
+flexible_default_descr(PyArray_DTypeMeta *cls)
+{
+    PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+    if (res == NULL) {
+        return NULL;
+    }
+    res->elsize = 1;
+    if (cls->type_num == NPY_UNICODE) {
+        res->elsize *= 4;
+    }
+    return res;
 }
 
 
@@ -312,6 +317,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;
+        dtype_class->default_descr = flexible_default_descr;
         if (descr->type_num == NPY_VOID) {
             dtype_class->is_known_scalar = void_is_known_scalar;
             dtype_class->discover_descr_from_pyobject = (

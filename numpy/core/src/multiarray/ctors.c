@@ -30,6 +30,7 @@
 #include <assert.h>
 
 #include "get_attr_string.h"
+#include "array_coercion.h"
 
 /*
  * Reading from a file or a string.
@@ -1916,6 +1917,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
      */
     PyArrayObject *arr = NULL, *ret;
     PyArray_Descr *dtype = NULL;
+    coercion_cache_obj *cache = NULL;
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
 
@@ -1924,124 +1926,84 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
-    /* Get either the array or its parameters if it isn't an array */
-    if (PyArray_GetArrayParamsFromObject_int(op,
-                newtype, 0, &dtype, &ndim, dims, &arr) < 0) {
-        Py_XDECREF(newtype);
+    PyArray_Descr *fixed_descriptor;
+    PyArray_DTypeMeta *fixed_DType;
+    if (PyArray_ExtractDTypeAndDescriptor((PyObject *)newtype,
+            &fixed_descriptor, &fixed_DType) < 0) {
         return NULL;
     }
 
-    /* If the requested dtype is flexible, adapt it */
-    if (newtype != NULL) {
-        newtype = PyArray_AdaptFlexibleDType((arr == NULL) ? op : (PyObject *)arr,
-                    (dtype == NULL) ? PyArray_DESCR(arr) : dtype,
-                    newtype);
-        if (newtype == NULL) {
-            return NULL;
-        }
+    // TODO: The path-through array path may be slowed down now... And
+    //       I should check for subtle behaviour changes otherwise
+    //       (mainly compare old code)?
+    ndim = PyArray_DiscoverDTypeAndShape(op,
+            NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype);
+    Py_XDECREF(newtype);
+    if (ndim < 0) {
+        return NULL;
     }
 
-    /* If we got dimensions and dtype instead of an array */
-    if (arr == NULL) {
-        if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
+    if (min_depth != 0 && ndim < min_depth) {
+        PyErr_SetString(PyExc_ValueError,
+                "object of too small depth for desired array");
+        Py_DECREF(dtype);
+        npy_free_coercion_cache(cache);
+        return NULL;
+    }
+    if (max_depth != 0 && ndim > max_depth) {
+        PyErr_SetString(PyExc_ValueError,
+                "object too deep for desired array");
+        Py_DECREF(dtype);
+        npy_free_coercion_cache(cache);
+        return NULL;
+    }
+
+    /* Got the correct parameters, but the cache may already hold the result */
+    if (cache != NULL && (cache->converted_obj == op && !(cache->sequence))) {
+        /*
+         * There is only a single array and it was converted, it
+         * may still have the incorrect type, but that is handled below.
+         */
+        arr = (PyArrayObject *)(cache->arr_or_sequence);
+        Py_INCREF(arr);
+        npy_free_coercion_cache(cache);
+
+        /* we may need to cast or assert flags: */
+        return PyArray_FromArray(arr, dtype, flags);
+    }
+
+    /* There was no array (or array-like) passed in directly. */
+    if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
-            Py_DECREF(dtype);
-            Py_XDECREF(newtype);
-            PyErr_SetString(PyExc_TypeError,
-                            "WRITEBACKIFCOPY used for non-array input.");
-            return NULL;
-        }
-        else if (min_depth != 0 && ndim < min_depth) {
-            Py_DECREF(dtype);
-            Py_XDECREF(newtype);
-            PyErr_SetString(PyExc_ValueError,
-                            "object of too small depth for desired array");
-            ret = NULL;
-        }
-        else if (max_depth != 0 && ndim > max_depth) {
-            Py_DECREF(dtype);
-            Py_XDECREF(newtype);
-            PyErr_SetString(PyExc_ValueError,
-                            "object too deep for desired array");
-            ret = NULL;
-        }
-        else if (ndim == 0 && PyArray_IsScalar(op, Generic)) {
-            ret = (PyArrayObject *)PyArray_FromScalar(op, newtype);
-            Py_DECREF(dtype);
-        }
-        else {
-            if (newtype == NULL) {
-                newtype = dtype;
-            }
-            else {
-                /*
-                 * TODO: would be nice to do this too, but it's
-                 *       a behavior change.  It's also a bit tricky
-                 *       for downcasting to small integer and float
-                 *       types, and might be better to modify
-                 *       PyArray_AssignFromSequence and descr->f->setitem
-                 *       to have a 'casting' parameter and
-                 *       to check each value with scalar rules like
-                 *       in PyArray_MinScalarType.
-                 */
-                /*
-                if (!(flags&NPY_ARRAY_FORCECAST) && ndim > 0 &&
-                        !PyArray_CanCastTo(dtype, newtype)) {
-                    Py_DECREF(dtype);
-                    Py_XDECREF(newtype);
-                    PyErr_SetString(PyExc_TypeError,
-                                "object cannot be safely cast to array "
-                                "of required type");
-                    return NULL;
-                }
-                */
-                Py_DECREF(dtype);
-            }
-
-            /* Create an array and copy the data */
-            ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, newtype,
-                                         ndim, dims,
-                                         NULL, NULL,
-                                         flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
-            if (ret == NULL) {
-                return NULL;
-            }
-
-            if (ndim > 0) {
-                if (PyArray_AssignFromSequence(ret, op) < 0) {
-                    Py_DECREF(ret);
-                    ret = NULL;
-                }
-            }
-            else {
-                if (PyArray_SETITEM(ret, PyArray_DATA(ret), op) < 0) {
-                    Py_DECREF(ret);
-                    ret = NULL;
-                }
-            }
-        }
-    }
-    else {
-        if (min_depth != 0 && PyArray_NDIM(arr) < min_depth) {
-            PyErr_SetString(PyExc_ValueError,
-                            "object of too small depth for desired array");
-            Py_DECREF(arr);
-            Py_XDECREF(newtype);
-            ret = NULL;
-        }
-        else if (max_depth != 0 && PyArray_NDIM(arr) > max_depth) {
-            PyErr_SetString(PyExc_ValueError,
-                            "object too deep for desired array");
-            Py_DECREF(arr);
-            Py_XDECREF(newtype);
-            ret = NULL;
-        }
-        else {
-            ret = (PyArrayObject *)PyArray_FromArray(arr, newtype, flags);
-            Py_DECREF(arr);
-        }
+        Py_DECREF(dtype);
+        PyErr_SetString(PyExc_TypeError,
+                        "WRITEBACKIFCOPY used for non-array input.");
+        return NULL;
     }
 
+    /* Create a new array and copy the data */
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype, ndim, dims, NULL, NULL,
+            flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
+    if (cache == NULL) {
+        /* This is a single item. Set it directly */
+        assert(ndim == 0);
+        if (PyArray_SETITEM(ret, PyArray_DATA(ret), op) < 0) {
+            Py_DECREF(ret);
+            ret = NULL;
+        }
+        return (PyObject *)ret;
+    }
+    assert(ndim != 0);
+    // TODO: Use the coercion cache in AssignFromSequence!
+    npy_free_coercion_cache(cache);
+    if (PyArray_AssignFromSequence(ret, op) < 0) {
+        Py_DECREF(ret);
+        ret = NULL;
+    }
     return (PyObject *)ret;
 }
 

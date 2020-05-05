@@ -35,6 +35,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 /* Internal APIs */
 #include "alloc.h"
+#include "abstractdtypes.h"
 #include "array_coercion.h"
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
@@ -4622,6 +4623,9 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (set_typeinfo(d) != 0) {
+        goto err;
+    }
+    if (initialize_abstract_dtypes_and_map_others() < 0) {
         goto err;
     }
     if (initumath(m) != 0) {
