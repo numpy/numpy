@@ -114,33 +114,27 @@ nonparametric_discover_descr_from_pyobject(
         PyArray_DTypeMeta *cls, PyObject *obj)
 {
     /* If the object is of the correct scalar type return our singleton */
-    if (Py_TYPE(obj) == cls->scalar_type) {
-        Py_INCREF(cls->singleton);
-        return cls->singleton;
-    }
-    /* Otherwise, it may also be a list so use normal machinery to find out */
-    Py_INCREF(Py_NotImplemented);
-    return (PyArray_Descr*)Py_NotImplemented;
+    assert(!cls->parametric);
+    Py_INCREF(cls->singleton);
+    return cls->singleton;
 }
 
 
+static int
+void_is_known_scalar(PyArray_DTypeMeta *cls, PyObject *obj)
+{
+    /* No need to check void scalars, those are always considered scalars */
+    if (PyTuple_Check(obj)) {
+        /* void/structured DType considers tuples as scalars */
+        return 1;
+    }
+    return 0;
+}
 
 static PyArray_Descr *
 string_discover_descr_from_pyobject(
         PyArray_DTypeMeta *cls, PyObject *obj)
 {
-    /*
-     * Stings are somewhat broken, as they try to convert everything to string
-     * unless it happens to be an array or an object already.
-     */
-    if (PyArray_Check(obj)) {
-        Py_INCREF(Py_None);
-        return (PyArray_Descr *)Py_None;
-    }
-    if (!PyBytes_Check(obj) && !PyUnicode_Check(obj)) {
-        Py_INCREF(Py_None);
-        return (PyArray_Descr *)Py_None;
-    }
     return PyArray_DTypeFromObjectStringDiscovery(obj, NULL, cls->type_num);
 }
 
@@ -307,6 +301,9 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->f = descr->f;
     dtype_class->kind = descr->kind;
 
+    /* Strings and voids have (strange) logic around scalars. */
+    dtype_class-> is_known_scalar = NULL;
+
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
         dtype_class->parametric = NPY_TRUE;
@@ -316,6 +313,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;
         if (descr->type_num == NPY_VOID) {
+            dtype_class->is_known_scalar = void_is_known_scalar;
             dtype_class->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
         }

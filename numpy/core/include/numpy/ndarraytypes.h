@@ -1825,6 +1825,9 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
             PyArray_DTypeMeta *cls, PyObject *obj);
 
+    typedef int (is_known_scalar_function)(
+            PyArray_DTypeMeta *cls, PyObject *obj);
+
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
      * make DTypes available in Python at which point they will be heap types.
@@ -1877,6 +1880,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
 
         /* DType methods, these could be moved into its own struct */
         discover_descr_from_pyobject_function *discover_descr_from_pyobject;
+        is_known_scalar_function *is_known_scalar;
     };
 
     #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
