@@ -976,3 +976,10 @@ cdef inline int import_ufunc() except -1:
         _import_umath()
     except Exception:
         raise ImportError("numpy.core.umath failed to import")
+
+cdef extern from *:
+    # Leave a marker that the NumPy declarations came from this file
+    # See https://github.com/cython/cython/issues/3573
+    """
+    /* NumPy API declarations from "numpy/__init__.pxd" */
+    """
