@@ -14,7 +14,7 @@ OPENBLAS_V = '0.3.9'
 OPENBLAS_LONG = 'v0.3.7-527-g79fd006c'  # the 0.3.7 is misleading
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
-ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86', 'ppc64le', 's390x']
+ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64', 'i686', 'ppc64le', 's390x']
 
 IS_32BIT = sys.maxsize < 2**32
 def get_arch():
@@ -25,10 +25,10 @@ def get_arch():
     else:
         ret = platform.uname().machine
         # What do 32 bit machines report?
-        # If they are a docker, they report x86_64 or i686
-        if 'x86' in ret or ret == 'i686':
-            ret = 'x86'
-    assert ret in ARCHITECTURES
+        # If they are a docker, they can report x86_64
+        if 'x86' in ret and IS_32BIT:
+            arch = 'i686'
+    assert ret in ARCHITECTURES, f'invalid architecture {ret}'
     return ret
 
 def get_ilp64():
@@ -38,14 +38,25 @@ def get_ilp64():
         raise RuntimeError("NPY_USE_BLAS_ILP64 set on 32-bit arch")
     return "64_"
 
+def get_manylinux(arch):
+    if arch in ('x86_64', 'i686'):
+        default = '2010'
+    else:
+        default = '2014'
+    ret = os.environ.get("MB_ML_VER", default)
+    # XXX For PEP 600 this can be a glibc version
+    assert ret in ('1', '2010', '2014'), f'invalid MB_ML_VER {ret}'
+    return ret
+
+
 def download_openblas(target, arch, ilp64):
     import urllib3
+    ml_ver = get_manylinux(arch)
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
-    if arch in ('aarch64', 'ppc64le', 's390x'):
-        suffix = f'manylinux2014_{arch}.tar.gz'
+    if arch in ('aarch64', 'ppc64le', 's390x', 'x86_64', 'i686'):
+        suffix = f'manylinux{ml_ver}_{arch}.tar.gz'
         filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
-        typ = 'tar.gz'
         typ = 'tar.gz'
     elif arch == 'darwin':
         suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
@@ -58,13 +69,6 @@ def download_openblas(target, arch, ilp64):
             suffix = 'win_amd64-gcc_7_1_0.zip'
         filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
-    elif 'x86' in arch:
-        if IS_32BIT:
-            suffix = 'manylinux2010_i686.tar.gz'
-        else:
-            suffix = 'manylinux2010_x86_64.tar.gz'
-        filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
-        typ = 'tar.gz'
     if not filename:
         return None
     print("Downloading:", filename, file=sys.stderr)
