@@ -38,6 +38,9 @@
 #define NPY_MAX_SIMD_SIZE 1024
 #endif
 
+/** Provides the various *_LOOP macros */
+#include "fast_loop_macros.h"
+
 /*
  * include vectorized functions and dispatchers
  * this file is safe to include also for generic builds
@@ -45,10 +48,6 @@
  * runtime detected
  */
 #include "simd.inc"
-
-/** Provides the various *_LOOP macros */
-#include "fast_loop_macros.h"
-
 
 /******************************************************************************
  **                          GENERIC FLOAT LOOPS                             **

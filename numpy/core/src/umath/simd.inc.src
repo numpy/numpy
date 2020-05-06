@@ -50,12 +50,6 @@
  */
 #define MAX_STEP_SIZE 2097152
 
-static NPY_INLINE npy_uintp
-abs_ptrdiff(char *a, char *b)
-{
-    return (a > b) ? (a - b) : (b - a);
-}
-
 /*
  * nomemoverlap - returns true if two strided arrays have an overlapping
  * region in memory. ip_size/op_size = size of the arrays which can be negative
