@@ -42,7 +42,7 @@ def get_manylinux(arch):
     if arch in ('x86_64', 'i686'):
         default = '2010'
     else:
-        default = '2104'
+        default = '2014'
     ret = os.environ.get("MB_ML_VER", "2010")
     # XXX For PEP 600 this can be a glibc version
     assert ret in ('1', '2010', '2014'), f'invalid MB_ML_VER {ret}'
