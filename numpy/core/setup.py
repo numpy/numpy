@@ -961,7 +961,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_operand_flag_tests',
                     sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
 
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
     config.add_data_dir('tests/data')
 
     config.make_svn_version_py()
