@@ -4,7 +4,7 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('fft', parent_package, top_path)
 
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
 
     # AIX needs to be told to use large file support - at all times
     defs = [('_LARGE_FILES', None)] if sys.platform[:3] == "aix" else []
