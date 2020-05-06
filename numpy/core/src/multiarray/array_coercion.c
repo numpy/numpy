@@ -81,6 +81,7 @@ enum _dtype_discovery_flags {
     IS_RAGGED_ARRAY = 1,
     GAVE_SUBCLASS_WARNING = 2,
     PROMOTION_FAILED = 4,
+    DISCOVER_STRINGS_AS_SEQUENCES = 8,
 };
 
 
@@ -260,7 +261,8 @@ discover_dtype_from_pyobject(PyObject *obj, enum _dtype_discovery_flags *flags)
         DType = (PyArray_DTypeMeta *)Py_TYPE(legacy_descr);
         Py_INCREF(DType);
         Py_DECREF(legacy_descr);
-        if (!((*flags) & GAVE_SUBCLASS_WARNING)) {
+        // TODO: Do not add new warning for now...
+        if (0 && !((*flags) & GAVE_SUBCLASS_WARNING)) {
             if (DEPRECATE_FUTUREWARNING(
                     "in the future NumPy will not automatically find the "
                     "dtype for subclasses of scalars known to NumPy (i.e. "
@@ -345,7 +347,7 @@ find_scalar_descriptor(
          * guess the unit for a user-implemented datetime scalar.
          */
         // TODO: Ensure the parametric check is documented in NEP (at least).
-        if (DType == fixed_DType || !fixed_DType->parametric) {
+        if (DType == fixed_DType) {
             PyErr_Format(PyExc_RuntimeError, bad_dtype_msg, fixed_DType);
             return NULL;
         }
@@ -383,7 +385,8 @@ find_scalar_descriptor(
         return descr;
     }
 
-    return cast_descriptor_to_fixed_dtype(descr, fixed_DType);
+    Py_SETREF(descr, cast_descriptor_to_fixed_dtype(descr, fixed_DType));
+    return descr;
 }
 
 
@@ -525,6 +528,31 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
  * @param flags used signal that this is a ragged array, used internally and
  *        can be expanded if necessary.
  */
+int handle_scalar(
+        PyObject *obj, int curr_dims, int *max_dims,
+        PyArray_Descr **out_descr, npy_intp *out_shape,
+        PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
+        enum _dtype_discovery_flags *flags,
+        PyArray_DTypeMeta *DType, PyArray_Descr *descr)
+{
+    /* This is a scalar, so find the descriptor */
+    descr = find_scalar_descriptor(fixed_DType, DType, obj, requested_descr);
+    if (descr == NULL) {
+        return -1;
+    }
+    if (update_shape(curr_dims, max_dims, out_shape, 0, NULL, NPY_FALSE) < 0) {
+        *flags |= IS_RAGGED_ARRAY;
+        Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
+        return *max_dims;
+    }
+    if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
+        return -1;
+    }
+    Py_DECREF(descr);
+    return *max_dims;
+}
+
+
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape_Recursive(
         PyObject *obj, int curr_dims, int max_dims, PyArray_Descr**out_descr,
@@ -534,6 +562,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         enum _dtype_discovery_flags *flags)
 {
     PyArrayObject *arr = NULL;
+    PyObject *seq;
 
     /*
      * The first step is to find the DType class if it was not provided,
@@ -542,6 +571,21 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      */
     PyArray_DTypeMeta *DType = NULL;
     PyArray_Descr *descr = NULL;
+
+    if (NPY_UNLIKELY(*flags & DISCOVER_STRINGS_AS_SEQUENCES)) {
+        /*
+         * We currently support that bytes/strings are considered sequences,
+         * if the dtype is np.dtype('c'), this should be deprecated probably,
+         * but requires hacks right now.
+         * TODO: Consider passing this as a flag, as it was before?
+         */
+        if (PyBytes_Check(obj) && PyBytes_Size(obj) != 1) {
+            goto force_sequence_due_to_char_dtype;
+        }
+        else if (PyUnicode_Check(obj) && PyUnicode_GetLength(obj) != 1) {
+            goto force_sequence_due_to_char_dtype;
+        }
+    }
 
     if (fixed_DType != NULL) {
         /*
@@ -576,25 +620,13 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
     }
     if (DType != (PyArray_DTypeMeta *)Py_None) {
-        /* This is a scalar, so find the descriptor */
-        descr = find_scalar_descriptor(fixed_DType, DType, obj, requested_descr);
-        if (descr == NULL) {
-            return -1;
-        }
+        max_dims = handle_scalar(
+                obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
+                requested_descr, flags, DType, descr);
         Py_DECREF(DType);
-        if (update_shape(curr_dims, &max_dims, out_shape, 0, NULL, NPY_FALSE) < 0) {
-            goto ragged_array;
-        }
-        if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
-            return -1;
-        }
-        Py_DECREF(descr);
         return max_dims;
     }
-    else {
-        /* Clear the None inside DType */
-        Py_DECREF(DType);
-    }
+    Py_DECREF(DType);
 
     /*
      * At this point we expect to find either a sequence, or an array-like.
@@ -629,7 +661,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
         if (update_shape(curr_dims, &max_dims, out_shape,
                 PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE) < 0) {
-            goto ragged_array;
+            *flags |= IS_RAGGED_ARRAY;
+            return max_dims;
         }
         if (fixed_DType != NULL && requested_descr == NULL) {
             /*
@@ -656,38 +689,39 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
     /*
      * The last step is to assume the input should be handled as a sequence
-     * and to handle it recursively.
+     * and to handle it recursively. That is, unless we have hit the
+     * dimension limit.
      */
-    if (!PySequence_Check(obj) || PySequence_Size(obj) < 0) {
+    npy_bool is_sequence = (PySequence_Check(obj) && PySequence_Size(obj) >= 0);
+    if (curr_dims == max_dims || !is_sequence) {
         /* Clear any PySequence_Size error which would corrupts further calls */
         PyErr_Clear();
-        /*
-         * Neither an array or sequence, so it must be an unknown scalar,
-         * this will usually be an `object` dtype, unless a fixed DType was
-         * given.
-         */
-        descr = find_scalar_descriptor(fixed_DType, NULL, obj, requested_descr);
-        if (descr == NULL) {
-            return -1;
+        max_dims = handle_scalar(
+                obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
+                requested_descr, flags, NULL, descr);
+        if (is_sequence) {
+            *flags |= IS_RAGGED_ARRAY;
         }
-        if (update_shape(curr_dims, &max_dims, out_shape, 0, NULL, NPY_FALSE) < 0) {
-            goto ragged_array;
-        }
-        if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
-            return -1;
-        }
-        Py_DECREF(descr);
         return max_dims;
     }
+    /* If we stop supporting bytes/str subclasses, more may be required here: */
+    assert(!PyBytes_Check(obj) && !PyUnicode_Check(obj));
+
+  force_sequence_due_to_char_dtype:
 
     /* Ensure we have a sequence (required for PyPy) */
-    PyObject *seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
-        /* Specifically do not fail on things that look like a dictionary */
+        /*
+         * Specifically do not fail on things that look like a dictionary,
+         * instead treat them as scalar.
+         */
         if (PyErr_ExceptionMatches(PyExc_KeyError)) {
             PyErr_Clear();
-            update_shape(curr_dims, &max_dims, out_shape, 0, NULL, NPY_FALSE);
-            goto ragged_array;
+            max_dims = handle_scalar(
+                    obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
+                    requested_descr, flags, NULL, descr);
+            return max_dims;
         }
         return -1;
     }
@@ -703,7 +737,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     if (update_shape(curr_dims, &max_dims,
                      out_shape, 1, &size, NPY_TRUE) < 0) {
         /* But do update, if there this is a ragged case */
-        goto ragged_array;
+        *flags |= IS_RAGGED_ARRAY;
+        return max_dims;
     }
     if (size == 0) {
         /* If the sequence is empty, there are no more dimensions */
@@ -721,19 +756,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             return -1;
         }
     }
-    return max_dims;
-
-ragged_array:
-    /*
-     * This is discovered as a ragged array, which means the dtype is
-     * guaranteed to be object. A warning will need to be given if an
-     * dtype[object] was not requested (checked outside to only warn once).
-     * If a different dtype was requested, this is always an error (except
-     * in theory for strings, but we will make that an error as well).
-     */
-    *flags |= IS_RAGGED_ARRAY;
-    Py_XDECREF(*out_descr);
-    *out_descr = PyArray_DescrFromType(NPY_OBJECT);
     return max_dims;
 }
 
@@ -818,12 +840,17 @@ PyArray_DiscoverDTypeAndShape(
      */
     enum _dtype_discovery_flags flags = 0;
 
+    if (requested_descr != NULL && requested_descr->type_num == NPY_STRING &&
+            requested_descr->type == 'c') {
+        /* The character dtype variation of string should be deprecated... */
+        flags |= DISCOVER_STRINGS_AS_SEQUENCES;
+    }
+
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
             obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
             fixed_DType, requested_descr, &flags);
     if (ndim < 0) {
-        Py_XSETREF(*out_descr, NULL);
-        return -1;
+        goto fail;
     }
 
     if ((flags & IS_RAGGED_ARRAY) &&
@@ -833,8 +860,7 @@ PyArray_DiscoverDTypeAndShape(
                 "numpy", "VisibleDeprecationWarning",
                 &visibleDeprecationWarning);
         if (visibleDeprecationWarning == NULL) {
-            Py_XSETREF(*out_descr, NULL);
-            return -1;
+            goto fail;
         }
         /* NumPy 1.19, 2019-11-01 */
         /* NumPy 1.20, warning is also given if dimension limit is hit */
@@ -846,8 +872,11 @@ PyArray_DiscoverDTypeAndShape(
                 "when creating the ndarray. (This warning also applies if "
                 "the result would have more than 32 dimensions.)", 1) < 0)
         {
-            Py_XSETREF(*out_descr, NULL);
-            return -1;
+            goto fail;
+        }
+        if (!fixed_DType) {
+            /* Force object dtype for ragged arrays... */
+            Py_XSETREF(*out_descr, PyArray_DescrNewFromType(NPY_OBJECT));
         }
     }
 
@@ -870,6 +899,9 @@ PyArray_DiscoverDTypeAndShape(
             }
             else {
                 *out_descr = fixed_DType->default_descr(fixed_DType);
+                if (*out_descr == NULL) {
+                    goto fail;
+                }
             }
         }
         else {
@@ -877,6 +909,12 @@ PyArray_DiscoverDTypeAndShape(
         }
     }
     return ndim;
+
+  fail:
+    npy_free_coercion_cache(*coercion_cache);
+    *coercion_cache = NULL;
+    Py_XSETREF(*out_descr, NULL);
+    return -1;
 }
 
 

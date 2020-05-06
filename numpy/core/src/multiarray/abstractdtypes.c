@@ -33,8 +33,8 @@ discover_descriptor_from_pyint(
         return PyArray_DescrFromType(NPY_LONGLONG);
     }
 
-    if ((PyLong_AsUnsignedLongLong(obj) == (unsigned long long) -1)
-            && PyErr_Occurred()){
+    unsigned long long uvalue = PyLong_AsUnsignedLongLong(obj);
+    if (error_converting(uvalue)){
         PyErr_Clear();
     }
     else {
@@ -42,7 +42,6 @@ discover_descriptor_from_pyint(
     }
 
     return PyArray_DescrFromType(NPY_OBJECT);
-
 }
 
 

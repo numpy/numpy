@@ -135,6 +135,25 @@ static PyArray_Descr *
 string_discover_descr_from_pyobject(
         PyArray_DTypeMeta *cls, PyObject *obj)
 {
+    npy_intp itemsize = -1;
+    if (PyBytes_Check(obj)) {
+        itemsize = PyBytes_Size(obj);
+    }
+    else if (PyUnicode_Check(obj)) {
+        itemsize = PyUnicode_GetLength(obj);
+    }
+    if (itemsize != -1) {
+        if (cls->type_num == NPY_UNICODE) {
+            itemsize *= 4;
+        }
+        if (itemsize > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_TypeError,
+                    "string to large to store inside array.");
+        }
+        PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+        res->elsize = (int)itemsize;
+        return res;
+    }
     return PyArray_DTypeFromObjectStringDiscovery(obj, NULL, cls->type_num);
 }
 

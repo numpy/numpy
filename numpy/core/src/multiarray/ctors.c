@@ -1930,15 +1930,18 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     PyArray_DTypeMeta *fixed_DType;
     if (PyArray_ExtractDTypeAndDescriptor((PyObject *)newtype,
             &fixed_descriptor, &fixed_DType) < 0) {
+        Py_XDECREF(newtype);
         return NULL;
     }
+    Py_XDECREF(newtype);
 
     // TODO: The path-through array path may be slowed down now... And
     //       I should check for subtle behaviour changes otherwise
     //       (mainly compare old code)?
     ndim = PyArray_DiscoverDTypeAndShape(op,
             NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype);
-    Py_XDECREF(newtype);
+    Py_XDECREF(fixed_descriptor);
+    Py_XDECREF(fixed_DType);
     if (ndim < 0) {
         return NULL;
     }
@@ -1965,11 +1968,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
          * may still have the incorrect type, but that is handled below.
          */
         arr = (PyArrayObject *)(cache->arr_or_sequence);
-        Py_INCREF(arr);
-        npy_free_coercion_cache(cache);
-
         /* we may need to cast or assert flags: */
-        return PyArray_FromArray(arr, dtype, flags);
+        PyObject *res = PyArray_FromArray(arr, dtype, flags);
+        npy_free_coercion_cache(cache);  /* free arr (and the cache) */
+        return res;
     }
 
     /* There was no array (or array-like) passed in directly. */
