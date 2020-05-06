@@ -101,7 +101,7 @@ the ``domain`` and ``window`` attributes.
 Another major difference bewteen the legacy polynomial module and the
 polynomial package is polynomial fitting. In the old module, fitting was
 done via the `~numpy.polyfit` function. In the polynomial package, the
-`~numpy.polynomial.polynomial.Polynomial.fit`_ class method is preferred. For
+`~numpy.polynomial.polynomial.Polynomial.fit` class method is preferred. For
 example, consider a simple linear fit to the following data:
 
 .. ipython:: python
@@ -117,7 +117,7 @@ could be applied to these data with `~numpy.polyfit`:
 
     np.polyfit(x, y, deg=1)
 
-With the new polynomial API, the `~numpy.polynomial.polynomial.Polynomial.fit`_
+With the new polynomial API, the `~numpy.polynomial.polynomial.Polynomial.fit`
 class method is preferred:
 
 .. ipython:: python
