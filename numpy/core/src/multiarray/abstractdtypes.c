@@ -112,8 +112,13 @@ initialize_abstract_dtypes_and_map_others()
         return -1;
     }
 
-    /* Map str, bytes, and bool, for which we do not need abstract versions */
-    /* We also map python str and bytes to our DTypes... */
+    /*
+     * Map str, bytes, and bool, for which we do not need abstract versions
+     * to the NumPy DTypes. This is done here using the `is_known_scalar`
+     * function.
+     * TODO: The `is_known_scalar` function was considered preliminary,
+     *       the same could be achieved e.g. with additional abstract DTypes.
+     */
     PyArray_DTypeMeta *dtype;
     dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_UNICODE));
     dtype->is_known_scalar = unicode_is_known_scalar;

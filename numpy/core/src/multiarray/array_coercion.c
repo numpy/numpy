@@ -79,9 +79,11 @@ PyObject *_global_pytype_to_type_dict = NULL;
 
 enum _dtype_discovery_flags {
     IS_RAGGED_ARRAY = 1,
-    GAVE_SUBCLASS_WARNING = 2,
-    PROMOTION_FAILED = 4,
-    DISCOVER_STRINGS_AS_SEQUENCES = 8,
+    REACHED_MAXDIMS = 2,
+    GAVE_SUBCLASS_WARNING = 4,
+    PROMOTION_FAILED = 8,
+    DISCOVER_STRINGS_AS_SEQUENCES = 16,
+    DISCOVER_TUPLES_AS_ELEMENTS = 32,
 };
 
 
@@ -224,13 +226,43 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
  * Find the correct DType class for the given python type.
  *
  * @param obj The python object, mainly type(pyobj) is used, the object
- *            is passed to reuse existing code at this time only.
+ *        is passed to reuse existing code at this time only.
  * @param flags Flags used to know if warnings were already given.
+ * @param fixed_DType if not NULL, will be checked first for whether or not
+ *        it can/wants to handle the (possible) scalar value.
  * @return New reference to either a DType class, Py_None, or NULL
  */
 static PyArray_DTypeMeta *
-discover_dtype_from_pyobject(PyObject *obj, enum _dtype_discovery_flags *flags)
+discover_dtype_from_pyobject(
+        PyObject *obj, enum _dtype_discovery_flags *flags,
+        PyArray_DTypeMeta *fixed_DType)
 {
+    if (fixed_DType != NULL) {
+        /*
+         * Let the given DType handle the discovery, there are three possible
+         * result cases here:
+         *   1. A descr, which is ready for promotion. (Correct DType)
+         *   2. None to indicate that this should be treated as a sequence.
+         *   3. NotImplemented to see if this is a known scalar type and
+         *      use normal casting logic instead. This can be slow especially
+         *      for parametric types.
+         *   4. NULL in case of an error.
+         */
+        if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
+            (fixed_DType->is_known_scalar != NULL &&
+             fixed_DType->is_known_scalar(fixed_DType, obj))) {
+            /*
+             * There are some corner cases, where we want to make sure a
+             * sequence is considered a scalar. In particular tuples with
+             * structured/void dtype and strings.
+             * The type check is simply a fast (and simple default) path
+             * which could capture some special dtypes, such as polynomials.
+             */
+            Py_INCREF(fixed_DType);
+            return fixed_DType;
+        }
+    }
+
     PyArray_DTypeMeta *DType = discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
         return DType;
@@ -282,15 +314,33 @@ discover_dtype_from_pyobject(PyObject *obj, enum _dtype_discovery_flags *flags)
 
 
 static PyArray_Descr *
-cast_descriptor_to_fixed_dtype(PyArray_Descr *descr, PyArray_DTypeMeta *DType)
+cast_descriptor_to_fixed_dtype(
+        PyArray_Descr *descr, PyArray_DTypeMeta *fixed_DType)
 {
+    if (fixed_DType == NULL) {
+        /* Nothing to do, we only need to promote the new dtype */
+        Py_INCREF(descr);
+        return descr;
+    }
+
+    if (!fixed_DType->parametric) {
+        /*
+         * Don't actually do anything, the default is always the result
+         * of any cast.
+         */
+        return fixed_DType->default_descr(fixed_DType);
+    }
+    if (PyObject_IsInstance((PyObject *)descr, (PyObject *)fixed_DType)) {
+        Py_INCREF(descr);
+        return descr;
+    }
     /*
      * TODO: When this is implemented for all dtypes, the special cases
      *       can be removed...
      */
-    if (DType->legacy && DType->parametric) {
+    if (fixed_DType->legacy && fixed_DType->parametric) {
         /* Fallback to the old AdaptFlexibleDType logic for now */
-        PyArray_Descr *flex_dtype = PyArray_DescrFromType(DType->type_num);
+        PyArray_Descr *flex_dtype = PyArray_DescrFromType(fixed_DType->type_num);
         return PyArray_AdaptFlexibleDType(NULL, descr, flex_dtype);
     }
 
@@ -587,37 +637,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
     }
 
-    if (fixed_DType != NULL) {
-        /*
-         * Let the given DType handle the discovery, there are three possible
-         * result cases here:
-         *   1. A descr, which is ready for promotion. (Correct DType)
-         *   2. None to indicate that this should be treated as a sequence.
-         *   3. NotImplemented to see if this is a known scalar type and
-         *      use normal casting logic instead. This can be slow especially
-         *      for parametric types.
-         *   4. NULL in case of an error.
-         */
-        if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
-                (fixed_DType->is_known_scalar != NULL &&
-                 fixed_DType->is_known_scalar(fixed_DType, obj))) {
-            /*
-             * There are some corner cases, where we want to make sure a
-             * sequence is considered a scalar. In particular tuples with
-             * structured/void dtype and strings.
-             * The type check is simply a fast (and simple default) path
-             * which could capture some special dtypes, such as polynomials.
-             */
-            Py_INCREF(fixed_DType);
-            DType = fixed_DType;
-        }
-    }
+    /* If this is a known scalar, find the corresponding DType class */
+    DType = discover_dtype_from_pyobject(obj, flags, fixed_DType);
     if (DType == NULL) {
-        /* If this is a known scalar, find the corresponding DType class */
-        DType = discover_dtype_from_pyobject(obj, flags);
-        if (DType == NULL) {
-            return -1;
-        }
+        return -1;
     }
     if (DType != (PyArray_DTypeMeta *)Py_None) {
         max_dims = handle_scalar(
@@ -664,26 +687,62 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             *flags |= IS_RAGGED_ARRAY;
             return max_dims;
         }
-        if (fixed_DType != NULL && requested_descr == NULL) {
+
+        if (PyArray_DESCR(arr)->type_num == NPY_OBJECT &&
+                    fixed_DType != NULL && fixed_DType->parametric &&
+                    requested_descr == NULL) {
             /*
-             * Cast to the fixed_DType, if a requested_descr was given,
-             * this is technically not necessary.
+             * We have one special case, if (and only if) the input array is of
+             * object DType and the dtype is not fixed already but parametric.
+             * Then, we allow inspection of all elements, treating them as
+             * elements. We do this recursively, so nested 0-D arrays can work,
+             * but nested higher dimensional arrays will lead to an error.
+             */
+            assert(fixed_DType->type_num != NPY_OBJECT);
+
+            PyArrayIterObject *iter;
+            iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
+            if (iter == NULL) {
+                return -1;
+            }
+            while (iter->index < iter->size) {
+                PyObject *elem = (*(PyObject **)(iter->dataptr));
+                if (elem == NULL) {
+                    assert(0);  /* We really may want to stop supporting this */
+                    elem = Py_None;
+                }
+                DType = discover_dtype_from_pyobject(elem, flags, fixed_DType);
+                if (DType == (PyArray_DTypeMeta *)Py_None) {
+                    Py_SETREF(DType, NULL);
+                }
+                int flat_max_dims = 0;
+                if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
+                        NULL, DType, NULL, flags, fixed_DType, NULL) < 0) {
+                    Py_DECREF(iter);
+                    Py_XDECREF(DType);
+                    return -1;
+                }
+                Py_XDECREF(DType);
+                PyArray_ITER_NEXT(iter);
+            }
+            Py_DECREF(iter);
+        }
+        else if (requested_descr == NULL) {
+            /*
+             * If this is not an object array figure out the dtype cast,
+             * or simply use the returned DType.
              */
             descr = cast_descriptor_to_fixed_dtype(
-                                PyArray_DESCR(arr), fixed_DType);
+                         PyArray_DESCR(arr), fixed_DType);
             if (descr == NULL) {
                 return -1;
             }
-        }
-        else {
-            descr = PyArray_DESCR(arr);
-            Py_INCREF(descr);
-        }
-        if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
+            if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
+                Py_DECREF(descr);
+                return -1;
+            }
             Py_DECREF(descr);
-            return -1;
         }
-        Py_DECREF(descr);
         return max_dims;
     }
 
@@ -693,6 +752,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * dimension limit.
      */
     npy_bool is_sequence = (PySequence_Check(obj) && PySequence_Size(obj) >= 0);
+    if (NPY_UNLIKELY(*flags & DISCOVER_TUPLES_AS_ELEMENTS) &&
+            PyTuple_Check(obj)) {
+        is_sequence = NPY_FALSE;
+    }
     if (curr_dims == max_dims || !is_sequence) {
         /* Clear any PySequence_Size error which would corrupts further calls */
         PyErr_Clear();
@@ -700,7 +763,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
                 requested_descr, flags, NULL, descr);
         if (is_sequence) {
-            *flags |= IS_RAGGED_ARRAY;
+            /* This may be ragged (if maxdims is not original), or too deep */
+            *flags |= REACHED_MAXDIMS;
         }
         return max_dims;
     }
@@ -840,10 +904,17 @@ PyArray_DiscoverDTypeAndShape(
      */
     enum _dtype_discovery_flags flags = 0;
 
-    if (requested_descr != NULL && requested_descr->type_num == NPY_STRING &&
-            requested_descr->type == 'c') {
-        /* The character dtype variation of string should be deprecated... */
-        flags |= DISCOVER_STRINGS_AS_SEQUENCES;
+    if (requested_descr != NULL) {
+        if (requested_descr->type_num == NPY_STRING &&
+                requested_descr->type == 'c') {
+            /* Character dtype variation of string (should be deprecated...) */
+            flags |= DISCOVER_STRINGS_AS_SEQUENCES;
+        }
+        else if (requested_descr->type_num == NPY_VOID &&
+                    (requested_descr->names || requested_descr->subarray))  {
+            /* Void is a chimera, in that it may or may not be structured... */
+            flags |= DISCOVER_TUPLES_AS_ELEMENTS;
+        }
     }
 
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
@@ -853,32 +924,37 @@ PyArray_DiscoverDTypeAndShape(
         goto fail;
     }
 
-    if ((flags & IS_RAGGED_ARRAY) &&
-            (fixed_DType == NULL || fixed_DType->type_num != NPY_OBJECT)) {
-        static PyObject *visibleDeprecationWarning = NULL;
-        npy_cache_import(
-                "numpy", "VisibleDeprecationWarning",
-                &visibleDeprecationWarning);
-        if (visibleDeprecationWarning == NULL) {
-            goto fail;
-        }
-        /* NumPy 1.19, 2019-11-01 */
-        /* NumPy 1.20, warning is also given if dimension limit is hit */
-        if (PyErr_WarnEx(visibleDeprecationWarning,
-                "Creating an ndarray from ragged nested sequences (which "
-                "is a list-or-tuple of lists-or-tuples-or ndarrays with "
-                "different lengths or shapes) is deprecated. If you "
-                "meant to do this, you must specify 'dtype=object' "
-                "when creating the ndarray. (This warning also applies if "
-                "the result would have more than 32 dimensions.)", 1) < 0)
-        {
-            goto fail;
-        }
-        if (!fixed_DType) {
-            /* Force object dtype for ragged arrays... */
+    if (flags & IS_RAGGED_ARRAY || (
+            /* if maxdims is not reached, but flagged this must be ragged */
+            flags & REACHED_MAXDIMS && ndim < max_dims)) {
+        if (fixed_DType == NULL) {
+            static PyObject *visibleDeprecationWarning = NULL;
+            npy_cache_import(
+                    "numpy", "VisibleDeprecationWarning",
+                    &visibleDeprecationWarning);
+            if (visibleDeprecationWarning == NULL) {
+                goto fail;
+            }
+            /* NumPy 1.19, 2019-11-01 */
+            /* NumPy 1.20, warning is also given if dimension limit is hit */
+            if (PyErr_WarnEx(visibleDeprecationWarning,
+                    "Creating an ndarray from ragged nested sequences (which "
+                    "is a list-or-tuple of lists-or-tuples-or ndarrays with "
+                    "different lengths or shapes) is deprecated. If you "
+                    "meant to do this, you must specify 'dtype=object' "
+                    "when creating the ndarray.", 1) < 0) {
+                goto fail;
+            }
             Py_XSETREF(*out_descr, PyArray_DescrNewFromType(NPY_OBJECT));
         }
+        else if (fixed_DType->type_num != NPY_OBJECT) {
+            /* Only object DType supports ragged cases unify error */
+            PyErr_SetString(PyExc_ValueError,
+                    "setting an array element with a sequence");
+            goto fail;
+        }
     }
+    /* We could check here for max-ndims being reached as well */
 
     if (requested_descr != NULL) {
         /* The user had given a specific one, we could sanity check, but... */

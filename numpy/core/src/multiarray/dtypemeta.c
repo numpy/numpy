@@ -120,17 +120,6 @@ nonparametric_discover_descr_from_pyobject(
 }
 
 
-static int
-void_is_known_scalar(PyArray_DTypeMeta *cls, PyObject *obj)
-{
-    /* No need to check void scalars, those are always considered scalars */
-    if (PyTuple_Check(obj)) {
-        /* void/structured DType considers tuples as scalars */
-        return 1;
-    }
-    return 0;
-}
-
 static PyArray_Descr *
 string_discover_descr_from_pyobject(
         PyArray_DTypeMeta *cls, PyObject *obj)
@@ -338,7 +327,6 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         dtype_class->parametric = NPY_TRUE;
         dtype_class->default_descr = flexible_default_descr;
         if (descr->type_num == NPY_VOID) {
-            dtype_class->is_known_scalar = void_is_known_scalar;
             dtype_class->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
         }
