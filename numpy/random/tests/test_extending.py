@@ -46,14 +46,24 @@ def test_cython(tmp_path):
     srcdir = os.path.join(os.path.dirname(__file__), '..')
     shutil.copytree(srcdir, tmp_path / 'random')
     # build the examples and "install" them into a temporary directory
-    env = os.environ.copy()
+    build_dir = tmp_path / 'random' / '_examples' / 'cython'
     subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
                            '--prefix', str(tmp_path / 'installdir'),
                            '--single-version-externally-managed',
                            '--record', str(tmp_path/ 'tmp_install_log.txt'),
                           ],
-                          cwd=str(tmp_path / 'random' / '_examples' / 'cython'),
-                          env=env)
+                          cwd=str(build_dir),
+                      )
+    # gh-16162: make sure numpy's __init__.pxd was used for cython
+    # not really part of this test, but it is a convenient place to check
+    with open(build_dir / 'extending.c') as fid:
+        txt_to_find = 'NumPy API declarations from "numpy/__init__.pxd"'
+        for i, line in enumerate(fid):
+            if txt_to_find in line:
+                break
+        else:
+            assert False, ("Could not find '{}' in C file, "
+                           "wrong pxd used".format(txt_to_find))
     # get the path to the so's
     so1 = so2 = None
     with open(tmp_path /'tmp_install_log.txt') as fid:
