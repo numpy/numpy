@@ -1051,7 +1051,9 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
                 n = operator.index(bins[i])
             
             except TypeError as e:
-                raise TypeError("`bins[{}]` must be an integer, when a scalar".format(i)) from e
+                raise TypeError(
+                	"`bins[{}]` must be an integer, when a scalar".format(i)
+                ) from e
                 
             edges[i] = np.linspace(smin, smax, n + 1)    
         elif np.ndim(bins[i]) == 1:
