@@ -1,7 +1,11 @@
 import pytest
-from numpy.core import arange, printoptions
+from numpy.core import array, arange, printoptions
 import numpy.polynomial as poly
 from numpy.testing import assert_equal, assert_
+
+# For testing polynomial printing with object arrays
+from fractions import Fraction
+from decimal import Decimal
 
 
 class TestStrUnicodeSuperSubscripts:
@@ -233,11 +237,48 @@ def test_set_default_printoptions():
 
 
 def test_complex_coefficients():
-    p = poly.Polynomial([0+1j, 1+1j, -2+2j, 3+0j])
+    """Test both numpy and built-in complex."""
+    coefs = [0+1j, 1+1j, -2+2j, 3+0j]
+    # numpy complex
+    p1 = poly.Polynomial(coefs)
+    # Python complex
+    p2 = poly.Polynomial(array(coefs, dtype=object))
     poly.set_default_printstyle('unicode')
-    assert_equal(str(p), "1j + (1+1j)·x¹ - (2-2j)·x² + (3+0j)·x³")
+    assert_equal(str(p1), "1j + (1+1j)·x¹ - (2-2j)·x² + (3+0j)·x³")
+    assert_equal(str(p2), "1j + (1+1j)·x¹ + (-2+2j)·x² + (3+0j)·x³")
     poly.set_default_printstyle('ascii')
-    assert_equal(str(p), "1j + (1+1j) x**1 - (2-2j) x**2 + (3+0j) x**3")
+    assert_equal(str(p1), "1j + (1+1j) x**1 - (2-2j) x**2 + (3+0j) x**3")
+    assert_equal(str(p2), "1j + (1+1j) x**1 + (-2+2j) x**2 + (3+0j) x**3")
+
+
+@pytest.mark.parametrize(('coefs', 'tgt'), (
+    (array([Fraction(1, 2), Fraction(3, 4)], dtype=object), (
+        "1/2 + 3/4·x¹"
+    )),
+    (array([1, 2, Fraction(5, 7)], dtype=object), (
+        "1 + 2·x¹ + 5/7·x²"
+    )),
+    (array([Decimal('1.00'), Decimal('2.2'), 3], dtype=object), (
+        "1.00 + 2.2·x¹ + 3·x²"
+    )),
+))
+def test_numeric_object_coefficients(coefs, tgt):
+    p = poly.Polynomial(coefs)
+    poly.set_default_printstyle('unicode')
+    assert_equal(str(p), tgt)
+
+
+@pytest.mark.parametrize(('coefs', 'tgt'), (
+    (array([1, 2, 'f'], dtype=object), '1 + 2·x¹ + f·x²'),
+    (array([1, 2, [3, 4]], dtype=object), '1 + 2·x¹ + [3, 4]·x²'),
+))
+def test_nonnumeric_object_coefficients(coefs, tgt):
+    """
+    Test coef fallback for object arrays of non-numeric coefficients.
+    """
+    p = poly.Polynomial(coefs)
+    poly.set_default_printstyle('unicode')
+    assert_equal(str(p), tgt)
 
 
 class TestFormat:

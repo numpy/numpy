@@ -347,10 +347,16 @@ class ABCPolyBase(abc.ABC):
             out += " "
             power = str(i + 1)
             # Polynomial coefficient
-            if coef >= 0:
+            try:
+                if coef >= 0:
+                    next_term = f"+ {coef}"
+                else:
+                    next_term = f"- {-coef}"
+            # The coefficient array can be an object array with elements that
+            # will raise a TypeError with >= 0 (e.g. strings or Python
+            # complex). In this case, represent the coeficient as-is.
+            except TypeError:
                 next_term = f"+ {coef}"
-            else:
-                next_term = f"- {-coef}"
             # Polynomial term
             next_term += term_method(power, "x")
             # Length of the current line with next term added
