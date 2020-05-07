@@ -1047,7 +1047,15 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
             smin, smax = _get_outer_edges(sample[:,i], range[i])
-            edges[i] = np.linspace(smin, smax, bins[i] + 1)
+            try:
+                n = operator.index(bins[i])
+            
+            except TypeError as e:
+                raise TypeError(
+                	"`bins[{}]` must be an integer, when a scalar".format(i)
+                ) from e
+                
+            edges[i] = np.linspace(smin, smax, n + 1)    
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
