@@ -34,6 +34,7 @@
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 /* Internal APIs */
+#include "alloc.h"
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
@@ -4161,6 +4162,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
+    {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

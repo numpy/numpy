@@ -31,7 +31,8 @@ def configuration(parent_package='', top_path=None):
                 ('_LARGEFILE64_SOURCE', '1')]
 
     defs.append(('NPY_NO_DEPRECATED_API', 0))
-    config.add_data_dir('tests')
+    config.add_subpackage('tests')
+    config.add_data_dir('tests/data')
     config.add_data_dir('_examples')
 
     EXTRA_LINK_ARGS = []

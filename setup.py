@@ -161,6 +161,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
     config.add_data_files(('numpy', 'LICENSE.txt'))
+    config.add_data_files(('numpy', 'numpy/__init__.pxd'))
 
     config.get_version('numpy/version.py') # sets config.version
 

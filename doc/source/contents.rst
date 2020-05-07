@@ -1,8 +1,8 @@
-.. _manual:
+.. _numpy_docs_mainpage:
 
-#####################
-NumPy manual contents
-#####################
+###################
+NumPy Documentation
+###################
 
 .. toctree::
 

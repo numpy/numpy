@@ -115,3 +115,15 @@ And in more detail:
   rg.random(out=existing[:2])
   print(existing)
 
+* Optional ``axis`` argument for methods like `~.Generator.choice`,
+  `~.Generator.permutation` and `~.Generator.shuffle` that controls which
+  axis an operation is performed over for multi-dimensional arrays.
+
+.. ipython:: python
+
+  rg = Generator(PCG64(123456789))
+  a = np.arange(12).reshape((3, 4))
+  a
+  rg.choice(a, axis=1, size=5)
+  rg.shuffle(a, axis=1)        # Shuffle in-place
+  a

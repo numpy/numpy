@@ -3,6 +3,7 @@ import warnings
 import sys
 import decimal
 from fractions import Fraction
+import math
 import pytest
 
 import numpy as np
@@ -1221,6 +1222,16 @@ class TestExtins:
         assert_array_equal(a, ac)
 
 
+# _foo1 and _foo2 are used in some tests in TestVectorize.
+
+def _foo1(x, y=1.0):
+    return y*math.floor(x)
+
+
+def _foo2(x, y=1.0, z=0.0):
+    return y*math.floor(x) + z
+
+
 class TestVectorize:
 
     def test_simple(self):
@@ -1252,7 +1263,6 @@ class TestVectorize:
         assert_array_equal(y, x)
 
     def test_ufunc(self):
-        import math
         f = vectorize(math.cos)
         args = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
         r1 = f(args)
@@ -1272,6 +1282,63 @@ class TestVectorize:
         r1 = f(args, 2)
         r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order1(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: invalid number of arguments`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0), 1.0)
+        r2 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order2(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: non-broadcastable output operand with shape ()
+        # doesn't match the broadcast shape (3,)`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), 1.0)
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order3(self):
+        # gh-1620: The third call of f would crash with
+        # `ValueError: invalid number of arguments`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), y=1.0)
+        r3 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+        assert_array_equal(r1, r3)
+
+    def test_keywords_with_otypes_several_kwd_args1(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+        f = vectorize(_foo2, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(10.4, z=100)
+        r2 = f(10.4, y=-1)
+        r3 = f(10.4)
+        assert_equal(r1, _foo2(10.4, z=100))
+        assert_equal(r2, _foo2(10.4, y=-1))
+        assert_equal(r3, _foo2(10.4))
+
+    def test_keywords_with_otypes_several_kwd_args2(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+        f = vectorize(_foo2, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(z=100, x=10.4, y=-1)
+        r2 = f(1, 2, 3)
+        assert_equal(r1, _foo2(z=100, x=10.4, y=-1))
+        assert_equal(r2, _foo2(1, 2, 3))
 
     def test_keywords_no_func_code(self):
         # This needs to test a function that has keywords but
