@@ -10,7 +10,11 @@
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
-#include "simd.inc"
+static NPY_INLINE npy_uintp
+abs_ptrdiff(char *a, char *b)
+{
+    return (a > b) ? (a - b) : (b - a);
+}
 
 /**
  * Simple unoptimized loop macros that iterate over the ufunc arguments in
