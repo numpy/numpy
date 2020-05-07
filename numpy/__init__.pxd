@@ -340,17 +340,17 @@ cdef extern from "numpy/arrayobject.h":
     #
     # Macros from ndarrayobject.h
     #
-    bint PyArray_CHKFLAGS(ndarray m, int flags)
-    bint PyArray_IS_C_CONTIGUOUS(ndarray arr)
-    bint PyArray_IS_F_CONTIGUOUS(ndarray arr)
-    bint PyArray_ISCONTIGUOUS(ndarray m)
-    bint PyArray_ISWRITEABLE(ndarray m)
-    bint PyArray_ISALIGNED(ndarray m)
+    bint PyArray_CHKFLAGS(ndarray m, int flags) nogil
+    bint PyArray_IS_C_CONTIGUOUS(ndarray arr) nogil
+    bint PyArray_IS_F_CONTIGUOUS(ndarray arr) nogil
+    bint PyArray_ISCONTIGUOUS(ndarray m) nogil
+    bint PyArray_ISWRITEABLE(ndarray m) nogil
+    bint PyArray_ISALIGNED(ndarray m) nogil
 
-    int PyArray_NDIM(ndarray)
-    bint PyArray_ISONESEGMENT(ndarray)
-    bint PyArray_ISFORTRAN(ndarray)
-    int PyArray_FORTRANIF(ndarray)
+    int PyArray_NDIM(ndarray) nogil
+    bint PyArray_ISONESEGMENT(ndarray) nogil
+    bint PyArray_ISFORTRAN(ndarray) nogil
+    int PyArray_FORTRANIF(ndarray) nogil
 
     void* PyArray_DATA(ndarray) nogil
     char* PyArray_BYTES(ndarray) nogil
@@ -360,9 +360,9 @@ cdef extern from "numpy/arrayobject.h":
     npy_intp PyArray_DIM(ndarray, size_t) nogil
     npy_intp PyArray_STRIDE(ndarray, size_t) nogil
 
-    PyObject *PyArray_BASE(ndarray)  # returns borrowed reference!
-    PyArray_Descr *PyArray_DESCR(ndarray) # returns borrowed reference to dtype!
-    int PyArray_FLAGS(ndarray)
+    PyObject *PyArray_BASE(ndarray) nogil  # returns borrowed reference!
+    PyArray_Descr *PyArray_DESCR(ndarray) nogil  # returns borrowed reference to dtype!
+    int PyArray_FLAGS(ndarray) nogil
     npy_intp PyArray_ITEMSIZE(ndarray) nogil
     int PyArray_TYPE(ndarray arr) nogil
 
@@ -448,13 +448,13 @@ cdef extern from "numpy/arrayobject.h":
     bint PyArray_IsZeroDim(object)
     # Cannot be supported due to ## ## in macro:
     # bint PyArray_IsScalar(object, verbatim work)
-    bint PyArray_CheckScalar(object) nogil
-    bint PyArray_IsPythonNumber(object) nogil
-    bint PyArray_IsPythonScalar(object) nogil
-    bint PyArray_IsAnyScalar(object) nogil
-    bint PyArray_CheckAnyScalar(object) nogil
+    bint PyArray_CheckScalar(object)
+    bint PyArray_IsPythonNumber(object)
+    bint PyArray_IsPythonScalar(object)
+    bint PyArray_IsAnyScalar(object)
+    bint PyArray_CheckAnyScalar(object)
 
-    ndarray PyArray_GETCONTIGUOUS(ndarray) nogil
+    ndarray PyArray_GETCONTIGUOUS(ndarray)
     bint PyArray_SAMESHAPE(ndarray, ndarray) nogil
     npy_intp PyArray_SIZE(ndarray) nogil
     npy_intp PyArray_NBYTES(ndarray) nogil
