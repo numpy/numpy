@@ -5035,7 +5035,9 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     See Also
     --------
-    numpy.outer
+    numpy.outer : ``np.outer`` only exists at this point for compatibility with old code.
+
+    tensordot : ``np.tensordot(a, b, axes=((), ()))`` and ``np.multiply.outer(a, b)`` behave same for all dimensions of a and b.
 
     Examples
     --------
