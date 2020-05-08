@@ -4008,7 +4008,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     """
     Integrate along the given axis using the composite trapezoidal rule.
 
-    Integrate `y` (`x`) along given axis, in the order of values passed.
+    Integrate `y` (`x`) along given axis. If `x` is provided, the integration happens in sequence along its elements - they are not sorted.
 
     Parameters
     ----------
