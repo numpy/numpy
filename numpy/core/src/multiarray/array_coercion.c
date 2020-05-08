@@ -2,9 +2,11 @@
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
+#include "Python.h"
+
+#include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
 
-#include "Python.h"
 #include "descriptor.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
@@ -249,8 +251,8 @@ discover_dtype_from_pyobject(
          *   4. NULL in case of an error.
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
-            (fixed_DType->is_known_scalar != NULL &&
-             fixed_DType->is_known_scalar(fixed_DType, obj))) {
+                (fixed_DType->is_known_scalar != NULL &&
+                 fixed_DType->is_known_scalar(fixed_DType, obj))) {
             /*
              * There are some corner cases, where we want to make sure a
              * sequence is considered a scalar. In particular tuples with
@@ -270,7 +272,7 @@ discover_dtype_from_pyobject(
     /*
      * At this point we have not found a clear mapping, but mainly for
      * backward compatibility we have to make some further attempts at
-     * interpreting the input correctly.
+     * interpreting the input as a known scalar type.
      */
     PyArray_Descr *legacy_descr;
     if (PyArray_IsScalar(obj, Generic)) {
@@ -290,7 +292,7 @@ discover_dtype_from_pyobject(
     }
 
     if (legacy_descr != NULL) {
-        DType = (PyArray_DTypeMeta *)Py_TYPE(legacy_descr);
+        DType = NPY_DTYPE(legacy_descr);
         Py_INCREF(DType);
         Py_DECREF(legacy_descr);
         // TODO: Do not add new warning for now...
@@ -440,6 +442,77 @@ find_scalar_descriptor(
 }
 
 
+/**
+ * Assign a single element in an array from a python value
+ *
+ * @param descr
+ * @param item
+ * @param value
+ * @return 0 on success -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
+{
+    static PyArrayObject_fields arr_fields = {
+            .ob_base.ob_refcnt = 1,
+            .ob_base.ob_type = &PyArrayDescr_Type,
+            .flags = NPY_ARRAY_BEHAVED,
+        };
+    enum _dtype_discovery_flags flags = GAVE_SUBCLASS_WARNING;
+    PyArray_DTypeMeta *DType = discover_dtype_from_pyobject(
+            value, &flags, NPY_DTYPE(descr));
+
+    if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None ||
+            DType == NULL) {
+        Py_XDECREF(DType);
+        /* We can set the element directly (luckily) */
+        arr_fields.descr = descr;
+        return descr->f->setitem(value, item, &arr_fields);
+    }
+    PyArray_Descr *tmp_descr;
+    tmp_descr = DType->discover_descr_from_pyobject(DType, value);
+    Py_DECREF(DType);
+    if (tmp_descr == NULL) {
+        return -1;
+    }
+
+    char *data = PyObject_Malloc(tmp_descr->elsize);
+    if (data == NULL) {
+        PyErr_NoMemory();
+        Py_DECREF(tmp_descr);
+        return -1;
+    }
+    if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
+        memset(data, 0, tmp_descr->elsize);
+    }
+    arr_fields.descr = tmp_descr;
+    if (tmp_descr->f->setitem(value, data, &arr_fields) < 0) {
+        PyObject_Free(data);
+        Py_DECREF(tmp_descr);
+        return -1;
+    }
+
+    int needs_api = 0;
+    PyArray_StridedUnaryOp *stransfer;
+    NpyAuxData *transferdata;
+    if (PyArray_GetDTypeTransferFunction(
+            0, 0, 0, tmp_descr, descr, 1, &stransfer, &transferdata,
+            &needs_api) < 0) {
+        PyObject_Free(data);
+        Py_DECREF(tmp_descr);
+        return -1;
+    }
+    stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata);
+    NPY_AUXDATA_FREE(transferdata);
+    PyObject_Free(data);
+    Py_DECREF(tmp_descr);
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+    return 0;
+}
+
+
 static int
 update_shape(int curr_ndim, int *max_ndim,
              npy_intp out_shape[NPY_MAXDIMS], int new_ndim,
@@ -491,7 +564,7 @@ update_shape(int curr_ndim, int *max_ndim,
 NPY_NO_EXPORT int
 npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
-        coercion_cache_obj ***next_ptr)
+        coercion_cache_obj ***next_ptr, int ndim)
 {
     coercion_cache_obj *cache = PyArray_malloc(sizeof(coercion_cache_obj));
     if (cache == NULL) {
@@ -502,6 +575,7 @@ npy_new_coercion_cache(
     Py_INCREF(arr_or_sequence);
     cache->arr_or_sequence = arr_or_sequence;
     cache->sequence = sequence;
+    cache->depth = ndim;
     cache->next = NULL;
     **next_ptr = cache;
     *next_ptr = &(cache->next);
@@ -676,7 +750,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
          * This is an array object which will be added to the cache, keeps
          * the a reference to the array alive.
          */
-        if (npy_new_coercion_cache(obj, (PyObject *)arr, 0, coercion_cache_tail_ptr) < 0) {
+        if (npy_new_coercion_cache(obj, (PyObject *)arr, 0, coercion_cache_tail_ptr, curr_dims) < 0) {
             Py_DECREF(arr);
             return -1;
         }
@@ -789,7 +863,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
         return -1;
     }
-    if (npy_new_coercion_cache(obj, seq, 1, coercion_cache_tail_ptr) < 0) {
+    if (npy_new_coercion_cache(obj, seq, 1, coercion_cache_tail_ptr, curr_dims) < 0) {
         Py_DECREF(seq);
         return -1;
     }
@@ -883,6 +957,7 @@ PyArray_DiscoverDTypeAndShape(
         PyArray_Descr **out_descr)
 {
     *out_descr = NULL;
+    coercion_cache_obj **original_coercion_cache_ptr = coercion_cache;
     *coercion_cache = NULL;
     for (int i = 0; i < max_dims; i++) {
         out_shape[i] = -1;
@@ -953,6 +1028,28 @@ PyArray_DiscoverDTypeAndShape(
                     "setting an array element with a sequence");
             goto fail;
         }
+
+        /*
+         * If the array is ragged, the cache may be too deep so prune it.
+         * The cache is left at the same depth as the array though.
+         */
+        coercion_cache_obj **next_ptr = original_coercion_cache_ptr;
+        coercion_cache_obj *current = *original_coercion_cache_ptr;  /* item to check */
+        while (current != NULL) {
+            if (current->depth > ndim) {
+                /* delete "next" cache item and advanced it (unlike later) */
+                Py_DECREF(current->arr_or_sequence);
+                coercion_cache_obj *_old = current;
+                current = current->next;
+                PyArray_free(_old);
+                continue;
+            }
+            /* advance both prev and next, and set prev->next to new item */
+            *next_ptr = current;
+            next_ptr = &(current->next);
+            current = current->next;
+        }
+        *next_ptr = NULL;
     }
     /* We could check here for max-ndims being reached as well */
 

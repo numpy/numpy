@@ -1550,8 +1550,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 static NPY_INLINE int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(
-                                                        v, itemptr, arr);
+    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
 }
 
 #else

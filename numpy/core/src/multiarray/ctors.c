@@ -621,6 +621,133 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
     return setArrayFromSequence(self, v, 0, NULL);
 }
 
+
+/*
+ * Recursive helper to assign using a coercion cache. This function
+ * must consume the cache depth first, just as the cache was originally
+ * produced.
+ */
+NPY_NO_EXPORT int
+PyArray_AssignFromCache_Recursive(
+        PyArrayObject *self, const int ndim, coercion_cache_obj **cache)
+{
+    /* Consume first cache element by extracting information and freeing it */
+    PyObject *obj = (*cache)->arr_or_sequence;  /* steal reference */
+    npy_bool sequence = (*cache)->sequence;
+    int depth = (*cache)->depth;
+    coercion_cache_obj *_old = *cache;
+    *cache = (*cache)->next;
+    PyArray_free(_old);
+
+    /* Take care of object special case */
+    if (NPY_UNLIKELY(depth == ndim) && PyArray_ISOBJECT(self) && ndim != 0) {
+        /*
+         * We have reached the maximum depth and this is either a sequence
+         * or an array with more then zero dimensions. This can only work
+         * if we have an object array (can assign the object).
+         * Otherwise, element assignment is unrolled below.
+         *
+         * NOTE: In principle we should likely do this only if this is a
+         *       ragged case. And in that case also do it for 0D arrays.
+         */
+        assert(PyArray_NDIM(self) == 0);
+        if (PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self), obj) < 0) {
+            goto fail;
+        }
+        Py_DECREF(obj);
+        return 0;
+    }
+
+    /* The element is either a sequence, or an array */
+    if (!sequence) {
+        /* Straight forward array assignment */
+        assert(PyArray_CheckExact(obj));
+        if (PyArray_CopyInto(self, (PyArrayObject *)obj) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        npy_intp length = PySequence_Length(obj);
+        if (length != PyArray_DIMS(self)[0]) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Inconsistent object during array creation? "
+                    "Content of sequences changed (length inconsistent).");
+            goto fail;
+        }
+
+        for (npy_intp i = 0; i < length; i++) {
+            PyObject *value = PySequence_Fast_GET_ITEM(obj, i);
+
+            if (*cache == NULL || (*cache)->converted_obj != value) {
+                if (ndim != depth + 1) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                            "Inconsistent object during array creation? "
+                            "Content of sequences changed (now too shallow).");
+                    goto fail;
+                }
+                /* Straight forward assignment of elements */
+                char *item;
+                item = (PyArray_BYTES(self) + i * PyArray_STRIDES(self)[0]);
+                if (PyArray_Pack(PyArray_DESCR(self), item, value) < 0) {
+                    goto fail;
+                }
+            }
+            else {
+                PyArrayObject *view;
+                view = (PyArrayObject *)array_item_asarray(self, i);
+                if (view < 0) {
+                    goto fail;
+                }
+                if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
+                    Py_DECREF(view);
+                    goto fail;
+                }
+                Py_DECREF(view);
+            }
+        }
+    }
+    Py_DECREF(obj);
+    return 0;
+
+  fail:
+    Py_DECREF(obj);
+    return -1;
+}
+
+
+/**
+ * Fills an item based on a coercion cache object. It consumes the cache
+ * object while doing so.
+ *
+ * @param self Array to fill.
+ * @param cache coercion_cache_object, will be consumed.
+ * @return 0 on success -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache) {
+    int ndim = PyArray_NDIM(self);
+
+    if (PyArray_AssignFromCache_Recursive(self, ndim, &cache) < 0) {
+        /* free the remaining cache. */
+        npy_free_coercion_cache(cache);
+        return -1;
+    }
+
+    /*
+     * Sanity check, this is the initial call, and when it returns, the
+     * cache has to be fully consumed, otherwise something is wrong.
+     * NOTE: May be nicer to put into a recursion helper.
+     */
+    if (cache != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Inconsistent object during array creation? "
+                "Content of sequences changed (cache not consumed).");
+        return -1;
+    }
+    return 0;
+}
+
+
 /*
  * The rest of this code is to build the right kind of array
  * from a python object.
@@ -1940,6 +2067,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     //       (mainly compare old code)?
     ndim = PyArray_DiscoverDTypeAndShape(op,
             NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype);
+
     Py_XDECREF(fixed_descriptor);
     Py_XDECREF(fixed_DType);
     if (ndim < 0) {
@@ -1973,6 +2101,17 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         npy_free_coercion_cache(cache);  /* free arr (and the cache) */
         return res;
     }
+    else if (cache == NULL && PyArray_IsScalar(op, Void) &&
+            !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
+            PyArray_EquivTypes(((PyVoidScalarObject *)op)->descr, dtype)) {
+        assert(ndim == 0);
+        return PyArray_NewFromDescrAndBase(
+                &PyArray_Type, dtype,
+                0, NULL, NULL,
+                ((PyVoidScalarObject *)op)->obval,
+                ((PyVoidScalarObject *)op)->flags,
+                NULL, (PyObject *)op);
+    }
 
     /* There was no array (or array-like) passed in directly. */
     if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
@@ -1991,18 +2130,17 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
     if (cache == NULL) {
-        /* This is a single item. Set it directly */
+        /* This is a single item. Set it directly. */
         assert(ndim == 0);
-        if (PyArray_SETITEM(ret, PyArray_DATA(ret), op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(ret), PyArray_DATA(ret), op) < 0) {
             Py_DECREF(ret);
-            ret = NULL;
+            return NULL;
         }
         return (PyObject *)ret;
     }
     assert(ndim != 0);
-    // TODO: Use the coercion cache in AssignFromSequence!
-    npy_free_coercion_cache(cache);
-    if (PyArray_AssignFromSequence(ret, op) < 0) {
+    assert(op == cache->converted_obj);
+    if (PyArray_AssignFromCache(ret, cache) < 0) {
         Py_DECREF(ret);
         ret = NULL;
     }

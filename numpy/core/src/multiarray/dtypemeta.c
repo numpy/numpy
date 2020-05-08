@@ -156,8 +156,19 @@ void_discover_descr_from_pyobject(
         Py_INCREF(void_obj->descr);
         return void_obj->descr;
     }
-    Py_INCREF(Py_NotImplemented);
-    return (PyArray_Descr *)Py_NotImplemented;
+    if (PyBytes_Check(obj)) {
+        PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
+        Py_ssize_t itemsize = (int)PyBytes_Size(obj);
+        if (itemsize > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_TypeError,
+                    "byte-like to large to store inside array.");
+        }
+        descr->elsize = itemsize;
+        return descr;
+    }
+    PyErr_Format(PyExc_TypeError,
+            "A bytes-like object is required, not '%s'", Py_TYPE(obj)->tp_name);
+    return NULL;
 }
 
 
@@ -194,6 +205,13 @@ flexible_default_descr(PyArray_DTypeMeta *cls)
         res->elsize *= 4;
     }
     return res;
+}
+
+static int
+python_classes_are_known_scalars(
+        PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
+{
+    return PyArray_IsPythonScalar(obj);
 }
 
 
@@ -315,7 +333,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->kind = descr->kind;
 
     /* Strings and voids have (strange) logic around scalars. */
-    dtype_class-> is_known_scalar = NULL;
+    dtype_class-> is_known_scalar = python_classes_are_known_scalars;
 
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */

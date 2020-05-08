@@ -63,25 +63,6 @@ discover_descriptor_from_pycomplex(
 }
 
 
-static int
-unicode_is_known_scalar(PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
-{
-    return PyUnicode_CheckExact(obj);
-}
-
-static int
-bytes_is_known_scalar(PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
-{
-    return PyBytes_CheckExact(obj);
-}
-
-static int
-bool_is_known_scalar(PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
-{
-    return PyBool_Check(obj);
-}
-
-
 NPY_NO_EXPORT int
 initialize_abstract_dtypes_and_map_others()
 {
@@ -121,18 +102,15 @@ initialize_abstract_dtypes_and_map_others()
      */
     PyArray_DTypeMeta *dtype;
     dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_UNICODE));
-    dtype->is_known_scalar = unicode_is_known_scalar;
     if (_PyArray_MapPyTypeToDType(dtype, &PyUnicode_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
     dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_STRING));
-    dtype->is_known_scalar = bytes_is_known_scalar;
     if (_PyArray_MapPyTypeToDType(dtype, &PyBytes_Type, NPY_FALSE) < 0) {
         return -1;
     }
     dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_BOOL));
-    dtype->is_known_scalar = bool_is_known_scalar;
     if (_PyArray_MapPyTypeToDType(dtype, &PyBool_Type, NPY_FALSE) < 0) {
         return -1;
     }
