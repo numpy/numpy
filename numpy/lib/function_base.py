@@ -4015,7 +4015,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     y : array_like
         Input array to integrate.
     x : array_like, optional
-        The sample points corresponding to the `y` values. If `x` is None,
+        The sample points corresponding to the `y` values. The sample 
+        points are assumed to be unique and in sorted order. If `x` is None,
         the sample points are assumed to be evenly spaced `dx` apart. The
         default is None.
     dx : scalar, optional
