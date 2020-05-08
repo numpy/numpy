@@ -577,6 +577,20 @@ class StringConverter:
             for fct, dft in zip(func, default):
                 cls._mapper.insert(-1, (cls._getsubdtype(dft), fct, dft))
 
+    @classmethod
+    def _find_map_entry(cls, dtype):
+        # if a converter for the specific dtype is available use that
+        for i, (deftype, func, default_def) in enumerate(cls._mapper):
+            if dtype.type == deftype:
+                return i, (deftype, func, default_def)
+
+        # otherwise find an inexact match
+        for i, (deftype, func, default_def) in enumerate(cls._mapper):
+            if np.issubdtype(dtype.type, deftype):
+                return i, (deftype, func, default_def)
+
+        raise LookupError
+
     def __init__(self, dtype_or_func=None, default=None, missing_values=None,
                  locked=False):
         # Defines a lock for upgrade
@@ -608,36 +622,26 @@ class StringConverter:
                     except ValueError:
                         default = None
                 dtype = self._getdtype(default)
-            # Set the status according to the dtype
-            _status = -1
-            for i, (deftype, func, default_def) in enumerate(self._mapper):
-                if np.issubdtype(dtype.type, deftype):
-                    _status = i
-                    if default is None:
-                        self.default = default_def
-                    else:
-                        self.default = default
-                    break
-            # if a converter for the specific dtype is available use that
-            last_func = func
-            for i, (deftype, func, default_def) in enumerate(self._mapper):
-                if dtype.type == deftype:
-                    _status = i
-                    last_func = func
-                    if default is None:
-                        self.default = default_def
-                    else:
-                        self.default = default
-                    break
-            func = last_func
-            if _status == -1:
-                # We never found a match in the _mapper...
-                _status = 0
+
+            # find the best match in our mapper
+            try:
+                self._status, (_, func, default_def) = self._find_map_entry(dtype)
+            except LookupError:
+                # no match
                 self.default = default
-            self._status = _status
+                _, func, _ = self._mapper[-1]
+                self._status = 0
+            else:
+                # use the found default only if we did not already have one
+                if default is None:
+                    self.default = default_def
+                else:
+                    self.default = default
+
             # If the input was a dtype, set the function to the last we saw
             if self.func is None:
                 self.func = func
+
             # If the status is 1 (int), change the function to
             # something more robust.
             if self.func == self._mapper[1][1]:
