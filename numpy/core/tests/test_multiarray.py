@@ -1012,6 +1012,8 @@ class TestCreation:
         with assert_raises(ValueError):
             a[:] = C()  # Segfault!
 
+        np.array(C()) == list(C())
+
     def test_failed_len_sequence(self):
         # gh-7393
         class A:
