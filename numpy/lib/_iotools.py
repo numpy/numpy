@@ -514,8 +514,6 @@ class StringConverter:
                     (nx.floating, float, nx.nan),
                     (nx.complexfloating, complex, nx.nan + 0j),])
 
-    (_defaulttype, _defaultfunc, _defaultfill) = zip(*_mapper)
-
     @classmethod
     def _getdtype(cls, val):
         """Returns the dtype of the input variable."""
