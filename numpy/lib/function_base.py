@@ -4008,7 +4008,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     """
     Integrate along the given axis using the composite trapezoidal rule.
 
-    Integrate `y` (`x`) along given axis.
+    Integrate `y` (`x`) along given axis, in the order of values passed.
 
     Parameters
     ----------
@@ -4054,6 +4054,10 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     4.0
     >>> np.trapz([1,2,3], x=[4,6,8])
     8.0
+    >>> np.trapz([0,1,0], x=[0,1,2])
+    1.0
+    >>> np.trapz([0,0,1], x=[0,2,1])
+    -0.5
     >>> np.trapz([1,2,3], dx=2)
     8.0
     >>> a = np.arange(6).reshape(2, 3)
