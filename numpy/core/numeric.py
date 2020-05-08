@@ -859,7 +859,7 @@ def outer(a, b, out=None):
     einsum : ``einsum('i,j->ij', a.ravel(), b.ravel())`` is the equivalent.
     ufunc.outer : A generalization to dimensions other than 1D and other operations.
                   ``np.multiply.outer(a.ravel(), b.ravel())`` is the equivalent.
-    tensordot : ``np.tensordot(a, b, axes=((), ()))`` and ``np.multiply.outer(a, b)`` behave same for all dimensions of a and b.
+    tensordot : ``np.tensordot(a.ravel(), b.ravel(), axes=((), ()))`` is the equivalent.
 
     References
     ----------
