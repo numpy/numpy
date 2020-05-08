@@ -574,7 +574,7 @@ class StringConverter:
             else:
                 default = list(default)
                 default.append([None] * (len(func) - len(default)))
-            for (fct, dft) in zip(func, default):
+            for fct, dft in zip(func, default):
                 cls._mapper.insert(-1, (cls._getsubdtype(dft), fct, dft))
 
     def __init__(self, dtype_or_func=None, default=None, missing_values=None,
@@ -610,7 +610,7 @@ class StringConverter:
                 dtype = self._getdtype(default)
             # Set the status according to the dtype
             _status = -1
-            for (i, (deftype, func, default_def)) in enumerate(self._mapper):
+            for i, (deftype, func, default_def) in enumerate(self._mapper):
                 if np.issubdtype(dtype.type, deftype):
                     _status = i
                     if default is None:
@@ -620,7 +620,7 @@ class StringConverter:
                     break
             # if a converter for the specific dtype is available use that
             last_func = func
-            for (i, (deftype, func, default_def)) in enumerate(self._mapper):
+            for i, (deftype, func, default_def) in enumerate(self._mapper):
                 if dtype.type == deftype:
                     _status = i
                     last_func = func
