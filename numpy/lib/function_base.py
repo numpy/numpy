@@ -4060,7 +4060,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     # Integrate along a parametric curve.
     # This finds the area of a circle, noting we repeat the sample which closes the curve.
-    >>> theta = np.linspace(0, 2 * np.pi, num=1000, include_endpoint=True)
+    >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
     >>> np.trapz(np.cos(theta), x=np.sin(theta))
     3.141571941375841
     >>> np.trapz([1,2,3], dx=2)
