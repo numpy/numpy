@@ -639,34 +639,46 @@ PyArray_AssignFromCache_Recursive(
     *cache = (*cache)->next;
     PyArray_free(_old);
 
-    /* Take care of object special case */
-    if (NPY_UNLIKELY(depth == ndim) && PyArray_ISOBJECT(self) && ndim != 0) {
+    /*
+     * The maximum depth is special (specifically for objects), but usually
+     * unrolled in the sequence branch below.
+     */
+    if (NPY_UNLIKELY(depth == ndim)) {
         /*
-         * We have reached the maximum depth and this is either a sequence
-         * or an array with more then zero dimensions. This can only work
-         * if we have an object array (can assign the object).
-         * Otherwise, element assignment is unrolled below.
-         *
-         * NOTE: In principle we should likely do this only if this is a
-         *       ragged case. And in that case also do it for 0D arrays.
+         * We have reached the maximum depth. We should simply assign to the
+         * element in principle. There is one exception. If this is a 0-D
+         * array being stored into a 0-D array (but we do not reach here then).
          */
-        assert(PyArray_NDIM(self) == 0);
-        if (PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self), obj) < 0) {
+        if (PyArray_ISOBJECT(self)) {
+            assert(ndim != 0);  /* guaranteed by PyArray_AssignFromCache */
+            assert(PyArray_NDIM(self) == 0);
+            if (PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self), obj) < 0) {
+                goto fail;
+            }
+            Py_DECREF(obj);
+            return 0;
+        }
+        if (sequence) {
+            /*
+             * The Pack function above used to handle this error and should
+             * typically fail, but it is more explicit here.
+             */
+            PyErr_SetString(PyExc_ValueError,
+                    "setting an array element with a sequence");
             goto fail;
         }
-        Py_DECREF(obj);
-        return 0;
     }
 
     /* The element is either a sequence, or an array */
     if (!sequence) {
         /* Straight forward array assignment */
-        assert(PyArray_CheckExact(obj));
+        assert(PyArray_Check(obj));
         if (PyArray_CopyInto(self, (PyArrayObject *)obj) < 0) {
             goto fail;
         }
     }
     else {
+        assert(depth != ndim);
         npy_intp length = PySequence_Length(obj);
         if (length != PyArray_DIMS(self)[0]) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -720,12 +732,23 @@ PyArray_AssignFromCache_Recursive(
  * object while doing so.
  *
  * @param self Array to fill.
- * @param cache coercion_cache_object, will be consumed.
+ * @param cache coercion_cache_object, will be consumed. The cache must not
+ *        contain a single array (must start with a sequence). The array case
+ *        should be handled by `PyArray_FromArray()` before.
  * @return 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
 PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache) {
     int ndim = PyArray_NDIM(self);
+    /*
+     * Do not support ndim == 0 now with an array in the cache.
+     * The ndim == 0 is special because np.array(np.array(0), dtype=object)
+     * should unpack the inner array.
+     * Since the single-array case is special, it is handled previously
+     * in either case.
+     */
+    assert(cache->sequence);
+    assert(ndim != 0);  /* guaranteed if cache contains a sequence */
 
     if (PyArray_AssignFromCache_Recursive(self, ndim, &cache) < 0) {
         /* free the remaining cache. */
@@ -2097,28 +2120,30 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
          */
         arr = (PyArrayObject *)(cache->arr_or_sequence);
         /* we may need to cast or assert flags: */
+
         PyObject *res = PyArray_FromArray(arr, dtype, flags);
-        npy_free_coercion_cache(cache);  /* free arr (and the cache) */
+        npy_free_coercion_cache(cache);
         return res;
     }
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&
             !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
             PyArray_EquivTypes(((PyVoidScalarObject *)op)->descr, dtype)) {
         assert(ndim == 0);
+
         return PyArray_NewFromDescrAndBase(
                 &PyArray_Type, dtype,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)op)->obval,
                 ((PyVoidScalarObject *)op)->flags,
-                NULL, (PyObject *)op);
+                NULL, op);
     }
 
     /* There was no array (or array-like) passed in directly. */
     if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
-        Py_DECREF(dtype);
         PyErr_SetString(PyExc_TypeError,
                         "WRITEBACKIFCOPY used for non-array input.");
+        Py_DECREF(dtype);
         return NULL;
     }
 
@@ -2142,7 +2167,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     assert(op == cache->converted_obj);
     if (PyArray_AssignFromCache(ret, cache) < 0) {
         Py_DECREF(ret);
-        ret = NULL;
+        return NULL;
     }
     return (PyObject *)ret;
 }

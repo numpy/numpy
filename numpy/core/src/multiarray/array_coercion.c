@@ -80,12 +80,11 @@ PyObject *_global_pytype_to_type_dict = NULL;
 
 
 enum _dtype_discovery_flags {
-    IS_RAGGED_ARRAY = 1,
-    REACHED_MAXDIMS = 2,
-    GAVE_SUBCLASS_WARNING = 4,
-    PROMOTION_FAILED = 8,
-    DISCOVER_STRINGS_AS_SEQUENCES = 16,
-    DISCOVER_TUPLES_AS_ELEMENTS = 32,
+    FOUND_RAGGED_ARRAY = 1,
+    GAVE_SUBCLASS_WARNING = 2,
+    PROMOTION_FAILED = 4,
+    DISCOVER_STRINGS_AS_SEQUENCES = 8,
+    DISCOVER_TUPLES_AS_ELEMENTS = 16,
 };
 
 
@@ -201,26 +200,25 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
         Py_INCREF(Py_None);
         return (PyArray_DTypeMeta *)Py_None;
     }
-    else {
-        assert(PyWeakref_CheckRef(weakref));
-        PyObject *DType = PyWeakref_GET_OBJECT(weakref);
-        if (DType == Py_None) {
-            /*
-             * The weak reference (and thus the mapping) was invalidated, this
-             * should not typically happen, but if it does delete it from the
-             * mapping.
-             */
-            int res = PyDict_DelItem(
-                    _global_pytype_to_type_dict, (PyObject *)pytype);
-            weakref = NULL;
-            if (res < 0) {
-                return NULL;
-            }
+    assert(PyWeakref_CheckRef(weakref));
+    PyObject *DType = PyWeakref_GET_OBJECT(weakref);
+    Py_INCREF(DType);
+    if (DType == Py_None) {
+        /*
+         * The weak reference (and thus the mapping) was invalidated, this
+         * should not typically happen, but if it does delete it from the
+         * mapping.
+         */
+        int res = PyDict_DelItem(
+                _global_pytype_to_type_dict, (PyObject *)pytype);
+        if (res < 0) {
+            return NULL;
         }
-        Py_INCREF(DType);
-        assert(PyObject_IsInstance(DType, (PyObject *)&PyArrayDTypeMeta_Type) == 1);
-        return (PyArray_DTypeMeta *)DType;
     }
+    else {
+        assert(PyObject_IsInstance(DType, (PyObject *)&PyArrayDTypeMeta_Type));
+    }
+    return (PyArray_DTypeMeta *)DType;
 }
 
 
@@ -390,6 +388,7 @@ find_scalar_descriptor(
         if (descr != (PyArray_Descr *)Py_NotImplemented) {
             return descr;
         }
+        Py_DECREF(Py_NotImplemented);
         /*
          * The DType is unable to provide a descr. A non-parametric DType
          * must always just return its canonical instance, though.
@@ -430,6 +429,7 @@ find_scalar_descriptor(
          * If the DType was discovered, it must be able to handle the scalar
          * object here, or is considered buggy.
          */
+        Py_DECREF(Py_NotImplemented);
         PyErr_Format(PyExc_RuntimeError, bad_dtype_msg, DType);
         return NULL;
     }
@@ -622,7 +622,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
         *out_descr = descr;
         return 0;
     }
-    // TODO: Will have to take care of the retry-with-string logic for now :(
+    // TODO: Will have to take care of the retry-with-string logic? :(
     PyArray_Descr *new_descr = PyArray_PromoteTypes(*out_descr, descr);
     if (new_descr == NULL) {
         PyErr_Clear();
@@ -665,11 +665,12 @@ int handle_scalar(
         return -1;
     }
     if (update_shape(curr_dims, max_dims, out_shape, 0, NULL, NPY_FALSE) < 0) {
-        *flags |= IS_RAGGED_ARRAY;
+        *flags |= FOUND_RAGGED_ARRAY;
         Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
         return *max_dims;
     }
     if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
+        Py_DECREF(descr);
         return -1;
     }
     Py_DECREF(descr);
@@ -758,7 +759,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
         if (update_shape(curr_dims, &max_dims, out_shape,
                 PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE) < 0) {
-            *flags |= IS_RAGGED_ARRAY;
+            *flags |= FOUND_RAGGED_ARRAY;
             return max_dims;
         }
 
@@ -837,8 +838,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
                 requested_descr, flags, NULL, descr);
         if (is_sequence) {
-            /* This may be ragged (if maxdims is not original), or too deep */
-            *flags |= REACHED_MAXDIMS;
+            /* Flag as ragged or too deep array */
+            *flags |= FOUND_RAGGED_ARRAY;
         }
         return max_dims;
     }
@@ -875,7 +876,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     if (update_shape(curr_dims, &max_dims,
                      out_shape, 1, &size, NPY_TRUE) < 0) {
         /* But do update, if there this is a ragged case */
-        *flags |= IS_RAGGED_ARRAY;
+        *flags |= FOUND_RAGGED_ARRAY;
         return max_dims;
     }
     if (size == 0) {
@@ -957,7 +958,7 @@ PyArray_DiscoverDTypeAndShape(
         PyArray_Descr **out_descr)
 {
     *out_descr = NULL;
-    coercion_cache_obj **original_coercion_cache_ptr = coercion_cache;
+    coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
     for (int i = 0; i < max_dims; i++) {
         out_shape[i] = -1;
@@ -979,6 +980,7 @@ PyArray_DiscoverDTypeAndShape(
      */
     enum _dtype_discovery_flags flags = 0;
 
+    /* Legacy discovery flags */
     if (requested_descr != NULL) {
         if (requested_descr->type_num == NPY_STRING &&
                 requested_descr->type == 'c') {
@@ -999,10 +1001,22 @@ PyArray_DiscoverDTypeAndShape(
         goto fail;
     }
 
-    if (flags & IS_RAGGED_ARRAY || (
-            /* if maxdims is not reached, but flagged this must be ragged */
-            flags & REACHED_MAXDIMS && ndim < max_dims)) {
+    if (flags & FOUND_RAGGED_ARRAY) {
+        /*
+         * If max-dims was reached and the dimensions reduced, this is ragged.
+         * Otherwise, we merely reached the maximum dimensions, which is
+         * slightly different. This happens for example for `[1, [2, 3]]`
+         * where the maximum dimensions is 1, but then a sequence found.
+         *
+         * In this case we need to inform the user and clean out the cache
+         * since it may be too deep.
+         */
+
+        /* Handle reaching the maximum depth differently: */
+        int too_deep = ndim == max_dims;
+
         if (fixed_DType == NULL) {
+            /* This is discovered as object, but deprecated */
             static PyObject *visibleDeprecationWarning = NULL;
             npy_cache_import(
                     "numpy", "VisibleDeprecationWarning",
@@ -1010,31 +1024,60 @@ PyArray_DiscoverDTypeAndShape(
             if (visibleDeprecationWarning == NULL) {
                 goto fail;
             }
-            /* NumPy 1.19, 2019-11-01 */
-            /* NumPy 1.20, warning is also given if dimension limit is hit */
-            if (PyErr_WarnEx(visibleDeprecationWarning,
-                    "Creating an ndarray from ragged nested sequences (which "
-                    "is a list-or-tuple of lists-or-tuples-or ndarrays with "
-                    "different lengths or shapes) is deprecated. If you "
-                    "meant to do this, you must specify 'dtype=object' "
-                    "when creating the ndarray.", 1) < 0) {
-                goto fail;
+            if (!too_deep) {
+                /* NumPy 1.19, 2019-11-01 */
+                if (PyErr_WarnEx(visibleDeprecationWarning,
+                        "Creating an ndarray from ragged nested sequences (which "
+                        "is a list-or-tuple of lists-or-tuples-or ndarrays with "
+                        "different lengths or shapes) is deprecated. If you "
+                        "meant to do this, you must specify 'dtype=object' "
+                        "when creating the ndarray.", 1) < 0) {
+                    goto fail;
+                }
+            }
+            else {
+                /* NumPy 1.20, 2020-05-08 */
+                /* Note, max_dims should normally always be NPY_MAXDIMS here */
+                if (PyErr_WarnFormat(visibleDeprecationWarning, 1,
+                        "Creating an ndarray from nested sequences exceeding "
+                        "the maximum number of dimensions of %d is deprecated. "
+                        "If you mean to do this, you must specify "
+                        "'dtype=object' when creating the ndarray.",
+                        max_dims) < 0) {
+                    goto fail;
+                }
             }
             Py_XSETREF(*out_descr, PyArray_DescrNewFromType(NPY_OBJECT));
         }
         else if (fixed_DType->type_num != NPY_OBJECT) {
             /* Only object DType supports ragged cases unify error */
-            PyErr_SetString(PyExc_ValueError,
-                    "setting an array element with a sequence");
-            goto fail;
+            if (!too_deep) {
+                PyObject *shape = PyArray_IntTupleFromIntp(ndim, out_shape);
+                PyErr_Format(PyExc_ValueError,
+                        "setting an array element with a sequence. The "
+                        "requested array has an inhomogeneous shape after "
+                        "%d dimensions. The detected shape was "
+                        "%R + inhomogeneous part.",
+                        ndim, shape);
+                Py_DECREF(shape);
+                goto fail;
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                        "setting an array element with a sequence. The "
+                        "requested array would exceed the maximum number of "
+                        "dimension of %d.",
+                        max_dims);
+                goto fail;
+            }
         }
 
         /*
-         * If the array is ragged, the cache may be too deep so prune it.
+         * If the array is ragged, the cache may be too deep, so clean it.
          * The cache is left at the same depth as the array though.
          */
-        coercion_cache_obj **next_ptr = original_coercion_cache_ptr;
-        coercion_cache_obj *current = *original_coercion_cache_ptr;  /* item to check */
+        coercion_cache_obj **next_ptr = coercion_cache_head;
+        coercion_cache_obj *current = *coercion_cache_head;  /* item to check */
         while (current != NULL) {
             if (current->depth > ndim) {
                 /* delete "next" cache item and advanced it (unlike later) */
@@ -1084,7 +1127,7 @@ PyArray_DiscoverDTypeAndShape(
     return ndim;
 
   fail:
-    npy_free_coercion_cache(*coercion_cache);
+    npy_free_coercion_cache(*coercion_cache_head);
     *coercion_cache = NULL;
     Py_XSETREF(*out_descr, NULL);
     return -1;
@@ -1125,18 +1168,9 @@ PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
             }
         }
         else {
-            // TODO: Should not allow known scalar type in this function!
-            //       at least not within PyArray_FromAny usage!
-            /* Try to interpret it as a known scalar type */
-            *out_DType = discover_dtype_from_pytype((PyTypeObject *)dtype);
-            if (*out_DType == (PyArray_DTypeMeta *)Py_None) {
-                Py_SETREF(*out_DType, NULL);
-            }
-            if (*out_DType == NULL) {
-                PyErr_SetString(PyExc_TypeError,
-                        "dtype parameter must be a DType instance or class.");
-                return -1;
-            }
+            PyErr_SetString(PyExc_TypeError,
+                    "dtype parameter must be a DType instance or class.");
+            return -1;
         }
     }
     return 0;
@@ -1167,12 +1201,14 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     }
 
     coercion_cache_obj *coercion_cache;
-    PyArray_Descr *res = NULL;
+    PyArray_Descr *out_dtype = NULL;
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            fixed_DType, fixed_descriptor, &res);
+            fixed_DType, fixed_descriptor, &out_dtype);
     npy_free_coercion_cache(coercion_cache);
+    Py_XDECREF(fixed_DType);
+    Py_XDECREF(fixed_descriptor);
 
     if (ndim < 0) {
         return NULL;
@@ -1182,5 +1218,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
         return NULL;
     }
 
-    return PyTuple_Pack(2, (PyObject *)res, shape_tuple);
+    PyObject *res = PyTuple_Pack(2, (PyObject *)out_dtype, shape_tuple);
+    Py_DECREF(out_dtype);
+    Py_DECREF(shape_tuple);
+    return res;
 }

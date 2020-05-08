@@ -145,7 +145,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
         return -1;
     }
     ret = PyLong_AsUnsigned@Type@(num);
-    if (error_converting(ret)) {
+    if (PyErr_Occurred()) {
         PyErr_Clear();
         ret = PyLong_As@Type@(num);
     }
@@ -219,7 +219,7 @@ static int
     else {
         temp = (@type@)@func2@(op);
     }
-    if (error_converting(temp)) {
+    if (PyErr_Occurred()) {
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
         if (PySequence_NoString_Check(op)) {
