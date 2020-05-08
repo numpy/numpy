@@ -165,7 +165,6 @@ class LineSplitter:
 
         """
         return lambda input: [_.strip() for _ in method(input)]
-    #
 
     def __init__(self, delimiter=None, comments='#', autostrip=True,
                  encoding=None):
@@ -195,7 +194,6 @@ class LineSplitter:
         else:
             self._handyman = _handyman
         self.encoding = encoding
-    #
 
     def _delimited_splitter(self, line):
         """Chop off comments, strip, and split at delimiter. """
@@ -205,7 +203,6 @@ class LineSplitter:
         if not line:
             return []
         return line.split(self.delimiter)
-    #
 
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
@@ -216,7 +213,6 @@ class LineSplitter:
         fixed = self.delimiter
         slices = [slice(i, i + fixed) for i in range(0, len(line), fixed)]
         return [line[s] for s in slices]
-    #
 
     def _variablewidth_splitter(self, line):
         if self.comments is not None:
@@ -225,7 +221,6 @@ class LineSplitter:
             return []
         slices = self.delimiter
         return [line[s] for s in slices]
-    #
 
     def __call__(self, line):
         return self._handyman(_decode_line(line, self.encoding))
@@ -282,10 +277,9 @@ class NameValidator:
     ('EXCL', 'FIELD2', 'NO_Q', 'WITH_SPACE', 'CASE')
 
     """
-    #
+
     defaultexcludelist = ['return', 'file', 'print']
     defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
-    #
 
     def __init__(self, excludelist=None, deletechars=None,
                  case_sensitive=None, replace_space='_'):
@@ -311,7 +305,7 @@ class NameValidator:
         else:
             msg = 'unrecognized case_sensitive value %s.' % case_sensitive
             raise ValueError(msg)
-        #
+
         self.replace_space = replace_space
 
     def validate(self, names, defaultfmt="f%i", nbfields=None):
@@ -362,7 +356,7 @@ class NameValidator:
         validatednames = []
         seen = dict()
         nbempty = 0
-        #
+
         for item in names:
             item = case_converter(item).strip()
             if replace_space:
@@ -383,7 +377,6 @@ class NameValidator:
                 validatednames.append(item)
             seen[item] = cnt + 1
         return tuple(validatednames)
-    #
 
     def __call__(self, names, defaultfmt="f%i", nbfields=None):
         return self.validate(names, defaultfmt=defaultfmt, nbfields=nbfields)
@@ -502,7 +495,6 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    #
     _mapper = [(nx.bool_, str2bool, False),
                (nx.int_, int, -1),]
 
@@ -528,49 +520,47 @@ class StringConverter:
     def _getdtype(cls, val):
         """Returns the dtype of the input variable."""
         return np.array(val).dtype
-    #
 
     @classmethod
     def _getsubdtype(cls, val):
         """Returns the type of the dtype of the input variable."""
         return np.array(val).dtype.type
-    #
-    # This is a bit annoying. We want to return the "general" type in most
-    # cases (ie. "string" rather than "S10"), but we want to return the
-    # specific type for datetime64 (ie. "datetime64[us]" rather than
-    # "datetime64").
 
     @classmethod
     def _dtypeortype(cls, dtype):
         """Returns dtype for datetime64 and type of dtype otherwise."""
+
+        # This is a bit annoying. We want to return the "general" type in most
+        # cases (ie. "string" rather than "S10"), but we want to return the
+        # specific type for datetime64 (ie. "datetime64[us]" rather than
+        # "datetime64").
         if dtype.type == np.datetime64:
             return dtype
         return dtype.type
-    #
 
     @classmethod
     def upgrade_mapper(cls, func, default=None):
         """
-    Upgrade the mapper of a StringConverter by adding a new function and
-    its corresponding default.
+        Upgrade the mapper of a StringConverter by adding a new function and
+        its corresponding default.
 
-    The input function (or sequence of functions) and its associated
-    default value (if any) is inserted in penultimate position of the
-    mapper.  The corresponding type is estimated from the dtype of the
-    default value.
+        The input function (or sequence of functions) and its associated
+        default value (if any) is inserted in penultimate position of the
+        mapper.  The corresponding type is estimated from the dtype of the
+        default value.
 
-    Parameters
-    ----------
-    func : var
-        Function, or sequence of functions
+        Parameters
+        ----------
+        func : var
+            Function, or sequence of functions
 
-    Examples
-    --------
-    >>> import dateutil.parser
-    >>> import datetime
-    >>> dateparser = dateutil.parser.parse
-    >>> defaultdate = datetime.date(2000, 1, 1)
-    >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
+        Examples
+        --------
+        >>> import dateutil.parser
+        >>> import datetime
+        >>> dateparser = dateutil.parser.parse
+        >>> defaultdate = datetime.date(2000, 1, 1)
+        >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
         """
         # Func is a single functions
         if hasattr(func, '__call__'):
@@ -588,7 +578,6 @@ class StringConverter:
                 default.append([None] * (len(func) - len(default)))
             for (fct, dft) in zip(func, default):
                 cls._mapper.insert(-1, (cls._getsubdtype(dft), fct, dft))
-    #
 
     def __init__(self, dtype_or_func=None, default=None, missing_values=None,
                  locked=False):
@@ -667,19 +656,17 @@ class StringConverter:
             if isinstance(missing_values, str):
                 missing_values = missing_values.split(",")
             self.missing_values = set(list(missing_values) + [''])
-        #
+
         self._callingfunction = self._strict_call
         self.type = self._dtypeortype(dtype)
         self._checked = False
         self._initial_default = default
-    #
 
     def _loose_call(self, value):
         try:
             return self.func(value)
         except ValueError:
             return self.default
-    #
 
     def _strict_call(self, value):
         try:
@@ -705,11 +692,9 @@ class StringConverter:
                     self._checked = False
                 return self.default
             raise ValueError("Cannot convert string '%s'" % value)
-    #
 
     def __call__(self, value):
         return self._callingfunction(value)
-    #
 
     def _do_upgrade(self):
         # Raise an exception if we locked the converter...
