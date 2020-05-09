@@ -211,9 +211,9 @@ Debugging
 ---------
 
 Another frequently asked question is "How do I debug C code inside NumPy?".
-First you must obtain the version of gdb higher than 7.0 (which includes an
-embedded Python), secondly make sure the embedded Python is 3.x. To see
-which version of Python is embedded inside your gdb, do the following::
+First, ensure that you have gdb installed on your system with the Python
+extensions (often the default on Linux). You can see which version of
+Python is running inside gdb to verify your setup::
 
     (gdb) python
     >import sys
