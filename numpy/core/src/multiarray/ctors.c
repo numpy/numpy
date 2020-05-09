@@ -637,7 +637,7 @@ PyArray_AssignFromCache_Recursive(
     int depth = (*cache)->depth;
     coercion_cache_obj *_old = *cache;
     *cache = (*cache)->next;
-    PyArray_free(_old);
+    PyObject_FREE(_old);
 
     /*
      * The maximum depth is special (specifically for objects), but usually
@@ -2113,14 +2113,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     }
 
     /* Got the correct parameters, but the cache may already hold the result */
-    if (cache != NULL && (cache->converted_obj == op && !(cache->sequence))) {
+    if (cache != NULL && !(cache->sequence)) {
         /*
-         * There is only a single array and it was converted, it
+         * There is only a single array-like and it was converted, it
          * may still have the incorrect type, but that is handled below.
          */
+        assert(cache->converted_obj == op);
         arr = (PyArrayObject *)(cache->arr_or_sequence);
-        /* we may need to cast or assert flags: */
-
+        /* we may need to cast or assert flags (e.g. copy) */
         PyObject *res = PyArray_FromArray(arr, dtype, flags);
         npy_free_coercion_cache(cache);
         return res;

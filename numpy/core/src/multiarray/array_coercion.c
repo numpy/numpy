@@ -188,7 +188,9 @@ _PyArray_MapPyTypeToDType(
 static NPY_INLINE PyArray_DTypeMeta *
 discover_dtype_from_pytype(PyTypeObject *pytype)
 {
-    PyObject *weakref = PyDict_GetItem(
+    PyObject *weakref;
+
+    weakref = PyDict_GetItem(
             _global_pytype_to_type_dict, (PyObject *)pytype);
 
     if (weakref == NULL) {
@@ -216,18 +218,22 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
         }
     }
     else {
-        assert(PyObject_IsInstance(DType, (PyObject *)&PyArrayDTypeMeta_Type));
+        assert(PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     }
     return (PyArray_DTypeMeta *)DType;
 }
 
 
 /**
- * Find the correct DType class for the given python type.
+ * Find the correct DType class for the given python type. If flags is NULL
+ * this is not used to discover a dtype, but only for conversion to an
+ * existing dtype. In that case the Python (not NumPy) scalar subclass
+ * checks are skipped.
  *
  * @param obj The python object, mainly type(pyobj) is used, the object
  *        is passed to reuse existing code at this time only.
- * @param flags Flags used to know if warnings were already given.
+ * @param flags Flags used to know if warnings were already given. If
+ *        flags is NULL, this is not
  * @param fixed_DType if not NULL, will be checked first for whether or not
  *        it can/wants to handle the (possible) scalar value.
  * @return New reference to either a DType class, Py_None, or NULL
@@ -249,15 +255,8 @@ discover_dtype_from_pyobject(
          *   4. NULL in case of an error.
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
-                (fixed_DType->is_known_scalar != NULL &&
-                 fixed_DType->is_known_scalar(fixed_DType, obj))) {
-            /*
-             * There are some corner cases, where we want to make sure a
-             * sequence is considered a scalar. In particular tuples with
-             * structured/void dtype and strings.
-             * The type check is simply a fast (and simple default) path
-             * which could capture some special dtypes, such as polynomials.
-             */
+                (fixed_DType->is_known_scalar_type != NULL &&
+                 fixed_DType->is_known_scalar_type(fixed_DType, Py_TYPE(obj)))) {
             Py_INCREF(fixed_DType);
             return fixed_DType;
         }
@@ -278,6 +277,10 @@ discover_dtype_from_pyobject(
         if (legacy_descr == NULL) {
             return NULL;
         }
+    }
+    else if (flags == NULL) {
+        Py_INCREF(Py_None);
+        return (PyArray_DTypeMeta *)Py_None;
     }
     else if (PyBytes_Check(obj)) {
         legacy_descr = PyArray_DescrFromType(NPY_BYTE);
@@ -307,7 +310,6 @@ discover_dtype_from_pyobject(
         }
         return DType;
     }
-
     Py_INCREF(Py_None);
     return (PyArray_DTypeMeta *)Py_None;
 }
@@ -330,7 +332,7 @@ cast_descriptor_to_fixed_dtype(
          */
         return fixed_DType->default_descr(fixed_DType);
     }
-    if (PyObject_IsInstance((PyObject *)descr, (PyObject *)fixed_DType)) {
+    if (PyObject_TypeCheck((PyObject *)descr, (PyTypeObject *)fixed_DType)) {
         Py_INCREF(descr);
         return descr;
     }
@@ -458,12 +460,23 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
             .ob_base.ob_type = &PyArrayDescr_Type,
             .flags = NPY_ARRAY_BEHAVED,
         };
-    enum _dtype_discovery_flags flags = GAVE_SUBCLASS_WARNING;
-    PyArray_DTypeMeta *DType = discover_dtype_from_pyobject(
-            value, &flags, NPY_DTYPE(descr));
 
-    if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None ||
-            DType == NULL) {
+    if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
+        /*
+         * We always have store objects directly, casting will lose some
+         * type information. Any other dtype discards the type information...
+         */
+        return descr->f->setitem(value, item, &arr_fields);
+    }
+
+    PyArray_DTypeMeta *DType = discover_dtype_from_pyobject(
+            value, NULL, NPY_DTYPE(descr));
+
+    if (DType == NULL) {
+        return -1;
+    }
+
+    if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         Py_XDECREF(DType);
         /* We can set the element directly (luckily) */
         arr_fields.descr = descr;
@@ -566,7 +579,7 @@ npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim)
 {
-    coercion_cache_obj *cache = PyArray_malloc(sizeof(coercion_cache_obj));
+    coercion_cache_obj *cache = PyObject_MALLOC(sizeof(coercion_cache_obj));
     if (cache == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -591,7 +604,7 @@ npy_free_coercion_cache(coercion_cache_obj *next) {
         next = current->next;
 
         Py_DECREF(current->arr_or_sequence);
-        PyArray_free(current);
+        PyObject_FREE(current);
     }
 }
 
@@ -760,6 +773,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         if (update_shape(curr_dims, &max_dims, out_shape,
                 PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE) < 0) {
             *flags |= FOUND_RAGGED_ARRAY;
+            Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
             return max_dims;
         }
 
@@ -966,8 +980,8 @@ PyArray_DiscoverDTypeAndShape(
 
     /* Validate input of requested descriptor and DType */
     if (fixed_DType != NULL) {
-        assert(PyObject_IsInstance(
-                (PyObject *)fixed_DType, (PyObject *)&PyArrayDTypeMeta_Type));
+        assert(PyObject_TypeCheck(
+                (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     }
     if (requested_descr != NULL) {
         assert(!descr_is_legacy_parametric_instance(requested_descr));
@@ -1084,7 +1098,7 @@ PyArray_DiscoverDTypeAndShape(
                 Py_DECREF(current->arr_or_sequence);
                 coercion_cache_obj *_old = current;
                 current = current->next;
-                PyArray_free(_old);
+                PyObject_FREE(_old);
                 continue;
             }
             /* advance both prev and next, and set prev->next to new item */
@@ -1153,13 +1167,13 @@ PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
     *out_descr = NULL;
 
     if (dtype != NULL) {
-        if (PyObject_IsInstance(dtype, (PyObject *)&PyArrayDTypeMeta_Type)) {
+        if (PyObject_TypeCheck(dtype, (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
             assert(dtype != (PyObject * )&PyArrayDescr_Type);  /* not np.dtype */
             *out_DType = (PyArray_DTypeMeta *)dtype;
             Py_INCREF(*out_DType);
         }
-        else if (PyObject_IsInstance((PyObject *)Py_TYPE(dtype),
-                    (PyObject *)&PyArrayDTypeMeta_Type)) {
+        else if (PyObject_TypeCheck((PyObject *)Py_TYPE(dtype),
+                    (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
             *out_DType = NPY_DTYPE(dtype);
             Py_INCREF(*out_DType);
             if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype)) {

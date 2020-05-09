@@ -208,10 +208,35 @@ flexible_default_descr(PyArray_DTypeMeta *cls)
 }
 
 static int
-python_classes_are_known_scalars(
-        PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
+python_builtins_are_known_scalar_types(
+        PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
 {
-    return PyArray_IsPythonScalar(obj);
+    /*
+     * Always accept the common Python types, this ensures that we do not
+     * convert pyfloat->float64->integers. Subclasses are hopefully rejected
+     * as being discovered.
+     * This is necessary only for python scalar classes which we discover
+     * as valid DTypes.
+     */
+    if (pytype == &PyFloat_Type) {
+        return 1;
+    }
+    if (pytype == &PyLong_Type) {
+        return 1;
+    }
+    if (pytype == &PyBool_Type) {
+        return 1;
+    }
+    if (pytype == &PyComplex_Type) {
+        return 1;
+    }
+    if (pytype == &PyUnicode_Type) {
+        return 1;
+    }
+    if (pytype == &PyBytes_Type) {
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -333,7 +358,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->kind = descr->kind;
 
     /* Strings and voids have (strange) logic around scalars. */
-    dtype_class-> is_known_scalar = python_classes_are_known_scalars;
+    dtype_class->is_known_scalar_type = python_builtins_are_known_scalar_types;
 
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */

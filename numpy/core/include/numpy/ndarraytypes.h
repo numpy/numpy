@@ -1822,8 +1822,14 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
             PyArray_DTypeMeta *cls, PyObject *obj);
 
-    typedef int (is_known_scalar_function)(
-            PyArray_DTypeMeta *cls, PyObject *obj);
+    /*
+     * Before making this public, we should decide whether it should pass
+     * the type, or allow looking at the object. A possible use-case:
+     * `np.array(np.array([0]), dtype=np.ndarray)`
+     * Could consider arrays that are not `dtype=ndarray` "scalars".
+     */
+    typedef int (is_known_scalar_type_function)(
+            PyArray_DTypeMeta *cls, PyTypeObject *obj);
 
     typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
 
@@ -1879,7 +1885,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
 
         /* DType methods, these could be moved into its own struct */
         discover_descr_from_pyobject_function *discover_descr_from_pyobject;
-        is_known_scalar_function *is_known_scalar;
+        is_known_scalar_type_function *is_known_scalar_type;
         default_descr_function *default_descr;
     };
 
