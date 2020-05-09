@@ -5009,7 +5009,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
-    """
+    r"""
     outer(A, B, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
@@ -5043,7 +5043,13 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     See Also
     --------
-    numpy.outer
+    numpy.outer : A less powerful version of ``np.multiply.outer``
+                  that `ravel`\ s all inputs to 1D. This exists
+                  primarily for compatibility with old code.
+
+    tensordot : ``np.tensordot(a, b, axes=((), ()))`` and
+                ``np.multiply.outer(a, b)`` behave same for all
+                dimensions of a and b.
 
     Examples
     --------
