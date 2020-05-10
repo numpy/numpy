@@ -113,8 +113,8 @@ You can report issues to the NumPy Code of Conduct committee, at
 numpy-conduct@googlegroups.com. Currently, the committee consists of:
 
 - Stefan van der Walt
-- Nathaniel J. Smith
-- Ralf Gommers
+- Melissa Weber Mendonça
+- Anirudh Subramanian
 
 If your report involves any members of the committee, or if they feel they have
 a conflict of interest in handling it, then they will recuse themselves from
