@@ -15,6 +15,7 @@
 #include "iterators.h"
 #include "ctors.h"
 #include "common.h"
+#include "array_coercion.h"
 
 #define NEWAXIS_INDEX -1
 #define ELLIPSIS_INDEX -2
@@ -824,7 +825,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = PyArray_SETITEM(self->ao, self->dataptr, val);
+            retval = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
         }
         goto finish;
     }

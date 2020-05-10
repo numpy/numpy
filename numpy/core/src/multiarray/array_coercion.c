@@ -715,7 +715,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
          * We currently support that bytes/strings are considered sequences,
          * if the dtype is np.dtype('c'), this should be deprecated probably,
          * but requires hacks right now.
-         * TODO: Consider passing this as a flag, as it was before?
          */
         if (PyBytes_Check(obj) && PyBytes_Size(obj) != 1) {
             goto force_sequence_due_to_char_dtype;
