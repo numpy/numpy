@@ -145,13 +145,13 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   ma.stack
-   ma.column_stack
    ma.concatenate
-   ma.append
-   ma.dstack
-   ma.hstack
+   ma.stack
    ma.vstack
+   ma.hstack
+   ma.dstack
+   ma.column_stack
+   ma.append
 
 
 _____

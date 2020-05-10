@@ -688,10 +688,12 @@ def dstack(tup):
 
     See Also
     --------
-    stack : Join a sequence of arrays along a new axis.
-    vstack : Stack along first axis.
-    hstack : Stack along second axis.
     concatenate : Join a sequence of arrays along an existing axis.
+    stack : Join a sequence of arrays along a new axis.
+    block : Assemble an nd-array from nested lists of blocks.
+    vstack : Stack arrays in sequence vertically (row wise).
+    hstack : Stack arrays in sequence horizontally (column wise).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
     dsplit : Split array along third axis.
 
     Examples
