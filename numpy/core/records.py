@@ -773,7 +773,40 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """Create a (read-only) record array from binary data contained in
-    a string"""
+    a string
+
+    Parameters
+    ----------
+    datastring : str
+        Binary data contained in a string
+    dtype : data-type, optional
+        Valid dtype for all arrays
+    shape : int or tuple of ints, optional
+        Shape of each array.
+    offset : int, optional
+        Position in the file to start reading from.
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
+
+
+    Returns
+    -------
+    np.recarray
+        record array consisting of data in datastring.
+
+    Examples
+    --------
+    >>> a = np.empty(10,dtype='f8,i4,a5')
+    >>> a[5] = (0.5,10,'abcde')
+    >>> b=np.core.records.fromstring(a.tostring(), formats='f8,i4,a5', shape=10,
+    ... byteorder='<')
+    >>> print(b[5])
+    (0.5, 10, 'abcde')
+    >>> b.shape
+    (10,)
+    """
 
     if dtype is None and formats is None:
         raise TypeError("fromstring() needs a 'dtype' or 'formats' argument")
