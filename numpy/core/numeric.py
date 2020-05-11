@@ -1231,8 +1231,9 @@ def rollaxis(a, axis, start=0):
     start : int, optional
         When ``start <= axis``, the axis is rolled back until it lies in
         this position. When ``start > axis``, the axis is rolled until it
-        lies before this position. The following table describes how negative
-        values of ``start`` are interpreted:
+        lies before this position. The default, 0, results in a "complete"
+        roll. The following table describes how negative values of ``start``
+        are interpreted:
 
         .. table::
            :align: left
@@ -1257,7 +1258,7 @@ def rollaxis(a, axis, start=0):
            | ``arr.ndim + 1``  | raise ``AxisError``  |
            +-------------------+----------------------+
            
-       .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
+        .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
     -------
