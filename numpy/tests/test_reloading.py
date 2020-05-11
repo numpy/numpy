@@ -1,7 +1,10 @@
+import sys
+
 from numpy.testing import assert_raises, assert_, assert_equal
 from numpy.compat import pickle
 
 from importlib import reload
+
 
 def test_numpy_reloading():
     # gh-7844. Also check that relevant globals retain their identity.
@@ -29,3 +32,13 @@ def test_novalue():
         assert_equal(repr(np._NoValue), '<no value>')
         assert_(pickle.loads(pickle.dumps(np._NoValue,
                                           protocol=proto)) is np._NoValue)
+
+def test_reimport():
+    # Regression test for gh-14384
+    import numpy as np
+
+    for k in list(sys.modules.keys()):
+        if "numpy" in k:
+            del sys.modules[k]
+
+    import numpy as np

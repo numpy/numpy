@@ -13,8 +13,12 @@ ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
 
-add_docstring(
-    implement_array_function,
+# We can't use add_newdoc (which is more robust than add_docstring) here to
+# attach these docstrings (cyclic imports), and add_docstring() gives a
+# RuntimeError on a reload (e.g. when using the %autoreload magic) - see
+# gh-14384. So wrap in a try-except:
+try:
+    add_docstring(implement_array_function,
     """
     Implement a function with checks for __array_function__ overrides.
 
@@ -46,10 +50,8 @@ add_docstring(
     TypeError : if no implementation is found.
     """)
 
-
-# exposed for testing purposes; used internally by implement_array_function
-add_docstring(
-    _get_implementing_args,
+    # exposed for testing purposes; used internally by implement_array_function
+    add_docstring(_get_implementing_args,
     """
     Collect arguments on which to call __array_function__.
 
@@ -64,6 +66,8 @@ add_docstring(
     Sequence of arguments with __array_function__ methods, in the order in
     which they should be called.
     """)
+except (RuntimeError, TypeError):
+    pass
 
 
 ArgSpec = collections.namedtuple('ArgSpec', 'args varargs keywords defaults')
@@ -157,7 +161,10 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     if not ARRAY_FUNCTION_ENABLED:
         def decorator(implementation):
             if docs_from_dispatcher:
-                add_docstring(implementation, dispatcher.__doc__)
+                try:
+                    add_docstring(implementation, dispatcher.__doc__)
+                except (RuntimeError, TypeError):
+                    pass
             if module is not None:
                 implementation.__module__ = module
             return implementation
@@ -168,7 +175,10 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
             verify_matching_signatures(implementation, dispatcher)
 
         if docs_from_dispatcher:
-            add_docstring(implementation, dispatcher.__doc__)
+            try:
+                add_docstring(implementation, dispatcher.__doc__)
+            except (RuntimeError, TypeError):
+                pass
 
         # Equivalently, we could define this function directly instead of using
         # exec. This version has the advantage of giving the helper function a
