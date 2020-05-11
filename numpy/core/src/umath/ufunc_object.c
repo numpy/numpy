@@ -2697,9 +2697,13 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             }
         }
 
-        /* Any output core dimensions shape should be ignored */
+        /*
+         * Any output core dimensions shape should be ignored, so we add
+         * it as a Reduce dimension (which can be broadcast with the rest).
+         * These will be removed before the actual iteration for gufuncs.
+         */
         for (idim = broadcast_ndim; idim < iter_ndim; ++idim) {
-            op_axes_arrays[i][idim] = -1;
+            op_axes_arrays[i][idim] = NPY_ITER_REDUCTION_AXIS(-1);
         }
 
         /* Except for when it belongs to this output */
@@ -2771,7 +2775,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     _ufunc_setup_flags(ufunc, NPY_ITER_COPY | NPY_UFUNC_DEFAULT_INPUT_FLAGS,
                        NPY_ITER_UPDATEIFCOPY |
-                       NPY_ITER_READWRITE |
+                       NPY_ITER_WRITEONLY |
                        NPY_UFUNC_DEFAULT_OUTPUT_FLAGS,
                        op_flags);
     /* For the generalized ufunc, we get the loop right away too */
@@ -2820,7 +2824,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     iter_flags = ufunc->iter_flags |
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
-                 NPY_ITER_REDUCE_OK |
                  NPY_ITER_ZEROSIZE_OK |
                  NPY_ITER_COPY_IF_OVERLAP;
 
@@ -3646,7 +3649,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     result = PyUFunc_ReduceWrapper(arr, out, wheremask, dtype, dtype,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
-                                   keepdims, 0,
+                                   keepdims,
                                    initial,
                                    reduce_loop,
                                    ufunc, buffersize, ufunc_name, errormask);
