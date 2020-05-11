@@ -2297,7 +2297,7 @@ def array_equal(a1, a2, equal_nan=False):
         complex, values will be considered equal if either the real or the
         imaginary component of a given value is ``nan``.
 
-    .. versionadded:: 1.19.0
+        .. versionadded:: 1.19.0
 
     Returns
     -------
