@@ -58,10 +58,9 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     const npy_uint32 *op_flags, int **op_axes,
                     npy_intp const *itershape);
 static void
-npyiter_replace_axisdata(NpyIter *iter, int iop,
-                      PyArrayObject *op,
-                      int op_ndim, char *op_dataptr,
-                      int *op_axes);
+npyiter_replace_axisdata(
+        NpyIter *iter, int iop, PyArrayObject *op,
+        int orig_op_ndim, const int *op_axes);
 static void
 npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags);
 static void
@@ -1922,14 +1921,14 @@ operand_different_than_broadcast: {
  * array.
  */
 static void
-npyiter_replace_axisdata(NpyIter *iter, int iop,
-                      PyArrayObject *op,
-                      int op_ndim, char *op_dataptr,
-                      int *op_axes)
+npyiter_replace_axisdata(
+        NpyIter *iter, int iop, PyArrayObject *op,
+        int orig_op_ndim, const int *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
+    char *op_dataptr = PyArray_DATA(op);
 
     NpyIter_AxisData *axisdata0, *axisdata;
     npy_intp sizeof_axisdata;
@@ -2810,8 +2809,8 @@ npyiter_allocate_arrays(NpyIter *iter,
              * Now we need to replace the pointers and strides with values
              * from the new array.
              */
-            npyiter_replace_axisdata(iter, iop, op[iop], ondim,
-                    PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
+            npyiter_replace_axisdata(iter, iop, op[iop], ndim,
+                    op_axes ? op_axes[iop] : NULL);
 
             /*
              * New arrays are guaranteed true-aligned, but copy/cast code
@@ -2852,8 +2851,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * Now we need to replace the pointers and strides with values
              * from the temporary array.
              */
-            npyiter_replace_axisdata(iter, iop, op[iop], 0,
-                    PyArray_DATA(op[iop]), NULL);
+            npyiter_replace_axisdata(iter, iop, op[iop], 0, NULL);
 
             /*
              * New arrays are guaranteed true-aligned, but copy/cast code
@@ -2925,7 +2923,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * from the temporary array.
              */
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
-                    PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
+                    op_axes ? op_axes[iop] : NULL);
 
             /*
              * New arrays are guaranteed true-aligned, but copy/cast code
