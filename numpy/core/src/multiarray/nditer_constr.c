@@ -57,6 +57,8 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     char **op_dataptr,
                     const npy_uint32 *op_flags, int **op_axes,
                     npy_intp const *itershape);
+static NPY_INLINE int
+npyiter_get_op_axis(int axis, npy_bool *reduction_axis);
 static void
 npyiter_replace_axisdata(
         NpyIter *iter, int iop, PyArrayObject *op,
@@ -825,7 +827,8 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
         if (axes != NULL) {
             memset(axes_dupcheck, 0, NPY_MAXDIMS);
             for (idim = 0; idim < oa_ndim; ++idim) {
-                int i = axes[idim];
+                int i = npyiter_get_op_axis(axes[idim], NULL);
+
                 if (i >= 0) {
                     if (i >= NPY_MAXDIMS) {
                         PyErr_Format(PyExc_ValueError,
@@ -1441,6 +1444,27 @@ npyiter_check_reduce_ok_and_set_flags(
     return 1;
 }
 
+/**
+ * Removes the (additive) NPY_ITER_REDUCTION_AXIS indication and sets
+ * is_forced_broadcast to 1 if it is set. Otherwise to 0.
+ *
+ * @param axis The op_axes[i] to normalize.
+ * @param reduction_axis Output 1 if a reduction axis, otherwise 0.
+ * @returns The normalized axis (without reduce axis flag).
+ */
+static NPY_INLINE int
+npyiter_get_op_axis(int axis, npy_bool *reduction_axis) {
+    npy_bool forced_broadcast = axis >= NPY_ITER_REDUCTION_AXIS(-1);
+
+    if (reduction_axis != NULL) {
+        *reduction_axis = forced_broadcast;
+    }
+    if (forced_broadcast) {
+        return axis - NPY_ITER_REDUCTION_AXIS(0);
+    }
+    return axis;
+}
+
 /*
  * Fills in the AXISDATA for the 'nop' operands, broadcasting
  * the dimensionas as necessary.  Also fills
@@ -1515,7 +1539,8 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
             else {
                 int *axes = op_axes[iop];
                 for (idim = 0; idim < ndim; ++idim) {
-                    int i = axes[idim];
+                    int i = npyiter_get_op_axis(axes[idim], NULL);
+
                     if (i >= 0) {
                         if (i < ondim) {
                             npy_intp bshape = broadcast_shape[idim];
@@ -1642,9 +1667,37 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
             }
             else {
                 int *axes = op_axes[iop];
-                int i = axes[ndim-idim-1];
-                if (i >= 0) {
-                    if (bshape == 1 || op_cur == NULL) {
+                npy_bool reduction_axis;
+                int i;
+                i = npyiter_get_op_axis(axes[ndim - idim - 1], &reduction_axis);
+
+                if (reduction_axis) {
+                    /* This is explicitly a reduction axis */
+                    strides[iop] = 0;
+                    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                    op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
+
+                    if (NPY_UNLIKELY((i >= 0) && (op_cur != NULL) &&
+                            (PyArray_DIM(op_cur, i) != 1))) {
+                        PyErr_Format(PyExc_ValueError,
+                                "operand was set up as a reduction along axis "
+                                "%d, but the length of the axis is %zd "
+                                "(it has to be 1)",
+                                i, (Py_ssize_t)PyArray_DIM(op_cur, i));
+                        return 0;
+                    }
+                }
+                else if (bshape == 1) {
+                    /*
+                     * If the full iterator shape is 1, zero always works.
+                     * NOTE: We thus always allow broadcast dimensions (i = -1)
+                     *       if the shape is 1.
+                     */
+                    strides[iop] = 0;
+                }
+                else if (i >= 0) {
+                    if (op_cur == NULL) {
+                        /* stride is filled later, shape will match `bshape` */
                         strides[iop] = 0;
                     }
                     else if (PyArray_DIM(op_cur, i) == 1) {
@@ -1775,7 +1828,7 @@ broadcast_error: {
 
                     if (axes != NULL) {
                         for (idim = 0; idim < ndim; ++idim) {
-                            npy_intp i = axes[idim];
+                            int i = npyiter_get_op_axis(axes[idim], NULL);
 
                             if (i >= 0 && i < PyArray_NDIM(op[iop])) {
                                 remdims[idim] = PyArray_DIM(op[iop], i);
@@ -1954,7 +2007,9 @@ npyiter_replace_axisdata(
             /* Apply perm to get the original axis, and check if its flipped */
             i = npyiter_undo_iter_axis_perm(idim, ndim, perm, &axis_flipped);
 
-            if (0 <= i && i < op_ndim) {
+            i = npyiter_get_op_axis(op_axes[i], NULL);
+            assert(i < orig_op_ndim);
+            if (i >= 0) {
                 shape = PyArray_DIM(op, i);
                 if (shape != 1) {
                     npy_intp stride = PyArray_STRIDE(op, i);
@@ -2511,9 +2566,11 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     if (op_axes != NULL) {
         used_op_ndim = 0;
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+            npy_bool reduction_axis;
 
             /* Apply the perm to get the original axis */
             i = npyiter_undo_iter_axis_perm(idim, ndim, perm, NULL);
+            i = npyiter_get_op_axis(op_axes[i], &reduction_axis);
 
             if (i >= 0) {
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
@@ -2522,7 +2579,13 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 used_op_ndim += 1;
                 strides[i] = stride;
                 if (shape == NULL) {
-                    new_shape[i] = NAD_SHAPE(axisdata);
+                    if (reduction_axis) {
+                        /* reduction axes always have a length of 1 */
+                        new_shape[i] = 1;
+                    }
+                    else {
+                        new_shape[i] = NAD_SHAPE(axisdata);
+                    }
                     stride *= new_shape[i];
                     if (i >= ndim) {
                         PyErr_Format(PyExc_ValueError,
@@ -2536,6 +2599,9 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 }
                 else {
                     stride *= shape[i];
+                    if (reduction_axis) {
+                        assert(shape[i] == 1);
+                    }
                 }
             }
             else {
@@ -2546,7 +2612,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                      * NOTE: We currently always allow new-axis if the iteration
                      *       size is 1 (thus allowing broadcasting sometimes).
                      */
-                    if (NAD_SHAPE(axisdata) != 1) {
+                    if (!reduction_axis && NAD_SHAPE(axisdata) != 1) {
                         if (!npyiter_check_reduce_ok_and_set_flags(
                                 iter, flags, op_itflags)) {
                             return NULL;
@@ -2782,16 +2848,21 @@ npyiter_allocate_arrays(NpyIter *iter,
         if (op[iop] == NULL) {
             PyArrayObject *out;
             PyTypeObject *op_subtype;
-            int ondim = ndim;
 
             /* Check whether the subtype was disabled */
             op_subtype = (op_flags[iop] & NPY_ITER_NO_SUBTYPE) ?
                                                 &PyArray_Type : subtype;
 
-            /* Allocate the output array */
+            /*
+             * Allocate the output array.
+             *
+             * Note that here, ndim is always correct if no op_axes was given
+             * (but the actual dimension of op can be larger). If op_axes
+             * is given, ndim is not actually used.
+             */
             out = npyiter_new_temp_array(iter, op_subtype,
                                         flags, &op_itflags[iop],
-                                        ondim,
+                                        ndim,
                                         NULL,
                                         op_dtype[iop],
                                         op_axes ? op_axes[iop] : NULL);

@@ -342,5 +342,14 @@ NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
 
+
+/*
+ * Used to indicate a broadcast axis, see also `npyiter_get_op_axis` in
+ * `nditer_constr.c`.  This may be the preferred API for reduction axes
+ * probably. So we should consider making this public either as a macro or
+ * function (so that the way we flag the axis can be changed).
+ */
+#define NPY_ITER_REDUCTION_AXIS(axis) (axis + (NPY_MAX_INT >> 1))
+
 #endif
 
