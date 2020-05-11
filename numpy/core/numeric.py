@@ -1229,11 +1229,39 @@ def rollaxis(a, axis, start=0):
     a : ndarray
         Input array.
     axis : int
-        The axis to roll backwards.  The positions of the other axes do not
+        The axis to be rolled. The positions of the other axes do not
         change relative to one another.
     start : int, optional
-        The axis is rolled until it lies before this position.  The default,
-        0, results in a "complete" roll.
+        When ``start <= axis``, the axis is rolled back until it lies in
+        this position. When ``start > axis``, the axis is rolled until it
+        lies before this position. The default, 0, results in a "complete"
+        roll. The following table describes how negative values of ``start``
+        are interpreted:
+
+        .. table::
+           :align: left
+
+           +-------------------+----------------------+
+           |     ``start``     | Normalized ``start`` |
+           +===================+======================+
+           | ``-(arr.ndim+1)`` | raise ``AxisError``  |
+           +-------------------+----------------------+
+           | ``-arr.ndim``     | 0                    |
+           +-------------------+----------------------+
+           | |vdots|           | |vdots|              |
+           +-------------------+----------------------+
+           | ``-1``            | ``arr.ndim-1``       |
+           +-------------------+----------------------+
+           | ``0``             | ``0``                |
+           +-------------------+----------------------+
+           | |vdots|           | |vdots|              |
+           +-------------------+----------------------+
+           | ``arr.ndim``      | ``arr.ndim``         |
+           +-------------------+----------------------+
+           | ``arr.ndim + 1``  | raise ``AxisError``  |
+           +-------------------+----------------------+
+           
+        .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
     -------
