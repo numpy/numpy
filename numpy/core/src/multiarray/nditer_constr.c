@@ -1470,8 +1470,9 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     return 0;
                 }
                 for (idim = 0; idim < ondim; ++idim) {
-                    npy_intp bshape = broadcast_shape[idim+ndim-ondim],
-                                      op_shape = shape[idim];
+                    npy_intp bshape = broadcast_shape[idim+ndim-ondim];
+                    npy_intp op_shape = shape[idim];
+
                     if (bshape == 1) {
                         broadcast_shape[idim+ndim-ondim] = op_shape;
                     }
@@ -1486,8 +1487,9 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     int i = axes[idim];
                     if (i >= 0) {
                         if (i < ondim) {
-                            npy_intp bshape = broadcast_shape[idim],
-                                              op_shape = shape[i];
+                            npy_intp bshape = broadcast_shape[idim];
+                            npy_intp op_shape = shape[i];
+
                             if (bshape == 1) {
                                 broadcast_shape[idim] = op_shape;
                             }
@@ -1945,25 +1947,18 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
 
     if (op_axes != NULL) {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
             int i;
+            npy_bool axis_flipped;
             npy_intp shape;
 
-            /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_axes[ndim+p];
-            }
-            else {
-                i = op_axes[ndim-p-1];
-            }
+            /* Apply perm to get the original axis, and check if its flipped */
+            i = npyiter_undo_iter_axis_perm(idim, ndim, perm, &axis_flipped);
 
             if (0 <= i && i < op_ndim) {
                 shape = PyArray_DIM(op, i);
                 if (shape != 1) {
                     npy_intp stride = PyArray_STRIDE(op, i);
-                    if (p < 0) {
-                        /* If the perm entry is negative, flip the axis */
+                    if (axis_flipped) {
                         NAD_STRIDES(axisdata)[iop] = -stride;
                         baseoffset += stride*(shape-1);
                     }
@@ -1976,25 +1971,18 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
     }
     else {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
             int i;
+            npy_bool axis_flipped;
             npy_intp shape;
 
-            /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_ndim+p;
-            }
-            else {
-                i = op_ndim-p-1;
-            }
+            i = npyiter_undo_iter_axis_perm(
+                    idim, orig_op_ndim, perm, &axis_flipped);
 
             if (i >= 0) {
                 shape = PyArray_DIM(op, i);
                 if (shape != 1) {
                     npy_intp stride = PyArray_STRIDE(op, i);
-                    if (p < 0) {
-                        /* If the perm entry is negative, flip the axis */
+                    if (axis_flipped) {
                         NAD_STRIDES(axisdata)[iop] = -stride;
                         baseoffset += stride*(shape-1);
                     }
@@ -2488,7 +2476,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
              stride = op_dtype->elsize;
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
-    npy_intp i;
+    int i;
 
     PyArrayObject *ret;
 
@@ -2521,16 +2509,9 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     if (op_axes != NULL) {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
 
             /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_axes[ndim+p];
-            }
-            else {
-                i = op_axes[ndim-p-1];
-            }
+            i = npyiter_undo_iter_axis_perm(idim, ndim, perm, NULL);
 
             if (i >= 0) {
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
@@ -2583,16 +2564,8 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     }
     else {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
-
             /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_ndim + p;
-            }
-            else {
-                i = op_ndim - p - 1;
-            }
+            i = npyiter_undo_iter_axis_perm(idim, op_ndim, perm, NULL);
 
             if (i >= 0) {
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
