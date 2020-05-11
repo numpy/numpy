@@ -1903,22 +1903,34 @@ class TestUfunc:
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
 
-    @pytest.mark.parametrize('output_shape',
-                             [(), (1,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('out_shape',
+                             [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('keepdims', [True, False])
     @pytest.mark.parametrize('f_reduce', [np.add.reduce, np.minimum.reduce])
-    def test_reduce_wrong_dimension_output(self, f_reduce, output_shape):
+    def test_reduce_wrong_dimension_output(self, f_reduce, keepdims, out_shape):
         # Test that we're not incorrectly broadcasting dimensions.
         # See gh-15144 (failed for np.add.reduce previously).
         a = np.arange(12.).reshape(4, 3)
-        out = np.empty(output_shape, a.dtype)
-        assert_raises(ValueError, f_reduce, a, axis=0, out=out)
-        if output_shape != (1, 3):
-            assert_raises(ValueError, f_reduce, a, axis=0, out=out,
-                          keepdims=True)
+        out = np.empty(out_shape, a.dtype)
+
+        correct_out = f_reduce(a, axis=0, keepdims=keepdims)
+        if out_shape != correct_out.shape:
+            with assert_raises(ValueError):
+                f_reduce(a, axis=0, out=out, keepdims=keepdims)
         else:
-            check = f_reduce(a, axis=0, out=out, keepdims=True)
+            check = f_reduce(a, axis=0, out=out, keepdims=keepdims)
             assert_(check is out)
-            assert_array_equal(check, f_reduce(a, axis=0, keepdims=True))
+            assert_array_equal(check, correct_out)
+
+    def test_reduce_output_no_subclass(self):
+        class MyArr(np.ndarray):
+            pass
+
+        out = np.empty(())
+        np.add.reduce(np.ones(5), out=out)  # no subclass, all fine
+        out = out.view(MyArr)
+        assert np.add.reduce(np.ones(5), out=out) is out
+        assert type(np.add.reduce(out)) is MyArr
 
     def test_no_doc_string(self):
         # gh-9337
