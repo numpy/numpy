@@ -1446,6 +1446,36 @@ class TestArrayComparisons:
         assert_(res)
         assert_(type(res) is bool)
 
+    def test_array_equal_equal_nan(self):
+        # Test array_equal with equal_nan kwarg
+        a1 = np.array([1, 2, np.nan])
+        a2 = np.array([1, np.nan, 2])
+        a3 = np.array([1, 2, np.inf])
+
+        # equal_nan=False by default
+        assert_(not np.array_equal(a1, a1))
+        assert_(np.array_equal(a1, a1, equal_nan=True))
+        assert_(not np.array_equal(a1, a2, equal_nan=True))
+        # nan's not conflated with inf's
+        assert_(not np.array_equal(a1, a3, equal_nan=True))
+        # 0-D arrays
+        a = np.array(np.nan)
+        assert_(not np.array_equal(a, a))
+        assert_(np.array_equal(a, a, equal_nan=True))
+        # Non-float dtype - equal_nan should have no effect
+        a = np.array([1, 2, 3], dtype=int)
+        assert_(np.array_equal(a, a))
+        assert_(np.array_equal(a, a, equal_nan=True))
+        # Multi-dimensional array
+        a = np.array([[0, 1], [np.nan, 1]])
+        assert_(not np.array_equal(a, a))
+        assert_(np.array_equal(a, a, equal_nan=True))
+        # Complex values
+        a, b = [np.array([1 + 1j])]*2
+        a.real, b.imag = np.nan, np.nan
+        assert_(not np.array_equal(a, b, equal_nan=False))
+        assert_(np.array_equal(a, b, equal_nan=True))
+
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
         assert_equal(a == None, [True, False, True])
