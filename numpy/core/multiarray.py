@@ -1266,7 +1266,13 @@ def shares_memory(a, b, max_work=None):
     """
     shares_memory(a, b, max_work=None)
 
-    Determine if two arrays share memory
+    Determine if two arrays share memory.
+
+    .. warning::
+
+       This function can be exponentially slow for some inputs, unless
+       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
     ----------
@@ -1279,7 +1285,8 @@ def shares_memory(a, b, max_work=None):
 
         max_work=MAY_SHARE_EXACT  (default)
             The problem is solved exactly. In this case, the function returns
-            True only if there is an element shared between the arrays.
+            True only if there is an element shared between the arrays. Finding
+            the exact solution may take extremely long in some cases.
         max_work=MAY_SHARE_BOUNDS
             Only the memory bounds of a and b are checked.
 
@@ -1298,8 +1305,32 @@ def shares_memory(a, b, max_work=None):
 
     Examples
     --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    >>> x = np.array([1, 2, 3, 4])
+    >>> np.shares_memory(x, np.array([5, 6, 7]))
     False
+    >>> np.shares_memory(x[::2], x)
+    True
+    >>> np.shares_memory(x[::2], x[1::2])
+    False
+
+    Checking whether two arrays share memory is NP-complete, and
+    runtime may increase exponentially in the number of
+    dimensions. Hence, `max_work` should generally be set to a finite
+    number, as it is possible to construct examples that take
+    extremely long to run:
+
+    >>> from numpy.lib.stride_tricks import as_strided
+    >>> x = np.zeros([192163377], dtype=np.int8)
+    >>> x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
+    >>> x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
+    >>> np.shares_memory(x1, x2, max_work=1000)
+    Traceback (most recent call last):
+    ...
+    numpy.TooHardError: Exceeded max_work
+
+    Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
+    around 1 minute for this case. It is possible to find problems
+    that take still significantly longer.
 
     """
     return (a, b)
