@@ -4005,11 +4005,14 @@ def _trapz_dispatcher(y, x=None, dx=None, axis=None):
 
 @array_function_dispatch(_trapz_dispatcher)
 def trapz(y, x=None, dx=1.0, axis=-1):
-    """
+    r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
-    Integrate `y` (`x`) along given axis. If `x` is provided, the integration happens in sequence along its elements - they are not sorted.
-
+    If `x` is provided, the integration happens in sequence along its elements - they are not sorted.
+    
+    Integrate `y` (`x`) along each 1d slice on the given axis, compute :math:`\int y(x) dx`.
+    When `x` is specified, this integrates along the parametric curve, computing :math:`\int_t y(t) dt = \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+    
     Parameters
     ----------
     y : array_like
