@@ -251,7 +251,6 @@ From scratch
     .. versionadded:: 1.6
 
     This function steals a reference to *descr* if it is not NULL.
-
     This array creation routine allows for the convenient creation of
     a new array matching an existing array's shapes and memory layout,
     possibly changing the layout and/or data type.
@@ -633,6 +632,15 @@ From other objects
     *max_depth*. Equivalent to a call to :c:func:`PyArray_FromAny` with
     requirements set to :c:data:`NPY_ARRAY_DEFAULT` and the type_num member of the
     type argument set to *typenum*.
+
+.. c:function:: PyObject* PyArray_ContiguousFromObject( \
+        PyObject *op, int typenum, int min_depth, int max_depth)
+
+    This function returns a well-behaved C-style contiguous array. The minimum
+    number of dimensions the array can have is given by `min_depth` while the
+    maximum is `max_depth`. This is equivalent to call :c:func:`PyArray_FromAny`
+    with requirements :c:data:`NPY_ARRAY_DEFAULT` and
+    :c:data:`NPY_ARRAY_ENSUREARRAY`.
 
 .. c:function:: PyObject *PyArray_FromObject( \
         PyObject *op, int typenum, int min_depth, int max_depth)
