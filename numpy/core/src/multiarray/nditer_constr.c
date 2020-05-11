@@ -2469,11 +2469,12 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
+    int used_op_ndim;
     int nop = NIT_NOP(iter);
 
     npy_int8 *perm = NIT_PERM(iter);
-    npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS],
-             stride = op_dtype->elsize;
+    npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp stride = op_dtype->elsize;
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     int i;
@@ -2503,11 +2504,12 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
     /* Initialize the strides to invalid values */
-    for (i = 0; i < NPY_MAXDIMS; ++i) {
+    for (i = 0; i < op_ndim; ++i) {
         strides[i] = NPY_MAX_INTP;
     }
 
     if (op_axes != NULL) {
+        used_op_ndim = 0;
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
 
             /* Apply the perm to get the original axis */
@@ -2517,14 +2519,18 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
                                     "for iterator dimension %d to %d\n", (int)i,
                                     (int)idim, (int)stride);
+                used_op_ndim += 1;
                 strides[i] = stride;
                 if (shape == NULL) {
                     new_shape[i] = NAD_SHAPE(axisdata);
                     stride *= new_shape[i];
                     if (i >= ndim) {
-                        PyErr_SetString(PyExc_ValueError,
+                        PyErr_Format(PyExc_ValueError,
                                 "automatically allocated output array "
-                                "specified with an inconsistent axis mapping");
+                                "specified with an inconsistent axis mapping; "
+                                "the axis mapping cannot include dimension %d "
+                                "which is too large for the iterator dimension "
+                                "of %d.", i, ndim);
                         return NULL;
                     }
                 }
@@ -2551,6 +2557,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         }
     }
     else {
+        used_op_ndim = ndim;
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
             /* Apply the perm to get the original axis */
             i = npyiter_undo_iter_axis_perm(idim, op_ndim, perm, NULL);
@@ -2571,73 +2578,57 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         }
     }
 
-    /*
-     * If custom axes were specified, some dimensions may not have been used.
-     * Add the REDUCE itflag if this creates a reduction situation.
-     */
     if (shape == NULL) {
-        /* Ensure there are no dimension gaps in op_axes, and find op_ndim */
-        op_ndim = ndim;
-        if (op_axes != NULL) {
-            for (i = 0; i < ndim; ++i) {
-                if (strides[i] == NPY_MAX_INTP) {
-                    if (op_ndim == ndim) {
-                        op_ndim = i;
-                    }
-                }
-                /*
-                 * If there's a gap in the array's dimensions, it's an error.
-                 * For example, op_axes of [0,2] for the automatically
-                 * allocated output.
-                 */
-                else if (op_ndim != ndim) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "automatically allocated output array "
-                            "specified with an inconsistent axis mapping");
-                    return NULL;
-                }
+        /* If shape was NULL, use the shape we calculated */
+        op_ndim = used_op_ndim;
+        shape = new_shape;
+        /*
+         * If op_axes [0, 2] is specified, there will a place in the strides
+         * array where the value is not set.
+         */
+        for (i = 0; i < op_ndim; i++) {
+            if (strides[i] == NPY_MAX_INTP) {
+                PyErr_Format(PyExc_ValueError,
+                        "automatically allocated output array "
+                        "specified with an inconsistent axis mapping; "
+                        "the axis mapping is missing an entry for "
+                        "dimension %d.", i);
+                return NULL;
             }
         }
     }
-    else {
+    else if (used_op_ndim < op_ndim) {
+        /*
+         * If custom axes were specified, some dimensions may not have
+         * been used. These are additional axes which are ignored in the
+         * iterator but need to be handled here.
+         */
+        npy_intp factor, itemsize, new_strides[NPY_MAXDIMS];
+
+        /* Fill in the missing strides in C order */
+        factor = 1;
+        itemsize = op_dtype->elsize;
+        for (i = op_ndim-1; i >= 0; --i) {
+            if (strides[i] == NPY_MAX_INTP) {
+                new_strides[i] = factor * itemsize;
+                factor *= shape[i];
+            }
+        }
+
+        /*
+         * Copy the missing strides, and multiply the existing strides
+         * by the calculated factor.  This way, the missing strides
+         * are tighter together in memory, which is good for nested
+         * loops.
+         */
         for (i = 0; i < op_ndim; ++i) {
             if (strides[i] == NPY_MAX_INTP) {
-                npy_intp factor, new_strides[NPY_MAXDIMS],
-                         itemsize;
-
-                /* Fill in the missing strides in C order */
-                factor = 1;
-                itemsize = op_dtype->elsize;
-                for (i = op_ndim-1; i >= 0; --i) {
-                    if (strides[i] == NPY_MAX_INTP) {
-                        new_strides[i] = factor * itemsize;
-                        factor *= shape[i];
-                    }
-                }
-
-                /*
-                 * Copy the missing strides, and multiply the existing strides
-                 * by the calculated factor.  This way, the missing strides
-                 * are tighter together in memory, which is good for nested
-                 * loops.
-                 */
-                for (i = 0; i < op_ndim; ++i) {
-                    if (strides[i] == NPY_MAX_INTP) {
-                        strides[i] = new_strides[i];
-                    }
-                    else {
-                        strides[i] *= factor;
-                    }
-                }
-
-                break;
+                strides[i] = new_strides[i];
+            }
+            else {
+                strides[i] *= factor;
             }
         }
-    }
-
-    /* If shape was NULL, set it to the shape we calculated */
-    if (shape == NULL) {
-        shape = new_shape;
     }
 
     /* Allocate the temporary array */
@@ -2650,6 +2641,11 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     /* Double-check that the subtype didn't mess with the dimensions */
     if (subtype != &PyArray_Type) {
+        /*
+         * TODO: the dtype could have a subarray, which adds new dimensions
+         *       to `ret`, that should typically be fine, but will break
+         *       in this branch.
+         */
         if (PyArray_NDIM(ret) != op_ndim ||
                     !PyArray_CompareLists(shape, PyArray_DIMS(ret), op_ndim)) {
             PyErr_SetString(PyExc_RuntimeError,
