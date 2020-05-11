@@ -1420,13 +1420,15 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
  */
 static int
 npyiter_check_reduce_ok_and_set_flags(
-        NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags) {
+        NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
+        int dim) {
     /* If it's writeable, this means a reduction */
     if (*op_itflags & NPY_OP_ITFLAG_WRITE) {
         if (!(flags & NPY_ITER_REDUCE_OK)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "output operand requires a reduction, but reduction is"
-                    "not enabled");
+            PyErr_Format(PyExc_ValueError,
+                    "output operand requires a reduction along dimension %d, "
+                    "but the reduction is not enabled. The dimension size of 1 "
+                    "does not match the expected output shape.", dim);
             return 0;
         }
         if (!(*op_itflags & NPY_OP_ITFLAG_READ)) {
@@ -1706,7 +1708,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                             goto operand_different_than_broadcast;
                         }
                         if (!npyiter_check_reduce_ok_and_set_flags(
-                                iter, flags, &op_itflags[iop])) {
+                                iter, flags, &op_itflags[iop], i)) {
                             return 0;
                         }
                     }
@@ -1717,7 +1719,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                 else {
                     strides[iop] = 0;
                     if (!npyiter_check_reduce_ok_and_set_flags(
-                            iter, flags, &op_itflags[iop])) {
+                            iter, flags, &op_itflags[iop], i)) {
                         return 0;
                     }
                 }
@@ -2614,7 +2616,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                      */
                     if (!reduction_axis && NAD_SHAPE(axisdata) != 1) {
                         if (!npyiter_check_reduce_ok_and_set_flags(
-                                iter, flags, op_itflags)) {
+                                iter, flags, op_itflags, i)) {
                             return NULL;
                         }
                     }
