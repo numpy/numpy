@@ -14,7 +14,7 @@ steps:
     # to $PYTHON_EXE's directory since that is on a different drive which
     # mingw does not like. Instead copy it to a directory and set OPENBLAS,
     # since OPENBLAS will be picked up by the openblas discovery
-    python -m pip  install urllib3
+    python -m pip  install
     $target = $(python tools/openblas_support.py)
     mkdir openblas
     echo Copying $target to openblas/openblas$env:OPENBLAS_SUFFIX.a
