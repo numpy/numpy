@@ -25,7 +25,6 @@ build:
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
     - sudo apt-get update
     - sudo apt-get install gcc gfortran libgfortran5
-    - python -mpip install urllib3
     - target=$(python tools/openblas_support.py)
     - ls -lR "${target}"
     - sudo cp -r "${target}"/lib/* /usr/lib

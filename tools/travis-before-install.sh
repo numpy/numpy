@@ -41,8 +41,7 @@ pip install --upgrade pip
 # A specific version of cython is required, so we read the cython package
 # requirement using `grep cython test_requirements.txt` instead of simply
 # writing 'pip install setuptools wheel cython'.
-# urllib3 is needed for openblas_support
-pip install setuptools wheel urllib3 `grep cython test_requirements.txt`
+pip install setuptools wheel `grep cython test_requirements.txt`
 
 if [ -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd
