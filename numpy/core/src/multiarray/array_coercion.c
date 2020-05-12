@@ -190,6 +190,11 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *weakref;
 
+    if (pytype == &PyArray_Type) {
+        Py_INCREF(Py_None);
+        return (PyArray_DTypeMeta *)Py_None;
+    }
+
     weakref = PyDict_GetItem(
             _global_pytype_to_type_dict, (PyObject *)pytype);
 
@@ -574,12 +579,23 @@ update_shape(int curr_ndim, int *max_ndim,
 }
 
 
+#define COERCION_CACHE_CACHE_SIZE 10
+static int _coercion_cache_num = 0;
+static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
+
 NPY_NO_EXPORT int
 npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim)
 {
-    coercion_cache_obj *cache = PyObject_MALLOC(sizeof(coercion_cache_obj));
+    coercion_cache_obj *cache;
+    if (_coercion_cache_num > 0) {
+        _coercion_cache_num--;
+        cache = _coercion_cache_cache[_coercion_cache_num];
+    }
+    else {
+        cache = PyObject_MALLOC(sizeof(coercion_cache_obj));
+    }
     if (cache == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -596,18 +612,36 @@ npy_new_coercion_cache(
 }
 
 
+/**
+ * Unlink coercion cache item.
+ *
+ * @param current
+ * @return next coercion cache object (or NULL)
+ */
+NPY_NO_EXPORT coercion_cache_obj *
+npy_unlink_coercion_cache(coercion_cache_obj *current)
+{
+    coercion_cache_obj *next = current->next;
+    Py_DECREF(current->arr_or_sequence);
+    if (_coercion_cache_num < COERCION_CACHE_CACHE_SIZE) {
+        _coercion_cache_cache[_coercion_cache_num] = current;
+        _coercion_cache_num++;
+    }
+    else {
+        PyObject_FREE(current);
+    }
+    return next;
+}
+
 NPY_NO_EXPORT void
 npy_free_coercion_cache(coercion_cache_obj *next) {
     /* We only need to check from the last used cache pos */
     while (next != NULL) {
-        coercion_cache_obj *current = next;
-        next = current->next;
-
-        Py_DECREF(current->arr_or_sequence);
-        PyObject_FREE(current);
+        next = npy_unlink_coercion_cache(next);
     }
 }
 
+#undef COERCION_CACHE_CACHE_SIZE
 
 /**
  * Do the promotion step and possible casting. This function should
@@ -1094,10 +1128,7 @@ PyArray_DiscoverDTypeAndShape(
         while (current != NULL) {
             if (current->depth > ndim) {
                 /* delete "next" cache item and advanced it (unlike later) */
-                Py_DECREF(current->arr_or_sequence);
-                coercion_cache_obj *_old = current;
-                current = current->next;
-                PyObject_FREE(_old);
+                current = npy_unlink_coercion_cache(current);
                 continue;
             }
             /* advance both prev and next, and set prev->next to new item */

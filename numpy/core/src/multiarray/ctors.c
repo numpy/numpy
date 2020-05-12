@@ -632,12 +632,11 @@ PyArray_AssignFromCache_Recursive(
         PyArrayObject *self, const int ndim, coercion_cache_obj **cache)
 {
     /* Consume first cache element by extracting information and freeing it */
-    PyObject *obj = (*cache)->arr_or_sequence;  /* steal reference */
+    PyObject *obj = (*cache)->arr_or_sequence;
+    Py_INCREF(obj);
     npy_bool sequence = (*cache)->sequence;
     int depth = (*cache)->depth;
-    coercion_cache_obj *_old = *cache;
-    *cache = (*cache)->next;
-    PyObject_FREE(_old);
+    *cache = npy_unlink_coercion_cache(*cache);
 
     /*
      * The maximum depth is special (specifically for objects), but usually

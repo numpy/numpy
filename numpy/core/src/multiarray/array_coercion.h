@@ -41,14 +41,18 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
 
 
 /* Create a new cache object */
-NPY_NO_EXPORT int npy_new_coercion_cache(
+NPY_NO_EXPORT int
+npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim);
 
 
 /* Frees the coercion cache object. */
-NPY_NO_EXPORT void npy_free_coercion_cache(coercion_cache_obj *first);
+NPY_NO_EXPORT void
+npy_free_coercion_cache(coercion_cache_obj *first);
 
+NPY_NO_EXPORT coercion_cache_obj *
+npy_unlink_coercion_cache(coercion_cache_obj *current);
 
 
 #endif  /* _NPY_ARRAY_COERCION_H */
