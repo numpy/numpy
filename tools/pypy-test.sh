@@ -6,9 +6,10 @@ set -o pipefail
 # Print expanded commands
 set -x
 
-#sudo apt-get -yq update
-#sudo apt-get -yq install libatlas-base-dev liblapack-dev gfortran-5 python3-urllib3
-F77=gfortran-5 F90=gfortran-5 \
+sudo apt-get -yq update
+sudo apt-get -yq install gfortran-5
+export F77=gfortran-5
+export F90=gfortran-5
 
 # Download the proper OpenBLAS x64 precompiled library
 target=$(python3 tools/openblas_support.py)

@@ -40,7 +40,6 @@ stages:
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
-            python3 -m pip install urllib3 && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
             cp \$target/include/* /usr/include && \
@@ -122,7 +121,6 @@ stages:
     # primarily on file size / name details
     - script: |
         set -xe
-        python -m pip install urllib3
         target=$(python tools/openblas_support.py)
         ls -lR $target
         # manually link to appropriate system paths
