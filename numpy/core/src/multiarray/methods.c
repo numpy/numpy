@@ -1889,13 +1889,8 @@ array_reduce_ex(PyArrayObject *self, PyObject *args)
          * method that involves using a temporary bytes allocation. */
         return array_reduce_ex_regular(self, protocol);
     }
-    else if (protocol == 5) {
-        return array_reduce_ex_picklebuffer(self, protocol);
-    }
     else {
-        PyErr_Format(PyExc_ValueError,
-                     "__reduce_ex__ called with protocol > 5");
-        return NULL;
+        return array_reduce_ex_picklebuffer(self, protocol);
     }
 }
 
