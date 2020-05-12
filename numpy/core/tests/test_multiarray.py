@@ -4633,7 +4633,17 @@ class TestIO:
 
     def test_gzipfile(self):
         with gzip.open(self.filename, 'w') as f:
+            pass
+        with gzip.open(self.filename, 'rb') as f:
             assert_raises(TypeError, np.fromfile, f, np.uint8)
+
+    # Should not throw error when starting bytes of binary file are same as magic bytes of gzip
+    def test_magicgzip_success(self):
+        magicgzip_data = np.frombuffer(b'\x1f\x8b\x08\x00\x00\x00\x00\x00', np.int)
+        with open(self.filename, 'wb') as f:
+            magicgzip_data.tofile(self.filename)
+        with open(self.filename, 'rb') as f:
+            np.fromfile(f, np.int)
 
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool_)

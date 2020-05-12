@@ -2097,6 +2097,19 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_DECREF(file);
         return NULL;
     }
+
+    static PyObject *gzip_class = NULL;
+    npy_cache_import("gzip", "GzipFile", &gzip_class);
+    if(gzip_class == NULL) {
+        return NULL;
+    }
+    if (PyObject_IsInstance(file, gzip_class) == 1) {
+        PyErr_SetString(PyExc_TypeError, "'file' argument does not allow object of type GzipFile. Use frombuffer() instead.");
+        Py_XDECREF(type);
+        Py_DECREF(file);
+        return NULL;
+    }
+
     if (PyString_Check(file) || PyUnicode_Check(file)) {
         Py_SETREF(file, npy_PyFile_OpenFile(file, "rb"));
         if (file == NULL) {
