@@ -244,7 +244,7 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
  *        it can/wants to handle the (possible) scalar value.
  * @return New reference to either a DType class, Py_None, or NULL
  */
-static PyArray_DTypeMeta *
+static NPY_INLINE PyArray_DTypeMeta *
 discover_dtype_from_pyobject(
         PyObject *obj, enum _dtype_discovery_flags *flags,
         PyArray_DTypeMeta *fixed_DType)
@@ -321,7 +321,7 @@ discover_dtype_from_pyobject(
 }
 
 
-static PyArray_Descr *
+static NPY_INLINE PyArray_Descr *
 cast_descriptor_to_fixed_dtype(
         PyArray_Descr *descr, PyArray_DTypeMeta *fixed_DType)
 {
@@ -590,7 +590,10 @@ update_shape(int curr_ndim, int *max_ndim,
 static int _coercion_cache_num = 0;
 static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
 
-NPY_NO_EXPORT int
+/*
+ * Steals a reference to the object.
+ */
+NPY_NO_EXPORT NPY_INLINE int
 npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim)
@@ -608,7 +611,6 @@ npy_new_coercion_cache(
         return -1;
     }
     cache->converted_obj = converted_obj;
-    Py_INCREF(arr_or_sequence);
     cache->arr_or_sequence = arr_or_sequence;
     cache->sequence = sequence;
     cache->depth = ndim;
@@ -618,14 +620,13 @@ npy_new_coercion_cache(
     return 0;
 }
 
-
 /**
  * Unlink coercion cache item.
  *
  * @param current
  * @return next coercion cache object (or NULL)
  */
-NPY_NO_EXPORT coercion_cache_obj *
+NPY_NO_EXPORT NPY_INLINE coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
 {
     coercion_cache_obj *next = current->next;
@@ -640,7 +641,7 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
     return next;
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_INLINE void
 npy_free_coercion_cache(coercion_cache_obj *next) {
     /* We only need to check from the last used cache pos */
     while (next != NULL) {
@@ -706,7 +707,8 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
  * @param flags used signal that this is a ragged array, used internally and
  *        can be expanded if necessary.
  */
-int handle_scalar(
+static NPY_INLINE int
+handle_scalar(
         PyObject *obj, int curr_dims, int *max_dims,
         PyArray_Descr **out_descr, npy_intp *out_shape,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
@@ -771,14 +773,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     if (DType == NULL) {
         return -1;
     }
-    if (DType != (PyArray_DTypeMeta *)Py_None) {
+    else if (DType == (PyArray_DTypeMeta *)Py_None) {
+        Py_DECREF(Py_None);
+    }
+    else {
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
                 requested_descr, flags, DType, descr);
         Py_DECREF(DType);
         return max_dims;
     }
-    Py_DECREF(DType);
 
     /*
      * At this point we expect to find either a sequence, or an array-like.
@@ -803,13 +807,12 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     if (arr) {
         /*
          * This is an array object which will be added to the cache, keeps
-         * the a reference to the array alive.
+         * the reference to the array alive (takes ownership).
          */
-        if (npy_new_coercion_cache(obj, (PyObject *)arr, 0, coercion_cache_tail_ptr, curr_dims) < 0) {
-            Py_DECREF(arr);
+        if (npy_new_coercion_cache(obj, (PyObject *)arr,
+                0, coercion_cache_tail_ptr, curr_dims) < 0) {
             return -1;
         }
-        Py_DECREF(arr);  /* the cache holds on for us */
 
         if (update_shape(curr_dims, &max_dims, out_shape,
                 PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE, flags) < 0) {
@@ -818,9 +821,9 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             return max_dims;
         }
 
-        if (PyArray_DESCR(arr)->type_num == NPY_OBJECT &&
-                    fixed_DType != NULL && fixed_DType->parametric &&
-                    requested_descr == NULL) {
+        if (NPY_UNLIKELY(fixed_DType != NULL && fixed_DType->parametric &&
+                requested_descr == NULL &&
+                PyArray_DESCR(arr)->type_num == NPY_OBJECT)) {
             /*
              * We have one special case, if (and only if) the input array is of
              * object DType and the dtype is not fixed already but parametric.
@@ -919,11 +922,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
         return -1;
     }
+    /* The cache takes ownership of the sequence here. */
     if (npy_new_coercion_cache(obj, seq, 1, coercion_cache_tail_ptr, curr_dims) < 0) {
-        Py_DECREF(seq);
         return -1;
     }
-    Py_DECREF(seq);  /* the cache holds on for us */
 
     npy_intp size = PySequence_Fast_GET_SIZE(seq);
     PyObject **objects = PySequence_Fast_ITEMS(seq);

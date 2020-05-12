@@ -2121,7 +2121,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         arr = (PyArrayObject *)(cache->arr_or_sequence);
         /* we may need to cast or assert flags (e.g. copy) */
         PyObject *res = PyArray_FromArray(arr, dtype, flags);
-        npy_free_coercion_cache(cache);
+        npy_unlink_coercion_cache(cache);
         return res;
     }
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&

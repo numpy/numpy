@@ -40,19 +40,16 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
                            PyObject *args, PyObject *kwargs);
 
 
-/* Create a new cache object */
-NPY_NO_EXPORT int
-npy_new_coercion_cache(
-        PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
-        coercion_cache_obj ***next_ptr, int ndim);
-
-
-/* Frees the coercion cache object. */
+/* Would make sense to inline the freeing functions everywhere */
+/* Frees the coercion cache object recursively. */
 NPY_NO_EXPORT void
 npy_free_coercion_cache(coercion_cache_obj *first);
 
+/* unlink a single item and return the next */
 NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current);
 
+NPY_NO_EXPORT int
+PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache);
 
 #endif  /* _NPY_ARRAY_COERCION_H */
