@@ -85,6 +85,7 @@ enum _dtype_discovery_flags {
     PROMOTION_FAILED = 4,
     DISCOVER_STRINGS_AS_SEQUENCES = 8,
     DISCOVER_TUPLES_AS_ELEMENTS = 16,
+    MAX_DIMS_WAS_REACHED = 32,
 };
 
 
@@ -534,12 +535,15 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 static int
 update_shape(int curr_ndim, int *max_ndim,
              npy_intp out_shape[NPY_MAXDIMS], int new_ndim,
-             const npy_intp new_shape[NPY_MAXDIMS], npy_bool sequence)
+             const npy_intp new_shape[NPY_MAXDIMS], npy_bool sequence,
+             enum _dtype_discovery_flags *flags)
 {
     int success = 0;  /* unsuccessful if array is ragged */
+    const npy_bool max_dims_reached = *flags & MAX_DIMS_WAS_REACHED;
+
     if (curr_ndim + new_ndim > *max_ndim) {
         success = -1;
-        /* Only update check as many dims as possible, max_ndim is unchanged */
+        /* Only update/check as many dims as possible, max_ndim is unchanged */
         new_ndim = *max_ndim - curr_ndim;
     }
     else if (!sequence && (*max_ndim != curr_ndim + new_ndim)) {
@@ -549,7 +553,7 @@ update_shape(int curr_ndim, int *max_ndim,
          */
         *max_ndim = curr_ndim + new_ndim;
         /* If a shape was already set, this is also ragged */
-        if (out_shape[*max_ndim] >= 0) {
+        if (max_dims_reached) {
             success = -1;
         }
     }
@@ -557,7 +561,7 @@ update_shape(int curr_ndim, int *max_ndim,
         npy_intp curr_dim = out_shape[curr_ndim + i];
         npy_intp new_dim = new_shape[i];
 
-        if (curr_dim == -1) {
+        if (!max_dims_reached) {
             out_shape[curr_ndim + i] = new_dim;
         }
         else if (new_dim != curr_dim) {
@@ -574,6 +578,9 @@ update_shape(int curr_ndim, int *max_ndim,
             }
             break;
         }
+    }
+    if (!sequence) {
+        *flags |= MAX_DIMS_WAS_REACHED;
     }
     return success;
 }
@@ -711,7 +718,8 @@ int handle_scalar(
     if (descr == NULL) {
         return -1;
     }
-    if (update_shape(curr_dims, max_dims, out_shape, 0, NULL, NPY_FALSE) < 0) {
+    if (update_shape(curr_dims, max_dims, out_shape,
+            0, NULL, NPY_FALSE, flags) < 0) {
         *flags |= FOUND_RAGGED_ARRAY;
         Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
         return *max_dims;
@@ -804,7 +812,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         Py_DECREF(arr);  /* the cache holds on for us */
 
         if (update_shape(curr_dims, &max_dims, out_shape,
-                PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE) < 0) {
+                PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE, flags) < 0) {
             *flags |= FOUND_RAGGED_ARRAY;
             Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
             return max_dims;
@@ -921,7 +929,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     PyObject **objects = PySequence_Fast_ITEMS(seq);
 
     if (update_shape(curr_dims, &max_dims,
-                     out_shape, 1, &size, NPY_TRUE) < 0) {
+                     out_shape, 1, &size, NPY_TRUE, flags) < 0) {
         /* But do update, if there this is a ragged case */
         *flags |= FOUND_RAGGED_ARRAY;
         return max_dims;
@@ -1007,9 +1015,6 @@ PyArray_DiscoverDTypeAndShape(
     *out_descr = NULL;
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
-    for (int i = 0; i < max_dims; i++) {
-        out_shape[i] = -1;
-    }
 
     /* Validate input of requested descriptor and DType */
     if (fixed_DType != NULL) {
@@ -1048,7 +1053,7 @@ PyArray_DiscoverDTypeAndShape(
         goto fail;
     }
 
-    if (flags & FOUND_RAGGED_ARRAY) {
+    if (NPY_UNLIKELY(flags & FOUND_RAGGED_ARRAY)) {
         /*
          * If max-dims was reached and the dimensions reduced, this is ragged.
          * Otherwise, we merely reached the maximum dimensions, which is
@@ -1145,7 +1150,7 @@ PyArray_DiscoverDTypeAndShape(
         Py_INCREF(requested_descr);
         Py_XSETREF(*out_descr, requested_descr);
     }
-    else if (*out_descr == NULL) {
+    else if (NPY_UNLIKELY(*out_descr == NULL)) {
         /*
          * When the object contained no items, we have to use the default.
          * We do this afterwards, to not cause promotion when there is only
@@ -1187,7 +1192,7 @@ PyArray_DiscoverDTypeAndShape(
  * @param dtype
  * @param out_descr
  * @param out_DType
- * @return
+ * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int
 PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
