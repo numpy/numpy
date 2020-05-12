@@ -1025,7 +1025,7 @@ def _from_string(str, gdict, ldict):
                 try:
                     thismat = gdict[col]
                 except KeyError as e:
-                    raise KeyError("{!r} not found".format((col,)) from None
+                    raise NameError("name {!r} is not defined".format(col)) from None
 
             coltup.append(thismat)
         rowtup.append(concatenate(coltup, axis=-1))
