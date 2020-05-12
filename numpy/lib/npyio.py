@@ -445,9 +445,10 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                                  "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except Exception:
+            except Exception as e:
                 raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file))
+                    "Failed to interpret file %s as a pickle" % repr(file)
+                    ) from None
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -965,8 +966,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             fh = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
-    except TypeError:
-        raise ValueError('fname must be a string, file handle, or generator')
+    except TypeError as e:
+        raise ValueError(
+            'fname must be a string, file handle, or generator'
+            ) from None
 
     # input may be a python2 io stream
     if encoding is not None:
@@ -1422,10 +1425,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 try:
                     v = format % tuple(row) + newline
-                except TypeError:
+                except TypeError as e:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
-                                    % (str(X.dtype), format))
+                                    % (str(X.dtype), format)
+                                    ) from None
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1752,10 +1756,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid = fname
             fid_ctx = contextlib_nullcontext(fid)
         fhd = iter(fid)
-    except TypeError:
+    except TypeError as e:
         raise TypeError(
             "fname must be a string, filehandle, list of strings, "
-            "or generator. Got %s instead." % type(fname))
+            "or generator. Got %s instead." % type(fname)
+            ) from None
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
@@ -2049,10 +2054,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 for (j, value) in enumerate(current_column):
                     try:
                         converter.upgrade(value)
-                    except (ConverterError, ValueError):
+                    except (ConverterError, ValueError) as e:
                         errmsg += "(occurred line #%i for value '%s')"
                         errmsg %= (j + 1 + skip_header, value)
-                        raise ConverterError(errmsg)
+                        raise ConverterError(errmsg) from None
 
     # Check that we don't have invalid values
     nbinvalid = len(invalid)
