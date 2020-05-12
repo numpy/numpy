@@ -1517,7 +1517,7 @@ def hermfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     array([[1.0218, 1.9986], [1.0218, 2.9999]]) # may vary
 
     """
-    return pu._fit2d(hermvander2d, x, y, z, deg, rcond, full, w, max_degree, False)
+    return pu._fitnd(hermvander2d, (x, y), z, deg, rcond, full, w, max_degree)
 
 
 

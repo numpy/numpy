@@ -1513,7 +1513,7 @@ def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     array([[ 1.01690445,  1.99951418], [1.01690445, 2.99948696]]) # may vary
 
     """
-    return pu._fit2d(hermevander2d, x, y, z, deg, rcond, full, w, max_degree, False)
+    return pu._fitnd(hermevander2d, (x, y), z, deg, rcond, full, w, max_degree)
 
 def hermecompanion(c):
     """

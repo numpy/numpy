@@ -1525,7 +1525,7 @@ def legfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     --------
 
     """
-    return pu._fit2d(legvander2d, x, y, z, deg, rcond, full, w, max_degree, False)
+    return pu._fitnd(legvander2d, (x, y), z, deg, rcond, full, w, max_degree)
 
 
 def legcompanion(c):

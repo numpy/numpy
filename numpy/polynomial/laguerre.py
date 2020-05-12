@@ -1519,7 +1519,7 @@ def lagfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     array([ [0.96971004,  2.00193749],  [0.96971004, 2.00288744]) # may vary
 
     """
-    return pu._fit2d(lagvander2d, x, y, z, deg, rcond, full, w, max_degree, False)
+    return pu._fitnd(lagvander2d, (x, y), z, deg, rcond, full, w, max_degree)
 
 def lagcompanion(c):
     """

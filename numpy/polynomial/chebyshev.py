@@ -1784,7 +1784,7 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     --------
 
     """
-    return pu._fit2d(chebvander2d, x, y, z, deg, rcond, full, w, max_degree, False)
+    return pu._fitnd(chebvander2d, (x, y), z, deg, rcond, full, w, max_degree)
 
 
 def chebcompanion(c):
