@@ -34,6 +34,7 @@ from numpy.core.tests._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
+import gzip
 
 
 def _aligned_zeros(shape, dtype=float, order="C", align=None):
@@ -4629,6 +4630,10 @@ class TestIO:
         assert_raises(IOError, np.fromfile, b, np.uint8, 80)
         d = np.ones(7)
         assert_raises(IOError, lambda x: x.tofile(b), d)
+
+    def test_gzipfile(self):
+        with gzip.open(self.filename, 'w') as f:
+            assert_raises(TypeError, np.fromfile, f, np.uint8)
 
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool_)
