@@ -725,273 +725,8 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     else:
         return c
 
-def _get_coeff_idx(shape):
-    """
-    Get the powers of x and y corresponding to a 2d coefficient matrix
-    in the same order as the Vandermonde matrix,
-    i.e. [[0, 0], [1, 0], ...]
-
-    Parameters
-    ----------
-    shape : 2-tuple
-        shape of the coefficient matrix, i.e. degree + 1
-
-    Returns
-    -------
-    idx : array of shape (n * m, 2)
-        pairs of indices to the coefficient matrix
-    """
-    ndim = len(shape)
-    idx = np.indices(shape)
-    idx = idx.T[::-1].reshape((-1, ndim))
-    return idx
-
-
-def _scale(*args):
-    """
-    Scale inputs independently to mean 0 and variance 1
-
-    Parameters
-    ----------
-    *args : array
-        any number of arrays
-
-    Returns
-    -------
-    *x : array
-        scaled arrays
-    norm : array of shape (n,)
-        scaling factors
-    offset : array of shape (n,)
-        offsets that were subtracted
-    """
-    # Normalize x and y to avoid huge numbers
-
-    n = len(args)
-    norm = [None for _ in range(n)]
-    out = [None for _ in range(n)]
-    for i, x in enumerate(args):
-        # need to convert to float in case its an integer
-        # Also make sure its a numpy array
-        norm[i] = np.max(np.abs(x))
-        if norm[i] == 0:
-            norm[i] = 1
-        out[i] =  x / norm[i]
-    return (*out, norm)
-
-
-def _unscale(*args, norm):
-    """
-    Invert the scaling on any number of arrays
-
-    Parameters
-    ----------
-    norm : array of shape (n,)
-        scaling factors
-    offset : array of shape (n,)
-        applied offsets
-
-    Returns
-    -------
-    *x : array
-        arrays with inverted scaling
-    """
-    n = len(args)
-    out = [None for _ in range(n)]
-    for i, x in enumerate(args):
-        x *= norm[i]
-        out[i] = x
-    return out
-
-
-def polyscale2d(coeff, scale_x, scale_y, copy=True):
-    """
-    Scale the coefficients of a 2d polynomial by scaling factors
-    previously applied to the coordinates
-
-    Parameters
-    ----------
-    coeff : array_like
-        polynomial coefficients
-    scale_x : float
-        scaling factor in x direction
-    scale_y : float
-        scaling factor in y direction
-    copy : bool, optional
-        Whether to copy the coefficients, by default True
-
-    Returns
-    -------
-    coeff : array_like
-        scaled coefficients
-    """
-    if copy:
-        coeff = np.copy(coeff)
-
-    i = np.arange(coeff.shape[0])
-    j = np.arange(coeff.shape[1])
-    coeff /= (scale_x ** i)[:, None]
-    coeff /= (scale_y ** j)[None, :]
-
-    return coeff
-
-
-def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
-           max_degree=None, scale=True):
-    """A simple 2D polynomial fit to data x, y, z
-    The polynomial can be evaluated with
-    numpy.polynomial.polynomial.polyval2d
-
-    Parameters
-    ----------
-    vander2d_f : function(array_like, array_like, int) -> ndarray
-        The 2d vander function, such as ``polyvander``
-    x : array_like
-        x coordinates
-    y : array_like
-        y coordinates
-    z : array_like
-        data values
-    degree : {int, 2-tuple, 2d-array}, optional
-        degree of the polynomial fit in x and y direction, by default 1.
-        If just one int, both directions use the same degree.
-        If 2-tuple or 1d array, then it specifies the two degrees in
-        each direction seperately.
-        If 2d-array, it should of of shape == (xdegree + 1, ydegree + 1),
-        i.e. like the output coefficients. With degrees that should be used in
-        the fit set to non-zero values.
-    max_degree : {int, None}, optional
-        if given the maximum combined degree of the coefficients is
-        limited to this value, by default None
-    scale : bool, optional
-        Wether to scale the input arrays x and y to mean 0 and variance 1,
-        to avoid numerical overflows. Especially useful at higher degrees.
-        By default True.
-
-    Returns
-    -------
-    coeff : array of shape (deg+1, deg+1)
-        the polynomial coefficients in numpy 2d format,
-        i.e. coeff[i, j] for x**i * y**j
-    """
-    # Flatten input
-    x = np.asarray(x) + 0.0
-    y = np.asarray(y) + 0.0
-    z = np.asarray(z) + 0.0
-    deg = np.asarray(deg)
-    if w is not None:
-        w = np.asarray(w) + 0.0
-
-    if deg.dtype.kind not in 'iu' or deg.size == 0:
-        raise TypeError("deg must be an int or non-empty array of int")
-    if deg.ndim == 1 and not deg.size == 2:
-        raise ValueError("deg must be of length 2, if it is a 1d array")
-    if deg.ndim == 2 and np.all(deg == 0):
-        raise ValueError("deg must have at least one non-zero value")
-    if deg.ndim > 2:
-        raise TypeError("deg must be an array of dimension 2 or less")
-    if deg.min() < 0:
-        raise ValueError("expected deg >= 0")
-    if x.ndim != 1 and x.ndim != 2:
-        raise TypeError("expected 1D or 2D vector for x")
-    if x.size == 0:
-        raise TypeError("expected non-empty vector for x")
-    if y.ndim != 1 and y.ndim != 2:
-        raise TypeError("expected 1D or 2D vector for y")
-    if y.size == 0:
-        raise TypeError("expected non-empty vector for y")
-    if z.ndim < 1 or z.ndim > 2:
-        raise TypeError("expected 1D or 2D array for z")
-    if z.size == 0:
-        raise TypeError("expected non-empty vector for z")
-    if len(x) != len(y) or len(x) != len(z):
-        raise TypeError("expected x, y and z to have same length")
-    if w is not None:
-        if w.ndim != 1 and w.ndim != 2:
-            raise TypeError("expected 1D or 2D vector for w")
-        if x.size != w.size:
-            raise TypeError("expected x and w to have same length")
-    if not callable(vander2d_f) and len(vander2d_f) != 2:
-        raise TypeError("expected a callable or a list of 2 vander_1d functions")
-
-    x, y, z = x.ravel(), y.ravel(), z.ravel()
-    if w is not None:
-        w = np.ravel(w)
-    if not callable(vander2d_f):
-        vander2d_f = lambda x, y, deg: _vander_nd_flat(vander2d_f, (x, y), deg)
-
-    # Remove masked values
-    pxmask = ~(np.ma.getmask(z) | np.ma.getmask(x) | np.ma.getmask(y))
-    x, y, z = x[pxmask].ravel(), y[pxmask].ravel(), z[pxmask].ravel()
-
-    mask = None
-    if deg.ndim == 0:
-        deg = deg[()]
-        deg = np.array([deg, deg])
-    elif deg.ndim == 1:
-        deg = deg[:2]
-    elif deg.ndim == 2:
-        mask = deg != 0
-        deg = np.array(deg.shape) - 1
-
-    idx = _get_coeff_idx(deg + 1)
-
-    # Scale coordinates to smaller values to avoid numerical
-    # problems at larger degrees
-    if scale:
-        x, y, norm = _scale(x, y)
-
-    # Calculate elements 1, x, y, x*y, x**2, y**2, ...
-    lhs = vander2d_f(x, y, deg)
-    rhs = z
-
-    # Remove degrees that were not explicitly specified
-    # Only if deg was given as a 2d array
-    if mask is not None:
-        mask = mask[idx[:, 0], idx[:, 1]]
-        idx = idx[mask]
-        lhs = lhs[:, mask]
-
-    # We only want the combinations with maximum order COMBINED power
-    if max_degree is not None:
-        mask = idx[:, 0] + idx[:, 1] <= int(max_degree)
-        idx = idx[mask]
-        lhs = lhs[:, mask]
-        order = max_degree + 1
-    else:
-        order = deg[0] + deg[1] + 1
-
-    if w is not None:
-        lhs = lhs * w[:, None]
-        rhs = rhs * w
-
-    if rcond is None:
-        rcond = len(x) * np.finfo(x.dtype).eps
-
-    # Do the actual least squares fit
-    C, resids, rank, s = np.linalg.lstsq(lhs, rhs, rcond)
-
-    # Reorder coefficients into numpy compatible 2d array
-    coeff = np.zeros(deg + 1, dtype=C.dtype)
-    for k, (i, j) in enumerate(idx):
-        coeff[i, j] = C[k]
-
-    # Reverse the scaling, it is important to scale first and then shift
-    if scale:
-        coeff = polyscale2d(coeff, *norm, copy=False)
-
-    # warn on rank reduction
-    if rank != order and not full:
-        msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=2)
-
-    if full:
-        return coeff, [resids, rank, s, rcond]
-    else:
-        return coeff
-
-def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
-           max_degree=None, scale=True):
+def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
+           max_degree=None):
     """A simple 2D polynomial fit to data x, y, z
     The polynomial can be evaluated with
     numpy.polynomial.polynomial.polyval2d
@@ -1015,10 +750,6 @@ def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
     max_degree : {int, None}, optional
         if given the maximum combined degree of the coefficients is
         limited to this value, by default None
-    scale : bool, optional
-        Wether to scale the input arrays x and y to mean 0 and variance 1,
-        to avoid numerical overflows. Especially useful at higher degrees.
-        By default True.
 
     Returns
     -------
@@ -1050,7 +781,7 @@ def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
         raise TypeError(f"deg must be an array of dimension {ndim}")
     if deg.min() < 0:
         raise ValueError("expected deg >= 0")
-    if data.ndim < 1 or data.ndim > 2:
+    if data.ndim < 1 or data.ndim != ndim:
         raise TypeError(f"expected 1D or {ndim}D array for z")
     if data.size == 0:
         raise TypeError("expected non-empty vector for z")
@@ -1077,7 +808,7 @@ def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
         w = np.ravel(w)
 
     if not callable(vandernd_f):
-        vandernd_f = lambda x, y, deg: _vander_nd_flat(vandernd_f, coords, deg)
+        vandernd_f2 = lambda coords, deg: _vander_nd_flat(vandernd_f, coords, deg)
 
     # Remove masked values
     pxmask = np.ma.getmask(data)
@@ -1099,15 +830,23 @@ def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
         mask = deg != 0
         deg = np.array(deg.shape) - 1
 
-    idx = _get_coeff_idx(deg + 1)
 
     # Calculate elements 1, x, y, x*y, x**2, y**2, ...
-    lhs = vandernd_f(*coords, deg)
+    lhs = vandernd_f2(coords, deg)
     rhs = data
+
+    # Determine the positions within the vandermode matrix
+    # TODO: how does that work with non standard polynomials?
+    idx = np.zeros((lhs.shape[1], ndim), dtype=int)
+    for i in range(ndim):
+        c = np.ones(ndim)
+        c[i] = 2
+        factors = vandernd_f2(c, deg) // 2
+        idx[:, i] = factors[0]
 
     # Remove degrees that were not explicitly specified
     # Only if deg was given as a 2d array
-    if deg.ndim == ndim:
+    if mask is not None:
         for i in range(ndim):
             mask = mask[idx[:, i]]
         idx = idx[mask]
@@ -1115,27 +854,35 @@ def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
 
     # We only want the combinations with maximum order COMBINED power
     if max_degree is not None:
-        mask = np.sum(idx) <= int(max_degree)
+        mask = np.sum(idx, axis=1) <= int(max_degree)
         idx = idx[mask]
         lhs = lhs[:, mask]
         order = max_degree + 1
     else:
-        order = deg[0] + deg[1] + 1
+        order = np.sum(deg) + 1
 
     if w is not None:
         lhs = lhs * w[:, None]
         rhs = rhs * w
 
     if rcond is None:
-        rcond = len(x) * np.finfo(x.dtype).eps
+        rcond = npoints * np.finfo(x.dtype).eps
+
+    # TODO: Scale lhs and coefficients
+    if issubclass(lhs.dtype.type, np.complexfloating):
+        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(0))
+    else:
+        scl = np.sqrt(np.square(lhs).sum(0))
+    scl[scl == 0] = 1
 
     # Do the actual least squares fit
-    C, resids, rank, s = np.linalg.lstsq(lhs, rhs, rcond)
+    C, resids, rank, s = np.linalg.lstsq(lhs / scl, rhs, rcond)
+    C = C / scl
 
     # Reorder coefficients into numpy compatible 2d array
     coeff = np.zeros(deg + 1, dtype=C.dtype)
     for k, cd in enumerate(idx):
-        coeff[cd] = C[k]
+        coeff[tuple(cd)] = C[k]
 
     # Reverse the scaling, it is important to scale first and then shift
     # if scale:
@@ -1144,7 +891,8 @@ def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=2)
+        print(msg)
+        # warnings.warn(msg, RankWarning, stacklevel=2)
 
     if full:
         return coeff, [resids, rank, s, rcond]

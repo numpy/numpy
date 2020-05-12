@@ -1434,13 +1434,90 @@ def polyfit2d(x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, s
      [ 1.00000000e+00  1.93986070e-12  1.00000000e+00]
      [ 3.13598612e-13 -2.30396083e-14  2.30548445e-16]]
     """
-    return pu._fit2d(polyvander2d, x, y, z, deg, rcond, full, w, max_degree, scale)
+    return pu._fitnd(polyvander2d, (x, y), z, deg, rcond, full, w, max_degree)
 
-print("Hello World")
-def polyfitnd(*coords, data, deg=1, rcond=None, full=False, w=None, max_degree=None, scale=True):
-    print("Hello World")
+def polyfitnd(coords, data, deg=1, rcond=None, full=False, w=None, max_degree=None):
+    """A simple ND polynomial fit to data (x, y, ...), z
+    The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
+
+    ..versionadded:: 1.20.0
+
+    Parameters
+    ----------
+    coords : tuple of array_like
+        x, y, ... coordinates
+    data : array_like
+        data values
+    deg : {int, n-tuple, n dimensional boolean array}, optional
+        maximum degree of the polynomial fit, by default 1
+        If given as a tuple, each element gives the degree of that axis
+        If given as an array, each element specifies whether that coefficient should be
+        fitted or not, where the layout of the array is the same as the output.
+    rcond : float, optional
+        Relative condition number of the fit.  Singular values smaller
+        than `rcond`, relative to the largest singular value, will be
+        ignored.  The default value is ``len(x)*eps``, where `eps` is the
+        relative precision of the platform's float type, about 2e-16 in
+        most cases.
+    full : bool, optional
+        Switch determining the nature of the return value.  When ``False``
+        (the default) just the coefficients are returned; when ``True``,
+        diagnostic information from the singular value decomposition (used
+        to solve the fit's matrix equation) is also returned.
+    w : array_like, shape (`M`,), optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*y[i]``
+        all have the same variance. The default value is None.
+    max_degree : int, optional
+        If given the maximum combined degree of the coefficients is limited
+        to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
+        The default is None.
+
+    Returns
+    -------
+    coef : ndarray, shape (`deg` + 1, ) x ndim
+        Polynomial coefficients ordered from low to high.
+        With coefficients in `x` direction along the first
+        dimension, the `y` direction along the second dimension, and so forth.
+
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+    Raises
+    ------
+    RankWarning
+        Raised if the matrix in the least-squares fit is rank deficient.
+        The warning is only raised if `full` == False.  The warnings can
+        be turned off by:
+
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', np.RankWarning)
+
+    See Also
+    --------
+    polyfit1d
+
+    Examples
+    --------
+    >>> from numpy.polynomial.polynomial import polyfitnd
+    >>> x = np.linspace(0, 2)
+    >>> y = np.linspace(0, 2)
+    >>> z = 1 + x + x * y ** 2
+    >>> coeff = polyfitnd((x, y), z, deg=2)
+    >>> coeff
+    [[ 1.00000000e+00 -1.73445280e-11  1.45681112e-13]
+     [ 1.00000000e+00  1.93986070e-12  1.00000000e+00]
+     [ 3.13598612e-13 -2.30396083e-14  2.30548445e-16]]
+    """
     polyvander_nd = [polyvander] * len(coords)
-    return pu._fitnd(polyvander_nd, *coords, data=data, deg=deg, rcond=rcond, full=full, w=w, max_degree=max_degree, scale=scale)
+    return pu._fitnd(polyvander_nd, coords, data, deg, rcond, full, w, max_degree)
 
 def polycompanion(c):
     """
