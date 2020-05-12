@@ -20,6 +20,7 @@ ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64', 'i686', 'ppc64le'
 sha256_vals = {
 "openblas-v0.3.7-527-g79fd006c-win_amd64-gcc_7_1_0.zip": "7249d68c02e6b6339e06edfeab1fecddf29ee1e67a3afaa77917c320c43de840",
 "openblas64_-v0.3.7-527-g79fd006c-win_amd64-gcc_7_1_0.zip": "6488e0961a5926e47242f63b63b41cfdd661e6f1d267e8e313e397cde4775c17",
+"openblas-v0.3.7-527-g79fd006c-win32-gcc_7_1_0.zip": "5fb0867ca70b1d0fdbf68dd387c0211f26903d74631420e4aabb49e94aa3930d",
 "openblas-v0.3.7-527-g79fd006c-macosx_10_9_x86_64-gf_1becaaa.tar.gz": "69434bd626bbc495da9ce8c36b005d140c75e3c47f94e88c764a199e820f9259",
 "openblas64_-v0.3.7-527-g79fd006c-macosx_10_9_x86_64-gf_1becaaa.tar.gz": "093f6d953e3fa76a86809be67bd1f0b27656671b5a55b233169cfaa43fd63e22",
 "openblas-v0.3.7-527-g79fd006c-manylinux2014_aarch64.tar.gz": "42676c69dc48cd6e412251b39da6b955a5a0e00323ddd77f9137f7c259d35319",
