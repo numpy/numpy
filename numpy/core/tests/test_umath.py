@@ -31,14 +31,16 @@ def bad_arcsinh():
     v1 = np.arcsinh(np.float128(x))
     v2 = np.arcsinh(np.complex256(x)).real
     # The eps for float128 is 1-e33, so this is way bigger
-    ret = abs((v1 / v2) - 1.0) > 1e-23
-    return True
-
+    return abs((v1 / v2) - 1.0) > 1e-23
 
 if platform.machine() == 'aarch64' and bad_arcsinh():
-    precision_complex_dtypes = [np.complex64, np.complex_]
+    skip_longcomplex_msg = ('Trig functions of np.longcomplex values known to be '
+                            'inaccurate on aarch64 for some compilation '
+                            'configurations, should be fixed by building on a '
+                            'platform using glibc>2.17')
 else:
-    precision_complex_dtypes = [np.complex64, np.complex_, np.longcomplex]
+    skip_longcomplex_msg = ''
+
 
 class _FilterInvalids:
     def setup(self):
@@ -2798,7 +2800,7 @@ class TestComplexFunctions:
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
-    @pytest.mark.parametrize('dtype', precision_complex_dtypes)
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
 
@@ -2842,6 +2844,8 @@ class TestComplexFunctions:
             # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
             # So, give more leeway for long complex tests here:
             # Can use 2.1 for > Ubuntu LTS Trusty (2014), glibc = 2.19.
+            if skip_longcomplex_msg:
+                pytest.skip(skip_longcomplex_msg)
             check(x_series, 50.0*eps)
         else:
             check(x_series, 2.1*eps)
