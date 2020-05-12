@@ -78,7 +78,7 @@ __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polyfit2d', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
+    'polyfit', 'polyfit2d', 'polyfitnd', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
     'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
 import numpy as np
@@ -1436,6 +1436,11 @@ def polyfit2d(x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, s
     """
     return pu._fit2d(polyvander2d, x, y, z, deg, rcond, full, w, max_degree, scale)
 
+print("Hello World")
+def polyfitnd(*coords, data, deg=1, rcond=None, full=False, w=None, max_degree=None, scale=True):
+    print("Hello World")
+    polyvander_nd = [polyvander] * len(coords)
+    return pu._fitnd(polyvander_nd, *coords, data=data, deg=deg, rcond=rcond, full=full, w=w, max_degree=max_degree, scale=scale)
 
 def polycompanion(c):
     """

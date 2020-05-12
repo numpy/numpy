@@ -741,9 +741,9 @@ def _get_coeff_idx(shape):
     idx : array of shape (n * m, 2)
         pairs of indices to the coefficient matrix
     """
-    assert len(shape) == 2, "Expected the shape of a 2d array"
+    ndim = len(shape)
     idx = np.indices(shape)
-    idx = idx.T.swapaxes(0, 1).reshape((-1, 2))
+    idx = idx.T[::-1].reshape((-1, ndim))
     return idx
 
 
@@ -911,14 +911,18 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
             raise TypeError("expected 1D or 2D vector for w")
         if x.size != w.size:
             raise TypeError("expected x and w to have same length")
+    if not callable(vander2d_f) and len(vander2d_f) != 2:
+        raise TypeError("expected a callable or a list of 2 vander_1d functions")
 
     x, y, z = x.ravel(), y.ravel(), z.ravel()
     if w is not None:
         w = np.ravel(w)
+    if not callable(vander2d_f):
+        vander2d_f = lambda x, y, deg: _vander_nd_flat(vander2d_f, (x, y), deg)
 
     # Remove masked values
-    mask = ~(np.ma.getmask(z) | np.ma.getmask(x) | np.ma.getmask(y))
-    x, y, z = x[mask].ravel(), y[mask].ravel(), z[mask].ravel()
+    pxmask = ~(np.ma.getmask(z) | np.ma.getmask(x) | np.ma.getmask(y))
+    x, y, z = x[pxmask].ravel(), y[pxmask].ravel(), z[pxmask].ravel()
 
     mask = None
     if deg.ndim == 0:
@@ -986,6 +990,166 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
     else:
         return coeff
 
+def _fitnd(vandernd_f, *coords, data, deg=1, rcond=None, full=False, w=None,
+           max_degree=None, scale=True):
+    """A simple 2D polynomial fit to data x, y, z
+    The polynomial can be evaluated with
+    numpy.polynomial.polynomial.polyval2d
+
+    Parameters
+    ----------
+    vander2d_f : function(array_like, array_like, int) -> ndarray
+        The 2d vander function, such as ``polyvander``
+    coords : array_like
+        x, y, z ... coordinates
+    data : array_like
+        data values
+    degree : {int, ndim-tuple, ndim-array}, optional
+        degree of the polynomial fit in x and y direction, by default 1.
+        If just one int, both directions use the same degree.
+        If 2-tuple or 1d array, then it specifies the two degrees in
+        each direction seperately.
+        If 2d-array, it should of of shape == (xdegree + 1, ydegree + 1),
+        i.e. like the output coefficients. With degrees that should be used in
+        the fit set to non-zero values.
+    max_degree : {int, None}, optional
+        if given the maximum combined degree of the coefficients is
+        limited to this value, by default None
+    scale : bool, optional
+        Wether to scale the input arrays x and y to mean 0 and variance 1,
+        to avoid numerical overflows. Especially useful at higher degrees.
+        By default True.
+
+    Returns
+    -------
+    coeff : array of shape (deg+1, deg+1)
+        the polynomial coefficients in numpy 2d format,
+        i.e. coeff[i, j] for x**i * y**j
+    """
+    ndim = len(coords)
+    if ndim == 0:
+        raise ValueError("Need to set some axis")
+
+    # Flatten input
+    coords = list(coords)
+    for i in range(ndim):
+        coords[i] = np.asarray(coords[i]) + 0.0
+    data = np.asarray(data) + 0.0
+
+    deg = np.asarray(deg)
+    if w is not None:
+        w = np.asarray(w) + 0.0
+
+    if deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty array of int")
+    if deg.ndim == 1 and not deg.size == ndim:
+        raise ValueError(f"deg must be of length {ndim}, if it is a 1d array")
+    if deg.ndim == ndim and np.all(deg == 0):
+        raise ValueError("deg must have at least one non-zero value")
+    if deg.ndim not in [0, 1, ndim]:
+        raise TypeError(f"deg must be an array of dimension {ndim}")
+    if deg.min() < 0:
+        raise ValueError("expected deg >= 0")
+    if data.ndim < 1 or data.ndim > 2:
+        raise TypeError(f"expected 1D or {ndim}D array for z")
+    if data.size == 0:
+        raise TypeError("expected non-empty vector for z")
+    npoints = len(data)
+    for x in coords:
+        if x.ndim != 1 and x.ndim != ndim:
+            raise TypeError(f"expected 1D or {ndim}D vector for x")
+        if x.size == 0:
+            raise TypeError("expected non-empty vector for x")
+        if len(x) != npoints:
+            raise TypeError("expected coords and data to have same length")
+    if w is not None:
+        if w.ndim != 1 and w.ndim != ndim:
+            raise TypeError(f"expected 1D or {ndim}D vector for w")
+        if data.size != w.size:
+            raise TypeError("expected data and w to have same length")
+    if not callable(vandernd_f) and len(vandernd_f) != ndim:
+        raise TypeError(f"expected a callable or a list of {ndim} vander_1d functions")
+
+    for i in range(ndim):
+        coords[i] = coords[i].ravel()
+    data = data.ravel()
+    if w is not None:
+        w = np.ravel(w)
+
+    if not callable(vandernd_f):
+        vandernd_f = lambda x, y, deg: _vander_nd_flat(vandernd_f, coords, deg)
+
+    # Remove masked values
+    pxmask = np.ma.getmask(data)
+    for cd in coords:
+        pxmask |= np.ma.getmask(cd)
+    pxmask = ~pxmask
+
+    data = data[pxmask].ravel()
+    for i in range(ndim):
+        coords[i] = coords[i][pxmask].ravel()
+
+    mask = None
+    if deg.ndim == 0:
+        deg = deg[()]
+        deg = np.array([deg] * ndim)
+    elif deg.ndim == 1:
+        deg = deg[:ndim]
+    elif deg.ndim == ndim:
+        mask = deg != 0
+        deg = np.array(deg.shape) - 1
+
+    idx = _get_coeff_idx(deg + 1)
+
+    # Calculate elements 1, x, y, x*y, x**2, y**2, ...
+    lhs = vandernd_f(*coords, deg)
+    rhs = data
+
+    # Remove degrees that were not explicitly specified
+    # Only if deg was given as a 2d array
+    if deg.ndim == ndim:
+        for i in range(ndim):
+            mask = mask[idx[:, i]]
+        idx = idx[mask]
+        lhs = lhs[:, mask]
+
+    # We only want the combinations with maximum order COMBINED power
+    if max_degree is not None:
+        mask = np.sum(idx) <= int(max_degree)
+        idx = idx[mask]
+        lhs = lhs[:, mask]
+        order = max_degree + 1
+    else:
+        order = deg[0] + deg[1] + 1
+
+    if w is not None:
+        lhs = lhs * w[:, None]
+        rhs = rhs * w
+
+    if rcond is None:
+        rcond = len(x) * np.finfo(x.dtype).eps
+
+    # Do the actual least squares fit
+    C, resids, rank, s = np.linalg.lstsq(lhs, rhs, rcond)
+
+    # Reorder coefficients into numpy compatible 2d array
+    coeff = np.zeros(deg + 1, dtype=C.dtype)
+    for k, cd in enumerate(idx):
+        coeff[cd] = C[k]
+
+    # Reverse the scaling, it is important to scale first and then shift
+    # if scale:
+    #     coeff = polyscale2d(coeff, *norm, copy=False)
+
+    # warn on rank reduction
+    if rank != order and not full:
+        msg = "The fit may be poorly conditioned"
+        warnings.warn(msg, RankWarning, stacklevel=2)
+
+    if full:
+        return coeff, [resids, rank, s, rcond]
+    else:
+        return coeff
 
 def _pow(mul_f, c, pow, maxpower):
     """
