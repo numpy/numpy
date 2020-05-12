@@ -772,8 +772,10 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """Create a (read-only) record array from binary data contained in
-    a string
+    """Create a record array from binary data
+
+    Note that despite the name of this function it does not accept `str`
+    instances
 
     Parameters
     ----------
@@ -799,15 +801,17 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     Examples
     --------
     >>> a = b'\x01\x02\x03abc'
-    >>> np.core.records.fromstring(a,dtype='u1,u1,u1,S3')
+    >>> np.core.records.fromstring(a, dtype='u1,u1,u1,S3')
     rec.array([(1, 2, 3, b'abc')],
-              dtype=[('f0', 'u1'), ('f1', 'u1'), ('f2', 'u1'), ('f3', 'S3')])
+            dtype=[('f0', 'u1'), ('f1', 'u1'), ('f2', 'u1'), ('f3', 'S3')])
 
-    >>> grades_dtype = [('Name', (np.str_, 10)), ('Marks', np.float64), ('GradeLevel', np.int32)]
-    >>> grades_array = np.array([('Sam', 33.3, 3), ('Mike', 44.4, 5), ('Aadi', 66.6, 6)], dtype=grades_dtype)
-    >>> np.core.records.fromstring(grades_array.tobytes(), dtype=dtype)
+    >>> grades_dtype = [('Name', (np.str_, 10)), ('Marks', np.float64),
+    ...                 ('GradeLevel', np.int32)]
+    >>> grades_array = np.array([('Sam', 33.3, 3), ('Mike', 44.4, 5),
+    ...                         ('Aadi', 66.6, 6)], dtype=grades_dtype)
+    >>> np.core.records.fromstring(grades_array.tobytes(), dtype=grades_dtype)
     rec.array([('Sam', 33.3, 3), ('Mike', 44.4, 5), ('Aadi', 66.6, 6)],
-          dtype=[('Name', '<U10'), ('Marks', '<f8'), ('GradeLevel', '<i4')])
+            dtype=[('Name', '<U10'), ('Marks', '<f8'), ('GradeLevel', '<i4')])
 
     >>> s = '\x01\x02\x03abc'
     >>> np.core.records.fromstring(s, dtype='u1,u1,u1,S3')
