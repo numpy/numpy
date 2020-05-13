@@ -175,7 +175,7 @@ double legacy_beta(aug_bitgen_t *aug_state, double a, double b) {
   double Ga, Gb;
 
   if ((a <= 1.0) && (b <= 1.0)) {
-    double U, V, X, Y;
+    double U, V, X, Y, Z;
     /* Use Johnk's algorithm */
 
     while (1) {
@@ -186,7 +186,7 @@ double legacy_beta(aug_bitgen_t *aug_state, double a, double b) {
 
       if ((X + Y) <= 1.0) {
         if (X + Y > 0) {
-          return X / (X + Y);
+          Z =  X / (X + Y);
         } else {
           double logX = log(U) / a;
           double logY = log(V) / b;
@@ -194,7 +194,10 @@ double legacy_beta(aug_bitgen_t *aug_state, double a, double b) {
           logX -= logM;
           logY -= logM;
 
-          return exp(logX - log(exp(logX) + exp(logY)));
+          Z =  exp(logX - log(exp(logX) + exp(logY)));
+        }
+        if (Z > 0 && Z < 1) {
+          return Z;
         }
       }
     }
