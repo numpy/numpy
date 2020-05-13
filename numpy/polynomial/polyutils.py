@@ -776,23 +776,23 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     if deg.ndim == 1 and not deg.size == ndim:
         raise ValueError(f"deg must be of length {ndim}, if it is a 1d array")
     if deg.ndim == ndim and np.all(deg == 0):
-        raise ValueError("deg must have at least one non-zero value")
+        raise ValueError(f"deg must have at least one non-zero value, if it is an {ndim} dimensional array")
     if deg.ndim not in [0, 1, ndim]:
-        raise TypeError(f"deg must be an array of dimension {ndim}")
+        raise TypeError(f"deg must be an array of dimension 0, 1, or {ndim}")
     if deg.min() < 0:
-        raise ValueError("expected deg >= 0")
-    if data.ndim < 1 or data.ndim != ndim:
-        raise TypeError(f"expected 1D or {ndim}D array for z")
+        raise ValueError("expected all deg >= 0")
+    if data.ndim != 1 and data.ndim != ndim:
+        raise TypeError(f"expected 1D or {ndim}D array for data")
     if data.size == 0:
-        raise TypeError("expected non-empty vector for z")
+        raise TypeError("expected non-empty vector for data")
     npoints = len(data)
-    for x in coords:
+    for i, x in enumerate(coords):
         if x.ndim != 1 and x.ndim != ndim:
-            raise TypeError(f"expected 1D or {ndim}D vector for x")
+            raise TypeError(f"expected 1D or {ndim}D vector for coords[{i}]")
         if x.size == 0:
-            raise TypeError("expected non-empty vector for x")
+            raise TypeError(f"expected non-empty vector for coords[{i}]")
         if len(x) != npoints:
-            raise TypeError("expected coords and data to have same length")
+            raise TypeError(f"expected coords[{i}] and data to have the same length")
     if w is not None:
         if w.ndim != 1 and w.ndim != ndim:
             raise TypeError(f"expected 1D or {ndim}D vector for w")
