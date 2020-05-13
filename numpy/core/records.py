@@ -775,12 +775,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     """Create a record array from binary data
 
     Note that despite the name of this function it does not accept `str`
-    instances
+    instances.
 
     Parameters
     ----------
     datastring : bytes-like
-        Binary data contained in a string
+        Buffer of binary data
     dtype : data-type, optional
         Valid dtype for all arrays
     shape : int or tuple of ints, optional
@@ -796,7 +796,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     Returns
     -------
     np.recarray
-        Read-only record array consisting of data in datastring.
+        Record array view into the data in datastring. This will be readonly
+        if `datastring` is readonly.
+
+See Also
+--------
+numpy.frombuffer
 
     Examples
     --------
