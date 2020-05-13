@@ -3270,3 +3270,39 @@ def test_outer_subclass_preserve(arr):
     class foo(np.ndarray): pass
     actual = np.multiply.outer(arr.view(foo), arr.view(foo))
     assert actual.__class__.__name__ == 'foo'
+
+def test_outer_bad_subclass():
+    class BadArr1(np.ndarray):
+        def __array_finalize__(self, obj):
+            # The outer call reshapes to 3 dims, try to do a bad reshape.
+            if self.ndim == 3:
+                self.shape = self.shape + (1,)
+
+        def __array_prepare__(self, obj, context=None):
+            return obj
+
+    class BadArr2(np.ndarray):
+        def __array_finalize__(self, obj):
+            if isinstance(obj, BadArr2):
+                # outer inserts 1-sized dims. In that case disturb them.
+                if self.shape[-1] == 1:
+                    self.shape = self.shape[::-1]
+
+        def __array_prepare__(self, obj, context=None):
+            return obj
+
+    for cls in [BadArr1, BadArr2]:
+        arr = np.ones((2, 3)).view(cls)
+        with assert_raises(TypeError) as a:
+            # The first array gets reshaped (not the second one)
+            np.add.outer(arr, [1, 2])
+
+        # This actually works, since we only see the reshaping error:
+        arr = np.ones((2, 3)).view(cls)
+        assert type(np.add.outer([1, 2], arr)) is cls
+
+def test_outer_exceeds_maxdims():
+    deep = np.ones((1,) * 17)
+    with assert_raises(ValueError):
+        np.add.outer(deep, deep)
+
