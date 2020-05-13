@@ -79,7 +79,7 @@ __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polyfit2d', 'polyfitnd', 'polytrim', 'polyroots', 'Polynomial',
+    'polyfit', 'polyfitnd', 'polytrim', 'polyroots', 'Polynomial',
     'polyval2d', 'polyval3d', 'polyvalnd', 'polygrid2d', 'polygrid3d', 
     'polyvander2d', 'polyvander3d']
 
