@@ -23,11 +23,11 @@ Building NumPy requires the following software installed:
    Various NumPy modules use FORTRAN 77 libraries, so you'll also need a
    FORTRAN 77 compiler installed.
 
-   Note that NumPy is developed mainly using GNU compilers. Compilers from
-   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Portland,
-   Lahey, HP, IBM, Microsoft are only supported in the form of community
-   feedback, and may not work out of the box. GCC 4.x (and later) compilers
-   are recommended.
+   Note that NumPy is developed mainly using GNU compilers and tested on
+   MSVC and Clang compilers. Compilers from other vendors such as Intel,
+   Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only supported
+   in the form of community feedback, and may not work out of the box.
+   GCC 4.x (and later) compilers are recommended.
 
 3) Linear Algebra libraries
 
