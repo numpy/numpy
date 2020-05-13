@@ -1,0 +1,4 @@
+``np.logaddexp2.identity`` changed to ``-inf``
+----------------------------------------------
+The ufunc `~numpy.logaddexp2` now has an identity of ``-inf``, allowing it to
+be called on empty sequences.  This matches the identity of `~numpy.logaddexp`.
