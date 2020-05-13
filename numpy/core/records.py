@@ -799,9 +799,9 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
         Record array view into the data in datastring. This will be readonly
         if `datastring` is readonly.
 
-See Also
---------
-numpy.frombuffer
+    See Also
+    --------
+    numpy.frombuffer
 
     Examples
     --------
