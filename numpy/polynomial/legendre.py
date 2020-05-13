@@ -42,6 +42,7 @@ Arithmetic
    legval
    legval2d
    legval3d
+   legvalnd
    leggrid2d
    leggrid3d
 
@@ -69,6 +70,7 @@ Misc Functions
    legweight
    legcompanion
    legfit
+   legfitnd
    legtrim
    legline
    leg2poly
@@ -90,8 +92,8 @@ __all__ = [
     'legzero', 'legone', 'legx', 'legdomain', 'legline', 'legadd',
     'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval', 'legder',
     'legint', 'leg2poly', 'poly2leg', 'legfromroots', 'legvander',
-    'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d',
-    'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d', 'legcompanion',
+    'legfit', 'legfitnd', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d', 
+    'legvalnd', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d', 'legcompanion',
     'leggauss', 'legweight']
 
 legtrim = pu.trimcoef
@@ -1120,6 +1122,56 @@ def leggrid3d(x, y, z, c):
     """
     return pu._gridnd(legval, c, x, y, z)
 
+def legvalnd(coords, c):
+    """
+    Evaluate a N-D legendre polynomial at points coords.
+
+    This function returns the values:
+
+    .. math:: p(x,y,z,...) = \\sum_{i,j,k,...} c_{i,j,k,...} * L_i(x) * L_j(y) * L_k(z) ...
+
+    The parameters are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, any coordinate
+    or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    coords[0].shape.
+
+    Parameters
+    ----------
+    coords : list of array_like, compatible object
+        The N dimensional series is evaluated at the points
+        `coords`, where each dimension must have the same shape.  If
+        any dimension is a list or tuple, it is first converted
+        to an ndarray, otherwise it is left unchanged and if it isn't an
+        ndarray it is  treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        sets of corresponding values from coords.
+
+    See Also
+    --------
+    legval, legval2d, leggrid2d, legval3d
+
+    Notes
+    -----
+
+    .. versionadded:: 1.20.0
+
+    """
+    return pu._valnd(legval, c, *coords)
+
 
 def legvander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
@@ -1280,7 +1332,6 @@ def legvander3d(x, y, z, deg):
     """
     return pu._vander_nd_flat((legvander, legvander, legvander), (x, y, z), deg)
 
-
 def legfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Legendre series to data.
@@ -1405,33 +1456,31 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     return pu._fit(legvander, x, y, deg, rcond, full, w)
 
 
-def legfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
+def legfitnd(coords, data, deg, rcond=None, full=False, w=None, max_degree=None):
     """
-    2D Least squares fit of Legendre series to data.
+    N-D Least squares fit of Legendre series to data.
 
     Return the coefficients of a Legendre series of degree `deg` that is the
-    least squares fit to the data values `z` given at points `(x, y)`.
-    The fitted polynomial(s) are in the form
+    least squares fit to the data values `z` given at points `(x, y, ...)`.
+    The fitted polynomial(s) are in the form (for the example of a 2D fit)
 
     .. math::  p(x, y) = c_{00} + c_{10} * L_1(x) L_0(y)  + c_{01} * L_0(x) L_1(y) + ... + c_{nm} * L_n(x) L_m(y),
 
     where `n` and `m` are `deg`.
 
-    ..versionadded:: 1.19.0
-
     Parameters
     ----------
-    x : array_like, shape (M,)
-        x-coordinates of the M sample points ``(x[i], y[i], z[i])``.
-    y : array_like, shape (M,)
-        y-coordinates of the M sample points ''(x[i], y[i], z[i])``.
-    z : array_like, shape (M,)
-        z-coordinates of the sample points.
-    deg : int or 1-D array_like
-        Degree(s) of the fitting polynomials. If `deg` is a single integer
-        all terms up to and including the `deg`'th term are included in the
-        fit. Otherwise the first element is the degree in `x` direction
-        and the second in `y` direction.
+    coords : list of array_like
+        x, y, z, ... coordinates, this defines the number of dimensions N
+    data : array_like
+        data values, of the same size and shape as each coordinate
+    deg : {int, n-tuple, n dimensional boolean array}, optional
+        maximum degree of the polynomial fit.
+        If given as an integer, it is used for each dimension.
+        If given as a tuple, each element gives the degree of that dimension.
+        If given as an array, each element specifies whether that coefficient should be
+        fitted or not, where the layout of the array is the same as the output coefficient matrix.
+        The default value is 1.
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1454,9 +1503,10 @@ def legfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     Returns
     -------
     coef : ndarray, shape (`deg` + 1, `deg` + 1)
-        Polynomial coefficients ordered from low to high.
-        With coefficients in `x` direction along the first
-        dimension and in `y` direction along the second dimension.
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
 
     [residuals, rank, singular_values, rcond] : list
         These values are only returned if `full` = True
@@ -1516,6 +1566,8 @@ def legfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     sample points and the smoothness of the data. If the quality of the fit
     is inadequate splines may be a good alternative.
 
+    ..versionadded:: 1.20.0
+
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
@@ -1525,7 +1577,7 @@ def legfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     --------
 
     """
-    return pu._fitnd(legvander2d, (x, y), z, deg, rcond, full, w, max_degree)
+    return pu._fitnd([legvander] * len(coords), coords, data, deg, rcond, full, w, max_degree)
 
 
 def legcompanion(c):

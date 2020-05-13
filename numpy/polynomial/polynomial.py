@@ -40,6 +40,7 @@ Arithmetic
    polyval
    polyval2d
    polyval3d
+   polyvalnd
    polygrid2d
    polygrid3d
 
@@ -61,7 +62,7 @@ Misc Functions
 - `polyvander3d` -- Vandermonde-like matrix for 3D power series.
 - `polycompanion` -- companion matrix in power series form.
 - `polyfit` -- least-squares fit returning a polynomial.
-- `polyfit2d` -- least-squares fit returning a 2D polynomial.
+- `polyfitnd` -- least-squares fit returning a 2D polynomial.
 - `polytrim` -- trim leading coefficients from a polynomial.
 - `polyline` -- polynomial representing given straight line.
 
@@ -78,8 +79,11 @@ __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polyfit2d', 'polyfitnd', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
+    'polyfit', 'polyfit2d', 'polyfitnd', 'polytrim', 'polyroots', 'Polynomial',
+    'polyval2d', 'polyval3d', 'polyvalnd', 'polygrid2d', 'polygrid3d', 
+    'polyvander2d', 'polyvander3d']
+
+import functools
 
 import numpy as np
 import numpy.linalg as la
@@ -1049,8 +1053,57 @@ def polygrid3d(x, y, z, c):
     """
     return pu._gridnd(polyval, c, x, y, z)
 
+
 def polyvalnd(coords, c):
+    """
+    Evaluate a N-D polynomial at points coords.
+
+    This function returns the values:
+
+    .. math:: p(*coords) = \\sum_{i,j,k,...} c_{i,j,k,...} * x^i * y^j ... * z^k
+
+    The parameters are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, any coordinate
+    or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    coords[0].shape.
+
+    Parameters
+    ----------
+    coords : list of array_like, compatible object
+        The N dimensional series is evaluated at the points
+        `coords`, where each dimension must have the same shape.  If
+        any dimension is a list or tuple, it is first converted
+        to an ndarray, otherwise it is left unchanged and if it isn't an
+        ndarray it is  treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        sets of corresponding values from coords.
+
+    See Also
+    --------
+    polyval, polyval2d, polyval3d, polygrid2d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded:: 1.20.0
+
+    """
     return pu._valnd(polyval, c, *coords)
+
 
 def polyvander(x, deg):
     """Vandermonde matrix of given degree.
@@ -1354,107 +1407,23 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     return pu._fit(polyvander, x, y, deg, rcond, full, w)
 
 
-def polyfit2d(x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, scale=True):
-    """A simple 2D polynomial fit to data x, y, z
-    The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
-
-    ..versionadded:: 1.19.0
-
-    Parameters
-    ----------
-    x : array_like
-        x coordinates
-    y : array_like
-        y coordinates
-    z : array_like
-        data values
-    deg : {int, 2-tuple}, optional
-        degree of the polynomial fit in x and y direction, by default 1
-    rcond : float, optional
-        Relative condition number of the fit.  Singular values smaller
-        than `rcond`, relative to the largest singular value, will be
-        ignored.  The default value is ``len(x)*eps``, where `eps` is the
-        relative precision of the platform's float type, about 2e-16 in
-        most cases.
-    full : bool, optional
-        Switch determining the nature of the return value.  When ``False``
-        (the default) just the coefficients are returned; when ``True``,
-        diagnostic information from the singular value decomposition (used
-        to solve the fit's matrix equation) is also returned.
-    w : array_like, shape (`M`,), optional
-        Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance. The default value is None.
-    max_degree : int, optional
-        If given the maximum combined degree of the coefficients is limited
-        to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
-        The default is None.
-    scale : bool, optional
-        Whether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
-        Especially useful at higher degrees. By default True.
-
-    Returns
-    -------
-    coef : ndarray, shape (`deg` + 1, `deg` + 1)
-        Polynomial coefficients ordered from low to high.
-        With coefficients in `x` direction along the first
-        dimension and in `y` direction along the second dimension.
-
-    [residuals, rank, singular_values, rcond] : list
-        These values are only returned if `full` = True
-
-        resid -- sum of squared residuals of the least squares fit
-        rank -- the numerical rank of the scaled Vandermonde matrix
-        sv -- singular values of the scaled Vandermonde matrix
-        rcond -- value of `rcond`.
-
-        For more details, see `linalg.lstsq`.
-    Raises
-    ------
-    RankWarning
-        Raised if the matrix in the least-squares fit is rank deficient.
-        The warning is only raised if `full` == False.  The warnings can
-        be turned off by:
-
-        >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
-
-    See Also
-    --------
-    polyfit1d
-
-    Examples
-    --------
-    >>> from numpy.polynomial.polynomial import polyfit2d
-    >>> x = np.linspace(0, 2)
-    >>> y = np.linspace(0, 2)
-    >>> z = 1 + x + x * y ** 2
-    >>> coeff = polyfit2d(x, y, z, deg=2)
-    >>> coeff
-    [[ 1.00000000e+00 -1.73445280e-11  1.45681112e-13]
-     [ 1.00000000e+00  1.93986070e-12  1.00000000e+00]
-     [ 3.13598612e-13 -2.30396083e-14  2.30548445e-16]]
-    """
-    return pu._fitnd(polyvander2d, (x, y), z, deg, rcond, full, w, max_degree)
-
 def polyfitnd(coords, data, deg=1, rcond=None, full=False, w=None, max_degree=None):
-    """A simple ND polynomial fit to data (x, y, ...), z
-    The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
-
-    ..versionadded:: 1.20.0
+    """A simple {nd}-D polynomial fit to coordinates {x}, and data {z}
+    The polynomial can be evaluated with polyval{nd}d
 
     Parameters
     ----------
-    coords : tuple of array_like
-        x, y, ... coordinates
-    data : array_like
-        data values
-    deg : {int, n-tuple, n dimensional boolean array}, optional
-        maximum degree of the polynomial fit, by default 1
-        If given as a tuple, each element gives the degree of that axis
+    {x} : list of array_like
+        coordinates, this defines the number of dimensions {nd}
+    {z} : array_like
+        data values, of the same size and shape as each coordinate
+    deg : {{int, {nd}-tuple, {nd} dimensional array}}, optional
+        maximum degree of the polynomial fit.
+        If given as an integer, it is used for each dimension.
+        If given as a tuple, each element gives the degree of that dimension.
         If given as an array, each element specifies whether that coefficient should be
-        fitted or not, where the layout of the array is the same as the output.
+        fitted or not, where the layout of the array is the same as the output coefficient matrix.
+        The default value is 1.
     rcond : float, optional
         Relative condition number of the fit.  Singular values smaller
         than `rcond`, relative to the largest singular value, will be
@@ -1466,11 +1435,11 @@ def polyfitnd(coords, data, deg=1, rcond=None, full=False, w=None, max_degree=No
         (the default) just the coefficients are returned; when ``True``,
         diagnostic information from the singular value decomposition (used
         to solve the fit's matrix equation) is also returned.
-    w : array_like, shape (`M`,), optional
+    w : array_like, optional
         Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance. The default value is None.
+        ``({x})[i]`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*data[i]``
+        all have the same variance. The default is None.
     max_degree : int, optional
         If given the maximum combined degree of the coefficients is limited
         to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
@@ -1478,10 +1447,11 @@ def polyfitnd(coords, data, deg=1, rcond=None, full=False, w=None, max_degree=No
 
     Returns
     -------
-    coef : ndarray, shape (`deg` + 1, ) x ndim
-        Polynomial coefficients ordered from low to high.
-        With coefficients in `x` direction along the first
-        dimension, the `y` direction along the second dimension, and so forth.
+    coef : ndarray
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree {i} is contained in ``c[{i}]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
 
     [residuals, rank, singular_values, rcond] : list
         These values are only returned if `full` = True
@@ -1504,7 +1474,7 @@ def polyfitnd(coords, data, deg=1, rcond=None, full=False, w=None, max_degree=No
 
     See Also
     --------
-    polyfit1d
+    polyfit
 
     Examples
     --------
@@ -1517,9 +1487,15 @@ def polyfitnd(coords, data, deg=1, rcond=None, full=False, w=None, max_degree=No
     [[ 1.00000000e+00 -1.73445280e-11  1.45681112e-13]
      [ 1.00000000e+00  1.93986070e-12  1.00000000e+00]
      [ 3.13598612e-13 -2.30396083e-14  2.30548445e-16]]
+    
+    Notes
+    -----
+
+    .. versionadded:: 1.20.0
+
     """
-    polyvander_nd = [polyvander] * len(coords)
-    return pu._fitnd(polyvander_nd, coords, data, deg, rcond, full, w, max_degree)
+    return pu._fitnd([polyvander] * len(coords), coords, data, deg, rcond, full, w, max_degree)
+
 
 def polycompanion(c):
     """

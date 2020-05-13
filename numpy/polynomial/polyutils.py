@@ -728,27 +728,41 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
 
 def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
            max_degree=None):
-    """A simple 2D polynomial fit to data x, y, z
-    The polynomial can be evaluated with
-    numpy.polynomial.polynomial.polyval2d
+    """A simple N dimensional polynomial fit to coordiantes (x, y, ...), and data z
+    The polynomial can be evaluated with _valnd
 
     Parameters
     ----------
-    vander2d_f : {function(array_like, ..., int) -> ndarray, list of function(array_like, int) -> ndarray}
-        The 2d vander function, such as ``polyvander2d``,
-        or a list of 1d vander functions for each dimension
+    vander2d_f : list of function(array_like, int) -> ndarray
+        a list of 1d vander functions for each dimension
     coords : list of array_like
-        x, y, z, ... coordinates
+        x, y, z, ... coordinates, this defines the number of dimensions N
     data : array_like
-        data values
+        data values, of the same size and shape as each coordinate
     degree : {int, ndim-tuple, ndim-array}, optional
         degree of the polynomial fit in each dimension, by default 1.
         If just one int, all dimensions use the same fit degree.
         If a 1d array, then it specifies the degrees in
         each dimension seperately.
-        If nd-array, it should have dimensions 
+        If an Nd-array, it should have dimensions 
         i.e. like the output coefficients. With degrees that should be used in
         the fit set to non-zero values.
+    rcond : float, optional
+        Relative condition number of the fit.  Singular values smaller
+        than `rcond`, relative to the largest singular value, will be
+        ignored.  The default value is ``len(x)*eps``, where `eps` is the
+        relative precision of the platform's float type, about 2e-16 in
+        most cases.
+    full : bool, optional
+        Switch determining the nature of the return value.  When ``False``
+        (the default) just the coefficients are returned; when ``True``,
+        diagnostic information from the singular value decomposition (used
+        to solve the fit's matrix equation) is also returned.
+    w : array_like, optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i],...)`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i] * data[i]``
+        all have the same variance. The default is None.
     max_degree : {int, None}, optional
         if given the maximum combined degree of the coefficients is
         limited to this value, by default None
@@ -756,8 +770,37 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     Returns
     -------
     coeff : array of shape (deg+1, deg+1)
-        the polynomial coefficients in numpy 2d format,
-        i.e. coeff[i, j] for x**i * y**j
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+        If N is 1, i.e. it is a 1D fit, the coefficients are ordered in inverse order,
+        i.e. with the highst coefficient first, to be consistent with the 1D fit function.
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+
+    Raises
+    ------
+    RankWarning
+        Raised if the matrix in the least-squares fit is rank deficient.
+        The warning is only raised if `full` == False.  The warnings can
+        be turned off by:
+
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', np.RankWarning)
+
+    Notes
+    ----
+
+    .. versionadded:: 1.20.0
+
     """
     ndim = len(coords)
     if ndim == 0:
@@ -787,21 +830,20 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
         raise TypeError(f"expected 1D or {ndim}D array for data")
     if data.size == 0:
         raise TypeError("expected non-empty vector for data")
-    npoints = len(data)
     for i, x in enumerate(coords):
         if x.ndim != 1 and x.ndim != ndim:
             raise TypeError(f"expected 1D or {ndim}D vector for coords[{i}]")
         if x.size == 0:
             raise TypeError(f"expected non-empty vector for coords[{i}]")
-        if len(x) != npoints:
+        if x.size != data.size:
             raise TypeError(f"expected coords[{i}] and data to have the same length")
     if w is not None:
         if w.ndim != 1 and w.ndim != ndim:
             raise TypeError(f"expected 1D or {ndim}D vector for w")
-        if data.size != w.size:
+        if w.size != data.size:
             raise TypeError("expected data and w to have same length")
-    if not callable(vandernd_f) and len(vandernd_f) != ndim:
-        raise TypeError(f"expected a callable or a list of {ndim} vander_1d functions")
+    if len(vandernd_f) != ndim:
+        raise TypeError(f"expected a list of {ndim} vander_1d functions")
 
     # Flatten the input
     for i in range(ndim):
@@ -810,10 +852,7 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     if w is not None:
         w = np.ravel(w)
 
-    if not callable(vandernd_f):
-        vandernd_f2 = lambda coords, deg: _vander_nd_flat(vandernd_f, coords, deg)
-    else:
-        vandernd_f2 = lambda coords, deg: vandernd_f(*coords, deg)
+    vandernd_f2 = lambda coords, deg: _vander_nd_flat(vandernd_f, coords, deg)
 
     # Remove masked values
     pxmask = np.ma.getmask(data)
@@ -834,6 +873,9 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     elif deg.ndim == ndim:
         mask = deg != 0
         deg = np.array(deg.shape) - 1
+        if ndim == 1:
+            # In the 1D case the output is flipped, so we must flip the mask here as well
+            mask = mask[::-1]
     else:
         raise ValueError("This should never happen")
 
@@ -862,16 +904,13 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
         mask = np.sum(idx, axis=1) <= int(max_degree)
         idx = idx[mask]
         lhs = lhs[:, mask]
-        order = max_degree + 1
-    else:
-        order = np.sum(deg) + 1
 
     if w is not None:
         lhs = lhs * w[:, None]
         rhs = rhs * w
 
     if rcond is None:
-        rcond = npoints * np.finfo(x.dtype).eps
+        rcond = data.size * np.finfo(x.dtype).eps
 
     # TODO: Scale lhs and coefficients
     if issubclass(lhs.dtype.type, np.complexfloating):
@@ -894,7 +933,8 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
         coeff = coeff[::-1]
 
     # warn on rank reduction
-    if rank != order and not full:
+    order = lhs.shape[1]
+    if rank < order and not full:
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, RankWarning, stacklevel=2)
 

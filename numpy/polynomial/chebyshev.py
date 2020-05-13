@@ -44,6 +44,7 @@ Arithmetic
    chebval
    chebval2d
    chebval3d
+   chebvalnd
    chebgrid2d
    chebgrid3d
 
@@ -71,6 +72,7 @@ Misc Functions
    chebweight
    chebcompanion
    chebfit
+   chebfitnd
    chebpts1
    chebpts2
    chebtrim
@@ -118,8 +120,8 @@ __all__ = [
     'chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline', 'chebadd',
     'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow', 'chebval',
     'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
-    'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
-    'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebgrid2d',
+    'chebvander', 'chebfit', 'chebfitnd', 'chebtrim', 'chebroots', 'chebpts1',
+    'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d', 'chebvalnd', 'chebgrid2d',
     'chebgrid3d', 'chebvander2d', 'chebvander3d', 'chebcompanion',
     'chebgauss', 'chebweight', 'chebinterpolate']
 
@@ -1381,6 +1383,57 @@ def chebgrid3d(x, y, z, c):
     return pu._gridnd(chebval, c, x, y, z)
 
 
+def chebvalnd(coords, c):
+    """
+    Evaluate a N-D polynomial at points coords.
+
+    This function returns the values:
+
+    .. math:: p(*coords) = \\sum_{i,j,k,...} c_{i,j,k,...} * x^i * y^j ... * z^k
+
+    The parameters are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, any coordinate
+    or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    coords[0].shape.
+
+    Parameters
+    ----------
+    coords : list of array_like, compatible object
+        The N dimensional series is evaluated at the points
+        `coords`, where each dimension must have the same shape.  If
+        any dimension is a list or tuple, it is first converted
+        to an ndarray, otherwise it is left unchanged and if it isn't an
+        ndarray it is  treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        sets of corresponding values from coords.
+
+    See Also
+    --------
+    polyval, polyval2d, polyval3d, polygrid2d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded:: 1.20.0
+
+    """
+    return pu._valnd(chebval, c, *coords)
+
+
 def chebvander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
 
@@ -1663,9 +1716,9 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     return pu._fit(chebvander, x, y, deg, rcond, full, w)
 
 
-def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
+def chebfitnd(coords, data, deg, rcond=None, full=False, w=None, max_degree=None):
     """
-    2d Least squares fit of Chebyshev series to data.
+    N-D Least squares fit of Chebyshev series to data.
 
     Return the coefficients of a Chebyshev series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`.
@@ -1675,21 +1728,19 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
 
     where `n` and `m` are `deg`.
 
-    ..versionadded:: 1.19.0
-
     Parameters
     ----------
-    x : array_like, shape (M,)
-        x-coordinates of the M sample points ``(x[i], y[i], z[i])``.
-    y : array_like, shape (M,)
-        y-coordinates of the M sample points ''(x[i], y[i], z[i])``.
-    z : array_like, shape (M,)
-        z-coordinates of the sample points.
-    deg : int or 1-D array_like
-        Degree(s) of the fitting polynomials. If `deg` is a single integer
-        all terms up to and including the `deg`'th term are included in the
-        fit. Otherwise the first element is the degree in `x` direction
-        and the second in `y` direction.
+    coords : list of array_like
+        x, y, z, ... coordinates, this defines the number of dimensions N
+    data : array_like
+        data values, of the same size and shape as each coordinate
+    deg : {int, n-tuple, n dimensional boolean array}, optional
+        maximum degree of the polynomial fit.
+        If given as an integer, it is used for each dimension.
+        If given as a tuple, each element gives the degree of that dimension.
+        If given as an array, each element specifies whether that coefficient should be
+        fitted or not, where the layout of the array is the same as the output coefficient matrix.
+        The default value is 1.
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1704,7 +1755,6 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
         ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
-
     max_degree : int, optional
         If given the maximum combined degree of the coefficients is limited
         to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
@@ -1713,9 +1763,10 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     Returns
     -------
     coef : ndarray, shape (`deg` + 1, `deg` + 1)
-        Polynomial coefficients ordered from low to high.
-        With coefficients in `x` direction along the first
-        dimension and in `y` direction along the second dimension.
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
 
     [residuals, rank, singular_values, rcond] : list
         These values are only returned if `full` = True
@@ -1775,6 +1826,8 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     sample points and the smoothness of the data. If the quality of the fit
     is inadequate splines may be a good alternative.
 
+    ..versionadded:: 1.20.0
+
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
@@ -1784,7 +1837,7 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     --------
 
     """
-    return pu._fitnd(chebvander2d, (x, y), z, deg, rcond, full, w, max_degree)
+    return pu._fitnd([chebvander] * len(coords), coords, data, deg, rcond, full, w, max_degree)
 
 
 def chebcompanion(c):

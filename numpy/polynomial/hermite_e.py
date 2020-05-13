@@ -40,6 +40,7 @@ Arithmetic
    hermeval
    hermeval2d
    hermeval3d
+   hermevalnd
    hermegrid2d
    hermegrid3d
 
@@ -65,6 +66,7 @@ Misc Functions
    hermeweight
    hermecompanion
    hermefit
+   hermefitnd
    hermetrim
    hermeline
    herme2poly
@@ -86,9 +88,9 @@ __all__ = [
     'hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
     'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv',
     'hermepow', 'hermeval', 'hermeder', 'hermeint', 'herme2poly',
-    'poly2herme', 'hermefromroots', 'hermevander', 'hermefit', 'hermetrim',
-    'hermeroots', 'HermiteE', 'hermeval2d', 'hermeval3d', 'hermegrid2d',
-    'hermegrid3d', 'hermevander2d', 'hermevander3d', 'hermecompanion',
+    'poly2herme', 'hermefromroots', 'hermevander', 'hermefit', 'hermefitnd',
+    'hermetrim', 'hermeroots', 'HermiteE', 'hermeval2d', 'hermeval3d', 'hermevalnd',
+    'hermegrid2d', 'hermegrid3d', 'hermevander2d', 'hermevander3d', 'hermecompanion',
     'hermegauss', 'hermeweight']
 
 hermetrim = pu.trimcoef
@@ -1090,6 +1092,57 @@ def hermegrid3d(x, y, z, c):
     return pu._gridnd(hermeval, c, x, y, z)
 
 
+def hermevalnd(coords, c):
+    """
+    Evaluate a N-D polynomial at points coords.
+
+    This function returns the values:
+
+    .. math:: p(*coords) = \\sum_{i,j,k,...} c_{i,j,k,...} * x^i * y^j ... * z^k
+
+    The parameters are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, any coordinate
+    or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    coords[0].shape.
+
+    Parameters
+    ----------
+    coords : list of array_like, compatible object
+        The N dimensional series is evaluated at the points
+        `coords`, where each dimension must have the same shape.  If
+        any dimension is a list or tuple, it is first converted
+        to an ndarray, otherwise it is left unchanged and if it isn't an
+        ndarray it is  treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        sets of corresponding values from coords.
+
+    See Also
+    --------
+    polyval, polyval2d, polyval3d, polygrid2d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded:: 1.20.0
+
+    """
+    return pu._valnd(hermeval, c, *coords)
+
+
 def hermevander(x, deg):
     """Pseudo-Vandermonde matrix of given degree.
 
@@ -1384,9 +1437,9 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     """
     return pu._fit(hermevander, x, y, deg, rcond, full, w)
 
-def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
+def hermefitnd(coords, data, deg, rcond=None, full=False, w=None, max_degree=None):
     """
-    2d Least squares fit of Hermite series to data.
+    N-D Least squares fit of Hermite series to data.
 
     Return the coefficients of a HermiteE series of degree `deg` that is
     the least squares fit to the data values `y` given at points `x`.
@@ -1396,21 +1449,19 @@ def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
 
     where `n` and `m` are `deg`.
 
-    ..versionadded:: 1.19.0
-
     Parameters
     ----------
-    x : array_like, shape (M,)
-        x-coordinates of the M sample points ``(x[i], y[i], z[i])``.
-    y : array_like, shape (M,)
-        y-coordinates of the M sample points ''(x[i], y[i], z[i])``.
-    z : array_like, shape (M,)
-        z-coordinates of the sample points.
-    deg : int or 1-D array_like
-        Degree(s) of the fitting polynomials. If `deg` is a single integer
-        all terms up to and including the `deg`'th term are included in the
-        fit. Otherwise the first element is the degree in `x` direction
-        and the second in `y` direction.
+    coords : list of array_like
+        x, y, z, ... coordinates, this defines the number of dimensions N
+    data : array_like
+        data values, of the same size and shape as each coordinate
+    deg : {int, n-tuple, n dimensional boolean array}, optional
+        maximum degree of the polynomial fit.
+        If given as an integer, it is used for each dimension.
+        If given as a tuple, each element gives the degree of that dimension.
+        If given as an array, each element specifies whether that coefficient should be
+        fitted or not, where the layout of the array is the same as the output coefficient matrix.
+        The default value is 1.
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1433,9 +1484,10 @@ def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     Returns
     -------
     coef : ndarray, shape (`deg` + 1, `deg` + 1)
-        Polynomial coefficients ordered from low to high.
-        With coefficients in `x` direction along the first
-        dimension and in `y` direction along the second dimension.
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has dimension
+        greater than N the remaining indices enumerate multiple sets of
+        coefficients.
 
     [residuals, rank, singular_values, rcond] : list
         These values are only returned if `full` = True
@@ -1496,6 +1548,8 @@ def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
     available as `hermeweight`.
 
+    ..versionadded:: 1.20.0
+
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
@@ -1503,17 +1557,17 @@ def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
 
     Examples
     --------
-    >>> from numpy.polynomial.hermite_e import hermefit2d, hermeval2d
+    >>> from numpy.polynomial.hermite_e import hermefitnd, hermevalnd
     >>> x = np.linspace(-10, 10)
     >>> y = np.linspace(-10, 10)
     >>> np.random.seed(123)
     >>> err = np.random.randn(len(x))/10
-    >>> z = hermeval(x, y, [[1, 2], [1, 2]]) + err
-    >>> hermefit2d(x, y, z, 2)
+    >>> z = hermevalnd((x, y), [[1, 2], [1, 2]]) + err
+    >>> hermefitnd(x, y, z, 2)
     array([[ 1.01690445,  1.99951418], [1.01690445, 2.99948696]]) # may vary
 
     """
-    return pu._fitnd(hermevander2d, (x, y), z, deg, rcond, full, w, max_degree)
+    return pu._fitnd([hermevander] * len(coords), coords, data, deg, rcond, full, w, max_degree)
 
 def hermecompanion(c):
     """
