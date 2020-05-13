@@ -733,7 +733,7 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
 
     Parameters
     ----------
-    vander2d_f : list of function(array_like, int) -> ndarray
+    vandernd_f : list of function(array_like, int) -> ndarray
         a list of 1d vander functions for each dimension
     coords : list of array_like
         x, y, z, ... coordinates, this defines the number of dimensions N
