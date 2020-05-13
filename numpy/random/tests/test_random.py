@@ -519,6 +519,12 @@ class TestRandomDist:
                  [1.58405155108498093e-04, 1.26252891949397652e-04]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_beta_domain(self):
+        # Test related to issue 16230
+        np.random.seed(self.seed)
+        actual = np.random.beta(0.01, 0.01, size=100000)
+        assert not (np.any(actual == 0) or np.any(actual == 1))
+
     def test_binomial(self):
         np.random.seed(self.seed)
         actual = np.random.binomial(100, .456, size=(3, 2))
