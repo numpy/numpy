@@ -5433,7 +5433,19 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         "matrix",
         &_numpy_matrix);
 
+    const char *matrix_deprecation_msg = (
+            "%s.outer() was passed a numpy matrix as %s argument. "
+            "Special handling of matrix is deprecated and will result in an "
+            "error in most cases. Please convert the matrix to a NumPy "
+            "array to retain the old behaviour. You can use `matrix.A` "
+            "to achieve this.");
+
     if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+        /* DEPRECATED 2020-05-13, NumPy 1.20 */
+        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                matrix_deprecation_msg, ufunc->name, "first") < 0) {
+            return NULL;
+        }
         ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
     }
     else {
@@ -5448,6 +5460,11 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return NULL;
     }
     if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+        /* DEPRECATED 2020-05-13, NumPy 1.20 */
+        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                matrix_deprecation_msg, ufunc->name, "second") < 0) {
+            return NULL;
+        }
         ap2 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
     }
     else {
