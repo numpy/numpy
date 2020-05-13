@@ -1,4 +1,5 @@
 import sys
+import hashlib
 
 import pytest
 
@@ -13,6 +14,26 @@ from numpy.random import Generator, MT19937, SeedSequence
 
 random = Generator(MT19937())
 
+JUMP_TEST_DATA = [
+    {
+        "seed": 0,
+        "steps": 10,
+        "initial": {"key_md5": "64eaf265d2203179fb5ffb73380cd589", "pos": 9},
+        "jumped": {"key_md5": "8cb7b061136efceef5217a9ce2cc9a5a", "pos": 598},
+    },
+    {
+        "seed":384908324,
+        "steps":312,
+        "initial": {"key_md5": "e99708a47b82ff51a2c7b0625b81afb5", "pos": 311},
+        "jumped": {"key_md5": "2ecdbfc47a895b253e6e19ccb2e74b90", "pos": 276},
+    },
+    {
+        "seed": [839438204, 980239840, 859048019, 821],
+        "steps": 511,
+        "initial": {"key_md5": "9fcd6280df9199785e17e93162ce283c", "pos": 510},
+        "jumped": {"key_md5": "433b85229f2ed853cde06cd872818305", "pos": 475},
+    },
+]
 
 @pytest.fixture(scope='module', params=[True, False])
 def endpoint(request):
@@ -462,7 +483,6 @@ class TestIntegers:
             assert_array_equal(scalar, array)
 
     def test_repeatability(self, endpoint):
-        import hashlib
         # We use a md5 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
@@ -487,7 +507,7 @@ class TestIntegers:
                 val = random.integers(0, 6 - endpoint, size=1000, endpoint=endpoint,
                                  dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.md5(val).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
@@ -885,8 +905,6 @@ class TestRandomDist:
         assert actual.dtype == np.int64
 
     def test_choice_large_sample(self):
-        import hashlib
-
         choice_hash = 'd44962a0b1e92f4a3373c23222244e21'
         random = Generator(MT19937(self.seed))
         actual = random.choice(10000, 5000, replace=False)
@@ -2351,3 +2369,31 @@ class TestSingleEltArrayInput:
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
+
+
+@pytest.mark.parametrize("config", JUMP_TEST_DATA)
+def test_jumped(config):
+    # Each config contains the initial seed, a number of raw steps
+    # the md5 hashes of the initial and the final states' keys and
+    # the position of of the initial and the final state.
+    # These were produced using the original C implementation.
+    seed = config["seed"]
+    steps = config["steps"]
+
+    mt19937 = MT19937(seed)
+    # Burn step
+    mt19937.random_raw(steps)
+    key = mt19937.state["state"]["key"]
+    if sys.byteorder == 'big':
+        key = key.byteswap()
+    md5 = hashlib.md5(key)
+    assert mt19937.state["state"]["pos"] == config["initial"]["pos"]
+    assert md5.hexdigest() == config["initial"]["key_md5"]
+
+    jumped = mt19937.jumped()
+    key = jumped.state["state"]["key"]
+    if sys.byteorder == 'big':
+        key = key.byteswap()
+    md5 = hashlib.md5(key)
+    assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
+    assert md5.hexdigest() == config["jumped"]["key_md5"]
