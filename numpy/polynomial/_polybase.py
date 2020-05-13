@@ -347,14 +347,14 @@ class ABCPolyBase(abc.ABC):
             out += " "
             power = str(i + 1)
             # Polynomial coefficient
+            # The coefficient array can be an object array with elements that
+            # will raise a TypeError with >= 0 (e.g. strings or Python
+            # complex). In this case, represent the coeficient as-is.
             try:
                 if coef >= 0:
                     next_term = f"+ {coef}"
                 else:
                     next_term = f"- {-coef}"
-            # The coefficient array can be an object array with elements that
-            # will raise a TypeError with >= 0 (e.g. strings or Python
-            # complex). In this case, represent the coeficient as-is.
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term
