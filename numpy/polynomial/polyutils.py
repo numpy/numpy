@@ -45,6 +45,7 @@ Functions
 """
 import operator
 import functools
+import itertools
 import warnings
 
 import numpy as np
@@ -733,18 +734,19 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
 
     Parameters
     ----------
-    vander2d_f : function(array_like, array_like, int) -> ndarray
-        The 2d vander function, such as ``polyvander``
-    coords : array_like
-        x, y, z ... coordinates
+    vander2d_f : {function(array_like, ..., int) -> ndarray, list of function(array_like, int) -> ndarray}
+        The 2d vander function, such as ``polyvander2d``,
+        or a list of 1d vander functions for each dimension
+    coords : list of array_like
+        x, y, z, ... coordinates
     data : array_like
         data values
     degree : {int, ndim-tuple, ndim-array}, optional
-        degree of the polynomial fit in x and y direction, by default 1.
-        If just one int, both directions use the same degree.
-        If 2-tuple or 1d array, then it specifies the two degrees in
-        each direction seperately.
-        If 2d-array, it should of of shape == (xdegree + 1, ydegree + 1),
+        degree of the polynomial fit in each dimension, by default 1.
+        If just one int, all dimensions use the same fit degree.
+        If a 1d array, then it specifies the degrees in
+        each dimension seperately.
+        If nd-array, it should have dimensions 
         i.e. like the output coefficients. With degrees that should be used in
         the fit set to non-zero values.
     max_degree : {int, None}, optional
@@ -759,9 +761,9 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     """
     ndim = len(coords)
     if ndim == 0:
-        raise ValueError("Need to set some axis")
+        raise ValueError("Need at least one dimension to fit")
 
-    # Flatten input
+    # Convert input to floating point numpy arrays if necessary
     coords = list(coords)
     for i in range(ndim):
         coords[i] = np.asarray(coords[i]) + 0.0
@@ -773,7 +775,7 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
 
     if deg.dtype.kind not in 'iu' or deg.size == 0:
         raise TypeError("deg must be an int or non-empty array of int")
-    if deg.ndim == 1 and not deg.size == ndim:
+    if ndim != 1 and deg.ndim == 1 and not deg.size == ndim:
         raise ValueError(f"deg must be of length {ndim}, if it is a 1d array")
     if deg.ndim == ndim and np.all(deg == 0):
         raise ValueError(f"deg must have at least one non-zero value, if it is an {ndim} dimensional array")
@@ -801,6 +803,7 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     if not callable(vandernd_f) and len(vandernd_f) != ndim:
         raise TypeError(f"expected a callable or a list of {ndim} vander_1d functions")
 
+    # Flatten the input
     for i in range(ndim):
         coords[i] = coords[i].ravel()
     data = data.ravel()
@@ -809,6 +812,8 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
 
     if not callable(vandernd_f):
         vandernd_f2 = lambda coords, deg: _vander_nd_flat(vandernd_f, coords, deg)
+    else:
+        vandernd_f2 = lambda coords, deg: vandernd_f(*coords, deg)
 
     # Remove masked values
     pxmask = np.ma.getmask(data)
@@ -824,11 +829,13 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     if deg.ndim == 0:
         deg = deg[()]
         deg = np.array([deg] * ndim)
-    elif deg.ndim == 1:
+    elif ndim != 1 and deg.ndim == 1:
         deg = deg[:ndim]
     elif deg.ndim == ndim:
         mask = deg != 0
         deg = np.array(deg.shape) - 1
+    else:
+        raise ValueError("This should never happen")
 
 
     # Calculate elements 1, x, y, x*y, x**2, y**2, ...
@@ -836,19 +843,17 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     rhs = data
 
     # Determine the positions within the vandermode matrix
-    # TODO: how does that work with non standard polynomials?
-    idx = np.zeros((lhs.shape[1], ndim), dtype=int)
-    for i in range(ndim):
-        c = np.ones(ndim)
-        c[i] = 2
-        factors = vandernd_f2(c, deg) // 2
-        idx[:, i] = factors[0]
+    ncoeff = np.product(deg + 1)
+    idx = np.zeros((ncoeff, ndim), dtype=int)
+    iterator = [range(d + 1) for d in deg]
+    for m, v in enumerate(itertools.product(*iterator)):
+        idx[m] = v
 
     # Remove degrees that were not explicitly specified
-    # Only if deg was given as a 2d array
+    # Only if deg was given as a nd array
     if mask is not None:
-        for i in range(ndim):
-            mask = mask[idx[:, i]]
+        i = [idx[:, i] for i in range(ndim)]
+        mask = mask[tuple(i)]
         idx = idx[mask]
         lhs = lhs[:, mask]
 
@@ -884,15 +889,14 @@ def _fitnd(vandernd_f, coords, data, deg=1, rcond=None, full=False, w=None,
     for k, cd in enumerate(idx):
         coeff[tuple(cd)] = C[k]
 
-    # Reverse the scaling, it is important to scale first and then shift
-    # if scale:
-    #     coeff = polyscale2d(coeff, *norm, copy=False)
+    # For the 1D case we want to be consistent with _fit, which puts the highest order first
+    if ndim == 1:
+        coeff = coeff[::-1]
 
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        print(msg)
-        # warnings.warn(msg, RankWarning, stacklevel=2)
+        warnings.warn(msg, RankWarning, stacklevel=2)
 
     if full:
         return coeff, [resids, rank, s, rcond]

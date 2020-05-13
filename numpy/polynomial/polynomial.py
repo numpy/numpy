@@ -1049,6 +1049,8 @@ def polygrid3d(x, y, z, c):
     """
     return pu._gridnd(polyval, c, x, y, z)
 
+def polyvalnd(coords, c):
+    return pu._valnd(polyval, c, *coords)
 
 def polyvander(x, deg):
     """Vandermonde matrix of given degree.

@@ -472,6 +472,7 @@ class TestFitting:
         # Test fit
         x = np.linspace(0, 2)
         y = np.linspace(0, 2)
+        x, y = np.meshgrid(x, y)
         z = f(x, y)
         #
         coef3 = lag.lagfit2d(x, y, z, 3)

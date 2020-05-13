@@ -493,6 +493,7 @@ class TestFitting:
         # Test fit
         x = np.linspace(0, 2)
         y = np.linspace(0, 2)
+        x, y = np.meshgrid(x, y)
         z = f(x, y)
         #
         coef3 = herme.hermefit2d(x, y, z, 3)
@@ -530,6 +531,7 @@ class TestFitting:
         # test fitting only even Legendre polynomials
         x = np.linspace(-1, 1)
         y = np.linspace(-1, 1)
+        x, y = np.meshgrid(x, y)
         z = f2(x, y)
         coef1 = herme.hermefit2d(x, y, z, 4)
         assert_almost_equal(herme.hermeval2d(x, y, coef1), z)
