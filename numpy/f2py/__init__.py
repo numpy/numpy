@@ -109,9 +109,10 @@ def compile(source,
                                    stderr=subprocess.PIPE)
         except OSError:
             # preserve historic status code used by exec_command()
-            cp = subprocess.CompletedProcess(c, 127, stdout='', stderr='')
-        if verbose:
-            print(cp.stdout.decode())
+            cp = subprocess.CompletedProcess(c, 127, stdout=b'', stderr=b'')
+        else:
+            if verbose:
+                print(cp.stdout.decode())
     finally:
         if source_fn is None:
             os.remove(fname)
