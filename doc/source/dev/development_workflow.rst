@@ -26,7 +26,7 @@ In short:
    - *Contributors*: push your feature branch to your own Github repo, and
      :ref:`create a pull request <asking-for-merging>`.
 
-   - *Core developers* If you want to push changes without
+   - *Core developers*: If you want to push changes without
      further review, see the notes :ref:`below <pushing-to-main>`.
 
 This way of working helps to keep work well organized and the history
