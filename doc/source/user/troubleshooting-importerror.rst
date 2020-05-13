@@ -66,6 +66,14 @@ VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/pytho
 for information on how to correctly set up VSCode with virtual environments
 or conda.
 
+Using Eclipse/PyDev with Anaconda/conda Python (or environments)
+----------------------------------------------------------------
+
+Please see the 
+`Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
+on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
+conda environments.
+
 
 Raspberry Pi
 ------------
