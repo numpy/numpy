@@ -5,6 +5,7 @@
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
+#include "npy_import.h"
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -148,13 +149,9 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         static PyObject *AxisError_cls = NULL;
         PyObject *exc;
 
+        npy_cache_import("numpy.core._exceptions", "AxisError", &AxisError_cls);
         if (AxisError_cls == NULL) {
-            PyObject *mod = PyImport_ImportModule("numpy.core._exceptions");
-
-            if (mod != NULL) {
-                AxisError_cls = PyObject_GetAttrString(mod, "AxisError");
-                Py_DECREF(mod);
-            }
+            return -1;
         }
 
         /* Invoke the AxisError constructor */
