@@ -317,6 +317,12 @@ class F2PyTest:
     module = None
     module_name = None
 
+    # Pytest seems to ignore this, but I'm not sure where else to put
+    # it, besides trying to make a metaclass that decorates every
+    # method of a subclass of F2PyTest
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='Fork() randomly fails on cygwin',
+                       raises=BlockingIOError)
     def setup(self):
         if sys.platform == 'win32':
             pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')

@@ -1837,6 +1837,9 @@ def test_xerbla_override():
 
 
 @pytest.mark.slow
+@pytest.mark.xfail(sys.platform == 'cygwin',
+                   reason='Fork() fails randomly on cygwin',
+                   raises=BlockingIOError)
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not
     # result to wrong results in float32 linear algebra.
