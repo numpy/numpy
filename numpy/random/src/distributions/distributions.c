@@ -360,6 +360,7 @@ double random_loggam(double x) {
   }
   x0 = x + n;
   x2 = (1.0 / x0) * (1.0 / x0);
+  /* log(2 * M_PI) */
   xlp = 1.8378770664093453e+00;
   gl0 = a[9];
   for (k = 8; k >= 0; k--) {
