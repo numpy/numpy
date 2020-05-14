@@ -696,17 +696,15 @@ get_nbo_cast_numeric_transfer_function(int aligned,
     if (PyTypeNum_ISCOMPLEX(src_type_num) &&
                     !PyTypeNum_ISCOMPLEX(dst_type_num) &&
                     !PyTypeNum_ISBOOL(dst_type_num)) {
-        PyObject *cls = NULL, *obj = NULL;
+        static PyObject *cls = NULL;
         int ret;
-        obj = PyImport_ImportModule("numpy.core");
-        if (obj) {
-            cls = PyObject_GetAttrString(obj, "ComplexWarning");
-            Py_DECREF(obj);
+        npy_cache_import("numpy.core", "ComplexWarning", &cls);
+        if (cls == NULL) {
+            return NPY_FAIL;
         }
         ret = PyErr_WarnEx(cls,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
-        Py_XDECREF(cls);
         if (ret < 0) {
             return NPY_FAIL;
         }
