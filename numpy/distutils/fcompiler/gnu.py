@@ -84,7 +84,7 @@ class GnuFCompiler(FCompiler):
             return None
         return v[1]
 
-    possible_executables = ['g77', 'f77']
+    possible_executables = ['g77', 'f77', "gfortran"]
     executables = {
         'version_cmd'  : [None, "-dumpversion"],
         'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
@@ -252,7 +252,7 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        if sys.platform[:3] == 'aix' or sys.platform == 'win32':
+        if sys.platform[:3] == 'aix' or sys.platform == 'win32' or sys.platform == 'cygwin':
             # Linux/Solaris/Unix support RPATH, Windows and AIX do not
             raise NotImplementedError
 
@@ -287,7 +287,7 @@ class Gnu95FCompiler(GnuFCompiler):
                     self.executables[key].append('-mno-cygwin')
         return v
 
-    possible_executables = ['gfortran', 'f95']
+    possible_executables = ['gfortran', 'f95', '/usr/bin/gfortran']
     executables = {
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
