@@ -1245,6 +1245,48 @@ class TestMaskedArrayArithmetic:
         assert_(x.max() is masked)
         assert_(x.ptp() is masked)
 
+    def test_minmax_dtypes(self):
+        # Additional tests on max/min for non-standard float and complex dtypes
+        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        a10 = 10.
+        an10 = -10.0
+        m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        xm = masked_array(x, mask=m1)
+        xm.set_fill_value(1e+20)
+        float_dtypes = [np.half, np.single, np.double,
+                        np.longdouble, np.cfloat, np.cdouble, np.clongdouble]
+        for float_dtype in float_dtypes:
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
+                         float_dtype(a10))
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).min(),
+                         float_dtype(an10))
+
+        assert_equal(xm.min(), an10)
+        assert_equal(xm.max(), a10)
+
+        # Non-complex type only test
+        for float_dtype in float_dtypes[:4]:
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).max(),
+                         float_dtype(a10))
+            assert_equal(masked_array(x, mask=m1, dtype=float_dtype).min(),
+                         float_dtype(an10))
+
+        # Complex types only test
+        for float_dtype in float_dtypes[-3:]:
+            ym = masked_array([1e20+1j, 1e20-2j, 1e20-1j], mask=[0, 1, 0],
+                          dtype=float_dtype)
+            assert_equal(ym.min(), float_dtype(1e20-1j))
+            assert_equal(ym.max(), float_dtype(1e20+1j))
+
+            zm = masked_array([np.inf+2j, np.inf+3j, -np.inf-1j], mask=[0, 1, 0],
+                              dtype=float_dtype)
+            assert_equal(zm.min(), float_dtype(-np.inf-1j))
+            assert_equal(zm.max(), float_dtype(np.inf+2j))
+            
+            cmax = np.inf - 1j * np.finfo(np.float64).max
+            assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
+            assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
+
     def test_addsumprod(self):
         # Tests add, sum, product.
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
