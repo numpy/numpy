@@ -26,6 +26,8 @@ def setup_module():
     "extra_args", [['--noopt', '--debug'], '--noopt --debug', '']
     )
 @pytest.mark.leaks_references(reason="Imported module seems never deleted.")
+@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+                   raises=BlockingIOError)
 def test_f2py_init_compile(extra_args):
     # flush through the f2py __init__ compile() function code path as a
     # crude test for input handling following migration from
@@ -83,6 +85,8 @@ def test_f2py_init_compile(extra_args):
             del sys.modules[modname]
 
 
+@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+                   raises=BlockingIOError)
 def test_f2py_init_compile_failure():
     # verify an appropriate integer status value returned by
     # f2py.compile() when invalid Fortran is provided
@@ -111,6 +115,8 @@ def test_f2py_init_compile_bad_cmd():
 @pytest.mark.parametrize('fsource',
         ['program test_f2py\nend program test_f2py',
          b'program test_f2py\nend program test_f2py',])
+@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+                   raises=BlockingIOError)
 def test_compile_from_strings(tmpdir, fsource):
     # Make sure we can compile str and bytes gh-12796
     cwd = os.getcwd()

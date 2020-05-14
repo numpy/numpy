@@ -42,6 +42,9 @@ else:
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
+@pytest.mark.xfail(sys.platform == "cygwin",
+                   reason="Random fork() failures",
+                   raises=BlockingIOError)
 def test_cython(tmp_path):
     srcdir = os.path.join(os.path.dirname(__file__), '..')
     shutil.copytree(srcdir, tmp_path / 'random')

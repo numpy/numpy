@@ -41,6 +41,8 @@ def test_f2py(f2py_cmd):
     assert_equal(stdout.strip(), b'2')
 
 
+@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+                   raises=BlockingIOError)
 def test_pep338():
     stdout = subprocess.check_output([sys.executable, '-mnumpy.f2py', '-v'])
     assert_equal(stdout.strip(), b'2')
