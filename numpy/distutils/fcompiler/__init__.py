@@ -40,6 +40,9 @@ __metaclass__ = type
 class CompilerNotFound(Exception):
     pass
 
+if sys.platform == 'cygwin':
+    COMPILED_MODULES = []
+
 def flaglist(s):
     if is_string(s):
         return split_quoted(s)
@@ -154,16 +157,16 @@ class FCompiler(CCompiler):
     compiler_aliases = ()
     version_pattern = None
 
-    possible_executables = []
+    possible_executables = ['gfortran']
     executables = {
-        'version_cmd': ["f77", "-v"],
-        'compiler_f77': ["f77"],
-        'compiler_f90': ["f90"],
-        'compiler_fix': ["f90", "-fixed"],
-        'linker_so': ["f90", "-shared"],
-        'linker_exe': ["f90"],
+        'version_cmd': ["gfortran", "-v"],
+        'compiler_f77': ["gfortran"],
+        'compiler_f90': ["gfortran"],
+        'compiler_fix': ["gfortran", "-fixed"],
+        'linker_so': ["gfortran", "-shared"],
+        'linker_exe': ["gfortran"],
         'archiver': ["ar", "-cr"],
-        'ranlib': None,
+        'ranlib': ["ranlib"],
         }
 
     # If compiler does not support compiling Fortran 90 then it can
@@ -679,6 +682,14 @@ class FCompiler(CCompiler):
             except DistutilsExecError as e:
                 msg = str(e)
                 raise LinkError(msg)
+            if sys.platform == 'cygwin':
+                # Rebase newly-compiled module so it has a higher
+                # chance of surviving fork()
+                COMPILED_MODULES.append(output_filename)
+                rebase_args = ['/usr/bin/rebase', '--database',
+                               '--oblivious']
+                rebase_args.extend(COMPILED_MODULES)
+                self.spawn(rebase_args)
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
 
