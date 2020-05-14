@@ -342,7 +342,7 @@ uint64_t random_uint(bitgen_t *bitgen_state) {
  * using logfactorial(k) instead.
  */
 double random_loggam(double x) {
-  double x0, x2, xlp, gl, gl0;
+  double x0, x2, lg2pi, gl, gl0;
   RAND_INT_TYPE k, n;
 
   static double a[10] = {8.333333333333333e-02, -2.777777777777778e-03,
@@ -361,13 +361,13 @@ double random_loggam(double x) {
   x0 = x + n;
   x2 = (1.0 / x0) * (1.0 / x0);
   /* log(2 * M_PI) */
-  xlp = 1.8378770664093453e+00;
+  lg2pi = 1.8378770664093453e+00;
   gl0 = a[9];
   for (k = 8; k >= 0; k--) {
     gl0 *= x2;
     gl0 += a[k];
   }
-  gl = gl0 / x0 + 0.5 * xlp + (x0 - 0.5) * log(x0) - x0;
+  gl = gl0 / x0 + 0.5 * lg2pi + (x0 - 0.5) * log(x0) - x0;
   if (x < 7.0) {
     for (k = 1; k <= n; k++) {
       gl -= log(x0 - 1.0);
