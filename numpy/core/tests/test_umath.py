@@ -3,6 +3,7 @@ import warnings
 import fnmatch
 import itertools
 import pytest
+import sys
 from fractions import Fraction
 
 import numpy.core.umath as ncu
@@ -566,6 +567,9 @@ class TestLog2:
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='Fails for i==29',
+                       strict=True)
     def test_log2_ints(self):
         # a good log2 implementation should provide this,
         # might fail on OS with bad libm
@@ -2737,6 +2741,9 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s' % f)
             assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s' % f)
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='0.7071j != 0.7071j, apparently',
+                       strict=True)
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)
@@ -2762,6 +2769,9 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1)
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='square root faces small loss of precision',
+                       strict=True)
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)
@@ -2806,6 +2816,9 @@ class TestComplexFunctions:
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='arcsinh(1e-20) returns 0',
+                       strict=True)
     @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
