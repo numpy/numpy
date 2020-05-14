@@ -674,9 +674,13 @@ class TestAbs:
             x = tp(np.finfo(tp).min)
             assert_equal(absfunc(x), -x.real)
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='abs(np.complex256.max) overflows')
     def test_builtin_abs(self):
         self._test_abs_func(abs)
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='abs(np.complex256.max) overflows')
     def test_numpy_abs(self):
         self._test_abs_func(np.abs)
 

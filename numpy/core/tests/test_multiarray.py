@@ -8576,6 +8576,9 @@ def test_equal_override():
         assert_equal(array != my_always_equal, 'ne')
 
 
+@pytest.mark.xfail(sys.platform == 'cygwin',
+                   reason='abs(inf+nanj) short-circuits to inf',
+                   strict=True)
 def test_npymath_complex():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
@@ -8595,6 +8598,9 @@ def test_npymath_complex():
                 assert_allclose(got, expected)
 
 
+@pytest.mark.xfail(sys.platform == 'cygwin',
+                   reason='expects cosh(-inf) == -inf',
+                   strict=True)
 def test_npymath_real():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (

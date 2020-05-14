@@ -614,6 +614,9 @@ class TestSeterr:
 
 
 class TestFloatExceptions:
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='FPE support incomplete',
+                       strict=True)
     def assert_raises_fpe(self, fpeerr, flop, x, y):
         ftype = type(x)
         try:
@@ -636,6 +639,9 @@ class TestFloatExceptions:
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason='FPE support incomplete',
+                       strict=True)
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
