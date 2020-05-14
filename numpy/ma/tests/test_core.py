@@ -1282,6 +1282,10 @@ class TestMaskedArrayArithmetic:
                               dtype=float_dtype)
             assert_equal(zm.min(), float_dtype(-np.inf-1j))
             assert_equal(zm.max(), float_dtype(np.inf+2j))
+            
+            cmax = np.inf - 1j * np.finfo(np.float64).max
+            assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
+            assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
     def test_addsumprod(self):
         # Tests add, sum, product.
