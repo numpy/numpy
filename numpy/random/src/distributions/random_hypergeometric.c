@@ -1,6 +1,7 @@
+#include "Python.h"
+#include <stdint.h>
 #include "numpy/random/distributions.h"
 #include "logfactorial.h"
-#include <stdint.h>
 
 /*
  *  Generate a sample from the hypergeometric distribution.
