@@ -5860,6 +5860,14 @@ class MaskedArray(ndarray):
         Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
 
+        .. warning::
+            `ptp` preserves the data type of the array. This means the
+            return value for an input of signed integers with n bits
+            (e.g. `np.int8`, `np.int16`, etc) is also a signed integer
+            with n bits.  In that case, peak-to-peak values greater than
+            ``2**(n-1)-1`` will be returned as negative values. An example
+            with a work-around is shown below.
+
         Parameters
         ----------
         axis : {None, int}, optional
@@ -5882,6 +5890,45 @@ class MaskedArray(ndarray):
             A new array holding the result, unless ``out`` was
             specified, in which case a reference to ``out`` is returned.
 
+        Examples
+        --------
+        >>> x = np.ma.MaskedArray([[4, 9, 2, 10],
+        ...                        [6, 9, 7, 12]])
+
+        >>> x.ptp(axis=1)
+        masked_array(data=[8, 6],
+                     mask=False,
+               fill_value=999999)
+
+        >>> x.ptp(axis=0)
+        masked_array(data=[2, 0, 5, 2],
+                     mask=False,
+               fill_value=999999)
+
+        >>> x.ptp()
+        10
+
+        This example shows that a negative value can be returned when
+        the input is an array of signed integers.
+
+        >>> y = np.ma.MaskedArray([[1, 127],
+        ...                        [0, 127],
+        ...                        [-1, 127],
+        ...                        [-2, 127]], dtype=np.int8)
+        >>> y.ptp(axis=1)
+        masked_array(data=[ 126,  127, -128, -127],
+                     mask=False,
+               fill_value=999999,
+                    dtype=int8)
+
+        A work-around is to use the `view()` method to view the result as
+        unsigned integers with the same bit width:
+
+        >>> y.ptp(axis=1).view(np.uint8)
+        masked_array(data=[126, 127, 128, 129],
+                     mask=False,
+               fill_value=999999,
+                    dtype=uint8)
         """
         if out is None:
             result = self.max(axis=axis, fill_value=fill_value,
