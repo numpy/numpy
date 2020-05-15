@@ -4853,7 +4853,7 @@ def digitize(x, bins, right=False, edge=False):
         # ``True``   decreasing     ``bins[i-1] >= x > bins[i]``   -1    -1
         # =========  =============  ============================ ===== =====
         delta = -1 if right else 1
-        idx = 0 if delta != mono else -1
+        idx = -1 if delta == mono else 0
         if np.issubdtype(bins.dtype, _nx.integer):
             bins[idx] += delta
         else:
