@@ -1028,8 +1028,10 @@ def make_arrays(funcdict):
                 funclist.append('NULL')
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
-                except KeyError:
-                    raise ValueError("Could not handle {}[{}]".format(name, t.type))
+                except KeyError as e:
+                    raise ValueError(
+                        "Could not handle {}[{}]".format(name, t.type)
+                    ) from None
 
                 astype = ''
                 if not t.astype is None:
