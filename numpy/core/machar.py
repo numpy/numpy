@@ -41,8 +41,8 @@ class MachAr:
         being no leading zeros in the mantissa.
     xmin : float
         Floating point number ``beta**minexp`` (the smallest [in
-        magnitude] usable floating value) with there
-        being no leading zeros in the mantissa.
+        magnitude] usable floating value with there
+        being no leading zeros in the mantissa).
     maxexp : int
         Smallest (positive) power of `ibeta` that causes overflow.
     xmax : float
