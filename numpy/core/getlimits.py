@@ -355,20 +355,18 @@ class finfo:
 
     Notes
     -----
-    As in the IEEE-745 standard, NumPy floating point types use subnormal
-    numbers to fill the gap between 0 and `tiny`. This is achieved by 
-    using bits of the mantissa to allow the representation of smaller 
-    exponents than `minexp`. For example, for 64-bit binary floats in the
-    IEEE-754 standard, the smallest positive value is actually 2**-1074.
-    However, since the number of bits available for the mantissa is 
-    reduced the precision of subnormal floating numbers is also often 
-    reduced significantly.
-    
     For developers of NumPy: do not instantiate this at the module level.
     The initial calculation of these parameters is expensive and negatively
     impacts import times.  These objects are cached, so calling ``finfo()``
     repeatedly inside your functions is not a problem.
 
+    Note that `tiny` is not actually the smallest positive representable
+    number in a NumPy floating point type. As in the IEEE-745 standard,
+    NumPy floating point types make use of subnormal numbers to fill the
+    gap between 0 and `tiny`. However, subnormal numbers may have a 
+    significantly reduced precision. Compare further with the Wikipedia page
+    `Denormal Numbers <https://en.wikipedia.org/wiki/Denormal_number>`_
+    
     """
 
     _finfo_cache = {}
