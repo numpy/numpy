@@ -337,8 +337,9 @@ class finfo:
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
     tiny : float
-        The smallest positive usable number.  Type of `tiny` is an
-        appropriate floating point type.
+        The smallest positive floating point number with there being no
+        leading 0's in the mantissa. Type of `tiny` is an appropriate 
+        floating point type.
 
     Parameters
     ----------
@@ -354,6 +355,15 @@ class finfo:
 
     Notes
     -----
+    As in the IEEE-745 standard, NumPy floating point types use subnormal
+    numbers to fill the gap between 0 and `tiny`. This is achieved by 
+    using bits of the mantissa to allow the representation of smaller 
+    exponents than `minexp`. For example, for 64-bit binary floats in the
+    IEEE-754 standard, the smallest positive value is actually 2**-1074.
+    However, since the number of bits available for the mantissa is 
+    reduced the precision of subnormal floating numbers is also often 
+    reduced significantly.
+    
     For developers of NumPy: do not instantiate this at the module level.
     The initial calculation of these parameters is expensive and negatively
     impacts import times.  These objects are cached, so calling ``finfo()``
