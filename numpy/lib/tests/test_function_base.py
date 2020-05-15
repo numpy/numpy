@@ -1743,7 +1743,7 @@ class TestDigitize:
         # gh-11022
         x = 2**54  # loses precision in a float
         assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
-        assert_raises(ValueError, digitize, x, [x - 1, x + 1], False, True)
+        assert_equal(np.digitize(x, [x - 1, x + 1], False, True), 1)
 
     @pytest.mark.xfail(
         reason="gh-11022: np.core.multiarray._monoticity loses precision")

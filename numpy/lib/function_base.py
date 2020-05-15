@@ -4845,15 +4845,17 @@ def digitize(x, bins, right=False, edge=False):
 
     if edge:
         # if cannot make round trip, cannot use eps
-        if np.issubdtype(bins.dtype, _nx.int64):
-            if (bins != bins.astype(_nx.float64).astype(_nx.int64)).any():
-                raise ValueError("bins have too large values to use"
-                                 "'edges=True'")
-        bins = bins.astype(_nx.float64)
-        if right:
-            bins[0] -= np.finfo(_nx.float64).eps * 2 * mono
+        if np.issubdtype(bins.dtype, _nx.integer):
+            if right:
+                bins[0] -= 1
+            else:
+                bins[-1] += 1
         else:
-            bins[-1] += np.finfo(_nx.float64).eps * 2 * mono
+            bins = bins.astype(_nx.float64)
+            if right:
+                bins[0] -= np.finfo(_nx.float64).eps * 2 * mono
+            else:
+                bins[-1] += np.finfo(_nx.float64).eps * 2 * mono
 
     # this is backwards because the arguments below are swapped
     side = 'left' if right else 'right'
