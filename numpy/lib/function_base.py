@@ -4768,9 +4768,9 @@ def digitize(x, bins, right=False, edge=False):
         case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
     edge : bool, optional
-        Whether to include the last right edge if right == False or the first
-        left edge if right == True. If egde==True, the entire interval is
-        included that would otherwise not be for the first or last edge case.
+        Whether to include the last right edge if right==False or the first
+        left edge if right==True so that the whole interval from the least
+        to the greatest value of bins is covered.
 
     Returns
     -------
@@ -4786,7 +4786,7 @@ def digitize(x, bins, right=False, edge=False):
 
     See Also
     --------
-    bincount, histogram, unique, searchsorted
+    bincount, histogram, unique, nextafter, searchsorted
 
     Notes
     -----
@@ -4844,18 +4844,15 @@ def digitize(x, bins, right=False, edge=False):
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     if edge:
-        # if cannot make round trip, cannot use eps
+        # move first bin eps if right edge not included else move last bin
+        idx = 0 if right else -1
+        # move bin down if going up and using right or going down and using
+        # left else move bin up
+        delta = -mono if right else mono
         if np.issubdtype(bins.dtype, _nx.integer):
-            if right:
-                bins[0] -= mono
-            else:
-                bins[-1] += mono
+            bins[idx] += delta
         else:
-            bins = bins.astype(_nx.float64)
-            if right:
-                bins[0] -= np.finfo(_nx.float64).eps * 2 * mono
-            else:
-                bins[-1] += np.finfo(_nx.float64).eps * 2 * mono
+            bins[idx] = np.nextafter(bins[idx], bins[idx] + delta)
 
     # this is backwards because the arguments below are swapped
     side = 'left' if right else 'right'
