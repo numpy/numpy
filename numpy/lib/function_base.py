@@ -4844,11 +4844,16 @@ def digitize(x, bins, right=False, edge=False):
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     if edge:
-        # move first bin eps if right edge not included else move last bin
-        idx = 0 if right else -1
-        # move bin down if going up and using right or going down and using
-        # left else move bin up
-        delta = -mono if right else mono
+        # =========  =============  ============================ ===== =====
+        # `right`    order of bins  returned index `i` satisfies delta index
+        # =========  =============  ============================ ===== =====
+        # ``False``  increasing     ``bins[i-1] <= x < bins[i]``   1    -1
+        # ``True``   increasing     ``bins[i-1] < x <= bins[i]``   -1    0
+        # ``False``  decreasing     ``bins[i-1] > x >= bins[i]``   1    0
+        # ``True``   decreasing     ``bins[i-1] >= x > bins[i]``   -1    -1
+        # =========  =============  ============================ ===== =====
+        delta = -1 if right else 1
+        idx = 0 if delta != mono else -1
         if np.issubdtype(bins.dtype, _nx.integer):
             bins[idx] += delta
         else:
