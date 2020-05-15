@@ -4733,12 +4733,12 @@ def append(arr, values, axis=None):
     return concatenate((arr, values), axis=axis)
 
 
-def _digitize_dispatcher(x, bins, right=None):
+def _digitize_dispatcher(x, bins, right=None, edge=None):
     return (x, bins)
 
 
 @array_function_dispatch(_digitize_dispatcher)
-def digitize(x, bins, right=False):
+def digitize(x, bins, right=False, edge=False):
     """
     Return the indices of the bins to which each value in input array belongs.
 
@@ -4767,6 +4767,10 @@ def digitize(x, bins, right=False):
         does not include the right edge. The left bin end is open in this
         case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
+    edge : bool, optional
+        Whether to include the last right edge if right == False or the first
+        left edge if right == True. If egde==True, the entire interval is
+        included that would otherwise not be for the first or last edge case.
 
     Returns
     -------
@@ -4838,6 +4842,18 @@ def digitize(x, bins, right=False):
     mono = _monotonicity(bins)
     if mono == 0:
         raise ValueError("bins must be monotonically increasing or decreasing")
+
+    if edge:
+        # if cannot make round trip, cannot use eps
+        if np.issubdtype(bins.dtype, _nx.int64):
+            if (bins != bins.astype(_nx.float64).astype(_nx.int64)).any():
+                raise ValueError("bins have too large values to use"
+                                 "'edges=True'")
+        bins = bins.astype(_nx.float64)
+        if right:
+            bins[0] -= np.finfo(_nx.float64).eps * 2 * mono
+        else:
+            bins[-1] += np.finfo(_nx.float64).eps * 2 * mono
 
     # this is backwards because the arguments below are swapped
     side = 'left' if right else 'right'
