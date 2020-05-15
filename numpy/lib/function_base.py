@@ -4847,9 +4847,9 @@ def digitize(x, bins, right=False, edge=False):
         # if cannot make round trip, cannot use eps
         if np.issubdtype(bins.dtype, _nx.integer):
             if right:
-                bins[0] -= 1
+                bins[0] -= mono
             else:
-                bins[-1] += 1
+                bins[-1] += mono
         else:
             bins = bins.astype(_nx.float64)
             if right:
