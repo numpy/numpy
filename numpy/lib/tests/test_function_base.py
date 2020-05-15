@@ -3350,11 +3350,49 @@ class TestAdd_newdoc:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
-        # test np.add_newdoc
+        # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_errors_are_ignored(self):
+        prev_doc = np.core.flatiter.index.__doc__
+        # nothing changed, but error ignored, this should probably
+        # give a warning (or even error) in the future.
+        np.add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
+        assert prev_doc == np.core.flatiter.index.__doc__
+
+
+class TestAddDocstring():
+    # Test should possibly be moved, but it also fits to be close to
+    # the newdoc tests...
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_add_same_docstring(self):
+        # test for attributes (which are C-level defined)
+        np.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        np.add_docstring(func, func.__doc__)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_different_docstring_fails(self):
+        # test for attributes (which are C-level defined)
+        with assert_raises(RuntimeError):
+            np.add_docstring(np.ndarray.flat, "different docstring")
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        with assert_raises(RuntimeError):
+            np.add_docstring(func, "different docstring")
+
 
 class TestSortComplex:
 
