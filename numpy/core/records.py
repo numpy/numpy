@@ -954,7 +954,60 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
 def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
           names=None, titles=None, aligned=False, byteorder=None, copy=True):
-    """Construct a record array from a wide-variety of objects.
+    """
+    Construct a record array from a wide-variety of objects.
+    
+    Parameters
+    ----------
+    obj: array_like
+        Input object.
+    dtype: data-type, optional
+        Valid dtype for all arrays.
+    shape: int or tuple of ints, optional
+        Shape of each array.
+    offset: int, optional
+        Position in the buffer to start reading from.
+    strides: tuple of ints, optional
+        Buffer (`buf`) is interpreted according to these strides (strides
+        define how many bytes each array element, row, column, etc.
+        occupy in memory).
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
+    copy: bool, optional
+        Whether to copy the input object (True), or to use a reference instead.
+        Defaults to True.
+    
+    Returns
+    -------
+    np.recarray
+        Record array created from the specified object.
+        
+    Examples
+    --------
+    >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    array([[1, 2, 3],
+           [4, 5, 6],
+           [7, 8, 9]])
+
+    >>> np.core.records.array(a)
+    rec.array([[1, 2, 3],
+               [4, 5, 6],
+               [7, 8, 9]], 
+        dtype=int32)
+
+    >>> b = [(1, 1), (2, 4), (3, 9)]
+    >>> c = np.core.records.array(b, formats = ['i2', 'f2'], names = ('x', 'y'))
+    >>> c
+    rec.array([(1, 1.0), (2, 4.0), (3, 9.0)], 
+              dtype=[('x', '<i2'), ('y', '<f2')])
+
+    >>> c['x']
+    array([1, 2, 3], dtype=int16)
+
+    >>> c['y']
+    array([ 1.0,  4.0,  9.0], dtype=float16)
     """
 
     if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
