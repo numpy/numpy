@@ -3439,7 +3439,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
 
     The average squared deviation is normally calculated as
-    ``x.sum() / N``, where ``N = len(x)``.  If, however, `ddof` is specified,
+    ``a.sum() / N``, where ``a = abs(x - x.mean())**2``, and ``N = len(a)``.  If, however, `ddof` is specified,
     the divisor ``N - ddof`` is used instead. In standard statistical
     practice, ``ddof=1`` provides an unbiased estimator of the variance
     of the infinite population. ``ddof=0`` provides a maximum likelihood
