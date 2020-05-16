@@ -171,14 +171,16 @@ information about how the module method may be called::
 
     >>> import add
     >>> print(add.zadd.__doc__)
-    zadd - Function signature:
-      zadd(a,b,c,n)
-    Required arguments:
-      a : input rank-1 array('D') with bounds (*)
-      b : input rank-1 array('D') with bounds (*)
-      c : input rank-1 array('D') with bounds (*)
-      n : input int
+    zadd(a,b,c,n)
 
+    Wrapper for ``zadd``.
+
+    Parameters
+    ----------
+    a : input rank-1 array('D') with bounds (*)
+    b : input rank-1 array('D') with bounds (*)
+    c : input rank-1 array('D') with bounds (*)
+    n : input int
 
 Improving the basic interface
 -----------------------------
@@ -249,18 +251,23 @@ The new interface has docstring::
 
     >>> import add
     >>> print(add.zadd.__doc__)
-    zadd - Function signature:
-      c = zadd(a,b)
-    Required arguments:
-      a : input rank-1 array('D') with bounds (n)
-      b : input rank-1 array('D') with bounds (n)
-    Return objects:
-      c : rank-1 array('D') with bounds (n)
+    c = zadd(a,b)
+
+    Wrapper for ``zadd``.
+
+    Parameters
+    ----------
+    a : input rank-1 array('D') with bounds (n)
+    b : input rank-1 array('D') with bounds (n)
+
+    Returns
+    -------
+    c : rank-1 array('D') with bounds (n)
 
 Now, the function can be called in a much more robust way::
 
     >>> add.zadd([1,2,3],[4,5,6])
-    array([ 5.+0.j,  7.+0.j,  9.+0.j])
+    array([5.+0.j, 7.+0.j, 9.+0.j])
 
 Notice the automatic conversion to the correct format that occurred.
 
