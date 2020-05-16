@@ -274,6 +274,13 @@ class TestEinsum:
             assert_equal(np.einsum(a, [0, 0], optimize=do_opt),
                          np.trace(a).astype(dtype))
 
+            # gh-15961: should accept numpy int64 type in subscript list
+            np_array = np.asarray([0, 0])
+            assert_equal(np.einsum(a, np_array, optimize=do_opt),
+                         np.trace(a).astype(dtype))
+            assert_equal(np.einsum(a, list(np_array), optimize=do_opt),
+                         np.trace(a).astype(dtype))
+
         # multiply(a, b)
         assert_equal(np.einsum("..., ...", 3, 4), 12)  # scalar case
         for n in range(1, 17):

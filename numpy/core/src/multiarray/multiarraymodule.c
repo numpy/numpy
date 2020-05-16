@@ -2438,7 +2438,6 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
     }
     size = PySequence_Size(obj);
 
-
     for (i = 0; i < size; ++i) {
         item = PySequence_Fast_GET_ITEM(obj, i);
         /* Ellipsis */
@@ -2461,8 +2460,16 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             ellipsis = 1;
         }
         /* Subscript */
-        else if (PyInt_Check(item) || PyLong_Check(item)) {
-            long s = PyInt_AsLong(item);
+        else {
+            npy_intp s = PyArray_PyIntAsIntp(item);
+            /* Invalid */
+            if (error_converting(s)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "each subscript must be either an integer "
+                        "or an ellipsis");
+                Py_DECREF(obj);
+                return -1;
+            }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
@@ -2472,7 +2479,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 return -1;
             }
 
-            if ( s < 0 ) {
+            if (s < 0) {
                 bad_input = 1;
             }
             else if (s < 26) {
@@ -2490,16 +2497,9 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                         "subscript is not within the valid range [0, 52)");
                 Py_DECREF(obj);
                 return -1;
-            }
+            }              
         }
-        /* Invalid */
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                    "each subscript must be either an integer "
-                    "or an ellipsis");
-            Py_DECREF(obj);
-            return -1;
-        }
+        
     }
 
     Py_DECREF(obj);
