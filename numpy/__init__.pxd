@@ -26,6 +26,7 @@ cimport libc.stdio as stdio
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t
+    bint PyObject_TypeCheck(object obj, PyTypeObject* type) nogil
 
 cdef extern from "numpy/arrayobject.h":
     ctypedef Py_intptr_t npy_intp
@@ -688,6 +689,22 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_SetBaseObject(ndarray, base)  # NOTE: steals a reference to base! Use "set_array_base()" instead.
 
 
+cdef extern from "numpy/ndarrayobject.h":
+    PyTypeObject PyTimedeltaArrType_Type
+    PyTypeObject PyDatetimeArrType_Type
+
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct PyArray_DatetimeMetaData:
+        NPY_DATETIMEUNIT base
+        int64_t num
+
+cdef extern from "numpy/arrayscalars.h":
+    ctypedef struct PyDatetimeScalarObject:
+        # PyObject_HEAD
+        npy_datetime obval
+        PyArray_DatetimeMetaData obmeta
+
+
 # Typedefs that matches the runtime dtype objects in
 # the numpy module.
 
@@ -976,3 +993,57 @@ cdef extern from *:
     """
     /* NumPy API declarations from "numpy/__init__.pxd" */
     """
+
+
+cdef inline bint is_timedelta64_object(object obj) nogil:
+    """
+    Cython equivalent of `isinstance(obj, np.timedelta64)`
+
+    Parameters
+    ----------
+    obj : object
+
+    Returns
+    -------
+    bool
+    """
+    return PyObject_TypeCheck(obj, &PyTimedeltaArrType_Type)
+
+
+cdef inline bint is_datetime64_object(object obj) nogil:
+    """
+    Cython equivalent of `isinstance(obj, np.datetime64)`
+
+    Parameters
+    ----------
+    obj : object
+
+    Returns
+    -------
+    bool
+    """
+    return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)
+
+
+cdef inline npy_datetime get_datetime64_value(object obj) nogil:
+    """
+    returns the int64 value underlying scalar numpy datetime64 object
+
+    Note that to interpret this as a datetime, the corresponding unit is
+    also needed.  That can be found using `get_datetime64_unit`.
+    """
+    return (<PyDatetimeScalarObject*>obj).obval
+
+
+cdef inline npy_timedelta get_timedelta64_value(object obj) nogil:
+    """
+    returns the int64 value underlying scalar numpy timedelta64 object
+    """
+    return (<PyTimedeltaScalarObject*>obj).obval
+
+
+cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
+    """
+    returns the unit part of the dtype for a numpy datetime64 object.
+    """
+    return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
