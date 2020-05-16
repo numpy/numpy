@@ -2183,6 +2183,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         PyErr_Clear();
         npy_set_invalid_cast_error(
                 PyArray_DESCR(arr), newtype, casting, PyArray_NDIM(arr) == 0);
+        Py_DECREF(newtype);
         return NULL;
     }
 
