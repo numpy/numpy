@@ -170,7 +170,7 @@ add (zadd, cadd, dadd, sadd). The docstring of each method contains
 information about how the module method may be called::
 
     >>> import add
-    >>> print add.zadd.__doc__
+    >>> print(add.zadd.__doc__)
     zadd - Function signature:
       zadd(a,b,c,n)
     Required arguments:
@@ -241,14 +241,14 @@ that it won't try to create the variable n until the variable a is
 created).
 
 After modifying ``add.pyf``, the new python module file can be generated
-by compiling both ``add.f95`` and ``add.pyf``::
+by compiling both ``add.f`` and ``add.pyf``::
 
-    f2py -c add.pyf add.f95 
+    f2py -c add.pyf add.f
 
 The new interface has docstring::
 
     >>> import add
-    >>> print add.zadd.__doc__
+    >>> print(add.zadd.__doc__)
     zadd - Function signature:
       c = zadd(a,b)
     Required arguments:
