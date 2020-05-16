@@ -361,7 +361,7 @@ class finfo:
     repeatedly inside your functions is not a problem.
 
     Note that `tiny` is not actually the smallest positive representable
-    number in a NumPy floating point type. As in the IEEE-745 standard,
+    number in a NumPy floating point type. As in the IEEE-754 standard,
     NumPy floating point types make use of subnormal numbers to fill the
     gap between 0 and `tiny`. However, subnormal numbers may have a 
     significantly reduced precision. Compare further with the Wikipedia page
@@ -554,4 +554,3 @@ class iinfo:
     def __repr__(self):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
                                     self.min, self.max, self.dtype)
-
