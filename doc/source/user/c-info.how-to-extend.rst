@@ -163,7 +163,7 @@ ignored. The *args* argument contains all of the arguments passed in
 to the function as a tuple. You can do anything you want at this
 point, but usually the easiest way to manage the input arguments is to
 call :c:func:`PyArg_ParseTuple` (args, format_string,
-addresses_to_C_variables...) or :c:func:`PyArg_UnpackTuple` (tuple, "name" ,
+addresses_to_C_variables...) or :c:func:`PyArg_UnpackTuple` (tuple, "name",
 min, max, ...). A good description of how to use the first function is
 contained in the Python C-API reference manual under section 5.5
 (Parsing arguments and building values). You should pay particular

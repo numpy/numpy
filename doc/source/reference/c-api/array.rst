@@ -1886,7 +1886,7 @@ Item selection and manipulation
 
     Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
     Return an array with the items of *self* sorted along *axis*. The array
-    is sorted using the algorithm denoted by *kind* , which is an integer/enum pointing
+    is sorted using the algorithm denoted by *kind*, which is an integer/enum pointing
     to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)

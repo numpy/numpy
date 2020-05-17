@@ -926,7 +926,7 @@ to access the array elements. This python indexing still goes through the
 Python API, so the NA handling and error checking in numpy still can work
 like normal and fail if the inputs have NAs which cannot fit in the output
 array. In this case it fails when trying to convert the NA into an integer
-to set in in the output.
+to set in the output.
 
 The next version of the code introduces more efficient indexing. This
 operates based on Python's buffer protocol. This causes Cython to call

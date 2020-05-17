@@ -466,7 +466,7 @@ def _rbl(rate, per, pmt, pv, when):
     This function is here to simply have a different name for the 'fv'
     function to not interfere with the 'fv' keyword argument within the 'ipmt'
     function.  It is the 'remaining balance on loan' which might be useful as
-    it's own function, but is easily calculated with the 'fv' function.
+    its own function, but is easily calculated with the 'fv' function.
     """
     return fv(rate, (per - 1), pmt, pv, when)
 

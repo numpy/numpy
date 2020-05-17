@@ -6,5 +6,5 @@ meaning an object implementing ``obj.__array__()``,
 buffer interface and which are also sequences (i.e. Pandas objects)
 will now always retain there shape correctly when converted to an array.
 If such an object has a shape of ``(0, 1)`` previously, it could
-be converted into an array of of shape ``(0,)`` (losing all dimensions
+be converted into an array of shape ``(0,)`` (losing all dimensions
 after the first 0).

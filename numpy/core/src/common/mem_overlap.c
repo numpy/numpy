@@ -127,7 +127,7 @@
   ends up considering all values x3=0...5 separately.
 
   The upper bound for work done is prod(shape_a)*prod(shape_b), which scales
-  faster than than work done by binary ufuncs, after broadcasting,
+  faster than work done by binary ufuncs, after broadcasting,
   prod(shape_a). The bound may be loose, but it is possible to construct hard
   instances where ufunc is faster (adapted from [2,3])::
 

@@ -1779,7 +1779,7 @@ def isdecimal(a):
     Calls `unicode.isdecimal` element-wise.
 
     Decimal characters include digit characters, and all characters
-    that that can be used to form decimal-radix numbers,
+    that can be used to form decimal-radix numbers,
     e.g. ``U+0660, ARABIC-INDIC DIGIT ZERO``.
 
     Parameters
