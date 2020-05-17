@@ -2689,7 +2689,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (mit->numiter == 0) {
         /*
          * For MapIterArray, it is possible that there is no fancy index.
-         * to support this case, add a a dummy iterator.
+         * to support this case, add a dummy iterator.
          * Since it is 0-d its transpose, etc. does not matter.
          */
 

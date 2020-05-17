@@ -392,7 +392,7 @@ numerical dtypes since there is no "universal" output type::
 In fact ``np.result_type(meters, seconds)`` must error without context
 of the operation being done.
 This example highlights how the specific ufunc loop
-(loop with known, specific DTypes as inputs), has to be able to to make
+(loop with known, specific DTypes as inputs), has to be able to make
 certain decisions before the actual calculation can start.
 
 
