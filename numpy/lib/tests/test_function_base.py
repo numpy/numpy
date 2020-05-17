@@ -3104,6 +3104,13 @@ class TestQuantile:
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
 
+    def test_quantile_monotic(self):
+        # GH 14685
+        # test that the return value of quantile is monotonic if p0 is ordered
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7]) * 0.1, p0)
+        equals_sorted = np.sort(quantile) == quantile
+        assert equals_sorted.all()
 
 class TestMedian:
 
