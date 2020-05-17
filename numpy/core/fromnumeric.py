@@ -3436,11 +3436,11 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(a))``, where 
-    ``a = abs(x - x.mean())**2``.
+    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where 
+    ``x = abs(a - a.mean())**2``.
 
-    The average squared deviation is typically calculated as ``a.sum() / N``,
-    where ``N = len(a)``. If, however, `ddof` is specified, the divisor
+    The average squared deviation is typically calculated as ``x.sum() / N``,
+    where ``N = len(x)``. If, however, `ddof` is specified, the divisor
     ``N - ddof`` is used instead. In standard statistical practice, ``ddof=1``
     provides an unbiased estimator of the variance of the infinite population.
     ``ddof=0`` provides a maximum likelihood estimate of the variance for
