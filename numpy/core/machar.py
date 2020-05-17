@@ -37,12 +37,11 @@ class MachAr:
     iexp : int
         Number of bits in the exponent (including its sign and bias).
     minexp : int
-        Smallest (most negative) power of `ibeta` consistent with there
-        being no leading zeros in the mantissa.
+        Smallest (most negative) value of the exponent for float with
+        full precision.
     xmin : float
         Floating point number ``beta**minexp`` (the smallest [in
-        magnitude] usable floating value with there
-        being no leading zeros in the mantissa).
+        magnitude] floating point number with full precision).
     maxexp : int
         Smallest (positive) power of `ibeta` that causes overflow.
     xmax : float

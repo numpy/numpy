@@ -322,8 +322,7 @@ class finfo:
     min : floating point number of the appropriate type
         The smallest representable number, typically ``-max``.
     minexp : int
-        The most negative power of the base (2) consistent with there
-        being no leading 0's in the mantissa.
+        The minimum value of the exponent for a float with full precision.
     negep : int
         The exponent that yields `epsneg`.
     nexp : int
@@ -337,9 +336,8 @@ class finfo:
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
     tiny : float
-        The smallest positive floating point number with there being no
-        leading 0's in the mantissa. Type of `tiny` is an appropriate 
-        floating point type.
+        The smallest positive floating point number with full precision
+        (see Notes).
 
     Parameters
     ----------
@@ -361,7 +359,7 @@ class finfo:
     repeatedly inside your functions is not a problem.
 
     Note that `tiny` is not actually the smallest positive representable
-    number in a NumPy floating point type. As in the IEEE-754 standard[1]_,
+    value in a NumPy floating point type. As in the IEEE-754 standard[1]_,
     NumPy floating point types make use of subnormal numbers to fill the
     gap between 0 and `tiny`. However, subnormal numbers may have a 
     significantly reduced precision[2]_.
