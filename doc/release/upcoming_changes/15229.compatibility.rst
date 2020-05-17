@@ -1,7 +1,0 @@
-Removed ``multiarray.int_asbuffer``
------------------------------------
-
-As part of the continued removal of Python 2 compatibility,
-``multiarray.int_asbuffer`` was removed. On Python 3, it threw a
-``NotImplementedError`` and was unused internally. It is expected that there
-are no downstream use cases for this method with Python 3.

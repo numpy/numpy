@@ -1,4 +1,0 @@
-`numpy.einsum` accepts NumPy ``int64`` type in subscript list
--------------------------------------------------------------
-There is no longer a type error thrown when `numpy.einsum` is passed
-a NumPy ``int64`` array as its subscript list. 
