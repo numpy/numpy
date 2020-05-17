@@ -671,7 +671,7 @@ simply have a shared library available to you). Items to remember are:
 - A shared library must be compiled in a special way ( *e.g.* using
   the ``-shared`` flag with gcc).
 
-- On some platforms (*e.g.* Windows) , a shared library requires a
+- On some platforms (*e.g.* Windows), a shared library requires a
   .def file that specifies the functions to be exported. For example a
   mylib.def file might contain::
 
@@ -802,7 +802,7 @@ Calling the function
 
 The function is accessed as an attribute of or an item from the loaded
 shared-library. Thus, if ``./mylib.so`` has a function named
-``cool_function1`` , I could access this function either as:
+``cool_function1``, I could access this function either as:
 
 .. code-block:: python
 

@@ -117,7 +117,7 @@ concepts to remember include:
       array([5, 6, 7, 8, 9])
 
 - If the number of objects in the selection tuple is less than
-  *N* , then ``:`` is assumed for any subsequent dimensions.
+  *N*, then ``:`` is assumed for any subsequent dimensions.
 
   .. admonition:: Example
 

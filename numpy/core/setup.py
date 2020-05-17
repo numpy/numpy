@@ -520,7 +520,7 @@ def configuration(parent_package='',top_path=None):
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
         # put common include directory in build_dir on search path
-        # allows using code generation in headers headers
+        # allows using code generation in headers
         config.add_include_dirs(join(build_dir, "src", "common"))
         config.add_include_dirs(join(build_dir, "src", "npymath"))
 
