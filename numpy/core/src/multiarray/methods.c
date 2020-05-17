@@ -146,8 +146,15 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
 
-    return PyArray_Return((PyArrayObject *)
-                PyArray_TakeFrom(self, indices, dimension, out, mode));
+    PyObject *ret = PyArray_TakeFrom(self, indices, dimension, out, mode);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -303,7 +310,15 @@ array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out))
         return NULL;
 
-    return PyArray_Return((PyArrayObject *)PyArray_ArgMax(self, axis, out));
+    PyObject *ret = PyArray_ArgMax(self, axis, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -318,7 +333,15 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out))
         return NULL;
 
-    return PyArray_Return((PyArrayObject *)PyArray_ArgMin(self, axis, out));
+    PyObject *ret = PyArray_ArgMin(self, axis, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -1218,7 +1241,15 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return PyArray_Return((PyArrayObject *)PyArray_Choose(self, choices, out, clipmode));
+    PyObject *ret = PyArray_Choose(self, choices, out, clipmode);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -2319,8 +2350,16 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out)) {
         return NULL;
     }
-    return PyArray_Return(
-                (PyArrayObject *)PyArray_Compress(self, condition, axis, out));
+
+    PyObject *ret = PyArray_Compress(self, condition, axis, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 
@@ -2355,7 +2394,15 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     rtype = _CHKTYPENUM(dtype);
     Py_XDECREF(dtype);
-    return PyArray_Return((PyArrayObject *)PyArray_Trace(self, offset, axis1, axis2, rtype, out));
+    PyObject *ret = PyArray_Trace(self, offset, axis1, axis2, rtype, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 #undef _CHKTYPENUM
@@ -2440,7 +2487,16 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out)) {
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_Round(self, decimals, out));
+
+    PyObject *ret = PyArray_Round(self, decimals, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 
