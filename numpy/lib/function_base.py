@@ -3975,10 +3975,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             x1 = x1.squeeze(0)
             x2 = x2.squeeze(0)
 
-        if out is not None:
-            r = add(x1, x2, out=out)
-        else:
-            r = add(x1, x2)
+        r = add(x1, x2, out=out)
 
     if np.any(n):
         if zerod:
