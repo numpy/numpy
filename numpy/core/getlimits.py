@@ -361,14 +361,16 @@ class finfo:
     repeatedly inside your functions is not a problem.
 
     Note that `tiny` is not actually the smallest positive representable
-    number in a NumPy floating point type. As in the IEEE-754 standard,
+    number in a NumPy floating point type. As in the IEEE-754 standard[1]_,
     NumPy floating point types make use of subnormal numbers to fill the
     gap between 0 and `tiny`. However, subnormal numbers may have a 
-    significantly reduced precision[1]_.
+    significantly reduced precision[2]_.
     
     References
     ----------
-    .. [1] Wikipedia, "Denormal Numbers",
+    .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
+           pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935.
+    .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
     """
 
