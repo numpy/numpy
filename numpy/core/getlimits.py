@@ -364,9 +364,12 @@ class finfo:
     number in a NumPy floating point type. As in the IEEE-754 standard,
     NumPy floating point types make use of subnormal numbers to fill the
     gap between 0 and `tiny`. However, subnormal numbers may have a 
-    significantly reduced precision. Compare further with the Wikipedia page
-    `Denormal Numbers <https://en.wikipedia.org/wiki/Denormal_number>`_
+    significantly reduced precision[1]_.
     
+    References
+    ----------
+    .. [1] Wikipedia, "Denormal Numbers",
+           https://en.wikipedia.org/wiki/Denormal_number
     """
 
     _finfo_cache = {}
