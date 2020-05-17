@@ -3562,9 +3562,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Notes
     -----
     The variance is the average of the squared deviations from the mean,
-    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
+    i.e.,  ``var = mean(x)``, where ``x = abs(a - a.mean())**2``.
 
-    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
+    The mean is typically calculated as ``x.sum() / N``, where ``N = len(x)``.
     If, however, `ddof` is specified, the divisor ``N - ddof`` is used
     instead.  In standard statistical practice, ``ddof=1`` provides an
     unbiased estimator of the variance of a hypothetical infinite population.
