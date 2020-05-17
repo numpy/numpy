@@ -3943,33 +3943,23 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         if np.issubdtype(a.dtype, np.inexact):
             indices_above = concatenate((indices_above, [-1]))
 
-        weights_above = indices - indices_below
-        weights_below = 1 - weights_above
-
-        weights_shape = [1, ] * ap.ndim
-        weights_shape[axis] = len(indices)
-        weights_below.shape = weights_shape
-        weights_above.shape = weights_shape
-
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
 
         # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
-        weights_below = np.moveaxis(weights_below, axis, 0)
-        weights_above = np.moveaxis(weights_above, axis, 0)
         axis = 0
+
+        weights_shape = [1] * ap.ndim
+        weights_shape[axis] = len(indices)
+        weights_above = (indices - indices_below).reshape(weights_shape)
 
         # Check if the array contains any nan's
         if np.issubdtype(a.dtype, np.inexact):
             indices_above = indices_above[:-1]
             n = np.isnan(ap[-1:, ...])
 
-        x1 = take(ap, indices_below, axis=axis) * weights_below
+        x1 = take(ap, indices_below, axis=axis) * (1 - weights_above)
         x2 = take(ap, indices_above, axis=axis) * weights_above
-
-        # ensure axis with q-th is first
-        x1 = np.moveaxis(x1, axis, 0)
-        x2 = np.moveaxis(x2, axis, 0)
 
         if zerod:
             x1 = x1.squeeze(0)
