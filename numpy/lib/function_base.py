@@ -3870,6 +3870,11 @@ def _quantile_is_valid(q):
     return True
 
 
+def _lerp(a, b, t, out=None):
+    """ Linearly interpolate from a to b by a factor of t """
+    return add(a*(1 - t), b*t, out=out)
+
+
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
                            interpolation='linear', keepdims=False):
     a = asarray(a)
@@ -3958,14 +3963,14 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices_above = indices_above[:-1]
             n = np.isnan(ap[-1:, ...])
 
-        x1 = take(ap, indices_below, axis=axis) * (1 - weights_above)
-        x2 = take(ap, indices_above, axis=axis) * weights_above
-
+        x1 = take(ap, indices_below, axis=axis)
+        x2 = take(ap, indices_above, axis=axis)
         if zerod:
             x1 = x1.squeeze(0)
             x2 = x2.squeeze(0)
+            weights_above = weights_above.squeeze(0)
 
-        r = add(x1, x2, out=out)
+        r = _lerp(x1, x2, weights_above, out=out)
 
     if np.any(n):
         if zerod:
