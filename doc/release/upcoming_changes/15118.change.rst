@@ -1,7 +1,0 @@
-Remove handling of extra argument to ``__array__``
---------------------------------------------------
-A code path and test have been in the code since NumPy 0.4 for a two-argument
-variant of ``__array__(dtype=None, context=None)``. It was activated when
-calling ``ufunc(op)`` or ``ufunc.reduce(op)`` if ``op.__array__`` existed.
-However that variant is not documented, and it is not clear what the intention
-was for its use. It has been removed.

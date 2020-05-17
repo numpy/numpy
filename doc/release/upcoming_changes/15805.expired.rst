@@ -1,6 +1,0 @@
-`numpy.insert` and `numpy.delete` no longer accept non-integral indices
------------------------------------------------------------------------
-This concludes a deprecation from 1.9, where sequences of non-integers indices
-were allowed and cast to integers. Now passing sequences of non-integral
-indices raises ``IndexError``, just like it does when passing a single
-non-integral scalar.

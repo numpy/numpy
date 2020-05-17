@@ -1,6 +1,0 @@
-Deprecation of `round` for ``np.complexfloating`` scalars
------------------------------------------------------------
-
-Output of the ``__round__`` dunder method and consequently the Python built-in
-`round` has been deprecated on complex scalars. This does not affect
-`np.round`.

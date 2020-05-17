@@ -1,6 +1,0 @@
-``equal_nan`` parameter for `numpy.array_equal`
-------------------------------------------------
-The keyword argument ``equal_nan`` was added to `numpy.array_equal`.
-``equal_nan`` is a boolean value that toggles whether or not ``nan`` values 
-are considered equal in comparison (default is ``False``). This matches API 
-used in related functions such as `numpy.isclose` and `numpy.allclose`.

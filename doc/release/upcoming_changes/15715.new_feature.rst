@@ -1,5 +1,0 @@
-`numpy.linalg.multi_dot` now accepts an ``out`` argument
---------------------------------------------------------
-
-``out`` can be used to avoid creating unnecessary copies of the final product
-computed by `numpy.linalg.multidot`.
