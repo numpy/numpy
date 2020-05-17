@@ -380,7 +380,7 @@ advanced usage and will not typically be used.
     result as a dimension with size one, so that the result will broadcast
     correctly against the inputs. This option can only be used for generalized
     ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions , i.e., with
+    dimensions and with outputs that have no core dimensions, i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
     the dimensions in the output can be controlled with ``axes`` and ``axis``.
 

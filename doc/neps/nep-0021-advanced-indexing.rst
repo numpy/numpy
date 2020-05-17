@@ -48,7 +48,7 @@ NumPy arrays currently support a flexible range of indexing operations:
 
 For clarity, we will refer to these existing rules as "legacy indexing".
 This is only a high-level summary; for more details, see NumPy's documentation
-and and `Examples` below.
+and `Examples` below.
 
 Outer indexing
 ~~~~~~~~~~~~~~
