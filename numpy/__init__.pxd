@@ -835,6 +835,11 @@ cdef extern from "numpy/ndarrayobject.h":
     ctypedef int64_t npy_timedelta
     ctypedef int64_t npy_datetime
 
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct PyArray_DatetimeMetaData:
+        NPY_DATETIMEUNIT base
+        int64_t num
+
 cdef extern from "numpy/arrayscalars.h":
     ctypedef struct PyDatetimeScalarObject:
         # PyObject_HEAD
@@ -845,11 +850,6 @@ cdef extern from "numpy/arrayscalars.h":
         # PyObject_HEAD
         npy_timedelta obval
         PyArray_DatetimeMetaData obmeta
-
-cdef extern from "numpy/ndarraytypes.h":
-    ctypedef struct PyArray_DatetimeMetaData:
-        NPY_DATETIMEUNIT base
-        int64_t num
 
     ctypedef enum NPY_DATETIMEUNIT:
         NPY_FR_Y
