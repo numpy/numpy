@@ -639,9 +639,12 @@ class TestFloatExceptions:
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason='FPE support incomplete',
-                       strict=True)
+    @pytest.mark.xfail(
+        sys.platform == "cygwin",
+        reason="complex256(2 ** (2 ** nexp_256)) is inf+infj without OverflowError",
+        raises=AssertionError,
+        strict=True,
+    )
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
