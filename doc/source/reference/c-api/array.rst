@@ -636,11 +636,11 @@ From other objects
 .. c:function:: PyObject* PyArray_ContiguousFromObject( \
         PyObject* op, int typenum, int min_depth, int max_depth)
 
-    This function returns a well-behaved C-style contiguous array. The minimum
-    number of dimensions the array can have is given by `min_depth` while the
-    maximum is `max_depth`. This is equivalent to call :c:func:`PyArray_FromAny`
-    with requirements :c:data:`NPY_ARRAY_DEFAULT` and
-    :c:data:`NPY_ARRAY_ENSUREARRAY`.
+    This function returns a well-behaved C-style contiguous array from any nested
+    sequence or array-interface exporting object. The minimum number of dimensions
+    the array can have is given by `min_depth` while the maximum is `max_depth`.
+    This is equivalent to call :c:func:`PyArray_FromAny` with requirements
+    :c:data:`NPY_ARRAY_DEFAULT` and :c:data:`NPY_ARRAY_ENSUREARRAY`.
 
 .. c:function:: PyObject* PyArray_FromObject( \
         PyObject* op, int typenum, int min_depth, int max_depth)
