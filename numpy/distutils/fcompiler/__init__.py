@@ -40,9 +40,6 @@ __metaclass__ = type
 class CompilerNotFound(Exception):
     pass
 
-if sys.platform == 'cygwin':
-    COMPILED_MODULES = []
-
 def flaglist(s):
     if is_string(s):
         return split_quoted(s)
@@ -682,14 +679,6 @@ class FCompiler(CCompiler):
             except DistutilsExecError as e:
                 msg = str(e)
                 raise LinkError(msg)
-            if sys.platform == 'cygwin':
-                # Rebase newly-compiled module so it has a higher
-                # chance of surviving fork()
-                COMPILED_MODULES.append(output_filename)
-                rebase_args = ['/usr/bin/rebase', '--database',
-                               '--oblivious']
-                rebase_args.extend(COMPILED_MODULES)
-                self.spawn(rebase_args)
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
 
