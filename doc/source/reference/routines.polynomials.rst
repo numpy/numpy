@@ -78,7 +78,7 @@ expression::
 
 In addition to the ``coef`` attribute, polynomials from the polynomial
 package also have ``domain`` and ``window`` attributes.
-These attributes are most relevant when
+These attributes are most relevant when fitting
 polynomials to data, though it should be noted that polynomials with
 different ``domain`` and ``window`` attributes are not considered equal, and
 can't be mixed in arithmetic::
