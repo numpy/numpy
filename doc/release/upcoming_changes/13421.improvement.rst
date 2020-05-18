@@ -1,8 +1,0 @@
-Improve detection of CPU features
-=================================
-
-Replace ``npy_cpu_supports`` which was a gcc-specific mechanism to test support
-of avx with more general functions ``npy_cpu_init`` and ``npy_cpu_have``, and
-expose the results via a ``NPY_CPU_HAVE`` c-macro as well as a python-level
-``__cpu_features__`` dictionary.
-

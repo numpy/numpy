@@ -1,5 +1,0 @@
-``np.str_`` scalars now support the buffer protocol
----------------------------------------------------
-``np.str_`` arrays are always stored as UCS4, so the corresponding scalars
-now expose this through the buffer interface, meaning
-``memoryview(np.str_('test'))`` now works.
