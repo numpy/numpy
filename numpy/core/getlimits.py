@@ -358,11 +358,11 @@ class finfo:
     impacts import times.  These objects are cached, so calling ``finfo()``
     repeatedly inside your functions is not a problem.
 
-    Note that `tiny` is not actually the smallest positive representable
-    value in a NumPy floating point type. As in the IEEE-754 standard[1]_,
+    Note that ``tiny`` is not actually the smallest positive representable
+    value in a NumPy floating point type. As in the IEEE-754 standard [1]_,
     NumPy floating point types make use of subnormal numbers to fill the
-    gap between 0 and `tiny`. However, subnormal numbers may have a 
-    significantly reduced precision[2]_.
+    gap between 0 and ``tiny``. However, subnormal numbers may have
+    significantly reduced precision [2]_.
     
     References
     ----------
