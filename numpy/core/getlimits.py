@@ -322,7 +322,8 @@ class finfo:
     min : floating point number of the appropriate type
         The smallest representable number, typically ``-max``.
     minexp : int
-        The minimum value of the exponent for a float with full precision.
+        The most negative power of the base (2) consistent with there
+        being no leading 0's in the mantissa.
     negep : int
         The exponent that yields `epsneg`.
     nexp : int
@@ -367,7 +368,7 @@ class finfo:
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
-           pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935.
+           pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
     .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
     """
