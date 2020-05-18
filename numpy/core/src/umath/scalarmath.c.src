@@ -16,6 +16,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "npy_import.h"
 #include "npy_pycompat.h"
 
 #include "numpy/halffloat.h"
@@ -1339,13 +1340,9 @@ static int
 emit_complexwarning(void)
 {
     static PyObject *cls = NULL;
+    npy_cache_import("numpy.core", "ComplexWarning", &cls);
     if (cls == NULL) {
-        PyObject *mod;
-        mod = PyImport_ImportModule("numpy.core");
-        assert(mod != NULL);
-        cls = PyObject_GetAttrString(mod, "ComplexWarning");
-        assert(cls != NULL);
-        Py_DECREF(mod);
+        return -1;
     }
     return PyErr_WarnEx(cls,
             "Casting complex values to real discards the imaginary part", 1);
