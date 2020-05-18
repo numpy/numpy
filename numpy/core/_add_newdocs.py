@@ -3949,8 +3949,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
         Controls the memory layout of the copy. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible.
-        Default is 'C'.
+        as possible. Default is 'C'.
 
     Returns
     -------
