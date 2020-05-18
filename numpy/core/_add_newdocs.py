@@ -3939,7 +3939,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 
     Constructs Python bytes showing a copy of the raw contents of
     data memory. The bytes object is produced in C-order by default.
-    This behavior is controlled by the order parameter.
+    This behavior is controlled by the ``order`` parameter.
 
     .. versionadded:: 1.9.0
 
