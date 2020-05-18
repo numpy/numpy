@@ -157,16 +157,16 @@ class FCompiler(CCompiler):
     compiler_aliases = ()
     version_pattern = None
 
-    possible_executables = ['gfortran']
+    possible_executables = []
     executables = {
-        'version_cmd': ["gfortran", "-v"],
-        'compiler_f77': ["gfortran"],
-        'compiler_f90': ["gfortran"],
-        'compiler_fix': ["gfortran", "-fixed"],
-        'linker_so': ["gfortran", "-shared"],
-        'linker_exe': ["gfortran"],
+        'version_cmd': ["f77", "-v"],
+        'compiler_f77': ["f77"],
+        'compiler_f90': ["f90"],
+        'compiler_fix': ["f90", "-fixed"],
+        'linker_so': ["f90", "-shared"],
+        'linker_exe': ["f90"],
         'archiver': ["ar", "-cr"],
-        'ranlib': ["ranlib"],
+        'ranlib': None,
         }
 
     # If compiler does not support compiling Fortran 90 then it can
