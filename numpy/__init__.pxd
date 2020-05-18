@@ -693,16 +693,16 @@ cdef extern from "numpy/ndarrayobject.h":
     PyTypeObject PyTimedeltaArrType_Type
     PyTypeObject PyDatetimeArrType_Type
 
-cdef extern from "numpy/ndarraytypes.h":
-    ctypedef struct PyArray_DatetimeMetaData:
-        NPY_DATETIMEUNIT base
-        int64_t num
-
 cdef extern from "numpy/arrayscalars.h":
     ctypedef struct PyDatetimeScalarObject:
         # PyObject_HEAD
         npy_datetime obval
         PyArray_DatetimeMetaData obmeta
+
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct PyArray_DatetimeMetaData:
+        NPY_DATETIMEUNIT base
+        int64_t num
 
 
 # Typedefs that matches the runtime dtype objects in
