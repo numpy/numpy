@@ -337,8 +337,8 @@ class finfo:
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
     tiny : float
-        The smallest positive usable number.  Type of `tiny` is an
-        appropriate floating point type.
+        The smallest positive floating point number with full precision
+        (see Notes).
 
     Parameters
     ----------
@@ -359,6 +359,18 @@ class finfo:
     impacts import times.  These objects are cached, so calling ``finfo()``
     repeatedly inside your functions is not a problem.
 
+    Note that ``tiny`` is not actually the smallest positive representable
+    value in a NumPy floating point type. As in the IEEE-754 standard [1]_,
+    NumPy floating point types make use of subnormal numbers to fill the
+    gap between 0 and ``tiny``. However, subnormal numbers may have
+    significantly reduced precision [2]_.
+    
+    References
+    ----------
+    .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
+           pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
+    .. [2] Wikipedia, "Denormal Numbers",
+           https://en.wikipedia.org/wiki/Denormal_number
     """
 
     _finfo_cache = {}
@@ -546,4 +558,3 @@ class iinfo:
     def __repr__(self):
         return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
                                     self.min, self.max, self.dtype)
-
