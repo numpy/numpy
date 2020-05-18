@@ -669,7 +669,9 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     mod = npy_fmod@c@(a, b);
 
-    if (!b) {
+    if (npy_isinf(b) && npy_isinf(a)) {
+        npy_set_floatstatus_invalid();
+    } else if (!b) {
         div = a / b;
         npy_set_floatstatus_invalid();
         if (a) {
