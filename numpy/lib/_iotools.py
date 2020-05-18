@@ -514,7 +514,8 @@ class StringConverter:
                     # Last, try with the string types (must be last, because
                     # `_mapper[-1]` is used as default in some cases)
                     (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???'),])
+                    (nx.string_, asbytes, '???'),
+                    ])
 
     @classmethod
     def _getdtype(cls, val):
