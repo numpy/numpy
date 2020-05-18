@@ -1525,7 +1525,7 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
         Controls the memory layout of the output. 'C' means it should
         be C contiguous. 'F' means it should be Fortran contiguous,
         'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout as the inputs as
+        'K' means it should be as close to the layout of the inputs as
         is possible, including arbitrarily permuted axes.
         Default is 'K'.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
@@ -3939,9 +3939,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 
     Constructs Python bytes showing a copy of the raw contents of
     data memory. The bytes object can be produced in either 'C' or 'Fortran',
-    or 'Any' order (the default is 'C'-order). 'Any' order means C-order
+    or 'K' or 'A' order (the default is 'C'-order). 'A' order means C-order
     unless the F_CONTIGUOUS flag in the array is set, in which case it
-    means 'Fortran' order.
+    means 'Fortran' order. 'K' order is as close to the order array elements appear
+    in memory.
 
     .. versionadded:: 1.9.0
 
@@ -3949,7 +3950,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     ----------
     order : {'C', 'F', None}, optional
         Order of the data for multidimensional arrays:
-        C, Fortran, or the same as for the original array.
+        'C' means it should be C contiguous,
+        'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout of the inputs as
+        is possible, including arbitrarily permuted axes.
 
     Returns
     -------
@@ -3965,6 +3970,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     True
     >>> x.tobytes('F')
     b'\\x00\\x00\\x02\\x00\\x01\\x00\\x03\\x00'
+    >>> x.tobytes('A') == x.tobytes()
+    True
+    >>> x.tobytes('K') == x.tobytes()
+    True
 
     """))
 
