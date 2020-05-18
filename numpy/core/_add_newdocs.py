@@ -3938,23 +3938,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     Construct Python bytes containing the raw data bytes in the array.
 
     Constructs Python bytes showing a copy of the raw contents of
-    data memory. The bytes object can be produced in either 'C' or 'Fortran',
-    or 'K' or 'A' order (the default is 'C'-order). 'A' order means C-order
-    unless the F_CONTIGUOUS flag in the array is set, in which case it
-    means 'Fortran' order. 'K' order is as close to the order array elements appear
-    in memory.
+    data memory. The bytes object can be produced in C-order by default.
+    This behavior is controlled by the order parameter.
 
     .. versionadded:: 1.9.0
 
     Parameters
     ----------
-    order : {'C', 'F', None}, optional
-        Order of the data for multidimensional arrays:
-        'C' means it should be C contiguous,
-        'F' means it should be Fortran contiguous,
-        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout of the inputs as
-        is possible, including arbitrarily permuted axes.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Controls the memory layout of the copy. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+        Default is 'C'.
 
     Returns
     -------
@@ -3970,10 +3966,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     True
     >>> x.tobytes('F')
     b'\\x00\\x00\\x02\\x00\\x01\\x00\\x03\\x00'
-    >>> x.tobytes('A') == x.tobytes()
-    True
-    >>> x.tobytes('K') == x.tobytes()
-    True
 
     """))
 
