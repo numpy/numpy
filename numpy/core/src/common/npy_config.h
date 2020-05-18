@@ -91,6 +91,55 @@
 #endif
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
+/* Disable functions that give undesired floating-point outputs on
+   Cygwin. */
+#ifdef __CYGWIN__
+
+#undef HAVE_CABS
+#undef HAVE_CABSF
+#undef HAVE_CABSL
+
+/* These work for me in C++, even for the failing test case (2 ** 29),
+   but the tests fail.  No idea if the functions I'm getting are used
+   or not. */
+#undef HAVE_LOG2
+#undef HAVE_LOG2F
+#undef HAVE_LOG2L
+
+/* Complex square root does not use sign of zero to find branch
+   cuts. */
+#undef HAVE_CSQRT
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRTL
+
+/* C++ Real asinh works fine, complex asinh says asinh(1e-20+0j) =
+   0 */
+#undef HAVE_CASINH
+#undef HAVE_CASINHF
+#undef HAVE_CASINHL
+
+/* _check_branch_cut(np.arcsin, ...) fails */
+#undef HAVE_CASIN
+#undef HAVE_CASINF
+#undef HAVE_CASINL
+
+/* Branch cuts for arccosine also fail */
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+
+/* Branch cuts for arctan fail as well */
+#undef HAVE_CATAN
+#undef HAVE_CATANF
+#undef HAVE_CATANL
+
+/* check_loss_of_precision fails in arctanh */
+#undef HAVE_CATANH
+#undef HAVE_CATANHF
+#undef HAVE_CATANHL
+
+#endif
+
 /* powl gives zero division warning on OS X, see gh-8307 */
 #if defined(HAVE_POWL) && defined(NPY_OS_DARWIN)
 #undef HAVE_POWL
