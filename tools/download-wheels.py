@@ -14,9 +14,9 @@ from bs4 import BeautifulSoup
 
 __version__ = '0.1'
 
-ANACONDA_INDEX = 'https://anaconda.org/multibuild-wheels-staging/numpy/files'
-ANACONDA_FILES = 'https://anaconda.org/multibuild-wheels-staging/numpy/simple'
-
+# Edit these for other projects.
+STAGING_URL = 'https://anaconda.org/multibuild-wheels-staging/numpy'
+PREFIX = '^.*numpy-'
 
 def get_wheel_names(version):
     """ Get wheel names from Anaconda HTML directory.
@@ -30,10 +30,11 @@ def get_wheel_names(version):
         The release version. For instance, "1.18.3".
 
     """
-    tmpl = re.compile('^.*numpy-' + version + '.*\.whl$')
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
-    indx = http.request('GET', ANACONDA_INDEX)
-    soup = BeautifulSoup(indx.data, 'html.parser')
+    tmpl = re.compile(PREFIX + version + '.*\.whl$')
+    index_url =  f"{STAGING_URL}/files"
+    index_html = http.request('GET', index_url)
+    soup = BeautifulSoup(index_html.data, 'html.parser')
     return soup.findAll(text=tmpl)
 
 
@@ -51,10 +52,10 @@ def download_wheels(version, wheelhouse):
         Directory in which to download the wheels.
 
     """
-    wheel_names = get_wheel_names(version[0])
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
+    wheel_names = get_wheel_names(version)
     for wheel_name in wheel_names:
-        wheel_url = os.path.join(ANACONDA_FILES, wheel_name)
+        wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
         wheel_path = os.path.join(wheelhouse, wheel_name)
         with open(wheel_path, 'wb') as f:
             with http.request('GET', wheel_url, preload_content=False,) as r:
