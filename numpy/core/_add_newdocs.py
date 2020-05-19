@@ -5901,29 +5901,21 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 
 # Attributes
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('T',
+def refer_to_array_attribute(attr, method=True):
+    docstring = """
+    Scalar {} identical to the corresponding array attribute.
+
+    Please see `ndarray.{}`.
     """
-    Not implemented (virtual attribute)
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    provide a uniform API.
+    return attr, docstring.format("method" if method else "attribute", attr)
 
-    See also the corresponding attribute of the derived class of interest.
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('T', method=False))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('base',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('base', method=False))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('data',
     """Pointer to start of data."""))
@@ -5963,305 +5955,80 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('strides',
 
 # Methods
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('all',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('all'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('any'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('argmax'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('argmin'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('any',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('argsort'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('astype'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('byteswap'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('choose'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('argmax',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('clip'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('compress'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('conjugate'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('copy'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('argmin',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('cumprod'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('cumsum'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('diagonal'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('dump'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('argsort',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('dumps'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('fill'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('flatten'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('getfield'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('astype',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('item'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('itemset'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('max'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('mean'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('byteswap',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('choose',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('clip',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('compress',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('conjugate',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('copy',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('cumprod',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('cumsum',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('diagonal',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('dump',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('dumps',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('fill',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('flatten',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('getfield',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('item',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('itemset',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('max',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('mean',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('min',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('min'))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     """
@@ -6296,305 +6063,80 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
 
     """))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('nonzero',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('nonzero'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('prod'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('ptp'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('put'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('prod',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('ravel'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('repeat'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('reshape'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('resize'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('ptp',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('round'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('searchsorted'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('setfield'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('setflags'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('put',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('sort'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('squeeze'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('std'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('sum'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('ravel',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('swapaxes'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('take'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('tofile'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('tolist'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('repeat',
-    """
-    Not implemented (virtual attribute)
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('tostring'))
 
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('trace'))
 
-    See also the corresponding attribute of the derived class of interest.
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('transpose'))
 
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('var'))
 
-add_newdoc('numpy.core.numerictypes', 'generic', ('reshape',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('resize',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('round',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('searchsorted',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('setfield',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('setflags',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class so as to
-    provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('sort',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('squeeze',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('std',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('sum',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('swapaxes',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('take',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('tofile',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('tolist',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('tostring',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('trace',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('transpose',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('var',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
-
-add_newdoc('numpy.core.numerictypes', 'generic', ('view',
-    """
-    Not implemented (virtual attribute)
-
-    Class generic exists solely to derive numpy scalars from, and possesses,
-    albeit unimplemented, all the attributes of the ndarray class
-    so as to provide a uniform API.
-
-    See also the corresponding attribute of the derived class of interest.
-
-    """))
+add_newdoc('numpy.core.numerictypes', 'generic',
+           refer_to_array_attribute('view'))
 
 
 ##############################################################################
