@@ -3942,8 +3942,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             n = np.array(False, dtype=bool)
 
         r = take(ap, indices, axis=0, out=out)
-        if out is not None:
-            r = out  # workaround for gh-16276
 
     else:
         # weight the points above and below the indices
