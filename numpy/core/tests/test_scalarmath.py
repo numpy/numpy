@@ -653,44 +653,67 @@ class TestSubtract:
 
 
 class TestAbs:
-    def _test_abs_func(self, absfunc):
-        for tp in floating_types + complex_floating_types:
-            x = tp(-1.5)
-            assert_equal(absfunc(x), 1.5)
-            x = tp(0.0)
-            res = absfunc(x)
-            # assert_equal() checks zero signedness
-            assert_equal(res, 0.0)
-            x = tp(-0.0)
-            res = absfunc(x)
-            assert_equal(res, 0.0)
+    def _test_abs_func(self, absfunc, tp):
+        x = tp(-1.5)
+        assert_equal(absfunc(x), 1.5)
+        x = tp(0.0)
+        res = absfunc(x)
+        # assert_equal() checks zero signedness
+        assert_equal(res, 0.0)
+        x = tp(-0.0)
+        res = absfunc(x)
+        assert_equal(res, 0.0)
 
-            x = tp(np.finfo(tp).max)
-            assert_equal(absfunc(x), x.real)
+        x = tp(np.finfo(tp).max)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).tiny)
-            assert_equal(absfunc(x), x.real)
+        x = tp(np.finfo(tp).tiny)
+        assert_equal(absfunc(x), x.real)
 
-            x = tp(np.finfo(tp).min)
-            assert_equal(absfunc(x), -x.real)
+        x = tp(np.finfo(tp).min)
+        assert_equal(absfunc(x), -x.real)
 
-    @pytest.mark.xfail(
-        sys.platform == 'cygwin',
-        reason='abs(np.complex256.max) overflows',
-        raises=AssertionError,
-        strict=True,
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            pytest.param(
+                dtype,
+                marks=(
+                    pytest.mark.xfail(
+                        sys.platform == 'cygwin',
+                        reason='abs(np.complex256.max) overflows',
+                        raises=AssertionError,
+                        strict=True,
+                    )
+                    if dtype == np.complex256 else ()
+                )
+            )
+            for dtype in floating_types + complex_floating_types
+        ],
     )
-    def test_builtin_abs(self):
-        self._test_abs_func(abs)
+    def test_builtin_abs(self, dtype):
+        self._test_abs_func(abs, dtype)
 
-    @pytest.mark.xfail(
-        sys.platform == 'cygwin',
-        reason='abs(np.complex256.max) overflows',
-        raises=AssertionError,
-        strict=True,
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            pytest.param(
+                dtype,
+                marks=(
+                    pytest.mark.xfail(
+                        sys.platform == 'cygwin',
+                        reason='abs(np.complex256.max) overflows',
+                        raises=RuntimeWarning,
+                        strict=True,
+                    )
+                    if dtype == np.complex256 else ()
+                )
+            )
+            for dtype in floating_types + complex_floating_types
+        ],
     )
-    def test_numpy_abs(self):
-        self._test_abs_func(np.abs)
+    def test_numpy_abs(self, dtype):
+        self._test_abs_func(np.abs, dtype)
 
 
 class TestBitShifts:
