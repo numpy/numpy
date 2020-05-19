@@ -9,9 +9,6 @@ from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
 
-# getargspec and formatargspec were removed in Python 3.6
-from numpy.compat import getargspec, formatargspec
-
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
     'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
@@ -552,9 +549,12 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                   file=output
                   )
 
-    elif inspect.isfunction(object):
+    elif inspect.isfunction(object) or inspect.ismethod(object):
         name = object.__name__
-        arguments = formatargspec(*getargspec(object))
+        try:
+            arguments = str(inspect.signature(object))
+        except Exception:
+            arguments = "()"
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -566,18 +566,10 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
     elif inspect.isclass(object):
         name = object.__name__
-        arguments = "()"
         try:
-            if hasattr(object, '__init__'):
-                arguments = formatargspec(
-                        *getargspec(object.__init__.__func__)
-                        )
-                arglist = arguments.split(', ')
-                if len(arglist) > 1:
-                    arglist[1] = "("+arglist[1]
-                    arguments = ", ".join(arglist[1:])
+            arguments = str(inspect.signature(object))
         except Exception:
-            pass
+            arguments = "()"
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -604,26 +596,6 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                             inspect.getdoc(thisobj) or "None"
                             )
                 print("  %s  --  %s" % (meth, methstr), file=output)
-
-    elif inspect.ismethod(object):
-        name = object.__name__
-        arguments = formatargspec(
-                *getargspec(object.__func__)
-                )
-        arglist = arguments.split(', ')
-        if len(arglist) > 1:
-            arglist[1] = "("+arglist[1]
-            arguments = ", ".join(arglist[1:])
-        else:
-            arguments = "()"
-
-        if len(name+arguments) > maxwidth:
-            argstr = _split_line(name, arguments, maxwidth)
-        else:
-            argstr = name + arguments
-
-        print(" " + argstr + "\n", file=output)
-        print(inspect.getdoc(object), file=output)
 
     elif hasattr(object, '__doc__'):
         print(inspect.getdoc(object), file=output)
