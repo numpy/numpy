@@ -766,9 +766,6 @@ class TestLog2:
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.log2(xf), yf)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason='Fails for i==29',
-                       strict=True)
     def test_log2_ints(self):
         # a good log2 implementation should provide this,
         # might fail on OS with bad libm
@@ -3089,9 +3086,6 @@ class TestComplexFunctions:
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason='arcsinh(1e-20) returns 0',
-                       strict=True)
     @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""

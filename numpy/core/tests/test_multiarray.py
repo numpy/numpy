@@ -8598,9 +8598,6 @@ def test_npymath_complex():
                 assert_allclose(got, expected)
 
 
-@pytest.mark.xfail(sys.platform == 'cygwin',
-                   reason='expects cosh(-inf) == -inf',
-                   strict=True)
 def test_npymath_real():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
