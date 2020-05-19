@@ -76,12 +76,15 @@ npy__cpu_getxcr0(void)
 #if defined(_MSC_VER) || defined (__INTEL_COMPILER)
     return _xgetbv(0);
 #elif defined(__GNUC__) || defined(__clang__)
+    /* named form of xgetbv not supported on OSX, so must use byte form, see:
+     https://github.com/asmjit/asmjit/issues/78
+   */
     unsigned int eax, edx;
-    __asm__("xgetbv" : "=a" (eax), "=d" (edx) : "c" (0));
-    return (eax | (unsigned long long)edx << 32);
+    __asm(".byte 0x0F, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(0));
+    return eax;
 #else
-    // TODO: handle other x86 compilers
-    return 0;
+#error "Unsupported compiler, x86 cpuid requires either GCC, Clang or MSVC."
+return 0;
 #endif
 }
 
@@ -93,24 +96,10 @@ npy__cpu_cpuid(int reg[4], int func_id)
 #elif defined(__INTEL_COMPILER)
     __cpuid(reg, func_id);
 #elif defined(__GNUC__) || defined(__clang__)
-    #if defined(NPY_CPU_X86) && defined(__PIC__)
-        // %ebx may be the PIC register
-        __asm__("xchg{l}\t{%%}ebx, %1\n\t"
-                "cpuid\n\t"
-                "xchg{l}\t{%%}ebx, %1\n\t"
-                : "=a" (reg[0]), "=r" (reg[1]), "=c" (reg[2]),
-                  "=d" (reg[3])
-                : "a" (func_id), "c" (0)
-        );
-    #else
-        __asm__("cpuid\n\t"
-                : "=a" (reg[0]), "=b" (reg[1]), "=c" (reg[2]),
-                  "=d" (reg[3])
-                : "a" (func_id), "c" (0)
-        );
-    #endif
+    #include <cpuid.h>
+    __cpuid_count(func_id, 0, reg[0], reg[1], reg[2], reg[3]);
 #else
-    // TODO: handle other x86 compilers
+    #error "Unsupported compiler, x86 cpuid requires either GCC, Clang or MSVC."
     reg[0] = 0;
 #endif
 }
