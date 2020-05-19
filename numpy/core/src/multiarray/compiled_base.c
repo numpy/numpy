@@ -1425,7 +1425,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     #else
     char *docstr;
     #endif
-    static char *msg = "already has a docstring";
+    static char *msg = "already has a different docstring";
     PyObject *tp_dict = PyArrayDescr_Type.tp_dict;
     PyObject *myobj;
     static PyTypeObject *PyMemberDescr_TypePtr = NULL;
@@ -1482,7 +1482,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         if (!(doc)) {                                                   \
             doc = docstr;                                               \
         }                                                               \
-        else {                                                          \
+        else if (strcmp(doc, docstr) != 0) {                            \
             PyErr_Format(PyExc_RuntimeError, "%s method %s", name, msg); \
             return NULL;                                                \
         }                                                               \
@@ -1507,7 +1507,12 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyObject *doc_attr;
 
         doc_attr = PyObject_GetAttrString(obj, "__doc__");
-        if (doc_attr != NULL && doc_attr != Py_None) {
+        if (doc_attr != NULL && doc_attr != Py_None &&
+                (PyUnicode_Compare(doc_attr, str) != 0)) {
+            if (PyErr_Occurred()) {
+                /* error during PyUnicode_Compare */
+                return NULL;
+            }
             PyErr_Format(PyExc_RuntimeError, "object %s", msg);
             return NULL;
         }
