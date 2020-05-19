@@ -133,10 +133,8 @@ your system. If you can open a correct python shell, you can also run the
 following in python::
 
     import os
-    PYTHONPATH = os.environ['PYTHONPATH'].split(os.pathsep)
-    print("The PYTHONPATH is:", PYTHONPATH)
-    PATH = os.environ['PATH'].split(os.pathsep)
-    print("The PATH is:", PATH)
+    print("PYTHONPATH:", os.environ.get('PYTHONPATH'))
+    print("PATH:", os.environ.get('PATH'))
 
 This may mainly help you if you are not running the python and/or NumPy
 version you are expecting to run.
