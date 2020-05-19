@@ -4049,7 +4049,7 @@ cdef class RandomState:
         [True, True] # random
 
         """
-        from numpy.dual import svd
+        from numpy.linalg import svd
 
         # Check preconditions on arguments
         mean = np.array(mean)
