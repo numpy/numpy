@@ -956,17 +956,17 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
           names=None, titles=None, aligned=False, byteorder=None, copy=True):
     """
     Construct a record array from a wide-variety of objects.
-    
+
     Parameters
     ----------
     obj: array_like
         Input object.
     dtype: data-type, optional
-        Valid dtype for all arrays.
+        Valid dtype for array.
     shape: int or tuple of ints, optional
         Shape of each array.
     offset: int, optional
-        Position in the buffer to start reading from.
+        Position in the file or buffer to start reading from.
     strides: tuple of ints, optional
         Buffer (`buf`) is interpreted according to these strides (strides
         define how many bytes each array element, row, column, etc.
@@ -977,13 +977,14 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         detailed documentation.
     copy: bool, optional
         Whether to copy the input object (True), or to use a reference instead.
+        This option only applies when the input is an ndarray or recarray.
         Defaults to True.
-    
+
     Returns
     -------
     np.recarray
         Record array created from the specified object.
-        
+
     Examples
     --------
     >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
@@ -994,20 +995,20 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     >>> np.core.records.array(a)
     rec.array([[1, 2, 3],
                [4, 5, 6],
-               [7, 8, 9]], 
+               [7, 8, 9]],
         dtype=int32)
 
     >>> b = [(1, 1), (2, 4), (3, 9)]
     >>> c = np.core.records.array(b, formats = ['i2', 'f2'], names = ('x', 'y'))
     >>> c
-    rec.array([(1, 1.0), (2, 4.0), (3, 9.0)], 
+    rec.array([(1, 1.0), (2, 4.0), (3, 9.0)],
               dtype=[('x', '<i2'), ('y', '<f2')])
 
-    >>> c['x']
-    array([1, 2, 3], dtype=int16)
+    >>> c.x
+    rec.array([1, 2, 3], dtype=int16)
 
-    >>> c['y']
-    array([ 1.0,  4.0,  9.0], dtype=float16)
+    >>> c.y
+    rec.array([ 1.0,  4.0,  9.0], dtype=float16)
     """
 
     if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
