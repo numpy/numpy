@@ -1139,7 +1139,7 @@ def packbits(a, axis=None, bitorder='big'):
         ``None`` implies packing the flattened array.
     bitorder : {'big', 'little'}, optional
         The order of the input bits. 'big' will mimic bin(val),
-        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011``, 'little' will
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
