@@ -1426,44 +1426,10 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     char *docstr;
     #endif
     static char *msg = "already has a different docstring";
-    PyObject *tp_dict = PyArrayDescr_Type.tp_dict;
-    PyObject *myobj;
-    static PyTypeObject *PyMemberDescr_TypePtr = NULL;
-    static PyTypeObject *PyGetSetDescr_TypePtr = NULL;
-    static PyTypeObject *PyMethodDescr_TypePtr = NULL;
 
     /* Don't add docstrings */
     if (Py_OptimizeFlag > 1) {
         Py_RETURN_NONE;
-    }
-
-    if (PyGetSetDescr_TypePtr == NULL) {
-        /* Get "subdescr" */
-        myobj = _PyDict_GetItemStringWithError(tp_dict, "fields");
-        if (myobj == NULL && PyErr_Occurred()) {
-            return NULL;
-        }
-        if (myobj != NULL) {
-            PyGetSetDescr_TypePtr = Py_TYPE(myobj);
-        }
-    }
-    if (PyMemberDescr_TypePtr == NULL) {
-        myobj = _PyDict_GetItemStringWithError(tp_dict, "alignment");
-        if (myobj == NULL && PyErr_Occurred()) {
-            return NULL;
-        }
-        if (myobj != NULL) {
-            PyMemberDescr_TypePtr = Py_TYPE(myobj);
-        }
-    }
-    if (PyMethodDescr_TypePtr == NULL) {
-        myobj = _PyDict_GetItemStringWithError(tp_dict, "newbyteorder");
-        if (myobj == NULL && PyErr_Occurred()) {
-            return NULL;
-        }
-        if (myobj != NULL) {
-            PyMethodDescr_TypePtr = Py_TYPE(myobj);
-        }
     }
 
     if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
@@ -1475,33 +1441,34 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-#define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
-#define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)
-#define _ADDDOC(typebase, doc, name) do {                               \
-        Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
+#define _ADDDOC(doc, name)                                              \
         if (!(doc)) {                                                   \
             doc = docstr;                                               \
         }                                                               \
         else if (strcmp(doc, docstr) != 0) {                            \
             PyErr_Format(PyExc_RuntimeError, "%s method %s", name, msg); \
             return NULL;                                                \
-        }                                                               \
-    } while (0)
+        }
 
-    if (_TESTDOC1(CFunction)) {
-        _ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name);
+    if (Py_TYPE(obj) == &PyCFunction_Type) {
+        PyCFunctionObject *new = (PyCFunctionObject *)obj;
+        _ADDDOC(new->m_ml->ml_doc, new->m_ml->ml_name);
     }
-    else if (_TESTDOC1(Type)) {
-        _ADDDOC(Type, new->tp_doc, new->tp_name);
+    else if (Py_TYPE(obj) == &PyType_Type) {
+        PyTypeObject *new = (PyTypeObject *)obj;
+        _ADDDOC(new->tp_doc, new->tp_name);
     }
-    else if (_TESTDOC2(MemberDescr)) {
-        _ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name);
+    else if (Py_TYPE(obj) == &PyMemberDescr_Type) {
+        PyMemberDescrObject *new = (PyMemberDescrObject *)obj;
+        _ADDDOC(new->d_member->doc, new->d_member->name);
     }
-    else if (_TESTDOC2(GetSetDescr)) {
-        _ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name);
+    else if (Py_TYPE(obj) == &PyGetSetDescr_Type) {
+        PyGetSetDescrObject *new = (PyGetSetDescrObject *)obj;
+        _ADDDOC(new->d_getset->doc, new->d_getset->name);
     }
-    else if (_TESTDOC2(MethodDescr)) {
-        _ADDDOC(MethodDescr, new->d_method->ml_doc, new->d_method->ml_name);
+    else if (Py_TYPE(obj) == &PyMethodDescr_Type) {
+        PyMethodDescrObject *new = (PyMethodDescrObject *)obj;
+        _ADDDOC(new->d_method->ml_doc, new->d_method->ml_name);
     }
     else {
         PyObject *doc_attr;
@@ -1526,8 +1493,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_RETURN_NONE;
     }
 
-#undef _TESTDOC1
-#undef _TESTDOC2
 #undef _ADDDOC
 
     Py_INCREF(str);
