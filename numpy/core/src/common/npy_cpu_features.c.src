@@ -68,6 +68,8 @@ npy_cpu_features_dict(void)
     #include <intrin.h>
 #elif defined(__INTEL_COMPILER)
     #include <immintrin.h>
+#elif defined(__GNUC__) || defined(__clang__)
+    #include <cpuid.h>
 #endif
 
 static int
@@ -96,7 +98,6 @@ npy__cpu_cpuid(int reg[4], int func_id)
 #elif defined(__INTEL_COMPILER)
     __cpuid(reg, func_id);
 #elif defined(__GNUC__) || defined(__clang__)
-    #include <cpuid.h>
     __cpuid_count(func_id, 0, reg[0], reg[1], reg[2], reg[3]);
 #else
     #error "Unsupported compiler, x86 cpuid requires either GCC, Clang or MSVC."
