@@ -1,0 +1,3 @@
+Improve `array_repr`
+--------------------
+Now `array_repr` returns nicely formatted repr for arrays with objects with multi-line reprs.
