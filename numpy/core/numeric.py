@@ -2230,6 +2230,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     See Also
     --------
     allclose
+    math.isclose
 
     Notes
     -----
