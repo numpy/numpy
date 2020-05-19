@@ -472,3 +472,4 @@ implementation of the Horner and Sliding Window jump methods.
 ==========================
 NumPy 1.19.0 Release Notes
 ==========================
+
