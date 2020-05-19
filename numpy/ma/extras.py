@@ -258,7 +258,8 @@ class _fromnxfunction:
         doc = getattr(npfunc, '__doc__', None)
         if doc:
             sig = self.__name__ + ma.get_object_signature(npfunc)
-            locdoc = "Notes\n-----\nThe function is applied to both the _data"\
+            locdoc = "\n\n        Notes\n        -----\n        "\
+                     "The function is applied to both the _data"\
                      " and the _mask, if any."
             return '\n'.join((sig, doc, locdoc))
         return
