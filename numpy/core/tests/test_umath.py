@@ -397,6 +397,12 @@ class TestRemainder:
             assert_raises(FloatingPointError, np.divmod, fzero, fzero)
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, np.divmod, finf, finf)
+        with np.errstate(divide='ignore', invalid='raise'):
+            assert_raises(FloatingPointError, np.divmod, finf, fzero)
+        with np.errstate(divide='raise', invalid='ignore'):
+            assert_raises(FloatingPointError, np.divmod, finf, fzero)
+        with np.errstate(invalid='raise'):
+            assert_raises(FloatingPointError, np.fmod, fone, fzero)
 
     def test_float_remainder_overflow(self):
         a = np.finfo(np.float64).tiny
@@ -419,6 +425,7 @@ class TestRemainder:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in remainder")
             sup.filter(RuntimeWarning, "invalid value encountered in divmod")
+            sup.filter(RuntimeWarning, "invalid value encountered in fmod")
             sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
@@ -430,19 +437,34 @@ class TestRemainder:
                 div, rem = np.divmod(fone, fzer)
                 assert_(np.isinf(div), 'dt: %s, div: %s' % (dt, rem))
                 assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                # MSVC 2008 returns NaN here, so disable the check.
-                #rem = np.remainder(fone, finf)
-                #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
-                rem = np.remainder(fone, fnan)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                rem = np.remainder(finf, fone)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
                 div, rem = np.divmod(fzer, fzer)
                 assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
                 assert_(np.isnan(div), 'dt: %s, rem: %s' % (dt, rem))
                 div, rem = np.divmod(finf, finf)
                 assert_(np.isnan(div), 'dt: %s, rem: %s' % (dt, rem))
                 assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                div, rem = np.divmod(finf, fzer)
+                assert_(np.isinf(div), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                # MSVC 2008 returns NaN here, so disable the check.
+                #rem = np.remainder(fone, finf)
+                #assert_(rem == fone, 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(fone, fnan)
+                fmod = np.fmod(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(finf, fone)
+                fmod = np.fmod(finf, fone)
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                rem = np.remainder(finf, finf)
+                fmod = np.fmod(finf, fone)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(finf, fzer)
+                fmod = np.fmod(finf, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
 
 
 class TestCbrt:
