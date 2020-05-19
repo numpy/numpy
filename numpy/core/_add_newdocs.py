@@ -3251,6 +3251,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         The default value ('S') results in swapping the current
         byte order.
 
+
     Returns
     -------
     new_arr : array

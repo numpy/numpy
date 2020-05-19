@@ -371,8 +371,10 @@ string_converter_helper(
     int ret = str_func(str, length, out);
     Py_DECREF(str_object);
     if (ret < 0) {
+        if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_ValueError,
                 "%s %s (got %R)", name, message, object);
+        }
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -520,7 +522,8 @@ static int searchside_parser(char const *str, Py_ssize_t length, void *data)
     else if (str[0] == 'r' || str[0] == 'R') {
         *side = NPY_SEARCHRIGHT;
         is_exact = (length == 5 && strcmp(str, "right") == 0);
-    } else {
+    }
+    else {
         return -1;
     }
 
@@ -557,7 +560,6 @@ static int order_parser(char const *str, Py_ssize_t length, void *data)
     if (length != 1) {
         return -1;
     }
-
     if (str[0] == 'C' || str[0] == 'c') {
         *val = NPY_CORDER;
         is_exact = str[0] == 'C';
@@ -573,7 +575,8 @@ static int order_parser(char const *str, Py_ssize_t length, void *data)
     else if (str[0] == 'K' || str[0] == 'k') {
         *val = NPY_KEEPORDER;
         is_exact = str[0] == 'K';
-    } else {
+    }
+    else {
         return -1;
     }
 
@@ -613,7 +616,6 @@ static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
     if (length < 1) {
         return -1;
     }
-
     if (str[0] == 'C' || str[0] == 'c') {
         *val = NPY_CLIP;
         is_exact = (length == 4 && strcmp(str, "clip") == 0);
@@ -625,7 +627,8 @@ static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
     else if (str[0] == 'R' || str[0] == 'r') {
         *val = NPY_RAISE;
         is_exact = (length == 5 && strcmp(str, "raise") == 0);
-    } else {
+    }
+    else {
         return -1;
     }
 

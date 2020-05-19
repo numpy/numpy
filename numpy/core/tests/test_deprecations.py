@@ -611,7 +611,7 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_deprecated(round, args=(scalar,))
             self.assert_deprecated(round, args=(scalar, 0))
             self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-
+    
     def test_not_deprecated(self):
         for scalar_type in self.not_deprecated_types:
             scalar = scalar_type(0)
@@ -653,8 +653,8 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
     def test_non_exact_match(self):
         arr = np.array([[3, 6, 6], [4, 5, 1]])
         # case insensitive check
-        self.assert_deprecated(np.ravel_multi_index, args=(arr, (7, 6)), kwargs={"order": "f"}, exceptions=(ValueError,))
+        self.assert_deprecated(np.ravel_multi_index, args=(arr, (7, 6)), kwargs={"order": "f"})
         # misspelt mode check
-        self.assert_deprecated(lambda: np.ravel_multi_index(arr, (7, 6), mode='Cilp'), exceptions=(ValueError,))
+        self.assert_deprecated(lambda: np.ravel_multi_index(arr, (7, 6), mode='Cilp'))
         # using completely different word with first character as R
-        self.assert_deprecated(lambda: np.searchsorted(arr[0], 4, side='Random'), exceptions=(ValueError,))
+        self.assert_deprecated(lambda: np.searchsorted(arr[0], 4, side='Random'))
