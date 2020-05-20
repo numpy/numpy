@@ -822,6 +822,8 @@ add_newdoc('numpy.core.multiarray', 'array',
         When ``copy=False`` and a copy is made for other reasons, the result is
         the same as if ``copy=True``, with some exceptions for `A`, see the
         Notes section. The default order is 'K'.
+
+        Mnemonics are : 'K' for "Keep", 'A' for "Any"
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
         the returned array will be forced to be a base-class array (default).
@@ -3947,9 +3949,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 
     Parameters
     ----------
-    order : {'C', 'F', None}, optional
+    order : {'C', 'F', 'K', 'A', None}, optional
         Order of the data for multidimensional arrays:
-        C, Fortran, or the same as for the original array.
+        C, Fortran, same as for the original array (K), or any (A).
+        See ``numpy.array`` documentation.
 
     Returns
     -------
