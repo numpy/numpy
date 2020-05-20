@@ -31,7 +31,7 @@ def get_wheel_names(version):
 
     """
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
-    tmpl = re.compile(PREFIX + version + '.*\.whl$')
+    tmpl = re.compile(rf"{PREFIX}{version}.*\.whl$")
     index_url =  f"{STAGING_URL}/files"
     index_html = http.request('GET', index_url)
     soup = BeautifulSoup(index_html.data, 'html.parser')
@@ -52,6 +52,8 @@ def download_wheels(version, wheelhouse):
         Directory in which to download the wheels.
 
     """
+    if not os.path.isdir(wheelhouse):
+        os.makedirs(wheelhouse)
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
     wheel_names = get_wheel_names(version)
     for wheel_name in wheel_names:
@@ -61,6 +63,10 @@ def download_wheels(version, wheelhouse):
             with http.request('GET', wheel_url, preload_content=False,) as r:
                 print(f"Downloading {wheel_name}")
                 shutil.copyfileobj(r, f)
+    if len(wheel_names) == 0:
+        raise RuntimeError("No wheels to download,"
+                           f" please check if the wheels are available for {version}")
+
 
 
 if __name__ == '__main__':
