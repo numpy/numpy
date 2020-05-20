@@ -260,8 +260,8 @@ class _fromnxfunction:
         if doc:
             sig = self.__name__ + ma.get_object_signature(npfunc) + '\n'
             doc = inspect.cleandoc(doc)
-            locdoc = "Notes\n-----\nThe function is applied to both the _data"\
-                     " and the _mask, if any."
+            locdoc = ("Notes\n-----\nThe function is applied to both the _data"
+                      " and the _mask, if any.")
             return '\n'.join((sig, doc, locdoc))
         return
 
