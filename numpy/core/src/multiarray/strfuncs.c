@@ -168,15 +168,13 @@ array_repr_builtin(PyArrayObject *self, int repr)
 NPY_NO_EXPORT PyObject *
 array_repr(PyArrayObject *self)
 {
-    PyObject *s, *arglist;
+    PyObject *s;
 
     if (PyArray_ReprFunction == NULL) {
         s = array_repr_builtin(self, 1);
     }
     else {
-        arglist = Py_BuildValue("(O)", self);
-        s = PyEval_CallObject(PyArray_ReprFunction, arglist);
-        Py_DECREF(arglist);
+        s = PyObject_CallFunctionObjArgs(PyArray_ReprFunction, self, NULL);
     }
     return s;
 }
@@ -185,15 +183,13 @@ array_repr(PyArrayObject *self)
 NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self)
 {
-    PyObject *s, *arglist;
+    PyObject *s;
 
     if (PyArray_StrFunction == NULL) {
         s = array_repr_builtin(self, 0);
     }
     else {
-        arglist = Py_BuildValue("(O)", self);
-        s = PyEval_CallObject(PyArray_StrFunction, arglist);
-        Py_DECREF(arglist);
+        s = PyObject_CallFunctionObjArgs(PyArray_StrFunction, self, NULL);
     }
     return s;
 }
