@@ -141,7 +141,7 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
-def concatenate(arrays, axis=None, out=None, dtype=None, casting=None):
+def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
     concatenate((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
 

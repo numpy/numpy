@@ -714,7 +714,7 @@ class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
     def test_deprecated(self):
         self.assert_deprecated(np.concatenate,
                 args=(([0.], [1.]),),
-                kwargs={'axis': None, 'out': np.empty(2, dtype=np.int64)})
+                kwargs=dict(axis=None, out=np.empty(2, dtype=np.int64)))
 
     def test_not_deprecated(self):
         self.assert_not_deprecated(np.concatenate,

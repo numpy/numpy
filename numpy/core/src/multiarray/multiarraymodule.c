@@ -612,7 +612,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         return NULL;
     }
 
-    int give_deprecation_warning = 1;  /* To give warning only once. */
+    int give_deprecation_warning = 1;  /* To give warning for just one input array. */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         /* Adjust the window dimensions for this array */
         sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
@@ -2341,7 +2341,7 @@ array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     PyObject *res;
     int axis = 0;
     static char *kwlist[] = {"seq", "axis", "out", "dtype", "casting", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&OO&O:concatenate", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O$O&O:concatenate", kwlist,
                 &a0, PyArray_AxisConverter, &axis, &out,
                 PyArray_DescrConverter2, &dtype, &casting_obj)) {
         return NULL;
