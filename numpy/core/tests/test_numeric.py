@@ -614,9 +614,6 @@ class TestSeterr:
 
 
 class TestFloatExceptions:
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason='FPE support incomplete',
-                       strict=True)
     def assert_raises_fpe(self, fpeerr, flop, x, y):
         ftype = type(x)
         try:
