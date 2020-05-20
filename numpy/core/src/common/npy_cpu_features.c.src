@@ -68,8 +68,6 @@ npy_cpu_features_dict(void)
     #include <intrin.h>
 #elif defined(__INTEL_COMPILER)
     #include <immintrin.h>
-#elif defined(__GNUC__) || defined(__clang__)
-    #include <cpuid.h>
 #endif
 
 static int
@@ -85,7 +83,6 @@ npy__cpu_getxcr0(void)
     __asm(".byte 0x0F, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(0));
     return eax;
 #else
-#error "Unsupported compiler, x86 cpuid requires either GCC, Clang or MSVC."
 return 0;
 #endif
 }
@@ -98,9 +95,23 @@ npy__cpu_cpuid(int reg[4], int func_id)
 #elif defined(__INTEL_COMPILER)
     __cpuid(reg, func_id);
 #elif defined(__GNUC__) || defined(__clang__)
-    __cpuid_count(func_id, 0, reg[0], reg[1], reg[2], reg[3]);
+    #if defined(NPY_CPU_X86) && defined(__PIC__)
+       // %ebx may be the PIC register
+       __asm__("xchg{l}\t{%%}ebx, %1\n\t"	
+                "cpuid\n\t"	
+                "xchg{l}\t{%%}ebx, %1\n\t"	
+                : "=a" (reg[0]), "=r" (reg[1]), "=c" (reg[2]),	
+                  "=d" (reg[3])	
+                : "a" (func_id), "c" (0)	
+        );	
+    #else	
+        __asm__("cpuid\n\t"	
+                : "=a" (reg[0]), "=b" (reg[1]), "=c" (reg[2]),	
+                  "=d" (reg[3])	
+                : "a" (func_id), "c" (0)	
+        );
+    #endif
 #else
-    #error "Unsupported compiler, x86 cpuid requires either GCC, Clang or MSVC."
     reg[0] = 0;
 #endif
 }
@@ -113,8 +124,15 @@ npy__cpu_init_features(void)
     // validate platform support
     int reg[] = {0, 0, 0, 0};
     npy__cpu_cpuid(reg, 0);
-    if (reg[0] == 0)
-        return;
+    if (reg[0] == 0) {
+       npy__cpu_have[NPY_CPU_FEATURE_MMX]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_SSE]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_SSE2] = 1;
+       #ifdef NPY_CPU_AMD64
+           npy__cpu_have[NPY_CPU_FEATURE_SSE3] = 1;
+       #endif
+       return;
+    }
 
     npy__cpu_cpuid(reg, 1);
     npy__cpu_have[NPY_CPU_FEATURE_MMX]    = (reg[3] & (1 << 23)) != 0;
