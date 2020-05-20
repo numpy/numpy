@@ -64,6 +64,13 @@
 #define NPY_GCC_TARGET_AVX512F
 #endif
 
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX && defined HAVE_LINK_AVX512_SKX
+#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
+#elif defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
+#define NPY_GCC_TARGET_AVX512_SKX __attribute__((target("avx512f,avx512dq,avx512vl,avx512bw,avx512cd")))
+#else
+#define NPY_GCC_TARGET_AVX512_SKX
+#endif
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check

@@ -843,7 +843,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -855,19 +855,19 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.signbit'),
           None,
-          TD(flts, out='?'),
+          TD(flts, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'copysign':
     Ufunc(2, 1, None,
