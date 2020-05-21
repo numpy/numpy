@@ -52,20 +52,20 @@ def download_wheels(version, wheelhouse):
         Directory in which to download the wheels.
 
     """
-    if not os.path.isdir(wheelhouse):
-        os.makedirs(wheelhouse)
+    os.makedirs(wheelhouse, exist_ok=True)
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
     wheel_names = get_wheel_names(version)
-    for wheel_name in wheel_names:
+    if len(wheel_names) == 0:
+        raise RuntimeError("No wheels to download,"
+                           f" please check if the wheels are available for {version}")
+
+    for i, wheel_name in enumerate(wheel_names):
         wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
         wheel_path = os.path.join(wheelhouse, wheel_name)
         with open(wheel_path, 'wb') as f:
             with http.request('GET', wheel_url, preload_content=False,) as r:
-                print(f"Downloading {wheel_name}")
+                print(f"Downloading wheel {i + 1}, name: {wheel_name}")
                 shutil.copyfileobj(r, f)
-    if len(wheel_names) == 0:
-        raise RuntimeError("No wheels to download,"
-                           f" please check if the wheels are available for {version}")
 
 
 
