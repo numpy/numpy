@@ -1444,6 +1444,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #define _ADDDOC(doc, name)                                              \
         if (!(doc)) {                                                   \
             doc = docstr;                                               \
+            Py_INCREF(str);  /* hold on to string (leaks reference) */  \
         }                                                               \
         else if (strcmp(doc, docstr) != 0) {                            \
             PyErr_Format(PyExc_RuntimeError, "%s method %s", name, msg); \
@@ -1476,6 +1477,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         doc_attr = PyObject_GetAttrString(obj, "__doc__");
         if (doc_attr != NULL && doc_attr != Py_None &&
                 (PyUnicode_Compare(doc_attr, str) != 0)) {
+            Py_DECREF(doc_attr);
             if (PyErr_Occurred()) {
                 /* error during PyUnicode_Compare */
                 return NULL;
@@ -1495,7 +1497,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
 #undef _ADDDOC
 
-    Py_INCREF(str);
     Py_RETURN_NONE;
 }
 
