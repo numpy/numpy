@@ -988,7 +988,8 @@ class TestCreation:
             def __len__(self):
                 return 42
 
-        assert_raises(ValueError, np.array, C()) # segfault?
+        a = np.array(C()) # segfault?
+        assert_equal(len(a), 0)
 
     def test_false_len_iterable(self):
         # Special case where a bad __getitem__ makes us fall back on __iter__:
