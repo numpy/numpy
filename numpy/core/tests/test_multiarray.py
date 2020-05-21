@@ -988,7 +988,22 @@ class TestCreation:
             def __len__(self):
                 return 42
 
-        assert_raises(ValueError, np.array, C()) # segfault?
+        a = np.array(C()) # segfault?
+        assert_equal(len(a), 0)
+
+    def test_false_len_iterable(self):
+        # Special case where a bad __getitem__ makes us fall back on __iter__:
+        class C:
+            def __getitem__(self, x):
+                raise Exception
+            def __iter__(self):
+                return iter(())
+            def __len__(self):
+                return 2
+
+        a = np.empty(2)
+        with assert_raises(ValueError):
+            a[:] = C()  # Segfault!
 
     def test_failed_len_sequence(self):
         # gh-7393
@@ -1804,7 +1819,7 @@ class TestMethods:
             c = b.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
-            
+
     def test_sort_structured(self):
         # test record array sorts.
         dt = np.dtype([('f', float), ('i', int)])
