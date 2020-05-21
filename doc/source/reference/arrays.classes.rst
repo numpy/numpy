@@ -326,9 +326,8 @@ NumPy provides several hooks that classes can customize:
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
-   <ufuncs-output-type>`, results will be written to the object
-   returned by :func:`__array__`. Similar conversion is done on
-   input arrays.
+   <ufuncs-output-type>`, results will *not* be written to the object
+   returned by :func:`__array__`. This practice will return ``TypeError``.
 
 
 Matrix objects
