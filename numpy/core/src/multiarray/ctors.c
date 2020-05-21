@@ -483,6 +483,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     /* INCREF on entry DECREF on exit */
     Py_INCREF(s);
 
+    PyObject *seq = NULL;
+
     if (PyArray_Check(s)) {
         if (!(PyArray_CheckExact(s))) {
             /*
@@ -529,7 +531,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         return 0;
     }
 
-    PyObject *seq = PySequence_Fast(s, "Could not convert object to sequence");
+    seq = PySequence_Fast(s, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
@@ -552,14 +554,12 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         npy_intp alen = PyArray_DIM(a, dim);
 
         o = PySequence_Fast_GET_ITEM(seq, 0);
-        Py_INCREF(o);
 
         for (i = 0; i < alen; i++) {
             if ((PyArray_NDIM(a) - dim) > 1) {
                 PyArrayObject * tmp =
                     (PyArrayObject *)array_item_asarray(dst, i);
                 if (tmp == NULL) {
-                    Py_DECREF(o);
                     goto fail;
                 }
 
@@ -571,11 +571,9 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 res = PyArray_SETITEM(dst, b, o);
             }
             if (res < 0) {
-                Py_DECREF(o);
                 goto fail;
             }
         }
-        Py_DECREF(o);
     }
     /* Copy element by element */
     else {
