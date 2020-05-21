@@ -26,7 +26,7 @@ cimport libc.stdio as stdio
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t
-    bint PyObject_TypeCheck(object obj, PyTypeObject* type) nogil
+    bint PyObject_TypeCheck(object obj, PyTypeObject* type)
 
 cdef extern from "numpy/arrayobject.h":
     ctypedef Py_intptr_t npy_intp
@@ -1018,7 +1018,7 @@ cdef extern from *:
     """
 
 
-cdef inline bint is_timedelta64_object(object obj) nogil:
+cdef inline bint is_timedelta64_object(object obj):
     """
     Cython equivalent of `isinstance(obj, np.timedelta64)`
 
@@ -1033,7 +1033,7 @@ cdef inline bint is_timedelta64_object(object obj) nogil:
     return PyObject_TypeCheck(obj, &PyTimedeltaArrType_Type)
 
 
-cdef inline bint is_datetime64_object(object obj) nogil:
+cdef inline bint is_datetime64_object(object obj):
     """
     Cython equivalent of `isinstance(obj, np.datetime64)`
 
