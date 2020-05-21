@@ -221,7 +221,7 @@ cdef extern from "numpy/arrayobject.h":
         cdef int type_num
         cdef int itemsize "elsize"
         cdef int alignment
-        cdef dict fields
+        cdef object fields
         cdef tuple names
         # Use PyDataType_HASSUBARRAY to test whether this field is
         # valid (the pointer can be NULL). Most users should access
