@@ -3243,9 +3243,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         below. `new_order` codes can be any of:
 
         * 'S' - swap dtype from current to opposite endian
-        * '<' - little endian
-        * '>' - big endian
-        * '=' - native order
+        * {'<', 'little'} - little endian
+        * {'>', 'big'} - big endian
+        * '=' - native order, equivalent to `sys.byteorder`
         * {'|', 'I'} - ignore (no change to byte order)
 
         The default value ('S') results in swapping the current
