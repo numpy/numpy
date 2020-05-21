@@ -3875,7 +3875,8 @@ def _quantile_is_valid(q):
 
 def _lerp(a, b, t, out=None):
     """ Linearly interpolate from a to b by a factor of t """
-    return add(a*(1 - t), b*t, out=out)
+    offset = subtract(b, a) * t
+    return add(a, offset, out=out)
 
 
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
@@ -3948,6 +3949,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
     else:
         # weight the points above and below the indices
+        #import pdb; pdb.set_trace()
 
         indices_below = not_scalar(floor(indices)).astype(intp)
         indices_above = not_scalar(indices_below + 1)

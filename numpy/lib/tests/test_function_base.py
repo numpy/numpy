@@ -5,6 +5,10 @@ import decimal
 from fractions import Fraction
 import math
 import pytest
+import hypothesis
+from hypothesis.extra.numpy import arrays
+import hypothesis.strategies as st
+
 
 import numpy as np
 from numpy import ma
@@ -3104,13 +3108,22 @@ class TestQuantile:
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
 
-    def test_quantile_monotic(self):
+    def test_quantile_monotonic(self):
         # GH 14685
         # test that the return value of quantile is monotonic if p0 is ordered
         p0 = np.arange(0, 1, 0.01)
         quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7]) * 0.1, p0)
         equals_sorted = np.sort(quantile) == quantile
         assert equals_sorted.all()
+
+    @hypothesis.given(arr=arrays(dtype=np.float, shape=st.integers(min_value=3, max_value=1000),
+                                 elements=st.floats(allow_infinity=False, allow_nan=False)))
+    def test_quantile_monotonic_hypo(self, arr):
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(arr, p0)
+        equals_sorted = np.sort(quantile) == quantile
+        assert equals_sorted.all()
+
 
 class TestMedian:
 
