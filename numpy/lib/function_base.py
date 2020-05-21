@@ -1332,7 +1332,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         If `xp` or `fp` are not 1-D sequences
         If `period == 0`
 
-    See also
+    See Also
     --------
     scipy.interpolate 
 
