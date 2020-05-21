@@ -2177,8 +2177,8 @@ AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *s
     }
 }
 #endif
-/**end repeat**/
 /**end repeat1**/
+/**end repeat**/
 
 /**begin repeat
  * #ISA = FMA, AVX512F#
