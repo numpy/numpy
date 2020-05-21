@@ -13,7 +13,11 @@ avx_ufuncs = ['sin',
               'rint',
               'floor',
               'ceil' ,
-              'trunc']
+              'trunc',
+              'isnan',
+              'isfinite',
+              'isinf',
+              'signbit']
 stride = [1, 2, 4]
 dtype  = ['f', 'd']
 
