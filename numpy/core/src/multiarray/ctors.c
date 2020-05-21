@@ -529,10 +529,11 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         return 0;
     }
 
-    slen = PySequence_Length(s);
-    if (slen < 0) {
+    PyObject *seq = PySequence_Fast(s, "Could not convert object to sequence");
+    if (seq == NULL) {
         goto fail;
     }
+    slen = PySequence_Fast_GET_SIZE(seq);
 
     /*
      * Either the dimensions match, or the sequence has length 1 and can
@@ -550,16 +551,15 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         PyObject *o;
         npy_intp alen = PyArray_DIM(a, dim);
 
-        o = PySequence_GetItem(s, 0);
-        if (o == NULL) {
-            goto fail;
-        }
+        o = PySequence_Fast_GET_ITEM(seq, 0);
+        Py_INCREF(o);
 
         for (i = 0; i < alen; i++) {
             if ((PyArray_NDIM(a) - dim) > 1) {
                 PyArrayObject * tmp =
                     (PyArrayObject *)array_item_asarray(dst, i);
                 if (tmp == NULL) {
+                    Py_DECREF(o);
                     goto fail;
                 }
 
@@ -579,18 +579,12 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     }
     /* Copy element by element */
     else {
-        PyObject * seq;
-        seq = PySequence_Fast(s, "Could not convert object to sequence");
-        if (seq == NULL) {
-            goto fail;
-        }
         for (i = 0; i < slen; i++) {
             PyObject * o = PySequence_Fast_GET_ITEM(seq, i);
             if ((PyArray_NDIM(a) - dim) > 1) {
                 PyArrayObject * tmp =
                     (PyArrayObject *)array_item_asarray(dst, i);
                 if (tmp == NULL) {
-                    Py_DECREF(seq);
                     goto fail;
                 }
 
@@ -602,17 +596,17 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 res = PyArray_SETITEM(dst, b, o);
             }
             if (res < 0) {
-                Py_DECREF(seq);
                 goto fail;
             }
         }
-        Py_DECREF(seq);
     }
 
+    Py_DECREF(seq);
     Py_DECREF(s);
     return 0;
 
  fail:
+    Py_XDECREF(seq);
     Py_DECREF(s);
     return res;
 }
