@@ -66,6 +66,29 @@ or from the command line::
 
   $python runtests.py -t scipy/integrate/tests
 
+or quickly running and debugging test case in a visualize way through `vscode`_ as following.
+
+Firstly, Install the Python extension from your extensions.
+
+Second of all, open Command Palette (ctrl +shift +P) and start typing ‘python: configure tests.’,
+select pytest framework and add the following settings to your user settings.json file
+(opened with the File > Preferences > Settings)::
+
+  {
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "./numpy/tests/",
+        "./numpy/core/tests/"
+    ]
+  }
+
+At last, Click "Discover Tests",Then you can running and debugging
+any test case that you want.
+
 The rest of this page will give you a basic idea of how to add unit
 tests to modules in SciPy. It is extremely important for us to have
 extensive unit testing since this code is going to be used by
@@ -374,3 +397,4 @@ each failure, and better-than-naive-random techniques for triggering bugs.
 .. _pytest: https://pytest.readthedocs.io
 .. _parameterization: https://docs.pytest.org/en/latest/parametrize.html
 .. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
+.. _vscode: https://code.visualstudio.com/Download
