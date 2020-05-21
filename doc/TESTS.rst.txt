@@ -81,8 +81,8 @@ select pytest framework and add the following settings to your user settings.jso
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
-        "./numpy/tests/",
-        "./numpy/core/tests/"
+        "--pyargs",
+        "numpy"
     ]
   }
 
