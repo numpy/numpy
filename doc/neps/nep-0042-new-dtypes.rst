@@ -911,20 +911,20 @@ are not aware of each other.
 
 **Notes:**
 
-The proposed ``CastingImpl`` this designed to be compatible with the
+The proposed ``CastingImpl`` is designed to be compatible with the
 ``UFuncImpl`` proposed in NEP 42.
 While initially it will be a distinct object, the aim is that ``CastingImpl``
 can be a subclass of ``UFuncImpl`` (at least conceptually).
 Once this happens, this will naturally allow the use of a ``CastingImpl`` to
 pass around a specialized casting function directly if so wished.
 
-In the future, we may considering adding a way to spell out that specific
+In the future, we may consider adding a way to spell out that specific
 casts are known to be *not* possible.
 
-In the above ``CastingImpl`` is described as a python object, in practice the
-current plan is to implement it as a C-side structure stored on the ``from``
+In the above text ``CastingImpl`` is described as a Python object. In practice,
+the current plan is to implement it as a C-side structure stored on the ``from``
 datatype.
-Python side API to get an equivalent ``CastingImpl`` object will be created,
+A Python side API to get an equivalent ``CastingImpl`` object will be created,
 but storing it (similar to the current implementation) on the ``from`` datatype
 avoids the creation of cyclic reference counts.
 
@@ -956,8 +956,8 @@ Its ``adjust_descriptors`` functions may look like::
 
 .. note::
 
-    In general a DType with a physical unit, may want to not allow casting
-    away the unit. Unlike NumPy datetime in general the cast from a datetime64
+    In general a DType with a physical unit may want to disallow dropping the unit
+    during casting. Unlike NumPy datetime in general, the cast from a datetime64
     to an integer is not clearly defined. Instead, this type of cast may be
     better represented as a special ufunc, e.g. ``unit.drop_unit(arr)``.
 
@@ -1014,7 +1014,7 @@ detailed above and given here for summary:
 * ``ensure_canonical(self) -> dtype``
 * ``default_descr(self) -> dtype`` (return must be native and should normally be a singleton)
 * ``get_sort_function(self, NPY_SORTKIND sort_kind) -> {out_sortfunction, NotImplemented, NULL}``.
-  If the sortkind is not understand it may be allowed to return ``NotImplemented``.
+  If the sortkind is not understood it may be allowed to return ``NotImplemented``.
 * ``setitem(self, char *item_ptr, PyObject *value) -> {-1, 0}``
 * ``getitem(self, char *item_ptr, PyObject (base_obj) -> object or NULL``
 * ``discover_descr_from_pyobject(cls, PyObject) -> dtype or NULL``
@@ -1045,7 +1045,7 @@ Using the above ``PyArrayDTypeMeta_Spec`` struct, the structure itself can
 only be extended clumsily (e.g. by adding a version tag to the ``slots``
 to indicate a new, longer version of the struct).
 We could also provide the struct using a function, which however will require
-memory management but would allow ABI compatible extension
+memory management but would allow ABI-compatible extension
 (the struct is freed again when the DType is created).
 
 
@@ -1065,10 +1065,10 @@ The external API for ``CastingImpl`` will be limited initially to defining:
 This is identical to the proposed API for ufuncs. By default the two dtypes
 are passed in as the last argument. On error return (if no error is set) a
 generic error will be given.
-More optimized loops are in use internally, and made available to users
+More optimized loops are in use internally, and will be made available to users
 in the future (see notes)
 The iterator API currently does not currently support casting errors, this is
-a bug that needs to be fixed. While it is not fixed the loop should always
+a bug that needs to be fixed. Until it is fixed the loop should always
 succeed (return 0).
 
 Although verbose, the API shall mimic the one for creating a new DType.
@@ -1123,8 +1123,8 @@ machinery.
 Alternatives
 """"""""""""
 
-Aside from name changes, and possible signature tweaks, there seems few
-alternatives to the above structure.
+Aside from name changes, and possible signature tweaks, there seem to
+be few alternatives to the above structure.
 Keeping the creation process close the Python limited API has some advantage.
 Convenience functions could still be provided to allow creation with less
 code.
@@ -1134,7 +1134,7 @@ A downside is the possible need to pass in e.g. integer flags using a void
 pointer inside this structure.
 
 A downside of this is that compilers cannot warn about function
-pointer incompatibilities, there is currently no proposed solution to this.
+pointer incompatibilities. There is currently no proposed solution to this.
 
 
 Issues
@@ -1175,7 +1175,7 @@ Discussion
 There is a large space of possible implementations with many discussions
 in various places, as well as initial thoughts and design documents.
 These are listed in the discussion of NEP 40 and not repeated here for
-brievaty.
+brevity.
 
 
 Copyright
