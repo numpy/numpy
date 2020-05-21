@@ -19,6 +19,7 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
+from numpy.lib import isneginf, isposinf
 import numpy.linalg.lapack_lite
 
 from io import StringIO
@@ -765,10 +766,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
             if equal_inf:
                 flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == +inf,
+                                                func=lambda xy: isposinf(xy),
                                                 hasval='+inf')
                 flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == -inf,
+                                                func=lambda xy: isneginf(xy),
                                                 hasval='-inf')
 
         elif istime(x) and istime(y):

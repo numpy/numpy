@@ -904,6 +904,15 @@ class TestAssertAllclose:
         msg = str(exc_info.value)
         assert_('Max relative difference: 0.5' in msg)
 
+    def test_nonstandard_nan(self):
+        nonstandard_nan = np.array(
+            [0b_0111_1111_1000_0000_0000_0000_0000_0001],
+            dtype='uint32'
+        ).view('float32')
+        with pytest.warns(RuntimeWarning) as rec:
+            assert_allclose(nonstandard_nan, np.nan)
+        assert len(rec) == 0
+
 
 class TestArrayAlmostEqualNulp:
 
