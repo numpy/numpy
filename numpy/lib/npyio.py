@@ -613,7 +613,7 @@ def savez(file, *args, allow_pickle=True, **kwds):
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     """
-    _savez(file, args, kwds, allow_pickle)
+    _savez(file, args, kwds, False, allow_pickle)
 
 
 def _savez_compressed_dispatcher(file, *args, **kwds):
@@ -683,7 +683,7 @@ def savez_compressed(file, *args, allow_pickle=True,  **kwds):
     True
 
     """
-    _savez(file, args, kwds, allow_pickle)
+    _savez(file, args, kwds, True, allow_pickle)
 
 
 def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
