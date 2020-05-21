@@ -550,10 +550,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
 
     /* Broadcast the one element from the sequence to all the outputs */
     if (slen == 1) {
-        PyObject *o;
+        PyObject *o = PySequence_Fast_GET_ITEM(seq, 0);
         npy_intp alen = PyArray_DIM(a, dim);
-
-        o = PySequence_Fast_GET_ITEM(seq, 0);
 
         for (i = 0; i < alen; i++) {
             if ((PyArray_NDIM(a) - dim) > 1) {
