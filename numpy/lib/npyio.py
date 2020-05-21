@@ -535,7 +535,7 @@ def _savez_dispatcher(file, *args, **kwds):
 
 
 @array_function_dispatch(_savez_dispatcher)
-def savez(file, *args, **kwds):
+def savez(file, *args, **kwds, allow_pickle=True):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
@@ -613,7 +613,7 @@ def savez(file, *args, **kwds):
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     """
-    _savez(file, args, kwds, False)
+    _savez(file, args, kwds, allow_pickle)
 
 
 def _savez_compressed_dispatcher(file, *args, **kwds):
@@ -622,7 +622,7 @@ def _savez_compressed_dispatcher(file, *args, **kwds):
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
-def savez_compressed(file, *args, **kwds):
+def savez_compressed(file, *args, **kwds, allow_pickle=True):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
@@ -683,7 +683,7 @@ def savez_compressed(file, *args, **kwds):
     True
 
     """
-    _savez(file, args, kwds, True)
+    _savez(file, args, kwds, allow_pickle)
 
 
 def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
