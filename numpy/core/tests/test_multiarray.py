@@ -929,7 +929,7 @@ class TestCreation:
             d = np.empty(i, dtype='U')
             str(d)
 
-    def test_sequence_non_homogenous(self):
+    def test_sequence_non_homogeneous(self):
         assert_equal(np.array([4, 2**80]).dtype, object)
         assert_equal(np.array([4, 2**80, 4]).dtype, object)
         assert_equal(np.array([2**80, 4]).dtype, object)
