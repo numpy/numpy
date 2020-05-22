@@ -52,7 +52,6 @@ def download_wheels(version, wheelhouse):
         Directory in which to download the wheels.
 
     """
-    os.makedirs(wheelhouse, exist_ok=True)
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
     wheel_names = get_wheel_names(version)
     if len(wheel_names) == 0:
@@ -83,4 +82,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     wheelhouse = os.path.expanduser(args.wheelhouse)
+    if not os.path.isdir(wheelhouse):
+        raise RuntimeError(f"{wheelhouse} directory is not present, "
+                           "please create the directory before running the script")
+
     download_wheels(args.version, wheelhouse)
