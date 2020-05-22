@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import subprocess
@@ -15,6 +14,7 @@ except ImportError:
     cython = None
 else:
     from distutils.version import LooseVersion
+
     # Cython 0.29.14 is required for Python 3.8 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
@@ -34,28 +34,33 @@ def install_temp(request, tmp_path):
     here = os.path.dirname(__file__)
     ext_dir = os.path.join(here, "examples")
 
-    #assert False
-    tmp_path = tmp_path._str  # str(tmp_path)
+    tmp_path = tmp_path._str
     cytest = os.path.join(tmp_path, "cytest")
 
     shutil.copytree(ext_dir, cytest)
     # build the examples and "install" them into a temporary directory
-    
-    build_dir = os.path.join(tmp_path, "examples")
+
     install_log = os.path.join(tmp_path, "tmp_install_log.txt")
-    subprocess.check_call([sys.executable, "setup.py", "build", "install",
-                           "--prefix", os.path.join(tmp_path, "installdir"),
-                           "--single-version-externally-managed",
-                           "--record", install_log,
-                          ],
-                          cwd=cytest,
-                      )
+    subprocess.check_call(
+        [
+            sys.executable,
+            "setup.py",
+            "build",
+            "install",
+            "--prefix",
+            os.path.join(tmp_path, "installdir"),
+            "--single-version-externally-managed",
+            "--record",
+            install_log,
+        ],
+        cwd=cytest,
+    )
 
     # In order to import the built module, we need its path to sys.path
     # so parse that out of the record
     with open(install_log) as fid:
         for line in fid:
-            if 'checks' in line:
+            if "checks" in line:
                 sys.path.append(os.path.dirname(line))
                 break
         else:
@@ -72,13 +77,12 @@ def test_is_timedelta64_object(install_temp):
     assert not checks.is_td64(1)
     assert not checks.is_td64(None)
     assert not checks.is_td64("foo")
-    assert not checks.is_td64(np.datetime64("now"))
+    assert not checks.is_td64(np.datetime64("now", "s"))
 
 
 def test_is_datetime64_object(install_temp):
     import checks
 
-    assert checks.is_dt64(np.datetime64(1234))
     assert checks.is_dt64(np.datetime64(1234, "ns"))
     assert checks.is_dt64(np.datetime64("NaT", "ns"))
 
@@ -115,10 +119,10 @@ def test_get_datetime64_unit(install_temp):
 
     dt64 = np.datetime64("2016-01-01", "ns")
     result = checks.get_dt64_unit(dt64)
-    expected = 11
+    expected = 10
     assert result == expected
 
     td64 = np.timedelta64(12345, "h")
-    result = checks.get_dt64_unit(dt64)
+    result = checks.get_dt64_unit(td64)
     expected = 5
     assert result == expected
