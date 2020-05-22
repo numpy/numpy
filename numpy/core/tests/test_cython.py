@@ -35,21 +35,31 @@ def install_temp(request, tmp_path):
     ext_dir = os.path.join(here, "examples")
 
     #assert False
-    tmp_path = tmp_path._str#str(tmp_path)
+    tmp_path = tmp_path._str  # str(tmp_path)
     cytest = os.path.join(tmp_path, "cytest")
 
     shutil.copytree(ext_dir, cytest)
     # build the examples and "install" them into a temporary directory
     
     build_dir = os.path.join(tmp_path, "examples")
+    install_log = os.path.join(tmp_path, "tmp_install_log.txt")
     subprocess.check_call([sys.executable, "setup.py", "build", "install",
                            "--prefix", os.path.join(tmp_path, "installdir"),
                            "--single-version-externally-managed",
-                           "--record", os.path.join(tmp_path, "tmp_install_log.txt"),
+                           "--record", install_log,
                           ],
                           cwd=cytest,
                       )
-    sys.path.append(cytest)
+
+    # In order to import the built module, we need its path to sys.path
+    # so parse that out of the record
+    with open(install_log) as fid:
+        for line in fid:
+            if 'checks' in line:
+                sys.path.append(os.path.dirname(line))
+                break
+        else:
+            raise RuntimeError(f'could not parse "{install_log}"')
 
 
 def test_is_timedelta64_object(install_temp):
@@ -92,9 +102,9 @@ def test_get_datetime64_value(install_temp):
 def test_get_timedelta64_value(install_temp):
     import checks
 
-    td64 = np.timedelta(12345, "h")
+    td64 = np.timedelta64(12345, "h")
 
-    result = checks.get_td64_value(dt64)
+    result = checks.get_td64_value(td64)
     expected = td64.view("i8")
 
     assert result == expected
@@ -108,7 +118,7 @@ def test_get_datetime64_unit(install_temp):
     expected = 11
     assert result == expected
 
-    td64 = np.timedelta(12345, "h")
+    td64 = np.timedelta64(12345, "h")
     result = checks.get_dt64_unit(dt64)
     expected = 5
     assert result == expected
