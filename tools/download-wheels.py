@@ -54,9 +54,6 @@ def download_wheels(version, wheelhouse):
     """
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
     wheel_names = get_wheel_names(version)
-    if len(wheel_names) == 0:
-        raise RuntimeError("No wheels to download,"
-                           f" please check if the wheels are available for {version}")
 
     for i, wheel_name in enumerate(wheel_names):
         wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
@@ -65,7 +62,7 @@ def download_wheels(version, wheelhouse):
             with http.request('GET', wheel_url, preload_content=False,) as r:
                 print(f"Downloading wheel {i + 1}, name: {wheel_name}")
                 shutil.copyfileobj(r, f)
-
+    print(f"\nTotal files downloaded: {len(wheel_names)}")
 
 
 if __name__ == '__main__':
@@ -83,7 +80,8 @@ if __name__ == '__main__':
 
     wheelhouse = os.path.expanduser(args.wheelhouse)
     if not os.path.isdir(wheelhouse):
-        raise RuntimeError(f"{wheelhouse} directory is not present, "
-                           "please create the directory before running the script")
+        raise RuntimeError(
+            f"{wheelhouse} wheelhouse directory is not present."
+            " Perhaps you need to use the '-w' flag to specify one.")
 
     download_wheels(args.version, wheelhouse)
