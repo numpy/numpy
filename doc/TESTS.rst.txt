@@ -41,7 +41,7 @@ NumPy can be tested in a number of ways, choose any way you feel comfortable.
 Running tests from inside python
 --------------------------------
 
-You can test an installed NumPy by :ref:`numpy.test`, for example,
+You can test an installed NumPy by `numpy.test`_, for example,
 To run NumPy's full test suite, use the following::
 
   >>> import numpy
@@ -50,7 +50,7 @@ To run NumPy's full test suite, use the following::
 The test method may take two or more arguments; the first ``label`` is a
 string specifying what should be tested and the second ``verbose`` is an
 integer giving the level of output verbosity. See the docstring
-:ref:`numpy.test`
+`numpy.test`_
 for details. The default value for ``label`` is 'fast' - which
 will run the standard tests.  The string 'full' will run the full battery
 of tests, including those identified as being slow to run. If ``verbose``
@@ -386,8 +386,7 @@ each failure, and better-than-naive-random techniques for triggering bugs.
 
 .. _nose: https://nose.readthedocs.io/en/latest/
 .. _pytest: https://pytest.readthedocs.io
-.. _numpy.test:
-.. autofunction:: numpy._pytesttester.PytestTester.__call__
+.. _numpy.test: https://github.com/numpy/numpy/blob/master/numpy/_pytesttester.py
 .. _parameterization: https://docs.pytest.org/en/latest/parametrize.html
 .. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
 .. _vscode: https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework
