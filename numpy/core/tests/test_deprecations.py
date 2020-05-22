@@ -620,7 +620,6 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
 
 
-<<<<<<< ba4e4b6558050e0ef0fa3a312a46d65a5f021c16
 class TestIncorrectAdvancedIndexWithEmptyResult(_DeprecationTestCase):
     # 2020-05-27, NumPy 1.20.0
     message = "Out of bound index found. This was previously ignored.*"

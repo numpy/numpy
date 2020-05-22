@@ -5664,8 +5664,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         byte order.  `new_order` codes can be any of:
 
         * 'S' - swap dtype from current to opposite endian
-        * '<' - little endian
-        * '>' - big endian
+        * {'<', 'little'} - little endian
+        * {'>', 'big'} - big endian
         * '=' - native order
         * {'|', 'I'} - ignore (no change to byte order)
 
@@ -6035,8 +6035,8 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     The `new_order` code can be any from the following:
 
     * 'S' - swap dtype from current to opposite endian
-    * '<' - little endian
-    * '>' - big endian
+    * {'<', 'little'} - little endian
+    * {'>', 'big'} - big endian
     * '=' - native order
     * {'|', 'I'} - ignore (no change to byte order)
 

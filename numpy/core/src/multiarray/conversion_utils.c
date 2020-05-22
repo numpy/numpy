@@ -371,6 +371,7 @@ string_converter_helper(
     int ret = str_func(str, length, out);
     Py_DECREF(str_object);
     if (ret < 0) {
+        /* str_func returns -1 without an exception if the value is wrong */
         if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_ValueError,
                 "%s %s (got %R)", name, message, object);
@@ -532,8 +533,8 @@ static int searchside_parser(char const *str, Py_ssize_t length, void *data)
     if (!is_exact) {
         /* NumPy 1.20, 2020-05-19 */
         if (DEPRECATE("inexact matches and case insensitive matches "
-                      "for search side are deprecated. Please use "
-                      "one of 'left' or 'right' instead") < 0) {
+                      "for search side are deprecated, please use "
+                      "one of 'left' or 'right' instead.") < 0) {
             return -1;
         }
     }
@@ -585,8 +586,8 @@ static int order_parser(char const *str, Py_ssize_t length, void *data)
     if (!is_exact) {
         /* Numpy 1.20, 2020-05-19 */
         if (DEPRECATE("case insensitive matches "
-                      "for order are deprecated. Please use "
-                      "one of 'C', 'F', 'A' or 'K' instead") < 0) {
+                      "for order are deprecated, please use "
+                      "one of 'C', 'F', 'A' or 'K' instead.") < 0) {
             return -1;
         }
     }
@@ -637,8 +638,8 @@ static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
     if (!is_exact) {
         /* Numpy 1.20, 2020-05-19 */
         if (DEPRECATE("inexact matches and case insensitive matches "
-                      "for clip mode are deprecated. Please use "
-                      "one of 'clip', 'raise', or 'wrap' instead") < 0) {
+                      "for clip mode are deprecated, please use "
+                      "one of 'clip', 'raise', or 'wrap' instead.") < 0) {
             return -1;
         }
     }
