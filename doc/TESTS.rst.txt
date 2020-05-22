@@ -384,9 +384,14 @@ failures without requiring a fixed seed, reporting *minimal* examples for
 each failure, and better-than-naive-random techniques for triggering bugs.
 
 
+.. _numpy.test:
+Documentation for ``numpy.test``
+--------------------------------
+
+.. autofunction:: numpy.test
+
 .. _nose: https://nose.readthedocs.io/en/latest/
 .. _pytest: https://pytest.readthedocs.io
-.. _numpy.test: https://github.com/numpy/numpy/blob/master/numpy/_pytesttester.py
 .. _parameterization: https://docs.pytest.org/en/latest/parametrize.html
 .. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
 .. _vscode: https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework
