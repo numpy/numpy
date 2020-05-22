@@ -1,4 +1,4 @@
-NumPy Testing Guidelines
+NumPy/SciPy Testing Guidelines
 ==============================
 
 .. contents::
@@ -28,26 +28,30 @@ is found in a routine, you should write a new test for that specific
 case and add it to the test suite to prevent that bug from creeping
 back in unnoticed.
 
+.. note::
+
+  SciPy uses the testing framework from :mod:`numpy.testing`,
+  so all of the NumPy examples shown below are also applicable to SciPy
+
+Testing NumPy
+''''''''''''
+
+NumPy can be tested in a number of ways, choose any way you feel comfortable.
+
+Running tests from inside python
+--------------------------------
+
+You can test an installed NumPy by :ref:`numpy.test`, for example,
 To run NumPy's full test suite, use the following::
 
   >>> import numpy
-  >>> numpy.test()
+  >>> numpy.test(label='slow')
 
-or from the command line::
-
-  $ python runtests.py
-
-NumPy's full test suite can be run as follows::
-
-  >>> import numpy
-  >>> numpy.test()
-
-The test method may take two or more arguments; the first, ``label`` is a
-string specifying what should be tested and the second, ``verbose`` is an
-integer giving the level of output verbosity. See the docstring for
-`numpy.test
-<https://github.com/numpy/numpy/blob/master/numpy/_pytesttester.py>`__
-for details.  The default value for ``label`` is 'fast' - which
+The test method may take two or more arguments; the first ``label`` is a
+string specifying what should be tested and the second ``verbose`` is an
+integer giving the level of output verbosity. See the docstring
+:ref:`numpy.test`
+for details. The default value for ``label`` is 'fast' - which
 will run the standard tests.  The string 'full' will run the full battery
 of tests, including those identified as being slow to run. If ``verbose``
 is 1 or less, the tests will just show information messages about the tests
@@ -62,27 +66,30 @@ example, the ``core`` module, use the following::
 
   >>> numpy.core.test()
 
-or from the command line::
+Running tests from the command line
+-----------------------------------
+
+If you want to build NumPy in order to work on NumPy itself, use
+``runtests.py``.To run NumPy's full test suite::
+
+  $ python runtests.py
+
+Testing a subset of NumPy::
 
   $python runtests.py -t numpy/core/tests
 
-or run tests in any way you feel comfortable(for instance `vscode`_)
+For detailed info on testing, see :ref:`testing-builds`
 
-The rest of this page will give you a basic idea of how to add unit
-tests to modules in NumPy. It is extremely important for us to have
-extensive unit testing since this code is going to be used by
-scientists and researchers and is being developed by a large number of
-people spread across the world. So, if you are writing a package that
-you'd like to become part of NumPy, please write the tests as you
-develop the package. Also since much of NumPy is legacy code that was
-originally written without unit tests, there are still several modules
-that don't have tests yet. Please feel free to choose one of these
-modules and develop tests for it as you read through
-this introduction.
+Other methods of running tests
+------------------------------
+
+Run tests using your favourite IDE such as `vscode`_ or `pycharm`_
 
 Writing your own tests
 ''''''''''''''''''''''
 
+If you are writing a package that you'd like to become part of NumPy,
+please write the tests as you develop the package.
 Every Python module, extension module, or subpackage in the NumPy
 package directory should have a corresponding ``test_<name>.py`` file.
 Pytest examines these files for test methods (named test*) and test
@@ -120,6 +127,11 @@ Note that ``test_`` functions or methods should not have a docstring, because
 that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
 (``#``) if necessary.
+
+Also since much of NumPy is legacy code that was
+originally written without unit tests, there are still several modules
+that don't have tests yet. Please feel free to choose one of these
+modules and develop tests for it.
 
 Labeling tests
 --------------
@@ -374,6 +386,9 @@ each failure, and better-than-naive-random techniques for triggering bugs.
 
 .. _nose: https://nose.readthedocs.io/en/latest/
 .. _pytest: https://pytest.readthedocs.io
+.. _numpy.test:
+.. autofunction:: numpy._pytesttester.PytestTester.__call__
 .. _parameterization: https://docs.pytest.org/en/latest/parametrize.html
 .. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
 .. _vscode: https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework
+.. _pycharm: https://www.jetbrains.com/help/pycharm/testing-your-first-python-application.html
