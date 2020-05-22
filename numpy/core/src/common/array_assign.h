@@ -114,5 +114,12 @@ IsUintAligned(PyArrayObject *ap);
 NPY_NO_EXPORT int
 arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2);
 
+/*
+ * Check that array data is both uint-aligned and true-aligned for all array
+ * elements, as required by the copy/casting code in lowlevel_strided_loops.c
+ */
+NPY_NO_EXPORT int
+copycast_isaligned(int ndim, npy_intp const *shape,
+        PyArray_Descr *dtype, char *data, npy_intp const *strides);
 
 #endif

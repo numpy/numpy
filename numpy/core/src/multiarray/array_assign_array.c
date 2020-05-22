@@ -25,47 +25,6 @@
 #include "array_assign.h"
 
 /*
- * Check that array data is both uint-aligned and true-aligned for all array
- * elements, as required by the copy/casting code in lowlevel_strided_loops.c
- */
-NPY_NO_EXPORT int
-copycast_isaligned(int ndim, npy_intp const *shape,
-        PyArray_Descr *dtype, char *data, npy_intp const *strides)
-{
-    int aligned;
-    int big_aln, small_aln;
-
-    int uint_aln = npy_uint_alignment(dtype->elsize);
-    int true_aln = dtype->alignment;
-
-    /* uint alignment can be 0, meaning not uint alignable */
-    if (uint_aln == 0) {
-        return 0;
-    }
-
-    /*
-     * As an optimization, it is unnecessary to check the alignment to the
-     * smaller of (uint_aln, true_aln) if the data is aligned to the bigger of
-     * the two and the big is a multiple of the small aln. We check the bigger
-     * one first and only check the smaller if necessary.
-     */
-    if (true_aln >= uint_aln) {
-        big_aln = true_aln;
-        small_aln = uint_aln;
-    }
-    else {
-        big_aln = uint_aln;
-        small_aln = true_aln;
-    }
-
-    aligned = raw_array_is_aligned(ndim, shape, data, strides, big_aln);
-    if (aligned && big_aln % small_aln != 0) {
-        aligned = raw_array_is_aligned(ndim, shape, data, strides, small_aln);
-    }
-    return aligned;
-}
-
-/*
  * Assigns the array from 'src' to 'dst'. The strides must already have
  * been broadcast.
  *
