@@ -225,10 +225,6 @@ NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *meth = (char *)func;
-    PyObject *tup = PyTuple_New(0);
-    if (tup == NULL) {
-        return;
-    }
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
@@ -247,20 +243,17 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
                          "type %s which has no callable %s method",
                          i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
-            Py_DECREF(tup);
             Py_XDECREF(func);
             return;
         }
-        ret = PyObject_Call(func, tup, NULL);
+        ret = PyObject_CallObject(func, NULL);
         Py_DECREF(func);
         if (ret == NULL) {
-            Py_DECREF(tup);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
-    Py_DECREF(tup);
 }
 
 /*UFUNC_API*/
@@ -359,7 +352,7 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
             PyTuple_SET_ITEM(arglist, j, in);
             Py_INCREF(in);
         }
-        result = PyEval_CallObject(tocall, arglist);
+        result = PyObject_CallObject(tocall, arglist);
         Py_DECREF(arglist);
         if (result == NULL) {
             return;
