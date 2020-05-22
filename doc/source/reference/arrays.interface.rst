@@ -71,7 +71,7 @@ This approach to the interface consists of the object having an
 
    **typestr** (required)
 
-       A string providing the basic type of the homogenous array The
+       A string providing the basic type of the homogeneous array The
        basic string format consists of 3 parts: a character describing
        the byteorder of the data (``<``: little-endian, ``>``:
        big-endian, ``|``: not-relevant), a character code giving the
