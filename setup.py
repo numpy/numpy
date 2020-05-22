@@ -179,7 +179,7 @@ def check_submodules():
             if 'path' in l:
                 p = l.split('=')[-1].strip()
                 if not os.path.exists(p):
-                    raise ValueError(f'Submodule {p} missing')
+                    raise ValueError('Submodule {} missing'.format(p))
 
 
     proc = subprocess.Popen(['git', 'submodule', 'status'],
@@ -188,7 +188,7 @@ def check_submodules():
     status = status.decode("ascii", "replace")
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
-            raise ValueError(f'Submodule not clean: {line}')
+            raise ValueError('Submodule not clean: {}'.format(line))
             
 
 
