@@ -3,10 +3,16 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, system_info
+    from numpy.distutils.system_info import (
+            get_info, system_info, lapack_opt_info, blas_opt_info)
     config = Configuration('linalg', parent_package, top_path)
 
     config.add_subpackage('tests')
+
+    # Accelerate is buggy, disallow it. See also numpy/core/setup.py
+    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
+        if 'accelerate' in opt_order:
+            opt_order.remove('accelerate')
 
     # Configure lapack_lite
 
