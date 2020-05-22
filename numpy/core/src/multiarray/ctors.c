@@ -2029,12 +2029,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             PyErr_SetString(PyExc_ValueError,
                             "object of too small depth for desired array");
             Py_DECREF(arr);
+            Py_XDECREF(newtype);
             ret = NULL;
         }
         else if (max_depth != 0 && PyArray_NDIM(arr) > max_depth) {
             PyErr_SetString(PyExc_ValueError,
                             "object too deep for desired array");
             Py_DECREF(arr);
+            Py_XDECREF(newtype);
             ret = NULL;
         }
         else {
