@@ -105,8 +105,6 @@ class CSAIterator:
     def __next__(self):
         return next(self._dataiter).__array__().view(type(self._original))
 
-    next = __next__
-
 
 class ComplicatedSubArray(SubArray):
 

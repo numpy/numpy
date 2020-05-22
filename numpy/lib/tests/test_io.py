@@ -1,4 +1,5 @@
 import sys
+import gc
 import gzip
 import os
 import threading
@@ -12,6 +13,7 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
+from multiprocessing import Process
 
 import numpy as np
 import numpy.ma as ma
@@ -276,8 +278,7 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    #FIXME: Is this still true?
-    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
+    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -290,17 +291,18 @@ class TestSavezLoad(RoundtripTest):
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
-            # collector, so we catch the warnings.  Because ResourceWarning
-            # is unknown in Python < 3.x, we take the easy way out and
-            # catch all warnings.
+            # collector, so we catch the warnings.
             with suppress_warnings() as sup:
-                sup.filter(Warning)  # TODO: specify exact message
+                sup.filter(ResourceWarning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
                         msg = "Failed to load data from a file: %s" % e
                         raise AssertionError(msg)
+                    finally:
+                        if IS_PYPY:
+                            gc.collect()
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -568,16 +570,21 @@ class TestSaveTxt:
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason="large files cause problems")
+    @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        # The test takes at least 6GB of memory, writes a file larger than 4GB
-        test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)], dtype=object)
-        with tempdir() as tmpdir:
-            np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip():
+            # The test takes at least 6GB of memory, writes a file larger than 4GB
+            test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
+                                   for i in range(800000)], dtype=object)
+            with tempdir() as tmpdir:
+                np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        p = Process(target=check_large_zip)
+        p.start()
+        p.join()
+        assert p.exitcode == 0
 
 class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
@@ -1560,6 +1567,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+    def test_dtype_with_object_no_converter(self):
+        # Object without a converter uses bytes:
+        parsed = np.genfromtxt(TextIO("1"), dtype=object)
+        assert parsed[()] == b"1"
+        parsed = np.genfromtxt(TextIO("string"), dtype=object)
+        assert parsed[()] == b"string"
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
@@ -2332,7 +2346,7 @@ M   33  21.99
 
         assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
-        assert_(test.dtype['f2'] == np.integer)
+        assert_(test.dtype['f2'] == np.int_)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)

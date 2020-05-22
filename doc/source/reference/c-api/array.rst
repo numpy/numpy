@@ -251,7 +251,6 @@ From scratch
     .. versionadded:: 1.6
 
     This function steals a reference to *descr* if it is not NULL.
-
     This array creation routine allows for the convenient creation of
     a new array matching an existing array's shapes and memory layout,
     possibly changing the layout and/or data type.
@@ -634,8 +633,17 @@ From other objects
     requirements set to :c:data:`NPY_ARRAY_DEFAULT` and the type_num member of the
     type argument set to *typenum*.
 
-.. c:function:: PyObject *PyArray_FromObject( \
-        PyObject *op, int typenum, int min_depth, int max_depth)
+.. c:function:: PyObject* PyArray_ContiguousFromObject( \
+        PyObject* op, int typenum, int min_depth, int max_depth)
+
+    This function returns a well-behaved C-style contiguous array from any nested
+    sequence or array-interface exporting object. The minimum number of dimensions
+    the array can have is given by `min_depth` while the maximum is `max_depth`.
+    This is equivalent to call :c:func:`PyArray_FromAny` with requirements
+    :c:data:`NPY_ARRAY_DEFAULT` and :c:data:`NPY_ARRAY_ENSUREARRAY`.
+
+.. c:function:: PyObject* PyArray_FromObject( \
+        PyObject* op, int typenum, int min_depth, int max_depth)
 
     Return an aligned and in native-byteorder array from any nested
     sequence or array-interface exporting object, op, of a type given by
@@ -834,7 +842,7 @@ General check of Python Type
 .. c:function:: PyArray_IsPythonScalar(op)
 
     Evaluates true if *op* is a builtin Python scalar object (int,
-    float, complex, str, unicode, long, bool).
+    float, complex, bytes, str, long, bool).
 
 .. c:function:: PyArray_IsAnyScalar(op)
 
@@ -1886,7 +1894,7 @@ Item selection and manipulation
 
     Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
     Return an array with the items of *self* sorted along *axis*. The array
-    is sorted using the algorithm denoted by *kind* , which is an integer/enum pointing
+    is sorted using the algorithm denoted by *kind*, which is an integer/enum pointing
     to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
@@ -3026,7 +3034,7 @@ Other conversions
 
     .. code-block:: c
 
-        #define error_converting(x) (((x) == -1) && PyErr_Occurred()
+        #define error_converting(x) (((x) == -1) && PyErr_Occurred())
 
 .. c:function:: npy_intp PyArray_PyIntAsIntp(PyObject* op)
 

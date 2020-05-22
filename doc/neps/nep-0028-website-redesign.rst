@@ -131,7 +131,7 @@ Possible options for static site generators
    Unlike the previous options, Docusaurus doesn't come with themes, and thus we
    would not want to use this for our landing page. This is an excellent docs
    option written in React. Docusaurus natively has support for i18n (via
-   Crowdin_, document versioning, and document search.
+   Crowdin_), document versioning, and document search.
 
 Both Jekyll and Hugo are excellent options that should be supported into the
 future and are good choices for NumPy. Docusaurus has several bonus features
@@ -153,7 +153,7 @@ significant drain on the time of maintainers.
 2. *Github Pages.* Github Pages also has a 100GB bandwidth limit, and is unclear if
    additional bandwidth can be purchased. It is also unclear where sites are deployed,
    and should be assumed sites aren't deployed globally. Github Pages has an easy to
-   use CI & DNS, similar to to Netlify. HTTPS is supported.
+   use CI & DNS, similar to Netlify. HTTPS is supported.
 3. *Cloudflare.* An excellent option, additional CI is likely needed for the same
    ease of deployment.
 

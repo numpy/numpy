@@ -59,7 +59,7 @@ SciPy pure Python package example
 
 Below is an example of a minimal ``setup.py`` file for a pure SciPy package::
 
-  #!/usr/bin/env python
+  #!/usr/bin/env python3
   def configuration(parent_package='',top_path=None):
       from numpy.distutils.misc_util import Configuration
       config = Configuration('mypackage',parent_package,top_path)
@@ -345,7 +345,7 @@ expression, '<...>' will be replaced first with item1, and then with
 item2, and so forth until N repeats are accomplished. Once a named
 repeat specification has been introduced, the same repeat rule may be
 used **in the current block** by referring only to the name
-(i.e. <rule1>.
+(i.e. <rule1>).
 
 
 Short repeat rule

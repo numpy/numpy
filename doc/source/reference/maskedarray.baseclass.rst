@@ -33,7 +33,7 @@ defines several constants.
 
    Value indicating that a masked array has no invalid entry.
    :attr:`nomask` is used internally to speed up computations when the mask
-   is not needed.
+   is not needed. It is represented internally as ``np.False_``.
 
 
 .. data:: masked_print_options
@@ -125,7 +125,6 @@ Conversion
 
    MaskedArray.__float__
    MaskedArray.__int__
-   MaskedArray.__long__
 
    MaskedArray.view
    MaskedArray.astype

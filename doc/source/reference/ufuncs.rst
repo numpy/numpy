@@ -380,7 +380,7 @@ advanced usage and will not typically be used.
     result as a dimension with size one, so that the result will broadcast
     correctly against the inputs. This option can only be used for generalized
     ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions , i.e., with
+    dimensions and with outputs that have no core dimensions, i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
     the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
@@ -441,13 +441,13 @@ advanced usage and will not typically be used.
 
 *extobj*
 
-    a list of length 1, 2, or 3 specifying the ufunc buffer-size, the
-    error mode integer, and the error call-back function. Normally, these
+    a list of length 3 specifying the ufunc buffer-size, the error
+    mode integer, and the error call-back function. Normally, these
     values are looked up in a thread-specific dictionary. Passing them
     here circumvents that look up and uses the low-level specification
-    provided for the error mode. This may be useful, for example, as an
-    optimization for calculations requiring many ufunc calls on small arrays
-    in a loop.
+    provided for the error mode. This may be useful, for example, as
+    an optimization for calculations requiring many ufunc calls on
+    small arrays in a loop.
 
 
 

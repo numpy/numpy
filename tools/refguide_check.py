@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 refguide_check.py [OPTIONS] [-- ARGS]
 
@@ -119,6 +119,9 @@ RST_SKIPLIST = [
     'doc/release',
     'doc/source/release',
     'c-info.ufunc-tutorial.rst',
+    'c-info.python-as-glue.rst',
+    'f2py.getting-started.rst',
+    'arrays.nditer.cython.rst',
 ]
 
 # these names are not required to be present in ALL despite being in
@@ -447,7 +450,7 @@ def validate_rst_syntax(text, name, dots=True):
         return False, "ERROR: %s: no documentation" % (name,)
 
     ok_unknown_items = set([
-        'mod', 'currentmodule', 'autosummary', 'data', 'attr',
+        'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
         'obj', 'versionadded', 'versionchanged', 'module', 'class',
         'ref', 'func', 'toctree', 'moduleauthor', 'term', 'c:member',
         'sectionauthor', 'codeauthor', 'eq', 'doi', 'DOI', 'arXiv', 'arxiv'
@@ -1034,7 +1037,7 @@ def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
     Yields
     ------
     path
-        Path of the directory and it's sub directories
+        Path of the directory and its sub directories
     """
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path

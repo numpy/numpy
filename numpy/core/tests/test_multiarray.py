@@ -16,19 +16,12 @@ from contextlib import contextmanager
 
 from numpy.compat import pickle
 
-try:
-    import pathlib
-except ImportError:
-    try:
-        import pathlib2 as pathlib
-    except ImportError:
-        pathlib = None
-
+import pathlib
 import builtins
 from decimal import Decimal
 
 import numpy as np
-from numpy.compat import strchar, unicode
+from numpy.compat import strchar
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
@@ -363,6 +356,11 @@ class TestAttributes:
         a.strides = 1
         a[::2].strides = 2
 
+        # test 0d
+        arr_0d = np.array(0)
+        arr_0d.strides = ()
+        assert_raises(TypeError, set_strides, arr_0d, None)
+
     def test_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = np.empty((3, 2, 1), t)
@@ -686,6 +684,12 @@ class TestZeroRank:
         y[()] = 6
         assert_equal(x[()], 6)
 
+        # strides and shape must be the same length
+        with pytest.raises(ValueError):
+            np.ndarray((2,), strides=())
+        with pytest.raises(ValueError):
+            np.ndarray((), strides=(2,))
+
     def test_output(self):
         x = np.array(2)
         assert_raises(ValueError, np.add, x, [1], x)
@@ -984,7 +988,22 @@ class TestCreation:
             def __len__(self):
                 return 42
 
-        assert_raises(ValueError, np.array, C()) # segfault?
+        a = np.array(C()) # segfault?
+        assert_equal(len(a), 0)
+
+    def test_false_len_iterable(self):
+        # Special case where a bad __getitem__ makes us fall back on __iter__:
+        class C:
+            def __getitem__(self, x):
+                raise Exception
+            def __iter__(self):
+                return iter(())
+            def __len__(self):
+                return 2
+
+        a = np.empty(2)
+        with assert_raises(ValueError):
+            a[:] = C()  # Segfault!
 
     def test_failed_len_sequence(self):
         # gh-7393
@@ -1464,12 +1483,12 @@ class TestZeroSizeFlexible:
         assert_equal(zs.itemsize, 0)
         zs = self._zeros(10, np.void)
         assert_equal(zs.itemsize, 0)
-        zs = self._zeros(10, unicode)
+        zs = self._zeros(10, str)
         assert_equal(zs.itemsize, 0)
 
     def _test_sort_partition(self, name, kinds, **kwargs):
         # Previously, these would all hang
-        for dt in [bytes, np.void, unicode]:
+        for dt in [bytes, np.void, str]:
             zs = self._zeros(10, dt)
             sort_method = getattr(zs, name)
             sort_func = getattr(np, name)
@@ -1491,13 +1510,13 @@ class TestZeroSizeFlexible:
 
     def test_resize(self):
         # previously an error
-        for dt in [bytes, np.void, unicode]:
+        for dt in [bytes, np.void, str]:
             zs = self._zeros(10, dt)
             zs.resize(25)
             zs.resize((10, 10))
 
     def test_view(self):
-        for dt in [bytes, np.void, unicode]:
+        for dt in [bytes, np.void, str]:
             zs = self._zeros(10, dt)
 
             # viewing as itself should be allowed
@@ -1512,7 +1531,7 @@ class TestZeroSizeFlexible:
 
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            for dt in [bytes, np.void, unicode]:
+            for dt in [bytes, np.void, str]:
                 zs = self._zeros(10, dt)
                 p = pickle.dumps(zs, protocol=proto)
                 zs2 = pickle.loads(p)
@@ -1577,6 +1596,11 @@ class TestMethods:
         oned = np.ones(1)
         # gh-12031, caused SEGFAULT
         assert_raises(TypeError, oned.choose,np.void(0), [oned])
+
+        out = np.array(0)
+        ret = np.choose(np.array(1), [10, 20, 30], out=out)
+        assert out is ret
+        assert_equal(out[()], 20)
 
         # gh-6272 check overlap on out
         x = np.arange(5)
@@ -1654,7 +1678,7 @@ class TestMethods:
             out = np.zeros_like(arr)
             res = arr.round(*round_args, out=out)
             assert_equal(out, expected)
-            assert_equal(out, res)
+            assert out is res
 
         check_round(np.array([1.2, 1.5]), [1, 2])
         check_round(np.array(1.5), 2)
@@ -1697,53 +1721,60 @@ class TestMethods:
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
-        # all c scalar sorts use the same code with different types
-        # so it suffices to run a quick check with one type. The number
-        # of sorted items must be greater than ~50 to check the actual
-        # algorithm because quick and merge sort fall over to insertion
-        # sort for small arrays.
-        # Test unsigned dtypes and nonnegative numbers
-        for dtype in [np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32, np.float64, np.longdouble]:
-            a = np.arange(101, dtype=dtype)
-            b = a[::-1].copy()
-            for kind in self.sort_kinds:
-                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
-                c = a.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
-                c = b.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
+    # all c scalar sorts use the same code with different types
+    # so it suffices to run a quick check with one type. The number
+    # of sorted items must be greater than ~50 to check the actual
+    # algorithm because quick and merge sort fall over to insertion
+    # sort for small arrays.
 
-        # Test signed dtypes and negative numbers as well
-        for dtype in [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble]:
-            a = np.arange(-50, 51, dtype=dtype)
-            b = a[::-1].copy()
-            for kind in self.sort_kinds:
-                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
-                c = a.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
-                c = b.copy()
-                c.sort(kind=kind)
-                assert_equal(c, a, msg)
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64,
+                                       np.float16, np.float32, np.float64,
+                                       np.longdouble])
+    def test_sort_unsigned(self, dtype):
+        a = np.arange(101, dtype=dtype)
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = "scalar sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
 
+    @pytest.mark.parametrize('dtype',
+                             [np.int8, np.int16, np.int32, np.int64, np.float16,
+                              np.float32, np.float64, np.longdouble])
+    def test_sort_signed(self, dtype):
+        a = np.arange(-50, 51, dtype=dtype)
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = "scalar sort, kind=%s" % (kind)
+            c = a.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy()
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+    @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.longdouble])
+    @pytest.mark.parametrize('part', ['real', 'imag'])
+    def test_sort_complex(self, part, dtype):
         # test complex sorts. These use the same code as the scalars
         # but the compare function differs.
-        ai = a*1j + 1
-        bi = b*1j + 1
+        cdtype = {
+            np.single: np.csingle,
+            np.double: np.cdouble,
+            np.longdouble: np.clongdouble,
+        }[dtype]
+        a = np.arange(-50, 51, dtype=dtype)
+        b = a[::-1].copy()
+        ai = (a * (1+1j)).astype(cdtype)
+        bi = (b * (1+1j)).astype(cdtype)
+        setattr(ai, part, 1)
+        setattr(bi, part, 1)
         for kind in self.sort_kinds:
-            msg = "complex sort, real part == 1, kind=%s" % kind
-            c = ai.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-            c = bi.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-        ai = a + 1j
-        bi = b + 1j
-        for kind in self.sort_kinds:
-            msg = "complex sort, imag part == 1, kind=%s" % kind
+            msg = "complex sort, %s part == 1, kind=%s" % (part, kind)
             c = ai.copy()
             c.sort(kind=kind)
             assert_equal(c, ai, msg)
@@ -1751,6 +1782,7 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, ai, msg)
 
+    def test_sort_complex_byte_swapping(self):
         # test sorting of complex arrays requiring byte-swapping, gh-5441
         for endianness in '<>':
             for dt in np.typecodes['Complex']:
@@ -1760,12 +1792,13 @@ class TestMethods:
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
                 assert_equal(c, arr, msg)
 
-        # test string sorts.
-        s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)])
+    @pytest.mark.parametrize('dtype', [np.bytes_, np.unicode_])
+    def test_sort_string(self, dtype):
+        # np.array will perform the encoding to bytes for us in the bytes test
+        a = np.array(['aaaaaaaa' + chr(i) for i in range(101)], dtype=dtype)
         b = a[::-1].copy()
         for kind in self.sort_kinds:
-            msg = "string sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1773,25 +1806,13 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test unicode sorts.
-        s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
-        b = a[::-1].copy()
-        for kind in self.sort_kinds:
-            msg = "unicode sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
+    def test_sort_object(self):
         # test object array sorts.
         a = np.empty((101,), dtype=object)
         a[:] = list(range(101))
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
-            msg = "object sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1799,12 +1820,13 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
+    def test_sort_structured(self):
         # test record array sorts.
         dt = np.dtype([('f', float), ('i', int)])
         a = np.array([(i, i) for i in range(101)], dtype=dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
-            msg = "object sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1812,11 +1834,13 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test datetime64 sorts.
-        a = np.arange(0, 101, dtype='datetime64[D]')
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    def test_sort_time(self, dtype):
+        # test datetime64 and timedelta64 sorts.
+        a = np.arange(0, 101, dtype=dtype)
         b = a[::-1]
         for kind in ['q', 'h', 'm']:
-            msg = "datetime64 sort, kind=%s" % kind
+            msg = "kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -1824,18 +1848,7 @@ class TestMethods:
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test timedelta64 sorts.
-        a = np.arange(0, 101, dtype='timedelta64[D]')
-        b = a[::-1]
-        for kind in ['q', 'h', 'm']:
-            msg = "timedelta64 sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-
+    def test_sort_axis(self):
         # check axis handling. This should be the same for all type
         # specific sorts, so we only check it for one type and one kind
         a = np.array([[3, 2], [1, 0]])
@@ -1851,6 +1864,7 @@ class TestMethods:
         d.sort()
         assert_equal(d, c, "test sort with default axis")
 
+    def test_sort_size_0(self):
         # check axis handling for multidimensional empty arrays
         a = np.array([])
         a.shape = (3, 2, 1, 0)
@@ -1860,16 +1874,19 @@ class TestMethods:
         msg = 'test empty array sort with axis=None'
         assert_equal(np.sort(a, axis=None), a.ravel(), msg)
 
+    def test_sort_bad_ordering(self):
         # test generic class with bogus ordering,
         # should not segfault.
         class Boom:
             def __lt__(self, other):
                 return True
 
-        a = np.array([Boom()]*100, dtype=object)
+        a = np.array([Boom()] * 100, dtype=object)
         for kind in self.sort_kinds:
-            msg = "bogus comparison object sort, kind=%s" % kind
+            msg = "kind=%s" % kind
+            c = a.copy()
             c.sort(kind=kind)
+            assert_equal(c, a, msg)
 
     def test_void_sort(self):
         # gh-8210 - previously segfaulted
@@ -2761,11 +2778,6 @@ class TestMethods:
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-    def test_flatten_invalid_order(self):
-        # invalid after gh-14596
-        for order in ['Z', 'c', False, True, 0, 8]:
-            x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
-            assert_raises(ValueError, x.flatten, {"order": order})
 
     @pytest.mark.parametrize('func', (np.dot, np.matmul))
     def test_arr_mult(self, func):
@@ -3030,6 +3042,10 @@ class TestMethods:
         assert_equal(b.trace(0, 0, 2), [5, 9])
         assert_equal(b.trace(0, 1, 2), [3, 11])
         assert_equal(b.trace(offset=1, axis1=0, axis2=2), [1, 3])
+
+        out = np.array(1)
+        ret = a.trace(out=out)
+        assert ret is out
 
     def test_trace_subclass(self):
         # The class would need to overwrite trace to ensure single-element
@@ -4134,6 +4150,13 @@ class TestArgmax:
         a.argmax(-1, out=out)
         assert_equal(out, a.argmax(-1))
 
+    @pytest.mark.parametrize('ndim', [0, 1])
+    def test_ret_is_out(self, ndim):
+        a = np.ones((4,) + (3,)*ndim)
+        out = np.empty((3,)*ndim, dtype=np.intp)
+        ret = a.argmax(axis=0, out=out)
+        assert ret is out
+
     def test_argmax_unicode(self):
         d = np.zeros(6031, dtype='<U9')
         d[5942] = "as"
@@ -4282,6 +4305,13 @@ class TestArgmin:
         out = np.ones(10, dtype=np.int_)
         a.argmin(-1, out=out)
         assert_equal(out, a.argmin(-1))
+
+    @pytest.mark.parametrize('ndim', [0, 1])
+    def test_ret_is_out(self, ndim):
+        a = np.ones((4,) + (3,)*ndim)
+        out = np.empty((3,)*ndim, dtype=np.intp)
+        ret = a.argmin(axis=0, out=out)
+        assert ret is out
 
     def test_argmin_unicode(self):
         d = np.ones(6031, dtype='<U9')
@@ -4456,7 +4486,7 @@ class TestPutmask:
         assert_equal(x[mask], np.array(val, T))
 
     def test_ip_types(self):
-        unchecked_types = [bytes, unicode, np.void]
+        unchecked_types = [bytes, str, np.void]
 
         x = np.random.random(1000)*100
         mask = x < 40
@@ -4510,7 +4540,7 @@ class TestTake:
         assert_array_equal(x.take(ind, axis=0), x)
 
     def test_ip_types(self):
-        unchecked_types = [bytes, unicode, np.void]
+        unchecked_types = [bytes, str, np.void]
 
         x = np.random.random(24)*100
         x.shape = 2, 3, 4
@@ -4559,6 +4589,16 @@ class TestTake:
         x = np.arange(5)
         y = np.take(x, [1, 2, 3], out=x[2:5], mode='wrap')
         assert_equal(y, np.array([1, 2, 3]))
+
+    @pytest.mark.parametrize('shape', [(1, 2), (1,), ()])
+    def test_ret_is_out(self, shape):
+        # 0d arrays should not be an exception to this rule
+        x = np.arange(5)
+        inds = np.zeros(shape, dtype=np.intp)
+        out = np.zeros(shape, dtype=x.dtype)
+        ret = np.take(x, inds, out=out)
+        assert ret is out
+
 
 class TestLexsort:
     @pytest.mark.parametrize('dtype',[
@@ -4680,14 +4720,12 @@ class TestIO:
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
-    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
     def test_roundtrip_pathlib(self):
         p = pathlib.Path(self.filename)
         self.x.tofile(p)
         y = np.fromfile(p, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
-    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
     def test_roundtrip_dump_pathlib(self):
         p = pathlib.Path(self.filename)
         self.x.dump(p)
@@ -5498,6 +5536,12 @@ class TestStats:
         # of float32.
         assert_(_mean(np.ones(100000, dtype='float16')) == 1)
 
+    def test_mean_axis_error(self):
+        # Ensure that AxisError is raised instead of IndexError when axis is
+        # out of bounds, see gh-15817.
+        with assert_raises(np.core._exceptions.AxisError):
+            np.arange(10).mean(axis=2)
+
     def test_var_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
@@ -5506,6 +5550,45 @@ class TestStats:
                 tgt = msqr - mean * mean.conjugate()
                 res = _var(mat, axis=axis)
                 assert_almost_equal(res, tgt)
+
+    @pytest.mark.parametrize(('complex_dtype', 'ndec'), (
+        ('complex64', 6),
+        ('complex128', 7),
+        ('clongdouble', 7),
+    ))
+    def test_var_complex_values(self, complex_dtype, ndec):
+        # Test fast-paths for every builtin complex type
+        for axis in [0, 1, None]:
+            mat = self.cmat.copy().astype(complex_dtype)
+            msqr = _mean(mat * mat.conj(), axis=axis)
+            mean = _mean(mat, axis=axis)
+            tgt = msqr - mean * mean.conjugate()
+            res = _var(mat, axis=axis)
+            assert_almost_equal(res, tgt, decimal=ndec)
+
+    def test_var_dimensions(self):
+        # _var paths for complex number introduce additions on views that
+        # increase dimensions. Ensure this generalizes to higher dims
+        mat = np.stack([self.cmat]*3)
+        for axis in [0, 1, 2, -1, None]:
+            msqr = _mean(mat * mat.conj(), axis=axis)
+            mean = _mean(mat, axis=axis)
+            tgt = msqr - mean * mean.conjugate()
+            res = _var(mat, axis=axis)
+            assert_almost_equal(res, tgt)
+
+    def test_var_complex_byteorder(self):
+        # Test that var fast-path does not cause failures for complex arrays
+        # with non-native byteorder
+        cmat = self.cmat.copy().astype('complex128')
+        cmat_swapped = cmat.astype(cmat.dtype.newbyteorder())
+        assert_almost_equal(cmat.var(), cmat_swapped.var())
+
+    def test_var_axis_error(self):
+        # Ensure that AxisError is raised instead of IndexError when axis is
+        # out of bounds, see gh-15817.
+        with assert_raises(np.core._exceptions.AxisError):
+            np.arange(10).var(axis=2)
 
     def test_std_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:

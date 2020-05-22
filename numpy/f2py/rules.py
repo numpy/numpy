@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -1157,7 +1157,6 @@ def buildmodule(m, um):
     """
     Return
     """
-    global f2py_version, options
     outmess('\tBuilding module "%s"...\n' % (m['name']))
     ret = {}
     mod_rules = defmod_rules[:]

@@ -15,7 +15,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.testing._private.utils import _no_tracing
-from numpy.compat import asbytes, asunicode, long, pickle
+from numpy.compat import asbytes, asunicode, pickle
 
 try:
     RecursionError
@@ -451,6 +451,11 @@ class TestRegression:
         xs.shape = (2, 0)
         xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 2
+
+    def test_lexsort_invalid_axis(self):
+        assert_raises(np.AxisError, np.lexsort, (np.arange(1),), axis=2)
+        assert_raises(np.AxisError, np.lexsort, (np.array([]),), axis=1)
+        assert_raises(np.AxisError, np.lexsort, (np.array(1),), axis=10)
 
     def test_lexsort_zerolen_element(self):
         dt = np.dtype([])  # a void dtype with no fields
@@ -1408,6 +1413,13 @@ class TestRegression:
                      dtype='U')
         assert_raises(UnicodeEncodeError, np.array, a, 'S4')
 
+    def test_unicode_to_string_cast_error(self):
+        # gh-15790
+        a = np.array([u'\x80'] * 129, dtype='U3')
+        assert_raises(UnicodeEncodeError, np.array, a, 'S')
+        b = a.reshape(3, 43)[:-1, :-1]
+        assert_raises(UnicodeEncodeError, np.array, b, 'S')
+
     def test_mixed_string_unicode_array_creation(self):
         a = np.array(['1234', u'123'])
         assert_(a.itemsize == 16)
@@ -1497,14 +1509,11 @@ class TestRegression:
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, int, np.compat.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int):
                 test_type(t)
 
     def test_buffer_hashlib(self):
-        try:
-            from hashlib import md5
-        except ImportError:
-            from md5 import new as md5
+        from hashlib import md5
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
@@ -1799,7 +1808,6 @@ class TestRegression:
         a = np.array(0, dtype=object)
         a[()] = a
         assert_raises(RecursionError, int, a)
-        assert_raises(RecursionError, long, a)
         assert_raises(RecursionError, float, a)
         a[()] = None
 
@@ -1825,7 +1833,6 @@ class TestRegression:
         b = np.array(0, dtype=object)
         a[()] = b
         assert_equal(int(a), int(0))
-        assert_equal(long(a), long(0))
         assert_equal(float(a), float(0))
 
     def test_object_array_self_copy(self):
@@ -2028,6 +2035,7 @@ class TestRegression:
         a[...] = [[1, 2]]
         assert_equal(a, [[1, 2], [1, 2]])
 
+    @pytest.mark.slow_pypy
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
         for i in range(1000):
@@ -2481,4 +2489,3 @@ class TestRegression:
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
-

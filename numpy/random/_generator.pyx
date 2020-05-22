@@ -11,6 +11,7 @@ import numpy as np
 cimport numpy as np
 from numpy.core.multiarray import normalize_axis_index
 
+from .c_distributions cimport *
 from libc cimport string
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
@@ -26,116 +27,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
         )
 
-
-cdef extern from "numpy/random/distributions.h":
-
-    struct s_binomial_t:
-        int has_binomial
-        double psave
-        int64_t nsave
-        double r
-        double q
-        double fm
-        int64_t m
-        double p1
-        double xm
-        double xl
-        double xr
-        double c
-        double laml
-        double lamr
-        double p2
-        double p3
-        double p4
-
-    ctypedef s_binomial_t binomial_t
-
-    double random_standard_uniform(bitgen_t *bitgen_state) nogil
-    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
-    double random_standard_exponential(bitgen_t *bitgen_state) nogil
-    double random_standard_exponential_f(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    double random_standard_normal(bitgen_t* bitgen_state) nogil
-    void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
-    void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
-    double random_standard_gamma(bitgen_t *bitgen_state, double shape) nogil
-
-    float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
-    void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
-    float random_standard_normal_f(bitgen_t* bitgen_state) nogil
-    float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
-
-    int64_t random_positive_int64(bitgen_t *bitgen_state) nogil
-    int32_t random_positive_int32(bitgen_t *bitgen_state) nogil
-    int64_t random_positive_int(bitgen_t *bitgen_state) nogil
-    uint64_t random_uint(bitgen_t *bitgen_state) nogil
-
-    double random_normal(bitgen_t *bitgen_state, double loc, double scale) nogil
-
-    double random_gamma(bitgen_t *bitgen_state, double shape, double scale) nogil
-    float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) nogil
-
-    double random_exponential(bitgen_t *bitgen_state, double scale) nogil
-    double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
-    double random_beta(bitgen_t *bitgen_state, double a, double b) nogil
-    double random_chisquare(bitgen_t *bitgen_state, double df) nogil
-    double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
-    double random_standard_cauchy(bitgen_t *bitgen_state) nogil
-    double random_pareto(bitgen_t *bitgen_state, double a) nogil
-    double random_weibull(bitgen_t *bitgen_state, double a) nogil
-    double random_power(bitgen_t *bitgen_state, double a) nogil
-    double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
-    double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) nogil
-    double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
-    double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) nogil
-    double random_rayleigh(bitgen_t *bitgen_state, double mode) nogil
-    double random_standard_t(bitgen_t *bitgen_state, double df) nogil
-    double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
-                                       double nonc) nogil
-    double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
-                               double dfden, double nonc) nogil
-    double random_wald(bitgen_t *bitgen_state, double mean, double scale) nogil
-    double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
-    double random_triangular(bitgen_t *bitgen_state, double left, double mode,
-                             double right) nogil
-
-    int64_t random_poisson(bitgen_t *bitgen_state, double lam) nogil
-    int64_t random_negative_binomial(bitgen_t *bitgen_state, double n, double p) nogil
-    int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n, binomial_t *binomial) nogil
-    int64_t random_logseries(bitgen_t *bitgen_state, double p) nogil
-    int64_t random_geometric_search(bitgen_t *bitgen_state, double p) nogil
-    int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) nogil
-    int64_t random_geometric(bitgen_t *bitgen_state, double p) nogil
-    int64_t random_zipf(bitgen_t *bitgen_state, double a) nogil
-    int64_t random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
-                                    int64_t sample) nogil
-
-    uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max) nogil
-
-    # Generate random uint64 numbers in closed interval [off, off + rng].
-    uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
-                                   uint64_t off, uint64_t rng,
-                                   uint64_t mask, bint use_masked) nogil
-
-    void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
-                            double *pix, np.npy_intp d, binomial_t *binomial) nogil
-
-    int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
-                          int64_t total,
-                          size_t num_colors, int64_t *colors,
-                          int64_t nsample,
-                          size_t num_variates, int64_t *variates) nogil
-    void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
-                               int64_t total,
-                               size_t num_colors, int64_t *colors,
-                               int64_t nsample,
-                               size_t num_variates, int64_t *variates) nogil
-
 np.import_array()
-
 
 cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
     """
@@ -624,7 +516,7 @@ cdef class Generator:
     @cython.wraparound(True)
     def choice(self, a, size=None, replace=True, p=None, axis=0, bint shuffle=True):
         """
-        choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
+        choice(a, size=None, replace=True, p=None, axis=0, shuffle=True)
 
         Generates a random sample from a given 1-D array
 
@@ -2952,14 +2844,14 @@ cdef class Generator:
 
         Samples are drawn from a negative binomial distribution with specified
         parameters, `n` successes and `p` probability of success where `n`
-        is > 0 and `p` is in the interval [0, 1].
+        is > 0 and `p` is in the interval (0, 1].
 
         Parameters
         ----------
         n : float or array_like of floats
             Parameter of the distribution, > 0.
         p : float or array_like of floats
-            Parameter of the distribution, >= 0 and <=1.
+            Parameter of the distribution. Must satisfy 0 < p <= 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3017,7 +2909,7 @@ cdef class Generator:
         """
         return disc(&random_negative_binomial, &self._bitgen, size, self.lock, 2, 0,
                     n, 'n', CONS_POSITIVE_NOT_NAN,
-                    p, 'p', CONS_BOUNDED_0_1,
+                    p, 'p', CONS_BOUNDED_GT_0_1,
                     0.0, '', CONS_NONE)
 
     def poisson(self, lam=1.0, size=None):
@@ -3610,14 +3502,14 @@ cdef class Generator:
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
         if method == 'svd':
-            from numpy.dual import svd
+            from numpy.linalg import svd
             (u, s, vh) = svd(cov)
         elif method == 'eigh':
-            from numpy.dual import eigh
+            from numpy.linalg import eigh
             # could call linalg.svd(hermitian=True), but that calculates a vh we don't need
             (s, u)  = eigh(cov)
         else:
-            from numpy.dual import cholesky
+            from numpy.linalg import cholesky
             l = cholesky(cov)
 
         # make sure check_valid is ignored whe method == 'cholesky'
@@ -3645,10 +3537,9 @@ cdef class Generator:
             # approximately zero or when the covariance is not positive-semidefinite
             _factor = u * np.sqrt(abs(s))
         else:
-            _factor = np.sqrt(s)[:, None] * vh
+            _factor = u * np.sqrt(s)
 
-        x = np.dot(x, _factor)
-        x += mean
+        x = mean + x @ _factor.T
         x.shape = tuple(final_shape)
         return x
 
@@ -3751,8 +3642,8 @@ cdef class Generator:
 
         d = len(pvals)
         on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
-        parr = <np.ndarray>np.PyArray_FROM_OTF(
-            pvals, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        parr = <np.ndarray>np.PyArray_FROMANY(
+            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
@@ -4032,23 +3923,23 @@ cdef class Generator:
 
         Parameters
         ----------
-        alpha : array
-            Parameter of the distribution (k dimension for sample of
-            dimension k).
+        alpha : sequence of floats, length k
+            Parameter of the distribution (length ``k`` for sample of
+            length ``k``).
         size : int or tuple of ints, optional
-            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            Output shape.  If the given shape is, e.g., ``(m, n)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            vector of length ``k`` is returned.
 
         Returns
         -------
         samples : ndarray,
-            The drawn samples, of shape (size, alpha.ndim).
+            The drawn samples, of shape ``(size, k)``.
 
         Raises
         -------
         ValueError
-            If any value in alpha is less than or equal to zero
+            If any value in ``alpha`` is less than or equal to zero
 
         Notes
         -----
@@ -4116,14 +4007,17 @@ cdef class Generator:
         # return val
 
         cdef np.npy_intp k, totsize, i, j
-        cdef np.ndarray alpha_arr, val_arr
+        cdef np.ndarray alpha_arr, val_arr, alpha_csum_arr
+        cdef double csum
         cdef double *alpha_data
+        cdef double *alpha_csum_data
         cdef double *val_data
-        cdef double acc, invacc
+        cdef double acc, invacc, v
 
         k = len(alpha)
-        alpha_arr = <np.ndarray>np.PyArray_FROM_OTF(
-            alpha, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        alpha_arr = <np.ndarray>np.PyArray_FROMANY(
+            alpha, np.NPY_DOUBLE, 1, 1,
+            np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         if np.any(np.less_equal(alpha_arr, 0)):
             raise ValueError('alpha <= 0')
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
@@ -4142,17 +4036,74 @@ cdef class Generator:
 
         i = 0
         totsize = np.PyArray_SIZE(val_arr)
-        with self.lock, nogil:
-            while i < totsize:
-                acc = 0.0
-                for j in range(k):
-                    val_data[i+j] = random_standard_gamma(&self._bitgen,
-                                                              alpha_data[j])
-                    acc = acc + val_data[i + j]
-                invacc = 1/acc
-                for j in range(k):
-                    val_data[i + j] = val_data[i + j] * invacc
-                i = i + k
+
+        # Select one of the following two algorithms for the generation
+        #  of Dirichlet random variates (RVs)
+        #
+        # A) Small alpha case: Use the stick-breaking approach with beta
+        #    random variates (RVs).
+        # B) Standard case: Perform unit normalisation of a vector
+        #    of gamma random variates
+        #
+        # A) prevents NaNs resulting from 0/0 that may occur in B)
+        # when all values in the vector ':math:\\alpha' are smaller
+        # than 1, then there is a nonzero probability that all
+        # generated gamma RVs will be 0. When that happens, the
+        # normalization process ends up computing 0/0, giving nan. A)
+        # does not use divisions, so that a situation in which 0/0 has
+        # to be computed cannot occur. A) is slower than B) as
+        # generation of beta RVs is slower than generation of gamma
+        # RVs. A) is selected whenever `alpha.max() < t`, where `t <
+        # 1` is a threshold that controls the probability of
+        # generating a NaN value when B) is used. For a given
+        # threshold `t` this probability can be bounded by
+        # `gammainc(t, d)` where `gammainc` is the regularized
+        # incomplete gamma function and `d` is the smallest positive
+        # floating point number that can be represented with a given
+        # precision. For the chosen threshold `t=0.1` this probability
+        # is smaller than `1.8e-31` for double precision floating
+        # point numbers.
+
+        if (k > 0) and (alpha_arr.max() < 0.1):
+            # Small alpha case: Use stick-breaking approach with beta
+            # random variates (RVs).
+            # alpha_csum_data will hold the cumulative sum, right to
+            # left, of alpha_arr.
+            # Use a numpy array for memory management only.  We could just as
+            # well have malloc'd alpha_csum_data.  alpha_arr is a C-contiguous
+            # double array, therefore so is alpha_csum_arr.
+            alpha_csum_arr = np.empty_like(alpha_arr)
+            alpha_csum_data = <double*>np.PyArray_DATA(alpha_csum_arr)
+            csum = 0.0
+            for j in range(k - 1, -1, -1):
+                csum += alpha_data[j]
+                alpha_csum_data[j] = csum
+
+            with self.lock, nogil:
+                while i < totsize:
+                    acc = 1.
+                    for j in range(k - 1):
+                        v = random_beta(&self._bitgen, alpha_data[j],
+                                        alpha_csum_data[j + 1])
+                        val_data[i + j] = acc * v
+                        acc *= (1. - v)
+                    val_data[i + k - 1] = acc
+                    i = i + k
+
+        else:
+            # Standard case: Unit normalisation of a vector of gamma random
+            # variates
+            with self.lock, nogil:
+                while i < totsize:
+                    acc = 0.
+                    for j in range(k):
+                        val_data[i + j] = random_standard_gamma(&self._bitgen,
+                                                                alpha_data[j])
+                        acc = acc + val_data[i + j]
+                    invacc = 1. / acc
+                    for j in range(k):
+                        val_data[i + j] = val_data[i + j] * invacc
+                    i = i + k
 
         return diric
 

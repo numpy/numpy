@@ -3,6 +3,7 @@ import warnings
 import sys
 import decimal
 from fractions import Fraction
+import math
 import pytest
 
 import numpy as np
@@ -21,7 +22,6 @@ from numpy.lib import (
     select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
     )
 
-from numpy.compat import long
 
 def get_mat(n):
     data = np.arange(n)
@@ -273,6 +273,13 @@ class TestCopy:
         assert_(not a_fort_copy.flags.c_contiguous)
         assert_(a_fort_copy.flags.f_contiguous)
 
+    def test_subok(self):
+        mx = ma.ones(5)
+        assert_(not ma.isMaskedArray(np.copy(mx, subok=False)))
+        assert_(ma.isMaskedArray(np.copy(mx, subok=True)))
+        # Default behavior
+        assert_(not ma.isMaskedArray(np.copy(mx)))
+
 
 class TestAverage:
 
@@ -502,12 +509,11 @@ class TestInsert:
                      insert(a, 1, a[:, 2, :], axis=1))
 
     def test_0d(self):
-        # This is an error in the future
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(insert(a, [], 2, axis=0), np.array(2))
-            assert_(w[0].category is DeprecationWarning)
+        with pytest.raises(np.AxisError):
+            insert(a, [], 2, axis=0)
+        with pytest.raises(TypeError):
+            insert(a, [], 2, axis="nonsense")
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -536,6 +542,12 @@ class TestInsert:
         val = [(4, 'd')] * 2
         b = np.insert(a, [0, 2], val)
         assert_array_equal(b[[0, 3]], np.array(val, dtype=b.dtype))
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([1.0, 2.0]), [10, 20])
+        with pytest.raises(IndexError):
+            np.insert([0, 1, 2], np.array([], dtype=float), [])
 
 
 class TestAmax:
@@ -797,10 +809,6 @@ class TestDelete:
         a_del = delete(self.a, indices)
         nd_a_del = delete(self.nd_a, indices, axis=1)
         msg = 'Delete failed for obj: %r' % indices
-        # NOTE: The cast should be removed after warning phase for bools
-        if not isinstance(indices, (slice, int, long, np.integer)):
-            indices = np.asarray(indices, dtype=np.intp)
-            indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
         xor = setxor1d(nd_a_del[0,:, 0], self.nd_a[0, indices, 0])
@@ -816,19 +824,25 @@ class TestDelete:
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
-        # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            assert_raises(DeprecationWarning, delete, self.a, [100])
-            assert_raises(DeprecationWarning, delete, self.a, [-100])
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', category=FutureWarning)
-            self._check_inverse_of_slicing([0, -1, 2, 2])
-            obj = np.array([True, False, False], dtype=bool)
-            self._check_inverse_of_slicing(obj)
-            assert_(w[0].category is FutureWarning)
-            assert_(w[1].category is FutureWarning)
+        with pytest.raises(IndexError):
+            delete(self.a, [100])
+        with pytest.raises(IndexError):
+            delete(self.a, [-100])
+
+        self._check_inverse_of_slicing([0, -1, 2, 2])
+
+        self._check_inverse_of_slicing([True, False, False, True, False])
+
+        # not legal, indexing with these would change the dimension
+        with pytest.raises(ValueError):
+            delete(self.a, True)
+        with pytest.raises(ValueError):
+            delete(self.a, False)
+
+        # not enough items
+        with pytest.raises(ValueError):
+            delete(self.a, [False]*4)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
@@ -836,10 +850,10 @@ class TestDelete:
 
     def test_0d(self):
         a = np.array(1)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(delete(a, [], axis=0), a)
-            assert_(w[0].category is DeprecationWarning)
+        with pytest.raises(np.AxisError):
+            delete(a, [], axis=0)
+        with pytest.raises(TypeError):
+            delete(a, [], axis="nonsense")
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -860,6 +874,12 @@ class TestDelete:
         # same ordering as 'k' and NOT become C ordered
         assert_equal(m.flags.c_contiguous, k.flags.c_contiguous)
         assert_equal(m.flags.f_contiguous, k.flags.f_contiguous)
+
+    def test_index_floats(self):
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([1.0, 2.0]))
+        with pytest.raises(IndexError):
+            np.delete([0, 1, 2], np.array([], dtype=float))
 
 
 class TestGradient:
@@ -1202,6 +1222,16 @@ class TestExtins:
         assert_array_equal(a, ac)
 
 
+# _foo1 and _foo2 are used in some tests in TestVectorize.
+
+def _foo1(x, y=1.0):
+    return y*math.floor(x)
+
+
+def _foo2(x, y=1.0, z=0.0):
+    return y*math.floor(x) + z
+
+
 class TestVectorize:
 
     def test_simple(self):
@@ -1233,7 +1263,6 @@ class TestVectorize:
         assert_array_equal(y, x)
 
     def test_ufunc(self):
-        import math
         f = vectorize(math.cos)
         args = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
         r1 = f(args)
@@ -1253,6 +1282,63 @@ class TestVectorize:
         r1 = f(args, 2)
         r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order1(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: invalid number of arguments`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0), 1.0)
+        r2 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order2(self):
+        # gh-1620: The second call of f would crash with
+        # `ValueError: non-broadcastable output operand with shape ()
+        # doesn't match the broadcast shape (3,)`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), 1.0)
+        assert_array_equal(r1, r2)
+
+    def test_keywords_with_otypes_order3(self):
+        # gh-1620: The third call of f would crash with
+        # `ValueError: invalid number of arguments`.
+        f = vectorize(_foo1, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(np.arange(3.0))
+        r2 = f(np.arange(3.0), y=1.0)
+        r3 = f(np.arange(3.0))
+        assert_array_equal(r1, r2)
+        assert_array_equal(r1, r3)
+
+    def test_keywords_with_otypes_several_kwd_args1(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+        f = vectorize(_foo2, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(10.4, z=100)
+        r2 = f(10.4, y=-1)
+        r3 = f(10.4)
+        assert_equal(r1, _foo2(10.4, z=100))
+        assert_equal(r2, _foo2(10.4, y=-1))
+        assert_equal(r3, _foo2(10.4))
+
+    def test_keywords_with_otypes_several_kwd_args2(self):
+        # gh-1620 Make sure different uses of keyword arguments
+        # don't break the vectorized function.
+        f = vectorize(_foo2, otypes=[float])
+        # We're testing the caching of ufuncs by vectorize, so the order
+        # of these function calls is an important part of the test.
+        r1 = f(z=100, x=10.4, y=-1)
+        r2 = f(1, 2, 3)
+        assert_equal(r1, _foo2(z=100, x=10.4, y=-1))
+        assert_equal(r2, _foo2(1, 2, 3))
 
     def test_keywords_no_func_code(self):
         # This needs to test a function that has keywords but
@@ -1899,7 +1985,7 @@ class TestCov:
     frequencies = np.array([1, 4, 1])
     x2_repeats = np.array([[0.0], [1.0], [1.0], [1.0], [1.0], [2.0]]).T
     res2 = np.array([[0.4, -0.4], [-0.4, 0.4]])
-    unit_frequencies = np.ones(3, dtype=np.integer)
+    unit_frequencies = np.ones(3, dtype=np.int_)
     weights = np.array([1.0, 4.0, 1.0])
     res3 = np.array([[2. / 3., -2. / 3.], [-2. / 3., 2. / 3.]])
     unit_weights = np.ones(3)
@@ -1952,11 +2038,11 @@ class TestCov:
                         self.res1)
         nonint = self.frequencies + 0.5
         assert_raises(TypeError, cov, self.x1, fweights=nonint)
-        f = np.ones((2, 3), dtype=np.integer)
+        f = np.ones((2, 3), dtype=np.int_)
         assert_raises(RuntimeError, cov, self.x1, fweights=f)
-        f = np.ones(2, dtype=np.integer)
+        f = np.ones(2, dtype=np.int_)
         assert_raises(RuntimeError, cov, self.x1, fweights=f)
-        f = -1 * np.ones(3, dtype=np.integer)
+        f = -1 * np.ones(3, dtype=np.int_)
         assert_raises(ValueError, cov, self.x1, fweights=f)
 
     def test_aweights(self):
@@ -2967,6 +3053,16 @@ class TestQuantile:
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
 
+    def test_correct_quantile_value(self):
+        a = np.array([True])
+        tf_quant = np.quantile(True, False)
+        assert_equal(tf_quant, a[0])
+        assert_equal(type(tf_quant), a.dtype)
+        a = np.array([False, True, True])
+        quant_res = np.quantile(a, a)
+        assert_array_equal(quant_res, a)
+        assert_equal(a.dtype, quant_res.dtype)
+
     def test_fraction(self):
         # fractional input, integral quantile
         x = [Fraction(i, 2) for i in range(8)]
@@ -3254,11 +3350,49 @@ class TestAdd_newdoc:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
-        # test np.add_newdoc
+        # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_errors_are_ignored(self):
+        prev_doc = np.core.flatiter.index.__doc__
+        # nothing changed, but error ignored, this should probably
+        # give a warning (or even error) in the future.
+        np.add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
+        assert prev_doc == np.core.flatiter.index.__doc__
+
+
+class TestAddDocstring():
+    # Test should possibly be moved, but it also fits to be close to
+    # the newdoc tests...
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_add_same_docstring(self):
+        # test for attributes (which are C-level defined)
+        np.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        np.add_docstring(func, func.__doc__)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_different_docstring_fails(self):
+        # test for attributes (which are C-level defined)
+        with assert_raises(RuntimeError):
+            np.add_docstring(np.ndarray.flat, "different docstring")
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        with assert_raises(RuntimeError):
+            np.add_docstring(func, "different docstring")
+
 
 class TestSortComplex:
 

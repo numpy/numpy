@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ NumPy is the fundamental package for array computing with Python.
 
 It provides:
@@ -54,7 +54,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 19
+MINOR               = 20
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -161,6 +161,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
     config.add_data_files(('numpy', 'LICENSE.txt'))
+    config.add_data_files(('numpy', 'numpy/__init__.pxd'))
 
     config.get_version('numpy/version.py') # sets config.version
 
@@ -442,9 +443,9 @@ def setup_package():
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-        test_suite='nose.collector',
+        test_suite='pytest',
         cmdclass=cmdclass,
-        python_requires='>=3.5',
+        python_requires='>=3.6',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds

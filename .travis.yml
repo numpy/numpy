@@ -29,7 +29,6 @@ stages:
 
 env:
   global:
-    - OpenBLAS_version=0.3.8
     - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
     # The following is generated with the command:
     # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
@@ -47,6 +46,7 @@ jobs:
     - stage: Comprehensive tests
       python: 3.6
     - python: 3.7
+    - python: 3.9-dev
 
     - python: 3.6
       env: USE_DEBUG=1
@@ -106,7 +106,7 @@ jobs:
       os: linux
       arch: ppc64le
       env:
-       # use ppc64le OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
@@ -114,15 +114,16 @@ jobs:
       os: linux
       arch: s390x
       env:
-       # use s390x OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
+       - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
 
     - python: 3.7
       os: linux
       arch: aarch64
       env:
-       # use ppc64le OpenBLAS build, not system ATLAS
+       # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 

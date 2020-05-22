@@ -622,8 +622,8 @@ def matrix_power(a, n):
 
     try:
         n = operator.index(n)
-    except TypeError:
-        raise TypeError("exponent must be an integer")
+    except TypeError as e:
+        raise TypeError("exponent must be an integer") from e
 
     # Fall back on dot for object arrays. Object arrays are not supported by
     # the current implementation of matmul using einsum
@@ -2172,13 +2172,13 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Solves the equation :math:`a x = b` by computing a vector `x` that
-    minimizes the squared Euclidean 2-norm :math:`\| b - a x \|^2_2`.
-    The equation may be under-, well-, or over-determined (i.e., the
-    number of linearly independent rows of `a` can be less than, equal
-    to, or greater than its number of linearly independent columns).
+    Computes the vector x that approximatively solves the equation
+    ``a @ x = b``. The equation may be under-, well-, or over-determined
+    (i.e., the number of linearly independent rows of `a` can be less than,
+    equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
-    is the "exact" solution of the equation.
+    is the "exact" solution of the equation. Else, `x` minimizes the
+    Euclidean 2-norm :math:`|| b - a x ||`.
 
     Parameters
     ----------
@@ -2434,6 +2434,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     The nuclear norm is the sum of the singular values.
 
+    Both the Frobenius and nuclear norm orders are only defined for
+    matrices and raise a ValueError when ``x.ndim != 2``.
+
     References
     ----------
     .. [1] G. H. Golub and C. F. Van Loan, *Matrix Computations*,
@@ -2537,8 +2540,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
     elif not isinstance(axis, tuple):
         try:
             axis = int(axis)
-        except Exception:
-            raise TypeError("'axis' must be None, an integer or a tuple of integers")
+        except Exception as e:
+            raise TypeError("'axis' must be None, an integer or a tuple of integers") from e
         axis = (axis,)
 
     if len(axis) == 1:
@@ -2556,11 +2559,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+        # None of the str-type keywords for ord ('fro', 'nuc') 
+        # are valid for vectors
+        elif isinstance(ord, str):
+            raise ValueError(f"Invalid norm order '{ord}' for vectors")
         else:
-            try:
-                ord + 1
-            except TypeError:
-                raise ValueError("Invalid norm order for vectors.")
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
@@ -2610,12 +2613,13 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 # multi_dot
 
-def _multidot_dispatcher(arrays):
-    return arrays
+def _multidot_dispatcher(arrays, *, out=None):
+    yield from arrays
+    yield out
 
 
 @array_function_dispatch(_multidot_dispatcher)
-def multi_dot(arrays):
+def multi_dot(arrays, *, out=None):
     """
     Compute the dot product of two or more arrays in a single function call,
     while automatically selecting the fastest evaluation order.
@@ -2639,6 +2643,15 @@ def multi_dot(arrays):
         If the first argument is 1-D it is treated as row vector.
         If the last argument is 1-D it is treated as column vector.
         The other arguments must be 2-D.
+    out : ndarray, optional
+        Output argument. This must have the exact kind that would be returned
+        if it was not used. In particular, it must have the right type, must be
+        C-contiguous, and its dtype must be the dtype that would be returned
+        for `dot(a, b)`. This is a performance feature. Therefore, if these
+        conditions are not met, an exception is raised, instead of attempting
+        to be flexible.
+
+        .. versionadded:: 1.19.0
 
     Returns
     -------
@@ -2696,7 +2709,7 @@ def multi_dot(arrays):
     if n < 2:
         raise ValueError("Expecting at least two arrays.")
     elif n == 2:
-        return dot(arrays[0], arrays[1])
+        return dot(arrays[0], arrays[1], out=out)
 
     arrays = [asanyarray(a) for a in arrays]
 
@@ -2712,10 +2725,10 @@ def multi_dot(arrays):
 
     # _multi_dot_three is much faster than _multi_dot_matrix_chain_order
     if n == 3:
-        result = _multi_dot_three(arrays[0], arrays[1], arrays[2])
+        result = _multi_dot_three(arrays[0], arrays[1], arrays[2], out=out)
     else:
         order = _multi_dot_matrix_chain_order(arrays)
-        result = _multi_dot(arrays, order, 0, n - 1)
+        result = _multi_dot(arrays, order, 0, n - 1, out=out)
 
     # return proper shape
     if ndim_first == 1 and ndim_last == 1:
@@ -2726,7 +2739,7 @@ def multi_dot(arrays):
         return result
 
 
-def _multi_dot_three(A, B, C):
+def _multi_dot_three(A, B, C, out=None):
     """
     Find the best order for three arrays and do the multiplication.
 
@@ -2742,9 +2755,9 @@ def _multi_dot_three(A, B, C):
     cost2 = a1b0 * c1 * (a0 + b1c0)
 
     if cost1 < cost2:
-        return dot(dot(A, B), C)
+        return dot(dot(A, B), C, out=out)
     else:
-        return dot(A, dot(B, C))
+        return dot(A, dot(B, C), out=out)
 
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
@@ -2788,10 +2801,14 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     return (s, m) if return_costs else s
 
 
-def _multi_dot(arrays, order, i, j):
+def _multi_dot(arrays, order, i, j, out=None):
     """Actually do the multiplication with the given order."""
     if i == j:
+        # the initial call with non-None out should never get here
+        assert out is None
+
         return arrays[i]
     else:
         return dot(_multi_dot(arrays, order, i, order[i, j]),
-                   _multi_dot(arrays, order, order[i, j] + 1, j))
+                   _multi_dot(arrays, order, order[i, j] + 1, j),
+                   out=out)

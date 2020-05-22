@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Build F90 module support for f2py2e.
@@ -23,7 +23,7 @@ from . import capi_maps
 from . import func2subr
 from .crackfortran import undo_rmbadname, undo_rmbadname1
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -85,7 +85,6 @@ fgetdims2_sa = """\
 
 
 def buildhooks(pymod):
-    global fgetdims1, fgetdims2
     from . import rules
     ret = {'f90modhooks': [], 'initf90modhooks': [], 'body': [],
            'need': ['F_FUNC', 'arrayobject.h'],

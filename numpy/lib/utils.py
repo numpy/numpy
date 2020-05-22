@@ -832,7 +832,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
         or newly generated.
 
     """
-    global _lookfor_caches
     # Local import to speed up numpy's import time.
     import inspect
 

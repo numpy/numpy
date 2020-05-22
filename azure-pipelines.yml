@@ -5,10 +5,11 @@ trigger:
     include:
       - master
       - maintenance/*
-variables:
-  # OpenBLAS_version should be updated
-  # to match numpy-wheels repo
-  OpenBLAS_version: 0.3.8
+
+pr:
+  branches:
+    include:
+    - '*'  # must quote since "*" is a YAML reserved character; we want a string
 
 stages:
 - stage: InitialTests
@@ -39,7 +40,6 @@ stages:
             /bin/bash -xc "cd numpy && \
             /opt/python/cp38-cp38/bin/python -mvenv venv &&\
             source venv/bin/activate && \
-            python3 -m pip install urllib3 && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
             cp \$target/include/* /usr/include && \
@@ -47,7 +47,7 @@ stages:
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
-            python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
+            python3 tools/openblas_support.py --check_version"
       displayName: 'Run 32-bit manylinux2010 Docker Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
@@ -66,13 +66,20 @@ stages:
       # they will patch this issue
       vmImage: macOS-10.14
     strategy:
-      maxParallel: 2
+      maxParallel: 3
       matrix:
           Python36:
             PYTHON_VERSION: '3.6'
+            USE_OPENBLAS: '1'
           Python36-ILP64:
             PYTHON_VERSION: '3.6'
             NPY_USE_BLAS_ILP64: '1'
+            USE_OPENBLAS: '1'
+            USE_XCODE_10: '1'
+          Accelerate:
+            PYTHON_VERSION: '3.6'
+            USE_OPENBLAS: '0'
+
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
@@ -82,36 +89,46 @@ stages:
         versionSpec: $(PYTHON_VERSION)
         addToPath: true
         architecture: 'x64'
-    # NOTE: do we have a compelling reason to use older / newer
-    # versions of Xcode toolchain for testing?
-    - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
-      displayName: 'select Xcode version'
+    - script: |
+        set -xe
+        [ -n "$USE_XCODE_10" ] && /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+        clang --version
+      displayName: 'report clang version'
     # NOTE: might be better if we could avoid installing
     # two C compilers, but with homebrew looks like we're
     # now stuck getting the full gcc toolchain instead of
     # just pulling in gfortran
     - script: |
-        # same version of gfortran as the wheel builds
-        brew install gcc49
-        # manually link critical gfortran libraries
-        ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
-        ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
+        set -xe
+        # same version of gfortran as the open-libs and numpy-wheel builds
+        curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
+        GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
+        KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
+        if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
+            echo sha256 mismatch
+            exit 1
+        fi
+        hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
+        sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
+        otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
         # Manually symlink gfortran-4.9 to plain gfortran for f2py.
         # No longer needed after Feb 13 2020 as gfortran is already present
         # and the attempted link errors. Keep this for future reference.
         # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
-      displayName: 'make gfortran available on mac os vm'
+      displayName: 'make libgfortran available on mac os for openblas'
     # use the pre-built openblas binary that most closely
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
     - script: |
-        python -mpip install urllib3
+        set -xe
         target=$(python tools/openblas_support.py)
         ls -lR $target
         # manually link to appropriate system paths
-        cp $target/lib/* /usr/local/lib/
+        cp $target/lib/lib* /usr/local/lib/
         cp $target/include/* /usr/local/include/
+        otool -L /usr/local/lib/libopenblas*
       displayName: 'install pre-built openblas'
+      condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python -m pip install --upgrade pip setuptools wheel
       displayName: 'Install tools'
     - script: |
@@ -130,16 +147,40 @@ stages:
         ATLAS: None
         ACCELERATE: None
         CC: /usr/bin/clang
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    - script: python setup.py build -j 4 build_ext --inplace install
+      displayName: 'Build NumPy without OpenBLAS'
+      env:
+        BLAS: None
+        LAPACK: None
+        ATLAS: None
+        CC: /usr/bin/clang
+      condition: eq(variables['USE_OPENBLAS'], '0')
     # wait until after dev build of NumPy to pip
     # install matplotlib to avoid pip install of older numpy
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
     - script: python runtests.py -g --refguide-check
       displayName: 'Run Refuide Check'
+      condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
-    - bash: python tools/openblas_support.py --check_version $(OpenBLAS_version)
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    - bash: python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    # import doesn't work when in numpy src directory , so do a pip dev install of build lib to test
+    - script: |
+        #!/bin/bash -v
+        set +e
+        python -c "import numpy as np" > test_output.log 2>&1
+        check_output_code=$?
+        cat test_output.log
+        grep "buggy Accelerate backend"  test_output.log
+        check_message=$?
+        if [ $check_output_code == 1 ] && [ $check_message == 0 ]; then exit 0; else exit 1;fi
+      displayName: "Check if numpy import fails with accelerate"
+      condition: eq(variables['USE_OPENBLAS'], '0')
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:

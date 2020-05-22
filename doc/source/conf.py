@@ -42,7 +42,7 @@ master_doc = 'contents'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2019, The SciPy community'
+copyright = '2008-2020, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.

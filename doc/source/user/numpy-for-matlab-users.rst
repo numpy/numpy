@@ -394,7 +394,8 @@ Linear Algebra Equivalents
 
    * - ``y=x(:)``
      - ``y = x.flatten()``
-     - turn array into vector (note that this forces a copy)
+     - turn array into vector (note that this forces a copy). To obtain the
+       same data ordering as in Matlab, use ``x.flatten('F')``.
 
    * - ``1:10``
      - ``arange(1.,11.)`` or ``r_[1.:11.]`` or  ``r_[1:10:10j]``

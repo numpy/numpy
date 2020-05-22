@@ -401,6 +401,35 @@ class TestIsSubDType:
             assert_(not np.issubdtype(w1(np.float32), w2(np.float64)))
             assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
 
+    def test_nondtype_nonscalartype(self):
+        # See gh-14619 and gh-9505 which introduced the deprecation to fix
+        # this. These tests are directly taken from gh-9505
+        assert not np.issubdtype(np.float32, 'float64')
+        assert not np.issubdtype(np.float32, 'f8')
+        assert not np.issubdtype(np.int32, str)
+        assert not np.issubdtype(np.int32, 'int64')
+        assert not np.issubdtype(np.str_, 'void')
+        # for the following the correct spellings are
+        # np.integer, np.floating, or np.complexfloating respectively:
+        assert not np.issubdtype(np.int8, int)  # np.int8 is never np.int_
+        assert not np.issubdtype(np.float32, float)
+        assert not np.issubdtype(np.complex64, complex)
+        assert not np.issubdtype(np.float32, "float")
+        assert not np.issubdtype(np.float64, "f")
+
+        # Test the same for the correct first datatype and abstract one
+        # in the case of int, float, complex:
+        assert np.issubdtype(np.float64, 'float64')
+        assert np.issubdtype(np.float64, 'f8')
+        assert np.issubdtype(np.str_, str)
+        assert np.issubdtype(np.int64, 'int64')
+        assert np.issubdtype(np.void, 'void')
+        assert np.issubdtype(np.int8, np.integer)
+        assert np.issubdtype(np.float32, np.floating)
+        assert np.issubdtype(np.complex64, np.complexfloating)
+        assert np.issubdtype(np.float64, "float")
+        assert np.issubdtype(np.float32, "f")
+
 
 class TestSctypeDict:
     def test_longdouble(self):
@@ -486,7 +515,8 @@ def test_issctype(rep, expected):
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.xfail(IS_PYPY,
+                   reason="PyPy cannot modify tp_doc after PyType_Ready")
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:

@@ -17,7 +17,7 @@ from ._multiarray_umath import *  # noqa: F403
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _get_ndarray_c_version
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version, _set_madvise_hugepage,
     )
 
 __all__ = [
@@ -171,14 +171,15 @@ def concatenate(arrays, axis=None, out=None):
     array_split : Split an array into multiple sub-arrays of equal or
                   near-equal size.
     split : Split array into a list of multiple sub-arrays of equal size.
-    hsplit : Split array into multiple sub-arrays horizontally (column wise)
-    vsplit : Split array into multiple sub-arrays vertically (row wise)
+    hsplit : Split array into multiple sub-arrays horizontally (column wise).
+    vsplit : Split array into multiple sub-arrays vertically (row wise).
     dsplit : Split array into multiple sub-arrays along the 3rd axis (depth).
     stack : Stack a sequence of arrays along a new axis.
-    hstack : Stack arrays in sequence horizontally (column wise)
-    vstack : Stack arrays in sequence vertically (row wise)
-    dstack : Stack arrays in sequence depth wise (along third dimension)
     block : Assemble arrays from blocks.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    vstack : Stack arrays in sequence vertically (row wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
 
     Notes
     -----
@@ -1138,7 +1139,7 @@ def packbits(a, axis=None, bitorder='big'):
         ``None`` implies packing the flattened array.
     bitorder : {'big', 'little'}, optional
         The order of the input bits. 'big' will mimic bin(val),
-        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011``, 'little' will
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
@@ -1266,7 +1267,13 @@ def shares_memory(a, b, max_work=None):
     """
     shares_memory(a, b, max_work=None)
 
-    Determine if two arrays share memory
+    Determine if two arrays share memory.
+
+    .. warning::
+
+       This function can be exponentially slow for some inputs, unless
+       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
     ----------
@@ -1279,7 +1286,8 @@ def shares_memory(a, b, max_work=None):
 
         max_work=MAY_SHARE_EXACT  (default)
             The problem is solved exactly. In this case, the function returns
-            True only if there is an element shared between the arrays.
+            True only if there is an element shared between the arrays. Finding
+            the exact solution may take extremely long in some cases.
         max_work=MAY_SHARE_BOUNDS
             Only the memory bounds of a and b are checked.
 
@@ -1298,8 +1306,32 @@ def shares_memory(a, b, max_work=None):
 
     Examples
     --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    >>> x = np.array([1, 2, 3, 4])
+    >>> np.shares_memory(x, np.array([5, 6, 7]))
     False
+    >>> np.shares_memory(x[::2], x)
+    True
+    >>> np.shares_memory(x[::2], x[1::2])
+    False
+
+    Checking whether two arrays share memory is NP-complete, and
+    runtime may increase exponentially in the number of
+    dimensions. Hence, `max_work` should generally be set to a finite
+    number, as it is possible to construct examples that take
+    extremely long to run:
+
+    >>> from numpy.lib.stride_tricks import as_strided
+    >>> x = np.zeros([192163377], dtype=np.int8)
+    >>> x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
+    >>> x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
+    >>> np.shares_memory(x1, x2, max_work=1000)
+    Traceback (most recent call last):
+    ...
+    numpy.TooHardError: Exceeded max_work
+
+    Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
+    around 1 minute for this case. It is possible to find problems
+    that take still significantly longer.
 
     """
     return (a, b)

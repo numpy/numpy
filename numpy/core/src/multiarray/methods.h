@@ -5,8 +5,6 @@
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
-NPY_NO_EXPORT const char *
-npy_casting_to_string(NPY_CASTING casting);
 
 /*
  * Pathlib support, takes a borrowed reference and returns a new one.

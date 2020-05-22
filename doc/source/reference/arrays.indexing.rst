@@ -1,3 +1,6 @@
+.. for doctests
+   >>> import numpy as np
+
 .. _arrays.indexing:
 
 Indexing
@@ -114,7 +117,7 @@ concepts to remember include:
       array([5, 6, 7, 8, 9])
 
 - If the number of objects in the selection tuple is less than
-  *N* , then ``:`` is assumed for any subsequent dimensions.
+  *N*, then ``:`` is assumed for any subsequent dimensions.
 
   .. admonition:: Example
 
@@ -265,10 +268,10 @@ understood with an example.
     one needs to select all elements *explicitly*. Using the method explained
     previously one could write:
 
-    >>> x = array([[ 0,  1,  2],
-    ...            [ 3,  4,  5],
-    ...            [ 6,  7,  8],
-    ...            [ 9, 10, 11]])
+    >>> x = np.array([[ 0,  1,  2],
+    ...               [ 3,  4,  5],
+    ...               [ 6,  7,  8],
+    ...               [ 9, 10, 11]])
     >>> rows = np.array([[0, 0],
     ...                  [3, 3]], dtype=np.intp)
     >>> columns = np.array([[0, 2],
@@ -392,7 +395,7 @@ smaller than *x* it is identical to filling it with :const:`False`.
 
     >>> x = np.array([[1., 2.], [np.nan, 3.], [np.nan, np.nan]])
     >>> x[~np.isnan(x)]
-    array([ 1.,  2.,  3.])
+    array([1., 2., 3.])
 
     Or wish to add a constant to all negative elements:
 
@@ -422,18 +425,6 @@ with.
     array([[0, 1],
            [1, 1]])
 
-    But if ``rowsum`` would have two dimensions as well:
-
-    >>> rowsum = x.sum(-1, keepdims=True)
-    >>> rowsum.shape
-    (3, 1)
-    >>> x[rowsum <= 2, :]    # fails
-    IndexError: too many indices
-    >>> x[rowsum <= 2]
-    array([0, 1])
-
-    The last one giving only the first elements because of the extra dimension.
-    Compare ``rowsum.nonzero()`` to understand this example.
 
 Combining multiple Boolean indexing arrays or a Boolean with an integer
 indexing array can best be understood with the
@@ -447,10 +438,10 @@ also supports boolean arrays and will work without any surprises.
     advanced integer index. Using the :func:`ix_` function this can be done
     with:
 
-    >>> x = array([[ 0,  1,  2],
-    ...            [ 3,  4,  5],
-    ...            [ 6,  7,  8],
-    ...            [ 9, 10, 11]])
+    >>> x = np.array([[ 0,  1,  2],
+    ...               [ 3,  4,  5],
+    ...               [ 6,  7,  8],
+    ...               [ 9, 10, 11]])
     >>> rows = (x.sum(-1) % 2) == 0
     >>> rows
     array([False,  True, False,  True])

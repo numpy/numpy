@@ -34,6 +34,7 @@
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 /* Internal APIs */
+#include "alloc.h"
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
@@ -1582,8 +1583,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                          "ndmin", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
-        PyErr_SetString(PyExc_ValueError,
-                        "only 2 non-keyword arguments accepted");
+        PyErr_Format(PyExc_TypeError,
+                     "array() takes from 1 to 2 positional arguments but "
+                     "%zd were given", PyTuple_GET_SIZE(args));
         return NULL;
     }
 
@@ -1856,14 +1858,15 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     NPY_ORDER order = NPY_KEEPORDER;
     PyArrayObject *ret = NULL;
     int subok = 1;
-    PyArray_Dims shape = {NULL, 0};
+    /* -1 is a special value meaning "not specified" */
+    PyArray_Dims shape = {NULL, -1};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:empty_like", kwlist,
                 &PyArray_Converter, &prototype,
                 &PyArray_DescrConverter2, &dtype,
                 &PyArray_OrderConverter, &order,
                 &subok,
-                &PyArray_IntpConverter, &shape)) {
+                &PyArray_OptionalIntpConverter, &shape)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
@@ -2435,7 +2438,6 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
     }
     size = PySequence_Size(obj);
 
-
     for (i = 0; i < size; ++i) {
         item = PySequence_Fast_GET_ITEM(obj, i);
         /* Ellipsis */
@@ -2458,8 +2460,16 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             ellipsis = 1;
         }
         /* Subscript */
-        else if (PyInt_Check(item) || PyLong_Check(item)) {
-            long s = PyInt_AsLong(item);
+        else {
+            npy_intp s = PyArray_PyIntAsIntp(item);
+            /* Invalid */
+            if (error_converting(s)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "each subscript must be either an integer "
+                        "or an ellipsis");
+                Py_DECREF(obj);
+                return -1;
+            }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
@@ -2469,7 +2479,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 return -1;
             }
 
-            if ( s < 0 ) {
+            if (s < 0) {
                 bad_input = 1;
             }
             else if (s < 26) {
@@ -2487,16 +2497,9 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                         "subscript is not within the valid range [0, 52)");
                 Py_DECREF(obj);
                 return -1;
-            }
+            }              
         }
-        /* Invalid */
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                    "each subscript must be either an integer "
-                    "or an ellipsis");
-            Py_DECREF(obj);
-            return -1;
-        }
+        
     }
 
     Py_DECREF(obj);
@@ -4159,6 +4162,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
+    {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

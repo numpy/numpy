@@ -52,8 +52,8 @@ class build_ext (old_build_ext):
         if self.parallel:
             try:
                 self.parallel = int(self.parallel)
-            except ValueError:
-                raise ValueError("--parallel/-j argument must be an integer")
+            except ValueError as e:
+                raise ValueError("--parallel/-j argument must be an integer") from e
 
         # Ensure that self.include_dirs and self.distribution.include_dirs
         # refer to the same list object. finalize_options will modify
@@ -520,7 +520,7 @@ class build_ext (old_build_ext):
 
         # Wrap unlinkable objects to a linkable one
         if unlinkable_fobjects:
-            fobjects = [os.path.relpath(obj) for obj in unlinkable_fobjects]
+            fobjects = [os.path.abspath(obj) for obj in unlinkable_fobjects]
             wrapped = fcompiler.wrap_unlinkable_objects(
                     fobjects, output_dir=self.build_temp,
                     extra_dll_dir=self.extra_dll_dir)

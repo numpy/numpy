@@ -9,7 +9,6 @@ from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
     has_nested_fields, easy_dtype, flatten_dtype
     )
-from numpy.compat import unicode
 
 
 class TestLineSplitter:
@@ -178,12 +177,12 @@ class TestStringConverter:
         # test str
         # note that the longdouble type has been skipped, so the
         # _status increases by 2. Everything should succeed with
-        # unicode conversion (5).
-        for s in ['a', u'a', b'a']:
+        # unicode conversion (8).
+        for s in ['a', b'a']:
             res = converter.upgrade(s)
-            assert_(type(res) is unicode)
-            assert_equal(res, u'a')
-            assert_equal(converter._status, 5 + status_offset)
+            assert_(type(res) is str)
+            assert_equal(res, 'a')
+            assert_equal(converter._status, 8 + status_offset)
 
     def test_missing(self):
         "Tests the use of missing values."

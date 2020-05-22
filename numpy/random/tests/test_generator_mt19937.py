@@ -1,4 +1,5 @@
 import sys
+import hashlib
 
 import pytest
 
@@ -13,6 +14,26 @@ from numpy.random import Generator, MT19937, SeedSequence
 
 random = Generator(MT19937())
 
+JUMP_TEST_DATA = [
+    {
+        "seed": 0,
+        "steps": 10,
+        "initial": {"key_md5": "64eaf265d2203179fb5ffb73380cd589", "pos": 9},
+        "jumped": {"key_md5": "8cb7b061136efceef5217a9ce2cc9a5a", "pos": 598},
+    },
+    {
+        "seed":384908324,
+        "steps":312,
+        "initial": {"key_md5": "e99708a47b82ff51a2c7b0625b81afb5", "pos": 311},
+        "jumped": {"key_md5": "2ecdbfc47a895b253e6e19ccb2e74b90", "pos": 276},
+    },
+    {
+        "seed": [839438204, 980239840, 859048019, 821],
+        "steps": 511,
+        "initial": {"key_md5": "9fcd6280df9199785e17e93162ce283c", "pos": 510},
+        "jumped": {"key_md5": "433b85229f2ed853cde06cd872818305", "pos": 475},
+    },
+]
 
 @pytest.fixture(scope='module', params=[True, False])
 def endpoint(request):
@@ -114,6 +135,12 @@ class TestMultinomial:
         random = Generator(MT19937(1432985819))
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
+
+    def test_multidimensional_pvals(self):
+        assert_raises(ValueError, random.multinomial, 10, [[0, 1]])
+        assert_raises(ValueError, random.multinomial, 10, [[0], [1]])
+        assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
+        assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
 
 
 class TestMultivariateHypergeometric:
@@ -456,7 +483,6 @@ class TestIntegers:
             assert_array_equal(scalar, array)
 
     def test_repeatability(self, endpoint):
-        import hashlib
         # We use a md5 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
@@ -481,7 +507,7 @@ class TestIntegers:
                 val = random.integers(0, 6 - endpoint, size=1000, endpoint=endpoint,
                                  dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.md5(val).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
@@ -513,6 +539,44 @@ class TestIntegers:
                                 endpoint=endpoint, dtype=dt)
 
             assert_array_equal(val, val_bc)
+
+    @pytest.mark.parametrize(
+        'bound, expected',
+        [(2**32 - 1, np.array([517043486, 1364798665, 1733884389, 1353720612,
+                               3769704066, 1170797179, 4108474671])),
+         (2**32, np.array([517043487, 1364798666, 1733884390, 1353720613,
+                           3769704067, 1170797180, 4108474672])),
+         (2**32 + 1, np.array([517043487, 1733884390, 3769704068, 4108474673,
+                               1831631863, 1215661561, 3869512430]))]
+    )
+    def test_repeatability_32bit_boundary(self, bound, expected):
+        for size in [None, len(expected)]:
+            random = Generator(MT19937(1234))
+            x = random.integers(bound, size=size)
+            assert_equal(x, expected if size is not None else expected[0])
+
+    def test_repeatability_32bit_boundary_broadcasting(self):
+        desired = np.array([[[1622936284, 3620788691, 1659384060],
+                             [1417365545,  760222891, 1909653332],
+                             [3788118662,  660249498, 4092002593]],
+                            [[3625610153, 2979601262, 3844162757],
+                             [ 685800658,  120261497, 2694012896],
+                             [1207779440, 1586594375, 3854335050]],
+                            [[3004074748, 2310761796, 3012642217],
+                             [2067714190, 2786677879, 1363865881],
+                             [ 791663441, 1867303284, 2169727960]],
+                            [[1939603804, 1250951100,  298950036],
+                             [1040128489, 3791912209, 3317053765],
+                             [3155528714,   61360675, 2305155588]],
+                            [[ 817688762, 1335621943, 3288952434],
+                             [1770890872, 1102951817, 1957607470],
+                             [3099996017,  798043451,   48334215]]])
+        for size in [None, (5, 3, 3)]:
+            random = Generator(MT19937(12345))
+            x = random.integers([[-1], [0], [1]],
+                                [2**32 - 1, 2**32, 2**32 + 1],
+                                size=size)
+            assert_array_equal(x, desired if size is not None else desired[0])
 
     def test_int64_uint64_broadcast_exceptions(self, endpoint):
         configs = {np.uint64: ((0, 2**65), (-1, 2**62), (10, 9), (0, 0)),
@@ -841,8 +905,6 @@ class TestRandomDist:
         assert actual.dtype == np.int64
 
     def test_choice_large_sample(self):
-        import hashlib
-
         choice_hash = 'd44962a0b1e92f4a3373c23222244e21'
         random = Generator(MT19937(self.seed))
         actual = random.choice(10000, 5000, replace=False)
@@ -1043,6 +1105,12 @@ class TestRandomDist:
         alpha = np.array([5.4e-01, -1.0e-16])
         assert_raises(ValueError, random.dirichlet, alpha)
 
+        # gh-15876
+        assert_raises(ValueError, random.dirichlet, [[5, 1]])
+        assert_raises(ValueError, random.dirichlet, [[5], [1]])
+        assert_raises(ValueError, random.dirichlet, [[[5], [1]], [[1], [5]]])
+        assert_raises(ValueError, random.dirichlet, np.array([[5, 1], [1, 5]]))
+
     def test_dirichlet_alpha_non_contiguous(self):
         a = np.array([51.72840233779265162, -1.0, 39.74494232180943953])
         alpha = a[::2]
@@ -1052,6 +1120,31 @@ class TestRandomDist:
         contig = random.dirichlet(np.ascontiguousarray(alpha),
                                   size=(3, 2))
         assert_array_almost_equal(non_contig, contig)
+
+    def test_dirichlet_small_alpha(self):
+        eps = 1.0e-9  # 1.0e-10 -> runtime x 10; 1e-11 -> runtime x 200, etc.
+        alpha = eps * np.array([1., 1.0e-3])
+        random = Generator(MT19937(self.seed))
+        actual = random.dirichlet(alpha, size=(3, 2))
+        expected = np.array([
+            [[1., 0.],
+             [1., 0.]],
+            [[1., 0.],
+             [1., 0.]],
+            [[1., 0.],
+             [1., 0.]]
+        ])
+        assert_array_almost_equal(actual, expected, decimal=15)
+
+    @pytest.mark.slow
+    def test_dirichlet_moderately_small_alpha(self):
+        # Use alpha.max() < 0.1 to trigger stick breaking code path
+        alpha = np.array([0.02, 0.04, 0.03])
+        exact_mean = alpha / alpha.sum()
+        random = Generator(MT19937(self.seed))
+        sample = random.dirichlet(alpha, size=20000000)
+        sample_mean = sample.mean(axis=0)
+        assert_allclose(sample_mean, exact_mean, rtol=1e-3)
 
     def test_exponential(self):
         random = Generator(MT19937(self.seed))
@@ -1242,6 +1335,17 @@ class TestRandomDist:
         assert_raises(ValueError, random.multivariate_normal, mean, cov,
                       check_valid='raise', method='eigh')
 
+        # check degenerate samples from singular covariance matrix
+        cov = [[1, 1], [1, 1]]
+        if method in ('svd', 'eigh'):
+            samples = random.multivariate_normal(mean, cov, size=(3, 2),
+                                                 method=method)
+            assert_array_almost_equal(samples[..., 0], samples[..., 1],
+                                      decimal=6)
+        else:
+            assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
+                          method='cholesky')
+
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
         with suppress_warnings() as sup:
             random.multivariate_normal(mean, cov, method=method)
@@ -1259,6 +1363,19 @@ class TestRandomDist:
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
 
+    @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
+    def test_multivariate_normal_basic_stats(self, method):
+        random = Generator(MT19937(self.seed))
+        n_s = 1000
+        mean = np.array([1, 2])
+        cov = np.array([[2, 1], [1, 2]])
+        s = random.multivariate_normal(mean, cov, size=(n_s,), method=method)
+        s_center = s - mean
+        cov_emp = (s_center.T @ s_center) / (n_s - 1)
+        # these are pretty loose and are only designed to detect major errors
+        assert np.all(np.abs(s_center.mean(-2)) < 0.1)
+        assert np.all(np.abs(cov_emp - cov) < 0.2)
+
     def test_negative_binomial(self):
         random = Generator(MT19937(self.seed))
         actual = random.negative_binomial(n=100, p=.12345, size=(3, 2))
@@ -1272,6 +1389,11 @@ class TestRandomDist:
             assert_raises(ValueError, random.negative_binomial, 100, np.nan)
             assert_raises(ValueError, random.negative_binomial, 100,
                           [np.nan] * 10)
+
+    def test_negative_binomial_p0_exception(self):
+        # Verify that p=0 raises an exception.
+        with assert_raises(ValueError):
+            x = random.negative_binomial(1, 0)
 
     def test_noncentral_chisquare(self):
         random = Generator(MT19937(self.seed))
@@ -2247,3 +2369,31 @@ class TestSingleEltArrayInput:
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
+
+
+@pytest.mark.parametrize("config", JUMP_TEST_DATA)
+def test_jumped(config):
+    # Each config contains the initial seed, a number of raw steps
+    # the md5 hashes of the initial and the final states' keys and
+    # the position of of the initial and the final state.
+    # These were produced using the original C implementation.
+    seed = config["seed"]
+    steps = config["steps"]
+
+    mt19937 = MT19937(seed)
+    # Burn step
+    mt19937.random_raw(steps)
+    key = mt19937.state["state"]["key"]
+    if sys.byteorder == 'big':
+        key = key.byteswap()
+    md5 = hashlib.md5(key)
+    assert mt19937.state["state"]["pos"] == config["initial"]["pos"]
+    assert md5.hexdigest() == config["initial"]["key_md5"]
+
+    jumped = mt19937.jumped()
+    key = jumped.state["state"]["key"]
+    if sys.byteorder == 'big':
+        key = key.byteswap()
+    md5 = hashlib.md5(key)
+    assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
+    assert md5.hexdigest() == config["jumped"]["key_md5"]

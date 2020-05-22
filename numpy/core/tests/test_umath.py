@@ -21,6 +21,27 @@ def on_powerpc():
            platform.machine().startswith('ppc')
 
 
+def bad_arcsinh():
+    """The blacklisted trig functions are not accurate on aarch64 for
+    complex256. Rather than dig through the actual problem skip the
+    test. This should be fixed when we can move past glibc2.17
+    which is the version in manylinux2014
+    """
+    x = 1.78e-10
+    v1 = np.arcsinh(np.float128(x))
+    v2 = np.arcsinh(np.complex256(x)).real
+    # The eps for float128 is 1-e33, so this is way bigger
+    return abs((v1 / v2) - 1.0) > 1e-23
+
+if platform.machine() == 'aarch64' and bad_arcsinh():
+    skip_longcomplex_msg = ('Trig functions of np.longcomplex values known to be '
+                            'inaccurate on aarch64 for some compilation '
+                            'configurations, should be fixed by building on a '
+                            'platform using glibc>2.17')
+else:
+    skip_longcomplex_msg = ''
+
+
 class _FilterInvalids:
     def setup(self):
         self.olderr = np.seterr(invalid='ignore')
@@ -618,6 +639,12 @@ class TestLogAddExp2(_FilterInvalids):
         assert_(np.isnan(np.logaddexp2(0, np.nan)))
         assert_(np.isnan(np.logaddexp2(np.nan, np.nan)))
 
+    def test_reduce(self):
+        assert_equal(np.logaddexp2.identity, -np.inf)
+        assert_equal(np.logaddexp2.reduce([]), -np.inf)
+        assert_equal(np.logaddexp2.reduce([-np.inf]), -np.inf)
+        assert_equal(np.logaddexp2.reduce([-np.inf, 0]), 0)
+
 
 class TestLog:
     def test_log_values(self):
@@ -640,6 +667,16 @@ class TestExp:
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.exp(yf), xf)
 
+    def test_exp_strides(self):
+        np.random.seed(42)
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        sizes = np.arange(2,100)
+        for ii in sizes:
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=709.1,size=ii))
+            y_true = np.exp(x_f64)
+            for jj in strides:
+                assert_array_almost_equal_nulp(np.exp(x_f64[::jj]), y_true[::jj], nulp=2)
+
 class TestSpecialFloats:
     def test_exp_values(self):
         x = [np.nan,  np.nan, np.inf, 0.]
@@ -652,6 +689,8 @@ class TestSpecialFloats:
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
             assert_raises(FloatingPointError, np.exp, np.float32(1E19))
+            assert_raises(FloatingPointError, np.exp, np.float64(800.))
+            assert_raises(FloatingPointError, np.exp, np.float64(1E19))
 
     def test_log_values(self):
         with np.errstate(all='ignore'):
@@ -2811,6 +2850,8 @@ class TestComplexFunctions:
             # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
             # So, give more leeway for long complex tests here:
             # Can use 2.1 for > Ubuntu LTS Trusty (2014), glibc = 2.19.
+            if skip_longcomplex_msg:
+                pytest.skip(skip_longcomplex_msg)
             check(x_series, 50.0*eps)
         else:
             check(x_series, 2.1*eps)

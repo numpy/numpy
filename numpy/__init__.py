@@ -79,7 +79,9 @@ test
 show_config
     Show numpy build configuration
 dual
-    Overwrite certain functions with high-performance Scipy tools
+    Overwrite certain functions with high-performance SciPy tools.
+    Note: `numpy.dual` is deprecated.  Use the functions from NumPy or Scipy
+    directly instead of importing them from `numpy.dual`.
 matlib
     Make everything matrices.
 __version__
@@ -153,13 +155,12 @@ else:
     from . import ma
     from . import matrixlib as _mat
     from .matrixlib import *
-    from .compat import long
 
     # Make these accessible from numpy name-space
     # but not imported in from numpy import *
     # TODO[gh-6103]: Deprecate these
     from builtins import bool, int, float, complex, object, str
-    unicode = str
+    from .compat import long, unicode
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
@@ -254,3 +255,56 @@ else:
 
     _sanity_check()
     del _sanity_check
+
+    def _mac_os_check():
+        """
+        Quick Sanity check for Mac OS look for accelerate build bugs.
+        Testing numpy polyfit calls init_dgelsd(LAPACK)
+        """
+        try:
+            c = array([3., 2., 1.])
+            x = linspace(0, 2, 5)
+            y = polyval(c, x)
+            _ = polyfit(x, y, 2, cov=True)
+        except ValueError:
+            pass
+
+    import sys
+    if sys.platform == "darwin":
+        with warnings.catch_warnings(record=True) as w:
+            _mac_os_check()
+            # Throw runtime error, if the test failed Check for warning and error_message
+            error_message = ""
+            if len(w) > 0:
+                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
+                msg = (
+                    "Polyfit sanity test emitted a warning, most likely due "
+                    "to using a buggy Accelerate backend. "
+                    "If you compiled yourself, "
+                    "see site.cfg.example for information. "
+                    "Otherwise report this to the vendor "
+                    "that provided NumPy.\n{}\n".format(
+                        error_message))
+                raise RuntimeError(msg)
+    del _mac_os_check
+
+    # We usually use madvise hugepages support, but on some old kernels it
+    # is slow and thus better avoided.
+    # Specifically kernel version 4.6 had a bug fix which probably fixed this:
+    # https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
+    import os
+    use_hugepage = os.environ.get("NUMPY_MADVISE_HUGEPAGE", None)
+    if sys.platform == "linux" and use_hugepage is None:
+        use_hugepage = 1
+        kernel_version = os.uname().release.split(".")[:2]
+        kernel_version = tuple(int(v) for v in kernel_version)
+        if kernel_version < (4, 6):
+            use_hugepage = 0
+    elif use_hugepage is None:
+        # This is not Linux, so it should not matter, just enable anyway
+        use_hugepage = 1
+    else:
+        use_hugepage = int(use_hugepage)
+
+    # Note that this will currently only make a difference on Linux
+    core.multiarray._set_madvise_hugepage(use_hugepage)

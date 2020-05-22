@@ -531,7 +531,7 @@ defdict = {
           TD(flts, f="logaddexp", astype={'e':'f'})
           ),
 'logaddexp2':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, MinusInfinity,
           docstrings.get('numpy.core.umath.logaddexp2'),
           None,
           TD(flts, f="logaddexp2", astype={'e':'f'})
@@ -702,6 +702,7 @@ defdict = {
           None,
           TD('e', f='exp', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
+          TD('d', simd=[('avx512f', 'd')]),
           TD('fdg' + cmplx, f='exp'),
           TD(P, f='exp'),
           ),
@@ -1027,8 +1028,11 @@ def make_arrays(funcdict):
                 funclist.append('NULL')
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
-                except KeyError:
-                    raise ValueError("Could not handle {}[{}]".format(name, t.type))
+                except KeyError as e:
+                    raise ValueError(
+                        f"Could not handle {name}[{t.type}] "
+                        f"with nin={uf.nin}, nout={uf.nout}"
+                    ) from None
 
                 astype = ''
                 if not t.astype is None:

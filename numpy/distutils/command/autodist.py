@@ -69,7 +69,10 @@ def check_gcc_function_attribute(cmd, attribute, name):
         #pragma GCC diagnostic error "-Wattributes"
         #pragma clang diagnostic error "-Wattributes"
 
-        int %s %s(void*);
+        int %s %s(void* unused)
+        {
+            return 0;
+        }
 
         int
         main()

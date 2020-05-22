@@ -8,6 +8,7 @@ import operator
 import warnings
 import pytest
 import tempfile
+import re
 
 import numpy as np
 from numpy.testing import (
@@ -547,3 +548,73 @@ def test_deprecate_ragged_arrays():
     with assert_warns(np.VisibleDeprecationWarning):
         np.array(arg)
 
+
+class TestToString(_DeprecationTestCase):
+    # 2020-03-06 1.19.0
+    message = re.escape("tostring() is deprecated. Use tobytes() instead.")
+
+    def test_tostring(self):
+        arr = np.array(list(b"test\xFF"), dtype=np.uint8)
+        self.assert_deprecated(arr.tostring)
+
+    def test_tostring_matches_tobytes(self):
+        arr = np.array(list(b"test\xFF"), dtype=np.uint8)
+        b = arr.tobytes()
+        with assert_warns(DeprecationWarning):
+            s = arr.tostring()
+        assert s == b
+
+
+class TestDTypeCoercion(_DeprecationTestCase):
+    # 2020-02-06 1.19.0
+    message = "Converting .* to a dtype .*is deprecated"
+    deprecated_types = [
+        # The builtin scalar super types:
+        np.generic, np.flexible, np.number,
+        np.inexact, np.floating, np.complexfloating,
+        np.integer, np.unsignedinteger, np.signedinteger,
+        # character is a deprecated S1 special case:
+        np.character,
+    ]
+
+    def test_dtype_coercion(self):
+        for scalar_type in self.deprecated_types:
+            self.assert_deprecated(np.dtype, args=(scalar_type,))
+
+    def test_array_construction(self):
+        for scalar_type in self.deprecated_types:
+            self.assert_deprecated(np.array, args=([], scalar_type,))
+
+    def test_not_deprecated(self):
+        # All specific types are not deprecated:
+        for group in np.sctypes.values():
+            for scalar_type in group:
+                self.assert_not_deprecated(np.dtype, args=(scalar_type,))
+
+        for scalar_type in [type, dict, list, tuple]:
+            # Typical python types are coerced to object currently:
+            self.assert_not_deprecated(np.dtype, args=(scalar_type,))
+
+
+class BuiltInRoundComplexDType(_DeprecationTestCase):
+    # 2020-03-31 1.19.0
+    deprecated_types = [np.csingle, np.cdouble, np.clongdouble]
+    not_deprecated_types = [
+        np.int8, np.int16, np.int32, np.int64,
+        np.uint8, np.uint16, np.uint32, np.uint64,
+        np.float16, np.float32, np.float64,
+    ]
+
+    def test_deprecated(self):
+        for scalar_type in self.deprecated_types:
+            scalar = scalar_type(0)
+            self.assert_deprecated(round, args=(scalar,))
+            self.assert_deprecated(round, args=(scalar, 0))
+            self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
+    
+    def test_not_deprecated(self):
+        for scalar_type in self.not_deprecated_types:
+            scalar = scalar_type(0)
+            self.assert_not_deprecated(round, args=(scalar,))
+            self.assert_not_deprecated(round, args=(scalar, 0))
+            self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})

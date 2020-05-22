@@ -372,8 +372,10 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     # invoke the function on the first item
     try:
         ind0 = next(inds)
-    except StopIteration:
-        raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
+    except StopIteration as e:
+        raise ValueError(
+            'Cannot apply_along_axis when any iteration dimensions are 0'
+        ) from None
     res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
 
     # build a buffer for storing evaluations of func1d.
@@ -686,10 +688,12 @@ def dstack(tup):
 
     See Also
     --------
-    stack : Join a sequence of arrays along a new axis.
-    vstack : Stack along first axis.
-    hstack : Stack along second axis.
     concatenate : Join a sequence of arrays along an existing axis.
+    stack : Join a sequence of arrays along a new axis.
+    block : Assemble an nd-array from nested lists of blocks.
+    vstack : Stack arrays in sequence vertically (row wise).
+    hstack : Stack arrays in sequence horizontally (column wise).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
     dsplit : Split array along third axis.
 
     Examples

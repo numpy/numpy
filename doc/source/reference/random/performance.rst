@@ -81,7 +81,7 @@ performance was computed using a geometric mean.
 
 .. note::
 
-   All timings were taken using Linux on a i5-3570 processor.
+   All timings were taken using Linux on an i5-3570 processor.
 
 Performance on different Operating Systems
 ******************************************
@@ -150,4 +150,4 @@ Exponentials                100     33.7      26.3    109.8
 
    Linux timings used Ubuntu 18.04 and GCC 7.4.  Windows timings were made on
    Windows 10 using Microsoft C/C++ Optimizing Compiler Version 19 (Visual
-   Studio 2015). All timings were produced on a i5-3570 processor.
+   Studio 2015). All timings were produced on an i5-3570 processor.

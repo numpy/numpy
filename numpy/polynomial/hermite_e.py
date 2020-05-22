@@ -1,5 +1,7 @@
 """
-Objects for dealing with Hermite_e series.
+===================================================================
+HermiteE Series, "Probabilists" (:mod:`numpy.polynomial.hermite_e`)
+===================================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Hermite_e series, including a `HermiteE` class that
@@ -7,51 +9,66 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+.. autosummary::
+   :toctree: generated/
+
+   HermiteE
+
 Constants
 ---------
-- `hermedomain` -- Hermite_e series default domain, [-1,1].
-- `hermezero` -- Hermite_e series that evaluates identically to 0.
-- `hermeone` -- Hermite_e series that evaluates identically to 1.
-- `hermex` -- Hermite_e series for the identity map, ``f(x) = x``.
+.. autosummary::
+   :toctree: generated/
+
+   hermedomain
+   hermezero
+   hermeone
+   hermex
 
 Arithmetic
 ----------
-- `hermeadd` -- add two Hermite_e series.
-- `hermesub` -- subtract one Hermite_e series from another.
-- `hermemulx` -- multiply a Hermite_e series in ``P_i(x)`` by ``x``.
-- `hermemul` -- multiply two Hermite_e series.
-- `hermediv` -- divide one Hermite_e series by another.
-- `hermepow` -- raise a Hermite_e series to a positive integer power.
-- `hermeval` -- evaluate a Hermite_e series at given points.
-- `hermeval2d` -- evaluate a 2D Hermite_e series at given points.
-- `hermeval3d` -- evaluate a 3D Hermite_e series at given points.
-- `hermegrid2d` -- evaluate a 2D Hermite_e series on a Cartesian product.
-- `hermegrid3d` -- evaluate a 3D Hermite_e series on a Cartesian product.
+.. autosummary::
+   :toctree: generated/
+
+   hermeadd
+   hermesub
+   hermemulx
+   hermemul
+   hermediv
+   hermepow
+   hermeval
+   hermeval2d
+   hermeval3d
+   hermegrid2d
+   hermegrid3d
 
 Calculus
 --------
-- `hermeder` -- differentiate a Hermite_e series.
-- `hermeint` -- integrate a Hermite_e series.
+.. autosummary::
+   :toctree: generated/
+
+   hermeder
+   hermeint
 
 Misc Functions
 --------------
-- `hermefromroots` -- create a Hermite_e series with specified roots.
-- `hermeroots` -- find the roots of a Hermite_e series.
-- `hermevander` -- Vandermonde-like matrix for Hermite_e polynomials.
-- `hermevander2d` -- Vandermonde-like matrix for 2D power series.
-- `hermevander3d` -- Vandermonde-like matrix for 3D power series.
-- `hermegauss` -- Gauss-Hermite_e quadrature, points and weights.
-- `hermeweight` -- Hermite_e weight function.
-- `hermecompanion` -- symmetrized companion matrix in Hermite_e form.
-- `hermefit` -- least-squares fit returning a Hermite_e series.
-- `hermetrim` -- trim leading coefficients from a Hermite_e series.
-- `hermeline` -- Hermite_e series of given straight line.
-- `herme2poly` -- convert a Hermite_e series to a polynomial.
-- `poly2herme` -- convert a polynomial to a Hermite_e series.
+.. autosummary::
+   :toctree: generated/
 
-Classes
--------
-- `HermiteE` -- A Hermite_e series class.
+   hermefromroots
+   hermeroots
+   hermevander
+   hermevander2d
+   hermevander3d
+   hermegauss
+   hermeweight
+   hermecompanion
+   hermefit
+   hermetrim
+   hermeline
+   herme2poly
+   poly2herme
 
 See also
 --------
@@ -1170,7 +1187,7 @@ def hermevander2d(x, y, deg):
     -------
     vander2d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        :math:`order = (deg[0]+1)*(deg[1]+1)`.  The dtype will be the same
         as the converted `x` and `y`.
 
     See Also
@@ -1224,7 +1241,7 @@ def hermevander3d(x, y, z, deg):
     -------
     vander3d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        :math:`order = (deg[0]+1)*(deg[1]+1)*(deg[2]+1)`.  The dtype will
         be the same as the converted `x`, `y`, and `z`.
 
     See Also
@@ -1345,8 +1362,8 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     Fits using HermiteE series are probably most useful when the data can
     be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the HermiteE
-    weight. In that case the weight ``sqrt(w(x[i])`` should be used
-    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    weight. In that case the weight ``sqrt(w(x[i]))`` should be used
+    together with data values ``y[i]/sqrt(w(x[i]))``. The weight function is
     available as `hermeweight`.
 
     References

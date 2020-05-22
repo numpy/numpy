@@ -5,7 +5,6 @@ import numpy as np
 from numpy.core._multiarray_tests import solve_diophantine, internal_overlap
 from numpy.core import _umath_tests
 from numpy.lib.stride_tricks import as_strided
-from numpy.compat import long
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_array_equal
     )
@@ -387,7 +386,6 @@ def test_shares_memory_api():
     assert_equal(np.shares_memory(a, b), True)
     assert_equal(np.shares_memory(a, b, max_work=None), True)
     assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=1)
-    assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=long(1))
 
 
 def test_may_share_memory_bad_max_work():

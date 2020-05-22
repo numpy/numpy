@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+from numpy.core._rational_tests import rational
 import pytest
 from numpy.testing import (
      assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
@@ -141,6 +142,16 @@ def test_array_array():
     assert_equal(np.array([(1.0,) * 10] * 10, dtype=np.float64),
                  np.ones((10, 10), dtype=np.float64))
 
+@pytest.mark.parametrize("array", [True, False])
+def test_array_impossible_casts(array):
+    # All builtin types can forst cast as least theoretically
+    # but user dtypes cannot necessarily.
+    rt = rational(1, 2)
+    if array:
+        rt = np.array(rt)
+    with assert_raises(ValueError):
+        np.array(rt, dtype="M8")
+
 
 def test_fastCopyAndTranspose():
     # 0D array
@@ -277,6 +288,34 @@ def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
     a = np.array(10, dtype=np.complex_)
     assert_warns(np.ComplexWarning, a.astype, t)
+
+@pytest.mark.parametrize(["dtype", "out_dtype"],
+        [(np.bytes_, np.bool_),
+         (np.unicode, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?"))])
+def test_string_to_boolean_cast(dtype, out_dtype):
+    """
+    Currently, for `astype` strings are cast to booleans effectively by
+    calling `bool(int(string)`. This is not consistent (see gh-9875) and
+    will eventually be deprecated.
+    """
+    arr = np.array(["10", "10\0\0\0", "0\0\0", "0"], dtype=dtype)
+    expected = np.array([True, True, False, False], dtype=out_dtype)
+    assert_array_equal(arr.astype(out_dtype), expected)
+
+@pytest.mark.parametrize(["dtype", "out_dtype"],
+        [(np.bytes_, np.bool_),
+         (np.unicode, np.bool_),
+         (np.dtype("S10,S9"), np.dtype("?,?"))])
+def test_string_to_boolean_cast_errors(dtype, out_dtype):
+    """
+    These currently error out, since cast to integers fails, but should not
+    error out in the future.
+    """
+    for invalid in ["False", "True", "", "\0", "non-empty"]:
+        arr = np.array([invalid], dtype=dtype)
+        with assert_raises(ValueError):
+            arr.astype(out_dtype)
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)

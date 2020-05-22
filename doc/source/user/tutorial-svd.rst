@@ -62,7 +62,7 @@ image. We'll use the ``face`` image from the `scipy.misc` module:
 Now, ``img`` is a NumPy array, as we can see when using the ``type`` function::
 
     >>> type(img)
-    numpy.ndarray
+    <class 'numpy.ndarray'>
 
 We can see the image using the `matplotlib.pyplot.imshow` function::
 
@@ -266,6 +266,11 @@ have a second axis. Executing
 ::
 
     >>> s @ Vt
+    Traceback (most recent call last):
+      ...
+    ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0,
+    with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 1024 is different from
+    768)
 
 results in a ``ValueError``. This happens because having a one-dimensional
 array for ``s``, in this case, is much more economic in practice than building a
@@ -450,7 +455,7 @@ and
     :include-source: 0
     
 should give you an image indistinguishable from the original one (although we
-may introduce floating point errors for this reconstruction. In fact, 
+may introduce floating point errors for this reconstruction). In fact, 
 you might see a warning message saying `"Clipping input data to the
 valid range for imshow with RGB data ([0..1] for floats or [0..255] for
 integers)."` This is expected from the manipulation we just did on the original

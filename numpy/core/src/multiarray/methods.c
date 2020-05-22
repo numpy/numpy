@@ -54,33 +54,6 @@ NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
     return ret;
 }
 
-static PyObject *
-get_forwarding_ndarray_method(const char *name)
-{
-    PyObject *module_methods, *callable;
-
-    /* Get a reference to the function we're calling */
-    module_methods = PyImport_ImportModule("numpy.core._methods");
-    if (module_methods == NULL) {
-        return NULL;
-    }
-    callable = _PyDict_GetItemStringWithError(PyModule_GetDict(module_methods), name);
-    if (callable == NULL && PyErr_Occurred()) {
-        Py_DECREF(module_methods);
-        return NULL;
-    }
-    if (callable == NULL) {
-        Py_DECREF(module_methods);
-        PyErr_Format(PyExc_RuntimeError,
-                "NumPy internal error: could not find function "
-                "numpy.core._methods.%s", name);
-    }
-    else {
-        Py_INCREF(callable);
-    }
-    Py_DECREF(module_methods);
-    return callable;
-}
 
 /*
  * Forwards an ndarray method to a the Python function
@@ -121,11 +94,9 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
  */
 #define NPY_FORWARD_NDARRAY_METHOD(name) \
         static PyObject *callable = NULL; \
+        npy_cache_import("numpy.core._methods", name, &callable); \
         if (callable == NULL) { \
-            callable = get_forwarding_ndarray_method(name); \
-            if (callable == NULL) { \
-                return NULL; \
-            } \
+            return NULL; \
         } \
         return forward_ndarray_method(self, args, kwds, callable)
 
@@ -146,8 +117,15 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
 
-    return PyArray_Return((PyArrayObject *)
-                PyArray_TakeFrom(self, indices, dimension, out, mode));
+    PyObject *ret = PyArray_TakeFrom(self, indices, dimension, out, mode);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -303,7 +281,15 @@ array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out))
         return NULL;
 
-    return PyArray_Return((PyArrayObject *)PyArray_ArgMax(self, axis, out));
+    PyObject *ret = PyArray_ArgMax(self, axis, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -318,7 +304,15 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out))
         return NULL;
 
-    return PyArray_Return((PyArrayObject *)PyArray_ArgMin(self, axis, out));
+    PyObject *ret = PyArray_ArgMin(self, axis, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -566,6 +560,23 @@ array_tobytes(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_ToString(self, order);
 }
 
+static PyObject *
+array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    NPY_ORDER order = NPY_CORDER;
+    static char *kwlist[] = {"order", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:tostring", kwlist,
+                                     PyArray_OrderConverter, &order)) {
+        return NULL;
+    }
+    /* 2020-03-30, NumPy 1.19 */
+    if (DEPRECATE("tostring() is deprecated. Use tobytes() instead.") < 0) {
+        return NULL;
+    }
+    return PyArray_ToString(self, order);
+}
+
 
 /* This should grow an order= keyword to be consistent
  */
@@ -772,24 +783,6 @@ array_setscalar(PyArrayObject *self, PyObject *args)
     }
 }
 
-NPY_NO_EXPORT const char *
-npy_casting_to_string(NPY_CASTING casting)
-{
-    switch (casting) {
-        case NPY_NO_CASTING:
-            return "'no'";
-        case NPY_EQUIV_CASTING:
-            return "'equiv'";
-        case NPY_SAFE_CASTING:
-            return "'safe'";
-        case NPY_SAME_KIND_CASTING:
-            return "'same_kind'";
-        case NPY_UNSAFE_CASTING:
-            return "'unsafe'";
-        default:
-            return "<unknown>";
-    }
-}
 
 static PyObject *
 array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -859,19 +852,8 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return (PyObject *)ret;
     }
     else {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot cast array from ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(self)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)dtype));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(self), dtype, casting, PyArray_NDIM(self) == 0);
         Py_DECREF(dtype);
         return NULL;
     }
@@ -1230,7 +1212,15 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return PyArray_Return((PyArrayObject *)PyArray_Choose(self, choices, out, clipmode));
+    PyObject *ret = PyArray_Choose(self, choices, out, clipmode);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
@@ -1872,13 +1862,8 @@ array_reduce_ex(PyArrayObject *self, PyObject *args)
          * method that involves using a temporary bytes allocation. */
         return array_reduce_ex_regular(self, protocol);
     }
-    else if (protocol == 5) {
-        return array_reduce_ex_picklebuffer(self, protocol);
-    }
     else {
-        PyErr_Format(PyExc_ValueError,
-                     "__reduce_ex__ called with protocol > 5");
-        return NULL;
+        return array_reduce_ex_picklebuffer(self, protocol);
     }
 }
 
@@ -2336,8 +2321,16 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out)) {
         return NULL;
     }
-    return PyArray_Return(
-                (PyArrayObject *)PyArray_Compress(self, condition, axis, out));
+
+    PyObject *ret = PyArray_Compress(self, condition, axis, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 
@@ -2372,7 +2365,15 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     rtype = _CHKTYPENUM(dtype);
     Py_XDECREF(dtype);
-    return PyArray_Return((PyArrayObject *)PyArray_Trace(self, offset, axis1, axis2, rtype, out));
+    PyObject *ret = PyArray_Trace(self, offset, axis1, axis2, rtype, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 #undef _CHKTYPENUM
@@ -2457,7 +2458,16 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out)) {
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_Round(self, decimals, out));
+
+    PyObject *ret = PyArray_Round(self, decimals, out);
+
+    /* this matches the unpacking behavior of ufuncs */
+    if (out == NULL) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 
@@ -2844,7 +2854,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_tolist,
         METH_VARARGS, NULL},
     {"tostring",
-        (PyCFunction)array_tobytes,
+        (PyCFunction)array_tostring,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)array_trace,

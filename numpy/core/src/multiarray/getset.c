@@ -13,6 +13,7 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "conversion_utils.h"
 #include "ctors.h"
 #include "scalartypes.h"
 #include "descriptor.h"
@@ -62,33 +63,39 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     if (PyArray_DATA(ret) != PyArray_DATA(self)) {
         Py_DECREF(ret);
         PyErr_SetString(PyExc_AttributeError,
-                        "incompatible shape for a non-contiguous "\
-                        "array");
+                        "Incompatible shape for in-place modification. Use "
+                        "`.reshape()` to make a copy with the desired shape.");
         return -1;
     }
 
-    /* Free old dimensions and strides */
-    npy_free_cache_dim_array(self);
     nd = PyArray_NDIM(ret);
-    ((PyArrayObject_fields *)self)->nd = nd;
     if (nd > 0) {
         /* create new dimensions and strides */
-        ((PyArrayObject_fields *)self)->dimensions = npy_alloc_cache_dim(2 * nd);
-        if (PyArray_DIMS(self) == NULL) {
+        npy_intp *_dimensions = npy_alloc_cache_dim(2 * nd);
+        if (_dimensions == NULL) {
             Py_DECREF(ret);
-            PyErr_SetString(PyExc_MemoryError,"");
+            PyErr_NoMemory();
             return -1;
         }
-        ((PyArrayObject_fields *)self)->strides = PyArray_DIMS(self) + nd;
+        /* Free old dimensions and strides */
+        npy_free_cache_dim_array(self);
+        ((PyArrayObject_fields *)self)->nd = nd;
+        ((PyArrayObject_fields *)self)->dimensions = _dimensions; 
+        ((PyArrayObject_fields *)self)->strides = _dimensions + nd;
+
         if (nd) {
             memcpy(PyArray_DIMS(self), PyArray_DIMS(ret), nd*sizeof(npy_intp));
             memcpy(PyArray_STRIDES(self), PyArray_STRIDES(ret), nd*sizeof(npy_intp));
         }
     }
     else {
+        /* Free old dimensions and strides */
+        npy_free_cache_dim_array(self);        
+        ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
     }
+
     Py_DECREF(ret);
     PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return 0;
@@ -104,7 +111,7 @@ array_strides_get(PyArrayObject *self)
 static int
 array_strides_set(PyArrayObject *self, PyObject *obj)
 {
-    PyArray_Dims newstrides = {NULL, 0};
+    PyArray_Dims newstrides = {NULL, -1};
     PyArrayObject *new;
     npy_intp numbytes = 0;
     npy_intp offset = 0;
@@ -117,8 +124,8 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
                 "Cannot delete array strides");
         return -1;
     }
-    if (!PyArray_IntpConverter(obj, &newstrides) ||
-        newstrides.ptr == NULL) {
+    if (!PyArray_OptionalIntpConverter(obj, &newstrides) ||
+        newstrides.len == -1) {
         PyErr_SetString(PyExc_TypeError, "invalid strides");
         return -1;
     }

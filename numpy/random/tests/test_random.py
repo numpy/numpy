@@ -91,6 +91,12 @@ class TestMultinomial:
         assert_raises(TypeError, np.random.multinomial, 1, p,
                       float(1))
 
+    def test_multidimensional_pvals(self):
+        assert_raises(ValueError, np.random.multinomial, 10, [[0, 1]])
+        assert_raises(ValueError, np.random.multinomial, 10, [[0], [1]])
+        assert_raises(ValueError, np.random.multinomial, 10, [[[0], [1]], [[1], [0]]])
+        assert_raises(ValueError, np.random.multinomial, 10, np.array([[0, 1], [1, 0]]))
+
 
 class TestSetState:
     def setup(self):
@@ -557,6 +563,12 @@ class TestRandomDist:
         # gh-2089
         alpha = np.array([5.4e-01, -1.0e-16])
         assert_raises(ValueError, np.random.mtrand.dirichlet, alpha)
+
+        # gh-15876
+        assert_raises(ValueError, random.dirichlet, [[5, 1]])
+        assert_raises(ValueError, random.dirichlet, [[5], [1]])
+        assert_raises(ValueError, random.dirichlet, [[[5], [1]], [[1], [5]]])
+        assert_raises(ValueError, random.dirichlet, np.array([[5, 1], [1, 5]]))
 
     def test_exponential(self):
         np.random.seed(self.seed)

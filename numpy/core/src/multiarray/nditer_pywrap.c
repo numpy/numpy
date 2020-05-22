@@ -17,6 +17,7 @@
 #include "npy_pycompat.h"
 #include "alloc.h"
 #include "common.h"
+#include "conversion_utils.h"
 #include "ctors.h"
 
 /* Functions not part of the public NumPy C API */
@@ -229,50 +230,6 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
 
     *flags |= tmpflags;
     return 1;
-}
-
-/* TODO: Use PyArray_OrderConverter once 'K' is added there */
-static int
-npyiter_order_converter(PyObject *order_in, NPY_ORDER *order)
-{
-    char *str = NULL;
-    Py_ssize_t length = 0;
-
-    if (PyUnicode_Check(order_in)) {
-        /* accept unicode input */
-        PyObject *str_obj;
-        int ret;
-        str_obj = PyUnicode_AsASCIIString(order_in);
-        if (str_obj == NULL) {
-            return 0;
-        }
-        ret = npyiter_order_converter(str_obj, order);
-        Py_DECREF(str_obj);
-        return ret;
-    }
-
-    if (PyBytes_AsStringAndSize(order_in, &str, &length) < 0) {
-        return 0;
-    }
-
-    if (length == 1) switch (str[0]) {
-        case 'C':
-            *order = NPY_CORDER;
-            return 1;
-        case 'F':
-            *order = NPY_FORTRANORDER;
-            return 1;
-        case 'A':
-            *order = NPY_ANYORDER;
-            return 1;
-        case 'K':
-            *order = NPY_KEEPORDER;
-            return 1;
-    }
-
-    PyErr_SetString(PyExc_ValueError,
-                    "order must be one of 'C', 'F', 'A', or 'K'");
-    return 0;
 }
 
 static int
@@ -748,7 +705,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     int oa_ndim = -1;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
-    PyArray_Dims itershape = {NULL, 0};
+    PyArray_Dims itershape = {NULL, -1};
     int buffersize = 0;
 
     if (self->iter != NULL) {
@@ -762,10 +719,10 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     NpyIter_GlobalFlagsConverter, &flags,
                     &op_flags_in,
                     &op_dtypes_in,
-                    npyiter_order_converter, &order,
+                    PyArray_OrderConverter, &order,
                     PyArray_CastingConverter, &casting,
                     &op_axes_in,
-                    PyArray_IntpConverter, &itershape,
+                    PyArray_OptionalIntpConverter, &itershape,
                     &buffersize)) {
         npy_free_cache_dim_obj(itershape);
         return -1;
@@ -800,7 +757,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    if (itershape.len > 0) {
+    if (itershape.len != -1) {
         if (oa_ndim == -1) {
             oa_ndim = itershape.len;
             memset(op_axes, 0, sizeof(op_axes[0]) * nop);
@@ -811,10 +768,6 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                         "of entries equal to the iterator ndim");
             goto fail;
         }
-    }
-    else if (itershape.ptr != NULL) {
-        npy_free_cache_dim_obj(itershape);
-        itershape.ptr = NULL;
     }
 
     self->iter = NpyIter_AdvancedNew(nop, op, flags, order, casting, op_flags,
@@ -895,7 +848,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
                     NpyIter_GlobalFlagsConverter, &flags,
                     &op_flags_in,
                     &op_dtypes_in,
-                    npyiter_order_converter, &order,
+                    PyArray_OrderConverter, &order,
                     PyArray_CastingConverter, &casting,
                     &buffersize)) {
         return NULL;

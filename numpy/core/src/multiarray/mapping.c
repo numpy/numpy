@@ -727,8 +727,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
     }
     else if (used_ndim > PyArray_NDIM(self)) {
-        PyErr_SetString(PyExc_IndexError,
-                        "too many indices for array");
+        PyErr_Format(PyExc_IndexError,
+                     "too many indices for array: "
+                     "array is %d-dimensional, but %d were indexed",
+                     PyArray_NDIM(self),
+                     used_ndim);
         goto failed_building_indices;
     }
     else if (index_ndim == 0) {
@@ -2686,7 +2689,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (mit->numiter == 0) {
         /*
          * For MapIterArray, it is possible that there is no fancy index.
-         * to support this case, add a a dummy iterator.
+         * to support this case, add a dummy iterator.
          * Since it is 0-d its transpose, etc. does not matter.
          */
 

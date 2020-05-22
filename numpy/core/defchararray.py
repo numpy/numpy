@@ -17,13 +17,14 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 import functools
 import sys
-from .numerictypes import string_, unicode_, integer, object_, bool_, character
+from .numerictypes import (
+    string_, unicode_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.core.overrides import set_module
 from numpy.core import overrides
-from numpy.compat import asbytes, long
+from numpy.compat import asbytes
 import numpy
 
 __all__ = [
@@ -276,7 +277,10 @@ def str_len(a):
     --------
     builtins.len
     """
-    return _vec_string(a, integer, '__len__')
+    # Note: __len__, etc. currently return ints, which are not C-integers.
+    # Generally intp would be expected for lengths, although int is sufficient
+    # due to the dtype itemsize limitation.
+    return _vec_string(a, int_, '__len__')
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -336,7 +340,7 @@ def multiply(a, i):
     i_arr = numpy.asarray(i)
     if not issubclass(i_arr.dtype.type, integer):
         raise ValueError("Can only multiply by integers")
-    out_size = _get_num_chars(a_arr) * max(long(i_arr.max()), 0)
+    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
 
@@ -446,7 +450,7 @@ def center(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -500,7 +504,7 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
+    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
@@ -710,7 +714,7 @@ def find(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'find', [sub, start] + _clean_args(end))
+        a, int_, 'find', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -739,7 +743,7 @@ def index(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'index', [sub, start] + _clean_args(end))
+        a, int_, 'index', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -991,7 +995,7 @@ def ljust(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -1199,7 +1203,7 @@ def rfind(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'rfind', [sub, start] + _clean_args(end))
+        a, int_, 'rfind', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1229,7 +1233,7 @@ def rindex(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'rindex', [sub, start] + _clean_args(end))
+        a, int_, 'rindex', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_just_dispatcher)
@@ -1261,7 +1265,7 @@ def rjust(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -1729,7 +1733,7 @@ def zfill(a, width):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
 
@@ -1775,7 +1779,7 @@ def isdecimal(a):
     Calls `unicode.isdecimal` element-wise.
 
     Decimal characters include digit characters, and all characters
-    that that can be used to form decimal-radix numbers,
+    that can be used to form decimal-radix numbers,
     e.g. ``U+0660, ARABIC-INDIC DIGIT ZERO``.
 
     Parameters
@@ -1948,10 +1952,10 @@ class chararray(ndarray):
         else:
             dtype = string_
 
-        # force itemsize to be a Python long, since using NumPy integer
+        # force itemsize to be a Python int, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
         # strings in the new array.
-        itemsize = long(itemsize)
+        itemsize = int(itemsize)
 
         if isinstance(buffer, str):
             # unicode objects do not have the buffer interface
@@ -2716,7 +2720,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 (itemsize != obj.itemsize) or
                 (not unicode and isinstance(obj, unicode_)) or
                 (unicode and isinstance(obj, string_))):
-            obj = obj.astype((dtype, long(itemsize)))
+            obj = obj.astype((dtype, int(itemsize)))
         return obj
 
     if isinstance(obj, ndarray) and issubclass(obj.dtype.type, object):
