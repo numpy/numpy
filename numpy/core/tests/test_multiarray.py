@@ -207,6 +207,11 @@ class TestFlags:
             a[2] = 10
             # only warn once
             assert_(len(w) == 1)
+    
+    def test_readonly_from_warnonwrite(self):
+        a = np.arange(10)
+        a.flags._warn_on_write = True
+        assert_(a.__array_interface__['data'][1])        
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
