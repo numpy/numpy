@@ -447,17 +447,17 @@ static int has_list_item(const char* list, const char* item)
     return 0;
 }
 
-static void get_feature_from_proc_cpuinfo() {
+static int get_feature_from_proc_cpuinfo() {
     char* cpuinfo = NULL;
     int   cpuinfo_len;
     long architecture = 0;
     cpuinfo_len = get_file_size("/proc/cpuinfo");
     if (cpuinfo_len < 0) {
-      return;
+      return 0;
     }
     cpuinfo = malloc(cpuinfo_len);
     if (cpuinfo == NULL) {
-      return;
+      return 0;
     }
     cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
     char* cpuArch = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "CPU architecture");
@@ -480,15 +480,13 @@ static void get_feature_from_proc_cpuinfo() {
         npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = isV8 || has_list_item(cpuFeatures, "vfpv3") || has_list_item(cpuFeatures, "half");
         npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = isV8 || has_list_item(cpuFeatures, "vfpv4");
     }
+    return 1;
 }
 
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
 static int
 npy__cpu_init_features_linux(void)
 {
-    // features are fetched from both hwcaps(getauxval, /proc/self/auxv) and /proc/cpuinfo so we can
-    // have some information if the executable is sandboxed (aka no access to /proc/cpuinfo).
-    get_feature_from_proc_cpuinfo();
     unsigned long hwcap = 0, hwcap2 = 0;
     if (getauxval != 0) {
         hwcap = getauxval(NPY__HWCAP);
@@ -518,9 +516,10 @@ npy__cpu_init_features_linux(void)
     }
     if (hwcap == 0 && hwcap2 == 0) {
         /*
+         * try parsing with /proc/cpuinfo, if sandboxed
          * failback to compiler definitions
         */
-        return 0;
+        return get_feature_from_proc_cpuinfo();
     }
 #ifdef __arm__
     // Detect Arm8 (aarch32 state)
