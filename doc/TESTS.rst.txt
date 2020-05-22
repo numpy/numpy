@@ -34,7 +34,7 @@ back in unnoticed.
   so all of the NumPy examples shown below are also applicable to SciPy
 
 Testing NumPy
-''''''''''''
+'''''''''''''
 
 NumPy can be tested in a number of ways, choose any way you feel comfortable.
 
