@@ -38,7 +38,7 @@ Testing NumPy
 
 NumPy can be tested in a number of ways, choose any way you feel comfortable.
 
-Running tests from inside python
+Running tests from inside Python
 --------------------------------
 
 You can test an installed NumPy by `numpy.test`, for example,
