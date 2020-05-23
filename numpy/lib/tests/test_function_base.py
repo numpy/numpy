@@ -2423,6 +2423,15 @@ class TestBincount:
         assert_equal(sys.getrefcount(np.dtype(np.intp)), intp_refcount)
         assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
 
+    @pytest.mark.parametrize("vals", [[[2, 2]], 2])
+    def test_error_not_1d(self, vals):
+        # Test that values has to be 1-D (both as array and nested list)
+        vals_arr = np.asarray(vals)
+        with assert_raises(ValueError):
+            np.bincount(vals_arr)
+        with assert_raises(ValueError):
+            np.bincount(vals)
+
 
 class TestInterp:
 
