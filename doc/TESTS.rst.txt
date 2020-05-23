@@ -50,7 +50,7 @@ To run NumPy's full test suite, use the following::
 The test method may take two or more arguments; the first ``label`` is a
 string specifying what should be tested and the second ``verbose`` is an
 integer giving the level of output verbosity. See the docstring
-`numpy.test`_
+`numpy.test`
 for details. The default value for ``label`` is 'fast' - which
 will run the standard tests.  The string 'full' will run the full battery
 of tests, including those identified as being slow to run. If ``verbose``
