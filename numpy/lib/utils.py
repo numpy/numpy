@@ -1,5 +1,6 @@
 import os
 import sys
+import textwrap
 import types
 import re
 import warnings
@@ -114,6 +115,7 @@ class _Deprecate:
                         break
                     skip += len(line) + 1
                 doc = doc[skip:]
+            depdoc = textwrap.indent(depdoc, ' ' * indent)
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
         try:
