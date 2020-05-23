@@ -92,8 +92,8 @@ If you are writing a package that you'd like to become part of NumPy,
 please write the tests as you develop the package.
 Every Python module, extension module, or subpackage in the NumPy
 package directory should have a corresponding ``test_<name>.py`` file.
-Pytest examines these files for test methods (named test*) and test
-classes (named Test*).
+Pytest examines these files for test methods (named ``test*``) and test
+classes (named ``Test*``).
 
 Suppose you have a NumPy module ``numpy/xxx/yyy.py`` containing a
 function ``zzz()``.  To test this function you would create a test
