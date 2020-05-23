@@ -384,7 +384,6 @@ failures without requiring a fixed seed, reporting *minimal* examples for
 each failure, and better-than-naive-random techniques for triggering bugs.
 
 
-.. _numpy.test:
 Documentation for ``numpy.test``
 --------------------------------
 
