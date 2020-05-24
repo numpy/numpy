@@ -50,8 +50,7 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
  * Converts a datetime from a datetimestruct to a datetime based
  * on some metadata.
  */
-NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
 
@@ -287,8 +286,7 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
 /*
  * Converts a datetime based on the given metadata into a datetimestruct
  */
-NPY_NO_EXPORT int
-convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out);
 
@@ -300,8 +298,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
  *
  * Returns 0 on success, -1 on failure.
  */
-NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
 
