@@ -11,16 +11,16 @@ DEF _buffer_format_string_len = 255
 cimport cpython.buffer as pybuf
 from cpython.ref cimport Py_INCREF
 from cpython.mem cimport PyObject_Malloc, PyObject_Free
-from cpython.object cimport PyObject, PyTypeObject
+from cpython.object cimport PyObject, PyTypeObject, PyObject_TypeCheck
 from cpython.buffer cimport PyObject_GetBuffer
 from cpython.type cimport type
 cimport libc.stdio as stdio
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t
-    bint PyObject_TypeCheck(object obj, PyTypeObject* type)
 
 cdef extern from "numpy/arrayobject.h":
+    PyTypeObject PyFloatingArrType_Type
     ctypedef Py_intptr_t npy_intp
     ctypedef size_t npy_uintp
 
@@ -757,8 +757,12 @@ cdef inline tuple PyDataType_SHAPE(dtype d):
 cdef extern from "numpy/ndarrayobject.h":
     PyTypeObject PyTimedeltaArrType_Type
     PyTypeObject PyDatetimeArrType_Type
+    PyTypeObject PyComplexFloatingArrType_Type
+    PyTypeObject PyBoolArrType_Type
     ctypedef int64_t npy_timedelta
     ctypedef int64_t npy_datetime
+
+    bint PyArray_IsIntegerScalar(obj) nogil
 
 cdef extern from "numpy/ndarraytypes.h":
     ctypedef struct PyArray_DatetimeMetaData:
@@ -941,6 +945,76 @@ cdef extern from *:
     """
     /* NumPy API declarations from "numpy/__init__.pxd" */
     """
+
+
+cdef inline bint is_integer_object(object obj):
+    """
+    Cython equivalent of
+
+    `isinstance(val, (int, long, np.integer)) and not isinstance(val, bool)`
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    is_integer : bool
+
+    Notes
+    -----
+    This does not counts np.timedelta64 objects as integers.
+    """
+    return (not isinstance(obj, bool) and PyArray_IsIntegerScalar(obj)
+            and not is_timedelta64_object(obj))
+
+
+cdef inline bint is_float_object(object obj):
+    """
+    Cython equivalent of `isinstance(val, (float, np.complex_))`
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    is_float : bool
+    """
+    return (isinstance(obj, float) or
+            (PyObject_TypeCheck(obj, &PyFloatingArrType_Type)))
+
+
+cdef inline bint is_complex_object(object obj):
+    """
+    Cython equivalent of `isinstance(val, (complex, np.complex_))`
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    is_complex : bool
+    """
+    return (isinstance(obj, complex) or
+            PyObject_TypeCheck(obj, &PyComplexFloatingArrType_Type))
+
+
+cdef inline bint is_bool_object(object obj):
+    """
+    Cython equivalent of `isinstance(val, (bool, np.bool_))`
+
+    Parameters
+    ----------
+    val : object
+
+    Returns
+    -------
+    bool
+    """
+    return (isinstance(obj, bool) or
+            PyObject_TypeCheck(obj, &PyBoolArrType_Type))
 
 
 cdef inline bint is_timedelta64_object(object obj):

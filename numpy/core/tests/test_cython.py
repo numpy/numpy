@@ -67,6 +67,103 @@ def install_temp(request, tmp_path):
             raise RuntimeError(f'could not parse "{install_log}"')
 
 
+def test_is_integer_object(install_temp):
+    import checks
+
+    assert not checks.is_integer(np.timedelta64(1234))
+    assert not checks.is_integer(np.datetime64(1234, "D"))
+
+    assert not checks.is_integer("a")
+
+    assert not checks.is_float(float("nan"))
+    assert not checks.is_float(np.nan)
+    assert not checks.is_integer(2.0)
+    assert not checks.is_integer(np.float64(2.0))
+
+    assert checks.is_integer(1)
+    assert checks.is_integer(np.int64(2))
+    assert checks.is_integer(np.uint32(4))
+
+    # Only scalars, not integer-dtyped ndarrays
+    assert not checks.is_integer(np.array([1]))
+
+
+def test_is_float_object(install_temp):
+    import checks
+
+    assert not checks.is_float(np.timedelta64(1234))
+    assert not checks.is_float(np.datetime64(1234, "D"))
+
+    assert not checks.is_float("a")
+
+    assert checks.is_float(float("nan"))
+    assert checks.is_float(np.nan)
+    assert checks.is_float(2.0)
+    assert checks.is_float(np.float64(2.0))
+
+    assert not checks.is_float(1)
+    assert not checks.is_float(np.int64(2))
+    assert not checks.is_float(np.uint32(4))
+
+    # Only scalars, not float-dtyped ndarrays
+    assert not checks.is_float(np.array([1.0]))
+
+
+def test_is_complex_object(install_temp):
+    import checks
+
+    assert not checks.is_complex(np.timedelta64(1234))
+    assert not checks.is_complex(np.datetime64(1234, "D"))
+
+    assert not checks.is_complex("a")
+
+    assert not checks.is_complex(float("nan"))
+    assert not checks.is_complex(np.nan)
+    assert not checks.is_complex(2.0)
+    assert not checks.is_complex(np.float64(2.0))
+
+    assert not checks.is_complex(1)
+    assert not checks.is_complex(np.int64(2))
+    assert not checks.is_complex(np.uint32(4))
+
+    assert checks.is_complex(2.0j)
+    assert checks.is_complex(np.complex64(2.0))
+    assert checks.is_complex(np.complex64(np.nan))
+
+    # Only scalars, not float-dtyped ndarrays
+    assert not checks.is_complex(np.array([1.0], dtype="c8"))
+
+
+def test_is_bool_object(install_temp):
+    import checks
+
+    assert not checks.is_bool(np.timedelta64(1234))
+    assert not checks.is_bool(np.datetime64(1234, "D"))
+
+    assert not checks.is_bool("a")
+    assert not checks.is_bool("True")
+
+    assert not checks.is_bool(float("nan"))
+    assert not checks.is_bool(np.nan)
+    assert not checks.is_bool(2.0)
+    assert not checks.is_bool(np.float64(2.0))
+
+    assert not checks.is_bool(1)
+    assert not checks.is_bool(np.int64(2))
+    assert not checks.is_bool(np.uint32(4))
+
+    assert not checks.is_bool(2.0j)
+    assert not checks.is_bool(np.complex64(2.0))
+    assert not checks.is_bool(np.complex64(np.nan))
+
+    assert checks.is_bool(True)
+    assert checks.is_bool(np.bool_(False))
+
+
+    # Only scalars, not bool-dtyped ndarrays
+    assert not checks.is_bool(np.array([True], dtype=bool))
+
+
 def test_is_timedelta64_object(install_temp):
     import checks
 
