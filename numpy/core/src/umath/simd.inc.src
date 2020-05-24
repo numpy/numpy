@@ -2016,7 +2016,6 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
  * #vindextype = __m512i, __m256i#
  * #vindexload = _mm512_loadu_si512, _mm256_loadu_si256#
  * #episize = epi32, epi64#
- * #mask_not = _knot_mask16, _knot_mask8#
  */
 
 /**begin repeat1
@@ -2069,7 +2068,7 @@ AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, co
 
         @mask@ fpclassmask = _mm512_fpclass_@vsuffix@_mask(x1, @IMM8@);
 #if @is_finite@
-        fpclassmask = @mask_not@(fpclassmask);
+        fpclassmask = _mm512_knot(fpclassmask);
 #endif
 
         __m128i out =_mm512_maskz_cvts@episize@_epi8(fpclassmask, ones);
