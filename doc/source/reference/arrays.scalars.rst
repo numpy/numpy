@@ -51,15 +51,64 @@ of the flexible itemsize array types (:class:`string`,
 Built-in scalar types
 =====================
 
-The built-in scalar types are shown below. Along with their (mostly)
-C-derived names, the integer, float, and complex data-types are also
-available using a bit-width convention so that an array of the right
-size can always be ensured (e.g. :class:`int8`, :class:`float64`,
-:class:`complex128`). Two aliases (:class:`intp` and :class:`uintp`)
-pointing to the integer type that is sufficiently large to hold a C pointer
-are also provided. The C-like names are associated with character codes,
-which are shown in the table. Use of the character codes, however,
-is discouraged.
+The built-in scalar types are shown below:
+
+.. autosummary::
+   :toctree: generated/
+
+   bool_
+   bool8
+
+   byte
+   short
+   intc
+   int_
+   longlong
+   intp
+   int8
+   int16
+   int32
+   int64
+
+   ubyte
+   ushort
+   uintc
+   ulonglong
+   uintp
+   uint8
+   uint16
+   uint32
+   uint64
+
+   half
+   single
+   double
+   float_
+   longfloat
+   float16
+   float32
+   float64
+
+   csingle
+   complex_
+   clongfloat
+   complex64
+   complex128
+
+   object_
+
+   bytes_
+   unicode_
+   void
+
+Along with their (mostly) C-derived names, the integer, float, and complex
+data-types are also available using a bit-width convention so that an array
+of the right size can always be ensured (e.g. :class:`int8`,
+:class:`float64`, :class:`complex128`). Two aliases (:class:`intp` and
+:class:`uintp`) pointing to the integer type that is sufficiently large
+to hold a C pointer are also provided. The C-like names are associated with
+character codes, which are shown in the table. Use of the character codes,
+however, is discouraged.
 
 Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
