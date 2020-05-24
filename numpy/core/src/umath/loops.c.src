@@ -2137,6 +2137,14 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
+@TYPE@_frexp_avx512_skx(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
+{
+    if (!run_unary_two_out_avx512_skx_frexp_@TYPE@(args, dimensions, steps)) {
+        @TYPE@_frexp(args, dimensions, steps, func);
+    }
+}
+
+NPY_NO_EXPORT void
 @TYPE@_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
