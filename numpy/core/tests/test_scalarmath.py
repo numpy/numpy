@@ -706,7 +706,7 @@ class TestAbs:
                         raises=RuntimeWarning,
                         strict=True,
                     )
-                    if dtype == np.complex256 else ()
+                    if dtype().dtype.str.endswith("c32") else ()
                 )
             )
             for dtype in floating_types + complex_floating_types
