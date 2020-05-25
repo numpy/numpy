@@ -971,7 +971,7 @@ cdef inline bint is_integer_object(object obj):
 
 cdef inline bint is_float_object(object obj):
     """
-    Cython equivalent of `isinstance(val, (float, np.complex_))`
+    Cython equivalent of `isinstance(val, (float, np.float_))`
 
     Parameters
     ----------
