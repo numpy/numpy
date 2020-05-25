@@ -83,7 +83,7 @@ npy__cpu_getxcr0(void)
     __asm(".byte 0x0F, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(0));
     return eax;
 #else
-return 0;
+    return 0;
 #endif
 }
 
