@@ -17,10 +17,10 @@ classes contained in the package, see the :ref:`reference`.
    setting-up
    quickstart
    absolute_beginners
-   tutorials_index
-   howtos_index
    basics
    misc
    numpy-for-matlab-users
    building
    c-info
+   tutorials_index
+   howtos_index
