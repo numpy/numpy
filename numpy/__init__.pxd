@@ -18,6 +18,7 @@ cimport libc.stdio as stdio
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t
+    bint PyBool_Check(object obj)
 
 cdef extern from "numpy/arrayobject.h":
     PyTypeObject PyFloatingArrType_Type
@@ -951,7 +952,7 @@ cdef inline bint is_integer_object(object obj):
     """
     Cython equivalent of
 
-    `isinstance(val, (int, long, np.integer)) and not isinstance(val, bool)`
+    `isinstance(val, (int, np.integer)) and not isinstance(val, bool)`
 
     Parameters
     ----------
@@ -965,7 +966,7 @@ cdef inline bint is_integer_object(object obj):
     -----
     This does not counts np.timedelta64 objects as integers.
     """
-    return (not isinstance(obj, bool) and PyArray_IsIntegerScalar(obj)
+    return (not PyBool_Check(obj) and PyArray_IsIntegerScalar(obj)
             and not is_timedelta64_object(obj))
 
 
@@ -1013,7 +1014,7 @@ cdef inline bint is_bool_object(object obj):
     -------
     bool
     """
-    return (isinstance(obj, bool) or
+    return (PyBool_Check(obj) or
             PyObject_TypeCheck(obj, &PyBoolArrType_Type))
 
 
