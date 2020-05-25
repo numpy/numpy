@@ -557,9 +557,6 @@ NPY_NO_EXPORT void
 TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
@@ -569,17 +566,28 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
+TIMEDELTA_mq_m_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+TIMEDELTA_mq_m_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+TIMEDELTA_mq_mm_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+
 /* Special case equivalents to above functions */
 
-#define TIMEDELTA_mq_m_true_divide TIMEDELTA_mq_m_divide
+#define TIMEDELTA_mq_m_true_divide TIMEDELTA_mq_m_floor_divide
 #define TIMEDELTA_md_m_true_divide TIMEDELTA_md_m_divide
 #define TIMEDELTA_mm_d_true_divide TIMEDELTA_mm_d_divide
-#define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
+#define TIMEDELTA_mm_q_divide TIMEDELTA_mm_q_floor_divide
+#define TIMEDELTA_mq_m_divide TIMEDELTA_mq_m_floor_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
 /* #define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide */
 

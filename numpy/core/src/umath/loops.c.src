@@ -1348,22 +1348,6 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
     }
 }
 
-/* Note: Assuming 'q' == NPY_LONGLONG */
-NPY_NO_EXPORT void
-TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        const npy_int64 in2 = *(npy_int64 *)ip2;
-        if (in1 == NPY_DATETIME_NAT || in2 == 0) {
-            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-        }
-        else {
-            *((npy_timedelta *)op1) = in1 / in2;
-        }
-    }
-}
-
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1400,13 +1384,26 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp const *dimensions, npy_intp const *s
     }
 }
 
+
+/**begin repeat
+ * #input_sig = mm, mq#
+ * #div_sig = q, m#
+ * #in2_type = npy_timedelta, npy_int64#
+ * #in2_is_timedelta = 1, 0#
+ * #div_op_type = npy_int64, npy_timedelta#
+ * #invalid_result = 0, NPY_DATETIME_NAT#
+ */
 NPY_NO_EXPORT void
-TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+TIMEDELTA_@input_sig@_m_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
+#if @in2_is_timedelta@
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+#else
+        if (in1 == NPY_DATETIME_NAT) {
+#endif
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
@@ -1429,60 +1426,70 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
 }
 
 NPY_NO_EXPORT void
-TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+TIMEDELTA_@input_sig@_@div_sig@_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
+#if @in2_is_timedelta@
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-            *((npy_int64 *)op1) = 0;
+            npy_set_floatstatus_invalid();  /* warn due to 0 result */
+#else
+        if (in1 == NPY_DATETIME_NAT) {
+#endif
+            *((@div_op_type@ *)op1) = @invalid_result@;
         }
         else if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((npy_int64 *)op1) = 0;
+            npy_set_floatstatus_invalid();
+            *((@div_op_type@ *)op1) = @invalid_result@;
         }
         else {
             if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((npy_int64 *)op1) = in1/in2 - 1;
+                *((@div_op_type@ *)op1) = in1/in2 - 1;
             }
             else {
-                *((npy_int64 *)op1) = in1/in2;
+                *((@div_op_type@ *)op1) = in1/in2;
             }
         }
     }
 }
 
 NPY_NO_EXPORT void
-TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+TIMEDELTA_@input_sig@_@div_sig@m_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP_TWO_OUT {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        const @in2_type@ in2 = *(@in2_type@ *)ip2;
+#if @in2_is_timedelta@
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-            *((npy_int64 *)op1) = 0;
+            npy_set_floatstatus_invalid();  /* warn due to 0 result */
+#else
+        if (in1 == NPY_DATETIME_NAT) {
+#endif
+            *((@div_op_type@ *)op1) = @invalid_result@;
             *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
         }
         else if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((npy_int64 *)op1) = 0;
+            npy_set_floatstatus_invalid();
+            *((@div_op_type@ *)op1) = @invalid_result@;
             *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
         }
         else {
             const npy_int64 quo = in1 / in2;
             const npy_timedelta rem = in1 % in2;
             if ((in1 > 0) == (in2 > 0) || rem == 0) {
-                *((npy_int64 *)op1) = quo;
+                *((@div_op_type@ *)op1) = quo;
                 *((npy_timedelta *)op2) = rem;
             }
             else {
-                *((npy_int64 *)op1) = quo - 1;
+                *((@div_op_type@ *)op1) = quo - 1;
                 *((npy_timedelta *)op2) = rem + in2;
             }
         }
     }
 }
+
+/**end repeat**/
 
 /*
  *****************************************************************************

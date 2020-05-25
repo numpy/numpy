@@ -151,7 +151,7 @@ class TestDateTime:
         expected = np.arange(size)
         arr = np.tile(np.datetime64('NaT'), size)
         assert_equal(np.argsort(arr, kind='mergesort'), expected)
-    
+
     @pytest.mark.parametrize("size", [
         3, 21, 217, 1000])
     def test_timedelta_nat_argsort_stability(self, size):
@@ -1193,13 +1193,6 @@ class TestDateTime:
         # div by 0
         (np.timedelta64(10, 'us'),
          np.timedelta64(0, 'us')),
-        # div with NaT
-        (np.timedelta64('NaT'),
-         np.timedelta64(50, 'us')),
-        # special case for int64 min
-        # in integer floor division
-        (np.timedelta64(np.iinfo(np.int64).min),
-         np.timedelta64(-1)),
         ])
     def test_timedelta_floor_div_warnings(self, op1, op2):
         with assert_warns(RuntimeWarning):
@@ -1257,31 +1250,65 @@ class TestDateTime:
          np.timedelta64('13', 'M')),
         # handle 1D arrays
         (np.array([1, 2, 3], dtype='m8'),
-         np.array([2], dtype='m8')),
-        ])
-    def test_timedelta_divmod(self, op1, op2):
-        expected = (op1 // op2, op1 % op2)
-        assert_equal(divmod(op1, op2), expected)
-
-    @pytest.mark.parametrize("op1, op2", [
-        # reuse cases from floordiv
+         np.array([2, 2, 2], dtype='m8')),
+        # divide a NaT
+        (np.timedelta64('NaT'),
+         np.timedelta64(50, 'us')),
+        # divide by NaT, warns because we return 0 for the division
+        (np.timedelta64(50, 'us'),
+         np.timedelta64('NaT')),
         # div by 0
         (np.timedelta64(10, 'us'),
          np.timedelta64(0, 'us')),
-        # div with NaT
-        (np.timedelta64('NaT'),
-         np.timedelta64(50, 'us')),
         # special case for int64 min
-        # in integer floor division
+        # in integer floor division (also a NaT, so no warning)
         (np.timedelta64(np.iinfo(np.int64).min),
          np.timedelta64(-1)),
         ])
-    def test_timedelta_divmod_warnings(self, op1, op2):
-        with assert_warns(RuntimeWarning):
-            expected = (op1 // op2, op1 % op2)
-        with assert_warns(RuntimeWarning):
-            actual = divmod(op1, op2)
-        assert_equal(actual, expected)
+    def test_timedelta_divmod(self, op1, op2):
+        if np.isnat(op1).any() or np.isnat(op2).any():
+            div_warns, int_div_warns, remainder_warns = 1, 0, 0
+        elif np.any(op2 == np.array(0, dtype=op1.dtype)):
+            div_warns, int_div_warns, remainder_warns = 1, 1, 1
+        else:
+            div_warns, int_div_warns, remainder_warns = 0, 0, 0
+
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            div, rem = (op1 // op2, op1 % op2)
+            assert len(sup.log) == div_warns + remainder_warns
+
+        # test timedelta division round-tripping behaviour (if result is valid)
+        f = ~np.isnat(rem)
+        assert_equal(op1[f], op2[f] * div[f] + rem[f])
+
+        # divmod gives the same result (timedelta division):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_equal(divmod(op1, op2), (div, rem))
+            assert len(sup.log) == (div_warns or remainder_warns)
+
+        # also test the integer behaviour:
+        op2 = op2.view(np.int64)
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            div_int, rem_int = (op1 // op2, op1 % op2)
+            assert len(sup.log) == int_div_warns + remainder_warns
+
+        # test integer division round-tripping behaviour (if result is valid)
+        f = ~np.isnat(rem)
+        assert_equal(op1[f], op2[f] * div_int[f] + rem_int[f])
+
+        # divmod gives the same result (integer division):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_equal(divmod(op1, op2), (div_int, rem_int))
+            assert len(sup.log) == (int_div_warns or remainder_warns)
+
+        # The remainder is the same for timedelta and integer division
+        # unless the division caused the time unit to be adjusted
+        if not np.isnat(rem).any() and rem.dtype == op1.dtype:
+            assert_equal(rem, rem_int)
 
     def test_datetime_divide(self):
         for dta, tda, tdb, tdc, tdd in \
@@ -1893,10 +1920,7 @@ class TestDateTime:
             assert_equal(actual, np.timedelta64('NaT'))
 
     @pytest.mark.parametrize("val1, val2", [
-        # cases where one operand is not
-        # timedelta64
-        (np.timedelta64(7, 'Y'),
-         15,),
+        # Remainder does not support floating point numbers.
         (7.5,
          np.timedelta64(1, 'D')),
         ])
