@@ -32,15 +32,21 @@ Overview
 First steps
 --------------------
 
-Fixes to technical inaccuracies take high priority -- a
-docstring missing a parameter, a faulty description of a
-function/parameter/method, etc. Other "structural" defects like broken links are
-also high priority. Corrections can be proposed via pull requests as they are
-straightforward to review.
+Fixes to technical inaccuracies take high priority -- a docstring missing a
+parameter, a faulty description of a function/parameter/method, and so on.
+Other "structural" defects like broken links also get priority. Problems
+like these can be addressed by a `pull request (PR)
+<https://numpy.org/devdocs/dev/index.html#devindex>`__ if you know how to do
+one; otherwise please `open an issue <https://github.com/numpy/numpy/issues>`__.
 
-Changes to improve clarity are less straightforward. Rather than plunging
-ahead with a PR, it's safer to raise your points first as issues. This can
-save you from wasting your time on undesired changes.
+Typos and misspellings fall on a lower rung; we welcome hearing about them but
+may not be able to fix them promptly. These too can be handled as pull
+requests or issues.
+
+Obvious mistakes in wording (like leaving out a "not") fall in the typo
+category, but other rewordings face a judgment call. Only if a change is
+significant and compellingly better is it likely to go forward. Thus it's
+best to lay it out first in an issue.
 
 To propose major additions, such as a new tutorial, write to the `mailing list
 <https://mail.python.org/mailman/listinfo/numpy-discussion>`__.
@@ -68,6 +74,9 @@ docs library, it turns out, needs to stock four sizes: ``tutorial``,
 written a `definitive, readable exposition
 <https://documentation.divio.com/>`__ of how these differ and how to write
 each type.
+
+
+.. _contributing:
 
 Contributing
 ------------
