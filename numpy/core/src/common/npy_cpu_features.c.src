@@ -77,8 +77,8 @@ npy__cpu_getxcr0(void)
     return _xgetbv(0);
 #elif defined(__GNUC__) || defined(__clang__)
     /* named form of xgetbv not supported on OSX, so must use byte form, see:
-     https://github.com/asmjit/asmjit/issues/78
-   */
+     * https://github.com/asmjit/asmjit/issues/78
+    */
     unsigned int eax, edx;
     __asm(".byte 0x0F, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(0));
     return eax;
