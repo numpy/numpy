@@ -58,7 +58,7 @@ class MinMax(Benchmark):
     def time_max(self, dtype):
         np.max(self.d)
 
-class ArgMinMax(Benchmark):
+class ArgMax(Benchmark):
     params = [np.float32, bool]
     param_names = ['dtype']
 
