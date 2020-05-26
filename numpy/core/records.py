@@ -772,7 +772,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """Create a record array from binary data
+    r"""Create a record array from binary data
 
     Note that despite the name of this function it does not accept `str`
     instances.
