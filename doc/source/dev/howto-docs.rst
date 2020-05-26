@@ -13,14 +13,15 @@ official NumPy documentation.
 The NumPy community has set a firm goal of improving its documentation. Our
 Documentation Team holds open meetings on Zoom every three weeks, and everyone
 is welcome. Don't hesitate to reach out if you have questions or just need
-someone to guide you through your first steps -- we're always happy to help.
+someone to guide you through your first steps -- we're happy to help.
 Meetings are usually announced on the `numpy-discussion mailing list
 <https://mail.python.org/mailman/listinfo/numpy-discussion>`__. Minutes are
 taken `on hackmd.io <https://hackmd.io/oB_boakvRqKR-_2jRV-Qjg>`__ and stored
 in the `NumPy Archive repository <https://github.com/numpy/archive>`__.
 
+*************************
 Overview
-------------------------
+*************************
 :ref:`NumPy Documentation <numpy_docs_mainpage>` falls into two categories:
 
 - **Hand-written:** Tutorials, How-Tos, Explanations. More on these categories below.
@@ -29,52 +30,87 @@ Overview
   code `docstrings <https://www.python.org/dev/peps/pep-0257/>`__ when the
   NumPy documentation is :ref:`built from source<howto-build-docs>`.
 
+*************************
 First steps
---------------------
+*************************
 
-Fixes to technical inaccuracies take high priority -- a
-docstring missing a parameter, a faulty description of a
-function/parameter/method, etc. Other "structural" defects like broken links are
-also high priority. Corrections can be proposed via pull requests as they are
-straightforward to review.
+Fixes
+=====
 
-Changes to improve clarity are less straightforward. Rather than plunging
-ahead with a PR, it's safer to raise your points first as issues. This can
-save you from wasting your time on undesired changes.
+We're eager to hear about and fix defects. But an ironic consequence of our
+efforts to improve the site is that we end up having to defer or overlook
+some of them, and it may seem your input wasn't valued.
 
-To propose major additions, such as a new tutorial, write to the `mailing list
-<https://mail.python.org/mailman/listinfo/numpy-discussion>`__.
+Here are the best fixes to go after.
 
-Our formal roadmap for documentation is a *NumPy Enhancement
-Proposal (NEP)*,
-`NEP 44 - Restructuring the NumPy Documentation
+Top priority goes to **technical inaccuracies** -- a docstring missing a
+parameter, a faulty description of a function/parameter/method, and so on.
+Other "structural" defects like broken links also get priority. You can submit
+a `pull request (PR) <https://numpy.org/devdocs/dev/index.html#devindex>`__
+with the fix, if you know how to do that; otherwise please `open an issue
+<https://github.com/numpy/numpy/issues>`__.
+
+**Typos and misspellings** fall on a lower rung; we welcome hearing about them but
+may not be able to fix them promptly. These too can be handled as pull
+requests or issues.
+
+Obvious mistakes in **wording** (like leaving out a "not") fall into the typo
+category, but other rewordings are a judgment call, and only if a change is
+significant and compellingly better is it likely to go forward. If you feel yours
+clears the bar, it's best to lay it out first in an issue.
+
+
+New pages
+==========
+
+No one can do a better job of addressing our shortcomings than you. Your
+frustrations expose the subjects we need to cover.
+
+If you sit down and write the missing doc you'll join the front line of open
+source, but it's also a contribution just to tell us what's missing. If you
+want to write, run your thoughts by the `mailing list
+<https://mail.python.org/mailman/listinfo/numpy-discussion>`__ to get further
+ideas and feedback. We offer writing suggestions below. If you just want to
+alert us to the problem, `open an issue <https://github.com/numpy/numpy/issues>`__.
+See `this issue <https://github.com/numpy/numpy/issues/15760>`__ for an
+example.
+
+If you like to write and are looking for subjects that need covering,
+our formal roadmap for documentation is a *NumPy Enhancement
+Proposal (NEP)*, `NEP 44 - Restructuring the NumPy Documentation
 <https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
 It identifies areas where our docs need help and lists several specific
-additions we'd like to see, including Jupyter notebooks.
+additions we'd like to see -- including Jupyter notebooks.
 
 You can find larger planned and in-progress documentation improvement ideas `at
 our GitHub project <https://github.com/orgs/numpy/projects/2>`__.
 
 .. _tutorials_howtos_explanations:
 
+************************************************************
 Tutorials, how-to's, explanations -- what's the difference?
-------------------------------------------------------------
+************************************************************
 
-On the battlefield of writing it's easy to forget that your goal is to
-answer questions. Daily life has no one-size-fits-all answers ("I asked her
-the time, and she told me how to build a watch"), and neither do projects. A
-docs library, it turns out, needs to stock four sizes: ``tutorial``,
-``how-to guide``, ``explanation``, and ``reference``. Daniele Procida has
-written a `definitive, readable exposition
-<https://documentation.divio.com/>`__ of how these differ and how to write
-each type.
+On the writing battlefield it's easy to forget that victory lies in answering
+questions. Daily life has no one-size-fits-all answers ("I asked her the time,
+and she told me how to build a watch"), and neither do documents. Docs
+libraries need to stock four sizes: ``tutorial``, ``how-to
+guide``, ``explanation``, and ``reference``. Daniele Procida has written a
+`definitive, readable exposition <https://documentation.divio.com/>`__ of how
+these differ and how to write each type. Before you begin, think
+over which of these types you're aiming for, then use his advice
+for that type when writing.
 
-Contributing
-------------
+
+.. _contributing:
+
+************************************************************
+More on contributing
+************************************************************
 
 Don't worry if English is not your first language, or if you can only come up
-with a rough draft. Open source is a community effort. Do your best -- we'll revise
-your content and make sure we fix any issues with the code or text.
+with a rough draft. Open source is a community effort. Do your best -- we'll
+help fix issues.
 
 We encourage you to use real images and data (provided they are appropriately
 licensed and available). This makes the material more engaging and can add
@@ -101,23 +137,21 @@ more on rST, see the `Quick reStructuredText Guide
 <http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
 
 
-Indirect ways to contribute
-----------------------------
+************************************************************
+Contributing indirectly
+************************************************************
 
-If you run across material that you think would be a useful addition,
+If you run across material that you think would be a useful addition to our docs,
 `open an issue on GitHub
 <https://github.com/numpy/numpy/issues>`__.
 
-Similarly, if you can't find information you need on our site,
-tell us!
-`See this issue <https://github.com/numpy/numpy/issues/15760>`__
-for an example.
-
 Writing a tutorial on your blog, creating a YouTube video, or answering
-questions on social media or Stack Overflow are also great contributions!
+questions on social media or Stack Overflow are also contributions!
 
 
-**Other interesting material**
+************************************************************
+Documentation reading
+************************************************************
 
 - `writethedocs.org <https://www.writethedocs.org/>`__ has a lot of interesting
   resources for technical writing.
