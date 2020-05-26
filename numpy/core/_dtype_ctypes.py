@@ -22,8 +22,6 @@ Unfortunately, this fails because:
 * PEP3118 cannot represent unions, but both numpy and ctypes can
 * ctypes cannot handle big-endian structs with PEP3118 (bpo-32780)
 """
-import _ctypes
-import ctypes
 
 import numpy as np
 
@@ -39,6 +37,7 @@ def _from_ctypes_structure(t):
                 "ctypes bitfields have no dtype equivalent")
 
     if hasattr(t, "_pack_"):
+        import ctypes
         formats = []
         offsets = []
         names = []
@@ -79,6 +78,7 @@ def _from_ctypes_scalar(t):
 
 
 def _from_ctypes_union(t):
+    import ctypes
     formats = []
     offsets = []
     names = []
@@ -98,6 +98,7 @@ def dtype_from_ctypes_type(t):
     """
     Construct a dtype object from a ctypes type
     """
+    import _ctypes
     if issubclass(t, _ctypes.Array):
         return _from_ctypes_array(t)
     elif issubclass(t, _ctypes._Pointer):
