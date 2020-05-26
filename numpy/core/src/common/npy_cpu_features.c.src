@@ -76,11 +76,13 @@ npy__cpu_getxcr0(void)
 #if defined(_MSC_VER) || defined (__INTEL_COMPILER)
     return _xgetbv(0);
 #elif defined(__GNUC__) || defined(__clang__)
+    /* named form of xgetbv not supported on OSX, so must use byte form, see:
+     * https://github.com/asmjit/asmjit/issues/78
+    */
     unsigned int eax, edx;
-    __asm__("xgetbv" : "=a" (eax), "=d" (edx) : "c" (0));
-    return (eax | (unsigned long long)edx << 32);
+    __asm(".byte 0x0F, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(0));
+    return eax;
 #else
-    // TODO: handle other x86 compilers
     return 0;
 #endif
 }
@@ -110,7 +112,6 @@ npy__cpu_cpuid(int reg[4], int func_id)
         );
     #endif
 #else
-    // TODO: handle other x86 compilers
     reg[0] = 0;
 #endif
 }
@@ -123,8 +124,15 @@ npy__cpu_init_features(void)
     // validate platform support
     int reg[] = {0, 0, 0, 0};
     npy__cpu_cpuid(reg, 0);
-    if (reg[0] == 0)
-        return;
+    if (reg[0] == 0) {
+       npy__cpu_have[NPY_CPU_FEATURE_MMX]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_SSE]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_SSE2] = 1;
+       #ifdef NPY_CPU_AMD64
+           npy__cpu_have[NPY_CPU_FEATURE_SSE3] = 1;
+       #endif
+       return;
+    }
 
     npy__cpu_cpuid(reg, 1);
     npy__cpu_have[NPY_CPU_FEATURE_MMX]    = (reg[3] & (1 << 23)) != 0;
