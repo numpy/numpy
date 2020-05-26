@@ -3153,6 +3153,7 @@ class TestLerp:
                       a=st.floats(allow_nan=False, allow_infinity=False),
                       b=st.floats(allow_nan=False, allow_infinity=False))
     def test_lerp_symmetric(self, t, a, b):
+        # double subtraction is needed to remove the extra precision that t < 0.5 has
         assert np.lib.function_base._lerp(a, b, 1 - (1 - t)) == np.lib.function_base._lerp(b, a, 1 - t)
 
 
