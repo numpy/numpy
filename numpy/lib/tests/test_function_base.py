@@ -3153,7 +3153,7 @@ class TestLerp:
                       a=st.floats(allow_nan=False, allow_infinity=False),
                       b=st.floats(allow_nan=False, allow_infinity=False))
     def test_lerp_symmetric(self, t, a, b):
-        assert np.lib.function_base._lerp(a, b, t) == np.lib.function_base._lerp(b, a, t)
+        assert np.isclose(np.lib.function_base._lerp(a, b, t), np.lib.function_base._lerp(b, a, (1-t)))
 
 
 class TestMedian:
