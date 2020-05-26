@@ -330,7 +330,6 @@ get_file_size(const char* pathname)
         }
         result += ret;
     }
-    
     close(fd);
     return result;
 }
@@ -478,6 +477,7 @@ get_feature_from_proc_cpuinfo() {
     if (cpuinfo_len < 0) {
         return 0;
     }
+    
     cpuinfo = malloc(cpuinfo_len);
     if (cpuinfo == NULL) {
         return 0;
