@@ -1343,7 +1343,7 @@ Special functions for NPY_OBJECT
     Precondition: ``arr`` is a copy of ``base`` (though possibly with different
     strides, ordering, etc.) Set the UPDATEIFCOPY flag and ``arr->base`` so
     that when ``arr`` is destructed, it will copy any changes back to ``base``.
-    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase``.
+    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase`.
 
     Returns 0 for success, -1 for failure.
 
@@ -1521,15 +1521,6 @@ specify desired properties of the new array.
 .. c:macro:: NPY_ARRAY_ENSUREARRAY
 
     Make sure the resulting object is an actual ndarray, and not a sub-class.
-
-.. c:macro:: NPY_ARRAY_NOTSWAPPED
-
-    Only used in :c:func:`PyArray_CheckFromAny` to over-ride the byteorder
-    of the data-type object passed in.
-
-.. c:macro:: NPY_ARRAY_BEHAVED_NS
-
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \| :c:data:`NPY_ARRAY_NOTSWAPPED`
 
 
 Flag checking
@@ -2263,7 +2254,7 @@ Array Functions
 
     See the :func:`~numpy.einsum` function for more details.
 
-.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject \* op)
+.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject * op)
 
     A specialized copy and transpose function that works only for 2-d
     arrays. The returned array is a transposed copy of *op*.
@@ -2453,7 +2444,7 @@ this useful approach to looping over an array.
     it easy to loop over an N-dimensional non-contiguous array in
     C-style contiguous fashion.
 
-.. c:function:: PyObject* PyArray_IterAllButAxis(PyObject* arr, int \*axis)
+.. c:function:: PyObject* PyArray_IterAllButAxis(PyObject* arr, int* axis)
 
     Return an array iterator that will iterate over all axes but the
     one provided in *\*axis*. The returned iterator cannot be used
@@ -2960,7 +2951,7 @@ to.
     the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable buffer
     interface.
 
-.. c:function:: int PyArray_AxisConverter(PyObject \* obj, int* axis)
+.. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 
     Convert a Python object, *obj*, representing an axis argument to
     the proper value for passing to the functions that take an integer

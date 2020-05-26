@@ -707,7 +707,7 @@ Construction and Destruction
 
     :c:func:`NpyIter_Deallocate` must be called for each copy.
 
-.. c:function:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)``
+.. c:function:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)
 
     Removes an axis from iteration.  This requires that
     :c:data:`NPY_ITER_MULTI_INDEX` was set for iterator creation, and does
