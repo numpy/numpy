@@ -3138,6 +3138,7 @@ finish:
 
         lo = vand_u8(lo, mask_and);
         lo = vshl_u8(lo, mask_shift);
+        
         hi = vand_u8(hi, mask_and);
         hi = vshl_u8(hi, mask_shift);
 
