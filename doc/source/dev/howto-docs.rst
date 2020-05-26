@@ -39,7 +39,7 @@ Fixes
 
 We're eager to hear about and fix defects. But an ironic consequence of our
 efforts to improve the site is that we end up having to defer or overlook
-some of them, and it may seem your input wasn't valued.
+some of them.
 
 Here are the best fixes to go after.
 
