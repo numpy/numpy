@@ -23,7 +23,7 @@ Detailed description
 --------------------
 
 Traditionally, NumPy’s ``ndarray`` objects have provided two things: a
-high level API for expression operations on homogenously-typed,
+high level API for expression operations on homogeneously-typed,
 arbitrary-dimensional, array-structured data, and a concrete
 implementation of the API based on strided in-RAM storage. The API is
 powerful, fairly general, and used ubiquitously across the scientific
