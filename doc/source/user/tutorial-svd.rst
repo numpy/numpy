@@ -1,5 +1,5 @@
 ===============================================================
-Tutorial: A tour of n-dimensional arrays
+Tutorial: Do linear algebra on n-dimensional arrays
 ===============================================================
 
 .. currentmodule:: numpy
@@ -8,6 +8,8 @@ Tutorial: A tour of n-dimensional arrays
 
    import numpy as np
    np.random.seed(1)
+
+**What you'll do**
 
 Use NumPy to compress an image using singular value decomposition.
 
@@ -20,9 +22,9 @@ action, and put some of NumPy's linear algebra tools to use. By the end,
 you'll be able to repeat the steps on an image of your own.
 
 
-**Prerequisites**
+**What you'll need**
 
-Some linear algebra knowledge and basic familiarity with NumPy's ndararrays.
+Some linear algebra knowledge and basic familiarity with NumPy's ndarrays.
 
 To run the examples, you'll need `Matplotlib
 <https://matplotlib.org/>`_ and `SciPy <https://scipy.org>`_ installed.
@@ -103,7 +105,7 @@ As expected, this is a 768x1024 matrix::
     >>> img[:, :, 0].shape
     (768, 1024)
 
-To perform linear algebra, let's rescale these values into real numbers
+To prepare for doing linear algebra, let's rescale these values into real numbers
 between 0 and 1:
 
     >>> img_array = img / 255
@@ -129,7 +131,7 @@ Using slice syntax, we can assign the channels to separate matrices::
 Methods from linear algebra can reduce data into a smaller approximate version
 that retains the most important features of the original. We'll do that using
 `SVD (Singular Value Decomposition)
-<https://blog.statsbot.co/singular-value-decomposition-tutorial-52c695315254?gi=2729cca75ba3>`_.
+<https://web.archive.org/web/20200102142016/https://www.cs.princeton.edu/picasso/mats/PCA-Tutorial-Intuition_jp.pdf>`_/
 
 Start by importing the linear algebra submodule from NumPy::
 
@@ -194,8 +196,8 @@ Checking the shapes:
     >>> U.shape, s.shape, Vt.shape
     ((768, 768), (768,), (1024, 1024))
 
-Unexpectedly, ``s`` has just one dimension. It can't be multipled with ``Vt``.
-Executing
+Unexpectedly, ``s`` has just one dimension. Under matrix algebra rules, it
+can't be multipled with ``Vt``. Executing
 
 ::
 
@@ -262,9 +264,9 @@ Although ``s`` has 768 singular values, most of them are pretty small. To
 build a more economical approximation, it might make sense to use only the
 first 50 or so.
 
-We'll zero out all but the first ``k`` singular values in
-``Sigma``, keeping ``U`` and ``Vt`` intact, and compute the product.
-Let's start with just 10:
+We'll zero out all but the first ``k`` singular values in ``Sigma``, keeping
+``U`` and ``Vt`` intact, and compute the product. Instead of picking the first
+50 singular values, let's see what happens if we use just the first 10:
 
 ::
 
