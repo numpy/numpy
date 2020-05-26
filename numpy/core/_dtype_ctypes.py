@@ -23,6 +23,9 @@ Unfortunately, this fails because:
 * ctypes cannot handle big-endian structs with PEP3118 (bpo-32780)
 """
 
+# We delay-import ctypes for distributions that do not include it.
+# While this module is not used unless the user passes in ctypes
+# members, it is eagerly imported from numpy/core/__init__.py.
 import numpy as np
 
 
