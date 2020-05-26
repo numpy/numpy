@@ -207,12 +207,12 @@ def make_init(dirname):
             and is created as part of the scripts that build the wheel.
             '''
             import os
-            from ctypes import WinDLL
             import glob
             if os.name == 'nt':
                 # convention for storing / loading the DLL from
                 # numpy/.libs/, if present
                 try:
+                    from ctypes import WinDLL
                     basedir = os.path.dirname(__file__)
                 except:
                     pass
@@ -221,16 +221,16 @@ def make_init(dirname):
                     DLL_filenames = []
                     if os.path.isdir(libs_dir):
                         for filename in glob.glob(os.path.join(libs_dir,
-                                                             '*openblas*dll')):
+                                                               '*openblas*dll')):
                             # NOTE: would it change behavior to load ALL
                             # DLLs at this path vs. the name restriction?
                             WinDLL(os.path.abspath(filename))
                             DLL_filenames.append(filename)
-                if len(DLL_filenames) > 1:
-                    import warnings
-                    warnings.warn("loaded more than 1 DLL from .libs:\\n%s" %
-                              "\\n".join(DLL_filenames),
-                              stacklevel=1)
+                    if len(DLL_filenames) > 1:
+                        import warnings
+                        warnings.warn("loaded more than 1 DLL from .libs:\\n%s" %
+                                      "\\n".join(DLL_filenames),
+                                      stacklevel=1)
     """))
 
 def test_setup(arches):
