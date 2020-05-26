@@ -3875,14 +3875,10 @@ def _quantile_is_valid(q):
 
 def _lerp(a, b, t, out=None):
     """ Linearly interpolate from a to b by a factor of t """
-    #a + (b-a)*t if t < 0.5 else b - (b-a)*(1-t)
-    #if t < 0.5:
-    #    return add(a, subtract(b, a)*t, out=out)
-    #else:
-    #    return subtract(b, subtract(b, a)*(1-t), out=out)
-    # a + (b-a)*t
-    offset = subtract(b, a) * t
-    return add(a, offset, out=out)
+    if t < 0.5:
+        return add(a, subtract(b, a)*t, out=out)
+    else:
+        return subtract(b, subtract(b, a)*(1-t), out=out)
 
 
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
