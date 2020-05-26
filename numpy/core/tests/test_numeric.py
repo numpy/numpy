@@ -1475,6 +1475,14 @@ class TestArrayComparisons:
         a.real, b.imag = np.nan, np.nan
         assert_(not np.array_equal(a, b, equal_nan=False))
         assert_(np.array_equal(a, b, equal_nan=True))
+        # String values (checking for issue #16377)
+        a = np.array(list("abc"))
+        assert_(np.array_equal(a, a, equal_nan=False))
+        assert_(np.array_equal(a, a, equal_nan=True))
+        # Object arrays
+        a = np.array(["a", None, np.nan], dtype=object)
+        assert_(not np.array_equal(a, a, equal_nan=False))
+        assert_(np.array_equal(a, a, equal_nan=True))
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)

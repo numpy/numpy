@@ -2369,16 +2369,30 @@ def array_equal(a1, a2, equal_nan=False):
     >>> np.array_equal(a, b, equal_nan=True)
     True
     """
+    import builtins
+    from operator import is_
+
     try:
         a1, a2 = asarray(a1), asarray(a2)
     except Exception:
         return False
     if a1.shape != a2.shape:
         return False
+
+    common_type_char = np.sctype2char(np.promote_types(a1.dtype, a2.dtype))
+    # When we don't need to check for nan
     if not equal_nan:
         return bool(asarray(a1 == a2).all())
-    # Handling NaN values if equal_nan is True
-    a1nan, a2nan = isnan(a1), isnan(a2)
+    # When isnan won't work, but there could be nan values
+    elif common_type_char == "O":
+        vecis = np.vectorize(is_)
+        a1nan, a2nan = vecis(a1, np.nan), vecis(a2, np.nan)
+    # When there can't be nan values
+    elif not builtins.any(t.startswith(common_type_char) for t in isnan.types):
+        return bool(asarray(a1 == a2).all())
+    # When we can use isnan
+    else:
+        a1nan, a2nan = isnan(a1), isnan(a2)
     # NaN's occur at different locations
     if not (a1nan == a2nan).all():
         return False
