@@ -1872,6 +1872,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     /* steals the reference to dtype if it's not NULL */
     ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(prototype, order, dtype,
                                                          shape.len, shape.ptr, subok);
+    npy_free_cache_dim_obj(shape);
     if (!ret) {
         goto fail;
     }
