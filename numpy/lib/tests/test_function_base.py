@@ -3125,6 +3125,37 @@ class TestQuantile:
         assert equals_sorted.all()
 
 
+class TestLerp:
+    @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      t1=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  width=32),
+                      b= st.floats(allow_nan=False, allow_infinity=False,
+                                   width=32))
+    def test_lerp_monotonic(self, t0, t1, a, b):
+        assert (np.lib.function_base._lerp(a, b, t1) -
+                np.lib.function_base._lerp(a, b, t0)) * (b - a) * (t1 - t0) >= 0
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False),
+                      b=st.floats(allow_nan=False, allow_infinity=False))
+    def test_lerp_bounded(self, t, a, b):
+        if a <= b:
+            assert a <= np.lib.function_base._lerp(a, b, t) <= b
+        else:
+            assert b <= np.lib.function_base._lerp(a, b, t) <= a
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False),
+                      b=st.floats(allow_nan=False, allow_infinity=False))
+    def test_lerp_symmetric(self, t, a, b):
+        assert np.lib.function_base._lerp(a, b, t) == np.lib.function_base._lerp(b, a, t)
+
+
 class TestMedian:
 
     def test_basic(self):
