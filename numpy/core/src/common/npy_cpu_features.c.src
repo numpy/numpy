@@ -330,6 +330,7 @@ get_file_size(const char* pathname)
         }
         result += ret;
     }
+    
     close(fd);
     return result;
 }
@@ -349,6 +350,7 @@ read_file(const char*  pathname, char*  buffer, size_t  buffsize)
     if (fd < 0) {
         return -1;
     }
+    
     count = 0;
     while (count < (int)buffsize) {
         int ret = read(fd, buffer + count, buffsize - count);
