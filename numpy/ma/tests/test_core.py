@@ -3485,6 +3485,27 @@ class TestMaskedArrayMethods:
         assert_equal(take(x, [0, 2], axis=1),
                      array([[10, 30], [40, 60]], mask=[[0, 1], [1, 0]]))
 
+    def test_take_dtype_conversion(self):
+        # Take to smaller dtype within range
+        a = arange(3, dtype=np.int16)
+        b = empty((3,), dtype=np.int8)
+        a.take([0,1,2], out=b)
+        assert_equal(a,b)
+        # Smaller dtype out of range
+        a = a + 128
+        with assert_raises(TypeError):
+            a.take([0,1,2], out=b)
+        # Larger dtype
+        b = empty((3,), dtype=np.int32)
+        a.take([0,1,2], out=b)
+        assert_equal(a, b)
+        
+        # Take to smaller dtype within range float to int
+        a = np.random.rand(3).astype(np.float32)
+        b = empty((3,), dtype=np.int8)
+        a.take([0,1,2], out=b)
+        assert_equal(a.astype(np.int8), b)
+
     def test_take_masked_indices(self):
         # Test take w/ masked indices
         a = np.array((40, 18, 37, 9, 22))

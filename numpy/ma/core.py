@@ -5972,7 +5972,17 @@ class MaskedArray(ndarray):
         if out is None:
             out = _data.take(indices, axis=axis, mode=mode)[...].view(cls)
         else:
-            np.take(_data, indices, axis=axis, mode=mode, out=out)
+            # Check if the numeric input values are within the range of the
+            # output dtype, if so, convert type and output, else raise error
+            in_dtype = self.dtype
+            out_dtype = out.dtype
+            if ntypes.issubdtype(in_dtype, np.number) and ntypes.issubdtype(out_dtype, np.number):
+                if np.logical_and(_data >= np.iinfo(out_dtype).min, _data <= np.iinfo(out_dtype).max).all():
+                    np.take(_data.astype(out_dtype), indices, axis=axis, mode=mode, out=out)
+                else:
+                    raise TypeError('Output format does not cover input range')
+            else:
+                np.take(_data, indices, axis=axis, mode=mode, out=out)
         # Get the mask
         if isinstance(out, MaskedArray):
             if _mask is nomask:
