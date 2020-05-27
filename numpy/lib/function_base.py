@@ -3959,7 +3959,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
     else:
         # weight the points above and below the indices
-        #import pdb; pdb.set_trace()
 
         indices_below = not_scalar(floor(indices)).astype(intp)
         indices_above = not_scalar(indices_below + 1)
