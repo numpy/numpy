@@ -349,15 +349,17 @@ npy__cpu_init_features_linux(void)
     if ((hwcap2 & NPY__HWCAP2_AES)  || (hwcap2 & NPY__HWCAP2_SHA1)  ||
         (hwcap2 & NPY__HWCAP2_SHA2) || (hwcap2 & NPY__HWCAP2_PMULL) ||
         (hwcap2 & NPY__HWCAP2_CRC32))
+    {
+        hwcap = hwcap2;
 #else
     if (1)
-#endif
     {
         if (!(hwcap & (NPY__HWCAP_FP | NPY__HWCAP_ASIMD))) {
             // Is this could happen? maybe disabled by kernel
             // BTW this will break the baseline of AARCH64
             return 1;
         }
+#endif
         npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = (hwcap & NPY__HWCAP_FPHP)     != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
