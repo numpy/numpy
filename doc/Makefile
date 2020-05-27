@@ -103,11 +103,11 @@ dist: build/dist.tar.gz
 build/dist.tar.gz:
 	make $(DIST_VARS) real-dist
 
-real-dist: dist-build html-build html-scipyorg
+real-dist: dist-build html-build
 	test -d build/latex || make latex-build
 	make -C build/latex all-pdf
 	-rm -rf build/dist
-	cp -r build/html-scipyorg build/dist
+	cp -r build/html build/dist
 	cd build/html && zip -9r ../dist/numpy-html.zip .
 	cp build/latex/numpy-ref.pdf build/dist
 	cp build/latex/numpy-user.pdf build/dist
