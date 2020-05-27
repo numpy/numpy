@@ -155,6 +155,9 @@ plot_html_show_source_link = False
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'
 
+# XeLaTeX for better support of unicode characters
+latex_engine = 'xelatex'
+
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 _stdauthor = 'Written by the NumPy community'
