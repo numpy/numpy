@@ -886,12 +886,11 @@ class ABCPolyBase(abc.ABC):
         if coef.ndim == 1:
             polynomials = cls(coef, domain=domain, window=window)
         else:
-            polynomials = list(map(lambda c: cls(c, domain=domain,
-                                                 window=window), coef.T))
+            polynomials = [cls(c, domain=domain, window=window)
+                           for c in coef.T]
         if full:
             return polynomials, status
-        else:
-            return polynomials
+        return polynomials
 
     @classmethod
     def fromroots(cls, roots, domain=[], window=None):
