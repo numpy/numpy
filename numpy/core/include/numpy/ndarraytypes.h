@@ -1809,6 +1809,77 @@ typedef struct {
 typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
                                        void *user_data);
 
+
+/*
+ * PyArray_DTypeMeta related definitions.
+ *
+ * As of now, this API is preliminary and will be extended as necessary.
+ */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * The Structures defined in this block are considered private API and
+     * may change without warning!
+     */
+    /* TODO: Make this definition public in the API, as soon as its settled */
+    NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type;
+
+    /*
+     * While NumPy DTypes would not need to be heap types the plan is to
+     * make DTypes available in Python at which point we will probably want
+     * them to be.
+     * Since we also wish to add fields to the DType class, this looks like
+     * a typical instance definition, but with PyHeapTypeObject instead of
+     * only the PyObject_HEAD.
+     * This must only be exposed very extremely careful consideration, since
+     * it is a fairly complex construct which may be better to allow
+     * refactoring of.
+     */
+    typedef struct _PyArray_DTypeMeta {
+        PyHeapTypeObject super;
+
+        /*
+         * Most DTypes will have a singleton default instance, for the
+         * parametric legacy DTypes (bytes, string, void, datetime) this
+         * may be a pointer to the *prototype* instance?
+         */
+        PyArray_Descr *singleton;
+        /*
+         * Is this DType created using the old API? This exists mainly to
+         * allow for assertions in paths specific to wrapping legacy types.
+         */
+        npy_bool legacy;
+        /* The values stored by a parametric datatype depend on its instance */
+        npy_bool parametric;
+        /* whether the DType can be instantiated (i.e. np.dtype cannot) */
+        npy_bool abstract;
+
+        /*
+         * The following fields replicate the most important dtype information.
+         * In the legacy implementation most of these are stored in the
+         * PyArray_Descr struct.
+         */
+        /* The type object of the scalar instances (may be NULL?) */
+        PyTypeObject *scalar_type;
+        /* kind for this type */
+        char kind;
+        /* unique-character representing this type */
+        char type;
+        /* flags describing data type */
+        char flags;
+        /* number representing this type */
+        int type_num;
+        /*
+         * Point to the original ArrFuncs.
+         * NOTE: We could make a copy to detect changes to `f`.
+         */
+        PyArray_ArrFuncs *f;
+    } PyArray_DTypeMeta;
+
+    #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
+
+#endif  /* NPY_INTERNAL_BUILD */
+
+
 /*
  * Use the keyword NPY_DEPRECATED_INCLUDES to ensure that the header files
  * npy_*_*_deprecated_api.h are only included from here and nowhere else.
