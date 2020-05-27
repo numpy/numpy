@@ -845,6 +845,13 @@ class TestCreation:
         assert_raises(ValueError, np.zeros, shape, dtype=np.int8)
         assert_raises(ValueError, np.ones, shape, dtype=np.int8)
 
+    @pytest.mark.skipif(np.dtype(np.intp).itemsize != 8,
+                        reason="malloc may not fail on 32 bit systems")
+    def test_malloc_fails(self):
+        # This test is guaranteed to fail due to a too large allocation
+        with assert_raises(np.core._exceptions._ArrayMemoryError):
+            np.empty(np.iinfo(np.intp).max, dtype=np.uint8)
+
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         for dt in types:

@@ -869,7 +869,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     return 0;
 }
 
-static PyObject *
+static void
 raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
 {
     static PyObject *exc_type = NULL;
@@ -894,12 +894,12 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     }
     PyErr_SetObject(exc_type, exc_value);
     Py_DECREF(exc_value);
-    return NULL;
+    return;
 
 fail:
     /* we couldn't raise the formatted exception for some reason */
     PyErr_WriteUnraisable(NULL);
-    return PyErr_NoMemory();
+    PyErr_NoMemory();
 }
 
 /*
@@ -1079,10 +1079,10 @@ PyArray_NewFromDescr_int(
             data = npy_alloc_cache(nbytes);
         }
         if (data == NULL) {
-            return raise_memory_error(fa->nd, fa->dimensions, descr);
+            raise_memory_error(fa->nd, fa->dimensions, descr);
+            goto fail;
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
-
     }
     else {
         /*
