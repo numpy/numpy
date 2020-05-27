@@ -145,14 +145,23 @@ def test_fit(Poly):
 
     def f(x):
         return x*(x - 1)*(x - 2)
+    def g(x):
+        return -(x-3)*(x-5)*(x-6)
     x = np.linspace(0, 3)
-    y = f(x)
+    y, z = f(x), g(x)
+    yz = np.column_stack((y,z))
 
     # check default value of domain and window
     p = Poly.fit(x, y, 3)
     assert_almost_equal(p.domain, [0, 3])
     assert_almost_equal(p(x), y)
     assert_equal(p.degree(), 3)
+    [q,r] = Poly.fit(x, yz, 3)
+    assert_almost_equal(r.domain, [0, 3])
+    assert_almost_equal(q(x), y)
+    assert_almost_equal(r(x), z)
+    assert_equal(r.degree(), 3)
+    print("testing")
 
     # check with given domains and window
     d = Poly.domain + random((2,))*.25
@@ -165,6 +174,20 @@ def test_fit(Poly):
     assert_almost_equal(p(x), y)
     assert_almost_equal(p.domain, d)
     assert_almost_equal(p.window, w)
+    [q,r] = Poly.fit(x, yz, 3, domain=d, window=w)
+    assert_almost_equal(q(x), y)
+    assert_almost_equal(r(x), z)
+    assert_almost_equal(q.domain, d)
+    assert_almost_equal(r.domain, d)
+    assert_almost_equal(q.window, w)
+    assert_almost_equal(r.window, w)
+    [q,r] = Poly.fit(x, yz, [0, 1, 2, 3], domain=d, window=w)
+    assert_almost_equal(q(x), y)
+    assert_almost_equal(r(x), z)
+    assert_almost_equal(q.domain, d)
+    assert_almost_equal(r.domain, d)
+    assert_almost_equal(q.window, w)
+    assert_almost_equal(r.window, w)
 
     # check with class domain default
     p = Poly.fit(x, y, 3, [])
@@ -173,6 +196,16 @@ def test_fit(Poly):
     p = Poly.fit(x, y, [0, 1, 2, 3], [])
     assert_equal(p.domain, Poly.domain)
     assert_equal(p.window, Poly.window)
+    [q,r] = Poly.fit(x, yz, 3, [])
+    assert_equal(q.domain, Poly.domain)
+    assert_equal(r.domain, Poly.domain)
+    assert_equal(q.window, Poly.window)
+    assert_equal(r.window, Poly.window)
+    [q,r] = Poly.fit(x, yz, [0, 1, 2, 3], [])
+    assert_equal(q.domain, Poly.domain)
+    assert_equal(r.domain, Poly.domain)
+    assert_equal(q.window, Poly.window)
+    assert_equal(r.window, Poly.window)
 
     # check that fit accepts weights.
     w = np.zeros_like(x)
@@ -183,6 +216,15 @@ def test_fit(Poly):
     p3 = Poly.fit(x, z, [0, 1, 2, 3], w=w)
     assert_almost_equal(p1(x), p2(x))
     assert_almost_equal(p2(x), p3(x))
+
+    yzz = yz + random(yz.shape)*.25
+    [q1, r1] = Poly.fit(x[::2], yzz[::2,:], 3)
+    [q2, r2] = Poly.fit(x, yzz, 3, w=w)
+    [q3, r3] = Poly.fit(x, yzz, [0, 1, 2, 3], w=w)
+    assert_almost_equal(q1(x), q2(x))
+    assert_almost_equal(q2(x), q3(x))
+    assert_almost_equal(r1(x), r2(x))
+    assert_almost_equal(r2(x), r3(x))
 
 
 def test_equal(Poly):
