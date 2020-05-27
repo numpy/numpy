@@ -2370,7 +2370,6 @@ def array_equal(a1, a2, equal_nan=False):
     True
     """
     import builtins
-    from operator import is_
 
     try:
         a1, a2 = asarray(a1), asarray(a2)
@@ -2380,24 +2379,26 @@ def array_equal(a1, a2, equal_nan=False):
         return False
 
     common_type_char = np.sctype2char(np.promote_types(a1.dtype, a2.dtype))
-    # When we don't need to check for nan
-    if not equal_nan:
-        return bool(asarray(a1 == a2).all())
-    # When isnan won't work, but there could be nan values
-    elif common_type_char == "O":
-        vecis = np.vectorize(is_)
-        a1nan, a2nan = vecis(a1, np.nan), vecis(a2, np.nan)
-    # When there can't be nan values
-    elif not builtins.any(t.startswith(common_type_char) for t in isnan.types):
-        return bool(asarray(a1 == a2).all())
-    # When we can use isnan
-    else:
-        a1nan, a2nan = isnan(a1), isnan(a2)
-    # NaN's occur at different locations
-    if not (a1nan == a2nan).all():
+    comp = asarray(a1 == a2)
+
+    if bool(comp.all()):
+        return True
+    elif not equal_nan:
         return False
-    # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return bool(asarray(a1[~a1nan] == a2[~a1nan]).all())
+    elif common_type_char == "O":
+        # When isnan won't work, but there could be nan values
+        _isnan = np.vectorize(functools.partial(operator.is_, nan), otypes="?")
+    elif not builtins.any(t.startswith(common_type_char) for t in isnan.types):
+        # When there can't be nan values
+        return False
+    else:
+        # When we can use isnan
+        _isnan = isnan
+    # Check if all failed comparisons were due to nans
+    if not _isnan(a1[~comp]).all() or not _isnan(a2[~comp]).all():
+        return False
+    else:
+        return True
 
 
 def _array_equiv_dispatcher(a1, a2):
