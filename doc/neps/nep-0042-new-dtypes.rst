@@ -451,12 +451,12 @@ of the constituent elements to the DType class.
 When the DType class is known, the correct dtype instance still needs to be found.
 This shall be implemented by leveraging two pieces of information:
 
-1. ``type``: The current type attribute to indicate which Python type is
+1. ``DType.type``: The current type attribute to indicate which Python type is
    associated with the DType class (this is a *class* attribute that always
    exists for any datatype and is not limited to array coercion).
 2. The reverse lookup will remain hardcoded for the basic Python types initially.
    Otherwise the ``type`` attribute will be used, and at least initially may
-   enforce deriving the scalar from a NumPy-provided scalar.
+   enforce deriving the scalar from a NumPy-provided scalar base class.
    This method may be expanded later (see alternatives).
 3. ``__discover_descr_from_pyobject__(cls, obj) -> dtype``: A classmethod that
    returns the correct descriptor given the input object.
@@ -464,20 +464,16 @@ This shall be implemented by leveraging two pieces of information:
    can simply use a default (singleton) dtype instance which is found only
    based on the ``type(obj)`` of the Python object.
 
-The ``type`` which is already associated with any dtype through the ``dtype.type``
-attribute maps the dtype to the Python type.
-However, initially we anticipate automatic conversion only for scalars which
-subclass from a base scalar object, such as ``np.generic`` (although possibly
-a class below ``np.generic`` to avoid array-scalar behaviour). 
+The ``type`` which is already associated with any dtype through the
+``dtype.type`` attribute maps the DType to the Python type.
 This will be cached globally to create a mapping (dictionary)
-``knwon_python_types[type] = DType``.
+``known_python_types[type] = DType``.
 NumPy currently uses a small hard-coded mapping and conversion of numpy scalars
-(inheriting from ``np.generic``) to achieve this, however, this forces a certain
-structure on the associated ``type``.
+(inheriting from ``np.generic``) to achieve this.
 
 .. note::
 
-    Python integers do not have a clear/specific NumPy type associated with
+    Python integers do not have a clear/concrete NumPy type associated with
     them right now. This is because during array coercion NumPy currently
     finds the first type capable of representing their value in the list
     of `long`, `unsigned long`, `int64`, `unsigned int64`, and `object`
@@ -539,7 +535,7 @@ The full algorithm (without user provided dtype) thus looks more like::
         # Same as above
 
 If the user provides ``DType``, then this DType will be tried first, and the
-``dtype`` must be cast.
+``dtype`` may need to be cast before the promotion is performed.
 
 **Limitations:**
 
@@ -679,6 +675,34 @@ While the casting machinery (``CastingImpl[Float64, String]``)
 could include the third step, it is not required to do so and the string
 can always be extended (e.g. with new encodings) without extending the
 ``CastingImpl[Float64, String]``.
+
+This means the implementation will work like this:
+
+    def common_dtype(DType1, DType2):
+        common_dtype = type(dtype1).__common_dtype__(type(dtype2))
+        if common_dtype is NotImplemented:
+            common_dtype = type(dtype2).__common_dtype__(type(dtype1))
+            if common_dtype is NotImplemented:
+                raise TypeError("no common dtype")
+        return common_dtype
+
+    def promote_types(dtype1, dtyp2):
+        common = common_dtype(type(dtype1), type(dtype2))
+
+        if type(dtype1) is not common:
+            # Find what dtype1 is cast to when cast to the common DType
+            # by using the CastingImpl as described below:
+            castingimpl = get_castingimpl(type(dtype1), common)
+            safety, (_, dtype1) = castingimpl.adjust_descriptors((dtype1, None))
+            assert safety == "safe"  # promotion should normally be a safe cast
+
+        if type(dtype2) is not common:
+            # Same as above branch for dtype1.
+
+        if dtype1 is not dtype2:
+            return common.__common_instance__(dtype1, dtype2)
+
+Some of these steps may be optimized for non-parametric DTypes.
 
 **Note:**
 
@@ -821,13 +845,13 @@ Additionally, it will have one more method::
 
     adjust_descriptors(self, Tuple[DType] : input) -> casting, Tuple[DType]
 
-(this method is common with the ufunc machineray, see NEP 43).
+(this method is common with the ufunc machinery, see NEP 43).
 Here, valid values for ``input`` are:
 
 * ``(input_dtype, None)``
 * ``(input_dtype, requested_dtype)``
 
-Where input and requested dtypes must be instances of ``InputDType`` and ``RequestedDtype``.
+with the correct DType classes.
 In the first case, when ``None`` is given, no dtype instance was requested.
 The returned values will be a new tuple of two datatypes, filling in ``None``
 if necessary.
@@ -843,7 +867,7 @@ a maximum version should consist of safest cast which is allowed:
 * ``NPY_SAFE_CASTING``, ``NPY_SAME_KIND_CASTING``, ``NPY_UNSAFE_CASTING``
 * a ``NPY_CAST_IS_VIEW`` *flag*
 
-Where the current ``NPY_EQUIV_CASTING`` should be signalled by
+Where the current ``NPY_EQUIV_CASTING`` should be signaled by
 ``NPY_SAFE_CASTING | NPY_CAST_IS_VIEW``. By returning this, the error
 message is given in a place with more information available, and new modes
 could be added in principle.
@@ -971,8 +995,8 @@ A Python side API shall not be defined here. This is a general side approach.
 DType creation
 """"""""""""""
 
-As already mentioned in NEP 41, the interface to define new DataTypes in C
-is modelled after the limited API in Python, the above mentioned slots,
+As already mentioned in NEP 41, the interface to define new DTypes in C
+is modeled after the limited API in Python, the above mentioned slots,
 and some additional necessary information will thus be passed within a slots
 struct and identified by ``ssize_t`` integers::
 
