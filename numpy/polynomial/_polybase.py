@@ -853,7 +853,7 @@ class ABCPolyBase(abc.ABC):
         -------
         new_series : series or List[series]
             A series (when y.shape is (M,)) or list of series (when y.shape
-            is (M,K)) that represents the least squares fit to the data and
+            is (M, K)) that represents the least-squares fit to the data and
             has the domain and window specified in the call. If the
             coefficients for the unscaled and unshifted basis polynomials are
             of interest, do ``new_series.convert().coef``.
