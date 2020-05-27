@@ -3130,10 +3130,10 @@ class TestLerp:
                                    min_value=0, max_value=1),
                       t1=st.floats(allow_nan=False, allow_infinity=False,
                                    min_value=0, max_value=1),
-                      a=st.floats(allow_nan=False, allow_infinity=False,
-                                  width=32),
-                      b= st.floats(allow_nan=False, allow_infinity=False,
-                                   width=32))
+                      a = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300),
+                      b = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300))
     def test_lerp_monotonic(self, t0, t1, a, b):
         l0 = np.lib.function_base._lerp(a, b, t0)
         l1 = np.lib.function_base._lerp(a, b, t1)
@@ -3146,10 +3146,10 @@ class TestLerp:
 
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
-                      a=st.floats(allow_nan=False, allow_infinity=False,
-                                  width=32),
-                      b=st.floats(allow_nan=False, allow_infinity=False,
-                                  width=32))
+                      a = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300),
+                      b = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300))
     def test_lerp_bounded(self, t, a, b):
         if a <= b:
             assert a <= np.lib.function_base._lerp(a, b, t) <= b
@@ -3159,9 +3159,9 @@ class TestLerp:
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
                       a=st.floats(allow_nan=False, allow_infinity=False,
-                                  width=32),
+                                  min_value=-1e300, max_value=1e300),
                       b=st.floats(allow_nan=False, allow_infinity=False,
-                                  width=32))
+                                  min_value=-1e300, max_value=1e300))
     def test_lerp_symmetric(self, t, a, b):
         # double subtraction is needed to remove the extra precision that t < 0.5 has
         assert np.lib.function_base._lerp(a, b, 1 - (1 - t)) == np.lib.function_base._lerp(b, a, 1 - t)
