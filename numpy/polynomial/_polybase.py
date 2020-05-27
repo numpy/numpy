@@ -880,10 +880,17 @@ class ABCPolyBase(abc.ABC):
         res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
         if full:
             [coef, status] = res
-            return cls(coef, domain=domain, window=window), status
         else:
             coef = res
-            return cls(coef, domain=domain, window=window)
+        if coef.ndim == 1:
+            polynomials = cls(coef, domain=domain, window=window)
+        else:
+            polynomials = list(map(lambda c: cls(c, domain=domain,
+                                                 window=window), coef.T))
+        if full:
+            return polynomials, status
+        else:
+            return polynomials
 
     @classmethod
     def fromroots(cls, roots, domain=[], window=None):
