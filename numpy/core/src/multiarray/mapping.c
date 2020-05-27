@@ -1655,11 +1655,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish;
     }
 
-    if (mit->numiter > 1) {
+    if (mit->numiter > 1 || mit->size == 0) {
         /*
          * If it is one, the inner loop checks indices, otherwise
          * check indices beforehand, because it is much faster if
-         * broadcasting occurs and most likely no big overhead
+         * broadcasting occurs and most likely no big overhead.
+         * The inner loop optimization skips index checks for size == 0 though.
          */
         if (PyArray_MapIterCheckIndices(mit) < 0) {
             goto finish;
@@ -2479,12 +2480,18 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     int i;
     NPY_BEGIN_THREADS_DEF;
 
-    if (mit->size == 0) {
-        /* All indices got broadcast away, do *not* check as it always was */
+    intp_type = PyArray_DescrFromType(NPY_INTP);
+
+    if (NpyIter_GetIterSize(mit->outer) == 0) {
+        /*
+         * When the outer iteration is empty, the indices broadcast to an
+         * empty shape, and in this case we do not check if there are out
+         * of bounds indices.
+         * The code below does use the indices without broadcasting since
+         * broadcasting only repeats values.
+         */
         return 0;
     }
-
-    intp_type = PyArray_DescrFromType(NPY_INTP);
 
     NPY_BEGIN_THREADS;
 
@@ -2515,7 +2522,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 if (check_and_adjust_index(&indval,
                                            outer_dim, outer_axis, _save) < 0) {
                     Py_DECREF(intp_type);
-                    return -1;
+                    goto indexing_error;
                 }
                 data += stride;
             }
@@ -2528,12 +2535,16 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
         op_iter = NpyIter_New(op,
                         NPY_ITER_BUFFERED | NPY_ITER_NBO | NPY_ITER_ALIGNED |
                         NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER |
-                        NPY_ITER_READONLY,
+                        NPY_ITER_READONLY | NPY_ITER_ZEROSIZE_OK,
                         NPY_KEEPORDER, NPY_SAME_KIND_CASTING, intp_type);
 
         if (op_iter == NULL) {
             Py_DECREF(intp_type);
             return -1;
+        }
+        if (NpyIter_GetIterSize(op_iter) == 0) {
+            NpyIter_Deallocate(op_iter);
+            continue;
         }
 
         op_iternext = NpyIter_GetIterNext(op_iter, NULL);
@@ -2554,7 +2565,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                                            outer_dim, outer_axis, _save) < 0) {
                     Py_DECREF(intp_type);
                     NpyIter_Deallocate(op_iter);
-                    return -1;
+                    goto indexing_error;
                 }
                 *iterptr += *iterstride;
             }
@@ -2567,6 +2578,32 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     NPY_END_THREADS;
     Py_DECREF(intp_type);
     return 0;
+
+indexing_error:
+
+    if (mit->size == 0) {
+        PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        /* 2020-05-27, NumPy 1.20 */
+        if (DEPRECATE(
+                "Out of bound index found. This was previously ignored "
+                "when the indexing result contained no elements. "
+                "In the future the index error will be raised. This error "
+                "occurs either due to an empty slice, or if an array has zero "
+                "elements even before indexing.\n"
+                "(Use `warnings.simplefilter('error')` to turn this "
+                "DeprecationWarning into an error and get more details on "
+                "the invalid index.)") < 0) {
+            npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+            return -1;
+        }
+        Py_DECREF(err_type);
+        Py_DECREF(err_value);
+        Py_XDECREF(err_traceback);
+        return 0;
+    }
+
+    return -1;
 }
 
 
