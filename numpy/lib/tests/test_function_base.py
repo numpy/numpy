@@ -3135,8 +3135,14 @@ class TestLerp:
                       b= st.floats(allow_nan=False, allow_infinity=False,
                                    width=32))
     def test_lerp_monotonic(self, t0, t1, a, b):
-        assert (np.lib.function_base._lerp(a, b, t1) -
-                np.lib.function_base._lerp(a, b, t0)) * (b - a) * (t1 - t0) >= 0
+        l0 = np.lib.function_base._lerp(a, b, t0)
+        l1 = np.lib.function_base._lerp(a, b, t1)
+        if t0 == t1 or a == b:
+            assert l0 == l1  # uninteresting
+        elif (t0 < t1) == (a < b):
+            assert l0 < l1
+        else:
+            assert l0 > l1
 
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
