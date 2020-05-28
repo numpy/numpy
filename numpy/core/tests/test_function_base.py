@@ -198,18 +198,34 @@ class TestGeomspace:
 
     def test_start_stop_array(self):
         # Try to use all special cases.
-        start = array([1.e0, 32., 1j, -4j, 1+1j, -1])
-        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1])
+        start = array([1.e0, 32., 1j, -4j, 1+1j, -1, 0.3])
+        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1, 20.3])
+
         t1 = geomspace(start, stop, 5)
         t2 = stack([geomspace(_start, _stop, 5)
                     for _start, _stop in zip(start, stop)], axis=1)
         assert_equal(t1, t2)
+        for i in range(len(start)):
+            assert_(t1[0, i] == start[i])
+            assert_(t1[-1, i] == stop[i])
+            assert_(t2[0, i] == start[i])
+            assert_(t2[-1, i] == stop[i])
+
         t3 = geomspace(start, stop[0], 5)
         t4 = stack([geomspace(_start, stop[0], 5)
                     for _start in start], axis=1)
         assert_equal(t3, t4)
+        for i in range(len(start)):
+            assert_(t3[0, i] == start[i])
+            assert_(t3[-1, i] == stop[0])
+            assert_(t4[0, i] == start[i])
+            assert_(t4[-1, i] == stop[0])
+
         t5 = geomspace(start, stop, 5, axis=-1)
         assert_equal(t5, t2.T)
+        for i in range(len(start)):
+            assert_(t5[i, 0] == start[i])
+            assert_(t5[i, -1] == stop[i])
 
     def test_physical_quantities(self):
         a = PhysicalQuantity(1.0)
