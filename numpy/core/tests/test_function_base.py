@@ -115,7 +115,7 @@ class TestGeomspace:
 
     def test_boundaries_match_start_and_stop_exactly(self):
         # make sure that the boundaries of the returned array exactly
-        # equal 'start' and 'stop' - this isnt' obvious because
+        # equal 'start' and 'stop' - this isn't obvious because
         # np.exp(np.log(x)) isn't necessarily exactly equal to x
         start = 0.3
         stop = 20.3
