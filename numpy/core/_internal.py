@@ -872,3 +872,50 @@ class recursive:
     def __call__(self, *args, **kwargs):
         return self.func(self, *args, **kwargs)
 
+def get_cpuinfo_item(item):
+    values = set()
+    with open('/proc/cpuinfo') as fd:
+        for line in fd:
+            if not line.startswith(item):
+                continue
+            flags_value = [s.strip() for s in line.split(':', 1)]
+            if len(flags_value) == 2:
+                values = values.union(flags_value[1].upper().split())
+    return values
+
+def _get_cpu_feature():
+    """ Return the information in /proc/cpuinfo
+     as a dictionary in the following format:
+     {'NEON': True, 'NEON_FP16': False, 'NEON_VFPV4': True,...}
+    """
+    features = [
+        "NEON", "ASIMD", "FPHP", "ASIMDHP", "ASIMDDP", "ASIMDFHM",
+        "HALF", "VFPV4", "VFPV3", "AES", "SHA1", "SHA2", "PMULL", "CRC32"
+    ]
+    cpu_features = {}
+    for feature in features:
+        cpu_features[feature] = False
+    try:
+        features_flags = get_cpuinfo_item("Features")
+        arch = get_cpuinfo_item("CPU architecture")
+    except:
+        return None
+    for feature in features_flags:
+        if cpu_features.get(feature) != None:
+            cpu_features[feature] = True
+    is_rootfs_v8 = int('0'+next(iter(arch))) > 7 if arch else 0
+    if re.match("^(aarch64|AARCH64)", platform.machine()) or is_rootfs_v8:
+        cpu_features["NEON"] = True
+        cpu_features["NEON_FP16"] = True
+        cpu_features["NEON_VFPV4"] = True
+        cpu_features["ASIMD"] = True
+    else:
+        cpu_features["NEON_FP16"] = any([cpu_features["NEON"], cpu_features["HALF"], cpu_features["VFPV3"]])
+        cpu_features["NEON_VFPV4"] = cpu_features["NEON"] or cpu_features["VFPV4"]
+        # ELF auxiliary vector and /proc/cpuinfo on Linux kernel(armv8 aarch32)
+        # doesn't provide information about ASIMD, so we assume that ASIMD is supported
+        # if the kernel reports any one of the following ARM8 features.
+        cpu_features["ASIMD"] =  any([cpu_features["AES"], cpu_features["SHA1"],
+                                 cpu_features["SHA2"], cpu_features["PMULL"],
+                                 cpu_features["CRC32"]])
+    return cpu_features
