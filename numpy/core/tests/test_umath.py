@@ -3,6 +3,7 @@ import warnings
 import fnmatch
 import itertools
 import pytest
+import sys
 from fractions import Fraction
 
 import numpy.core.umath as ncu
@@ -802,6 +803,8 @@ class TestLDExp:
 class TestFRExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
+    @pytest.mark.skipif(not sys.platform.startswith('linux'),
+                        reason="np.frexp gives different answers for NAN/INF on windows and linux")
     def test_frexp(self, dtype, stride):
         arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
         mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
