@@ -516,7 +516,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     NpyAuxData *transferdata;
     if (PyArray_GetDTypeTransferFunction(
             0, 0, 0, tmp_descr, descr, 1, &stransfer, &transferdata,
-            &needs_api) < 0) {
+            &needs_api) == NPY_FAIL) {
         PyObject_Free(data);
         Py_DECREF(tmp_descr);
         return -1;

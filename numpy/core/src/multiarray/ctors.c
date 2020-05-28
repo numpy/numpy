@@ -2084,9 +2084,6 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     }
     Py_XDECREF(newtype);
 
-    // TODO: The path-through array path may be slowed down now... And
-    //       I should check for subtle behaviour changes otherwise
-    //       (mainly compare old code)?
     ndim = PyArray_DiscoverDTypeAndShape(op,
             NPY_MAXDIMS, dims, &cache, fixed_DType, fixed_descriptor, &dtype);
 
