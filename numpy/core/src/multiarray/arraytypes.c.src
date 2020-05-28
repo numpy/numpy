@@ -3102,7 +3102,7 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
         }
     }
 #else
-    #if defined( __arm__ ) || defined(__aarch64__)
+    #ifdef NPY_CPU_HAVE({NEON})
         uint8x16_t zero = vdupq_n_u8(0);
         for(; i < n - (n % 32); i+=32) {
             uint8x16_t d1 = vld1q_u8((char *)&ip[i]);
