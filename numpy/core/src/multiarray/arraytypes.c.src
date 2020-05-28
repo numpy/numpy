@@ -3076,7 +3076,7 @@ finish:
     int32_t _mm_movemask_epi8_neon(uint8x16_t input)
     {
         int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(a.val, 7), vcombine_s8(m0, m0));
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
         uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
         return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
     }
