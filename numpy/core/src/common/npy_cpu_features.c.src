@@ -312,12 +312,49 @@ get_feature_from_proc_cpuinfo() {
     if (_numpy_internal == NULL) {
         return 0;
     }
+
     PyObject *res = PyObject_CallMethod(_numpy_internal, "_get_cpu_feature", "O", NULL);
     Py_DECREF(_numpy_internal);
-    if (res == NULL || !PyArray_Check(res)) {
+    if (res == NULL || !PyDict_Check(res)) {
         return 0;
     }
-    return 0;
+    
+    PyObject *res = _PyDict_GetItemStringWithError(res, "NEON");
+    if (res == NULL && PyErr_Occurred()) {
+        return 0;
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_NEON]       = PyInt_AsLong(res);
+
+    res = _PyDict_GetItemStringWithError(res, "FPHP");
+    if (res == NULL && PyErr_Occurred()) {
+        return 0;
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = PyInt_AsLong(res);
+
+    res = _PyDict_GetItemStringWithError(res, "ASIMDHP");
+    if (res == NULL && PyErr_Occurred()) {
+        return 0;
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]       = PyInt_AsLong(res);
+    
+    res = _PyDict_GetItemStringWithError(res, "ASIMDDP");
+    if (res == NULL && PyErr_Occurred()) {
+        return 0;
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]       = PyInt_AsLong(res);
+    
+    res = _PyDict_GetItemStringWithError(res, "NEON_FP16");
+    if (res == NULL && PyErr_Occurred()) {
+        return 0;
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]       = PyInt_AsLong(res);
+
+    res = _PyDict_GetItemStringWithError(res, "NEON_VFPV4");
+    if (res == NULL && PyErr_Occurred()) {
+        return 0;
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4]       = PyInt_AsLong(res);
+    return 1;
 }
 
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it

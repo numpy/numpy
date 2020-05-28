@@ -886,7 +886,7 @@ def get_cpuinfo_item(item):
 def _get_cpu_feature():
     """ Return the information in /proc/cpuinfo
      as a dictionary in the following format:
-     {'NEON': True, 'NEON_FP16': False, 'NEON_VFPV4': True,...}
+     {'NEON': 1, 'NEON_FP16': 0, 'NEON_VFPV4': 1,...}
     """
     features = [
         "NEON", "ASIMD", "FPHP", "ASIMDHP", "ASIMDDP", "ASIMDFHM",
@@ -894,7 +894,7 @@ def _get_cpu_feature():
     ]
     cpu_features = {}
     for feature in features:
-        cpu_features[feature] = False
+        cpu_features[feature] = 0
     try:
         features_flags = get_cpuinfo_item("Features")
         arch = get_cpuinfo_item("CPU architecture")
@@ -902,20 +902,20 @@ def _get_cpu_feature():
         return None
     for feature in features_flags:
         if cpu_features.get(feature) != None:
-            cpu_features[feature] = True
+            cpu_features[feature] = 1
     is_rootfs_v8 = int('0'+next(iter(arch))) > 7 if arch else 0
     if re.match("^(aarch64|AARCH64)", platform.machine()) or is_rootfs_v8:
-        cpu_features["NEON"] = True
-        cpu_features["NEON_FP16"] = True
-        cpu_features["NEON_VFPV4"] = True
-        cpu_features["ASIMD"] = True
+        cpu_features["NEON"] = 1
+        cpu_features["NEON_FP16"] = 1
+        cpu_features["NEON_VFPV4"] = 1
+        cpu_features["ASIMD"] = 1
     else:
-        cpu_features["NEON_FP16"] = any([cpu_features["NEON"], cpu_features["HALF"], cpu_features["VFPV3"]])
-        cpu_features["NEON_VFPV4"] = cpu_features["NEON"] or cpu_features["VFPV4"]
+        cpu_features["NEON_FP16"] = int(any([cpu_features["NEON"], cpu_features["HALF"], cpu_features["VFPV3"]]))
+        cpu_features["NEON_VFPV4"] = int(cpu_features["NEON"] or cpu_features["VFPV4"])
         # ELF auxiliary vector and /proc/cpuinfo on Linux kernel(armv8 aarch32)
         # doesn't provide information about ASIMD, so we assume that ASIMD is supported
         # if the kernel reports any one of the following ARM8 features.
-        cpu_features["ASIMD"] =  any([cpu_features["AES"], cpu_features["SHA1"],
+        cpu_features["ASIMD"] =  int(any([cpu_features["AES"], cpu_features["SHA1"],
                                  cpu_features["SHA2"], cpu_features["PMULL"],
-                                 cpu_features["CRC32"]])
+                                 cpu_features["CRC32"]]))
     return cpu_features
