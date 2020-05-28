@@ -44,23 +44,27 @@
  * Further, there are a few other things to keep in mind when coercing arrays:
  *
  *   * For UFunc promotion, Python scalars need to be handled specially to
- *     allow value based casting. For this purpose they have a ``bound_value``
- *     slot.
+ *     allow value based casting.  This requires python complex/float to
+ *     have their own DTypes.
  *   * It is necessary to decide whether or not a sequence is an element.
  *     For example tuples are considered elements for structured dtypes, but
  *     otherwise are considered sequences.
  *     This means that if a dtype is given (either as a class or instance),
  *     it can effect the dimension discovery part.
+ *     For the "special" NumPy types structured void and "c" (single character)
+ *     this is special cased.  For future user-types, this is currently
+ *     handled by providing calling an `is_known_scalar` method.  This method
+ *     currently ensures that Python numerical types are handled quickly.
  *
  * In the initial version of this implementation, it is assumed that dtype
- * discovery can be implemented sufficiently fast, that it is not necessary
- * to create fast paths that only find the correct shape e.g. when
+ * discovery can be implemented sufficiently fast.  That is, it is not
+ * necessary to create fast paths that only find the correct shape e.g. when
  * ``dtype=np.dtype("f8")`` is given.
  *
- * One design goal in this code is to avoid multiple conversions of nested
- * array like objects and sequences. Thus a cache is created to store sequences
- * for the internal API which in almost all cases will, after allocating the
- * new array, iterate all objects a second time to fill that array.
+ * The code here avoid multiple conversion of array-like objects (including
+ * sequences). These objects are cached after conversion, which will require
+ * additional memory, but can drastically speed up coercion from from array
+ * like objects.
  */
 
 
@@ -79,6 +83,7 @@
 PyObject *_global_pytype_to_type_dict = NULL;
 
 
+/* Enum to track or signal some things during dtype and shape discovery */
 enum _dtype_discovery_flags {
     FOUND_RAGGED_ARRAY = 1,
     GAVE_SUBCLASS_WARNING = 2,
@@ -367,10 +372,12 @@ cast_descriptor_to_fixed_dtype(
  *
  * @param fixed_DType A user provided fixed DType, can be NULL
  * @param DType A discovered DType (by discover_dtype_from_pyobject);
- *              This can be identical to `fixed_DType`, if it obj is a
- *              known scalar. Can be `NULL` indicating no known type.
+ *        this can be identical to `fixed_DType`, if it obj is a
+ *        known scalar. Can be `NULL` indicating no known type.
  * @param obj The Python scalar object. At the time of calling this function
- *            it must be known that `obj` should represent a scalar.
+ *        it must be known that `obj` should represent a scalar.
+ * @param requested_descr The requested descriptor or NULL, if not NULL
+ *        it is returned unmodified.
  */
 static NPY_INLINE PyArray_Descr *
 find_scalar_descriptor(
@@ -378,67 +385,29 @@ find_scalar_descriptor(
         PyObject *obj, PyArray_Descr *requested_descr)
 {
     PyArray_Descr *descr;
-    const char *bad_dtype_msg = (
-            "DType %R was unable to handle its own scalar type. "
-            "This is an error in the DType's implementation.");
 
     if (requested_descr != NULL) {
+        /* We simply assume that this is correct and continue. */
         Py_INCREF(requested_descr);
         return requested_descr;
     }
 
-    if (fixed_DType != NULL) {
-        /* always give the fixed dtype a first chance */
+    if (DType == NULL && fixed_DType == NULL) {
+        /* No known DType and no fixed one means we go to object. */
+        return PyArray_DescrFromType(NPY_OBJECT);
+    }
+    else if (DType == NULL) {
+        /*
+         * If no DType is known/found, give the fixed give one a second
+         * chance.  This allows for example string, to call `str(obj)` to
+         * figure out the length for arbitrary objects.
+         */
         descr = fixed_DType->discover_descr_from_pyobject(fixed_DType, obj);
-        if (descr == NULL) {
-            return NULL;
-        }
-        if (descr != (PyArray_Descr *)Py_NotImplemented) {
-            return descr;
-        }
-        Py_DECREF(Py_NotImplemented);
-        /*
-         * The DType is unable to provide a descr. A non-parametric DType
-         * must always just return its canonical instance, though.
-         * But a parametric one may not be able to handle certain types which
-         * are known scalars (of another DType). And we may still know how
-         * to do the cast. For example, a datetime64 may not be able to
-         * guess the unit for a user-implemented datetime scalar.
-         */
-        // TODO: Ensure the parametric check is documented in NEP (at least).
-        if (DType == fixed_DType) {
-            PyErr_Format(PyExc_RuntimeError, bad_dtype_msg, fixed_DType);
-            return NULL;
-        }
     }
-
-    if (DType == NULL) {
-        /*
-         * Only a generic python object can be used at this point since
-         * this is not a known scalar type.
-         */
-        if (fixed_DType != NULL) {
-            PyErr_Format(PyExc_TypeError,
-                    "unable to represent the object %(50)R using the "
-                    "DType %R.", obj, fixed_DType);
-            return NULL;
-        }
-        /* This is the generic fall-back to object path... */
-        return PyArray_DescrNewFromType(NPY_OBJECT);
+    else {
+        descr = DType->discover_descr_from_pyobject(DType, obj);
     }
-
-    /* Try with the discovered DType */
-    descr = DType->discover_descr_from_pyobject(DType, obj);
     if (descr == NULL) {
-        return NULL;
-    }
-    if (descr == (PyArray_Descr *)Py_NotImplemented) {
-        /*
-         * If the DType was discovered, it must be able to handle the scalar
-         * object here, or is considered buggy.
-         */
-        Py_DECREF(Py_NotImplemented);
-        PyErr_Format(PyExc_RuntimeError, bad_dtype_msg, DType);
         return NULL;
     }
     if (fixed_DType == NULL) {
@@ -706,9 +675,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
 
 
 /**
- * Discover the dtype and shape for a potentially nested sequence of scalars.
- * Note that in the ufunc machinery, when value based casting is desired it
- * is necessary to first check for the scalar case.
+ * Handle a leave node (known scalar) during dtype and shape discovery.
  *
  * @param obj The python object or nested sequence to convert
  * @param max_dims The maximum number of dimensions.

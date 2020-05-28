@@ -119,7 +119,6 @@ initialize_abstract_dtypes_and_map_others()
 }
 
 
-
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
         .tp_basicsize = sizeof(PyArray_DTypeMeta),
