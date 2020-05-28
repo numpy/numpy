@@ -3075,26 +3075,10 @@ finish:
 #if defined( __arm__ ) || defined(__aarch64__)
     int32_t _mm_movemask_epi8_neon(uint8x16_t input)
     {
-        const int8_t __attribute__ ((aligned (16))) xr[8] = {-7,-6,-5,-4,-3,-2,-1,0};
-        uint8x8_t mask_and = vdup_n_u8(0x80);
-        int8x8_t mask_shift = vld1_s8(xr);
-        uint8x8_t lo = vget_low_u8(input);
-        uint8x8_t hi = vget_high_u8(input);
-
-        lo = vand_u8(lo, mask_and);
-        lo = vshl_u8(lo, mask_shift);
-        hi = vand_u8(hi, mask_and);
-        hi = vshl_u8(hi, mask_shift);
-
-        lo = vpadd_u8(lo,lo);
-        lo = vpadd_u8(lo,lo);
-        lo = vpadd_u8(lo,lo);
-
-        hi = vpadd_u8(hi,hi);
-        hi = vpadd_u8(hi,hi);
-        hi = vpadd_u8(hi,hi);
-
-        return ((hi[0] << 8) | (lo[0] & 0xFF));
+        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(a.val, 7), vcombine_s8(m0, m0));
+        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
+        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
     }
 #endif
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
