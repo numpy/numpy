@@ -143,7 +143,11 @@ PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {
 #else
   m = wrap_module = Py_InitModule("test_array_from_pyobj_ext", f2py_module_methods);
 #endif
+#if PY_VERSION_HEX >= 0x030a0000
+  Py_SET_TYPE(&PyFortran_Type, &PyType_Type);
+#else
   Py_TYPE(&PyFortran_Type) = &PyType_Type;
+#endif
   import_array();
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap (failed to import numpy)");

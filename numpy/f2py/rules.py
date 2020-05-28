@@ -208,7 +208,11 @@ PyMODINIT_FUNC init#modulename#(void) {
 #else
 \tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
 #endif
+#if PY_VERSION_HEX >= 0x030a0000
+\tPy_SET_TYPE(&PyFortran_Type, &PyType_Type);
+#else
 \tPy_TYPE(&PyFortran_Type) = &PyType_Type;
+#endif
 \timport_array();
 \tif (PyErr_Occurred())
 \t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return RETVAL;}

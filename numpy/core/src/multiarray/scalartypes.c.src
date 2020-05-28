@@ -3067,7 +3067,11 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             return PyErr_NoMemory();
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
+#if PY_VERSION_HEX >= 0x030a0000
+        Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
+#else
         Py_SIZE((PyVoidScalarObject *)ret) = (int) memu;
+#endif
         ((PyVoidScalarObject *)ret)->descr =
             PyArray_DescrNewFromType(NPY_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
