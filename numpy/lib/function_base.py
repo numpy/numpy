@@ -1332,6 +1332,10 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         If `xp` or `fp` are not 1-D sequences
         If `period == 0`
 
+    See Also
+    --------
+    scipy.interpolate 
+
     Notes
     -----
     The x-coordinate sequence is expected to be increasing, but this is not

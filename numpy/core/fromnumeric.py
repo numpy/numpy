@@ -1374,10 +1374,17 @@ def resize(a, new_shape):
 
     See Also
     --------
+    np.reshape : Reshape an array without changing the total size.
+    np.pad : Enlarge and pad an array.
+    np.repeat: Repeat elements of an array.
     ndarray.resize : resize an array in-place.
 
     Notes
     -----
+    When the total size of the array does not change `~numpy.reshape` should
+    be used.  In most other cases either indexing (to reduce the size)
+    or padding (to increase the size) may be a more appropriate solution.
+
     Warning: This functionality does **not** consider axes separately,
     i.e. it does not apply interpolation/extrapolation.
     It fills the return array with the required number of elements, taken
@@ -1401,22 +1408,21 @@ def resize(a, new_shape):
     """
     if isinstance(new_shape, (int, nt.integer)):
         new_shape = (new_shape,)
+
     a = ravel(a)
-    Na = len(a)
-    total_size = um.multiply.reduce(new_shape)
-    if Na == 0 or total_size == 0:
-        return mu.zeros(new_shape, a.dtype)
 
-    n_copies = int(total_size / Na)
-    extra = total_size % Na
+    new_size = 1
+    for dim_length in new_shape:
+        new_size *= dim_length
+        if dim_length < 0:
+            raise ValueError('all elements of `new_shape` must be non-negative')
 
-    if extra != 0:
-        n_copies = n_copies + 1
-        extra = Na - extra
+    if a.size == 0 or new_size == 0:
+        # First case must zero fill. The second would have repeats == 0.
+        return np.zeros_like(a, shape=new_shape)
 
-    a = concatenate((a,) * n_copies)
-    if extra > 0:
-        a = a[:-extra]
+    repeats = -(-new_size // a.size)  # ceil division
+    a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)
 

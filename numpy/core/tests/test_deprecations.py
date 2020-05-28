@@ -618,3 +618,30 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_not_deprecated(round, args=(scalar,))
             self.assert_not_deprecated(round, args=(scalar, 0))
             self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
+
+
+class TestIncorrectAdvancedIndexWithEmptyResult(_DeprecationTestCase):
+    # 2020-05-27, NumPy 1.20.0
+    message = "Out of bound index found. This was previously ignored.*"
+
+    @pytest.mark.parametrize("index", [([3, 0],), ([0, 0], [3, 0])])
+    def test_empty_subspace(self, index):
+        # Test for both a single and two/multiple advanced indices. These
+        # This will raise an IndexError in the future.
+        arr = np.ones((2, 2, 0))
+        self.assert_deprecated(arr.__getitem__, args=(index,))
+        self.assert_deprecated(arr.__setitem__, args=(index, 0.))
+
+        # for this array, the subspace is only empty after applying the slice
+        arr2 = np.ones((2, 2, 1))
+        index2 = (slice(0, 0),) + index
+        self.assert_deprecated(arr2.__getitem__, args=(index2,))
+        self.assert_deprecated(arr2.__setitem__, args=(index2, 0.))
+
+    def test_empty_index_broadcast_not_deprecated(self):
+        arr = np.ones((2, 2, 2))
+
+        index = ([[3], [2]], [])  # broadcast to an empty result.
+        self.assert_not_deprecated(arr.__getitem__, args=(index,))
+        self.assert_not_deprecated(arr.__setitem__,
+                                   args=(index, np.empty((2, 0, 2))))

@@ -75,10 +75,13 @@ stages:
             PYTHON_VERSION: '3.6'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
-            USE_XCODE_10: '1'
-          Accelerate:
-            PYTHON_VERSION: '3.6'
-            USE_OPENBLAS: '0'
+          # Disable this job: the azure images do not create the problematic
+          # symlink from Accelerate to OpenBLAS. We still have the test
+          # at import to detect a buggy Accelerate, just cannot easily trigger
+          # it with azure.
+          # Accelerate:
+          #   PYTHON_VERSION: '3.6'
+          #   USE_OPENBLAS: '0'
 
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
@@ -145,7 +148,6 @@ stages:
         BLAS: None
         LAPACK: None
         ATLAS: None
-        ACCELERATE: None
         CC: /usr/bin/clang
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python setup.py build -j 4 build_ext --inplace install
