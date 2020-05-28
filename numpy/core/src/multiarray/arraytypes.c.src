@@ -26,7 +26,7 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
-#if defined( __arm__ ) || defined(__aarch64__)
+#ifdef NPY_HAVE_NEON
 #include <arm_neon.h>
 #endif
 #ifdef NPY_HAVE_SSE2_INTRINSICS
@@ -3072,7 +3072,7 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-#if defined( __arm__ ) || defined(__aarch64__)
+#ifdef NPY_HAVE_NEON
     int32_t _mm_movemask_epi8_neon(uint8x16_t input)
     {
         int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
