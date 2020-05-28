@@ -408,8 +408,18 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     log_start = _nx.log10(start)
     log_stop = _nx.log10(stop)
-    result = out_sign * logspace(log_start, log_stop, num=num,
-                                 endpoint=endpoint, base=10.0, dtype=dtype)
+    result = logspace(log_start, log_stop, num=num,
+                      endpoint=endpoint, base=10.0, dtype=dtype)
+
+    # Make sure the endpoints match the start and stop arguments. This is
+    # necessary because np.exp(np.log(x)) is not necessarily equal to x.
+    if num > 0:
+        result[0] = start
+        if num > 1 and endpoint:
+            result[-1] = stop
+
+    result = out_sign * result
+
     if axis != 0:
         result = _nx.moveaxis(result, 0, axis)
 

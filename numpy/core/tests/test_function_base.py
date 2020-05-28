@@ -113,6 +113,19 @@ class TestGeomspace:
         assert_array_equal(y, [-100, -10, -1])
         assert_array_equal(y.imag, 0)
 
+        y = geomspace(0.3, 20.3, num=1)
+        assert_(y[0] == 0.3)
+
+        y = geomspace(0.3, 20.3, num=1, endpoint=False)
+        assert_(y[0] == 0.3)
+
+        y = geomspace(0.3, 20.3, num=3)
+        assert_(y[0] == 0.3)
+        assert_(y[-1] == 20.3)
+
+        y = geomspace(0.3, 20.3, num=3, endpoint=False)
+        assert_(y[0] == 0.3)
+
     def test_complex(self):
         # Purely imaginary
         y = geomspace(1j, 16j, num=5)
