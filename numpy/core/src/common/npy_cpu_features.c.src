@@ -287,7 +287,9 @@ npy__cpu_init_features_arm8(void)
 #include <fcntl.h>
 #include <string.h>
 #include <stddef.h>
+#include <time.h>
 
+clock_t start, stop;
 #define NPY__HWCAP  16
 #define NPY__HWCAP2 26
 
@@ -512,6 +514,19 @@ get_feature_from_proc_cpuinfo2() {
     return 1;
 }
 
+static NPY_INLINE PyObject *
+_PyDict_GetItemStringWithError(PyObject *v, const char *key)
+{
+    PyObject *kv, *rv;
+    kv = PyUnicode_FromString(key);
+    if (kv == NULL) {
+        return NULL;
+    }
+    rv = PyDict_GetItemWithError(v, kv);
+    Py_DECREF(kv);
+    return rv;
+}
+
 static int
 get_feature_from_proc_cpuinfo() {
     PyObject *_numpy_internal = PyImport_ImportModule("numpy.core._internal");
@@ -525,41 +540,41 @@ get_feature_from_proc_cpuinfo() {
         return 0;
     }
     
-    PyObject *res = _PyDict_GetItemStringWithError(res, "NEON");
+    res = _PyDict_GetItemStringWithError(res, "NEON");
     if (res == NULL && PyErr_Occurred()) {
         return 0;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_NEON]       = PyInt_AsLong(res);
+    npy__cpu_have[NPY_CPU_FEATURE_NEON]       = PyLong_AsLong(res);
 
     res = _PyDict_GetItemStringWithError(res, "FPHP");
     if (res == NULL && PyErr_Occurred()) {
         return 0;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = PyInt_AsLong(res);
+    npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = PyLong_AsLong(res);
 
     res = _PyDict_GetItemStringWithError(res, "ASIMDHP");
     if (res == NULL && PyErr_Occurred()) {
         return 0;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]       = PyInt_AsLong(res);
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]       = PyLong_AsLong(res);
     
     res = _PyDict_GetItemStringWithError(res, "ASIMDDP");
     if (res == NULL && PyErr_Occurred()) {
         return 0;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]       = PyInt_AsLong(res);
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]       = PyLong_AsLong(res);
     
     res = _PyDict_GetItemStringWithError(res, "NEON_FP16");
     if (res == NULL && PyErr_Occurred()) {
         return 0;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]       = PyInt_AsLong(res);
+    npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]       = PyLong_AsLong(res);
 
     res = _PyDict_GetItemStringWithError(res, "NEON_VFPV4");
     if (res == NULL && PyErr_Occurred()) {
         return 0;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4]       = PyInt_AsLong(res);
+    npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4]       = PyLong_AsLong(res);
     return 1;
 }
 
@@ -567,6 +582,12 @@ __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should h
 static int
 npy__cpu_init_features_linux(void)
 {
+    start=clock();
+    get_feature_from_proc_cpuinfo();
+    stop=clock();
+    printf("python way: %f\n",(double)(stop-start)/_SC_CLK_TCK);
+    get_feature_from_proc_cpuinfo2();
+    printf("C way: %f\n",(double)(clock()-stop)/_SC_CLK_TCK);
     unsigned long hwcap = 0, hwcap2 = 0;
     if (getauxval != 0) {
         hwcap = getauxval(NPY__HWCAP);
