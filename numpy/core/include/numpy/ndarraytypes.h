@@ -1547,6 +1547,11 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
                                         (void *)itemptr, (PyArrayObject *)arr);
 }
 
+/*
+ * SETITEM should only be used if it is known that the value is a scalar
+ * and of a type understood by the arrays dtype.
+ * Use `PyArray_Pack` if the value may be of a different dtype.
+ */
 static NPY_INLINE int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {

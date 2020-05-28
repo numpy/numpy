@@ -34,7 +34,7 @@ discover_descriptor_from_pyint(
     }
 
     unsigned long long uvalue = PyLong_AsUnsignedLongLong(obj);
-    if (error_converting(uvalue)){
+    if (uvalue == (unsigned long long)-1 && PyErr_Occurred()){
         PyErr_Clear();
     }
     else {

@@ -1755,7 +1755,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
         if (get_item_pointer(self, &item, indices, 1) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
     }

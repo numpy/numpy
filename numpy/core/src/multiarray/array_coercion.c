@@ -451,12 +451,27 @@ find_scalar_descriptor(
 
 
 /**
- * Assign a single element in an array from a python value
+ * Assign a single element in an array from a python value.
+ *
+ * The dtypes SETITEM should only be trusted to generally do the right
+ * thing if something is known to be a scalar *and* is of a python type known
+ * to the DType (which should include all basic Python math types), but in
+ * general a cast may be necessary.
+ * This function handles the cast, which is for example hit when assigning
+ * a float128 to complex128.
+ *
+ * At this time, this function does not support arrays (historically we
+ * mainly supported arrays through `__float__()`, etc. Such support should
+ * possibly be added (although in some cases we know that the input is not
+ * an array).
  *
  * @param descr
  * @param item
  * @param value
  * @return 0 on success -1 on failure.
+ */
+/*
+ * TODO: This function should possibly be public API.
  */
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
@@ -593,7 +608,7 @@ static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
 /*
  * Steals a reference to the object.
  */
-NPY_NO_EXPORT NPY_INLINE int
+static NPY_INLINE int
 npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim)

@@ -842,7 +842,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
             goto finish;
         }
         PyArray_ITER_GOTO1D(self, start);
-        retval = type->f->setitem(val, self->dataptr, self->ao);
+        retval = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
         PyArray_ITER_RESET(self);
         if (retval < 0) {
             PyErr_SetString(PyExc_ValueError,
