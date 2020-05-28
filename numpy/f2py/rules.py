@@ -194,7 +194,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 \tint i;
 \tPyObject *m,*d, *s, *tmp;
 \tm = #modulename#_module = PyModule_Create(&moduledef);
-\tPy_TYPE(&PyFortran_Type) = &PyType_Type;
+\tPy_SET_TYPE(&PyFortran_Type, &PyType_Type);
 \timport_array();
 \tif (PyErr_Occurred())
 \t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}

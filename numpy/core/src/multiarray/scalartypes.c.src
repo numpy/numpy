@@ -345,7 +345,7 @@ format_@name@(@type@ val, npy_bool scientific,
  * over-ride repr and str of array-scalar strings and unicode to
  * remove NULL bytes and then call the corresponding functions
  * of string and unicode.
- * 
+ *
  * FIXME:
  *   is this really a good idea?
  *   stop using Py_UNICODE here.
@@ -1542,7 +1542,7 @@ static PyObject *
         return NULL;
     }
 #endif
-    
+
     PyObject *tup;
     if (ndigits == Py_None) {
         tup = PyTuple_Pack(0);
@@ -1568,7 +1568,7 @@ static PyObject *
         return ret;
     }
 #endif
-    
+
     return obj;
 }
 /**end repeat**/
@@ -2774,7 +2774,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return PyErr_NoMemory();
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
-        Py_SIZE((PyVoidScalarObject *)ret) = (int) memu;
+        Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
         ((PyVoidScalarObject *)ret)->descr =
             PyArray_DescrNewFromType(NPY_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
