@@ -114,17 +114,17 @@ class TestGeomspace:
         assert_array_equal(y.imag, 0)
 
         y = geomspace(0.3, 20.3, num=1)
-        assert_(y[0] == 0.3)
+        assert_equal(y[0], 0.3)
 
         y = geomspace(0.3, 20.3, num=1, endpoint=False)
-        assert_(y[0] == 0.3)
+        assert_equal(y[0], 0.3)
 
         y = geomspace(0.3, 20.3, num=3)
-        assert_(y[0] == 0.3)
-        assert_(y[-1] == 20.3)
+        assert_equal(y[0], 0.3)
+        assert_equal(y[-1], 20.3)
 
         y = geomspace(0.3, 20.3, num=3, endpoint=False)
-        assert_(y[0] == 0.3)
+        assert_equal(y[0], 0.3)
 
     def test_complex(self):
         # Purely imaginary
@@ -206,26 +206,26 @@ class TestGeomspace:
                     for _start, _stop in zip(start, stop)], axis=1)
         assert_equal(t1, t2)
         for i in range(len(start)):
-            assert_(t1[0, i] == start[i])
-            assert_(t1[-1, i] == stop[i])
-            assert_(t2[0, i] == start[i])
-            assert_(t2[-1, i] == stop[i])
+            assert_equal(t1[0, i], start[i])
+            assert_equal(t1[-1, i], stop[i])
+            assert_equal(t2[0, i], start[i])
+            assert_equal(t2[-1, i], stop[i])
 
         t3 = geomspace(start, stop[0], 5)
         t4 = stack([geomspace(_start, stop[0], 5)
                     for _start in start], axis=1)
         assert_equal(t3, t4)
         for i in range(len(start)):
-            assert_(t3[0, i] == start[i])
-            assert_(t3[-1, i] == stop[0])
-            assert_(t4[0, i] == start[i])
-            assert_(t4[-1, i] == stop[0])
+            assert_(t3[0, i], start[i])
+            assert_(t3[-1, i], stop[0])
+            assert_(t4[0, i], start[i])
+            assert_(t4[-1, i], stop[0])
 
         t5 = geomspace(start, stop, 5, axis=-1)
         assert_equal(t5, t2.T)
         for i in range(len(start)):
-            assert_(t5[i, 0] == start[i])
-            assert_(t5[i, -1] == stop[i])
+            assert_(t5[i, 0], start[i])
+            assert_(t5[i, -1], stop[i])
 
     def test_physical_quantities(self):
         a = PhysicalQuantity(1.0)
