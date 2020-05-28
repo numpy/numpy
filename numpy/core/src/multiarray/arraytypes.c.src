@@ -26,8 +26,10 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
-#if defined NPY_CPU_HAVE({NEON}) && defined __ARM_NEON__
+#ifdef NPY_CPU_HAVE({NEON})
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
+#endif
 #endif
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
@@ -3072,7 +3074,8 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-#if defined NPY_CPU_HAVE({NEON}) && defined __ARM_NEON__
+#ifdef NPY_CPU_HAVE({NEON})
+#ifdef __ARM_NEON__
     int32_t _mm_movemask_epi8_neon(uint8x16_t input)
     {
         int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
@@ -3080,6 +3083,7 @@ finish:
         uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
         return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
     }
+#endif
 #endif
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
 
@@ -3102,7 +3106,8 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
         }
     }
 #else
-    #if defined NPY_CPU_HAVE({NEON}) && defined __ARM_NEON__
+    #ifdef NPY_CPU_HAVE({NEON})
+    #ifdef __ARM_NEON__
         uint8x16_t zero = vdupq_n_u8(0);
         for(; i < n - (n % 32); i+=32) {
             uint8x16_t d1 = vld1q_u8((char *)&ip[i]);
@@ -3113,6 +3118,7 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
                 break;
             }
         }
+    #endif
     #endif
 #endif
     for (; i < n; i++) {
