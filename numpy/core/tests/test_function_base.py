@@ -113,18 +113,25 @@ class TestGeomspace:
         assert_array_equal(y, [-100, -10, -1])
         assert_array_equal(y.imag, 0)
 
-        y = geomspace(0.3, 20.3, num=1)
-        assert_equal(y[0], 0.3)
+    def test_boundaries_match_start_and_stop_exactly(self):
+        # make sure that the boundaries of the returned array exactly
+        # equal 'start' and 'stop' - this isnt' obvious because
+        # np.exp(np.log(x)) isn't necessarily exactly equal to x
+        start = 0.3
+        stop = 20.3
 
-        y = geomspace(0.3, 20.3, num=1, endpoint=False)
-        assert_equal(y[0], 0.3)
+        y = geomspace(start, stop, num=1)
+        assert_equal(y[0], start)
 
-        y = geomspace(0.3, 20.3, num=3)
-        assert_equal(y[0], 0.3)
-        assert_equal(y[-1], 20.3)
+        y = geomspace(start, stop, num=1, endpoint=False)
+        assert_equal(y[0], start)
 
-        y = geomspace(0.3, 20.3, num=3, endpoint=False)
-        assert_equal(y[0], 0.3)
+        y = geomspace(start, stop, num=3)
+        assert_equal(y[0], start)
+        assert_equal(y[-1], stop)
+
+        y = geomspace(start, stop, num=3, endpoint=False)
+        assert_equal(y[0], start)
 
     def test_complex(self):
         # Purely imaginary
@@ -198,34 +205,18 @@ class TestGeomspace:
 
     def test_start_stop_array(self):
         # Try to use all special cases.
-        start = array([1.e0, 32., 1j, -4j, 1+1j, -1, 0.3])
-        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1, 20.3])
-
+        start = array([1.e0, 32., 1j, -4j, 1+1j, -1])
+        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1])
         t1 = geomspace(start, stop, 5)
         t2 = stack([geomspace(_start, _stop, 5)
                     for _start, _stop in zip(start, stop)], axis=1)
         assert_equal(t1, t2)
-        for i in range(len(start)):
-            assert_equal(t1[0, i], start[i])
-            assert_equal(t1[-1, i], stop[i])
-            assert_equal(t2[0, i], start[i])
-            assert_equal(t2[-1, i], stop[i])
-
         t3 = geomspace(start, stop[0], 5)
         t4 = stack([geomspace(_start, stop[0], 5)
                     for _start in start], axis=1)
         assert_equal(t3, t4)
-        for i in range(len(start)):
-            assert_(t3[0, i], start[i])
-            assert_(t3[-1, i], stop[0])
-            assert_(t4[0, i], start[i])
-            assert_(t4[-1, i], stop[0])
-
         t5 = geomspace(start, stop, 5, axis=-1)
         assert_equal(t5, t2.T)
-        for i in range(len(start)):
-            assert_(t5[i, 0], start[i])
-            assert_(t5[i, -1], stop[i])
 
     def test_physical_quantities(self):
         a = PhysicalQuantity(1.0)
