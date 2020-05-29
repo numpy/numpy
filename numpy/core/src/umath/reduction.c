@@ -21,6 +21,7 @@
 #include "ctors.h"
 
 #include "numpy/ufuncobject.h"
+#include "array_assign.h"
 #include "lowlevel_strided_loops.h"
 #include "reduction.h"
 #include "extobj.h"  /* for _check_ufunc_fperr */
@@ -418,8 +419,8 @@ PyArray_InitializeReduceResult(
  *               with size one.
  * subok       : If true, the result uses the subclass of operand, otherwise
  *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_InitializeReduceResult is used, otherwise
- *               this value is used to initialize the result to
+ * identity    : If NULL, PyArray_InitializeReduceResult is used, otherwise
+ *               this array is broadcast to initialize the result to
  *               the reduction's unit.
  * loop        : The loop which does the reduction.
  * data        : Data which is passed to the inner loop.
@@ -445,7 +446,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       npy_bool *axis_flags, int reorderable,
                       int keepdims,
                       int subok,
-                      PyObject *identity,
+                      PyArrayObject *identity,
                       PyArray_ReduceLoopFunc *loop,
                       void *data, npy_intp buffersize, const char *funcname,
                       int errormask)
@@ -468,7 +469,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         return NULL;
     }
     /* Can only use where with an initial ( from identity or argument) */
-    if (wheremask != NULL && identity == Py_None) {
+    if (wheremask != NULL && identity == NULL) {
         PyErr_Format(PyExc_ValueError,
                      "reduction operation '%s' does not have an identity, "
                      "so to use a where mask one has to specify 'initial'",
@@ -495,8 +496,8 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
      * Initialize the result to the reduction unit if possible,
      * otherwise copy the initial values and get a view to the rest.
      */
-    if (identity != Py_None) {
-        if (PyArray_FillWithScalar(result, identity) < 0) {
+    if (identity != NULL) {
+        if (PyArray_AssignArray(result, identity, NULL, NPY_SAME_KIND_CASTING) < 0) {
             goto fail;
         }
         op_view = operand;

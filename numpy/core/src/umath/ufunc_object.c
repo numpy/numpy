@@ -3613,47 +3613,84 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    /* Get the identity */
-    identity = _get_identity(ufunc, &reorderable);
-    if (identity == NULL) {
+    /* Get the reduction dtype */
+    if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
         return NULL;
     }
 
-    /* Get the initial value */
+    /* Get the identity */
+    identity = _get_identity(ufunc, &reorderable);
+    if (identity == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
+    /* Get the initial value array */
+    PyArrayObject *initial_arr;
     if (initial == NULL || initial == NoValue) {
-        initial = identity;
+        /* Not specified, use the identity */
 
         /*
         * The identity for a dynamic dtype like
         * object arrays can't be used in general
         */
-        if (initial != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-            Py_DECREF(initial);
-            initial = Py_None;
-            Py_INCREF(initial);
+        if (identity != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+            Py_DECREF(identity);
+            identity = Py_None;
+            Py_INCREF(identity);
         }
-    } else {
-        Py_DECREF(identity);
-        Py_INCREF(initial);  /* match the reference count in the if above */
-    }
 
-    /* Get the reduction dtype */
-    if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
-        Py_DECREF(initial);
-        return NULL;
+        if (identity == Py_None) {
+            initial_arr = NULL;
+        }
+        else {
+            /* upcast to a 0d array of the right type, with deliberately vague casting */
+            Py_INCREF(dtype);
+            initial_arr = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type,
+                dtype,
+                /* zero-dimensional */
+                0, NULL, NULL,
+                /* no data, flags or base */
+                NULL, 0, NULL);
+            if (initial_arr == NULL) {
+                goto fail;
+            }
+            if (PyArray_FillWithScalar(initial_arr, identity) < 0) {
+                Py_DECREF(initial_arr);
+                goto fail;
+            }
+        }
     }
+    else if (initial == Py_None) {
+        /* identity explicitly disallowed */
+        initial_arr = NULL;
+    }
+    else {
+        /* infer the dtype, ReduceWrapper will perform same_kind casting to check later */
+        initial_arr = (PyArrayObject *)PyArray_FROM_O(initial);
+        if (initial_arr == NULL) {
+            goto fail;
+        }
+    }
+    Py_DECREF(identity);
 
     result = PyUFunc_ReduceWrapper(arr, out, wheremask, dtype, dtype,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
                                    keepdims, 0,
-                                   initial,
+                                   initial_arr,
                                    reduce_loop,
                                    ufunc, buffersize, ufunc_name, errormask);
 
     Py_DECREF(dtype);
-    Py_DECREF(initial);
+    Py_XDECREF(initial_arr);
     return result;
+
+fail:
+    Py_DECREF(identity);
+    Py_DECREF(dtype);
+    return NULL;
 }
 
 
