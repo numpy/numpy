@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2010 The Android Open Source Project
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 #include "npy_cpu_features.h"
 #include "numpy/npy_common.h" // for NPY_INLINE
 #include "numpy/npy_cpu.h" // To guarantee of having CPU definitions in scope.
@@ -287,9 +314,7 @@ npy__cpu_init_features_arm8(void)
 #include <fcntl.h>
 #include <string.h>
 #include <stddef.h>
-#include <time.h>
 
-clock_t start, stop;
 #define NPY__HWCAP  16
 #define NPY__HWCAP2 26
 
@@ -478,7 +503,7 @@ has_list_item(const char* list, const char* item)
 }
 
 static int
-get_feature_from_proc_cpuinfo2() {
+get_feature_from_proc_cpuinfo() {
     char* cpuinfo = NULL;
     int cpuinfo_len;
     long architecture = 0;
@@ -507,74 +532,12 @@ get_feature_from_proc_cpuinfo2() {
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = has_list_item(cpuFeatures, "asimdhp");
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = has_list_item(cpuFeatures, "asimddp");
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = has_list_item(cpuFeatures, "asimdfhm");
-        npy__cpu_have[NPY_CPU_FEATURE_NEON]       = has_list_item(cpuFeatures, "neon") || has_list_item(cpuFeatures, "asimd");
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = isV8 || has_list_item(cpuFeatures, "vfpv3") || has_list_item(cpuFeatures, "half");
+        npy__cpu_have[NPY_CPU_FEATURE_NEON]       = has_list_item(cpuFeatures, "neon") ||
+                                                    has_list_item(cpuFeatures, "asimd");
+        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = isV8 || has_list_item(cpuFeatures, "neon") ||
+                                                     has_list_item(cpuFeatures, "vfpv3") || has_list_item(cpuFeatures, "half");
         npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = isV8 || has_list_item(cpuFeatures, "vfpv4");
     }
-    return 1;
-}
-
-static NPY_INLINE PyObject *
-_PyDict_GetItemStringWithError(PyObject *v, const char *key)
-{
-    PyObject *kv, *rv;
-    kv = PyUnicode_FromString(key);
-    if (kv == NULL) {
-        return NULL;
-    }
-    rv = PyDict_GetItemWithError(v, kv);
-    Py_DECREF(kv);
-    return rv;
-}
-
-static int
-get_feature_from_proc_cpuinfo() {
-    PyObject *_numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) {
-        return 0;
-    }
-
-    PyObject *res = PyObject_CallMethod(_numpy_internal, "_get_cpu_feature", "O", NULL);
-    Py_DECREF(_numpy_internal);
-    if (res == NULL || !PyDict_Check(res)) {
-        return 0;
-    }
-    
-    res = _PyDict_GetItemStringWithError(res, "NEON");
-    if (res == NULL && PyErr_Occurred()) {
-        return 0;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_NEON]       = PyLong_AsLong(res);
-
-    res = _PyDict_GetItemStringWithError(res, "FPHP");
-    if (res == NULL && PyErr_Occurred()) {
-        return 0;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = PyLong_AsLong(res);
-
-    res = _PyDict_GetItemStringWithError(res, "ASIMDHP");
-    if (res == NULL && PyErr_Occurred()) {
-        return 0;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]       = PyLong_AsLong(res);
-    
-    res = _PyDict_GetItemStringWithError(res, "ASIMDDP");
-    if (res == NULL && PyErr_Occurred()) {
-        return 0;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]       = PyLong_AsLong(res);
-    
-    res = _PyDict_GetItemStringWithError(res, "NEON_FP16");
-    if (res == NULL && PyErr_Occurred()) {
-        return 0;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]       = PyLong_AsLong(res);
-
-    res = _PyDict_GetItemStringWithError(res, "NEON_VFPV4");
-    if (res == NULL && PyErr_Occurred()) {
-        return 0;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4]       = PyLong_AsLong(res);
     return 1;
 }
 
@@ -582,12 +545,6 @@ __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should h
 static int
 npy__cpu_init_features_linux(void)
 {
-    start=clock();
-    get_feature_from_proc_cpuinfo();
-    stop=clock();
-    printf("python way: %f\n",(double)(stop-start)/_SC_CLK_TCK);
-    get_feature_from_proc_cpuinfo2();
-    printf("C way: %f\n",(double)(clock()-stop)/_SC_CLK_TCK);
     unsigned long hwcap = 0, hwcap2 = 0;
     if (getauxval != 0) {
         hwcap = getauxval(NPY__HWCAP);
