@@ -1,9 +1,19 @@
 """
 Build/Install NumPy on Windows with clang-cl using (powershell syntax)
 
+Short:
+python setup.py build --compiler=clang-cl install
+
+Full:
 python setup.py config --compiler=clang-cl build_clib `
                        --compiler=clang-cl build_ext `
                        --compiler=clang-cl install
+
+Develop mode:
+python setup.py build_ext -i --compiler=clang-cl develop
+
+Run tests:
+python runtests.py --compiler=clang-cl
 """
 
 import os
