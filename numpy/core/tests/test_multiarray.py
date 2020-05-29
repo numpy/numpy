@@ -3808,14 +3808,14 @@ class TestPickling(object):
     def test_correct_protocol5_error_message(self):
         array = np.arange(10)
 
-        if sys.version_info[:2] in ((3, 6), (3, 7)):
+        if sys.version_info[:2] in ((3, 5), (3, 6), (3, 7)):
             # For the specific case of python3.6 and 3.7, raise a clear import
             # error about the pickle5 backport when trying to use protocol=5
             # without the pickle5 package
             with pytest.raises(ImportError):
                 array.__reduce_ex__(5)
 
-        elif sys.version_info[:2] < (3, 6):
+        elif sys.version_info[:2] < (3, 5):
             # when calling __reduce_ex__ explicitly with protocol=5 on python
             # raise a ValueError saying that protocol 5 is not available for
             # this python version
