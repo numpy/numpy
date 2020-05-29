@@ -510,7 +510,9 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
-            raise AttributeError("record array has no attribute %s" % attr) from e
+            raise AttributeError(
+                "record array has no attribute %s" % attr
+            ) from e
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
