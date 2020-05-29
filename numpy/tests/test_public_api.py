@@ -192,6 +192,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.armccompiler",
     "distutils.ccompiler",
     'distutils.ccompiler_opt',
+    "distutils.clang_cl",
     "distutils.command",
     "distutils.command.autodist",
     "distutils.command.bdist_rpm",

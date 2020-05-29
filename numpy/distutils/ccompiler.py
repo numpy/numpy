@@ -719,7 +719,8 @@ ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'pathcc'),
                                  ('nt', 'intelw'),
                                  ('nt', 'intelemw'),
-                                 ('nt', 'clangcl'))
+                                 ('nt', 'clangcl'),
+                                 )
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
