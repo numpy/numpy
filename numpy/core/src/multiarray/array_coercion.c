@@ -307,7 +307,7 @@ discover_dtype_from_pyobject(
         DType = NPY_DTYPE(legacy_descr);
         Py_INCREF(DType);
         Py_DECREF(legacy_descr);
-        // TODO: Do not add new warning for now...
+        /* TODO: Enable warning about subclass handling */
         if (0 && !((*flags) & GAVE_SUBCLASS_WARNING)) {
             if (DEPRECATE_FUTUREWARNING(
                     "in the future NumPy will not automatically find the "
@@ -359,7 +359,7 @@ cast_descriptor_to_fixed_dtype(
 
     PyErr_SetString(PyExc_NotImplementedError,
             "Must use casting to find the correct dtype, this is "
-            "not yet implemented, oh noes! "
+            "not yet implemented! "
             "(It should not be possible to hit this code currently!)");
     return NULL;
 }
@@ -454,21 +454,21 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*
          * We always have store objects directly, casting will lose some
-         * type information. Any other dtype discards the type information...
+         * type information. Any other dtype discards the type information.
+         * TODO: For a Categorical[object] this path may be necessary?
          */
         return descr->f->setitem(value, item, &arr_fields);
     }
 
+    /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
     PyArray_DTypeMeta *DType = discover_dtype_from_pyobject(
             value, NULL, NPY_DTYPE(descr));
-
     if (DType == NULL) {
         return -1;
     }
-
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
+        /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
-        /* We can set the element directly (luckily) */
         arr_fields.descr = descr;
         return descr->f->setitem(value, item, &arr_fields);
     }
@@ -823,7 +823,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             while (iter->index < iter->size) {
                 PyObject *elem = (*(PyObject **)(iter->dataptr));
                 if (elem == NULL) {
-                    assert(0);  /* We really may want to stop supporting this */
                     elem = Py_None;
                 }
                 DType = discover_dtype_from_pyobject(elem, flags, fixed_DType);
