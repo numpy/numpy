@@ -611,7 +611,7 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_deprecated(round, args=(scalar,))
             self.assert_deprecated(round, args=(scalar, 0))
             self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-    
+
     def test_not_deprecated(self):
         for scalar_type in self.not_deprecated_types:
             scalar = scalar_type(0)
@@ -620,6 +620,7 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
 
 
+<<<<<<< ba4e4b6558050e0ef0fa3a312a46d65a5f021c16
 class TestIncorrectAdvancedIndexWithEmptyResult(_DeprecationTestCase):
     # 2020-05-27, NumPy 1.20.0
     message = "Out of bound index found. This was previously ignored.*"
@@ -645,3 +646,15 @@ class TestIncorrectAdvancedIndexWithEmptyResult(_DeprecationTestCase):
         self.assert_not_deprecated(arr.__getitem__, args=(index,))
         self.assert_not_deprecated(arr.__setitem__,
                                    args=(index, np.empty((2, 0, 2))))
+
+
+class TestNonExactMatchDeprecation(_DeprecationTestCase):
+    # 2020-04-22
+    def test_non_exact_match(self):
+        arr = np.array([[3, 6, 6], [4, 5, 1]])
+        # case insensitive check
+        self.assert_deprecated(np.ravel_multi_index, args=(arr, (7, 6)), kwargs={"order": "f"}, exceptions=(ValueError,))
+        # misspelt mode check
+        self.assert_deprecated(lambda: np.ravel_multi_index(arr, (7, 6), mode='Cilp'), exceptions=(ValueError,))
+        # using completely different word with first character as R
+        self.assert_deprecated(lambda: np.searchsorted(arr[0], 4, side='Random'), exceptions=(ValueError,))

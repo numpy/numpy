@@ -385,8 +385,8 @@ static int byteorder_parser(char const *str, Py_ssize_t length, void *data)
     if (length < 1) {
         return -1;
     }
-    else if (str[0] == NPY_BIG || str[0] == NPY_LITTLE
-        || str[0] == NPY_NATIVE || str[0] == NPY_IGNORE) {
+    else if (str[0] == NPY_BIG || str[0] == NPY_LITTLE ||
+             str[0] == NPY_NATIVE || str[0] == NPY_IGNORE) {
         *endian = str[0];
         return 0;
     }
@@ -508,21 +508,34 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 static int searchside_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)data;
+    int is_exact = 0;
 
     if (length < 1) {
         return -1;
     }
     else if (str[0] == 'l' || str[0] == 'L') {
         *side = NPY_SEARCHLEFT;
-        return 0;
+        is_exact = (length == 4 && strcmp(str, "left") == 0);
     }
     else if (str[0] == 'r' || str[0] == 'R') {
         *side = NPY_SEARCHRIGHT;
-        return 0;
-    }
-    else {
+        is_exact = (length == 5 && strcmp(str, "right") == 0);
+    } else {
         return -1;
     }
+
+    /* Filters out the case sensitive/non-exact
+     * match inputs and other inputs and outputs DeprecationWarning */
+    if (!is_exact) {
+        /* NumPy 1.20, 2020-05-19 */
+        if (DEPRECATE("inexact matches and case insensitive matches "
+                      "for search side are deprecated. Please use "
+                      "one of 'left' or 'right' instead") < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /*NUMPY_API
@@ -539,28 +552,42 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
 static int order_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_ORDER *val = (NPY_ORDER *)data;
+    int is_exact = 0;
+
     if (length != 1) {
         return -1;
     }
+
     if (str[0] == 'C' || str[0] == 'c') {
         *val = NPY_CORDER;
-        return 0;
+        is_exact = str[0] == 'C';
     }
     else if (str[0] == 'F' || str[0] == 'f') {
         *val = NPY_FORTRANORDER;
-        return 0;
+        is_exact = str[0] == 'F';
     }
     else if (str[0] == 'A' || str[0] == 'a') {
         *val = NPY_ANYORDER;
-        return 0;
+        is_exact = str[0] == 'A';
     }
     else if (str[0] == 'K' || str[0] == 'k') {
         *val = NPY_KEEPORDER;
-        return 0;
-    }
-    else {
+        is_exact = str[0] == 'K';
+    } else {
         return -1;
     }
+
+    /* Filters out the case sensitive/non-exact
+     * match inputs and other inputs and outputs DeprecationWarning */
+    if (!is_exact) {
+        /* Numpy 1.20, 2020-05-19 */
+        if (DEPRECATE("case insensitive matches "
+                      "for order are deprecated. Please use "
+                      "one of 'C', 'F', 'A' or 'K' instead") < 0) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 /*NUMPY_API
@@ -581,24 +608,39 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_CLIPMODE *val = (NPY_CLIPMODE *)data;
+    int is_exact = 0;
+
     if (length < 1) {
         return -1;
     }
+
     if (str[0] == 'C' || str[0] == 'c') {
         *val = NPY_CLIP;
-        return 0;
+        is_exact = (length == 4 && strcmp(str, "clip") == 0);
     }
     else if (str[0] == 'W' || str[0] == 'w') {
         *val = NPY_WRAP;
-        return 0;
+        is_exact = (length == 4 && strcmp(str, "wrap") == 0);
     }
     else if (str[0] == 'R' || str[0] == 'r') {
         *val = NPY_RAISE;
-        return 0;
-    }
-    else {
+        is_exact = (length == 5 && strcmp(str, "raise") == 0);
+    } else {
         return -1;
     }
+
+    /* Filters out the case sensitive/non-exact
+     * match inputs and other inputs and outputs DeprecationWarning */
+    if (!is_exact) {
+        /* Numpy 1.20, 2020-05-19 */
+        if (DEPRECATE("inexact matches and case insensitive matches "
+                      "for clip mode are deprecated. Please use "
+                      "one of 'clip', 'raise', or 'wrap' instead") < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /*NUMPY_API
