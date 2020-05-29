@@ -1158,7 +1158,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     npyrational_arrfuncs.fill = npyrational_fill;
     npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
     /* Left undefined: scanfunc, fromstr, sort, argsort */
-    Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
+    Py_SET_TYPE(&npyrational_descr, &PyArrayDescr_Type);
     npy_rational = PyArray_RegisterDataType(&npyrational_descr);
     if (npy_rational<0) {
         goto fail;
