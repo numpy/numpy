@@ -66,15 +66,22 @@ discover_descriptor_from_pycomplex(
 NPY_NO_EXPORT int
 initialize_abstract_dtypes_and_map_others()
 {
+    PyArrayAbstractObjDTypeMeta_Type.tp_base = &PyArrayDTypeMeta_Type;
     if (PyType_Ready(&PyArrayAbstractObjDTypeMeta_Type) < 0) {
         return -1;
     }
+    ((PyTypeObject *)&PyArray_PyIntAbstractDType)->tp_base = &PyArrayDTypeMeta_Type;
+    PyArray_PyIntAbstractDType.scalar_type = &PyLong_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_PyIntAbstractDType) < 0) {
         return -1;
     }
+    ((PyTypeObject *)&PyArray_PyFloatAbstractDType)->tp_base = &PyArrayDTypeMeta_Type;
+    PyArray_PyFloatAbstractDType.scalar_type = &PyFloat_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_PyFloatAbstractDType) < 0) {
         return -1;
     }
+    ((PyTypeObject *)&PyArray_PyComplexAbstractDType)->tp_base = &PyArrayDTypeMeta_Type;
+    PyArray_PyComplexAbstractDType.scalar_type = &PyComplex_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_PyComplexAbstractDType) < 0) {
         return -1;
     }
@@ -119,44 +126,6 @@ initialize_abstract_dtypes_and_map_others()
 }
 
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
-        .tp_basicsize = sizeof(PyArray_DTypeMeta),
-        .tp_name = "numpy._PyIntBaseAbstractDType",
-        .tp_base = &PyArrayDescr_Type,
-    },},
-    .abstract = 1,
-    .scalar_type = &PyLong_Type,
-    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
-    .kind = 'i',
-};
-
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
-        .tp_basicsize = sizeof(PyArray_DTypeMeta),
-        .tp_name = "numpy._PyFloatBaseAbstractDType",
-        .tp_base = &PyArrayDescr_Type,
-    },},
-    .abstract = 1,
-    .scalar_type = &PyLong_Type,
-    .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
-    .kind = 'f',
-};
-
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
-        .tp_basicsize = sizeof(PyArray_DTypeMeta),
-        .tp_name = "numpy._PyComplexBaseAbstractDType",
-        .tp_base = &PyArrayDescr_Type,
-    },},
-    .abstract = 1,
-    .scalar_type = &PyLong_Type,
-    .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
-    .kind = 'c',
-};
-
 
 /* Note: This is currently largely not used, but will be required eventually. */
 NPY_NO_EXPORT PyTypeObject PyArrayAbstractObjDTypeMeta_Type = {
@@ -165,5 +134,35 @@ NPY_NO_EXPORT PyTypeObject PyArrayAbstractObjDTypeMeta_Type = {
         .tp_basicsize = sizeof(PyArray_DTypeMeta),
         .tp_flags = Py_TPFLAGS_DEFAULT,
         .tp_doc = "Helper MetaClass for value based casting AbstractDTypes.",
-        .tp_base = &PyArrayDTypeMeta_Type,
 };
+
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
+        PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
+        .tp_basicsize = sizeof(PyArray_DTypeMeta),
+        .tp_name = "numpy._PyIntBaseAbstractDType",
+    },},
+    .abstract = 1,
+    .discover_descr_from_pyobject = discover_descriptor_from_pyint,
+    .kind = 'i',
+};
+
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
+        PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
+        .tp_basicsize = sizeof(PyArray_DTypeMeta),
+        .tp_name = "numpy._PyFloatBaseAbstractDType",
+    },},
+    .abstract = 1,
+    .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
+    .kind = 'f',
+};
+
+NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
+        PyVarObject_HEAD_INIT(&PyArrayAbstractObjDTypeMeta_Type, 0)
+        .tp_basicsize = sizeof(PyArray_DTypeMeta),
+        .tp_name = "numpy._PyComplexBaseAbstractDType",
+    },},
+    .abstract = 1,
+    .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
+    .kind = 'c',
+};
+
