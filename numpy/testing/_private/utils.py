@@ -1768,12 +1768,10 @@ def assert_warns(warning_class, *args, **kwargs):
     ----------
     warning_class : class
         The class defining the warning that `func` is expected to throw.
-    func : callable
-        The callable to test.
-    \\*args : Arguments
-        Arguments passed to `func`.
+    \\*args : List of function and arguments
+        `func` and arguments for `func`.
     \\*\\*kwargs : Kwargs
-        Keyword arguments passed to `func`.
+        Keyword arguments for `func`.
 
     Returns
     -------
