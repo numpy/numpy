@@ -113,7 +113,7 @@ class config(old_config):
     def _link (self, body,
                headers, include_dirs,
                libraries, library_dirs, lang):
-        if self.compiler.compiler_type=='msvc':
+        if self.compiler.compiler_type in ('msvc', 'clang_cl'):
             libraries = (libraries or [])[:]
             library_dirs = (library_dirs or [])[:]
             if lang in ['f77', 'f90']:
