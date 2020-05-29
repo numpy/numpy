@@ -546,4 +546,10 @@ NpyCapsule_Check(PyObject *ptr)
 }
 #endif
 
+// account for changing PyType
+#if PY_VERSION_HEX < 0x03090000
+    #define Py_SET_TYPE(obj, typ) (Py_TYPE(obj) = typ)
+    #define Py_SET_SIZE(obj, typ) (Py_SIZE(obj) = typ)
+#endif
+
 #endif /* _NPY_3KCOMPAT_H_ */
