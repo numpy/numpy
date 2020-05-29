@@ -60,6 +60,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
 #endif
 
+#if PY_VERSION_HEX < 0x030900a4
+    /* Introduced in https://github.com/python/cpython/commit/d2ec81a8c99796b51fb8c49b77a7fe369863226f */
+    #define Py_SET_TYPE(obj, typ) (Py_TYPE(obj) = typ)
+    /* Introduced in https://github.com/python/cpython/commit/b10dc3e7a11fcdb97e285882eba6da92594f90f9 */
+    #define Py_SET_SIZE(obj, size) (Py_SIZE(obj) = size)
+#endif
+
+
 #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
 
 /* Py_SETREF was added in 3.5.2, and only if Py_LIMITED_API is absent */
@@ -546,10 +554,5 @@ NpyCapsule_Check(PyObject *ptr)
 }
 #endif
 
-// account for changing PyType
-#if PY_VERSION_HEX < 0x03090000
-    #define Py_SET_TYPE(obj, typ) (Py_TYPE(obj) = typ)
-    #define Py_SET_SIZE(obj, typ) (Py_SIZE(obj) = typ)
-#endif
 
 #endif /* _NPY_3KCOMPAT_H_ */
