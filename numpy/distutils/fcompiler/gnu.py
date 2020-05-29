@@ -78,7 +78,7 @@ class GnuFCompiler(FCompiler):
             return None
         return v[1]
 
-    possible_executables = ['g77', 'f77', "gfortran"]
+    possible_executables = ['g77', 'f77']
     executables = {
         'version_cmd'  : [None, "-dumpversion"],
         'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
