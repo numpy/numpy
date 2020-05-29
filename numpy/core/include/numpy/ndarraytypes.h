@@ -1821,7 +1821,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
      * may change without warning!
      */
     /* TODO: Make this definition public in the API, as soon as its settled */
-    NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type;
+    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
