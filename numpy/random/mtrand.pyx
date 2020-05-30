@@ -930,6 +930,47 @@ cdef class RandomState:
             if abs(p_sum - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
+        replace = np.array(replace, copy=False)
+        if replace.ndim > 0 and len(replace) > 1:
+            if len(replace) != len(size):
+                raise ValueError("replace must be a boolean or have same size as 'size'")
+            if replace[0] == False and pop_size < np.prod(size):
+                raise ValueError("Cannot take a larger sample than "
+                                 "population when 'replace=False'")
+            if len(replace) > 1 and replace[0] == replace[1]:
+                shape = size
+                size = (size[0] * size[1],) + size[2:]
+                result = choice(a, size=size, replace=replace[1:], p=p)
+                result.shape=shape
+                return result
+
+            if a.ndim == 0:
+                n = a
+            else:
+                n = len(a)
+            if p is not None:
+                p = np.array(p)
+            result = np.ndarray(shape=size, dtype=int)
+            current = np.arange(n)
+            old_p = p
+            for i, row in enumerate(result):
+                if replace[0] == True:
+                    result[i] = choice(n, size[1:], replace[1:], p)
+                else:
+                    result_i = choice(current, size[1:], replace[1:], p)
+                    current = np.setdiff1d(current, result_i)
+                    result[i] = result_i
+                    if p is not None:
+                        p = old_p[current]
+                        p = p / p.sum()
+            if a.ndim == 0:
+                return result
+            else:
+                return a[result]
+
+        replace = replace.item()
+
+
         shape = size
         if shape is not None:
             size = np.prod(shape, dtype=np.intp)
