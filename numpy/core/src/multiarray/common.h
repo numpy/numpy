@@ -349,7 +349,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  * probably. So we should consider making this public either as a macro or
  * function (so that the way we flag the axis can be changed).
  */
-#define NPY_ITER_REDUCTION_AXIS(axis) (axis + (NPY_MAX_INT >> 1))
+#define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
 #endif
 

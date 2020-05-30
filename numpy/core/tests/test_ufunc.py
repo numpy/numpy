@@ -1922,7 +1922,7 @@ class TestUfunc:
             assert_(check is out)
             assert_array_equal(check, correct_out)
 
-    def test_reduce_output_no_subclass(self):
+    def test_reduce_output_subclass_ok(self):
         class MyArr(np.ndarray):
             pass
 

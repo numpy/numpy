@@ -2600,10 +2600,8 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                     }
                 }
                 else {
+                    assert(!reduction_axis || shape[i] == 1);
                     stride *= shape[i];
-                    if (reduction_axis) {
-                        assert(shape[i] == 1);
-                    }
                 }
             }
             else {
@@ -2651,8 +2649,9 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         op_ndim = used_op_ndim;
         shape = new_shape;
         /*
-         * If op_axes [0, 2] is specified, there will a place in the strides
-         * array where the value is not set.
+         * If there's a gap in the array's dimensions, it's an error.
+         * For instance, if op_axes [0, 2] is specified, there will a place
+         * in the strides array where the value is not set.
          */
         for (i = 0; i < op_ndim; i++) {
             if (strides[i] == NPY_MAX_INTP) {

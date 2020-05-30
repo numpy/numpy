@@ -303,16 +303,17 @@ struct NpyIter_AD {
 /* Internal helper functions shared between implementation files */
 
 /**
- * Undo the axis permutation of the iterator. When the operand has less
+ * Undo the axis permutation of the iterator. When the operand has fewer
  * dimensions then the iterator, this can return negative values for
  * inserted (broadcast) dimensions.
  *
  * @param axis Axis for which to undo the iterator axis permutation.
  * @param ndim If `op_axes` is being used, this is the iterator dimension,
  *             otherwise this is the operand dimension.
- * @param perm he iterator axis permutation NIT_PERM(iter)
- * @param axis_flipped Will be set to to true if this is a flipped axis and
- *        otherwise false. Can be NULL.
+ * @param perm The iterator axis permutation NIT_PERM(iter)
+ * @param axis_flipped Will be set to true if this is a flipped axis
+ *        (i.e. is iterated in reversed order) and otherwise false.
+ *        Can be NULL if the information is not needed.
  * @return The unpermuted axis. Without `op_axes` this is correct, with
  *         `op_axes` this indexes into `op_axes` (unpermuted iterator axis)
  */
