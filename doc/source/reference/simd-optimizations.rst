@@ -22,12 +22,21 @@ once. There are three layers:
 Build options
 =============
 
-``--cpu-baseline`` minimal set of required optimizations, default `"min"`
+- ``--cpu-baseline`` minimal set of required optimizations, default
+  value is ``min`` which provides the minimum CPU features that can
+  safely run on a wide range of users platforms.
 
-``--cpu-dipsatch`` dispatched set of additional optimizations, default `"max
--xop -fma4"`
+- ``--cpu-dispatch`` dispatched set of additional optimizations,
+  the default value is ``max -xop -fma4`` which enables all CPU
+  features, except for AMD legacy features.
 
-Optimization names can be CPU features or group of features that gather several features or special options perform a series of procedures.
+The command arguments can be reached through ``build``, ``build_clib``, ``build_ext``.
+if ``build_clib`` or ``build_ext`` are not specified by the user, the arguments of
+``build`` will be used instead, which also holds the default values.
+
+Optimization names can be CPU features or group of features that gather several features or
+special options perform a series of procedures.
+
 
 The following tables show the current supported optimizations sorted from the lowest to the highest interest.
 
@@ -40,29 +49,6 @@ The following tables show the current supported optimizations sorted from the lo
     ============  ===================================================================
      Name          Implies
     ============  ===================================================================
-    ``SSE``       ``NONE``
-    ``SSE2``      ``SSE``
-    ``SSE3``      ``SSE`` ``SSE2``
-    ``SSSE3``     ``SSE`` ``SSE2`` ``SSE3``
-    ``SSE41``     ``SSE`` ``SSE2`` ``SSE3`` ``SSE3``
-    ``POPCNT``    ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41``
-    ``SSE42``     ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-    ``AVX``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42``
-    ``F16C``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX``
-    ``XOP``       ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX``
-    ``FMA4``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX``
-    ``FMA3``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX``
-    ``AVX2``      ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3``
-    ``AVX512F``   ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2``
-    ``AVX512CD``  ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE41`` ``POPCNT``
-                  ``SSE42`` ``AVX`` ``F16C`` ``FMA3`` ``AVX2`` ``AVX512F``
     ============  ===================================================================
 
 ``X86`` - Group names
@@ -74,20 +60,6 @@ The following tables show the current supported optimizations sorted from the lo
     ==============  ================================== ============================================
       Name          Gather                                            Implies
     ==============  ================================== ============================================
-    ``AVX512_KNL``  ``AVX512ER`` ``AVX512PF``          ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                                                       ``AVX2`` ``AVX512F`` ``AVX512CD``
-    ``AVX512_KNM``  ``AVX5124FMAPS`` ``AVX5124VNNIW``  ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                    ``AVX512VPOPCNTDQ``                ``AVX2`` ``AVX512F`` ``AVX512CD``
-                                                       ``AVX512_KNL``
-    ``AVX512_SKX``  ``AVX512VL`` ``AVX512BW``          ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                    ``AVX512DQ``                       ``AVX2`` ``AVX512F`` ``AVX512CD``
-    ``AVX512_CLX``  ``AVX512VNNI``                     ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
-    ``AVX512_CNL``  ``AVX512IFM`` ``AVX512VBMI``       ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                                                       ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
-    ``AVX512_ICL``  ``AVX512VBMI2`` ``AVX512BITALG``   ``SSE*`` ``POPCNT`` ``AVX`` ``F16C`` ``FMA3``
-                    ``AVX512VPOPCNTDQ``                ``AVX2`` ``AVX512F`` ``AVX512CD`` ``AVX512_SKX``
-                                                       ``AVX512_CLX`` ``AVX512_CNL``
     ==============  ================================== ============================================
 
 ``IBM/POWER``  - CPU feature names
@@ -99,9 +71,6 @@ The following tables show the current supported optimizations sorted from the lo
     ============  =================
      Name          Implies
     ============  =================
-     ``VSX``      ``NONE``
-     ``VSX2``     ``VSX``
-     ``VSX3``     ``VSX`` ``VSX2``
     ============  =================
 
 ``ARM`` - CPU feature names
@@ -113,26 +82,17 @@ The following tables show the current supported optimizations sorted from the lo
     ===============  ================================================================
      Name            Implies
     ===============  ================================================================
-     ``NEON``        ``NONE``
-     ``NEON_FP16``   ``NEON``
-     ``NEON_VFPV4``  ``NEON`` ````NEON_FP16````
-     ``ASIMD``       ``NEON`` ````NEON_FP16```` ``NEON_VFPV4``
-     ``ASIMDHP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``
-     ``ASIMDDP``     ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD``
-     ``ASIMDFHM``    ``NEON`` ````NEON_FP16```` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP``
     ===============  ================================================================
 
 Special options
 ~~~~~~~~~~~~~~~
 
-``NONE``: enable no features
+- ``NONE``: enable no features
 
-``NATIVE``:  fetch all CPU features and groups the current machine supports,
-this operation is based on the compiler flags (``-march=native, -xHost,
-/QxHost``)
+- ``NATIVE``: Enables all CPU features that supported by the current
+   machine, this operation is based on the compiler flags (``-march=native, -xHost, /QxHost``)
 
-``MIN``: the safest features for wide range of users platforms, explained as
-following:
+- ``MIN``: Enables the minimum CPU features that can safely run on a wide range of users platforms:
 
 .. table::
     :align: left
@@ -149,10 +109,38 @@ following:
                                             ``ASIMD``
     ======================================  =======================================
 
-``MAX``: fetch all CPU features and groups that supported by current platform
-and compiler build.
+- ``MAX``: Enables all supported CPU features by the Compiler and platform.
 
-``Operators ``-/+``: add or subtract features and options.
+- ``Operators-/+``: remove or add features, useful with options ``MAX``, ``MIN`` and ``NATIVE``.
+
+NOTES
+~~~~~~~~~~~~~
+- Case-insensitive among all CPU features and other options.
+
+- Comma or space can be used as a separator, e.g. ``--cpu-dispatch``\ = "avx2 avx512f" or
+  ``--cpu-dispatch``\ = "avx2, avx512f" both applicable.
+
+- operand ``+`` is only added for nominal reason, For example:
+    - ``--cpu-basline``="min avx2" equivalent to ``--cpu-basline``="min + avx2"
+    - ``--cpu-basline``="min,avx2" equivalent to ``--cpu-basline``="min,+avx2"
+
+- If the CPU feature is not supported by the user platform or
+  compiler, it will be skipped rather than raising a fatal error.
+
+- Any specified CPU features to ``--cpu-dispatch`` will be skipped if
+  it's part of CPU baseline features
+
+- Argument ``--cpu-baseline`` force enables implied features,
+  e.g. ``--cpu-baseline``\ ="sse42" equivalent to
+  ``--cpu-baseline``\ ="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+
+- The value of ``--cpu-baseline`` will be treated as "native" if
+  compiler native flag ``-march=native`` or ``-xHost`` or ``QxHost`` is
+  enabled through environment variable ``CFLAGS``
+
+- The user should always check the final report through the build log
+  to verify the enabled features.
+
 
 Special cases
 ~~~~~~~~~~~~~
