@@ -230,7 +230,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
 
     /* Finally, replace the current class of the descr */
-    Py_TYPE(descr) = (PyTypeObject *)dtype_class;
+    Py_SET_TYPE(descr, (PyTypeObject *)dtype_class);
 
     return 0;
 }
@@ -266,4 +266,3 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_is_gc = dtypemeta_is_gc,
     .tp_traverse = (traverseproc)dtypemeta_traverse,
 };
-
