@@ -628,7 +628,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
-    
+
     >>> x1 = np.array([1, 2, 3, 4])
     >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
     >>> x3 = np.array([1.1, 2, 3,4])
@@ -953,6 +953,42 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
           names=None, titles=None, aligned=False, byteorder=None, copy=True):
     """Construct a record array from a wide-variety of objects.
+
+    Parameters
+    ----------
+    obj : sequence, bytes-like, list, tuple, recarray, ndarray, str or file type.
+        If obj is None, str or file, either dtype or format must be specified.
+    dtype : data-type, optional
+        Valid dtype for all arrays.
+    shape : int or tuple of ints, optional
+        Shape of each array.
+        If obj is None, shape is required.
+    offset : int, optional
+        Position in the file to start reading from.
+        Zero by default.
+    strides : tuple of ints, optional
+    formats, names, titles, aligned, byteorder :
+        If `dtype` is ``None``, these arguments are passed to
+        `numpy.format_parser` to construct a dtype. See that function for
+        detailed documentation.
+    copy : bool, optional
+        If True and obj is a ndarray or recarray, creates a copy of the object.
+        True by default.
+
+    Returns
+    -------
+    np.recarray
+        record array consisting of data from object.
+
+    Examples
+    --------
+    >>> r = np.rec.array(['abc','def'], names=['col1','col2'])
+    >>> print(r.col1)
+    abc
+    >>> r.col1
+    array('abc', dtype='<U3')
+    >>> r.col2
+    array('def', dtype='<U3')
     """
 
     if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
