@@ -463,6 +463,18 @@ class TestRandomDist:
         a = np.array([42, 1, 2])
         p = [None, None, None]
         assert_raises(ValueError, np.random.choice, a, p=p)
+        
+    def test_choice_replace_tuple(self):
+        assert_raises(ValueError, np.random.choice, 8, size=(2,2), replace=(False, False, False))
+        assert_raises(ValueError, np.random.choice, 6, size=(2,3,2), replace=(False, False, False))
+        np.random.seed(self.seed)
+        actual = np.random.choice(4, (2,2,2),replace=(True, False, False))
+        desired = np.array([[[0, 1], [3, 2]], [[3, 2], [1, 0]]])
+        assert_equal(actual, desired)
+        actual = np.random.choice(['a','b','c','d','e','f','g','h'], (2,2,2),
+                                  replace=(False, True, False),p=[0.7,0.1,0.1,0.02,0.02,0.02,0.02,0.02])
+        desired = np.array([[['a', 'b'], ['a', 'h']], [['c', 'e'], ['e', 'c']]])
+        assert_equal(actual, desired)
 
     def test_bytes(self):
         np.random.seed(self.seed)
