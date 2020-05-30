@@ -1334,7 +1334,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     See Also
     --------
-    scipy.interpolate 
+    scipy.interpolate
 
     Notes
     -----
@@ -3273,10 +3273,17 @@ def _sinc_dispatcher(x):
 
 @array_function_dispatch(_sinc_dispatcher)
 def sinc(x):
-    """
-    Return the sinc function.
+    r"""
+    Return the normalized sinc function.
 
-    The sinc function is :math:`\\sin(\\pi x)/(\\pi x)`.
+    The sinc function is :math:`\sin(\pi x)/(\pi x)`.
+
+    .. note::
+
+        Note the normalization factor of ``pi`` used in the definition.
+        This is the most commonly used definition in signal processing.
+        Use ``sinc(x / np.pi)`` to obtain the unnormalized sinc function
+        :math:`\sin(x)/(x)` that is more common in mathematics.
 
     Parameters
     ----------
