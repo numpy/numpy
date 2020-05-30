@@ -632,6 +632,11 @@ array_struct_get(PyArrayObject *self)
     inter->typekind = PyArray_DESCR(self)->kind;
     inter->itemsize = PyArray_DESCR(self)->elsize;
     inter->flags = PyArray_FLAGS(self);
+    if (inter->flags & NPY_ARRAY_WARN_ON_WRITE) {
+        /* Export a warn-on-write array as read-only */
+        inter->flags = inter->flags & ~NPY_ARRAY_WARN_ON_WRITE;
+        inter->flags = inter->flags & ~NPY_ARRAY_WRITEABLE;
+    }
     /* reset unused flags */
     inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_UPDATEIFCOPY |NPY_ARRAY_OWNDATA);
     if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NPY_ARRAY_NOTSWAPPED;

@@ -208,10 +208,22 @@ class TestFlags:
             # only warn once
             assert_(len(w) == 1)
     
-    def test_readonly_from_warnonwrite(self):
+    @pytest.mark.parametrize(["flag", "flag_value", "writeable"],
+            [("writeable", True, True),
+             # Delete _warn_on_write after deprecation and simplify
+             # the parameterization:
+             ("_warn_on_write", True, False),
+             ("writeable", False, False)])
+    def test_readonly_flag_protocols(self, flag, flag_value, writeable):
         a = np.arange(10)
-        a.flags._warn_on_write = True
-        assert_(a.__array_interface__['data'][1])        
+        setattr(a.flags, flag, flag_value)
+
+        class MyArr():
+            __array_struct__ = a.__array_struct__
+
+        assert memoryview(a).readonly is not writeable
+        assert a.__array_interface__['data'][1] is not writeable
+        assert np.asarray(MyArr()).flags.writeable is writeable
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
