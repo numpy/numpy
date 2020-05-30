@@ -3,13 +3,10 @@ NEP 45 — C Style Guide
 =================================
 
 :Author: Charles Harris <charlesr.harris@gmail.com>
-:Author: Pierre de Buyl <pdebuyl@pdebuyl.be>
-:Author: Matti Picus <matti.picus@gmail.com>
-:Author: Warren Weckesser <warren.weckesser@gmail.com>
-:Author: Parul Aggarwal <parulagg27@gmail.com>
-:Status: Draft
+:Status: Accepted
 :Type: Process
 :Created: 2012-02-26
+:Resolution: https://github.com/numpy/numpy/issues/11911
 
 Abstract
 --------
@@ -250,16 +247,11 @@ Related Work
 Based on Van Rossum and Warsaw, `PEP 7 -- Style Guide for C Code <https://www.python.org/dev/peps/pep-0007>`_
 
 
-
-Implementation
---------------
-
-
 Discussion
 ----------
 
 https://github.com/numpy/numpy/issues/11911
-recommended that this proposal, which originated as `doc/C_STYLE_GUIDE.rst.txt`,
+recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst.txt``,
 be turned into an NEP.
 
 
