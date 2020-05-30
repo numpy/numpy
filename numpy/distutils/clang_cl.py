@@ -18,6 +18,7 @@ python runtests.py --compiler=clang-cl
 
 import os
 import subprocess
+
 try:
     from distutils._msvccompiler import MSVCCompiler, _find_exe
 except ImportError:
@@ -75,16 +76,26 @@ class ClangCL(MSVCCompiler):
         os.environ["include"] = _merge(environ_include, os.environ["include"])
         clang_base = os.path.split(self.cc)[0]
         clang_version_cmd = [self.cc, "--version"]
-        out = subprocess.check_output(clang_version_cmd).decode()
+        clang_full_ver = subprocess.check_output(clang_version_cmd).decode()
         clang_version = None
-        if out.find("version"):
-            out = out[out.find("version") + 7:]
-            clang_version = out.split("\n")[0].strip()
+        if "version" in clang_full_ver:
+            clang_ver_string = clang_full_ver[clang_full_ver.find("version") + 7:]
+            clang_version = clang_ver_string.split("\n")[0].strip()
+        clang_command_and_return = f"""\
+Running the command \n\n{' '.join(clang_version_cmd)}\n\n which returned\
+\n\n{clang_full_ver}
+"""
+        # Forbid compiling 32 on 64 and vice versa
+        target = "i686" if platform_bits == 32 else "x86_64"
+        if target not in clang_full_ver:
+            raise RuntimeError(
+                f"clang-cl must target {target} when building on "
+                f"{platform_bits}-bit windows. {clang_command_and_return}"
+            )
         if clang_version is None:
             raise RuntimeError(
-                "clang_version could not be detected from the version string "
-                f"returned when running\n\n{' '.join(clang_version_cmd)}\n\n "
-                f"which returned\n\n{out}"
+                f"clang_version could not be detected from the version "
+                f"string. {clang_command_and_return}"
             )
         clang_incl = ["..", "lib", "clang", clang_version, "include"]
         clang_incl = os.path.abspath(os.path.join(clang_base, *clang_incl))
@@ -110,4 +121,13 @@ class ClangCL(MSVCCompiler):
             if not (path in existing or existing.add(path))
         ]
         self.include_dirs = include_dirs
+        if platform_bits == 32:
+            clang_lib = ["..", "lib", "clang", clang_version, "lib", "windows"]
+            clang_lib = os.path.abspath(os.path.join(clang_base, *clang_lib))
+            if not os.path.exists(clang_lib):
+                raise RuntimeError()
+            self.add_library_dir(clang_lib)
+            if not os.path.exists(os.path.join(clang_lib,"clang_rt.builtins-i386.lib")):
+                raise RuntimeError()
+            self.add_library("clang_rt.builtins-i386")
 
