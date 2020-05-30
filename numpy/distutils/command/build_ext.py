@@ -522,7 +522,7 @@ class build_ext (old_build_ext):
 
         # Wrap unlinkable objects to a linkable one
         if unlinkable_fobjects:
-            fobjects = [os.path.relpath(obj) for obj in unlinkable_fobjects]
+            fobjects = [os.path.abspath(obj) for obj in unlinkable_fobjects]
             wrapped = fcompiler.wrap_unlinkable_objects(
                     fobjects, output_dir=self.build_temp,
                     extra_dll_dir=self.extra_dll_dir)
