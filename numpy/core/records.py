@@ -628,7 +628,6 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
-
     >>> x1 = np.array([1, 2, 3, 4])
     >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
     >>> x3 = np.array([1.1, 2, 3,4])
