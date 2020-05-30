@@ -241,7 +241,8 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                   NPY_ITER_ALLOCATE |
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY |
-                  NPY_ITER_ALIGNED;
+                  NPY_ITER_ALIGNED |
+                  NPY_ITER_NO_BROADCAST;
 
     if (wheremask != NULL) {
         op[2] = wheremask;

@@ -1922,6 +1922,19 @@ class TestUfunc:
             assert_(check is out)
             assert_array_equal(check, correct_out)
 
+    def test_reduce_output_does_not_broadcast_input(self):
+        # Test that the output shape cannot broadcast an input dimension
+        # (it never can add dimensions, but it might expand an existing one)
+        a = np.ones((1, 10))
+        out_correct = (np.empty((1, 1)))
+        out_incorrect = np.empty((3, 1))
+        np.add.reduce(a, axis=-1, out=out_correct, keepdims=True)
+        np.add.reduce(a, axis=-1, out=out_correct[:, 0], keepdims=False)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect, keepdims=True)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect[:, 0], keepdims=False)
+
     def test_reduce_output_subclass_ok(self):
         class MyArr(np.ndarray):
             pass
