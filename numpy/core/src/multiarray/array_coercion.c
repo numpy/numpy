@@ -127,10 +127,16 @@ _prime_global_pytype_to_type_dict()
 
 
 /**
- * Add a new mapping from a python type to the DType class. This assumes
- * that the DType class is guaranteed to hold on the python type (this
- * assumption is guaranteed).
- * This function replaces ``_typenum_fromtypeobj``.
+ * Add a new mapping from a python type to the DType class.
+ *
+ * This assumes that the DType class is guaranteed to hold on the
+ * python type (this assumption is guaranteed).
+ * This functionality supercedes ``_typenum_fromtypeobj``.
+ *
+ * @param DType DType to map the python type to
+ * @param pytype Python type to map from
+ * @param userdef Whether or not it is user defined. We ensure that user
+ *        defined scalars subclass from our scalars (for now).
  */
 NPY_NO_EXPORT int
 _PyArray_MapPyTypeToDType(
@@ -354,7 +360,7 @@ cast_descriptor_to_fixed_dtype(
     if (fixed_DType->legacy && fixed_DType->parametric) {
         /* Fallback to the old AdaptFlexibleDType logic for now */
         PyArray_Descr *flex_dtype = PyArray_DescrFromType(fixed_DType->type_num);
-        return PyArray_AdaptFlexibleDType(NULL, descr, flex_dtype);
+        return PyArray_AdaptFlexibleDType(descr, flex_dtype);
     }
 
     PyErr_SetString(PyExc_NotImplementedError,
@@ -694,10 +700,10 @@ handle_scalar(
         PyObject *obj, int curr_dims, int *max_dims,
         PyArray_Descr **out_descr, npy_intp *out_shape,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        enum _dtype_discovery_flags *flags,
-        PyArray_DTypeMeta *DType, PyArray_Descr *descr)
+        enum _dtype_discovery_flags *flags, PyArray_DTypeMeta *DType)
 {
     /* This is a scalar, so find the descriptor */
+    PyArray_Descr *descr;
     descr = find_scalar_descriptor(fixed_DType, DType, obj, requested_descr);
     if (descr == NULL) {
         return -1;
@@ -714,6 +720,148 @@ handle_scalar(
     }
     Py_DECREF(descr);
     return *max_dims;
+}
+
+
+
+
+/**
+ * Return the correct descriptor given an array object and a DType class.
+ *
+ * This is identical to casting the arrays descriptor/dtype to the new
+ * DType class
+ *
+ * @param arr The array object.
+ * @param DType The DType class to cast to (or NULL for convenience)
+ * @param out_descr The output descriptor will set. The result can be NULL
+ *        when the array is of object dtype and has no elements.
+ *
+ * @return -1 on failure, 0 on success.
+ */
+static int
+find_descriptor_from_array(
+        PyArrayObject *arr, PyArray_DTypeMeta *DType, PyArray_Descr **out_descr)
+{
+    enum _dtype_discovery_flags flags = 0;
+    *out_descr = NULL;
+
+    if (NPY_UNLIKELY(DType != NULL && DType->parametric &&
+            PyArray_ISOBJECT(arr))) {
+        /*
+         * We have one special case, if (and only if) the input array is of
+         * object DType and the dtype is not fixed already but parametric.
+         * Then, we allow inspection of all elements, treating them as
+         * elements. We do this recursively, so nested 0-D arrays can work,
+         * but nested higher dimensional arrays will lead to an error.
+         */
+        assert(DType->type_num != NPY_OBJECT);  /* not parametric */
+
+        PyArrayIterObject *iter;
+        iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
+        if (iter == NULL) {
+            return -1;
+        }
+        int array_is_object = PyArray_ISOBJECT(arr);
+        while (iter->index < iter->size) {
+            /*
+             * TODO: We should only allow this for object arrays really,
+             *       and it is slow for strings currently.
+             */
+            PyObject *elem = PyArray_GETITEM(arr, iter->dataptr);
+            if (elem == NULL) {
+                elem = Py_None;
+            }
+            DType = discover_dtype_from_pyobject(elem, &flags, DType);
+            if (DType == (PyArray_DTypeMeta *)Py_None) {
+                Py_SETREF(DType, NULL);
+            }
+            int flat_max_dims = 0;
+            if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
+                    NULL, DType, NULL, &flags, DType) < 0) {
+                Py_DECREF(iter);
+                Py_XDECREF(DType);
+                return -1;
+            }
+            Py_XDECREF(DType);
+            PyArray_ITER_NEXT(iter);
+        }
+        Py_DECREF(iter);
+    }
+    else if (DType != NULL && NPY_UNLIKELY(DType->type_num == NPY_DATETIME) &&
+                PyArray_ISSTRING(arr)) {
+        /*
+         * TODO: This branch should be deprecated IMO, the workaround is
+         *       to simply cast to the object to a string array, or we
+         *       can create a special function for it, but I doubt it is
+         *       necessary?
+         * Unless of course we actually want to support this kind of thing
+         * in general (not just for object dtype)...
+         */
+        PyArray_DatetimeMetaData meta;
+        meta.base = NPY_FR_GENERIC;
+        meta.num = 1;
+
+        if (find_string_array_datetime64_type(arr, &meta) < 0) {
+            return -1;
+        }
+        else {
+            *out_descr = create_datetime_dtype(NPY_DATETIME, &meta);
+            if (*out_descr == NULL) {
+                return -1;
+            }
+        }
+    }
+    else {
+        /*
+         * If this is not an object array figure out the dtype cast,
+         * or simply use the returned DType.
+         */
+        *out_descr = cast_descriptor_to_fixed_dtype(
+                     PyArray_DESCR(arr), DType);
+        if (*out_descr == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+/**
+ * Given a dtype or DType object, find the correct descriptor to cast the
+ * array to.
+ *
+ * This function is identical to normal casting using only the dtype, however,
+ * it supports inspecting the elements when the array has object dtype
+ * (and the given datatype describes a parametric DType class).
+ *
+ * @param arr
+ * @param dtype A dtype instance or class.
+ * @return A concrete dtype instance or NULL
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
+{
+    /* If the requested dtype is flexible, adapt it */
+    PyArray_Descr *new_dtype;
+    PyArray_DTypeMeta *new_DType;
+    int res;
+
+    res= PyArray_ExtractDTypeAndDescriptor((PyObject *)dtype,
+            &new_dtype, &new_DType);
+    if (res < 0) {
+        return NULL;
+    }
+    if (new_dtype == NULL) {
+        res = find_descriptor_from_array(arr, new_DType, &new_dtype);
+        if (res < 0) {
+            Py_DECREF(new_DType);
+            return NULL;
+        }
+        if (new_dtype == NULL) {
+            /* This is an object array but contained no elements, use default */
+            new_dtype = new_DType->default_descr(new_DType);
+        }
+    }
+    return new_dtype;
 }
 
 
@@ -734,7 +882,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * (which could fail and lead us to `object` dtype).
      */
     PyArray_DTypeMeta *DType = NULL;
-    PyArray_Descr *descr = NULL;
 
     if (NPY_UNLIKELY(*flags & DISCOVER_STRINGS_AS_SEQUENCES)) {
         /*
@@ -761,7 +908,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     else {
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
-                requested_descr, flags, DType, descr);
+                requested_descr, flags, DType);
         Py_DECREF(DType);
         return max_dims;
     }
@@ -803,60 +950,29 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             return max_dims;
         }
 
-        if (NPY_UNLIKELY(fixed_DType != NULL && fixed_DType->parametric &&
-                requested_descr == NULL &&
-                PyArray_DESCR(arr)->type_num == NPY_OBJECT)) {
-            /*
-             * We have one special case, if (and only if) the input array is of
-             * object DType and the dtype is not fixed already but parametric.
-             * Then, we allow inspection of all elements, treating them as
-             * elements. We do this recursively, so nested 0-D arrays can work,
-             * but nested higher dimensional arrays will lead to an error.
-             */
-            assert(fixed_DType->type_num != NPY_OBJECT);
-
-            PyArrayIterObject *iter;
-            iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
-            if (iter == NULL) {
-                return -1;
-            }
-            while (iter->index < iter->size) {
-                PyObject *elem = (*(PyObject **)(iter->dataptr));
-                if (elem == NULL) {
-                    elem = Py_None;
-                }
-                DType = discover_dtype_from_pyobject(elem, flags, fixed_DType);
-                if (DType == (PyArray_DTypeMeta *)Py_None) {
-                    Py_SETREF(DType, NULL);
-                }
-                int flat_max_dims = 0;
-                if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
-                        NULL, DType, NULL, flags, fixed_DType, NULL) < 0) {
-                    Py_DECREF(iter);
-                    Py_XDECREF(DType);
-                    return -1;
-                }
-                Py_XDECREF(DType);
-                PyArray_ITER_NEXT(iter);
-            }
-            Py_DECREF(iter);
+        if (requested_descr != NULL) {
+            return max_dims;
         }
-        else if (requested_descr == NULL) {
-            /*
-             * If this is not an object array figure out the dtype cast,
-             * or simply use the returned DType.
-             */
-            descr = cast_descriptor_to_fixed_dtype(
-                         PyArray_DESCR(arr), fixed_DType);
-            if (descr == NULL) {
-                return -1;
-            }
-            if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
-                Py_DECREF(descr);
-                return -1;
-            }
-            Py_DECREF(descr);
+        /*
+         * For arrays we may not just need to cast the dtype to the user
+         * provided fixed_DType. If this is an object array, the elements
+         * may need to be inspected individually.
+         * Note, this finds the descriptor of the array first and only then
+         * promotes here (different associativity).
+         */
+        PyArray_Descr *cast_descr;
+        if (find_descriptor_from_array(arr, fixed_DType, &cast_descr) < 0) {
+            return -1;
         }
+        if (cast_descr == NULL) {
+            /* object array with no elements, no need to promote/adjust. */
+            return max_dims;
+        }
+        if (handle_promotion(out_descr, cast_descr, requested_descr, flags) < 0) {
+            Py_DECREF(cast_descr);
+            return -1;
+        }
+        Py_DECREF(cast_descr);
         return max_dims;
     }
 
@@ -875,7 +991,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         PyErr_Clear();
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
-                requested_descr, flags, NULL, descr);
+                requested_descr, flags, NULL);
         if (is_sequence) {
             /* Flag as ragged or too deep array */
             *flags |= FOUND_RAGGED_ARRAY;
@@ -898,7 +1014,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             PyErr_Clear();
             max_dims = handle_scalar(
                     obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
-                    requested_descr, flags, NULL, descr);
+                    requested_descr, flags, NULL);
             return max_dims;
         }
         return -1;

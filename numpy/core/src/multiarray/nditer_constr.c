@@ -16,6 +16,7 @@
 #include "nditer_impl.h"
 
 #include "arrayobject.h"
+#include "array_coercion.h"
 #include "templ_common.h"
 #include "array_assign.h"
 
@@ -1101,17 +1102,11 @@ npyiter_prepare_one_operand(PyArrayObject **op,
          */
         if (op_request_dtype != NULL) {
             /* We just have a borrowed reference to op_request_dtype */
-            Py_INCREF(op_request_dtype);
-            /* If the requested dtype is flexible, adapt it */
-            op_request_dtype = PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
-                                                          op_request_dtype);
-            if (op_request_dtype == NULL) {
+            Py_SETREF(*op_dtype, PyArray_AdaptDescriptorToArray(
+                                            *op, (PyObject *)op_request_dtype));
+            if (*op_dtype == NULL) {
                 return 0;
             }
-
-            /* Store the requested dtype */
-            Py_DECREF(*op_dtype);
-            *op_dtype = op_request_dtype;
         }
 
         /* Check if the operand is in the byte order requested */

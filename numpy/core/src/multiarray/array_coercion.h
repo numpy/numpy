@@ -23,6 +23,9 @@ _PyArray_MapPyTypeToDType(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
 
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype);
+
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(
         PyObject *obj, int max_dims,
