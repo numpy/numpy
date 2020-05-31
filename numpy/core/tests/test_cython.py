@@ -75,8 +75,8 @@ def test_is_integer_object(install_temp):
 
     assert not checks.is_integer("a")
 
-    assert not checks.is_float(float("nan"))
-    assert not checks.is_float(np.nan)
+    assert not checks.is_integer(float("nan"))
+    assert not checks.is_integer(np.nan)
     assert not checks.is_integer(2.0)
     assert not checks.is_integer(np.float64(2.0))
 
