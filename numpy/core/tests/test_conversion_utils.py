@@ -154,3 +154,33 @@ class TestCastingConverter(StringConverterTestCase):
         self._check("safe", "NPY_SAFE_CASTING")
         self._check("same_kind", "NPY_SAME_KIND_CASTING")
         self._check("unsafe", "NPY_UNSAFE_CASTING")
+
+
+class TestIntpConverter:
+    """ Tests of PyArray_IntpConverter """
+    conv = mt.run_intp_converter
+
+    def test_basic(self):
+        assert self.conv(1) == (1,)
+        assert self.conv((1, 2)) == (1, 2)
+        assert self.conv([1, 2]) == (1, 2)
+        assert self.conv(()) == ()
+
+    def test_none(self):
+        # gh-15886: could deprecate this
+        assert self.conv(None) == ()
+
+    def test_float(self):
+        with pytest.raises(TypeError):
+            self.conv(1.0)
+        with pytest.raises(TypeError):
+            self.conv([1, 1.0])
+
+    def test_too_large(self):
+        with pytest.raises(ValueError):
+            self.conv(2**64)
+
+    def test_too_many_dims(self):
+        assert self.conv([1]*32) == (1,)*32
+        with pytest.raises(ValueError):
+            self.conv([1]*33)
