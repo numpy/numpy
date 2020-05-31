@@ -14,6 +14,7 @@ avx_ufuncs = ['sin',
               'floor',
               'ceil' ,
               'trunc',
+              'frexp',
               'isnan',
               'isfinite',
               'isinf',
@@ -58,6 +59,22 @@ class AVX_BFunc(Benchmark):
         self.arr2 = np.array(np.random.rand(stride*N), dtype=dtype)
 
     def time_ufunc(self, ufuncname, dtype, stride):
+        self.f(self.arr1[::stride], self.arr2[::stride])
+
+class AVX_ldexp(Benchmark):
+
+    params = [dtype, stride]
+    param_names = ['dtype', 'stride']
+    timeout = 10
+
+    def setup(self, dtype, stride):
+        np.seterr(all='ignore')
+        self.f = getattr(np, 'ldexp')
+        N = 10000
+        self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
+        self.arr2 = np.array(np.random.rand(stride*N), dtype='i')
+
+    def time_ufunc(self, dtype, stride):
         self.f(self.arr1[::stride], self.arr2[::stride])
 
 cmplx_bfuncs = ['add',

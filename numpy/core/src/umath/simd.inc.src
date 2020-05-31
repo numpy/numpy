@@ -120,6 +120,13 @@ nomemoverlap(char *ip,
      (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
      (nomemoverlap(args[1], steps[1] * dimensions[0], args[2], steps[2] * dimensions[0])))
 
+#define IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP \
+    ((abs(steps[0]) < MAX_STEP_SIZE)  && \
+     (abs(steps[1]) < MAX_STEP_SIZE)  && \
+     (abs(steps[2]) < MAX_STEP_SIZE)  && \
+     (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
+     (nomemoverlap(args[0], steps[0] * dimensions[0], args[1], steps[1] * dimensions[0])))
+
 /*
  * 1) Output should be contiguous, can handle strided input data
  * 2) Input step should be smaller than MAX_STEP_SIZE for performance
@@ -294,6 +301,42 @@ run_binary_avx512f_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_in
 
 
 /**end repeat1**/
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
+static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+AVX512_SKX_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps);
+
+static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+AVX512_SKX_frexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps);
+#endif
+
+static NPY_INLINE int
+run_binary_avx512_skx_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
+    if (IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP) {
+        AVX512_SKX_ldexp_@TYPE@(args, dimensions, steps);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
+
+static NPY_INLINE int
+run_unary_two_out_avx512_skx_frexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
+    if (IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP) {
+        AVX512_SKX_frexp_@TYPE@(args, dimensions, steps);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
 /**end repeat**/
 
 /**begin repeat
@@ -2089,12 +2132,166 @@ AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, co
  * #num_lanes = 16, 8#
  * #vsuffix = ps, pd#
  * #mask = __mmask16, __mmask8#
- * #vtype = __m512, __m512d#
+ * #vtype1 = __m512, __m512d#
+ * #vtype2 = __m512i, __m256i#
  * #scale = 4, 8#
  * #vindextype = __m512i, __m256i#
  * #vindexsize = 512, 256#
  * #vindexload = _mm512_loadu_si512, _mm256_loadu_si256#
+ * #vtype2_load = _mm512_maskz_loadu_epi32, _mm256_maskz_loadu_epi32#
+ * #vtype2_gather = _mm512_mask_i32gather_epi32, _mm256_mmask_i32gather_epi32#
+ * #vtype2_store = _mm512_mask_storeu_epi32, _mm256_mask_storeu_epi32#
+ * #vtype2_scatter = _mm512_mask_i32scatter_epi32, _mm256_mask_i32scatter_epi32#
+ * #setzero = _mm512_setzero_epi32, _mm256_setzero_si256#
  */
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+AVX512_SKX_ldexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_ip2 = steps[1]/(npy_intp)sizeof(int);
+    const npy_intp stride_op = steps[2]/(npy_intp)sizeof(@type@);
+    const npy_intp array_size = dimensions[0];
+    npy_intp num_remaining_elements = array_size;
+    @type@* ip1 = (@type@*) args[0];
+    int* ip2 = (int*) args[1];
+    @type@* op  = (@type@*) args[2];
+
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP
+     */
+
+    npy_int32 index_ip1[@num_lanes@], index_ip2[@num_lanes@], index_op[@num_lanes@];
+    for (npy_int32 ii = 0; ii < @num_lanes@; ii++) {
+        index_ip1[ii] = ii*stride_ip1;
+        index_ip2[ii] = ii*stride_ip2;
+        index_op[ii] = ii*stride_op;
+    }
+    @vindextype@ vindex_ip1 = @vindexload@((@vindextype@*)&index_ip1[0]);
+    @vindextype@ vindex_ip2 = @vindexload@((@vindextype@*)&index_ip2[0]);
+    @vindextype@ vindex_op  = @vindexload@((@vindextype@*)&index_op[0]);
+    @vtype1@ zeros_f = _mm512_setzero_@vsuffix@();
+    @vtype2@ zeros = @setzero@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype1@ x1;
+        @vtype2@ x2;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
+        }
+        else {
+            x1 = avx512_masked_gather_@vsuffix@(zeros_f, ip1, vindex_ip1, load_mask);
+        }
+        if (stride_ip2 == 1) {
+            x2 = @vtype2_load@(load_mask, ip2);
+        }
+        else {
+            x2 = @vtype2_gather@(zeros, load_mask, vindex_ip2, ip2, 4);
+        }
+
+        @vtype1@ out = _mm512_scalef_@vsuffix@(x1, _mm512_cvtepi32_@vsuffix@(x2));
+        
+        if (stride_op == 1) {
+            _mm512_mask_storeu_@vsuffix@(op, load_mask, out);
+        }
+        else {
+            /* scatter! */
+            _mm512_mask_i32scatter_@vsuffix@(op, load_mask, vindex_op, out, @scale@);
+        }
+
+        ip1 += @num_lanes@*stride_ip1;
+        ip2 += @num_lanes@*stride_ip2;
+        op += @num_lanes@*stride_op;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+
+static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+AVX512_SKX_frexp_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_op1 = steps[1]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_op2 = steps[2]/(npy_intp)sizeof(int);
+    const npy_intp array_size = dimensions[0];
+    npy_intp num_remaining_elements = array_size;
+    @type@* ip1 = (@type@*) args[0];
+    @type@* op1  = (@type@*) args[1];
+    int* op2 = (int*) args[2];
+
+    @mask@ load_mask = avx512_get_full_load_mask_@vsuffix@();
+
+    /*
+     * Note: while generally indices are npy_intp, we ensure that our maximum index
+     * will fit in an int32 as a precondition for this function via
+     * IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP
+     */
+
+    npy_int32 index_ip1[@num_lanes@], index_op1[@num_lanes@], index_op2[@num_lanes@];
+    for (npy_int32 ii = 0; ii < @num_lanes@; ii++) {
+        index_ip1[ii] = ii*stride_ip1;
+        index_op1[ii] = ii*stride_op1;
+        index_op2[ii] = ii*stride_op2;
+    }
+    @vindextype@ vindex_ip1 = @vindexload@((@vindextype@*)&index_ip1[0]);
+    @vindextype@ vindex_op1 = @vindexload@((@vindextype@*)&index_op1[0]);
+    @vindextype@ vindex_op2 = @vindexload@((@vindextype@*)&index_op2[0]);
+    @vtype1@ zeros_f = _mm512_setzero_@vsuffix@();
+
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < @num_lanes@) {
+            load_mask = avx512_get_partial_load_mask_@vsuffix@(
+                                    num_remaining_elements, @num_lanes@);
+        }
+        @vtype1@ x1;
+        if (stride_ip1 == 1) {
+            x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
+        }
+        else {
+            x1 = avx512_masked_gather_@vsuffix@(zeros_f, ip1, vindex_ip1, load_mask);
+        }
+
+        /*
+         * The x86 instructions vpgetmant and vpgetexp do not conform
+         * with NumPy's output for special floating points: NAN, +/-INF, +/-0.0
+         * We mask these values with spmask to avoid invalid exceptions.
+         */
+        @mask@ spmask =_mm512_knot(_mm512_fpclass_@vsuffix@_mask(
+                                                x1, 0b10011111));
+        @vtype1@ out1 = _mm512_maskz_getmant_@vsuffix@(
+                                spmask, x1, _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src);
+        out1 = _mm512_mask_mov_@vsuffix@(x1, spmask, out1);
+        @vtype2@ out2 = _mm512_cvt@vsuffix@_epi32(
+                            _mm512_maskz_add_@vsuffix@(spmask, _mm512_set1_@vsuffix@(1.0),
+                                _mm512_maskz_getexp_@vsuffix@(spmask, x1)));
+        if (stride_op1 == 1) {
+            _mm512_mask_storeu_@vsuffix@(op1, load_mask, out1);
+        }
+        else {
+            _mm512_mask_i32scatter_@vsuffix@(op1, load_mask, vindex_op1, out1, @scale@);
+        }
+        if (stride_op2 == 1) {
+            @vtype2_store@(op2, load_mask, out2);
+        }
+        else {
+            @vtype2_scatter@(op2, load_mask, vindex_op2, out2, 4);
+        }
+
+        ip1 += @num_lanes@*stride_ip1;
+        op1 += @num_lanes@*stride_op1;
+        op2 += @num_lanes@*stride_op2;
+        num_remaining_elements -= @num_lanes@;
+    }
+}
+#endif
 
 /**begin repeat1
  *  #func = maximum, minimum#
@@ -2131,14 +2328,14 @@ AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *s
     @vindextype@ vindex_ip1 = @vindexload@((@vindextype@*)&index_ip1[0]);
     @vindextype@ vindex_ip2 = @vindexload@((@vindextype@*)&index_ip2[0]);
     @vindextype@ vindex_op  = @vindexload@((@vindextype@*)&index_op[0]);
-    @vtype@ zeros_f = _mm512_setzero_@vsuffix@();
+    @vtype1@ zeros_f = _mm512_setzero_@vsuffix@();
 
     while (num_remaining_elements > 0) {
         if (num_remaining_elements < @num_lanes@) {
             load_mask = avx512_get_partial_load_mask_@vsuffix@(
                                     num_remaining_elements, @num_lanes@);
         }
-        @vtype@ x1, x2;
+        @vtype1@ x1, x2;
         if (stride_ip1 == 1) {
             x1 = avx512_masked_load_@vsuffix@(load_mask, ip1);
         }
@@ -2158,7 +2355,7 @@ AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *s
          * this issue to conform with NumPy behaviour.
          */
         @mask@ nan_mask = _mm512_cmp_@vsuffix@_mask(x1, x1, _CMP_NEQ_UQ);
-        @vtype@ out = _mm512_@vectorf@_@vsuffix@(x1, x2);
+        @vtype1@ out = _mm512_@vectorf@_@vsuffix@(x1, x2);
         out = _mm512_mask_blend_@vsuffix@(nan_mask, out, x1);
 
         if (stride_op == 1) {
