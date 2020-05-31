@@ -17,10 +17,10 @@ may include (among other things) interoperability protocols, better duck typing
 support and ndarray subclass handling.
 
 - The ``__array_function__`` protocol is currently experimental and needs to be
-  matured. See `NEP 18`_ for details.
+  matured. See  :ref`NEP18` for details.
 - New protocols for overriding other functionality in NumPy may be needed.
 - Array duck typing, or handling "duck arrays", needs improvements.  See
-  `NEP 22`_ for details.
+  :ref:`NEP22` for details.
 
 Extensibility
 -------------
@@ -71,13 +71,13 @@ Random number generation policy & rewrite
 -----------------------------------------
 
 A new random number generation framework with higher performance generators is
-close to completion, see `NEP 19`_ and `PR 13163`_.
+close to completion, see :ref:`NEP19` and `PR 13163`_.
 
 Indexing
 --------
 
 We intend to add new indexing modes for "vectorized indexing" and "outer indexing",
-see `NEP 21`_.
+see :ref:`NEP21`.
 
 Continuous Integration
 ----------------------
@@ -105,10 +105,6 @@ Other functionality
 - Deprecate ``np.matrix`` (very slowly)
 
 
-.. _`NEP 19`: https://www.numpy.org/neps/nep-0019-rng-policy.html
-.. _`NEP 22`: http://www.numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
-.. _`NEP 18`: https://www.numpy.org/neps/nep-0018-array-function-protocol.html
 .. _implementation: https://gist.github.com/shoyer/1f0a308a06cd96df20879a1ddb8f0006
 .. _`reference implementation`: https://github.com/bashtage/randomgen
-.. _`NEP 21`: https://www.numpy.org/neps/nep-0021-advanced-indexing.html
 .. _`PR 13163`: https://github.com/numpy/numpy/pull/13163
