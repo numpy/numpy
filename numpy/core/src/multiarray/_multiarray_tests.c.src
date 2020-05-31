@@ -2048,7 +2048,7 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 static PyObject *
 run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
-    PyArray_Dims dims = {-1, NULL};
+    PyArray_Dims dims = {NULL, -1};
     if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter, &dims)) {
         return NULL;
     }
