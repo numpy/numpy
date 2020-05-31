@@ -242,14 +242,6 @@
 # library_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\lib\intel64
 # libraries = mkl_rt
 
-# Accelerate
-# ----------
-# Accelerate/vecLib is an OSX framework providing a BLAS and LAPACK implementation.
-#
-# [accelerate]
-# libraries = Accelerate, vecLib
-# #libraries = None
-
 # UMFPACK
 # -------
 # The UMFPACK library is used in scikits.umfpack to factor large sparse matrices.

@@ -6,6 +6,10 @@ Building from source
 A general overview of building NumPy from source is given here, with detailed
 instructions for specific platforms given separately.
 
+.. comment::
+  This page is referenced from numpy/numpy/__init__.py. Please keep its
+  location in sync with the link there.
+
 Prerequisites
 -------------
 
