@@ -4060,6 +4060,32 @@ cdef class RandomState:
             shape = [size]
         else:
             shape = size
+                  
+        if size is None and len(mean.shape) != 1:
+            if len(mean.shape) != len(cov.shape) - 1:
+                raise ValueError("mean and cov must have same size")
+            for m, c in zip(mean.shape, cov.shape):
+                if m != c:
+                    raise ValueError("mean and cov must have same size")
+            if cov.shape[len(cov.shape) - 1] != cov.shape[len(cov.shape) - 2]:
+                raise ValueError("cov must be square")
+            if mean.shape[len(mean.shape) - 1] != cov.shape[len(cov.shape) - 1]:
+                raise ValueError("mean and cov must have same length")
+
+            result = np.zeros(mean.shape)
+            cov.reshape(-1, *cov.shape[-2:])
+            final_shape = list(shape[:])
+            final_shape.append(mean.shape[len(mean.shape) - 1])
+            for i in range(cov.shape[0]):
+                x = self.standard_normal(final_shape)
+                cov_i = cov[i].astype(np.double)
+                (u, s, v) = svd(cov_i)
+                x = np.dot(x, np.sqrt(s)[:, None] * v)
+                result[i] = x
+                
+            result.shape = mean.shape
+            result += mean
+            return result
 
         if len(mean.shape) != 1:
             raise ValueError("mean must be 1 dimensional")
