@@ -771,6 +771,24 @@ class TestSpecialFloats:
             for dt in ['f', 'd', 'g']:
                 assert_raises(FloatingPointError, np.reciprocal, np.array(-0.0, dtype=dt))
 
+class TestFPClass:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    def test_fpclass(self, stride):
+        arr_f64 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.2251e-308], dtype='d')
+        arr_f32 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 1.4013e-045, -1.4013e-045], dtype='f')
+        nan     = np.array([True, True, False, False, False, False, False, False, False, False])
+        inf     = np.array([False, False, True, True, False, False, False, False, False, False])
+        sign    = np.array([False, True, False, True, True, False, True, False, False, True])
+        finite  = np.array([False, False, False, False, True, True, True, True, True, True])
+        assert_equal(np.isnan(arr_f32[::stride]), nan[::stride])
+        assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
+        assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
+        assert_equal(np.isinf(arr_f64[::stride]), inf[::stride])
+        assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
+        assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
+        assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
+        assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
+
 # func : [maxulperror, low, high]
 avx_ufuncs = {'sqrt'        :[1,  0.,   100.],
               'absolute'    :[0, -100., 100.],
