@@ -5,9 +5,10 @@ Short:
 python setup.py build --compiler=clang-cl install
 
 Full:
-python setup.py config --compiler=clang-cl build_clib `
-                       --compiler=clang-cl build_ext `
-                       --compiler=clang-cl install
+python setup.py config --compiler=clang-cl `
+                build_clib --compiler=clang-cl `
+                build_ext --compiler=clang-cl `
+                install
 
 Develop mode:
 python setup.py build_ext -i --compiler=clang-cl develop
@@ -18,15 +19,19 @@ python runtests.py --compiler=clang-cl
 
 import os
 import subprocess
+from .system_info import platform_bits
+from .msvccompiler import _merge
 
 try:
     from distutils._msvccompiler import MSVCCompiler, _find_exe
 except ImportError:
     # Dummy to pass import test on non-Windows
-    MSVCCompiler = object
-
-from .system_info import platform_bits
-from .msvccompiler import _merge
+    class MSVCCompiler:
+        def __init__(self, verbose=0, dry_run=0, force=0):
+            raise NotImplementedError(
+                "ClangLC can only be run on Windows when MSVCCompiler can "
+                "be imported from distutils._msvccompiler"
+            )
 
 
 class ClangCL(MSVCCompiler):
@@ -50,12 +55,11 @@ class ClangCL(MSVCCompiler):
         self.cc = _find_exe("clang-cl.exe")
         if self.cc is None:
             raise FileNotFoundError(
-                "Unable to locate clang-cl.exe. It should " "be on the path"
+                "Unable to locate clang-cl.exe. It should be on the path"
             )
-        for opt in ("/GL", "/GL-"):
+        for opt in ("/GL", "/GL-", "/Ox"):
             if opt in self.compile_options:
                 self.compile_options.remove(opt)
-        self.compile_options.remove("/Ox")
         self.compile_options.extend(
             [
                 "/O2",
@@ -67,39 +71,53 @@ class ClangCL(MSVCCompiler):
             ]
         )
 
-        if platform_bits == 32:
-            self.compile_options += ['/arch:SSE2']
-            self.compile_options_debug += ['/arch:SSE2']
-
         # Merge current and previous values of 'lib' and 'include'
         os.environ["lib"] = _merge(environ_lib, os.environ["lib"])
         os.environ["include"] = _merge(environ_include, os.environ["include"])
+        # Get version information about clang which is needed to find
+        # the correct include and lib directories
         clang_base = os.path.split(self.cc)[0]
         clang_version_cmd = [self.cc, "--version"]
-        clang_full_ver = subprocess.check_output(clang_version_cmd).decode()
-        clang_version = None
+        # Get version or let the user know if there was an issue
+        try:
+            clang_full_ver = subprocess.check_output(
+                clang_version_cmd
+            ).decode()
+        except WindowsError:
+            raise WindowsError(
+                "clang-cl.exe could not be found. It must be on your path."
+            )
+        clang_version = ""
         if "version" in clang_full_ver:
-            clang_ver_string = clang_full_ver[clang_full_ver.find("version") + 7:]
+            loc = clang_full_ver.find("version")
+            clang_ver_string = clang_full_ver[loc + 7 :]
             clang_version = clang_ver_string.split("\n")[0].strip()
-        clang_command_and_return = f"""\
-Running the command \n\n{' '.join(clang_version_cmd)}\n\n which returned\
-\n\n{clang_full_ver}
-"""
-        # Forbid compiling 32 on 64 and vice versa
+        clang_command_and_return = (
+            f"Running the command \n\n{' '.join(clang_version_cmd)}\n\n "
+            f"which returned \n\n{clang_full_ver}"
+        )
+
+        if not clang_version:
+            raise RuntimeError(
+                f"The clang version could not be detected from the version "
+                f"string. {clang_command_and_return}"
+            )
+
+        # Forbid compiling 32 on 64-bit LLVM and vice versa
         target = "i686" if platform_bits == 32 else "x86_64"
         if target not in clang_full_ver:
             raise RuntimeError(
                 f"clang-cl must target {target} when building on "
                 f"{platform_bits}-bit windows. {clang_command_and_return}"
             )
-        if clang_version is None:
-            raise RuntimeError(
-                f"clang_version could not be detected from the version "
-                f"string. {clang_command_and_return}"
-            )
+        # Add the include directory for clang
         clang_incl = ["..", "lib", "clang", clang_version, "include"]
         clang_incl = os.path.abspath(os.path.join(clang_base, *clang_incl))
-        assert os.path.exists(clang_incl)
+        if not os.path.exists(clang_incl):
+            raise RuntimeError(
+                f"{clang_incl} could not be found. This directory contains "
+                f"includes required by clang-cl."
+            )
         self.include_dirs.insert(0, clang_incl)
 
         # Need to block MS includes except those from Visual Studio 14.0
@@ -114,6 +132,7 @@ Running the command \n\n{' '.join(clang_version_cmd)}\n\n which returned\
         include_dirs = [
             path for path in self.include_dirs if retain_include(path)
         ]
+        # Deduplicate the included dirs but keep them in order
         existing = set()
         include_dirs = [
             path
@@ -121,13 +140,22 @@ Running the command \n\n{' '.join(clang_version_cmd)}\n\n which returned\
             if not (path in existing or existing.add(path))
         ]
         self.include_dirs = include_dirs
-        if platform_bits == 32:
-            clang_lib = ["..", "lib", "clang", clang_version, "lib", "windows"]
-            clang_lib = os.path.abspath(os.path.join(clang_base, *clang_lib))
-            if not os.path.exists(clang_lib):
-                raise RuntimeError()
-            self.add_library_dir(clang_lib)
-            if not os.path.exists(os.path.join(clang_lib,"clang_rt.builtins-i386.lib")):
-                raise RuntimeError()
-            self.add_library("clang_rt.builtins-i386")
 
+        # Add the builtins library
+        builtins_target = "x86_64" if platform_bits == 64 else "i386"
+        builtins_lib = f"clang_rt.builtins-{builtins_target}"
+        clang_lib = ["..", "lib", "clang", clang_version, "lib", "windows"]
+        clang_lib = os.path.abspath(os.path.join(clang_base, *clang_lib))
+        if not os.path.exists(os.path.join(clang_lib, builtins_lib + ".lib")):
+            raise RuntimeError(
+                f"{builtins_lib}.lib could not be found in {clang_lib}. This "
+                f"library is supplies built-ins that clang-cl uses that are "
+                f"not part of MSVC."
+            )
+        self.add_library_dir(clang_lib)
+        self.add_library(builtins_lib)
+
+        # Enable/require SSE2 for i686
+        if platform_bits == 32:
+            self.compile_options += ["/arch:SSE2"]
+            self.compile_options_debug += ["/arch:SSE2"]
