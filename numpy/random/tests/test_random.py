@@ -738,6 +738,14 @@ class TestRandomDist:
             np.random.multivariate_normal(mean, cov)
             w = sup.record(RuntimeWarning)
             assert len(w) == 0
+        P = [[1,0.5],[0.5,1]]
+        M = np.random.multivariate_normal(mean=[0,0], cov=P, size=3)
+        actual = np.random.multivariate_normal(mean=M, 
+                                               cov=np.array([[[1,0.5],[0.5,1]],[[1,0.5],[0.5,1]],[[1,0.5],[0.5,1]]]))
+        desired = np.array([[ 0.55634567,  0.76625442],
+                            [-1.68659823, -0.62195926],
+                            [-2.53066145, -2.45790399]])
+        assert_array_almost_equal(actual, desired, decimal=8)
 
     def test_negative_binomial(self):
         np.random.seed(self.seed)
