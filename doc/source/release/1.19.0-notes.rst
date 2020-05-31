@@ -8,7 +8,7 @@ Python 2 has been removed, many deprecations have been expired, and
 documentation has been improved. The polishing of the random module continues
 apace with bug fixes and better usability from Cython.
 
-The Python versions supported for this release are 3.6-3.8.  Downstream
+The Python versions supported for this release are 3.6-3.8. Downstream
 developers should use Cython >= 0.29.16 for Python 3.8 support and
 OpenBLAS >= 3.7 to avoid problems on the Skylake architecture.
 
@@ -16,10 +16,11 @@ OpenBLAS >= 3.7 to avoid problems on the Skylake architecture.
 Highlights
 ==========
 
-* Code compatibility with Python versions < 3.5 (including Python 2) was
+* Code compatibility with Python versions < 3.6 (including Python 2) was
   dropped from both the python and C code. The shims in ``numpy.compat`` will
   remain to support third-party packages, but they may be deprecated in a
-  future release.
+  future release. Note that 1.19.x will *not* compile with earlier versions of
+  Python due to the use of f-strings.
 
   (`gh-15233 <https://github.com/numpy/numpy/pull/15233>`__)
 
