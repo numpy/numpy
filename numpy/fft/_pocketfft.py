@@ -636,7 +636,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     if _unitary(norm):
         output *= 1./sqrt(n)
     elif norm is None:
-        output *= n
+        output *= 1./n
     return output
 
 
