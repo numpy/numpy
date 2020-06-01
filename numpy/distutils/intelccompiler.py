@@ -1,3 +1,4 @@
+import re
 import platform
 
 from distutils.unixccompiler import UnixCCompiler
@@ -16,10 +17,19 @@ class IntelCCompiler(UnixCCompiler):
     def __init__(self, verbose=0, dry_run=0, force=0):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
 
+        if platform.system() == "Windows":
+            self.executables['version_cmd'] = ["icl" , "-dummy"]
+            self.version_pattern = r'Version\s*(?"version"[\d.]+)'
+        else:
+            self.executables['version_cmd'] = ["icc", "-dumpversion"]
+            self.version_pattern = r'^(?"version"[\d.]$)'
+
+        # Using -qopenmp leads to overlinking if C code does not use OpenMP features
+        # like in the case of NumPy. If an extension requires -qopenmp, it should be
+        # explicitly set for that extension
         v = self.get_version()
-        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
-        self.cc_exe = ('icc -fPIC -fp-model strict -O3 '
-                       '-fomit-frame-pointer -{}').format(mpopt)
+        mpopt = '-openmp' if v and v < '15' else '-qopenmp'
+        self.cc_exe = 'icc -fPIC -fp-model strict -O3 -fomit-frame-pointer ' # + mpopt
         compiler = self.cc_exe
 
         if platform.system() == 'Darwin':
@@ -56,10 +66,19 @@ class IntelEM64TCCompiler(UnixCCompiler):
     def __init__(self, verbose=0, dry_run=0, force=0):
         UnixCCompiler.__init__(self, verbose, dry_run, force)
 
+        if platform.system() == "Windows":
+            self.executables['version_cmd'] = ["icl" , "-dummy"]
+            self.version_pattern = r'Version\s*(?"version"[\d.]+)'
+        else:
+            self.executables['version_cmd'] = ["icc", "-dumpversion"]
+            self.version_patten = r'^(?"version"[\d.]$)'
+
+        # Using -qopenmp leads to overlinking if C code does not use OpenMP features
+        # like in the case of NumPy. If an extension requires -qopenmp, it should be
+        # explicitly set for that extension
         v = self.get_version()
-        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
-        self.cc_exe = ('icc -m64 -fPIC -fp-model strict -O3 '
-                       '-fomit-frame-pointer -{}').format(mpopt)
+        mpopt = '-openmp' if v and v < '15' else '-qopenmp'
+        self.cc_exe = 'icc -m64 -fPIC -fp-model strict -O3 -fomit-frame-pointer' # + mpopt
         compiler = self.cc_exe
 
         if platform.system() == 'Darwin':
@@ -73,7 +92,6 @@ class IntelEM64TCCompiler(UnixCCompiler):
                              linker_exe=compiler + ' -shared-intel',
                              linker_so=compiler + ' ' + shared_flag +
                              ' -shared-intel')
-
 
 if platform.system() == 'Windows':
     class IntelCCompilerW(MSVCCompiler):
@@ -94,7 +112,7 @@ if platform.system() == 'Windows':
             self.lib = self.find_exe('xilib')
             self.linker = self.find_exe('xilink')
             self.compile_options = ['/nologo', '/O3', '/MD', '/W3',
-                                    '/Qstd=c99']
+                                    '/Qstd=c99', '/fp:strict']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
                                           '/Qstd=c99', '/Z7', '/D_DEBUG']
 
