@@ -95,9 +95,21 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
     seq->ptr = NULL;
     seq->len = 0;
+
+    /*
+     * When the deprecation below expires, remove the `if` statement, and
+     * update the comment for PyArray_OptionalIntpConverter.
+     */
     if (obj == Py_None) {
+        /* Numpy 1.20, 2020-05-31 */
+        if (DEPRECATE(
+                "Passing None into shape arguments as an alias for () is "
+                "deprecated.") < 0){
+            return NPY_FAIL;
+        }
         return NPY_SUCCEED;
     }
+
     len = PySequence_Size(obj);
     if (len == -1) {
         /* Check to see if it is an integer number */

@@ -2498,9 +2498,9 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                         "subscript is not within the valid range [0, 52)");
                 Py_DECREF(obj);
                 return -1;
-            }              
+            }
         }
-        
+
     }
 
     Py_DECREF(obj);
@@ -4453,7 +4453,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
-    Py_TYPE(&PyArrayDescr_Type) = &PyArrayDTypeMeta_Type;
+    Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         goto err;
     }
