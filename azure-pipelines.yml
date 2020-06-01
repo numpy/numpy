@@ -244,12 +244,6 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
-          Python38-64bit-full-clang-cl:
-            PYTHON_VERSION: '3.8'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: full
-            BITS: 64
-            CLANG_CL: 1
           Python39-32bit-fast:
             PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x86'
@@ -267,7 +261,13 @@ stages:
             TEST_MODE: fast
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
-
+          Python39-64bit-clang:
+            PYTHON_VERSION: '3.9'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+            CLANG_CL: 1
     steps:
     - template: azure-steps-windows.yml
 

@@ -302,7 +302,7 @@ class build_clib(old_build_clib):
         if requiref90:
             self.mkpath(module_build_dir)
 
-        if compiler.compiler_type == 'msvc':
+        if compiler.compiler_type in ('msvc', 'clang_cl'):
             # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources

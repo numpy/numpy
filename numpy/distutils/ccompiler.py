@@ -679,7 +679,7 @@ def CCompiler_cxx_compiler(self):
         The C++ compiler, as a `CCompiler` instance.
 
     """
-    if self.compiler_type in ('msvc', 'intelw', 'intelemw'):
+    if self.compiler_type in ('msvc', 'intelw', 'intelemw', 'clang_cl'):
         return self
 
     cxx = copy(self)
