@@ -1506,12 +1506,11 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
 #if defined __ARM_NEON || defined __ARM_NEON__
     #include<arm_neon.h>
-    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
+    int32_t _mm_movemask_epi8_neon(uint64x2_t input)
     {
-        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
+        int64x1_t m0 = vdup_n_s64(0);
+        uint64x2_t v0 = vshlq_u64(vshrq_n_u64(input, 63), vcombine_s64(m0, m0));
+        return (int)vgetq_lane_u64(v0, 0) + ((int)vgetq_lane_u64(v0, 1) << 1);
     }
 #endif
 /*
