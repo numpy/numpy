@@ -1504,6 +1504,16 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #include <emmintrin.h>
 #endif
 
+#if defined __ARM_NEON || defined __ARM_NEON__
+    #include<arm_neon.h>
+    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
+    {
+        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
+        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
+        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
+    }
+#endif
 /*
  * This function packs boolean values in the input array into the bits of a
  * byte array. Truth values are determined as usual: 0 is false, everything
@@ -1550,6 +1560,35 @@ pack_inner(const char *inptr,
             v = _mm_cmpeq_epi8(v, zero);
             /* extract msb of 16 bytes and pack it into 16 bit */
             r = _mm_movemask_epi8(v);
+            /* store result */
+            memcpy(outptr, &r, 1);
+            outptr += out_stride;
+            memcpy(outptr, (char*)&r + 1, 1);
+            outptr += out_stride;
+            inptr += 16;
+        }
+    }
+#elif defined __ARM_NEON || defined __ARM_NEON__
+    if (in_stride == 1 && element_size == 1 && n_out > 2) {
+        uint64x2_t zero = vdupq_n_u64(0);
+        /* don't handle non-full 8-byte remainder */
+        npy_intp vn_out = n_out - (remain ? 1 : 0);
+        vn_out -= (vn_out & 1);
+        for (index = 0; index < vn_out; index += 2) {
+            unsigned int r;
+            npy_uint64 a = *(npy_uint64*)inptr;
+            npy_uint64 b = *(npy_uint64*)(inptr + 8);
+            if (order == 'b') {
+                a = npy_bswap8(a);
+                b = npy_bswap8(b);
+            }
+            const npy_uint64 __attribute__((aligned(16))) data[2] = {a, b};
+            uint64x2_t v = vld1q_s64(data);
+            /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
+            v = vreinterpretq_s32_u8(vceqq_s8(vreinterpretq_s8_s32(v), vreinterpretq_s8_s32(zero)));
+            v = vreinterpretq_s32_u8(vceqq_s8(vreinterpretq_s8_s32(v), vreinterpretq_s8_s32(zero)));
+            /* extract msb of 16 bytes and pack it into 16 bit */
+            r = _mm_movemask_epi8_neon(v);
             /* store result */
             memcpy(outptr, &r, 1);
             outptr += out_stride;
