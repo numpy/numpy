@@ -51,6 +51,10 @@ steps:
     refreshenv
   displayName: 'Install 32-bit mingw for 32-bit builds'
   condition: eq(variables['BITS'], 32)
+- powershell: |
+    choco install -y llvm --force --version=10.0.0
+  displayName: 'Install LLVM for Clang-CL builds'
+  condition: eq(variables['CLANG_CL'], 1)
 # NOTE: for Windows builds it seems much more tractable to use runtests.py
 # vs. manual setup.py and then runtests.py for testing only
 
@@ -67,7 +71,18 @@ steps:
         python -m pip install $_.FullName
     }
   displayName: 'Build NumPy'
+  condition: ne(variables['CLANG_CL'], 1)
 
+- powershell: |
+    $env:Path="$env:Path;C:\Program Files\LLVM\bin"
+    python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
+    python setup.py build --compiler=clang-cl bdist_wheel
+
+    ls dist -r | Foreach-Object {
+        python -m pip install $_.FullName
+    }
+  displayName: 'Build NumPy (clang-cl)'
+  condition: eq(variables['CLANG_CL'], 1)
 - bash: |
     pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
     python -m pip download -d destination --only-binary :all: --no-deps numpy==1.14
