@@ -39,7 +39,7 @@ class ClangCL(MSVCCompiler):
     A modified clang-cl compiler compatible with an MSVC-built Python.
     """
 
-    compiler_type = "clang_cl"
+    compiler_type = "clang-cl"
     compiler_cxx = "clang-cl"
 
     def __init__(self, verbose=0, dry_run=0, force=0):

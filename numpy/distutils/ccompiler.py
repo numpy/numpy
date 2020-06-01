@@ -666,7 +666,7 @@ def CCompiler_cxx_compiler(self):
         The C++ compiler, as a `CCompiler` instance.
 
     """
-    if self.compiler_type in ('msvc', 'intelw', 'intelemw', 'clang_cl'):
+    if self.compiler_type in ('msvc', 'intelw', 'intelemw', 'clang-cl'):
         return self
 
     cxx = copy(self)
@@ -701,7 +701,7 @@ ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'pathcc'),
                                  ('nt', 'intelw'),
                                  ('nt', 'intelemw'),
-                                 ('nt', 'clangcl'),
+                                 ('nt', 'clang-cl'),
                                  )
 
 if sys.platform == 'win32':

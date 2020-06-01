@@ -210,7 +210,7 @@ class GnuFCompiler(FCompiler):
             opt.append(g2c)
         c_compiler = self.c_compiler
         if sys.platform == 'win32' and c_compiler and \
-                c_compiler.compiler_type in ("msvc", "clang_cl"):
+                c_compiler.compiler_type in ("msvc", "clang-cl"):
             opt.append('gcc')
         if sys.platform == 'darwin':
             opt.append('cc_dynamic')
@@ -347,7 +347,7 @@ class Gnu95FCompiler(GnuFCompiler):
         opt = GnuFCompiler.get_library_dirs(self)
         if sys.platform == 'win32':
             c_compiler = self.c_compiler
-            if c_compiler and c_compiler.compiler_type in ("msvc", "clang_cl"):
+            if c_compiler and c_compiler.compiler_type in ("msvc", "clang-cl"):
                 target = self.get_target()
                 if target:
                     d = os.path.normpath(self.get_libgcc_dir())
@@ -368,13 +368,13 @@ class Gnu95FCompiler(GnuFCompiler):
             opt.remove('cc_dynamic')
         if sys.platform == 'win32':
             c_compiler = self.c_compiler
-            if c_compiler and c_compiler.compiler_type in ("msvc", "clang_cl"):
+            if c_compiler and c_compiler.compiler_type in ("msvc", "clang-cl"):
                 if "gcc" in opt:
                     i = opt.index("gcc")
                     opt.insert(i + 1, "mingwex")
                     opt.insert(i + 1, "mingw32")
             c_compiler = self.c_compiler
-            if c_compiler and c_compiler.compiler_type in ("msvc", "clang_cl"):
+            if c_compiler and c_compiler.compiler_type in ("msvc", "clang-cl"):
                 return []
             else:
                 pass
@@ -413,7 +413,7 @@ class Gnu95FCompiler(GnuFCompiler):
         """
 
         c_compiler = self.c_compiler
-        if c_compiler.compiler_type not in ("msvc", "clang_cl"):
+        if c_compiler.compiler_type not in ("msvc", "clang-cl"):
             raise ValueError("This method only supports MSVC and clang-cl")
 
         object_hash = self._hash_files(list(objects) + list(chained_dlls))
@@ -469,14 +469,14 @@ class Gnu95FCompiler(GnuFCompiler):
 
     def can_ccompiler_link(self, compiler):
         # MSVC cannot link objects compiled by GNU fortran
-        return compiler.compiler_type not in ("msvc", "clang_cl")
+        return compiler.compiler_type not in ("msvc", "clang-cl")
 
     def wrap_unlinkable_objects(self, objects, output_dir, extra_dll_dir):
         """
         Convert a set of object files that are not compatible with the default
         linker, to a file that is compatible.
         """
-        if self.c_compiler.compiler_type in ("msvc", "clang_cl"):
+        if self.c_compiler.compiler_type in ("msvc", "clang-cl"):
             # Compile a DLL and return the lib for the DLL as
             # the object. Also keep track of previous DLLs that
             # we have compiled so that we can link against them.
