@@ -1768,15 +1768,28 @@ def assert_warns(warning_class, *args, **kwargs):
     ----------
     warning_class : class
         The class defining the warning that `func` is expected to throw.
-    \\*args : List of function and arguments
-        `func` and arguments for `func`.
-    \\*\\*kwargs : Kwargs
+    func : callable, optional
+        Callable to test
+    *args : Arguments
+        Arguments for `func`.
+    **kwargs : Kwargs
         Keyword arguments for `func`.
 
     Returns
     -------
     The value returned by `func`.
 
+    Examples
+    --------
+    >>> import warnings
+    >>> def deprecated_func(num):
+    ...     warnings.warn("Please upgrade", DeprecationWarning)
+    ...     return num*num
+    >>> with np.testing.assert_warns(DeprecationWarning):
+    ...     assert deprecated_func(4) == 16
+    >>> # or passing a func
+    >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
+    >>> assert ret == 16
     """
     if not args:
         return _assert_warns_context(warning_class)
