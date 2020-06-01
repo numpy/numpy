@@ -210,7 +210,7 @@ class GnuFCompiler(FCompiler):
             opt.append(g2c)
         c_compiler = self.c_compiler
         if sys.platform == 'win32' and c_compiler and \
-                c_compiler.compiler_type not in ("msvc", "clang_cl"):
+                c_compiler.compiler_type in ("msvc", "clang_cl"):
             opt.append('gcc')
         if sys.platform == 'darwin':
             opt.append('cc_dynamic')
