@@ -70,7 +70,7 @@ def process_pyx(fromfile, tofile):
         # other fixes in the 0.29 series that are needed even for earlier
         # Python versions.
         # Note: keep in sync with that in pyproject.toml
-        required_version = LooseVersion('0.29.14')
+        required_version = LooseVersion('0.29.19')
 
         if LooseVersion(cython_version) < required_version:
             raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}')
