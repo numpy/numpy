@@ -1582,10 +1582,12 @@ pack_inner(const char *inptr,
                 b = npy_bswap8(b);
             }
             const npy_uint64 __attribute__((aligned(16))) data[2] = {a, b};
-            uint64x2_t v = vld1q_s64(data);
+            uint64x2_t v = vld1q_u64(data);
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = vreinterpretq_s32_u8(vceqq_s8(vreinterpretq_s8_s32(v), vreinterpretq_s8_s32(zero)));
-            v = vreinterpretq_s32_u8(vceqq_s8(vreinterpretq_s8_s32(v), vreinterpretq_s8_s32(zero)));
+            v = vreinterpretq_u64_u8(vceqq_u8(vreinterpretq_u8_u64(v),
+                                              vreinterpretq_u8_u64(zero)));
+            v = vreinterpretq_u64_u8(vceqq_u8(vreinterpretq_u8_u64(v),
+                                              vreinterpretq_u8_u64(zero)));
             /* extract msb of 16 bytes and pack it into 16 bit */
             r = _mm_movemask_epi8_neon(v);
             /* store result */
