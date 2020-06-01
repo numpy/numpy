@@ -116,7 +116,6 @@ def fft(a, n=None, axis=-1, norm=None):
     norm : {None, "ortho", "inverse"}, optional
         .. versionadded:: 1.10.0
         .. versionadded:: ?? #TODO
-
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -229,7 +228,6 @@ def ifft(a, n=None, axis=-1, norm=None):
     norm : {None, "ortho", "inverse"}, optional
         .. versionadded:: 1.10.0
         .. versionadded:: ?? #TODO
-
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -310,9 +308,9 @@ def rfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last axis is
         used.
-    norm : {None, "ortho"}, optional
+    norm : {None, "ortho", "inverse"}, optional
         .. versionadded:: 1.10.0
-
+        .. versionadded:: ?? #TODO
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -369,11 +367,13 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
     a = asarray(a)
+    if n is None:
+        n = a.shape[axis]
     inv_norm = 1
-    if norm is not None and _unitary(norm):
-        if n is None:
-            n = a.shape[axis]
+    if _unitary(norm):
         inv_norm = sqrt(n)
+    elif norm == "inverse":
+        inv_norm = n
     output = _raw_fft(a, n, axis, True, True, inv_norm)
     return output
 
@@ -408,9 +408,9 @@ def irfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho"}, optional
+    norm : {None, "ortho", "inverse"}, optional
         .. versionadded:: 1.10.0
-
+        .. versionadded:: ?? #TODO
         Normalization mode (see `numpy.fft`). Default is None.
 
     Returns
@@ -472,8 +472,10 @@ def irfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = (a.shape[axis] - 1) * 2
     inv_norm = n
-    if norm is not None and _unitary(norm):
+    if _unitary(norm):
         inv_norm = sqrt(n)
+    elif norm == "inverse":
+        inv_norm = 1
     output = _raw_fft(a, n, axis, True, False, inv_norm)
     return output
 
