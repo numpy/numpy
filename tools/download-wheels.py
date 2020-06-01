@@ -1,6 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- encoding:utf-8 -*-
 """
-Download NumPy wheels from Anaconda staging area.
+Script to download NumPy wheels from the Anaconda staging area.
+
+Usage::
+    
+    $ ./tools/download-wheels.py <version> -w <optional-wheelhouse>
+
+
+The default wheelhouse is ``release/installers``.
+
+Dependencies
+------------
+
+- beautifulsoup4
+- urllib3
+
+Examples
+--------
+
+    $ ./tools/download-wheels.py 1.19.0rc2
+    $ ./tools/download-wheels.py 1.19.0rc2 -w ~/wheelhouse
 
 """
 import sys
