@@ -256,7 +256,7 @@ From the ``doc/`` directory:
     git submodule update --init
 
 The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system 
+A working LaTeX document production system
 (e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
 proper rendering of the LaTeX math in the documentation.
 
@@ -291,4 +291,4 @@ The rest of the story
 NumPy-specific workflow is in :ref:`numpy-development-workflow
 <development-workflow>`.
 
-.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-devel
+.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-discussion

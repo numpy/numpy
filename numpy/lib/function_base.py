@@ -1334,7 +1334,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     See Also
     --------
-    scipy.interpolate 
+    scipy.interpolate
 
     Notes
     -----
@@ -1974,7 +1974,7 @@ class vectorize:
     References
     ----------
     .. [1] NumPy Reference, section `Generalized Universal Function API
-           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+           <https://numpy.org/doc/stable/reference/c-api/generalized-ufuncs.html>`_.
 
     Examples
     --------
@@ -3122,7 +3122,7 @@ def i0(x):
     .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
            Functions*, 10th printing, New York: Dover, 1964, pp. 379.
            http://www.math.sfu.ca/~cbm/aands/page_379.htm
-    .. [3] http://kobesearch.cpan.org/htdocs/Math-Cephes/Math/Cephes.html
+    .. [3] https://metacpan.org/pod/distribution/Math-Cephes/lib/Math/Cephes.pod#i0:-Modified-Bessel-function-of-order-zero
 
     Examples
     --------

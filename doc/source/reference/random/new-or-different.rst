@@ -15,7 +15,7 @@ What's New or Different
   streams, use `RandomState`, i.e., `RandomState.gamma` or
   `RandomState.standard_t`.
 
-Quick comparison of legacy `mtrand <legacy>`_ to the new `Generator`
+Quick comparison of legacy :ref:`mtrand <legacy>` to the new `Generator`
 
 ================== ==================== =============
 Feature            Older Equivalent     Notes
@@ -52,7 +52,7 @@ And in more detail:
   methods which are 2-10 times faster than NumPy's default implementation in
   `~.Generator.standard_normal`, `~.Generator.standard_exponential` or
   `~.Generator.standard_gamma`.
-   
+
 
 .. ipython:: python
 
