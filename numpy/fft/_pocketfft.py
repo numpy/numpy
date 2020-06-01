@@ -3,20 +3,20 @@ Discrete Fourier Transforms
 
 Routines in this module:
 
-fft(a, n=None, axis=-1)
-ifft(a, n=None, axis=-1)
-rfft(a, n=None, axis=-1)
-irfft(a, n=None, axis=-1)
-hfft(a, n=None, axis=-1)
-ihfft(a, n=None, axis=-1)
-fftn(a, s=None, axes=None)
-ifftn(a, s=None, axes=None)
-rfftn(a, s=None, axes=None)
-irfftn(a, s=None, axes=None)
-fft2(a, s=None, axes=(-2,-1))
-ifft2(a, s=None, axes=(-2, -1))
-rfft2(a, s=None, axes=(-2,-1))
-irfft2(a, s=None, axes=(-2, -1))
+fft(a, n=None, axis=-1, norm=None)
+ifft(a, n=None, axis=-1, norm=None)
+rfft(a, n=None, axis=-1, norm=None)
+irfft(a, n=None, axis=-1, norm=None)
+hfft(a, n=None, axis=-1, norm=None)
+ihfft(a, n=None, axis=-1, norm=None)
+fftn(a, s=None, axes=None, norm=None)
+ifftn(a, s=None, axes=None, norm=None)
+rfftn(a, s=None, axes=None, norm=None)
+irfftn(a, s=None, axes=None, norm=None)
+fft2(a, s=None, axes=(-2,-1), norm=None)
+ifft2(a, s=None, axes=(-2, -1), norm=None)
+rfft2(a, s=None, axes=(-2,-1), norm=None)
+irfft2(a, s=None, axes=(-2, -1), norm=None)
 
 i = inverse transform
 r = transform of purely real data
