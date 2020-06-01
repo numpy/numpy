@@ -39,7 +39,7 @@ class TestFFT1D:
         assert_allclose(fft1(x) / np.sqrt(30),
                         np.fft.fft(x, norm="ortho"), atol=1e-6)
 
-    @pytest.mark.parametrize('norm', (None, 'ortho'))
+    @pytest.mark.parametrize('norm', (None, 'ortho', 'inverse'))
     def test_ifft(self, norm):
         x = random(30) + 1j*random(30)
         assert_allclose(
@@ -83,7 +83,7 @@ class TestFFT1D:
     def test_rfft(self):
         x = random(30)
         for n in [x.size, 2*x.size]:
-            for norm in [None, 'ortho']:
+            for norm in [None, 'ortho', 'inverse']:
                 assert_allclose(
                     np.fft.fft(x, n=n, norm=norm)[:(n//2 + 1)],
                     np.fft.rfft(x, n=n, norm=norm), atol=1e-6)
@@ -161,7 +161,7 @@ class TestFFT1D:
                       ]
         for forw, back in func_pairs:
             for n in [x.size, 2*x.size]:
-                for norm in [None, 'ortho']:
+                for norm in [None, 'ortho', 'inverse']:
                     tmp = forw(x, n=n, norm=norm)
                     tmp = back(tmp, n=n, norm=norm)
                     assert_allclose(x_norm,

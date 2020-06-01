@@ -80,12 +80,12 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
 
 
 def _unitary(norm):
-    if norm is None:
-        return False
-    if norm=="ortho":
+    if norm == "ortho":
         return True
-    raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
-                     % norm)
+    if norm is None or norm == "inverse":
+        return False
+    raise ValueError("Invalid norm value %s; should be None, \"ortho\" or\
+                    \"inverse\"." % norm)
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -113,8 +113,9 @@ def fft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
-    norm : {None, "ortho"}, optional
+    norm : {None, "ortho", "inverse"}, optional
         .. versionadded:: 1.10.0
+        .. versionadded:: ?? #TODO
 
         Normalization mode (see `numpy.fft`). Default is None.
 
@@ -171,7 +172,8 @@ def fft(a, n=None, axis=-1, norm=None):
     >>> sp = np.fft.fft(np.sin(t))
     >>> freq = np.fft.fftfreq(t.shape[-1])
     >>> plt.plot(freq, sp.real, freq, sp.imag)
-    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object
+                    at 0x...>]
     >>> plt.show()
 
     """
@@ -180,8 +182,10 @@ def fft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     inv_norm = 1
-    if norm is not None and _unitary(norm):
+    if _unitary(norm):
         inv_norm = sqrt(n)
+    elif norm == "inverse":
+        inv_norm = n
     output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
 
@@ -222,8 +226,9 @@ def ifft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse DFT.  If not given, the last
         axis is used.
-    norm : {None, "ortho"}, optional
+    norm : {None, "ortho", "inverse"}, optional
         .. versionadded:: 1.10.0
+        .. versionadded:: ?? #TODO
 
         Normalization mode (see `numpy.fft`). Default is None.
 
@@ -265,7 +270,8 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
-    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object at ...>]
+    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object
+                    at ...>]
     >>> plt.legend(('real', 'imaginary'))
     <matplotlib.legend.Legend object at ...>
     >>> plt.show()
@@ -274,13 +280,13 @@ def ifft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    if norm is not None and _unitary(norm):
-        inv_norm = sqrt(max(n, 1))
-    else:
-        inv_norm = n
+    inv_norm = n
+    if _unitary(norm):
+        inv_norm = sqrt(n)
+    elif norm == "inverse":
+        inv_norm = 1
     output = _raw_fft(a, n, axis, False, False, inv_norm)
     return output
-
 
 
 @array_function_dispatch(_fft_dispatcher)
@@ -539,7 +545,8 @@ def hfft(a, n=None, axis=-1, norm=None):
     --------
     >>> signal = np.array([1, 2, 3, 4, 3, 2])
     >>> np.fft.fft(signal)
-    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may vary
+    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may
+                    vary
     >>> np.fft.hfft(signal[:4]) # Input first half of signal
     array([15.,  -4.,   0.,  -1.,   0.,  -4.])
     >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
@@ -928,7 +935,8 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.fft2(a)
-    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
+    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may
+                    vary
               0.  +0.j        ,   0.  +0.j        ],
            [-12.5+17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
               0.  +0.j        ,   0.  +0.j        ],
@@ -1190,8 +1198,8 @@ def irfftn(a, s=None, axes=None, norm=None):
         Along any axis, if the shape indicated by `s` is smaller than that of
         the input, the input is cropped.  If it is larger, the input is padded
         with zeros. If `s` is not given, the shape of the input along the axes
-        specified by axes is used. Except for the last axis which is taken to be
-        ``2*(m-1)`` where ``m`` is the length of the input along that axis.
+        specified by axes is used. Except for the last axis which is taken to
+        be ``2*(m-1)`` where ``m`` is the length of the input along that axis.
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
         `len(s)` axes are used, or all axes if `s` is also not specified.
