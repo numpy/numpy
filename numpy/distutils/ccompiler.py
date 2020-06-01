@@ -679,7 +679,7 @@ def CCompiler_cxx_compiler(self):
         The C++ compiler, as a `CCompiler` instance.
 
     """
-    if self.compiler_type in ('msvc', 'intelw', 'intelemw', 'clang_cl'):
+    if self.compiler_type in ('msvc', 'intelw', 'intelemw', 'clang-cl'):
         return self
 
     cxx = copy(self)
@@ -707,7 +707,7 @@ compiler_class['intelw'] = ('intelccompiler', 'IntelCCompilerW',
 compiler_class['intelemw'] = ('intelccompiler', 'IntelEM64TCCompilerW',
                               "Intel C Compiler for 64-bit applications on Windows")
 compiler_class['clang-cl'] = ('clang_cl', 'ClangCL',
-                              "Clang CL Compiler for 64-bit Windows")
+                              "Clang CL Compiler for Windows")
 compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 compiler_class['arm'] = ('armccompiler', 'ArmCCompiler',
@@ -719,7 +719,7 @@ ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'pathcc'),
                                  ('nt', 'intelw'),
                                  ('nt', 'intelemw'),
-                                 ('nt', 'clangcl'),
+                                 ('nt', 'clang-cl'),
                                  )
 
 if sys.platform == 'win32':
@@ -808,4 +808,3 @@ for _cc in ['msvc9', 'msvc', '_msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
     _m = sys.modules.get('distutils.' + _cc + 'compiler')
     if _m is not None:
         setattr(_m, 'gen_lib_options', gen_lib_options)
-

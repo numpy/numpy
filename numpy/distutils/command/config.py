@@ -42,7 +42,7 @@ class config(old_config):
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 
         if sys.platform == 'win32' and (self.compiler.compiler_type in
-                                        ('msvc', 'intelw', 'intelemw', 'clang_cl')):
+                                        ('msvc', 'intelw', 'intelemw', 'clang-cl')):
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
             # initialize call query_vcvarsall, which throws an IOError, and
             # causes an error along the way without much information. We try to
@@ -113,7 +113,7 @@ class config(old_config):
     def _link (self, body,
                headers, include_dirs,
                libraries, library_dirs, lang):
-        if self.compiler.compiler_type in ('msvc', 'clang_cl'):
+        if self.compiler.compiler_type in ('msvc', 'clang-cl'):
             libraries = (libraries or [])[:]
             library_dirs = (library_dirs or [])[:]
             if lang in ['f77', 'f90']:
