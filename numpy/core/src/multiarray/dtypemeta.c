@@ -207,6 +207,7 @@ flexible_default_descr(PyArray_DTypeMeta *cls)
     return res;
 }
 
+
 static int
 python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
@@ -237,6 +238,23 @@ python_builtins_are_known_scalar_types(
         return 1;
     }
     return 0;
+}
+
+
+static int
+datetime_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+{
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    /*
+     * To be able to identify the descriptor from e.g. any string, datetime
+     * must take charge. Otherwise we would attempt casting which does not
+     * truly support this. Only object arrays are special cased in this way.
+     */
+    return (PyType_IsSubtype(pytype, &PyString_Type) ||
+            PyType_IsSubtype(pytype, &PyUnicode_Type));
 }
 
 
@@ -365,6 +383,9 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         dtype_class->parametric = NPY_TRUE;
         dtype_class->discover_descr_from_pyobject = (
                 discover_datetime_and_timedelta_from_pyobject);
+        if (descr->type_num == NPY_DATETIME) {
+            dtype_class->is_known_scalar_type = datetime_known_scalar_types;
+        }
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;

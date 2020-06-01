@@ -253,7 +253,7 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
  *        flags is NULL, this is not
  * @param fixed_DType if not NULL, will be checked first for whether or not
  *        it can/wants to handle the (possible) scalar value.
- * @return New reference to either a DType class, Py_None, or NULL
+ * @return New reference to either a DType class, Py_None, or NULL on error.
  */
 static NPY_INLINE PyArray_DTypeMeta *
 discover_dtype_from_pyobject(
@@ -357,8 +357,8 @@ cast_descriptor_to_fixed_dtype(
      * TODO: When this is implemented for all dtypes, the special cases
      *       can be removed...
      */
-    if (fixed_DType->legacy && fixed_DType->parametric) {
-        /* Fallback to the old AdaptFlexibleDType logic for now */
+    if (fixed_DType->legacy && fixed_DType->parametric &&
+            NPY_DTYPE(descr)->legacy) {
         PyArray_Descr *flex_dtype = PyArray_DescrFromType(fixed_DType->type_num);
         return PyArray_AdaptFlexibleDType(descr, flex_dtype);
     }
@@ -763,26 +763,30 @@ find_descriptor_from_array(
         }
         int array_is_object = PyArray_ISOBJECT(arr);
         while (iter->index < iter->size) {
+            PyArray_DTypeMeta *item_DType;
             /*
-             * TODO: We should only allow this for object arrays really,
-             *       and it is slow for strings currently.
+             * Note: If the array contains typed objects we may need to use
+             *       the dtype to use casting for finding the correct instance.
              */
             PyObject *elem = PyArray_GETITEM(arr, iter->dataptr);
             if (elem == NULL) {
                 elem = Py_None;
             }
-            DType = discover_dtype_from_pyobject(elem, &flags, DType);
-            if (DType == (PyArray_DTypeMeta *)Py_None) {
-                Py_SETREF(DType, NULL);
+            item_DType = discover_dtype_from_pyobject(elem, &flags, DType);
+            if (item_DType == NULL) {
+                return -1;
+            }
+            if (item_DType == (PyArray_DTypeMeta *)Py_None) {
+                Py_SETREF(item_DType, NULL);
             }
             int flat_max_dims = 0;
             if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
-                    NULL, DType, NULL, &flags, DType) < 0) {
+                    NULL, DType, NULL, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
-                Py_XDECREF(DType);
+                Py_XDECREF(item_DType);
                 return -1;
             }
-            Py_XDECREF(DType);
+            Py_XDECREF(item_DType);
             PyArray_ITER_NEXT(iter);
         }
         Py_DECREF(iter);
@@ -791,9 +795,9 @@ find_descriptor_from_array(
                 PyArray_ISSTRING(arr)) {
         /*
          * TODO: This branch should be deprecated IMO, the workaround is
-         *       to simply cast to the object to a string array, or we
-         *       can create a special function for it, but I doubt it is
-         *       necessary?
+         *       to cast to the object to a string array. Although a specific
+         *       function (if there is even any need) would be better.
+         *       This is value based casting!
          * Unless of course we actually want to support this kind of thing
          * in general (not just for object dtype)...
          */
