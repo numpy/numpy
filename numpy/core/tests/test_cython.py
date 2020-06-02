@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import shutil
 import subprocess
@@ -126,3 +127,34 @@ def test_get_datetime64_unit(install_temp):
     result = checks.get_dt64_unit(td64)
     expected = 5
     assert result == expected
+
+
+class TestDatetimeStrings:
+    def test_make_iso_8601_datetime(self, install_temp):
+        dt = datetime(2016, 6, 2, 10, 45, 19)
+        result = checks.make_iso_8601_datetime(dt)
+        assert result == "2016-05-02 10:45:19"
+
+    def test_get_datetime_iso_8601_strlen(self, install_temp):
+        result = checks.get_datetime_iso_8601_strlen()
+        assert result == 22
+
+    def test_parse_iso_8601_datetime(self, install_temp):
+        raise NotImplementedError
+
+
+def test_convert_datetime_to_datetimestruct(install_temp):
+    dt = datetime(2016, 6, 2, 10, 45, 19)
+    result = checks.convert_datetime_to_datetimestruct(dt)
+    assert isinstance(result, dict)
+    assert result["year"] == 2016
+    assert result["month"] = 6
+    assert result["day"] == 2
+    assert result["hour"] = 10
+    assert result["min"] = 45
+    assert result["sec"] = 19
+    # other dts fields aren't pinned down
+
+
+def test_convert_datetimestruct_to_datetime(install_temp):
+    raise NotImplementedError

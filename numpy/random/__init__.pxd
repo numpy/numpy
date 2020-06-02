@@ -12,5 +12,3 @@ cdef extern from "numpy/random/bitgen.h":
     ctypedef bitgen bitgen_t
 
 from numpy.random.bit_generator cimport BitGenerator, SeedSequence
-
-from numpy cimport parse_iso_8601_datetime  # just checking
