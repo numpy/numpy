@@ -36,7 +36,7 @@ steps:
     If ($(BITS) -eq 32) {
         $env:CFLAGS = "-m32"
         $env:LDFLAGS = "-m32"
-        $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH
+        $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
         refreshenv
     }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
