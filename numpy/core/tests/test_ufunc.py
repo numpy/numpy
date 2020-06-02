@@ -612,6 +612,21 @@ class TestUfunc:
             assert_equal(len(w), 1)
             assert_(x[0,0]  != u[0, 0])
 
+    def test_out_broadcasts(self):
+        # For ufuncs and gufuncs (not for reductions), we currently allow
+        # the output to cause broadcasting of the input arrays.
+        # both along dimensions with shape 1 and dimensions which do not
+        # exist at all in the inputs.
+        arr = np.arange(3).reshape(1, 3)
+        out = np.empty((5, 4, 3))
+        np.add(arr, arr, out=out)
+        assert (out == np.arange(3) * 2).all()
+
+        # The same holds for gufuncs (gh-16484)
+        umt.inner1d(arr, arr, out=out)
+        # the result would be just a scalar `5`, but is broadcast fully:
+        assert (out == 5).all()
+
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))

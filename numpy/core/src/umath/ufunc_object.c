@@ -2610,11 +2610,15 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
     /*
      * Figure out the number of iteration dimensions, which
-     * is the broadcast result of all the input non-core
-     * dimensions.
+     * is the broadcast result of all the non-core dimensions.
+     * (We do allow outputs to broadcast inputs currently, if they are given.
+     * This is in line with what normal ufuncs do.)
      */
     broadcast_ndim = 0;
-    for (i = 0; i < nin; ++i) {
+    for (i = 0; i < nop; ++i) {
+        if (op[i] == NULL) {
+            continue;
+        }
         int n = PyArray_NDIM(op[i]) - op_core_num_dims[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
