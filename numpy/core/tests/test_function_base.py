@@ -133,6 +133,12 @@ class TestGeomspace:
         y = geomspace(start, stop, num=3, endpoint=False)
         assert_equal(y[0], start)
 
+    def test_nan_midpoint(self):
+        y = geomspace(-3, 3, num=3)
+        assert_equal(y[0], -3.0)
+        assert_(isnan(y[1]))
+        assert_equal(y[2], 3.0)
+
     def test_complex(self):
         # Purely imaginary
         y = geomspace(1j, 16j, num=5)
