@@ -164,6 +164,8 @@ a certain source and compile it multiple times with different compiler
 flags depend on the required optimizations, then combining the returned
 objects together.
 
+.. figure:: figures/opt-infra.png
+
 | This mechanism is very friendly with all compilers and it doesn't
   require any compiler-specific extension,
 | but at the same time it takes a long process that has a sequence of
