@@ -294,6 +294,20 @@ class TestDivision:
         assert_equal(np.signbit((-x)//1), 1)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
+    def test_floor_division_errors(self, dtype):
+        fnan = np.array(np.nan, dtype=dtype)
+        fone = np.array(1.0, dtype=dtype)
+        fzer = np.array(0.0, dtype=dtype)
+        finf = np.array(np.inf, dtype=dtype)
+        # divide by zero error check
+        with np.errstate(divide='raise', invalid='ignore'):
+            assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
+        with np.errstate(invalid='raise'):
+            assert_raises(FloatingPointError, np.floor_divide, fnan, fone)
+            assert_raises(FloatingPointError, np.floor_divide, fone, fnan)
+            assert_raises(FloatingPointError, np.floor_divide, fnan, fzer)
+
+    @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_corner_cases(self, dtype):
         # test corner cases like 1.0//0.0 for errors and return vals
         x = np.zeros(10, dtype=dtype)
@@ -302,15 +316,14 @@ class TestDivision:
         fone = np.array(1.0, dtype=dtype)
         fzer = np.array(0.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
-        div = np.floor_divide(fnan, fone)
-        assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
-        div = np.floor_divide(fone, fnan)
-        assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
-        div = np.floor_divide(fnan, fzer)
-        assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
-        # divide by zero error check
-        with np.errstate(divide='raise', invalid='ignore'):
-            assert_raises(FloatingPointError, np.floor_divide, y, x)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
+            div = np.floor_divide(fnan, fone)
+            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            div = np.floor_divide(fone, fnan)
+            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            div = np.floor_divide(fnan, fzer)
+            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
         # verify 1.0//0.0 computations return inf
         with np.errstate(divide='ignore'):
             z = np.floor_divide(y, x)
@@ -390,13 +403,12 @@ class TestRemainder:
                         assert_(b > rem >= 0, msg)
 
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
-    def test_float_remainder_errors(self, dtype):
+    def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
         fzero = np.array(0.0, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
-        with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, np.remainder, fone, fzero)
+        fnan = np.array(np.nan, dtype=dtype)
         # since divmod is combination of both remainder and divide
         # ops it will set both dividebyzero and invalid flags
         with np.errstate(divide='raise', invalid='ignore'):
@@ -411,8 +423,19 @@ class TestRemainder:
             assert_raises(FloatingPointError, np.divmod, finf, fzero)
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.divmod, finf, fzero)
+
+    @pytest.mark.parametrize('dtype', np.typecodes['Float'])
+    @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
+    def test_float_remainder_errors(self, dtype, fn):
+        fzero = np.array(0.0, dtype=dtype)
+        fone = np.array(1.0, dtype=dtype)
+        finf = np.array(np.inf, dtype=dtype)
+        fnan = np.array(np.nan, dtype=dtype)
         with np.errstate(invalid='raise'):
-            assert_raises(FloatingPointError, np.fmod, fone, fzero)
+            assert_raises(FloatingPointError, fn, fone, fzero)
+            assert_raises(FloatingPointError, fn, fnan, fzero)
+            assert_raises(FloatingPointError, fn, fone, fnan)
+            assert_raises(FloatingPointError, fn, fnan, fone)
 
     def test_float_remainder_overflow(self):
         a = np.finfo(np.float64).tiny
@@ -432,15 +455,6 @@ class TestRemainder:
             fone = np.array(1.0, dtype=dt)
             fzer = np.array(0.0, dtype=dt)
             finf = np.array(np.inf, dtype=dt)
-            div, rem = np.divmod(fnan, fone)
-            assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
-            assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
-            div, rem = np.divmod(fone, fnan)
-            assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
-            assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
-            div, rem = np.divmod(fnan, fzer)
-            assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
-            assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "invalid value encountered in divmod")
                 sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
@@ -456,6 +470,15 @@ class TestRemainder:
                 div, rem = np.divmod(finf, fzer)
                 assert(np.isinf(div)), 'dt: %s, rem: %s' % (dt, rem)
                 assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
+                div, rem = np.divmod(fnan, fone)
+                assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
+                assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
+                div, rem = np.divmod(fone, fnan)
+                assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
+                assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
+                div, rem = np.divmod(fnan, fzer)
+                assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
+                assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
 
     def test_float_remainder_corner_cases(self):
         # Check remainder magnitude.
@@ -469,18 +492,6 @@ class TestRemainder:
             assert_(rem <= b, 'dt: %s' % dt)
             rem = np.remainder(-a, -b)
             assert_(rem >= -b, 'dt: %s' % dt)
-            rem = np.remainder(fone, fnan)
-            fmod = np.fmod(fone, fnan)
-            assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-            assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
-            rem = np.remainder(fnan, fzer)
-            fmod = np.fmod(fnan, fzer)
-            assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-            assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
-            rem = np.remainder(fnan, fone)
-            fmod = np.fmod(fnan, fone)
-            assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-            assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
 
         # Check nans, inf
         with suppress_warnings() as sup:
@@ -508,6 +519,18 @@ class TestRemainder:
                 fmod = np.fmod(finf, fzer)
                 assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
                 assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(fone, fnan)
+                fmod = np.fmod(fone, fnan)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, fmod))
+                rem = np.remainder(fnan, fzer)
+                fmod = np.fmod(fnan, fzer)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
+                rem = np.remainder(fnan, fone)
+                fmod = np.fmod(fnan, fone)
+                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
+                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
 
 
 class TestCbrt:
