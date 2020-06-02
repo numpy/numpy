@@ -112,8 +112,8 @@ The phase spectrum is obtained by ``np.angle(A)``.
 The inverse DFT is defined as
 
 .. math::
-   a_m = \\frac{1}{n}\\sum_{k=0}^{n-1}A_k\\exp\\left\\{2\\pi i{mk\\over n}
-   \\right\\}\\qquad m = 0,\\ldots,n-1.
+   a_m = \\frac{1}{n}\\sum_{k=0}^{n-1}A_k\\exp\\left\\{2\\pi i{mk\\over n}\\right\\}
+   \\qquad m = 0,\\ldots,n-1.
 
 It differs from the forward transform by the sign of the exponential
 argument and the default normalization by :math:`1/n`.
@@ -167,8 +167,8 @@ In two dimensions, the DFT is defined as
 
 .. math::
    A_{kl} =  \\sum_{m=0}^{M-1} \\sum_{n=0}^{N-1}
-   a_{mn}\\exp\\left\\{-2\\pi i \\left({mk\\over M}+{nl\\over N}\\right)
-   \\right\\}\\qquad k = 0, \\ldots, M-1;\\quad l = 0, \\ldots, N-1,
+   a_{mn}\\exp\\left\\{-2\\pi i \\left({mk\\over M}+{nl\\over N}\\right)\\right\\}
+   \\qquad k = 0, \\ldots, M-1;\\quad l = 0, \\ldots, N-1,
 
 which extends in the obvious way to higher dimensions, and the inverses
 in higher dimensions also extend in the same way.

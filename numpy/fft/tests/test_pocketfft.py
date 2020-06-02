@@ -262,8 +262,8 @@ class TestFFTThreadSafe:
         [x.join() for x in t]
         # Make sure all threads returned the correct value
         for i in range(self.threads):
-            assert_array_equal(q.get(timeout=5), expected, 'Function returned\
-                            wrong value in multithreade context')
+            assert_array_equal(q.get(timeout=5), expected,
+                    'Function returned wrong value in multithreade context')
 
     def test_fft(self):
         a = np.ones(self.input_shape) * 1+0j

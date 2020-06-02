@@ -1,5 +1,5 @@
 """
-Discrete Fourier Transforms
+Discrete Fourier Transforms.
 
 Routines in this module:
 
@@ -171,8 +171,7 @@ def fft(a, n=None, axis=-1, norm=None):
     >>> sp = np.fft.fft(np.sin(t))
     >>> freq = np.fft.fftfreq(t.shape[-1])
     >>> plt.plot(freq, sp.real, freq, sp.imag)
-    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object
-                    at 0x...>]
+    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
     >>> plt.show()
 
     """
@@ -268,8 +267,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
-    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object
-                    at ...>]
+    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object at ...>]
     >>> plt.legend(('real', 'imaginary'))
     <matplotlib.legend.Legend object at ...>
     >>> plt.show()
@@ -547,8 +545,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     --------
     >>> signal = np.array([1, 2, 3, 4, 3, 2])
     >>> np.fft.fft(signal)
-    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may
-                    vary
+    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may vary
     >>> np.fft.hfft(signal[:4]) # Input first half of signal
     array([15.,  -4.,   0.,  -1.,   0.,  -4.])
     >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
@@ -944,8 +941,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.fft2(a)
-    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may
-                    vary
+    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
               0.  +0.j        ,   0.  +0.j        ],
            [-12.5+17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
               0.  +0.j        ,   0.  +0.j        ],
