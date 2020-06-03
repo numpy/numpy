@@ -134,7 +134,7 @@ class TestGeomspace:
         assert_equal(y[0], start)
 
     def test_nan_midpoint(self):
-        with errstate(all='ignore'):
+        with errstate(invalid='ignore'):
             y = geomspace(-3, 3, num=3)
             assert_equal(y[0], -3.0)
             assert_(isnan(y[1]))
