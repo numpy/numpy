@@ -947,7 +947,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             return -1;
         }
 
-        if (update_shape(curr_dims, &max_dims, out_shape,
+        if (curr_dims == 0) {
+            /*
+             * Special case for reverse broadcasting, ignore max_dims if this
+             * is a single array-like object; needed for PyArray_CopyObject.
+             */
+            memcpy(out_shape, PyArray_SHAPE(arr),
+                   PyArray_NDIM(arr) * sizeof(npy_intp));
+            max_dims = PyArray_NDIM(arr);
+        }
+        else if (update_shape(curr_dims, &max_dims, out_shape,
                 PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE, flags) < 0) {
             *flags |= FOUND_RAGGED_ARRAY;
             Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
@@ -1106,6 +1115,10 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr)
  *        for the ``__array__`` protocol.
  * @param out_descr The discovered output descriptor.
  * @return dimensions of the discovered object or -1 on error.
+ *         WARNING: If (and only if) the output is a single array, the ndim
+ *         returned _can_ exceed the maximum allowed number of dimensions.
+ *         It might be nice to deprecate this? But it allows things such as
+ *         `arr1d[...] = np.array([[1,2,3,4]])`
  */
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(

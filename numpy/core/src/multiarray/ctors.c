@@ -2124,6 +2124,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&
             !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
             PyArray_EquivTypes(((PyVoidScalarObject *)op)->descr, dtype)) {
+        /*
+         * Special case, we return a *view* into void scalars, mainly to
+         * allow "reversed" assignment:
+         *    arr[indx]["field"] = val  # instead of arr["field"][indx] = val
+         */
         assert(ndim == 0);
 
         return PyArray_NewFromDescrAndBase(
