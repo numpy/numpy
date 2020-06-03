@@ -135,9 +135,9 @@ class TestGeomspace:
 
     def test_nan_midpoint(self):
         with errstate(invalid='ignore'):
-            y = geomspace(-3, 3, num=3)
+            y = geomspace(-3, 3, num=4)
             assert_equal(y[0], -3.0)
-            assert_(isnan(y[1]))
+            assert_(isnan(y[1:-1]).all())
             assert_equal(y[2], 3.0)
 
     def test_complex(self):
