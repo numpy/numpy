@@ -1973,8 +1973,7 @@ class vectorize:
 
     References
     ----------
-    .. [1] NumPy Reference, section `Generalized Universal Function API
-           <https://numpy.org/doc/stable/reference/c-api/generalized-ufuncs.html>`_.
+    .. [1] :doc:`/reference/c-api/generalized-ufuncs`
 
     Examples
     --------
