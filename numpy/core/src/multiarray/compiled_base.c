@@ -1506,7 +1506,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
 #if defined __ARM_NEON || defined __ARM_NEON__
     #include <arm_neon.h>
-    int _mm_movemask_epi8_neon(uint64x2_t input)
+    int sign_mask(uint64x2_t input)
     {
         uint8x16_t ninput = vreinterpretq_u8_u64(input);
         int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
@@ -1590,7 +1590,7 @@ pack_inner(const char *inptr,
             v = vreinterpretq_u64_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero)));
             v = vreinterpretq_u64_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero)));
             /* extract msb of 16 bytes and pack it into 16 bit */
-            r = _mm_movemask_epi8_neon(v);
+            r = sign_mask(v);
             /* store result */
             memcpy(outptr, &r, 1);
             outptr += out_stride;
