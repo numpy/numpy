@@ -138,7 +138,7 @@ class TestGeomspace:
             y = geomspace(-3, 3, num=4)
             assert_equal(y[0], -3.0)
             assert_(isnan(y[1:-1]).all())
-            assert_equal(y[2], 3.0)
+            assert_equal(y[3], 3.0)
 
     def test_complex(self):
         # Purely imaginary
