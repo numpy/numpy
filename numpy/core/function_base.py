@@ -53,9 +53,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         between samples.
     dtype : dtype, optional
         The type of the output array.  If `dtype` is not given, the data type
-        is inferred from `start`, `stop`, and `num`. The inferred dtype will
-        never be an integer; `float` is chosen even if all three arguments are
-        integers.
+        is inferred from `start` and `stop`. The inferred dtype will
+        never be an integer; `float` is chosen even if the arguments would
+        produce an array of integers.
 
         .. versionadded:: 1.9.0
 
