@@ -1,6 +1,6 @@
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
-    ndarray, sqrt, nextafter, stack
+    ndarray, sqrt, nextafter, stack, errstate
     )
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
@@ -134,10 +134,11 @@ class TestGeomspace:
         assert_equal(y[0], start)
 
     def test_nan_midpoint(self):
-        y = geomspace(-3, 3, num=3)
-        assert_equal(y[0], -3.0)
-        assert_(isnan(y[1]))
-        assert_equal(y[2], 3.0)
+        with errstate(all='ignore'):
+            y = geomspace(-3, 3, num=3)
+            assert_equal(y[0], -3.0)
+            assert_(isnan(y[1]))
+            assert_equal(y[2], 3.0)
 
     def test_complex(self):
         # Purely imaginary
