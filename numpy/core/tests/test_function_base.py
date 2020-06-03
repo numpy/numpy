@@ -140,6 +140,10 @@ class TestGeomspace:
             assert_(isnan(y[1:-1]).all())
             assert_equal(y[3], 3.0)
 
+            y = geomspace(-3, 3, num=4, endpoint=False)
+            assert_equal(y[0], -3.0)
+            assert_(isnan(y[1:]).all())
+
     def test_complex(self):
         # Purely imaginary
         y = geomspace(1j, 16j, num=5)
