@@ -85,7 +85,6 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 static void
 gentype_dealloc(PyObject *v)
 {
-    _dealloc_cached_buffer_info(v);
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -1691,7 +1690,6 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(self);
     }
     else {
         Py_DECREF(ret);
@@ -2365,9 +2363,167 @@ static PySequenceMethods voidtype_as_sequence = {
 };
 
 
-static PyBufferProcs gentype_as_buffer = {
-    .bf_getbuffer = gentype_getbuffer,
-    /* release buffer not defined (see buffer.c) */
+
+/**begin repeat
+ * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
+ *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
+ *         clongdouble#
+ * #Name = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
+ *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
+ *         CLongDouble#
+ * #NAME = BOOL, BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
+ *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
+ *         CLONGDOUBLE#
+ * #fmt = ?, b, h, i, l, q, B, H, I, L, Q, e, f, d, g, Zf, Zd, Zg#
+ */
+
+static int
+@name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        return -1;
+    }
+    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
+
+    static char fmt[3] = "@fmt@";
+
+    view->ndim = 0;
+    view->len = sizeof(scalar->obval);
+    view->itemsize = sizeof(scalar->obval);
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+    view->buf = &(scalar->obval);
+
+    if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
+
+    view->format = fmt;
+
+    return 0;
+}
+
+static PyBufferProcs @name@_arrtype_as_buffer = {
+    .bf_getbuffer = @name@_getbuffer,
+    /* No need to release the buffer */
+};
+
+/**end repeat**/
+
+static int
+unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        return -1;
+    }
+    PyUnicodeScalarObject *scalar = (PyUnicodeScalarObject *)self;
+    Py_ssize_t length = PyUnicode_GetLength(self);
+
+    view->ndim = 0;
+    view->len = length * 4;
+    view->itemsize = length * 4;
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+
+    if (scalar->obval == NULL) {
+        /*
+         * Unicode may not have the representation available, `scalar_value`
+         * ensures materialization.
+         */
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_UNICODE);
+        scalar_value(self, descr);
+        Py_DECREF(descr);
+        if (scalar->obval == NULL) {
+            /* allocating memory failed */
+            Py_SETREF(view->obj, NULL);
+            return -1;
+        }
+    }
+    view->buf = scalar->obval;
+
+    if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
+
+    if (scalar->buffer_fmt != NULL) {
+        view->format = scalar->buffer_fmt;
+    }
+    else {
+        scalar->buffer_fmt = PyObject_Malloc(22);
+        if (scalar->buffer_fmt == NULL) {
+            Py_SETREF(view->obj, NULL);
+            return -1;
+        }
+        PyOS_snprintf(scalar->buffer_fmt, 22, "%" NPY_INTP_FMT "w", length);
+        view->format = scalar->buffer_fmt;
+    }
+
+    return 0;
+}
+
+static PyBufferProcs unicode_arrtype_as_buffer = {
+    .bf_getbuffer = unicode_getbuffer,
+    /* No need to release the buffer */
+};
+
+
+/**begin repeat
+ * #name = datetime, timedelta#
+ * #Name = Datetime, Timedelta#
+ */
+
+static int
+@name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        return -1;
+    }
+    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
+
+    view->ndim = 1;
+    view->len = 8;
+    view->itemsize = 1;
+    static Py_ssize_t length = 8;
+    view->shape = &length;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+
+    view->buf = &(scalar->obval);
+
+    if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
+
+    /* export datetime scalars as bytes (although arrays are not exported) */
+    view->format = "B";
+
+    return 0;
+}
+
+static PyBufferProcs @name@_arrtype_as_buffer = {
+        .bf_getbuffer = @name@_getbuffer,
+        /* No need to release the buffer */
+};
+
+/**end repeat**/
+
+static PyBufferProcs void_arrtype_as_buffer = {
+        .bf_getbuffer = void_getbuffer,  /* defined in buffer.c */
+        /* No need to release the buffer */
 };
 
 
@@ -3584,7 +3740,6 @@ initialize_numeric_types(void)
     init_basetypes();
     PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
     PyGenericArrType_Type.tp_as_number = &gentype_as_number;
-    PyGenericArrType_Type.tp_as_buffer = &gentype_as_buffer;
     PyGenericArrType_Type.tp_as_mapping = &gentype_as_mapping;
     PyGenericArrType_Type.tp_flags = BASEFLAGS;
     PyGenericArrType_Type.tp_methods = gentype_methods;
@@ -3668,10 +3823,15 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
     Py@NAME@ArrType_Type.tp_richcompare = gentype_richcompare;
 
+#define _IS_@NAME@  /* inherit string buffer */
+#if !defined(_IS_String)
+    Py@NAME@ArrType_Type.tp_as_buffer = &@name@_arrtype_as_buffer;
+#endif
+#undef _IS_@NAME@
+
     /**end repeat**/
 
     PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
-    PyUnicodeArrType_Type.tp_as_buffer = &gentype_as_buffer;
 
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,

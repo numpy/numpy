@@ -2576,7 +2576,6 @@ PyArray_FromInterface(PyObject *origin)
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(base);
 
         /* Get offset number from interface specification */
         attr = _PyDict_GetItemStringWithError(iface, "offset");
@@ -3801,7 +3800,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
-    _dealloc_cached_buffer_info(buf);
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,

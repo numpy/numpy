@@ -147,7 +147,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
         offset = PyArray_BYTES(self) - (char *)view.buf;
         numbytes = view.len + offset;
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info((PyObject*)new);
     }
     else {
         PyErr_Clear();
@@ -376,7 +375,6 @@ array_data_set(PyArrayObject *self, PyObject *op)
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
-    _dealloc_cached_buffer_info(op);
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_AttributeError,

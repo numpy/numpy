@@ -928,7 +928,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + view.len, 0, itemsize - view.len);
         }
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(op);
     }
     return 0;
 }

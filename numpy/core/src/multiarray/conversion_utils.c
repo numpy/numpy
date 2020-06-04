@@ -207,7 +207,6 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
-    _dealloc_cached_buffer_info(obj);
 
     /* Point to the base of the buffer object if present */
     if (PyMemoryView_Check(obj)) {
