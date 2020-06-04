@@ -461,8 +461,8 @@ class recarray(ndarray):
         fielddict = ndarray.__getattribute__(self, 'dtype').fields
         try:
             res = fielddict[attr][:2]
-        except (TypeError, KeyError):
-            raise AttributeError("recarray has no attribute %s" % attr)
+        except (TypeError, KeyError) as e:
+            raise AttributeError("recarray has no attribute %s" % attr) from e
         obj = self.getfield(*res)
 
         # At this point obj will always be a recarray, since (see
@@ -509,8 +509,10 @@ class recarray(ndarray):
                     return ret
         try:
             res = fielddict[attr][:2]
-        except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+        except (TypeError, KeyError) as e:
+            raise AttributeError(
+                "record array has no attribute %s" % attr
+            ) from e
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
