@@ -3,7 +3,8 @@ Discrete Fourier Transforms - helper.py
 
 """
 from numpy.compat import integer_types
-from numpy.core import integer, empty, arange, asarray, roll
+from numpy.core import (integer, empty, arange, asarray, roll, reciprocal,
+                        float32, float64)
 from numpy.core.overrides import array_function_dispatch, set_module
 
 # Created by Pearu Peterson, September 2002
@@ -122,7 +123,7 @@ def ifftshift(x, axes=None):
 
 
 @set_module('numpy.fft')
-def fftfreq(n, d=1.0):
+def fftfreq(n, d=1.0, dtype=float64):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
@@ -140,7 +141,10 @@ def fftfreq(n, d=1.0):
     n : int
         Window length.
     d : scalar, optional
-        Sample spacing (inverse of the sampling rate). Defaults to 1.
+        Sample spacing (inverse of the sampling rate). Defaults to 1.0.
+    dtype : object, optional
+        Output data type; either float32 or float64
+        Defaults to float64.
 
     Returns
     -------
@@ -160,18 +164,22 @@ def fftfreq(n, d=1.0):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
-    val = 1.0 / (n * d)
+    if dtype != float32:
+        dtype = float64
+
+    val = reciprocal(n*d, dtype=dtype)
     results = empty(n, int)
     N = (n-1)//2 + 1
     p1 = arange(0, N, dtype=int)
     results[:N] = p1
     p2 = arange(-(n//2), 0, dtype=int)
     results[N:] = p2
+
     return results * val
 
 
 @set_module('numpy.fft')
-def rfftfreq(n, d=1.0):
+def rfftfreq(n, d=1.0, dtype=float64):
     """
     Return the Discrete Fourier Transform sample frequencies
     (for usage with rfft, irfft).
@@ -193,7 +201,10 @@ def rfftfreq(n, d=1.0):
     n : int
         Window length.
     d : scalar, optional
-        Sample spacing (inverse of the sampling rate). Defaults to 1.
+        Sample spacing (inverse of the sampling rate). Defaults to 1.0.
+    dtype : object, optional
+        Output data type; either float32 or float64
+        Defaults to float64.
 
     Returns
     -------
@@ -216,7 +227,11 @@ def rfftfreq(n, d=1.0):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
-    val = 1.0/(n*d)
+    if dtype != float32:
+        dtype = float64
+
+    val = reciprocal(n*d, dtype=dtype)
     N = n//2 + 1
     results = arange(0, N, dtype=int)
+
     return results * val
