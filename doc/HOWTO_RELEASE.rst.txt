@@ -40,16 +40,17 @@ Release Scripts
 
 Supported platforms and versions
 ================================
-`NEP 29`_ outlines which Python versions are supported; For the first half of
-2020, this will be Python >= 3.6. We test NumPy against all these versions
-every time we merge code to master.  Binary installers may be available for a
-subset of these versions (see below).
+:doc:`NEP 29<neps:nep-0029-deprecation_policy>` outlines which Python versions
+are supported; For the first half of 2020, this will be Python >= 3.6. We test
+NumPy against all these versions every time we merge code to master.  Binary
+installers may be available for a subset of these versions (see below).
 
 OS X
 ----
-OS X versions >= 10.9 are supported, for Python version support see `NEP 29`_.
-We build binary wheels for OSX that are compatible with Python.org Python,
-system Python, homebrew and macports - see this `OSX wheel building summary
+OS X versions >= 10.9 are supported, for Python version support see
+:doc:`NEP 29<neps:nep-0029-deprecation_policy>`. We build binary wheels for
+OSX that are compatible with Python.org Python, system Python, homebrew and
+macports - see this `OSX wheel building summary
 <https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_ for details.
 
 
@@ -95,7 +96,6 @@ You will need Cython for building the binaries.  Cython compiles the ``.pyx``
 files in the NumPy distribution to ``.c`` files.
 
 .. _mingw-w64 toolchain : https://mingwpy.github.io
-.. _NEP 29 : https://numpy.org/neps/nep-0029-deprecation_policy.html
 
 OpenBLAS
 ------------

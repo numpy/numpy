@@ -35,8 +35,9 @@ Current vision for the documentation: NEP 44
 --------------------------------------------
 
 Recently, the NumPy community approved a *NumPy Enhancement Proposal (NEP)*
-about documentation, `NEP 44 - Restructuring the NumPy Documentation
-<https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
+about documentation,
+:doc:`NEP 44 - Restructuring the NumPy Documentation
+     <neps:nep-0044-restructuring-numpy-docs>`.
 
 **Where is the documentation?**
 
@@ -87,7 +88,7 @@ check out the following specific guides:
 Major additions to the documentation (e.g. new tutorials) should be proposed to
 the `mailing list
 <https://mail.python.org/mailman/listinfo/numpy-discussion>`__.
-  
+
 Other ways to contribute
 ------------------------
 
