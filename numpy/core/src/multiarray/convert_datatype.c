@@ -2087,6 +2087,19 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
     if (dtype == NULL) {
         ret = NPY_DEFAULT_TYPE;
     }
+    else if (!NPY_DTYPE(dtype)->legacy) {
+        /*
+         * TODO: If we keep all type number style API working, by defining
+         *       type numbers always. We may be able to allow this again.
+         */
+        PyErr_Format(PyExc_TypeError,
+                "This function currently only supports native NumPy dtypes "
+                "and old-style user dtypes, but the dtype was %S.\n"
+                "(The function may need to be updated to support arbitrary"
+                "user dtypes.)",
+                dtype);
+        ret = NPY_NOTYPE;
+    }
     else {
         ret = dtype->type_num;
     }

@@ -1121,6 +1121,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr)
  *        non NULL but only when fixed_DType/requested_descr are not given.
  *        If non NULL, it is the first dtype being promoted and used if there
  *        are no elements.
+ *        The result may be unchanged (remain NULL) when converting a
+ *        sequence with no elements. In this case it is callers responsibility
+ *        to choose a default.
  * @return dimensions of the discovered object or -1 on error.
  *         WARNING: If (and only if) the output is a single array, the ndim
  *         returned _can_ exceed the maximum allowed number of dimensions.
@@ -1273,15 +1276,17 @@ PyArray_DiscoverDTypeAndShape(
     /* We could check here for max-ndims being reached as well */
 
     if (requested_descr != NULL) {
-        /* The user had given a specific one, we could sanity check, but... */
+        /* The user had given a specific one, make sure it is the output one */
         Py_INCREF(requested_descr);
         Py_XSETREF(*out_descr, requested_descr);
     }
     else if (NPY_UNLIKELY(*out_descr == NULL)) {
         /*
-         * When the object contained no items, we have to use the default.
-         * We do this afterwards, to not cause promotion when there is only
-         * a single element.
+         * When the object contained no elements (sequence of length zero),
+         * the no descriptor may have been found. When a DType was requested
+         * we use it to define the output dtype.
+         * Otherwise, out_descr will remain NULL and the caller has to set
+         * the correct default.
          */
         // TODO: This may be a tiny, unsubstantial behaviour change.
         if (fixed_DType != NULL) {
@@ -1295,9 +1300,6 @@ PyArray_DiscoverDTypeAndShape(
                     goto fail;
                 }
             }
-        }
-        else {
-            *out_descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
         }
     }
     return ndim;
@@ -1377,14 +1379,19 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     }
 
     coercion_cache_obj *coercion_cache;
-    PyArray_Descr *out_dtype = NULL;
+    PyObject *out_dtype = NULL;
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            fixed_DType, fixed_descriptor, &out_dtype);
+            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype);
     npy_free_coercion_cache(coercion_cache);
     Py_XDECREF(fixed_DType);
     Py_XDECREF(fixed_descriptor);
+    if (out_dtype == NULL) {
+        /* Empty sequence, report this as None. */
+        out_dtype = Py_None;
+        Py_INCREF(Py_None);
+    }
 
     if (ndim < 0) {
         return NULL;

@@ -1499,7 +1499,6 @@ _array_from_array_like(PyObject *op,
 }
 
 
-
 /*NUMPY_API*/
 NPY_NO_EXPORT int
 PyArray_GetArrayParamsFromObject(PyObject *NPY_UNUSED(op),
@@ -1558,6 +1557,9 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     Py_XDECREF(fixed_DType);
     if (ndim < 0) {
         return NULL;
+    }
+    if (dtype == NULL) {
+        dtype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
 
     if (min_depth != 0 && ndim < min_depth) {
