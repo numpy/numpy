@@ -189,7 +189,7 @@ Stylistic Guidelines
 
    import numpy as np
 
-* For C code, see the :ref:`numpy-c-style-guide<style_guide>`
+* For C code, see `NEP 45 <https://numpy.org/neps/nep-0045-c_style_guide.html>`_.
 
 
 Test coverage
@@ -256,7 +256,7 @@ From the ``doc/`` directory:
     git submodule update --init
 
 The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system 
+A working LaTeX document production system
 (e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
 proper rendering of the LaTeX math in the documentation.
 

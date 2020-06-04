@@ -244,7 +244,7 @@ C functions, see the files in ``doc/cdoc/``.
 Related Work
 ------------
 
-Based on Van Rossum and Warsaw, `PEP 7 -- Style Guide for C Code <https://www.python.org/dev/peps/pep-0007>`_
+Based on Van Rossum and Warsaw, :pep:`7`_
 
 
 Discussion
