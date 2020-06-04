@@ -2740,7 +2740,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         op_axes[nop][idim] = idim;
     }
     for (idim = ndim_output; idim < ndim_iter; ++idim) {
-        op_axes[nop][idim] = -1;
+        op_axes[nop][idim] = NPY_ITER_REDUCTION_AXIS(-1);
     }
 
     /* Set the iterator per-op flags */
@@ -2753,13 +2753,11 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     op_flags[nop] = NPY_ITER_READWRITE|
                     NPY_ITER_NBO|
                     NPY_ITER_ALIGNED|
-                    NPY_ITER_ALLOCATE|
-                    NPY_ITER_NO_BROADCAST;
+                    NPY_ITER_ALLOCATE;
     iter_flags = NPY_ITER_EXTERNAL_LOOP|
             NPY_ITER_BUFFERED|
             NPY_ITER_DELAY_BUFALLOC|
             NPY_ITER_GROWINNER|
-            NPY_ITER_REDUCE_OK|
             NPY_ITER_REFS_OK|
             NPY_ITER_ZEROSIZE_OK;
     if (out != NULL) {

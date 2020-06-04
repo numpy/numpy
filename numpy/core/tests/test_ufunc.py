@@ -610,7 +610,17 @@ class TestUfunc:
             warnings.simplefilter("always")
             u += v
             assert_equal(len(w), 1)
-            assert_(x[0,0]  != u[0, 0])
+            assert_(x[0, 0] != u[0, 0])
+
+        # Output reduction should not be allowed.
+        # See gh-15139
+        a = np.arange(6).reshape(3, 2)
+        b = np.ones(2)
+        out = np.empty(())
+        assert_raises(ValueError, umt.inner1d, a, b, out)
+        out2 = np.empty(3)
+        c = umt.inner1d(a, b, out2)
+        assert_(c is out2)
 
     def test_out_broadcasts(self):
         # For ufuncs and gufuncs (not for reductions), we currently allow
@@ -957,7 +967,10 @@ class TestUfunc:
         assert_array_equal(result, np.vstack((np.zeros(3), a[2], -a[1])))
         assert_raises(ValueError, umt.cross1d, np.eye(4), np.eye(4))
         assert_raises(ValueError, umt.cross1d, a, np.arange(4.))
+        # Wrong output core dimension.
         assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros((3, 4)))
+        # Wrong output broadcast dimension (see gh-15139).
+        assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros(3))
 
     def test_can_ignore_signature(self):
         # Comparing the effects of ? in signature:
@@ -1905,22 +1918,47 @@ class TestUfunc:
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
 
-    @pytest.mark.parametrize('output_shape',
-                             [(), (1,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('out_shape',
+                             [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('keepdims', [True, False])
     @pytest.mark.parametrize('f_reduce', [np.add.reduce, np.minimum.reduce])
-    def test_reduce_wrong_dimension_output(self, f_reduce, output_shape):
+    def test_reduce_wrong_dimension_output(self, f_reduce, keepdims, out_shape):
         # Test that we're not incorrectly broadcasting dimensions.
         # See gh-15144 (failed for np.add.reduce previously).
         a = np.arange(12.).reshape(4, 3)
-        out = np.empty(output_shape, a.dtype)
-        assert_raises(ValueError, f_reduce, a, axis=0, out=out)
-        if output_shape != (1, 3):
-            assert_raises(ValueError, f_reduce, a, axis=0, out=out,
-                          keepdims=True)
+        out = np.empty(out_shape, a.dtype)
+
+        correct_out = f_reduce(a, axis=0, keepdims=keepdims)
+        if out_shape != correct_out.shape:
+            with assert_raises(ValueError):
+                f_reduce(a, axis=0, out=out, keepdims=keepdims)
         else:
-            check = f_reduce(a, axis=0, out=out, keepdims=True)
+            check = f_reduce(a, axis=0, out=out, keepdims=keepdims)
             assert_(check is out)
-            assert_array_equal(check, f_reduce(a, axis=0, keepdims=True))
+            assert_array_equal(check, correct_out)
+
+    def test_reduce_output_does_not_broadcast_input(self):
+        # Test that the output shape cannot broadcast an input dimension
+        # (it never can add dimensions, but it might expand an existing one)
+        a = np.ones((1, 10))
+        out_correct = (np.empty((1, 1)))
+        out_incorrect = np.empty((3, 1))
+        np.add.reduce(a, axis=-1, out=out_correct, keepdims=True)
+        np.add.reduce(a, axis=-1, out=out_correct[:, 0], keepdims=False)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect, keepdims=True)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect[:, 0], keepdims=False)
+
+    def test_reduce_output_subclass_ok(self):
+        class MyArr(np.ndarray):
+            pass
+
+        out = np.empty(())
+        np.add.reduce(np.ones(5), out=out)  # no subclass, all fine
+        out = out.view(MyArr)
+        assert np.add.reduce(np.ones(5), out=out) is out
+        assert type(np.add.reduce(out)) is MyArr
 
     def test_no_doc_string(self):
         # gh-9337
