@@ -10,6 +10,7 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
+from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -273,7 +274,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not v or v[0] != 'gfortran':
             return None
         v = v[1]
-        if v >= '4.':
+        if LooseVersion(v) >= "4":
             # gcc-4 series releases do not support -mno-cygwin option
             pass
         else:
