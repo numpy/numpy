@@ -2080,7 +2080,6 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
             return NPY_NOTYPE;
         }
     }
-
     if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &dtype) < 0) {
         return NPY_NOTYPE;
     }

@@ -1102,6 +1102,10 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr)
  * general purpose function to find the parameters of the array (but not
  * the array itself) as returned by `np.array()`
  *
+ * Note: Before considering to make part of this public, we should consider
+ *       whether things such as `out_descr != NULL` should be supported in
+ *       a public API.
+ *
  * @param obj Scalar or nested sequences.
  * @param max_dims Maximum number of dimensions (after this scalars are forced)
  * @param out_shape Will be filled with the output shape (more than the actual
@@ -1113,7 +1117,10 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr)
  * @param requested_descr A user provided fixed descriptor. This is always
  *        returned as the discovered descriptor, but currently only used
  *        for the ``__array__`` protocol.
- * @param out_descr The discovered output descriptor.
+ * @param out_descr Set to the discovered output descriptor. This may be
+ *        non NULL but only when fixed_DType/requested_descr are not given.
+ *        If non NULL, it is the first dtype being promoted and used if there
+ *        are no elements.
  * @return dimensions of the discovered object or -1 on error.
  *         WARNING: If (and only if) the output is a single array, the ndim
  *         returned _can_ exceed the maximum allowed number of dimensions.
@@ -1128,7 +1135,6 @@ PyArray_DiscoverDTypeAndShape(
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
         PyArray_Descr **out_descr)
 {
-    *out_descr = NULL;
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
 
@@ -1141,6 +1147,11 @@ PyArray_DiscoverDTypeAndShape(
         assert(!descr_is_legacy_parametric_instance(requested_descr));
         assert(fixed_DType == NPY_DTYPE(requested_descr));
     }
+    /*
+     * For easier support of legacy behaviour we support a passed in output
+     * when no descriptor is already defined.
+     */
+    assert(*out_descr == NULL || fixed_DType == NULL);
 
     /*
      * Call the recursive function, the setup for this may need expanding
