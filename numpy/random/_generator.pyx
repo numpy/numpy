@@ -3345,7 +3345,8 @@ cdef class Generator:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
                             tol=1e-8, *, method='svd'):
         """
-        multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
+        multivariate_normal(mean, cov, size=None, check_valid='warn',
+                            tol=1e-8, *, method='svd')
 
         Draw random samples from a multivariate normal distribution.
 
