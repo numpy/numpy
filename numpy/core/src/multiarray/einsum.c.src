@@ -276,6 +276,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b;
+#elif EINSUM_USE_SSE2 && @float64@
+__m128d a, b;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
@@ -324,7 +326,29 @@ finish_after_unrolled_loop:
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
+        EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            a = _mm_mul_pd(_mm_load_pd(data0+@i@), _mm_load_pd(data1+@i@));
+            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
+            _mm_store_pd(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 8;
+            data1 += 8;
+            data_out += 8;
+        }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
 #if EINSUM_USE_SSE1 && @float32@
 /**begin repeat2
  * #i = 0, 4#
@@ -332,6 +356,14 @@ finish_after_unrolled_loop:
         a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
         _mm_storeu_ps(data_out+@i@, b);
+/**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), _mm_loadu_pd(data1+@i@));
+        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
+        _mm_storeu_pd(data_out+@i@, b);
 /**end repeat2**/
 #else
 /**begin repeat2
