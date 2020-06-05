@@ -1410,9 +1410,9 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
 static int
 npyiter_check_reduce_ok_and_set_flags(
         NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
-        int dim) {
+        int iop, int maskop, int dim) {
     /* If it's writeable, this means a reduction */
-    if (*op_itflags & NPY_OP_ITFLAG_WRITE) {
+    if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
         if (!(flags & NPY_ITER_REDUCE_OK)) {
             PyErr_Format(PyExc_ValueError,
                     "output operand requires a reduction along dimension %d, "
@@ -1420,17 +1420,35 @@ npyiter_check_reduce_ok_and_set_flags(
                     "does not match the expected output shape.", dim);
             return 0;
         }
-        if (!(*op_itflags & NPY_OP_ITFLAG_READ)) {
+        if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
             PyErr_SetString(PyExc_ValueError,
                     "output operand requires a reduction, but is flagged as "
                     "write-only, not read-write");
+            return 0;
+        }
+        /*
+         * The ARRAYMASK can't be a reduction, because
+         * it would be possible to write back to the
+         * array once when the ARRAYMASK says 'True',
+         * then have the reduction on the ARRAYMASK
+         * later flip to 'False', indicating that the
+         * write back should never have been done,
+         * and violating the strict masking semantics
+         */
+        if (iop == maskop) {
+            PyErr_SetString(PyExc_ValueError,
+                    "output operand requires a "
+                    "reduction, but is flagged as "
+                    "the ARRAYMASK operand which "
+                    "is not permitted to be the "
+                    "result of a reduction");
             return 0;
         }
         NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is"
                          "occurring\n");
 
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-        *op_itflags |= NPY_OP_ITFLAG_REDUCE;
+        op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
     }
     return 1;
 }
@@ -1613,42 +1631,9 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                             goto operand_different_than_broadcast;
                         }
                         /* If it's writeable, this means a reduction */
-                        if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                            if (!(flags & NPY_ITER_REDUCE_OK)) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a "
-                                        "reduction, but reduction is "
-                                        "not enabled");
-                                return 0;
-                            }
-                            if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a "
-                                        "reduction, but is flagged as "
-                                        "write-only, not read-write");
-                                return 0;
-                            }
-                            /*
-                             * The ARRAYMASK can't be a reduction, because
-                             * it would be possible to write back to the
-                             * array once when the ARRAYMASK says 'True',
-                             * then have the reduction on the ARRAYMASK
-                             * later flip to 'False', indicating that the
-                             * write back should never have been done,
-                             * and violating the strict masking semantics
-                             */
-                            if (iop == maskop) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a "
-                                        "reduction, but is flagged as "
-                                        "the ARRAYMASK operand which "
-                                        "is not permitted to be the "
-                                        "result of a reduction");
-                                return 0;
-                            }
-
-                            NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-                            op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
+                        if (!npyiter_check_reduce_ok_and_set_flags(
+                                iter, flags, op_itflags, iop, maskop, idim)) {
+                            return 0;
                         }
                     }
                     else {
@@ -1697,7 +1682,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                             goto operand_different_than_broadcast;
                         }
                         if (!npyiter_check_reduce_ok_and_set_flags(
-                                iter, flags, &op_itflags[iop], i)) {
+                                iter, flags, op_itflags, iop, maskop, i)) {
                             return 0;
                         }
                     }
@@ -1707,8 +1692,14 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                 }
                 else {
                     strides[iop] = 0;
+                    /*
+                     * If deleting this axis produces a reduction, but
+                     * reduction wasn't enabled, throw an error.
+                     * NOTE: We currently always allow new-axis if the iteration
+                     *       size is 1 (thus allowing broadcasting sometimes).
+                     */
                     if (!npyiter_check_reduce_ok_and_set_flags(
-                            iter, flags, &op_itflags[iop], i)) {
+                            iter, flags, op_itflags, iop, maskop, i)) {
                         return 0;
                     }
                 }
@@ -2545,6 +2536,11 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
             i = npyiter_undo_iter_axis_perm(idim, ndim, perm, NULL);
             i = npyiter_get_op_axis(op_axes[i], &reduction_axis);
 
+            /*
+             * If i < 0, this is a new axis (the operand does not have it)
+             * so we can ignore it here.  The iterator setup will have
+             * ensured already that a potential reduction/broadcast is valid.
+             */
             if (i >= 0) {
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
                                     "for iterator dimension %d to %d\n", (int)i,
@@ -2573,22 +2569,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 else {
                     assert(!reduction_axis || shape[i] == 1);
                     stride *= shape[i];
-                }
-            }
-            else {
-                if (shape == NULL) {
-                    /*
-                     * If deleting this axis produces a reduction, but
-                     * reduction wasn't enabled, throw an error.
-                     * NOTE: We currently always allow new-axis if the iteration
-                     *       size is 1 (thus allowing broadcasting sometimes).
-                     */
-                    if (!reduction_axis && NAD_SHAPE(axisdata) != 1) {
-                        if (!npyiter_check_reduce_ok_and_set_flags(
-                                iter, flags, op_itflags, i)) {
-                            return NULL;
-                        }
-                    }
                 }
             }
         }

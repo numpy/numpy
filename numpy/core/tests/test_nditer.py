@@ -2728,6 +2728,7 @@ def test_iter_writemasked_badinput():
                     op_dtypes=['f4', None],
                     casting='same_kind')
 
+
 def _is_buffered(iterator):
     try:
         iterator.itviews
@@ -2802,6 +2803,34 @@ def test_iter_writemasked(a):
     # Even though we violated the semantics, only the selected values
     # were copied back
     assert_equal(a, np.broadcast_to([3, 3, 2.5] * reps, shape))
+
+
+@pytest.mark.parametrize(["mask", "mask_axes"], [
+        # Allocated operand (only broadcasts with -1)
+        (None, [-1, 0]),
+        # Reduction along the first dimension (with and without op_axes)
+        (np.zeros((1, 4), dtype="bool"), [0, 1]),
+        (np.zeros((1, 4), dtype="bool"), None),
+        # Test 0-D and -1 op_axes
+        (np.zeros(4, dtype="bool"), [-1, 0]),
+        (np.zeros((), dtype="bool"), [-1, -1]),
+        (np.zeros((), dtype="bool"), None)])
+def test_iter_writemasked_broadcast_error(mask, mask_axes):
+    # This assumes that a readwrite mask makes sense. This is likely not the
+    # case and should simply be deprecated.
+    arr = np.zeros((3, 4))
+    itflags = ["reduce_ok"]
+    mask_flags = ["arraymask", "readwrite", "allocate"]
+    a_flags = ["writeonly", "writemasked"]
+    if mask_axes is None:
+        op_axes = None
+    else:
+        op_axes = [mask_axes, [0, 1]]
+
+    with assert_raises(ValueError):
+        np.nditer((mask, arr), flags=itflags, op_flags=[mask_flags, a_flags],
+                  op_axes=op_axes)
+
 
 def test_iter_writemasked_decref():
     # force casting (to make it interesting) by using a structured dtype.
