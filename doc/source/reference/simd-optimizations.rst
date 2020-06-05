@@ -180,7 +180,7 @@ objects together.
   procedures, which are explained as follow:
 
 1- Configuration
-----------------
+~~~~~~~~~~~~~~~~
 
 | Configuring the required optimization by the user before starting to
   build the source files via two command
@@ -193,26 +193,26 @@ objects together.
 See **TODO**
 
 2- Discovering the environment
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In this part, we check what kind of compiler and architecture we deal
 with, also handling the caching process which is important to speed up
 the rebuilding.
 
 3- Parsing the command arguments
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 NumPy have a very unique syntax that gives the user ability to easily
 manage the optimizations. See **TODO**
 
 4- Validating the required optimizations
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By testing them against the compiler, and seeing what the compiler can
 support according to the required optimizations.
 
 5- Generating the main configuration header
--------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The header contains all the definitions and headers of instruction-sets
 for the required optimizations that have been validated during the
@@ -299,7 +299,7 @@ procedure.
   enabled within **dispatch-able sources**.
 
 6- Dispatch-able sources and configuration statements
------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dispatch-able sources are special C files that can be compiled multiple
 times with different compiler flags and also with different **C**
