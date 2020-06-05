@@ -920,7 +920,7 @@ class ABCPolyBase(abc.ABC):
         x : array_like, shape (M,)
             x-coordinates of the M sample points ``(x[i], y[i])``.
         y : array_like, shape (M,)
-            y-coordinates of the sample points.
+            y-coordinates of the sample points ``(x[i], y[i])``.
         deg : int or 1-D array_like
             Degree(s) of the fitting polynomials. If `deg` is a single integer
             all terms up to and including the `deg`'th term are included in the
