@@ -529,7 +529,8 @@ static int searchside_parser(char const *str, Py_ssize_t length, void *data)
     }
 
     /* Filters out the case sensitive/non-exact
-     * match inputs and other inputs and outputs DeprecationWarning */
+     * match inputs and other inputs and outputs DeprecationWarning
+     */
     if (!is_exact) {
         /* NumPy 1.20, 2020-05-19 */
         if (DEPRECATE("inexact matches and case insensitive matches "
@@ -556,42 +557,28 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
 static int order_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_ORDER *val = (NPY_ORDER *)data;
-    int is_exact = 0;
-
     if (length != 1) {
         return -1;
     }
     if (str[0] == 'C' || str[0] == 'c') {
         *val = NPY_CORDER;
-        is_exact = str[0] == 'C';
+        return 0;
     }
     else if (str[0] == 'F' || str[0] == 'f') {
         *val = NPY_FORTRANORDER;
-        is_exact = str[0] == 'F';
+        return 0;
     }
     else if (str[0] == 'A' || str[0] == 'a') {
         *val = NPY_ANYORDER;
-        is_exact = str[0] == 'A';
+        return 0;
     }
     else if (str[0] == 'K' || str[0] == 'k') {
         *val = NPY_KEEPORDER;
-        is_exact = str[0] == 'K';
+        return 0;
     }
     else {
         return -1;
     }
-
-    /* Filters out the case sensitive/non-exact
-     * match inputs and other inputs and outputs DeprecationWarning */
-    if (!is_exact) {
-        /* Numpy 1.20, 2020-05-19 */
-        if (DEPRECATE("case insensitive matches "
-                      "for order are deprecated, please use "
-                      "one of 'C', 'F', 'A' or 'K' instead.") < 0) {
-            return -1;
-        }
-    }
-    return 0;
 }
 
 /*NUMPY_API
@@ -634,7 +621,8 @@ static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
     }
 
     /* Filters out the case sensitive/non-exact
-     * match inputs and other inputs and outputs DeprecationWarning */
+     * match inputs and other inputs and outputs DeprecationWarning
+     */
     if (!is_exact) {
         /* Numpy 1.20, 2020-05-19 */
         if (DEPRECATE("inexact matches and case insensitive matches "

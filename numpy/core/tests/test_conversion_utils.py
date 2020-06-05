@@ -129,11 +129,13 @@ class TestSearchsideConverter(StringConverterTestCase):
 class TestOrderConverter(StringConverterTestCase):
     """ Tests of PyArray_OrderConverter """
     conv = mt.run_order_converter
+    warn = False
+
     def test_valid(self):
-        self._check('C', 'NPY_CORDER')
-        self._check('F', 'NPY_FORTRANORDER')
-        self._check('A', 'NPY_ANYORDER')
-        self._check('K', 'NPY_KEEPORDER')
+        self._check('c', 'NPY_CORDER')
+        self._check('f', 'NPY_FORTRANORDER')
+        self._check('a', 'NPY_ANYORDER')
+        self._check('k', 'NPY_KEEPORDER')
 
     def test_flatten_invalid_order(self):
         # invalid after gh-14596

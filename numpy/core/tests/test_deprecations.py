@@ -651,8 +651,6 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
     # 2020-04-22
     def test_non_exact_match(self):
         arr = np.array([[3, 6, 6], [4, 5, 1]])
-        # case insensitive check
-        self.assert_deprecated(np.ravel_multi_index, args=(arr, (7, 6)), kwargs={"order": "f"})
         # misspelt mode check
         self.assert_deprecated(lambda: np.ravel_multi_index(arr, (7, 6), mode='Cilp'))
         # using completely different word with first character as R

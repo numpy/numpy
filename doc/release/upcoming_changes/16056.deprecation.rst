@@ -1,14 +1,12 @@
-Inexact matches for mode, order and searchside are deprecated
--------------------------------------------------------------
-Inexact and case insensitive matches for mode, order and searchside were
+Inexact matches for mode and searchside are deprecated
+------------------------------------------------------
+Inexact and case insensitive matches for mode and searchside were
 valid inputs earlier and will give a DeprecationWarning now.
 For example, below are some example usages which are now deprecated and will
 give a DeprecationWarning.
 
     import numpy as np
     arr = np.array([[3, 6, 6], [4, 5, 1]])
-    # order: case insensitive match
-    np.ravel_multi_index(arr, (7, 6), order="f")  # should be "F"
     # mode: inexact match
     np.ravel_multi_index(arr, (7, 6), mode="clap")  # should be "clip"
     # searchside: inexact match
