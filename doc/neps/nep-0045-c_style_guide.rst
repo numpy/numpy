@@ -73,8 +73,8 @@ C dialect
 
 * No compiler warnings with major compilers (gcc, VC++, a few others).
 
-..  Note::
-    NumPy still produces compiler warnings that need to be addressed.
+.. note::
+   NumPy still produces compiler warnings that need to be addressed.
 
 Code layout
 ============
@@ -228,7 +228,8 @@ Naming conventions
   ``array_real_get``. Single leading underscores should not be used, but
   some current function names violate that rule due to historical accident.
 
-.. Note::
+.. note::
+
    Functions whose names begin with a single underscore should be renamed at
    some point.
 
