@@ -1,3 +1,5 @@
+.. _NEP45:
+
 =================================
 NEP 45 — C Style Guide
 =================================
@@ -244,7 +246,7 @@ C functions, see the files in ``doc/cdoc/``.
 Related Work
 ------------
 
-Based on Van Rossum and Warsaw, :pep:`7`_
+Based on Van Rossum and Warsaw, :pep:`7`
 
 
 Discussion
