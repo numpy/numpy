@@ -30,6 +30,11 @@ GSYMS
 GTAGS
 .cache
 
+#OS-Based
+.DS_Store
+Thumbs.db
+.vagrant/
+
 # Compiled source #
 ###################
 *.a
