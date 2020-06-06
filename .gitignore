@@ -15,9 +15,28 @@
 pmip
 *.rej
 .settings/
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 .*.sw[nop]
 .sw[nop]
 *.tmp
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+Network Trash Folder
+Temporary Items
+.apdisk
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 *.vim
 .vscode
 tags
@@ -34,6 +53,21 @@ GTAGS
 .DS_Store
 Thumbs.db
 .vagrant/
+ehthumbs.db
+*.cab
+*.msi
+*.msix
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.msm
+*.msp
+*.lnk
+.AppleDouble
+.LSOverride
+Icon
+._*
 
 # Compiled source #
 ###################
