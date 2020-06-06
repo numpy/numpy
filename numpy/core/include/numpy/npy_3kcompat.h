@@ -62,9 +62,9 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 
 #if PY_VERSION_HEX < 0x030900a4
     /* Introduced in https://github.com/python/cpython/commit/d2ec81a8c99796b51fb8c49b77a7fe369863226f */
-    #define Py_SET_TYPE(obj, typ) (Py_TYPE(obj) = typ)
+    #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)), (void)0)
     /* Introduced in https://github.com/python/cpython/commit/b10dc3e7a11fcdb97e285882eba6da92594f90f9 */
-    #define Py_SET_SIZE(obj, size) (Py_SIZE(obj) = size)
+    #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)), (void)0)
 #endif
 
 
