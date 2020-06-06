@@ -387,8 +387,7 @@ Acknowledgements
 ================
 
 Substantial portions of this document were adapted from the
-`Jupyter/IPython project's governance document
-<https://github.com/jupyter/governance/blob/master/governance.md>`_.
+`Jupyter/IPython project's governance document <https://github.com/jupyter/governance>`_
 
 License
 =======

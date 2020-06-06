@@ -87,7 +87,7 @@ check out the following specific guides:
 Major additions to the documentation (e.g. new tutorials) should be proposed to
 the `mailing list
 <https://mail.python.org/mailman/listinfo/numpy-discussion>`__.
-  
+
 Other ways to contribute
 ------------------------
 
@@ -145,5 +145,5 @@ the quality of the documentation.
   resources for technical writing.
 - Google offers two free `Technical Writing Courses
   <https://developers.google.com/tech-writing>`__
-- `Software Carpentry <https://software-carpentry.org/software>`__ has a lot of
+- `Software Carpentry <https://carpentries.github.io/curriculum-development/>`__ has a lot of
   nice recommendations for creating educational material.

@@ -19,18 +19,11 @@ Source tree
 NumPy Docs
 ----------
 - https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
-- http://projects.scipy.org/numpy/wiki/MicrosoftToolchainSupport (dead link)
 
 
 SciPy.org wiki
 --------------
 - https://www.scipy.org/Installing_SciPy and links on that page.
-- http://new.scipy.org/building/windows.html (dead link)
-
-
-Doc wiki
---------
-- http://docs.scipy.org/numpy/docs/numpy-docs/user/install.rst/ (dead link)
 
 
 Release Scripts

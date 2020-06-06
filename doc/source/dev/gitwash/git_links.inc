@@ -16,7 +16,7 @@
 .. _subversion: http://subversion.tigris.org/
 .. _git cheat sheet: http://cheat.errtheblog.com/s/git
 .. _pro git book: https://git-scm.com/book/
-.. _git svn crash course: https://git-scm.com/course/svn.html
+.. _git svn crash course: https://git.wiki.kernel.org/index.php/GitSvnCrashCourse
 .. _learn.github: https://learn.github.com/
 .. _network graph visualizer: https://github.blog/2008-04-10-say-hello-to-the-network-graph-visualizer/
 .. _git user manual: https://www.kernel.org/pub/software/scm/git/docs/user-manual.html
@@ -42,7 +42,7 @@
 .. _why the -a flag?: http://www.gitready.com/beginner/2009/01/18/the-staging-area.html
 .. _git staging area: http://www.gitready.com/beginner/2009/01/18/the-staging-area.html
 .. _tangled working copy problem: https://tomayko.com/writings/the-thing-about-git
-.. _git management: http://kerneltrap.org/Linux/Git_Management
+.. _git management: https://web.archive.org/web/20090328043540/http://kerneltrap.org/Linux/Git_Management
 .. _linux git workflow: https://www.mail-archive.com/dri-devel@lists.sourceforge.net/msg39091.html
 .. _ipython git workflow: https://mail.python.org/pipermail/ipython-dev/2010-October/005632.html
 .. _git parable: http://tom.preston-werner.com/2009/05/19/the-git-parable.html
