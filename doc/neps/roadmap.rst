@@ -57,11 +57,15 @@ improve the dtype system.
 Performance
 -----------
 
-We want to further improve NumPy's performance, through:
+Improvements to NumPy's performance are important to many users. The primary
+topic at the moment is better use of SIMD instructions, also on platforms other
+than x86 - see :ref:`NEP38`.
 
-- Better use of SIMD instructions, also on platforms other than x86 - see :ref:`NEP38`.
-- Reducing ufunc overhead.
+Other performance improvement ideas include:
+
+- Reducing ufunc and ``__array_function__`` overhead.
 - Optimizations in individual functions.
+- A better story around parallel execution.
 
 Furthermore we would like to improve the benchmarking system, in terms of coverage,
 easy of use, and publication of the results (now
@@ -71,13 +75,14 @@ easy of use, and publication of the results (now
 Website and documentation
 -------------------------
 
+The NumPy `documentation <https://www.numpy.org/devdocs>`__ is of varying
+quality. The API documentation is in good shape; tutorials and high-level
+documentation on many topics are missing or outdated. See :ref:`NEP44` for
+planned improvements.
+
 Our website (https://numpy.org) was completely redesigned recently. We aim to
 further improve it by adding translations, better Hugo-Sphinx integration via a
 new Sphinx theme, and more (see `this tracking issue <https://github.com/numpy/numpy.org/issues/266>`__).
-
-The NumPy `documentation <https://www.numpy.org/devdocs>`__ is of varying
-quality. The API documentation is in good shape, high-level documentation on
-many topics is missing or outdated. See :ref:`NEP44` for planned improvements.
 
 
 User experience
@@ -113,6 +118,11 @@ Maintenance
 - A backend system for ``numpy.fft`` (so that e.g. ``fft-mkl`` doesn't need to monkeypatch numpy).
 - Write a strategy on how to deal with overlap between NumPy and SciPy for ``linalg``.
 - Deprecate ``np.matrix`` (very slowly).
+- Add new indexing modes for "vectorized indexing" and "outer indexing" (see :ref:`NEP21`).
+- Make the polynomial API easier to use.
+- Integrate an improved text file loader.
+- Ufunc and gufunc improvements, see `gh-8892 <https://github.com/numpy/numpy/issues/8892>`__
+  and `gh-11492 <https://github.com/numpy/numpy/issues/11492>`__.
 
 
 .. _`mypy`: https://mypy.readthedocs.io
