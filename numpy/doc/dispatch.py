@@ -267,5 +267,5 @@ Refer to the `dask source code <https://github.com/dask/dask>`_ and
 `cupy source code <https://github.com/cupy/cupy>`_  for more fully-worked
 examples of custom array containers.
 
-See also `NEP 18 <http://www.numpy.org/neps/nep-0018-array-function-protocol.html>`_.
+See also :doc:`NEP 18<neps:nep-0018-array-function-protocol>`.
 """

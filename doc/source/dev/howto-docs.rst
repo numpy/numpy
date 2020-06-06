@@ -35,8 +35,8 @@ Current vision for the documentation: NEP 44
 --------------------------------------------
 
 Recently, the NumPy community approved a *NumPy Enhancement Proposal (NEP)*
-about documentation, `NEP 44 - Restructuring the NumPy Documentation
-<https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
+about documentation,
+:ref:`NEP 44 - Restructuring the NumPy Documentation <NEP44>`.
 
 **Where is the documentation?**
 
