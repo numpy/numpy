@@ -40,25 +40,9 @@ typedef struct {
     jmp_buf jmpbuf;
 } #name#_t;
 
-#if defined(__GNUC__) \
-    && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 4))) \
-    && !defined(F2PY_USE_PYTHON_TLS)
+#if defined(F2PY_THREAD_LOCAL_DECL) && !defined(F2PY_USE_PYTHON_TLS)
 
-static __thread #name#_t *_active_#name# = NULL;
-
-static #name#_t *swap_active_#name#(#name#_t *ptr) {
-    #name#_t *prev = _active_#name#;
-    _active_#name# = ptr;
-    return prev;
-}
-
-static #name#_t *get_active_#name#(void) {
-    return _active_#name#;
-}
-
-#elif defined(_MSC_VER) && !defined(F2PY_USE_PYTHON_TLS)
-
-static __declspec(thread) #name#_t *_active_#name# = NULL;
+static F2PY_THREAD_LOCAL_DECL #name#_t *_active_#name# = NULL;
 
 static #name#_t *swap_active_#name#(#name#_t *ptr) {
     #name#_t *prev = _active_#name#;
@@ -196,7 +180,7 @@ capi_return_pt:
 }
 #endtitle#
 """,
-    'need': ['setjmp.h', 'CFUNCSMESS'],
+    'need': ['setjmp.h', 'CFUNCSMESS', 'F2PY_THREAD_LOCAL_DECL'],
     'maxnofargs': '#maxnofargs#',
     'nofoptargs': '#nofoptargs#',
     'docstr': """\
