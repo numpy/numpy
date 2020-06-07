@@ -7,3 +7,6 @@ pickle5; python_version == '3.7'
 pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending
 cffi
+# for testing types
+mypy==0.770; platform_python_implementation != "PyPy"
+typing_extensions
