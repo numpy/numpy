@@ -64,7 +64,7 @@ _append_char(_tmp_string_t *s, char c)
         char *p;
         size_t to_alloc = (s->allocated == 0) ? INIT_SIZE : (2 * s->allocated);
 
-        p = realloc(s->s, to_alloc);
+        p = PyObject_Realloc(s->s, to_alloc);
         if (p == NULL) {
             PyErr_SetString(PyExc_MemoryError, "memory allocation failed");
             return -1;
@@ -458,49 +458,22 @@ static PyObject *_buffer_info_cache = NULL;
 static _buffer_info_t*
 _buffer_info_new(PyObject *obj)
 {
+    /*
+     * Note that the buffer info is cached as PyLongObjects making them appear
+     * like unreachable lost memory to valgrind.
+     */
     _buffer_info_t *info;
     _tmp_string_t fmt = {NULL, 0, 0};
     int k;
     PyArray_Descr *descr = NULL;
     int err = 0;
 
-    /*
-     * Note that the buffer info is cached as pyints making them appear like
-     * unreachable lost memory to valgrind.
-     */
-    info = malloc(sizeof(_buffer_info_t));
-    if (info == NULL) {
-        PyErr_NoMemory();
-        goto fail;
-    }
-
-    if (PyArray_IsScalar(obj, Datetime) || PyArray_IsScalar(obj, Timedelta)) {
-        /*
-         * Special case datetime64 scalars to remain backward compatible.
-         * This will change in a future version.
-         * Note arrays of datetime64 and structured arrays with datetime64
-         * fields will not hit this code path and are currently unsupported
-         * in _buffer_format_string.
-         */
-        if (_append_char(&fmt, 'B') < 0) {
-            goto fail;
-        }
-        if (_append_char(&fmt, '\0') < 0) {
-            goto fail;
-        }
-        info->ndim = 1;
-        info->shape = malloc(sizeof(Py_ssize_t) * 2);
-        if (info->shape == NULL) {
+    if (PyArray_IsScalar(obj, Void)) {
+        info = PyObject_Malloc(sizeof(_buffer_info_t));
+        if (info == NULL) {
             PyErr_NoMemory();
             goto fail;
         }
-        info->strides = info->shape + info->ndim;
-        info->shape[0] = 8;
-        info->strides[0] = 1;
-        info->format = fmt.s;
-        return info;
-    }
-    else if (PyArray_IsScalar(obj, Generic)) {
         descr = PyArray_DescrFromScalar(obj);
         if (descr == NULL) {
             goto fail;
@@ -510,8 +483,16 @@ _buffer_info_new(PyObject *obj)
         info->strides = NULL;
     }
     else {
+        assert(PyArray_Check(obj));
         PyArrayObject * arr = (PyArrayObject *)obj;
         descr = PyArray_DESCR(arr);
+
+        info = PyObject_Malloc(sizeof(_buffer_info_t) +
+                               sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2);
+        if (info == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
         /* Fill in shape and strides */
         info->ndim = PyArray_NDIM(arr);
 
@@ -520,11 +501,8 @@ _buffer_info_new(PyObject *obj)
             info->strides = NULL;
         }
         else {
-            info->shape = malloc(sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2 + 1);
-            if (info->shape == NULL) {
-                PyErr_NoMemory();
-                goto fail;
-            }
+            info->shape = (npy_intp *)((char *)info + sizeof(_buffer_info_t));
+            assert((size_t)info->shape % sizeof(npy_intp) == 0);
             info->strides = info->shape + PyArray_NDIM(arr);
             for (k = 0; k < PyArray_NDIM(arr); ++k) {
                 info->shape[k] = PyArray_DIMS(arr)[k];
@@ -538,11 +516,9 @@ _buffer_info_new(PyObject *obj)
     err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
     Py_DECREF(descr);
     if (err != 0) {
-        free(info->shape);
         goto fail;
     }
     if (_append_char(&fmt, '\0') < 0) {
-        free(info->shape);
         goto fail;
     }
     info->format = fmt.s;
@@ -550,8 +526,8 @@ _buffer_info_new(PyObject *obj)
     return info;
 
 fail:
-    free(fmt.s);
-    free(info);
+    PyObject_Free(fmt.s);
+    PyObject_Free(info);
     return NULL;
 }
 
@@ -582,12 +558,9 @@ static void
 _buffer_info_free(_buffer_info_t *info)
 {
     if (info->format) {
-        free(info->format);
+        PyObject_Free(info->format);
     }
-    if (info->shape) {
-        free(info->shape);
-    }
-    free(info);
+    PyObject_Free(info);
 }
 
 /* Get buffer info from the global dictionary */
