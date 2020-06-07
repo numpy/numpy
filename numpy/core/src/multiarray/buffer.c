@@ -135,11 +135,24 @@ fail:
  * AND, the descr element size is a multiple of the alignment,
  * AND, the array data is positioned to alignment granularity.
  */
-static int
+static NPY_INLINE int
 _is_natively_aligned_at(PyArray_Descr *descr,
                         PyArrayObject *arr, Py_ssize_t offset)
 {
     int k;
+
+    if (NPY_LIKELY(descr == PyArray_DESCR(arr))) {
+        /*
+         * If the descriptor is the arrays descriptor we can assume the
+         * array's alignment is correct.
+         */
+        assert(offset == 0);
+        if (PyArray_ISALIGNED(arr)) {
+            assert(descr->elsize % descr->alignment == 0);
+            return 1;
+        }
+        return 0;
+    }
 
     if ((Py_ssize_t)(PyArray_DATA(arr)) % descr->alignment != 0) {
         return 0;
@@ -297,8 +310,6 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 descr->type_num == NPY_ULONGLONG);
         }
 
-        *offset += descr->elsize;
-
         if (PyArray_IsScalar(obj, Generic)) {
             /* scalars are always natively aligned */
             is_natively_aligned = 1;
@@ -307,6 +318,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             is_natively_aligned = _is_natively_aligned_at(descr,
                                               (PyArrayObject*)obj, *offset);
         }
+
+        *offset += descr->elsize;
 
         if (descr->byteorder == '=' && is_natively_aligned) {
             /* Prefer native types, to cater for Cython */
