@@ -12,7 +12,10 @@ except ImportError:
 else:
     NO_MYPY = False
 
-TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTS_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "typing",
+)
 PASS_DIR = os.path.join(TESTS_DIR, "pass")
 FAIL_DIR = os.path.join(TESTS_DIR, "fail")
 REVEAL_DIR = os.path.join(TESTS_DIR, "reveal")
