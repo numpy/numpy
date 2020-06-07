@@ -78,7 +78,13 @@ def test_fail(path):
         if not error_line:
             continue
 
-        lineno = int(error_line.split(":")[1])
+        match = re.match(
+            r"^.+\.py:(?P<lineno>\d+): (error|note): .+$",
+            error_line,
+        )
+        if match is None:
+            raise ValueError(f"Unexpected error line format: {error_line}")
+        lineno = int(match.group('lineno'))
         errors[lineno] += error_line
 
     for i, line in enumerate(lines):
@@ -114,7 +120,13 @@ def test_reveal(path):
         if not error_line:
             continue
 
-        lineno = int(error_line.split(":")[1])
+        match = re.match(
+            r"^.+\.py:(?P<lineno>\d+): note: .+$",
+            error_line,
+        )
+        if match is None:
+            raise ValueError(f"Unexpected reveal line format: {error_line}")
+        lineno = int(match.group('lineno'))
         assert "Revealed type is" in error_line
         marker = lines[lineno - 1].split("# E:")[-1].strip()
         assert marker in error_line
