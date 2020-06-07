@@ -33,13 +33,61 @@ cb_routine_rules = {
     'cbtypedefs': 'typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);',
     'body': """
 #begintitle#
-PyObject *#name#_capi = NULL;/*was Py_None*/
-PyTupleObject *#name#_args_capi = NULL;
-int #name#_nofargs = 0;
-jmp_buf #name#_jmpbuf;
+typedef struct {
+    PyObject *capi;
+    PyTupleObject *args_capi;
+    int nofargs;
+    jmp_buf jmpbuf;
+} #name#_t;
+
+#if defined(__GNUC__) \
+    && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 4))) \
+    && !defined(F2PY_USE_PYTHON_TLS)
+
+static __thread #name#_t *_active_#name# = NULL;
+
+static #name#_t *swap_active_#name#(#name#_t *ptr) {
+    #name#_t *prev = _active_#name#;
+    _active_#name# = ptr;
+    return prev;
+}
+
+static #name#_t *get_active_#name#(void) {
+    return _active_#name#;
+}
+
+#elif defined(_MSC_VER) && !defined(F2PY_USE_PYTHON_TLS)
+
+static __declspec(thread) #name#_t *_active_#name# = NULL;
+
+static #name#_t *swap_active_#name#(#name#_t *ptr) {
+    #name#_t *prev = _active_#name#;
+    _active_#name# = ptr;
+    return prev;
+}
+
+static #name#_t *get_active_#name#(void) {
+    return _active_#name#;
+}
+
+#else
+
+static #name#_t *swap_active_#name#(#name#_t *ptr) {
+    char *key = "__f2py_cb_#name#";
+    return (#name#_t *)F2PySwapThreadLocalCallbackPtr(key, ptr);
+}
+
+static #name#_t *get_active_#name#(void) {
+    char *key = "__f2py_cb_#name#";
+    return (#name#_t *)F2PyGetThreadLocalCallbackPtr(key);
+}
+
+#endif
+
 /*typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);*/
 #static# #rctype# #callbackname# (#optargs##args##strarglens##noargs#) {
-    PyTupleObject *capi_arglist = #name#_args_capi;
+    #name#_t *cb;
+    PyTupleObject *capi_arglist = NULL;
     PyObject *capi_return = NULL;
     PyObject *capi_tmp = NULL;
     PyObject *capi_arglist_list = NULL;
@@ -49,19 +97,21 @@ jmp_buf #name#_jmpbuf;
 #ifdef F2PY_REPORT_ATEXIT
 f2py_cb_start_clock();
 #endif
+    cb = get_active_#name#();
+    capi_arglist = cb->args_capi;
     CFUNCSMESS(\"cb:Call-back function #name# (maxnofargs=#maxnofargs#(-#nofoptargs#))\\n\");
-    CFUNCSMESSPY(\"cb:#name#_capi=\",#name#_capi);
-    if (#name#_capi==NULL) {
+    CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
+    if (cb->capi==NULL) {
         capi_longjmp_ok = 0;
-        #name#_capi = PyObject_GetAttrString(#modulename#_module,\"#argname#\");
+        cb->capi = PyObject_GetAttrString(#modulename#_module,\"#argname#\");
     }
-    if (#name#_capi==NULL) {
+    if (cb->capi==NULL) {
         PyErr_SetString(#modulename#_error,\"cb: Callback #argname# not defined (as an argument or module #modulename# attribute).\\n\");
         goto capi_fail;
     }
-    if (F2PyCapsule_Check(#name#_capi)) {
+    if (F2PyCapsule_Check(cb->capi)) {
     #name#_typedef #name#_cptr;
-    #name#_cptr = F2PyCapsule_AsVoidPtr(#name#_capi);
+    #name#_cptr = F2PyCapsule_AsVoidPtr(cb->capi);
     #returncptr#(*#name#_cptr)(#optargs_nm##args_nm##strarglens_nm#);
     #return#
     }
@@ -103,11 +153,11 @@ f2py_cb_start_clock();
 f2py_cb_start_call_clock();
 #endif
 #ifdef PYPY_VERSION
-    capi_return = PyObject_CallObject(#name#_capi,(PyObject *)capi_arglist_list);
+    capi_return = PyObject_CallObject(cb->capi,(PyObject *)capi_arglist_list);
     Py_DECREF(capi_arglist_list);
     capi_arglist_list = NULL;
 #else
-    capi_return = PyObject_CallObject(#name#_capi,(PyObject *)capi_arglist);
+    capi_return = PyObject_CallObject(cb->capi,(PyObject *)capi_arglist);
 #endif
 #ifdef F2PY_REPORT_ATEXIT
 f2py_cb_stop_call_clock();
@@ -137,8 +187,9 @@ capi_fail:
     fprintf(stderr,\"Call-back #name# failed.\\n\");
     Py_XDECREF(capi_return);
     Py_XDECREF(capi_arglist_list);
-    if (capi_longjmp_ok)
-        longjmp(#name#_jmpbuf,-1);
+    if (capi_longjmp_ok) {
+        longjmp(cb->jmpbuf,-1);
+    }
 capi_return_pt:
     ;
 #return#
@@ -335,11 +386,11 @@ cb_arg_rules = [
         '_check': isscalar
     }, {
         'pyobjfrom': [{isintent_in: """\
-    if (#name#_nofargs>capi_i)
+    if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1(#varname_i#)))
             goto capi_fail;"""},
                       {isintent_inout: """\
-    if (#name#_nofargs>capi_i)
+    if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyarr_from_p_#ctype#1(#varname_i#_cb_capi)))
             goto capi_fail;"""}],
         'need': [{isintent_in: 'pyobj_from_#ctype#1'},
@@ -360,11 +411,11 @@ cb_arg_rules = [
     }, {
         'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
                       {isintent_in: """\
-    if (#name#_nofargs>capi_i)
+    if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
             goto capi_fail;"""},
                       {isintent_inout: """\
-    if (#name#_nofargs>capi_i) {
+    if (cb->nofargs>capi_i) {
         int #varname_i#_cb_dims[] = {#varname_i#_cb_len};
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyarr_from_p_#ctype#1(#varname_i#,#varname_i#_cb_dims)))
             goto capi_fail;
@@ -384,13 +435,13 @@ cb_arg_rules = [
     {
         'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                       {isintent_c: """\
-    if (#name#_nofargs>capi_i) {
+    if (cb->nofargs>capi_i) {
         int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
         /*XXX: Hmm, what will destroy this array??? */
         PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_CARRAY,NULL);
 """,
                        l_not(isintent_c): """\
-    if (#name#_nofargs>capi_i) {
+    if (cb->nofargs>capi_i) {
         int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
         /*XXX: Hmm, what will destroy this array??? */
         PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_FARRAY,NULL);
