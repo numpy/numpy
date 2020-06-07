@@ -1,0 +1,8 @@
+NumPy is now typed
+------------------
+Type annotations have been added for large parts of NumPy. There is
+also a new `numpy.typing` module that contains useful types for
+end-users. The currently available types are
+
+- ``ArrayLike``: for objects that can be coerced to an array
+- ``DtypeLike``: for objects that can be coerced to a dtype
