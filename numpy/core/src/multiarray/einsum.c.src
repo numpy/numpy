@@ -598,7 +598,7 @@ finish_after_unrolled_loop:
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
+#if EINSUM_USE_SSE3 && @float32@
 /**begin repeat2
  * #i = 0, 4#
  */
