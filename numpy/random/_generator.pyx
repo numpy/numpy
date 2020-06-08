@@ -2779,7 +2779,7 @@ cdef class Generator:
         generate zero positive results.
 
         >>> sum(rng.binomial(9, 0.1, 20000) == 0)/20000.
-        # answer = 0.38885, or 38%.
+        # answer = 0.38885, or 39%.
 
         """
 
