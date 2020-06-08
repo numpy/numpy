@@ -4596,14 +4596,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             && ((strcmp(ufunc->name,"add") == 0)
                 || (strcmp(ufunc->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_LONG;
+                typenum = NPY_DEFAULT_INT;
             }
-            else if ((size_t)PyArray_DESCR(mp)->elsize < sizeof(long)) {
+            else if ((size_t)PyArray_DESCR(mp)->elsize < NPY_SIZEOF_DEFAULT_INT) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_ULONG;
+                    typenum = NPY_DEFAULT_UINT;
                 }
                 else {
-                    typenum = NPY_LONG;
+                    typenum = NPY_DEFAULT_INT;
                 }
             }
         }

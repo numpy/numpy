@@ -23,6 +23,11 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
 
+# Use NPY_INTP_IS_DEFAULT_INTEGER=1 in the environment to make the default
+# integer always match the size of intp (64bit on 64bit system 32bit on
+# 32bit systems).  This should only affect windows where long is 32bit.
+NPY_INTP_IS_DEFAULT_INTEGER = (os.environ.get('NPY_INTP_IS_DEFAULT_INTEGER', "0") != "0")
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -459,6 +464,11 @@ def configuration(parent_package='',top_path=None):
             # Use bogus stride debug aid when relaxed strides are enabled
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
+
+            # Use intp as the default integer type if long is 32-bit but
+            # intp is 64-bit.
+            if NPY_INTP_IS_DEFAULT_INTEGER:
+                moredefs.append(('NPY_INTP_IS_DEFAULT_INTEGER', 1))
 
             # Get long double representation
             rep = check_long_double_representation(config_cmd)

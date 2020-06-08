@@ -11,6 +11,20 @@ purposes and will not be interesting to the vast majority
 of users.
 
 
+User Facing Options
+===================
+
+Default Integer (affects Windows)
+---------------------------------
+
+The ``NPY_INTP_IS_DEFAULT_INTEGER`` environment variable can be changed
+to ensure that the default integer is 32bit on 32bit systems and 64bit
+on 64bit systems.  Without this switch, the default integer will be
+identical to ``long`` as defined by C.
+This setting should only affect 64bit windows systems for which the default
+integer will be 64bit instead of 32bit.
+
+
 Performance-Related Options
 ===========================
 

@@ -44,6 +44,7 @@ _array_find_python_scalar_type(PyObject *op)
     else if (PyComplex_Check(op)) {
         return PyArray_DescrFromType(NPY_CDOUBLE);
     }
+#if NPY_DEFAULT_INT == NPY_LONG
     else if (PyInt_Check(op)) {
         /* bools are a subclass of int */
         if (PyBool_Check(op)) {
@@ -53,6 +54,7 @@ _array_find_python_scalar_type(PyObject *op)
             return  PyArray_DescrFromType(NPY_LONG);
         }
     }
+#endif
     else if (PyLong_Check(op)) {
         /* check to see if integer can fit into a longlong or ulonglong
            and return that --- otherwise return object */

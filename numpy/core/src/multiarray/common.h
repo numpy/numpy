@@ -348,5 +348,23 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
+
+/*
+ * The default array type and default integer type, if we were to expose
+ * this publically, we would need to put this into the API table so that
+ * it is runtime detected.  Instead assume that we will flip the switch
+ * in some version, and downstream should try to decide based on our
+ * version.
+ */
+#if NPY_INTP_IS_DEFAULT_INTEGER
+    #define NPY_DEFAULT_INT NPY_INTP
+    #define NPY_DEFAULT_UINT NPY_UINTP
+    #define NPY_SIZEOF_DEFAULT_INT NPY_SIZEOF_INTP
+#else
+    #define NPY_DEFAULT_INT NPY_LONG
+    #define NPY_DEFAULT_UINT NPY_ULONG
+    #define NPY_SIZEOF_DEFAULT_INT NPY_SIZEOF_LONG
+#endif
+
 #endif
 

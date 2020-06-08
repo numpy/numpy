@@ -3383,8 +3383,8 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         PyArray_Descr *deftype;
         PyArray_Descr *newtype;
 
-        /* intentionally made to be at least NPY_LONG */
-        deftype = PyArray_DescrFromType(NPY_LONG);
+        /* intentionally made to be at least NPY_DEFAULT_INT */
+        deftype = PyArray_DescrFromType(NPY_DEFAULT_INT);
         newtype = PyArray_DescrFromObject(start, deftype);
         Py_DECREF(deftype);
         if (newtype == NULL) {

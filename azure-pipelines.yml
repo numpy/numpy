@@ -219,6 +219,7 @@ stages:
             PYTHON_VERSION: '3.7'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
+            NPY_INTP_IS_DEFAULT_INTEGER: 1
             BITS: 64
           Python38-64bit-full:
             PYTHON_VERSION: '3.8'
