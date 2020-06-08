@@ -2,35 +2,37 @@
 SIMD Optimizations
 ******************
 
-NumPy provides a set of macros that define `Universal Intrinsics`_, abstracting
-typical platform-specific intrinsics so SIMD code needs to be written only
-once. There are three layers:
+NumPy provides a set of macros that define `Universal Intrinsics`_ to provide
+abstract out typical platform-specific intrinsics so SIMD code needs to be
+written only once. There are three layers:
 
-- Code is written using the universal intrinsic macros, with guards that
+- Code is *written* using the universal intrinsic macros, with guards that
   will enable use of the macros only when the compiler recognizes them.
   In NumPy, these are used to construct multiple ufunc loops. Current policy is
   to create three loops: One loop is the default and uses no intrinsics. One
-  uses the minimum intrinsics required on the architecture. And the thirs is
+  uses the minimum intrinsics required on the architecture. And the third is
   written using the maximum set of intrinsics possible.
-- At compile time, these macros are overlayed with the appropriate platform /
-  architecture intrinsics, and the three loops compiled.
-- At runtime import, the CPU is probed for the set of supported intrinsic
+- At *compile* time, a distutils command is used to define the minimum and
+  maximum features to support, based on user choice and compiler support. The
+  appropriate macros are overlayed with the platform / architecture intrinsics,
+  and the three loops compiled.
+- At *runtime import*, the CPU is probed for the set of supported intrinsic
   features. A mechanism is used to grab the pointer to the most appropriate
-  function, and this will be the one called.
+  function, and this will be the one called for the function.
 
 
-Build options
-=============
+Build options for the second stage
+==================================
 
-- ``--cpu-baseline`` minimal set of required optimizations, default
+- ``--cpu-baseline``: minimal set of required optimizations. Default
   value is ``min`` which provides the minimum CPU features that can
-  safely run on a wide range of users platforms.
+  safely run on a wide range of platform within the processor family.
 
-- ``--cpu-dispatch`` dispatched set of additional optimizations,
-  the default value is ``max -xop -fma4`` which enables all CPU
+- ``--cpu-dispatch``: dispatched set of additional optimizations.
+  The default value for ``x86`` is ``max -xop -fma4`` which enables all CPU
   features, except for AMD legacy features.
 
-The command arguments can be reached through ``build``, ``build_clib``, ``build_ext``.
+The command arguments are available in ``build``, ``build_clib``, ``build_ext``.
 if ``build_clib`` or ``build_ext`` are not specified by the user, the arguments of
 ``build`` will be used instead, which also holds the default values.
 
@@ -115,16 +117,17 @@ Special options
 
 NOTES
 ~~~~~~~~~~~~~
-- Case-insensitive among all CPU features and other options.
+- CPU features and other options are case-insensitive.
 
 - The order among the requsted optimizations doesn't matter.
 
-- Comma or space can be used as a separator, e.g. ``--cpu-dispatch``\ = "avx2 avx512f" or
-  ``--cpu-dispatch`` = "avx2, avx512f" both applicable.
+- Comma or space can be used as a separator, e.g. ``--cpu-dispatch``\ = 
+  "avx2 avx512f" or ``--cpu-dispatch`` = "avx2, avx512f" both work, but the
+  arguments must be enclosed in quotes.
 
 - operand ``+`` is only added for nominal reason, For example:
-    ``--cpu-basline= "min avx2" equivalent`` to ``--cpu-basline="min + avx2"``
-    ``--cpu-basline="min,avx2"`` equivalent to ``--cpu-basline`="min,+avx2"``
+  ``--cpu-basline= "min avx2"`` is equivalent to ``--cpu-basline="min + avx2"``
+  ``--cpu-basline="min,avx2"`` is equivalent to ``--cpu-basline`="min,+avx2"``
 
 - If the CPU feature is not supported by the user platform or
   compiler, it will be skipped rather than raising a fatal error.
@@ -133,17 +136,18 @@ NOTES
   it's part of CPU baseline features
 
 - Argument ``--cpu-baseline`` force enables implied features,
-  e.g. ``--cpu-baseline``\ ="sse42" equivalent to
+  e.g. ``--cpu-baseline``\ ="sse42" is equivalent to
   ``--cpu-baseline``\ ="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
 - The value of ``--cpu-baseline`` will be treated as "native" if
   compiler native flag ``-march=native`` or ``-xHost`` or ``QxHost`` is
   enabled through environment variable ``CFLAGS``
 
-- The validating process for the requsted optimizations when it comes to ``--cpu-baseline`` isn't strict,
-| For example, if the user requested ``AVX2`` but the compiler doesn't support it
-| then we just skip it and return the maximum optimization that can handle it by
-| the compiler depending on the implied features of ``AVX2``, let us assume `AVX`.
+- The validation process for the requsted optimizations when it comes to
+  ``--cpu-baseline`` isn't strict. For example, if the user requested
+  ``AVX2`` but the compiler doesn't support it then we just skip it and return
+  the maximum optimization that the compiler can handle depending on the
+  implied features of ``AVX2``, let us assume `AVX`.
 
 - The user should always check the final report through the build log
   to verify the enabled features.
@@ -174,35 +178,31 @@ objects together.
 
 .. figure:: figures/opt-infra.png
 
-| This mechanism is very friendly with all compilers and it doesn't
-  require any compiler-specific extension,
-| but at the same time it takes a long process that has a sequence of
-  procedures, which are explained as follow:
+This mechanism is should support all compilers and it doesn't require any
+compiler-specific extension, but at the same time it is adds a few steps to
+normal compilation that are explained as follows:
 
 1- Configuration
 ~~~~~~~~~~~~~~~~
 
-| Configuring the required optimization by the user before starting to
-  build the source files via two command
-| arguments:
+Configuring the required optimization by the user before starting to build the
+source files via two command arguments:
 
 -  ``--cpu-baseline`` minimal set of required optimizations.
 
 -  ``--cpu-dispatch`` dispatched set of additional optimizations.
 
-See **TODO**
 
 2- Discovering the environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this part, we check what kind of compiler and architecture we deal
-with, also handling the caching process which is important to speed up
-the rebuilding.
+In this part, we check the compiler and platform architecture
+and cache some of the intermediary results to speed up rebuilding.
 
 3- Parsing the command arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-NumPy have a very unique syntax that gives the user ability to easily
+NumPy has a very unique syntax that gives the user ability to easily
 manage the optimizations. See **TODO**
 
 4- Validating the required optimizations
@@ -214,14 +214,14 @@ support according to the required optimizations.
 5- Generating the main configuration header
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The header contains all the definitions and headers of instruction-sets
-for the required optimizations that have been validated during the
-previous step.
+The generated header ``_cpu_dispatch.h`` contains all the definitions and
+headers of instruction-sets for the required optimizations that have been
+validated during the previous step.
 
 It also contains extra C definitions that are used for defining NumPy
 module's attributes ``__cpu_baseline__`` and ``__cpu_dispaٍtch__``.
 
-**But how this header looks like?**
+**What is in this header?**
 
 Let's see how it looks on X86 since the header is dynamically generated
 according to what kind of compiler and architecture we have, we also
@@ -262,56 +262,53 @@ configured through ``--cpu-baseline="sse sse2 sse3"`` and
      #include <smmintrin.h>
    #endif
 
-| **Baseline features** is our minimal set of required optimizations
-  that been configured via
-| ``--cpu-baseline``, They have no preprocessor guards and they're
-  always on, which means they can be used in any source.
+**Baseline features** is the minimal set of required optimizations configured
+via ``--cpu-baseline``. They have no preprocessor guards and they're
+always on, which means they can be used in any source.
 
-   Wait here!! Does NumPy's infrastructure pass the compiler's flags of
-   baseline features to all sources?
+Does this mean NumPy's infrastructure passes the compiler's flags of
+baseline features to all sources?
 
-Definitely, yes. But wait, the **dispatch-able sources** are treated
+Definitely, yes. But the **dispatch-able sources** are treated
 differently.
 
-   What is the **dispatch-able sources**?
+What are the **dispatch-able sources**?
 
 Please just continue reading, you will find your answer in the next
 procedure.
 
-   What if the user specifies certain **baseline features** during the
-   build but the running machine doesn't support these kinds of CPU
-   features and at the same time there's instruction-sets laying down in
-   a C source activated by one of these definitions, or maybe the
-   compiler itself auto-generated/vectorized certain piece of code
-   depending on the provided flags?
+What if the user specifies certain **baseline features** during the
+build but the running machine doesn't support these kinds of CPU
+features and at the same time there's instruction-sets laying down in
+a C source activated by one of these definitions, or maybe the
+compiler itself auto-generated/vectorized certain piece of code
+depending on the provided flags?
 
-| Well, during the loading of the NumPy module, there's a validating
-  process detecting
-| this behavior that raises a Python runtime error to inform the user.
-  Otherwise, the CPU/Kernel will interrupt the execution process by
-  raising an illegal instruction error.
+During the loading of the NumPy module, there's a validation step
+which detects this behavior. It will raise a Python runtime error to inform the
+user. Otherwise, the CPU/Kernel will interrupt the execution process by
+raising an illegal instruction error.
 
-| **Dispatch-able features** is our dispatched set of additional
-  optimizations that had been configured via
-| ``--cpu-dispatch``. They're not activated by default and always guard
-  it by other C definitions prefixed with
-| ``NPY__CPU_TARGET_``. C definitions ``NPY__CPU_TARGET_`` are only
-  enabled within **dispatch-able sources**.
+**Dispatch-able features** is our dispatched set of additional optimizations
+that had been configured via ``--cpu-dispatch``. They're not activated by
+default and always guarded by other C definitions prefixed with
+``NPY__CPU_TARGET_``. C definitions ``NPY__CPU_TARGET_`` are only
+enabled within **dispatch-able sources**.
 
 6- Dispatch-able sources and configuration statements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dispatch-able sources are special C files that can be compiled multiple
 times with different compiler flags and also with different **C**
-definitions that affect on the code paths to enable certain
-instructions-set for each compiled object according to "**the
+definitions that affect code paths to enable certain
+instructions-sets for each compiled object according to "**the
 configuration statements**" that must be declared between a **C**
 comment\ ``(/**/)`` and start with a special mark **@targets** at the
 top of each dispatch-able source. At the same time, dispatch-able
 sources will be treated as normal **C** sources if the optimization was
 disabled by the command argument ``--disable-optimization`` .
 
-**What is the configuration statements?**
+**What are configuration statements?**
 
 Configuration statements are sort of keywords combined together to
 determine the required optimization for the dispatch-able source.
@@ -323,46 +320,42 @@ Example:
    /*@targets avx2 avx512f vsx2 vsx3 asimd asimdhp */
    // C code
 
-| The keywords mainly represent the additional optimizations that
-  configured through ``--cpu-dispatch``,
-| but it can also represent other options such as:
+The keywords mainly represent the additional optimizations that configured
+through ``--cpu-dispatch``, but it can also represent other options such as:
 
--  | Target groups: pre-configured configuration statements used for
-     managing the required
-   | optimizations from outside the dispatch-able source.
+- Target groups: pre-configured configuration statements used for
+  managing the required optimizations from outside the dispatch-able source.
 
--  | Policies: collections of options used for changing the default
-     behaviors
-   | or forcing the compilers to perform certain things.
+- Policies: collections of options used for changing the default
+  behaviors or forcing the compilers to perform certain things.
 
--  | "baseline": a unique keyword represents the minimal optimizations
-     that configured through
-   | ``--cpu-baseline``
+- "baseline": a unique keyword represents the minimal optimizations
+  that configured through ``--cpu-baseline``
 
 **Numpy's infrastructure handles dispatch-able sources in four steps**:
 
--  | **(A) Recognition**: Just like source templates and F2PY, the
-     dispatch-able sources requires a special extension ``*.dispatch.c``
-     to mark C dispatch-able source files, and for C++
-     ``*.dispatch.cpp`` or ``*.dispatch.cxx``
-   | **NOTE**: C++ not supported yet.
+- **(A) Recognition**: Just like source templates and F2PY, the
+  dispatch-able sources requires a special extension ``*.dispatch.c``
+  to mark C dispatch-able source files, and for C++
+  ``*.dispatch.cpp`` or ``*.dispatch.cxx``
+  **NOTE**: C++ not supported yet.
 
--  **(B) Parsing and validating**: In this step, we take the
-   dispatch-able sources that had been filtered by the previous step,
-   then we parse and validate the configuration statements for each one
-   of them one by one in order to determine the required optimizations.
+- **(B) Parsing and validating**: In this step, we take the
+  dispatch-able sources that had been filtered by the previous step,
+  then we parse and validate the configuration statements for each one
+  of them one by one in order to determine the required optimizations.
 
--  **(C) Wrapping**: This is the approach taken by NumPy's
-   infrastructure, which has proved to be sufficiently flexible in order
-   to compile a single source multiple times with different **C**
-   definitions and flags that affect on the code paths. The process is
-   achieved by creating a temporary **C** source for each required
-   optimization that related to the additional optimization, which
-   contains the declarations of the **C** definitions and including the
-   involved source via the **C** directive **#include**. For more
-   clarification take a look at the following code :
+- **(C) Wrapping**: This is the approach taken by NumPy's
+  infrastructure, which has proved to be sufficiently flexible in order
+  to compile a single source multiple times with different **C**
+  definitions and flags that affect on the code paths. The process is
+  achieved by creating a temporary **C** source for each required
+  optimization that related to the additional optimization, which
+  contains the declarations of the **C** definitions and including the
+  involved source via the **C** directive **#include**. For more
+  clarification take a look at the following code :
 
-   .. code:: c
+  .. code:: c
 
       /**
        * Here's an example of wrapping the dispatch-able source for AVX512F
@@ -390,19 +383,19 @@ Example:
       // our dispatch-able source
       #include "/the/absuolate/path/of/hello.dispatch.c"
 
--  **(D) Dispatch-able configuration header**: The infrastructure
-   generates a config header for each dispatch-able source, this header
-   mainly contains two abstract **C** macros used for identifying the
-   generated objects, so they can be used for runtime dispatching
-   certain symbols from the generated objects by any **C** source, it
-   also used for forward declarations.
+- **(D) Dispatch-able configuration header**: The infrastructure
+  generates a config header for each dispatch-able source, this header
+  mainly contains two abstract **C** macros used for identifying the
+  generated objects, so they can be used for runtime dispatching
+  certain symbols from the generated objects by any **C** source, it
+  also used for forward declarations.
 
-   The generated header takes the name of the dispatch-able source after
-   excluding the extension and replace it with '**.h**', for example
-   assume we have a dispatch-able source called **hello.dispatch.c** and
-   contains the following:
+  The generated header takes the name of the dispatch-able source after
+  excluding the extension and replace it with '**.h**', for example
+  assume we have a dispatch-able source called **hello.dispatch.c** and
+  contains the following:
 
-   .. code:: c
+  .. code:: c
 
       // hello.dispatch.c
       /*@targets baseline sse42 avx512f */
@@ -431,12 +424,12 @@ Example:
           printf("I'm " NPY_TOSTR(NPY__CPU_TARGET_CURRENT) ", %s\n", extra_info);
       }
 
-   Now assume you attached **hello.dispatch.c** to the source tree, then
-   the infrastructure should generate a temporary config header called
-   **hello.dispatch.h** that can be reached by any source in the source
-   tree, and it should contains the following code :
+  Now assume you attached **hello.dispatch.c** to the source tree, then
+  the infrastructure should generate a temporary config header called
+  **hello.dispatch.h** that can be reached by any source in the source
+  tree, and it should contains the following code :
 
-   .. code:: c
+  .. code:: c
 
       #ifndef NPY__CPU_DISPATCH_EXPAND_
         // To expand the macro calls in this header
@@ -475,9 +468,9 @@ Example:
         NPY__CPU_DISPATCH_EXPAND_(CB((CHK(AVX512F)), AVX512F, __VA_ARGS__)) \
         NPY__CPU_DISPATCH_EXPAND_(CB((CHK(SSE)&&CHK(SSE2)&&CHK(SSE3)&&CHK(SSSE3)&&CHK(SSE41)), SSE41, __VA_ARGS__))
 
-   An example of using the config header in light of the above:
+  An example of using the config header in light of the above:
 
-   .. code:: c
+  .. code:: c
 
       // NOTE: The following macros are only defined for demonstration purposes only.
       // NumPy already has a collections of macros located at
