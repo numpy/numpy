@@ -33,6 +33,26 @@
 #include <string.h>
 #include <stddef.h>
 
+#define NPY__HWCAP  16
+#define NPY__HWCAP2 26
+
+// arch/arm/include/uapi/asm/hwcap.h
+#define NPY__HWCAP_HALF   (1 << 1)
+#define NPY__HWCAP_NEON   (1 << 12)
+#define NPY__HWCAP_VFPv3  (1 << 13)
+#define NPY__HWCAP_VFPv4  (1 << 16)
+#define NPY__HWCAP2_AES   (1 << 0)
+#define NPY__HWCAP2_PMULL (1 << 1)
+#define NPY__HWCAP2_SHA1  (1 << 2)
+#define NPY__HWCAP2_SHA2  (1 << 3)
+#define NPY__HWCAP2_CRC32 (1 << 4)
+// arch/arm64/include/uapi/asm/hwcap.h
+#define NPY__HWCAP_FP       (1 << 0)
+#define NPY__HWCAP_ASIMD    (1 << 1)
+#define NPY__HWCAP_FPHP     (1 << 9)
+#define NPY__HWCAP_ASIMDHP  (1 << 10)
+#define NPY__HWCAP_ASIMDDP  (1 << 20)
+#define NPY__HWCAP_ASIMDFHM (1 << 23)
 /* 
  * Get the size of a file by reading it until the end. This is needed
  * because files under /proc do not always return a valid size when
@@ -199,11 +219,24 @@ has_list_item(const char* list, const char* item)
     return 0;
 }
 
+static void setHwcap(char* cpuFeatures, unsigned long* hwcap) {
+    *hwcap |= has_list_item(cpuFeatures, "neon") ? NPY__HWCAP_NEON : 0;
+    *hwcap |= has_list_item(cpuFeatures, "half") ? NPY__HWCAP_HALF : 0;
+    *hwcap |= has_list_item(cpuFeatures, "vfpv3") ? NPY__HWCAP_VFPv3 : 0;
+    *hwcap |= has_list_item(cpuFeatures, "vfpv4") ? NPY__HWCAP_VFPv4 : 0;
+
+    *hwcap |= has_list_item(cpuFeatures, "asimd") ? NPY__HWCAP_ASIMD : 0;
+    *hwcap |= has_list_item(cpuFeatures, "fp") ? NPY__HWCAP_FP : 0;
+    *hwcap |= has_list_item(cpuFeatures, "fphp") ? NPY__HWCAP_FPHP : 0;
+    *hwcap |= has_list_item(cpuFeatures, "asimdhp") ? NPY__HWCAP_ASIMDHP : 0;
+    *hwcap |= has_list_item(cpuFeatures, "asimddp") ? NPY__HWCAP_ASIMDDP : 0;
+    *hwcap |= has_list_item(cpuFeatures, "asimdfhm") ? NPY__HWCAP_ASIMDFHM : 0;
+}
+
 static int
-get_feature_from_proc_cpuinfo(unsigned char npy__cpu_have[NPY_CPU_FEATURE_MAX]) {
+get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     char* cpuinfo = NULL;
     int cpuinfo_len;
-    long architecture = 0;
     cpuinfo_len = get_file_size("/proc/cpuinfo");
     if (cpuinfo_len < 0) {
         return 0;
@@ -213,28 +246,17 @@ get_feature_from_proc_cpuinfo(unsigned char npy__cpu_have[NPY_CPU_FEATURE_MAX]) 
         return 0;
     }
     cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
-    char* cpuArch = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "CPU architecture");
-    int isV8 = 0;
-    if (cpuArch) {
-        architecture = strtol(cpuArch, NULL, 10);
-        free(cpuArch);
-        if (architecture >= 8L) {
-            isV8 = 1;
-            npy__cpu_init_features_arm8();
-        }
-    }
     char* cpuFeatures = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
-    if (cpuFeatures != NULL) {
-        npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = has_list_item(cpuFeatures, "fphp");
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = has_list_item(cpuFeatures, "asimdhp");
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = has_list_item(cpuFeatures, "asimddp");
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = has_list_item(cpuFeatures, "asimdfhm");
-        npy__cpu_have[NPY_CPU_FEATURE_NEON]       = has_list_item(cpuFeatures, "neon") ||
-                                                    has_list_item(cpuFeatures, "asimd");
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = isV8 || has_list_item(cpuFeatures, "neon") ||
-                                                     has_list_item(cpuFeatures, "vfpv3") || has_list_item(cpuFeatures, "half");
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = isV8 || has_list_item(cpuFeatures, "vfpv4");
+    if(cpuFeatures == NULL) {
+        return 0;
     }
+    setHwcap(cpuFeatures, hwcap);
+    setHwcap(cpuFeatures, hwcap2);
+    *hwcap2 |= has_list_item(cpuFeatures, "aes") ? NPY__HWCAP2_AES : 0;
+    *hwcap2 |= has_list_item(cpuFeatures, "pmull") ? NPY__HWCAP2_PMULL : 0;
+    *hwcap2 |= has_list_item(cpuFeatures, "sha1") ? NPY__HWCAP2_SHA1 : 0;
+    *hwcap2 |= has_list_item(cpuFeatures, "sha2") ? NPY__HWCAP2_SHA2 : 0;
+    *hwcap2 |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP2_CRC32 : 0;
     return 1;
 }
 #endif
