@@ -5,7 +5,7 @@ import numpy as np
 from typing import Iterable  # noqa: F401
 
 # Basic checks
-array = np.array([1, 2])
+array = np.array([2, 3])
 
 
 def ndarray_func(x):
