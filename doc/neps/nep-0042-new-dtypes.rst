@@ -35,7 +35,7 @@ datatypes, it does not allow to naturally split up logic. For example,
 functions such as ``can_cast`` have explicit logic for each datatype.
 This monolithic code structure means that user-defined datatypes do not have
 the same capabilities as NumPy datatypes have.
-The current structure also makes reasoning and modifying datatypes harder.
+The current structure also makes reasoning about and modifying datatypes harder.
 The current datatypes are not well encapsulated, so modifications targeting
 a single datatype inevitably touches code involving others.
 As detailed in NEP 41, the desired general design is to create classes for
@@ -148,7 +148,7 @@ There are multiple reasons for this:
    ``Float64Unit``. In which case ``Unit(np.float64, "m")`` could be
    identical to ``Float64Unit("m")``.
 
-A very concrete example, is the current Pandas ``Categorical`` DType
+A very concrete example is the current Pandas ``Categorical`` DType
 which may benefit from abstraction to allow the differentiation of
 a categorical of integer values and one of general object values.
 The reason for this is that we may want to reject
@@ -296,7 +296,7 @@ is the ``np.datetime64`` scalar.
 **Issues and Details:**
 
 A potential DType such as ``Categorical`` will not be required to have a clear type
-associated with it. Instead the ``type`` may just be ``object``, its values are
+associated with it. Instead the ``type`` may just be ``object``, its values
 are arbitrary objects.  Unlike well-defined scalars, this ``type`` could
 not be used for the dtype discovery necessary for coercion
 (compare section `DType Discovery during Array Coercion`_).
@@ -426,7 +426,7 @@ to allow the discovery the of all unique values.
 There are three further issues to consider:
 
 1. It may be desirable that datatypes can be created which are associated
-   to normal Python scalars (such as ``datetime.Datetime``), which do not
+   to normal Python scalars (such as ``datetime.datetime``), which do not
    have a ``dtype`` attribute already.
 2. In general, a datatype could represent a sequence, however, NumPy currently
    assumes that sequences are always collections of elements (the sequence cannot be an
@@ -480,7 +480,7 @@ NumPy currently uses a small hard-coded mapping and conversion of numpy scalars
     (on many machines `long` is 64 bit).
 
     Instead they will need to be be implemented using an
-    ``AbstractPyInt``, this DType class, can than provide
+    ``AbstractPyInt``. This DType class can then provide
     ``__discover_descr_from_pyobject__`` and return the actual dtype which
     is e.g. ``np.dtype("int64")``.
     For dispatching/promotion in ufuncs, it will also be necessary
@@ -676,7 +676,7 @@ could include the third step, it is not required to do so and the string
 can always be extended (e.g. with new encodings) without extending the
 ``CastingImpl[Float64, String]``.
 
-This means the implementation will work like this:
+This means the implementation will work like this::
 
     def common_dtype(DType1, DType2):
         common_dtype = type(dtype1).__common_dtype__(type(dtype2))
