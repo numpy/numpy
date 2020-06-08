@@ -1,6 +1,6 @@
 cython==0.29.19
 hypothesis==5.16.0
-pytest==5.4.2
+pytest==5.4.3
 pytz==2020.1
 pytest-cov==2.9.0
 pickle5; python_version == '3.7'
