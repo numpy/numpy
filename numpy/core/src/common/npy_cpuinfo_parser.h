@@ -251,7 +251,7 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
         return 0;
     }
     setHwcap(cpuFeatures, hwcap);
-    setHwcap(cpuFeatures, hwcap2);
+    *hwcap2 |= *hwcap;
     *hwcap2 |= has_list_item(cpuFeatures, "aes") ? NPY__HWCAP2_AES : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "pmull") ? NPY__HWCAP2_PMULL : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "sha1") ? NPY__HWCAP2_SHA1 : 0;
