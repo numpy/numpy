@@ -283,28 +283,7 @@ npy__cpu_init_features_arm8(void)
  * so we play it safe
 */
 #include <stdio.h>
-#include <fcntl.h>
-
-#define NPY__HWCAP  16
-#define NPY__HWCAP2 26
-
-// arch/arm/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_HALF   (1 << 1)
-#define NPY__HWCAP_NEON   (1 << 12)
-#define NPY__HWCAP_VFPv3  (1 << 13)
-#define NPY__HWCAP_VFPv4  (1 << 16)
-#define NPY__HWCAP2_AES   (1 << 0)
-#define NPY__HWCAP2_PMULL (1 << 1)
-#define NPY__HWCAP2_SHA1  (1 << 2)
-#define NPY__HWCAP2_SHA2  (1 << 3)
-#define NPY__HWCAP2_CRC32 (1 << 4)
-// arch/arm64/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_FP       (1 << 0)
-#define NPY__HWCAP_ASIMD    (1 << 1)
-#define NPY__HWCAP_FPHP     (1 << 9)
-#define NPY__HWCAP_ASIMDHP  (1 << 10)
-#define NPY__HWCAP_ASIMDDP  (1 << 20)
-#define NPY__HWCAP_ASIMDFHM (1 << 23)
+#include "npy_cpuinfo_parser.h"
 
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
 static int
@@ -339,10 +318,12 @@ npy__cpu_init_features_linux(void)
     }
     if (hwcap == 0 && hwcap2 == 0) {
         /*
-         * FIXME: failback to compiler definitions,
-         * BTW we can parse /proc/cpuinfo for badly patched kernels
+         * try parsing with /proc/cpuinfo, if sandboxed
+         * failback to compiler definitions
         */
-        return 0;
+        if(!get_feature_from_proc_cpuinfo(&hwcap, &hwcap2)) {
+            return 0;
+        }
     }
 #ifdef __arm__
     // Detect Arm8 (aarch32 state)
