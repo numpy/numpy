@@ -65,11 +65,26 @@ window::
    >>> p.window
    array([-1.,  1.])
 
-Printing a polynomial yields a shorter form without the domain
-and window::
+Printing a polynomial yields the polynomial expression in a more familiar
+format::
 
    >>> print(p)
-   poly([1. 2. 3.])
+   1.0 + 2.0·x¹ + 3.0·x²
+
+Note that the string representation of polynomials uses Unicode characters
+by default (except on Windows) to express powers and subscripts. An ASCII-based
+representation is also available (default on Windows). The polynomial string
+format can be toggled at the package-level with the 
+`~numpy.polynomial.set_default_printstyle` function::
+
+   >>> numpy.polynomial.set_default_printstyle('ascii')
+   >>> print(p)
+   1.0 + 2.0 x**1 + 3.0 x**2
+
+or controlled for individual polynomial instances with string formatting::
+
+   >>> print(f"{p:unicode}")
+   1.0 + 2.0·x¹ + 3.0·x²
 
 We will deal with the domain and window when we get to fitting, for the moment
 we ignore them and run through the basic algebraic and arithmetic operations.

@@ -24,14 +24,14 @@ Calling ``np.array([[1, [1, 2, 3]])`` will issue a ``DeprecationWarning`` as
 per `NEP 34`_. Users should explicitly use ``dtype=object`` to avoid the
 warning.
 
-.. _`NEP 34`: https://numpy.org/neps/nep-0034.html
+.. _`NEP 34`: https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
 
 (`gh-15119 <https://github.com/numpy/numpy/pull/15119>`__)
 
 Passing ``shape=0`` to factory functions in ``numpy.rec`` is deprecated
 -----------------------------------------------------------------------
 
-``0`` is treated as a special case and is aliased to ``None`` in the functions: 
+``0`` is treated as a special case and is aliased to ``None`` in the functions:
 
 * `numpy.core.records.fromarrays`
 * `numpy.core.records.fromrecords`
@@ -316,12 +316,12 @@ now expose this through the buffer interface, meaning
 
 ``subok`` option for `numpy.copy`
 ---------------------------------
-A new kwarg, ``subok``, was added to `numpy.copy` to allow users to toggle the 
+A new kwarg, ``subok``, was added to `numpy.copy` to allow users to toggle the
 behavior of `numpy.copy` with respect to array subclasses. The default value
-is ``False`` which is consistent with the behavior of `numpy.copy` for 
+is ``False`` which is consistent with the behavior of `numpy.copy` for
 previous numpy versions. To create a copy that preserves an array subclass with
 `numpy.copy`, call ``np.copy(arr, subok=True)``. This addition better documents
-that the default behavior of `numpy.copy` differs from the 
+that the default behavior of `numpy.copy` differs from the
 `numpy.ndarray.copy` method which respects array subclasses by default.
 
 (`gh-15685 <https://github.com/numpy/numpy/pull/15685>`__)
@@ -345,8 +345,8 @@ as `numpy.sum` or `numpy.mean`.
 ``equal_nan`` parameter for `numpy.array_equal`
 ------------------------------------------------
 The keyword argument ``equal_nan`` was added to `numpy.array_equal`.
-``equal_nan`` is a boolean value that toggles whether or not ``nan`` values 
-are considered equal in comparison (default is ``False``). This matches API 
+``equal_nan`` is a boolean value that toggles whether or not ``nan`` values
+are considered equal in comparison (default is ``False``). This matches API
 used in related functions such as `numpy.isclose` and `numpy.allclose`.
 
 (`gh-16128 <https://github.com/numpy/numpy/pull/16128>`__)
@@ -376,9 +376,9 @@ linear algebra for large arrays.
 
 Use AVX512 intrinsic to implement ``np.exp`` when input is ``np.float64``
 --------------------------------------------------------------------------
-Use AVX512 intrinsic to implement ``np.exp`` when input is ``np.float64``, 
+Use AVX512 intrinsic to implement ``np.exp`` when input is ``np.float64``,
 which can improve the performance of ``np.exp`` with ``np.float64`` input 5-7x
-faster than before. The _multiarray_umath.so module has grown about 63 KB on 
+faster than before. The _multiarray_umath.so module has grown about 63 KB on
 linux64.
 
 (`gh-15648 <https://github.com/numpy/numpy/pull/15648>`__)

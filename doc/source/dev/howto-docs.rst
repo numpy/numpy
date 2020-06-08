@@ -35,8 +35,8 @@ Current vision for the documentation: NEP 44
 --------------------------------------------
 
 Recently, the NumPy community approved a *NumPy Enhancement Proposal (NEP)*
-about documentation, `NEP 44 - Restructuring the NumPy Documentation
-<https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
+about documentation,
+:ref:`NEP 44 - Restructuring the NumPy Documentation <NEP44>`.
 
 **Where is the documentation?**
 
@@ -87,7 +87,7 @@ check out the following specific guides:
 Major additions to the documentation (e.g. new tutorials) should be proposed to
 the `mailing list
 <https://mail.python.org/mailman/listinfo/numpy-discussion>`__.
-  
+
 Other ways to contribute
 ------------------------
 
@@ -145,5 +145,5 @@ the quality of the documentation.
   resources for technical writing.
 - Google offers two free `Technical Writing Courses
   <https://developers.google.com/tech-writing>`__
-- `Software Carpentry <https://software-carpentry.org/software>`__ has a lot of
+- `Software Carpentry <https://carpentries.github.io/curriculum-development/>`__ has a lot of
   nice recommendations for creating educational material.

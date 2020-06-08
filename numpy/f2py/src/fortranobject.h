@@ -86,6 +86,9 @@ PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
 void * F2PyCapsule_AsVoidPtr(PyObject *obj);
 int F2PyCapsule_Check(PyObject *ptr);
 
+extern void *F2PySwapThreadLocalCallbackPtr(char *key, void *ptr);
+extern void *F2PyGetThreadLocalCallbackPtr(char *key);
+
 #define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_ARRAY_C_CONTIGUOUS)
 #define F2PY_INTENT_IN 1
 #define F2PY_INTENT_INOUT 2

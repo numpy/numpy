@@ -218,6 +218,19 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
     return out
 
 
+cdef validate_output_shape(iter_shape, np.ndarray output):
+    cdef np.npy_intp *shape, ndim, i
+    cdef bint error
+    dims = np.PyArray_DIMS(output)
+    ndim = np.PyArray_NDIM(output)
+    output_shape = tuple((dims[i] for i in range(ndim)))
+    if iter_shape != output_shape:
+        raise ValueError(
+            f"Output size {output_shape} is not compatible with broadcast "
+            f"dimensions of inputs {iter_shape}."
+        )
+
+
 cdef check_output(object out, object dtype, object size):
     if out is None:
         return
@@ -404,6 +417,7 @@ cdef object cont_broadcast_1(void *func, void *state, object size, object lock,
     randoms_data = <double *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
 
     with lock, nogil:
         for i in range(n):
@@ -441,6 +455,8 @@ cdef object cont_broadcast_2(void *func, void *state, object size, object lock,
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -482,6 +498,8 @@ cdef object cont_broadcast_3(void *func, void *state, object size, object lock,
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew4(randoms, a_arr, b_arr, c_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -611,6 +629,8 @@ cdef object discrete_broadcast_d(void *func, void *state, object size, object lo
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -645,6 +665,8 @@ cdef object discrete_broadcast_dd(void *func, void *state, object size, object l
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -680,6 +702,8 @@ cdef object discrete_broadcast_di(void *func, void *state, object size, object l
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -719,6 +743,8 @@ cdef object discrete_broadcast_iii(void *func, void *state, object size, object 
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew4(randoms, a_arr, b_arr, c_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -750,6 +776,8 @@ cdef object discrete_broadcast_i(void *func, void *state, object size, object lo
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
+
     with lock, nogil:
         for i in range(n):
             a_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -923,6 +951,7 @@ cdef object cont_broadcast_1_f(void *func, bitgen_t *state, object size, object 
     randoms_data = <float *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
+    validate_output_shape(it.shape, randoms)
 
     with lock, nogil:
         for i in range(n):

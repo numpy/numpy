@@ -30,6 +30,68 @@ F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj)
     return PyDict_SetItemString(dict, name, obj);
 }
 
+/*
+ * Python-only fallback for thread-local callback pointers
+ */
+void *F2PySwapThreadLocalCallbackPtr(char *key, void *ptr)
+{
+    PyObject *local_dict, *value;
+    void *prev;
+
+    local_dict = PyThreadState_GetDict();
+    if (local_dict == NULL) {
+        Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyThreadState_GetDict failed");
+    }
+
+    value = PyDict_GetItemString(local_dict, key);
+    if (value != NULL) {
+        prev = PyLong_AsVoidPtr(value);
+        if (PyErr_Occurred()) {
+           Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyLong_AsVoidPtr failed");
+        }
+    }
+    else {
+        prev = NULL;
+    }
+
+    value = PyLong_FromVoidPtr((void *)ptr);
+    if (value == NULL) {
+        Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyLong_FromVoidPtr failed");
+    }
+
+    if (PyDict_SetItemString(local_dict, key, value) != 0) {
+        Py_FatalError("F2PySwapThreadLocalCallbackPtr: PyDict_SetItemString failed");
+    }
+
+    Py_DECREF(value);
+
+    return prev;
+}
+
+void *F2PyGetThreadLocalCallbackPtr(char *key)
+{
+    PyObject *local_dict, *value;
+    void *prev;
+
+    local_dict = PyThreadState_GetDict();
+    if (local_dict == NULL) {
+        Py_FatalError("F2PyGetThreadLocalCallbackPtr: PyThreadState_GetDict failed");
+    }
+
+    value = PyDict_GetItemString(local_dict, key);
+    if (value != NULL) {
+        prev = PyLong_AsVoidPtr(value);
+        if (PyErr_Occurred()) {
+           Py_FatalError("F2PyGetThreadLocalCallbackPtr: PyLong_AsVoidPtr failed");
+        }
+    }
+    else {
+        prev = NULL;
+    }
+
+    return prev;
+}
+
 /************************* FortranObject *******************************/
 
 typedef PyObject *(*fortranfunc)(PyObject *,PyObject *,PyObject *,void *);

@@ -57,11 +57,12 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     char **op_dataptr,
                     const npy_uint32 *op_flags, int **op_axes,
                     npy_intp const *itershape);
+static NPY_INLINE int
+npyiter_get_op_axis(int axis, npy_bool *reduction_axis);
 static void
-npyiter_replace_axisdata(NpyIter *iter, int iop,
-                      PyArrayObject *op,
-                      int op_ndim, char *op_dataptr,
-                      int *op_axes);
+npyiter_replace_axisdata(
+        NpyIter *iter, int iop, PyArrayObject *op,
+        int orig_op_ndim, const int *op_axes);
 static void
 npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags);
 static void
@@ -826,7 +827,8 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
         if (axes != NULL) {
             memset(axes_dupcheck, 0, NPY_MAXDIMS);
             for (idim = 0; idim < oa_ndim; ++idim) {
-                int i = axes[idim];
+                int i = npyiter_get_op_axis(axes[idim], NULL);
+
                 if (i >= 0) {
                     if (i >= NPY_MAXDIMS) {
                         PyErr_Format(PyExc_ValueError,
@@ -1391,6 +1393,61 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
 }
 
 /*
+ * Check whether a reduction is OK based on the flags and the operand being
+ * readwrite. This path is deprecated, since usually only specific axes
+ * should be reduced. If axes are specified explicitely, the flag is
+ * unnecessary.
+ */
+static int
+npyiter_check_reduce_ok_and_set_flags(
+        NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
+        int dim) {
+    /* If it's writeable, this means a reduction */
+    if (*op_itflags & NPY_OP_ITFLAG_WRITE) {
+        if (!(flags & NPY_ITER_REDUCE_OK)) {
+            PyErr_Format(PyExc_ValueError,
+                    "output operand requires a reduction along dimension %d, "
+                    "but the reduction is not enabled. The dimension size of 1 "
+                    "does not match the expected output shape.", dim);
+            return 0;
+        }
+        if (!(*op_itflags & NPY_OP_ITFLAG_READ)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "output operand requires a reduction, but is flagged as "
+                    "write-only, not read-write");
+            return 0;
+        }
+        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is"
+                         "occurring\n");
+
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+        *op_itflags |= NPY_OP_ITFLAG_REDUCE;
+    }
+    return 1;
+}
+
+/**
+ * Removes the (additive) NPY_ITER_REDUCTION_AXIS indication and sets
+ * is_forced_broadcast to 1 if it is set. Otherwise to 0.
+ *
+ * @param axis The op_axes[i] to normalize.
+ * @param reduction_axis Output 1 if a reduction axis, otherwise 0.
+ * @returns The normalized axis (without reduce axis flag).
+ */
+static NPY_INLINE int
+npyiter_get_op_axis(int axis, npy_bool *reduction_axis) {
+    npy_bool forced_broadcast = axis >= NPY_ITER_REDUCTION_AXIS(-1);
+
+    if (reduction_axis != NULL) {
+        *reduction_axis = forced_broadcast;
+    }
+    if (forced_broadcast) {
+        return axis - NPY_ITER_REDUCTION_AXIS(0);
+    }
+    return axis;
+}
+
+/*
  * Fills in the AXISDATA for the 'nop' operands, broadcasting
  * the dimensionas as necessary.  Also fills
  * in the ITERSIZE data member.
@@ -1450,8 +1507,9 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     return 0;
                 }
                 for (idim = 0; idim < ondim; ++idim) {
-                    npy_intp bshape = broadcast_shape[idim+ndim-ondim],
-                                      op_shape = shape[idim];
+                    npy_intp bshape = broadcast_shape[idim+ndim-ondim];
+                    npy_intp op_shape = shape[idim];
+
                     if (bshape == 1) {
                         broadcast_shape[idim+ndim-ondim] = op_shape;
                     }
@@ -1463,11 +1521,13 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
             else {
                 int *axes = op_axes[iop];
                 for (idim = 0; idim < ndim; ++idim) {
-                    int i = axes[idim];
+                    int i = npyiter_get_op_axis(axes[idim], NULL);
+
                     if (i >= 0) {
                         if (i < ondim) {
-                            npy_intp bshape = broadcast_shape[idim],
-                                              op_shape = shape[i];
+                            npy_intp bshape = broadcast_shape[idim];
+                            npy_intp op_shape = shape[i];
+
                             if (bshape == 1) {
                                 broadcast_shape[idim] = op_shape;
                             }
@@ -1589,9 +1649,37 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
             }
             else {
                 int *axes = op_axes[iop];
-                int i = axes[ndim-idim-1];
-                if (i >= 0) {
-                    if (bshape == 1 || op_cur == NULL) {
+                npy_bool reduction_axis;
+                int i;
+                i = npyiter_get_op_axis(axes[ndim - idim - 1], &reduction_axis);
+
+                if (reduction_axis) {
+                    /* This is explicitly a reduction axis */
+                    strides[iop] = 0;
+                    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
+                    op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
+
+                    if (NPY_UNLIKELY((i >= 0) && (op_cur != NULL) &&
+                            (PyArray_DIM(op_cur, i) != 1))) {
+                        PyErr_Format(PyExc_ValueError,
+                                "operand was set up as a reduction along axis "
+                                "%d, but the length of the axis is %zd "
+                                "(it has to be 1)",
+                                i, (Py_ssize_t)PyArray_DIM(op_cur, i));
+                        return 0;
+                    }
+                }
+                else if (bshape == 1) {
+                    /*
+                     * If the full iterator shape is 1, zero always works.
+                     * NOTE: We thus always allow broadcast dimensions (i = -1)
+                     *       if the shape is 1.
+                     */
+                    strides[iop] = 0;
+                }
+                else if (i >= 0) {
+                    if (op_cur == NULL) {
+                        /* stride is filled later, shape will match `bshape` */
                         strides[iop] = 0;
                     }
                     else if (PyArray_DIM(op_cur, i) == 1) {
@@ -1599,51 +1687,20 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                         if (op_flags[iop] & NPY_ITER_NO_BROADCAST) {
                             goto operand_different_than_broadcast;
                         }
-                        /* If it's writeable, this means a reduction */
-                        if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                            if (!(flags & NPY_ITER_REDUCE_OK)) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a reduction, but "
-                                        "reduction is not enabled");
-                                return 0;
-                            }
-                            if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a reduction, but "
-                                        "is flagged as write-only, not "
-                                        "read-write");
-                                return 0;
-                            }
-                            NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-                            op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
+                        if (!npyiter_check_reduce_ok_and_set_flags(
+                                iter, flags, &op_itflags[iop], i)) {
+                            return 0;
                         }
                     }
                     else {
                         strides[iop] = PyArray_STRIDE(op_cur, i);
                     }
                 }
-                else if (bshape == 1) {
-                    strides[iop] = 0;
-                }
                 else {
                     strides[iop] = 0;
-                    /* If it's writeable, this means a reduction */
-                    if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                        if (!(flags & NPY_ITER_REDUCE_OK)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "output operand requires a reduction, but "
-                                    "reduction is not enabled");
-                            return 0;
-                        }
-                        if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "output operand requires a reduction, but "
-                                    "is flagged as write-only, not "
-                                    "read-write");
-                            return 0;
-                        }
-                        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-                        op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
+                    if (!npyiter_check_reduce_ok_and_set_flags(
+                            iter, flags, &op_itflags[iop], i)) {
+                        return 0;
                     }
                 }
             }
@@ -1753,7 +1810,7 @@ broadcast_error: {
 
                     if (axes != NULL) {
                         for (idim = 0; idim < ndim; ++idim) {
-                            npy_intp i = axes[idim];
+                            int i = npyiter_get_op_axis(axes[idim], NULL);
 
                             if (i >= 0 && i < PyArray_NDIM(op[iop])) {
                                 remdims[idim] = PyArray_DIM(op[iop], i);
@@ -1899,14 +1956,14 @@ operand_different_than_broadcast: {
  * array.
  */
 static void
-npyiter_replace_axisdata(NpyIter *iter, int iop,
-                      PyArrayObject *op,
-                      int op_ndim, char *op_dataptr,
-                      int *op_axes)
+npyiter_replace_axisdata(
+        NpyIter *iter, int iop, PyArrayObject *op,
+        int orig_op_ndim, const int *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
+    char *op_dataptr = PyArray_DATA(op);
 
     NpyIter_AxisData *axisdata0, *axisdata;
     npy_intp sizeof_axisdata;
@@ -1925,25 +1982,20 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
 
     if (op_axes != NULL) {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
             int i;
+            npy_bool axis_flipped;
             npy_intp shape;
 
-            /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_axes[ndim+p];
-            }
-            else {
-                i = op_axes[ndim-p-1];
-            }
+            /* Apply perm to get the original axis, and check if its flipped */
+            i = npyiter_undo_iter_axis_perm(idim, ndim, perm, &axis_flipped);
 
-            if (0 <= i && i < op_ndim) {
+            i = npyiter_get_op_axis(op_axes[i], NULL);
+            assert(i < orig_op_ndim);
+            if (i >= 0) {
                 shape = PyArray_DIM(op, i);
                 if (shape != 1) {
                     npy_intp stride = PyArray_STRIDE(op, i);
-                    if (p < 0) {
-                        /* If the perm entry is negative, flip the axis */
+                    if (axis_flipped) {
                         NAD_STRIDES(axisdata)[iop] = -stride;
                         baseoffset += stride*(shape-1);
                     }
@@ -1956,25 +2008,18 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
     }
     else {
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
             int i;
+            npy_bool axis_flipped;
             npy_intp shape;
 
-            /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_ndim+p;
-            }
-            else {
-                i = op_ndim-p-1;
-            }
+            i = npyiter_undo_iter_axis_perm(
+                    idim, orig_op_ndim, perm, &axis_flipped);
 
             if (i >= 0) {
                 shape = PyArray_DIM(op, i);
                 if (shape != 1) {
                     npy_intp stride = PyArray_STRIDE(op, i);
-                    if (p < 0) {
-                        /* If the perm entry is negative, flip the axis */
+                    if (axis_flipped) {
                         NAD_STRIDES(axisdata)[iop] = -stride;
                         baseoffset += stride*(shape-1);
                     }
@@ -2461,14 +2506,15 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
+    int used_op_ndim;
     int nop = NIT_NOP(iter);
 
     npy_int8 *perm = NIT_PERM(iter);
-    npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS],
-             stride = op_dtype->elsize;
+    npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp stride = op_dtype->elsize;
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
-    npy_intp i;
+    int i;
 
     PyArrayObject *ret;
 
@@ -2495,39 +2541,46 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
     /* Initialize the strides to invalid values */
-    for (i = 0; i < NPY_MAXDIMS; ++i) {
+    for (i = 0; i < op_ndim; ++i) {
         strides[i] = NPY_MAX_INTP;
     }
 
     if (op_axes != NULL) {
+        used_op_ndim = 0;
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
+            npy_bool reduction_axis;
 
             /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_axes[ndim+p];
-            }
-            else {
-                i = op_axes[ndim-p-1];
-            }
+            i = npyiter_undo_iter_axis_perm(idim, ndim, perm, NULL);
+            i = npyiter_get_op_axis(op_axes[i], &reduction_axis);
 
             if (i >= 0) {
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
                                     "for iterator dimension %d to %d\n", (int)i,
                                     (int)idim, (int)stride);
+                used_op_ndim += 1;
                 strides[i] = stride;
                 if (shape == NULL) {
-                    new_shape[i] = NAD_SHAPE(axisdata);
+                    if (reduction_axis) {
+                        /* reduction axes always have a length of 1 */
+                        new_shape[i] = 1;
+                    }
+                    else {
+                        new_shape[i] = NAD_SHAPE(axisdata);
+                    }
                     stride *= new_shape[i];
                     if (i >= ndim) {
-                        PyErr_SetString(PyExc_ValueError,
+                        PyErr_Format(PyExc_ValueError,
                                 "automatically allocated output array "
-                                "specified with an inconsistent axis mapping");
+                                "specified with an inconsistent axis mapping; "
+                                "the axis mapping cannot include dimension %d "
+                                "which is too large for the iterator dimension "
+                                "of %d.", i, ndim);
                         return NULL;
                     }
                 }
                 else {
+                    assert(!reduction_axis || shape[i] == 1);
                     stride *= shape[i];
                 }
             }
@@ -2535,44 +2588,25 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 if (shape == NULL) {
                     /*
                      * If deleting this axis produces a reduction, but
-                     * reduction wasn't enabled, throw an error
+                     * reduction wasn't enabled, throw an error.
+                     * NOTE: We currently always allow new-axis if the iteration
+                     *       size is 1 (thus allowing broadcasting sometimes).
                      */
-                    if (NAD_SHAPE(axisdata) != 1) {
-                        if (!(flags & NPY_ITER_REDUCE_OK)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "output requires a reduction, but "
-                                    "reduction is not enabled");
+                    if (!reduction_axis && NAD_SHAPE(axisdata) != 1) {
+                        if (!npyiter_check_reduce_ok_and_set_flags(
+                                iter, flags, op_itflags, i)) {
                             return NULL;
                         }
-                        if (!((*op_itflags) & NPY_OP_ITFLAG_READ)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "output requires a reduction, but "
-                                    "is flagged as write-only, not read-write");
-                            return NULL;
-                        }
-
-                        NPY_IT_DBG_PRINT("Iterator: Indicating that a "
-                                          "reduction is occurring\n");
-                        /* Indicate that a reduction is occurring */
-                        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
-                        (*op_itflags) |= NPY_OP_ITFLAG_REDUCE;
                     }
                 }
             }
         }
     }
     else {
+        used_op_ndim = ndim;
         for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            npy_int8 p;
-
             /* Apply the perm to get the original axis */
-            p = perm[idim];
-            if (p < 0) {
-                i = op_ndim + p;
-            }
-            else {
-                i = op_ndim - p - 1;
-            }
+            i = npyiter_undo_iter_axis_perm(idim, op_ndim, perm, NULL);
 
             if (i >= 0) {
                 NPY_IT_DBG_PRINT3("Iterator: Setting allocated stride %d "
@@ -2590,73 +2624,58 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         }
     }
 
-    /*
-     * If custom axes were specified, some dimensions may not have been used.
-     * Add the REDUCE itflag if this creates a reduction situation.
-     */
     if (shape == NULL) {
-        /* Ensure there are no dimension gaps in op_axes, and find op_ndim */
-        op_ndim = ndim;
-        if (op_axes != NULL) {
-            for (i = 0; i < ndim; ++i) {
-                if (strides[i] == NPY_MAX_INTP) {
-                    if (op_ndim == ndim) {
-                        op_ndim = i;
-                    }
-                }
-                /*
-                 * If there's a gap in the array's dimensions, it's an error.
-                 * For example, op_axes of [0,2] for the automatically
-                 * allocated output.
-                 */
-                else if (op_ndim != ndim) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "automatically allocated output array "
-                            "specified with an inconsistent axis mapping");
-                    return NULL;
-                }
+        /* If shape was NULL, use the shape we calculated */
+        op_ndim = used_op_ndim;
+        shape = new_shape;
+        /*
+         * If there's a gap in the array's dimensions, it's an error.
+         * For instance, if op_axes [0, 2] is specified, there will a place
+         * in the strides array where the value is not set.
+         */
+        for (i = 0; i < op_ndim; i++) {
+            if (strides[i] == NPY_MAX_INTP) {
+                PyErr_Format(PyExc_ValueError,
+                        "automatically allocated output array "
+                        "specified with an inconsistent axis mapping; "
+                        "the axis mapping is missing an entry for "
+                        "dimension %d.", i);
+                return NULL;
             }
         }
     }
-    else {
+    else if (used_op_ndim < op_ndim) {
+        /*
+         * If custom axes were specified, some dimensions may not have
+         * been used. These are additional axes which are ignored in the
+         * iterator but need to be handled here.
+         */
+        npy_intp factor, itemsize, new_strides[NPY_MAXDIMS];
+
+        /* Fill in the missing strides in C order */
+        factor = 1;
+        itemsize = op_dtype->elsize;
+        for (i = op_ndim-1; i >= 0; --i) {
+            if (strides[i] == NPY_MAX_INTP) {
+                new_strides[i] = factor * itemsize;
+                factor *= shape[i];
+            }
+        }
+
+        /*
+         * Copy the missing strides, and multiply the existing strides
+         * by the calculated factor.  This way, the missing strides
+         * are tighter together in memory, which is good for nested
+         * loops.
+         */
         for (i = 0; i < op_ndim; ++i) {
             if (strides[i] == NPY_MAX_INTP) {
-                npy_intp factor, new_strides[NPY_MAXDIMS],
-                         itemsize;
-
-                /* Fill in the missing strides in C order */
-                factor = 1;
-                itemsize = op_dtype->elsize;
-                for (i = op_ndim-1; i >= 0; --i) {
-                    if (strides[i] == NPY_MAX_INTP) {
-                        new_strides[i] = factor * itemsize;
-                        factor *= shape[i];
-                    }
-                }
-
-                /*
-                 * Copy the missing strides, and multiply the existing strides
-                 * by the calculated factor.  This way, the missing strides
-                 * are tighter together in memory, which is good for nested
-                 * loops.
-                 */
-                for (i = 0; i < op_ndim; ++i) {
-                    if (strides[i] == NPY_MAX_INTP) {
-                        strides[i] = new_strides[i];
-                    }
-                    else {
-                        strides[i] *= factor;
-                    }
-                }
-
-                break;
+                strides[i] = new_strides[i];
+            }
+            else {
+                strides[i] *= factor;
             }
         }
-    }
-
-    /* If shape was NULL, set it to the shape we calculated */
-    if (shape == NULL) {
-        shape = new_shape;
     }
 
     /* Allocate the temporary array */
@@ -2669,6 +2688,11 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     /* Double-check that the subtype didn't mess with the dimensions */
     if (subtype != &PyArray_Type) {
+        /*
+         * TODO: the dtype could have a subarray, which adds new dimensions
+         *       to `ret`, that should typically be fine, but will break
+         *       in this branch.
+         */
         if (PyArray_NDIM(ret) != op_ndim ||
                     !PyArray_CompareLists(shape, PyArray_DIMS(ret), op_ndim)) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -2805,16 +2829,21 @@ npyiter_allocate_arrays(NpyIter *iter,
         if (op[iop] == NULL) {
             PyArrayObject *out;
             PyTypeObject *op_subtype;
-            int ondim = ndim;
 
             /* Check whether the subtype was disabled */
             op_subtype = (op_flags[iop] & NPY_ITER_NO_SUBTYPE) ?
                                                 &PyArray_Type : subtype;
 
-            /* Allocate the output array */
+            /*
+             * Allocate the output array.
+             *
+             * Note that here, ndim is always correct if no op_axes was given
+             * (but the actual dimension of op can be larger). If op_axes
+             * is given, ndim is not actually used.
+             */
             out = npyiter_new_temp_array(iter, op_subtype,
                                         flags, &op_itflags[iop],
-                                        ondim,
+                                        ndim,
                                         NULL,
                                         op_dtype[iop],
                                         op_axes ? op_axes[iop] : NULL);
@@ -2828,8 +2857,8 @@ npyiter_allocate_arrays(NpyIter *iter,
              * Now we need to replace the pointers and strides with values
              * from the new array.
              */
-            npyiter_replace_axisdata(iter, iop, op[iop], ondim,
-                    PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
+            npyiter_replace_axisdata(iter, iop, op[iop], ndim,
+                    op_axes ? op_axes[iop] : NULL);
 
             /*
              * New arrays are guaranteed true-aligned, but copy/cast code
@@ -2870,8 +2899,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * Now we need to replace the pointers and strides with values
              * from the temporary array.
              */
-            npyiter_replace_axisdata(iter, iop, op[iop], 0,
-                    PyArray_DATA(op[iop]), NULL);
+            npyiter_replace_axisdata(iter, iop, op[iop], 0, NULL);
 
             /*
              * New arrays are guaranteed true-aligned, but copy/cast code
@@ -2943,7 +2971,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * from the temporary array.
              */
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
-                    PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
+                    op_axes ? op_axes[iop] : NULL);
 
             /*
              * New arrays are guaranteed true-aligned, but copy/cast code

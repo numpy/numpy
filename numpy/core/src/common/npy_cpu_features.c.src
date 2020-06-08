@@ -367,9 +367,10 @@ npy__cpu_init_features_linux(void)
         npy__cpu_init_features_arm8();
     } else {
         npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & (NPY__HWCAP_NEON | NPY__HWCAP_VFPv3 |
-                                                              NPY__HWCAP_HALF)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & (NPY__HWCAP_NEON | NPY__HWCAP_VFPv4)) != 0;
+        if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
+            npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
+            npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
+        }
     }
     return 1;
 }

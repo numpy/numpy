@@ -173,7 +173,7 @@ NumPy provides several hooks that classes can customize:
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
-   -  ``types`` is a `collection <collections.abc.Collection>`_
+   -  ``types`` is a collection :py:class:`collections.abc.Collection`
       of unique argument types from the original NumPy function call that
       implement ``__array_function__``.
    -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the

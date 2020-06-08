@@ -266,18 +266,18 @@ static PyObject *#apiname#(const PyObject *capi_self,
                            PyObject *capi_args,
                            PyObject *capi_keywds,
                            #functype# (*f2py_func)(#callprotoargument#)) {
-\tPyObject * volatile capi_buildvalue = NULL;
-\tvolatile int f2py_success = 1;
+    PyObject * volatile capi_buildvalue = NULL;
+    volatile int f2py_success = 1;
 #decl#
-\tstatic char *capi_kwlist[] = {#kwlist##kwlistopt##kwlistxa#NULL};
+    static char *capi_kwlist[] = {#kwlist##kwlistopt##kwlistxa#NULL};
 #usercode#
 #routdebugenter#
 #ifdef F2PY_REPORT_ATEXIT
 f2py_start_clock();
 #endif
-\tif (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\\
-\t\t\"#argformat#|#keyformat##xaformat#:#pyname#\",\\
-\t\tcapi_kwlist#args_capi##keys_capi##keys_xa#))\n\t\treturn NULL;
+    if (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\\
+        \"#argformat#|#keyformat##xaformat#:#pyname#\",\\
+        capi_kwlist#args_capi##keys_capi##keys_xa#))\n        return NULL;
 #frompyobj#
 /*end of frompyobj*/
 #ifdef F2PY_REPORT_ATEXIT
@@ -290,27 +290,27 @@ if (PyErr_Occurred())
 f2py_stop_call_clock();
 #endif
 /*end of callfortranroutine*/
-\t\tif (f2py_success) {
+        if (f2py_success) {
 #pyobjfrom#
 /*end of pyobjfrom*/
-\t\tCFUNCSMESS(\"Building return value.\\n\");
-\t\tcapi_buildvalue = Py_BuildValue(\"#returnformat#\"#return#);
+        CFUNCSMESS(\"Building return value.\\n\");
+        capi_buildvalue = Py_BuildValue(\"#returnformat#\"#return#);
 /*closepyobjfrom*/
 #closepyobjfrom#
-\t\t} /*if (f2py_success) after callfortranroutine*/
+        } /*if (f2py_success) after callfortranroutine*/
 /*cleanupfrompyobj*/
 #cleanupfrompyobj#
-\tif (capi_buildvalue == NULL) {
+    if (capi_buildvalue == NULL) {
 #routdebugfailure#
-\t} else {
+    } else {
 #routdebugleave#
-\t}
-\tCFUNCSMESS(\"Freeing memory.\\n\");
+    }
+    CFUNCSMESS(\"Freeing memory.\\n\");
 #freemem#
 #ifdef F2PY_REPORT_ATEXIT
 f2py_stop_clock();
 #endif
-\treturn capi_buildvalue;
+    return capi_buildvalue;
 }
 #endtitle#
 """,
@@ -749,36 +749,35 @@ arg_rules = [
         'docstrcbs': '#cbdocstr#',
         'latexdocstrcbs': '\\item[] #cblatexdocstr#',
         'latexdocstropt': {isintent_nothide: '\\item[]{{}\\verb@#varname#_extra_args := () input tuple@{}} --- Extra arguments for call-back function {{}\\verb@#varname#@{}}.'},
-        'decl': ['\tPyObject *#varname#_capi = Py_None;',
-                 '\tPyTupleObject *#varname#_xa_capi = NULL;',
-                 '\tPyTupleObject *#varname#_args_capi = NULL;',
-                 '\tint #varname#_nofargs_capi = 0;',
+        'decl': ['    #cbname#_t #varname#_cb = { Py_None, NULL, 0 };',
+                 '    #cbname#_t *#varname#_cb_ptr = &#varname#_cb;',
+                 '    PyTupleObject *#varname#_xa_capi = NULL;',
                  {l_not(isintent_callback):
-                  '\t#cbname#_typedef #varname#_cptr;'}
+                  '    #cbname#_typedef #varname#_cptr;'}
                  ],
         'kwlistxa': {isintent_nothide: '"#varname#_extra_args",'},
         'argformat': {isrequired: 'O'},
         'keyformat': {isoptional: 'O'},
         'xaformat': {isintent_nothide: 'O!'},
-        'args_capi': {isrequired: ',&#varname#_capi'},
-        'keys_capi': {isoptional: ',&#varname#_capi'},
+        'args_capi': {isrequired: ',&#varname#_cb.capi'},
+        'keys_capi': {isoptional: ',&#varname#_cb.capi'},
         'keys_xa': ',&PyTuple_Type,&#varname#_xa_capi',
-        'setjmpbuf': '(setjmp(#cbname#_jmpbuf))',
+        'setjmpbuf': '(setjmp(#varname#_cb.jmpbuf))',
         'callfortran': {l_not(isintent_callback): '#varname#_cptr,'},
         'need': ['#cbname#', 'setjmp.h'],
         '_check':isexternal
     },
     {
         'frompyobj': [{l_not(isintent_callback): """\
-if(F2PyCapsule_Check(#varname#_capi)) {
-  #varname#_cptr = F2PyCapsule_AsVoidPtr(#varname#_capi);
+if(F2PyCapsule_Check(#varname#_cb.capi)) {
+  #varname#_cptr = F2PyCapsule_AsVoidPtr(#varname#_cb.capi);
 } else {
   #varname#_cptr = #cbname#;
 }
 """}, {isintent_callback: """\
-if (#varname#_capi==Py_None) {
-  #varname#_capi = PyObject_GetAttrString(#modulename#_module,\"#varname#\");
-  if (#varname#_capi) {
+if (#varname#_cb.capi==Py_None) {
+  #varname#_cb.capi = PyObject_GetAttrString(#modulename#_module,\"#varname#\");
+  if (#varname#_cb.capi) {
     if (#varname#_xa_capi==NULL) {
       if (PyObject_HasAttrString(#modulename#_module,\"#varname#_extra_args\")) {
         PyObject* capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#varname#_extra_args\");
@@ -796,35 +795,29 @@ if (#varname#_capi==Py_None) {
       }
     }
   }
-  if (#varname#_capi==NULL) {
+  if (#varname#_cb.capi==NULL) {
     PyErr_SetString(#modulename#_error,\"Callback #varname# not defined (as an argument or module #modulename# attribute).\\n\");
     return NULL;
   }
 }
 """},
             """\
-\t#varname#_nofargs_capi = #cbname#_nofargs;
-\tif (create_cb_arglist(#varname#_capi,#varname#_xa_capi,#maxnofargs#,#nofoptargs#,&#cbname#_nofargs,&#varname#_args_capi,\"failed in processing argument list for call-back #varname#.\")) {
-\t\tjmp_buf #varname#_jmpbuf;""",
+    if (create_cb_arglist(#varname#_cb.capi,#varname#_xa_capi,#maxnofargs#,#nofoptargs#,&#varname#_cb.nofargs,&#varname#_cb.args_capi,\"failed in processing argument list for call-back #varname#.\")) {
+""",
             {debugcapi: ["""\
-\t\tfprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#cbname#_nofargs);
-\t\tCFUNCSMESSPY(\"for #varname#=\",#cbname#_capi);""",
-                         {l_not(isintent_callback): """\t\tfprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
+        fprintf(stderr,\"debug-capi:Assuming %d arguments; at most #maxnofargs#(-#nofoptargs#) is expected.\\n\",#varname#_cb.nofargs);
+        CFUNCSMESSPY(\"for #varname#=\",#cbname#_capi);""",
+                         {l_not(isintent_callback): """        fprintf(stderr,\"#vardebugshowvalue# (call-back in C).\\n\",#cbname#);"""}]},
             """\
-\t\tCFUNCSMESS(\"Saving jmpbuf for `#varname#`.\\n\");
-\t\tSWAP(#varname#_capi,#cbname#_capi,PyObject);
-\t\tSWAP(#varname#_args_capi,#cbname#_args_capi,PyTupleObject);
-\t\tmemcpy(&#varname#_jmpbuf,&#cbname#_jmpbuf,sizeof(jmp_buf));""",
+        CFUNCSMESS(\"Saving callback variables for `#varname#`.\\n\");
+        #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);""",
         ],
         'cleanupfrompyobj':
         """\
-\t\tCFUNCSMESS(\"Restoring jmpbuf for `#varname#`.\\n\");
-\t\t#cbname#_capi = #varname#_capi;
-\t\tPy_DECREF(#cbname#_args_capi);
-\t\t#cbname#_args_capi = #varname#_args_capi;
-\t\t#cbname#_nofargs = #varname#_nofargs_capi;
-\t\tmemcpy(&#cbname#_jmpbuf,&#varname#_jmpbuf,sizeof(jmp_buf));
-\t}""",
+        CFUNCSMESS(\"Restoring callback variables for `#varname#`.\\n\");
+        #varname#_cb_ptr = swap_active_#cbname#(#varname#_cb_ptr);
+        Py_DECREF(#varname#_cb.args_capi);
+    }""",
         'need': ['SWAP', 'create_cb_arglist'],
         '_check':isexternal,
         '_depend':''
