@@ -5,7 +5,7 @@ import numpy as np
 from typing import Iterable  # noqa: F401
 
 # Basic checks
-array = np.array([2, 3])
+array = np.array([1, 2])
 
 
 def ndarray_func(x):
@@ -125,21 +125,22 @@ array * 1
 1 * array
 array *= 1
 
+nonzero_array = np.array([1, 2])
 array / 1
-1 / array
+1 / nonzero_array
 float_array = np.array([1.0, 2.0])
 float_array /= 1
 
 array // 1
-1 // array
+1 // nonzero_array
 array //= 1
 
 array % 1
-1 % array
+1 % nonzero_array
 array %= 1
 
 divmod(array, 1)
-divmod(1, array)
+divmod(1, nonzero_array)
 
 array ** 1
 1 ** array
