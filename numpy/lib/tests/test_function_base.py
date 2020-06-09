@@ -3138,7 +3138,7 @@ class TestLerp:
         if t0 == t1 or a == b:
             assert l0 == l1  # uninteresting
         elif (t0 < t1) == (a < b):
-            assert l0 < l1
+            assert l0 <= l1
         else:
             assert l0 >= l1
 
