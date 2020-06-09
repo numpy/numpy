@@ -91,7 +91,7 @@ from numpy.core.multiarray import (
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
+__all__ = ['sctypeDict', 'typeDict', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
@@ -106,7 +106,6 @@ from ._string_helpers import (
 
 from ._type_aliases import (
     sctypeDict,
-    sctypeNA,
     allTypes,
     bitname,
     sctypes,
@@ -512,7 +511,6 @@ typecodes = {'Character':'c',
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
-typeNA = sctypeNA
 
 # b -> boolean
 # u -> unsigned integer
