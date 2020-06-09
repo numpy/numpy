@@ -74,7 +74,7 @@ def getargs(co):
     if not iscode(co):
         raise TypeError('arg is not a code object')
 
-    nargs = co.co_argcount
+    nargs = co.co_argcount + co.co_kwonlyargcount
     names = co.co_varnames
     args = list(names[:nargs])
 
@@ -108,7 +108,12 @@ def getargspec(func):
     if not isfunction(func):
         raise TypeError('arg is not a Python function')
     args, varargs, varkw = getargs(func.__code__)
-    return args, varargs, varkw, func.__defaults__
+    defaults = func.__defaults__
+    if func.__kwdefaults__:
+        if not defaults:
+            defaults = tuple()
+        defaults += tuple(func.__kwdefaults__.values())
+    return args, varargs, varkw, defaults
 
 def getargvalues(frame):
     """Get information about arguments passed into a particular frame.
