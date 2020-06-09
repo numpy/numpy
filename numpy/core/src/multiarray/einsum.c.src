@@ -546,7 +546,7 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if EINSUM_USE_SSE3 && @float32@
     value1_sse = _mm_set_ps1(value1);
 
     /* Use aligned instructions if possible */
@@ -570,6 +570,7 @@ finish_after_unrolled_loop:
         goto finish_after_unrolled_loop;
     }
 #elif EINSUM_USE_SSE2 && @float64@
+    printf("using sse2\n");
     value1_sse = _mm_set1_pd(value1);
 
     /* Use aligned instructions if possible */
