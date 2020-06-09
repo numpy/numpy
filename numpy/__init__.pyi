@@ -1021,14 +1021,14 @@ def searchsorted(
     a: ArrayLike,
     v: _Scalar,
     side: _Side = ...,
-    sorter: Union[None, Sequence[_IntOrBool], ndarray] = ...,  # 1D int array
+    sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
 ) -> integer: ...
 @overload
 def searchsorted(
     a: ArrayLike,
     v: ArrayLike,
     side: _Side = ...,
-    sorter: Union[None, Sequence[_IntOrBool], ndarray] = ...,  # 1D int array
+    sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
 ) -> ndarray: ...
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> ndarray: ...
 @overload
