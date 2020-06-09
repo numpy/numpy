@@ -3140,7 +3140,7 @@ class TestLerp:
         elif (t0 < t1) == (a < b):
             assert l0 < l1
         else:
-            assert l0 > l1
+            assert l0 >= l1
 
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
