@@ -195,16 +195,6 @@ stages:
     strategy:
       maxParallel: 6
       matrix:
-          Python36-32bit-fast:
-            PYTHON_VERSION: '3.6'
-            PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
-            BITS: 32
-          Python37-32bit-fast:
-            PYTHON_VERSION: '3.7'
-            PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
-            BITS: 32
           Python38-32bit-fast:
             PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x86'
