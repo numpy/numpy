@@ -193,3 +193,6 @@ tools/swig/test/Tensor.py
 tools/swig/test/Vector.py
 tools/swig/test/Vector_wrap.cxx
 tools/swig/test/Array.py
+
+# MyPy
+.mypy_cache/
