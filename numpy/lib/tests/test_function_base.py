@@ -3164,6 +3164,12 @@ class TestLerp:
         # double subtraction is needed to remove the extra precision that t < 0.5 has
         assert np.lib.function_base._lerp(a, b, 1 - (1 - t)) == np.lib.function_base._lerp(b, a, 1 - t)
 
+    def test_lerp_0d_inputs(self):
+        a = np.array(2)
+        b = np.array(5)
+        t = np.array(0.2)
+        assert np.lib.function_base._lerp(a, b, t) == 2.6
+
 
 class TestMedian:
 
