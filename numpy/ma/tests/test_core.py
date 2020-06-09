@@ -34,8 +34,8 @@ from numpy.ma.core import (
     MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
     allclose, allequal, alltrue, angle, anom, arange, arccos, arccosh, arctan2,
     arcsin, arctan, argsort, array, asarray, choose, concatenate,
-    conjugate, cos, cosh, count, default_fill_value, diag, divide, empty,
-    empty_like, equal, exp, flatten_mask, filled, fix_invalid,
+    conjugate, cos, cosh, count, default_fill_value, diag, divide, doc_note,
+    empty, empty_like, equal, exp, flatten_mask, filled, fix_invalid,
     flatten_structured_array, fromflex, getmask, getmaskarray, greater,
     greater_equal, identity, inner, isMaskedArray, less, less_equal, log,
     log10, make_mask, make_mask_descr, mask_or, masked, masked_array,
@@ -5283,3 +5283,33 @@ def test_mask_shape_assignment_does_not_break_masked():
     b = np.ma.array(1, mask=a.mask)
     b.shape = (1,)
     assert_equal(a.mask.shape, ())
+
+@pytest.mark.skipif(sys.flags.optimize > 1,
+                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
+def test_doc_note():
+    def method(self):
+        """This docstring
+
+        Has multiple lines
+
+        And notes
+
+        Notes
+        -----
+        original note
+        """
+        pass
+
+    expected_doc = """This docstring
+
+Has multiple lines
+
+And notes
+
+Notes
+-----
+note
+
+original note"""
+
+    assert_equal(np.ma.core.doc_note(method.__doc__, "note"), expected_doc)
