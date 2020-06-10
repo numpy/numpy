@@ -28,6 +28,7 @@ GRTAGS
 GSYMS
 GTAGS
 .cache
+.mypy_cache/
 
 # Compiled source #
 ###################
