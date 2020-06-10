@@ -207,8 +207,7 @@ discover_dtype_from_pytype(PyTypeObject *pytype)
         return (PyArray_DTypeMeta *)Py_None;
     }
 
-    weakref = PyDict_GetItem(
-            _global_pytype_to_type_dict, (PyObject *)pytype);
+    weakref = PyDict_GetItem(_global_pytype_to_type_dict, (PyObject *)pytype);
 
     if (weakref == NULL) {
         /* This should not be possible, since types should be hashable */
@@ -576,7 +575,7 @@ update_shape(int curr_ndim, int *max_ndim,
 }
 
 
-#define COERCION_CACHE_CACHE_SIZE 10
+#define COERCION_CACHE_CACHE_SIZE 0
 static int _coercion_cache_num = 0;
 static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
 
@@ -723,8 +722,6 @@ handle_scalar(
 }
 
 
-
-
 /**
  * Return the correct descriptor given an array object and a DType class.
  *
@@ -761,7 +758,6 @@ find_descriptor_from_array(
         if (iter == NULL) {
             return -1;
         }
-        int array_is_object = PyArray_ISOBJECT(arr);
         while (iter->index < iter->size) {
             PyArray_DTypeMeta *item_DType;
             /*
@@ -770,10 +766,13 @@ find_descriptor_from_array(
              */
             PyObject *elem = PyArray_GETITEM(arr, iter->dataptr);
             if (elem == NULL) {
-                elem = Py_None;
+                Py_DECREF(iter);
+                return -1;
             }
             item_DType = discover_dtype_from_pyobject(elem, &flags, DType);
             if (item_DType == NULL) {
+                Py_DECREF(iter);
+                Py_DECREF(elem);
                 return -1;
             }
             if (item_DType == (PyArray_DTypeMeta *)Py_None) {
@@ -783,10 +782,12 @@ find_descriptor_from_array(
             if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
                     NULL, DType, NULL, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
+                Py_DECREF(elem);
                 Py_XDECREF(item_DType);
                 return -1;
             }
             Py_XDECREF(item_DType);
+            Py_DECREF(elem);
             PyArray_ITER_NEXT(iter);
         }
         Py_DECREF(iter);
