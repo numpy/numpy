@@ -136,6 +136,9 @@ else:
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
+    # mapping of {name: (value, deprecation_msg)}
+    __deprecated_attrs__ = {}
+
     # Allow distributors to run custom init code
     from . import _distributor_init
 
@@ -156,11 +159,35 @@ else:
     from . import matrixlib as _mat
     from .matrixlib import *
 
-    # Make these accessible from numpy name-space
-    # but not imported in from numpy import *
-    # TODO[gh-6103]: Deprecate these
-    from builtins import bool, int, float, complex, object, str
-    from .compat import long, unicode
+    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
+    import builtins as _builtins
+    __deprecated_attrs__.update({
+        n: (
+            getattr(_builtins, n),
+            "`np.{n}` is a deprecated alias for the builtin `{n}`. "
+            "Use `{n}` by itself, which is identical in behavior, to silence "
+            "this warning. "
+            "If you specifically wanted the numpy scalar type, use `np.{n}_` "
+            "here."
+            .format(n=n)
+        )
+        for n in ["bool", "int", "float", "complex", "object", "str"]
+    })
+    __deprecated_attrs__.update({
+        n: (
+            getattr(compat, n),
+            "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
+            "Use `np.compat.{n}` by itself, which is identical in behavior, "
+            "to silence this warning. "
+            "In the likely event your code does not need to work on Python 2 "
+            "you can use the builtin ``{n2}`` for which ``np.compat.{n}`` is "
+            "itself an alias. "
+            "If you specifically wanted the numpy scalar type, use `np.{n2}_` "
+            "here."
+            .format(n=n, n2=n2)
+        )
+        for n, n2 in [("long", "int"), ("unicode", "str")]
+    })
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
@@ -172,8 +199,10 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
-    # These are added by `from .core import *` and `core.__all__`, but we
-    # overwrite them above with builtins we do _not_ want to export.
+    # These are exported by np.core, but are replaced by the builtins below
+    # remove them to ensure that we don't end up with `np.long == np.int_`,
+    # which would be a breaking change.
+    del long, unicode
     __all__.remove('long')
     __all__.remove('unicode')
 
@@ -196,25 +225,33 @@ else:
     numarray = 'removed'
 
     if sys.version_info[:2] >= (3, 7):
-        # Importing Tester requires importing all of UnitTest which is not a
-        # cheap import Since it is mainly used in test suits, we lazy import it
-        # here to save on the order of 10 ms of import time for most users
-        #
-        # The previous way Tester was imported also had a side effect of adding
-        # the full `numpy.testing` namespace
-        #
         # module level getattr is only supported in 3.7 onwards
         # https://www.python.org/dev/peps/pep-0562/
         def __getattr__(attr):
+            # Emit warnings for deprecated attributes
+            try:
+                val, msg = __deprecated_attrs__[attr]
+            except KeyError:
+                pass
+            else:
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+                return val
+
+            # Importing Tester requires importing all of UnitTest which is not a
+            # cheap import Since it is mainly used in test suits, we lazy import it
+            # here to save on the order of 10 ms of import time for most users
+            #
+            # The previous way Tester was imported also had a side effect of adding
+            # the full `numpy.testing` namespace
             if attr == 'testing':
                 import numpy.testing as testing
                 return testing
             elif attr == 'Tester':
                 from .testing import Tester
                 return Tester
-            else:
-                raise AttributeError("module {!r} has no attribute "
-                                     "{!r}".format(__name__, attr))
+
+            raise AttributeError("module {!r} has no attribute "
+                                 "{!r}".format(__name__, attr))
 
         def __dir__():
             return list(globals().keys() | {'Tester', 'testing'})
@@ -223,6 +260,13 @@ else:
         # We don't actually use this ourselves anymore, but I'm not 100% sure that
         # no-one else in the world is using it (though I hope not)
         from .testing import Tester
+
+        # We weren't able to emit a warning about these, so keep them around
+        globals().update({
+            k: v
+            for k, (v, msg) in __deprecated_attrs__.items()
+        })
+
 
     # Pytest testing
     from numpy._pytesttester import PytestTester

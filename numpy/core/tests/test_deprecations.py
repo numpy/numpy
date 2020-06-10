@@ -9,6 +9,7 @@ import warnings
 import pytest
 import tempfile
 import re
+import sys
 
 import numpy as np
 from numpy.testing import (
@@ -655,3 +656,22 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.ravel_multi_index(arr, (7, 6), mode='Cilp'))
         # using completely different word with first character as R
         self.assert_deprecated(lambda: np.searchsorted(arr[0], 4, side='Random'))
+
+
+class TestDeprecatedGlobals(_DeprecationTestCase):
+    # 2020-06-06
+    @pytest.mark.skipif(
+        sys.version_info < (3, 7),
+        reason='module-level __getattr__ not supported')
+    def test_type_aliases(self):
+        # from builtins
+        self.assert_deprecated(lambda: np.bool)
+        self.assert_deprecated(lambda: np.int)
+        self.assert_deprecated(lambda: np.float)
+        self.assert_deprecated(lambda: np.complex)
+        self.assert_deprecated(lambda: np.object)
+        self.assert_deprecated(lambda: np.str)
+
+        # from np.compat
+        self.assert_deprecated(lambda: np.long)
+        self.assert_deprecated(lambda: np.unicode)
