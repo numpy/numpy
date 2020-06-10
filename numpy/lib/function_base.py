@@ -3877,7 +3877,7 @@ def _lerp(a, b, t, out=None):
     """ Linearly interpolate from a to b by a factor of t """
     diff_b_a = subtract(b, a)
 
-    _scalar_or_0d = lambda x: np.isscalar(a) or np.ndim(x) == 0
+    _scalar_or_0d = lambda x: np.isscalar(x) or np.ndim(x) == 0
     if _scalar_or_0d(a) and _scalar_or_0d(b) and _scalar_or_0d(t):
         if t <= 0.5:
             return add(a, diff_b_a * t, out=out)
