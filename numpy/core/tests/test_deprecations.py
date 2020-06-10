@@ -313,16 +313,15 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
 
 class TestNumericStyleTypecodes(_DeprecationTestCase):
     """
-     Most numeric style typecodes were previously deprecated (and removed)
-     in 1.20. This also deprecates the remaining ones.
+    Most numeric style typecodes were previously deprecated (and removed)
+    in 1.20. This also deprecates the remaining ones.
     """
     # 2020-06-09, NumPy 1.20
     def test_all_dtypes(self):
-        deprecated_types = ['Bytes0', 'Datetime64', 'Str0', 'Uint64']
+        deprecated_types = ['Bytes0', 'Datetime64', 'Str0']
+        # Depending on intp size, either Uint32 or Uint64 is defined:
+        deprecated_types.append(f"U{np.dtype(np.intp).name}")
         for dt in deprecated_types:
-            if dt == 'Uint64' and dt not in np.typeDict:
-                # Uint64 was only (accidentally) added on some platforms
-                continue
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
 

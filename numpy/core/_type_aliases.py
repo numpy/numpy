@@ -116,9 +116,10 @@ def _add_aliases():
 
     # Add deprecated numeric-style type aliases manually, at some point
     # we may want to deprecate the lower case "bytes0" version as well.
-    for name in ["Bytes0", "Datetime64", "Str0", "Uint64"]:
-        if name == "Uint64" and "uint64" not in allTypes:
-            # Due to the integer priority, this was not always defined
+    for name in ["Bytes0", "Datetime64", "Str0", "Uint32", "Uint64"]:
+        if english_lower(name) not in allTypes:
+            # Only Uint32 or Uint64 was (and is) defined, note that this
+            # is not UInt23/UInt64 (capital i), which is removed.
             continue
         allTypes[name] = allTypes[english_lower(name)]
         sctypeDict[name] = sctypeDict[english_lower(name)]
