@@ -3945,11 +3945,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
 
     Parameters
     ----------
-    order : {'C', 'F', 'A', 'K'}, optional
+    order : {'C', 'F', 'A'}, optional
         Controls the memory layout of the bytes object. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
-        'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible. Default is 'C'.
+        'F' means F-order, 'A' (short for *Any*) means 'F' if `a` is
+        Fortran contiguous, 'C' otherwise. Default is 'C'.
 
     Returns
     -------
