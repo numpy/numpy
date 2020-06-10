@@ -1,11 +1,5 @@
-from typing import Any, TYPE_CHECKING
-
 import numpy as np
-
-if TYPE_CHECKING:
-    from numpy.typing import ArrayLike
-else:
-    ArrayLike = Any
+from numpy.typing import ArrayLike
 
 
 class A:
