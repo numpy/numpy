@@ -107,45 +107,26 @@ class Lstsq(Benchmark):
 
 class Einsum(Benchmark):
     param_names = ['dtype']
-    params = [[np.float32, np.float64]]
+    params = [[np.float64]]
     def setup(self, dtype):
-        self.a = np.arange(3000, dtype=dtype)
-        self.b = np.arange(2990, dtype=dtype)
+        self.a = np.arange(2900, dtype=dtype)
+        self.b = np.arange(3000, dtype=dtype)
         self.c = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
         self.c1 = np.arange(1200, dtype=dtype).reshape(30, 40)
-        self.c2 = np.arange(40, dtype=dtype)
-        self.c3 = np.arange(30000, dtype=dtype).reshape(30, 20, 50)
-        self.d = np.arange(2*1000, dtype=dtype).reshape(2, 1000)
-        self.e = np.arange(100*100, dtype=dtype).reshape(100, 100)
+        self.d = np.arange(10000, dtype=dtype).reshape(10,100,10)
 
-    #outer(a,b)
+    #outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):
         np.einsum("i,j", self.a, self.b, optimize=True)
 
-    #inner(a,b)
-    def time_einsum_inner(self, dtype):
-        np.einsum("...i, ...i", self.c, self.c2, optimize=True)
-
-    # swap axes
-    def time_einsum_swap(self, dtype):
-        np.einsum("ijk->jik", self.c, optimize=True)
-    
-    # sum(a, axis=0)
-    def time_einsum_sum(self, dtype):
-        np.einsum("i...->...", self.d, optimize=True)
-    
-    # trace(a)
-    def time_einsum_trace(self, dtype):
-        np.einsum("ii", self.e, optimize=True)
-
-    # multiply(a, b)
+    # multiply(a, b):trigger sum_of_products_contig_two
     def time_einsum_multiply(self, dtype):
         np.einsum("..., ...", self.c1, self.c , optimize=True)
     
-    # tensordot(a, b)
-    def time_einsum_tensordot(self, dtype):
-        np.einsum("ijk, jil -> kl", self.c, self.c3 , optimize=True)
+    # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
+    def time_einsum_sum_mul(self, dtype):
+        np.einsum(",i...->", 300, self.d, optimize=True)
 
-    # a.dot(b)
-    def time_einsum_matmat(self, dtype):
-        np.einsum("ij,jk", self.e, self.e , optimize=True)
+    # sum and multiply:trigger sum_of_products_stride0_contig_outstride0_two
+    def time_einsum_sum_mul2(self, dtype):
+        np.einsum("i...,->", self.d, 300, optimize=True)

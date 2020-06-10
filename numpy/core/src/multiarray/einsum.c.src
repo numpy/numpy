@@ -31,9 +31,6 @@
 #define EINSUM_USE_SSE1 0
 #endif
 
-/*
- * TODO: Only some SSE2 for float64 is implemented.
- */
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #define EINSUM_USE_SSE2 1
 #else
