@@ -1,5 +1,5 @@
-Numeric style types removed from type dictionaries
---------------------------------------------------
+Numeric-style type names have been removed from type dictionaries
+-----------------------------------------------------------------
 
 To stay in sync with the deprecation for ``np.dtype("Complex64")``
 and other numeric-style (capital case) types.  These were removed

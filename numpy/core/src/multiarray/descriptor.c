@@ -1678,7 +1678,8 @@ _convert_from_str(PyObject *obj, int align)
         }
 
         /* Check for a deprecated Numeric-style typecode */
-        char *dep_tps[] = {"Bytes", "Datetime64", "Str", "Uint64"};
+        /* `Uint` has deliberately weird uppercasing */
+        char *dep_tps[] = {"Bytes", "Datetime64", "Str", "Uint"};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
         for (int i = 0; i < ndep_tps; ++i) {
             char *dep_tp = dep_tps[i];
