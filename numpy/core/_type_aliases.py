@@ -118,7 +118,7 @@ def _add_aliases():
     # we may want to deprecate the lower case "bytes0" version as well.
     for name in ["Bytes0", "Datetime64", "Str0", "Uint32", "Uint64"]:
         if english_lower(name) not in allTypes:
-            # Only Uint32 or Uint64 was (and is) defined, note that this
+            # Only one of Uint32 or Uint64, aliases of `np.uintp`, was (and is) defined, note that this
             # is not UInt32/UInt64 (capital i), which is removed.
             continue
         allTypes[name] = allTypes[english_lower(name)]
