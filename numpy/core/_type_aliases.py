@@ -119,7 +119,7 @@ def _add_aliases():
     for name in ["Bytes0", "Datetime64", "Str0", "Uint32", "Uint64"]:
         if english_lower(name) not in allTypes:
             # Only Uint32 or Uint64 was (and is) defined, note that this
-            # is not UInt23/UInt64 (capital i), which is removed.
+            # is not UInt32/UInt64 (capital i), which is removed.
             continue
         allTypes[name] = allTypes[english_lower(name)]
         sctypeDict[name] = sctypeDict[english_lower(name)]
