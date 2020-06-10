@@ -1148,7 +1148,6 @@ PyArray_DiscoverDTypeAndShape(
                 (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     }
     if (requested_descr != NULL) {
-        assert(!descr_is_legacy_parametric_instance(requested_descr));
         assert(fixed_DType == NPY_DTYPE(requested_descr));
     }
     /*
