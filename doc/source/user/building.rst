@@ -165,7 +165,7 @@ lower case).
 
 .. deprecated:: 1.20
   The native libraries on macOS, provided by Accelerate, are not fit for use
-  in NumPy since they have bugs that cause wrong output under easily reproducable
+  in NumPy since they have bugs that cause wrong output under easily reproducible
   conditions. If the vendor fixes those bugs, the library could be reinstated,
   but until then users compiling for themselves should use another linear
   library or use the built-in (but slower) default, see the next section.
