@@ -261,9 +261,12 @@ information is currently provided and will be defined on the class:
   class attribute and the current ``dtype.type`` field considered
   deprecated. This may be relaxed if a use-case arises.
 
-Additionally, existing methods (and C-side fields) will be provided, although
-fields such as the "kind" and and "char" may be set to invalid values on
-the C-side, and access may error on the Python side.
+Additionally, existing methods (and C-side fields) will be provided.
+However, the fields ``kind`` and and ``char`` will be set to ``\0``
+(NULL character) on the C-side.
+While discouraged, except for NumPy builtin types, ``kind`` both will return
+the ``__qualname__`` of the object to ensure uniqueness for all DTypes.
+(the replacement for ``kind`` will be to use ``isinstance`` checks).
 
 Another example of methods that should be moved to the DType class are the
 various sorting functions, which shall be implemented by defining a method:
@@ -1041,10 +1044,11 @@ Its ``adjust_descriptors`` functions may look like::
 
 .. note::
 
-    In general a DType with a physical unit may want to disallow dropping the unit
-    during casting. Unlike NumPy datetime in general, the cast from a datetime64
-    to an integer is not clearly defined. Instead, this type of cast may be
-    better represented as a special ufunc, e.g. ``unit.drop_unit(arr)``.
+    While NumPy currently defines some of these casts, with the possible
+    exception of the unit-less ``timedelta64`` it may be better to not
+    define these cast at all.  In general we expect that user defined
+    DTypes will be using other methods such as ``unit.drop_unit(arr)``
+    or ``arr * unit.seconds``.
 
 
 C-Side API
@@ -1157,6 +1161,9 @@ The external API for ``CastingImpl`` will be limited initially to defining:
   or ``NPY_SAME_KIND_CASTING``.  With a new, additional, flag ``NPY_CAST_IS_VIEW``
   which can be set to indicate that no cast is necessary, but a simple view
   is sufficient to perform the cast.
+  The cast should return ``-1`` when a custom error message is set and
+  ``NPY_NO_CASTING`` to indicate that a generic casting error should be
+  set (this is in most cases preferable).
 * ``strided_loop(char **args, npy_intp *dimensions, npy_intp *strides, dtypes[2]) -> int {0, nonzero}`` (must currently succeed)
 
 This is identical to the proposed API for ufuncs. By default the two dtypes
@@ -1237,18 +1244,31 @@ pointer incompatibilities. There is currently no proposed solution to this.
 Issues
 ^^^^^^
 
-Any possible design decision will have issues, two of which should be mentioned
-here.
-The above split into Python objects has the disadvantage that reference cycles
-naturally occur, unless ``CastingImpl`` is bound every time it is returned.
-Although normally Numpy DTypes are not expected to have a limited lifetime,
-this may require some thought.
+Any possible design decision will have issues.
 
-A second downside is that by splitting up the code into more natural and
-logical parts, some exceptions will be less specific.
-This should be alleviated almost entirely by exception chaining, although it
-is likely that the quality of some error messages will be impacted at least
-temporarily.
+The above split into Python objects has the disadvantage that reference cycles
+naturally occur.  For example a potential ``CastingImpl`` object needs to
+hold on to both ``DTypes``.  Further, a scalar type may want to own a
+strong reference to the corresponding ``DType`` while the ``DType`` *must*
+hold a strong reference to the scalar.
+We do not believe that these reference cycles are an issue. The may
+require implementation of of cyclic reference counting at some point, but
+cyclic reference resolution is very common in Python and dtypes (especially
+classes) are only a small number of objects.
+
+In some cases, the new split will add additional indirections to the code,
+since methods on the DType have to be looked up and called.
+This should not have serious performance impact and seems necessary to
+achieve the desired flexibility.
+
+From a user-perspective, a more serious downside is that handling certain
+functionality in the ``DType`` rather than directly can mean that error
+messages need to be raised from places where less context is available.
+This may mean that error messages can be less specific.
+This will be alleviated by exception chaining.  Also decisions such as
+returning the casting safety (even when it is impossible to cast) allow
+most exceptions to be set at a point where more context is available
+and ensures uniform errors messages.
 
 
 Implementation
@@ -1261,9 +1281,19 @@ This includes:
 
 * How ``CastingImpl`` lookup, and thus the decision whether a cast is possible,
   is defined. (This is speed relevant, although mainly during a transition
-  phase where UFuncs where NEP YY is not yet implemented).
+  phase where UFuncs where NEP 43 is not yet implemented).
   Thus, it is not very relevant to the NEP. It is only necessary to ensure fast
   lookup during the transition phase for the current builtin Numerical types.
+
+* How the mapping from a python scalar (e.g. ``3.``) to the DType is
+  implemented.
+
+The main steps for implementation are outlined in :ref:`NEP 41 <NEP41>`.
+This includes the internal restructure for how casting and array-coercion
+works.
+After this the new public API will be added incrementally.
+This includes replacements for certain slots which are occasionally
+directly used on the dtype (e.g. ``dtype->f->setitem``).
 
 
 Discussion
@@ -1273,6 +1303,18 @@ There is a large space of possible implementations with many discussions
 in various places, as well as initial thoughts and design documents.
 These are listed in the discussion of NEP 40 and not repeated here for
 brevity.
+
+
+References
+----------
+
+.. _value_based: NumPy currently inspects the value to allow the operations::
+
+     np.array([1], dtype=np.uint8) + 1
+     np.array([1.2], dtype=np.float32) + 1.
+
+   to return a ``uint8`` or ``float32`` array respectively.  This is
+   further described in the documentation of :ref:`numpy.result_type`.
 
 
 Copyright
