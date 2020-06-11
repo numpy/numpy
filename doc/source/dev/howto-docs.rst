@@ -24,7 +24,7 @@ and stored in the `NumPy Archive repository
 *************************
 What's needed
 *************************
-From a forest-and-trees perspective, NumPy has trees covered. NumPy's API reference
+NumPy docs have the details covered. API reference
 documentation is generated directly from
 `docstrings <https://www.python.org/dev/peps/pep-0257/>`_ in the code
 when the documentation is :ref:`built<howto-build-docs>`.
@@ -33,7 +33,7 @@ What we lack are docs with broader scope -- tutorials, how-tos, and explanations
 Reporting defects is another way to contribute. We discuss both.
 
 *************************
-Fixes
+Contributing fixes
 *************************
 
 We're eager to hear about and fix doc defects. But to attack the biggest
@@ -56,9 +56,9 @@ Obvious **wording** mistakes (like leaving out a "not") fall into the typo
 category, but other rewordings -- even for grammar -- require a judgment call,
 which raises the bar. Test the waters by first presenting the fix as an issue.
 
-***********
-New pages
-***********
+******************************************************************************
+Contributing new pages
+******************************************************************************
 
 Your frustrations using our documents are our best guide to what needs fixing.
 
