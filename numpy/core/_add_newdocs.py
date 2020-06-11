@@ -1525,7 +1525,7 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
         Controls the memory layout of the output. 'C' means it should
         be C contiguous. 'F' means it should be Fortran contiguous,
         'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout as the inputs as
+        'K' means it should be as close to the layout of the inputs as
         is possible, including arbitrarily permuted axes.
         Default is 'K'.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
@@ -3936,18 +3936,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     Construct Python bytes containing the raw data bytes in the array.
 
     Constructs Python bytes showing a copy of the raw contents of
-    data memory. The bytes object can be produced in either 'C' or 'Fortran',
-    or 'Any' order (the default is 'C'-order). 'Any' order means C-order
-    unless the F_CONTIGUOUS flag in the array is set, in which case it
-    means 'Fortran' order.
+    data memory. The bytes object is produced in C-order by default.
+    This behavior is controlled by the ``order`` parameter.
 
     .. versionadded:: 1.9.0
 
     Parameters
     ----------
-    order : {'C', 'F', None}, optional
-        Order of the data for multidimensional arrays:
-        C, Fortran, or the same as for the original array.
+    order : {'C', 'F', 'A'}, optional
+        Controls the memory layout of the bytes object. 'C' means C-order,
+        'F' means F-order, 'A' (short for *Any*) means 'F' if `a` is
+        Fortran contiguous, 'C' otherwise. Default is 'C'.
 
     Returns
     -------
