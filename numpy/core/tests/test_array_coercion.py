@@ -16,8 +16,6 @@ from numpy.testing import (
     HAS_REFCOUNT
 )
 
-all_scalars = set(np.typeDict.values())
-all_scalars.add(rational)
 
 def arraylikes():
     """
@@ -70,29 +68,51 @@ def arraylikes():
     yield ArrayStruct
 
 
-def scalar_instances(times=True):
-    for scalar_type in all_scalars:
-        if isinstance(scalar_instances(), np.complexfloating):
-            yield scalar_type(2, 3)**scalar_type(0.5)
-        elif issubclass(scalar_type, np.flexible):
-            yield scalar_type(b"string")
-        elif scalar_type is np.timedelta64:
-            if times:
-                yield np.timedelta64(2)  # generic units
-                yield np.timedelta64(23, "s")
-        elif scalar_type is np.datetime64:
-            if times:
-                yield np.datetime64("NaT")  # generic units
-                yield np.datetime64("2020-06-07 12:43", "ms")
-        elif issubclass(scalar_type, np.number):
-            # Make we have an irrational scalar which needs full precision
-            yield scalar_type(2)**scalar_type(0.5)
+def scalar_instances(times=True, extended_precision=False):
+    # Hard-coded list of scalar instances.
+    # Floats:
+    yield np.sqrt(np.float16(5))
+    yield np.sqrt(np.float32(5))
+    yield np.sqrt(np.float64(5))
+    if extended_precision:
+        yield np.sqrt(np.longdouble(5))
+
+    # Complex:
+    yield np.sqrt(np.complex64(2+3j))
+    yield np.sqrt(np.complex128(2+3j))
+    if extended_precision:
+        yield np.sqrt(np.longcomplex(2+3j))
+
+    # Integers:
+    yield np.int8(2)
+    yield np.int16(2)
+    yield np.int32(2)
+    yield np.int64(2)
+
+    yield np.uint8(2)
+    yield np.uint16(2)
+    yield np.uint32(2)
+    yield np.uint64(2)
 
     # Cannot create a structured void scalar directly:
-    structured = np.array((1, 3), "i,i")[()]
+    structured = np.array([(1, 3)], "i,i")[0]
     assert isinstance(structured, np.void)
     assert structured.dtype == np.dtype("i,i")
     yield structured
+
+    if times:
+        # Datetimes and timedelta
+        yield np.timedelta64(2)  # generic units
+        yield np.timedelta64(23, "s")
+        yield np.timedelta64("NaT", "s")
+
+        yield np.datetime64("NaT")  # generic units
+        yield np.datetime64("2020-06-07 12:43", "ms")
+
+        # Strings and unstructured void:
+        yield np.bytes_(b"1234")
+        yield np.unicode_("String")
+        yield np.void(b"4321")
 
 
 def is_parametric_dtype(dtype):
@@ -246,11 +266,9 @@ class TestScalarDiscovery:
         """
         dtype = cast_to.dtype  # use to parametrize only the target dtype
 
-        for scalar in scalar_instances(times=False):
-            if is_parametric_dtype(dtype) and dtype.type is type(scalar):
-                # This skips datetime and timedelta when the target has no
-                # unit. Because for them `np.array()` adapts the unit.
-                continue
+        # XFAIL: Some extended precision tests fail, because assigning to
+        #        complex256 will use float(float128)
+        for scalar in scalar_instances(times=False, extended_precision=False):
             if dtype.type == np.void:
                if scalar.dtype.fields is not None and dtype.fields is None:
                     # Here, coercion to "V6" works, but the cast fails.
@@ -258,8 +276,7 @@ class TestScalarDiscovery:
                     # this, but has different rules than the cast.
                     with assert_raises(TypeError):
                         np.array(scalar).astype(dtype)
-                    with pytest.xfail("raises, unlike the second one"):
-                        np.array(scalar, dtype=dtype)
+                    # XFAIL: np.array(scalar, dtype=dtype)
                     np.array([scalar], dtype=dtype)
                     continue
 
@@ -425,8 +442,9 @@ class TestNested:
 
 class TestBadSequences:
     # These are tests for bad objects passed into `np.array`, in general
-    # these should raise some error, although even returning undefined
-    # behaviour is fine.  But they should not crash.
+    # these have undefined behaviour.  In the old code they partially worked
+    # when now they will fail.  We could (and maybe should) create a copy
+    # of all sequences to be safe against bad-actors.
 
     def test_growing_list(self):
         # List to coerce, `mylist` will append to it during coercion
@@ -438,33 +456,41 @@ class TestBadSequences:
 
         obj.append(mylist([1, 2]))
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # changes to RuntimeError
             np.array(obj)
 
-    @pytest.mark.skip(reason="segfaults currently")
-    def test_shrinking_list(self):
-        # List to coerce, `mylist` will delete to it during coercion
-        obj = []
-        class mylist(list):
-            def __len__(self):
-                obj.pop()
-                return super().__len__()
+    # Note: We do not test a shrinking list.  These do very evil things
+    #       and the only way to fix them would be to copy all sequences.
+    #       (which may be a real option in the future).
 
-        obj.append(mylist([1, 2]))
-        obj.append([2, 3])
-        with pytest.raises(ValueError):
-            np.array(obj)
-
-    @pytest.mark.skip(reason="segfaults currently")
     def test_mutated_list(self):
         # List to coerce, `mylist` will mutate the first element
         obj = []
         class mylist(list):
             def __len__(self):
-                obj[0] = [2, 3]
+                obj[0] = [2, 3]  # replace with a different list.
                 return super().__len__()
 
-        obj.append(mylist([1, 2]))
         obj.append([2, 3])
-        with pytest.raises(ValueError):
-            np.array(obj)
+        obj.append(mylist([1, 2]))
+        #with pytest.raises(RuntimeError):  # Will error in the future
+        np.array(obj)
+
+
+    def test_replace_0d_array(self):
+        # List to coerce, `mylist` will mutate the first element
+        obj = []
+        class baditem:
+            def __len__(self):
+                obj[0][0] = 2  # replace with a different list.
+                raise ValueError("not actually a sequence!")
+
+            def __getitem__(self):
+                pass
+
+        # Runs into a corner case in the new code, the `array(2)` is cached
+        # so replacing it invalidates the cache.
+        obj.append([np.array(2), baditem()])
+        # with pytest.raises(RuntimeError):  # Will error in the future
+        np.array(obj)
+
