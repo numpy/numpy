@@ -648,7 +648,7 @@ Common DType Operations
 Numpy currently provides functions like ``np.result_type`` and
 ``np.promote_types`` for determining common types.
 These differ in that ``np.result_type`` can take arrays and scalars as input
-and implements value based promotion [value_based]_.
+and implements value based promotion [1]_.
 
 To distinguish between the promotion occurring during universal function application,
 we will call it "common type" operation here.
@@ -894,7 +894,7 @@ with the signature.
 .. figure:: _static/casting_flow.svg
     :figclass: align-center
 
-`Figure <cast_figure>`_ illustrates the multi-step logic necessary to
+`The above figure <cast_figure>`_ illustrates the multi-step logic necessary to
 cast for example an ``int24`` with a value of ``42`` to a string of length 20
 (``"S20"``).
 In this example, the implementer only provided the functionality of casting
@@ -927,7 +927,7 @@ In this case the result of ``(int24, "S8")`` defines the correct cast:
 To answer the question of casting safety
 ``np.can_cast(int24, "S20", casting="safe")``, only the ``adjust_descriptors``
 function is required and called is in the same way as in 
-`Figure <cast_figure>`_.
+`the figure describing a cast <cast_figure>`_.
 In this case, the calls to ``adjust_descriptors``, will also provide the
 information that ``int24 -> "S8"`` as well as ``"S8" -> "S20"`` are safe casts,
 and thus also the ``int24 -> "S20"`` is a safe cast.
@@ -1315,13 +1315,13 @@ brevity.
 References
 ----------
 
-.. _value_based: NumPy currently inspects the value to allow the operations::
+.. [1] NumPy currently inspects the value to allow the operations::
 
      np.array([1], dtype=np.uint8) + 1
      np.array([1.2], dtype=np.float32) + 1.
 
    to return a ``uint8`` or ``float32`` array respectively.  This is
-   further described in the documentation of :ref:`numpy.result_type`.
+   further described in the documentation of `numpy.result_type`.
 
 
 Copyright
