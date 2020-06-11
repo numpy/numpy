@@ -1048,8 +1048,9 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return max_dims;
     }
     if (size == 0) {
-        /* If the sequence is empty, there are no more dimensions */
-        return curr_dims+1;
+        /* If the sequence is empty, this must be the last dimension */
+        *flags |= MAX_DIMS_WAS_REACHED;
+        return curr_dims + 1;
     }
 
     /* Recursive call for each sequence item */
