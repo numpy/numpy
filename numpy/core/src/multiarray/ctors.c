@@ -632,6 +632,7 @@ PyArray_AssignFromCache_Recursive(
         PyArrayObject *self, const int ndim, coercion_cache_obj **cache)
 {
     /* Consume first cache element by extracting information and freeing it */
+    PyObject *original_obj = (*cache)->converted_obj;
     PyObject *obj = (*cache)->arr_or_sequence;
     Py_INCREF(obj);
     npy_bool sequence = (*cache)->sequence;
@@ -651,7 +652,8 @@ PyArray_AssignFromCache_Recursive(
         if (PyArray_ISOBJECT(self)) {
             assert(ndim != 0);  /* guaranteed by PyArray_AssignFromCache */
             assert(PyArray_NDIM(self) == 0);
-            if (PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self), obj) < 0) {
+            if (PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self),
+                    original_obj) < 0) {
                 goto fail;
             }
             Py_DECREF(obj);
