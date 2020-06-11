@@ -267,6 +267,19 @@ of users.
 
 (`gh-16068 <https://github.com/numpy/numpy/pull/16068>`__)
 
+``SeedSequence`` with small seeds no longer conflicts with spawning
+-------------------------------------------------------------------
+Small seeds (less than ``2**96``) are implicitly 0-padded out to 128 bits, the
+size of the internal entropy pool. When spawned, the spawn key was concatenated
+before the 0-padding. Since the first spawn key is ``(0,)``, small seeds
+before the spawn created the same states as the first spawned ``SeedSequence``.
+Now, the seed is explicitly 0-padded out to the internal pool size before
+concatenating the spawn key. Spawned ``SeedSequences`` will produce different
+results than in the previous release. Unspawned ``SeedSequences`` will still
+produce the same results.
+
+(`gh-16551 <https://github.com/numpy/numpy/pull/16551>`__)
+
 
 C API changes
 =============

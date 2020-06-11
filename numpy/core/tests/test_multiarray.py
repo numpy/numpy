@@ -2153,10 +2153,10 @@ class TestMethods:
         # check double
         a = np.array([0, 1, np.nan])
         msg = "Test real searchsorted with nans, side='l'"
-        b = a.searchsorted(a, side='l')
+        b = a.searchsorted(a, side='left')
         assert_equal(b, np.arange(3), msg)
         msg = "Test real searchsorted with nans, side='r'"
-        b = a.searchsorted(a, side='r')
+        b = a.searchsorted(a, side='right')
         assert_equal(b, np.arange(1, 4), msg)
         # check keyword arguments
         a.searchsorted(v=1)
@@ -2165,10 +2165,10 @@ class TestMethods:
         a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
         a.imag += [0, 1, 0, 1, np.nan, np.nan, 0, 1, np.nan]
         msg = "Test complex searchsorted with nans, side='l'"
-        b = a.searchsorted(a, side='l')
+        b = a.searchsorted(a, side='left')
         assert_equal(b, np.arange(9), msg)
         msg = "Test complex searchsorted with nans, side='r'"
-        b = a.searchsorted(a, side='r')
+        b = a.searchsorted(a, side='right')
         assert_equal(b, np.arange(1, 10), msg)
         msg = "Test searchsorted with little endian, side='l'"
         a = np.array([0, 128], dtype='<i4')
@@ -2181,21 +2181,21 @@ class TestMethods:
 
         # Check 0 elements
         a = np.ones(0)
-        b = a.searchsorted([0, 1, 2], 'l')
+        b = a.searchsorted([0, 1, 2], 'left')
         assert_equal(b, [0, 0, 0])
-        b = a.searchsorted([0, 1, 2], 'r')
+        b = a.searchsorted([0, 1, 2], 'right')
         assert_equal(b, [0, 0, 0])
         a = np.ones(1)
         # Check 1 element
-        b = a.searchsorted([0, 1, 2], 'l')
+        b = a.searchsorted([0, 1, 2], 'left')
         assert_equal(b, [0, 0, 1])
-        b = a.searchsorted([0, 1, 2], 'r')
+        b = a.searchsorted([0, 1, 2], 'right')
         assert_equal(b, [0, 1, 1])
         # Check all elements equal
         a = np.ones(2)
-        b = a.searchsorted([0, 1, 2], 'l')
+        b = a.searchsorted([0, 1, 2], 'left')
         assert_equal(b, [0, 0, 2])
-        b = a.searchsorted([0, 1, 2], 'r')
+        b = a.searchsorted([0, 1, 2], 'right')
         assert_equal(b, [0, 2, 2])
 
         # Test searching unaligned array
@@ -2204,21 +2204,21 @@ class TestMethods:
         unaligned = aligned[1:].view(a.dtype)
         unaligned[:] = a
         # Test searching unaligned array
-        b = unaligned.searchsorted(a, 'l')
+        b = unaligned.searchsorted(a, 'left')
         assert_equal(b, a)
-        b = unaligned.searchsorted(a, 'r')
+        b = unaligned.searchsorted(a, 'right')
         assert_equal(b, a + 1)
         # Test searching for unaligned keys
-        b = a.searchsorted(unaligned, 'l')
+        b = a.searchsorted(unaligned, 'left')
         assert_equal(b, a)
-        b = a.searchsorted(unaligned, 'r')
+        b = a.searchsorted(unaligned, 'right')
         assert_equal(b, a + 1)
 
         # Test smart resetting of binsearch indices
         a = np.arange(5)
-        b = a.searchsorted([6, 5, 4], 'l')
+        b = a.searchsorted([6, 5, 4], 'left')
         assert_equal(b, [5, 5, 4])
-        b = a.searchsorted([6, 5, 4], 'r')
+        b = a.searchsorted([6, 5, 4], 'right')
         assert_equal(b, [5, 5, 5])
 
         # Test all type specific binary search functions
@@ -2233,16 +2233,16 @@ class TestMethods:
             else:
                 a = np.arange(0, 5, dtype=dt)
                 out = np.arange(5)
-            b = a.searchsorted(a, 'l')
+            b = a.searchsorted(a, 'left')
             assert_equal(b, out)
-            b = a.searchsorted(a, 'r')
+            b = a.searchsorted(a, 'right')
             assert_equal(b, out + 1)
             # Test empty array, use a fresh array to get warnings in
             # valgrind if access happens.
             e = np.ndarray(shape=0, buffer=b'', dtype=dt)
-            b = e.searchsorted(a, 'l')
+            b = e.searchsorted(a, 'left')
             assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
-            b = a.searchsorted(e, 'l')
+            b = a.searchsorted(e, 'left')
             assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
     def test_searchsorted_unicode(self):
@@ -2297,9 +2297,9 @@ class TestMethods:
         s = a.argsort()
         k = [0, 1, 2, 3, 5]
         expected = [0, 20, 40, 60, 80]
-        assert_equal(a.searchsorted(k, side='l', sorter=s), expected)
+        assert_equal(a.searchsorted(k, side='left', sorter=s), expected)
         expected = [20, 40, 60, 80, 100]
-        assert_equal(a.searchsorted(k, side='r', sorter=s), expected)
+        assert_equal(a.searchsorted(k, side='right', sorter=s), expected)
 
         # Test searching unaligned array
         keys = np.arange(10)
@@ -2310,15 +2310,15 @@ class TestMethods:
         unaligned = aligned[1:].view(a.dtype)
         # Test searching unaligned array
         unaligned[:] = a
-        b = unaligned.searchsorted(keys, 'l', s)
+        b = unaligned.searchsorted(keys, 'left', s)
         assert_equal(b, keys)
-        b = unaligned.searchsorted(keys, 'r', s)
+        b = unaligned.searchsorted(keys, 'right', s)
         assert_equal(b, keys + 1)
         # Test searching for unaligned keys
         unaligned[:] = keys
-        b = a.searchsorted(unaligned, 'l', s)
+        b = a.searchsorted(unaligned, 'left', s)
         assert_equal(b, keys)
-        b = a.searchsorted(unaligned, 'r', s)
+        b = a.searchsorted(unaligned, 'right', s)
         assert_equal(b, keys + 1)
 
         # Test all type specific indirect binary search functions
@@ -2339,16 +2339,16 @@ class TestMethods:
                 # from np.intp in all platforms, to check for #4698
                 s = np.array([4, 2, 3, 0, 1], dtype=np.int16)
                 out = np.array([3, 4, 1, 2, 0], dtype=np.intp)
-            b = a.searchsorted(a, 'l', s)
+            b = a.searchsorted(a, 'left', s)
             assert_equal(b, out)
-            b = a.searchsorted(a, 'r', s)
+            b = a.searchsorted(a, 'right', s)
             assert_equal(b, out + 1)
             # Test empty array, use a fresh array to get warnings in
             # valgrind if access happens.
             e = np.ndarray(shape=0, buffer=b'', dtype=dt)
-            b = e.searchsorted(a, 'l', s[:0])
+            b = e.searchsorted(a, 'left', s[:0])
             assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
-            b = a.searchsorted(e, 'l', s)
+            b = a.searchsorted(e, 'left', s)
             assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
         # Test non-contiguous sorter array
@@ -2358,9 +2358,9 @@ class TestMethods:
         srt[::2] = [4, 2, 3, 0, 1]
         s = srt[::2]
         out = np.array([3, 4, 1, 2, 0], dtype=np.intp)
-        b = a.searchsorted(a, 'l', s)
+        b = a.searchsorted(a, 'left', s)
         assert_equal(b, out)
-        b = a.searchsorted(a, 'r', s)
+        b = a.searchsorted(a, 'right', s)
         assert_equal(b, out + 1)
 
     def test_searchsorted_return_type(self):
@@ -2370,10 +2370,10 @@ class TestMethods:
         a = np.arange(5).view(A)
         b = np.arange(1, 3).view(A)
         s = np.arange(5).view(A)
-        assert_(not isinstance(a.searchsorted(b, 'l'), A))
-        assert_(not isinstance(a.searchsorted(b, 'r'), A))
-        assert_(not isinstance(a.searchsorted(b, 'l', s), A))
-        assert_(not isinstance(a.searchsorted(b, 'r', s), A))
+        assert_(not isinstance(a.searchsorted(b, 'left'), A))
+        assert_(not isinstance(a.searchsorted(b, 'right'), A))
+        assert_(not isinstance(a.searchsorted(b, 'left', s), A))
+        assert_(not isinstance(a.searchsorted(b, 'right', s), A))
 
     def test_argpartition_out_of_range(self):
         # Test out of range values in kth raise an error, gh-5469

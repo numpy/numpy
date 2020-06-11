@@ -81,9 +81,6 @@ our GitHub project <https://github.com/orgs/numpy/projects/2>`__.
 
 .. _tutorials_howtos_explanations:
 
-************************************************************
-Tutorials, how-to's, explanations -- what's the difference?
-************************************************************
 
 Formula writing
 ==============================================================================

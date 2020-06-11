@@ -42,13 +42,6 @@ class TestRegression:
                 b = pickle.load(f)
             assert_array_equal(a, b)
 
-    def test_typeNA(self):
-        # Issue gh-515
-        with suppress_warnings() as sup:
-            sup.filter(np.VisibleDeprecationWarning)
-            assert_equal(np.typeNA[np.int64], 'Int64')
-            assert_equal(np.typeNA[np.uint64], 'UInt64')
-
     def test_dtype_names(self):
         # Ticket #35
         # Should succeed

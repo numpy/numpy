@@ -3243,15 +3243,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
         below. `new_order` codes can be any of:
 
         * 'S' - swap dtype from current to opposite endian
-        * {'<', 'L'} - little endian
-        * {'>', 'B'} - big endian
-        * {'=', 'N'} - native order
+        * {'<', 'little'} - little endian
+        * {'>', 'big'} - big endian
+        * '=' - native order, equivalent to `sys.byteorder`
         * {'|', 'I'} - ignore (no change to byte order)
 
         The default value ('S') results in swapping the current
-        byte order. The code does a case-insensitive check on the first
-        letter of `new_order` for the alternatives above.  For example,
-        any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+        byte order.
 
 
     Returns
@@ -5666,14 +5664,10 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         byte order.  `new_order` codes can be any of:
 
         * 'S' - swap dtype from current to opposite endian
-        * {'<', 'L'} - little endian
-        * {'>', 'B'} - big endian
-        * {'=', 'N'} - native order
+        * {'<', 'little'} - little endian
+        * {'>', 'big'} - big endian
+        * '=' - native order
         * {'|', 'I'} - ignore (no change to byte order)
-
-        The code does a case-insensitive check on the first letter of
-        `new_order` for these alternatives.  For example, any of '>'
-        or 'B' or 'b' or 'brian' are valid to specify big-endian.
 
     Returns
     -------
@@ -6041,9 +6035,9 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     The `new_order` code can be any from the following:
 
     * 'S' - swap dtype from current to opposite endian
-    * {'<', 'L'} - little endian
-    * {'>', 'B'} - big endian
-    * {'=', 'N'} - native order
+    * {'<', 'little'} - little endian
+    * {'>', 'big'} - big endian
+    * '=' - native order
     * {'|', 'I'} - ignore (no change to byte order)
 
     Parameters
@@ -6051,9 +6045,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     new_order : str, optional
         Byte order to force; a value from the byte order specifications
         above.  The default value ('S') results in swapping the current
-        byte order. The code does a case-insensitive check on the first
-        letter of `new_order` for the alternatives above.  For example,
-        any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+        byte order.
 
 
     Returns

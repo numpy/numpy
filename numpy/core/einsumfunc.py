@@ -1358,10 +1358,17 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
         raise TypeError("Did not understand the following kwargs: %s"
                         % unknown_kwargs)
 
-
     # Build the contraction list and operand
     operands, contraction_list = einsum_path(*operands, optimize=optimize,
                                              einsum_call=True)
+
+    # Handle order kwarg for output array, c_einsum allows mixed case
+    output_order = kwargs.pop('order', 'K')
+    if output_order.upper() == 'A':
+        if all(arr.flags.f_contiguous for arr in operands):
+            output_order = 'F'
+        else:
+            output_order = 'C'
 
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
@@ -1412,4 +1419,4 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     if specified_out:
         return out
     else:
-        return operands[0]
+        return asanyarray(operands[0], order=output_order)

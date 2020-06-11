@@ -1,4 +1,4 @@
-.. _NEP0029:
+.. _NEP29:
 
 ==================================================================================
 NEP 29 — Recommend Python and Numpy version support as a community policy standard

@@ -371,8 +371,11 @@ string_converter_helper(
     int ret = str_func(str, length, out);
     Py_DECREF(str_object);
     if (ret < 0) {
+        /* str_func returns -1 without an exception if the value is wrong */
+        if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_ValueError,
                 "%s %s (got %R)", name, message, object);
+        }
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -385,8 +388,8 @@ static int byteorder_parser(char const *str, Py_ssize_t length, void *data)
     if (length < 1) {
         return -1;
     }
-    else if (str[0] == NPY_BIG || str[0] == NPY_LITTLE
-        || str[0] == NPY_NATIVE || str[0] == NPY_IGNORE) {
+    else if (str[0] == NPY_BIG || str[0] == NPY_LITTLE ||
+             str[0] == NPY_NATIVE || str[0] == NPY_IGNORE) {
         *endian = str[0];
         return 0;
     }
@@ -508,21 +511,36 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 static int searchside_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)data;
+    int is_exact = 0;
 
     if (length < 1) {
         return -1;
     }
     else if (str[0] == 'l' || str[0] == 'L') {
         *side = NPY_SEARCHLEFT;
-        return 0;
+        is_exact = (length == 4 && strcmp(str, "left") == 0);
     }
     else if (str[0] == 'r' || str[0] == 'R') {
         *side = NPY_SEARCHRIGHT;
-        return 0;
+        is_exact = (length == 5 && strcmp(str, "right") == 0);
     }
     else {
         return -1;
     }
+
+    /* Filters out the case sensitive/non-exact
+     * match inputs and other inputs and outputs DeprecationWarning
+     */
+    if (!is_exact) {
+        /* NumPy 1.20, 2020-05-19 */
+        if (DEPRECATE("inexact matches and case insensitive matches "
+                      "for search side are deprecated, please use "
+                      "one of 'left' or 'right' instead.") < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /*NUMPY_API
@@ -581,24 +599,40 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_CLIPMODE *val = (NPY_CLIPMODE *)data;
+    int is_exact = 0;
+
     if (length < 1) {
         return -1;
     }
     if (str[0] == 'C' || str[0] == 'c') {
         *val = NPY_CLIP;
-        return 0;
+        is_exact = (length == 4 && strcmp(str, "clip") == 0);
     }
     else if (str[0] == 'W' || str[0] == 'w') {
         *val = NPY_WRAP;
-        return 0;
+        is_exact = (length == 4 && strcmp(str, "wrap") == 0);
     }
     else if (str[0] == 'R' || str[0] == 'r') {
         *val = NPY_RAISE;
-        return 0;
+        is_exact = (length == 5 && strcmp(str, "raise") == 0);
     }
     else {
         return -1;
     }
+
+    /* Filters out the case sensitive/non-exact
+     * match inputs and other inputs and outputs DeprecationWarning
+     */
+    if (!is_exact) {
+        /* Numpy 1.20, 2020-05-19 */
+        if (DEPRECATE("inexact matches and case insensitive matches "
+                      "for clip mode are deprecated, please use "
+                      "one of 'clip', 'raise', or 'wrap' instead.") < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /*NUMPY_API

@@ -967,6 +967,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('tests')
     config.add_data_dir('tests/data')
     config.add_data_dir('tests/examples')
+    config.add_data_files('*.pyi')
 
     config.make_svn_version_py()
 

@@ -21,6 +21,7 @@ Released for unlimited redistribution.
 """
 # pylint: disable-msg=E1002
 import builtins
+import inspect
 import operator
 import warnings
 import textwrap
@@ -122,15 +123,8 @@ def doc_note(initialdoc, note):
     if note is None:
         return initialdoc
 
-    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
-
-    notedoc = """\
-Notes
-    -----
-    %s""" % note
-
-    if len(notesplit) > 1:
-        notedoc = '\n\n    ' + notedoc + '\n'
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', inspect.cleandoc(initialdoc))
+    notedoc = "\n\nNotes\n-----\n%s\n" % inspect.cleandoc(note)
 
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
