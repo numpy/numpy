@@ -421,3 +421,50 @@ class TestNested:
         # result shape will be (0,) which leads to an error during:
         with pytest.raises(ValueError):
             np.array([[], np.empty((0, 1))], dtype=object)
+
+
+class TestBadSequences:
+    # These are tests for bad objects passed into `np.array`, in general
+    # these should raise some error, although even returning undefined
+    # behaviour is fine.  But they should not crash.
+
+    def test_growing_list(self):
+        # List to coerce, `mylist` will append to it during coercion
+        obj = []
+        class mylist(list):
+            def __len__(self):
+                obj.append([1, 2])
+                return super().__len__()
+
+        obj.append(mylist([1, 2]))
+
+        with pytest.raises(ValueError):
+            np.array(obj)
+
+    @pytest.mark.skip(reason="segfaults currently")
+    def test_shrinking_list(self):
+        # List to coerce, `mylist` will delete to it during coercion
+        obj = []
+        class mylist(list):
+            def __len__(self):
+                obj.pop()
+                return super().__len__()
+
+        obj.append(mylist([1, 2]))
+        obj.append([2, 3])
+        with pytest.raises(ValueError):
+            np.array(obj)
+
+    @pytest.mark.skip(reason="segfaults currently")
+    def test_mutated_list(self):
+        # List to coerce, `mylist` will mutate the first element
+        obj = []
+        class mylist(list):
+            def __len__(self):
+                obj[0] = [2, 3]
+                return super().__len__()
+
+        obj.append(mylist([1, 2]))
+        obj.append([2, 3])
+        with pytest.raises(ValueError):
+            np.array(obj)
