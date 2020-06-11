@@ -412,3 +412,12 @@ class TestNested:
             # This is a broadcast error during assignment, because
             # the array shape would be (2, 2, 2) but `arr[0, 0] = arr` fails.
             np.array([arr, [arr, arr]], dtype=object)
+
+    def test_empty_sequence(self):
+        arr = np.array([[], [1], [[1]]], dtype=object)
+        assert arr.shape == (3,)
+
+        # The empty sequence stops further dimension discovery, so the
+        # result shape will be (0,) which leads to an error during:
+        with pytest.raises(ValueError):
+            np.array([[], np.empty((0, 1))], dtype=object)
