@@ -91,7 +91,7 @@ and ``reference``. The insight that docs divide up this way belongs to
 Daniele Procida, who goes on
 `in this short article <https://documentation.divio.com/>`__ to explain
 the differences and reveal the formulas. When you begin a document or
-propose one, have in mind which of these documents it will be.
+propose one, have in mind which of these types it will be.
 
 
 .. _contributing:
@@ -147,10 +147,10 @@ Documentation reading
   holds conferences, hosts learning resources, and runs a Slack channel.
 
 - "Every engineer is also a writer," says Google's
-  `free collection of technical writing resources <https://developers.google.com/tech-writing>`__,
-  which has free online classes for developers in planning and writing
+  `collection of technical writing resources <https://developers.google.com/tech-writing>`__,
+  which includes free online courses for developers in planning and writing
   documents.
 
 - `Software Carpentry's <https://software-carpentry.org/lessons>`__ mission is
-  teaching software to researchers. In addition hosting to the curriculum, the
-  website describes how to present ideas effectively.
+  teaching software to researchers. In addition to hosting the curriculum, the
+  website explains how to present ideas effectively.
