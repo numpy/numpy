@@ -112,7 +112,7 @@ For now, the only data formats accepted by NumPy are those also used by other
 Python scientific libraries like pandas, SciPy, or Matplotlib. We're
 developing a package to accept more formats; contact us for details.
 
-NumPy documentation is kept in the source code tree. To get into your document
+NumPy documentation is kept in the source code tree. To get your document
 into the docbase you must download the tree, :ref:`build it
 <howto-build-docs>`, and submit a pull request. If GitHub and pull requests
 are new to you, check our :ref:`Contributor Guide <devindex>`.
