@@ -156,8 +156,8 @@ names.
 Notes
 -----
 The ``.npy`` format, including motivation for creating it and a comparison of
-alternatives, is described in the `"npy-format" NEP
-<https://www.numpy.org/neps/nep-0001-npy-format.html>`_, however details have
+alternatives, is described in the
+:doc:`"npy-format" NEP <neps:nep-0001-npy-format>`, however details have
 evolved with time and this document is more current.
 
 """

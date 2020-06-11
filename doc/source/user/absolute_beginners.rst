@@ -1531,19 +1531,19 @@ Importing and exporting a CSV
 -----------------------------
 
 .. save a csv
-   
+
    >>> with open('music.csv', 'w') as fid:
    ...     n = fid.write('Artist,Genre,Listeners,Plays\n')
    ...     n = fid.write('Billie Holiday,Jazz,1300000,27000000\n')
    ...     n = fid.write('Jimmie Hendrix,Rock,2700000,70000000\n')
    ...     n = fid.write('Miles Davis,Jazz,1500000,48000000\n')
    ...     n = fid.write('SIA,Pop,2000000,74000000\n')
-   
+
 
 
 It's simple to read in a CSV that contains existing information. The best and
 easiest way to do this is to use
-`Pandas <https://pandas.pydata.org/getpandas.html>`_. ::
+`Pandas <https://pandas.pydata.org>`_. ::
 
   >>> import pandas as pd
 

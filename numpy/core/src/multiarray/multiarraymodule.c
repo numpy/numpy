@@ -1872,6 +1872,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     /* steals the reference to dtype if it's not NULL */
     ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(prototype, order, dtype,
                                                          shape.len, shape.ptr, subok);
+    npy_free_cache_dim_obj(shape);
     if (!ret) {
         goto fail;
     }
@@ -2497,9 +2498,9 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                         "subscript is not within the valid range [0, 52)");
                 Py_DECREF(obj);
                 return -1;
-            }              
+            }
         }
-        
+
     }
 
     Py_DECREF(obj);
@@ -4445,6 +4446,18 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_matmul_flags(d) < 0) {
         goto err;
     }
+
+    PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
+    if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
+        goto err;
+    }
+
+    PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
+    Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
+    if (PyType_Ready(&PyArrayDescr_Type) < 0) {
+        goto err;
+    }
+
     initialize_casting_tables();
     initialize_numeric_types();
     if (initscalarmath(m) < 0) {
@@ -4478,10 +4491,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
-    if (PyType_Ready(&PyArrayDescr_Type) < 0) {
-        goto err;
-    }
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
         goto err;
     }

@@ -133,7 +133,6 @@ comprehensive language than Markdown; the rST docs are then processed by Sphinx,
 the tool most Python projects use to build and link project documentation. For
 more on rST, see the `Quick reStructuredText Guide
 <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`__ or the
-`reStructuredText Primer
 <http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
 
 
@@ -152,10 +151,77 @@ questions on social media or Stack Overflow are also contributions!
 ************************************************************
 Documentation reading
 ************************************************************
+=======
+<http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__ for
+more information.
+
+If you have already decided which type of document you want to write, you can
+check out the following specific guides:
+
+- Guide to writing Tutorials (TODO)
+- :ref:`Guide to writing reference (API) documentation: the numpydoc docstring
+  guide <howto-document>`
+
+Major additions to the documentation (e.g. new tutorials) should be proposed to
+the `mailing list
+<https://mail.python.org/mailman/listinfo/numpy-discussion>`__.
+
+Other ways to contribute
+------------------------
+
+Correcting technical inaccuracies in the documentation are high priority. For
+example, if a docstring is missing a parameter or the description of a
+fuction/parameter/method etc. is incorrect. Other "structural" defects like
+broken links are also high priority.
+
+Proposals for changes that improve the clarity of the documentation are welcome.
+However, "clarity" is a bit subjective, so such proposals are best made by
+raising issues that describe what could be improved in the current
+documentation. Proposals that include specific suggestions for the improvement
+are encouraged as the proposed changes helps frame the discussion.
+
+Based on the above characterization, "high-priority" changes (i.e. fixing
+technical inaccuracies, broken links, etc.) can be proposed via pull requests
+directly as they are straightforward to review. Other changes should be raised
+as issues first so that the discussion can happen before you make major
+modifications, which in principle saves you from wasting your time on
+undesired changes.
+
+If you see a good tutorial, how-to or explanation that is not included in the
+official documentation, you can suggest it to be added by `opening an issue on
+GitHub <https://github.com/numpy/numpy/issues>`__. Similarly, opening issues to
+suggest a tutorial, how-to or explanation that you can't find anywhere is a
+great way to help the documentation team direct efforts towards what users are
+looking for. `See this issue <https://github.com/numpy/numpy/issues/15760>`__
+for an example of how to do this.
+
+Finally, if you detect a typo or an error in the documentation, or would like to
+suggest a different approach, you can also open an issue or submit a pull
+request with your suggestion. Keep in mind that changes fixing
+grammatical/spelling errors are welcome but not necessarily the highest
+priority. "Grammatical correctness" often gets confused with "style" which can
+result in unfruitful discussions that don't necessarily improve anything.
+Changes that modify wording or rearrange phrasing without changing the technical
+content are discouraged. If you think that a different wording improves clarity,
+you should open an issue as noted above, but again, changes along these lines
+very often tend to be highly subjective and not necessarily do much to improve
+the quality of the documentation.
+
+**Final tips**
+
+- Don't worry if English is not your first language. Do your best - we'll revise
+  your content and make sure we fix any issues with the code or text.
+- If you are unsure whether your tutorial is useful to the community, consider
+  submitting an issue on GitHub suggesting it, or asking on the mailing
+  list or Stack Overflow.
+- If you are unfamiliar with git/GitHub or the process of submitting a pull
+  request (PR), check our :ref:`Contributor Guide <devindex>`.
+
+**Other interesting material**
 
 - `writethedocs.org <https://www.writethedocs.org/>`__ has a lot of interesting
   resources for technical writing.
 - Google offers two free `Technical Writing Courses
   <https://developers.google.com/tech-writing>`__
-- `Software Carpentry <https://software-carpentry.org/software>`__ has a lot of
+- `Software Carpentry <https://carpentries.github.io/curriculum-development/>`__ has a lot of
   nice recommendations for creating educational material.

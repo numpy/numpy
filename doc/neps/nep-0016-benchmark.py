@@ -1,3 +1,5 @@
+.. _NEP16:
+
 import perf
 import abc
 import numpy as np

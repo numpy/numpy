@@ -22,7 +22,7 @@ https://scipy.org/install.html for instructions.
 
 **Learner profile**
 
-This tutorial is intended as a quick overview of 
+This tutorial is intended as a quick overview of
 algebra and arrays in NumPy and want to understand how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
@@ -1036,6 +1036,8 @@ Basic Linear Algebra
 Less Basic
 ==========
 
+.. _broadcasting-rules:
+
 Broadcasting rules
 ------------------
 
@@ -1054,7 +1056,7 @@ element is assumed to be the same along that dimension for the
 "broadcast" array.
 
 After application of the broadcasting rules, the sizes of all arrays
-must match. More details can be found in :doc:`basics.broadcasting`.
+must match. More details can be found in :ref:`basics.broadcasting`.
 
 Advanced indexing and index tricks
 ==================================
@@ -1390,8 +1392,8 @@ and then use it as::
             [14, 13, 15, 17, 12]]])
 
 The advantage of this version of reduce compared to the normal
-ufunc.reduce is that it makes use of the `Broadcasting
-Rules <Tentative_NumPy_Tutorial.html#head-c43f3f81719d84f09ae2b33a22eaf50b26333db8>`__
+ufunc.reduce is that it makes use of the
+:ref:`broadcasting rules <broadcasting-rules>`
 in order to avoid creating an argument array the size of the output
 times the number of vectors.
 

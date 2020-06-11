@@ -2,6 +2,10 @@ import math
 import textwrap
 import sys
 import pytest
+import threading
+import traceback
+import time
+import random
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, IS_PYPY
@@ -161,3 +165,49 @@ cf2py  intent(out) a
         f = getattr(self.module, 'string_callback_array')
         res = f(callback, cu, len(cu))
         assert_(res == 0, repr(res))
+
+    def test_threadsafety(self):
+        # Segfaults if the callback handling is not threadsafe
+
+        errors = []
+
+        def cb():
+            # Sleep here to make it more likely for another thread
+            # to call their callback at the same time.
+            time.sleep(1e-3)
+
+            # Check reentrancy
+            r = self.module.t(lambda: 123)
+            assert_(r == 123)
+
+            return 42
+
+        def runner(name):
+            try:
+                for j in range(50):
+                    r = self.module.t(cb)
+                    assert_(r == 42)
+                    self.check_function(name)
+            except Exception:
+                errors.append(traceback.format_exc())
+
+        threads = [threading.Thread(target=runner, args=(arg,))
+                   for arg in ("t", "t2") for n in range(20)]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        errors = "\n\n".join(errors)
+        if errors:
+            raise AssertionError(errors)
+
+
+class TestF77CallbackPythonTLS(TestF77Callback):
+    """
+    Callback tests using Python thread-local storage instead of
+    compiler-provided
+    """
+    options = ["-DF2PY_USE_PYTHON_TLS"]

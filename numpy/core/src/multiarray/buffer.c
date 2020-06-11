@@ -802,7 +802,7 @@ fail:
  * Retrieving buffers for scalars
  */
 int
-gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
+void_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     _buffer_info_t *info = NULL;
     PyArray_Descr *descr = NULL;

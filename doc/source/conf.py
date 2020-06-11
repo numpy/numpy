@@ -155,6 +155,9 @@ plot_html_show_source_link = False
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'
 
+# XeLaTeX for better support of unicode characters
+latex_engine = 'xelatex'
+
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 _stdauthor = 'Written by the NumPy community'
@@ -237,11 +240,12 @@ texinfo_documents = [
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
+    'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
-    'skimage': ('https://scikit-image.org/docs/stable', None)
+    'skimage': ('https://scikit-image.org/docs/stable', None),
 }
 
 

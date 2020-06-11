@@ -784,6 +784,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'conversion_utils.h'),
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
+            join('src', 'multiarray', 'dtypemeta.h'),
             join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
@@ -842,6 +843,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'dtypemeta.c'),
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
             join('src', 'multiarray', 'einsum.c.src'),
@@ -965,6 +967,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('tests')
     config.add_data_dir('tests/data')
     config.add_data_dir('tests/examples')
+    config.add_data_files('*.pyi')
 
     config.make_svn_version_py()
 

@@ -140,6 +140,7 @@ typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
         PyUnicodeObject base;
         Py_UCS4 *obval;
+        char *buffer_fmt;
 } PyUnicodeScalarObject;
 
 

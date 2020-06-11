@@ -4,6 +4,13 @@
 A Guide to NumPy/SciPy Documentation
 ====================================
 
+User documentation
+*******************
+NumPy text documents should follow the `Google developer documentation style guide <https://developers.google.com/style>`_.
+
+Docstrings
+**********
+
 When using `Sphinx <http://www.sphinx-doc.org/>`__ in combination with the
 numpy conventions, you should use the ``numpydoc`` extension so that your
 docstrings will be handled correctly. For example, Sphinx will extract the

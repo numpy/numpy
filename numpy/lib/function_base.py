@@ -604,14 +604,13 @@ def piecewise(x, condlist, funclist, *args, **kw):
         )
 
     y = zeros(x.shape, x.dtype)
-    for k in range(n):
-        item = funclist[k]
-        if not isinstance(item, collections.abc.Callable):
-            y[condlist[k]] = item
+    for cond, func in zip(condlist, funclist):
+        if not isinstance(func, collections.abc.Callable):
+            y[cond] = func
         else:
-            vals = x[condlist[k]]
+            vals = x[cond]
             if vals.size > 0:
-                y[condlist[k]] = item(vals, *args, **kw)
+                y[cond] = func(vals, *args, **kw)
 
     return y
 
@@ -682,8 +681,7 @@ def select(condlist, choicelist, default=0):
     choicelist = np.broadcast_arrays(*choicelist)
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    for i in range(len(condlist)):
-        cond = condlist[i]
+    for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool_:
             raise TypeError(
                 'invalid entry {} in condlist: should be boolean ndarray'.format(i))
@@ -1334,7 +1332,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     See Also
     --------
-    scipy.interpolate 
+    scipy.interpolate
 
     Notes
     -----
@@ -1973,8 +1971,7 @@ class vectorize:
 
     References
     ----------
-    .. [1] NumPy Reference, section `Generalized Universal Function API
-           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+    .. [1] :doc:`/reference/c-api/generalized-ufuncs`
 
     Examples
     --------
@@ -3122,7 +3119,7 @@ def i0(x):
     .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
            Functions*, 10th printing, New York: Dover, 1964, pp. 379.
            http://www.math.sfu.ca/~cbm/aands/page_379.htm
-    .. [3] http://kobesearch.cpan.org/htdocs/Math-Cephes/Math/Cephes.html
+    .. [3] https://metacpan.org/pod/distribution/Math-Cephes/lib/Math/Cephes.pod#i0:-Modified-Bessel-function-of-order-zero
 
     Examples
     --------
@@ -3273,10 +3270,17 @@ def _sinc_dispatcher(x):
 
 @array_function_dispatch(_sinc_dispatcher)
 def sinc(x):
-    """
-    Return the sinc function.
+    r"""
+    Return the normalized sinc function.
 
-    The sinc function is :math:`\\sin(\\pi x)/(\\pi x)`.
+    The sinc function is :math:`\sin(\pi x)/(\pi x)`.
+
+    .. note::
+
+        Note the normalization factor of ``pi`` used in the definition.
+        This is the most commonly used definition in signal processing.
+        Use ``sinc(x / np.pi)`` to obtain the unnormalized sinc function
+        :math:`\sin(x)/(x)` that is more common in mathematics.
 
     Parameters
     ----------

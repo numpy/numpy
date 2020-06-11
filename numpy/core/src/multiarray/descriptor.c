@@ -1678,14 +1678,14 @@ _convert_from_str(PyObject *obj, int align)
         }
 
         /* Check for a deprecated Numeric-style typecode */
-        char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
-                           "Object0", "String0", "Timedelta64",
-                           "Unicode0", "UInt", "Void0"};
+        /* `Uint` has deliberately weird uppercasing */
+        char *dep_tps[] = {"Bytes", "Datetime64", "Str", "Uint"};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
         for (int i = 0; i < ndep_tps; ++i) {
             char *dep_tp = dep_tps[i];
 
             if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
+                /* Deprecated 2020-06-09, NumPy 1.20 */
                 if (DEPRECATE("Numeric-style type codes are "
                               "deprecated and will result in "
                               "an error in the future.") < 0) {
@@ -1744,7 +1744,7 @@ fail:
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-    PyArray_Descr *newdescr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    PyArray_Descr *newdescr = PyObject_New(PyArray_Descr, Py_TYPE(base));
 
     if (newdescr == NULL) {
         return NULL;
@@ -1808,7 +1808,6 @@ arraydescr_dealloc(PyArray_Descr *self)
         Py_INCREF(self);
         return;
     }
-    _dealloc_cached_buffer_info((PyObject*)self);
     Py_XDECREF(self->typeobj);
     Py_XDECREF(self->names);
     Py_XDECREF(self->fields);
@@ -2261,9 +2260,16 @@ static PyGetSetDef arraydescr_getsets[] = {
 };
 
 static PyObject *
-arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
+arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
+    if (subtype != &PyArrayDescr_Type) {
+        /* The DTypeMeta class should prevent this from happening. */
+        PyErr_Format(PyExc_SystemError,
+                "'%S' must not inherit np.dtype.__new__().", subtype);
+        return NULL;
+    }
+
     PyObject *odescr, *metadata=NULL;
     PyArray_Descr *descr, *conv;
     npy_bool align = NPY_FALSE;
@@ -2333,6 +2339,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 
     return (PyObject *)conv;
 }
+
 
 /*
  * Return a tuple of
@@ -3456,21 +3463,34 @@ static PyMappingMethods descr_as_mapping = {
 
 /****************** End of Mapping Protocol ******************************/
 
-NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.dtype",
-    .tp_basicsize = sizeof(PyArray_Descr),
-    /* methods */
-    .tp_dealloc = (destructor)arraydescr_dealloc,
-    .tp_repr = (reprfunc)arraydescr_repr,
-    .tp_as_number = &descr_as_number,
-    .tp_as_sequence = &descr_as_sequence,
-    .tp_as_mapping = &descr_as_mapping,
-    .tp_str = (reprfunc)arraydescr_str,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_richcompare = (richcmpfunc)arraydescr_richcompare,
-    .tp_methods = arraydescr_methods,
-    .tp_members = arraydescr_members,
-    .tp_getset = arraydescr_getsets,
-    .tp_new = arraydescr_new,
+
+/*
+ * NOTE: Since this is a MetaClass, the name has Full appended here, the
+ *       correct name of the type is PyArrayDescr_Type.
+ */
+NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
+    {{
+        /* NULL represents `type`, this is set to DTypeMeta at import time */
+        PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "numpy.dtype",
+        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_dealloc = (destructor)arraydescr_dealloc,
+        .tp_repr = (reprfunc)arraydescr_repr,
+        .tp_as_number = &descr_as_number,
+        .tp_as_sequence = &descr_as_sequence,
+        .tp_as_mapping = &descr_as_mapping,
+        .tp_str = (reprfunc)arraydescr_str,
+        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+        .tp_richcompare = (richcmpfunc)arraydescr_richcompare,
+        .tp_methods = arraydescr_methods,
+        .tp_members = arraydescr_members,
+        .tp_getset = arraydescr_getsets,
+        .tp_new = arraydescr_new,
+    },},
+    .type_num = -1,
+    .kind = '\0',
+    .abstract = 1,
+    .parametric = 0,
+    .singleton = 0,
+    .scalar_type = NULL,
 };
