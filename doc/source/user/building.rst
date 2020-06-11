@@ -168,7 +168,8 @@ lower case).
   in NumPy since they have bugs that cause wrong output under easily reproducible
   conditions. If the vendor fixes those bugs, the library could be reinstated,
   but until then users compiling for themselves should use another linear
-  library or use the built-in (but slower) default, see the next section.
+  algebra library or use the built-in (but slower) default, see the next
+  section.
 
 
 Disabling ATLAS and other accelerated libraries
