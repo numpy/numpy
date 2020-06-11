@@ -957,10 +957,14 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     """
     Construct a record array from a wide-variety of objects.
 
+    A general-purpose record array constructor that dispatches to the 
+    appropriate ``records.from*`` function based on the inputs (see Notes).
+
     Parameters
     ----------
-    obj: array_like
-        Input object.
+    obj: any
+        Input object. See Notes for details on how various input types are
+        treated.
     dtype: data-type, optional
         Valid dtype for array.
     shape: int or tuple of ints, optional
@@ -984,6 +988,17 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     -------
     np.recarray
         Record array created from the specified object.
+
+    Notes
+    -----
+    If `obj` is ``None``, then call the `~numpy.recarray` constructor. If
+    `obj` is a string, then call the `fromstring` constructor. If `obj` is a
+    list or a tuple, then if the first object is an `~numpy.ndarray`, call
+    `fromarrays`, otherwise call `fromrecords`. If `obj` is a
+    `~numpy.recarray`, then make a copy of the data in the recarray 
+    (if ``copy=True``) and use the new formats, names, and titles. If `obj`
+    is a file, then call `fromfile`. Finally, if obj is an `ndarray`, then
+    return ``obj.view(recarray)``, making a copy of the data if ``copy=True``.
 
     Examples
     --------
