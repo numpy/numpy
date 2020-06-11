@@ -279,12 +279,11 @@ else:
                 error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
                 msg = (
                     "Polyfit sanity test emitted a warning, most likely due "
-                    "to using a buggy Accelerate backend. "
-                    "If you compiled yourself, "
-                    "see site.cfg.example for information. "
+                    "to using a buggy Accelerate backend. If you compiled "
+                    "yourself, more information is available at "
+                    "https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries "
                     "Otherwise report this to the vendor "
-                    "that provided NumPy.\n{}\n".format(
-                        error_message))
+                    "that provided NumPy.\n{}\n".format(error_message))
                 raise RuntimeError(msg)
     del _mac_os_check
 
