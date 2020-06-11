@@ -4714,6 +4714,10 @@ class TestIO:
         y = np.fromfile(self.filename, sep=" ")
         assert_(y.size == 0, "Array not empty")
 
+    def test_tobytes_order(self):
+        x = np.array([[1, 2, 3], [4, 5, 6]], order='F')
+        assert_(x.tobytes('F') == x.tobytes('K'))
+
     def test_roundtrip_file(self):
         with open(self.filename, 'wb') as f:
             self.x.tofile(f)
