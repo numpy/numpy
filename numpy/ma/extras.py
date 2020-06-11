@@ -244,11 +244,6 @@ class _fromnxfunction:
         the new masked array version of the function. A note on application
         of the function to the mask is appended.
 
-        .. warning::
-          If the function docstring already contained a Notes section, the
-          new docstring will have two Notes sections instead of appending a note
-          to the existing section.
-
         Parameters
         ----------
         None
@@ -258,9 +253,9 @@ class _fromnxfunction:
         doc = getattr(npfunc, '__doc__', None)
         if doc:
             sig = self.__name__ + ma.get_object_signature(npfunc)
-            locdoc = "Notes\n-----\nThe function is applied to both the _data"\
-                     " and the _mask, if any."
-            return '\n'.join((sig, doc, locdoc))
+            doc = ma.doc_note(doc, "The function is applied to both the _data "
+                                   "and the _mask, if any.")
+            return '\n\n'.join((sig, doc))
         return
 
     def __call__(self, *args, **params):
