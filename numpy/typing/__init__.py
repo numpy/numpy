@@ -3,6 +3,13 @@
 Typing (:mod:`numpy.typing`)
 ============================
 
+.. warning::
+
+  Some of the types in this module rely on features only present in
+  the standard library in Python 3.8 and greater. If you want to use
+  these types in earlier versions of Python, you should install the
+  typing-extensions_ package.
+
 Large parts of the NumPy API have PEP-484-style type annotations. In
 addition, the following type aliases are available for users.
 
@@ -12,6 +19,8 @@ addition, the following type aliases are available for users.
 Roughly speaking, ``typing.ArrayLike`` is "objects that can be used as
 inputs to ``np.array``" and ``typing.DtypeLike`` is "objects that can
 be used as inputs to ``np.dtype``".
+
+.. _typing-extensions: https://pypi.org/project/typing-extensions/
 
 Differences from the runtime NumPy API
 --------------------------------------

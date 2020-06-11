@@ -1,5 +1,5 @@
 import sys
-from typing import Any, overload, Sequence, Tuple, Union
+from typing import Any, overload, Sequence, TYPE_CHECKING, Union
 
 from numpy import ndarray
 from ._dtype_like import DtypeLike
@@ -15,7 +15,7 @@ else:
     else:
         HAVE_PROTOCOL = True
 
-if HAVE_PROTOCOL:
+if TYPE_CHECKING or HAVE_PROTOCOL:
     class _SupportsArray(Protocol):
         @overload
         def __array__(self, __dtype: DtypeLike = ...) -> ndarray: ...
