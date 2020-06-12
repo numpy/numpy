@@ -653,8 +653,7 @@ def transpose(a, axes=None):
     >>> x.shape
     (2, 3, 4, 5)
 
-    >>> x_transposed = np.transpose(x)
-    >>> x_transposed.shape
+    >>> np.transpose(x).shape
     (5, 4, 3, 2)
 
     """
