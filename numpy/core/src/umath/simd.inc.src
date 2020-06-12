@@ -2698,17 +2698,17 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
         /* process elements using glibc for large elements */
         if (my_trig_op == npy_compute_cos) {
-            for (int ii = 0; iglibc_mask != 0; ii++) {
+            for (int ii = 0, jj = 0; iglibc_mask != 0; ii++, jj += stride) {
                 if (iglibc_mask & 0x01) {
-                    op[ii] = npy_cosf(ip[ii]);
+                    op[ii] = npy_cosf(ip[jj]);
                 }
                 iglibc_mask  = iglibc_mask >> 1;
             }
         }
         else {
-            for (int ii = 0; iglibc_mask != 0; ii++) {
+            for (int ii = 0, jj = 0; iglibc_mask != 0; ii++, jj += stride) {
                 if (iglibc_mask & 0x01) {
-                    op[ii] = npy_sinf(ip[ii]);
+                    op[ii] = npy_sinf(ip[jj]);
                 }
                 iglibc_mask  = iglibc_mask >> 1;
             }
