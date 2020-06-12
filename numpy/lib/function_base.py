@@ -4008,10 +4008,14 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
-    If `x` is provided, the integration happens in sequence along its elements - they are not sorted.
+    If `x` is provided, the integration happens in sequence along its
+    elements - they are not sorted.
     
-    Integrate `y` (`x`) along each 1d slice on the given axis, compute :math:`\int y(x) dx`.
-    When `x` is specified, this integrates along the parametric curve, computing :math:`\int_t y(t) dt = \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+    Integrate `y` (`x`) along each 1d slice on the given axis, compute
+    :math:`\int y(x) dx`.
+    When `x` is specified, this integrates along the parametric curve,
+    computing
+    :math:`\int_t y(t) dt = \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
     
     Parameters
     ----------
@@ -4057,15 +4061,19 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     4.0
     >>> np.trapz([1,2,3], x=[4,6,8])
     8.0
-    # integrate in reverse
+
+    Integrate in reverse
+
     >>> np.trapz([1,2,3], x=[8,6,4])  
     -8.0
 
-    # Integrate along a parametric curve.
-    # This finds the area of a circle, noting we repeat the sample which closes the curve.
+    Integrate along a parametric curve. This finds the area of a circle,
+    noting we repeat the sample which closes the curve.
+
     >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
     >>> np.trapz(np.cos(theta), x=np.sin(theta))
     3.141571941375841
+
     >>> np.trapz([1,2,3], dx=2)
     8.0
     >>> a = np.arange(6).reshape(2, 3)
@@ -4076,7 +4084,6 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     array([1.5, 2.5, 3.5])
     >>> np.trapz(a, axis=1)
     array([2.,  8.])
-
     """
     y = asanyarray(y)
     if x is None:
