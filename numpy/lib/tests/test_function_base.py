@@ -3112,11 +3112,16 @@ class TestQuantile:
         # GH 14685
         # test that the return value of quantile is monotonic if p0 is ordered
         p0 = np.arange(0, 1, 0.01)
-        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7]) * 0.1, p0)
+        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
+                                         8, 8, 7]) * 0.1, p0)
         assert_equal(np.sort(quantile), quantile)
 
-    @hypothesis.given(arr=arrays(dtype=np.float, shape=st.integers(min_value=3, max_value=1000),
-                                 elements=st.floats(allow_infinity=False, allow_nan=False)))
+    @hypothesis.given(arr=arrays(dtype=np.float, shape=st.integers(min_value=3,
+                                                                   max_value=1000),
+                                 elements=st.floats(allow_infinity=False,
+                                                    allow_nan=False,
+                                                    min_value=-1e300,
+                                                    max_value=1e300)))
     def test_quantile_monotonic_hypo(self, arr):
         p0 = np.arange(0, 1, 0.01)
         quantile = np.quantile(arr, p0)
