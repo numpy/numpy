@@ -650,6 +650,9 @@ def transpose(a, axes=None):
     (2, 1, 3)
 
     >>> x = np.arange(24).reshape(2, 2, 2, 3)
+    >>> x.shape
+    (2, 2, 2, 3)
+
     >>> x 
     array([[[[ 0,  1,  2],
              [ 3,  4,  5]],
@@ -665,7 +668,7 @@ def transpose(a, axes=None):
              [21, 22, 23]]]])
 
     >>> x_transposed = np.transpose(x)
-    >>> x.shape
+    >>> x_transposed.shape
     (3, 2, 2, 2)
 
     >>> x_transposed
