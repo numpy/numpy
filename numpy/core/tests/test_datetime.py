@@ -775,6 +775,10 @@ class TestDateTime:
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[M]'), np.dtype('m8[W]'))
+        # timedelta and float cannot be safely cast with each other
+        assert_raises(TypeError, np.promote_types, "float32", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "float32")
+
         # timedelta <op> timedelta may overflow with big unit ranges
         assert_raises(OverflowError, np.promote_types,
                             np.dtype('m8[W]'), np.dtype('m8[fs]'))
