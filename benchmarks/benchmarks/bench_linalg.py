@@ -13,8 +13,9 @@ class Eindot(Benchmark):
         self.c = np.arange(600)
         self.d = np.arange(400)
 
-        self.a3 = np.arange(480000.).reshape(60, 80, 100)
+        self.a3 = np.arange(480000., dtype='f8').reshape(60, 80, 100)
         self.b3 = np.arange(192000.).reshape(80, 60, 40)
+        self.c4 = np.arange(480000, dtype='f8')
 
     def time_dot_a_b(self):
         np.dot(self.a, self.b)
@@ -42,6 +43,14 @@ class Eindot(Benchmark):
 
     def time_einsum_ijk_jil_kl(self):
         np.einsum('ijk,jil->kl', self.a3, self.b3)
+    
+    # trigger sum_of_products_stride0_contig_outcontig_two
+    def time_einsum_mul(self):
+        np.einsum("i,->i", self.c4, 300, optimize=True)
+    
+    # trigger contig_contig_outstride0_two
+    def time_einsum_contig_contig(self):
+        np.einsum("ji,i->", self.b, self.c, optimize=True)
 
     def time_inner_trans_a_a(self):
         np.inner(self.a, self.a)
