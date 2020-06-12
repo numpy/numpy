@@ -12,9 +12,7 @@ import numpy as np
 from numpy.core._rational_tests import rational
 
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
-    HAS_REFCOUNT
-)
+    assert_array_equal, assert_warns, IS_PYPY)
 
 
 def arraylikes():
@@ -68,7 +66,7 @@ def arraylikes():
     yield ArrayStruct
 
 
-def scalar_instances(times=True, extended_precision=False):
+def scalar_instances(times=True, extended_precision=True):
     # Hard-coded list of scalar instances.
     # Floats:
     yield np.sqrt(np.float16(5))
@@ -251,6 +249,7 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr3)
         assert_array_equal(arr, arr4)
 
+    @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
     @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
     # After change, can enable times here, and below and it will work,
     # Right now times are too complex, so map out some details below.
@@ -274,7 +273,7 @@ class TestScalarDiscovery:
                     # Here, coercion to "V6" works, but the cast fails.
                     # Since the types are identical, SETITEM takes care of
                     # this, but has different rules than the cast.
-                    with assert_raises(TypeError):
+                    with pytest.raises(TypeError):
                         np.array(scalar).astype(dtype)
                     # XFAIL: np.array(scalar, dtype=dtype)
                     np.array([scalar], dtype=dtype)
@@ -287,11 +286,11 @@ class TestScalarDiscovery:
                 cast = np.array(scalar).astype(dtype)
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
-                with assert_raises(Exception):
+                with pytest.raises(Exception):
                     np.array(scalar, dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
-                with assert_raises(Exception):
+                with pytest.raises(Exception):
                     res[()] = scalar
 
                 return
@@ -363,7 +362,7 @@ class TestNested:
 
         arr = np.array(nested, dtype="float64")
         assert arr.shape == (1,) * np.MAXDIMS
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             np.array([nested], dtype="float64")
 
         # We discover object automatically at this time:
@@ -397,7 +396,7 @@ class TestNested:
         for i in range(np.MAXDIMS - 1):
             nested = [nested]
 
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             # It will refuse to assign the array into
             np.array(nested, dtype="float64")
 
@@ -475,7 +474,6 @@ class TestBadSequences:
         obj.append(mylist([1, 2]))
         #with pytest.raises(RuntimeError):  # Will error in the future
         np.array(obj)
-
 
     def test_replace_0d_array(self):
         # List to coerce, `mylist` will mutate the first element
