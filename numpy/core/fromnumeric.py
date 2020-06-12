@@ -624,6 +624,7 @@ def transpose(a, axes=None):
 
     See Also
     --------
+    ndarray.transpose : Method to reverse or permute the axes of an array.
     moveaxis
     argsort
 
