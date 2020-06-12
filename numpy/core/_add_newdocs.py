@@ -1640,6 +1640,7 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
     >>> a = np.arange(25).reshape(5,5)
     >>> b = np.arange(5)
     >>> c = np.arange(6).reshape(2,3)
+    >>> d = np.arange(16).reshape(4, 4)
 
     Trace of a matrix:
 
@@ -1693,6 +1694,11 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
     array([[0, 3],
            [1, 4],
            [2, 5]])
+    >>> np.transpose(d)
+    array([[ 0,  4,  8, 12],
+           [ 1,  5,  9, 13],
+           [ 2,  6, 10, 14],
+           [ 3,  7, 11, 15]])
 
     Vector inner products:
 
