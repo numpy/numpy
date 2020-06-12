@@ -479,6 +479,26 @@ run_unary_avx512f_exp_DOUBLE(char **args, npy_intp const *dimensions, npy_intp c
     return 0;
 }
 
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+static NPY_INLINE void
+AVX512F_log_DOUBLE(npy_double *, npy_double *, const npy_intp n, const npy_intp stride);
+#endif
+static NPY_INLINE int
+run_unary_avx512f_log_DOUBLE(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), 64)) {
+        AVX512F_log_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+#endif
+    return 0;
+}
+
 /**begin repeat
  * Float types
  *  #type = npy_float, npy_double, npy_longdouble#
@@ -1794,11 +1814,24 @@ avx512_permute_x4var_pd(__m512d t0,
                         __m512d t3,
                         __m512i index)
 {
-
-    __mmask8 lut_mask = _mm512_cmp_epi64_mask(index, _mm512_set1_epi64(15),
-                                  _MM_CMPINT_GT);
+    __mmask8 lut_mask = _mm512_cmp_epi64_mask(
+                          _mm512_and_epi64(_mm512_set1_epi64(0x10ULL), index),
+                          _mm512_set1_epi64(0), _MM_CMPINT_GT);
     __m512d res1 = _mm512_permutex2var_pd(t0, index, t1);
     __m512d res2 = _mm512_permutex2var_pd(t2, index, t3);
+    return _mm512_mask_blend_pd(lut_mask, res1, res2);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512d
+avx512_permute_x8var_pd(__m512d t0, __m512d t1, __m512d t2, __m512d t3,
+                        __m512d t4, __m512d t5, __m512d t6, __m512d t7,
+                        __m512i index)
+{
+    __mmask8 lut_mask = _mm512_cmp_epi64_mask(
+                          _mm512_and_epi64(_mm512_set1_epi64(0x20ULL), index),
+                          _mm512_set1_epi64(0), _MM_CMPINT_GT);
+    __m512d res1 = avx512_permute_x4var_pd(t0, t1, t2, t3, index);
+    __m512d res2 = avx512_permute_x4var_pd(t4, t5, t6, t7, index);
     return _mm512_mask_blend_pd(lut_mask, res1, res2);
 }
 
@@ -3139,6 +3172,207 @@ AVX512F_exp_DOUBLE(npy_double * op,
     }
     if (overflow_mask) {
         npy_set_floatstatus_overflow();
+    }
+}
+#endif
+#endif
+
+/*
+ * Vectorized implementation of log double using AVX512
+ * 1) if x = 0; return -INF
+ * 2) if x < 0; return NAN
+ * 3) if x is INF; return INF
+ * 4) if x is NAN; return NAN
+ * 5) Range reduction:
+ *    log(x) = log(2^m * z)
+ *           = mln2 + log(z)
+ * 6) log(z) = log(z / c_k) + log(c_k);
+ *    where c_k = 1 + k/64, k = 0,1,...,64
+ *    s.t. |x - c_k| <= 1/128 when x on[1,2].
+ * 7) r = 2(x - c_k)/(x + c_k)
+ *    log(x/c_k) = log((1 + r/2) / (1 - r/2))
+ *               = p(r)
+ *               = 2((r/2) + 1/3*(r/2)^3 + 1/5*(r/2)^5 + ...)
+ */
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
+#if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
+static NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F void
+AVX512F_log_DOUBLE(npy_double * op,
+                npy_double * ip,
+                const npy_intp array_size,
+                const npy_intp steps)
+{
+    npy_intp num_remaining_elements = array_size;
+    const npy_intp stride = steps / (npy_intp)sizeof(npy_double);
+    const npy_int num_lanes = 64 / (npy_intp)sizeof(npy_double);
+    npy_int32 indexarr[8];
+    for (npy_int32 ii = 0; ii < 8; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+
+    __m512d zeros_d = _mm512_set1_pd(0.0f);
+    __m512d ones_d = _mm512_set1_pd(1.0f);
+    __m512d mInf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d mInv64 = (__m512d)(_mm512_set1_epi64(0x3f90000000000000));
+    __m512d mNeg_nan = _mm512_set1_pd(-NPY_NAN);
+    __m512d mNan = _mm512_set1_pd(NPY_NAN);
+    __m512d mNeg_inf = _mm512_set1_pd(-NPY_INFINITY);
+    __m512d mA1 = _mm512_set1_pd(NPY_TANG_LOG_A1);
+    __m512d mA2 = _mm512_set1_pd(NPY_TANG_LOG_A2);
+    __m512d mA3 = _mm512_set1_pd(NPY_TANG_LOG_A3);
+    __m512d mA4 = _mm512_set1_pd(NPY_TANG_LOG_A4);
+    __m512d mLN2HI = _mm512_set1_pd(NPY_TANG_LOG_LN2HI);
+    __m512d mLN2LO = _mm512_set1_pd(NPY_TANG_LOG_LN2LO);
+
+    __m512d mTo_glibc_min = _mm512_set1_pd(1.0 - 0x1p-4);
+    __m512d mTo_glibc_max = _mm512_set1_pd(1.0 + 0x1.09p-4);
+    __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
+
+    /* Load lookup table data */
+    __m512d mLUT_TOP_0 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*0]));
+    __m512d mLUT_TOP_1 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*1]));
+    __m512d mLUT_TOP_2 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*2]));
+    __m512d mLUT_TOP_3 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*3]));
+    __m512d mLUT_TOP_4 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*4]));
+    __m512d mLUT_TOP_5 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*5]));
+    __m512d mLUT_TOP_6 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*6]));
+    __m512d mLUT_TOP_7 = _mm512_loadu_pd(&(LOG_TABLE_TOP[8*7]));
+
+    __m512d mLUT_TAIL_0 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*0]));
+    __m512d mLUT_TAIL_1 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*1]));
+    __m512d mLUT_TAIL_2 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*2]));
+    __m512d mLUT_TAIL_3 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*3]));
+    __m512d mLUT_TAIL_4 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*4]));
+    __m512d mLUT_TAIL_5 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*5]));
+    __m512d mLUT_TAIL_6 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*6]));
+    __m512d mLUT_TAIL_7 = _mm512_loadu_pd(&(LOG_TABLE_TAIL[8*7]));
+
+
+    __mmask8 load_mask = avx512_get_full_load_mask_pd();
+    __mmask8 invalid_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
+    __mmask8 divide_by_zero_mask = invalid_mask;
+
+    __mmask8 inf_mask, nan_mask, zero_mask, negx_mask, denormal_mask,
+             glibc_mask;
+
+    __m512d x;
+    while (num_remaining_elements > 0) {
+        if (num_remaining_elements < num_lanes) {
+            load_mask = avx512_get_partial_load_mask_pd(num_remaining_elements,
+                                                      num_lanes);
+        }
+
+        if (1 == stride) {
+            x = avx512_masked_load_pd(load_mask, ip);
+        }
+        else {
+            x = avx512_masked_gather_pd(zeros_d, ip, vindex, load_mask);
+        }
+
+        /* call glibc when x on [1.0 - 0x1p-4, 1.0 + 0x1.09p-4] */
+        __mmask8 m1 = _mm512_cmp_pd_mask(x, mTo_glibc_max, _CMP_LT_OQ);
+        __mmask8 m2 = _mm512_cmp_pd_mask(x, mTo_glibc_min, _CMP_GT_OQ);
+        glibc_mask =  _kand_mask8(m1,m2);
+
+        if (glibc_mask != 0xFF) {
+            zero_mask = _mm512_cmp_pd_mask(x, zeros_d, _CMP_EQ_OQ);
+            inf_mask = _mm512_cmp_pd_mask(x, mInf, _CMP_EQ_OQ);
+            negx_mask = _mm512_cmp_pd_mask(x, zeros_d, _CMP_LT_OQ);
+            nan_mask = _mm512_cmp_pd_mask(x, x, _CMP_NEQ_UQ);
+
+            divide_by_zero_mask = _kor_mask8(divide_by_zero_mask,
+                                        _kand_mask8(zero_mask, load_mask));
+            invalid_mask = _kor_mask8(invalid_mask, negx_mask);
+
+
+            x = avx512_set_masked_lanes_pd(x, zeros_d, negx_mask);
+
+            __m512i ix = (__m512i)x;
+
+            /* Normalize x when it is denormal */
+            __m512i top12 = _mm512_and_epi64(ix,
+                                _mm512_set1_epi64(0xfff0000000000000));
+            denormal_mask = _mm512_cmp_epi64_mask(top12, _mm512_set1_epi64(0),
+                                _CMP_EQ_OQ);
+            denormal_mask = _kandn_mask8(zero_mask, denormal_mask);
+            ix = (__m512i)_mm512_mask_mul_pd(x, denormal_mask,
+                                    x, _mm512_set1_pd(0x1p52));
+            ix = _mm512_mask_sub_epi64(ix, denormal_mask,
+                                    ix, _mm512_set1_epi64(52ULL << 52));
+
+            /*
+             * x = 2^k * z; where z in range [1,2]
+             */
+            __m512i tmp = _mm512_sub_epi64(ix,
+                              _mm512_set1_epi64(0x3ff0000000000000));
+            __m512i i = _mm512_and_epi64(_mm512_srai_epi64(tmp, 52 - 6),
+                            _mm512_set1_epi64(0x3fULL));
+            __m512i ik = _mm512_srai_epi64(tmp, 52);
+            __m512d z = (__m512d)(_mm512_sub_epi64(ix, _mm512_and_epi64(tmp,
+                            _mm512_set1_epi64(0xfff0000000000000))));
+            /* c = i/64 + 1 */
+            __m512d c = _mm512_fmadd_pd(_mm512_cvtepi64_pd(i), mInv64, ones_d);
+
+            /* u = 2 * (z - c) / (z + c) */
+            __m512d u = _mm512_div_pd(_mm512_sub_pd(z, c), _mm512_add_pd(z,c));
+            u = _mm512_mul_pd(_mm512_set1_pd(2.0), u);
+
+            /* v = u * u */
+            __m512d v = _mm512_mul_pd(u,u);
+
+            /* log(z/c) = u + u*v*(A1 + v*(A2 + v*(A3 + v*A4))) */
+            __m512d res = _mm512_fmadd_pd(v, mA4, mA3);
+            res = _mm512_fmadd_pd(v, res, mA2);
+            res = _mm512_fmadd_pd(v, res, mA1);
+            res = _mm512_mul_pd(v, res);
+            res = _mm512_fmadd_pd(u, res, u);
+
+            /* Load lookup table data */
+            __m512d c_hi = avx512_permute_x8var_pd(mLUT_TOP_0, mLUT_TOP_1,
+                            mLUT_TOP_2, mLUT_TOP_3, mLUT_TOP_4, mLUT_TOP_5,
+                            mLUT_TOP_6, mLUT_TOP_7, i);
+            __m512d c_lo = avx512_permute_x8var_pd(mLUT_TAIL_0, mLUT_TAIL_1,
+                              mLUT_TAIL_2, mLUT_TAIL_3, mLUT_TAIL_4, mLUT_TAIL_5,
+                              mLUT_TAIL_6, mLUT_TAIL_7, i);
+
+            /*
+             * log(x) = k * ln2_hi + c_hi +
+             *          k * ln2_lo + c_lo +
+             *          log(z/c)
+             */
+            __m512d k = _mm512_cvtepi64_pd(ik);
+            __m512d tt = _mm512_fmadd_pd(k, mLN2HI, c_hi);
+            __m512d tt2 = _mm512_fmadd_pd(k, mLN2LO, c_lo);
+            tt = _mm512_add_pd(tt, tt2);
+            res = _mm512_add_pd(tt, res);
+
+            /* return special cases */
+            res = avx512_set_masked_lanes_pd(res, mNan, nan_mask);
+            res = avx512_set_masked_lanes_pd(res, mNeg_nan, negx_mask);
+            res = avx512_set_masked_lanes_pd(res, mNeg_inf, zero_mask);
+            res = avx512_set_masked_lanes_pd(res, mInf, inf_mask);
+
+            _mm512_mask_storeu_pd(op, load_mask, res);
+        }
+
+        /* call glibc's log func when x around 1.0f */
+        for (int ii = 0, jj = 0; glibc_mask != 0; ii++, jj += stride) {
+            if (glibc_mask & 0x01) {
+                op[ii] = npy_log(ip[jj]);
+            }
+            glibc_mask  = glibc_mask >> 1;
+        }
+
+        ip += num_lanes * stride;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+
+    if (invalid_mask) {
+        npy_set_floatstatus_invalid();
+    }
+    if (divide_by_zero_mask) {
+        npy_set_floatstatus_divbyzero();
     }
 }
 #endif
