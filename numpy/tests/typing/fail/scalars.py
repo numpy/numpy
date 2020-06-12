@@ -65,3 +65,17 @@ np.floating(1)  # E: Cannot instantiate abstract class
 np.complexfloating(1)  # E: Cannot instantiate abstract class
 np.character("test")  # E: Cannot instantiate abstract class
 np.flexible(b"test")  # E: Cannot instantiate abstract class
+
+np.float64(value=0.0)  # E: Unexpected keyword argument
+np.int64(value=0)  # E: Unexpected keyword argument
+np.uint64(value=0)  # E: Unexpected keyword argument
+np.complex128(value=0.0j)  # E: Unexpected keyword argument
+np.str_(value='bob')  # E: No overload variant
+np.bytes_(value=b'test')  # E: No overload variant
+np.void(value=b'test')  # E: Unexpected keyword argument
+np.bool_(value=True)  # E: Unexpected keyword argument
+np.datetime64(value="2019")  # E: No overload variant
+np.timedelta64(value=0)  # E: Unexpected keyword argument
+
+np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
+np.str_("hello", encoding='utf-8')  # E: No overload variant
