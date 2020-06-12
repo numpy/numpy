@@ -52,6 +52,10 @@ class Eindot(Benchmark):
     def time_einsum_contig_contig(self):
         np.einsum("ji,i->", self.b, self.c, optimize=True)
 
+    # trigger sum_of_products_contig_outstride0_one
+    def time_einsum_contig_outstride0(self):
+        np.einsum("i->", self.c4, optimize=True)
+
     def time_inner_trans_a_a(self):
         np.inner(self.a, self.a)
 
