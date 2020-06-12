@@ -5142,7 +5142,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
 add_newdoc('numpy.core.multiarray', 'dtype',
     """
-    dtype(obj, align=False, copy=False)
+    dtype(dtype, align=False, copy=False)
 
     Create a data type object.
 
@@ -5152,7 +5152,7 @@ add_newdoc('numpy.core.multiarray', 'dtype',
 
     Parameters
     ----------
-    obj
+    dtype
         Object to be converted to a data type object.
     align : bool, optional
         Add padding to the fields to match what a C compiler would output
