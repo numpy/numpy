@@ -1056,6 +1056,11 @@ def test_invalid_dtype_string():
     assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
 
 
+def test_keyword_argument():
+    # test for https://github.com/numpy/numpy/pull/16574#issuecomment-642660971
+    assert np.dtype(dtype=np.float64) == np.dtype(np.float64)
+
+
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
@@ -1333,4 +1338,3 @@ class TestFromCTypes:
         pair_type = np.dtype('{},{}'.format(*pair))
         expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
         assert_equal(pair_type, expected)
-
