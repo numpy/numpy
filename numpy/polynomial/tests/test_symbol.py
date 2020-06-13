@@ -7,6 +7,7 @@ import numpy.polynomial as poly
 from numpy.core import array
 from numpy.testing import assert_equal, assert_raises, assert_
 
+
 class TestInit:
     """
     Test polynomial creation with symbol kwarg.
@@ -51,7 +52,7 @@ class TestInit:
     def test_change_symbol(self):
         p = poly.Polynomial(self.c, symbol='y')
         # Create new polynomial from p with different symbol
-        pt = poly.Polynomial(p, symbol='t')
+        pt = poly.Polynomial(p.coef, symbol='t')
         assert_equal(pt.symbol, 't')
 
 
@@ -118,11 +119,8 @@ class TestBinaryOperatorsSameSymbol:
         for out in divmod(rhs, self.p):
             assert_equal(out.symbol, 'z')
 
+
 class TestBinaryOperatorsDifferentSymbol:
-    """
-    Ensure that a ValueError is raised for binary operations between 
-    polynomials of the same kind with different symbols.
-    """
     p = poly.Polynomial([1, 2, 3], symbol='x')
     other = poly.Polynomial([4, 5, 6], symbol='y')
     ops = (p.__add__, p.__sub__, p.__mul__, p.__floordiv__, p.__mod__)
