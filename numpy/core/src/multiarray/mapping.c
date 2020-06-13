@@ -2480,8 +2480,6 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     int i;
     NPY_BEGIN_THREADS_DEF;
 
-    intp_type = PyArray_DescrFromType(NPY_INTP);
-
     if (NpyIter_GetIterSize(mit->outer) == 0) {
         /*
          * When the outer iteration is empty, the indices broadcast to an
@@ -2492,6 +2490,8 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
          */
         return 0;
     }
+
+    intp_type = PyArray_DescrFromType(NPY_INTP);
 
     NPY_BEGIN_THREADS;
 
