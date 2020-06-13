@@ -28,11 +28,13 @@ behavior.)
 
 """
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
-           'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
+           'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn',
+           'chebyfft', 'chebyifft']
 
 import functools
 
-from numpy.core import asarray, zeros, swapaxes, conjugate, take, sqrt
+from numpy.core import (asarray, zeros, swapaxes, conjugate, take, sqrt,
+                        real, append)
 from . import _pocketfft_internal as pfi
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
@@ -153,7 +155,7 @@ def fft(a, n=None, axis=-1, norm=None):
 
     Returns
     -------
-    out : complex ndarray
+    output : complex ndarray
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
 
@@ -1401,3 +1403,60 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
 
     """
     return irfftn(a, s, axes, norm)
+
+
+@array_function_dispatch(_fftn_dispatcher)
+def chebyfft(a, n=None, axis=-1):
+    """
+    Compute forward 1D Chebyshev (cosine) transform using real FFT.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+        If complex, imaginary part is silently discarded.
+    n : int, optional
+        Length of the transformed axis of the output.
+        If `n` is smaller than the length of the input, the input is cropped.
+        If it is larger, the input is padded with zeros.  If `n` is not given,
+        the length of the input along the axis specified by `axis` is used.
+    axis : int, optional
+        Axis over which to compute the FFT.  If not given, the last axis is
+        used.
+
+    Returns
+    -------
+    output : real ndarray
+        The truncated or zero-padded input, transformed along the axis
+        indicated by `axis`, or the last one if `axis` is not specified.
+        The length of the transformed axis is `n`.
+
+    Raises
+    ------
+    IndexError
+        If `axis` is larger than the last axis of `a`.
+
+    """
+    a = real(asarray(a))
+    if n is None:
+        n = a.shape[axis]
+
+    # Even extension of `a` from [pi, 2pi] to [0, 2pi]; the original
+    # vector is mirrored and appended "in front" of the original.
+    # The point phi=pi is not repeated, and the last point phi=2pi is
+    # omitted because of periodicity of the extension.
+    # `a` has n points, its extension 'aext' has n+n-2=2n-2, because
+    # 2 points are omitted during the mirroring.
+
+    aext = append(a[n-1:0:-1], a[0:n-1])
+
+    # Forward Fourier transform of the even extension.
+    # Since input is real, -k and k coefficients are complex conjugates;
+    # since input also even, they must also be pairwise equal; so all
+    # coefficients are real, and -k and k coefficients are pairwise equal.
+    # The real FFT is used, so that only (2n-2)//2 + 1 = n coeffs are
+    # returned instead of all 2n-2.
+
+    output = 2.*real(rfft(aext, norm="forward"))
+
+    return output
