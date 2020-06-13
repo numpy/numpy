@@ -327,7 +327,7 @@ class ABCPolyBase(abc.ABC):
         if len(symbol) < 1:
             raise ValueError("Symbol must be a non-empty string")
 
-        if not symbol[0].isalpha():
+        if symbol[0].isnumeric():
             raise ValueError("First character of symbol must be non-numeric")
 
         self._symbol = symbol
@@ -383,7 +383,7 @@ class ABCPolyBase(abc.ABC):
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term
-            next_term += term_method(power, "x")
+            next_term += term_method(power, self.symbol)
             # Length of the current line with next term added
             line_len = len(out.split('\n')[-1]) + len(next_term)
             # If not the last term in the polynomial, it will be two
