@@ -866,6 +866,7 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
             new_dtype = new_DType->default_descr(new_DType);
         }
     }
+    Py_DECREF(new_DType);
     return new_dtype;
 }
 
