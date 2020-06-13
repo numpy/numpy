@@ -309,6 +309,19 @@ class TestFormat:
             format(p, '.2f')
 
 
+@pytest.mark.parametrize(('poly', 'tgt'), (
+    (poly.Polynomial, '1.0 + 2.0·z¹ + 3.0·z²'),
+    (poly.Chebyshev, '1.0 + 2.0·T₁(z) + 3.0·T₂(z)'),
+    (poly.Hermite, '1.0 + 2.0·H₁(z) + 3.0·H₂(z)'),
+    (poly.HermiteE, '1.0 + 2.0·He₁(z) + 3.0·He₂(z)'),
+    (poly.Laguerre, '1.0 + 2.0·L₁(z) + 3.0·L₂(z)'),
+    (poly.Legendre, '1.0 + 2.0·P₁(z) + 3.0·P₂(z)'),
+))
+def test_symbol(poly, tgt):
+    p = poly([1, 2, 3], symbol='z')
+    assert_equal(f"{p:unicode}", tgt)
+
+
 class TestRepr:
     def test_polynomial_str(self):
         res = repr(poly.Polynomial([0, 1]))
