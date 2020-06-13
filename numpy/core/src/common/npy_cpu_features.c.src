@@ -1,6 +1,7 @@
 #include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h" // To guarantee the CPU baseline definitions are in scope.
 #include "numpy/npy_common.h" // for NPY_INLINE
-#include "numpy/npy_cpu.h" // To guarantee of having CPU definitions in scope.
+#include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
 /******************** Private Definitions *********************/
 
@@ -53,6 +54,44 @@ npy_cpu_features_dict(void)
     /**end repeat**/
     }
     return dict;
+}
+
+#define NPY__CPU_PYLIST_APPEND_CB(FEATURE, LIST) \
+    item = PyUnicode_FromString(NPY_TOSTRING(FEATURE)); \
+    if (item == NULL) { \
+        Py_DECREF(LIST); \
+        return NULL; \
+    } \
+    PyList_SET_ITEM(LIST, index++, item);
+
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_baseline_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_BASELINE_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
+}
+
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_dispatch_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_DISPATCH_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
 }
 
 /****************************************************************
@@ -366,7 +405,7 @@ npy__cpu_init_features(void)
         return;
 #endif
     // We have nothing else todo
-#if defined(NPY_HAVE_NEON_ARM8) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
+#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
     #if defined(NPY_HAVE_FPHP) || defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     npy__cpu_have[NPY_CPU_FEATURE_FPHP] = 1;
     #endif
