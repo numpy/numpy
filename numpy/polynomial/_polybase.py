@@ -40,8 +40,8 @@ class ABCPolyBase(abc.ABC):
     symbol : str, optional
         Symbol used to represent the independent variable in string 
         representations of the polynomial expression, e.g. for printing.
-        The symbol must be a non-empty string, the first character of which
-        is an alphabetical character. Default value is 'x'.
+        The symbol must be a non-empty string where the first character is
+        non-numeric. Default value is 'x'.
 
     Attributes
     ----------
@@ -983,6 +983,8 @@ class ABCPolyBase(abc.ABC):
             value is the default class domain
 
             .. versionadded:: 1.6.0
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -1039,6 +1041,8 @@ class ABCPolyBase(abc.ABC):
         window : {None, array_like}, optional
             Window for the returned series. If None the class window is
             used. The default is None.
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -1079,6 +1083,8 @@ class ABCPolyBase(abc.ABC):
             ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
             the window. If None is given then the class window is used. The
             default is None.
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -1115,6 +1121,8 @@ class ABCPolyBase(abc.ABC):
             ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
             the window. If None is given then the class window is used. The
             default is None.
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
