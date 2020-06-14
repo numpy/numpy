@@ -1024,6 +1024,16 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     >>> c.y
     rec.array([ 1.0,  4.0,  9.0], dtype=float16)
+
+    >>> r = np.rec.array(['abc','def'], names=['col1','col2'])
+    >>> print(r.col1)
+    abc
+
+    >>> r.col1
+    array('abc', dtype='<U3')
+
+    >>> r.col2
+    array('def', dtype='<U3')
     """
 
     if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
