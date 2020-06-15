@@ -825,6 +825,9 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     PyObject* ret = NULL;
 
     typenum = PyArray_ObjectType(op1, 0);
+    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
@@ -914,6 +917,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     NPY_BEGIN_THREADS_DEF;
 
     typenum = PyArray_ObjectType(op1, 0);
+    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
