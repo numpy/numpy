@@ -2,6 +2,7 @@ from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
 
 import numpy as np
 
+
 class Eindot(Benchmark):
     def setup(self):
         self.a = np.arange(60000.0).reshape(150, 400)
