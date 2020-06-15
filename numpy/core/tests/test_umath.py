@@ -657,6 +657,19 @@ class TestLog:
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.log(xf), yf)
 
+    def test_log_strides(self):
+        np.random.seed(42)
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        sizes = np.arange(2,100)
+        for ii in sizes:
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=100.0,size=ii))
+            x_special = x_f64.copy()
+            x_special[3:-1:4] = 1.0
+            y_true = np.log(x_f64)
+            y_special = np.log(x_special)
+            for jj in strides:
+                assert_array_almost_equal_nulp(np.log(x_f64[::jj]), y_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.log(x_special[::jj]), y_special[::jj], nulp=2)
 
 class TestExp:
     def test_exp_values(self):
