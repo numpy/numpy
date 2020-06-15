@@ -10,10 +10,11 @@ import zipfile
 
 from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.9'
+OPENBLAS_V = '0.3.10'
 # Temporary build of OpenBLAS to test a fix for dynamic detection of CPU
-OPENBLAS_LONG = 'v0.3.7-527-g79fd006c'  # the 0.3.7 is misleading
+OPENBLAS_LONG = 'v0.3.10'  
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64', 'i686', 'ppc64le', 's390x']
@@ -32,10 +33,6 @@ sha256_vals = {
 "openblas64_-v0.3.7-527-g79fd006c-manylinux2014_ppc64le.tar.gz": "a0885873298e21297a04be6cb7355a585df4fa4873e436b4c16c0a18fc9073ea",
 "openblas-v0.3.7-527-g79fd006c-manylinux2014_s390x.tar.gz": "79b454320817574e20499d58f05259ed35213bea0158953992b910607b17f240",
 "openblas64_-v0.3.7-527-g79fd006c-manylinux2014_s390x.tar.gz": "9fddbebf5301518fc4a5d2022a61886544a0566868c8c014359a1ee6b17f2814",
-"openblas-v0.3.7-527-g79fd006c-manylinux1_i686.tar.gz": "24fb92684ec4676185fff5c9340f50c3db6075948bcef760e9c715a8974e4680",
-"openblas-v0.3.7-527-g79fd006c-manylinux1_x86_64.tar.gz": "ebb8236b57a1b4075fd5cdc3e9246d2900c133a42482e5e714d1e67af5d00e62",
-"openblas-v0.3.7-527-g79fd006c-manylinux1_i686.tar.gz": "24fb92684ec4676185fff5c9340f50c3db6075948bcef760e9c715a8974e4680",
-"openblas-v0.3.7-527-g79fd006c-manylinux1_x86_64.tar.gz": "ebb8236b57a1b4075fd5cdc3e9246d2900c133a42482e5e714d1e67af5d00e62",
 "openblas-v0.3.7-527-g79fd006c-manylinux1_i686.tar.gz": "24fb92684ec4676185fff5c9340f50c3db6075948bcef760e9c715a8974e4680",
 "openblas-v0.3.7-527-g79fd006c-manylinux1_x86_64.tar.gz": "ebb8236b57a1b4075fd5cdc3e9246d2900c133a42482e5e714d1e67af5d00e62",
 }
@@ -75,7 +72,7 @@ def get_manylinux(arch):
     return ret
 
 
-def download_openblas(target, arch, ilp64):
+def download_openblas(target, arch, ilp64, is_32bit):
     ml_ver = get_manylinux(arch)
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
@@ -91,7 +88,7 @@ def download_openblas(target, arch, ilp64):
         filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'tar.gz'
     elif arch == 'windows':
-        if IS_32BIT:
+        if is_32bit:
             suffix = 'win32-gcc_7_1_0.zip'
         else:
             suffix = 'win_amd64-gcc_7_1_0.zip'
@@ -100,7 +97,11 @@ def download_openblas(target, arch, ilp64):
     if not filename:
         return None
     req = Request(url=filename, headers=headers)
-    response = urlopen(req)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print(f'Could not download "{filename}"', file=sys.stderr)
+        raise
     length = response.getheader('content-length')
     if response.status != 200:
         print(f'Could not download "{filename}"', file=sys.stderr)
@@ -121,7 +122,7 @@ def download_openblas(target, arch, ilp64):
         fid.write(data)
     return typ
 
-def setup_openblas(arch=get_arch(), ilp64=get_ilp64()):
+def setup_openblas(arch=get_arch(), ilp64=get_ilp64(), is_32bit=IS_32BIT):
     '''
     Download and setup an openblas library for building. If successful,
     the configuration script will find it automatically.
@@ -135,7 +136,7 @@ def setup_openblas(arch=get_arch(), ilp64=get_ilp64()):
     _, tmp = mkstemp()
     if not arch:
         raise ValueError('unknown architecture')
-    typ = download_openblas(tmp, arch, ilp64)
+    typ = download_openblas(tmp, arch, ilp64, is_32bit)
     if not typ:
         return ''
     if arch == 'windows':
@@ -239,22 +240,25 @@ def test_setup(arches):
     '''
     def items():
         for arch in arches:
-            yield arch, None
-            if arch not in ('i686'):
-                yield arch, '64_'
+            yield arch, None, False
+            if arch not in ('i686',):
+                yield arch, '64_', False
+            if arch in ('windows',):
+                yield arch, None, False
+                
 
     errs = []
-    for arch, ilp64 in items():
+    for arch, ilp64, is_32bit in items():
         if arch == '':
             continue
 
         target = None
         try:
             try:
-                target = setup_openblas(arch, ilp64)
+                target = setup_openblas(arch, ilp64, is_32bit)
             except Exception as e:
-                print(f'Could not setup {arch}:')
-                print(str(e))
+                print(f'Could not setup {arch} with ilp64 {ilp64}, 32bit {is_32bit}:')
+                print(e)
                 errs.append(e)
                 continue
             if not target:
