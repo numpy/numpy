@@ -34,7 +34,11 @@ np.float32(16)
 np.float64(3.0)
 
 np.bytes_(b"hello")
+np.bytes_("hello", 'utf-8')
+np.bytes_("hello", encoding='utf-8')
 np.str_("hello")
+np.str_(b"hello", 'utf-8')
+np.str_(b"hello", encoding='utf-8')
 
 # Protocols
 float(np.int8(4))
