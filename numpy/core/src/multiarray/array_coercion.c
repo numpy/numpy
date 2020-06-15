@@ -331,6 +331,12 @@ discover_dtype_from_pyobject(
 }
 
 
+/*
+ * This function should probably become public API eventually.  At this
+ * time it is implemented by falling back to `PyArray_AdaptFlexibleDType`.
+ * We will use `CastingImpl[from, to].adjust_descriptors(...)` to implement
+ * this logic.
+ */
 static NPY_INLINE PyArray_Descr *
 cast_descriptor_to_fixed_dtype(
         PyArray_Descr *descr, PyArray_DTypeMeta *fixed_DType)
@@ -453,7 +459,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     static PyArrayObject_fields arr_fields = {
             .ob_base.ob_refcnt = 1,
             .ob_base.ob_type = &PyArrayDescr_Type,
-            .flags = NPY_ARRAY_BEHAVED,
+            .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
         };
 
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
@@ -500,24 +506,34 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         return -1;
     }
 
+    int res;
     int needs_api = 0;
     PyArray_StridedUnaryOp *stransfer;
     NpyAuxData *transferdata;
     if (PyArray_GetDTypeTransferFunction(
-            0, 0, 0, tmp_descr, descr, 1, &stransfer, &transferdata,
+            0, 0, 0, tmp_descr, descr, 0, &stransfer, &transferdata,
             &needs_api) == NPY_FAIL) {
-        PyObject_Free(data);
-        Py_DECREF(tmp_descr);
-        return -1;
+        res = -1;
+        goto finish;
     }
     stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata);
     NPY_AUXDATA_FREE(transferdata);
     PyObject_Free(data);
     Py_DECREF(tmp_descr);
-    if (PyErr_Occurred()) {
-        return -1;
+    if (needs_api && PyErr_Occurred()) {
+        res = -1;
+        goto finish;
     }
-    return 0;
+    res = 0;
+
+  finish:
+    if (PyDataType_REFCHK(tmp_descr)) {
+        /* We could probably use move-references above */
+        PyArray_Item_XDECREF(data, tmp_descr);
+    }
+    PyObject_Free(data);
+    Py_DECREF(tmp_descr);
+    return res;
 }
 
 
@@ -575,7 +591,7 @@ update_shape(int curr_ndim, int *max_ndim,
 }
 
 
-#define COERCION_CACHE_CACHE_SIZE 0
+#define COERCION_CACHE_CACHE_SIZE 5
 static int _coercion_cache_num = 0;
 static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
 
@@ -710,7 +726,6 @@ handle_scalar(
     if (update_shape(curr_dims, max_dims, out_shape,
             0, NULL, NPY_FALSE, flags) < 0) {
         *flags |= FOUND_RAGGED_ARRAY;
-        Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
         return *max_dims;
     }
     if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
@@ -939,7 +954,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             arr = NULL;
         }
     }
-    if (arr) {
+    if (arr != NULL) {
         /*
          * This is an array object which will be added to the cache, keeps
          * the reference to the array alive (takes ownership).
@@ -961,7 +976,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         else if (update_shape(curr_dims, &max_dims, out_shape,
                 PyArray_NDIM(arr), PyArray_SHAPE(arr), NPY_FALSE, flags) < 0) {
             *flags |= FOUND_RAGGED_ARRAY;
-            Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
             return max_dims;
         }
 
@@ -1009,6 +1023,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 requested_descr, flags, NULL);
         if (is_sequence) {
             /* Flag as ragged or too deep array */
+            // TODO: Add test exercising this path (may need to add to cache)
             *flags |= FOUND_RAGGED_ARRAY;
         }
         return max_dims;
@@ -1070,37 +1085,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
 
 /**
- * Check the descriptor is a legacy "flexible" DType instance, this is
- * an instance which is (normally) not attached to an array, such as a string
- * of length 0 or a datetime with no unit.
- * These should be largely deprecated, and represent only the DType class
- * for most `dtype` parameters.
- *
- * TODO: This function should eventually recieve a deprecation warning and
- *       be removed.
- *
- * @param descr
- * @return 1 if this is not a concrete dtype instance 0 otherwise
- */
-static int
-descr_is_legacy_parametric_instance(PyArray_Descr *descr)
-{
-    if (PyDataType_ISUNSIZED(descr)) {
-        return 1;
-    }
-    /* Flexible descr with generic time unit (which can be adapted) */
-    if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
-        if (meta->base == NPY_FR_GENERIC) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-/**
  * Finds the DType and shape of an arbitrary nested sequence. This is the
  * general purpose function to find the parameters of the array (but not
  * the array itself) as returned by `np.array()`
@@ -1116,6 +1100,7 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr)
  * @param coercion_cache NULL initialized reference to a cache pointer.
  *        May be set to the first coercion_cache, and has to be freed using
  *        npy_free_coercion_cache.
+ *        This should be stored in a thread-safe manner. (i.e. function static)
  * @param fixed_DType A user provided fixed DType class.
  * @param requested_descr A user provided fixed descriptor. This is always
  *        returned as the discovered descriptor, but currently only used
@@ -1314,6 +1299,38 @@ PyArray_DiscoverDTypeAndShape(
 }
 
 
+
+/**
+ * Check the descriptor is a legacy "flexible" DType instance, this is
+ * an instance which is (normally) not attached to an array, such as a string
+ * of length 0 or a datetime with no unit.
+ * These should be largely deprecated, and represent only the DType class
+ * for most `dtype` parameters.
+ *
+ * TODO: This function should eventually recieve a deprecation warning and
+ *       be removed.
+ *
+ * @param descr
+ * @return 1 if this is not a concrete dtype instance 0 otherwise
+ */
+static int
+descr_is_legacy_parametric_instance(PyArray_Descr *descr)
+{
+    if (PyDataType_ISUNSIZED(descr)) {
+        return 1;
+    }
+    /* Flexible descr with generic time unit (which can be adapted) */
+    if (PyDataType_ISDATETIME(descr)) {
+        PyArray_DatetimeMetaData *meta;
+        meta = get_datetime_metadata_from_dtype(descr);
+        if (meta->base == NPY_FR_GENERIC) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
 /**
  * Given either a DType instance or class, (or legacy flexible instance),
  * ands sets output dtype instance and DType class. Both results may be
@@ -1357,6 +1374,10 @@ PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
 }
 
 
+/*
+ * Python API function to expose the dtype+shape discovery functionality
+ * directly.
+ */
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),
                            PyObject *args, PyObject *kwargs)
