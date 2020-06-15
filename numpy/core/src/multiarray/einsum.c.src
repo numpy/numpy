@@ -31,9 +31,6 @@
 #define EINSUM_USE_SSE1 0
 #endif
 
-/*
- * TODO: Only some SSE2 for float64 is implemented.
- */
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #define EINSUM_USE_SSE2 1
 #else
@@ -276,6 +273,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b;
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, b;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
@@ -319,6 +318,29 @@ finish_after_unrolled_loop:
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
+        EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            a = _mm_mul_pd(_mm_load_pd(data0+@i@), _mm_load_pd(data1+@i@));
+            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
+            _mm_store_pd(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 8;
+            data1 += 8;
+            data_out += 8;
+        }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
 #endif
 
     /* Unroll the loop by 8 */
@@ -332,6 +354,14 @@ finish_after_unrolled_loop:
         a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
         _mm_storeu_ps(data_out+@i@, b);
+/**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), _mm_loadu_pd(data1+@i@));
+        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
+        _mm_storeu_pd(data_out+@i@, b);
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -491,6 +521,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value1_sse;
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, b, value1_sse;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
@@ -534,6 +566,29 @@ finish_after_unrolled_loop:
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
+#elif EINSUM_USE_SSE2 && @float64@
+    value1_sse = _mm_set1_pd(value1);
+
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            a = _mm_mul_pd(_mm_load_pd(data0+@i@), value1_sse);
+            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
+            _mm_store_pd(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 8;
+            data_out += 8;
+        }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
 #endif
 
     /* Unroll the loop by 8 */
@@ -547,6 +602,14 @@ finish_after_unrolled_loop:
         a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), value1_sse);
         b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
         _mm_storeu_ps(data_out+@i@, b);
+/**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), value1_sse);
+        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
+        _mm_storeu_pd(data_out+@i@, b);
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -735,6 +798,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, accum_sse = _mm_setzero_pd();
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
@@ -772,15 +837,38 @@ finish_after_unrolled_loop:
 /**end repeat2**/
             data1 += 8;
         }
-
-#if EINSUM_USE_SSE1 && @float32@
         /* Add the four SSE values and put in accum */
         a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = _mm_add_ps(a, accum_sse);
         a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = _mm_add_ps(a, accum_sse);
         _mm_store_ss(&accum, accum_sse);
-#endif
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data1)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            /*
+             * NOTE: This accumulation changes the order, so will likely
+             *       produce slightly different results.
+             */
+            accum_sse = _mm_add_pd(accum_sse, _mm_load_pd(data1+@i@));
+/**end repeat2**/
+            data1 += 8;
+        }
+        /* Add the two SSE2 values and put in accum */
+        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
+        accum_sse = _mm_add_pd(a, accum_sse);
+        _mm_store_sd(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
@@ -801,6 +889,16 @@ finish_after_unrolled_loop:
          */
         accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data1+@i@));
 /**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        /*
+         * NOTE: This accumulation changes the order, so will likely
+         *       produce slightly different results.
+         */
+        accum_sse = _mm_add_pd(accum_sse, _mm_loadu_pd(data1+@i@));
+/**end repeat2**/
 #else
 /**begin repeat2
  * #i = 0, 1, 2, 3, 4, 5, 6, 7#
@@ -818,6 +916,11 @@ finish_after_unrolled_loop:
     a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = _mm_add_ps(a, accum_sse);
     _mm_store_ss(&accum, accum_sse);
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Add the two SSE2 values and put in accum */
+    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
+    accum_sse = _mm_add_pd(a, accum_sse);
+    _mm_store_sd(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
@@ -834,6 +937,8 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, accum_sse = _mm_setzero_pd();
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outstride0_two (%d)\n",
@@ -871,16 +976,37 @@ finish_after_unrolled_loop:
 /**end repeat2**/
             data0 += 8;
         }
-
-#if EINSUM_USE_SSE1 && @float32@
         /* Add the four SSE values and put in accum */
         a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = _mm_add_ps(a, accum_sse);
         a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = _mm_add_ps(a, accum_sse);
         _mm_store_ss(&accum, accum_sse);
-#endif
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
 
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            /*
+             * NOTE: This accumulation changes the order, so will likely
+             *       produce slightly different results.
+             */
+            accum_sse = _mm_add_pd(accum_sse, _mm_load_pd(data0+@i@));
+/**end repeat2**/
+            data0 += 8;
+        }
+        /* Add the two SSE2 values and put in accum */
+        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
+        accum_sse = _mm_add_pd(a, accum_sse);
+        _mm_store_sd(&accum, accum_sse);
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
@@ -900,6 +1026,16 @@ finish_after_unrolled_loop:
          */
         accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data0+@i@));
 /**end repeat2**/
+#elif EINSUM_USE_SSE2 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        /*
+         * NOTE: This accumulation changes the order, so will likely
+         *       produce slightly different results.
+         */
+        accum_sse = _mm_add_pd(accum_sse, _mm_loadu_pd(data0+@i@));
+/**end repeat2**/
 #else
 /**begin repeat2
  * #i = 0, 1, 2, 3, 4, 5, 6, 7#
@@ -917,6 +1053,11 @@ finish_after_unrolled_loop:
     a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = _mm_add_ps(a, accum_sse);
     _mm_store_ss(&accum, accum_sse);
+#elif EINSUM_USE_SSE2 && @float64@
+    /* Add the two SSE2 values and put in accum */
+    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
+    accum_sse = _mm_add_pd(a, accum_sse);
+    _mm_store_sd(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
