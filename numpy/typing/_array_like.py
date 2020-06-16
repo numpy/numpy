@@ -24,4 +24,9 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 else:
     _SupportsArray = Any
 
+# TODO: support buffer protocols once
+#
+# https://github.com/python/typing/issues/593
+#
+# is resolved.
 ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
