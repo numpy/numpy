@@ -91,6 +91,7 @@ enum _dtype_discovery_flags {
     DISCOVER_STRINGS_AS_SEQUENCES = 8,
     DISCOVER_TUPLES_AS_ELEMENTS = 16,
     MAX_DIMS_WAS_REACHED = 32,
+    DESCRIPTOR_WAS_SET = 64,
 };
 
 
@@ -387,21 +388,13 @@ cast_descriptor_to_fixed_dtype(
  *        known scalar. Can be `NULL` indicating no known type.
  * @param obj The Python scalar object. At the time of calling this function
  *        it must be known that `obj` should represent a scalar.
- * @param requested_descr The requested descriptor or NULL, if not NULL
- *        it is returned unmodified.
  */
 static NPY_INLINE PyArray_Descr *
 find_scalar_descriptor(
         PyArray_DTypeMeta *fixed_DType, PyArray_DTypeMeta *DType,
-        PyObject *obj, PyArray_Descr *requested_descr)
+        PyObject *obj)
 {
     PyArray_Descr *descr;
-
-    if (requested_descr != NULL) {
-        /* We simply assume that this is correct and continue. */
-        Py_INCREF(requested_descr);
-        return requested_descr;
-    }
 
     if (DType == NULL && fixed_DType == NULL) {
         /* No known DType and no fixed one means we go to object. */
@@ -668,17 +661,12 @@ npy_free_coercion_cache(coercion_cache_obj *next) {
  * @param flags dtype discover flags to signal failed promotion.
  * @return -1 on error, 0 on success.
  */
-static int
+static NPY_INLINE int
 handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
-        PyArray_Descr *requested_descr, enum _dtype_discovery_flags *flags)
+        enum _dtype_discovery_flags *flags)
 {
-    if (requested_descr != NULL) {
-        /*
-         * If the user fixed a descriptor, do not promote, this will just
-         * error during assignment if necessary.
-         */
-        return 0;
-    }
+    assert(!(*flags & DESCRIPTOR_WAS_SET));
+
     if (*out_descr == NULL) {
         Py_INCREF(descr);
         *out_descr = descr;
@@ -705,9 +693,6 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
  * @param out_shape The discovered output shape, will be filled
  * @param coercion_cache The coercion cache object to use.
  * @param DType the DType class that should be used, or NULL, if not provided.
- * @param requested_descr The dtype instance passed in by the user, this is
- *        passed to array-likes, and otherwise prevents any form of promotion
- *        (to avoid errors).
  * @param flags used signal that this is a ragged array, used internally and
  *        can be expanded if necessary.
  */
@@ -715,7 +700,7 @@ static NPY_INLINE int
 handle_scalar(
         PyObject *obj, int curr_dims, int *max_dims,
         PyArray_Descr **out_descr, npy_intp *out_shape,
-        PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
+        PyArray_DTypeMeta *fixed_DType,
         enum _dtype_discovery_flags *flags, PyArray_DTypeMeta *DType)
 {
     PyArray_Descr *descr;
@@ -725,12 +710,16 @@ handle_scalar(
         *flags |= FOUND_RAGGED_ARRAY;
         return *max_dims;
     }
+    if (*flags & DESCRIPTOR_WAS_SET) {
+        /* no need to do any promotion */
+        return *max_dims;
+    }
     /* This is a scalar, so find the descriptor */
-    descr = find_scalar_descriptor(fixed_DType, DType, obj, requested_descr);
+    descr = find_scalar_descriptor(fixed_DType, DType, obj);
     if (descr == NULL) {
         return -1;
     }
-    if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
+    if (handle_promotion(out_descr, descr, flags) < 0) {
         Py_DECREF(descr);
         return -1;
     }
@@ -797,7 +786,7 @@ find_descriptor_from_array(
             }
             int flat_max_dims = 0;
             if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
-                    NULL, DType, NULL, &flags, item_DType) < 0) {
+                    NULL, DType, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
                 Py_DECREF(elem);
                 Py_XDECREF(item_DType);
@@ -893,8 +882,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         PyObject *obj, int curr_dims, int max_dims, PyArray_Descr**out_descr,
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj ***coercion_cache_tail_ptr,
-        PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        enum _dtype_discovery_flags *flags)
+        PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags)
 {
     PyArrayObject *arr = NULL;
     PyObject *seq;
@@ -931,7 +919,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     else {
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
-                requested_descr, flags, DType);
+                flags, DType);
         Py_DECREF(DType);
         return max_dims;
     }
@@ -946,6 +934,11 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         Py_INCREF(arr);
     }
     else {
+        PyArray_Descr *requested_descr = NULL;
+        if (*flags & DESCRIPTOR_WAS_SET) {
+            /* __array__ may be passed the requested descriptor if provided */
+            requested_descr = *out_descr;
+        }
         arr = (PyArrayObject *)_array_from_array_like(obj,
                 requested_descr, 0, NULL);
         if (arr == NULL) {
@@ -981,7 +974,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             return max_dims;
         }
 
-        if (requested_descr != NULL) {
+        if (*flags & DESCRIPTOR_WAS_SET) {
             return max_dims;
         }
         /*
@@ -999,7 +992,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             /* object array with no elements, no need to promote/adjust. */
             return max_dims;
         }
-        if (handle_promotion(out_descr, cast_descr, requested_descr, flags) < 0) {
+        if (handle_promotion(out_descr, cast_descr, flags) < 0) {
             Py_DECREF(cast_descr);
             return -1;
         }
@@ -1022,7 +1015,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         PyErr_Clear();
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
-                requested_descr, flags, NULL);
+                flags, NULL);
         if (is_sequence) {
             /* Flag as ragged or too deep array */
             // TODO: Add test exercising this path (may need to add to cache)
@@ -1046,7 +1039,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             PyErr_Clear();
             max_dims = handle_scalar(
                     obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
-                    requested_descr, flags, NULL);
+                    flags, NULL);
             return max_dims;
         }
         return -1;
@@ -1076,7 +1069,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
                 objects[i], curr_dims + 1, max_dims,
                 out_descr, out_shape, coercion_cache_tail_ptr, fixed_DType,
-                requested_descr, flags);
+                flags);
 
         if (max_dims < 0) {
             return -1;
@@ -1130,26 +1123,30 @@ PyArray_DiscoverDTypeAndShape(
 {
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
+    enum _dtype_discovery_flags flags = 0;
 
+    /*
+     * Support a passed in descriptor (but only if nothing was specified).
+     */
+    assert(*out_descr == NULL || fixed_DType == NULL);
     /* Validate input of requested descriptor and DType */
     if (fixed_DType != NULL) {
         assert(PyObject_TypeCheck(
                 (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     }
+
     if (requested_descr != NULL) {
         assert(fixed_DType == NPY_DTYPE(requested_descr));
+        /* The output descriptor must be the input. */
+        Py_INCREF(requested_descr);
+        *out_descr = requested_descr;
+        flags |= DESCRIPTOR_WAS_SET;
     }
-    /*
-     * For easier support of legacy behaviour we support a passed in output
-     * when no descriptor is already defined.
-     */
-    assert(*out_descr == NULL || fixed_DType == NULL);
 
     /*
      * Call the recursive function, the setup for this may need expanding
      * to handle caching better.
      */
-    enum _dtype_discovery_flags flags = 0;
 
     /* Legacy discovery flags */
     if (requested_descr != NULL) {
@@ -1167,7 +1164,7 @@ PyArray_DiscoverDTypeAndShape(
 
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
             obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
-            fixed_DType, requested_descr, &flags);
+            fixed_DType, &flags);
     if (ndim < 0) {
         goto fail;
     }
@@ -1266,9 +1263,8 @@ PyArray_DiscoverDTypeAndShape(
     /* We could check here for max-ndims being reached as well */
 
     if (requested_descr != NULL) {
-        /* The user had given a specific one, make sure it is the output one */
-        Py_INCREF(requested_descr);
-        Py_XSETREF(*out_descr, requested_descr);
+        /* descriptor was provided, we did not accidentally change it */
+        assert(*out_descr == requested_descr);
     }
     else if (NPY_UNLIKELY(*out_descr == NULL)) {
         /*
