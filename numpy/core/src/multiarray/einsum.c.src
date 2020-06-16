@@ -909,6 +909,10 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, accum_sse = _mm_setzero_pd();
+#elif EINSUM_USE_NEON_64 && @float64@
+    float64x2_t a, accum_sse = vreinterpretq_f64_s32(vdupq_n_s32((int)0));
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
@@ -959,6 +963,29 @@ finish_after_unrolled_loop:
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
+#elif EINSUM_USE_NEON_64 && @float64@
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
+
+/**begin repeat2
+* #i = 0, 2, 4, 6#
+*/
+        /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+        accum_sse = vaddq_f64(accum_sse, vld1q_f64(data1+@i@));
+/**end repeat2**/
+        data1 += 8;
+    }
+    /* Add the two SSE2 values and put in accum */
+    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
+    accum_sse = vaddq_f64(a, accum_sse);
+    vst1_f64(&accum, vget_low_f64(accum_sse));
+
+    /* Finish off the loop */
+    goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
