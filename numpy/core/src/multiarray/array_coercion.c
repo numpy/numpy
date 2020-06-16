@@ -717,16 +717,17 @@ handle_scalar(
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
         enum _dtype_discovery_flags *flags, PyArray_DTypeMeta *DType)
 {
-    /* This is a scalar, so find the descriptor */
     PyArray_Descr *descr;
-    descr = find_scalar_descriptor(fixed_DType, DType, obj, requested_descr);
-    if (descr == NULL) {
-        return -1;
-    }
+
     if (update_shape(curr_dims, max_dims, out_shape,
             0, NULL, NPY_FALSE, flags) < 0) {
         *flags |= FOUND_RAGGED_ARRAY;
         return *max_dims;
+    }
+    /* This is a scalar, so find the descriptor */
+    descr = find_scalar_descriptor(fixed_DType, DType, obj, requested_descr);
+    if (descr == NULL) {
+        return -1;
     }
     if (handle_promotion(out_descr, descr, requested_descr, flags) < 0) {
         Py_DECREF(descr);
@@ -1216,7 +1217,8 @@ PyArray_DiscoverDTypeAndShape(
                     goto fail;
                 }
             }
-            Py_XSETREF(*out_descr, PyArray_DescrNewFromType(NPY_OBJECT));
+            /* Ensure that ragged arrays always return object dtype */
+            Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
         }
         else if (fixed_DType->type_num != NPY_OBJECT) {
             /* Only object DType supports ragged cases unify error */
@@ -1293,7 +1295,7 @@ PyArray_DiscoverDTypeAndShape(
 
   fail:
     npy_free_coercion_cache(*coercion_cache_head);
-    *coercion_cache = NULL;
+    *coercion_cache_head = NULL;
     Py_XSETREF(*out_descr, NULL);
     return -1;
 }
@@ -1401,24 +1403,24 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
         return NULL;
     }
 
-    coercion_cache_obj *coercion_cache;
+    coercion_cache_obj *coercion_cache = NULL;
     PyObject *out_dtype = NULL;
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
             fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype);
-    npy_free_coercion_cache(coercion_cache);
     Py_XDECREF(fixed_DType);
     Py_XDECREF(fixed_descriptor);
+    if (ndim < 0) {
+        return NULL;
+    }
+    npy_free_coercion_cache(coercion_cache);
     if (out_dtype == NULL) {
         /* Empty sequence, report this as None. */
         out_dtype = Py_None;
         Py_INCREF(Py_None);
     }
 
-    if (ndim < 0) {
-        return NULL;
-    }
     PyObject *shape_tuple = PyArray_IntTupleFromIntp(ndim, shape);
     if (shape_tuple == NULL) {
         return NULL;
