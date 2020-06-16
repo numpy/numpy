@@ -458,7 +458,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 {
     PyArrayObject_fields arr_fields = {
             .ob_base.ob_refcnt = 1,
-            .ob_base.ob_type = NULL,
+            .ob_base.ob_type = &PyArray_Type,
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
         };
 
@@ -684,8 +684,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
         *out_descr = descr;
         return 0;
     }
-    // TODO: Will have to take care of the retry-with-string logic? :(
-    PyArray_Descr *new_descr = PyArray_PromoteTypes(*out_descr, descr);
+    PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
     if (new_descr == NULL) {
         PyErr_Clear();
         *flags |= PROMOTION_FAILED;
