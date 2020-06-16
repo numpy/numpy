@@ -39,10 +39,26 @@ example,
 
 .. code-block:: python
 
-  np.array(x**2 for x in range(10))
+    >>> np.array(x**2 for x in range(10))
+    array(<generator object <genexpr> at 0x10c004cd0>, dtype=object)
 
-is valid NumPy code which will create an object array. The types will
-complain about this usage however.
+is valid NumPy code which will create a 0-dimensional object
+array. Type checkers will complain about the above example when using
+the NumPy types however. If you really intended to do the above, then
+you can either use a ``# type: ignore`` comment:
+
+.. code-block:: python
+
+    >>> np.array(x**2 for x in range(10))  # type: ignore
+
+or explicitly type the array like object as ``Any``:
+
+.. code-block:: python
+
+    >>> from typing import Any
+    >>> array_like: Any = (x**2 for x in range(10))
+    >>> np.array(array_like)
+    array(<generator object <genexpr> at 0x1192741d0>, dtype=object)
 
 ndarray
 ~~~~~~~
@@ -52,8 +68,8 @@ the following code is valid:
 
 .. code-block:: python
 
-  x = np.array([1, 2])
-  x.dtype = np.bool_
+    x = np.array([1, 2])
+    x.dtype = np.bool_
 
 This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should insted use the `numpy.ndarray.view`
