@@ -456,9 +456,9 @@ find_scalar_descriptor(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 {
-    static PyArrayObject_fields arr_fields = {
+    PyArrayObject_fields arr_fields = {
             .ob_base.ob_refcnt = 1,
-            .ob_base.ob_type = &PyArrayDescr_Type,
+            .ob_base.ob_type = NULL,
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
         };
 
@@ -468,6 +468,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
          * type information. Any other dtype discards the type information.
          * TODO: For a Categorical[object] this path may be necessary?
          */
+        arr_fields.descr = descr;
         return descr->f->setitem(value, item, &arr_fields);
     }
 
@@ -505,8 +506,12 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         Py_DECREF(tmp_descr);
         return -1;
     }
+    if (PyDataType_REFCHK(tmp_descr)) {
+        /* We could probably use move-references above */
+        PyArray_Item_INCREF(data, tmp_descr);
+    }
 
-    int res;
+    int res = 0;
     int needs_api = 0;
     PyArray_StridedUnaryOp *stransfer;
     NpyAuxData *transferdata;
@@ -518,13 +523,10 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     }
     stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata);
     NPY_AUXDATA_FREE(transferdata);
-    PyObject_Free(data);
-    Py_DECREF(tmp_descr);
+
     if (needs_api && PyErr_Occurred()) {
         res = -1;
-        goto finish;
     }
-    res = 0;
 
   finish:
     if (PyDataType_REFCHK(tmp_descr)) {
