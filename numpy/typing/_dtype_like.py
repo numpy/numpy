@@ -33,16 +33,14 @@ DtypeLike = Union[
     # TODO: add a protocol for anything with a dtype attribute
     # character codes, type strings or comma-separated fields, e.g., 'float64'
     str,
-    # (flexible_dtype, itemsize)
-    Tuple[_DtypeLikeNested, int],
     # (fixed_dtype, shape)
-    Tuple[_DtypeLikeNested, _ShapeLike],
+    Tuple[_DtypeLikeNested, Sequence[int]],  # No integers allowed
     # [(field_name, field_dtype, field_shape), ...]
     #
     # The type here is quite broad because NumPy accepts quite a wide
     # range of inputs inside the list; see the tests for some
     # examples.
-    List[_DtypeLikeNested],
+    List[Any],
     # {'names': ..., 'formats': ..., 'offsets': ..., 'titles': ...,
     #  'itemsize': ...}
     _DtypeDict,

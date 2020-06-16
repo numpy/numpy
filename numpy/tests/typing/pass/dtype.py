@@ -5,10 +5,7 @@ np.dtype(int)
 np.dtype("int")
 np.dtype(None)
 
-np.dtype((int, 1))
 np.dtype((int, (1,)))
-np.dtype([(int, 1)])
-np.dtype([(int, (1,))])
 
 np.dtype({"names": ["a", "b"], "formats": [int, float]})
 np.dtype(
