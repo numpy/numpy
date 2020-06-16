@@ -737,6 +737,7 @@ class ufunc:
     @property
     def at(self) -> Any: ...
 
+abs: ufunc
 absolute: ufunc
 add: ufunc
 arccos: ufunc
