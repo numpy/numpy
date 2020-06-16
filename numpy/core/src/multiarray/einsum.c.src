@@ -74,13 +74,6 @@ static void prefetch(const double *ptr, size_t offset)
 #endif
 }
 
-#ifdef EINSUM_USE_NEON_64
-static float64x2_t npyv_combine_f64(float64x2_t VEC)
-{
-    return vcombine_f64(vget_high_f64(VEC), vget_low_f64(VEC));
-}
-#endif
-
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_EINSUM_DBG_TRACING 0
 
@@ -309,6 +302,8 @@ static void
     __m128 a, b;
 #elif EINSUM_USE_SSE2 && @float64@
     __m128d a, b;
+#elif EINSUM_USE_NEON_64 && @float64@
+    float64x2_t a, b;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
@@ -375,6 +370,25 @@ finish_after_unrolled_loop:
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
+#elif EINSUM_USE_NEON_64 && @float64@
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            a = vmulq_f64(vld1q_f64(data0+@i@), vld1q_f64(data1+@i@));
+            b = vaddq_f64(a, vld1q_f64(data_out+@i@));
+            vst1q_f64(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 8;
+            data1 += 8;
+            data_out += 8;
+        }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
@@ -808,7 +822,7 @@ finish_after_unrolled_loop:
     }
 
     /* Add the two SSE2 values and put in accum */
-    a = npyv_combine_f64(accum_sse);
+    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
     accum_sse = vaddq_f64(a, accum_sse);
     vst1_f64(&accum, vget_low_f64(accum_sse));
     /* Finish off the loop */
@@ -1380,7 +1394,7 @@ finish_after_unrolled_loop:
     }
 
     /* Add the two SSE2 values and put in accum */
-    a = npyv_combine_f64(accum_sse);
+    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
     accum_sse = vaddq_f64(a, accum_sse);
     vst1_f64(&accum, vget_low_f64(accum_sse));
 

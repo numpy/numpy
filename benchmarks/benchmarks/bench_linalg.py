@@ -13,9 +13,8 @@ class Eindot(Benchmark):
         self.c = np.arange(600)
         self.d = np.arange(400)
 
-        self.a3 = np.arange(480000., dtype='f8').reshape(60, 80, 100)
+        self.a3 = np.arange(480000.).reshape(60, 80, 100)
         self.b3 = np.arange(192000.).reshape(80, 60, 40)
-        self.c4 = np.arange(480000, dtype='f8')
 
     def time_dot_a_b(self):
         np.dot(self.a, self.b)
@@ -43,18 +42,6 @@ class Eindot(Benchmark):
 
     def time_einsum_ijk_jil_kl(self):
         np.einsum('ijk,jil->kl', self.a3, self.b3)
-    
-    # trigger sum_of_products_stride0_contig_outcontig_two
-    def time_einsum_mul(self):
-        np.einsum("i,->i", self.c4, 300, optimize=True)
-    
-    # trigger contig_contig_outstride0_two
-    def time_einsum_contig_contig(self):
-        np.einsum("ji,i->", self.b, self.c, optimize=True)
-
-    # trigger sum_of_products_contig_outstride0_one
-    def time_einsum_contig_outstride0(self):
-        np.einsum("i->", self.c4, optimize=True)
 
     def time_inner_trans_a_a(self):
         np.inner(self.a, self.a)
@@ -125,11 +112,14 @@ class Einsum(Benchmark):
     def setup(self, dtype):
         self.a = np.arange(2900, dtype=dtype)
         self.b = np.arange(3000, dtype=dtype)
+        self.b1 = np.arange(240000, dtype=dtype).reshape(400, 600)
         self.c = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
         self.c1 = np.arange(1200, dtype=dtype).reshape(30, 40)
+        self.c2 = np.arange(480000, dtype=dtype)
+        self.c3 = np.arange(600, dtype=dtype)
         self.d = np.arange(10000, dtype=dtype).reshape(10,100,10)
 
-    #outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
+    # outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):
         np.einsum("i,j", self.a, self.b, optimize=True)
 
@@ -144,3 +134,15 @@ class Einsum(Benchmark):
     # sum and multiply:trigger sum_of_products_stride0_contig_outstride0_two
     def time_einsum_sum_mul2(self, dtype):
         np.einsum("i...,->", self.d, 300, optimize=True)
+    
+    # scalar mul: trigger sum_of_products_stride0_contig_outcontig_two
+    def time_einsum_mul(self):
+        np.einsum("i,->i", self.c2, 300, optimize=True)
+    
+    # trigger contig_contig_outstride0_two
+    def time_einsum_contig_contig(self):
+        np.einsum("ji,i->", self.b1, self.c3, optimize=True)
+
+    # trigger sum_of_products_contig_outstride0_one
+    def time_einsum_contig_outstride0(self):
+        np.einsum("i->", self.c2, optimize=True)
