@@ -291,6 +291,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 &PyArray_Type, dtype, ndim, dims, NULL, NULL,
                 PyArray_FLAGS(dest) & NPY_ARRAY_F_CONTIGUOUS, NULL);
         if (view == NULL) {
+            // TODO: See if we can trigger this path in a test.
+            npy_free_coercion_cache(cache);
             return -1;
         }
     }
