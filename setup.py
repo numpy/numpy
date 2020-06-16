@@ -189,7 +189,6 @@ def check_submodules():
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
             raise ValueError('Submodule not clean: {}'.format(line))
-            
 
 
 class concat_license_files():
@@ -235,19 +234,32 @@ def get_build_overrides():
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
 
-    def _is_using_gcc(obj):
-        is_gcc = False
+    def _is_using_old_gcc(obj):
+        is_old_gcc = False
         if obj.compiler.compiler_type == 'unix':
             cc = sysconfig.get_config_var("CC")
             if not cc:
                 cc = ""
             compiler_name = os.path.basename(cc)
-            is_gcc = "gcc" in compiler_name
-        return is_gcc
+            if "gcc" in compiler_name:
+                out = subprocess.run(['gcc', '-dM', '-E', '-'],
+                                     stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                    )
+                for line in out.stdout.split(b'\n'):
+                    if b'__STDC_VERSION__' in line:
+                        # line is something like
+                        # #define __STDC_VERSION__ 201710L
+                        val = line.split(b' ')[-1]
+                        if val < b'199901L':
+                            # before c99, so we must add it ourselves
+                            is_old_gcc = True
+        return is_old_gcc
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
-            if _is_using_gcc(self):
+            if _is_using_old_gcc(self):
                 args = build_info.get('extra_compiler_args') or []
                 args.append('-std=c99')
                 build_info['extra_compiler_args'] = args
@@ -255,7 +267,7 @@ def get_build_overrides():
 
     class new_build_ext(build_ext):
         def build_extension(self, ext):
-            if _is_using_gcc(self):
+            if _is_using_old_gcc(self):
                 if '-std=c99' not in ext.extra_compile_args:
                     ext.extra_compile_args.append('-std=c99')
             build_ext.build_extension(self, ext)
