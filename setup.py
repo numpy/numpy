@@ -237,24 +237,16 @@ def get_build_overrides():
     def _is_using_old_gcc(obj):
         is_old_gcc = False
         if obj.compiler.compiler_type == 'unix':
-            cc = sysconfig.get_config_var("CC")
-            if not cc:
-                cc = ""
-            compiler_name = os.path.basename(cc)
-            if "gcc" in compiler_name:
-                out = subprocess.run(['gcc', '-dM', '-E', '-'],
-                                     stdin=subprocess.DEVNULL,
+            cc = obj.compiler.compiler[0]
+            if cc == "gcc":
+                out = subprocess.run([cc, '-dumpversion'],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
                                     )
-                for line in out.stdout.split(b'\n'):
-                    if b'__STDC_VERSION__' in line:
-                        # line is something like
-                        # #define __STDC_VERSION__ 201710L
-                        val = line.split(b' ')[-1]
-                        if val < b'199901L':
-                            # before c99, so we must add it ourselves
-                            is_old_gcc = True
+                ver = float(out.stdout)
+                if ver < 6:
+                    # perhaps 5 is OK?
+                    is_old_gcc = True
         return is_old_gcc
 
     class new_build_clib(build_clib):
