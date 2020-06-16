@@ -1678,14 +1678,14 @@ _convert_from_str(PyObject *obj, int align)
         }
 
         /* Check for a deprecated Numeric-style typecode */
-        char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
-                           "Object0", "String0", "Timedelta64",
-                           "Unicode0", "UInt", "Void0"};
+        /* `Uint` has deliberately weird uppercasing */
+        char *dep_tps[] = {"Bytes", "Datetime64", "Str", "Uint"};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
         for (int i = 0; i < ndep_tps; ++i) {
             char *dep_tp = dep_tps[i];
 
             if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
+                /* Deprecated 2020-06-09, NumPy 1.20 */
                 if (DEPRECATE("Numeric-style type codes are "
                               "deprecated and will result in "
                               "an error in the future.") < 0) {

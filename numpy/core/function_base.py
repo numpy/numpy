@@ -52,8 +52,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
     dtype : dtype, optional
-        The type of the output array.  If `dtype` is not given, infer the data
-        type from the other input arguments.
+        The type of the output array.  If `dtype` is not given, the data type
+        is inferred from `start` and `stop`. The inferred dtype will never be
+        an integer; `float` is chosen even if the arguments would produce an
+        array of integers.
 
         .. versionadded:: 1.9.0
 
@@ -202,8 +204,10 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
         Default is 10.0.
     dtype : dtype
-        The type of the output array.  If `dtype` is not given, infer the data
-        type from the other input arguments.
+        The type of the output array.  If `dtype` is not given, the data type
+        is inferred from `start` and `stop`. The inferred type will never be
+        an integer; `float` is chosen even if the arguments would produce an
+        array of integers.
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
@@ -297,8 +301,10 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         If true, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
     dtype : dtype
-        The type of the output array.  If `dtype` is not given, infer the data
-        type from the other input arguments.
+        The type of the output array.  If `dtype` is not given, the data type
+        is inferred from `start` and `stop`. The inferred dtype will never be
+        an integer; `float` is chosen even if the arguments would produce an
+        array of integers.
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
@@ -408,8 +414,18 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     log_start = _nx.log10(start)
     log_stop = _nx.log10(stop)
-    result = out_sign * logspace(log_start, log_stop, num=num,
-                                 endpoint=endpoint, base=10.0, dtype=dtype)
+    result = logspace(log_start, log_stop, num=num,
+                      endpoint=endpoint, base=10.0, dtype=dtype)
+
+    # Make sure the endpoints match the start and stop arguments. This is
+    # necessary because np.exp(np.log(x)) is not necessarily equal to x.
+    if num > 0:
+        result[0] = start
+        if num > 1 and endpoint:
+            result[-1] = stop
+
+    result = out_sign * result
+
     if axis != 0:
         result = _nx.moveaxis(result, 0, axis)
 

@@ -11,40 +11,19 @@ and sometimes other mappings too.
 .. data:: sctypeDict
     Similar to `allTypes`, but maps a broader set of aliases to their types.
 
-.. data:: sctypeNA
-    NumArray-compatible names for the scalar types. Contains not only
-    ``name: type`` mappings, but ``char: name`` mappings too.
-
-    .. deprecated:: 1.16
-
 .. data:: sctypes
     A dictionary keyed by a "type group" string, providing a list of types
     under that group.
 
 """
-import warnings
 
 from numpy.compat import unicode
-from numpy._globals import VisibleDeprecationWarning
-from numpy.core._string_helpers import english_lower, english_capitalize
+from numpy.core._string_helpers import english_lower
 from numpy.core.multiarray import typeinfo, dtype
 from numpy.core._dtype import _kind_name
 
 
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
-class TypeNADict(dict):
-    def __getitem__(self, key):
-        # 2018-06-24, 1.16
-        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
-                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
-        return dict.__getitem__(self, key)
-    def get(self, key, default=None):
-        # 2018-06-24, 1.16
-        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
-                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
-        return dict.get(self, key, default)
-
-sctypeNA = TypeNADict()  # Contails all leaf-node types -> numarray type equivalences
 allTypes = {}            # Collect the types we will add to the module
 
 
@@ -127,27 +106,24 @@ def _add_aliases():
         if name in ('longdouble', 'clongdouble') and myname in allTypes:
             continue
 
-        base_capitalize = english_capitalize(base)
-        if base == 'complex':
-            na_name = '%s%d' % (base_capitalize, bit//2)
-        elif base == 'bool':
-            na_name = base_capitalize
-        else:
-            na_name = "%s%d" % (base_capitalize, bit)
-
         allTypes[myname] = info.type
 
         # add mapping for both the bit name and the numarray name
         sctypeDict[myname] = info.type
-        sctypeDict[na_name] = info.type
 
         # add forward, reverse, and string mapping to numarray
-        sctypeNA[na_name] = info.type
-        sctypeNA[info.type] = na_name
-        sctypeNA[info.char] = na_name
-
         sctypeDict[char] = info.type
-        sctypeNA[char] = na_name
+
+    # Add deprecated numeric-style type aliases manually, at some point
+    # we may want to deprecate the lower case "bytes0" version as well.
+    for name in ["Bytes0", "Datetime64", "Str0", "Uint32", "Uint64"]:
+        if english_lower(name) not in allTypes:
+            # Only one of Uint32 or Uint64, aliases of `np.uintp`, was (and is) defined, note that this
+            # is not UInt32/UInt64 (capital i), which is removed.
+            continue
+        allTypes[name] = allTypes[english_lower(name)]
+        sctypeDict[name] = sctypeDict[english_lower(name)]
+
 _add_aliases()
 
 def _add_integer_aliases():
@@ -157,20 +133,15 @@ def _add_integer_aliases():
         u_info = _concrete_typeinfo[u_ctype]
         bits = i_info.bits  # same for both
 
-        for info, charname, intname, Intname in [
-                (i_info,'i%d' % (bits//8,), 'int%d' % bits, 'Int%d' % bits),
-                (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)]:
+        for info, charname, intname in [
+                (i_info,'i%d' % (bits//8,), 'int%d' % bits),
+                (u_info,'u%d' % (bits//8,), 'uint%d' % bits)]:
             if bits not in seen_bits:
                 # sometimes two different types have the same number of bits
                 # if so, the one iterated over first takes precedence
                 allTypes[intname] = info.type
                 sctypeDict[intname] = info.type
-                sctypeDict[Intname] = info.type
                 sctypeDict[charname] = info.type
-                sctypeNA[Intname] = info.type
-                sctypeNA[charname] = info.type
-            sctypeNA[info.type] = Intname
-            sctypeNA[info.char] = Intname
 
         seen_bits.add(bits)
 

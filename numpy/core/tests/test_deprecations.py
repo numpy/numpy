@@ -313,19 +313,14 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
 
 class TestNumericStyleTypecodes(_DeprecationTestCase):
     """
-    Deprecate the old numeric-style dtypes, which are especially
-    confusing for complex types, e.g. Complex32 -> complex64. When the
-    deprecation cycle is complete, the check for the strings should be
-    removed from PyArray_DescrConverter in descriptor.c, and the
-    deprecated keys should not be added as capitalized aliases in
-    _add_aliases in numerictypes.py.
+    Most numeric style typecodes were previously deprecated (and removed)
+    in 1.20. This also deprecates the remaining ones.
     """
+    # 2020-06-09, NumPy 1.20
     def test_all_dtypes(self):
-        deprecated_types = [
-            'Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
-            'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
-            'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
-            ]
+        deprecated_types = ['Bytes0', 'Datetime64', 'Str0']
+        # Depending on intp size, either Uint32 or Uint64 is defined:
+        deprecated_types.append(f"U{np.dtype(np.intp).name}")
         for dt in deprecated_types:
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
@@ -436,14 +431,6 @@ class TestGeneratorSum(_DeprecationTestCase):
     # 2018-02-25, 1.15.0
     def test_generator_sum(self):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
-
-
-class TestSctypeNA(_VisibleDeprecationTestCase):
-    # 2018-06-24, 1.16
-    def test_sctypeNA(self):
-        self.assert_deprecated(lambda: np.sctypeNA['?'])
-        self.assert_deprecated(lambda: np.typeNA['?'])
-        self.assert_deprecated(lambda: np.typeNA.get('?'))
 
 
 class TestPositiveOnNonNumerical(_DeprecationTestCase):

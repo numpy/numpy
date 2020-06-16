@@ -1,0 +1,10 @@
+Numeric-style type names have been removed from type dictionaries
+-----------------------------------------------------------------
+
+To stay in sync with the deprecation for ``np.dtype("Complex64")``
+and other numeric-style (capital case) types.  These were removed
+from ``np.sctypeDict`` and ``np.typeDict``.  You should use
+the lower case versions instead.  Note that ``"Complex64"``
+corresponds to ``"complex128"`` and ``"Complex32"`` corresponds
+to ``"complex64"``.  The numpy style (new) versions, denote the full
+size and not the size of the real/imaginary part.
