@@ -38,8 +38,10 @@ DtypeLike = Union[
     _SupportsDtype,
     # character codes, type strings or comma-separated fields, e.g., 'float64'
     str,
+    # (flexible_dtype, itemsize)
+    Tuple[_DtypeLikeNested, int],
     # (fixed_dtype, shape)
-    Tuple[_DtypeLikeNested, Sequence[int]],  # No integers allowed
+    Tuple[_DtypeLikeNested, _ShapeLike],  # No integers allowed
     # [(field_name, field_dtype, field_shape), ...]
     #
     # The type here is quite broad because NumPy accepts quite a wide
