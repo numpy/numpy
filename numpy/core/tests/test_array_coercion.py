@@ -92,6 +92,9 @@ def scalar_instances(times=True, extended_precision=True):
     yield np.uint32(2)
     yield np.uint64(2)
 
+    # Rational:
+    yield rational(1, 2)
+
     # Cannot create a structured void scalar directly:
     structured = np.array([(1, 3)], "i,i")[0]
     assert isinstance(structured, np.void)
@@ -186,6 +189,18 @@ class TestScalarDiscovery:
         arr = np.array(["string"], dtype="c")
         assert arr.shape == (1, 6)
         assert arr.dtype.char == "c"
+
+    def test_char_special_case_deep(self):
+        # Check that the character special case errors correctly if the
+        # array is too deep:
+        nested = ["string"]  # 2 dimensions (due to string being sequence)
+        for i in range(np.MAXDIMS - 2):
+            nested = [nested]
+
+        arr = np.array(nested, dtype='c')
+        assert arr.shape == (1,) * (np.MAXDIMS - 1) + (6,)
+        with pytest.raises(ValueError):
+            np.array([nested], dtype="c")
 
     def test_unknown_object(self):
         arr = np.array(object())
@@ -371,6 +386,17 @@ class TestNested:
         assert arr.dtype == np.dtype("O")
         assert arr.shape == (1,) * np.MAXDIMS
         assert arr.item() is initial
+
+    def test_pathological_self_containing(self):
+        # Test that this also works for two nested sequences
+        l = []
+        l.append(l)
+        arr = np.array([l, l, l], dtype=object)
+        assert arr.shape == (3,) + (1,) * (np.MAXDIMS - 1)
+
+        # Also check a ragged case:
+        arr = np.array([l, [None], l], dtype=object)
+        assert arr.shape == (3, 1)
 
     @pytest.mark.xfail(
             reason="For arrays and memoryview, this used to not complain "
