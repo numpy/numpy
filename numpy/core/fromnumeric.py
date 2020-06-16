@@ -649,6 +649,10 @@ def transpose(a, axes=None):
     >>> np.transpose(x, (1, 0, 2)).shape
     (2, 1, 3)
 
+    >>> x = np.ones((2, 3, 4, 5))
+    >>> np.transpose(x).shape
+    (5, 4, 3, 2)
+
     """
     return _wrapfunc(a, 'transpose', axes)
 
