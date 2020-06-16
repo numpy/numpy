@@ -5,6 +5,7 @@ are tested (sometimes indirectly) elsewhere.
 """
 
 import pytest
+from pytest import param
 
 from itertools import product
 
@@ -25,7 +26,7 @@ def arraylikes():
     def ndarray(a):
         return a
 
-    yield ndarray
+    yield param(ndarray, id="ndarray")
 
     # subclass:
     class MyArr(np.ndarray):
@@ -44,10 +45,10 @@ def arraylikes():
         def __array__(self, dtype=None):
             return self.a
 
-    yield ArrayDunder
+    yield param(ArrayDunder, id="__array__")
 
     # memory-view
-    yield memoryview
+    yield param(memoryview, id="memoryview")
 
     # Array-interface
     class ArrayInterface:
@@ -55,7 +56,7 @@ def arraylikes():
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
 
-    yield ArrayInterface
+    yield param(ArrayInterface, id="__array_interface__")
 
     # Array-Struct
     class ArrayStruct:
@@ -63,58 +64,63 @@ def arraylikes():
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__
 
-    yield ArrayStruct
+    yield param(ArrayStruct, id="__array_struct__")
 
 
 def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     # Hard-coded list of scalar instances.
     # Floats:
-    yield np.sqrt(np.float16(5))
-    yield np.sqrt(np.float32(5))
-    yield np.sqrt(np.float64(5))
+    yield param(np.sqrt(np.float16(5)), id="float16")
+    yield param(np.sqrt(np.float32(5)), id="float32")
+    yield param(np.sqrt(np.float64(5)), id="float64")
     if extended_precision:
-        yield np.sqrt(np.longdouble(5))
+        yield param(np.sqrt(np.longdouble(5)), id="longdouble")
 
     # Complex:
-    yield np.sqrt(np.complex64(2+3j))
-    yield np.sqrt(np.complex128(2+3j))
+    yield param(np.sqrt(np.complex64(2+3j)), id="complex64")
+    yield param(np.sqrt(np.complex128(2+3j)), id="complex128")
     if extended_precision:
-        yield np.sqrt(np.longcomplex(2+3j))
+        yield param(np.sqrt(np.longcomplex(2+3j)), id="clongdouble")
+
+    # Bool:
+    # XFAIL: Bool should be added, but has some bad properties when it
+    # comes to strings, see also gh-9875
+    # yield param(np.bool_(0), id="bool")
 
     # Integers:
-    yield np.int8(2)
-    yield np.int16(2)
-    yield np.int32(2)
-    yield np.int64(2)
+    yield param(np.int8(2), id="int8")
+    yield param(np.int16(2), id="int16")
+    yield param(np.int32(2), id="int32")
+    yield param(np.int64(2), id="int64")
 
-    yield np.uint8(2)
-    yield np.uint16(2)
-    yield np.uint32(2)
-    yield np.uint64(2)
+    yield param(np.uint8(2), id="uint8")
+    yield param(np.uint16(2), id="uint16")
+    yield param(np.uint32(2), id="uint32")
+    yield param(np.uint64(2), id="uint64")
 
     # Rational:
     if user_dtype:
-        yield rational(1, 2)
+        yield param(rational(1, 2), id="rational")
 
     # Cannot create a structured void scalar directly:
     structured = np.array([(1, 3)], "i,i")[0]
     assert isinstance(structured, np.void)
     assert structured.dtype == np.dtype("i,i")
-    yield structured
+    yield param(structured, id="structured")
 
     if times:
         # Datetimes and timedelta
-        yield np.timedelta64(2)  # generic units
-        yield np.timedelta64(23, "s")
-        yield np.timedelta64("NaT", "s")
+        yield param(np.timedelta64(2), id="timedelta64[generic]")
+        yield param(np.timedelta64(23, "s"), id="timedelta64[s]")
+        yield param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)")
 
-        yield np.datetime64("NaT")  # generic units
-        yield np.datetime64("2020-06-07 12:43", "ms")
+        yield param(np.datetime64("NaT"), id="datetime64[generic](NaT)")
+        yield param(np.datetime64("2020-06-07 12:43", "ms"), id="datetime64[ms]")
 
-        # Strings and unstructured void:
-        yield np.bytes_(b"1234")
-        yield np.unicode_("String")
-        yield np.void(b"4321")
+    # Strings and unstructured void:
+    yield param(np.bytes_(b"1234"), id="bytes")
+    yield param(np.unicode_("2345"), id="unicode")
+    yield param(np.void(b"4321"), id="unstructured_void")
 
 
 def is_parametric_dtype(dtype):
@@ -226,6 +232,7 @@ class TestScalarDiscovery:
     @pytest.mark.xfail(reason="Coercion to string is not symmetric")
     def test_scalar_promotion(self):
         for sc1, sc2 in product(scalar_instances(), scalar_instances()):
+            sc1, sc2 = sc1.values[0], sc2.values[0]
             # test all combinations:
             arr = np.array([sc1, sc2])
             assert arr.shape == (2,)
@@ -287,6 +294,8 @@ class TestScalarDiscovery:
         #        complex256 will use float(float128). Rational fails currently.
         for scalar in scalar_instances(
                 times=False, extended_precision=False, user_dtype=False):
+            scalar = scalar.values[0]
+
             if dtype.type == np.void:
                if scalar.dtype.fields is not None and dtype.fields is None:
                     # Here, coercion to "V6" works, but the cast fails.
