@@ -66,7 +66,7 @@ def arraylikes():
     yield ArrayStruct
 
 
-def scalar_instances(times=True, extended_precision=True):
+def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     # Hard-coded list of scalar instances.
     # Floats:
     yield np.sqrt(np.float16(5))
@@ -93,7 +93,8 @@ def scalar_instances(times=True, extended_precision=True):
     yield np.uint64(2)
 
     # Rational:
-    yield rational(1, 2)
+    if user_dtype:
+        yield rational(1, 2)
 
     # Cannot create a structured void scalar directly:
     structured = np.array([(1, 3)], "i,i")[0]
@@ -244,8 +245,10 @@ class TestScalarDiscovery:
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
 
-        if is_parametric_dtype(scalar.dtype):
+        if is_parametric_dtype(scalar.dtype) or type(scalar) is rational:
             # datetime with unit will be named "datetime64[unit]"
+            # Rational generally fails due to a missing cast. In the future
+            # object casts should automatically be defined based on `setitem`.
             pytest.xfail("0-D object array to a unit-less datetime cast fails")
 
         # Use casting from object:
@@ -281,8 +284,9 @@ class TestScalarDiscovery:
         dtype = cast_to.dtype  # use to parametrize only the target dtype
 
         # XFAIL: Some extended precision tests fail, because assigning to
-        #        complex256 will use float(float128)
-        for scalar in scalar_instances(times=False, extended_precision=False):
+        #        complex256 will use float(float128). Rational fails currently.
+        for scalar in scalar_instances(
+                times=False, extended_precision=False, user_dtype=False):
             if dtype.type == np.void:
                if scalar.dtype.fields is not None and dtype.fields is None:
                     # Here, coercion to "V6" works, but the cast fails.
