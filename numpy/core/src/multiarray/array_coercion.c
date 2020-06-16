@@ -4,6 +4,8 @@
 
 #include "Python.h"
 
+#include "numpy/npy_3kcompat.h"
+
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
 
@@ -450,10 +452,10 @@ NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 {
     PyArrayObject_fields arr_fields = {
-            .ob_base.ob_refcnt = 1,
-            .ob_base.ob_type = &PyArray_Type,
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
         };
+    Py_SET_TYPE(&arr_fields, &PyArray_Type);
+    Py_REFCNT(&arr_fields) = 1;
 
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*
