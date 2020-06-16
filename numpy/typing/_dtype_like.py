@@ -22,6 +22,10 @@ class _DtypeDict(_DtypeDictBase, total=False):
     itemsize: int
     aligned: bool
 
+# A protocol for anything with the dtype attribute
+class _SupportsDtype:
+    dtype: _DtypeLikeNested
+
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
 DtypeLike = Union[
@@ -30,7 +34,8 @@ DtypeLike = Union[
     None,
     # array-scalar types and generic types
     type,  # TODO: enumerate these when we add type hints for numpy scalars
-    # TODO: add a protocol for anything with a dtype attribute
+    # anything with a dtype attribute
+    _SupportsDtype,
     # character codes, type strings or comma-separated fields, e.g., 'float64'
     str,
     # (fixed_dtype, shape)

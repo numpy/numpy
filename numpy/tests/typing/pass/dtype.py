@@ -21,3 +21,10 @@ np.dtype(
 
 np.dtype({"field1": (float, 1), "field2": (int, 3)})
 np.dtype((np.float_, float))
+
+
+class Test:
+    dtype = float
+
+
+np.dtype(Test)
