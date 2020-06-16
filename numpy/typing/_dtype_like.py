@@ -41,7 +41,7 @@ DtypeLike = Union[
     # (flexible_dtype, itemsize)
     Tuple[_DtypeLikeNested, int],
     # (fixed_dtype, shape)
-    Tuple[_DtypeLikeNested, _ShapeLike],  # No integers allowed
+    Tuple[_DtypeLikeNested, _ShapeLike],
     # [(field_name, field_dtype, field_shape), ...]
     #
     # The type here is quite broad because NumPy accepts quite a wide
