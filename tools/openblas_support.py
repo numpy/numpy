@@ -35,7 +35,22 @@ sha256_vals = {
 "openblas64_-v0.3.7-527-g79fd006c-manylinux2014_s390x.tar.gz": "9fddbebf5301518fc4a5d2022a61886544a0566868c8c014359a1ee6b17f2814",
 "openblas-v0.3.7-527-g79fd006c-manylinux1_i686.tar.gz": "24fb92684ec4676185fff5c9340f50c3db6075948bcef760e9c715a8974e4680",
 "openblas-v0.3.7-527-g79fd006c-manylinux1_x86_64.tar.gz": "ebb8236b57a1b4075fd5cdc3e9246d2900c133a42482e5e714d1e67af5d00e62",
+"openblas-v0.3.10-win_amd64-gcc_7_1_0.zip": "2ffd656ed441070df2f7a7acb9e610c940701f7e560cc3fb827f4fa4750eeb37",
+"openblas-v0.3.10-win32-gcc_7_1_0.zip": "e9212c5fc9d8620a1d091c2dc90d6f8b1a7943f636b2c482440d9b6f5be49ae4",
+"openblas-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz": "c6940b5133e687ae7a4f9c7c794f6a6d92b619cf41e591e5db07aab5da118199",
+"openblas-v0.3.10-manylinux2014_aarch64.tar.gz": "c9bf6cb7cd6bafc1252fc40ca368112caef902536a31660346308714f4ab7504",
+"openblas-v0.3.10-manylinux2010_x86_64.tar.gz": "5e471d171078618b718489ef7e6af1e250ceb5c50d9f9c9ba3cb2d018004fa45",
+"openblas-v0.3.10-manylinux2010_i686.tar.gz": "39626cb4d42b2e6187167712c58a748f13e3bd1eaae00aa48d8d1797c07a85c0",
+"openblas-v0.3.10-manylinux2014_ppc64le.tar.gz": "ef1a4f27b37a7fcd15bbe0457ceb395b726753c6b43884fce9ad52d18b8b4d27",
+"openblas-v0.3.10-manylinux2014_s390x.tar.gz": "498198057b0b479aa809916d6882f896925957ec399f469e4520d009bbfc258d",
+"openblas64_-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz": "91189592d0d801807843863a7249bf4f61621a2d056680d83723f8bb4019242b",
+"openblas64_-v0.3.10-manylinux2014_s390x.tar.gz": "e0347dd6f3f3a27d2f5e76d382e8a4a68e2e92f5f6a10e54ef65c7b14b44d0e8",
+"openblas64_-v0.3.10-manylinux2014_ppc64le.tar.gz": "999e336c81800c7e5ff22628fc1fe3963be6e64f89744f98589b649f4c9a5199",
+"openblas64_-v0.3.10-manylinux2010_x86_64.tar.gz": "2291851d113b8310aae722149ea3dbda3dfe31fc08ec3698fad91923ffdd1b05",
+"openblas64_-v0.3.10-manylinux2014_aarch64.tar.gz": "da9ce72d8c920c633446864469f440dee347b53f7b72437148cfb0aa54b00a18",
+"openblas64_-v0.3.10-win_amd64-gcc_7_1_0.zip": "662f1578d685a9a21da53230e9077c001205100eaa14ea56533c61dfbd0fe14b",
 }
+
 
 
 IS_32BIT = sys.maxsize < 2**32
@@ -244,9 +259,10 @@ def test_setup(arches):
             if arch not in ('i686',):
                 yield arch, '64_', False
             if arch in ('windows',):
-                yield arch, None, False
+                yield arch, None, True
                 
 
+    
     errs = []
     for arch, ilp64, is_32bit in items():
         if arch == '':
