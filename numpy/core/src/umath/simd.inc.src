@@ -3272,7 +3272,7 @@ AVX512F_log_DOUBLE(npy_double * op,
         /* call glibc when x on [1.0 - 0x1p-4, 1.0 + 0x1.09p-4] */
         __mmask8 m1 = _mm512_cmp_pd_mask(x, mTo_glibc_max, _CMP_LT_OQ);
         __mmask8 m2 = _mm512_cmp_pd_mask(x, mTo_glibc_min, _CMP_GT_OQ);
-        glibc_mask =  _kand_mask8(m1,m2);
+        glibc_mask =  m1 & m2;
 
         if (glibc_mask != 0xFF) {
             zero_mask = _mm512_cmp_pd_mask(x, zeros_d, _CMP_EQ_OQ);
@@ -3280,9 +3280,8 @@ AVX512F_log_DOUBLE(npy_double * op,
             negx_mask = _mm512_cmp_pd_mask(x, zeros_d, _CMP_LT_OQ);
             nan_mask = _mm512_cmp_pd_mask(x, x, _CMP_NEQ_UQ);
 
-            divide_by_zero_mask = _kor_mask8(divide_by_zero_mask,
-                                        _kand_mask8(zero_mask, load_mask));
-            invalid_mask = _kor_mask8(invalid_mask, negx_mask);
+            divide_by_zero_mask = divide_by_zero_mask | (zero_mask & load_mask);
+            invalid_mask = invalid_mask | negx_mask;
 
 
             x = avx512_set_masked_lanes_pd(x, zeros_d, negx_mask);
@@ -3294,7 +3293,7 @@ AVX512F_log_DOUBLE(npy_double * op,
                                 _mm512_set1_epi64(0xfff0000000000000));
             denormal_mask = _mm512_cmp_epi64_mask(top12, _mm512_set1_epi64(0),
                                 _CMP_EQ_OQ);
-            denormal_mask = _kandn_mask8(zero_mask, denormal_mask);
+            denormal_mask = (~zero_mask) & denormal_mask;
             ix = (__m512i)_mm512_mask_mul_pd(x, denormal_mask,
                                     x, _mm512_set1_pd(0x1p52));
             ix = _mm512_mask_sub_epi64(ix, denormal_mask,
@@ -3311,7 +3310,8 @@ AVX512F_log_DOUBLE(npy_double * op,
             __m512d z = (__m512d)(_mm512_sub_epi64(ix, _mm512_and_epi64(tmp,
                             _mm512_set1_epi64(0xfff0000000000000))));
             /* c = i/64 + 1 */
-            __m512d c = _mm512_fmadd_pd(_mm512_cvtepi64_pd(i), mInv64, ones_d);
+            __m256i i_32 = _mm512_cvtepi64_epi32(i);
+            __m512d c = _mm512_fmadd_pd(_mm512_cvtepi32_pd(i_32), mInv64, ones_d);
 
             /* u = 2 * (z - c) / (z + c) */
             __m512d u = _mm512_div_pd(_mm512_sub_pd(z, c), _mm512_add_pd(z,c));
@@ -3340,7 +3340,8 @@ AVX512F_log_DOUBLE(npy_double * op,
              *          k * ln2_lo + c_lo +
              *          log(z/c)
              */
-            __m512d k = _mm512_cvtepi64_pd(ik);
+            __m256i ik_32 = _mm512_cvtepi64_epi32(ik);
+            __m512d k = _mm512_cvtepi32_pd(ik_32);
             __m512d tt = _mm512_fmadd_pd(k, mLN2HI, c_hi);
             __m512d tt2 = _mm512_fmadd_pd(k, mLN2LO, c_lo);
             tt = _mm512_add_pd(tt, tt2);
