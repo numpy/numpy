@@ -3,7 +3,24 @@ from typing import Any, Dict, List, Sequence, Tuple, Union
 from numpy import dtype
 from ._shape import _ShapeLike
 
+if sys.version_info >= (3, 8):
+    from typing import Protocol, TypedDict
+else:
+    from typing_extensions import Protocol, TypedDict
+
 _DtypeLikeNested = Any  # TODO: wait for support for recursive types
+
+# Mandatory keys
+class _DtypeDictBase(TypedDict):
+    names: Sequence[str]
+    formats: Sequence[_DtypeLikeNested]
+
+# Mandatory + optional keys
+class _DtypeDict(_DtypeDictBase, total=False):
+    offsets: Sequence[int]
+    titles: Sequence[Union[bytes, Text, None]]
+    itemsize: int
+    aligned: bool
 
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
@@ -25,20 +42,10 @@ DtypeLike = Union[
     # The type here is quite broad because NumPy accepts quite a wide
     # range of inputs inside the list; see the tests for some
     # examples.
-    List[Any],
+    List[_DtypeLikeNested],
     # {'names': ..., 'formats': ..., 'offsets': ..., 'titles': ...,
     #  'itemsize': ...}
-    # TODO: use TypedDict when/if it's officially supported
-    Dict[
-        str,
-        Union[
-            Sequence[str],  # names
-            Sequence[_DtypeLikeNested],  # formats
-            Sequence[int],  # offsets
-            Sequence[Union[bytes, str, None]],  # titles
-            int,  # itemsize
-        ],
-    ],
+    _DtypeDict,
     # {'field1': ..., 'field2': ..., ...}
     Dict[str, Tuple[_DtypeLikeNested, int]],
     # (base_dtype, new_dtype)
