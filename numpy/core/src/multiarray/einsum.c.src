@@ -589,6 +589,10 @@ static void
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value1_sse;
+#elif EINSUM_USE_SSE2 && @float64@
+    __m128d a, b, value1_sse;
+#elif EINSUM_USE_NEON_64 && @float64@
+    float64x2_t a, b, value1_sse;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
@@ -632,6 +636,49 @@ finish_after_unrolled_loop:
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
+#elif EINSUM_USE_SSE2 && @float64@
+    value1_sse = _mm_set1_pd(value1);
+
+    /* Use aligned instructions if possible */
+    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
+        /* Unroll the loop by 8 */
+        while (count >= 8) {
+            count -= 8;
+
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+            a = _mm_mul_pd(_mm_load_pd(data0+@i@), value1_sse);
+            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
+            _mm_store_pd(data_out+@i@, b);
+/**end repeat2**/
+            data0 += 8;
+            data_out += 8;
+        }
+
+        /* Finish off the loop */
+        goto finish_after_unrolled_loop;
+    }
+#elif EINSUM_USE_NEON_64 && @float64@
+    value1_sse = vdupq_n_f64(value1);
+
+    /* Unroll the loop by 8 */
+    while (count >= 8) {
+        count -= 8;
+
+/**begin repeat2
+* #i = 0, 2, 4, 6#
+*/
+        a = vmulq_f64(vld1q_f64(data0+@i@), value1_sse);
+        b = vaddq_f64(a, vld1q_f64(data_out+@i@));
+        vst1q_f64(data_out+@i@, b);
+/**end repeat2**/
+        data0 += 8;
+        data_out += 8;
+    }
+
+/* Finish off the loop */
+goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
