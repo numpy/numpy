@@ -1018,7 +1018,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 flags, NULL);
         if (is_sequence) {
             /* Flag as ragged or too deep array */
-            // TODO: Add test exercising this path (may need to add to cache)
             *flags |= FOUND_RAGGED_ARRAY;
         }
         return max_dims;
@@ -1274,7 +1273,6 @@ PyArray_DiscoverDTypeAndShape(
          * Otherwise, out_descr will remain NULL and the caller has to set
          * the correct default.
          */
-        // TODO: This may be a tiny, unsubstantial behaviour change.
         if (fixed_DType != NULL) {
             if (fixed_DType->default_descr == NULL) {
                 Py_INCREF(fixed_DType->singleton);

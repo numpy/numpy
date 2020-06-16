@@ -268,8 +268,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 
     if (cache != NULL && !(cache->sequence)) {
         /* The input is an array or array object, so assign directly */
-        // TODO: Ensure this path is hit in the tests. Pandas would
-        //       hit this path with an array-like (use-after-free)
         assert(cache->converted_obj == src_object);
         view = (PyArrayObject *)cache->arr_or_sequence;
         Py_DECREF(dtype);
@@ -294,7 +292,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 &PyArray_Type, dtype, ndim, dims, NULL, NULL,
                 PyArray_FLAGS(dest) & NPY_ARRAY_F_CONTIGUOUS, NULL);
         if (view == NULL) {
-            // TODO: See if we can trigger this path in a test.
             npy_free_coercion_cache(cache);
             return -1;
         }

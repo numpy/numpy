@@ -691,7 +691,8 @@ PyArray_AssignFromCache_Recursive(
         for (npy_intp i = 0; i < length; i++) {
             PyObject *value = PySequence_Fast_GET_ITEM(obj, i);
 
-            if (*cache == NULL || (*cache)->converted_obj != value) {
+            if (*cache == NULL || (*cache)->converted_obj != value ||
+                        (*cache)->depth != depth + 1) {
                 if (ndim != depth + 1) {
                     PyErr_SetString(PyExc_RuntimeError,
                             "Inconsistent object during array creation? "
