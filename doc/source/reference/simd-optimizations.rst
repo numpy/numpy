@@ -261,7 +261,7 @@ always on, which means they can be used in any source.
 Does this mean NumPy's infrastructure passes the compiler's flags of
 baseline features to all sources?
 
-Definitely, yes. But the `dispatch-able sources <dispatchable-sources>` are
+Definitely, yes. But the :ref:`dispatch-able sources <dispatchable-sources>` are
 treated differently.
 
 What if the user specifies certain **baseline features** during the
@@ -281,7 +281,7 @@ default and are always guarded by other C definitions prefixed with
 ``NPY__CPU_TARGET_``. C definitions ``NPY__CPU_TARGET_`` are only
 enabled within **dispatch-able sources**.
 
-.. _dispatchable-sources
+.. _dispatchable-sources:
 
 6- Dispatch-able sources and configuration statements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
