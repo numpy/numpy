@@ -5,6 +5,9 @@ import itertools
 import pytest
 import weakref
 
+from hypothesis import given
+from hypothesis.extra import numpy as hynp
+
 import numpy as np
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
@@ -15,6 +18,18 @@ from numpy.testing import (
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
 from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
+
+
+_ANY_ARRAY_STRATEGY = hynp.arrays(
+    # We want a wide variety of array shapes, so we'll use a mixture
+    # of "normal" shapes (1-3 dimensions, side length 1-5) and "weird"
+    # shapes which permit zero-dimensional arrays and side length zero.
+    shape=hynp.array_shapes() | hynp.array_shapes(min_dims=0, min_side=0),
+    # And we'll allow both scalar and possibly-recursive structured
+    # dtypes, so long as all the leaf types are scalar dtypes too.
+    # No objects here, so pickles etc. shouldn't be a problem...
+    dtype=hynp.array_dtypes(subtype_strategy=hynp.scalar_dtypes()),
+)
 
 
 class _GenericTest:
@@ -61,6 +76,10 @@ class _GenericTest:
 
     def test_array_likes(self):
         self._test_equal([1, 2, 3], (1, 2, 3))
+
+    @given(arr=_ANY_ARRAY_STRATEGY)
+    def test_property_equal_weird_arrays_pass(self, arr):
+        self._test_equal(arr, arr.copy())
 
 
 class TestArrayEqual(_GenericTest):
