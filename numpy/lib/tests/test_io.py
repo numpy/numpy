@@ -104,7 +104,15 @@ class RoundtripTest:
         try:
             arr = args
 
-            save_func(target_file, *arr, **save_kwds)
+            with warnings.catch_warnings():
+                # Ignore format-version warning caused by saving an array with
+                # non-ascii characters in structured dtype field names or
+                # titles without setting an explicit format version.
+                warnings.filterwarnings(
+                    "ignore", message="Stored array in format 3.0.",
+                    category=UserWarning, module="numpy.lib.format",
+                )
+                save_func(target_file, *arr, **save_kwds)
             target_file.flush()
             target_file.seek(0)
 
