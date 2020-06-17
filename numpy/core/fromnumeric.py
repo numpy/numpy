@@ -1434,7 +1434,7 @@ def _squeeze_dispatcher(a, axis=None):
 @array_function_dispatch(_squeeze_dispatcher)
 def squeeze(a, axis=None):
     """
-    Remove single-dimensional entries from the shape of an array.
+    Remove entries of length one from the shape of an array.
 
     Parameters
     ----------
@@ -1443,7 +1443,7 @@ def squeeze(a, axis=None):
     axis : None or int or tuple of ints, optional
         .. versionadded:: 1.7.0
 
-        Selects a subset of the single-dimensional entries in the
+        Selects a subset of the entries of length one in the
         shape. If an axis is selected with shape entry greater than
         one, an error is raised.
 
@@ -1462,7 +1462,7 @@ def squeeze(a, axis=None):
 
     See Also
     --------
-    expand_dims : The inverse operation, adding singleton dimensions
+    expand_dims : The inverse operation, adding entries of length one
     reshape : Insert, remove, and combine dimensions, and resize existing ones
 
     Examples

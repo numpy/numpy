@@ -3751,7 +3751,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
     """
     a.squeeze(axis=None)
 
-    Remove single-dimensional entries from the shape of `a`.
+    Remove entries of length one from the shape of `a`.
 
     Refer to `numpy.squeeze` for full documentation.
 
