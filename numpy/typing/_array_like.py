@@ -26,7 +26,9 @@ else:
 
 # TODO: support buffer protocols once
 #
-# https://github.com/python/typing/issues/593
+# https://bugs.python.org/issue27501
 #
-# is resolved.
+# is resolved. See also the mypy issue:
+#
+# https://github.com/python/typing/issues/593
 ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
