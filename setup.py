@@ -238,13 +238,14 @@ def get_build_overrides():
         is_old_gcc = False
         if obj.compiler.compiler_type == 'unix':
             cc = obj.compiler.compiler[0]
-            if cc == "gcc":
+            if "gcc" in cc:
                 out = subprocess.run([cc, '-dumpversion'],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
                                     )
-                ver = float(out.stdout)
-                if ver < 6:
+                # will print something like b'4.2.1\n'
+                ver_parts = out.stdout.split(b'.')
+                if int(ver_parts[0]) < 6:
                     # perhaps 5 is OK?
                     is_old_gcc = True
         return is_old_gcc
