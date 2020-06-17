@@ -136,6 +136,9 @@ static npy_uint64 EXP_Table_tail[32] = {
 
 /*
  * Lookup table of log(c_k)
+ * Reference form: Tang, Ping-Tak Peter. "Table-driven implementation of the 
+ *     logarithm function in IEEE floating-point arithmetic." ACM Transactions 
+ *     on Mathematical Software (TOMS) 16.4 (1990): 378-400.
  */
 static npy_uint64 LOG_TABLE_TOP[64] = {
     0x0000000000000000,
