@@ -4542,6 +4542,26 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
     Py_DECREF(s);
 
+    s = npy_cpu_baseline_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_baseline__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+
+    s = npy_cpu_dispatch_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_dispatch__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+
     s = NpyCapsule_FromVoidPtr((void *)_datetime_strings, NULL);
     if (s == NULL) {
         goto err;

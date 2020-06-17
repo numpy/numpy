@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
 #include "numpy/numpyconfig.h"
 #include "numpy/npy_cpu.h"
 #include "numpy/npy_os.h"

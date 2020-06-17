@@ -114,6 +114,12 @@ def main(argv):
                         help="Number of parallel jobs during build")
     parser.add_argument("--warn-error", action="store_true",
                         help="Set -Werror to convert all compiler warnings to errors")
+    parser.add_argument("--cpu-baseline", default=None,
+                        help="Specify a list of enabled baseline CPU optimizations"),
+    parser.add_argument("--cpu-dispatch", default=None,
+                        help="Specify a list of dispatched CPU optimizations"),
+    parser.add_argument("--disable-optimization", action="store_true",
+                        help="Disable CPU optimized code(dispatch,simd,fast...)"),
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -388,6 +394,12 @@ def build_project(args):
         cmd += ["build_src", "--verbose-cfg"]
     if args.warn_error:
         cmd += ["--warn-error"]
+    if args.cpu_baseline:
+        cmd += ["--cpu-baseline", args.cpu_baseline]
+    if args.cpu_dispatch:
+        cmd += ["--cpu-dispatch", args.cpu_dispatch]
+    if args.disable_optimization:
+        cmd += ["--disable-optimization"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',
