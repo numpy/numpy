@@ -102,7 +102,7 @@ def test_dir_testing():
     """Assert that output of dir has only one "testing/tester"
     attribute without duplicate"""
     assert len(dir(np)) == len(set(dir(np)))
-    
+
 
 def test_numpy_linalg():
     bad_results = check_dir(np.linalg)
@@ -180,6 +180,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.polyutils",
     "random",
     "testing",
+    "typing",
     "version",
 ]]
 

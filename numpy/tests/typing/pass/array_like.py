@@ -1,13 +1,7 @@
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import Any, List, Optional
 
 import numpy as np
-
-if TYPE_CHECKING:
-    from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
-else:
-    ArrayLike = Any
-    DtypeLike = Any
-    _SupportsArray = Any
+from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
 
 x1: ArrayLike = True
 x2: ArrayLike = 5

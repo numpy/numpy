@@ -1,17 +1,7 @@
-import sys
-from typing import Any, Dict, List, overload, Sequence, Text, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
-from numpy import dtype, ndarray
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
-
-_Shape = Tuple[int, ...]
-
-# Anything that can be coerced to a shape tuple
-_ShapeLike = Union[int, Sequence[int]]
+from numpy import dtype
+from ._shape import _ShapeLike
 
 _DtypeLikeNested = Any  # TODO: wait for support for recursive types
 
@@ -45,7 +35,7 @@ DtypeLike = Union[
             Sequence[str],  # names
             Sequence[_DtypeLikeNested],  # formats
             Sequence[int],  # offsets
-            Sequence[Union[bytes, Text, None]],  # titles
+            Sequence[Union[bytes, str, None]],  # titles
             int,  # itemsize
         ],
     ],
@@ -54,11 +44,3 @@ DtypeLike = Union[
     # (base_dtype, new_dtype)
     Tuple[_DtypeLikeNested, _DtypeLikeNested],
 ]
-
-class _SupportsArray(Protocol):
-    @overload
-    def __array__(self, __dtype: DtypeLike = ...) -> ndarray: ...
-    @overload
-    def __array__(self, dtype: DtypeLike = ...) -> ndarray: ...
-
-ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
