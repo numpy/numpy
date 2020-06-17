@@ -3580,7 +3580,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
     npy_intp i;
     char *dptr, *clean_sep, *tmp;
     int err = 0;
-    int stop_reading_flag;  /* -1 indicates end reached; -2 a parsing error */
+    int stop_reading_flag = 0;  /* -1 means end reached; -2 a parsing error */
     npy_intp thisbuf = 0;
     npy_intp size;
     npy_intp bytes, totalbytes;
