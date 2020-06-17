@@ -9,6 +9,8 @@ np.dtype((int, 2))
 np.dtype((int, (1,)))
 
 np.dtype({"names": ["a", "b"], "formats": [int, float]})
+np.dtype({"names": ["a"], "formats": [int], "titles": [object]})
+np.dtype({"names": ["a"], "formats": [int], "titles": [object()]})
 np.dtype(
     {
         "names": ["a", "b"],

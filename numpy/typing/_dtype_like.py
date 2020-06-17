@@ -18,7 +18,7 @@ class _DtypeDictBase(TypedDict):
 # Mandatory + optional keys
 class _DtypeDict(_DtypeDictBase, total=False):
     offsets: Sequence[int]
-    titles: Sequence[Union[bytes, Text, None]]
+    titles: Sequence[Any]  # Elements should be valid as dict keys
     itemsize: int
     aligned: bool
 
