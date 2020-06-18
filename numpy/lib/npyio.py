@@ -784,6 +784,7 @@ def _getconv(dtype):
     else:
         return asstr
 
+
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
 
@@ -1110,7 +1111,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname,
+                          stacklevel=2)
         N = len(usecols or first_vals)
 
         # Now that we know N, create the default converters list, and
@@ -1134,8 +1136,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Unused converter specified
                     continue
             if byte_converters:
-                # converters may use decode to workaround numpy's old behaviour,
-                # so encode the string again before passing to the user converter
+                # converters may use decode to workaround numpy's old
+                # behaviour, so encode the string again before passing to
+                # the user converter
                 def tobytes_first(x, conv):
                     if type(x) is bytes:
                         return conv(x)
