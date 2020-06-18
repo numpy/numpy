@@ -87,8 +87,17 @@ enum npy_cpu_features
 
 /*
  * Initialize CPU features
+ *
+ * This function
+ *  - detect CPU features avalibilty in runtime
+ *  - check the sanity of CPU baseline features
+ *
+ * It also trigger Py runtime error when
+ *  - NumPy build has CPU baseline features
+ *    that aren't supported by the current hardware
+ *
  * return 0 on success otherwise return -1
-*/
+ */
 NPY_VISIBILITY_HIDDEN int
 npy_cpu_init(void);
 

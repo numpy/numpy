@@ -13,6 +13,12 @@ static unsigned char npy__cpu_have[NPY_CPU_FEATURE_MAX];
 // Almost detect all CPU features in runtime
 static void
 npy__cpu_init_features(void);
+/*
+ * check if NumPy build has CPU baseline features
+ * that aren't supported by the current hardware
+*/
+static void
+npy__cpu_validate_baseline(void);
 
 /******************** Public Definitions *********************/
 
@@ -28,6 +34,10 @@ NPY_VISIBILITY_HIDDEN int
 npy_cpu_init(void)
 {
     npy__cpu_init_features();
+    npy__cpu_validate_baseline();
+
+    if (PyErr_Occurred())
+        return -1;
     return 0;
 }
 
@@ -91,6 +101,36 @@ npy_cpu_dispatch_list(void)
     return list;
 #else
     return PyList_New(0);
+#endif
+}
+
+/******************** Private Definitions *********************/
+
+static void
+npy__cpu_validate_baseline(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
+
+    char baseline_failure[sizeof(NPY_WITH_CPU_BASELINE) + 1];
+    char *fptr = &baseline_failure[0];
+
+    #define NPY__CPU_VALIDATE_CB(FEATURE, DUMMY) \
+    if (!npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)]) { \
+        const int size = sizeof(NPY_TOSTRING(FEATURE));  \
+        memcpy(fptr, NPY_TOSTRING(FEATURE), size); \
+        fptr[size] = ' '; fptr += size + 1; \
+    }
+    NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_VALIDATE_CB, DUMMY) // extra arg for msvc
+    *fptr = '\0';
+
+    if (baseline_failure[0] != '\0') {
+        *(fptr-1) = '\0'; // trim the last space
+        PyErr_Format(PyExc_RuntimeError,
+            "NumPy doesn't support the current hardware.\n"
+            "This NumPy build come with CPU baseline features " NPY_WITH_CPU_BASELINE "\n"
+            "but this CPU doesn't support \"%s\".\n", baseline_failure
+        );
+    }
 #endif
 }
 
