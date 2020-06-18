@@ -55,6 +55,9 @@ __version__ = "$Revision: 1.129 $"[10:-1]
 from . import __version__
 f2py_version = __version__.version
 
+from .. import version as _numpy_version
+numpy_version = _numpy_version.version
+
 import os
 import time
 import copy
@@ -205,6 +208,9 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 \ts = PyUnicode_FromString(
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
+\tPy_DECREF(s);
+\ts = PyUnicode_FromString(\"""" + numpy_version + """\");
+\tPyDict_SetItemString(d, \"__f2py_numpy_version__\", s);
 \tPy_DECREF(s);
 \t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \t/*
