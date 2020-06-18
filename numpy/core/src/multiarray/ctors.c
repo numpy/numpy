@@ -490,10 +490,11 @@ PyArray_AssignFromCache_Recursive(
         }
         if (sequence) {
             /*
-             * The Pack function above used to handle this error and should
-             * typically fail, but it is more explicit here.
+             * Sanity check which may be removed, the error is raised already
+             * in `PyArray_DiscoverDTypeAndShape`.
              */
-            PyErr_SetString(PyExc_ValueError,
+            assert(0);
+            PyErr_SetString(PyExc_RuntimeError,
                     "setting an array element with a sequence");
             goto fail;
         }
