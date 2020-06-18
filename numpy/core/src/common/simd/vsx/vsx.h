@@ -55,3 +55,10 @@ typedef struct { npyv_f64 val[3]; } npyv_f64x3;
 #define npyv_b16 __vector __bool short
 #define npyv_b32 __vector __bool int
 #define npyv_b64 __vector __bool long long
+
+#include "memory.h"
+#include "misc.h"
+#include "reorder.h"
+#include "operators.h"
+#include "conversion.h"
+#include "arithmetic.h"
