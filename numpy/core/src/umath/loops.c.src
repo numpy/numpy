@@ -567,6 +567,18 @@ NPY_NO_EXPORT void
     UNARY_LOOP_FAST(@type@, @type@, *out = +in);
 }
 
+#ifdef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
+NPY_NO_EXPORT void
+@TYPE@_right_shift_noopt(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = npy_rshift@c@(in1, in2);
+    }
+}
+#endif
+
 /**begin repeat1
  * #kind = maximum, minimum#
  * #OP =  >, <#

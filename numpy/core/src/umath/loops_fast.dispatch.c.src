@@ -136,7 +136,16 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_left_shift)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_right_shift)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+/**
+ * dispatch-able sources through policy '$maxopt' or '$autovec'
+ * get the maximum safe optimize flags that compiler can offer
+ * e.g on gcc '-O3', so @TYPE@_right_shift_noopt is defined in loops.c.
+*/
+#ifndef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
     BINARY_LOOP_FAST(@type@, @type@, *out = npy_rshift@c@(in1, in2));
+#else
+    @TYPE@_right_shift_noopt(args, dimensions, steps);
+#endif
 }
 
 /**begin repeat1
