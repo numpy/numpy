@@ -17,8 +17,8 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, assert_array_almost_equal,
-    suppress_warnings, assert_raises_regex, HAS_LAPACK64,
+    assert_almost_equal, assert_allclose, suppress_warnings,
+    assert_raises_regex, HAS_LAPACK64,
     )
 from numpy.testing._private.utils import requires_memory
 
@@ -1711,16 +1711,6 @@ class TestQR:
 class TestCholesky:
     # TODO: are there no other tests for cholesky?
     
-    def test_simple(self):
-        a = np.array([[4, 12, -16], [12, 37, -53], [-16, -53, 98]], dtype=np.int32)
-        b = np.array([[2., 0., 0.], [6., 1., 0.], [-8., -5., 3.]], dtype=np.float64)
-        assert_array_equal(np.linalg.cholesky(a), b)
-        a = np.array([[8, 2, 3], [2, 9, 3], [3, 3, 6]], dtype=np.int32)
-        c = np.linalg.cholesky(a)
-        t = list(range(len(a.shape)))
-        t[-2:] = -1, -2
-        assert_array_almost_equal(np.matmul(c, c.transpose(t)), a)
-    
     def test_basic_property(self):
         # Check A = L L^H
         shapes = [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
@@ -2053,10 +2043,13 @@ class TestTensorinv:
 
 def test_unsupported_commontype():
     # linalg gracefully handles unsupported type
-    arr = np.array([[1, -2], [2, 5]], dtype='float16')
-    with assert_raises_regex(TypeError, "unsupported in linalg"):
-        linalg.cholesky(arr)
-
+    linalg_funcs = ['cholesky', 'inv', 'qr', 'eigvals', 'eigvalsh',
+                    'eig', 'eigh', 'svd', 'cond', 'slogdet', 'det']
+    for func in linalg_funcs:
+        arr = np.array([[1, -2], [2, 5]], dtype='float16')
+        with assert_raises_regex(TypeError, "unsupported in linalg"):
+            f = getattr(linalg, func)
+            f(arr)
 
 @pytest.mark.slow
 @pytest.mark.xfail(not HAS_LAPACK64, run=False,
