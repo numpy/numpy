@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+"""Find the functions in a module missing type annotations.
+
+To use it run
+
+./functions_missing_types.py <module>
+
+and it will print out a list of functions in the module that don't
+have types.
+
+"""
 import argparse
 import ast
 import importlib
@@ -58,7 +68,7 @@ EXCLUDE_LIST = {
 
 
 class FindAttributes(ast.NodeVisitor):
-    """Find top-level attributes/functions/classes a stubs file.
+    """Find top-level attributes/functions/classes in stubs files.
 
     Do this by walking the stubs ast. See e.g.
 
