@@ -784,6 +784,7 @@ def _getconv(dtype):
     else:
         return asstr
 
+
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
 
@@ -914,68 +915,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
            [ 19.22,  64.31],
            [-17.57,  63.94]])
     """
-    # Type conversions for Py3 convenience
-    if comments is not None:
-        if isinstance(comments, (str, bytes)):
-            comments = [comments]
-        comments = [_decode_line(x) for x in comments]
-        # Compile regex for comments beforehand
-        comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile('|'.join(comments))
 
-    if delimiter is not None:
-        delimiter = _decode_line(delimiter)
-
-    user_converters = converters
-
-    if encoding == 'bytes':
-        encoding = None
-        byte_converters = True
-    else:
-        byte_converters = False
-
-    if usecols is not None:
-        # Allow usecols to be a single int or a sequence of ints
-        try:
-            usecols_as_list = list(usecols)
-        except TypeError:
-            usecols_as_list = [usecols]
-        for col_idx in usecols_as_list:
-            try:
-                opindex(col_idx)
-            except TypeError as e:
-                e.args = (
-                    "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type %s" %
-                    type(col_idx),
-                    )
-                raise
-        # Fall back to existing code
-        usecols = usecols_as_list
-
-    fown = False
-    try:
-        if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
-        if _is_string_like(fname):
-            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fencoding = getattr(fh, 'encoding', 'latin1')
-            fh = iter(fh)
-            fown = True
-        else:
-            fh = iter(fname)
-            fencoding = getattr(fname, 'encoding', 'latin1')
-    except TypeError:
-        raise ValueError('fname must be a string, file handle, or generator')
-
-    # input may be a python2 io stream
-    if encoding is not None:
-        fencoding = encoding
-    # we must assume local encoding
-    # TODO emit portability warning?
-    elif fencoding is None:
-        import locale
-        fencoding = locale.getpreferredencoding()
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Nested functions used by loadtxt.
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     # not to be confused with the flatten_dtype we import...
     @recursive
@@ -1075,11 +1018,84 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if X:
             yield X
 
-    try:
-        # Make sure we're dealing with a proper dtype
-        dtype = np.dtype(dtype)
-        defconv = _getconv(dtype)
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Main body of loadtxt.
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    # Check correctness of the values of `ndmin`
+    if ndmin not in [0, 1, 2]:
+        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
+
+    # Type conversions for Py3 convenience
+    if comments is not None:
+        if isinstance(comments, (str, bytes)):
+            comments = [comments]
+        comments = [_decode_line(x) for x in comments]
+        # Compile regex for comments beforehand
+        comments = (re.escape(comment) for comment in comments)
+        regex_comments = re.compile('|'.join(comments))
+
+    if delimiter is not None:
+        delimiter = _decode_line(delimiter)
+
+    user_converters = converters
+
+    if encoding == 'bytes':
+        encoding = None
+        byte_converters = True
+    else:
+        byte_converters = False
+
+    if usecols is not None:
+        # Allow usecols to be a single int or a sequence of ints
+        try:
+            usecols_as_list = list(usecols)
+        except TypeError:
+            usecols_as_list = [usecols]
+        for col_idx in usecols_as_list:
+            try:
+                opindex(col_idx)
+            except TypeError as e:
+                e.args = (
+                    "usecols must be an int or a sequence of ints but "
+                    "it contains at least one element of type %s" %
+                    type(col_idx),
+                    )
+                raise
+        # Fall back to existing code
+        usecols = usecols_as_list
+
+    # Make sure we're dealing with a proper dtype
+    dtype = np.dtype(dtype)
+    defconv = _getconv(dtype)
+
+    dtype_types, packing = flatten_dtype_internal(dtype)
+
+    fown = False
+    try:
+        if isinstance(fname, os_PathLike):
+            fname = os_fspath(fname)
+        if _is_string_like(fname):
+            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+            fencoding = getattr(fh, 'encoding', 'latin1')
+            fh = iter(fh)
+            fown = True
+        else:
+            fh = iter(fname)
+            fencoding = getattr(fname, 'encoding', 'latin1')
+    except TypeError:
+        raise ValueError('fname must be a string, file handle, or generator')
+
+    # input may be a python2 io stream
+    if encoding is not None:
+        fencoding = encoding
+    # we must assume local encoding
+    # TODO emit portability warning?
+    elif fencoding is None:
+        import locale
+        fencoding = locale.getpreferredencoding()
+
+    try:
         # Skip the first `skiprows` lines
         for i in range(skiprows):
             next(fh)
@@ -1095,10 +1111,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
-            warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname,
+                          stacklevel=2)
         N = len(usecols or first_vals)
 
-        dtype_types, packing = flatten_dtype_internal(dtype)
+        # Now that we know N, create the default converters list, and
+        # set packing, if necessary.
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
@@ -1118,8 +1136,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     # Unused converter specified
                     continue
             if byte_converters:
-                # converters may use decode to workaround numpy's old behaviour,
-                # so encode the string again before passing to the user converter
+                # converters may use decode to workaround numpy's old
+                # behaviour, so encode the string again before passing to
+                # the user converter
                 def tobytes_first(x, conv):
                     if type(x) is bytes:
                         return conv(x)
@@ -1158,9 +1177,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         X.shape = (1, -1)
 
     # Verify that the array has at least dimensions `ndmin`.
-    # Check correctness of the values of `ndmin`
-    if ndmin not in [0, 1, 2]:
-        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
     # Tweak the size and shape of the arrays - remove extraneous dimensions
     if X.ndim > ndmin:
         X = np.squeeze(X)
