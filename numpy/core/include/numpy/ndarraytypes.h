@@ -1821,6 +1821,8 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
      * The Structures defined in this block are considered private API and
      * may change without warning!
      */
+    /* TODO: Make this definition public in the API, as soon as its settled */
+    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
     typedef struct PyArray_DTypeMeta_tag PyArray_DTypeMeta;
 
@@ -1895,14 +1897,6 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     };
 
     #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
-
-    /* TODO: Make this definition public in the API, as soon as its settled */
-    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
-    /* These are mainly needed for value based promotion in ufuncs: */
-    NPY_NO_EXPORT extern PyTypeObject PyArrayAbstractObjDTypeMeta_Type;
-    NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyIntAbstractDType;
-    NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyFloatAbstractDType;
-    NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexAbstractDType;
 
 #endif  /* NPY_INTERNAL_BUILD */
 
