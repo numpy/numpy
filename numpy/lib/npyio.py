@@ -1064,6 +1064,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # Fall back to existing code
         usecols = usecols_as_list
 
+    # Make sure we're dealing with a proper dtype
+    dtype = np.dtype(dtype)
+    defconv = _getconv(dtype)
+
+    dtype_types, packing = flatten_dtype_internal(dtype)
+
     fown = False
     try:
         if isinstance(fname, os_PathLike):
@@ -1089,10 +1095,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         fencoding = locale.getpreferredencoding()
 
     try:
-        # Make sure we're dealing with a proper dtype
-        dtype = np.dtype(dtype)
-        defconv = _getconv(dtype)
-
         # Skip the first `skiprows` lines
         for i in range(skiprows):
             next(fh)
@@ -1111,7 +1113,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
-        dtype_types, packing = flatten_dtype_internal(dtype)
+        # Now that we know N, create the default converters list, and
+        # set packing, if necessary.
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
