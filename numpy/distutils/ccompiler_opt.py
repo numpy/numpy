@@ -1222,9 +1222,31 @@ class _Feature:
             return rank
         return sorted(names, reverse=reverse, key=sort_cb)
 
-    def feature_implies(self, names):
-        """Return a set of CPU features that implied by 'names'"""
-        def get_implies(name, _caller=[]):
+    def feature_implies(self, names, keep_origins=False):
+        """
+        Return a set of CPU features that implied by 'names'
+
+        Parameters
+        ----------
+        'names': str(single feature) or sequence
+            CPU feature names in uppercase.
+
+        'keep_origins': bool
+            if False(default) then the returned set will not contain any
+            features from 'names'. This case happens only when two features
+            imply each other.
+
+        Examples
+        --------
+        >>> self.feature_implies("SSE3")
+        {'SSE', 'SSE2'}
+        >>> self.feature_implies("SSE2")
+        {'SSE'}
+        >>> self.feature_implies("SSE2", keep_origins=True)
+        # 'SSE2' found here since 'SSE' and 'SSE2' imply each other
+        {'SSE', 'SSE2'}
+        """
+        def get_implies(name, _caller=set()):
             implies = set()
             d = self.feature_supported[name]
             for i in d.get("implies", []):
@@ -1233,17 +1255,20 @@ class _Feature:
                     # infinity recursive guard since
                     # features can imply each other
                     continue
-                _caller.append(name)
+                _caller.add(name)
                 implies = implies.union(get_implies(i, _caller))
             return implies
 
         if isinstance(names, str):
-            return get_implies(names)
-
-        assert(hasattr(names, "__iter__"))
-        implies = set()
-        for n in names:
-            implies = implies.union(get_implies(n))
+            implies = get_implies(names)
+            names = [names]
+        else:
+            assert(hasattr(names, "__iter__"))
+            implies = set()
+            for n in names:
+                implies = implies.union(get_implies(n))
+        if not keep_origins:
+            implies.difference_update(names)
         return implies
 
     def feature_implies_c(self, names):
@@ -1270,21 +1295,21 @@ class _Feature:
 
         Examples
         --------
-        >>> self.feature_untied(["SSE2", "SSE3", "SSE41"])
+        >>> self.feature_ahead(["SSE2", "SSE3", "SSE41"])
         ["SSE41"]
         # assume AVX2 and FMA3 implies each other and AVX2
         # is the highest interest
-        >>> self.feature_untied(["SSE2", "SSE3", "SSE41", "AVX2", "FMA3"])
+        >>> self.feature_ahead(["SSE2", "SSE3", "SSE41", "AVX2", "FMA3"])
         ["AVX2"]
         # assume AVX2 and FMA3 don't implies each other
-        >>> self.feature_untied(["SSE2", "SSE3", "SSE41", "AVX2", "FMA3"])
+        >>> self.feature_ahead(["SSE2", "SSE3", "SSE41", "AVX2", "FMA3"])
         ["AVX2", "FMA3"]
         """
         assert(
             not isinstance(names, str)
             and hasattr(names, '__iter__')
         )
-        implies = self.feature_implies(names)
+        implies = self.feature_implies(names, keep_origins=True)
         ahead = [n for n in names if n not in implies]
         if len(ahead) == 0:
             # return the highest interested feature
