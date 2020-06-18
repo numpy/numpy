@@ -739,6 +739,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'umathmodule.h'),
             join('src', 'common', 'numpyos.h'),
             join('src', 'common', 'npy_cpu_dispatch.h'),
+            join('src', 'common', 'simd', 'simd.h'),
             ]
 
     common_src = [

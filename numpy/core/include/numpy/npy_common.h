@@ -141,6 +141,14 @@
     #define NPY_INLINE
 #endif
 
+#ifdef _MSC_VER
+    #define NPY_FINLINE static __forceinline
+#elif defined(__GNUC__)
+    #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
+#else
+    #define NPY_INLINE static
+#endif
+
 #ifdef HAVE___THREAD
     #define NPY_TLS __thread
 #else
