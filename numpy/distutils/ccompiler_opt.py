@@ -1228,10 +1228,10 @@ class _Feature:
 
         Parameters
         ----------
-        'names': str(single feature) or sequence
-            CPU feature names in uppercase.
+        names: str or sequence of str
+            CPU feature name(s) in uppercase.
 
-        'keep_origins': bool
+        keep_origins: bool
             if False(default) then the returned set will not contain any
             features from 'names'. This case happens only when two features
             imply each other.
