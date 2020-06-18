@@ -66,3 +66,9 @@ typedef float64x2x3_t npyv_f64x3;
 #define npyv_nlanes_f32 4
 #define npyv_nlanes_f64 2
 
+#include "memory.h"
+#include "misc.h"
+#include "reorder.h"
+#include "operators.h"
+#include "conversion.h"
+#include "arithmetic.h"
