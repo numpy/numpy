@@ -138,7 +138,8 @@ def is_parametric_dtype(dtype):
 
 class TestStringDiscovery:
     @pytest.mark.parametrize("obj",
-            [object(), 1.2, 10**43, None, "string"])
+            [object(), 1.2, 10**43, None, "string"],
+            ids=["object", "1.2", "10**43", "None", "string"])
     def test_basic_stringlength(self, obj):
         if not isinstance(obj, (str, int)):
             pytest.xfail(
@@ -158,7 +159,8 @@ class TestStringDiscovery:
 
     @pytest.mark.xfail(reason="Only single array unpacking is supported")
     @pytest.mark.parametrize("obj",
-            [object(), 1.2, 10**43, None, "string"])
+            [object(), 1.2, 10**43, None, "string"],
+            ids=["object", "1.2", "10**43", "None", "string"])
     def test_nested_arrays_stringlength(self, obj):
         length = len(str(obj))
         expected = np.dtype(f"S{length}")
@@ -336,8 +338,10 @@ class TestScalarDiscovery:
 class TestTimeScalars:
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("scalar",
-            [np.timedelta64("NaT", "s"), np.timedelta64(123, "s"),
-             np.datetime64("NaT", "generic"), np.datetime64(1, "D")])
+            [param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)"),
+             param(np.timedelta64(123, "s"), id="timedelta64[s]"),
+             param(np.datetime64("NaT", "generic"), id="datetime64[generic](NaT)"),
+             param(np.datetime64(1, "D"), id="datetime64[D]")],)
     @pytest.mark.xfail(
             reason="This uses int(scalar) or float(scalar) to assign, which "
                    "fails.  However, casting currently does not fail.")
@@ -352,7 +356,8 @@ class TestTimeScalars:
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("scalar",
-             [np.timedelta64(123, "ns"), np.timedelta64(12, "generic")])
+            [param(np.timedelta64(123, "ns"), id="timedelta64[ns]"),
+             param(np.timedelta64(12, "generic"), id="timedelta64[generic]")])
     def test_coercion_timedelta_convert_to_number(self, dtype, scalar):
         # Only "ns" and "generic" timedeltas can be converted to numbers
         # so these are slightly special.
@@ -364,9 +369,9 @@ class TestTimeScalars:
         assert_array_equal(arr, cast)
         assert_array_equal(cast, cast)
 
-    @pytest.mark.parametrize("scalar_type", [np.datetime64, np.timedelta64])
     @pytest.mark.parametrize(["val", "unit"],
-            [(123, "s"), (123, "D")])
+            [param(123, "s", id="[s]"), param(123, "D", id="[D]")])
+    @pytest.mark.parametrize("scalar_type", [np.datetime64, np.timedelta64])
     @pytest.mark.xfail(reason="Error not raised for assignment")
     def test_coercion_assignment_times(self, scalar_type, val, unit):
         scalar = scalar_type(val, unit)
