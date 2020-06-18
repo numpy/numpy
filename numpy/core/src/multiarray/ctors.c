@@ -484,12 +484,9 @@ PyArray_AssignFromCache_Recursive(
         if (PyArray_ISOBJECT(self)) {
             assert(ndim != 0);  /* guaranteed by PyArray_AssignFromCache */
             assert(PyArray_NDIM(self) == 0);
-            if (PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self),
-                    original_obj) < 0) {
-                goto fail;
-            }
             Py_DECREF(obj);
-            return 0;
+            return PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self),
+                                original_obj);
         }
         if (sequence) {
             /*
@@ -499,6 +496,19 @@ PyArray_AssignFromCache_Recursive(
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence");
             goto fail;
+        }
+        else if (original_obj != obj || !PyArray_CheckExact(obj)) {
+            /*
+             * If the leave node is an array-like, but not a numpy array,
+             * we pretend it is an arbitrary scalar.  This means that in
+             * most cases (where the dtype is int or float), we will end
+             * up using float(array-like), or int(array-like).  That does
+             * not support general casting, but helps Quantity and masked
+             * arrays, because it allows them to raise an error when
+             * `__float__()` or `__int__()` is called.
+             */
+            Py_DECREF(obj);
+            return PyArray_SETITEM(self, PyArray_BYTES(self), original_obj);
         }
     }
 

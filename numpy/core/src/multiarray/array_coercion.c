@@ -436,9 +436,16 @@ find_scalar_descriptor(
  * a float128 to complex128.
  *
  * At this time, this function does not support arrays (historically we
- * mainly supported arrays through `__float__()`, etc. Such support should
- * possibly be added (although in some cases we know that the input is not
- * an array).
+ * mainly supported arrays through `__float__()`, etc.). Such support should
+ * possibly be added (although when called from `PyArray_AssignFromCache`
+ * the input cannot be an array).
+ * Note that this is also problematic for some array-likes, such as
+ * `astropy.units.Quantity` and `np.ma.masked`.  These are used to us calling
+ * `__float__`/`__int__` for 0-D instances in many cases.
+ * Eventually, we may want to define this as wrong: They must use DTypes
+ * instead of (only) subclasses.  Until then, here as well as in
+ * `PyArray_AssignFromCache` (which already does this), we need to special
+ * case 0-D array-likes to behave like arbitrary (unknown!) Python objects.
  *
  * @param descr
  * @param item
