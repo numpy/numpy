@@ -1021,6 +1021,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     # Main body of loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    # Check correctness of the values of `ndmin`
+    if ndmin not in [0, 1, 2]:
+        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
+
     # Type conversions for Py3 convenience
     if comments is not None:
         if isinstance(comments, (str, bytes)):
@@ -1167,9 +1171,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         X.shape = (1, -1)
 
     # Verify that the array has at least dimensions `ndmin`.
-    # Check correctness of the values of `ndmin`
-    if ndmin not in [0, 1, 2]:
-        raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
     # Tweak the size and shape of the arrays - remove extraneous dimensions
     if X.ndim > ndmin:
         X = np.squeeze(X)
