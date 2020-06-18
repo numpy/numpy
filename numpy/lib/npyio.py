@@ -999,7 +999,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             vals = split_line(line)
             if len(vals) == 0:
                 continue
-            if usecols:
+            if usecols is not None:
                 vals = [vals[j] for j in usecols]
             if len(vals) != N:
                 line_num = i + skiprows + 1
@@ -1071,6 +1071,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     dtype_types, packing = flatten_dtype_internal(dtype)
 
+    if usecols is not None:
+        if len(dtype_types) > 1 and len(usecols) != len(dtype_types):
+            raise ValueError('the number of columns specified in usecols '
+                             f'({len(usecols)}) does not equal the number of '
+                             f'fields in the given dtype ({len(dtype_types)})')
+        if len(usecols) == 0:
+            shp = (0, 0) if ndmin == 2 else (0,)
+            return np.empty(shp, dtype=dtype)
+
     fown = False
     try:
         if isinstance(fname, os_PathLike):
@@ -1095,6 +1104,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         import locale
         fencoding = locale.getpreferredencoding()
 
+    # This long try/finally block is to ensure that the file is closed if it
+    # was opened here (i.e. if fown is True).
     try:
         # Skip the first `skiprows` lines
         for i in range(skiprows):
@@ -1113,7 +1124,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             first_vals = []
             warnings.warn('loadtxt: Empty input file: "%s"' % fname,
                           stacklevel=2)
-        N = len(usecols or first_vals)
+        if usecols is not None:
+            N = len(usecols)
+        else:
+            N = len(first_vals)
 
         # Now that we know N, create the default converters list, and
         # set packing, if necessary.
@@ -1129,7 +1143,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         # By preference, use the converters specified by the user
         for i, conv in (user_converters or {}).items():
-            if usecols:
+            if usecols is not None:
                 try:
                     i = usecols.index(i)
                 except ValueError:

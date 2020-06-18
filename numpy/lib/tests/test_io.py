@@ -863,6 +863,22 @@ class TestLoadTxt(LoadTxtBase):
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
 
+    def test_usecols_dtype_mismatched_lengths(self):
+        dt3 = np.dtype('i,i,i')
+        c = TextIO('1 2 3 4\n5 6 7 8\n')
+        with pytest.raises(ValueError,
+                           match='does not equal the number of fields'):
+            np.loadtxt(c, usecols=[0, 1], dtype=dt3)
+
+    @pytest.mark.parametrize('ndmin, expected_shape', [
+        (2, (0, 0)), (1, (0,)), (0, (0,)),
+    ])
+    def test_empty_usecols(self, ndmin, expected_shape):
+        c = TextIO('1 2 3\n4 5 6\n')
+        x = np.loadtxt(c, usecols=[], ndmin=ndmin)
+        expected = np.empty(expected_shape, dtype=np.float64)
+        assert_array_equal(x, expected)
+
     def test_fancy_dtype(self):
         c = TextIO()
         c.write('1,2,3.0\n4,5,6.0\n')
