@@ -61,3 +61,11 @@ typedef struct { __m512d val[3]; } npyv_f64x3;
 #define npyv_nlanes_s64 8
 #define npyv_nlanes_f32 16
 #define npyv_nlanes_f64 8
+
+#include "utils.h"
+#include "memory.h"
+#include "misc.h"
+#include "reorder.h"
+#include "operators.h"
+#include "conversion.h"
+#include "arithmetic.h"

@@ -9,6 +9,7 @@
 */
 #include "numpy/npy_common.h"
 #include "npy_cpu_dispatch.h"
+#include "simd_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
