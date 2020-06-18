@@ -1896,8 +1896,6 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         default_descr_function *default_descr;
     };
 
-    #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
-
 #endif  /* NPY_INTERNAL_BUILD */
 
 

@@ -15,6 +15,7 @@
 #include "array_coercion.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "scalartypes.h"
 #include "mapping.h"
 

@@ -43,6 +43,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "arrayobject.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "methods.h"
 #include "descriptor.h"
 #include "iterators.h"

@@ -9,6 +9,7 @@
 #include "npy_pycompat.h"
 #include "common.h"
 
+#include "abstractdtypes.h"
 #include "usertypes.h"
 
 #include "common.h"
