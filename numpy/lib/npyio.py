@@ -914,68 +914,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
            [ 19.22,  64.31],
            [-17.57,  63.94]])
     """
-    # Type conversions for Py3 convenience
-    if comments is not None:
-        if isinstance(comments, (str, bytes)):
-            comments = [comments]
-        comments = [_decode_line(x) for x in comments]
-        # Compile regex for comments beforehand
-        comments = (re.escape(comment) for comment in comments)
-        regex_comments = re.compile('|'.join(comments))
 
-    if delimiter is not None:
-        delimiter = _decode_line(delimiter)
-
-    user_converters = converters
-
-    if encoding == 'bytes':
-        encoding = None
-        byte_converters = True
-    else:
-        byte_converters = False
-
-    if usecols is not None:
-        # Allow usecols to be a single int or a sequence of ints
-        try:
-            usecols_as_list = list(usecols)
-        except TypeError:
-            usecols_as_list = [usecols]
-        for col_idx in usecols_as_list:
-            try:
-                opindex(col_idx)
-            except TypeError as e:
-                e.args = (
-                    "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type %s" %
-                    type(col_idx),
-                    )
-                raise
-        # Fall back to existing code
-        usecols = usecols_as_list
-
-    fown = False
-    try:
-        if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
-        if _is_string_like(fname):
-            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fencoding = getattr(fh, 'encoding', 'latin1')
-            fh = iter(fh)
-            fown = True
-        else:
-            fh = iter(fname)
-            fencoding = getattr(fname, 'encoding', 'latin1')
-    except TypeError:
-        raise ValueError('fname must be a string, file handle, or generator')
-
-    # input may be a python2 io stream
-    if encoding is not None:
-        fencoding = encoding
-    # we must assume local encoding
-    # TODO emit portability warning?
-    elif fencoding is None:
-        import locale
-        fencoding = locale.getpreferredencoding()
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Nested functions used by loadtxt.
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     # not to be confused with the flatten_dtype we import...
     @recursive
@@ -1074,6 +1016,73 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 X = []
         if X:
             yield X
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Main body of loadtxt.
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    # Type conversions for Py3 convenience
+    if comments is not None:
+        if isinstance(comments, (str, bytes)):
+            comments = [comments]
+        comments = [_decode_line(x) for x in comments]
+        # Compile regex for comments beforehand
+        comments = (re.escape(comment) for comment in comments)
+        regex_comments = re.compile('|'.join(comments))
+
+    if delimiter is not None:
+        delimiter = _decode_line(delimiter)
+
+    user_converters = converters
+
+    if encoding == 'bytes':
+        encoding = None
+        byte_converters = True
+    else:
+        byte_converters = False
+
+    if usecols is not None:
+        # Allow usecols to be a single int or a sequence of ints
+        try:
+            usecols_as_list = list(usecols)
+        except TypeError:
+            usecols_as_list = [usecols]
+        for col_idx in usecols_as_list:
+            try:
+                opindex(col_idx)
+            except TypeError as e:
+                e.args = (
+                    "usecols must be an int or a sequence of ints but "
+                    "it contains at least one element of type %s" %
+                    type(col_idx),
+                    )
+                raise
+        # Fall back to existing code
+        usecols = usecols_as_list
+
+    fown = False
+    try:
+        if isinstance(fname, os_PathLike):
+            fname = os_fspath(fname)
+        if _is_string_like(fname):
+            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+            fencoding = getattr(fh, 'encoding', 'latin1')
+            fh = iter(fh)
+            fown = True
+        else:
+            fh = iter(fname)
+            fencoding = getattr(fname, 'encoding', 'latin1')
+    except TypeError:
+        raise ValueError('fname must be a string, file handle, or generator')
+
+    # input may be a python2 io stream
+    if encoding is not None:
+        fencoding = encoding
+    # we must assume local encoding
+    # TODO emit portability warning?
+    elif fencoding is None:
+        import locale
+        fencoding = locale.getpreferredencoding()
 
     try:
         # Make sure we're dealing with a proper dtype
