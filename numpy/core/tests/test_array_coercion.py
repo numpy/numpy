@@ -181,6 +181,7 @@ class TestStringDiscovery:
         assert arr.shape == (1, 1)
         assert arr.dtype == expected
 
+
 class TestScalarDiscovery:
     def test_void_special_case(self):
         # Void dtypes with structures discover tuples as elements
@@ -531,3 +532,41 @@ class TestBadSequences:
         # with pytest.raises(RuntimeError):  # Will error in the future
         np.array(obj)
 
+
+class TestArrayLikes:
+    @pytest.mark.parametrize("arraylike", arraylikes())
+    def test_0d_object_special_case(self, arraylike):
+        arr = np.array(0.)
+        obj = arraylike(arr)
+        # A single array-like is always converted:
+        res = np.array(obj, dtype=object)
+        assert_array_equal(arr, res)
+
+        # But a single 0-D nested array-like never:
+        res = np.array([obj], dtype=object)
+        assert res[0] is obj
+
+    def test_0d_generic_special_case(self):
+        class ArraySubclass(np.ndarray):
+            def __float__(self):
+                raise TypeError("e.g. quantities raise on this")
+
+        arr = np.array(0.)
+        obj = arr.view(ArraySubclass)
+        res = np.array(obj)
+        # The subclass is simply cast:
+        assert_array_equal(arr, res)
+
+        # If the 0-D array-like is included, __float__ is currently
+        # guaranteed to be used.  We may want to change that, quantities
+        # and masked arrays half make use of this.
+        with pytest.raises(TypeError):
+            np.array([obj])
+
+        # The same holds for memoryview:
+        obj = memoryview(arr)
+        res = np.array(obj)
+        assert_array_equal(arr, res)
+        with pytest.raises(ValueError):
+            # The error type does not matter much here.
+            np.array([obj])
