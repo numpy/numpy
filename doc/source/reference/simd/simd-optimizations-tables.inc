@@ -1,3 +1,5 @@
+.. generated via source/reference/simd/simd-optimizations.py
+
 ``X86`` - CPU feature names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -7,8 +9,8 @@
     ======== =================================================================================================================
     Name     Implies                                                                                                          
     ======== =================================================================================================================
-    SSE      ``SSE2``                                                                                                         
-    SSE2     ``SSE``                                                                                                          
+    SSE      ``SSE`` ``SSE2``                                                                                                 
+    SSE2     ``SSE`` ``SSE2``                                                                                                 
     SSE3     ``SSE`` ``SSE2``                                                                                                 
     SSSE3    ``SSE`` ``SSE2`` ``SSE3``                                                                                        
     SSE41    ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3``                                                                              
@@ -64,8 +66,8 @@
     ==== ================
     Name Implies         
     ==== ================
-    VSX  ``VSX2``        
-    VSX2 ``VSX``         
+    VSX  ``VSX`` ``VSX2``
+    VSX2 ``VSX`` ``VSX2``
     VSX3 ``VSX`` ``VSX2``
     ==== ================
 
@@ -96,10 +98,10 @@
     ========== ===========================================================
     Name       Implies                                                    
     ========== ===========================================================
-    NEON       ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``                     
-    NEON_FP16  ``NEON`` ``NEON_VFPV4`` ``ASIMD``                          
-    NEON_VFPV4 ``NEON`` ``NEON_FP16`` ``ASIMD``                           
-    ASIMD      ``NEON`` ``NEON_FP16`` ``NEON_VFPV4``                      
+    NEON       ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
+    NEON_FP16  ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
+    NEON_VFPV4 ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
+    ASIMD      ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
     ASIMDHP    ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
     ASIMDDP    ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
     ASIMDFHM   ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP``

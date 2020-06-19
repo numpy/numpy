@@ -21,8 +21,8 @@ written only once. There are three layers:
   function, and this will be the one called for the function.
 
 
-Build options for the second stage
-==================================
+Build options for compilation
+=============================
 
 - ``--cpu-baseline``: minimal set of required optimizations. Default
   value is ``min`` which provides the minimum CPU features that can
@@ -42,7 +42,7 @@ special options perform a series of procedures.
 
 The following tables show the current supported optimizations sorted from the lowest to the highest interest.
 
-.. include:: generators/simd-optimizations-tables.inc
+.. include:: simd-optimizations-tables.inc
 
 Special options
 ~~~~~~~~~~~~~~~
@@ -134,7 +134,7 @@ paths to enable certain instructions-set for each compiled object
 depending on the required optimizations, then combining the returned
 objects together.
 
-.. figure:: figures/opt-infra.png
+.. figure:: ../figures/opt-infra.png
 
 This mechanism should support all compilers and it doesn't require any
 compiler-specific extension, but at the same time it is adds a few steps to
