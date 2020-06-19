@@ -10,6 +10,7 @@ import subprocess
 
 import numpy as np
 from numpy.testing import assert_equal
+from numpy.testing._private.utils import IS_32BIT_CYGWIN
 
 is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
 
@@ -41,7 +42,7 @@ def test_f2py(f2py_cmd):
     assert_equal(stdout.strip(), np.__version__.encode('ascii'))
 
 
-@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+@pytest.mark.xfail(IS_32BIT_CYGWIN, reason="Random fork failures",
                    raises=BlockingIOError)
 def test_pep338():
     stdout = subprocess.check_output([sys.executable, '-mnumpy.f2py', '-v'])

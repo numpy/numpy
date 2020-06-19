@@ -10,6 +10,7 @@ import pytest
 import numpy.f2py
 
 from numpy.testing import assert_equal
+from numpy.testing._private.utils import IS_32BIT_CYGWIN
 from . import util
 
 
@@ -26,7 +27,7 @@ def setup_module():
     "extra_args", [['--noopt', '--debug'], '--noopt --debug', '']
     )
 @pytest.mark.leaks_references(reason="Imported module seems never deleted.")
-@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+@pytest.mark.xfail(IS_32BIT_CYGWIN, reason="Random fork failures",
                    raises=BlockingIOError)
 def test_f2py_init_compile(extra_args):
     # flush through the f2py __init__ compile() function code path as a
@@ -85,7 +86,7 @@ def test_f2py_init_compile(extra_args):
             del sys.modules[modname]
 
 
-@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+@pytest.mark.xfail(IS_32BIT_CYGWIN, reason="Random fork failures",
                    raises=BlockingIOError)
 def test_f2py_init_compile_failure():
     # verify an appropriate integer status value returned by
@@ -115,7 +116,7 @@ def test_f2py_init_compile_bad_cmd():
 @pytest.mark.parametrize('fsource',
         ['program test_f2py\nend program test_f2py',
          b'program test_f2py\nend program test_f2py',])
-@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+@pytest.mark.xfail(IS_32BIT_CYGWIN, reason="Random fork failures",
                    raises=BlockingIOError)
 def test_compile_from_strings(tmpdir, fsource):
     # Make sure we can compile str and bytes gh-12796

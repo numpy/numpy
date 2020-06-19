@@ -5,6 +5,7 @@ import subprocess
 import sys
 import warnings
 import numpy as np
+from numpy.testing._private.utils import IS_32BIT_CYGWIN
 
 try:
     import cffi
@@ -42,7 +43,7 @@ else:
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
-@pytest.mark.xfail(sys.platform == "cygwin",
+@pytest.mark.xfail(IS_32BIT_CYGWIN,
                    reason="Random fork() failures",
                    raises=BlockingIOError)
 def test_cython(tmp_path):

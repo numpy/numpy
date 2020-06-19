@@ -17,6 +17,7 @@ import pytest
 
 from numpy.compat import asbytes, asstr
 from numpy.testing import temppath
+from numpy.testing._private.utils import IS_32BIT_CYGWIN
 from importlib import import_module
 
 #
@@ -320,7 +321,7 @@ class F2PyTest:
     # Pytest seems to ignore this, but I'm not sure where else to put
     # it, besides trying to make a metaclass that decorates every
     # method of a subclass of F2PyTest
-    @pytest.mark.xfail(sys.platform == 'cygwin',
+    @pytest.mark.xfail(IS_32BIT_CYGWIN,
                        reason='Fork() randomly fails on cygwin',
                        raises=BlockingIOError)
     def setup(self):
