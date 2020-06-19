@@ -1,6 +1,7 @@
 #ifndef __NPY_SIMD_DATA_H_
 #define __NPY_SIMD_DATA_H_
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if idefined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
 /*
  * Constants used in vector implementation of float64 exp(x)
  */
@@ -85,6 +86,7 @@ static npy_uint64 EXP_Table_tail[32] = {
     0x3C99D3E12DD8A18B,
 };
 #endif
+#endif
 
 /*
  * Constants used in vector implementation of exp(x)
@@ -140,6 +142,8 @@ static npy_uint64 EXP_Table_tail[32] = {
  *     logarithm function in IEEE floating-point arithmetic." ACM Transactions 
  *     on Mathematical Software (TOMS) 16.4 (1990): 378-400.
  */
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
+#if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
 static npy_uint64 LOG_TABLE_TOP[64] = {
     0x0000000000000000,
     0x3F8FC0A8B1000000,
@@ -281,5 +285,7 @@ static npy_uint64 LOG_TABLE_TAIL[64] = {
 
 #define NPY_TANG_LOG_LN2HI 0x1.62e42fefa4p-1
 #define NPY_TANG_LOG_LN2LO -0x1.8432a1b0e2634p-43
+#endif
+#endif
 
 #endif
