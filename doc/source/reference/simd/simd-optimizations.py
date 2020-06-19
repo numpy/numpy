@@ -3,10 +3,7 @@ Generate CPU features tables from CCompilerOpt
 """
 from os import sys, path
 gen_path = path.dirname(path.realpath(__file__))
-sys.path.append(path.abspath(path.join(
-    gen_path, '..', '..', '..', '..', 'numpy', 'distutils'
-)))
-from ccompiler_opt import CCompilerOpt
+from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
     fake_info = ""
@@ -162,7 +159,8 @@ if __name__ == '__main__':
         )
     )
     # TODO: diff the difference among all supported compilers
-    with open(path.join(gen_path, 'simd-optimizations-tables.inc'), 'w') as fd:
+    with open(path.join(gen_path, 'simd-optimizations-tables.inc'), 'wt') as fd:
+        fd.write(f'.. generated via {__file__}\n\n')
         fd.write(x86_tables)
         fd.write(ppc64_tables)
         fd.write(arm_tables)
