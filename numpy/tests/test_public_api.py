@@ -7,6 +7,7 @@ import warnings
 
 import numpy as np
 import numpy
+from numpy.testing._private.utils import IS_32BIT_CYGWIN
 import pytest
 
 try:
@@ -77,7 +78,7 @@ def test_numpy_namespace():
 
 
 @pytest.mark.parametrize('name', ['testing', 'Tester'])
-@pytest.mark.xfail(sys.platform == 'cygwin', reason="Random fork failures",
+@pytest.mark.xfail(IS_32BIT_CYGWIN, reason="Random fork failures",
                    raises=BlockingIOError)
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
