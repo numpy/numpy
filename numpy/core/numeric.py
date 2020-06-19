@@ -2395,10 +2395,7 @@ def array_equal(a1, a2, equal_nan=False):
         # When we can use isnan
         _isnan = isnan
     # Check if all failed comparisons were due to nans
-    if not _isnan(a1[~comp]).all() or not _isnan(a2[~comp]).all():
-        return False
-    else:
-        return True
+    return all(comp | (_isnan(a1) & _isnan(a2)))
 
 
 def _array_equiv_dispatcher(a1, a2):
