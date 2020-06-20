@@ -136,13 +136,13 @@ class Einsum(Benchmark):
         np.einsum("i...,->", self.d, 300, optimize=True)
     
     # scalar mul: trigger sum_of_products_stride0_contig_outcontig_two
-    def time_einsum_mul(self):
+    def time_einsum_mul(self, dtype):
         np.einsum("i,->i", self.c2, 300, optimize=True)
     
     # trigger contig_contig_outstride0_two
-    def time_einsum_contig_contig(self):
+    def time_einsum_contig_contig(self, dtype):
         np.einsum("ji,i->", self.b1, self.c3, optimize=True)
 
     # trigger sum_of_products_contig_outstride0_one
-    def time_einsum_contig_outstride0(self):
+    def time_einsum_contig_outstride0(self, dtype):
         np.einsum("i->", self.c2, optimize=True)
