@@ -837,8 +837,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
-        data-type, arrays are returned for each field.  Default is False.
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
@@ -1631,7 +1632,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         If 'lower', field names are converted to lower case.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``
+        unpacked using ``x, y, z = genfromtxt(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
@@ -2242,9 +2245,18 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask:
         output = output.view(MaskedArray)
         output._mask = outputmask
+    output = np.squeeze(output)
     if unpack:
-        return output.squeeze().T
-    return output.squeeze()
+        if names is None:
+            return output.T
+        elif len(names) == 1:
+            # squeeze single-name dtypes too
+            return output[names[0]]
+        else:
+            # For structured arrays with multiple fields,
+            # return an array for each field.
+            return [output[field] for field in names]
+    return output
 
 
 def ndfromtxt(fname, **kwargs):
