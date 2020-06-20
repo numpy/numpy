@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 124 people contributed to this release.  People with a "+" by their
+A total of 126 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * Alex Henrie
@@ -76,6 +76,7 @@ names contributed a patch for the first time.
 * Maxwell Bileschi +
 * Melissa Weber Mendonça +
 * Michael Felt
+* Michael Hirsch +
 * Mike Taves
 * Nico Schlömer
 * Pan Jan +
@@ -90,6 +91,7 @@ names contributed a patch for the first time.
 * Rakesh Vasudevan +
 * Ralf Gommers
 * RenaRuirui +
+* Robert Kern
 * Roman Yurchak
 * Ross Barnowski +
 * Ryan +
@@ -134,7 +136,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 444 pull requests were merged for this release.
+A total of 452 pull requests were merged for this release.
 
 * `#8255 <https://github.com/numpy/numpy/pull/8255>`__: ENH: add identity kwarg to frompyfunc
 * `#12646 <https://github.com/numpy/numpy/pull/12646>`__: TST: check exception details in refguide_check.py
@@ -580,3 +582,11 @@ A total of 444 pull requests were merged for this release.
 * `#16414 <https://github.com/numpy/numpy/pull/16414>`__: MAINT, DOC: add index for user docs.
 * `#16437 <https://github.com/numpy/numpy/pull/16437>`__: MAINT: support python 3.10
 * `#16456 <https://github.com/numpy/numpy/pull/16456>`__: DOC: Fix troubleshooting code snippet when env vars are empty
+* `#16457 <https://github.com/numpy/numpy/pull/16457>`__: REL: Prepare for the NumPy 1.19.0rc2 release.
+* `#16526 <https://github.com/numpy/numpy/pull/16526>`__: MAINT:ARMHF Fix detecting feature groups NEON_HALF and NEON_VFPV4
+* `#16527 <https://github.com/numpy/numpy/pull/16527>`__: BUG:random: Error when ``size`` is smaller than broadcast input...
+* `#16528 <https://github.com/numpy/numpy/pull/16528>`__: BUG: fix GCC 10 major version comparison
+* `#16563 <https://github.com/numpy/numpy/pull/16563>`__: BUG: Ensure SeedSequence 0-padding does not collide with spawn...
+* `#16586 <https://github.com/numpy/numpy/pull/16586>`__: BUG: fix sin/cos bug when input is strided array
+* `#16602 <https://github.com/numpy/numpy/pull/16602>`__: MAINT: Move and improve ``test_ignore_nan_ulperror``.
+* `#16645 <https://github.com/numpy/numpy/pull/16645>`__: REL: Update 1.19.0-changelog.rst for 1.19.0 release.
