@@ -18,6 +18,7 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    NoReturn,
     Optional,
     overload,
     Sequence,
@@ -1068,6 +1069,14 @@ def compress(
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
 ) -> ndarray: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: None,
+    a_max: None,
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> NoReturn: ...
 @overload
 def clip(
     a: _Number,
