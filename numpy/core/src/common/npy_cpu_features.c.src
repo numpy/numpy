@@ -1,6 +1,7 @@
 #include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h" // To guarantee the CPU baseline definitions are in scope.
 #include "numpy/npy_common.h" // for NPY_INLINE
-#include "numpy/npy_cpu.h" // To guarantee of having CPU definitions in scope.
+#include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
 /******************** Private Definitions *********************/
 
@@ -53,6 +54,44 @@ npy_cpu_features_dict(void)
     /**end repeat**/
     }
     return dict;
+}
+
+#define NPY__CPU_PYLIST_APPEND_CB(FEATURE, LIST) \
+    item = PyUnicode_FromString(NPY_TOSTRING(FEATURE)); \
+    if (item == NULL) { \
+        Py_DECREF(LIST); \
+        return NULL; \
+    } \
+    PyList_SET_ITEM(LIST, index++, item);
+
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_baseline_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_BASELINE_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
+}
+
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_dispatch_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_DISPATCH_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
 }
 
 /****************************************************************
@@ -283,28 +322,7 @@ npy__cpu_init_features_arm8(void)
  * so we play it safe
 */
 #include <stdio.h>
-#include <fcntl.h>
-
-#define NPY__HWCAP  16
-#define NPY__HWCAP2 26
-
-// arch/arm/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_HALF   (1 << 1)
-#define NPY__HWCAP_NEON   (1 << 12)
-#define NPY__HWCAP_VFPv3  (1 << 13)
-#define NPY__HWCAP_VFPv4  (1 << 16)
-#define NPY__HWCAP2_AES   (1 << 0)
-#define NPY__HWCAP2_PMULL (1 << 1)
-#define NPY__HWCAP2_SHA1  (1 << 2)
-#define NPY__HWCAP2_SHA2  (1 << 3)
-#define NPY__HWCAP2_CRC32 (1 << 4)
-// arch/arm64/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_FP       (1 << 0)
-#define NPY__HWCAP_ASIMD    (1 << 1)
-#define NPY__HWCAP_FPHP     (1 << 9)
-#define NPY__HWCAP_ASIMDHP  (1 << 10)
-#define NPY__HWCAP_ASIMDDP  (1 << 20)
-#define NPY__HWCAP_ASIMDFHM (1 << 23)
+#include "npy_cpuinfo_parser.h"
 
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
 static int
@@ -339,10 +357,12 @@ npy__cpu_init_features_linux(void)
     }
     if (hwcap == 0 && hwcap2 == 0) {
         /*
-         * FIXME: failback to compiler definitions,
-         * BTW we can parse /proc/cpuinfo for badly patched kernels
+         * try parsing with /proc/cpuinfo, if sandboxed
+         * failback to compiler definitions
         */
-        return 0;
+        if(!get_feature_from_proc_cpuinfo(&hwcap, &hwcap2)) {
+            return 0;
+        }
     }
 #ifdef __arm__
     // Detect Arm8 (aarch32 state)
@@ -367,9 +387,10 @@ npy__cpu_init_features_linux(void)
         npy__cpu_init_features_arm8();
     } else {
         npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & (NPY__HWCAP_NEON | NPY__HWCAP_VFPv3 |
-                                                              NPY__HWCAP_HALF)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & (NPY__HWCAP_NEON | NPY__HWCAP_VFPv4)) != 0;
+        if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
+            npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
+            npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
+        }
     }
     return 1;
 }
@@ -384,7 +405,7 @@ npy__cpu_init_features(void)
         return;
 #endif
     // We have nothing else todo
-#if defined(NPY_HAVE_NEON_ARM8) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
+#if defined(NPY_HAVE_ASIMD) || defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 8)
     #if defined(NPY_HAVE_FPHP) || defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
     npy__cpu_have[NPY_CPU_FEATURE_FPHP] = 1;
     #endif

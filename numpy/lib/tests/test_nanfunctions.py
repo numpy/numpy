@@ -957,7 +957,7 @@ def test__replace_nan():
     """ Test that _replace_nan returns the original array if there are no
     NaNs, not a copy.
     """
-    for dtype in [np.bool, np.int32, np.int64]:
+    for dtype in [np.bool_, np.int32, np.int64]:
         arr = np.array([0, 1], dtype=dtype)
         result, mask = _replace_nan(arr, 0)
         assert mask is None

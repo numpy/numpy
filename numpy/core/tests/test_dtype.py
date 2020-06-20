@@ -86,6 +86,15 @@ class TestBuiltin:
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+    @pytest.mark.parametrize("dtype",
+             ['Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
+              'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
+              'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0',
+              "Float128", "Complex128"])
+    def test_numeric_style_types_are_invalid(self, dtype):
+        with assert_raises(TypeError):
+            np.dtype(dtype)
+
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
@@ -1047,6 +1056,11 @@ def test_invalid_dtype_string():
     assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
 
 
+def test_keyword_argument():
+    # test for https://github.com/numpy/numpy/pull/16574#issuecomment-642660971
+    assert np.dtype(dtype=np.float64) == np.dtype(np.float64)
+
+
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
@@ -1324,4 +1338,3 @@ class TestFromCTypes:
         pair_type = np.dtype('{},{}'.format(*pair))
         expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
         assert_equal(pair_type, expected)
-

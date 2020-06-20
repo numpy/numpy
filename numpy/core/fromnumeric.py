@@ -536,9 +536,9 @@ def put(a, ind, v, mode='raise'):
     """
     try:
         put = a.put
-    except AttributeError:
+    except AttributeError as e:
         raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(a).__name__))
+                        "not {name}".format(name=type(a).__name__)) from e
 
     return put(ind, v, mode=mode)
 
@@ -648,6 +648,10 @@ def transpose(a, axes=None):
     >>> x = np.ones((1, 2, 3))
     >>> np.transpose(x, (1, 0, 2)).shape
     (2, 1, 3)
+
+    >>> x = np.ones((2, 3, 4, 5))
+    >>> np.transpose(x).shape
+    (5, 4, 3, 2)
 
     """
     return _wrapfunc(a, 'transpose', axes)

@@ -2,6 +2,7 @@
 Test scalar buffer interface adheres to PEP 3118
 """
 import numpy as np
+from numpy.core._rational_tests import rational
 import pytest
 
 from numpy.testing import assert_, assert_equal, assert_raises
@@ -117,3 +118,8 @@ class TestScalarPEP3118:
         code_points = np.frombuffer(v, dtype='i4')
 
         assert_equal(code_points, [ord(c) for c in s])
+
+    def test_user_scalar_fails_buffer(self):
+        r = rational(1)
+        with assert_raises(TypeError):
+            memoryview(r)
