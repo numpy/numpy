@@ -91,7 +91,7 @@ np.compress(
 )
 
 np.clip(a, 1, 2, out=1)  # E: No overload variant of "clip" matches argument type
-_ = np.clip(1, None, None)  # E: Need type annotation
+np.clip(1, None, None)  # E: No overload variant of "clip" matches argument type
 
 np.sum(a, axis=1.0)  # E: No overload variant of "sum" matches argument type
 np.sum(a, keepdims=1.0)  # E: No overload variant of "sum" matches argument type

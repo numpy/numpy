@@ -18,7 +18,6 @@ from typing import (
     Iterable,
     List,
     Mapping,
-    NoReturn,
     Optional,
     overload,
     Sequence,
@@ -1071,25 +1070,33 @@ def compress(
 ) -> ndarray: ...
 @overload
 def clip(
-    a: ArrayLike,
-    a_min: None,
-    a_max: None,
-    out: Optional[ndarray] = ...,
-    **kwargs: Any,
-) -> NoReturn: ...
-@overload
-def clip(
     a: _Number,
-    a_min: Optional[ArrayLike],
+    a_min: ArrayLike,
     a_max: Optional[ArrayLike],
     out: Optional[ndarray] = ...,
     **kwargs: Any,
 ) -> _Number: ...
 @overload
 def clip(
+    a: _Number,
+    a_min: None,
+    a_max: ArrayLike,
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> _Number: ...
+@overload
+def clip(
     a: ArrayLike,
-    a_min: Optional[ArrayLike],
+    a_min: ArrayLike,
     a_max: Optional[ArrayLike],
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> Union[number, ndarray]: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: None,
+    a_max: ArrayLike,
     out: Optional[ndarray] = ...,
     **kwargs: Any,
 ) -> Union[number, ndarray]: ...
