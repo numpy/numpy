@@ -542,3 +542,10 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+
+@pytest.mark.parametrize(["shape", "fill_value", "expected_output"],
+        [((2, 2), [5.0,  6.0], np.array([[5.0, 6.0], [5.0, 6.0]])),
+         ((3, 2), [1.0,  2.0], np.array([[1.0, 2.0], [1.0, 2.0], [1.0,  2.0]]))])
+def test_full_from_list(shape, fill_value, expected_output):
+    output = np.full(shape, fill_value)
+    assert_equal(output, expected_output)
