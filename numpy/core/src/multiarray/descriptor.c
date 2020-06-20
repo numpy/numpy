@@ -469,7 +469,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
-        if (PyUString_GET_SIZE(name) == 0) {
+        if (PyUnicode_GetLength(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
                 name = PyUString_FromFormat("f%d", i);
@@ -478,7 +478,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 }
             }
             /* On Py3, allow only non-empty Unicode strings as field names */
-            else if (PyUString_Check(title) && PyUString_GET_SIZE(title) > 0) {
+            else if (PyUnicode_Check(title) && PyUnicode_GetLength(title) > 0) {
                 name = title;
                 Py_INCREF(name);
             }
