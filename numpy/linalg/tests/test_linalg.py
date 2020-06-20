@@ -2043,13 +2043,9 @@ class TestTensorinv:
 
 def test_unsupported_commontype():
     # linalg gracefully handles unsupported type
-    linalg_funcs = ['cholesky', 'inv', 'qr', 'eigvals', 'eigvalsh',
-                    'eig', 'eigh', 'svd', 'cond', 'slogdet', 'det']
-    for func in linalg_funcs:
-        arr = np.array([[1, -2], [2, 5]], dtype='float16')
-        with assert_raises_regex(TypeError, "unsupported in linalg"):
-            f = getattr(linalg, func)
-            f(arr)
+    arr = np.array(['3.5', '2.'], dtype='float16')
+    with assert_raises_regex(TypeError, "unsupported in linalg"):
+        linalg.linalg._commonType(arr)
 
 @pytest.mark.slow
 @pytest.mark.xfail(not HAS_LAPACK64, run=False,
