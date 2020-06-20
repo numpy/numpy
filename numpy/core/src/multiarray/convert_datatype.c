@@ -1419,7 +1419,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_TIMEDELTA:
-            if (PyTypeNum_ISINTEGER(type_num1)) {
+            if (PyTypeNum_ISSIGNED(type_num1)) {
                 return ensure_dtype_nbo(type2);
             }
             break;
