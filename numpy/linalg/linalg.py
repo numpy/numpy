@@ -2660,7 +2660,7 @@ def multi_dot(arrays, *, out=None):
 
     See Also
     --------
-    dot : dot multiplication with two arguments.
+    numpy.dot : dot multiplication with two arguments.
 
     References
     ----------
