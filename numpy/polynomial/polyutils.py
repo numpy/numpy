@@ -176,12 +176,12 @@ def as_series(alist, trim=True):
     arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
     if min([a.size for a in arrays]) == 0:
         raise ValueError("Coefficient array is empty")
-    if any([a.ndim != 1 for a in arrays]):
+    if any(a.ndim != 1 for a in arrays):
         raise ValueError("Coefficient array is not 1-d")
     if trim:
         arrays = [trimseq(a) for a in arrays]
 
-    if any([a.dtype == np.dtype(object) for a in arrays]):
+    if any(a.dtype == np.dtype(object) for a in arrays):
         ret = []
         for a in arrays:
             if a.dtype != np.dtype(object):
