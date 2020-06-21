@@ -737,7 +737,6 @@ class ufunc:
     @property
     def at(self) -> Any: ...
 
-abs: ufunc
 absolute: ufunc
 add: ufunc
 arccos: ufunc
@@ -824,6 +823,8 @@ tan: ufunc
 tanh: ufunc
 true_divide: ufunc
 trunc: ufunc
+
+abs = absolute
 
 # Warnings
 class ModuleDeprecationWarning(DeprecationWarning): ...
