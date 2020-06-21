@@ -2362,7 +2362,7 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
         return 0;
     }
     name = PyTuple_GET_ITEM(tuple, 0);
-    if (!(PyUString_Check(name) && PyUString_GET_SIZE(name) == 0)) {
+    if (!(PyUnicode_Check(name) && PyUnicode_GetLength(name) == 0)) {
         return 0;
     }
     typestr2 = PyTuple_GET_ITEM(tuple, 1);
