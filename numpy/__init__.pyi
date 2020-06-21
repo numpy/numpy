@@ -824,6 +824,8 @@ tanh: ufunc
 true_divide: ufunc
 trunc: ufunc
 
+abs = absolute
+
 # Warnings
 class ModuleDeprecationWarning(DeprecationWarning): ...
 class VisibleDeprecationWarning(UserWarning): ...
