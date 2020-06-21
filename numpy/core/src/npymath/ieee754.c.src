@@ -634,7 +634,7 @@ void npy_set_floatstatus_invalid(void)
     fpsetsticky(FP_X_INV);
 }
 
-#elif defined(_AIX)
+#elif defined(_AIX) && !defined(__GNUC__)
 #include <float.h>
 #include <fpxcp.h>
 
