@@ -1096,6 +1096,12 @@ class TestCreation:
         a = np.array([1, Decimal(1)])
         a = np.array([[1], [Decimal(1)]])
 
+    def test_ndmax(self):
+        assert np.array([1], ndmax=0).ndim == 0
+        assert np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], ndmax=1).ndim == 1
+        assert np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], ndmax=2).ndim == 2
+        assert np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]).ndim == 3
+
 class TestStructured:
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])

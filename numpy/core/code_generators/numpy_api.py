@@ -350,6 +350,7 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
+    'PyArray_FromAny_MaxDim':               (304, StealRef(2)),
 }
 
 ufunc_types_api = {
