@@ -5,8 +5,8 @@ group: travis_latest
 os: linux
 dist: bionic
 
-# Travis whitelists the installable packages, additions can be requested
-#   https://github.com/travis-ci/apt-package-whitelist
+# Travis safelists the installable packages, additions can be requested
+#   https://github.com/travis-ci/apt-package-safelist
 addons:
   apt:
     packages: &common_packages
