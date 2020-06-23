@@ -244,7 +244,9 @@ static NPY_INLINE int
 run_unary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
-    if ((IS_OUTPUT_BLOCKABLE_UNARY((npy_uint)(@esize@/@outsize@), 64)) && (labs(steps[0]) < 2*@max_stride@*@esize@)) {
+    if ((IS_OUTPUT_BLOCKABLE_UNARY((npy_uint)(@esize@/@outsize@), 64)) &&
+            (labs(steps[0]) < 2*@max_stride@*@esize@) &&
+                ((steps[0] & (@esize@-1)) == 0)) {
         AVX512F_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0], steps[0]);
         return 1;
     }
