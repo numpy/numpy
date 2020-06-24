@@ -30,4 +30,4 @@ class Test:
     dtype = float
 
 
-np.dtype(Test)
+np.dtype(Test())
