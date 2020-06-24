@@ -820,7 +820,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     See Also
     --------
-    memmap
+    numpy.memmap
 
     """
     if isfileobj(filename):
