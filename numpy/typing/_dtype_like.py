@@ -1,31 +1,36 @@
 import sys
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union, TYPE_CHECKING
 
 from numpy import dtype
 from ._shape import _ShapeLike
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol, TypedDict
-else:
-    from typing_extensions import Protocol, TypedDict
-
 _DtypeLikeNested = Any  # TODO: wait for support for recursive types
 
-# Mandatory keys
-class _DtypeDictBase(TypedDict):
-    names: Sequence[str]
-    formats: Sequence[_DtypeLikeNested]
+if TYPE_CHECKING:
+    if sys.version_info >= (3, 8):
+        from typing import Protocol, TypedDict
+    else:
+        from typing_extensions import Protocol, TypedDict
 
-# Mandatory + optional keys
-class _DtypeDict(_DtypeDictBase, total=False):
-    offsets: Sequence[int]
-    titles: Sequence[Any]  # Elements should be valid as dict keys
-    itemsize: int
-    aligned: bool
+    # Mandatory keys
+    class _DtypeDictBase(TypedDict):
+        names: Sequence[str]
+        formats: Sequence[_DtypeLikeNested]
 
-# A protocol for anything with the dtype attribute
-class _SupportsDtype:
-    dtype: _DtypeLikeNested
+    # Mandatory + optional keys
+    class _DtypeDict(_DtypeDictBase, total=False):
+        offsets: Sequence[int]
+        titles: Sequence[Any]  # Elements should be valid as dict keys
+        itemsize: int
+        aligned: bool
+
+    # A protocol for anything with the dtype attribute
+    class _SupportsDtype(Protocol):
+        dtype: _DtypeLikeNested
+
+else:  # runtime-only placeholders
+    _DtypeDict = 'numpy.typing._dtype_like._DtypeDict'
+    _SupportsDtype = 'numpy.typing._dtype_like._SupportsDtype'
 
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
