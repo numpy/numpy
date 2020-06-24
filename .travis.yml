@@ -5,7 +5,7 @@ group: travis_latest
 os: linux
 dist: bionic
 
-# Travis safelists the installable packages, additions can be requested
+# Travis allows these packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-safelist
 addons:
   apt:
