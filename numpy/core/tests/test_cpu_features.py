@@ -1,7 +1,7 @@
 import sys, platform, re, pytest
 from numpy.core._multiarray_umath import __cpu_features__
 
-def assert_equal(actual, desired, fname):
+def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test
     actual, desired = str(actual), str(desired)
     if actual == desired:
@@ -61,12 +61,12 @@ class AbstractTest(object):
         self.load_flags()
         for gname, features in self.features_groups.items():
             test_features = [self.cpu_have(f) for f in features]
-            assert_equal(__cpu_features__.get(gname), all(test_features), gname)
+            assert_features_equal(__cpu_features__.get(gname), all(test_features), gname)
 
         for feature_name in self.features:
             cpu_have = self.cpu_have(feature_name)
             npy_have = __cpu_features__.get(feature_name)
-            assert_equal(npy_have, cpu_have, feature_name)
+            assert_features_equal(npy_have, cpu_have, feature_name)
 
     def cpu_have(self, feature_name):
         map_names = self.features_map.get(feature_name, feature_name)
