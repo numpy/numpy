@@ -10,7 +10,7 @@ allow downstream libraries to continue to use these shims for forward
 compatibility with numpy while they transition their code to newer versions of
 Python.
 """
-__all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
+__all__ = ['bytes', 'asbytes', 'isfileobj', 'isfilelikeobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
            'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
@@ -52,6 +52,9 @@ def asstr(s):
 
 def isfileobj(f):
     return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
+
+def isfilelikeobj(f):
+    return hasattr(f, 'readinto')
 
 def open_latin1(filename, mode='r'):
     return open(filename, mode=mode, encoding='iso-8859-1')
