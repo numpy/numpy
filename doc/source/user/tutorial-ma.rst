@@ -129,7 +129,7 @@ data.
     dates = np.genfromtxt(filename, dtype=np.unicode_, delimiter=",",
                           max_rows=1, usecols=range(3, 17),
                           encoding="utf-8-sig")
-    # Read the names text names of the geographic locations from the first two
+    # Read the names of the geographic locations from the first two
     # columns, skipping the first seven rows
     locations = np.genfromtxt(filename, dtype=np.unicode_, delimiter=",",
                               skip_header=7, usecols=(0, 1),
@@ -175,7 +175,7 @@ to plot a dashed line (using the ``'--'`` line style). See the
    also that we use a semicolon at the end of a line to suppress its output, but
    this is optional.
 
-The graph has a strange shape from January 24th to January 21st. It would be
+The graph has a strange shape from January 24th to February 1st. It would be
 interesing to know where this data comes from. If we look at the ``locations``
 array we extracted from the ``.csv`` file, we can see that we have two columns,
 where the first would contain regions and the second would contain the name of
@@ -222,7 +222,7 @@ If we look at the ``nbcases_ma`` masked array, this is what we have:
 
 We can see that this is a different kind of array. As mentioned in the
 introduction, it has three attributes (``data``, ``mask`` and ``fill_value``).
-Keep in ming that the ``mask`` attribute has a ``True`` value for elements
+Keep in mind that the ``mask`` attribute has a ``True`` value for elements
 corresponding to **invalid** data (represented by two dashes in the ``data``
 attribute).
 
