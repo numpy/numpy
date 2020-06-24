@@ -72,15 +72,13 @@
 
 /*
  * For finding a DType quickly from a type, it is easiest to have a
- * a mapping of pytype -> dtype.
- * Since a DType must know its type, but the type not the DType, we will
- * store the DType as a weak reference. When a reference is dead we can
- * remove the item from the dictionary.
- * A cleanup should probably be done occasionally if (and only if) a large
- * number of type -> DType mappings are added.
- * This assumes that the mapping is a bifurcation DType <-> type
- * (there is exactly one DType for each type and vise versa).
- * If it is not, it is possible for a python type to stay alive unnecessarily.
+ * a mapping of pytype -> DType.
+ * TODO: This mapping means that it is currently impossible to delete a
+ *       pair of pytype <-> DType.  To resolve this, it is necessary to
+ *       weakly reference the pytype. As long as the pytype is alive, we
+ *       want to be able to use `np.array([pytype()])`.
+ *       It should be possible to retrofit this without too much trouble
+ *       (all type objects support weak references).
  */
 PyObject *_global_pytype_to_type_dict = NULL;
 
@@ -175,7 +173,7 @@ _PyArray_MapPyTypeToDType(
         }
     }
 
-    int res = PyDict_Contains(_global_pytype_to_type_dict, Dtype_obj);
+    int res = PyDict_Contains(_global_pytype_to_type_dict, (PyObject *)pytype);
     if (res < 0) {
         return -1;
     }
@@ -185,12 +183,8 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
-    PyObject *weakref = PyWeakref_NewRef(Dtype_obj, NULL);
-    if (weakref == NULL) {
-        return -1;
-    }
     return PyDict_SetItem(_global_pytype_to_type_dict,
-            (PyObject *)pytype, weakref);
+            (PyObject *)pytype, Dtype_obj);
 }
 
 
@@ -203,42 +197,24 @@ _PyArray_MapPyTypeToDType(
 static NPY_INLINE PyArray_DTypeMeta *
 discover_dtype_from_pytype(PyTypeObject *pytype)
 {
-    PyObject *weakref;
+    PyObject *DType;
 
     if (pytype == &PyArray_Type) {
         Py_INCREF(Py_None);
         return (PyArray_DTypeMeta *)Py_None;
     }
 
-    weakref = PyDict_GetItem(_global_pytype_to_type_dict, (PyObject *)pytype);
-
-    if (weakref == NULL) {
-        /* This should not be possible, since types should be hashable */
-        assert(!PyErr_Occurred());
+    DType = PyDict_GetItem(_global_pytype_to_type_dict, (PyObject *)pytype);
+    if (DType == NULL) {
+        /* the python type is not known */
         return NULL;
     }
-    if (weakref == Py_None) {
-        Py_INCREF(Py_None);
-        return (PyArray_DTypeMeta *)Py_None;
-    }
-    assert(PyWeakref_CheckRef(weakref));
-    PyObject *DType = PyWeakref_GET_OBJECT(weakref);
+
     Py_INCREF(DType);
     if (DType == Py_None) {
-        /*
-         * The weak reference (and thus the mapping) was invalidated, this
-         * should not typically happen, but if it does delete it from the
-         * mapping.
-         */
-        int res = PyDict_DelItem(
-                _global_pytype_to_type_dict, (PyObject *)pytype);
-        if (res < 0) {
-            return NULL;
-        }
+        return (PyArray_DTypeMeta *)Py_None;
     }
-    else {
-        assert(PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
-    }
+    assert(PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }
 
@@ -886,6 +862,25 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
 }
 
 
+/**
+ * Recursion helper for `PyArray_DiscoverDTypeAndShape`.  See its
+ * documentation for additional details.
+ *
+ * @param obj The current (possibly nested) object
+ * @param curr_dims The current depth, i.e. initially 0 and increasing.
+ * @param max_dims Maximum number of dimensions, modified during discovery.
+ * @param out_descr dtype instance (or NULL) to promoted and update.
+ * @param out_shape The current shape (updated)
+ * @param coercion_cache_tail_ptr The tail of the linked list of coercion
+ *        cache objects, which hold on to converted sequences and arrays.
+ *        This is a pointer to the `->next` slot of the previous cache so
+ *        that we can append a new cache object (and update this pointer).
+ *        (Initially it is a pointer to the user-provided head pointer).
+ * @param fixed_DType User provided fixed DType class
+ * @param flags Discovery flags (reporting and behaviour flags, see def.)
+ * @return The updated number of maximum dimensions (i.e. scalars will set
+ *         this to the current dimensions).
+ */
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape_Recursive(
         PyObject *obj, int curr_dims, int max_dims, PyArray_Descr**out_descr,
@@ -1103,7 +1098,9 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  * @param coercion_cache NULL initialized reference to a cache pointer.
  *        May be set to the first coercion_cache, and has to be freed using
  *        npy_free_coercion_cache.
- *        This should be stored in a thread-safe manner. (i.e. function static)
+ *        This should be stored in a thread-safe manner (i.e. function static)
+ *        and is designed to be consumed by `PyArray_AssignFromCache`.
+ *        If not consumed, must be freed using `npy_free_coercion_cache`.
  * @param fixed_DType A user provided fixed DType class.
  * @param requested_descr A user provided fixed descriptor. This is always
  *        returned as the discovered descriptor, but currently only used

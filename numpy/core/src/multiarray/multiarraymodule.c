@@ -4631,7 +4631,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-    if (initialize_abstract_dtypes_and_map_others() < 0) {
+    if (initialize_and_map_pytypes_to_dtypes() < 0) {
         goto err;
     }
     if (initumath(m) != 0) {

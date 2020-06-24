@@ -64,7 +64,7 @@ discover_descriptor_from_pycomplex(
 
 
 NPY_NO_EXPORT int
-initialize_abstract_dtypes_and_map_others()
+initialize_and_map_pytypes_to_dtypes()
 {
     PyArrayAbstractObjDTypeMeta_Type.tp_base = &PyArrayDTypeMeta_Type;
     if (PyType_Ready(&PyArrayAbstractObjDTypeMeta_Type) < 0) {
