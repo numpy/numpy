@@ -66,14 +66,14 @@ def test_numpy_namespace():
             'str': 'builtins.str',
             'unicode': 'builtins.str',
         }
-        whitelist = dict(undocumented, **builtins)
+        allowlist = dict(undocumented, **builtins)
     else:
         # after 3.7, we override dir to not show these members
-        whitelist = undocumented
+        allowlist = undocumented
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
-    assert bad_results == whitelist
+    assert bad_results == allowlist
 
 
 @pytest.mark.parametrize('name', ['testing', 'Tester'])

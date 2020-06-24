@@ -8,7 +8,7 @@
 #include "numpy/npy_cpu.h"
 #include "numpy/npy_os.h"
 
-/* blacklist */
+/* blocklist */
 
 /* Disable broken Sun Workshop Pro math functions */
 #ifdef __SUNPRO_C
