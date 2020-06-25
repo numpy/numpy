@@ -841,7 +841,7 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
     PyArray_DTypeMeta *new_DType;
     int res;
 
-    res= PyArray_ExtractDTypeAndDescriptor((PyObject *)dtype,
+    res = PyArray_ExtractDTypeAndDescriptor((PyObject *)dtype,
             &new_dtype, &new_DType);
     if (res < 0) {
         return NULL;
