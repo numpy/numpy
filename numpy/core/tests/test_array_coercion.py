@@ -248,11 +248,10 @@ class TestScalarDiscovery:
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
 
-        if is_parametric_dtype(scalar.dtype) or type(scalar) is rational:
-            # datetime with unit will be named "datetime64[unit]"
+        if type(scalar) is rational:
             # Rational generally fails due to a missing cast. In the future
             # object casts should automatically be defined based on `setitem`.
-            pytest.xfail("0-D object array to a unit-less datetime cast fails")
+            pytest.xfail("Rational to object cast is undefined currently.")
 
         # Use casting from object:
         arr = np.array(scalar, dtype=object).astype(scalar.dtype)
