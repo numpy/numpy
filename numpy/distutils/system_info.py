@@ -2371,7 +2371,7 @@ class accelerate_info(system_info):
                     'accelerate' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
+                elif 'arm64' not in get_platform():
                     args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
@@ -2381,7 +2381,7 @@ class accelerate_info(system_info):
                       'veclib' in libraries):
                 if intel:
                     args.extend(['-msse3'])
-                else:
+                elif 'arm64' not in get_platform():
                     args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
