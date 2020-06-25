@@ -16,6 +16,12 @@ will succeed at this time (this may change) and return an undefined result
 Note, this already happened for ``np.array(np.float64(np.nan), dtype=np.int64)``
 and that the behaviour is unchanged for ``np.nan`` itself which is a Python
 float.
+To avoid backward compatibility issues, at this time assignment from
+``datetime64`` scalar to strings of too short length remains supported.
+This means that ``np.asarray(np.datetime64("2020-10-10"), dtype="S5")``
+succeeds now, when it failed before.  In the long term this may be
+deprecate this or the unsafe cast may be allowed generally to make assignment
+of arrays and scalars behave consistently.
 
 
 Array coercion changes when Strings and other types are mixed

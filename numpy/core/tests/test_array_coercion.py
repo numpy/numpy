@@ -354,20 +354,32 @@ class TestTimeScalars:
         assert_array_equal(arr, cast)
         assert_array_equal(cast, cast)
 
+    @pytest.mark.parametrize("dtype", ["S6", "U6"])
     @pytest.mark.parametrize(["val", "unit"],
             [param(123, "s", id="[s]"), param(123, "D", id="[D]")])
-    def test_coercion_assignment_datetime(self, val, unit):
+    def test_coercion_assignment_datetime(self, val, unit, dtype):
+        # String from datetime64 assignment is currently special cased to
+        # never use casting.  This is because casting will error in this
+        # case, and traditionally in most cases the behaviour is maintained
+        # like this.  (`np.array(scalar, dtype="U6")` would have failed before)
+        # TODO: This discrepency _should_ be resolved, either by relaxing the
+        #       cast, or by deprecating the first part.
         scalar = np.datetime64(val, unit)
+        dtype = np.dtype(dtype)
+        cut_string = dtype.type(str(scalar)[:6])
 
-        # The error type is not ideal, fails because string is too short,
-        # This should possibly be allowed as an unsafe cast:
+        arr = np.array(scalar, dtype=dtype)
+        assert arr[()] == cut_string
+        ass = np.ones((), dtype=dtype)
+        ass[()] = scalar
+        assert ass[()] == cut_string
+
         with pytest.raises(RuntimeError):
-            np.array(scalar, dtype="S6")
-        with pytest.raises(RuntimeError):
-            np.array(scalar).astype("S6")
-        ass = np.ones((), dtype="S6")
-        with pytest.raises(RuntimeError):
-            ass[()] = scalar
+            # However, unlike the above assignment using `str(scalar)[:6]`
+            # due to being handled by the string DType and not be casting
+            # the explicit cast fails:
+            np.array(scalar).astype(dtype)
+
 
     @pytest.mark.parametrize(["val", "unit"],
             [param(123, "s", id="[s]"), param(123, "D", id="[D]")])

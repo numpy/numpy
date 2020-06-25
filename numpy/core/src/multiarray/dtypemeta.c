@@ -258,6 +258,29 @@ datetime_known_scalar_types(
 }
 
 
+static int
+string_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype) {
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    if (PyType_IsSubtype(pytype, &PyDatetimeArrType_Type)) {
+        /*
+         * TODO: This should likely be deprecated or otherwise resolved.
+         *       Deprecation has to occur in `String->setitem` unfortunately.
+         *
+         * Datetime currently do not cast to shorter strings, but string
+         * coercion for arbitrary values uses `str(obj)[:len]` so it works.
+         * This means `np.array(np.datetime64("2020-01-01"), "U9")`
+         * and `np.array(np.datetime64("2020-01-01")).astype("U9")` behave
+         * differently.
+         */
+        return 1;
+    }
+    return 0;
+}
+
+
 /**
  * This function takes a PyArray_Descr and replaces its base class with
  * a newly created dtype subclass (DTypeMeta instances).
@@ -395,6 +418,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     void_discover_descr_from_pyobject);
         }
         else {
+            dtype_class->is_known_scalar_type = string_known_scalar_types;
             dtype_class->discover_descr_from_pyobject = (
                     string_discover_descr_from_pyobject);
         }
