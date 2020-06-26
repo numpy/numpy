@@ -958,7 +958,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     Construct a record array from a wide-variety of objects.
 
     A general-purpose record array constructor that dispatches to the 
-    appropriate ``records.from*`` function based on the inputs (see Notes).
+    appropriate `recarray` creation function based on the inputs (see Notes).
 
     Parameters
     ----------
