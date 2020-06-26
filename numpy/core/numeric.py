@@ -310,7 +310,8 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     """
     if dtype is None:
-        dtype = array(fill_value).dtype
+        fill_value = asarray(fill_value)
+        dtype = fill_value.dtype
     a = empty(shape, dtype, order)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
