@@ -1434,7 +1434,7 @@ def _squeeze_dispatcher(a, axis=None):
 @array_function_dispatch(_squeeze_dispatcher)
 def squeeze(a, axis=None):
     """
-    Remove entries of length one from the shape of an array.
+    Remove axes of length one from `a`.
 
     Parameters
     ----------
