@@ -280,14 +280,26 @@ def dtype_to_descr(dtype):
         return dtype.str
 
 def descr_to_dtype(descr):
-    '''
-    descr may be stored as dtype.descr, which is a list of
-    (name, format, [shape]) tuples where format may be a str or a tuple.
-    Offsets are not explicitly saved, rather empty fields with
-    name, format == '', '|Vn' are added as padding.
+    """
+    Returns a dtype based off the given description.
 
-    This function reverses the process, eliminating the empty padding fields.
-    '''
+    This is essentially the reverse of `dtype_to_descr()`. It will remove
+    the valueless padding fields created by, i.e. simple fields like
+    dtype('float32'), and then convert the description to its corresponding
+    dtype.
+
+    Parameters
+    ----------
+    descr : object
+        The object retreived by dtype.descr. Can be passed to
+        `numpy.dtype()` in order to replicate the input dtype.
+
+    Returns
+    -------
+    dtype : dtype
+        The dtype constructed by the description.
+
+    """
     if isinstance(descr, str):
         # No padding removal needed
         return numpy.dtype(descr)
