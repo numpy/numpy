@@ -441,7 +441,7 @@ def triu(m, k=0):
     """
     Upper triangle of an array.
 
-    Return a copy of a matrix with the elements below the `k`-th diagonal
+    Return a copy of an array with the elements below the `k`-th diagonal
     zeroed.
 
     Please refer to the documentation for `tril` for further details.
