@@ -1761,8 +1761,8 @@ class TestMethods:
         # check complex
         msg = "Test complex sort order with nans"
         a = np.zeros(9, dtype=np.complex128)
-        a.real += [np.nan, np.nan, np.nan, 1, 0, 1, 1, 0, 0]
-        a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
+        a.real += [np.nan, np.nan, np.nan, 1, 1, 1, 0, 0, 0]
+        a.imag += [np.nan, 1, 0, np.nan, 1, 0, np.nan, 1, 0]
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
