@@ -8,6 +8,7 @@ To contribute code or documentation, you first need
 #. a GitHub account
 #. a fork of NumPy
 
+
 ******************************************************************************
 Install git
 ******************************************************************************
@@ -23,12 +24,16 @@ Then set your name and email: ::
   git config --global user.email you@yourdomain.example.com
   git config --global user.name "Your Name"
 
+.. _set-up-and-configure-a-github-account:
+
 ******************************************************************************
 Create a GitHub account
 ******************************************************************************
 
 If you don't have a GitHub account, visit https://github.com/join to create
 one.
+
+.. _forking:
 
 ******************************************************************************
 Create a NumPy fork
@@ -53,6 +58,9 @@ Create the fork repo
    and then you'll be taken to the home page of your forked copy:
 
    .. image:: forked_page.png
+
+
+.. _set-up-fork:
 
 Make the local copy
 ==============================================================================
@@ -80,6 +88,8 @@ Make the local copy
     total 0
     drwxrwxrwx 1 bjn bjn 4096 Jun 20 07:20 numpy
 
+.. _linking-to-upstream:
+
 #. Give the name ``upstream`` to the main NumPy repo: ::
 
     cd numpy
@@ -90,11 +100,6 @@ Make the local copy
 
     git config branch.master.remote upstream
     git config branch.master.merge refs/heads/master
-
-#. Optionally, to get easy access to NumPy pull requests (useful mostly to
-   reviewers): ::
-
-    git config --add remote.upstream.fetch '+refs/pull/*/head:refs/remotes/upstream/pr/*'
 
 ******************************************************************************
 Look it over
@@ -139,7 +144,6 @@ Look it over
 
 .. include:: git_links.inc
 
-.. _set-up-and-configure-a-github-account:
 
 ******************************************************************************
 Optional: set up SSH keys to avoid passwords
