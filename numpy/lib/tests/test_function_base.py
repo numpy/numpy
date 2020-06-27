@@ -5,6 +5,10 @@ import decimal
 from fractions import Fraction
 import math
 import pytest
+import hypothesis
+from hypothesis.extra.numpy import arrays
+import hypothesis.strategies as st
+
 
 import numpy as np
 from numpy import ma
@@ -3103,6 +3107,73 @@ class TestQuantile:
         p = p.tolist()
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
+
+    def test_quantile_monotonic(self):
+        # GH 14685
+        # test that the return value of quantile is monotonic if p0 is ordered
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
+                                         8, 8, 7]) * 0.1, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+    @hypothesis.given(arr=arrays(dtype=np.float, shape=st.integers(min_value=3,
+                                                                   max_value=1000),
+                                 elements=st.floats(allow_infinity=False,
+                                                    allow_nan=False,
+                                                    min_value=-1e300,
+                                                    max_value=1e300)))
+    def test_quantile_monotonic_hypo(self, arr):
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(arr, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+
+class TestLerp:
+    @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      t1=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      a = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300),
+                      b = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300))
+    def test_lerp_monotonic(self, t0, t1, a, b):
+        l0 = np.lib.function_base._lerp(a, b, t0)
+        l1 = np.lib.function_base._lerp(a, b, t1)
+        if t0 == t1 or a == b:
+            assert l0 == l1  # uninteresting
+        elif (t0 < t1) == (a < b):
+            assert l0 <= l1
+        else:
+            assert l0 >= l1
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_bounded(self, t, a, b):
+        if a <= b:
+            assert a <= np.lib.function_base._lerp(a, b, t) <= b
+        else:
+            assert b <= np.lib.function_base._lerp(a, b, t) <= a
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_symmetric(self, t, a, b):
+        # double subtraction is needed to remove the extra precision that t < 0.5 has
+        assert np.lib.function_base._lerp(a, b, 1 - (1 - t)) == np.lib.function_base._lerp(b, a, 1 - t)
+
+    def test_lerp_0d_inputs(self):
+        a = np.array(2)
+        b = np.array(5)
+        t = np.array(0.2)
+        assert np.lib.function_base._lerp(a, b, t) == 2.6
 
 
 class TestMedian:
