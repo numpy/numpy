@@ -1,0 +1,5 @@
+``norm=forward`` keyword option available for ``numpy.fft`` functions
+---------------------------------------------------------------------
+Using the keyword argument option ``norm=forward`` has the direct transforms
+scaled by ``1/n`` and the inverse transforms unscaled (i.e. directly opposite
+to the default option ``norm=None``).

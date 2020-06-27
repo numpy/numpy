@@ -52,8 +52,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
         n = a.shape[axis]
 
     if n < 1:
-        raise ValueError("Invalid number of FFT data points (%d) specified."
-                         % n)
+        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
 
     fct = 1/inv_norm
 
@@ -82,10 +81,10 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
 def _unitary(norm):
     if norm == "ortho":
         return True
-    if norm is None or norm == "inverse":
+    if norm is None or norm == "forward":
         return False
-    raise ValueError("Invalid norm value %s; should be None, \"ortho\" or\
-                    \"inverse\"." % norm)
+    raise ValueError(f"Invalid norm value {norm}; should be None, \"ortho\" or\
+                    \"forward\".")
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -113,10 +112,14 @@ def fft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -175,14 +178,13 @@ def fft(a, n=None, axis=-1, norm=None):
     >>> plt.show()
 
     """
-
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
     inv_norm = 1
     if _unitary(norm):
         inv_norm = sqrt(n)
-    elif norm == "inverse":
+    elif norm == "forward":
         inv_norm = n
     output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
@@ -224,10 +226,14 @@ def ifft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse DFT.  If not given, the last
         axis is used.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -279,7 +285,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     inv_norm = n
     if _unitary(norm):
         inv_norm = sqrt(n)
-    elif norm == "inverse":
+    elif norm == "forward":
         inv_norm = 1
     output = _raw_fft(a, n, axis, False, False, inv_norm)
     return output
@@ -306,10 +312,14 @@ def rfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last axis is
         used.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -370,7 +380,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     inv_norm = 1
     if _unitary(norm):
         inv_norm = sqrt(n)
-    elif norm == "inverse":
+    elif norm == "forward":
         inv_norm = n
     output = _raw_fft(a, n, axis, True, True, inv_norm)
     return output
@@ -406,10 +416,14 @@ def irfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -472,7 +486,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     inv_norm = n
     if _unitary(norm):
         inv_norm = sqrt(n)
-    elif norm == "inverse":
+    elif norm == "forward":
         inv_norm = 1
     output = _raw_fft(a, n, axis, True, False, inv_norm)
     return output
@@ -498,10 +512,14 @@ def hfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -591,10 +609,14 @@ def ihfft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -696,10 +718,14 @@ def fftn(a, s=None, axes=None, norm=None):
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the transform over that axis is
         performed multiple times.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -764,7 +790,6 @@ def fftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-
     return _raw_fftnd(a, s, axes, fft, norm)
 
 
@@ -803,10 +828,14 @@ def ifftn(a, s=None, axes=None, norm=None):
         axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -862,14 +891,13 @@ def ifftn(a, s=None, axes=None, norm=None):
     >>> plt.show()
 
     """
-
     return _raw_fftnd(a, s, axes, ifft, norm)
 
 
 @array_function_dispatch(_fftn_dispatcher)
 def fft2(a, s=None, axes=(-2, -1), norm=None):
     """
-    Compute the 2-dimensional discrete Fourier Transform
+    Compute the 2-dimensional discrete Fourier Transform.
 
     This function computes the *n*-dimensional discrete Fourier Transform
     over any axes in an *M*-dimensional array by means of the
@@ -893,10 +921,14 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -953,7 +985,6 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
               0.  +0.j        ,   0.  +0.j        ]])
 
     """
-
     return _raw_fftnd(a, s, axes, fft, norm)
 
 
@@ -991,10 +1022,14 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         axes are used.  A repeated index in `axes` means the transform over
         that axis is performed multiple times.  A one-element sequence means
         that a one-dimensional FFT is performed.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -1041,7 +1076,6 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-
     return _raw_fftnd(a, s, axes, ifft, norm)
 
 
@@ -1072,10 +1106,14 @@ def rfftn(a, s=None, axes=None, norm=None):
     axes : sequence of ints, optional
         Axes over which to compute the FFT.  If not given, the last ``len(s)``
         axes are used, or all axes if `s` is also not specified.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -1150,10 +1188,14 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
         Shape of the FFT.
     axes : sequence of ints, optional
         Axes over which to compute the FFT.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -1171,7 +1213,6 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `rfftn`.
 
     """
-
     return rfftn(a, s, axes, norm)
 
 
@@ -1210,10 +1251,14 @@ def irfftn(a, s=None, axes=None, norm=None):
         `len(s)` axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -1293,10 +1338,14 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     axes : sequence of ints, optional
         The axes over which to compute the inverse fft.
         Default is the last two axes.
-    norm : {None, "ortho", "inverse"}, optional
+    norm : {None, "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
-        .. versionadded:: 1.20.0
+
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.20.0
+
+            The "forward" option was added.
 
     Returns
     -------
@@ -1313,5 +1362,4 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     For more details see `irfftn`.
 
     """
-
     return irfftn(a, s, axes, norm)
