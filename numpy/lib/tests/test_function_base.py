@@ -3116,12 +3116,11 @@ class TestQuantile:
                                          8, 8, 7]) * 0.1, p0)
         assert_equal(np.sort(quantile), quantile)
 
-    @hypothesis.given(arr=arrays(dtype=np.float, shape=st.integers(min_value=3,
-                                                                   max_value=1000),
-                                 elements=st.floats(allow_infinity=False,
-                                                    allow_nan=False,
-                                                    min_value=-1e300,
-                                                    max_value=1e300)))
+    @hypothesis.given(
+            arr=arrays(dtype=np.float64,
+                       shape=st.integers(min_value=3, max_value=1000),
+                       elements=st.floats(allow_infinity=False, allow_nan=False,
+                                          min_value=-1e300, max_value=1e300)))
     def test_quantile_monotonic_hypo(self, arr):
         p0 = np.arange(0, 1, 0.01)
         quantile = np.quantile(arr, p0)
@@ -3166,8 +3165,10 @@ class TestLerp:
                       b=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=-1e300, max_value=1e300))
     def test_lerp_symmetric(self, t, a, b):
-        # double subtraction is needed to remove the extra precision that t < 0.5 has
-        assert np.lib.function_base._lerp(a, b, 1 - (1 - t)) == np.lib.function_base._lerp(b, a, 1 - t)
+        # double subtraction is needed to remove the extra precision of t < 0.5
+        left = np.lib.function_base._lerp(a, b, 1 - (1 - t))
+        right = np.lib.function_base._lerp(b, a, 1 - t)
+        assert left == right
 
     def test_lerp_0d_inputs(self):
         a = np.array(2)
