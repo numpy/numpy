@@ -168,8 +168,7 @@ class TestFFT1D:
                                     np.fft.rfftn, np.fft.irfftn])
     def test_axes(self, op):
         x = random((30, 20, 10))
-        axes = [(0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1),
-                (2, 1, 0)]
+        axes = [(0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)]
         for a in axes:
             op_tr = op(np.transpose(x, a))
             tr_op = np.transpose(op(x, axes=a), a)
@@ -263,7 +262,7 @@ class TestFFTThreadSafe:
         # Make sure all threads returned the correct value
         for i in range(self.threads):
             assert_array_equal(q.get(timeout=5), expected,
-                    'Function returned wrong value in multithreade context')
+                'Function returned wrong value in multithreaded context')
 
     def test_fft(self):
         a = np.ones(self.input_shape) * 1+0j

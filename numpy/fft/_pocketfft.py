@@ -1,5 +1,5 @@
 """
-Discrete Fourier Transforms.
+Discrete Fourier Transforms
 
 Routines in this module:
 
@@ -84,7 +84,7 @@ def _unitary(norm):
     if norm is None or norm == "forward":
         return False
     raise ValueError(f"Invalid norm value {norm}; should be None, \"ortho\" or\
-                    \"forward\".")
+                     \"forward\".")
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
