@@ -134,7 +134,7 @@ transforms by setting the keyword argument ``norm`` to ``"ortho"`` (default is
 `None`) so that both direct and inverse transforms will be scaled by
 :math:`1/\\sqrt{n}`. Finally, setting the keyword argument "norm" to
 ``"forward"`` has the direct transforms scaled by :math:`1/n` and the inverse
-transforms unscaled (i.e. directly oppposite to the default option `None`).
+transforms unscaled (i.e. directly oppposite to the default option ``None``).
 
 Real and Hermitian transforms
 -----------------------------
