@@ -81,10 +81,10 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
 def _unitary(norm):
     if norm == "ortho":
         return True
-    if norm is None or norm == "forward":
+    if norm == "backward" or norm == "forward" or norm is None:
         return False
-    raise ValueError(f"Invalid norm value {norm}; should be None, \"ortho\" or\
-                     \"forward\".")
+    raise ValueError(f"Invalid norm value {norm}; should be \"backward\" (None\
+                     alias), \"ortho\" or \"forward\".")
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -112,14 +112,15 @@ def fft(a, n=None, axis=-1, norm=None):
     axis : int, optional
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
-    norm : {None, "ortho", "forward"}, optional
+    norm : {"backward", "ortho", "forward"}, optional
         .. versionadded:: 1.10.0
 
-        Normalization mode (see `numpy.fft`). Default is None.
+        Normalization mode (see `numpy.fft`).
+        Default is "backward" (alias of None).
 
         .. versionadded:: 1.20.0
 
-            The "forward" option was added.
+            The "backward", "forward" options were added.
 
     Returns
     -------
@@ -586,7 +587,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     output = irfft(conjugate(a), n, axis)
     if _unitary(norm):
         output *= sqrt(n)
-    elif norm is None:
+    elif norm == "backward" or norm is None:
         output *= n
     return output
 
@@ -654,7 +655,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     output = conjugate(rfft(a, n, axis))
     if _unitary(norm):
         output *= 1./sqrt(n)
-    elif norm is None:
+    elif norm == "backward" or norm is None:
         output *= 1./n
     return output
 
