@@ -1,0 +1,9 @@
+``nickname`` attribute removed from ABCPolyBase
+-----------------------------------------------
+
+An abstract property ``nickname`` has been removed from 
+`~numpy.polynomial._polybase.ABCPolyBase` as it was no longer used in any of
+the derived :doc:`convenience classes <routines.polynomials.classes>`.
+This may affect users who have derived classes from ``ABCPolyBase`` and 
+overridden the methods for representation and display, e.g. ``__str__``, 
+``__repr__``, ``_repr_latex``, etc.
