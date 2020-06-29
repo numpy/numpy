@@ -2850,6 +2850,9 @@ def alen(a):
     """
     Return the length of the first dimension of the input array.
 
+    .. deprecated:: 1.18
+       `numpy.alen` is deprecated, use `len` instead.
+
     Parameters
     ----------
     a : array_like
