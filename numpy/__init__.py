@@ -293,11 +293,18 @@ else:
     import os
     use_hugepage = os.environ.get("NUMPY_MADVISE_HUGEPAGE", None)
     if sys.platform == "linux" and use_hugepage is None:
-        use_hugepage = 1
-        kernel_version = os.uname().release.split(".")[:2]
-        kernel_version = tuple(int(v) for v in kernel_version)
-        if kernel_version < (4, 6):
-            use_hugepage = 0
+        # If there is an issue with parsing the kernel version,
+        # set use_hugepages to 0. Usage of LooseVersion will handle
+        # the kernel version parsing better, but avoided since it
+        # will increase the import time. See: #16679 for related discussion.
+        try:
+            use_hugepage = 1
+            kernel_version = os.uname().release.split(".")[:2]
+            kernel_version = tuple(int(v) for v in kernel_version)
+            if kernel_version < (4, 6):
+                use_hugepage = 0
+        except ValueError:
+            use_hugepages = 0
     elif use_hugepage is None:
         # This is not Linux, so it should not matter, just enable anyway
         use_hugepage = 1
