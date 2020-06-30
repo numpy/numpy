@@ -44,7 +44,7 @@ a uniform string length::
     np.array([np.float64(3.)], dtype="S")  # gives "S32"
     np.array([3.0], dtype="S")  # gives "S3"
 
-while previously the fist version gave the same result as the second.
+while previously the first version gave the same result as the second.
 
 
 Array coercion restructure
