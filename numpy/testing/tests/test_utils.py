@@ -5,6 +5,9 @@ import itertools
 import pytest
 import weakref
 
+from hypothesis import given
+from hypothesis.extra import numpy as hynp
+
 import numpy as np
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
@@ -15,6 +18,16 @@ from numpy.testing import (
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
 from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
+
+
+_ANY_ARRAY_STRATEGY = hynp.arrays(
+    # We want a wide variety of array shapes, including "weird" shapes,
+    # so we explicitly allow zero-dimensional arrays and side length zero.
+    shape=hynp.array_shapes(min_dims=0, min_side=0),
+    # And we'll allow both scalar and possibly-nested structured
+    # dtypes, so long as all the leaf types are scalar dtypes too.
+    dtype=hynp.array_dtypes(subtype_strategy=hynp.scalar_dtypes()),
+)
 
 
 class _GenericTest:
@@ -67,6 +80,10 @@ class TestArrayEqual(_GenericTest):
 
     def setup(self):
         self._assert_func = assert_array_equal
+
+    @given(arr=_ANY_ARRAY_STRATEGY)
+    def test_property_equal_weird_arrays_pass(self, arr):
+        self._assert_func(arr, arr.copy())
 
     def test_generic_rank1(self):
         """Test rank 1 array for all dtypes."""
@@ -258,6 +275,10 @@ class TestEqual(TestArrayEqual):
     def setup(self):
         self._assert_func = assert_equal
 
+    @given(arr=_ANY_ARRAY_STRATEGY)
+    def test_property_equal_weird_arrays_pass(self, arr):
+        self._assert_func(arr, arr.copy())
+
     def test_nan_items(self):
         self._assert_func(np.nan, np.nan)
         self._assert_func([np.nan], [np.nan])
@@ -352,6 +373,10 @@ class TestArrayAlmostEqual(_GenericTest):
 
     def setup(self):
         self._assert_func = assert_array_almost_equal
+
+    @given(arr=_ANY_ARRAY_STRATEGY)
+    def test_property_equal_weird_arrays_pass(self, arr):
+        self._assert_func(arr, arr.copy())
 
     def test_closeness(self):
         # Note that in the course of time we ended up with
@@ -450,6 +475,10 @@ class TestAlmostEqual(_GenericTest):
 
     def setup(self):
         self._assert_func = assert_almost_equal
+
+    @given(arr=_ANY_ARRAY_STRATEGY)
+    def test_property_equal_weird_arrays_pass(self, arr):
+        self._assert_func(arr, arr.copy())
 
     def test_closeness(self):
         # Note that in the course of time we ended up with
@@ -601,6 +630,10 @@ class TestApproxEqual:
 
     def setup(self):
         self._assert_func = assert_approx_equal
+
+    @given(arr=_ANY_ARRAY_STRATEGY)
+    def test_property_equal_weird_arrays_pass(self, arr):
+        self._assert_func(arr, arr.copy())
 
     def test_simple_0d_arrays(self):
         x = np.array(1234.22)
