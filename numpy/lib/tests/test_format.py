@@ -281,7 +281,6 @@ import tempfile
 import warnings
 import pytest
 from io import BytesIO
-import zipfile
 
 import numpy as np
 from numpy.testing import (
@@ -289,7 +288,6 @@ from numpy.testing import (
     assert_warns
     )
 from numpy.lib import format
-from numpy.lib.npyio import NpzFile
 
 
 tempdir = None
@@ -928,15 +926,6 @@ def test_empty_npz():
     fname = os.path.join(tempdir, "nothing.npz")
     np.savez(fname)
     np.load(fname)
-
-def test_loading_invalid_zip_file():
-    with zipfile.ZipFile('spam.zip', 'w') as myzip:
-        myzip.writestr('spam.zip', 'eggs')
-    # Corrupting spam.zip intentionally
-    with open('spam.zip', 'w+b') as fh:
-        fh.seek(2)
-        fh.write(b"\xde\xad\xc0\xde")
-    assert_raises(zipfile.BadZipFile, NpzFile, 'spam.zip')
 
 
 def test_unicode_field_names():
