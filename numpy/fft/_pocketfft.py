@@ -51,9 +51,6 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
     if n is None:
         n = a.shape[axis]
 
-    if n < 1:
-        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
-
     fct = 1/inv_norm
 
     if a.shape[axis] != n:
@@ -78,13 +75,32 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
     return r
 
 
-def _unitary(norm):
-    if norm == "ortho":
-        return True
-    if norm == "backward" or norm == "forward" or norm is None:
-        return False
-    raise ValueError(f"Invalid norm value {norm}; should be \"backward\" (None\
-                     alias), \"ortho\" or \"forward\".")
+def _go_forw(n, norm):
+    if n < 1:
+        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
+
+    if norm is None or norm == "backward":
+        return 1
+    elif norm == "ortho":
+        return sqrt(n)
+    elif norm == "forward":
+        return n
+    raise ValueError(f"Invalid norm value {norm}; should be \"backward\"\
+                     (None), \"ortho\" or \"forward\".")
+
+
+def _go_back(n, norm):
+    if n < 1:
+        raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
+
+    if norm is None or norm == "backward":
+        return n
+    elif norm == "ortho":
+        return sqrt(n)
+    elif norm == "forward":
+        return 1
+    raise ValueError(f"Invalid norm value {norm}; should be \"backward\"\
+                     (None), \"ortho\" or \"forward\".")
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -182,11 +198,7 @@ def fft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = 1
-    if _unitary(norm):
-        inv_norm = sqrt(n)
-    elif norm == "forward":
-        inv_norm = n
+    inv_norm = _go_forw(n, norm)
     output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
 
@@ -283,11 +295,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = n
-    if _unitary(norm):
-        inv_norm = sqrt(n)
-    elif norm == "forward":
-        inv_norm = 1
+    inv_norm = _go_back(n, norm)
     output = _raw_fft(a, n, axis, False, False, inv_norm)
     return output
 
@@ -378,11 +386,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = 1
-    if _unitary(norm):
-        inv_norm = sqrt(n)
-    elif norm == "forward":
-        inv_norm = n
+    inv_norm = _go_forw(n, norm)
     output = _raw_fft(a, n, axis, True, True, inv_norm)
     return output
 
@@ -484,11 +488,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    inv_norm = n
-    if _unitary(norm):
-        inv_norm = sqrt(n)
-    elif norm == "forward":
-        inv_norm = 1
+    inv_norm = _go_back(n, norm)
     output = _raw_fft(a, n, axis, True, False, inv_norm)
     return output
 
@@ -585,10 +585,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = (a.shape[axis] - 1) * 2
     output = irfft(conjugate(a), n, axis)
-    if _unitary(norm):
-        output *= sqrt(n)
-    elif norm == "backward" or norm is None:
-        output *= n
+    output *= _go_back(n, norm)
     return output
 
 
@@ -653,10 +650,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     output = conjugate(rfft(a, n, axis))
-    if _unitary(norm):
-        output *= 1./sqrt(n)
-    elif norm == "backward" or norm is None:
-        output *= 1./n
+    output *= 1./_go_back(n, norm)
     return output
 
 
