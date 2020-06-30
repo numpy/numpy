@@ -85,13 +85,13 @@ PyObject *_global_pytype_to_type_dict = NULL;
 
 /* Enum to track or signal some things during dtype and shape discovery */
 enum _dtype_discovery_flags {
-    FOUND_RAGGED_ARRAY = 1,
-    GAVE_SUBCLASS_WARNING = 2,
-    PROMOTION_FAILED = 4,
-    DISCOVER_STRINGS_AS_SEQUENCES = 8,
-    DISCOVER_TUPLES_AS_ELEMENTS = 16,
-    MAX_DIMS_WAS_REACHED = 32,
-    DESCRIPTOR_WAS_SET = 64,
+    FOUND_RAGGED_ARRAY = 1 << 0,
+    GAVE_SUBCLASS_WARNING = 1 << 1,
+    PROMOTION_FAILED = 1 << 2,
+    DISCOVER_STRINGS_AS_SEQUENCES = 1 << 3,
+    DISCOVER_TUPLES_AS_ELEMENTS = 1 << 4,
+    MAX_DIMS_WAS_REACHED = 1 << 5,
+    DESCRIPTOR_WAS_SET = 1 << 6,
 };
 
 
@@ -240,14 +240,10 @@ discover_dtype_from_pyobject(
 {
     if (fixed_DType != NULL) {
         /*
-         * Let the given DType handle the discovery, there are three possible
-         * result cases here:
-         *   1. A descr, which is ready for promotion. (Correct DType)
-         *   2. None to indicate that this should be treated as a sequence.
-         *   3. NotImplemented to see if this is a known scalar type and
-         *      use normal casting logic instead. This can be slow especially
-         *      for parametric types.
-         *   4. NULL in case of an error.
+         * Let the given DType handle the discovery.  This is when the
+         * scalar-type matches exactly, or the DType signals that it can
+         * handle the scalar-type.  (Even if it cannot handle here it may be
+         * asked to attempt to do so later, if no other matching DType exists.)
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
                 (fixed_DType->is_known_scalar_type != NULL &&
