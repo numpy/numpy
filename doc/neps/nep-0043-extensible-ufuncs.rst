@@ -1,0 +1,631 @@
+==============================================
+NEP 43 — Enhancing the Extensibility of UFuncs
+==============================================
+
+:title: Enhancing the Extensibility of UFuncs
+:Author: Sebastian Berg
+:Status: Draft
+:Type: Standard
+:Created: 2020-06-20
+
+
+.. note::
+
+    This NEP is part of a series of NEPs encompassing first information
+    about the previous dtype implementation and issues with it in
+    :ref:`NEP 40 <NEP40>`.
+    :ref:`NEP 41 <NEP41>` then provides an overview and generic design
+    choices for the refactor. NEPs 42 and 43 (this document) go into the
+    technical details of the internal and external
+    API changes related to datatypes and universal functions, respectively.
+    In some cases it may be necessary to consult the other NEPs for a full
+    picture of the desired changes and why these changes are necessary.
+
+
+Abstract
+--------
+
+Allowing the creation of new user-defined DTypes in NumPy also requires
+a better extensibility of the ufunc interface, which is the backbone for
+a large part of the NumPy API.
+Especially, parametric DTypes are currently severly limited, making it
+impossible to implement for a user-defined DType to register universal
+function loops.
+
+This NEP proposes a new ``UFuncImpl`` struct, with an extensible C-API
+to register more feature rich loops, thus allowing these use-cases.
+It also proposes to address certain deficiencies, for example with respect
+to error reporting, by extending the signature of the core inner-loop
+functions.
+Finally, one of the most important steps in the ufunc call is finding the
+correct function for a specific set of input dtypes.  We propose to use
+multiple-dispatching in the future.
+
+.. note::
+
+    At this time this NEP is in a preliminary state. Both internal and
+    external API may be adapted based on user input or implementation needs.
+    The general design principles and choices, while provisional, should not
+    be expected to change dramatically.
+    For example, the *exact* additional information passed into ``UFuncImpl``
+    is likely to evolve.
+
+
+Detailed Description
+--------------------
+
+NEP 41 and NEP 42 layed out the general proposed structure into DType
+classes (similar to the current type numbers) and dtype instances.
+Universal functions have a fairly fixed signature of multiple input arrays
+and certain additional features. But depending on the input DTypes, they
+have to perform a different operation.  In general these operations are
+registered by users, e.g. implementers of a user-defined DTypes.
+
+A UFunc call consists of into multiple steps:
+
+1. Resolution of ``__array_ufunc__`` for container types, such as a Dask
+   array handling the full process, rather than NumPy.
+   This step is performed first, and unaffected by this NEP.
+
+2. *Promotion and Dispatching*
+
+   * Given the DTypes of all inputs we need to find the correct implementation
+     for the ufuncs functionality. E.g. an implementation for ``float64``
+     or ``int64``, but also a user-defined DType.
+
+   * When no exact implementation exists, *promotion* has to be performed.
+     For example, adding ``float32`` and ``float64`` is implemented by
+     first casting the ``float32`` to ``float64``.
+
+3. *DType Adaptation:*
+
+   * The step has to perform no special work for non-parametric dtypes.
+   * For example, if a loop adds two strings, it is necessary to define the
+     correct output (and possibly input) dtypes.  ``S5 + S4 -> S9``, while
+     an ``upper`` function has the signature ``S5 -> S5``.
+
+4. Preparing the actual iteration. This step is largely handled by ``NpyIter`` (the iterator).
+
+   * Allocate all ouputs and potentially copies (or buffers).
+   * Finds the best iteration order, which includes information such as
+     a broadcasted stride always being 0.
+
+5. *Loop-specific setup* may include for example:
+
+   * Clearing of floating point exception flags (if necessary),
+   * Possibly allocating temporary working space,
+   * Setting (and potentially finding) the inner-loop function.  Finding
+     the inner-loop function could allow specialized implementations in the
+     future.
+   * Signal whether the inner-loop requires the Python API, or whether
+     the GIL may be released.
+
+6. Run the DType specific *inner-loop*
+
+   * The loop may require access to additional data, such as dtypes or
+     additional data set in the previous step.
+
+7. *Loop-specific Teardown* may be necessary to undo any setup done in step 5
+   such as checking for floating point errors.
+
+This NEP proposes a new registration approach for step 2 by creating a private
+``UfuncImpl`` structure which will be filled using an extensible API,
+and which may be exposed as a Python object later.
+This shall allow users to define custom behaviour for steps 3, 5, and 7,
+while extending the inner-loop function (step 6) accordingly.
+
+The following sections go into more details, and are seperated into the
+two main topics of *promotion and dispatching* and the further C-API
+provided to the user for the ufunc execution.
+
+
+UFuncImpl Specifications
+""""""""""""""""""""""""
+
+These specifications provide a minimal initial API, which shall be expanded
+in the future, for example to allow specialized inner-loops.
+
+Briefly, NumPy currently relies fully on strided inner-loops and, this
+will be the only allowed method of defining a ufunc initially.
+With additional setup and teardown functionality, as well as the
+``adapt_descriptors`` function mirroring the same functionality as required
+for casting (see also NEP 42 ``CastingImpl``).
+This gives the following function definitions:
+
+* Similar to casting, also ufuncs may need to find the correct output DType
+  or indicate that a loop is only capable of handling certain instances of
+  the involved DTypes (e.g. only native byte order).  This is handled by
+  an ``resolve_descriptors`` function (similar to ``adjust_descriptors``
+  of ``CastingImpl``)::
+
+      int resolve_descriptors(
+              PyUFuncObject *ufunc, PyArray_DTypeMeta *DTypes[nargs],
+              PyArray_Descr *in_dtypes[nargs], PyArray_Descr *out_dtypes[nargs]);
+
+  setting the desired output descriptors, and possibly modifying the input
+  ones to conform with the inner-loops requirements.
+
+* Define a new structure to be passed in the inner-loop, which can be
+  partially modified by the setup/teardown as well::
+  
+      typedef struct {
+          PyUFuncObject *ufunc,
+          /* could add information about __call__, reduce, etc. here */
+          // method
+          /* The exact operand dtypes of the inner-loop */
+          PyArray_Descr const *dtypes;
+          /* 
+           * The Python threadstate (if the GIL was released) or NULL.
+           * Will always be NULL, if `needs_api` was indicated.
+           */
+          PyThreadState const *tstate;
+          /* Per-loop user data, equivalent to the current void* */
+          void const *user_loop_data;
+          /* User data potentially filled by the setup function. */
+          void *user_data;
+      } PyArray_UFuncData
+  
+  This structure may be appended to include additional information in future
+  versions of NumPy.
+
+* The *optional* setup function::
+
+      innerloop *
+      setup(PyArray_UFuncData *data, int *needs_api, npy_intp *fixed_strides);
+  
+  Is passed the above struct and may modify (only) the ``user_data`` slot
+  and potentially further slots in the future.  The function returns
+  the inner-loop or ``NULL`` to indicate an error.
+
+* The inner-loop function::
+
+    int inner_loop(..., PyArray_UFuncData *data);
+
+  Will have the identical signature to current inner-loops with the difference
+  of the additional return value and passing ``PyArray_UfuncData *`` instead
+  of the previous ``void *`` representing ``user_loop_data``.
+  The inner-loop shall return 0 to indicate continued (successful) execution.
+  Any non-zero value will terminate the iteration.  The inner-loop shall
+  return a *negative* value (e.g. -1) with a Python exception set.  
+
+* The *optional* teardown function::
+
+     int teardown(int return_value, PyArray_UFuncData *data);
+
+  Teardown function, may return ``-1`` if an error is set.  If an error
+  was already set previously it will be stored. Any previous error
+  will be cleared before calling ``teardown``.
+  The return value of the inner-loop is passed in to allow simple error
+  flagging (e.g. warnings) if desired.
+
+* A flag to ask NumPy to perform floating point error checking (after custom
+  setup and before user teardown).
+
+* Instead of a user-setup function, 
+
+To simplify setup and not require the implementation of setup/teardown for
+the majority of ufuncs, NumPy provides floating error setup and teardown
+if flagged during registration.
+
+**Notes**
+
+Alternatives and details to the ``resolve_descriptors`` function are described
+below.
+
+The current signature must be extended to allow the return value, as well
+as error reporting.  The choice of passing in a pointer to a struct means
+minimal adjustments to current functions which do not require it (they only
+need a ``0`` return value).  It may also simplify the addition of future
+parameters if necessary.
+
+The main alternative would be extending the signature either by only a
+return value giving a much higher burden to implement a user setup.
+
+
+Reusing existing Loops/Implementations
+""""""""""""""""""""""""""""""""""""""
+
+*TODO: Do we need to make both easy? Or maybe even neither? I personally prefer
+the design of having a class factory here (point 1).  I realize that many
+users seem to find the second version.*
+
+For many DTypes adding additional C-level (or python level) loops will be
+sufficient and require no more than a single strided loop implementation.
+Everything else can be provided by NumPy.  If the loop works with
+parametric DTypes, the ``resolve_descriptors`` function *must* additionally
+be provided.
+
+However, in some use-cases it is desired to call back to an existing loop.
+In Python, this can be achieved by simply calling into the original ufunc
+(when parametric types are involved potentially twice, due to calling one
+more time from ``resolve_descriptors``).
+
+For better performance in C, and for large arrays, it is desirable to reuse
+an existing implementation fully, so that the inner-loop does not need
+to be wrapped.
+The preferred solution to this is allow one additional method of setting
+up a UFunc loop conveniently without the need of directly exposing the
+the inner structure immediately.
+
+There are two potential settings here, shown with two different approaches
+for implementing a ``Unit`` DType.
+
+1. An abstract Unit DType with subclasses for each numeric dtype (these
+   could be dynamically created).  Such a ``Unit[Float64]("m")`` instance
+   has a well defined signature with respect to type promotion.
+2. A concrete Unit DType which parametrizes the numeric dtype making it
+   ``Unit(float64, "m")``.
+
+The difference between the two, is that in the first case a ``UFuncImpl``
+can be created which *wraps* a single existing ``UFuncImpl`` and after that
+dispatching can be cached.  The creation of this ``UFuncImpl`` can further
+occur dynamically in the *promotion* step.
+To fall back to the existing loop, we allow creation of a wrapped loop
+from an existing (bound) ``UFuncImpl``.
+
+This wrapped loop will have two additional methods:
+
+* ``view_inputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
+  user input descriptors with descriptors matching the wrapped loop.
+  It must be possible to *view* the inputs as the output.
+* ``wrap_outputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
+  resolved descriptors with with the desired actual loop descriptors.
+  The original ``resolve_descriptors`` function will be called between these
+  two calls, so that the output descriptors may not be set in the first call.
+
+The ``view_inputs`` method allows passing the correct inputs into the
+original ``resolve_descriptors`` function, while ``wrap_outputs`` ensures
+the correct descriptors are used for output allocation and input buffering casts.
+
+The second use-case can be implemented within the inner-loop and
+``resolve_descriptors`` functions.
+This will incur additional overheads, partially because the loop dispatch
+effectively has to be done twice, but mostly because an efficient
+implementation will require direct access to the original
+setup/teardown, etc. functions.
+Such functionality can be added at a later time.
+
+
+Details for ``resolve_descriptors``
+"""""""""""""""""""""""""""""""""""
+
+*TODO: Should this function also get the full set of information which
+I want to pass in to the setup/teardown/inner-loop?  On the one hand, much
+of the information is not yet available/defined (or is set here).  On the
+other hand, some of the info is useful, and it may be nice to just have
+a homogeneous calling convention.*
+
+The UFunc machinery must know the correct dtypes to use before arrays can
+be allocated. The arrays creation itself is desirable to happen before any
+setup functionality to allow potential choosing of an optimized loops.
+
+**Notes:**
+
+There are a few possible extension to this function.  Currently, it also
+takes care of casting in general.  This is not necessary, however, it
+would be possible to extend the signature with casting indication for
+*outputs*.
+This would allow registering e.g. ``float64 + float64 -> float32`` as an explicit
+(faster) loop while indicating that it is an unsafe cast on the result array,
+which requires the user to specify ``casting="unsafe"``.
+
+The current design allows such a specialized loop (with access to the
+initially private ``setup``), from within the ``float64+float64->float64``
+implementation only.
+
+
+Bound UFuncImpl
+"""""""""""""""
+
+The ``UFuncImpl`` is much like a bound method on an object, which in Python
+are passed the ``self`` argument.  There are some small difference in that
+a ``UFuncImpl`` represents a set of such bound methods.
+
+With respect to a ``UFuncImpl``, the normally passed ``self`` argument
+represents the following set of information:
+
+* The ufunc itself, which may be useful for information such as the ufunc's name
+  but is also required to match up information such as the ``ufunc.signature``.
+* The DTypes involved, which are thus passed into all of the methods of the
+  ``UFuncImpl`` in some form or another.
+
+Both of these are *not* stored on the ``UFuncImpl`` itself and just like
+methods, most of the time ``UFuncImpl`` should only be used indirectly by
+calling the ufunc it is bound to.
+It is possible to bind a single ``UFuncImpl`` to multiple ufuncs.
+Note that the ufunc itself can hold on weakly to most ``DTypes`` to allow
+correct cleanup of ``UFuncImpl`` if used correctly.  However, when
+the *output* DTypes are not also input DTypes they have to referenced strongly.
+
+In principle it is be possible to define unbound ``UFuncImpl`` as a full
+Python object.  This will *not* be possible initially, since it would require
+careful duplication of many of the ufunc's metadata on the ``UFuncImpl``
+
+
+Promotion and Discovery
+"""""""""""""""""""""""
+
+NumPy ufuncs are multimethods in the sense that they operate on multiple
+DTypes at once.  While the input (and outpyt) dtypes are attached to numpy
+arrays, the ``ndarray`` type itself does not carry the information of which
+function to apply to the data.
+
+For example, given the input::
+
+    arr1 = np.array([1, 2, 3], dtype=np.int64)
+    arr2 = np.array([1, 2, 3], dtype=np.float64)
+    np.add(arr1, arr2)
+
+has to find the correct ``UfuncImpl`` to perform the operation.
+Ideally, there is an exact match defined, e.g. if the above was written
+as ``np.add(arr1, arr1)``, a ``UFuncImpl[Int64, Int64, out=Int64]`` matches
+exactly can be used.
+However, in the above example there is no direct match, requireing a
+promotion step.
+
+**Implementation:**
+
+1. By default any UFunc has a promotion which uses the common DType of all
+   inputs and tries again.  This is well defined for most mathematical
+   functions, but can be disabled or customized if necessary.
+
+2. Users can *register* new Promoters just as they can register new UFuncImpl.
+   These will use abstract DTypes to allow matching a large variation of
+   signatures.
+   The return value of a promotion function shall be a new ``UFuncImpl``
+   and must consistent over multiple calls with the same input (or return
+   ``NotImplemented`` to indicate an invalid promotion).  This allows
+   caching of the result.
+
+The signature of a promotion function consists is defined by::
+
+    promoter(np.ufunc: ufunc, Tuple[DTypeMeta]: DTypes): -> Union[UFuncImpl, NotImplemented]
+
+Note that DTypes may contain the outputs DType, however, normally the
+output DType should *not* affect which ``UFuncImpl`` is chosen.
+
+In most cases, it should not be necessary to add a custom promotion function,
+however, an example which needs this is for example multiplication with a
+unit.  For example ``timedelta64`` can be multiplied with most integers.
+However, we may only have a loop defined for ``timedelta64 * int64``,
+multiplying with ``int32`` will fail.
+To allow this, the following promoter can be registered for
+``[Timedelta64, Integral, None]``::
+
+    def promote(ufunc, DTypes):
+        res = list(DTypes)
+        try:
+            res[1] = np.common_dtype(DTypes[1], Int64)
+        except TypeError:
+            return NotImplemented
+
+        # Could check that res[1] is actually Int64
+        return ufunc.resolve_impl(tuple(res))
+
+In this case, just as a ``Timedelta64 * int64`` and ``int64 * timedelta64``
+``UFuncImpl`` is necessary, a second promoter has to be registered to handle
+the case where the integer is passed first.
+
+Promoters and UFUncImpls are discovered by using the best matching one first.
+Initially, it will be an error if ``NotImplemented`` is returned or if two
+promoters match the input equally well *unless* the mismatch occurs due to
+unspecified output arguments.  When two signatures are identical for all
+inputs, but differ in the output the first one registered is used.
+In all other cases, the creation of a new ``AbstractDType`` should allow to
+resolve any disambiguities.
+This allows support of loops specialization if an output is supplied
+or the full loop is specified.  It should not typically be necessary,
+but allows resolving ``np.logic_or``, etc. which have both
+``Object, Object->Bool`` and ``Object, Object->Object`` loops (using the
+first by default).  In principle it could be used to add loops by-passing
+casting, such as ``float32 + float32 -> float64`` *without* casting both
+inputs to ``float64``.
+
+
+**Alternative Details:**
+
+Instead of resolving and returning a new implementation, we could also
+return a new set of DTypes to use for dispatching.  This works, however,
+it has the disadvantage that it cannot be possible to dispatch to a loop
+defined on a different ufunc.
+
+
+**Rejected Alternatives:**
+
+In the above the promoters use a multiple dispatching style type resolution
+while the current UFunc machinery rather uses the first
+"safe" loop (see also NEP 40) in an ordered hierarchy.
+
+While the "safe" casting rule seems not restrictive enough, we could imagine
+using a new "promote" casting rule, or the common-DType logic to find the
+best matching loop by upcasting the inputs as necessary.
+
+The downside to this approach upcasting alone will allow to upcast results
+beyond what is expected by users.
+Currently (which will remain supported as a fallback) any ufunc which defines
+only a float64 loop will also work for float16 and float32 by *upcasting*,
+leading to this example::
+
+    >>> from scipy.special import erf
+    >>> erf(np.array([4.], dtype=np.float16))  # float16
+    array([1.], dtype=float32)
+
+with a float32 result.
+Thus, it is impossible to change this to a float16 result without possibly
+changing the result of following code.
+In general, we argue that automatic upcasting should not occur in cases
+where a a less precise loop can be reasonably defined, *unless* the ufunc
+author defines this behaviour intentionally.
+
+*Alternative 1:*
+
+Assuming general upcasting is not intended, a rule must be defined to
+limit upcasting the input from ``float16 -> float32`` either using generic
+logic on the DTypes or the UFunc itself (or a combination of both).
+The UFunc cannot do this easily on its own, since it cannot know all possible
+DTypes which register loops.
+Consider the two loops ``float16 * float16`` with a ``float32 * float32`` loop
+defined and ``timedelta64 * int32`` with a ``timedelta64 * int16`` loop defined.
+This requires either:
+
+* The timedelta64 to somehow signal that the int64 upcast is always fine
+  if it is involved in the operation.
+* The ``float32 * float32`` loop to reject upcasting.
+
+Signaling that upcasts are OK in this context seems hard.  For the
+second rule in most cases a simple ``np.common_dtype`` rule will work,
+although only if the loop is homogeneous.
+This option will thus require adding a function to check whether input
+is a valid upcast to each loop individually.
+
+*Alternative 2:*
+
+An alternative "promotion" step is to ensure that the *output* DType matches
+with the loop after first finding the correct output DType.
+If the output DTypes are known, finding a safe loop becomes easy.
+In the majority of cases this works, the correct output dtype is just::
+
+    np.common_dtype(*input_DTypes)
+
+or some fixed DType (e.g. Bool for logical functions).
+
+However, it fails for example in the ``timedelta64 * int32`` case above since
+there is a-priory no way to know that the "expected" result type of this
+output is indeed ``timedelta64`` (``np.common_dtype(Datetime64, Int32)`` fails).
+This requires some additional knowledge of the timedelta64 precision being
+int64. Since a ufunc can have an arbitrary number of (relevant) inputs
+it would thus at least require an additional ``__promoted_dtypes__`` method
+on ``Datetime64`` (and all DTypes).
+
+A further limitation is shown by masked DTypes.  Logical functions do not
+have a boolean result when masked are involved, which would thus require the
+original ufunc author to anticipate masked DTypes in this scheme.
+Similarly, some functions defined for complex values will return real numbers
+while others return complex numbers.  If the original author did not anticipate
+complex numbers, the promotion may be incorrect for a later added complex loop.
+
+
+We believe that promoters, while allowing for an huge theoretical complexity,
+are the best solution:
+
+1. Promotion allows for dynamically adding new loops. E.g. it is possible
+   to define an abstract Unit DType, which dynamically creates classes to
+   wrap existing other DTypes.  Using a single promoter, this DType can
+   dynamically wrap existing ``UFuncImpl`` enabling it to find the correct
+   Loop in a single lookup instead of otherwise two.
+2. The promotion logic will usually err on the safe side: A newly added
+   loop cannot be misused unless a promoter is added as well.
+3. They put the burden of carefully thinking of whether the logic is correct
+   on the programmer generalizing it.  (Compared to Alternative 2)
+4. In case of incorrect existing promotion, writing a promoter to restrict
+   or refine a generic rule is possible.  In general a promotion rule should
+   never return an *incorrect* promotion, but if it the promotion is incorrect
+   for a newly added loop, the loop can add a promoter to refine the logic. 
+
+The option of having each loop verify that no upcast occurs is probably
+the best alternative, but does not allow dynamically adding new loops,
+and in most cases promoters should be able the same with less code.
+The main downsides of general promoters is that they allow a possibly
+very large complexity.
+A third-party library *could* add incorrect promotions to NumPy, however,
+this is already possible by adding new incorrect loops.
+It may be possible to catch some cases like this.
+In general we believe we can rely on downstream projects to use this
+power and complexity carefully and responsibly.
+
+
+Further Notes and User Guidelines for Promoters and UFuncImpl
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+In general adding a promoter to a UFunc must be done very carefully.
+A promoter should never affect loops which can be reasonably defined
+by other datatypes.  Defining a hypothetical ``erf(UnitFloat16)`` loop
+must not lead to ``erf(float16)``.
+In general a promoter should fulfill the requirements that:
+
+* Be conservative when defining a new promotion rule. An incorrect result
+  is a much more dangerous error than an unexpected error.
+* One of the (abstract) DTypes added should typically match specifically with a
+  DType (or family of DTypes) defined by your project.
+  Never add promotion rules which go beyond normal common DType rules!
+  It is *not* reasonable to add a loop for ``int16 + uint16 -> int24`` if
+  you write an ``int24`` dtype. The result of this operation was already
+  defined previously as ``int32`` and will be used with this assumption.
+* A promoter (or loop) should never affect existing other loop results.
+  Additionally, to changes in the resulting dtype, do not add for example
+  faster but less precise loops/promoter.
+* Try to stay within a clear, linear hierarchy for all promotion (and casting)
+  related logic. NumPy itself breaks this logic for integers and floats
+  (they are not strictly linear, since int64 cannot promote to float32).
+* Loops and promoters can be added by any project, which could be:
+
+  * The project defining the ufunc
+  * The project defining the DType
+  * A third-party project
+
+  Try to find out which is the best project to add the loop.  If neither
+  the project defining the ufunc or the project defining the DType add the
+  loop, issues with multiple definitions (which are rejected) may arise
+  and care should be taken that the loop behaviour is always more desirable
+  than an error.
+
+In some cases exceptions to these rules may make sense, however, in general
+we ask you to use extreme caution and when in doubt create a new UFunc
+instead.  This clearly notifies the users of differing rules.
+When in doubt, ask on the NumPy mailing list or issue tracker!
+
+
+Implementation
+--------------
+
+Internally a few implementation details have to be decided. These will be
+fully opaque to the user and can be changed at a later time.
+
+This includes:
+
+* How ``CastingImpl`` lookup, and thus the decision whether a cast is possible,
+  is defined. (This is speed relevant, although mainly during a transition
+  phase where UFuncs where NEP 43 is not yet implemented).
+  Thus, it is not very relevant to the NEP. It is only necessary to ensure fast
+  lookup during the transition phase for the current builtin Numerical types.
+
+* How the mapping from a python scalar (e.g. ``3.``) to the DType is
+  implemented.
+
+The main steps for implementation are outlined in :ref:`NEP 41 <NEP41>`.
+This includes the internal restructure for how casting and array-coercion
+works.
+After this the new public API will be added incrementally.
+This includes replacements for certain slots which are occasionally
+directly used on the dtype (e.g. ``dtype->f->setitem``).
+
+
+Discussion
+----------
+
+There is a large space of possible implementations with many discussions
+in various places, as well as initial thoughts and design documents.
+These are listed in the discussion of NEP 40 and not repeated here for
+brevity.
+
+A long discussion which touches many of these points and points towards
+similar solutions can be found in
+`the github issue 12518 "What should be the calling convention for ufunc inner loop signatures?" <https://github.com/numpy/numpy/issues/12518>`_
+
+
+References
+----------
+
+.. [1] NumPy currently inspects the value to allow the operations::
+
+     np.array([1], dtype=np.uint8) + 1
+     np.array([1.2], dtype=np.float32) + 1.
+
+   to return a ``uint8`` or ``float32`` array respectively.  This is
+   further described in the documentation of `numpy.result_type`.
+
+
+Copyright
+---------
+
+This document has been placed in the public domain.
