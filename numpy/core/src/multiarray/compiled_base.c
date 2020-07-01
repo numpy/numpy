@@ -1586,8 +1586,7 @@ pack_inner(const char *inptr,
             uint64x2_t v = vcombine_u64(vcreate_u64(a), vcreate_u64(b));
             uint64x2_t zero = vdupq_n_u64(0);
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = vreinterpretq_u64_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero)));
-            v = vreinterpretq_u64_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero)));
+            v = vreinterpretq_u64_u8(vmvnq_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero))));
             /* extract msb of 16 bytes and pack it into 16 bit */
             uint8x16_t input = vreinterpretq_u8_u64(v);
             r = sign_mask(input);
