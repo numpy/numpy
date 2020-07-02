@@ -1235,9 +1235,10 @@ def amin(
 # TODO: `np.prod()``: For object arrays `initial` does not necasarily
 # have to be a numerical scalar.
 # The only requirement is that it is compatible
-# with the `.__mult__()` method(s) of the passed array's elements.
+# with the `.__mul__()` method(s) of the passed array's elements.
 
-# Note that the same holds for `np.sum()` and `.__add__()`.
+# Note that the same situation holds for all wrappers around
+# `np.ufunc.reduce`, e.g. `np.sum()` (`.__add__()`).
 
 @overload
 def prod(
