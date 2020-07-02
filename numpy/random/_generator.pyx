@@ -3726,6 +3726,7 @@ cdef class Generator:
         cdef np.npy_intp d, i, sz, offset
         cdef np.ndarray parr, mnarr, on, temp_arr
         cdef double *pix
+        cdef double max_sum
         cdef int64_t *mnix
         cdef int64_t ni
         cdef np.broadcast it
@@ -3736,8 +3737,16 @@ cdef class Generator:
             pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            raise ValueError("sum(pvals[:-1]) > 1.0")
+        max_sum = 1.0 + 1e-12
+        if kahan_sum(pix, d-1) > max_sum:
+            # Further checks to handle case where the pvals is an array with
+            # a dtype that differs from double. Comparison is slow, but should
+            # almost never be hit when pvals is valid
+            if (not isinstance(pvals, np.ndarray)
+                    or pvals.dtype == float
+                    or not np.issubdtype(pvals.dtype, np.floating)
+                    or pvals[:-1].sum() > pvals.dtype.type(max_sum)):
+                raise ValueError(f"sum(pvals[:-1]) > 1.0")
 
         if np.PyArray_NDIM(on) != 0: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
