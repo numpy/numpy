@@ -3683,24 +3683,34 @@ cdef class Generator:
         ----------
         n : int or array-like of ints
             Number of experiments.
-        pvals : sequence of floats, length p
-            Probabilities of each of the ``p`` different outcomes.  These
-            must sum to 1 (however, the last element is always assumed to
-            account for the remaining probability, as long as
-            ``sum(pvals[:-1]) <= 1)``.
+        pvals : array-like of floats
+            Probabilities of each of the ``p`` different outcomes with shape
+            ``(k0, k1, ..., kn, p)``. Each element ``pvals[i,j,...,:]`` must
+            sum to 1 (however, the last element is always assumed to account
+            for the remaining probability, as long as
+            ``sum(pvals[i,j,...,:-1]) <= 1)``.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
+            ``m * n * k`` samples are drawn.  Default is None where the output
+            size is determined by the broadcast shape of ``n`` and ``pvals``,
+            ``b=(b0, b1, ..., bq)``. If size is not None, then it must be
+            compatible with the broadcast shape of ``n`` and ``pvals``. size
+            must have ``q+1`` or more elements and size[-(q+1-j):] must equal
+            ``bj`` when ``bj`` is not 1. If ``bj`` is 1, then size can be any
+            positive integer value.
 
         Returns
         -------
         out : ndarray
-            The drawn samples, of shape *size*, if that was provided.  If not,
-            the shape is ``(N,)``.
+            The drawn samples, of shape size, if provided. When size is
+            provided, the output shape is size + (p,)  If not specified,
+            the shape is determined by the broadcast shape of ``n`` and
+            ``pvals``, ``(b0, b1, ..., bq)`` augmented with the dimension of
+            the multiconial, ``p``, so that that output shape is
+            ``(b0, b1, ..., bq, p)``.
 
-            In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
-            value drawn from the distribution.
+            Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
+            from the distribution.
 
         Examples
         --------
@@ -3738,6 +3748,28 @@ cdef class Generator:
         >>> rng.multinomial(100, [1/7.]*5 + [2/7.])
         array([11, 16, 14, 17, 16, 26])  # random
 
+        Simulate 10 throws of a 4-sided die and 20 throws of a 6-sided die
+
+        >>> rng.multinomial([10, 20],[[1/4]*4 + [0]*2, [1/6]*6])
+        array([[2, 1, 4, 3, 0, 0],
+               [3, 3, 3, 6, 1, 4]], dtype=int64)  # random
+
+        Generate categorical random variates from two categories where the
+        first has 3 outcomes and the second has 2.
+
+        >>> rng.multinomial(1, [[.1, .5, .4 ], [.3, .7, .0]])
+        array([[0, 0, 1],
+               [0, 1, 0]], dtype=int64)  # random
+
+        ``argmax(axis=-1)`` is then used to return the categories.
+
+        >>> rvs = rng.multinomial(1, [[.1, .5, .4 ], [.3, .7, .0]], size=(4,2))
+        >>> rvs.argmax(axis=-1)
+        array([[0, 1],
+               [2, 0],
+               [2, 1],
+               [2, 0]], dtype=int64)  # random
+
         The probability inputs should be normalized. As an implementation
         detail, the value of the last entry is ignored and assumed to take
         up any leftover probability mass, but this should not be relied on.
@@ -3752,47 +3784,71 @@ cdef class Generator:
         >>> rng.multinomial(100, [1.0, 2.0])  # WRONG
         Traceback (most recent call last):
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
-
         """
 
-        cdef np.npy_intp d, i, sz, offset
+        cdef np.npy_intp d, i, sz, offset, pi
         cdef np.ndarray parr, mnarr, on, temp_arr
         cdef double *pix
+        cdef int ndim
         cdef int64_t *mnix
         cdef int64_t ni
         cdef np.broadcast it
 
-        d = len(pvals)
         on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
         parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
-        pix = <double*>np.PyArray_DATA(parr)
+            pvals, np.NPY_DOUBLE, 1, 32, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            # When floating, but not float dtype, and close, improve the error
-            # 1.0001 works for float16 and float32
-            if (isinstance(pvals, np.ndarray)
-                    and np.issubdtype(pvals.dtype, np.floating)
-                    and pvals.dtype != float
-                    and pvals.sum() < 1.0001):
-                msg = ("sum(pvals[:-1].astype(np.float64)) > 1.0. The pvals "
-                       "array is cast to 64-bit floating point prior to "
-                       "checking the sum. Precision changes when casting may "
-                       "cause problems even if the sum of the original pvals "
-                       "is valid.")
-            else:
-                msg = "sum(pvals[:-1]) > 1.0"
-            raise ValueError(msg)
+        ndim = parr.ndim
+        d = parr.shape[ndim - 1]
+        pix = <double*>np.PyArray_DATA(parr)
+        sz = np.PyArray_SIZE(parr)
+        # Cython 0.29.20 would not correctly translate the range-based for
+        # loop to a C for loop
+        # for offset in range(<np.npy_intp>0, sz, d):
+        offset = 0
+        while offset < sz:
+            if kahan_sum(pix + offset, d-1) > (1.0 + 1e-12):
+                # When floating, but not float dtype, and close, improve the error
+                # 1.0001 works for float16 and float32
+                slice_repr = "[:-1]" if ndim == 1 else "[...,:-1]"
+                if (isinstance(pvals, np.ndarray)
+                        and np.issubdtype(pvals.dtype, np.floating)
+                        and pvals.dtype != float
+                        and pvals.sum() < 1.0001):
+                    msg = (f"sum(pvals{slice_repr}.astype(np.float64)) > 1.0."
+                           " The pvals array is cast to 64-bit floating"
+                           " point prior to checking the sum. Precision "
+                           "changes when casting may cause problems even "
+                           "if the sum of the original pvals is valid.")
+                else:
+                    msg = f"sum(pvals{slice_repr}) > 1.0"
 
-        if np.PyArray_NDIM(on) != 0: # vector
+                raise ValueError(msg)
+            offset += d
+
+        if np.PyArray_NDIM(on) != 0 or ndim > 1: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
+            # This provides the offsets to use in the C-contig parr when
+            # broadcasting
+            offsets = <np.ndarray>np.arange(0, np.PyArray_SIZE(parr), d, dtype=np.intp).reshape((<object>parr).shape[:ndim - 1])
             if size is None:
-                it = np.PyArray_MultiIterNew1(on)
+                it = np.PyArray_MultiIterNew2(on, offsets)
             else:
                 temp = np.empty(size, dtype=np.int8)
                 temp_arr = <np.ndarray>temp
-                it = np.PyArray_MultiIterNew2(on, temp_arr)
-                validate_output_shape(it.shape, temp_arr)
+                it = np.PyArray_MultiIterNew3(on, offsets, temp_arr)
+                # Validate size and the broadcast shape
+                try:
+                    size = (operator.index(size),)
+                except:
+                    size = tuple(size)
+                # This test verifies that an axis with dim 1 in size has not
+                # been increased by broadcasting with the input
+                if it.shape != size:
+                    raise ValueError(
+                        f"Output size {size} is not compatible with "
+                        f"broadcast dimensions of inputs {it.shape}."
+                    )
             shape = it.shape + (d,)
             multin = np.zeros(shape, dtype=np.int64)
             mnarr = <np.ndarray>multin
@@ -3802,7 +3858,8 @@ cdef class Generator:
             with self.lock, nogil:
                 for i in range(sz):
                     ni = (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
-                    random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
+                    pi = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 1))[0]
+                    random_multinomial(&self._bitgen, ni, &mnix[offset], &pix[pi], d, &self._binomial)
                     offset += d
                     np.PyArray_MultiIter_NEXT(it)
             return multin
