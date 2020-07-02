@@ -25,7 +25,7 @@ from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
-            double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
+            double_fill, cont, kahan_sum, kahan_check, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
         )
@@ -3725,7 +3725,10 @@ cdef class Generator:
 
         cdef np.npy_intp d, i, sz, offset
         cdef np.ndarray parr, mnarr, on, temp_arr
+        cdef float[::1] pvals32
+        cdef double[::1] pvals64
         cdef double *pix
+        cdef bint err
         cdef double max_sum
         cdef int64_t *mnix
         cdef int64_t ni
@@ -3737,16 +3740,16 @@ cdef class Generator:
             pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        max_sum = 1.0 + 1e-12
-        if kahan_sum(pix, d-1) > max_sum:
-            # Further checks to handle case where the pvals is an array with
-            # a dtype that differs from double. Comparison is slow, but should
-            # almost never be hit when pvals is valid
-            if (not isinstance(pvals, np.ndarray)
-                    or pvals.dtype == float
-                    or not np.issubdtype(pvals.dtype, np.floating)
-                    or pvals[:-1].sum() > pvals.dtype.type(max_sum)):
-                raise ValueError(f"sum(pvals[:-1]) > 1.0")
+        if isinstance(pvals, np.ndarray) and pvals.dtype == np.float32:
+            # Special case 32 bit floats
+            pvals32 = np.PyArray_GETCONTIGUOUS(pvals)
+            err = kahan_check(pvals32,  <float>1.0000001)
+        else:
+            # All other original types are tested using 64 bit floats
+            pvals64 = parr
+            err = kahan_check(pvals64, 1.0 + 1e-12)
+        if err:
+            raise ValueError(f"sum(pvals[:-1]) > 1.0")
 
         if np.PyArray_NDIM(on) != 0: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)

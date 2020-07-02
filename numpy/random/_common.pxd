@@ -1,5 +1,5 @@
 #cython: language_level=3
-
+from cython cimport floating
 from libc.stdint cimport uint32_t, uint64_t, int32_t, int64_t
 
 import numpy as np
@@ -63,6 +63,8 @@ ctypedef int32_t (*random_int_2_i_32)(bitgen_t *state, int32_t a, int32_t b) nog
 ctypedef int64_t (*random_int_2_i)(bitgen_t *state, int64_t a, int64_t b) nogil
 
 cdef double kahan_sum(double *darr, np.npy_intp n)
+
+cdef bint kahan_check(floating[::1] a, floating tol)
 
 cdef inline double uint64_to_double(uint64_t rnd) nogil:
     return (rnd >> 11) * (1.0 / 9007199254740992.0)
