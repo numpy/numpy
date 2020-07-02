@@ -1231,6 +1231,14 @@ def amin(
     initial: _NumberLike = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
+
+# TODO: `np.prod()``: For object arrays `initial` does not necasarily
+# have to be a numerical scalar.
+# The only requirement is that it is compatible
+# with the `.__mult__()` method(s) of the passed array's elements.
+
+# Note that the same holds for `np.sum()` and `.__add__()`.
+
 @overload
 def prod(
     a: _Number,
