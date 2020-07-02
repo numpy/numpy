@@ -1245,7 +1245,7 @@ def prod(
     a: _Number,
     axis: Optional[_ShapeLike] = ...,
     dtype: DtypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     keepdims: bool = ...,
     initial: _NumberLike = ...,
     where: _ArrayLikeBool = ...,
@@ -1255,7 +1255,7 @@ def prod(
     a: ArrayLike,
     axis: None = ...,
     dtype: DtypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     keepdims: Literal[False] = ...,
     initial: _NumberLike = ...,
     where: _ArrayLikeBool = ...,
@@ -1295,7 +1295,7 @@ def mean(
     a: ArrayLike,
     axis: None = ...,
     dtype: DtypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     keepdims: Literal[False] = ...,
 ) -> number: ...
 @overload
@@ -1311,7 +1311,7 @@ def std(
     a: ArrayLike,
     axis: None = ...,
     dtype: DtypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     ddof: int = ...,
     keepdims: Literal[False] = ...,
 ) -> number: ...
@@ -1329,7 +1329,7 @@ def var(
     a: ArrayLike,
     axis: None = ...,
     dtype: DtypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     ddof: int = ...,
     keepdims: Literal[False] = ...,
 ) -> number: ...

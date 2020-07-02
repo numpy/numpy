@@ -10,6 +10,7 @@ B.setflags(write=False)
 a = np.bool_(True)
 b = np.float32(1.0)
 c = 1.0
+d = np.array(1.0, dtype=np.float32)  # writeable
 
 reveal_type(np.take(a, 0))  # E: numpy.bool_
 reveal_type(np.take(b, 0))  # E: numpy.float32
@@ -213,6 +214,8 @@ reveal_type(np.prod(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.prod(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.prod(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.prod(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.prod(b, out=d))  # E: numpy.ndarray
+reveal_type(np.prod(B, out=d))  # E: numpy.ndarray
 
 reveal_type(np.cumprod(a))  # E: numpy.ndarray
 reveal_type(np.cumprod(b))  # E: numpy.ndarray
@@ -247,6 +250,8 @@ reveal_type(np.mean(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.mean(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.mean(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.mean(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.mean(b, out=d))  # E: numpy.ndarray
+reveal_type(np.mean(B, out=d))  # E: numpy.ndarray
 
 reveal_type(np.std(a))  # E: numpy.number
 reveal_type(np.std(b))  # E: numpy.number
@@ -257,6 +262,8 @@ reveal_type(np.std(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.std(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.std(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.std(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.std(b, out=d))  # E: numpy.ndarray
+reveal_type(np.std(B, out=d))  # E: numpy.ndarray
 
 reveal_type(np.var(a))  # E: numpy.number
 reveal_type(np.var(b))  # E: numpy.number
@@ -267,3 +274,5 @@ reveal_type(np.var(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.var(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.var(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
 reveal_type(np.var(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.var(b, out=d))  # E: numpy.ndarray
+reveal_type(np.var(B, out=d))  # E: numpy.ndarray
