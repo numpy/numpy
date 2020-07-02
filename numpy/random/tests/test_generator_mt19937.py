@@ -136,12 +136,6 @@ class TestMultinomial:
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
-    def test_multidimensional_pvals(self):
-        assert_raises(ValueError, random.multinomial, 10, [[0, 1]])
-        assert_raises(ValueError, random.multinomial, 10, [[0], [1]])
-        assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
-        assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
-
     def test_multinomial_pvals_float32(self):
         x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
                       1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
@@ -2347,6 +2341,50 @@ class TestBroadcast:
         desired = np.array([[0, 0, 2, 1, 2, 0],
                             [2, 3, 6, 4, 2, 3]], dtype=np.int64)
         assert_array_equal(actual, desired)
+
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial([5, 20], [[1 / 6.] * 6] * 2)
+        desired = np.array([[0, 0, 2, 1, 2, 0],
+                            [2, 3, 6, 4, 2, 3]], dtype=np.int64)
+        assert_array_equal(actual, desired)
+
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial([[5], [20]], [[1 / 6.] * 6] * 2)
+        desired = np.array([[[0, 0, 2, 1, 2, 0],
+                             [0, 0, 2, 1, 1, 1]],
+                            [[4, 2, 3, 3, 5, 3],
+                             [7, 2, 2, 1, 4, 4]]], dtype=np.int64)
+        assert_array_equal(actual, desired)
+
+    @pytest.mark.parametrize("n", [10,
+                                   np.array([10, 10]),
+                                   np.array([[[10]], [[10]]])
+                                   ]
+                             )
+    def test_multinomial_pval_broadcast(self, n):
+        random = Generator(MT19937(self.seed))
+        pvals = np.array([1 / 4] * 4)
+        actual = random.multinomial(n, pvals)
+        assert actual.shape == np.broadcast(n, 1).shape + (4,)
+        pvals = np.vstack([pvals, pvals])
+        actual = random.multinomial(n, pvals)
+        assert actual.shape == np.broadcast(n, np.ones(2)).shape + (4,)
+
+        pvals = np.vstack([[pvals], [pvals]])
+        actual = random.multinomial(n, pvals)
+        expected_shape = np.broadcast(n, np.ones((2, 2))).shape
+        assert actual.shape == expected_shape + (4,)
+        actual = random.multinomial(n, pvals, size=(3, 2) + expected_shape)
+        assert actual.shape == (3, 2) + expected_shape + (4,)
+
+        with pytest.raises(ValueError):
+            # Ensure that size is not broadcast
+            actual = random.multinomial(n, pvals, size=(1,) * 6)
+
+    def test_invalid_pvals_broadcast(self):
+        random = Generator(MT19937(self.seed))
+        pvals = [[1 / 6] * 6, [1 / 4] * 6]
+        assert_raises(ValueError, random.multinomial, 1, pvals)
 
 
 class TestThread:
