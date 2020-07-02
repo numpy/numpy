@@ -1231,3 +1231,105 @@ def amin(
     initial: _NumberLike = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
+@overload
+def prod(
+    a: _Number,
+    axis: Optional[_ShapeLike] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> _Number: ...
+@overload
+def prod(
+    a: ArrayLike,
+    axis: None = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> number: ...
+@overload
+def prod(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> Union[number, ndarray]: ...
+def cumprod(
+    a: ArrayLike,
+    axis: Optional[int] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+) -> ndarray: ...
+def ndim(a: ArrayLike) -> int: ...
+def size(a: ArrayLike, axis: Optional[int] = ...) -> int: ...
+@overload
+def around(
+    a: _Number, decimals: int = ..., out: Optional[ndarray] = ...
+) -> _Number: ...
+@overload
+def around(
+    a: _NumberLike, decimals: int = ..., out: Optional[ndarray] = ...
+) -> number: ...
+@overload
+def around(
+    a: ArrayLike, decimals: int = ..., out: Optional[ndarray] = ...
+) -> ndarray: ...
+@overload
+def mean(
+    a: ArrayLike,
+    axis: None = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+) -> number: ...
+@overload
+def mean(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+) -> Union[number, ndarray]: ...
+@overload
+def std(
+    a: ArrayLike,
+    axis: None = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    ddof: int = ...,
+    keepdims: Literal[False] = ...,
+) -> number: ...
+@overload
+def std(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    ddof: int = ...,
+    keepdims: bool = ...,
+) -> Union[number, ndarray]: ...
+@overload
+def var(
+    a: ArrayLike,
+    axis: None = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    ddof: int = ...,
+    keepdims: Literal[False] = ...,
+) -> number: ...
+@overload
+def var(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    ddof: int = ...,
+    keepdims: bool = ...,
+) -> Union[number, ndarray]: ...
