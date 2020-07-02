@@ -25,7 +25,7 @@ from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
-            double_fill, cont, kahan_sum, kahan_check, cont_broadcast_3, float_fill, cont_f,
+            double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
         )
@@ -3725,11 +3725,7 @@ cdef class Generator:
 
         cdef np.npy_intp d, i, sz, offset
         cdef np.ndarray parr, mnarr, on, temp_arr
-        cdef float[::1] pvals32
-        cdef double[::1] pvals64
         cdef double *pix
-        cdef bint err
-        cdef double max_sum
         cdef int64_t *mnix
         cdef int64_t ni
         cdef np.broadcast it
@@ -3740,16 +3736,19 @@ cdef class Generator:
             pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if isinstance(pvals, np.ndarray) and pvals.dtype == np.float32:
-            # Special case 32 bit floats
-            pvals32 = np.PyArray_GETCONTIGUOUS(pvals)
-            err = kahan_check(pvals32,  <float>1.0000001)
-        else:
-            # All other original types are tested using 64 bit floats
-            pvals64 = parr
-            err = kahan_check(pvals64, 1.0 + 1e-12)
-        if err:
-            raise ValueError(f"sum(pvals[:-1]) > 1.0")
+        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
+            msg = "sum(pvals[:-1]) > 1.0"
+            # When floating, but not float dtype, and close, improve the error
+            # 1.0001 works for float16 and float32
+            if (isinstance(pvals, np.ndarray) and
+                    pvals.dtype != float and
+                    np.issubdtype(pvals.dtype, np.floating) and
+                    pvals.sum() < 1.0001):
+                msg += (". pvals has been cast to double before checking "
+                        "the sum. Changes in precision when casting may "
+                        "produce violations even if pvals.sum() <= 1 when "
+                        "evaluated in its original dtype.")
+            raise ValueError(msg)
 
         if np.PyArray_NDIM(on) != 0: # vector
             check_array_constraint(on, 'n', CONS_NON_NEGATIVE)

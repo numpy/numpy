@@ -183,20 +183,6 @@ cdef double kahan_sum(double *darr, np.npy_intp n):
     return sum
 
 
-cdef bint kahan_check(floating[::1] a, floating tol):
-    cdef floating c, y, t, sum
-    cdef np.npy_intp i, n
-    n = a.shape[0]
-    sum = a[0]
-    c = 0.0
-    for i in range(1, n):
-        y = a[i] - c
-        t = sum + y
-        c = (t-sum) - y
-        sum = t
-    return sum > tol
-
-
 cdef object wrap_int(object val, object bits):
     """Wraparound to place an integer into the interval [0, 2**bits)"""
     mask = ~(~int(0) << bits)

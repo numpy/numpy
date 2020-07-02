@@ -147,15 +147,9 @@ class TestMultinomial:
                       1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
         pvals = x / x.sum()
         random = Generator(MT19937(1432985819))
-        result = random.multinomial(1, pvals)
-
-        random = Generator(MT19937(1432985819))
-        pvals = pvals.astype(float)
-        assert_raises(ValueError, random.multinomial, 1, pvals)
-        pvals = pvals / pvals.sum()
-        expected = random.multinomial(1, pvals)
-        assert_array_equal(result, expected)
-
+        match = r"[\w\s]*pvals has been cast to double"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
 
 class TestMultivariateHypergeometric:
 
