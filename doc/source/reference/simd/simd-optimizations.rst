@@ -2,7 +2,7 @@
 SIMD Optimizations
 ******************
 
-NumPy provides a set of macros that define `Universal Intrinsics`_ to provide
+NumPy provides a set of macros that define `Universal Intrinsics`_ to
 abstract out typical platform-specific intrinsics so SIMD code needs to be
 written only once. There are three layers:
 
@@ -15,7 +15,7 @@ written only once. There are three layers:
 - At *compile* time, a distutils command is used to define the minimum and
   maximum features to support, based on user choice and compiler support. The
   appropriate macros are overlayed with the platform / architecture intrinsics,
-  and the three loops compiled.
+  and the three loops are compiled.
 - At *runtime import*, the CPU is probed for the set of supported intrinsic
   features. A mechanism is used to grab the pointer to the most appropriate
   function, and this will be the one called for the function.
@@ -26,18 +26,19 @@ Build options for compilation
 
 - ``--cpu-baseline``: minimal set of required optimizations. Default
   value is ``min`` which provides the minimum CPU features that can
-  safely run on a wide range of platform within the processor family.
+  safely run on a wide range of platforms within the processor family.
 
 - ``--cpu-dispatch``: dispatched set of additional optimizations.
   The default value for ``x86`` is ``max -xop -fma4`` which enables all CPU
   features, except for AMD legacy features.
 
-The command arguments are available in ``build``, ``build_clib``, ``build_ext``.
+The command arguments are available in ``build``, ``build_clib``, and
+``build_ext``.
 if ``build_clib`` or ``build_ext`` are not specified by the user, the arguments of
 ``build`` will be used instead, which also holds the default values.
 
-Optimization names can be CPU features or group of features that gather several features or
-special options perform a series of procedures.
+Optimization names can be CPU features or groups of features that gather
+several features or special options to perform a series of procedures.
 
 
 The following tables show the current supported optimizations sorted from the lowest to the highest interest.
@@ -52,7 +53,7 @@ Special options
 - ``NATIVE``: Enables all CPU features that supported by the current
    machine, this operation is based on the compiler flags (``-march=native, -xHost, /QxHost``)
 
-- ``MIN``: Enables the minimum CPU features that can safely run on a wide range of users platforms:
+- ``MIN``: Enables the minimum CPU features that can safely run on a wide range of platforms:
 
   .. table::
       :align: left
@@ -77,23 +78,23 @@ NOTES
 ~~~~~~~~~~~~~
 - CPU features and other options are case-insensitive.
 
-- The order among the requsted optimizations doesn't matter.
+- The order of the requsted optimizations doesn't matter.
 
-- Comma or space can be used as a separator, e.g. ``--cpu-dispatch``\ = 
-  "avx2 avx512f" or ``--cpu-dispatch`` = "avx2, avx512f" both work, but the
+- Either commas or spaces can be used as a separator, e.g. ``--cpu-dispatch``\ = 
+  "avx2 avx512f" or ``--cpu-dispatch``\ = "avx2, avx512f" both work, but the
   arguments must be enclosed in quotes.
 
-- operand ``+`` is only added for nominal reason, For example:
-  ``--cpu-basline= "min avx2"`` is equivalent to ``--cpu-basline="min + avx2"``
+- The operand ``+`` is only added for nominal reasons, For example:
+  ``--cpu-basline= "min avx2"`` is equivalent to ``--cpu-basline="min + avx2"``.
   ``--cpu-basline="min,avx2"`` is equivalent to ``--cpu-basline`="min,+avx2"``
 
 - If the CPU feature is not supported by the user platform or
   compiler, it will be skipped rather than raising a fatal error.
 
-- Any specified CPU features to ``--cpu-dispatch`` will be skipped if
+- Any specified CPU feature to ``--cpu-dispatch`` will be skipped if
   it's part of CPU baseline features
 
-- Argument ``--cpu-baseline`` force enables implied features,
+- The ``--cpu-baseline`` argument force-enables implied features,
   e.g. ``--cpu-baseline``\ ="sse42" is equivalent to
   ``--cpu-baseline``\ ="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
@@ -105,7 +106,7 @@ NOTES
   ``--cpu-baseline`` isn't strict. For example, if the user requested
   ``AVX2`` but the compiler doesn't support it then we just skip it and return
   the maximum optimization that the compiler can handle depending on the
-  implied features of ``AVX2``, let us assume `AVX`.
+  implied features of ``AVX2``, let us assume ``AVX``.
 
 - The user should always check the final report through the build log
   to verify the enabled features.
@@ -129,8 +130,8 @@ Understanding CPU Dispatching, How the NumPy dispatcher works?
 
 NumPy dispatcher is based on multi-source compiling, which means taking
 a certain source and compiling it multiple times with different compiler
-flags and also with different **C** definitions that affect on the code
-paths to enable certain instructions-set for each compiled object
+flags and also with different **C** definitions that affect the code
+paths to enable certain instruction-sets for each compiled object
 depending on the required optimizations, then combining the returned
 objects together.
 
@@ -146,9 +147,9 @@ normal compilation that are explained as follows:
 Configuring the required optimization by the user before starting to build the
 source files via the two command arguments as explained above:
 
--  ``--cpu-baseline`` minimal set of required optimizations.
+-  ``--cpu-baseline``: minimal set of required optimizations.
 
--  ``--cpu-dispatch`` dispatched set of additional optimizations.
+-  ``--cpu-dispatch``: dispatched set of additional optimizations.
 
 
 2- Discovering the environment
@@ -170,8 +171,8 @@ The generated header ``_cpu_dispatch.h`` contains all the definitions and
 headers of instruction-sets for the required optimizations that have been
 validated during the previous step.
 
-It also contains extra C definitions that are used for defining NumPy
-python-level module's attributes ``__cpu_baseline__`` and ``__cpu_dispaٍtch__``.
+It also contains extra C definitions that are used for defining NumPy's
+Python-level module attributes ``__cpu_baseline__`` and ``__cpu_dispaٍtch__``.
 
 **What is in this header?**
 
@@ -241,13 +242,13 @@ enabled within **dispatch-able sources**.
 
 .. _dispatchable-sources:
 
-6- Dispatch-able sources and configuration statements
+5- Dispatch-able sources and configuration statements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Dispatch-able sources are special C files that can be compiled multiple
+Dispatch-able sources are special **C** files that can be compiled multiple
 times with different compiler flags and also with different **C**
 definitions. These affect code paths to enable certain
-instructions sets for each compiled object according to "**the
+instruction-sets for each compiled object according to "**the
 configuration statements**" that must be declared between a **C**
 comment\ ``(/**/)`` and start with a special mark **@targets** at the
 top of each dispatch-able source. At the same time, dispatch-able
@@ -294,10 +295,10 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
 - **(C) Wrapping**: This is the approach taken by NumPy's
   infrastructure, which has proved to be sufficiently flexible in order
   to compile a single source multiple times with different **C**
-  definitions and flags that affect on the code paths. The process is
+  definitions and flags that affect the code paths. The process is
   achieved by creating a temporary **C** source for each required
   optimization that related to the additional optimization, which
-  contains the declarations of the **C** definitions and including the
+  contains the declarations of the **C** definitions and includes the
   involved source via the **C** directive **#include**. For more
   clarification take a look at the following code for AVX512F :
 
@@ -372,7 +373,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
   Now assume you attached **hello.dispatch.c** to the source tree, then
   the infrastructure should generate a temporary config header called
   **hello.dispatch.h** that can be reached by any source in the source
-  tree, and it should contains the following code :
+  tree, and it should contain the following code :
 
   .. code:: c
 
