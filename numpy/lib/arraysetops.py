@@ -206,6 +206,7 @@ def unique(ar, return_index=False, return_inverse=False,
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+    repeat : Repeat elements of an array.
 
     Notes
     -----
