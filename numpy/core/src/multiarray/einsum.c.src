@@ -37,7 +37,7 @@
 #define EINSUM_USE_SSE2 0
 #endif
 
-#if defined(__ARM_NEON__) || defined (__ARM_NEON)
+#ifdef NPY_HAVE_NEON
     #ifdef __aarch64__
         #define EINSUM_USE_NEON_64 1
     #else
@@ -58,10 +58,6 @@
 
 #if EINSUM_USE_NEON_32 || EINSUM_USE_NEON_64
 #include <arm_neon.h>
-#endif
-
-#define EINSUM_IS_SSE_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
-
 static void prefetch(const double *ptr, size_t offset)
 {
 #if defined __GNUC__
@@ -73,6 +69,9 @@ static void prefetch(const double *ptr, size_t offset)
     (void)offset;
 #endif
 }
+#endif
+
+#define EINSUM_IS_SSE_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_EINSUM_DBG_TRACING 0
