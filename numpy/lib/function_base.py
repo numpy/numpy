@@ -3879,7 +3879,13 @@ def _quantile_is_valid(q):
 
 def _lerp(a, b, t, out=None):
     """ Linearly interpolate from a to b by a factor of t """
-    return add(a*(1 - t), b*t, out=out)
+    diff_b_a = subtract(b, a)
+    # asanyarray is a stop-gap until gh-13105
+    lerp_interpolation = asanyarray(add(a, diff_b_a*t, out=out))
+    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t>=0.5)
+    if lerp_interpolation.ndim == 0 and out is None:
+        lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
+    return lerp_interpolation
 
 
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,

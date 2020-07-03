@@ -8,7 +8,7 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns
+    assert_raises_regex, assert_warns, IS_PYPY
     )
 
 
@@ -319,6 +319,19 @@ class TestConcatenate:
         rout = concatenate((a0, a1, a2), 2, out=out)
         assert_(out is rout)
         assert_equal(res, rout)
+
+    @pytest.mark.skipif(IS_PYPY, reason="PYPY handles sq_concat, nb_add differently than cpython")
+    def test_operator_concat(self):
+        import operator
+        a = array([1, 2])
+        b = array([3, 4])
+        n = [1,2]
+        res = array([1, 2, 3, 4])
+        assert_raises(TypeError, operator.concat, a, b)
+        assert_raises(TypeError, operator.concat, a, n)
+        assert_raises(TypeError, operator.concat, n, a)
+        assert_raises(TypeError, operator.concat, a, 1)
+        assert_raises(TypeError, operator.concat, 1, a)
 
     def test_bad_out_shape(self):
         a = array([1, 2])

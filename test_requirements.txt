@@ -1,5 +1,5 @@
 cython==0.29.19
-hypothesis==5.16.1
+hypothesis==5.16.3
 pytest==5.4.3
 pytz==2020.1
 pytest-cov==2.10.0
@@ -11,5 +11,5 @@ cffi
 # - Mypy relies on C API features not present in PyPy
 # - Mypy doesn't currently work on Python 3.9
 # - Python 3.6 doesn't work because it doesn't understand py.typed
-mypy==0.780; platform_python_implementation != "PyPy" and python_version > "3.6"
+mypy==0.781; platform_python_implementation != "PyPy" and python_version > "3.6"
 typing_extensions

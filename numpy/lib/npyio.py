@@ -1083,8 +1083,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             fh = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
-    except TypeError:
-        raise ValueError('fname must be a string, file handle, or generator')
+    except TypeError as e:
+        raise ValueError(
+            'fname must be a string, file handle, or generator'
+        ) from e
 
     # input may be a python2 io stream
     if encoding is not None:
@@ -1768,10 +1770,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid = fname
             fid_ctx = contextlib_nullcontext(fid)
         fhd = iter(fid)
-    except TypeError:
+    except TypeError as e:
         raise TypeError(
             "fname must be a string, filehandle, list of strings, "
-            "or generator. Got %s instead." % type(fname))
+            "or generator. Got %s instead." % type(fname)) from e
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
