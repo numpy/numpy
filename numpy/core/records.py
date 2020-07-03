@@ -911,6 +911,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         shape = (shape,)
 
     if hasattr(fd, 'readinto'):
+        # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface. 
+        # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
         ctx = contextlib_nullcontext(fd)
     else:
