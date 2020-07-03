@@ -23,7 +23,7 @@ def on_powerpc():
 
 
 def bad_arcsinh():
-    """The blacklisted trig functions are not accurate on aarch64 for
+    """The blocklisted trig functions are not accurate on aarch64 for
     complex256. Rather than dig through the actual problem skip the
     test. This should be fixed when we can move past glibc2.17
     which is the version in manylinux2014

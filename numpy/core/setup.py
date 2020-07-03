@@ -738,6 +738,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ufunc_override.h'),
             join('src', 'common', 'umathmodule.h'),
             join('src', 'common', 'numpyos.h'),
+            join('src', 'common', 'npy_cpu_dispatch.h'),
             ]
 
     common_src = [
@@ -939,8 +940,11 @@ def configuration(parent_package='',top_path=None):
     #                        umath_tests module                           #
     #######################################################################
 
-    config.add_extension('_umath_tests',
-                    sources=[join('src', 'umath', '_umath_tests.c.src')])
+    config.add_extension('_umath_tests', sources=[
+        join('src', 'umath', '_umath_tests.c.src'),
+        join('src', 'umath', '_umath_tests.dispatch.c'),
+        join('src', 'common', 'npy_cpu_features.c.src'),
+    ])
 
     #######################################################################
     #                   custom rational dtype module                      #

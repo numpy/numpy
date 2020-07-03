@@ -52,8 +52,8 @@ because broadcasting moves less memory around during the multiplication
 General Broadcasting Rules
 ==========================
 When operating on two arrays, NumPy compares their shapes element-wise.
-It starts with the trailing dimensions and works its way forward.  Two
-dimensions are compatible when
+It starts with the trailing (i.e. rightmost) dimensions and works its
+way left.  Two dimensions are compatible when
 
 1) they are equal, or
 2) one of them is 1

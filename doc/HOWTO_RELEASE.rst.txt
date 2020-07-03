@@ -390,8 +390,11 @@ create an archive of the documentation in the numpy/doc repo::
     # This checks out github.com/numpy/doc and adds (``git add``) the
     # documentation to the checked out repo.
     make merge-doc
-    # Now edit the ``index.html`` file in the repo to reflect the new content,
-    # and commit the changes
+    # Now edit the ``index.html`` file in the repo to reflect the new content.
+    # If the documentation is for a non-patch release (e.g. 1.19 -> 1.20),
+    # make sure to update the ``stable`` symlink to point to the new directory.
+    ln -sfn <latest_stable_directory> stable
+    # Commit the changes
     git -C build/merge commit -am "Add documentation for <version>"
     # Push to numpy/doc repo
     git -C build/merge push

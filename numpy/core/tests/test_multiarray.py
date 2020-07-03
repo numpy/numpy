@@ -4702,6 +4702,10 @@ class TestIO:
         e = np.array([-25041670086757, 104783749223640], dtype=np.int64)
         assert_array_equal(d, e)
 
+    def test_fromstring_count0(self):
+        d = np.fromstring("1,2", sep=",", dtype=np.int64, count=0)
+        assert d.shape == (0,)
+
     def test_empty_files_binary(self):
         with open(self.filename, 'w') as f:
             pass

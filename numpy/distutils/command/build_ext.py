@@ -19,7 +19,7 @@ from numpy.distutils.misc_util import (
     has_cxx_sources, has_f_sources, is_sequence
 )
 from numpy.distutils.command.config_compiler import show_fortran_compilers
-
+from numpy.distutils.ccompiler_opt import new_ccompiler_opt
 
 
 class build_ext (old_build_ext):
@@ -33,6 +33,12 @@ class build_ext (old_build_ext):
          "number of parallel jobs"),
         ('warn-error', None,
          "turn all warnings into errors (-Werror)"),
+        ('cpu-baseline=', None,
+         "specify a list of enabled baseline CPU optimizations"),
+        ('cpu-dispatch=', None,
+         "specify a list of dispatched CPU optimizations"),
+        ('disable-optimization', None,
+         "disable CPU optimized code(dispatch,simd,fast...)"),
     ]
 
     help_options = old_build_ext.help_options + [
@@ -40,13 +46,16 @@ class build_ext (old_build_ext):
          show_fortran_compilers),
     ]
 
-    boolean_options = old_build_ext.boolean_options + ['warn-error']
+    boolean_options = old_build_ext.boolean_options + ['warn-error', 'disable-optimization']
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
         self.parallel = None
         self.warn_error = None
+        self.cpu_baseline = None
+        self.cpu_dispatch = None
+        self.disable_optimization = None
 
     def finalize_options(self):
         if self.parallel:
@@ -75,6 +84,9 @@ class build_ext (old_build_ext):
         self.set_undefined_options('build',
                                         ('parallel', 'parallel'),
                                         ('warn_error', 'warn_error'),
+                                        ('cpu_baseline', 'cpu_baseline'),
+                                        ('cpu_dispatch', 'cpu_dispatch'),
+                                        ('disable_optimization', 'disable_optimization'),
                                   )
 
     def run(self):
@@ -128,6 +140,22 @@ class build_ext (old_build_ext):
             self.compiler.compiler_so.append('-Werror')
 
         self.compiler.show_customization()
+
+        if not self.disable_optimization:
+            opt_cache_path = os.path.abspath(os.path.join(self.build_temp, 'ccompiler_opt_cache_ext.py'))
+            self.compiler_opt = new_ccompiler_opt(compiler=self.compiler,
+                                                  cpu_baseline=self.cpu_baseline,
+                                                  cpu_dispatch=self.cpu_dispatch,
+                                                  cache_path=opt_cache_path)
+            if not self.compiler_opt.is_cached():
+                log.info("Detected changes on compiler optimizations, force rebuilding")
+                self.force = True
+
+            import atexit
+            def report():
+                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
+                log.info(self.compiler_opt.report(full=True))
+            atexit.register(report)
 
         # Setup directory for storing generated extra DLL files on Windows
         self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
@@ -378,6 +406,32 @@ class build_ext (old_build_ext):
 
         include_dirs = ext.include_dirs + get_numpy_include_dirs()
 
+        dispatch_objects = []
+        if not self.disable_optimization:
+            dispatch_sources  = [
+                c_sources.pop(c_sources.index(src))
+                for src in c_sources[:] if src.endswith(".dispatch.c")
+            ]
+            if dispatch_sources:
+                if not self.inplace:
+                    build_src = self.get_finalized_command("build_src").build_src
+                else:
+                    build_src = None
+                dispatch_objects = self.compiler_opt.try_dispatch(
+                    dispatch_sources,
+                    output_dir=output_dir,
+                    src_dir=build_src,
+                    macros=macros,
+                    include_dirs=include_dirs,
+                    debug=self.debug,
+                    extra_postargs=extra_args,
+                    **kws
+                )
+            extra_args_baseopt = extra_args + self.compiler_opt.cpu_baseline_flags()
+        else:
+            extra_args_baseopt = extra_args
+            macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
+
         c_objects = []
         if c_sources:
             log.info("compiling C sources")
@@ -386,8 +440,9 @@ class build_ext (old_build_ext):
                                               macros=macros,
                                               include_dirs=include_dirs,
                                               debug=self.debug,
-                                              extra_postargs=extra_args,
+                                              extra_postargs=extra_args_baseopt,
                                               **kws)
+        c_objects.extend(dispatch_objects)
 
         if cxx_sources:
             log.info("compiling C++ sources")

@@ -286,14 +286,10 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
 NPY_NO_EXPORT PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
-    PyArray_Descr *typecode;
-    PyArrayObject *r;
-    char *memptr;
-    PyObject *ret;
-
     /* convert to 0-dim array of scalar typecode */
-    typecode = PyArray_DescrFromScalar(scalar);
+    PyArray_Descr *typecode = PyArray_DescrFromScalar(scalar);
     if (typecode == NULL) {
+        Py_XDECREF(outcode);
         return NULL;
     }
     if ((typecode->type_num == NPY_VOID) &&
@@ -307,49 +303,53 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                 NULL, (PyObject *)scalar);
     }
 
-    /* Need to INCREF typecode because PyArray_NewFromDescr steals a
-     * reference below and we still need to access typecode afterwards. */
-    Py_INCREF(typecode);
-    r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+    PyArrayObject *r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             typecode,
             0, NULL,
             NULL, NULL, 0, NULL);
-    if (r==NULL) {
-        Py_DECREF(typecode); Py_XDECREF(outcode);
+    if (r == NULL) {
+        Py_XDECREF(outcode);
         return NULL;
     }
+    /* the dtype used by the array may be different to the one requested */
+    typecode = PyArray_DESCR(r);
     if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
         if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
-            Py_DECREF(typecode); Py_XDECREF(outcode); Py_DECREF(r);
+            Py_DECREF(r);
+            Py_XDECREF(outcode);
             return NULL;
         }
-        goto finish;
+    }
+    else {
+        char *memptr = scalar_value(scalar, typecode);
+
+        memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
+        if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
+            /* Need to INCREF just the PyObject portion */
+            PyArray_Item_INCREF(memptr, typecode);
+        }
     }
 
-    memptr = scalar_value(scalar, typecode);
-
-    memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
-    if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
-        /* Need to INCREF just the PyObject portion */
-        PyArray_Item_INCREF(memptr, typecode);
-    }
-
-finish:
     if (outcode == NULL) {
-        Py_DECREF(typecode);
         return (PyObject *)r;
     }
     if (PyArray_EquivTypes(outcode, typecode)) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
-            Py_DECREF(typecode); Py_DECREF(outcode);
+            /*
+             * Since the type is equivalent, and we haven't handed the array
+             * to anyone yet, let's fix the dtype to be what was requested,
+             * even if it is equivalent to what was passed in.
+             */
+            Py_SETREF(((PyArrayObject_fields *)r)->descr, outcode);
+
             return (PyObject *)r;
         }
     }
 
     /* cast if necessary to desired output typecode */
-    ret = PyArray_CastToType((PyArrayObject *)r, outcode, 0);
-    Py_DECREF(typecode); Py_DECREF(r);
+    PyObject *ret = PyArray_CastToType(r, outcode, 0);
+    Py_DECREF(r);
     return ret;
 }
 

@@ -132,8 +132,9 @@ nomemoverlap(char *ip,
  * 2) Input step should be smaller than MAX_STEP_SIZE for performance
  * 3) Input and output arrays should have no overlap in memory
  */
-#define IS_OUTPUT_BLOCKABLE_UNARY(esize, vsize) \
-    (steps[1] == (esize) && abs(steps[0]) < MAX_STEP_SIZE && \
+#define IS_OUTPUT_BLOCKABLE_UNARY(esizein, esizeout, vsize) \
+    ((steps[0] & (esizein-1)) == 0 && \
+     steps[1] == (esizeout) && abs(steps[0]) < MAX_STEP_SIZE && \
      (nomemoverlap(args[1], steps[1] * dimensions[0], args[0], steps[0] * dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
@@ -251,7 +252,7 @@ static NPY_INLINE int
 run_unary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
-    if ((IS_OUTPUT_BLOCKABLE_UNARY((npy_uint)(@esize@/@outsize@), 64)) && (labs(steps[0]) < 2*@max_stride@*@esize@)) {
+    if ((IS_OUTPUT_BLOCKABLE_UNARY(@esize@, (npy_uint)(@esize@/@outsize@), 64)) && (labs(steps[0]) < 2*@max_stride@*@esize@)) {
         AVX512F_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0], steps[0]);
         return 1;
     }
@@ -358,7 +359,7 @@ static NPY_INLINE int
 run_@func@_avx512_skx_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_bool), 64)) {
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(@type@), sizeof(npy_bool), 64)) {
         AVX512_SKX_@func@_@TYPE@((npy_bool*)args[1], (@type@*)args[0], dimensions[0], steps[0]);
         return 1;
     }
@@ -400,7 +401,7 @@ static NPY_INLINE int
 run_unary_@isa@_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(@type@), @REGISTER_SIZE@)) {
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(@type@), sizeof(@type@), @REGISTER_SIZE@)) {
         @ISA@_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0], steps[0]);
         return 1;
     }
@@ -426,7 +427,7 @@ static NPY_INLINE int
 run_unary_@isa@_@func@_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), sizeof(npy_float), @REGISTER_SIZE@)) {
         @ISA@_@func@_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0]);
         return 1;
     }
@@ -447,7 +448,7 @@ static NPY_INLINE int
 run_unary_@isa@_sincos_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps, NPY_TRIG_OP my_trig_op)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), sizeof(npy_float), @REGISTER_SIZE@)) {
         @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0], my_trig_op);
         return 1;
     }
@@ -468,7 +469,7 @@ run_unary_avx512f_exp_DOUBLE(char **args, npy_intp const *dimensions, npy_intp c
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), 64)) {
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), sizeof(npy_double), 64)) {
         AVX512F_exp_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
         return 1;
     }

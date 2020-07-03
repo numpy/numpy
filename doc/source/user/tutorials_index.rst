@@ -15,5 +15,6 @@ classes contained in the package, see the :ref:`API reference <reference>`.
    misc
    numpy-for-matlab-users
    tutorial-svd
+   tutorial-ma
    building
    c-info

@@ -109,6 +109,48 @@ npy_cpu_have(NPY_CPU_FEATURE_##FEATURE_NAME)
  */
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_features_dict(void);
+/*
+ * Return a new a Python list contains the minimal set of required optimizations
+ * that supported by the compiler and platform according to the specified
+ * values to command argument '--cpu-baseline'.
+ *
+ * This function is mainly used to implement umath's attrbute '__cpu_baseline__',
+ * and the items are sorted from the lowest to highest interest.
+ *
+ * For example, according to the default build configuration and by assuming the compiler
+ * support all the involved optimizations then the returned list should equivalent to:
+ *
+ * On x86: ['SSE', 'SSE2']
+ * On x64: ['SSE', 'SSE2', 'SSE3']
+ * On armhf: []
+ * On aarch64: ['NEON', 'NEON_FP16', 'NEON_VPFV4', 'ASIMD']
+ * On ppc64: []
+ * On ppc64le: ['VSX', 'VSX2']
+ * On any other arch or if the optimization is disabled: []
+ */
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_baseline_list(void);
+/*
+ * Return a new a Python list contains the dispatched set of additional optimizations
+ * that supported by the compiler and platform according to the specified
+ * values to command argument '--cpu-dispatch'.
+ *
+ * This function is mainly used to implement umath's attrbute '__cpu_dispatch__',
+ * and the items are sorted from the lowest to highest interest.
+ *
+ * For example, according to the default build configuration and by assuming the compiler
+ * support all the involved optimizations then the returned list should equivalent to:
+ *
+ * On x86: ['SSE3', 'SSSE3', 'SSE41', 'POPCNT', 'SSE42', 'AVX', 'F16C', 'FMA3', 'AVX2', 'AVX512F', ...]
+ * On x64: ['SSSE3', 'SSE41', 'POPCNT', 'SSE42', 'AVX', 'F16C', 'FMA3', 'AVX2', 'AVX512F', ...]
+ * On armhf: ['NEON', 'NEON_FP16', 'NEON_VPFV4', 'ASIMD', 'ASIMDHP', 'ASIMDDP', 'ASIMDFHM']
+ * On aarch64: ['ASIMDHP', 'ASIMDDP', 'ASIMDFHM']
+ * On ppc64:  ['VSX', 'VSX2', 'VSX3']
+ * On ppc64le: ['VSX3']
+ * On any other arch or if the optimization is disabled: []
+ */
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_dispatch_list(void);
 
 #ifdef __cplusplus
 }

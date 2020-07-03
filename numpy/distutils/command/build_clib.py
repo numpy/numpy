@@ -13,6 +13,7 @@ from numpy.distutils.misc_util import (
     filter_sources, get_lib_source_files, get_numpy_include_dirs,
     has_cxx_sources, has_f_sources, is_sequence
 )
+from numpy.distutils.ccompiler_opt import new_ccompiler_opt
 
 # Fix Python distutils bug sf #1718574:
 _l = old_build_clib.user_options
@@ -34,9 +35,16 @@ class build_clib(old_build_clib):
          "number of parallel jobs"),
         ('warn-error', None,
          "turn all warnings into errors (-Werror)"),
+        ('cpu-baseline=', None,
+         "specify a list of enabled baseline CPU optimizations"),
+        ('cpu-dispatch=', None,
+         "specify a list of dispatched CPU optimizations"),
+        ('disable-optimization', None,
+         "disable CPU optimized code(dispatch,simd,fast...)"),
     ]
 
-    boolean_options = old_build_clib.boolean_options + ['inplace', 'warn-error']
+    boolean_options = old_build_clib.boolean_options + \
+    ['inplace', 'warn-error', 'disable-optimization']
 
     def initialize_options(self):
         old_build_clib.initialize_options(self)
@@ -44,6 +52,10 @@ class build_clib(old_build_clib):
         self.inplace = 0
         self.parallel = None
         self.warn_error = None
+        self.cpu_baseline = None
+        self.cpu_dispatch = None
+        self.disable_optimization = None
+
 
     def finalize_options(self):
         if self.parallel:
@@ -55,6 +67,9 @@ class build_clib(old_build_clib):
         self.set_undefined_options('build',
                                         ('parallel', 'parallel'),
                                         ('warn_error', 'warn_error'),
+                                        ('cpu_baseline', 'cpu_baseline'),
+                                        ('cpu_dispatch', 'cpu_dispatch'),
+                                        ('disable_optimization', 'disable_optimization')
                                   )
 
     def have_f_sources(self):
@@ -101,6 +116,25 @@ class build_clib(old_build_clib):
         self.libraries = libraries
 
         self.compiler.show_customization()
+
+        if not self.disable_optimization:
+            opt_cache_path = os.path.abspath(
+                os.path.join(self.build_temp, 'ccompiler_opt_cache_clib.py'
+            ))
+            self.compiler_opt = new_ccompiler_opt(
+                compiler=self.compiler, cpu_baseline=self.cpu_baseline,
+                cpu_dispatch=self.cpu_dispatch, cache_path=opt_cache_path
+            )
+            if not self.compiler_opt.is_cached():
+                log.info("Detected changes on compiler optimizations, force rebuilding")
+                self.force = True
+
+            import atexit
+            def report():
+                log.info("\n########### CLIB COMPILER OPTIMIZATION ###########")
+                log.info(self.compiler_opt.report(full=True))
+
+            atexit.register(report)
 
         if self.have_f_sources():
             from numpy.distutils.fcompiler import new_fcompiler
@@ -211,6 +245,8 @@ class build_clib(old_build_clib):
                 'extra_f90_compile_args') or []
 
         macros = build_info.get('macros')
+        if macros is None:
+            macros = []
         include_dirs = build_info.get('include_dirs')
         if include_dirs is None:
             include_dirs = []
@@ -222,6 +258,31 @@ class build_clib(old_build_clib):
         module_build_dir = os.path.dirname(lib_file)
         if requiref90:
             self.mkpath(module_build_dir)
+
+        dispatch_objects = []
+        if not self.disable_optimization:
+            dispatch_sources  = [
+                c_sources.pop(c_sources.index(src))
+                for src in c_sources[:] if src.endswith(".dispatch.c")
+            ]
+            if dispatch_sources:
+                if not self.inplace:
+                    build_src = self.get_finalized_command("build_src").build_src
+                else:
+                    build_src = None
+                dispatch_objects = self.compiler_opt.try_dispatch(
+                    dispatch_sources,
+                    output_dir=self.build_temp,
+                    src_dir=build_src,
+                    macros=macros,
+                    include_dirs=include_dirs,
+                    debug=self.debug,
+                    extra_postargs=extra_postargs
+                )
+            extra_args_baseopt = extra_postargs + self.compiler_opt.cpu_baseline_flags()
+        else:
+            extra_args_baseopt = extra_postargs
+            macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
 
         if compiler.compiler_type == 'msvc':
             # this hack works around the msvc compiler attributes
@@ -237,7 +298,8 @@ class build_clib(old_build_clib):
                                        macros=macros,
                                        include_dirs=include_dirs,
                                        debug=self.debug,
-                                       extra_postargs=extra_postargs)
+                                       extra_postargs=extra_args_baseopt)
+        objects.extend(dispatch_objects)
 
         if cxx_sources:
             log.info("compiling C++ sources")

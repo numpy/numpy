@@ -576,6 +576,51 @@ fail:
     return NULL;
 }
 
+// Testing the utilites of the CPU dispatcher
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "_umath_tests.dispatch.h"
+#endif
+NPY_CPU_DISPATCH_DECLARE(extern const char *_umath_tests_dispatch_var)
+NPY_CPU_DISPATCH_DECLARE(const char *_umath_tests_dispatch_func, (void))
+NPY_CPU_DISPATCH_DECLARE(void _umath_tests_dispatch_attach, (PyObject *list))
+
+static PyObject *
+UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dummy2))
+{
+    const char *highest_func, *highest_var;
+    NPY_CPU_DISPATCH_CALL(highest_func = _umath_tests_dispatch_func, ())
+    NPY_CPU_DISPATCH_CALL(highest_var  = _umath_tests_dispatch_var)
+    const char *highest_func_xb = "nobase", *highest_var_xb = "nobase";
+    NPY_CPU_DISPATCH_CALL_XB(highest_func_xb = _umath_tests_dispatch_func, ())
+    NPY_CPU_DISPATCH_CALL_XB(highest_var_xb  = _umath_tests_dispatch_var)
+
+    PyObject *dict = PyDict_New(), *item;
+    if (dict == NULL) {
+        return NULL;
+    }
+    /**begin repeat
+     * #str = func, var, func_xb, var_xb#
+    */
+    item = PyUnicode_FromString(highest_@str@);
+    if (item == NULL || PyDict_SetItemString(dict, "@str@", item) < 0) {
+        goto err;
+    }
+    /**end repeat**/
+    item = PyList_New(0);
+    if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
+        goto err;
+    }
+    NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item))
+    if (PyErr_Occurred()) {
+        goto err;
+    }
+    return dict;
+err:
+    Py_XDECREF(item);
+    Py_DECREF(dict);
+    return NULL;
+}
+
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
@@ -583,6 +628,7 @@ static PyMethodDef UMath_TestsMethods[] = {
      "If fails, it returns NULL. Otherwise it returns a tuple of ufunc "
      "internals. \n",
      },
+    {"test_dispatch", UMath_Tests_test_dispatch, METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -603,6 +649,11 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
     PyObject *m;
     PyObject *d;
     PyObject *version;
+
+    // Initialize CPU features
+    if (npy_cpu_init() < 0) {
+        return NULL;
+    }
 
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
@@ -632,6 +683,5 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
                         "cannot load _umath_tests module.");
         return NULL;
     }
-
     return m;
 }

@@ -370,6 +370,20 @@ class TestIndexing:
         a[...] = s
         assert_((a == 1).all())
 
+    def test_array_like_values(self):
+        # Similar to the above test, but use a memoryview instead
+        a = np.zeros((5, 5))
+        s = np.arange(25, dtype=np.float64).reshape(5, 5)
+
+        a[[0, 1, 2, 3, 4], :] = memoryview(s)
+        assert_array_equal(a, s)
+
+        a[:, [0, 1, 2, 3, 4]] = memoryview(s)
+        assert_array_equal(a, s)
+
+        a[...] = memoryview(s)
+        assert_array_equal(a, s)
+
     def test_subclass_writeable(self):
         d = np.rec.array([('NGC1001', 11), ('NGC1002', 1.), ('NGC1003', 1.)],
                          dtype=[('target', 'S20'), ('V_mag', '>f4')])
