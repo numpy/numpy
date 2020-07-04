@@ -141,7 +141,15 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
             return (void *)PyString_AS_STRING(scalar);
         }
         if (_CHK(Unicode)) {
-            return (void *)PyUnicode_AS_DATA(scalar);
+            PyUnicode_READY(scalar);
+            switch (PyUnicode_KIND(scalar)) {
+                case PyUnicode_1BYTE_KIND :
+                    return (void *)PyUnicode_1BYTE_DATA(scalar);
+                case PyUnicode_2BYTE_KIND :
+                    return (void *)PyUnicode_2BYTE_DATA(scalar);
+                case PyUnicode_4BYTE_KIND :
+                    return (void *)PyUnicode_4BYTE_DATA(scalar);
+            }
         }
         if (_CHK(Void)) {
             /* Note: no & needed here, so can't use _IFCASE */
