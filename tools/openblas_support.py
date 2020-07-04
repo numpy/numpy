@@ -41,6 +41,8 @@ sha256_vals = {
 "openblas-v0.3.10-manylinux2014_aarch64.tar.gz": "c9bf6cb7cd6bafc1252fc40ca368112caef902536a31660346308714f4ab7504",
 "openblas-v0.3.10-manylinux2010_x86_64.tar.gz": "5e471d171078618b718489ef7e6af1e250ceb5c50d9f9c9ba3cb2d018004fa45",
 "openblas-v0.3.10-manylinux2010_i686.tar.gz": "39626cb4d42b2e6187167712c58a748f13e3bd1eaae00aa48d8d1797c07a85c0",
+"openblas-v0.3.10-manylinux1_x86_64.tar.gz": "57accc9125eea164e3e28c2945db1d8723ef533020aa1d1c8ff0fe4c281fe10b",
+"openblas-v0.3.10-manylinux1_i686.tar.gz": "58645fa0b41819b0e0fbb86fd5ee8469f87da5db9a264c6d9f66887b7878ba31",
 "openblas-v0.3.10-manylinux2014_ppc64le.tar.gz": "ef1a4f27b37a7fcd15bbe0457ceb395b726753c6b43884fce9ad52d18b8b4d27",
 "openblas-v0.3.10-manylinux2014_s390x.tar.gz": "498198057b0b479aa809916d6882f896925957ec399f469e4520d009bbfc258d",
 "openblas64_-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz": "91189592d0d801807843863a7249bf4f61621a2d056680d83723f8bb4019242b",
@@ -254,15 +256,26 @@ def test_setup(arches):
     Make sure all the downloadable files exist and can be opened
     '''
     def items():
+        """ yields all combinations of arch, ilp64, is_32bit
+        """
         for arch in arches:
             yield arch, None, False
             if arch not in ('i686',):
                 yield arch, '64_', False
             if arch in ('windows',):
                 yield arch, None, True
-                
+            if arch in ('i686', 'x86_64'):
+                oldval = os.environ.get('MB_ML_VER', None)
+                os.environ['MB_ML_VER'] = '1'
+                yield arch, None, False
+                # Once we create x86_64 and i686 manylinux2014 wheels...
+                # os.environ['MB_ML_VER'] = '2014'
+                # yield arch, None, False
+                if oldval:
+                    os.environ['MB_ML_VER'] = oldval
+                else:
+                    os.environ.pop('MB_ML_VER')
 
-    
     errs = []
     for arch, ilp64, is_32bit in items():
         if arch == '':
