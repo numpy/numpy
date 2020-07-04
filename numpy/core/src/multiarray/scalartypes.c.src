@@ -719,12 +719,13 @@ legacy_@name@_format@kind@(@type@ val)
             return NULL;
         }
         if (!npy_isfinite(val.imag)) {
-            strncat(buf, "*", 1);
+            strncat(buf, "*", sizeof(buf) - strlen(buf) - 1);
         }
-        strncat(buf, "j", 1);
+        strncat(buf, "j", sizeof(buf) - strlen(buf) - 1);
     }
     else {
         char re[64], im[64];
+
         if (npy_isfinite(val.real)) {
             PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
@@ -767,7 +768,7 @@ legacy_@name@_format@kind@(@type@ val)
                 strcpy(im, "-inf");
             }
             if (!npy_isfinite(val.imag)) {
-                strncat(im, "*", 1);
+                strncat(im, "*", sizeof(im) - strlen(im) - 1);
             }
         }
         PyOS_snprintf(buf, sizeof(buf), "(%s%sj)", re, im);
