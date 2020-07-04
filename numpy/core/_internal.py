@@ -161,9 +161,10 @@ def _commastring(astr):
         mo = format_re.match(astr, pos=startindex)
         try:
             (order1, repeats, order2, dtype) = mo.groups()
-        except (TypeError, AttributeError):
-            raise ValueError('format number %d of "%s" is not recognized' %
-                                            (len(result)+1, astr))
+        except (TypeError, AttributeError) as e:
+            raise ValueError(
+                f'format number {len(result)+1} of "{astr}" is not recognized'
+                ) from e
         startindex = mo.end()
         # Separator or ending padding
         if startindex < len(astr):
@@ -371,11 +372,11 @@ def _newnames(datatype, order):
         for name in order:
             try:
                 nameslist.remove(name)
-            except ValueError:
+            except ValueError as e:
                 if name in seen:
-                    raise ValueError("duplicate field name: %s" % (name,))
+                    raise ValueError(f"duplicate field name: {name}") from e
                 else:
-                    raise ValueError("unknown field name: %s" % (name,))
+                    raise ValueError(f"unknown field name: {name}") from e
             seen.add(name)
         return tuple(list(order) + nameslist)
     raise ValueError("unsupported order value: %s" % (order,))
