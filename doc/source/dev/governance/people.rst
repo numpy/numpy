@@ -18,8 +18,6 @@ Steering council
 
 * Stephan Hoyer
 
-* Marten van Kerkwijk
-
 * Matti Picus
 
 * Nathaniel Smith
@@ -40,6 +38,8 @@ Emeritus members
 * Travis Oliphant -- project founder / emeritus leader (2005-2012)
 
 * Alex Griffing (2015-2017)
+
+* Marten van Kerkwijk (2017-2019)
 
 
 NumFOCUS Subcommittee
