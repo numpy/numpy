@@ -266,7 +266,7 @@ class ABCPolyBase(abc.ABC):
 
     def __init__(self, coef, domain=None, window=None):
         [coef] = pu.as_series([coef], trim=False)
-        self.coef = coef
+        self._coef = coef
 
         if domain is not None:
             [domain] = pu.as_series([domain], trim=False)
@@ -291,6 +291,19 @@ class ABCPolyBase(abc.ABC):
         coef = str(self.coef)
         name = self.nickname
         return f"{name}({coef})"
+
+    @property
+    def coef(self):
+        """
+        Series coefficients in order of increasing degree, i.e.,
+        ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``, where
+        ``P_i`` is the basis polynomials of degree ``i``.
+
+        Please note that these are coefficients in the scaled
+        domain, and that to get coefficients from the data domain, you
+        should use ``ABCPolyBase.convert().coef``.
+        """
+        return self._coef
 
     @classmethod
     def _repr_latex_term(cls, i, arg_str, needs_parens):
