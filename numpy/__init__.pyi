@@ -15,6 +15,8 @@ from numpy.typing import (
     _FloatLike,
     _ComplexLike,
     _NumberLike,
+    _SupportsDtype,
+    _VoidDtypeLike,
 )
 from numpy.typing._callable import (
     _BoolOp,
@@ -527,16 +529,112 @@ where: Any
 who: Any
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
+_DTypeScalar = TypeVar("_DTypeScalar", bound=generic)
 _ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
-class dtype:
+class dtype(Generic[_DTypeScalar]):
     names: Optional[Tuple[str, ...]]
-    def __init__(
-        self,
-        dtype: DtypeLike,
+    # Overload for subclass of generic
+    @overload
+    def __new__(
+        cls,
+        dtype: Type[_DTypeScalar],
         align: bool = ...,
         copy: bool = ...,
-    ) -> None: ...
+    ) -> dtype[_DTypeScalar]: ...
+    # Overloads for string aliases
+    @overload
+    def __new__(
+        cls,
+        dtype: Literal["float64", "f8", "<f8", ">f8", "float", "double", "float_", "d"],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[float64]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: Literal["float32", "f4", "<f4", ">f4", "single"],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[float32]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: Literal["int64", "i8", "<i8", ">i8"],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[int64]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: Literal["int32", "i4", "<i4", ">i4"],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[int32]: ...
+    # "int" resolves to int_, which is system dependent, and as of now
+    # untyped. Long-term we'll do something fancier here.
+    @overload
+    def __new__(
+        cls,
+        dtype: Literal["int"],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype: ...
+    # Overloads for Python types. Order is important here.
+    @overload
+    def __new__(
+        cls,
+        dtype: Type[bool],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[bool_]: ...
+    # See the notes for "int"
+    @overload
+    def __new__(
+        cls,
+        dtype: Type[int],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[Any]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: Type[float],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[float64]: ...
+    # None is a special case
+    @overload
+    def __new__(
+        cls,
+        dtype: None,
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[float64]: ...
+    # dtype of a dtype is the same dtype
+    @overload
+    def __new__(
+        cls,
+        dtype: dtype[_DTypeScalar],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[_DTypeScalar]: ...
+    # TODO: handle _SupportsDtype better
+    @overload
+    def __new__(
+        cls,
+        dtype: _SupportsDtype,
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[Any]: ...
+    # Catchall overload
+    @overload
+    def __new__(
+        cls,
+        dtype: _VoidDtypeLike,
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[void]: ...
     def __eq__(self, other: DtypeLike) -> bool: ...
     def __ne__(self, other: DtypeLike) -> bool: ...
     def __gt__(self, other: DtypeLike) -> bool: ...

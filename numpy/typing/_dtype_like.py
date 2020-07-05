@@ -38,18 +38,9 @@ else:
     _DtypeDict = Any
     _SupportsDtype = Any
 
-# Anything that can be coerced into numpy.dtype.
-# Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
-DtypeLike = Union[
-    dtype,
-    # default data type (float64)
-    None,
-    # array-scalar types and generic types
-    type,  # TODO: enumerate these when we add type hints for numpy scalars
-    # anything with a dtype attribute
-    _SupportsDtype,
-    # character codes, type strings or comma-separated fields, e.g., 'float64'
-    str,
+
+# Would create a dtype[np.void]
+_VoidDtypeLike = Union[
     # (flexible_dtype, itemsize)
     Tuple[_DtypeLikeNested, int],
     # (fixed_dtype, shape)
@@ -65,6 +56,21 @@ DtypeLike = Union[
     _DtypeDict,
     # (base_dtype, new_dtype)
     Tuple[_DtypeLikeNested, _DtypeLikeNested],
+]
+
+# Anything that can be coerced into numpy.dtype.
+# Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
+DtypeLike = Union[
+    dtype,
+    # default data type (float64)
+    None,
+    # array-scalar types and generic types
+    type,  # TODO: enumerate these when we add type hints for numpy scalars
+    # anything with a dtype attribute
+    _SupportsDtype,
+    # character codes, type strings or comma-separated fields, e.g., 'float64'
+    str,
+    _VoidDtypeLike,
 ]
 
 # NOTE: while it is possible to provide the dtype as a dict of
