@@ -12,7 +12,15 @@ Steering council
 
 * Ralf Gommers
 
+* Allan Haldane
+
 * Charles Harris
+
+* Stephan Hoyer
+
+* Marten van Kerkwijk
+
+* Matti Picus
 
 * Nathaniel Smith
 
@@ -20,23 +28,18 @@ Steering council
 
 * Pauli Virtanen
 
+* Stéfan van der Walt
+
 * Eric Wieser
 
-* Marten van Kerkwijk
-
-* Stephan Hoyer
-
-* Allan Haldane
-
-* Stefan van der Walt
 
 
 Emeritus members
 ----------------
 
-* Travis Oliphant - Project Founder / Emeritus Leader (served: 2005-2012)
+* Travis Oliphant -- project founder / emeritus leader (2005-2012)
 
-* Alex Griffing (served: 2015-2017)
+* Alex Griffing (2015-2017)
 
 
 NumFOCUS Subcommittee
@@ -56,7 +59,7 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-* UC Berkeley (Stefan van der Walt, Sebastian Berg, Warren Weckesser, Ross Barnowski)
+* UC Berkeley (Stéfan van der Walt, Sebastian Berg, Warren Weckesser, Ross Barnowski)
 
 * Quansight (Ralf Gommers, Hameer Abbasi, Melissa Weber Mendonça, Mars Lee, Matti Picus)
 
