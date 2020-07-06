@@ -385,9 +385,7 @@ unicodetype_@form@(PyObject *self)
     PyObject *new;
     PyObject *ret;
 
-    if (PyUnicode_READY(self) < 0) {
-        return NULL;
-    }
+    /* PyUnicode_READY is called by PyUnicode_GetLength */
     len = PyUnicode_GetLength(self);
     ip = PyUnicode_AsUCS4Copy(self);
     if (ip == NULL) {
