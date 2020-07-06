@@ -341,47 +341,70 @@ format_@name@(@type@ val, npy_bool scientific,
 /**end repeat**/
 
 /*
- * over-ride repr and str of array-scalar strings and unicode to
- * remove NULL bytes and then call the corresponding functions
- * of string and unicode.
- *
- * FIXME:
- *   is this really a good idea?
- *   stop using Py_UNICODE here.
+ * Over-ride repr and str of array-scalar byte strings to remove NULL bytes and
+ * then call the corresponding functions of PyBytes_Type to generate the string
  */
 
 /**begin repeat
- * #name = string*2,unicode*2#
- * #form = (repr,str)*2#
- * #Name = String*2,Unicode*2#
- * #NAME = STRING*2,UNICODE*2#
- * #extra = AndSize*2,,#
- * #type = npy_char*2, Py_UNICODE*2#
+ * #form = repr, str#
  */
 static PyObject *
-@name@type_@form@(PyObject *self)
+stringtype_@form@(PyObject *self)
 {
-    const @type@ *dptr, *ip;
-    int len;
+    const npy_char *dptr, *ip;
+    Py_ssize_t len;
     PyObject *new;
     PyObject *ret;
 
-    ip = dptr = Py@Name@_AS_@NAME@(self);
-    len = Py@Name@_GET_SIZE(self);
-    dptr += len-1;
-    while(len > 0 && *dptr-- == 0) {
-        len--;
-    }
-    new = Py@Name@_From@Name@@extra@(ip, len);
+    ip = PyBytes_AS_STRING(self);
+    len = PyBytes_GET_SIZE(self);
+    for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
+    new = PyBytes_FromStringAndSize(ip, len);
     if (new == NULL) {
-        return PyUString_FromString("");
+        return NULL;
     }
-    ret = Py@Name@_Type.tp_@form@(new);
+    ret = PyBytes_Type.tp_@form@(new);
     Py_DECREF(new);
     return ret;
 }
 /**end repeat**/
 
+/*
+ * Over-ride repr and str of array-scalar strings to remove NULL code points and
+ * then call the corresponding functions of PyUnicode_Type to generate the string
+ */
+
+/**begin repeat
+ * #form = repr, str#
+ */
+static PyObject *
+unicodetype_@form@(PyObject *self)
+{
+    Py_UCS4 *dptr, *ip;
+    Py_ssize_t len;
+    PyObject *new;
+    PyObject *ret;
+
+    if (PyUnicode_READY(self) < 0) {
+        return NULL;
+    }
+    len = PyUnicode_GetLength(self);
+    ip = PyUnicode_AsUCS4Copy(self);
+    if (ip == NULL) {
+        return NULL;
+    }
+    for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
+    new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    if (new == NULL) {
+        PyMem_Free(ip);
+        return NULL;
+    }
+    ret = PyUnicode_Type.tp_@form@(new);
+    Py_DECREF(new);
+    PyMem_Free(ip);
+    return ret;
+}
+/**end repeat**/
 
 /*
  * Convert array of bytes to a string representation much like bytes.__repr__,
@@ -719,12 +742,13 @@ legacy_@name@_format@kind@(@type@ val)
             return NULL;
         }
         if (!npy_isfinite(val.imag)) {
-            strncat(buf, "*", 1);
+            strncat(buf, "*", sizeof(buf) - strlen(buf) - 1);
         }
-        strncat(buf, "j", 1);
+        strncat(buf, "j", sizeof(buf) - strlen(buf) - 1);
     }
     else {
         char re[64], im[64];
+
         if (npy_isfinite(val.real)) {
             PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
@@ -767,7 +791,7 @@ legacy_@name@_format@kind@(@type@ val)
                 strcpy(im, "-inf");
             }
             if (!npy_isfinite(val.imag)) {
-                strncat(im, "*", 1);
+                strncat(im, "*", sizeof(im) - strlen(im) - 1);
             }
         }
         PyOS_snprintf(buf, sizeof(buf), "(%s%sj)", re, im);
