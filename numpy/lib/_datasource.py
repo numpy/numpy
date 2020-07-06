@@ -337,8 +337,8 @@ class DataSource:
                 with closing(urlopen(path)) as openedurl:
                     with _open(upath, 'wb') as f:
                         shutil.copyfileobj(openedurl, f)
-            except URLError:
-                raise URLError("URL not found: %s" % path)
+            except URLError as e:
+                raise URLError("URL not found: %s" % path) from e
         else:
             shutil.copyfile(path, upath)
         return upath
