@@ -1,5 +1,5 @@
 cython==0.29.19
-hypothesis==5.16.3
+hypothesis==5.19.0
 pytest==5.4.3
 pytz==2020.1
 pytest-cov==2.10.0
