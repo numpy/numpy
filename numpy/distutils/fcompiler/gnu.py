@@ -261,12 +261,12 @@ class GnuFCompiler(FCompiler):
         assert "," not in dir
 
         if sys.platform == 'darwin':
-            return '-Wl,-rpath,%s' % dir
+            return f'-Wl,-rpath,{dir}'
         elif sys.platform[:3] == 'aix':
             # AIX RPATH is called LIBPATH
-            return '-Wl,-blibpath:%s' % dir
+            return f'-Wl,-blibpath:{dir}'
         else:
-            return '-Wl,-rpath=%s' % dir
+            return f'-Wl,-rpath={dir}'
 
 
 class Gnu95FCompiler(GnuFCompiler):
