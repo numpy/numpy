@@ -333,12 +333,9 @@ class DataSource:
 
         # TODO: Doesn't handle compressed files!
         if self._isurl(path):
-            try:
-                with closing(urlopen(path)) as openedurl:
-                    with _open(upath, 'wb') as f:
-                        shutil.copyfileobj(openedurl, f)
-            except URLError as e:
-                raise URLError("URL not found: %s" % path) from e
+            with closing(urlopen(path)) as openedurl:
+                with _open(upath, 'wb') as f:
+                    shutil.copyfileobj(openedurl, f)
         else:
             shutil.copyfile(path, upath)
         return upath
