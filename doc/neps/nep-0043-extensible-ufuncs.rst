@@ -29,8 +29,7 @@ Allowing the creation of new user-defined DTypes in NumPy also requires
 a better extensibility of the ufunc interface, which is the backbone for
 a large part of the NumPy API.
 Especially, parametric DTypes are currently severly limited, making it
-impossible to implement for a user-defined DType to register universal
-function loops.
+impossible for a user-defined DType to register universal function loops.
 
 This NEP proposes a new ``UFuncImpl`` struct, with an extensible C-API
 to register more feature rich loops, thus allowing these use-cases.
@@ -38,7 +37,7 @@ It also proposes to address certain deficiencies, for example with respect
 to error reporting, by extending the signature of the core inner-loop
 functions.
 Finally, one of the most important steps in the ufunc call is finding the
-correct function for a specific set of input dtypes.  We propose to use
+correct inner loop for a specific set of input dtypes.  We propose to use
 multiple-dispatching in the future.
 
 .. note::
@@ -142,8 +141,10 @@ This gives the following function definitions:
               PyUFuncObject *ufunc, PyArray_DTypeMeta *DTypes[nargs],
               PyArray_Descr *in_dtypes[nargs], PyArray_Descr *out_dtypes[nargs]);
 
-  setting the desired output descriptors, and possibly modifying the input
-  ones to conform with the inner-loops requirements.
+  The function writes ``out_dtypes`` based on ``in_dtypes``.  This typically
+  means filling in the descriptor of the output(s).  In many cases also the
+  input descriptor(s) have to be set, e.g. to ensure native byte order when
+  needed by the inner-loop.
 
 * Define a new structure to be passed in the inner-loop, which can be
   partially modified by the setup/teardown as well::
@@ -200,8 +201,6 @@ This gives the following function definitions:
 
 * A flag to ask NumPy to perform floating point error checking (after custom
   setup and before user teardown).
-
-* Instead of a user-setup function, 
 
 To simplify setup and not require the implementation of setup/teardown for
 the majority of ufuncs, NumPy provides floating error setup and teardown
@@ -585,7 +584,7 @@ This includes:
 
 * How ``CastingImpl`` lookup, and thus the decision whether a cast is possible,
   is defined. (This is speed relevant, although mainly during a transition
-  phase where UFuncs where NEP 43 is not yet implemented).
+  phase where NEP 43 is not yet implemented).
   Thus, it is not very relevant to the NEP. It is only necessary to ensure fast
   lookup during the transition phase for the current builtin Numerical types.
 
