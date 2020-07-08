@@ -1369,6 +1369,11 @@ class TestStructured:
         a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
         a[['a', 'b']] = a[['b', 'a']]
         assert_equal(a[0].item(), (2,1))
+    
+    def test_scalar_assignment(self):
+        with assert_raises(ValueError):
+            arr = np.arange(25).reshape(5, 5)                                                                               
+            arr.itemset(3)  
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
