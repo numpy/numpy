@@ -10,6 +10,10 @@
 Iterating Over Arrays
 *********************
 
+.. note:: Arrays support the iterator protocol and can be iterated over like Python
+   lists. See the :ref:`quickstart.indexing-slicing-and-iterating` section in
+   the Quickstart guide for information and examples.
+
 The iterator object :class:`nditer`, introduced in NumPy 1.6, provides
 many flexible ways to visit all the elements of one or more arrays in
 a systematic fashion. This page introduces some basic ways to use the
