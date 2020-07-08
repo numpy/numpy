@@ -56,7 +56,7 @@ class ScalarIndexing(Benchmark):
         # time an assignment which may use a cast operation
         arr = self.array
         indx = (1,) * ndim
-        val = np.int16 = 43
+        val = np.int16(43)
         for i in range(100):
             arr[indx] = val
 
