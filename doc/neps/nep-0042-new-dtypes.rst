@@ -509,7 +509,7 @@ To anticipate the possibility of creating both a Python type (``pytype``)
 and ``DType`` dynamically, and thus the potential desire to delete them again,
 this mapping should generally be weak.
 This requires that the ``pytype`` holds on to the ``DType`` explicitly.
-Thus, additionally to building the global mapping, NumPy will store
+Thus, in addition to building the global mapping, NumPy will store
 the ``DType`` as ``pytype.__associated_array_dtype__`` in the Python type.
 This does *not* define the mapping and should *not* be accessed directly.
 In particular potential inheritance of the attribute does not mean that
@@ -535,7 +535,7 @@ A new ``DType`` must be created for the subclass.
 
 To allow for a DType to accept specific inputs as known scalars, we will
 initially use a ``known_scalar_type`` method.
-This allows discovering a ``vector`` as a scalar (element) instead of
+This allows discovery of a ``vector`` as a scalar (element) instead of
 a sequence (for the command ``np.array(vector, dtype=VectorDType)``)
 even when ``vector`` is itself a sequence or even an array subclass.
 This will *not* be public API initially, but may be made public at a later
