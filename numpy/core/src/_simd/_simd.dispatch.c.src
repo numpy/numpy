@@ -1,0 +1,351 @@
+/*@targets $werror #simd_test*/
+#include "_simd.h"
+#include "_simd_inc.h"
+
+#if NPY_SIMD
+#include "_simd_inc_data.h"
+#include "_simd_inc_convert.h"
+#include "_simd_inc_vector.h"
+#include "_simd_inc_arg.h"
+#include "_simd_inc_easyintrin.h"
+
+/*************************************************************************
+ * Defining NPYV intrinsics as module functions
+ *************************************************************************/
+/**begin repeat
+ * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
+ * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
+ * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
+ * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ */
+#if @simd_sup@
+/***************************
+ * Memory
+ ***************************/
+/**begin repeat1
+ * # intrin = load, loada, loads, loadl#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, q@sfx@)
+/**end repeat1**/
+/**begin repeat1
+ * # intrin = store, storea, stores, storel, storeh#
+ */
+// special definition due to the nature of @intrin@
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg req_args[] = {
+        {.dtype = simd_data_q@sfx@},
+        {.dtype = simd_data_v@sfx@},
+    };
+    if (simd_args_from_tuple(args, req_args, 2, "@intrin@_@sfx@")) {
+        return NULL;
+    }
+    npyv_@intrin@_@sfx@(
+        req_args[0].data.q@sfx@, req_args[1].data.v@sfx@
+    );
+    // write-back
+    if (simd_sequence_fill_obj(req_args[0].obj, req_args[0].data.q@sfx@, simd_data_q@sfx@)) {
+        simd_args_sequence_free(req_args, 2);
+        return NULL;
+    }
+    simd_args_sequence_free(req_args, 2);
+    Py_RETURN_NONE;
+}
+/**end repeat1**/
+
+/***************************
+ * Misc
+ ***************************/
+SIMD_IMPL_INTRIN_0(zero_@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(setall_@sfx@, v@sfx@, @sfx@)
+SIMD_IMPL_INTRIN_3(select_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@)
+
+/**begin repeat1
+ * #sfx_to     = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ */
+#if @simd_sup2@
+SIMD_IMPL_INTRIN_1(reinterpret_@sfx_to@_@sfx@, v@sfx_to@, v@sfx@)
+#endif // simd_sup2
+/**end repeat1**/
+
+/**
+ * special definition due to the nature of intrinsics
+ * npyv_setf_@sfx@ and npy_set_@sfx@.
+*/
+/**begin repeat1
+ * #intrin = setf, set#
+ */
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    npyv_lanetype_@sfx@ *data = simd_sequence_from_obj(args, simd_data_q@sfx@, npyv_nlanes_@sfx@);
+    if (data == NULL) {
+        return NULL;
+    }
+    simd_data r = {.v@sfx@ = npyv_@intrin@_@sfx@(
+        data[0],  data[1],  data[2],  data[3],  data[4],  data[5],  data[6],  data[7],
+        data[8],  data[9],  data[10], data[11], data[12], data[13], data[14], data[15],
+        data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
+        data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
+        data[32], data[33], data[34], data[35], data[36], data[37], data[38], data[39],
+        data[40], data[41], data[42], data[43], data[44], data[45], data[46], data[47],
+        data[48], data[49], data[50], data[51], data[52], data[53], data[54], data[55],
+        data[56], data[57], data[58], data[59], data[60], data[61], data[62], data[63],
+        data[64] // for setf
+    )};
+    simd_sequence_free(data);
+    return (PyObject*)simd_vector_to_obj(r, simd_data_v@sfx@);
+}
+/**end repeat1**/
+
+/***************************
+ * Reorder
+ ***************************/
+/**begin repeat1
+ * # intrin = combinel, combineh#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+/**begin repeat1
+ * # intrin = combine, zip#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@x2, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+/***************************
+ * Operators
+ ***************************/
+#if @shl_imm@ > 0
+SIMD_IMPL_INTRIN_2(shl_@sfx@, v@sfx@, v@sfx@, u8)
+SIMD_IMPL_INTRIN_2(shr_@sfx@, v@sfx@, v@sfx@, u8)
+// immediate constant
+SIMD_IMPL_INTRIN_2IMM(shli_@sfx@, v@sfx@, v@sfx@, @shl_imm@)
+SIMD_IMPL_INTRIN_2IMM(shri_@sfx@, v@sfx@, v@sfx@, @shr_imm@)
+#endif // shl_imm
+
+/**begin repeat1
+ * #intrin  = and, or, xor#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
+
+/**begin repeat1
+ * #intrin  = cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+/***************************
+ * Conversion
+ ***************************/
+SIMD_IMPL_INTRIN_1(cvt_@sfx@_@bsfx@, v@sfx@,  v@bsfx@)
+SIMD_IMPL_INTRIN_1(cvt_@bsfx@_@sfx@, v@bsfx@, v@sfx@)
+
+/***************************
+ * Arithmetic
+ ***************************/
+/**begin repeat1
+ * #intrin  = add, sub#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
+#if @sat_sup@
+/**begin repeat1
+ * #intrin  = adds, subs#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif // sat_sup
+
+#if @mul_sup@
+SIMD_IMPL_INTRIN_2(mul_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+#endif // mul_sup
+
+#if @div_sup@
+SIMD_IMPL_INTRIN_2(div_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+#endif // div_sup
+
+#endif // simd_sup
+/**end repeat**/
+
+/***************************
+ * Variant
+ ***************************/
+SIMD_IMPL_INTRIN_0N(cleanup)
+
+/*************************************************************************
+ * Attach module functions
+ *************************************************************************/
+static PyMethodDef simd__intrinsics_methods[] = {
+/**begin repeat
+ * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
+ * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
+ * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
+ * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ */
+#if @simd_sup@
+
+/***************************
+ * Memory
+ ***************************/
+/**begin repeat1
+ * # intrin = load, loada, loads, loadl, store, storea, stores, storel, storeh#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+/***************************
+ * Misc
+ ***************************/
+/**begin repeat1
+ * #sfx_to     = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ */
+#if @simd_sup2@
+SIMD_INTRIN_DEF(reinterpret_@sfx_to@_@sfx@)
+#endif // simd_sup2
+/**end repeat1**/
+
+/**begin repeat1
+ * # intrin = set, setf, setall, zero, select#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+/***************************
+ * Reorder
+ ***************************/
+/**begin repeat1
+ * # intrin = combinel, combineh, combine, zip#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
+SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
+
+/***************************
+ * Operators
+ ***************************/
+#if @shl_imm@ > 0
+/**begin repeat1
+ * # intrin = shl, shr, shli, shri#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif // shl_imm
+
+/**begin repeat1
+ * #intrin  = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+/***************************
+ * Conversion
+ ***************************/
+SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
+SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
+
+/***************************
+ * Arithmetic
+ ***************************/
+/**begin repeat1
+ * #intrin  = add, sub#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
+#if @sat_sup@
+/**begin repeat1
+ * #intrin  = adds, subs#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif // sat_sup
+
+#if @mul_sup@
+SIMD_INTRIN_DEF(mul_@sfx@)
+#endif // mul_sup
+
+#if @div_sup@
+SIMD_INTRIN_DEF(div_@sfx@)
+#endif // div_sup
+
+#endif // simd_sup
+/**end repeat**/
+
+/***************************
+ * Variant
+ ***************************/
+SIMD_INTRIN_DEF(cleanup)
+/***************************/
+{NULL, NULL, 0, NULL}
+}; // PyMethodDef
+
+#endif // NPY_SIMD
+
+/*************************************************************************
+ * Defining a separate module for each target
+ *************************************************************************/
+NPY_VISIBILITY_HIDDEN PyObject *
+NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
+{
+    static struct PyModuleDef defs = {
+        .m_base = PyModuleDef_HEAD_INIT,
+        .m_size = -1,
+    #ifdef NPY__CPU_TARGET_CURRENT
+        .m_name = "NPYV_" NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
+    #else
+        .m_name = "NPYV_BASELINE",
+    #endif
+    #if NPY_SIMD
+        .m_methods = simd__intrinsics_methods
+    #else
+        .m_methods = NULL
+    #endif
+    };
+    PyObject *m = PyModule_Create(&defs);
+    if (m == NULL) {
+        return NULL;
+    }
+    if (PyModule_AddIntConstant(m, "simd", NPY_SIMD)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH)) {
+        goto err;
+    }
+#if NPY_SIMD
+    if (simd_vector_register(m)) {
+        goto err;
+    }
+    /**begin repeat
+     * #sfx = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+     */
+    if (PyModule_AddIntConstant(m, "nlanes_@sfx@", npyv_nlanes_@sfx@)) {
+        goto err;
+    }
+    /**end repeat**/
+#endif // NPY_SIMD
+    return m;
+err:
+    Py_DECREF(m);
+    return NULL;
+}
