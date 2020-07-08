@@ -253,15 +253,20 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        if sys.platform[:3] == 'aix' or sys.platform == 'win32':
-            # Linux/Solaris/Unix support RPATH, Windows and AIX do not
+        if sys.platform == 'win32':
+            # Linux/Solaris/Unix support RPATH, Windows does not
             raise NotImplementedError
 
         # TODO: could use -Xlinker here, if it's supported
         assert "," not in dir
 
-        sep = ',' if sys.platform == 'darwin' else '='
-        return '-Wl,-rpath%s%s' % (sep, dir)
+        if sys.platform == 'darwin':
+            return f'-Wl,-rpath,{dir}'
+        elif sys.platform[:3] == 'aix':
+            # AIX RPATH is called LIBPATH
+            return f'-Wl,-blibpath:{dir}'
+        else:
+            return f'-Wl,-rpath={dir}'
 
 
 class Gnu95FCompiler(GnuFCompiler):
