@@ -89,16 +89,16 @@ enum npy_cpu_features
  * Initialize CPU features
  *
  * This function
- *  - detect CPU features avalibilty in runtime
- *  - check the sanity of CPU baseline features
- *  - disable CPU dispatched features in runtime,
- *    depend on given values of environment variable 'NPY_DISABLE_CPU_FEATURES'
+ *  - detects runtime CPU features
+ *  - check that baseline CPU features are present
+ *  - uses 'NPY_DISABLE_CPU_FEATURES' to disable dispatchable features
  *
- * It also trigger Py runtime error when
- *  - NumPy build has CPU baseline features
- *    that aren't supported by the current hardware
- *  - The misuse of environment variable 'NPY_DISABLE_CPU_FEATURES'
- *
+ * It will set a RuntimeError when 
+ *  - CPU baseline features from the build are not supported at runtime
+ *  - 'NPY_DISABLE_CPU_FEATURES' tries to disable a baseline feature
+ * and will warn if 'NPY_DISABLE_CPU_FEATURES' tries to disable a feature that
+ * is not disabled (the machine or build does not support it, or the project was
+ * not built with any feature optimization support)
  * return 0 on success otherwise return -1
  */
 NPY_VISIBILITY_HIDDEN int
