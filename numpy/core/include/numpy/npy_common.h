@@ -146,7 +146,7 @@
 #elif defined(__GNUC__)
     #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
 #else
-    #define NPY_INLINE static
+    #define NPY_FINLINE static
 #endif
 
 #ifdef HAVE___THREAD
