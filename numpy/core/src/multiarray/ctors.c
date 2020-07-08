@@ -1659,7 +1659,7 @@ PyArray_GetArrayParamsFromObject_int(PyObject *op,
                         PyArray_Descr *requested_dtype,
                         npy_bool writeable,
                         PyArray_Descr **out_dtype,
-                        int *out_ndim, npy_intp *out_dims,
+                        int maxdims, int *out_ndim, npy_intp *out_dims,
                         PyArrayObject **out_arr)
 {
     PyObject *tmp;
@@ -1739,7 +1739,7 @@ PyArray_GetArrayParamsFromObject_int(PyObject *op,
         }
         else {
             *out_dtype = NULL;
-            if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, out_dtype) < 0) {
+            if (PyArray_DTypeFromObject(op, maxdims, out_dtype) < 0) {
                 if (PyErr_ExceptionMatches(PyExc_MemoryError)) {
                     return -1;
                 }
@@ -1769,7 +1769,7 @@ PyArray_GetArrayParamsFromObject_int(PyObject *op,
         stop_at_tuple = (type_num == NPY_VOID &&
                          ((*out_dtype)->names || (*out_dtype)->subarray));
 
-        *out_ndim = NPY_MAXDIMS;
+        *out_ndim = maxdims;
         discovered_t is_object = DISCOVERED_OK;
         if (discover_dimensions(
                 op, out_ndim, out_dims, check_it,
@@ -1900,7 +1900,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     }
 
     return PyArray_GetArrayParamsFromObject_int(op,
-            requested_dtype, writeable, out_dtype, out_ndim, out_dims,
+            requested_dtype, writeable, out_dtype, NPY_MAXDIMS, out_ndim, out_dims,
             out_arr);
 }
 
@@ -1917,6 +1917,18 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
      * This is the main code to make a NumPy array from a Python
      * Object.  It is called from many different places.
      */
+    return PyArray_FromAny_MaxDim(op, newtype, NPY_MAXDIMS, min_depth, max_depth,
+                            flags, context);
+}
+
+/*NUMPY_API
+ * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
+ * Steals a reference to newtype --- which can be NULL
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_FromAny_MaxDim(PyObject *op, PyArray_Descr *newtype, int maxdims,
+                int min_depth, int max_depth, int flags, PyObject *context)
+{
     PyArrayObject *arr = NULL, *ret;
     PyArray_Descr *dtype = NULL;
     int ndim = 0;
@@ -1929,7 +1941,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* Get either the array or its parameters if it isn't an array */
     if (PyArray_GetArrayParamsFromObject_int(op,
-                newtype, 0, &dtype, &ndim, dims, &arr) < 0) {
+                newtype, 0, &dtype, maxdims, &ndim, dims, &arr) < 0) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -2103,6 +2115,14 @@ NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
+    return PyArray_CheckFromAny_MaxDim(op, descr, NPY_MAXDIMS, min_depth,
+                                       max_depth, requires, context);
+}
+
+NPY_NO_EXPORT PyObject *
+PyArray_CheckFromAny_MaxDim(PyObject *op, PyArray_Descr *descr, int maxdims,
+                     int min_depth, int max_depth, int requires, PyObject *context)
+{
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
@@ -2117,7 +2137,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         }
     }
 
-    obj = PyArray_FromAny(op, descr, min_depth, max_depth, requires, context);
+    obj = PyArray_FromAny_MaxDim(op, descr, maxdims, min_depth, max_depth, requires, context);
     if (obj == NULL) {
         return NULL;
     }

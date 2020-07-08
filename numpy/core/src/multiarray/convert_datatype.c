@@ -264,7 +264,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                     list,
                                     retval,
                                     0, &dtype,
-                                    &ndim, dims, &arr);
+                                    NPY_MAXDIMS, &ndim, dims, &arr);
                             Py_DECREF(list);
                             Py_XDECREF(arr);
                             if (result < 0) {

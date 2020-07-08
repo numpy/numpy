@@ -1573,14 +1573,14 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyArrayObject *oparr = NULL, *ret = NULL;
     npy_bool subok = NPY_FALSE;
     npy_bool copy = NPY_TRUE;
-    int ndmin = 0, nd;
+    int ndmin = 0, ndmax = -1, nd;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     int flags = 0;
 
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
+                         "ndmin", "ndmax", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_Format(PyExc_TypeError,
@@ -1666,13 +1666,14 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&$ii:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
-                &ndmin)) {
+                &ndmin,
+                &ndmax)) {
         goto clean_type;
     }
 
@@ -1681,6 +1682,9 @@ full_path:
                 "ndmin bigger than allowable number of dimensions "
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
         goto clean_type;
+    }
+    if (ndmax == -1) {
+        ndmax = NPY_MAXDIMS;
     }
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op)) ||
@@ -1736,7 +1740,7 @@ full_path:
 
     flags |= NPY_ARRAY_FORCECAST;
     Py_XINCREF(type);
-    ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
+    ret = (PyArrayObject *)PyArray_CheckFromAny_MaxDim(op, type, ndmax,
                                                 0, 0, flags, NULL);
 
  finish:
@@ -4351,6 +4355,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmax = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 
@@ -4367,6 +4372,7 @@ intern_strings(void)
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");
     npy_ma_str_ndmin = PyUString_InternFromString("ndmin");
+    npy_ma_str_ndmax = PyUString_InternFromString("ndmax");
     npy_ma_str_axis1 = PyUString_InternFromString("axis1");
     npy_ma_str_axis2 = PyUString_InternFromString("axis2");
 
@@ -4374,7 +4380,8 @@ intern_strings(void)
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
            npy_ma_str_ufunc && npy_ma_str_implementation &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
+           npy_ma_str_ndmin && npy_ma_str_ndmax && npy_ma_str_axis1 &&
+           npy_ma_str_axis2;
 }
 
 static struct PyModuleDef moduledef = {
