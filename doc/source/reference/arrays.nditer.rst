@@ -10,7 +10,9 @@
 Iterating Over Arrays
 *********************
 
-.. note:: Arrays support the iterator protocol and can be iterated over like Python
+.. note::
+
+   Arrays support the iterator protocol and can be iterated over like Python
    lists. See the :ref:`quickstart.indexing-slicing-and-iterating` section in
    the Quickstart guide for information and examples.
 
