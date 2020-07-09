@@ -20,12 +20,16 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "lowlevel_strided_loops.h"
 #include "usertypes.h"
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
+#if defined(__ARM_NEON__) || defined (__ARM_NEON)
+#include <arm_neon.h>
+#endif
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
@@ -924,7 +928,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + view.len, 0, itemsize - view.len);
         }
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(op);
     }
     return 0;
 }
@@ -3069,7 +3072,15 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-
+#if defined(__ARM_NEON__) || defined (__ARM_NEON)
+    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
+    {
+        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
+        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
+        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
+    }
+#endif
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
 
 static int
@@ -3090,6 +3101,19 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
             break;
         }
     }
+#else
+    #if defined(__ARM_NEON__) || defined (__ARM_NEON)
+        uint8x16_t zero = vdupq_n_u8(0);
+        for(; i < n - (n % 32); i+=32) {
+            uint8x16_t d1 = vld1q_u8((char *)&ip[i]);
+            uint8x16_t d2 = vld1q_u8((char *)&ip[i + 16]);
+            d1 = vceqq_u8(d1, zero);
+            d2 = vceqq_u8(d2, zero);
+            if(_mm_movemask_epi8_neon(vminq_u8(d1, d2)) != 0xFFFF) {
+                break;
+            }
+        }
+    #endif
 #endif
     for (; i < n; i++) {
         if (ip[i]) {
@@ -3846,7 +3870,7 @@ static void
  */
 
 /*
- * Compute correlation of data with with small kernels
+ * Compute correlation of data with small kernels
  * Calling a BLAS dot product for the inner loop of the correlation is overkill
  * for small kernels. It is faster to compute it directly.
  * Intended to be used by _pyarray_correlate so no input verifications is done
@@ -4365,6 +4389,17 @@ set_typeinfo(PyObject *dict)
 
     PyArray_Descr *dtype;
     PyObject *cobj, *key;
+
+    /*
+     * Override the base class for all types, eventually all of this logic
+     * should be defined on the class and inherited to the scalar.
+     * (NPY_HALF is the largest builtin one.)
+     */
+    for (i = 0; i <= NPY_HALF; i++) {
+        if (dtypemeta_wrap_legacy_descriptor(_builtin_descrs[i]) < 0) {
+            return -1;
+        }
+    }
 
     /*
      * Add cast functions for the new types

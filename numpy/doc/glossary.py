@@ -169,7 +169,7 @@ Glossary
        Collapsed to a one-dimensional array. See `numpy.ndarray.flatten`
        for details.
 
-   homogenous
+   homogeneous
        Describes a block of memory comprised of blocks, each block comprised of 
        items and of the same size, and blocks are interpreted in exactly the
        same way. In the simplest case each block contains a single item, for

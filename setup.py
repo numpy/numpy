@@ -54,7 +54,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 19
+MINOR               = 20
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -179,7 +179,7 @@ def check_submodules():
             if 'path' in l:
                 p = l.split('=')[-1].strip()
                 if not os.path.exists(p):
-                    raise ValueError(f'Submodule {p} missing')
+                    raise ValueError('Submodule {} missing'.format(p))
 
 
     proc = subprocess.Popen(['git', 'submodule', 'status'],
@@ -188,7 +188,7 @@ def check_submodules():
     status = status.decode("ascii", "replace")
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
-            raise ValueError(f'Submodule not clean: {line}')
+            raise ValueError('Submodule not clean: {}'.format(line))
             
 
 
@@ -403,6 +403,16 @@ def parse_setuppy_commands():
     return True
 
 
+def get_docs_url():
+    if not ISRELEASED:
+        return "https://numpy.org/devdocs"
+    else:
+        # For releaeses, this URL ends up on pypi.
+        # By pinning the version, users looking at old PyPI releases can get
+        # to the associated docs easily.
+        return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
+
+
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
@@ -437,15 +447,15 @@ def setup_package():
         download_url = "https://pypi.python.org/pypi/numpy",
         project_urls={
             "Bug Tracker": "https://github.com/numpy/numpy/issues",
-            "Documentation": "https://docs.scipy.org/doc/numpy/",
+            "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-        test_suite='nose.collector',
+        test_suite='pytest',
         cmdclass=cmdclass,
-        python_requires='>=3.5',
+        python_requires='>=3.6',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds

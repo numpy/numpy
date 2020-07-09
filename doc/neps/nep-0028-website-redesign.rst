@@ -1,3 +1,5 @@
+.. _NEP28:
+
 ===================================
 NEP 28 — numpy.org website redesign
 ===================================
@@ -153,7 +155,7 @@ significant drain on the time of maintainers.
 2. *Github Pages.* Github Pages also has a 100GB bandwidth limit, and is unclear if
    additional bandwidth can be purchased. It is also unclear where sites are deployed,
    and should be assumed sites aren't deployed globally. Github Pages has an easy to
-   use CI & DNS, similar to to Netlify. HTTPS is supported.
+   use CI & DNS, similar to Netlify. HTTPS is supported.
 3. *Cloudflare.* An excellent option, additional CI is likely needed for the same
    ease of deployment.
 

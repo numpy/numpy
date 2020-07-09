@@ -10,6 +10,7 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
+from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -252,17 +253,20 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        if (
-                sys.platform[:3] == 'aix' or sys.platform == 'win32' or sys.platform == 'cygwin'
-        ):
-            # Linux/Solaris/Unix support RPATH, Windows and AIX do not
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            # Linux/Solaris/Unix support RPATH, Windows does not
             raise NotImplementedError
 
         # TODO: could use -Xlinker here, if it's supported
         assert "," not in dir
 
-        sep = ',' if sys.platform == 'darwin' else '='
-        return '-Wl,-rpath%s%s' % (sep, dir)
+        if sys.platform == 'darwin':
+            return f'-Wl,-rpath,{dir}'
+        elif sys.platform[:3] == 'aix':
+            # AIX RPATH is called LIBPATH
+            return f'-Wl,-blibpath:{dir}'
+        else:
+            return f'-Wl,-rpath={dir}'
 
 
 class Gnu95FCompiler(GnuFCompiler):
@@ -275,7 +279,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not v or v[0] != 'gfortran':
             return None
         v = v[1]
-        if v >= '4.':
+        if LooseVersion(v) >= "4":
             # gcc-4 series releases do not support -mno-cygwin option
             pass
         else:

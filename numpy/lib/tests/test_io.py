@@ -1567,6 +1567,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+    def test_dtype_with_object_no_converter(self):
+        # Object without a converter uses bytes:
+        parsed = np.genfromtxt(TextIO("1"), dtype=object)
+        assert parsed[()] == b"1"
+        parsed = np.genfromtxt(TextIO("string"), dtype=object)
+        assert parsed[()] == b"string"
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
@@ -1817,16 +1824,11 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
-        #
-        kwargs = dict(delimiter=",", dtype=None, names=True)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
 
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, invalid_raise=False, **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        kwargs = dict(delimiter=",", dtype=None, names=True)
+        def f():
+            return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -1841,16 +1843,12 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
+
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
-
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        def f():
+            return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #

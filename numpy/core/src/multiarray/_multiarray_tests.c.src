@@ -2045,6 +2045,21 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(casting);
 }
 
+static PyObject *
+run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    PyArray_Dims dims = {NULL, -1};
+    if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter, &dims)) {
+        return NULL;
+    }
+    if (dims.len == -1) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *tup = PyArray_IntTupleFromIntp(dims.len, dims.ptr);
+    PyDimMem_FREE(dims.ptr);
+    return tup;
+}
 
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
@@ -2217,6 +2232,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"run_casting_converter",
         run_casting_converter,
+        METH_VARARGS, NULL},
+    {"run_intp_converter",
+        run_intp_converter,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

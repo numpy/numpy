@@ -6,6 +6,10 @@ Building from source
 A general overview of building NumPy from source is given here, with detailed
 instructions for specific platforms given separately.
 
+.. 
+  This page is referenced from numpy/numpy/__init__.py. Please keep its
+  location in sync with the link there.
+
 Prerequisites
 -------------
 
@@ -27,7 +31,7 @@ Building NumPy requires the following software installed:
    MSVC and Clang compilers. Compilers from other vendors such as Intel,
    Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only supported
    in the form of community feedback, and may not work out of the box.
-   GCC 4.x (and later) compilers are recommended.
+   GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64) GCC 8.x (and later) are recommended.
 
 3) Linear Algebra libraries
 
@@ -123,8 +127,7 @@ The default order for the libraries are:
 2. BLIS
 3. OpenBLAS
 4. ATLAS
-5. Accelerate (MacOS)
-6. BLAS (NetLIB)
+5. BLAS (NetLIB)
 
 If you wish to build against OpenBLAS but you also have BLIS available one
 may predefine the order of searching via the environment variable
@@ -146,8 +149,7 @@ The default order for the libraries are:
 2. OpenBLAS
 3. libFLAME
 4. ATLAS
-5. Accelerate (MacOS)
-6. LAPACK (NetLIB)
+5. LAPACK (NetLIB)
 
 
 If you wish to build against OpenBLAS but you also have MKL available one
@@ -160,6 +162,14 @@ for instance::
 will prefer to use ATLAS, then OpenBLAS and as a last resort MKL.
 If neither of these exists the build will fail (names are compared
 lower case).
+
+.. deprecated:: 1.20
+  The native libraries on macOS, provided by Accelerate, are not fit for use
+  in NumPy since they have bugs that cause wrong output under easily reproducible
+  conditions. If the vendor fixes those bugs, the library could be reinstated,
+  but until then users compiling for themselves should use another linear
+  algebra library or use the built-in (but slower) default, see the next
+  section.
 
 
 Disabling ATLAS and other accelerated libraries

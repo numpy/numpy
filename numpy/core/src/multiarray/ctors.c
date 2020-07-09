@@ -483,6 +483,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     /* INCREF on entry DECREF on exit */
     Py_INCREF(s);
 
+    PyObject *seq = NULL;
+
     if (PyArray_Check(s)) {
         if (!(PyArray_CheckExact(s))) {
             /*
@@ -529,10 +531,11 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         return 0;
     }
 
-    slen = PySequence_Length(s);
-    if (slen < 0) {
+    seq = PySequence_Fast(s, "Could not convert object to sequence");
+    if (seq == NULL) {
         goto fail;
     }
+    slen = PySequence_Fast_GET_SIZE(seq);
 
     /*
      * Either the dimensions match, or the sequence has length 1 and can
@@ -547,13 +550,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
 
     /* Broadcast the one element from the sequence to all the outputs */
     if (slen == 1) {
-        PyObject *o;
+        PyObject *o = PySequence_Fast_GET_ITEM(seq, 0);
         npy_intp alen = PyArray_DIM(a, dim);
-
-        o = PySequence_GetItem(s, 0);
-        if (o == NULL) {
-            goto fail;
-        }
 
         for (i = 0; i < alen; i++) {
             if ((PyArray_NDIM(a) - dim) > 1) {
@@ -571,26 +569,18 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 res = PyArray_SETITEM(dst, b, o);
             }
             if (res < 0) {
-                Py_DECREF(o);
                 goto fail;
             }
         }
-        Py_DECREF(o);
     }
     /* Copy element by element */
     else {
-        PyObject * seq;
-        seq = PySequence_Fast(s, "Could not convert object to sequence");
-        if (seq == NULL) {
-            goto fail;
-        }
         for (i = 0; i < slen; i++) {
             PyObject * o = PySequence_Fast_GET_ITEM(seq, i);
             if ((PyArray_NDIM(a) - dim) > 1) {
                 PyArrayObject * tmp =
                     (PyArrayObject *)array_item_asarray(dst, i);
                 if (tmp == NULL) {
-                    Py_DECREF(seq);
                     goto fail;
                 }
 
@@ -602,17 +592,17 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 res = PyArray_SETITEM(dst, b, o);
             }
             if (res < 0) {
-                Py_DECREF(seq);
                 goto fail;
             }
         }
-        Py_DECREF(seq);
     }
 
+    Py_DECREF(seq);
     Py_DECREF(s);
     return 0;
 
  fail:
+    Py_XDECREF(seq);
     Py_DECREF(s);
     return res;
 }
@@ -879,7 +869,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     return 0;
 }
 
-static PyObject *
+static void
 raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
 {
     static PyObject *exc_type = NULL;
@@ -904,12 +894,12 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     }
     PyErr_SetObject(exc_type, exc_value);
     Py_DECREF(exc_value);
-    return NULL;
+    return;
 
 fail:
     /* we couldn't raise the formatted exception for some reason */
     PyErr_WriteUnraisable(NULL);
-    return PyErr_NoMemory();
+    PyErr_NoMemory();
 }
 
 /*
@@ -1089,10 +1079,10 @@ PyArray_NewFromDescr_int(
             data = npy_alloc_cache(nbytes);
         }
         if (data == NULL) {
-            return raise_memory_error(fa->nd, fa->dimensions, descr);
+            raise_memory_error(fa->nd, fa->dimensions, descr);
+            goto fail;
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
-
     }
     else {
         /*
@@ -2039,12 +2029,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             PyErr_SetString(PyExc_ValueError,
                             "object of too small depth for desired array");
             Py_DECREF(arr);
+            Py_XDECREF(newtype);
             ret = NULL;
         }
         else if (max_depth != 0 && PyArray_NDIM(arr) > max_depth) {
             PyErr_SetString(PyExc_ValueError,
                             "object too deep for desired array");
             Py_DECREF(arr);
+            Py_XDECREF(newtype);
             ret = NULL;
         }
         else {
@@ -2183,6 +2175,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         PyErr_Clear();
         npy_set_invalid_cast_error(
                 PyArray_DESCR(arr), newtype, casting, PyArray_NDIM(arr) == 0);
+        Py_DECREF(newtype);
         return NULL;
     }
 
@@ -2369,7 +2362,7 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
         return 0;
     }
     name = PyTuple_GET_ITEM(tuple, 0);
-    if (!(PyUString_Check(name) && PyUString_GET_SIZE(name) == 0)) {
+    if (!(PyUnicode_Check(name) && PyUnicode_GetLength(name) == 0)) {
         return 0;
     }
     typestr2 = PyTuple_GET_ITEM(tuple, 1);
@@ -2583,7 +2576,6 @@ PyArray_FromInterface(PyObject *origin)
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(base);
 
         /* Get offset number from interface specification */
         attr = _PyDict_GetItemStringWithError(iface, "offset");
@@ -3588,7 +3580,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
     npy_intp i;
     char *dptr, *clean_sep, *tmp;
     int err = 0;
-    int stop_reading_flag;  /* -1 indicates end reached; -2 a parsing error */
+    int stop_reading_flag = 0;  /* -1 means end reached; -2 a parsing error */
     npy_intp thisbuf = 0;
     npy_intp size;
     npy_intp bytes, totalbytes;
@@ -3808,7 +3800,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
-    _dealloc_cached_buffer_info(buf);
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,

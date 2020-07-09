@@ -19,18 +19,11 @@ Source tree
 NumPy Docs
 ----------
 - https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
-- http://projects.scipy.org/numpy/wiki/MicrosoftToolchainSupport (dead link)
 
 
 SciPy.org wiki
 --------------
 - https://www.scipy.org/Installing_SciPy and links on that page.
-- http://new.scipy.org/building/windows.html (dead link)
-
-
-Doc wiki
---------
-- http://docs.scipy.org/numpy/docs/numpy-docs/user/install.rst/ (dead link)
 
 
 Release Scripts
@@ -40,16 +33,17 @@ Release Scripts
 
 Supported platforms and versions
 ================================
-`NEP 29`_ outlines which Python versions are supported; For the first half of
-2020, this will be Python >= 3.6. We test NumPy against all these versions
-every time we merge code to master.  Binary installers may be available for a
-subset of these versions (see below).
+:ref:`NEP 29 <NEP29>` outlines which Python versions
+are supported; For the first half of 2020, this will be Python >= 3.6. We test
+NumPy against all these versions every time we merge code to master.  Binary
+installers may be available for a subset of these versions (see below).
 
 OS X
 ----
-OS X versions >= 10.9 are supported, for Python version support see `NEP 29`_.
-We build binary wheels for OSX that are compatible with Python.org Python,
-system Python, homebrew and macports - see this `OSX wheel building summary
+OS X versions >= 10.9 are supported, for Python version support see
+:ref:`NEP 29 <NEP29>`. We build binary wheels for
+OSX that are compatible with Python.org Python, system Python, homebrew and
+macports - see this `OSX wheel building summary
 <https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_ for details.
 
 
@@ -95,7 +89,6 @@ You will need Cython for building the binaries.  Cython compiles the ``.pyx``
 files in the NumPy distribution to ``.c`` files.
 
 .. _mingw-w64 toolchain : https://mingwpy.github.io
-.. _NEP 29 : https://numpy.org/neps/nep-0029-deprecation_policy.html
 
 OpenBLAS
 ------------
@@ -397,8 +390,11 @@ create an archive of the documentation in the numpy/doc repo::
     # This checks out github.com/numpy/doc and adds (``git add``) the
     # documentation to the checked out repo.
     make merge-doc
-    # Now edit the ``index.html`` file in the repo to reflect the new content,
-    # and commit the changes
+    # Now edit the ``index.html`` file in the repo to reflect the new content.
+    # If the documentation is for a non-patch release (e.g. 1.19 -> 1.20),
+    # make sure to update the ``stable`` symlink to point to the new directory.
+    ln -sfn <latest_stable_directory> stable
+    # Commit the changes
     git -C build/merge commit -am "Add documentation for <version>"
     # Push to numpy/doc repo
     git -C build/merge push

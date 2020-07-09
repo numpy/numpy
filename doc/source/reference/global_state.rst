@@ -81,5 +81,5 @@ This setting should always be enabled. Setting the
 debug option can be interesting for testing code written
 in C which iterates through arrays that may or may not be
 contiguous in memory.
-Most users will have no reason to change these, for details
-please see the `memory layout <memory-layout>`_ documentation.
+Most users will have no reason to change these; for details
+see the :ref:`memory layout <memory-layout>` documentation.

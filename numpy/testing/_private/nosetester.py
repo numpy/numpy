@@ -352,7 +352,7 @@ class NoseTester:
         coverage : bool, optional
             If True, report coverage of NumPy code. Default is False.
             (This requires the
-            `coverage module <https://nedbatchelder.com/code/modules/coveragehtml>`_).
+            `coverage module <https://pypi.org/project/coverage/>`_).
         raise_warnings : None, str or sequence of warnings, optional
             This specifies which warnings to configure as 'raise' instead
             of being shown once during the test execution. Valid strings are:

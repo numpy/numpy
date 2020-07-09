@@ -86,6 +86,15 @@ class TestBuiltin:
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+    @pytest.mark.parametrize("dtype",
+             ['Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
+              'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
+              'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0',
+              "Float128", "Complex128"])
+    def test_numeric_style_types_are_invalid(self, dtype):
+        with assert_raises(TypeError):
+            np.dtype(dtype)
+
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
@@ -1047,6 +1056,11 @@ def test_invalid_dtype_string():
     assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
 
 
+def test_keyword_argument():
+    # test for https://github.com/numpy/numpy/pull/16574#issuecomment-642660971
+    assert np.dtype(dtype=np.float64) == np.dtype(np.float64)
+
+
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
@@ -1090,6 +1104,40 @@ class TestFromDTypeAttribute:
 
         with pytest.raises(RecursionError):
             np.dtype(dt(1))
+
+
+class TestDTypeClasses:
+    @pytest.mark.parametrize("dtype", list(np.typecodes['All']) + [rational])
+    def test_basic_dtypes_subclass_properties(self, dtype):
+        # Note: Except for the isinstance and type checks, these attributes
+        #       are considered currently private and may change.
+        dtype = np.dtype(dtype)
+        assert isinstance(dtype, np.dtype)
+        assert type(dtype) is not np.dtype
+        assert type(dtype).__name__ == f"dtype[{dtype.type.__name__}]"
+        assert type(dtype).__module__ == "numpy"
+        assert not type(dtype)._abstract
+
+        # the flexible dtypes and datetime/timedelta have additional parameters
+        # which are more than just storage information, these would need to be
+        # given when creating a dtype:
+        parametric = (np.void, np.str_, np.bytes_, np.datetime64, np.timedelta64)
+        if dtype.type not in parametric:
+            assert not type(dtype)._parametric
+            assert type(dtype)() is dtype
+        else:
+            assert type(dtype)._parametric
+            with assert_raises(TypeError):
+                type(dtype)()
+
+    def test_dtype_superclass(self):
+        assert type(np.dtype) is not type
+        assert isinstance(np.dtype, type)
+
+        assert type(np.dtype).__name__ == "_DTypeMeta"
+        assert type(np.dtype).__module__ == "numpy"
+        assert np.dtype._abstract
+
 
 class TestFromCTypes:
 
@@ -1290,4 +1338,3 @@ class TestFromCTypes:
         pair_type = np.dtype('{},{}'.format(*pair))
         expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
         assert_equal(pair_type, expected)
-

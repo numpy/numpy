@@ -54,22 +54,26 @@ def test_numpy_namespace():
         'show_config': 'numpy.__config__.show',
         'who': 'numpy.lib.utils.who',
     }
-    # These built-in types are re-exported by numpy.
-    builtins = {
-        'bool': 'builtins.bool',
-        'complex': 'builtins.complex',
-        'float': 'builtins.float',
-        'int': 'builtins.int',
-        'long': 'builtins.int',
-        'object': 'builtins.object',
-        'str': 'builtins.str',
-        'unicode': 'builtins.str',
-    }
-    whitelist = dict(undocumented, **builtins)
+    if sys.version_info < (3, 7):
+        # These built-in types are re-exported by numpy.
+        builtins = {
+            'bool': 'builtins.bool',
+            'complex': 'builtins.complex',
+            'float': 'builtins.float',
+            'int': 'builtins.int',
+            'long': 'builtins.int',
+            'object': 'builtins.object',
+            'str': 'builtins.str',
+            'unicode': 'builtins.str',
+        }
+        allowlist = dict(undocumented, **builtins)
+    else:
+        # after 3.7, we override dir to not show these members
+        allowlist = undocumented
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
-    assert bad_results == whitelist
+    assert bad_results == allowlist
 
 
 @pytest.mark.parametrize('name', ['testing', 'Tester'])
@@ -100,7 +104,7 @@ def test_dir_testing():
     """Assert that output of dir has only one "testing/tester"
     attribute without duplicate"""
     assert len(dir(np)) == len(set(dir(np)))
-    
+
 
 def test_numpy_linalg():
     bad_results = check_dir(np.linalg)
@@ -156,7 +160,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "doc.structured_arrays",
     "doc.subclassing",
     "doc.ufuncs",
-    "dual",
     "f2py",
     "fft",
     "lib",
@@ -179,6 +182,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.polyutils",
     "random",
     "testing",
+    "typing",
     "version",
 ]]
 
@@ -212,6 +216,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.umath",
     "core.umath_tests",
     "distutils.ccompiler",
+    'distutils.ccompiler_opt',
     "distutils.command",
     "distutils.command.autodist",
     "distutils.command.bdist_rpm",
@@ -260,6 +265,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.numpy_distribution",
     "distutils.pathccompiler",
     "distutils.unixccompiler",
+    "dual",
     "f2py.auxfuncs",
     "f2py.capi_maps",
     "f2py.cb_rules",

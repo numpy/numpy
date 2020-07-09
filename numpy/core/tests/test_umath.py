@@ -23,7 +23,7 @@ def on_powerpc():
 
 
 def bad_arcsinh():
-    """The blacklisted trig functions are not accurate on aarch64 for
+    """The blocklisted trig functions are not accurate on aarch64 for
     complex256. Rather than dig through the actual problem skip the
     test. This should be fixed when we can move past glibc2.17
     which is the version in manylinux2014
@@ -772,6 +772,51 @@ class TestSpecialFloats:
             for dt in ['f', 'd', 'g']:
                 assert_raises(FloatingPointError, np.reciprocal, np.array(-0.0, dtype=dt))
 
+class TestFPClass:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    def test_fpclass(self, stride):
+        arr_f64 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.2251e-308], dtype='d')
+        arr_f32 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 1.4013e-045, -1.4013e-045], dtype='f')
+        nan     = np.array([True, True, False, False, False, False, False, False, False, False])
+        inf     = np.array([False, False, True, True, False, False, False, False, False, False])
+        sign    = np.array([False, True, False, True, True, False, True, False, False, True])
+        finite  = np.array([False, False, False, False, True, True, True, True, True, True])
+        assert_equal(np.isnan(arr_f32[::stride]), nan[::stride])
+        assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
+        assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
+        assert_equal(np.isinf(arr_f64[::stride]), inf[::stride])
+        assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
+        assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
+        assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
+        assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
+
+class TestLDExp:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("dtype", ['f', 'd'])
+    def test_ldexp(self, dtype, stride):
+        mant = np.array([0.125, 0.25, 0.5, 1., 1., 2., 4., 8.], dtype=dtype)
+        exp  = np.array([3, 2, 1, 0, 0, -1, -2, -3], dtype='i')
+        out  = np.zeros(8, dtype=dtype)
+        assert_equal(np.ldexp(mant[::stride], exp[::stride], out=out[::stride]), np.ones(8, dtype=dtype)[::stride])
+        assert_equal(out[::stride], np.ones(8, dtype=dtype)[::stride])
+
+class TestFRExp:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("dtype", ['f', 'd'])
+    @pytest.mark.skipif(not sys.platform.startswith('linux'),
+                        reason="np.frexp gives different answers for NAN/INF on windows and linux")
+    def test_frexp(self, dtype, stride):
+        arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
+        mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
+        exp_true  = np.array([0, 0, 0, 0, 0, 0, 1, 1], dtype='i')
+        out_mant  = np.ones(8, dtype=dtype)
+        out_exp   = 2*np.ones(8, dtype='i')
+        mant, exp = np.frexp(arr[::stride], out=(out_mant[::stride], out_exp[::stride]))
+        assert_equal(mant_true[::stride], mant)
+        assert_equal(exp_true[::stride], exp)
+        assert_equal(out_mant[::stride], mant_true[::stride])
+        assert_equal(out_exp[::stride], exp_true[::stride])
+
 # func : [maxulperror, low, high]
 avx_ufuncs = {'sqrt'        :[1,  0.,   100.],
               'absolute'    :[0, -100., 100.],
@@ -845,15 +890,17 @@ class TestAVXFloat32Transcendental:
         sizes = np.arange(2,100)
         for ii in sizes:
             x_f32 = np.float32(np.random.uniform(low=0.01,high=88.1,size=ii))
+            x_f32_large = x_f32.copy()
+            x_f32_large[3:-1:4] = 120000.0
             exp_true = np.exp(x_f32)
             log_true = np.log(x_f32)
-            sin_true = np.sin(x_f32)
-            cos_true = np.cos(x_f32)
+            sin_true = np.sin(x_f32_large)
+            cos_true = np.cos(x_f32_large)
             for jj in strides:
                 assert_array_almost_equal_nulp(np.exp(x_f32[::jj]), exp_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.log(x_f32[::jj]), log_true[::jj], nulp=2)
-                assert_array_almost_equal_nulp(np.sin(x_f32[::jj]), sin_true[::jj], nulp=2)
-                assert_array_almost_equal_nulp(np.cos(x_f32[::jj]), cos_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.sin(x_f32_large[::jj]), sin_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.cos(x_f32_large[::jj]), cos_true[::jj], nulp=2)
 
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):

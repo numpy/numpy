@@ -109,7 +109,7 @@ The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
 Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
-`overridden <ufuncs.overrides>`_.
+:ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the :obj:`~class.__array_prepare__` and
@@ -380,7 +380,7 @@ advanced usage and will not typically be used.
     result as a dimension with size one, so that the result will broadcast
     correctly against the inputs. This option can only be used for generalized
     ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions , i.e., with
+    dimensions and with outputs that have no core dimensions, i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
     the dimensions in the output can be controlled with ``axes`` and ``axis``.
 

@@ -5,6 +5,10 @@ import decimal
 from fractions import Fraction
 import math
 import pytest
+import hypothesis
+from hypothesis.extra.numpy import arrays
+import hypothesis.strategies as st
+
 
 import numpy as np
 from numpy import ma
@@ -2423,6 +2427,15 @@ class TestBincount:
         assert_equal(sys.getrefcount(np.dtype(np.intp)), intp_refcount)
         assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
 
+    @pytest.mark.parametrize("vals", [[[2, 2]], 2])
+    def test_error_not_1d(self, vals):
+        # Test that values has to be 1-D (both as array and nested list)
+        vals_arr = np.asarray(vals)
+        with assert_raises(ValueError):
+            np.bincount(vals_arr)
+        with assert_raises(ValueError):
+            np.bincount(vals)
+
 
 class TestInterp:
 
@@ -3095,6 +3108,74 @@ class TestQuantile:
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
 
+    def test_quantile_monotonic(self):
+        # GH 14685
+        # test that the return value of quantile is monotonic if p0 is ordered
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
+                                         8, 8, 7]) * 0.1, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+    @hypothesis.given(
+            arr=arrays(dtype=np.float64,
+                       shape=st.integers(min_value=3, max_value=1000),
+                       elements=st.floats(allow_infinity=False, allow_nan=False,
+                                          min_value=-1e300, max_value=1e300)))
+    def test_quantile_monotonic_hypo(self, arr):
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(arr, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+
+class TestLerp:
+    @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      t1=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      a = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300),
+                      b = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300))
+    def test_lerp_monotonic(self, t0, t1, a, b):
+        l0 = np.lib.function_base._lerp(a, b, t0)
+        l1 = np.lib.function_base._lerp(a, b, t1)
+        if t0 == t1 or a == b:
+            assert l0 == l1  # uninteresting
+        elif (t0 < t1) == (a < b):
+            assert l0 <= l1
+        else:
+            assert l0 >= l1
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_bounded(self, t, a, b):
+        if a <= b:
+            assert a <= np.lib.function_base._lerp(a, b, t) <= b
+        else:
+            assert b <= np.lib.function_base._lerp(a, b, t) <= a
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_symmetric(self, t, a, b):
+        # double subtraction is needed to remove the extra precision of t < 0.5
+        left = np.lib.function_base._lerp(a, b, 1 - (1 - t))
+        right = np.lib.function_base._lerp(b, a, 1 - t)
+        assert left == right
+
+    def test_lerp_0d_inputs(self):
+        a = np.array(2)
+        b = np.array(5)
+        t = np.array(0.2)
+        assert np.lib.function_base._lerp(a, b, t) == 2.6
+
 
 class TestMedian:
 
@@ -3350,11 +3431,49 @@ class TestAdd_newdoc:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
-        # test np.add_newdoc
+        # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_errors_are_ignored(self):
+        prev_doc = np.core.flatiter.index.__doc__
+        # nothing changed, but error ignored, this should probably
+        # give a warning (or even error) in the future.
+        np.add_newdoc("numpy.core", "flatiter", ("index", "bad docstring"))
+        assert prev_doc == np.core.flatiter.index.__doc__
+
+
+class TestAddDocstring():
+    # Test should possibly be moved, but it also fits to be close to
+    # the newdoc tests...
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_add_same_docstring(self):
+        # test for attributes (which are C-level defined)
+        np.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        np.add_docstring(func, func.__doc__)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_different_docstring_fails(self):
+        # test for attributes (which are C-level defined)
+        with assert_raises(RuntimeError):
+            np.add_docstring(np.ndarray.flat, "different docstring")
+        # And typical functions:
+        def func():
+            """docstring"""
+            return
+
+        with assert_raises(RuntimeError):
+            np.add_docstring(func, "different docstring")
+
 
 class TestSortComplex:
 

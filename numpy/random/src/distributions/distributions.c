@@ -22,7 +22,7 @@ static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
 
 /* Random generators for external use */
 float random_standard_uniform_f(bitgen_t *bitgen_state) {
-    return next_float(bitgen_state); 
+    return next_float(bitgen_state);
 }
 
 double random_standard_uniform(bitgen_t *bitgen_state) {
@@ -342,7 +342,7 @@ uint64_t random_uint(bitgen_t *bitgen_state) {
  * using logfactorial(k) instead.
  */
 double random_loggam(double x) {
-  double x0, x2, xp, gl, gl0;
+  double x0, x2, lg2pi, gl, gl0;
   RAND_INT_TYPE k, n;
 
   static double a[10] = {8.333333333333333e-02, -2.777777777777778e-03,
@@ -350,23 +350,25 @@ double random_loggam(double x) {
                          8.417508417508418e-04, -1.917526917526918e-03,
                          6.410256410256410e-03, -2.955065359477124e-02,
                          1.796443723688307e-01, -1.39243221690590e+00};
-  x0 = x;
-  n = 0;
+
   if ((x == 1.0) || (x == 2.0)) {
     return 0.0;
-  } else if (x <= 7.0) {
+  } else if (x < 7.0) {
     n = (RAND_INT_TYPE)(7 - x);
-    x0 = x + n;
+  } else {
+    n = 0;
   }
-  x2 = 1.0 / (x0 * x0);
-  xp = 2 * M_PI;
+  x0 = x + n;
+  x2 = (1.0 / x0) * (1.0 / x0);
+  /* log(2 * M_PI) */
+  lg2pi = 1.8378770664093453e+00;
   gl0 = a[9];
   for (k = 8; k >= 0; k--) {
     gl0 *= x2;
     gl0 += a[k];
   }
-  gl = gl0 / x0 + 0.5 * log(xp) + (x0 - 0.5) * log(x0) - x0;
-  if (x <= 7.0) {
+  gl = gl0 / x0 + 0.5 * lg2pi + (x0 - 0.5) * log(x0) - x0;
+  if (x < 7.0) {
     for (k = 1; k <= n; k++) {
       gl -= log(x0 - 1.0);
       x0 -= 1.0;

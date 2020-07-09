@@ -140,8 +140,7 @@ Here's the short summary, complete TOC links are below:
 
    If your change introduces a deprecation, make sure to discuss this first on
    GitHub or the mailing list first. If agreement on the deprecation is
-   reached, follow `NEP 23 deprecation policy <http://www.numpy.org/neps/
-   nep-0023-backwards-compatibility.html>`_  to add the deprecation.
+   reached, follow :ref:`NEP 23 deprecation policy <NEP23>`  to add the deprecation.
 
 6. Cross referencing issues
 
@@ -189,7 +188,7 @@ Stylistic Guidelines
 
    import numpy as np
 
-* For C code, see the :ref:`numpy-c-style-guide<style_guide>`
+* For C code, see :ref:`NEP 45 <NEP45>`.
 
 
 Test coverage
@@ -256,7 +255,7 @@ From the ``doc/`` directory:
     git submodule update --init
 
 The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system 
+A working LaTeX document production system
 (e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
 proper rendering of the LaTeX math in the documentation.
 
@@ -291,4 +290,4 @@ The rest of the story
 NumPy-specific workflow is in :ref:`numpy-development-workflow
 <development-workflow>`.
 
-.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-devel
+.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-discussion

@@ -935,13 +935,8 @@ NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)
     if (itflags&NPY_ITFLAG_HASMULTIINDEX) {
         perm = NIT_PERM(iter);
         for(idim = 0; idim < ndim; ++idim) {
-            npy_int8 p = perm[idim];
-            if (p < 0) {
-                outshape[ndim+p] = NAD_SHAPE(axisdata);
-            }
-            else {
-                outshape[ndim-p-1] = NAD_SHAPE(axisdata);
-            }
+            int axis = npyiter_undo_iter_axis_perm(idim, ndim, perm, NULL);
+            outshape[axis] = NAD_SHAPE(axisdata);
 
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
@@ -1005,8 +1000,9 @@ NpyIter_CreateCompatibleStrides(NpyIter *iter,
 
     perm = NIT_PERM(iter);
     for(idim = 0; idim < ndim; ++idim) {
-        npy_int8 p = perm[idim];
-        if (p < 0) {
+        npy_bool flipped;
+        npy_int8 axis = npyiter_undo_iter_axis_perm(idim, ndim, perm, &flipped);
+        if (flipped) {
             PyErr_SetString(PyExc_RuntimeError,
                     "Iterator CreateCompatibleStrides may only be called "
                     "if DONT_NEGATE_STRIDES was used to prevent reverse "
@@ -1014,7 +1010,7 @@ NpyIter_CreateCompatibleStrides(NpyIter *iter,
             return NPY_FAIL;
         }
         else {
-            outstrides[ndim-p-1] = itemsize;
+            outstrides[axis] = itemsize;
         }
 
         itemsize *= NAD_SHAPE(axisdata);

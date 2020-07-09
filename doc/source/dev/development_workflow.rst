@@ -377,10 +377,10 @@ Deleting a branch on github_
    # delete branch locally
    git branch -D my-unwanted-branch
    # delete branch on github
-   git push origin :my-unwanted-branch
+   git push origin --delete my-unwanted-branch
 
-(Note the colon ``:`` before ``test-branch``.  See also:
-https://github.com/guides/remove-a-remote-branch
+See also:
+https://stackoverflow.com/questions/2003505/how-do-i-delete-a-git-branch-locally-and-remotely
 
 
 Several people sharing a single repository
@@ -477,7 +477,7 @@ backport.
 Pushing changes to the main repo
 ================================
 
-*This is only relevant if you have commit rights to the main NumPy repo.*
+*Requires commit rights to the main NumPy repo.*
 
 When you have a set of "ready" changes in a feature branch ready for
 NumPy's ``master`` or ``maintenance`` branches, you can push

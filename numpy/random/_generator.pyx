@@ -646,10 +646,14 @@ cdef class Generator:
             if abs(p_sum - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
-        shape = size
-        if shape is not None:
+        # `shape == None` means `shape == ()`, but with scalar unpacking at the
+        # end
+        is_scalar = size is None
+        if not is_scalar:
+            shape = size
             size = np.prod(shape, dtype=np.intp)
         else:
+            shape = ()
             size = 1
 
         # Actual sampling
@@ -733,10 +737,9 @@ cdef class Generator:
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
                             self._shuffle_int(size_i, 1, idx_data)
-                if shape is not None:
-                    idx.shape = shape
+                idx.shape = shape
 
-        if shape is None and isinstance(idx, np.ndarray):
+        if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
             idx = idx.item(0)
 
@@ -744,7 +747,7 @@ cdef class Generator:
         if a.ndim == 0:
             return idx
 
-        if shape is not None and idx.ndim == 0:
+        if not is_scalar and idx.ndim == 0:
             # If size == () then the user requested a 0-d array as opposed to
             # a scalar object when size is None. However a[idx] is always a
             # scalar and not an array. So this makes sure the result is an
@@ -2776,7 +2779,7 @@ cdef class Generator:
         generate zero positive results.
 
         >>> sum(rng.binomial(9, 0.1, 20000) == 0)/20000.
-        # answer = 0.38885, or 38%.
+        # answer = 0.38885, or 39%.
 
         """
 
@@ -3342,7 +3345,8 @@ cdef class Generator:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
                             tol=1e-8, *, method='svd'):
         """
-        multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
+        multivariate_normal(mean, cov, size=None, check_valid='warn',
+                            tol=1e-8, *, method='svd')
 
         Draw random samples from a multivariate normal distribution.
 
@@ -3502,14 +3506,14 @@ cdef class Generator:
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
         if method == 'svd':
-            from numpy.dual import svd
+            from numpy.linalg import svd
             (u, s, vh) = svd(cov)
         elif method == 'eigh':
-            from numpy.dual import eigh
+            from numpy.linalg import eigh
             # could call linalg.svd(hermitian=True), but that calculates a vh we don't need
             (s, u)  = eigh(cov)
         else:
-            from numpy.dual import cholesky
+            from numpy.linalg import cholesky
             l = cholesky(cov)
 
         # make sure check_valid is ignored whe method == 'cholesky'

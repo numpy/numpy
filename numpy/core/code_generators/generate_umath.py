@@ -843,7 +843,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -855,19 +855,19 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.signbit'),
           None,
-          TD(flts, out='?'),
+          TD(flts, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'copysign':
     Ufunc(2, 1, None,
@@ -898,10 +898,10 @@ defdict = {
           docstrings.get('numpy.core.umath.ldexp'),
           None,
           [TypeDescription('e', None, 'ei', 'e'),
-          TypeDescription('f', None, 'fi', 'f'),
+          TypeDescription('f', None, 'fi', 'f', simd=['avx512_skx']),
           TypeDescription('e', FuncNameSuffix('long'), 'el', 'e'),
           TypeDescription('f', FuncNameSuffix('long'), 'fl', 'f'),
-          TypeDescription('d', None, 'di', 'd'),
+          TypeDescription('d', None, 'di', 'd', simd=['avx512_skx']),
           TypeDescription('d', FuncNameSuffix('long'), 'dl', 'd'),
           TypeDescription('g', None, 'gi', 'g'),
           TypeDescription('g', FuncNameSuffix('long'), 'gl', 'g'),
@@ -912,8 +912,8 @@ defdict = {
           docstrings.get('numpy.core.umath.frexp'),
           None,
           [TypeDescription('e', None, 'e', 'ei'),
-          TypeDescription('f', None, 'f', 'fi'),
-          TypeDescription('d', None, 'd', 'di'),
+          TypeDescription('f', None, 'f', 'fi', simd=['avx512_skx']),
+          TypeDescription('d', None, 'd', 'di', simd=['avx512_skx']),
           TypeDescription('g', None, 'g', 'gi'),
           ],
           ),
@@ -1028,8 +1028,11 @@ def make_arrays(funcdict):
                 funclist.append('NULL')
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
-                except KeyError:
-                    raise ValueError("Could not handle {}[{}]".format(name, t.type))
+                except KeyError as e:
+                    raise ValueError(
+                        f"Could not handle {name}[{t.type}] "
+                        f"with nin={uf.nin}, nout={uf.nout}"
+                    ) from None
 
                 astype = ''
                 if not t.astype is None:

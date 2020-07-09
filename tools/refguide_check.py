@@ -1037,7 +1037,7 @@ def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
     Yields
     ------
     path
-        Path of the directory and it's sub directories
+        Path of the directory and its sub directories
     """
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path

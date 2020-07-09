@@ -1872,6 +1872,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     /* steals the reference to dtype if it's not NULL */
     ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(prototype, order, dtype,
                                                          shape.len, shape.ptr, subok);
+    npy_free_cache_dim_obj(shape);
     if (!ret) {
         goto fail;
     }
@@ -2438,7 +2439,6 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
     }
     size = PySequence_Size(obj);
 
-
     for (i = 0; i < size; ++i) {
         item = PySequence_Fast_GET_ITEM(obj, i);
         /* Ellipsis */
@@ -2461,8 +2461,16 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             ellipsis = 1;
         }
         /* Subscript */
-        else if (PyInt_Check(item) || PyLong_Check(item)) {
-            long s = PyInt_AsLong(item);
+        else {
+            npy_intp s = PyArray_PyIntAsIntp(item);
+            /* Invalid */
+            if (error_converting(s)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "each subscript must be either an integer "
+                        "or an ellipsis");
+                Py_DECREF(obj);
+                return -1;
+            }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
@@ -2472,7 +2480,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 return -1;
             }
 
-            if ( s < 0 ) {
+            if (s < 0) {
                 bad_input = 1;
             }
             else if (s < 26) {
@@ -2492,14 +2500,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 return -1;
             }
         }
-        /* Invalid */
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                    "each subscript must be either an integer "
-                    "or an ellipsis");
-            Py_DECREF(obj);
-            return -1;
-        }
+
     }
 
     Py_DECREF(obj);
@@ -4445,6 +4446,18 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_matmul_flags(d) < 0) {
         goto err;
     }
+
+    PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
+    if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
+        goto err;
+    }
+
+    PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
+    Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
+    if (PyType_Ready(&PyArrayDescr_Type) < 0) {
+        goto err;
+    }
+
     initialize_casting_tables();
     initialize_numeric_types();
     if (initscalarmath(m) < 0) {
@@ -4478,10 +4491,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
-    if (PyType_Ready(&PyArrayDescr_Type) < 0) {
-        goto err;
-    }
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
         goto err;
     }
@@ -4528,6 +4537,26 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
     if (PyDict_SetItemString(d, "__cpu_features__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+
+    s = npy_cpu_baseline_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_baseline__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+
+    s = npy_cpu_dispatch_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_dispatch__", s) < 0) {
         Py_DECREF(s);
         goto err;
     }
