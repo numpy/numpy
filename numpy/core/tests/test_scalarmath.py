@@ -678,7 +678,7 @@ class TestAbs:
                         raises=AssertionError,
                         strict=True,
                     )
-                    if dtype().dtype.str.endswith("c32") else ()
+                    if sys.platform == 'cygwin' and dtype == np.complex256 else ()
                 )
             )
             for dtype in floating_types + complex_floating_types
@@ -699,7 +699,7 @@ class TestAbs:
                         raises=RuntimeWarning,
                         strict=True,
                     )
-                    if dtype().dtype.str.endswith("c32") else ()
+                    if sys.platform == 'cygwin' and dtype == np.complex256 else ()
                 )
             )
             for dtype in floating_types + complex_floating_types
