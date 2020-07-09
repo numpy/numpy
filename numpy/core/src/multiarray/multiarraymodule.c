@@ -138,7 +138,6 @@ PyArray_MultiplyIntList(int const *l1, int n)
 {
     int s = 1;
 #ifdef NPY_HAVE_NEON
-    printf("enter neon.haha");
     int dim4 = n >> 2;
     n &= 3;
     int32x4_t sum_vec = vdupq_n_s32(1);
