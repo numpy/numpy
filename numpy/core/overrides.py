@@ -68,24 +68,26 @@ add_docstring(
 
 def verify_matching_signatures(implementation, dispatcher):
     """Verify that a dispatcher function has the right signature."""
-    # Get an ordered dict of Parameter objects from each signature
-    implementation_sig = inspect.signature(implementation).parameters
-    dispatcher_sig = inspect.signature(dispatcher).parameters
+    implementation_sig = inspect.signature(implementation)
+    dispatcher_sig = inspect.signature(dispatcher)
 
-    for p1, p2 in zip(implementation_sig.values(), dispatcher_sig.values()):
-        if (
-            (p1.name != p2.name) or (p1.kind != p2.kind) or
-            ((p1.default is p1.empty) and (p2.default is not p2.empty))
-        ):
-            raise RuntimeError(
-                f'implementation and dispatcher for {implementation} have '
-                 'different function signatures'
+    implementation_sig_with_none_defaults = implementation_sig.replace(
+        parameters=[
+            p.replace(
+                annotation=p.empty,
+                default=p.empty if p.default is p.empty else None
             )
-        if (p1.default is not p1.empty) and (p2.default is not None):
-            raise RuntimeError(
-                f'dispatcher functions can only use None for default '
-                 'argument values'
-            )
+            for p in implementation_sig.parameters.values()
+        ]
+    )
+
+    if dispatcher_sig != implementation_sig_with_none_defaults:
+        raise RuntimeError(
+            f"dispatcher for {implementation} has the wrong function "
+             "signature:\n"
+             "  expected: {implementation_sig_with_none_defaults}\n"
+             "  got:      {dispatcher_sig}"
+        )
 
 
 def set_module(module):
