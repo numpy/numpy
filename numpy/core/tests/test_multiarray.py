@@ -8576,26 +8576,36 @@ def test_equal_override():
         assert_equal(array != my_always_equal, 'ne')
 
 
-@pytest.mark.xfail(sys.platform == 'cygwin',
-                   reason='abs(inf+nanj) short-circuits to inf',
-                   strict=True)
-def test_npymath_complex():
+@pytest.mark.parametrize(
+    ["fun", "npfun", "x", "y", "dtype"],
+    [
+        pytest.param(
+            fun, npfun, x, y, dtype, marks=pytest.mark.xfail(
+                sys.platform == "cygwin" and
+                dtype in (np.clongdouble,) and
+                fun == _multiarray_tests.npy_cabs and
+                np.isinf([x, y]).any() and np.isnan([x, y]).any(),
+                reason='abs(inf+nanj) short-circuits to inf',
+                strict=True,
+            )
+        )
+        for (fun, npfun), x, y, dtype in itertools.product(
+                [
+                    (_multiarray_tests.npy_cabs, np.absolute),
+                    (_multiarray_tests.npy_carg, np.angle),
+                ],
+                [1, np.inf, -np.inf, np.nan],
+                [1, np.inf, -np.inf, np.nan],
+                [np.complex64, np.complex128, np.clongdouble],
+        )
+    ],
+)
+def test_npymath_complex(fun, npfun, x, y, dtype):
     # Smoketest npymath functions
-    from numpy.core._multiarray_tests import (
-        npy_cabs, npy_carg)
-
-    funcs = {npy_cabs: np.absolute,
-             npy_carg: np.angle}
-    vals = (1, np.inf, -np.inf, np.nan)
-    types = (np.complex64, np.complex128, np.clongdouble)
-
-    for fun, npfun in funcs.items():
-        for x, y in itertools.product(vals, vals):
-            for t in types:
-                z = t(complex(x, y))
-                got = fun(z)
-                expected = npfun(z)
-                assert_allclose(got, expected)
+    z = dtype(complex(x, y))
+    got = fun(z)
+    expected = npfun(z)
+    assert_allclose(got, expected)
 
 
 def test_npymath_real():
