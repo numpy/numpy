@@ -47,7 +47,6 @@ npy_set_invalid_cast_error(
  * and NPY_DATETIME with generic units.
  */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
-                            PyArray_Descr *flex_dtype);
+PyArray_AdaptFlexibleDType(PyArray_Descr *data_dtype, PyArray_Descr *flex_dtype);
 
 #endif

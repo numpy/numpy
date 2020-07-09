@@ -14,6 +14,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 #include "ufunc_override.h"
+#include "array_coercion.h"
 #include "common.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "ctors.h"
@@ -809,6 +810,12 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    /* If it is not a concrete dtype instance find the best one for the array */
+    Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(self, (PyObject *)dtype));
+    if (dtype == NULL) {
+        return NULL;
+    }
+
     /*
      * If the memory layout matches and, data types are equivalent,
      * and it's not a subtype if subok is False, then we
@@ -830,13 +837,6 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     else if (PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyArrayObject *ret;
-
-        /* If the requested dtype is flexible, adapt it */
-        dtype = PyArray_AdaptFlexibleDType((PyObject *)self,
-                                           PyArray_DESCR(self), dtype);
-        if (dtype == NULL) {
-            return NULL;
-        }
 
         /* This steals the reference to dtype, so no DECREF of dtype */
         ret = (PyArrayObject *)PyArray_NewLikeArray(

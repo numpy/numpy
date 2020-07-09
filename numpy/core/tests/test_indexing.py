@@ -538,6 +538,15 @@ class TestIndexing:
         arr[slices] = 10
         assert_array_equal(arr, 10.)
 
+    def test_character_assignment(self):
+        # This is an example a function going through CopyObject which
+        # used to have an untested special path for scalars
+        # (the character special dtype case, should be deprecated probably)
+        arr = np.zeros((1, 5), dtype="c")
+        arr[0] = np.str_("asdfg")  # must assign as a sequence
+        assert_array_equal(arr[0], np.array("asdfg", dtype="c"))
+        assert arr[0, 1] == b"s"  # make sure not all were set to "a" for both
+
 class TestFieldIndexing:
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it

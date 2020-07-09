@@ -141,12 +141,6 @@ class TestStringDiscovery:
             [object(), 1.2, 10**43, None, "string"],
             ids=["object", "1.2", "10**43", "None", "string"])
     def test_basic_stringlength(self, obj):
-        if not isinstance(obj, (str, int)):
-            pytest.xfail(
-                "The Single object (first assert) uses a different branch "
-                "and thus gives a different result (either wrong or longer"
-                "string than normally discovered).")
-
         length = len(str(obj))
         expected = np.dtype(f"S{length}")
 
@@ -156,8 +150,9 @@ class TestStringDiscovery:
         # A nested array is also discovered correctly
         arr = np.array(obj, dtype="O")
         assert np.array(arr, dtype="S").dtype == expected
+        # Check that .astype() behaves identical
+        assert arr.astype("S").dtype == expected
 
-    @pytest.mark.xfail(reason="Only single array unpacking is supported")
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],
             ids=["object", "1.2", "10**43", "None", "string"])
@@ -167,7 +162,6 @@ class TestStringDiscovery:
         arr = np.array(obj, dtype="O")
         assert np.array([arr, arr], dtype="S").dtype == expected
 
-    @pytest.mark.xfail(reason="Only single array unpacking is supported")
     @pytest.mark.parametrize("arraylike", arraylikes())
     def test_unpack_first_level(self, arraylike):
         # We unpack exactly one level of array likes
@@ -223,21 +217,22 @@ class TestScalarDiscovery:
         assert arr.shape == ()
         assert arr.dtype == scalar.dtype
 
-        if type(scalar) is np.bytes_:
-            pytest.xfail("Nested bytes use len(str(scalar)) currently.")
-
         arr = np.array([[scalar, scalar]])
         assert arr.shape == (1, 2)
         assert arr.dtype == scalar.dtype
 
     # Additionally to string this test also runs into a corner case
     # with datetime promotion (the difference is the promotion order).
-    @pytest.mark.xfail(reason="Coercion to string is not symmetric")
     def test_scalar_promotion(self):
         for sc1, sc2 in product(scalar_instances(), scalar_instances()):
             sc1, sc2 = sc1.values[0], sc2.values[0]
             # test all combinations:
-            arr = np.array([sc1, sc2])
+            try:
+                arr = np.array([sc1, sc2])
+            except (TypeError, ValueError):
+                # The promotion between two times can fail
+                # XFAIL (ValueError): Some object casts are currently undefined
+                continue
             assert arr.shape == (2,)
             try:
                 dt1, dt2 = sc1.dtype, sc2.dtype
@@ -255,11 +250,10 @@ class TestScalarDiscovery:
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
 
-        if is_parametric_dtype(scalar.dtype) or type(scalar) is rational:
-            # datetime with unit will be named "datetime64[unit]"
+        if type(scalar) is rational:
             # Rational generally fails due to a missing cast. In the future
             # object casts should automatically be defined based on `setitem`.
-            pytest.xfail("0-D object array to a unit-less datetime cast fails")
+            pytest.xfail("Rational to object cast is undefined currently.")
 
         # Use casting from object:
         arr = np.array(scalar, dtype=object).astype(scalar.dtype)
@@ -279,9 +273,7 @@ class TestScalarDiscovery:
 
     @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
     @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
-    # After change, can enable times here, and below and it will work,
-    # Right now times are too complex, so map out some details below.
-    @pytest.mark.parametrize("cast_to", scalar_instances(times=False))
+    @pytest.mark.parametrize("cast_to", scalar_instances())
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):
         """
         Test that in most cases:
@@ -293,10 +285,7 @@ class TestScalarDiscovery:
         """
         dtype = cast_to.dtype  # use to parametrize only the target dtype
 
-        # XFAIL: Some extended precision tests fail, because assigning to
-        #        complex256 will use float(float128). Rational fails currently.
-        for scalar in scalar_instances(
-                times=False, extended_precision=False, user_dtype=False):
+        for scalar in scalar_instances(times=False):
             scalar = scalar.values[0]
 
             if dtype.type == np.void:
@@ -306,7 +295,7 @@ class TestScalarDiscovery:
                     # this, but has different rules than the cast.
                     with pytest.raises(TypeError):
                         np.array(scalar).astype(dtype)
-                    # XFAIL: np.array(scalar, dtype=dtype)
+                    np.array(scalar, dtype=dtype)
                     np.array([scalar], dtype=dtype)
                     continue
 
@@ -342,9 +331,6 @@ class TestTimeScalars:
              param(np.timedelta64(123, "s"), id="timedelta64[s]"),
              param(np.datetime64("NaT", "generic"), id="datetime64[generic](NaT)"),
              param(np.datetime64(1, "D"), id="datetime64[D]")],)
-    @pytest.mark.xfail(
-            reason="This uses int(scalar) or float(scalar) to assign, which "
-                   "fails.  However, casting currently does not fail.")
     def test_coercion_basic(self, dtype, scalar):
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
@@ -369,25 +355,48 @@ class TestTimeScalars:
         assert_array_equal(arr, cast)
         assert_array_equal(cast, cast)
 
+    @pytest.mark.parametrize("dtype", ["S6", "U6"])
     @pytest.mark.parametrize(["val", "unit"],
             [param(123, "s", id="[s]"), param(123, "D", id="[D]")])
-    @pytest.mark.parametrize("scalar_type", [np.datetime64, np.timedelta64])
-    @pytest.mark.xfail(reason="Error not raised for assignment")
-    def test_coercion_assignment_times(self, scalar_type, val, unit):
-        scalar = scalar_type(val, unit)
+    def test_coercion_assignment_datetime(self, val, unit, dtype):
+        # String from datetime64 assignment is currently special cased to
+        # never use casting.  This is because casting will error in this
+        # case, and traditionally in most cases the behaviour is maintained
+        # like this.  (`np.array(scalar, dtype="U6")` would have failed before)
+        # TODO: This discrepency _should_ be resolved, either by relaxing the
+        #       cast, or by deprecating the first part.
+        scalar = np.datetime64(val, unit)
+        dtype = np.dtype(dtype)
+        cut_string = dtype.type(str(scalar)[:6])
 
-        # The error type is not ideal, fails because string is too short:
+        arr = np.array(scalar, dtype=dtype)
+        assert arr[()] == cut_string
+        ass = np.ones((), dtype=dtype)
+        ass[()] = scalar
+        assert ass[()] == cut_string
+
         with pytest.raises(RuntimeError):
-            np.array(scalar, dtype="S6")
-        with pytest.raises(RuntimeError):
-            cast = np.array(scalar).astype("S6")
+            # However, unlike the above assignment using `str(scalar)[:6]`
+            # due to being handled by the string DType and not be casting
+            # the explicit cast fails:
+            np.array(scalar).astype(dtype)
+
+
+    @pytest.mark.parametrize(["val", "unit"],
+            [param(123, "s", id="[s]"), param(123, "D", id="[D]")])
+    def test_coercion_assignment_timedelta(self, val, unit):
+        scalar = np.timedelta64(val, unit)
+
+        # Unlike datetime64, timedelta allows the unsafe cast:
+        np.array(scalar, dtype="S6")
+        cast = np.array(scalar).astype("S6")
         ass = np.ones((), dtype="S6")
-        with pytest.raises(RuntimeError):
-            ass[()] = scalar
-
+        ass[()] = scalar
+        expected = scalar.astype("S")[:6]
+        assert cast[()] == expected
+        assert ass[()] == expected
 
 class TestNested:
-    @pytest.mark.xfail(reason="No deprecation warning given.")
     def test_nested_simple(self):
         initial = [1.2]
         nested = initial
@@ -417,11 +426,6 @@ class TestNested:
         arr = np.array([l, [None], l], dtype=object)
         assert arr.shape == (3, 1)
 
-    @pytest.mark.xfail(
-            reason="For arrays and memoryview, this used to not complain "
-                   "and assign to a too small array instead. For other "
-                   "array-likes the error is different because fewer (only "
-                   "MAXDIM-1) dimensions are found, failing the last test.")
     @pytest.mark.parametrize("arraylike", arraylikes())
     def test_nested_arraylikes(self, arraylike):
         # We try storing an array like into an array, but the array-like
@@ -432,10 +436,6 @@ class TestNested:
         # assigned to it (which does work for object or if `float(arraylike)`
         # works).
         initial = arraylike(np.ones((1, 1)))
-        #if not isinstance(initial, (np.ndarray, memoryview)):
-        #    pytest.xfail(
-        #        "When coercing to object, these cases currently discover "
-        #        "fewer dimensions than ndarray failing the second part.")
 
         nested = initial
         for i in range(np.MAXDIMS - 1):
@@ -462,11 +462,6 @@ class TestNested:
         assert out.shape == (2,)
         assert out[0] is arr
         assert type(out[1]) is list
-
-        if not isinstance(arr, (np.ndarray, memoryview)):
-            pytest.xfail(
-                "does not raise ValueError below, because it discovers "
-                "the dimension as (2,) and not (2, 2, 2)")
 
         # Array is ragged in the third dimension:
         with pytest.raises(ValueError):
@@ -500,7 +495,7 @@ class TestBadSequences:
 
         obj.append(mylist([1, 2]))
 
-        with pytest.raises(ValueError):  # changes to RuntimeError
+        with pytest.raises(RuntimeError):
             np.array(obj)
 
     # Note: We do not test a shrinking list.  These do very evil things
@@ -517,8 +512,8 @@ class TestBadSequences:
 
         obj.append([2, 3])
         obj.append(mylist([1, 2]))
-        #with pytest.raises(RuntimeError):  # Will error in the future
-        np.array(obj)
+        with pytest.raises(RuntimeError):
+            np.array(obj)
 
     def test_replace_0d_array(self):
         # List to coerce, `mylist` will mutate the first element
@@ -534,8 +529,8 @@ class TestBadSequences:
         # Runs into a corner case in the new code, the `array(2)` is cached
         # so replacing it invalidates the cache.
         obj.append([np.array(2), baditem()])
-        # with pytest.raises(RuntimeError):  # Will error in the future
-        np.array(obj)
+        with pytest.raises(RuntimeError):
+            np.array(obj)
 
 
 class TestArrayLikes:

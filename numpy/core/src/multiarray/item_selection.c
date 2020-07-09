@@ -26,7 +26,7 @@
 #include "npy_binsearch.h"
 #include "alloc.h"
 #include "arraytypes.h"
-
+#include "array_coercion.h"
 
 
 static NPY_GCC_OPT_3 NPY_INLINE int
@@ -2629,5 +2629,5 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
         data += ind * strides[idim];
     }
 
-    return PyArray_SETITEM(self, data, obj);
+    return PyArray_Pack(PyArray_DESCR(self), data, obj);
 }
