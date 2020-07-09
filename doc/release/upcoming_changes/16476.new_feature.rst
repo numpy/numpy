@@ -5,5 +5,5 @@ and acts as the default option; using it has the direct transforms unscaled
 and the inverse transforms scaled by ``1/n``.
 
 Using the new keyword argument option ``norm=forward`` has the direct
-transforms scaled by ``1/n`` and the inverse transforms unscaled (i.e. directly
+transforms scaled by ``1/n`` and the inverse transforms unscaled (i.e. exactly
 opposite to the default option ``norm=backward``).
