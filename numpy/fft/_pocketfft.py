@@ -102,11 +102,12 @@ def _go_back(n, norm):
     raise ValueError(f'Invalid norm value {norm}; should be "backward",\
                      "ortho" or "forward".')
 
+_SWAP_DIRECTION_MAP = {"backward": "forward", None: "forward",
+                       "ortho": "ortho", "forward": "backward"}
 
 def _swap_direction(norm):
     try:
-        return {"backward": "forward", None: "forward",
-                "ortho": "ortho", "forward": "backward"}[norm]
+        return _SWAP_DIRECTION_MAP[norm]
     except KeyError:
         raise ValueError(f'Invalid norm value {norm}; should be "backward",\
                          "ortho" or "forward".')
