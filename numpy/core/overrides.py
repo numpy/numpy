@@ -74,11 +74,16 @@ def verify_matching_signatures(implementation, dispatcher):
     implementation_sig_with_none_defaults = implementation_sig.replace(
         parameters=[
             p.replace(
-                annotation=p.empty,
-                default=p.empty if p.default is p.empty else None
+                annotation=inspect.Parameter.empty,
+                default=(
+                    inspect.Parameter.empty
+                    if p.default is inspect.Parameter.empty
+                    else None
+                ),
             )
             for p in implementation_sig.parameters.values()
-        ]
+        ],
+        return_annotation=inspect.Signature.empty
     )
 
     if dispatcher_sig != implementation_sig_with_none_defaults:
