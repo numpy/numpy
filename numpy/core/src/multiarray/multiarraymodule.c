@@ -137,7 +137,20 @@ NPY_NO_EXPORT int
 PyArray_MultiplyIntList(int const *l1, int n)
 {
     int s = 1;
-
+#ifdef NPY_HAVE_NEON
+    printf("enter neon.haha");
+    int dim4 = n >> 2;
+    n &= 3;
+    int32x4_t sum_vec = vdupq_n_s32(1);
+    int32x4_t data_vec;
+    for(;dim4>0;dim4--){
+        data_vec = vld1q_s32(l1);
+        sum_vec = vmulq_s32(sum_vec, data_vec);
+        l1+=4;
+    }
+    s = vgetq_lane_s32(sum_vec,0)*vgetq_lane_s32(sum_vec,1)*
+    vgetq_lane_s32(sum_vec,2)*vgetq_lane_s32(sum_vec,3);
+#endif
     while (n--) {
         s *= (*l1++);
     }
