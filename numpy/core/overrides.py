@@ -71,7 +71,7 @@ def verify_matching_signatures(implementation, dispatcher):
     implementation_sig = inspect.signature(implementation)
     dispatcher_sig = inspect.signature(dispatcher)
 
-    implementation_sig_with_none_defaults = implementation_sig.replace(
+    implementation_sig_with_none_defaults = inspect.Signature(
         parameters=[
             p.replace(
                 annotation=inspect.Parameter.empty,
@@ -83,7 +83,6 @@ def verify_matching_signatures(implementation, dispatcher):
             )
             for p in implementation_sig.parameters.values()
         ],
-        return_annotation=inspect.Signature.empty
     )
 
     if dispatcher_sig != implementation_sig_with_none_defaults:
