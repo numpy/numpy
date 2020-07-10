@@ -31,6 +31,7 @@ from numpy.testing import (
     )
 from numpy.testing._private.utils import _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
+from numpy.lib.recfunctions import repack_fields
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -1389,6 +1390,53 @@ class TestStructured:
         assert_raises(KeyError, lambda : a[['a','a']])
         assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
+
+    def test_structured_cast_promotion_fieldorder(self):
+        # gh-15494
+        # dtypes with different field names are not promotable
+        A = ("a", "<i8")
+        B = ("b", ">i8")
+        ab = np.array([(1, 2)], dtype=[A, B])
+        ba = np.array([(1, 2)], dtype=[B, A])
+        assert_raises(TypeError, np.concatenate, ab, ba)
+        assert_raises(TypeError, np.result_type, ab.dtype, ba.dtype)
+        assert_raises(TypeError, np.promote_types, ab.dtype, ba.dtype)
+
+        # dtypes with same field names/order but different memory offsets
+        # and byte-order are promotable to packed nbo.
+        assert_equal(np.promote_types(ab.dtype, ba[['a', 'b']].dtype),
+                     repack_fields(ab.dtype.newbyteorder('N')))
+
+        # gh-13667
+        # dtypes with different fieldnames but castable field types are castable
+        assert_equal(np.can_cast(ab.dtype, ba.dtype), True)
+        assert_equal(ab.astype(ba.dtype).dtype, ba.dtype)
+        assert_equal(np.can_cast('f8,i8', [('f0', 'f8'), ('f1', 'i8')]), True)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'f8'), ('f0', 'i8')]), True)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'i8'), ('f0', 'f8')]), False)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'i8'), ('f0', 'f8')],
+                                 casting='unsafe'), True)
+
+        ab[:] = ba  # make sure assignment still works
+
+        # tests of type-promotion of corresponding fields
+        dt1 = np.dtype([("", "i4")])
+        dt2 = np.dtype([("", "i8")])
+        assert_equal(np.promote_types(dt1, dt2), np.dtype([('f0', 'i8')]))
+        assert_equal(np.promote_types(dt2, dt1), np.dtype([('f0', 'i8')]))
+        assert_raises(TypeError, np.promote_types, dt1, np.dtype([("", "V3")]))
+        assert_equal(np.promote_types('i4,f8', 'i8,f4'),
+                     np.dtype([('f0', 'i8'), ('f1', 'f8')]))
+        # test nested case
+        dt1nest = np.dtype([("", dt1)])
+        dt2nest = np.dtype([("", dt2)])
+        assert_equal(np.promote_types(dt1nest, dt2nest),
+                     np.dtype([('f0', np.dtype([('f0', 'i8')]))]))
+
+        # note that offsets are lost when promoting:
+        dt = np.dtype({'names': ['x'], 'formats': ['i4'], 'offsets': [8]})
+        a = np.ones(3, dtype=dt)
+        assert_equal(np.concatenate([a, a]).dtype, np.dtype([('x', 'i4')]))
 
 
 class TestBool:

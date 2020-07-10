@@ -11,6 +11,7 @@
 
 #include "npy_pycompat.h"
 #include "numpy/npy_math.h"
+#include "npy_import.h"
 
 #include "array_coercion.h"
 #include "common.h"
@@ -558,44 +559,52 @@ type_num_unsigned_to_signed(int type_num)
 }
 
 /*
- * Compare two field dictionaries for castability.
+ * Compare two structured datatypes for castability.
  *
- * Return 1 if 'field1' can be cast to 'field2' according to the rule
+ * Return 1 if 'from' can be cast to 'to' according to the rule
  * 'casting', 0 if not.
  *
- * Castabiliy of field dictionaries is defined recursively: 'field1' and
- * 'field2' must have the same field names (possibly in different
- * orders), and the corresponding field types must be castable according
- * to the given casting rule.
+ * Castability of structured types is defined recursively: the corresponding
+ * field types of 'from' and 'to' must be castable according to the given
+ * casting rule. The field names are ignored.
  */
 static int
-can_cast_fields(PyObject *field1, PyObject *field2, NPY_CASTING casting)
+can_cast_fields(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting)
 {
-    Py_ssize_t ppos;
-    PyObject *key;
-    PyObject *tuple1, *tuple2;
-
-    if (field1 == field2) {
-        return 1;
-    }
-    if (field1 == NULL || field2 == NULL) {
-        return 0;
-    }
-    if (PyDict_Size(field1) != PyDict_Size(field2)) {
+    if (from->names == NULL || to->names == NULL) {
         return 0;
     }
 
-    /* Iterate over all the fields and compare for castability */
-    ppos = 0;
-    while (PyDict_Next(field1, &ppos, &key, &tuple1)) {
-        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) {
+    int field_count = PyTuple_GET_SIZE(to->names);
+    if (field_count != PyTuple_GET_SIZE(from->names)) {
+        return 0;
+    }
+
+    for (int i = 0; i < field_count; ++i) {
+        PyArray_Descr *to_fld_dtype, *from_fld_dtype;
+
+        PyObject *to_key = PyTuple_GET_ITEM(to->names, i);
+        PyObject *to_tup = PyDict_GetItemWithError(to->fields, to_key);
+        if (to_tup == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_RuntimeError, "bug, should not happen");
+            }
             return 0;
         }
+        to_fld_dtype = (PyArray_Descr*)PyTuple_GET_ITEM(to_tup, 0);
+
+        PyObject *from_key = PyTuple_GET_ITEM(from->names, i);
+        PyObject *from_tup = PyDict_GetItemWithError(from->fields, from_key);
+        if (from_tup == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_RuntimeError, "bug, should not happen");
+            }
+            return 0;
+        }
+        from_fld_dtype = (PyArray_Descr*)PyTuple_GET_ITEM(from_tup, 0);
+
         /* Compare the dtype of the field for castability */
-        if (!PyArray_CanCastTypeTo(
-                        (PyArray_Descr *)PyTuple_GET_ITEM(tuple1, 0),
-                        (PyArray_Descr *)PyTuple_GET_ITEM(tuple2, 0),
-                        casting)) {
+        if (!PyArray_CanCastTypeTo(from_fld_dtype, to_fld_dtype, casting)) {
             return 0;
         }
     }
@@ -725,7 +734,7 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                      * `from' and `to' must have the same fields, and
                      * corresponding fields must be (recursively) castable.
                      */
-                    return can_cast_fields(from->fields, to->fields, casting);
+                    return can_cast_fields(from, to, casting);
 
                 case NPY_NO_CASTING:
                 default:
@@ -1062,7 +1071,8 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
      * Non-native-byte-order types are converted to native ones below, so we
      * can't quit early.
      */
-    if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
+    if (type1 == type2 && PyArray_ISNBO(type1->byteorder) &&
+            !PyDataType_HASFIELDS(type1)) {
         Py_INCREF(type1);
         return type1;
     }
@@ -1350,6 +1360,18 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 return ensure_dtype_nbo(type2);
             }
             break;
+    }
+
+    if (PyDataType_HASFIELDS(type1) || PyDataType_HASFIELDS(type2)) {
+        static PyObject *promote_fields_func = NULL;
+        npy_cache_import("numpy.core._internal", "_promote_fields",
+                         &promote_fields_func);
+        if (promote_fields_func == NULL) {
+            return NULL;
+        }
+
+        return (PyArray_Descr*)PyObject_CallFunction(promote_fields_func,
+                                                     "OO", type1, type2);
     }
 
     /* For types equivalent up to endianness, can return either */

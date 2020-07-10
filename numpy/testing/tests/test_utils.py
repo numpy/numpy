@@ -151,7 +151,8 @@ class TestArrayEqual(_GenericTest):
 
         self._test_equal(a, b)
 
-        c = np.empty(2, [('floupipi', float), ('floupa', float)])
+        c = np.empty(2, [('floupipi', float),
+                         ('floupi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 
