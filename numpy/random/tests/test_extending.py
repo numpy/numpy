@@ -31,11 +31,11 @@ except ImportError:
     cython = None
 else:
     from distutils.version import LooseVersion
-    # Cython 0.29.14 is required for Python 3.8 and there are
+    # Cython 0.29.21 is required for Python 3.9 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = LooseVersion('0.29.14')
+    required_version = LooseVersion('0.29.21')
     if LooseVersion(cython_version) < required_version:
         # too old or wrong cython, skip the test
         cython = None
