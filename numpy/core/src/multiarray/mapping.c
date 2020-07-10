@@ -22,6 +22,7 @@
 #include "item_selection.h"
 #include "mem_overlap.h"
 #include "array_assign.h"
+#include "array_coercion.h"
 
 
 #define HAS_INTEGER 1
@@ -1754,7 +1755,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
         if (get_item_pointer(self, &item, indices, 1) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
     }
@@ -1832,7 +1833,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (get_item_pointer(self, &item, indices, index_num) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
         /* integers do not store objects in indices */

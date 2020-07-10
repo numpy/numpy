@@ -452,7 +452,7 @@ def apply_over_axes(func, a, axes):
         Apply a function to 1-D slices of an array along the given axis.
 
     Notes
-    ------
+    -----
     This function is equivalent to tuple axis arguments to reorderable ufuncs
     with keepdims=True. Tuple axis arguments to ufuncs have been available since
     version 1.7.0.

@@ -221,7 +221,7 @@ class MGridClass(nd_grid):
     the stop value **is inclusive**.
 
     Returns
-    ----------
+    -------
     mesh-grid `ndarrays` all of the same dimensions
 
     See Also
@@ -896,7 +896,7 @@ def diag_indices(n, ndim=2):
     ndim : int, optional
       The number of dimensions.
 
-    See also
+    See Also
     --------
     diag_indices_from
 

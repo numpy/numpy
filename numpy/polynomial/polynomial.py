@@ -1490,7 +1490,6 @@ class Polynomial(ABCPolyBase):
     _fromroots = staticmethod(polyfromroots)
 
     # Virtual properties
-    nickname = 'poly'
     domain = np.array(polydomain)
     window = np.array(polydomain)
     basis_name = None

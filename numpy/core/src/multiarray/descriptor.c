@@ -1801,9 +1801,10 @@ static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
     if (self->fields == Py_None) {
-        fprintf(stderr, "*** Reference count error detected: \n" \
-                "an attempt was made to deallocate %d (%c) ***\n",
+        fprintf(stderr, "*** Reference count error detected: "
+                "an attempt was made to deallocate the dtype %d (%c) ***\n",
                 self->type_num, self->type);
+        assert(0);
         Py_INCREF(self);
         Py_INCREF(self);
         return;
