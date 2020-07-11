@@ -26,7 +26,7 @@ def asarray(a, dtype=None, order=None):
     order : {'K', 'A', 'C', 'F'}, optional
         Memory layout.  'K' and 'A' depend on the order of input array a: 
         'K' preserve input order
-        'A' preserve input if 'F', otherwise convert to 'C',
+        'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'C' row-major (C-style), 
         'F' column-major (Fortran-style) memory representation.
         Defaults to 'C'.
@@ -101,7 +101,7 @@ def asanyarray(a, dtype=None, order=None):
     order : {'K', 'A', 'C', 'F'}, optional
         Memory layout.  'K' and 'A' depend on the order of input array a: 
         'K' preserve input order
-        'A' preserve input if 'F', otherwise convert to 'C',
+        'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'C' row-major (C-style), 
         'F' column-major (Fortran-style) memory representation.
         Defaults to 'C'.
