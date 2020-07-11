@@ -2,24 +2,29 @@ from .common import Benchmark
 
 import numpy as np
 
+_FLOAT = np.dtype('float64')
+_COMPLEX = np.dtype('complex128')
+_INT = np.dtype('int64')
+_BOOL = np.dtype('bool')
+_VOID = np.dtype([('a', 'int64'), ('b', 'float64'), ('c', bool)])
+_STR = np.dtype('U32')
+_BYTES = np.dtype('S32')
+
 
 class TrimZeros(Benchmark):
-    def setup(self):
-        self.ar_float = np.hstack([
-            np.zeros(100_000),
-            np.random.uniform(size=100_000),
-            np.zeros(100_000),
-        ])
+    param_names = ["dtype", "size"]
+    params = [
+        [_INT, _FLOAT, _COMPLEX, _BOOL, _STR, _BYTES, _VOID],
+        [3000, 30_000, 300_000]
+    ]
 
-        dtype = [('a', 'int64'), ('b', 'float64'), ('c', bool)]
-        self.ar_void = self.ar_float.astype(dtype)
-        self.ar_str = self.ar_float.astype(str)
+    def setup(self, dtype, size):
+        n = size // 3
+        self.array = np.hstack([
+            np.zeros(n),
+            np.random.uniform(size=n),
+            np.zeros(n),
+        ]).astype(dtype)
 
-    def time_trim_zeros_float(self):
-        np.trim_zeros(self.ar_float)
-
-    def time_trim_zeros_void(self):
-        np.trim_zeros(self.ar_void)
-
-    def time_trim_zeros_str(self):
-        np.trim_zeros(self.ar_str)
+    def time_trim_zeros(self, dtype, size):
+        np.trim_zeros(self.array)
