@@ -211,6 +211,14 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                         " is missing.");
         return -1;
     }
+    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Legacy user dtypes referencing python objects or generally "
+                "allocated memory are unsupported. "
+                "If you see this error in an existing, working code base, "
+                "please contact the NumPy developers.");
+        return -1;
+    }
     if (descr->typeobj == NULL) {
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
