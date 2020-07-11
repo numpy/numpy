@@ -1598,7 +1598,7 @@ def trim_zeros(filt, trim='fb'):
 
     Parameters
     ----------
-    filt : 1-D array or sequence
+    filt : array_like, 1 dimension
         Input array.
     trim : str, optional
         A string with 'f' representing trim from front and 'b' to trim from
@@ -1619,27 +1619,51 @@ def trim_zeros(filt, trim='fb'):
     >>> np.trim_zeros(a, 'b')
     array([0, 0, 0, ..., 0, 2, 1])
 
+    In practice all leading and/or trailing elements will be trimmed as
+    long as they evaluate to ``False``.
+
+    >>> b = np.array(('', '', '' ,'a', 'b', 'c', '', 'b', 'a', ''))
+    >>> np.trim_zeros(b)
+    array(['a', 'b', 'c', '', 'b', 'a'])
+
     The input data type is preserved, list/tuple in means list/tuple out.
 
     >>> np.trim_zeros([0, 1, 2, 0])
     [1, 2]
 
     """
-    first = 0
-    trim = trim.upper()
-    if 'F' in trim:
-        for i in filt:
-            if i != 0.:
-                break
-            else:
-                first = first + 1
-    last = len(filt)
-    if 'B' in trim:
-        for i in filt[::-1]:
-            if i != 0.:
-                break
-            else:
-                last = last - 1
+    try:
+        arr = np.asanyarray(filt, dtype=bool)
+
+    # str/bytes and structured arrays cannot be directly converted into bool arrays
+    except (TypeError, ValueError):
+        arr_any = np.asanyarray(filt)
+        _arr = arr_any.view(bool)
+        _arr.shape = arr_any.shape + (arr_any.dtype.itemsize,)
+        arr = _arr.any(axis=-1)
+
+    if arr.ndim != 1:
+        raise ValueError('trim_zeros requires an array of exactly one dimension')
+
+    trim_upper = trim.upper()
+    len_arr = len(arr)
+    first = last = None
+
+    if 'F' in trim_upper:
+        first = arr.argmax()
+        # If `arr[first] is False` then so are all other elements
+        if not arr[first]:
+            return filt[len_arr:]
+
+    if 'B' in trim_upper:
+        last = len_arr -arr[::-1].argmax()
+        # `last == len(arr)` if all elements in `arr` are zero;
+        # `arr[last]` will thus raise an IndexError
+        try:
+            arr[last]
+        except IndexError:
+            return filt[len_arr:]
+
     return filt[first:last]
 
 

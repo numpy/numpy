@@ -1166,25 +1166,47 @@ class TestAngle:
 
 class TestTrimZeros:
 
-    """
-    Only testing for integer splits.
+    a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
+    b = a.astype(float)
+    c = a.astype(complex)
+    d = a.astype([('a', int), ('b', float), ('c', bool)])
 
-    """
+    e = np.array([None, [], 1, False, 'b', 3.0, range(4), b''], dtype=object)
+    f = np.array(['', '', 'a', '', 'b', 'c', 'd', ''])
+    g = f.astype(bytes)
+
+    def values(self):
+        attr_names = ('a', 'b', 'c', 'd', 'e', 'f', 'g')
+        return (getattr(self, name) for name in attr_names)
 
     def test_basic(self):
-        a = np.array([0, 0, 1, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 2, 3, 4]))
+        slc = np.s_[2:-1]
+        for arr in self.values():
+            res = trim_zeros(arr)
+            assert_array_equal(res, arr[slc])
 
     def test_leading_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 4]))
+        slc = np.s_[:-1]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='b')
+            assert_array_equal(res, arr[slc])
 
     def test_trailing_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 0, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 0, 4]))
+        slc = np.s_[2:]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='F')
+            assert_array_equal(res, arr[slc])
+
+    def test_all_zero(self):
+        for _arr in self.values():
+            arr = np.zeros_like(_arr, dtype=_arr.dtype)
+            ref = np.zeros((), dtype=_arr.dtype)
+
+            res1 = trim_zeros(arr, trim='B')
+            assert_array_equal(res1, ref)
+
+            res2 = trim_zeros(arr, trim='f')
+            assert_array_equal(res2, ref)
 
 
 class TestExtins:
