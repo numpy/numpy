@@ -25,7 +25,13 @@ _descr_from_subtype(PyObject *type)
     PyObject *mro;
     mro = ((PyTypeObject *)type)->tp_mro;
     if (PyTuple_GET_SIZE(mro) < 2) {
-        return PyArray_DescrFromType(NPY_OBJECT);
+        PyErr_SetString(PyExc_TypeError,
+                "Could not get dtype for NumPy scalar subclass, this can "
+                "happen depending on how it is inherited and whether a dtype "
+                "was registered.  In general, subclassing scalars is not "
+                "encouraged. Please get in touch with the NumPy developers "
+                "for more information.");
+        return NULL;
     }
     return PyArray_DescrFromTypeObject(PyTuple_GET_ITEM(mro, 1));
 }
