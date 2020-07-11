@@ -2548,8 +2548,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     --------   
     In this example we generate two random arrays, xarr and yarr, and
     compute the correlation coefficients, R. Since rowvar is true by default,
-    we first find the correlation coefficients between the rows (variables) and the
-    columns (observations) of xarr.
+    we first find the correlation coefficients between the rows (variables)
+    and the columns (observations) of xarr.
 
     >>> import numpy as np
     >>> rng = np.random.default_rng(seed=42)
