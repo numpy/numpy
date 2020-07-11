@@ -611,8 +611,9 @@ class ndindex:
 
     Parameters
     ----------
-    `*args` : ints
-      The size of each dimension of the array.
+    `*args` : ints, or a single tuple of ints
+      The size of each dimension of the array can be passed as 
+      individual parameters or as the elements of a tuple.
 
     See Also
     --------
@@ -621,6 +622,15 @@ class ndindex:
     Examples
     --------
     >>> for index in np.ndindex(3, 2, 1):
+    ...     print(index)
+    (0, 0, 0)
+    (0, 1, 0)
+    (1, 0, 0)
+    (1, 1, 0)
+    (2, 0, 0)
+    (2, 1, 0)
+
+    >>> for index in np.ndindex((3, 2, 1)):
     ...     print(index)
     (0, 0, 0)
     (0, 1, 0)
