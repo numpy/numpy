@@ -612,8 +612,8 @@ class ndindex:
     Parameters
     ----------
     `*args` : ints, or a single tuple of ints
-      The size of each dimension of the array can be passed as 
-      individual parameters or as the elements of a tuple.
+        The size of each dimension of the array can be passed as 
+        individual parameters or as the elements of a tuple.
 
     See Also
     --------
