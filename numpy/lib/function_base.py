@@ -2547,9 +2547,9 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     Examples
     --------   
     In this example we generate two random arrays, ``xarr`` and ``yarr``, and
-    compute the correlation coefficients, ``R``. Since ``rowvar`` is true by 
-    default, we first find the correlation coefficients between the rows 
-    (variables) and the columns (observations) of ``xarr``.
+    compute the Pearson correlation coefficients, ``R``. Since ``rowvar`` is 
+    true by  default, we first find the Pearson correlation coefficients 
+    between the rows (variables) of ``xarr``.
 
     >>> import numpy as np
     >>> rng = np.random.default_rng(seed=42)
@@ -2565,7 +2565,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
            [-0.68080986, -0.76492172,  1.        ]])
     
     If we add another set of variables and observations ``yarr``, we can 
-    compute the additional correlation coefficients.
+    compute the additional Pearson correlation coefficients between the
+    rows (variables) in ``xarr`` and ``yarr``.
    
     >>> yarr = rng.random((3, 3))
     >>> yarr
@@ -2588,8 +2589,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
              1.        ]])
 
     Finally if we use the option ``rowvar=False``, the columns are now
-    being treated as the variables and the rows are being treated as the
-    observations.
+    being treated as the variables and we will find the Pearson correlation
+    coefficients between the columns (variables) in ``xarr`` and ``yarr``.
 
     >>> R3 = np.corrcoef(xarr, yarr, rowvar=False)
     >>> R3
