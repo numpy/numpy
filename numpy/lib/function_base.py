@@ -2543,6 +2543,52 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
+    
+    Examples
+    --------   
+    In this example we generate two random arrays, xarr and yarr, and compute
+    the correlation coefficients. Since rowvar is true by default, we first 
+    find the correlation coefficients between
+    the rows (variables) and the columns (observations) of xarr.
+  
+    >>> import numpy as np
+    >>> xarr = np.random.rand(2,2)
+    >>> xarr
+    array([[0.01058132, 0.81118288],
+           [0.82673181, 0.95805997]])
+    >>> yarr = np.random.rand(2,2)
+    >>> yarr
+    array([[0.882256  , 0.69058452],
+           [0.02637064, 0.20776167]])
+    >>> R1 = np.corrcoef(xarr)
+    >>> R1
+    array([[1., 1.],
+           [1., 1.]])
+    
+    In this case because the matrix is 2D, the correlation coefficients of
+    xarr are all 1.
+    
+    If we add another set of variables and observations (yarr) we can compute
+    the additional correlation coefficients which are now either 1 or -1 
+    (correlated or anticorrelated).
+    
+    >>> R2 = np.corrcoef(xarr, yarr)
+    >>> R2
+    array([[ 1.,  1., -1.,  1.],
+           [ 1.,  1., -1.,  1.],
+           [-1., -1.,  1., -1.],
+           [ 1.,  1., -1.,  1.]])
+    
+    Finally if we use the option rowvar=False, we see that the columns are now
+    being treated as the variables and the rows are being treated as the 
+    observations. 
+    
+    >>> R3 = np.corrcoef(xarr, yarr, rowvar=False)
+    >>> R3
+    array([[ 1.,  1., -1., -1.],
+           [ 1.,  1., -1., -1.],
+           [-1., -1.,  1.,  1.],
+           [-1., -1.,  1.,  1.]])
 
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
