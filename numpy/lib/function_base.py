@@ -2543,6 +2543,69 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
+    
+    Examples
+    --------   
+    In this example we generate two random arrays, ``xarr`` and ``yarr``, and
+    compute the row-wise and column-wise Pearson correlation coefficients, 
+    ``R``. Since ``rowvar`` is  true by  default, we first find the row-wise
+    Pearson correlation coefficients between the variables of ``xarr``.
+
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=42)
+    >>> xarr = rng.random((3, 3))
+    >>> xarr
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
+    >>> R1 = np.corrcoef(xarr)
+    >>> R1
+    array([[ 1.        ,  0.99256089, -0.68080986],
+           [ 0.99256089,  1.        , -0.76492172],
+           [-0.68080986, -0.76492172,  1.        ]])
+    
+    If we add another set of variables and observations ``yarr``, we can 
+    compute the row-wise Pearson correlation coefficients between the
+    variables in ``xarr`` and ``yarr``.
+   
+    >>> yarr = rng.random((3, 3))
+    >>> yarr
+    array([[0.45038594, 0.37079802, 0.92676499],
+           [0.64386512, 0.82276161, 0.4434142 ],
+           [0.22723872, 0.55458479, 0.06381726]])
+    >>> R2 = np.corrcoef(xarr, yarr)
+    >>> R2
+    array([[ 1.        ,  0.99256089, -0.68080986,  0.75008178, -0.934284  ,
+            -0.99004057],
+           [ 0.99256089,  1.        , -0.76492172,  0.82502011, -0.97074098,
+            -0.99981569],
+           [-0.68080986, -0.76492172,  1.        , -0.99507202,  0.89721355,
+             0.77714685],
+           [ 0.75008178,  0.82502011, -0.99507202,  1.        , -0.93657855,
+            -0.83571711],
+           [-0.934284  , -0.97074098,  0.89721355, -0.93657855,  1.        ,
+             0.97517215],
+           [-0.99004057, -0.99981569,  0.77714685, -0.83571711,  0.97517215,
+             1.        ]])
+
+    Finally if we use the option ``rowvar=False``, the columns are now
+    being treated as the variables and we will find the column-wise Pearson 
+    correlation coefficients between variables in ``xarr`` and ``yarr``.
+
+    >>> R3 = np.corrcoef(xarr, yarr, rowvar=False)
+    >>> R3
+    array([[ 1.        ,  0.77598074, -0.47458546, -0.75078643, -0.9665554 ,
+             0.22423734],
+           [ 0.77598074,  1.        , -0.92346708, -0.99923895, -0.58826587,
+            -0.44069024],
+           [-0.47458546, -0.92346708,  1.        ,  0.93773029,  0.23297648,
+             0.75137473],
+           [-0.75078643, -0.99923895,  0.93773029,  1.        ,  0.55627469,
+             0.47536961],
+           [-0.9665554 , -0.58826587,  0.23297648,  0.55627469,  1.        ,
+            -0.46666491],
+           [ 0.22423734, -0.44069024,  0.75137473,  0.47536961, -0.46666491,
+             1.        ]])
 
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
