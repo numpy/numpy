@@ -2546,49 +2546,65 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     
     Examples
     --------   
-    In this example we generate two random arrays, xarr and yarr, and compute
-    the correlation coefficients. Since rowvar is true by default, we first 
-    find the correlation coefficients between
-    the rows (variables) and the columns (observations) of xarr.
-  
+    In this example we generate two random arrays, xarr and yarr, and
+    compute the correlation coefficients, R. Since rowvar is true by default,
+    we first find the correlation coefficients between the rows (variables) and the
+    columns (observations) of xarr.
+
     >>> import numpy as np
-    >>> xarr = np.random.rand(2,2)
+    >>> rng = np.random.default_rng(seed=42)
+    >>> xarr = rng.random((3, 3))
     >>> xarr
-    array([[0.01058132, 0.81118288],
-           [0.82673181, 0.95805997]])
-    >>> yarr = np.random.rand(2,2)
-    >>> yarr
-    array([[0.882256  , 0.69058452],
-           [0.02637064, 0.20776167]])
+    array([[0.77395605, 0.43887844, 0.85859792],
+           [0.69736803, 0.09417735, 0.97562235],
+           [0.7611397 , 0.78606431, 0.12811363]])
     >>> R1 = np.corrcoef(xarr)
     >>> R1
-    array([[1., 1.],
-           [1., 1.]])
+    array([[ 1.        ,  0.99256089, -0.68080986],
+           [ 0.99256089,  1.        , -0.76492172],
+           [-0.68080986, -0.76492172,  1.        ]])
     
-    In this case because the matrix is 2D, the correlation coefficients of
-    xarr are all 1.
-    
-    If we add another set of variables and observations (yarr) we can compute
-    the additional correlation coefficients which are now either 1 or -1 
-    (correlated or anticorrelated).
-    
+    If we add another set of variables and observations yarr, we can compute
+    the additional correlation coefficients.
+   
+    >>> yarr = rng.random((3, 3))
+    >>> yarr
+    array([[0.45038594, 0.37079802, 0.92676499],
+           [0.64386512, 0.82276161, 0.4434142 ],
+           [0.22723872, 0.55458479, 0.06381726]])
     >>> R2 = np.corrcoef(xarr, yarr)
     >>> R2
-    array([[ 1.,  1., -1.,  1.],
-           [ 1.,  1., -1.,  1.],
-           [-1., -1.,  1., -1.],
-           [ 1.,  1., -1.,  1.]])
-    
-    Finally if we use the option rowvar=False, we see that the columns are now
-    being treated as the variables and the rows are being treated as the 
-    observations. 
-    
+    array([[ 1.        ,  0.99256089, -0.68080986,  0.75008178, -0.934284  ,
+            -0.99004057],
+           [ 0.99256089,  1.        , -0.76492172,  0.82502011, -0.97074098,
+            -0.99981569],
+           [-0.68080986, -0.76492172,  1.        , -0.99507202,  0.89721355,
+             0.77714685],
+           [ 0.75008178,  0.82502011, -0.99507202,  1.        , -0.93657855,
+            -0.83571711],
+           [-0.934284  , -0.97074098,  0.89721355, -0.93657855,  1.        ,
+             0.97517215],
+           [-0.99004057, -0.99981569,  0.77714685, -0.83571711,  0.97517215,
+             1.        ]])
+
+    Finally if we use the option rowvar=False, the columns are now
+    being treated as the variables and the rows are being treated as the
+    observations.
+
     >>> R3 = np.corrcoef(xarr, yarr, rowvar=False)
     >>> R3
-    array([[ 1.,  1., -1., -1.],
-           [ 1.,  1., -1., -1.],
-           [-1., -1.,  1.,  1.],
-           [-1., -1.,  1.,  1.]])
+    array([[ 1.        ,  0.77598074, -0.47458546, -0.75078643, -0.9665554 ,
+             0.22423734],
+           [ 0.77598074,  1.        , -0.92346708, -0.99923895, -0.58826587,
+            -0.44069024],
+           [-0.47458546, -0.92346708,  1.        ,  0.93773029,  0.23297648,
+             0.75137473],
+           [-0.75078643, -0.99923895,  0.93773029,  1.        ,  0.55627469,
+             0.47536961],
+           [-0.9665554 , -0.58826587,  0.23297648,  0.55627469,  1.        ,
+            -0.46666491],
+           [ 0.22423734, -0.44069024,  0.75137473,  0.47536961, -0.46666491,
+             1.        ]])
 
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
