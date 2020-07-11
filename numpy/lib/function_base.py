@@ -1624,7 +1624,7 @@ def trim_zeros(filt, trim='fb'):
 
     >>> b = np.array(('', '', '' ,'a', 'b', 'c', '', 'b', 'a', ''))
     >>> np.trim_zeros(b)
-    array(['a', 'b', 'c', '', 'b', 'a'])
+    array(['a', 'b', 'c', '', 'b', 'a'], dtype='<U1')
 
     The input data type is preserved, list/tuple in means list/tuple out.
 
