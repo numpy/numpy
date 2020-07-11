@@ -359,7 +359,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         If True, the input arrays are both assumed to be unique, which can speed
         up the calculation.  If True but non-unique arrays are given, incorrect
         results and out-of-bounds indices could result.  Default is False.
-
     return_indices : bool
         If True, the indices which correspond to the intersection of the two
         arrays are returned. The first instance of a value is used if there are
