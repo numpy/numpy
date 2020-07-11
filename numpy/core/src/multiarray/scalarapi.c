@@ -509,30 +509,15 @@ PyArray_DescrFromTypeObject(PyObject *type)
      * not corresponding to a registered data-type object.
      */
 
-    /* Do special thing for VOID sub-types */
+    /*
+     * If this is a void (subclass) we allow overriding the type attribute
+     * which is used for `np.record`.  Its dtypes return a version of void
+     * that uses `record` as a name.  And return records when getting items.
+     */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
-        if (new == NULL) {
-            return NULL;
-        }
-        PyArray_Descr *conv = _arraydescr_try_convert_from_dtype_attr(type);
-        if ((PyObject *)conv != Py_NotImplemented) {
-            if (conv == NULL) {
-                Py_DECREF(new);
-                return NULL;
-            }
-            new->fields = conv->fields;
-            Py_XINCREF(new->fields);
-            new->names = conv->names;
-            Py_XINCREF(new->names);
-            new->elsize = conv->elsize;
-            new->subarray = conv->subarray;
-            conv->subarray = NULL;
-        }
-        Py_DECREF(conv);
-        Py_XDECREF(new->typeobj);
-        new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
+        Py_SETREF((new->typeobj), (PyTypeObject *)type);
         return new;
     }
     return _descr_from_subtype(type);

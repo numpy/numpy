@@ -1084,26 +1084,31 @@ class TestFromDTypeAttribute:
 
     def test_void_subtype(self):
         class dt(np.void):
-            # This code path is fully untested before, so it is unclear
-            # what this should be useful for. Note that if np.void is used
-            # numpy will think we are deallocating a base type [1.17, 2019-02].
+            # A code path used to exist to support looking up the dtype
+            # attribute even for void classes.  This was probably always
+            # an oversight. The test merely existed to test an otherwise
+            # uncovered (but probably not useful) code path.
             dtype = np.dtype("f,f")
             pass
 
-        np.dtype(dt)
-        np.dtype(dt(1))
+        # This returns a void dtype, but with the original type
+        assert np.dtype(dt).type is dt
+        # In the second case, we actually do end up looking up the attribute
+        assert np.dtype(dt(1)) == np.dtype("f,f")
 
     def test_void_subtype_recursion(self):
+        # The code allowing a recursion was bad, the dtype attribute now
+        # only occurs for the instantiated scalar.
         class dt(np.void):
             pass
 
         dt.dtype = dt
-
-        with pytest.raises(RecursionError):
-            np.dtype(dt)
-
-        with pytest.raises(RecursionError):
-            np.dtype(dt(1))
+        assert np.dtype(dt).str == np.dtype(np.void).str
+        assert np.dtype(dt).type is dt
+        # When instantiated, the dtype attribute is used, but recursively.
+        # This may be made an error, since there is no good reason to do the
+        # recursive discovery probably.
+        assert np.dtype(dt(1)) == np.dtype(dt)
 
 
 class TestDTypeClasses:
