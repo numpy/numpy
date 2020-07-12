@@ -23,7 +23,9 @@ number of different BitGenerators. It exposes many different probability
 distributions. See `NEP 19 <https://www.numpy.org/neps/
 nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
 routines. The legacy `RandomState` random number routines are still
-available, but limited to a single BitGenerator.
+available, but limited to a single BitGenerator. See :ref:`new-or-different` 
+for a complete list of improvements and differences from the legacy
+``Randomstate``.
 
 For convenience and backward compatibility, a single `RandomState`
 instance's methods are imported into the numpy.random namespace, see
@@ -41,13 +43,13 @@ properties than the legacy `MT19937` used in `RandomState`.
 
 .. code-block:: python
 
-  # Do this
+  # Do this (new version)
   from numpy.random import default_rng
   rng = default_rng()
   vals = rng.standard_normal(10)
   more_vals = rng.standard_normal(10)
 
-  # instead of this
+  # instead of this (legacy version)
   from numpy import random
   vals = random.standard_normal(10)
   more_vals = random.standard_normal(10)
@@ -73,7 +75,7 @@ cleanup means that legacy and compatibility methods have been removed from
 ``seed``            removed        Use `SeedSequence.spawn`
 =================== ============== ============
 
-See :ref:`new-or-different` for more information
+See :ref:`new-or-different` for more information.
 
 Something like the following code can be used to support both ``RandomState``
 and ``Generator``, with the understanding that the interfaces are slightly
@@ -97,6 +99,30 @@ is wrapped with a `Generator`.
   from numpy.random import Generator, PCG64
   rg = Generator(PCG64(12345))
   rg.standard_normal()
+  
+Here we use `default_rng` to create an instance of `Generator` to generate a 
+random float:
+ 
+>>> import numpy as np
+>>> rng = np.random.default_rng()
+>>> rng
+Generator(PCG64) at 0x7F9B9D25FC50
+>>> rfloat = rng.random()
+>>> rfloat
+0.3461018504257666
+>>> type(rfloat)
+<class 'float'>
+ 
+Here we use `default_rng` to create an instance of `Generator` to generate 3 
+random integers between 0 (inclusive) and 10 (exclusive):
+    
+>>> import numpy as np
+>>> rng = np.random.default_rng()
+>>> rints = rng.integers(low=0,high=10,size=3)
+>>> rints
+array([9, 6, 2])
+>>> type(rints[0])
+<class 'numpy.int64'>  
 
 Introduction
 ------------
@@ -113,25 +139,38 @@ bit generator-provided stream and transforms them into more useful
 distributions, e.g., simulated normal random values. This structure allows
 alternative bit generators to be used with little code duplication.
 
-The `Generator` is the user-facing object that is nearly identical to
-`RandomState`. The canonical method to initialize a generator passes a
+The `Generator` is the user-facing object that is nearly identical to the
+legacy `RandomState`. The canonical method to initialize a generator passes a
 `PCG64` bit generator as the sole argument.
-
-.. code-block:: python
-
-  from numpy.random import default_rng
-  rg = default_rng(12345)
-  rg.random()
-
+  
+>>> from numpy.random import default_rng
+>>> rg = default_rng(12345)
+>>> print(rg)
+Generator(PCG64)
+>>> print(rg.random())
+0.22733602246716966  
+  
 One can also instantiate `Generator` directly with a `BitGenerator` instance.
-To use the older `MT19937` algorithm, one can instantiate it directly
-and pass it to `Generator`.
 
-.. code-block:: python
+To use the default `PCG64` algorithm, one can instantiate it directly and 
+pass it to `Generator`:
 
-  from numpy.random import Generator, MT19937
-  rg = Generator(MT19937(12345))
-  rg.random()
+>>> from numpy.random import Generator, PCG64
+>>> rg = Generator(PCG64(12345))
+>>> rg
+Generator(PCG64) at 0x7FBB88A5FC50
+>>> print(rg.random)
+<built-in method random of numpy.random._generator.Generator object at 0x7fbb88a5fc50>
+
+Similarly to use the older `MT19937` algorithm, one can instantiate it 
+directly and pass it to `Generator`:
+
+>>> from numpy.random import Generator, MT19937
+>>> rg = Generator(MT19937(12345))
+>>> rg
+Generator(MT19937) at 0x7FC4E6A7FC50
+>>> print(rg.random)
+<built-in method random of numpy.random._generator.Generator object at 0x7fc4e6a7fc50>
 
 What's New or Different
 ~~~~~~~~~~~~~~~~~~~~~~~
