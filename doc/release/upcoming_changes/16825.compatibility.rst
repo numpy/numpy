@@ -1,0 +1,6 @@
+Zero length string dtypes preserved more often
+----------------------------------------------
+When creating an array from one or more zero length strings,
+the output dtype will now be zero length in many cases as well.
+Note that NumPy will still often convert such dtypes to a length
+one dtype for many operations.

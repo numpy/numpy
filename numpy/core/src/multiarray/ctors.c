@@ -1468,10 +1468,23 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     }
 
     /* Create a new array and copy the data */
-    ret = (PyArrayObject *)PyArray_NewFromDescr(
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
             &PyArray_Type, dtype, ndim, dims, NULL, NULL,
-            flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
+            flags&NPY_ARRAY_F_CONTIGUOUS, NULL, NULL, 0, 1);
     if (ret == NULL) {
+        return NULL;
+    }
+    if (PyArray_DESCR(ret) != dtype) {
+        /*
+         * Sanity check, only subarray dtypes should be modified, and there
+         * should be no subarray scalars (they would be arrays).
+         */
+        PyErr_Format(PyExc_RuntimeError,
+                "dtype changed while creating an array from a python object. "
+                "This should not be possible. Please notify the NumPy "
+                "developers you see this message.",
+                PyArray_DESCR(ret), dtype, PyArray_DESCR(ret));
+        Py_DECREF(ret);
         return NULL;
     }
     if (cache == NULL) {

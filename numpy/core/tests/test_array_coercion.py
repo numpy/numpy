@@ -137,6 +137,21 @@ def is_parametric_dtype(dtype):
 
 
 class TestStringDiscovery:
+    @pytest.mark.parametrize("scalar", [np.bytes_(b""), np.unicode_("")])
+    def test_zero_length_string(self, scalar):
+        assert scalar.dtype.itemsize == 0
+        assert np.array(scalar).dtype == scalar.dtype
+        # Scalar methods converting to ndarray internally, end up using
+        # zero length strings (although we do lose 0-length strings in many
+        # places at this time).
+        assert scalar.squeeze().dtype == scalar.dtype
+
+        # For comparison, the current default array path upgrades the dtype,
+        # even (or especially) when the array is empty.
+        assert np.array([], dtype=type(scalar)).dtype.itemsize != 0
+        # but now not if a concret empty string was found:
+        assert np.array([b''], dtype=type(scalar)).dtype.itemsize == 0
+
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],
             ids=["object", "1.2", "10**43", "None", "string"])

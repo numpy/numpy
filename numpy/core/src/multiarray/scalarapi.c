@@ -13,6 +13,8 @@
 
 #include "npy_pycompat.h"
 
+#include "array_coercion.h"
+#include "dtypemeta.h"
 #include "ctors.h"
 #include "descriptor.h"
 #include "scalartypes.h"
@@ -285,7 +287,8 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
 }
 
 /*NUMPY_API
- * Get 0-dim array from scalar
+ * Get 0-dim array from scalar (must be a subclass of `np.generic`, which is
+ * not checked).
  *
  * 0-dim array from array-scalar object
  * always contains a copy of the data
@@ -306,6 +309,11 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     if ((typecode->type_num == NPY_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
+        /*
+         * Special case, we return a *view* into void scalars, mainly to
+         * allow things similar to "reversed" assignment:
+         *    arr[indx]["field"] = val  # instead of arr["field"][indx] = val
+         */
         return PyArray_NewFromDescrAndBase(
                 &PyArray_Type, typecode,
                 0, NULL, NULL,
@@ -314,54 +322,48 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                 NULL, (PyObject *)scalar);
     }
 
-    PyArrayObject *r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-            typecode,
-            0, NULL,
-            NULL, NULL, 0, NULL);
+    if (outcode == NULL) {
+        outcode = typecode;
+        Py_INCREF(outcode);
+    }
+
+    PyArrayObject *r = (PyArrayObject *)PyArray_NewFromDescr_int(
+            &PyArray_Type, outcode, 0, NULL, NULL, NULL,
+            0, NULL, NULL, 0, 1);
     if (r == NULL) {
-        Py_XDECREF(outcode);
         return NULL;
     }
-    /* the dtype used by the array may be different to the one requested */
-    typecode = PyArray_DESCR(r);
-    if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
-        if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
+    if (PyArray_DESCR(r) != outcode) {
+        /*
+         * Sanity check, only subarray dtypes should be modified, and there
+         * should be no subarray scalars (they would be arrays).
+         */
+        PyErr_SetString(PyExc_RuntimeError,
+                "dtype changed while creating an array from a scalar. This "
+                "should not be possible. Please notify the NumPy developers "
+                "you see this message");
+        Py_DECREF(r);
+        return NULL;
+    }
+    if (outcode == typecode) {
+        /*
+         * Fast path using setitem directly, since this is the matching,
+         * scalar for sure.
+         */
+        assert(PyObject_TypeCheck(scalar, NPY_DTYPE(outcode)->scalar_type));
+        if (outcode->f->setitem(scalar, PyArray_BYTES(r), r) < 0) {
             Py_DECREF(r);
-            Py_XDECREF(outcode);
             return NULL;
         }
     }
     else {
-        char *memptr = scalar_value(scalar, typecode);
-
-        memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
-        if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
-            /* Need to INCREF just the PyObject portion */
-            PyArray_Item_INCREF(memptr, typecode);
+        /* Use PyArray_Pack which implements casting when necessary */
+        if (PyArray_Pack(outcode, PyArray_BYTES(r), scalar) < 0) {
+            Py_DECREF(r);
+            return NULL;
         }
     }
-
-    if (outcode == NULL) {
-        return (PyObject *)r;
-    }
-    if (PyArray_EquivTypes(outcode, typecode)) {
-        if (!PyTypeNum_ISEXTENDED(typecode->type_num)
-                || (outcode->elsize == typecode->elsize)) {
-            /*
-             * Since the type is equivalent, and we haven't handed the array
-             * to anyone yet, let's fix the dtype to be what was requested,
-             * even if it is equivalent to what was passed in.
-             */
-            Py_SETREF(((PyArrayObject_fields *)r)->descr, outcode);
-
-            return (PyObject *)r;
-        }
-    }
-
-    /* cast if necessary to desired output typecode */
-    PyObject *ret = PyArray_CastToType(r, outcode, 0);
-    Py_DECREF(r);
-    return ret;
+    return (PyObject *)r;
 }
 
 /*NUMPY_API
