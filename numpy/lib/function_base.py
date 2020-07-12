@@ -431,12 +431,12 @@ def asarray_chkfinite(a, dtype=None, order=None):
         of lists and ndarrays.  Success requires no NaNs or Infs.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'K', 'A', 'C', 'F'}, optional
-        Memory layout.  'K' and 'A' depend on the order of input array a: 
-        'K' preserve input order
-        'A' means 'F' if `a` is Fortran contiguous, 'C' otherwise
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
         'C' row-major (C-style), 
         'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
         Defaults to 'C'.
 
     Returns
