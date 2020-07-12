@@ -75,7 +75,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
     return r
 
 
-def _go_forw(n, norm):
+def _get_forward_norm(n, norm):
     if n < 1:
         raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
 
@@ -85,11 +85,11 @@ def _go_forw(n, norm):
         return sqrt(n)
     elif norm == "forward":
         return n
-    raise ValueError(f'Invalid norm value {norm}; should be "backward",\
-                     "ortho" or "forward".')
+    raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+                     '"ortho" or "forward".')
 
 
-def _go_back(n, norm):
+def _get_backward_norm(n, norm):
     if n < 1:
         raise ValueError(f"Invalid number of FFT data points ({n}) specified.")
 
@@ -99,18 +99,20 @@ def _go_back(n, norm):
         return sqrt(n)
     elif norm == "forward":
         return 1
-    raise ValueError(f'Invalid norm value {norm}; should be "backward",\
-                     "ortho" or "forward".')
+    raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+                     '"ortho" or "forward".')
+
 
 _SWAP_DIRECTION_MAP = {"backward": "forward", None: "forward",
                        "ortho": "ortho", "forward": "backward"}
+
 
 def _swap_direction(norm):
     try:
         return _SWAP_DIRECTION_MAP[norm]
     except KeyError:
-        raise ValueError(f'Invalid norm value {norm}; should be "backward",\
-                         "ortho" or "forward".')
+        raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+                         '"ortho" or "forward".')
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -142,6 +144,8 @@ def fft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -207,7 +211,7 @@ def fft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = _go_forw(n, norm)
+    inv_norm = _get_forward_norm(n, norm)
     output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
 
@@ -252,6 +256,8 @@ def ifft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -304,7 +310,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = _go_back(n, norm)
+    inv_norm = _get_backward_norm(n, norm)
     output = _raw_fft(a, n, axis, False, False, inv_norm)
     return output
 
@@ -334,6 +340,8 @@ def rfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -395,7 +403,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_norm = _go_forw(n, norm)
+    inv_norm = _get_forward_norm(n, norm)
     output = _raw_fft(a, n, axis, True, True, inv_norm)
     return output
 
@@ -434,6 +442,8 @@ def irfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -497,7 +507,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    inv_norm = _go_back(n, norm)
+    inv_norm = _get_backward_norm(n, norm)
     output = _raw_fft(a, n, axis, True, False, inv_norm)
     return output
 
@@ -526,6 +536,8 @@ def hfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -620,6 +632,8 @@ def ihfft(a, n=None, axis=-1, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -726,6 +740,8 @@ def fftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -836,6 +852,8 @@ def ifftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -929,6 +947,8 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -1030,6 +1050,8 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -1114,6 +1136,8 @@ def rfftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -1196,6 +1220,8 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -1259,6 +1285,8 @@ def irfftn(a, s=None, axes=None, norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
@@ -1346,6 +1374,8 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
         .. versionadded:: 1.10.0
 
         Normalization mode (see `numpy.fft`). Default is "backward".
+        Indicates which direction of the forward/backward pair of transforms
+        is scaled and with what normalization factor.
 
         .. versionadded:: 1.20.0
 
