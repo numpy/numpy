@@ -4360,8 +4360,8 @@ def default_rng(seed=None):
  
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
-    >>> str(rng)
-    'Generator(PCG64)'
+    >>> print(rng)
+    Generator(PCG64)
     >>> rfloat = rng.random()
     >>> rfloat
     0.22733602246716966
@@ -4383,8 +4383,8 @@ def default_rng(seed=None):
     
     >>> import numpy as np
     >>> rng = np.random.default_rng(seed=42)
-    >>> str(rng)
-    'Generator(PCG64)'
+    >>> print(rng)
+    Generator(PCG64)
     >>> arr1 = rng.random((3, 3))
     >>> arr1
     array([[0.77395605, 0.43887844, 0.85859792],

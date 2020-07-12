@@ -105,8 +105,8 @@ random float:
  
 >>> import numpy as np
 >>> rng = np.random.default_rng(12345)
->>> str(rng)
-'Generator(PCG64)'
+>>> print(rng)
+Generator(PCG64)
 >>> rfloat = rng.random()
 >>> rfloat
 0.22733602246716966
@@ -143,12 +143,12 @@ The `Generator` is the user-facing object that is nearly identical to the
 legacy `RandomState`. It accepts a bit generator instance as an argument.
 The default is currently `PCG64` but this may change in future versions. 
 As a convenience NumPy  provides the `default_rng` funtion to hide these 
-details::
+details:
   
 >>> from numpy.random import default_rng
 >>> rg = default_rng(12345)
->>> str(rg)
-'Generator(PCG64)'
+>>> print(rg)
+Generator(PCG64)
 >>> print(rg.random())
 0.22733602246716966
   
@@ -159,16 +159,16 @@ pass it to `Generator`:
 
 >>> from numpy.random import Generator, PCG64
 >>> rg = Generator(PCG64(12345))
->>> str(rg)
-'Generator(PCG64)'
+>>> print(rg)
+Generator(PCG64)
 
 Similarly to use the older `MT19937` bit generator (not recommended), one can
 instantiate it directly and pass it to `Generator`:
 
 >>> from numpy.random import Generator, MT19937
 >>> rg = Generator(MT19937(12345))
->>> str(rg)
-'Generator(MT19937)'
+>>> print(rg)
+Generator(MT19937)
 
 What's New or Different
 ~~~~~~~~~~~~~~~~~~~~~~~
