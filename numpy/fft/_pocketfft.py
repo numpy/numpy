@@ -1242,6 +1242,15 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     This is really just `rfftn` with different default behavior.
     For more details see `rfftn`.
 
+    Examples
+    --------
+    >>> a = np.ones((2, 2))
+    >>> np.fft.rfft2(a)
+    array([[4.+0.j, 0.+0.j],
+           [0.+0.j, 0.+0.j]])
+    >>> np.fft.rfft2(a, axes=(1, 1))
+    array([[2.+0.j, 2.+0.j],
+           [2.+0.j, 2.+0.j]])
     """
     return rfftn(a, s, axes, norm)
 
@@ -1399,5 +1408,13 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     This is really `irfftn` with different defaults.
     For more details see `irfftn`.
 
+    Examples
+    --------
+    >>> a = np.zeros((3, 3))
+    >>> a[0, 0] = 3 * 3
+    >>> np.fft.irfft2(a)
+    array([[0.75, 0.75, 0.75, 0.75],
+           [0.75, 0.75, 0.75, 0.75],
+           [0.75, 0.75, 0.75, 0.75]])
     """
     return irfftn(a, s, axes, norm)
