@@ -249,6 +249,26 @@ class TestGrid:
         assert_equal(grid.size, expected[0])
         assert_equal(grid_small.size, expected[1])
 
+    def test_accepts_npfloating(self):
+        # regression test for #16466
+        grid64 = mgrid[0.1:0.33:0.1, ]
+        grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1), ]
+        assert_(not isinstance(grid32.dtype, int))
+        assert_array_almost_equal(grid64, grid32)
+
+        # different code path for single slice
+        grid64 = mgrid[0.1:0.33:0.1]
+        grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1)]
+        assert_(not isinstance(grid32.dtype, int))
+        assert_array_almost_equal(grid64, grid32)
+
+    def test_accepts_npcomplexfloating(self):
+        grid = mgrid[0.1:0.3:np.complex64(3j), ]
+        assert_array_almost_equal(grid, np.array([[0.1, 0.2, 0.3]]))
+
+        # different code path for single slice
+        grid = mgrid[0.1:0.3:np.complex64(3j)]
+        assert_array_almost_equal(grid, np.array([0.1, 0.2, 0.3]))
 
 class TestConcatenator:
     def test_1d(self):
@@ -268,6 +288,9 @@ class TestConcatenator:
     def test_complex_step(self):
         # Regression test for #12262
         g = r_[0:36:100j]
+        assert_(g.shape == (100,))
+
+        g = r_[0:36:np.complex64(100j)]
         assert_(g.shape == (100,))
 
     def test_2d(self):
