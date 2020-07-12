@@ -837,12 +837,12 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None, keys=None):
+def _sort_dispatcher(a, axis=None, kind=None, order=None, by=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None, keys=None):
+def sort(a, axis=-1, kind=None, order=None, by=None):
     """
     Return a sorted copy of an array.
 
@@ -869,9 +869,9 @@ def sort(a, axis=-1, kind=None, order=None, keys=None):
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
 
-    keys: tuple or object, optional
-        With a given array `a` sort the elements not by arithmethic
-        order, but by any abitary order defined by keys, there can
+    by: tuple or object, optional
+        With a given array `a` sort the elements not by arithmetic
+        order, but by any arbitrary order defined by tuple, there can
         be multiple keys in a tuple form , or just a single object
 
     Returns
@@ -999,7 +999,7 @@ def sort(a, axis=-1, kind=None, order=None, keys=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order, keys=keys)
+    a.sort(axis=axis, kind=kind, order=order, by=by)
     return a
 
 

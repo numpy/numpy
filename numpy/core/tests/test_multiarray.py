@@ -1747,6 +1747,19 @@ class TestMethods:
         assert_raises(ValueError, lambda: a.transpose(0, 0))
         assert_raises(ValueError, lambda: a.transpose(0, 1, 2))
 
+    def test_sort_by(self):
+        msg = "Test sorting by absolute values as keys"
+        a = np.array([-2, -3, -4, -1, -6])
+        b = np.sort(a, by=(np.absolute(a),))
+        e = np.array([-1, -2, -3, -4, -6])
+        assert_equal(b, e, msg)
+        # Test sorting complex numbers by absolute value
+        msg = "Test sorting comple xnumbers by absolute value"
+        carr = np.arange(4, dtype=complex)[::-1].reshape(2, 2)
+        carr_out = np.arange([[2+0j, 3+0j], [0+0j, 1+0j]])
+        carr.sort(axis=1, by=(np.absolute(carr),))
+        assert_equal(carr, carr_out, msg)
+
     def test_sort(self):
         # test ordering for floats and complex containing nans. It is only
         # necessary to check the less-than comparison, so sorts that

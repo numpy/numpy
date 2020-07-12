@@ -1065,7 +1065,7 @@ def sort(
     axis: Optional[int] = ...,
     kind: Optional[_SortKind] = ...,
     order: Union[None, str, Sequence[str]] = ...,
-    keys: Union[None, Sequence[ndarray]] = ...,
+    by: Union[None, Sequence[ndarray]] = ...,
 ) -> ndarray: ...
 def argsort(
     a: ArrayLike,

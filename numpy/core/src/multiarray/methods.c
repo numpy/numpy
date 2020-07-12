@@ -1346,20 +1346,20 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int val;
     NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL;
-    PyObject *keys = NULL;
+    PyObject *by = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
 
 
-    static char *kwlist[] = {"axis", "kind", "order", "keys", NULL};
+    static char *kwlist[] = {"axis", "kind", "order", "by", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&OO:sort", kwlist,
                                     &axis,
                                     PyArray_SortkindConverter, &sortkind,
-                                    &order, &keys)) {
+                                    &order, &by)) {
         return NULL;
     }
     // If keys are None and We have complex types use c.real, c.imag as keys for lexsort
-    if (keys == Py_None || keys == NULL) {
+    if (by == Py_None || by == NULL) {
         if (PyArray_ISCOMPLEX(self)) {
             PyArrayObject *real = (PyArrayObject*)PyObject_GetAttrString(
                 (PyObject*)self, "real");
@@ -1372,10 +1372,10 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 Py_DECREF(real);
                 return NULL;
             }
-            keys = PyTuple_Pack(2, imag, real);
+            by = PyTuple_Pack(2, imag, real);
             Py_DECREF(real);
             Py_DECREF(imag);
-            if (keys == NULL) {
+            if (by == NULL) {
                 return NULL;
             }
         }
@@ -1383,8 +1383,8 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     /* WIP: The below code is for discussion
      * purposes use take_along_axis followed by lexsort.
      */
-    if (keys != Py_None && keys != NULL) {
-        PyObject *indices_obj = PyArray_LexSort(keys, axis);
+    if (by != Py_None && by != NULL) {
+        PyObject *indices_obj = PyArray_LexSort(by, axis);
         PyArrayObject *sorted_out = NULL;
         if (indices_obj == NULL) {
             return NULL;
