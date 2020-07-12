@@ -253,13 +253,13 @@ class TestGrid:
         # regression test for #16466
         grid64 = mgrid[0.1:0.33:0.1, ]
         grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1), ]
-        assert_(not isinstance(grid32.dtype, int))
+        assert_(grid32.dtype == np.float64)
         assert_array_almost_equal(grid64, grid32)
 
         # different code path for single slice
         grid64 = mgrid[0.1:0.33:0.1]
         grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1)]
-        assert_(not isinstance(grid32.dtype, int))
+        assert_(grid32.dtype == np.float64)
         assert_array_almost_equal(grid64, grid32)
 
     def test_accepts_npcomplexfloating(self):
