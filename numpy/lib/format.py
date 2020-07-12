@@ -370,7 +370,7 @@ def _wrap_header(header, version):
     import struct
     assert version is not None
     fmt, encoding = _header_size_info[version]
-    if not isinstance(header, bytes):  # always true on python 3
+    if not isinstance(header, bytes):
         header = header.encode(encoding)
     hlen = len(header) + 1
     padlen = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize(fmt) + hlen) % ARRAY_ALIGN)
