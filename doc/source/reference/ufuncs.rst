@@ -139,7 +139,11 @@ Use of internal buffers
 .. index:: buffers
 
 Internally, buffers are used for misaligned data, swapped data, and
-data that has to be converted from one data type to another. The size
+data that has to be converted from one data type to another.
+Operations where ufunc input and output operands have memory overlap,
+for instance a -= b, are defined to be the same as for equivalent
+operations where there is no memory overlap.  Operations make
+temporary copies as needed to eliminate data dependency.  The size
 of internal buffers is settable on a per-thread basis. There can
 be up to :math:`2 (n_{\mathrm{inputs}} + n_{\mathrm{outputs}})`
 buffers of the specified size created to handle the data from all the
@@ -334,6 +338,19 @@ advanced usage and will not typically be used.
     default), then this corresponds to the entire output being filled.
     Note that outputs not explicitly filled are left with their
     uninitialized values.
+
+    .. versionadded:: 1.13
+
+    Operations where ufunc input and output operands have memory overlap are
+    now defined to be the same as for equivalent operations where there
+    is no memory overlap.  Operations affected make temporary copies,
+    as needed to eliminate data dependency.  As detecting these cases
+    is computationally expensive, a heuristic is used, which may in rare
+    cases result to needless temporary copies.  For operations where the
+    data dependency is simple enough for the heuristic to analyze,
+    temporary copies will not be made even if the arrays overlap, if it
+    can be deduced copies are not necessary.  As an example,
+    ``np.add(a, b, out=a)`` will not involve copies.
 
 *where*
 
