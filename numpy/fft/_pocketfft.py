@@ -99,7 +99,7 @@ def _get_backward_norm(n, norm):
         return sqrt(n)
     elif norm == "forward":
         return 1
-    raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+    raise ValueError(f'Invalid norm value {norm}; should be "backward", '
                      '"ortho" or "forward".')
 
 
@@ -111,7 +111,7 @@ def _swap_direction(norm):
     try:
         return _SWAP_DIRECTION_MAP[norm]
     except KeyError:
-        raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+        raise ValueError(f'Invalid norm value {norm}; should be "backward", '
                          '"ortho" or "forward".')
 
 
