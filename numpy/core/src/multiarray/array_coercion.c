@@ -102,7 +102,7 @@ enum _dtype_discovery_flags {
  * @return -1 on error 0 on success
  */
 static int
-_prime_global_pytype_to_type_dict()
+_prime_global_pytype_to_type_dict(void)
 {
     int res;
 

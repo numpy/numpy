@@ -14,6 +14,6 @@ NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyFloatAbstractDType;
 NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexAbstractDType;
 
 NPY_NO_EXPORT int
-initialize_and_map_pytypes_to_dtypes();
+initialize_and_map_pytypes_to_dtypes(void);
 
 #endif  /*_NPY_ABSTRACTDTYPES_H */
