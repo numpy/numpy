@@ -341,6 +341,7 @@ def build_project(args):
 
     """
 
+    import setuptools
     import distutils.sysconfig
 
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
