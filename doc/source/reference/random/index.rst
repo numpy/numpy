@@ -104,12 +104,12 @@ Here we use `default_rng` to create an instance of `Generator` to generate a
 random float:
  
 >>> import numpy as np
->>> rng = np.random.default_rng()
->>> rng
-Generator(PCG64) at 0x7F9B9D25FC50
+>>> rng = np.random.default_rng(12345)
+>>> str(rng)
+'Generator(PCG64)'
 >>> rfloat = rng.random()
 >>> rfloat
-0.3461018504257666
+0.22733602246716966
 >>> type(rfloat)
 <class 'float'>
  
@@ -117,12 +117,12 @@ Here we use `default_rng` to create an instance of `Generator` to generate 3
 random integers between 0 (inclusive) and 10 (exclusive):
     
 >>> import numpy as np
->>> rng = np.random.default_rng()
->>> rints = rng.integers(low=0,high=10,size=3)
+>>> rng = np.random.default_rng(12345)
+>>> rints = rng.integers(low=0, high=10, size=3)
 >>> rints
-array([9, 6, 2])
+array([6, 2, 7])
 >>> type(rints[0])
-<class 'numpy.int64'>  
+<class 'numpy.int64'> 
 
 Introduction
 ------------
@@ -140,37 +140,35 @@ distributions, e.g., simulated normal random values. This structure allows
 alternative bit generators to be used with little code duplication.
 
 The `Generator` is the user-facing object that is nearly identical to the
-legacy `RandomState`. The canonical method to initialize a generator passes a
-`PCG64` bit generator as the sole argument.
+legacy `RandomState`. It accepts a bit generator instance as an argument.
+The default is currently `PCG64` but this may change in future versions. 
+As a convenience NumPy  provides the `default_rng` funtion to hide these 
+details::
   
 >>> from numpy.random import default_rng
 >>> rg = default_rng(12345)
->>> print(rg)
-Generator(PCG64)
+>>> str(rg)
+'Generator(PCG64)'
 >>> print(rg.random())
-0.22733602246716966  
+0.22733602246716966
   
 One can also instantiate `Generator` directly with a `BitGenerator` instance.
 
-To use the default `PCG64` algorithm, one can instantiate it directly and 
+To use the default `PCG64` bit generator, one can instantiate it directly and 
 pass it to `Generator`:
 
 >>> from numpy.random import Generator, PCG64
 >>> rg = Generator(PCG64(12345))
->>> rg
-Generator(PCG64) at 0x7FBB88A5FC50
->>> print(rg.random)
-<built-in method random of numpy.random._generator.Generator object at 0x7fbb88a5fc50>
+>>> str(rg)
+'Generator(PCG64)'
 
-Similarly to use the older `MT19937` algorithm, one can instantiate it 
-directly and pass it to `Generator`:
+Similarly to use the older `MT19937` bit generator (not recommended), one can
+instantiate it directly and pass it to `Generator`:
 
 >>> from numpy.random import Generator, MT19937
 >>> rg = Generator(MT19937(12345))
->>> rg
-Generator(MT19937) at 0x7FC4E6A7FC50
->>> print(rg.random)
-<built-in method random of numpy.random._generator.Generator object at 0x7fc4e6a7fc50>
+>>> str(rg)
+'Generator(MT19937)'
 
 What's New or Different
 ~~~~~~~~~~~~~~~~~~~~~~~
