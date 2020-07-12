@@ -2325,6 +2325,10 @@ class TestRegression:
         # allowed as a special case due to existing use, see gh-2798
         a = np.ones(1, dtype=('O', [('name', 'O')]))
         assert_equal(a[0], 1)
+        # In particular, the above union dtype (and union dtypes in general)
+        # should mainly behave like the main (object) dtype:
+        assert a[0] is a.item()
+        assert type(a[0]) is int
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set

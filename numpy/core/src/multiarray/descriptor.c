@@ -885,7 +885,17 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         new->metadata = conv->metadata;
         Py_XINCREF(new->metadata);
     }
-    new->flags = conv->flags;
+    /*
+     * Certain flags must be inherited from the fields.  This is needed
+     * only for void dtypes (or subclasses of it such as a record dtype).
+     * For other dtypes, the field part will only be used for direct field
+     * access and thus flag inheritance should not be necessary.
+     * (We only allow object fields if the dtype is object as well.)
+     * This ensures copying over of the NPY_FROM_FIELDS "inherited" flags.
+     */
+    if (new->type_num == NPY_VOID) {
+        new->flags = conv->flags;
+    }
     Py_DECREF(conv);
     return new;
 
