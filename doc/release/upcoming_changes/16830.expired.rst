@@ -1,0 +1,6 @@
+``NpzFile.iteritems()`` and ``NpzFile.iterkeys()`` are removed
+--------------------------------------------------------------
+
+As part of the continued removal of Python 2 compatibility
+``NpzFile.iteritems()`` and ``NpzFile.iterkeys()`` methods are now removed. This
+concludes the deprecation from 1.15.
