@@ -161,7 +161,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
     
-    if _nx.issubdtype(dtype, np.integer):
+    if _nx.issubdtype(dtype, _nx.integer):
         _nx.floor(y, out=y)
 
     if retstep:
