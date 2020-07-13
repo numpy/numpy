@@ -53,37 +53,39 @@ sha256_vals = {
     "openblas-v0.3.7-527-g79fd006c-manylinux1_x86_64.tar.gz":
     "ebb8236b57a1b4075fd5cdc3e9246d2900c133a42482e5e714d1e67af5d00e62",
     "openblas-v0.3.10-win_amd64-gcc_7_1_0.zip":
-    "2ffd656ed441070df2f7a7acb9e610c940701f7e560cc3fb827f4fa4750eeb37",
+    "e5356a2aa4aa7ed9233b2ca199fdd445f55ba227f004ebc63071dfa2426e9b09",
+    "openblas64_-v0.3.10-win_amd64-gcc_7_1_0.zip":
+    "aea3f9c8bdfe0b837f0d2739a6c755b12b6838f6c983e4ede71b4e1b576e6e77",
     "openblas-v0.3.10-win32-gcc_7_1_0.zip":
-    "e9212c5fc9d8620a1d091c2dc90d6f8b1a7943f636b2c482440d9b6f5be49ae4",
+    "af1ad3172b23f7c6ef2234151a71d3be4d92010dad4dfb25d07cf5a20f009202",
+    "openblas64_-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
+    "38b61c58d63048731d6884fea7b63f8cbd610e85b138c6bac0e39fd77cd4699b",
+    "openblas-v0.3.10-manylinux2014_aarch64.tar.gz":
+    "c4444b9836ec26f7772fae02851961bf73177ff2aa436470e56fab8a1ef8d405",
+    "openblas-v0.3.10-manylinux2010_x86_64.tar.gz":
+    "cb7988c4a015aece9c49b1169f51c4ac2287fb9aab8114c8ab67792138ffc85e",
+    "openblas-v0.3.10-manylinux2010_i686.tar.gz":
+    "dc637801dd80ebd6394ea8b4a97f8858e4224870ea9214de08bebbdddd8e206e",
+    "openblas-v0.3.10-manylinux1_x86_64.tar.gz":
+    "ec1f9e9b2a62d5cb9e2634b88ee2da7cb6b07702d5a0e8b190d680a31adfa23a",
+    "openblas-v0.3.10-manylinux1_i686.tar.gz":
+    "b13d9d14e6bd452c0fbadb5cd5fda05b98b1e14043edb13ead90694d4cc07f0e",
+    "openblas-v0.3.10-manylinux2014_ppc64le.tar.gz":
+    "1cbc8176986099cf0cbb8f64968d5a14880d602d4b3c59a91d75b69b8760cde3",
+    "openblas-v0.3.10-manylinux2014_s390x.tar.gz":
+    "fa6722f0b12507ab0a65f38501ed8435b573df0adc0b979f47cdc4c9e9599475",
     "openblas-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
     "c6940b5133e687ae7a4f9c7c794f6a6d92b619cf41e591e5db07aab5da118199",
-    "openblas-v0.3.10-manylinux2014_aarch64.tar.gz":
-    "c9bf6cb7cd6bafc1252fc40ca368112caef902536a31660346308714f4ab7504",
-    "openblas-v0.3.10-manylinux2010_x86_64.tar.gz":
-    "5e471d171078618b718489ef7e6af1e250ceb5c50d9f9c9ba3cb2d018004fa45",
-    "openblas-v0.3.10-manylinux2010_i686.tar.gz":
-    "39626cb4d42b2e6187167712c58a748f13e3bd1eaae00aa48d8d1797c07a85c0",
-    "openblas-v0.3.10-manylinux1_x86_64.tar.gz":
-    "57accc9125eea164e3e28c2945db1d8723ef533020aa1d1c8ff0fe4c281fe10b",
-    "openblas-v0.3.10-manylinux1_i686.tar.gz":
-    "58645fa0b41819b0e0fbb86fd5ee8469f87da5db9a264c6d9f66887b7878ba31",
-    "openblas-v0.3.10-manylinux2014_ppc64le.tar.gz":
-    "ef1a4f27b37a7fcd15bbe0457ceb395b726753c6b43884fce9ad52d18b8b4d27",
-    "openblas-v0.3.10-manylinux2014_s390x.tar.gz":
-    "498198057b0b479aa809916d6882f896925957ec399f469e4520d009bbfc258d",
-    "openblas64_-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
-    "91189592d0d801807843863a7249bf4f61621a2d056680d83723f8bb4019242b",
     "openblas64_-v0.3.10-manylinux2014_s390x.tar.gz":
     "e0347dd6f3f3a27d2f5e76d382e8a4a68e2e92f5f6a10e54ef65c7b14b44d0e8",
     "openblas64_-v0.3.10-manylinux2014_ppc64le.tar.gz":
-    "999e336c81800c7e5ff22628fc1fe3963be6e64f89744f98589b649f4c9a5199",
+    "4b96a51ac767ec0aabb821c61bcd3420e82e987fc93f7e1f85aebb2a845694eb",
     "openblas64_-v0.3.10-manylinux2010_x86_64.tar.gz":
-    "2291851d113b8310aae722149ea3dbda3dfe31fc08ec3698fad91923ffdd1b05",
+    "f68fea21fbc73d06b7566057cad2ed8c7c0eb71fabf9ed8a609f86e5bc60ce5e",
     "openblas64_-v0.3.10-manylinux2014_aarch64.tar.gz":
-    "da9ce72d8c920c633446864469f440dee347b53f7b72437148cfb0aa54b00a18",
+    "15e6eed8cb0df8b88e52baa136ffe1769c517e9de7bcdfd81ec56420ae1069e9",
     "openblas64_-v0.3.10-win_amd64-gcc_7_1_0.zip":
-    "662f1578d685a9a21da53230e9077c001205100eaa14ea56533c61dfbd0fe14b",
+    "aea3f9c8bdfe0b837f0d2739a6c755b12b6838f6c983e4ede71b4e1b576e6e77",
 }
 
 
@@ -165,9 +167,10 @@ def download_openblas(target, arch, ilp64, is_32bit):
     sha256_returned = hashlib.sha256(data).hexdigest()
     if key not in sha256_vals:
         raise ValueError(
-            f'key "{key}" with hash "{sha256_returned}" not in sha256_vals')
+            f'\nkey "{key}" with hash "{sha256_returned}" not in sha256_vals\n')
     sha256_expected = sha256_vals[key]
-    if 0 and sha256_returned != sha256_expected:
+    if sha256_returned != sha256_expected:
+        # print(f'\nkey "{key}" with hash "{sha256_returned}" mismatch\n')
         raise ValueError(f'sha256 hash mismatch for filename {filename}')
     print("Saving to file", file=sys.stderr)
     with open(target, 'wb') as fid:
@@ -321,7 +324,8 @@ def test_setup(arches):
     for arch, ilp64, is_32bit in items():
         if arch == '':
             continue
-
+        if arch not in arches:
+            continue
         target = None
         try:
             try:
