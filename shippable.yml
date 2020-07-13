@@ -29,7 +29,7 @@ build:
     - ls -lR "${target}"
     - sudo cp -r "${target}"/lib/* /usr/lib
     - sudo cp "${target}"/include/* /usr/include
-    - python -m pip install --upgrade pip
+    - python -m pip install --upgrade pip setuptools
 
     # we will pay the ~13 minute cost of compiling Cython only when a new
     # version is scraped in by pip; otherwise, use the cached
