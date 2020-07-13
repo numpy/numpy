@@ -176,7 +176,7 @@ def _to_native_byte_order(*arrays):
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if not a.dtype.type is type:
+        if a.dtype.type is not type:
             a = a.astype(type)
         cast_arrays = cast_arrays + (_fastCT(a),)
     if len(cast_arrays) == 1:
