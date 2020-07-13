@@ -262,7 +262,6 @@ def _get_machar(ftype):
         raise ValueError(repr(ftype))
     # Detect known / suspected types
     key = ftype('-0.1').newbyteorder('<').tobytes()
-    ma_like = _KNOWN_TYPES.get(key)
     ma_like = None
     if ftype == ntypes.longdouble:
         # Could be 80 bit == 10 byte extended precision, where last bytes can
