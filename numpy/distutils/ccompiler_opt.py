@@ -673,7 +673,7 @@ class _Distutils:
         # intel and msvc compilers don't raise
         # fatal errors when flags are wrong or unsupported
         ".*("
-        "ignoring unknown option|" # msvc
+        "warning D9002|"  # msvc, it should be work with any language. 
         "invalid argument for option" # intel
         ").*"
     )
@@ -681,9 +681,8 @@ class _Distutils:
     def _dist_test_spawn(cmd, display=None):
         from distutils.errors import CompileError
         try:
-            o = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-            if isinstance(o, bytes):
-                o = o.decode()
+            o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                        universal_newlines=True)
             if o and re.match(_Distutils._dist_warn_regex, o):
                 _Distutils.dist_error(
                     "Flags in command", cmd ,"aren't supported by the compiler"
@@ -697,7 +696,6 @@ class _Distutils:
             s = 127
         else:
             return None
-        o = o.decode()
         _Distutils.dist_error(
             "Command", cmd, "failed with exit status %d output -> \n%s" % (
             s, o

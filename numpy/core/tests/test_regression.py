@@ -2450,7 +2450,8 @@ class TestRegression:
         class T:
             __array_interface__ = {}
 
-        np.array([T()])
+        with assert_raises(ValueError):
+            np.array([T()])
 
     def test_2d__array__shape(self):
         class T(object):

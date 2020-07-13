@@ -537,6 +537,22 @@ def test_deprecate_ragged_arrays():
         np.array(arg)
 
 
+class TestTooDeepDeprecation(_VisibleDeprecationTestCase):
+    # NumPy 1.20, 2020-05-08
+    # This is a bit similar to the above ragged array deprecation case.
+    message = re.escape("Creating an ndarray from nested sequences exceeding")
+
+    def test_deprecation(self):
+        nested = [1]
+        for i in range(np.MAXDIMS - 1):
+            nested = [nested]
+        self.assert_not_deprecated(np.array, args=(nested,))
+        self.assert_not_deprecated(np.array,
+                args=(nested,), kwargs=dict(dtype=object))
+
+        self.assert_deprecated(np.array, args=([nested],))
+
+
 class TestToString(_DeprecationTestCase):
     # 2020-03-06 1.19.0
     message = re.escape("tostring() is deprecated. Use tobytes() instead.")

@@ -12,7 +12,6 @@ addons:
     packages: &common_packages
       - gfortran
       - libgfortran5
-      - libgfortran3
       - libatlas-base-dev
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
@@ -36,9 +35,10 @@ jobs:
     - stage: Comprehensive tests
       python: 3.6
     - python: 3.7
-#    - python: 3.9-dev
+    - python: 3.9-dev
 
-    - python: 3.6
+    - python: 3.8
+      dist: focal
       env: USE_DEBUG=1
       addons:
         apt:

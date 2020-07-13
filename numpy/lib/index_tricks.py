@@ -221,7 +221,7 @@ class MGridClass(nd_grid):
     the stop value **is inclusive**.
 
     Returns
-    ----------
+    -------
     mesh-grid `ndarrays` all of the same dimensions
 
     See Also
@@ -611,8 +611,9 @@ class ndindex:
 
     Parameters
     ----------
-    `*args` : ints
-      The size of each dimension of the array.
+    shape : ints, or a single tuple of ints
+        The size of each dimension of the array can be passed as 
+        individual parameters or as the elements of a tuple.
 
     See Also
     --------
@@ -620,7 +621,18 @@ class ndindex:
 
     Examples
     --------
+    # dimensions as individual arguments
     >>> for index in np.ndindex(3, 2, 1):
+    ...     print(index)
+    (0, 0, 0)
+    (0, 1, 0)
+    (1, 0, 0)
+    (1, 1, 0)
+    (2, 0, 0)
+    (2, 1, 0)
+
+    # same dimensions - but in a tuple (3, 2, 1)
+    >>> for index in np.ndindex((3, 2, 1)):
     ...     print(index)
     (0, 0, 0)
     (0, 1, 0)
@@ -896,7 +908,7 @@ def diag_indices(n, ndim=2):
     ndim : int, optional
       The number of dimensions.
 
-    See also
+    See Also
     --------
     diag_indices_from
 

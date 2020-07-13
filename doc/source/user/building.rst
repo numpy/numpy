@@ -111,6 +111,8 @@ means that g77 has been used (note: g77 is no longer supported for building NumP
 If libgfortran.so is a dependency, gfortran has been used. If both are dependencies,
 this means both have been used, which is almost always a very bad idea.
 
+.. _accelerated-blas-lapack-libraries:
+
 Accelerated BLAS/LAPACK libraries
 ---------------------------------
 

@@ -20,6 +20,11 @@
 #define NPY_BEGIN_THREADS_NDITER(iter)
 #endif
 
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_DTypeFromObjectStringDiscovery(
+        PyObject *obj, PyArray_Descr *last_dtype, int string_type);
+
 /*
  * Recursively examines the object to determine an appropriate dtype
  * to use for converting to an ndarray.

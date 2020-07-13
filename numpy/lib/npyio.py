@@ -1685,7 +1685,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
            <https://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
-    ---------
+    --------
     >>> from io import StringIO
     >>> import numpy as np
 
