@@ -10,6 +10,9 @@ import shutil
 import multiprocessing
 import textwrap
 
+# from setuptools v49.2.0, setuptools warns if distutils is imported first,
+# so pre-emptively import setuptools
+import setuptools
 import distutils
 from distutils.errors import DistutilsError
 try:
