@@ -55,7 +55,7 @@ See :doc:`routines.polynomials.classes` for more details.
 Convenience Classes
 ===================
 
-The following listing the various constants and methods common to the all of
+The following lists the various constants and methods common to all of
 the classes representing the various kinds of polynomials. In the following,
 the term ``Poly`` represents any one of the convenience classes (e.g.
 ``Polynomial``, ``Chebyshev``, ``Hermite``, etc.) while the lowercase ``p``
