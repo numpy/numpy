@@ -1,6 +1,6 @@
 branches:
     only:
-       - master
+      #       - master
        - maintenance/*
 
 language: python
