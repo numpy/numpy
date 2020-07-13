@@ -10,6 +10,7 @@ import shutil
 import multiprocessing
 import textwrap
 
+import setuptools
 import distutils
 from distutils.errors import DistutilsError
 try:

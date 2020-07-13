@@ -1,7 +1,7 @@
 branches:
-    except:
-       - master
-       - maintenance/*
+    only:
+        - master
+        - maintenance/*
 
 language: python
 
@@ -29,7 +29,7 @@ build:
     - ls -lR "${target}"
     - sudo cp -r "${target}"/lib/* /usr/lib
     - sudo cp "${target}"/include/* /usr/include
-    - python -m pip install --upgrade pip
+    - python -m pip install --upgrade pip setuptools
 
     # we will pay the ~13 minute cost of compiling Cython only when a new
     # version is scraped in by pip; otherwise, use the cached
@@ -51,7 +51,7 @@ build:
     # check OpenBLAS version
     - python tools/openblas_support.py --check_version
     # run the test suite
-    - python runtests.py -n --debug-info --show-build-log -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
+    - python runtests.py -n -vv --debug-info --show-build-log -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
 
     cache: false
 
