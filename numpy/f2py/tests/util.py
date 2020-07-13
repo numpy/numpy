@@ -179,6 +179,7 @@ def _get_compiler_status():
     code = textwrap.dedent("""\
         import os
         import sys
+        import setuptools
         sys.path = %(syspath)s
 
         def configuration(parent_name='',top_path=None):
@@ -244,6 +245,7 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     Build a module via distutils and import it.
 
     """
+    import setuptools
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.core import setup
 
@@ -264,6 +266,7 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     code = textwrap.dedent("""\
         import os
         import sys
+        import setuptools
         sys.path = %(syspath)s
 
         def configuration(parent_name='',top_path=None):

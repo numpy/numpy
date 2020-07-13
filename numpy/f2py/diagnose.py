@@ -2,6 +2,7 @@
 import os
 import sys
 import tempfile
+import setuptools
 
 
 def run_command(cmd):

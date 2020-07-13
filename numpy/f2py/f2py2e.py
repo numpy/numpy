@@ -174,6 +174,7 @@ License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
 http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
 
+import setuptools
 
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
