@@ -263,6 +263,7 @@ class TestGrid:
         assert_array_almost_equal(grid64, grid32)
 
     def test_accepts_npcomplexfloating(self):
+        # Related to #16466
         assert_array_almost_equal(
             mgrid[0.1:0.3:3j, ], mgrid[0.1:0.3:np.complex64(3j), ]
         )
@@ -292,6 +293,7 @@ class TestConcatenator:
         g = r_[0:36:100j]
         assert_(g.shape == (100,))
 
+        # Related to #16466
         g = r_[0:36:np.complex64(100j)]
         assert_(g.shape == (100,))
 
