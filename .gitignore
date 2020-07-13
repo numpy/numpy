@@ -75,6 +75,7 @@ doc/cdoc/build
 ./.shelf
 MANIFEST
 .cache
+pip-wheel-metadata
 
 # Paver generated files #
 #########################
@@ -105,6 +106,11 @@ Thumbs.db
 # pytest generated files #
 ##########################
 /.pytest_cache
+
+# doc build generated files #
+#############################
+doc/source/savefig/
+
 
 # Things specific to this project #
 ###################################
