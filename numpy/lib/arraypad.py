@@ -208,7 +208,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     edge_pair = _get_edges(padded, axis, width_pair)
 
     rmap = lambda x: np.linspace(
-        start=end_value_pair[0],
+        start=end_value_pair[x],
         stop=edge_pair[x].squeeze(axis),  # Dimensions is replaced by linspace
         num=width_pair[x],
         endpoint=False,
