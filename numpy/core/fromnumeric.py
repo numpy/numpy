@@ -459,7 +459,8 @@ def repeat(a, repeats, axis=None):
     See Also
     --------
     tile : Tile an array.
-
+    unique : Find the unique elements of an array.
+    
     Examples
     --------
     >>> np.repeat(3, 4)

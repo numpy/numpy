@@ -30,13 +30,9 @@ PyArray_New(
         PyTypeObject *, int nd, npy_intp const *,
         int, npy_intp const*, void *, int, int, PyObject *);
 
-NPY_NO_EXPORT int
-PyArray_GetArrayParamsFromObject_int(PyObject *op,
-         PyArray_Descr *requested_dtype,
-         npy_bool writeable,
-         PyArray_Descr **out_dtype,
-         int *out_ndim, npy_intp *out_dims,
-         PyArrayObject **out_arr);
+NPY_NO_EXPORT PyObject *
+_array_from_array_like(PyObject *op,
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -97,9 +93,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, npy_intp n, int size);
-
-NPY_NO_EXPORT int
-PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
 
 /*
  * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'

@@ -111,11 +111,6 @@ class ABCPolyBase(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def nickname(self):
-        pass
-
-    @property
-    @abc.abstractmethod
     def basis_name(self):
         pass
 

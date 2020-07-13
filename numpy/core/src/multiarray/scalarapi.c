@@ -69,7 +69,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         CASE(TIMEDELTA, Timedelta);
 #undef CASE
         case NPY_STRING:
-            return (void *)PyString_AS_STRING(scalar);
+            return (void *)PyBytes_AsString(scalar);
         case NPY_UNICODE:
             /* lazy initialization, to reduce the memory used by string scalars */
             if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
@@ -141,7 +141,18 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
             return (void *)PyString_AS_STRING(scalar);
         }
         if (_CHK(Unicode)) {
-            return (void *)PyUnicode_AS_DATA(scalar);
+            /* Treat this the same as the NPY_UNICODE base class */
+
+            /* lazy initialization, to reduce the memory used by string scalars */
+            if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
+                Py_UCS4 *raw_data = PyUnicode_AsUCS4Copy(scalar);
+                if (raw_data == NULL) {
+                    return NULL;
+                }
+                PyArrayScalar_VAL(scalar, Unicode) = raw_data;
+                return (void *)raw_data;
+            }
+            return PyArrayScalar_VAL(scalar, Unicode);
         }
         if (_CHK(Void)) {
             /* Note: no & needed here, so can't use _IFCASE */

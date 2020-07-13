@@ -1547,11 +1547,15 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
                                         (void *)itemptr, (PyArrayObject *)arr);
 }
 
+/*
+ * SETITEM should only be used if it is known that the value is a scalar
+ * and of a type understood by the arrays dtype.
+ * Use `PyArray_Pack` if the value may be of a different dtype.
+ */
 static NPY_INLINE int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fields *)arr)->descr->f->setitem(
-                                                        v, itemptr, arr);
+    return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
 }
 
 #else
@@ -1820,10 +1824,25 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
+    typedef struct PyArray_DTypeMeta_tag PyArray_DTypeMeta;
+
+    typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
+            PyArray_DTypeMeta *cls, PyObject *obj);
+
+    /*
+     * Before making this public, we should decide whether it should pass
+     * the type, or allow looking at the object. A possible use-case:
+     * `np.array(np.array([0]), dtype=np.ndarray)`
+     * Could consider arrays that are not `dtype=ndarray` "scalars".
+     */
+    typedef int (is_known_scalar_type_function)(
+            PyArray_DTypeMeta *cls, PyTypeObject *obj);
+
+    typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
+
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
-     * make DTypes available in Python at which point we will probably want
-     * them to be.
+     * make DTypes available in Python at which point they will be heap types.
      * Since we also wish to add fields to the DType class, this looks like
      * a typical instance definition, but with PyHeapTypeObject instead of
      * only the PyObject_HEAD.
@@ -1831,7 +1850,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
      * it is a fairly complex construct which may be better to allow
      * refactoring of.
      */
-    typedef struct _PyArray_DTypeMeta {
+    struct PyArray_DTypeMeta_tag {
         PyHeapTypeObject super;
 
         /*
@@ -1870,9 +1889,12 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
          * NOTE: We could make a copy to detect changes to `f`.
          */
         PyArray_ArrFuncs *f;
-    } PyArray_DTypeMeta;
 
-    #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
+        /* DType methods, these could be moved into its own struct */
+        discover_descr_from_pyobject_function *discover_descr_from_pyobject;
+        is_known_scalar_type_function *is_known_scalar_type;
+        default_descr_function *default_descr;
+    };
 
 #endif  /* NPY_INTERNAL_BUILD */
 

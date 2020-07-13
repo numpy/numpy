@@ -1099,7 +1099,7 @@ get_datetime_to_unicode_transfer_function(int aligned,
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
     str_dtype = PyArray_DescrFromType(NPY_STRING);
-    str_dtype = PyArray_AdaptFlexibleDType(NULL, dst_dtype, str_dtype);
+    str_dtype = PyArray_AdaptFlexibleDType(dst_dtype, str_dtype);
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
@@ -1222,7 +1222,7 @@ get_unicode_to_datetime_transfer_function(int aligned,
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
     str_dtype = PyArray_DescrFromType(NPY_STRING);
-    str_dtype = PyArray_AdaptFlexibleDType(NULL, src_dtype, str_dtype);
+    str_dtype = PyArray_AdaptFlexibleDType(src_dtype, str_dtype);
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }

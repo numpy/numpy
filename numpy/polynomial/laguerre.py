@@ -1626,7 +1626,6 @@ class Laguerre(ABCPolyBase):
     _fromroots = staticmethod(lagfromroots)
 
     # Virtual properties
-    nickname = 'lag'
     domain = np.array(lagdomain)
     window = np.array(lagdomain)
     basis_name = 'L'

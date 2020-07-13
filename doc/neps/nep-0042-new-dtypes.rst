@@ -4,6 +4,7 @@ NEP 42 — Implementation of New DataTypes
 
 :title: Extensible Datatypes for NumPy
 :Author: Sebastian Berg
+:Author: Marten van Kerkwijk
 :Status: Draft
 :Type: Standard
 :Created: 2019-07-17
@@ -91,7 +92,7 @@ used in proposed C-API names to differentiate dtype instances from DType
 classes more clearly.
 Note that the notion of dtype class is currently represented mainly as
 the ``dtype.num`` and ``dtype.char``.
-Please see the `dtype hierarchy figure <hierarchy_figure>`_ for an
+Please see the :ref:`dtype hierarchy figure <hierarchy_figure>` for an
 illustration of this distinction.
 
 There are currently classes in NumPy for numeric types e.g. 
@@ -497,12 +498,23 @@ This shall be implemented by leveraging two pieces of information:
    can simply use a default (singleton) dtype instance which is found only
    based on the ``type(obj)`` of the Python object.
 
-The ``type`` which is already associated with any dtype through the
-``dtype.type`` attribute maps the DType to the Python type.
-This will be cached globally to create a mapping (dictionary)
-``known_python_types[type] = DType``.
-NumPy currently uses a small hard-coded mapping and conversion of numpy scalars
-(inheriting from ``np.generic``) to achieve this.
+The Python type which is already associated with a DType through the
+``DType.type`` attribute maps from the DType to the Python type.
+A DType may choose to automatically discover from this Python type.
+This will be achieved using a global a mapping (dictionary-like) of::
+
+   known_python_types[type] = DType
+
+To anticipate the possibility of creating both a Python type (``pytype``)
+and ``DType`` dynamically, and thus the potential desire to delete them again,
+this mapping should generally be weak.
+This requires that the ``pytype`` holds on to the ``DType`` explicitly.
+Thus, in addition to building the global mapping, NumPy will store
+the ``DType`` as ``pytype.__associated_array_dtype__`` in the Python type.
+This does *not* define the mapping and should *not* be accessed directly.
+In particular potential inheritance of the attribute does not mean that
+NumPy will use the superclasses ``DType`` automatically.
+A new ``DType`` must be created for the subclass.
 
 .. note::
 
@@ -512,19 +524,20 @@ NumPy currently uses a small hard-coded mapping and conversion of numpy scalars
     of `long`, `unsigned long`, `int64`, `unsigned int64`, and `object`
     (on many machines `long` is 64 bit).
 
-    Instead they will need to be be implemented using an
+    Instead they will need to be implemented using an
     ``AbstractPyInt``. This DType class can then provide
     ``__discover_descr_from_pyobject__`` and return the actual dtype which
     is e.g. ``np.dtype("int64")``.
     For dispatching/promotion in ufuncs, it will also be necessary
     to dynamically create ``AbstractPyInt[value]`` classes (creation can be
-    cached), so that they can provide the current functionality provided by
-    ``np.result_type(python_integer, array)``.
+    cached), so that they can provide the current value based promotion
+    functionality provided by ``np.result_type(python_integer, array)`` [1]_.
 
 To allow for a DType to accept specific inputs as known scalars, we will
-initially use a method such as ``known_scalar_type`` or ``known_scalar_object``
-which allows discovering an e.g. ``vector`` as a scalar (element) instead of
-a sequence (for the command ``np.array(vector, dtype=VectorDType)``).
+initially use a ``known_scalar_type`` method.
+This allows discovery of a ``vector`` as a scalar (element) instead of
+a sequence (for the command ``np.array(vector, dtype=VectorDType)``)
+even when ``vector`` is itself a sequence or even an array subclass.
 This will *not* be public API initially, but may be made public at a later
 time.
 
@@ -595,12 +608,13 @@ The above proposes to add a global mapping, however, initially limiting it
 to types deriving from a NumPy subclass (and a fixed set of Python types).
 This could be relaxed in the future.
 Alternatively, we could rely on the scalar belonging to the user dtype to
-implement ``scalar.dtype`` or similar.
+implement ``scalar.__associated_array_dtype__`` or similar.
 
-Initially, the exact implementation shall be *undefined*, since
+Initially, the exact implementation shall be *undefined*, if
 scalars will have to derive from a NumPy scalar, they will also have
-a ``.dtype`` attribute.  A future update can choose to use this instead
-of a global mapping.
+a ``.__associated_array_dtype__`` attribute.
+At this time, a future update may to use this instead of a global mapping,
+however, it makes NumPy a hard dependency for the scalar class.
 
 An initial alternative suggestion was to use a two-pass approach instead.
 The first pass would only find the correct DType class, and the second pass

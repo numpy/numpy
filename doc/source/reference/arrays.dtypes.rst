@@ -206,7 +206,7 @@ Built-in Python types
     .. note::
 
         All other types map to ``object_`` for convenience. Code should expect
-        that such types may map to a specific (new) dtype in future the future.
+        that such types may map to a specific (new) dtype in the future.
 
 Types with ``.dtype``
 
