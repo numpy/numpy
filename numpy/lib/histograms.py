@@ -196,7 +196,7 @@ def _hist_bin_doane(x, range):
     return 0.0
 
 
-def _hist_bin_fd(x, range):
+def _hist_bin_fd(x, range=None):
     """
     The Freedman-Diaconis histogram bin estimator.
 
