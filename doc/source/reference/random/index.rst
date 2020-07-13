@@ -142,7 +142,7 @@ alternative bit generators to be used with little code duplication.
 The `Generator` is the user-facing object that is nearly identical to the
 legacy `RandomState`. It accepts a bit generator instance as an argument.
 The default is currently `PCG64` but this may change in future versions. 
-As a convenience NumPy  provides the `default_rng` funtion to hide these 
+As a convenience NumPy  provides the `default_rng` function to hide these 
 details:
   
 >>> from numpy.random import default_rng
@@ -248,4 +248,3 @@ Original Source of the Generator and BitGenerators
 
 This package was developed independently of NumPy and was integrated in version
 1.17.0. The original repo is at https://github.com/bashtage/randomgen.
-
