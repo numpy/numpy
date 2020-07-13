@@ -263,12 +263,14 @@ class TestGrid:
         assert_array_almost_equal(grid64, grid32)
 
     def test_accepts_npcomplexfloating(self):
-        grid = mgrid[0.1:0.3:np.complex64(3j), ]
-        assert_array_almost_equal(grid, np.array([[0.1, 0.2, 0.3]]))
+        assert_array_almost_equal(
+            mgrid[0.1:0.3:3j, ], mgrid[0.1:0.3:np.complex64(3j), ]
+        )
 
         # different code path for single slice
-        grid = mgrid[0.1:0.3:np.complex64(3j)]
-        assert_array_almost_equal(grid, np.array([0.1, 0.2, 0.3]))
+        assert_array_almost_equal(
+            mgrid[0.1:0.3:3j], mgrid[0.1:0.3:np.complex64(3j)]
+        )
 
 class TestConcatenator:
     def test_1d(self):
