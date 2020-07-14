@@ -219,10 +219,6 @@ class concat_license_files():
             f.write(self.bsd_text)
 
 
-# from setuptools v49.2.0, setuptools warns if distutils is imported first,
-# so pre-emptively import setuptools. Eventually we can migrate to using
-# setuptools.command
-import setuptools
 from distutils.command.sdist import sdist
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
