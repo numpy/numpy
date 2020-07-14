@@ -208,13 +208,13 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     edge_pair = _get_edges(padded, axis, width_pair)
 
     left_ramp, right_ramp = (
-    np.linspace(
-        start=end_value,
-        stop=edge.squeeze(axis), # Dimension is replaced by linspace
-        num=width,
-        endpoint=False,
-        dtype=padded.dtype,
-        axis=axis
+        np.linspace(
+            start=end_value,
+            stop=edge.squeeze(axis), # Dimension is replaced by linspace
+            num=width,
+            endpoint=False,
+            dtype=padded.dtype,
+            axis=axis
         )
         for end_value, edge, width in zip(end_value_pair, edge_pair, width_pair)
     )
