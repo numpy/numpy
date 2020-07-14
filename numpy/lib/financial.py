@@ -354,7 +354,7 @@ def _ipmt_dispatcher(rate, per, nper, pv, fv=None, when=None):
 
 
 @array_function_dispatch(_ipmt_dispatcher)
-def ipmt(rate, per, nper, pv, fv=0, when='end'):
+def ipmt(rate, per=np.arange(nper)+1, nper, pv, fv=0, when='end'):
     """
     Compute the interest portion of a payment.
 
@@ -478,7 +478,7 @@ def _ppmt_dispatcher(rate, per, nper, pv, fv=None, when=None):
 
 
 @array_function_dispatch(_ppmt_dispatcher)
-def ppmt(rate, per, nper, pv, fv=0, when='end'):
+def ppmt(rate, per=np.arange(nper)+1, nper, pv, fv=0, when='end'):
     """
     Compute the payment against loan principal.
 
@@ -653,7 +653,7 @@ def _rate_dispatcher(nper, pmt, pv, fv, when=None, guess=None, tol=None,
 #  g(r) is the formula
 #  g'(r) is the derivative with respect to r.
 @array_function_dispatch(_rate_dispatcher)
-def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
+def rate(nper, pmt, pv, fv=0, when='end', guess=None, tol=None, maxiter=100):
     """
     Compute the rate of interest per period.
 
