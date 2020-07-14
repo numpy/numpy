@@ -853,7 +853,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
             join('src', 'multiarray', 'einsum.c.src'),
-            join('src', 'multiarray', 'einsum.dispatch.c.src'),
+            join('src', 'multiarray', 'einsum.dispatch.c'),
             join('src', 'multiarray', 'flagsobject.c'),
             join('src', 'multiarray', 'getset.c'),
             join('src', 'multiarray', 'hashdescr.c'),

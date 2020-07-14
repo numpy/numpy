@@ -65,7 +65,7 @@ static void prefetch(const double *ptr, size_t offset)
 {
 #if defined __GNUC__
     __builtin_prefetch(ptr + offset);
-#elif defined _MSC_VER && (defined EINSUM_USE_NEON_64 || defined EINSUM_USE_NEON_32)
+#elif defined _MSC_VER
     __prefetch(ptr + offset);
 #else
     (void)ptr;
@@ -300,12 +300,10 @@ static void
     @type@ *data1 = (@type@ *)dataptr[1];
     @type@ *data_out = (@type@ *)dataptr[2];
 
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, b;
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, b;
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, b;
+#if NPY_SIMD && @float32@
+    npyv_f32 a, b;
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, b;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
@@ -326,84 +324,75 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
         EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+        int simd_pack_size = npyv_nlanes_f32 * 2;
+        /* Unroll the loop by simd_pack_size */
+        while (count >= simd_pack_size) {
+            count -= simd_pack_size;
 
 /**begin repeat2
  * #i = 0, 4#
  */
-            a = _mm_mul_ps(_mm_load_ps(data0+@i@), _mm_load_ps(data1+@i@));
-            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
-            _mm_store_ps(data_out+@i@, b);
+            a = npyv_mul_f32(npyv_loada_f32(data0+@i@), npyv_loada_f32(data1+@i@));
+            b = npyv_add_f32(a, npyv_loada_f32(data_out+@i@));
+            npyv_storea_f32(data_out+@i@, b);
 /**end repeat2**/
-            data0 += 8;
-            data1 += 8;
-            data_out += 8;
+            data0 += simd_pack_size;
+            data1 += simd_pack_size;
+            data_out += simd_pack_size;
         }
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
         EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+        int simd_pack_size = npyv_nlanes_f64 * 4;
+        /* Unroll the loop by simd_pack_size */
+        while (count >= simd_pack_size) {
+            count -= simd_pack_size;
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
-            a = _mm_mul_pd(_mm_load_pd(data0+@i@), _mm_load_pd(data1+@i@));
-            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
-            _mm_store_pd(data_out+@i@, b);
+            a = npyv_mul_f64(npyv_loada_f64(data0+@i@), npyv_loada_f64(data1+@i@));
+            b = npyv_add_f64(a, npyv_loada_f64(data_out+@i@));
+            npyv_storea_f64(data_out+@i@, b);
 /**end repeat2**/
-            data0 += 8;
-            data1 += 8;
-            data_out += 8;
+            data0 += simd_pack_size;
+            data1 += simd_pack_size;
+            data_out += simd_pack_size;
         }
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_NEON_64 && @float64@
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
-
-/**begin repeat2
- * #i = 0, 2, 4, 6#
- */
-            a = vmulq_f64(vld1q_f64(data0+@i@), vld1q_f64(data1+@i@));
-            b = vaddq_f64(a, vld1q_f64(data_out+@i@));
-            vst1q_f64(data_out+@i@, b);
-/**end repeat2**/
-            data0 += 8;
-            data1 += 8;
-            data_out += 8;
-        }
-
-        /* Finish off the loop */
-        goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
 /**begin repeat2
  * #i = 0, 4#
  */
-        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
-        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
-        _mm_storeu_ps(data_out+@i@, b);
+        a = npyv_mul_f32(npyv_load_f32(data0+@i@), npyv_load_f32(data1+@i@));
+        b = npyv_add_f32(a, npyv_load_f32(data_out+@i@));
+        npyv_store_f32(data_out+@i@, b);
+/**end repeat2**/
+#elif NPY_SIMD_F64 && @float64@
+/**begin repeat2
+ * #i = 0, 2, 4, 6#
+ */
+        a = npyv_mul_f64(npyv_load_f64(data0+@i@), npyv_load_f64(data1+@i@));
+        b = npyv_add_f64(a, npyv_load_f64(data_out+@i@));
+        npyv_store_f64(data_out+@i@, b);
 /**end repeat2**/
 #else
 /**begin repeat2
