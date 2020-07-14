@@ -114,16 +114,16 @@ nomemoverlap(char *ip,
  * should have no overlap in memory.
  */
 #define IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP \
-    ((abs(steps[0]) < MAX_STEP_SIZE)  && \
-     (abs(steps[1]) < MAX_STEP_SIZE)  && \
-     (abs(steps[2]) < MAX_STEP_SIZE)  && \
+    ((labs(steps[0]) < MAX_STEP_SIZE)  && \
+     (labs(steps[1]) < MAX_STEP_SIZE)  && \
+     (labs(steps[2]) < MAX_STEP_SIZE)  && \
      (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
      (nomemoverlap(args[1], steps[1] * dimensions[0], args[2], steps[2] * dimensions[0])))
 
 #define IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP \
-    ((abs(steps[0]) < MAX_STEP_SIZE)  && \
-     (abs(steps[1]) < MAX_STEP_SIZE)  && \
-     (abs(steps[2]) < MAX_STEP_SIZE)  && \
+    ((labs(steps[0]) < MAX_STEP_SIZE)  && \
+     (labs(steps[1]) < MAX_STEP_SIZE)  && \
+     (labs(steps[2]) < MAX_STEP_SIZE)  && \
      (nomemoverlap(args[0], steps[0] * dimensions[0], args[2], steps[2] * dimensions[0])) && \
      (nomemoverlap(args[0], steps[0] * dimensions[0], args[1], steps[1] * dimensions[0])))
 
@@ -134,7 +134,7 @@ nomemoverlap(char *ip,
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esizein, esizeout, vsize) \
     ((steps[0] & (esizein-1)) == 0 && \
-     steps[1] == (esizeout) && abs(steps[0]) < MAX_STEP_SIZE && \
+     steps[1] == (esizeout) && labs(steps[0]) < MAX_STEP_SIZE && \
      (nomemoverlap(args[1], steps[1] * dimensions[0], args[0], steps[0] * dimensions[0])))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
@@ -489,7 +489,7 @@ run_unary_avx512f_log_DOUBLE(char **args, npy_intp const *dimensions, npy_intp c
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), 64)) {
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), sizeof(npy_double), 64)) {
         AVX512F_log_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
         return 1;
     }
