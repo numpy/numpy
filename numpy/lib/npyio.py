@@ -2251,6 +2251,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             return output.T
         elif len(names) == 1:
             # squeeze single-name dtypes too
+            # squeeze single-name dtypes too
             return output[names[0]]
         else:
             # For structured arrays with multiple fields,
