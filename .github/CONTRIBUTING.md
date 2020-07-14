@@ -32,7 +32,6 @@ the tests without interfering with system packages) are described in
 
 ### A note on feature enhancements/API changes
 
-1. If you are looking to enhance features or make any API changes please note that NumPy
-prefers not to add new APIs but instead leave these to more specialized packages.
-2. If you would like to add a new feature please make sure you raise the feature in our
-mailing list first to get alignment. You can sign up for the mailing list [here](https://mail.python.org/mailman/listinfo/numpy-discussion).
+If you are interested in adding a new feature to NumPy, consider
+submitting your feature proposal to the `mailing_list`_, which is
+the preferred forum for discussing new features and API changes.
