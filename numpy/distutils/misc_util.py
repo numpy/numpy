@@ -1764,15 +1764,14 @@ class Configuration:
     def __str__(self):
         from pprint import pformat
         known_keys = self.list_keys + self.dict_keys + self.extra_keys
-        s = '<'+5*'-' + '\n'
-        s += 'Configuration of '+self.name+':\n'
+        s = ['<-----', f'Configuration of {self.name}:']
         known_keys.sort()
         for k in known_keys:
             a = getattr(self, k, None)
             if a:
-                s += '%s = %s\n' % (k, pformat(a))
-        s += 5*'-' + '>'
-        return s
+                s.append(f'{k} = {pformat(a)}')
+        s.append('----->')
+        return '\n'.join(s)
 
     def get_config_cmd(self):
         """
