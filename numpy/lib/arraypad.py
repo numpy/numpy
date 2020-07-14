@@ -207,17 +207,18 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     """
     edge_pair = _get_edges(padded, axis, width_pair)
 
-    rmap = lambda x: np.linspace(
-        start=end_value_pair[x],
-        stop=edge_pair[x].squeeze(axis),  # Dimensions is replaced by linspace
-        num=width_pair[x],
+    left_ramp, right_ramp = (
+    np.linspace(
+        start=end_value
+        stop=edge.squeeze(axis)
+        num=width,
         endpoint=False,
         dtype=padded.dtype,
-        axis=axis,
+        axis=axis
+        )
+        for end_value, edge, width in zip(end_value_pair, edge_pair, width_pair)
     )
-
-    left_ramp = rmap(0)
-    right_ramp = rmap(1)
+        
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
