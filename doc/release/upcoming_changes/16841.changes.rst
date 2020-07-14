@@ -1,0 +1,4 @@
+Output if ``dtype`` of ``linspace`` is int
+----------------------------------------------------
+- If the ``dtype`` of the ``linspace`` is int, round down it and casted it.
+- To use it, write ``np.linspace(..., dtype=np.int)``
