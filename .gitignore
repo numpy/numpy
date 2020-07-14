@@ -106,6 +106,7 @@ Thumbs.db
 # pytest generated files #
 ##########################
 /.pytest_cache
+.hypothesis/
 
 # doc build generated files #
 #############################
