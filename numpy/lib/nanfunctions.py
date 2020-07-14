@@ -1224,7 +1224,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 def _nanpercentile_dispatcher(
         a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, interpolation=None):
+        method=None, keepdims=None, *, interpolation=None,
+        aweights=None):
     return (a, q, out)
 
 
@@ -1239,6 +1240,7 @@ def nanpercentile(
         keepdims=np._NoValue,
         *,
         interpolation=None,
+        aweights=None,
 ):
     """
     Compute the qth percentile of the data along the specified axis,
@@ -1386,7 +1388,8 @@ def nanpercentile(
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, interpolation=None):
+                            method=None, keepdims=None, *, interpolation=None,
+                            aweights=None):
     return (a, q, out)
 
 
@@ -1401,6 +1404,7 @@ def nanquantile(
         keepdims=np._NoValue,
         *,
         interpolation=None,
+        aweights=None,
 ):
     """
     Compute the qth quantile of the data along the specified axis,
