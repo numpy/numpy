@@ -145,7 +145,7 @@ def _fix_int_lt_zero(x):
     """
     x = asarray(x)
     if any(isreal(x) & (x < 0)):
-        x = x * 1.0
+        x = x.astype('float64')
     return x
 
 
