@@ -207,7 +207,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     """
     edge_pair = _get_edges(padded, axis, width_pair)
 
-    left_ramp, right_ramp = (
+    left_ramp, right_ramp = [
         np.linspace(
             start=end_value,
             stop=edge.squeeze(axis), # Dimension is replaced by linspace
@@ -217,7 +217,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
             axis=axis
         )
         for end_value, edge, width in zip(end_value_pair, edge_pair, width_pair)
-    )
+    ]
         
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
