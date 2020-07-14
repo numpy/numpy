@@ -173,7 +173,6 @@ Guidelines
 * No changes are ever committed without review and approval by a core
   team member.Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
-* If you would like to create a new feature please get alignment first by discussing the feature in the `mailing list`_
 
 Stylistic Guidelines
 --------------------
