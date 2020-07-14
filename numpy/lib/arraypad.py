@@ -209,8 +209,8 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
 
     left_ramp, right_ramp = (
     np.linspace(
-        start=end_value
-        stop=edge.squeeze(axis)
+        start=end_value,
+        stop=edge.squeeze(axis),
         num=width,
         endpoint=False,
         dtype=padded.dtype,
