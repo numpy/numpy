@@ -139,11 +139,7 @@ Use of internal buffers
 .. index:: buffers
 
 Internally, buffers are used for misaligned data, swapped data, and
-data that has to be converted from one data type to another.
-Operations where ufunc input and output operands have memory overlap,
-for instance a -= b, are defined to be the same as for equivalent
-operations where there is no memory overlap.  Operations make
-temporary copies as needed to eliminate data dependency.  The size
+data that has to be converted from one data type to another. The size
 of internal buffers is settable on a per-thread basis. There can
 be up to :math:`2 (n_{\mathrm{inputs}} + n_{\mathrm{outputs}})`
 buffers of the specified size created to handle the data from all the
