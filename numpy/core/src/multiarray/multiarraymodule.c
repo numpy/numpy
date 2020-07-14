@@ -3804,6 +3804,88 @@ _PyArray_GetSigintBuf(void)
 
 
 static PyObject *
+test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    int kind = 0;
+    int a = 0;
+
+    if (!PyArg_ParseTuple(args, "|i:test_interrupt", &kind)) {
+        return NULL;
+    }
+    if (kind) {
+        Py_BEGIN_ALLOW_THREADS;
+        while (a >= 0) {
+            if ((a % 1000 == 0) && PyOS_InterruptOccurred()) {
+                break;
+            }
+            a += 1;
+        }
+        Py_END_ALLOW_THREADS;
+    }
+    else {
+        NPY_SIGINT_ON
+        while(a >= 0) {
+            a += 1;
+        }
+        NPY_SIGINT_OFF
+    }
+    return PyInt_FromLong(a);
+}
+
+// Testing the utilites of the CPU dispatcher
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "einsum.dispatch.h"
+#endif
+NPY_CPU_DISPATCH_DECLARE(extern const char *einsum_dispatch_var)
+NPY_CPU_DISPATCH_DECLARE(const char *einsum_dispatch_func, (void))
+NPY_CPU_DISPATCH_DECLARE(void einsum_dispatch_attach, (PyObject *list))
+
+static PyObject *
+test_einsum_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dummy2))
+{
+    const char *highest_func, *highest_var;
+    NPY_CPU_DISPATCH_CALL(highest_func = einsum_dispatch_func, ())
+    NPY_CPU_DISPATCH_CALL(highest_var  = einsum_dispatch_var)
+    const char *highest_func_xb = "nobase", *highest_var_xb = "nobase";
+    NPY_CPU_DISPATCH_CALL_XB(highest_func_xb = einsum_dispatch_func, ())
+    NPY_CPU_DISPATCH_CALL_XB(highest_var_xb  = einsum_dispatch_var)
+
+    PyObject *dict = PyDict_New(), *item;
+    if (dict == NULL) {
+        return NULL;
+    }
+    item = PyUnicode_FromString(highest_func);
+    if (item == NULL || PyDict_SetItemString(dict, "func", item) < 0) {
+        goto err;
+    }
+    item = PyUnicode_FromString(highest_var);
+    if (item == NULL || PyDict_SetItemString(dict, "var", item) < 0) {
+        goto err;
+    }
+    item = PyUnicode_FromString(highest_func_xb);
+    if (item == NULL || PyDict_SetItemString(dict, "func_xb", item) < 0) {
+        goto err;
+    }
+    item = PyUnicode_FromString(highest_var_xb);
+    if (item == NULL || PyDict_SetItemString(dict, "var_xb", item) < 0) {
+        goto err;
+    }
+    item = PyList_New(0);
+    if (item == NULL || PyDict_SetItemString(dict, "all", item) < 0) {
+        goto err;
+    }
+    NPY_CPU_DISPATCH_CALL_ALL(einsum_dispatch_attach, (item))
+    if (PyErr_Occurred()) {
+        goto err;
+    }
+    return dict;
+err:
+    Py_XDECREF(item);
+    Py_DECREF(dict);
+    return NULL;
+}
+
+static PyObject *
 array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_work,
                          int raise_exceptions)
 {
@@ -4033,6 +4115,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
+    {"test_dispatch",
+        (PyCFunction)test_einsum_dispatch,
+        METH_NOARGS, NULL},
     {"_fastCopyAndTranspose",
         (PyCFunction)array_fastCopyAndTranspose,
         METH_VARARGS, NULL},
