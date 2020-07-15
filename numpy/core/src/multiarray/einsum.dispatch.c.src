@@ -15,50 +15,12 @@
  */
 #include "einsum_p.h"
 
-#ifdef NPY_HAVE_SSE_INTRINSICS
-#define EINSUM_USE_SSE1 1
-#else
-#define EINSUM_USE_SSE1 0
-#endif
-
-#ifdef NPY_HAVE_SSE2_INTRINSICS
-#define EINSUM_USE_SSE2 1
-#else
-#define EINSUM_USE_SSE2 0
-#endif
-
-#ifdef NPY_HAVE_NEON
-    #ifdef __aarch64__
-        #define EINSUM_USE_NEON_64 1
+#if NPY_SIMD || NPY_SIMD_F64
+    #if NPY_SIMD_WIDTH > 32 # avx512f
+        const int unroll_by = npyv_nlanes_f64 * 2;
     #else
-        #define EINSUM_USE_NEON_32 1
+        const int unroll_by = npyv_nlanes_f64 * 4;
     #endif
-#else
-#define EINSUM_USE_NEON_64 0
-#define EINSUM_USE_NEON_32 0
-#endif
-
-#if EINSUM_USE_SSE1
-#include <xmmintrin.h>
-#endif
-
-#if EINSUM_USE_SSE2
-#include <emmintrin.h>
-#endif
-
-#if EINSUM_USE_NEON_32 || EINSUM_USE_NEON_64
-#include <arm_neon.h>
-static void prefetch(const double *ptr, size_t offset)
-{
-#if defined __GNUC__
-    __builtin_prefetch(ptr + offset);
-#elif defined _MSC_VER
-    __prefetch(ptr + offset);
-#else
-    (void)ptr;
-    (void)offset;
-#endif
-}
 #endif
 
 /**begin repeat
@@ -295,12 +257,11 @@ finish_after_unrolled_loop:
 
 #if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
-        EINSUM_IS_SSE_ALIGNED(data_out)) {
-        int simd_pack_size = npyv_nlanes_f32 * 2;
-        /* Unroll the loop by simd_pack_size */
-        while (count >= simd_pack_size) {
-            count -= simd_pack_size;
+    if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1) &&
+        EINSUM_IS_ALIGNED(data_out)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 4#
@@ -309,9 +270,9 @@ finish_after_unrolled_loop:
             b = npyv_add_f32(a, npyv_loada_f32(data_out+@i@));
             npyv_storea_f32(data_out+@i@, b);
 /**end repeat2**/
-            data0 += simd_pack_size;
-            data1 += simd_pack_size;
-            data_out += simd_pack_size;
+            data0 += unroll_by;
+            data1 += unroll_by;
+            data_out += unroll_by;
         }
 
         /* Finish off the loop */
@@ -319,12 +280,11 @@ finish_after_unrolled_loop:
     }
 #elif NPY_SIMD_F64 && @float64@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1) &&
-        EINSUM_IS_SSE_ALIGNED(data_out)) {
-        int simd_pack_size = npyv_nlanes_f64 * 4;
-        /* Unroll the loop by simd_pack_size */
-        while (count >= simd_pack_size) {
-            count -= simd_pack_size;
+    if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1) &&
+        EINSUM_IS_ALIGNED(data_out)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -333,9 +293,9 @@ finish_after_unrolled_loop:
             b = npyv_add_f64(a, npyv_loada_f64(data_out+@i@));
             npyv_storea_f64(data_out+@i@, b);
 /**end repeat2**/
-            data0 += simd_pack_size;
-            data1 += simd_pack_size;
-            data_out += simd_pack_size;
+            data0 += unroll_by;
+            data1 += unroll_by;
+            data_out += unroll_by;
         }
 
         /* Finish off the loop */
@@ -389,12 +349,10 @@ static void
     @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
     @type@ *data1 = (@type@ *)dataptr[1];
     @type@ *data_out = (@type@ *)dataptr[2];
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, b, value0_sse;
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, b, value0_sse;
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, b, value0_sse;
+#if NPY_SIMD && @float32@
+    npyv_f32 a, b, value0_sse;
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, b, value0_sse;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
@@ -415,24 +373,24 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
-    value0_sse = _mm_set_ps1(value0);
+#if NPY_SIMD && @float32@
+    value0_sse = npyv_setall_f32(value0);
 
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
+    if (EINSUM_IS_ALIGNED(data1) && EINSUM_IS_ALIGNED(data_out)) {
         /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 4#
  */
-            a = _mm_mul_ps(value0_sse, _mm_load_ps(data1+@i@));
-            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
-            _mm_store_ps(data_out+@i@, b);
+            a = npyv_mul_f32(value0_sse, npyv_loada_f32(data1+@i@));
+            b = npyv_add_f32(a, npyv_loada_f32(data_out+@i@));
+            npyv_storea_f32(data_out+@i@, b);
 /**end repeat2**/
-            data1 += 8;
-            data_out += 8;
+            data1 += unroll_by;
+            data_out += unroll_by;
         }
 
         /* Finish off the loop */
@@ -443,24 +401,24 @@ finish_after_unrolled_loop:
             return;
         }
     }
-#elif EINSUM_USE_SSE2 && @float64@
-    value0_sse = _mm_set1_pd(value0);
+#elif NPY_SIMD_F64 && @float64@
+    value0_sse = npyv_setall_f64(value0);
 
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data1) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data1) && EINSUM_IS_ALIGNED(data_out)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
-            a = _mm_mul_pd(value0_sse, _mm_load_pd(data1+@i@));
-            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
-            _mm_store_pd(data_out+@i@, b);
+            a = npyv_mul_f64(value0_sse, npyv_loada_f64(data1+@i@));
+            b = npyv_add_f64(a, npyv_loada_f64(data_out+@i@));
+            npyv_storea_f64(data_out+@i@, b);
 /**end repeat2**/
-            data1 += 8;
-            data_out += 8;
+            data1 += unroll_by;
+            data_out += unroll_by;
         }
 
         /* Finish off the loop */
@@ -470,30 +428,6 @@ finish_after_unrolled_loop:
         else {
             return;
         }
-    }
-#elif EINSUM_USE_NEON_64 && @float64@
-    value0_sse = vdupq_n_f64(value0);
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-/**begin repeat2
-* #i = 0, 2, 4, 6#
-*/
-        a = vmulq_f64(value0_sse, vld1q_f64(data1+@i@));
-        b = vaddq_f64(a, vld1q_f64(data_out+@i@));
-        vst1q_f64(data_out+@i@, b);
-/**end repeat2**/
-        data1 += 8;
-        data_out += 8;
-    }
-
-    /* Finish off the loop */
-    if (count > 0) {
-        goto finish_after_unrolled_loop;
-    }
-    else {
-        return;
     }
 #endif
 
@@ -501,21 +435,21 @@ finish_after_unrolled_loop:
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
 /**begin repeat2
  * #i = 0, 4#
  */
-        a = _mm_mul_ps(value0_sse, _mm_loadu_ps(data1+@i@));
-        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
-        _mm_storeu_ps(data_out+@i@, b);
+        a = npyv_mul_f32(value0_sse, npyv_load_f32(data1+@i@));
+        b = npyv_add_f32(a, npyv_load_f32(data_out+@i@));
+        npyv_store_f32(data_out+@i@, b);
 /**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
-        a = _mm_mul_pd(value0_sse, _mm_loadu_pd(data1+@i@));
-        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
-        _mm_storeu_pd(data_out+@i@, b);
+        a = npyv_mul_f64(value0_sse, npyv_load_f64(data1+@i@));
+        b = npyv_add_f64(a, npyv_load_f64(data_out+@i@));
+        npyv_store_f64(data_out+@i@, b);
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -544,12 +478,10 @@ static void
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
     @type@ *data_out = (@type@ *)dataptr[2];
 
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, b, value1_sse;
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, b, value1_sse;
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, b, value1_sse;
+#if NPY_SIMD && @float32@
+    npyv_f32 a, b, value1_sse;
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, b, value1_sse;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
@@ -570,93 +502,73 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
-    value1_sse = _mm_set_ps1(value1);
+#if NPY_SIMD && @float32@
+    value1_sse = npyv_setall_f32(value1);
 
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data_out)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 4#
  */
-            a = _mm_mul_ps(_mm_load_ps(data0+@i@), value1_sse);
-            b = _mm_add_ps(a, _mm_load_ps(data_out+@i@));
-            _mm_store_ps(data_out+@i@, b);
+            a = npyv_mul_f32(npyv_loada_f32(data0+@i@), value1_sse);
+            b = npyv_add_f32(a, npyv_loada_f32(data_out+@i@));
+            npyv_storea_f32(data_out+@i@, b);
 /**end repeat2**/
-            data0 += 8;
-            data_out += 8;
+            data0 += unroll_by;
+            data_out += unroll_by;
         }
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_SSE2 && @float64@
-    value1_sse = _mm_set1_pd(value1);
+#elif NPY_SIMD_F64 && @float64@
+    value1_sse = npyv_setall_f64(value1);
 
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data_out)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data_out)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
-            a = _mm_mul_pd(_mm_load_pd(data0+@i@), value1_sse);
-            b = _mm_add_pd(a, _mm_load_pd(data_out+@i@));
-            _mm_store_pd(data_out+@i@, b);
+            a = npyv_mul_f64(npyv_loada_f64(data0+@i@), value1_sse);
+            b = npyv_add_f64(a, npyv_loada_f64(data_out+@i@));
+            npyv_storea_f64(data_out+@i@, b);
 /**end repeat2**/
-            data0 += 8;
-            data_out += 8;
+            data0 += unroll_by;
+            data_out += unroll_by;
         }
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_NEON_64 && @float64@
-    value1_sse = vdupq_n_f64(value1);
-
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-/**begin repeat2
-* #i = 0, 2, 4, 6#
-*/
-        a = vmulq_f64(vld1q_f64(data0+@i@), value1_sse);
-        b = vaddq_f64(a, vld1q_f64(data_out+@i@));
-        vst1q_f64(data_out+@i@, b);
-/**end repeat2**/
-        data0 += 8;
-        data_out += 8;
-    }
-
-/* Finish off the loop */
-goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
 /**begin repeat2
  * #i = 0, 4#
  */
-        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), value1_sse);
-        b = _mm_add_ps(a, _mm_loadu_ps(data_out+@i@));
-        _mm_storeu_ps(data_out+@i@, b);
+        a = npyv_mul_f32(npyv_load_f32(data0+@i@), value1_sse);
+        b = npyv_add_f32(a, npyv_load_f32(data_out+@i@));
+        npyv_store_f32(data_out+@i@, b);
 /**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
-        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), value1_sse);
-        b = _mm_add_pd(a, _mm_loadu_pd(data_out+@i@));
-        _mm_storeu_pd(data_out+@i@, b);
+        a = npyv_mul_f64(npyv_load_f64(data0+@i@), value1_sse);
+        b = npyv_add_f64(a, npyv_load_f64(data_out+@i@));
+        npyv_store_f64(data_out+@i@, b);
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -682,12 +594,10 @@ static void
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data1 = (@type@ *)dataptr[1];
     @temptype@ accum = 0;
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, accum_sse = _mm_setzero_ps();
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, accum_sse = _mm_setzero_pd();
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, accum_sse = vreinterpretq_f64_s32(vdupq_n_s32((int)0));
+#if NPY_SIMD && @float32@
+    npyv_f32 a, accum_sse = npyv_zero_f32();
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, accum_sse = npyv_zero_f64();
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
@@ -707,15 +617,15 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
-            _mm_prefetch(data1 + 512, _MM_HINT_T0);
+            npyv_prefetch(data0 + 512, 1);
+            npyv_prefetch(data1 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -724,32 +634,30 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            a = _mm_mul_ps(_mm_load_ps(data0+@i@), _mm_load_ps(data1+@i@));
-            accum_sse = _mm_add_ps(accum_sse, a);
+            a = npyv_mul_f32(npyv_loada_f32(data0+@i@), npyv_loada_f32(data1+@i@));
+            accum_sse = npyv_add_f32(accum_sse, a);
 /**end repeat2**/
-            data0 += 8;
-            data1 += 8;
+            data0 += unroll_by;
+            data1 += unroll_by;
         }
 
         /* Add the four SSE values and put in accum */
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        _mm_store_ss(&accum, accum_sse);
+        a = npyv_reverse_f32(accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        npyv_storel_f32(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0) && EINSUM_IS_SSE_ALIGNED(data1)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
-
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
-            _mm_prefetch(data1 + 512, _MM_HINT_T0);
+    if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
+            npyv_prefetch(data0 + 512, 1);
+            npyv_prefetch(data1 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -758,58 +666,30 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            a = _mm_mul_pd(_mm_load_pd(data0+@i@), _mm_load_pd(data1+@i@));
-            accum_sse = _mm_add_pd(accum_sse, a);
+            a = npyv_mul_f64(npyv_loada_f64(data0+@i@), npyv_loada_f64(data1+@i@));
+            accum_sse = npyv_add_f64(accum_sse, a);
 /**end repeat2**/
-            data0 += 8;
-            data1 += 8;
+            data0 += unroll_by;
+            data1 += unroll_by;
         }
 
         /* Add the two SSE2 values and put in accum */
-        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-        accum_sse = _mm_add_pd(a, accum_sse);
-        _mm_store_sd(&accum, accum_sse);
+        a = npyv_reverse_f64(accum_sse);
+        accum_sse = npyv_add_f64(a, accum_sse);
+        npyv_storel_f64(&accum, accum_sse);
         
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_NEON_64 && @float64@
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-        prefetch(data0 + 512, 512);
-        prefetch(data1 + 512, 512);
-
-/**begin repeat2
-* #i = 0, 2, 4, 6#
-*/
-        /*
-            * NOTE: This accumulation changes the order, so will likely
-            *       produce slightly different results.
-            */
-        a = vmulq_f64(vld1q_f64(data0+@i@), vld1q_f64(data1+@i@));
-        accum_sse = vaddq_f64(accum_sse, a);
-/**end repeat2**/
-        data0 += 8;
-        data1 += 8;
-    }
-
-    /* Add the two SSE2 values and put in accum */
-    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
-    accum_sse = vaddq_f64(a, accum_sse);
-    vst1_f64(&accum, vget_low_f64(accum_sse));
-    /* Finish off the loop */
-    goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
-        _mm_prefetch(data1 + 512, _MM_HINT_T0);
+#if NPY_SIMD && @float32@
+        npyv_prefetch(data0 + 512, 1);
+        npyv_prefetch(data1 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -818,12 +698,12 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        a = _mm_mul_ps(_mm_loadu_ps(data0+@i@), _mm_loadu_ps(data1+@i@));
-        accum_sse = _mm_add_ps(accum_sse, a);
+        a = npyv_mul_f32(npyv_load_f32(data0+@i@), npyv_load_f32(data1+@i@));
+        accum_sse = npyv_add_f32(accum_sse, a);
 /**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
-        _mm_prefetch(data1 + 512, _MM_HINT_T0);
+#elif NPY_SIMD_F64 && @float64@
+        npyv_prefetch(data0 + 512, 1);
+        npyv_prefetch(data1 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -832,8 +712,8 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        a = _mm_mul_pd(_mm_loadu_pd(data0+@i@), _mm_loadu_pd(data1+@i@));
-        accum_sse = _mm_add_pd(accum_sse, a);
+        a = npyv_mul_f64(npyv_load_f64(data0+@i@), npyv_load_f64(data1+@i@));
+        accum_sse = npyv_add_f64(accum_sse, a);
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -846,18 +726,17 @@ finish_after_unrolled_loop:
         data1 += 8;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    _mm_store_ss(&accum, accum_sse);
-#elif EINSUM_USE_SSE2 && @float64@
+    a = npyv_reverse_f32(accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    npyv_storel_f32(&accum, accum_sse);
+#elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-    accum_sse = _mm_add_pd(a, accum_sse);
-    _mm_store_sd(&accum, accum_sse);
+    a = npyv_reverse_f64(accum_sse);
+    accum_sse = npyv_add_f64(a, accum_sse);
+    npyv_storel_f64(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
@@ -872,12 +751,10 @@ static void
     @type@ *data1 = (@type@ *)dataptr[1];
     @temptype@ accum = 0;
 
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, accum_sse = _mm_setzero_ps();
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, accum_sse = _mm_setzero_pd();
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, accum_sse = vreinterpretq_f64_s32(vdupq_n_s32((int)0));
+#if NPY_SIMD && @float32@
+    npyv_f32 a, accum_sse = npyv_zero_f32();
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, accum_sse = npyv_zero_f64();
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
@@ -897,12 +774,12 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data1)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data1)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 4#
@@ -911,26 +788,25 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data1+@i@));
+            accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data1+@i@));
 /**end repeat2**/
-            data1 += 8;
+            data1 += unroll_by;
         }
         /* Add the four SSE values and put in accum */
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        _mm_store_ss(&accum, accum_sse);
+        a = npyv_reverse_f32(accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        npyv_storel_f32(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data1)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data1)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -939,48 +815,25 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            accum_sse = _mm_add_pd(accum_sse, _mm_load_pd(data1+@i@));
+            accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data1+@i@));
 /**end repeat2**/
-            data1 += 8;
+            data1 += unroll_by;
         }
         /* Add the two SSE2 values and put in accum */
-        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-        accum_sse = _mm_add_pd(a, accum_sse);
-        _mm_store_sd(&accum, accum_sse);
+        a = npyv_reverse_f64(accum_sse);
+        accum_sse = npyv_add_f64(a, accum_sse);
+        npyv_storel_f64(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_NEON_64 && @float64@
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-/**begin repeat2
-* #i = 0, 2, 4, 6#
-*/
-        /*
-            * NOTE: This accumulation changes the order, so will likely
-            *       produce slightly different results.
-            */
-        accum_sse = vaddq_f64(accum_sse, vld1q_f64(data1+@i@));
-/**end repeat2**/
-        data1 += 8;
-    }
-    /* Add the two SSE2 values and put in accum */
-    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
-    accum_sse = vaddq_f64(a, accum_sse);
-    vst1_f64(&accum, vget_low_f64(accum_sse));
-
-    /* Finish off the loop */
-    goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
 /**begin repeat2
  * #i = 0, 4#
  */
@@ -988,9 +841,9 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data1+@i@));
+        accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data1+@i@));
 /**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
@@ -998,7 +851,7 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        accum_sse = _mm_add_pd(accum_sse, _mm_loadu_pd(data1+@i@));
+        accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data1+@i@));
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -1010,18 +863,17 @@ finish_after_unrolled_loop:
         data1 += 8;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    _mm_store_ss(&accum, accum_sse);
-#elif EINSUM_USE_SSE2 && @float64@
+    a = npyv_reverse_f32(accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    npyv_storel_f32(&accum, accum_sse);
+#elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-    accum_sse = _mm_add_pd(a, accum_sse);
-    _mm_store_sd(&accum, accum_sse);
+    a = npyv_reverse_f64(accum_sse);
+    accum_sse = npyv_add_f64(a, accum_sse);
+    npyv_storel_f64(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
@@ -1036,12 +888,10 @@ static void
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
     @temptype@ accum = 0;
 
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, accum_sse = _mm_setzero_ps();
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, accum_sse = _mm_setzero_pd();
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, accum_sse = vreinterpretq_f64_s32(vdupq_n_s32((int)0));
+#if NPY_SIMD && @float32@
+    npyv_f32 a, accum_sse = npyv_zero_f32();
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, accum_sse = npyv_zero_f64();
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outstride0_two (%d)\n",
@@ -1061,12 +911,12 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0)) {
+    if (EINSUM_IS_ALIGNED(data0)) {
         /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 4#
@@ -1075,25 +925,24 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data0+@i@));
+            accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data0+@i@));
 /**end repeat2**/
-            data0 += 8;
+            data0 += unroll_by;
         }
         /* Add the four SSE values and put in accum */
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        _mm_store_ss(&accum, accum_sse);
+        a = npyv_reverse_f32(accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        npyv_storel_f32(&accum, accum_sse);
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data0)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -1102,46 +951,24 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            accum_sse = _mm_add_pd(accum_sse, _mm_load_pd(data0+@i@));
+            accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data0+@i@));
 /**end repeat2**/
-            data0 += 8;
+            data0 += unroll_by;
         }
         /* Add the two SSE2 values and put in accum */
-        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-        accum_sse = _mm_add_pd(a, accum_sse);
-        _mm_store_sd(&accum, accum_sse);
+        a = npyv_reverse_f64(accum_sse);
+        accum_sse = npyv_add_f64(a, accum_sse);
+        npyv_storel_f64(&accum, accum_sse);
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_NEON_64 && @float64@
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-/**begin repeat2
-* #i = 0, 2, 4, 6#
-*/
-        /*
-            * NOTE: This accumulation changes the order, so will likely
-            *       produce slightly different results.
-            */
-        accum_sse = vaddq_f64(accum_sse, vld1q_f64(data0+@i@));
-/**end repeat2**/
-        data0 += 8;
-    }
-    /* Add the two SSE2 values and put in accum */
-    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
-    accum_sse = vaddq_f64(a, accum_sse);
-    vst1_f64(&accum, vget_low_f64(accum_sse));
-    /* Finish off the loop */
-    goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
 /**begin repeat2
  * #i = 0, 4#
  */
@@ -1149,9 +976,9 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data0+@i@));
+        accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data0+@i@));
 /**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
 /**begin repeat2
  * #i = 0, 2, 4, 6#
  */
@@ -1159,7 +986,7 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        accum_sse = _mm_add_pd(accum_sse, _mm_loadu_pd(data0+@i@));
+        accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data0+@i@));
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -1171,18 +998,17 @@ finish_after_unrolled_loop:
         data0 += 8;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    _mm_store_ss(&accum, accum_sse);
-#elif EINSUM_USE_SSE2 && @float64@
+    a = npyv_reverse_f32(accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    npyv_storel_f32(&accum, accum_sse);
+#elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-    accum_sse = _mm_add_pd(a, accum_sse);
-    _mm_store_sd(&accum, accum_sse);
+    a = npyv_reverse_f64(accum_sse);
+    accum_sse = npyv_add_f64(a, accum_sse);
+    npyv_storel_f64(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
@@ -1300,12 +1126,10 @@ static void
     @type@ *data0 = (@type@ *)dataptr[0];
 #endif
 
-#if EINSUM_USE_SSE1 && @float32@
-    __m128 a, accum_sse = _mm_setzero_ps();
-#elif EINSUM_USE_SSE2 && @float64@
-    __m128d a, accum_sse = _mm_setzero_pd();
-#elif EINSUM_USE_NEON_64 && @float64@
-    float64x2_t a, accum_sse = vreinterpretq_f64_s32(vdupq_n_s32((int)0));
+#if NPY_SIMD && @float32@
+    npyv_f32 a, accum_sse = npyv_zero_f32();
+#elif NPY_SIMD_F64 && @float64@
+    npyv_f64 a, accum_sse = npyv_zero_f64();
 #endif
 
 
@@ -1337,14 +1161,14 @@ finish_after_unrolled_loop:
             return;
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0)) {
-        /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+    if (EINSUM_IS_ALIGNED(data0)) {
+        /* Unroll the loop by unroll_by */
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
+            npyv_prefetch(data0 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -1353,29 +1177,28 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            accum_sse = _mm_add_ps(accum_sse, _mm_load_ps(data0+@i@));
+            accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data0+@i@));
 /**end repeat2**/
             data0 += 8;
         }
 
         /* Add the four SSE values and put in accum */
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-        accum_sse = _mm_add_ps(a, accum_sse);
-        _mm_store_ss(&accum, accum_sse);
+        a = npyv_reverse_f32(accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        accum_sse = npyv_add_f32(a, accum_sse);
+        npyv_storel_f32(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_SSE2 && @float64@
+#elif NPY_SIMD_F64 && @float64@
     /* Use aligned instructions if possible */
-    if (EINSUM_IS_SSE_ALIGNED(data0)) {
+    if (EINSUM_IS_ALIGNED(data0)) {
         /* Unroll the loop by 8 */
-        while (count >= 8) {
-            count -= 8;
+        while (count >= unroll_by) {
+            count -= unroll_by;
 
-            _mm_prefetch(data0 + 512, _MM_HINT_T0);
+            npyv_prefetch(data0 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -1384,53 +1207,27 @@ finish_after_unrolled_loop:
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            accum_sse = _mm_add_pd(accum_sse, _mm_load_pd(data0+@i@));
+            accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data0+@i@));
 /**end repeat2**/
             data0 += 8;
         }
 
         /* Add the two SSE2 values and put in accum */
-        a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-        accum_sse = _mm_add_pd(a, accum_sse);
-        _mm_store_sd(&accum, accum_sse);
+        a = npyv_reverse_f64(accum_sse);
+        accum_sse = npyv_add_f64(a, accum_sse);
+        npyv_storel_f64(&accum, accum_sse);
 
         /* Finish off the loop */
         goto finish_after_unrolled_loop;
     }
-#elif EINSUM_USE_NEON_64 && @float64@
-    /* Unroll the loop by 8 */
-    while (count >= 8) {
-        count -= 8;
-
-        prefetch(data0 + 512, 512);
-
-/**begin repeat2
-* #i = 0, 2, 4, 6#
-*/
-        /*
-            * NOTE: This accumulation changes the order, so will likely
-            *       produce slightly different results.
-            */
-        accum_sse = vaddq_f64(accum_sse, vld1q_f64(data0+@i@));
-/**end repeat2**/
-        data0 += 8;
-    }
-
-    /* Add the two SSE2 values and put in accum */
-    a = vcombine_f64(vget_high_f64(accum_sse), vget_low_f64(accum_sse));
-    accum_sse = vaddq_f64(a, accum_sse);
-    vst1_f64(&accum, vget_low_f64(accum_sse));
-
-    /* Finish off the loop */
-    goto finish_after_unrolled_loop;
 #endif
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
         count -= 8;
 
-#if EINSUM_USE_SSE1 && @float32@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
+#if NPY_SIMD && @float32@
+        npyv_prefetch(data0 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 4#
@@ -1439,10 +1236,10 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        accum_sse = _mm_add_ps(accum_sse, _mm_loadu_ps(data0+@i@));
+        accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data0+@i@));
 /**end repeat2**/
-#elif EINSUM_USE_SSE2 && @float64@
-        _mm_prefetch(data0 + 512, _MM_HINT_T0);
+#elif NPY_SIMD_F64 && @float64@
+        npyv_prefetch(data0 + 512, 1);
 
 /**begin repeat2
  * #i = 0, 2, 4, 6#
@@ -1451,7 +1248,7 @@ finish_after_unrolled_loop:
          * NOTE: This accumulation changes the order, so will likely
          *       produce slightly different results.
          */
-        accum_sse = _mm_add_pd(accum_sse, _mm_loadu_pd(data0+@i@));
+        accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data0+@i@));
 /**end repeat2**/
 #else
 /**begin repeat2
@@ -1473,18 +1270,17 @@ finish_after_unrolled_loop:
 #endif
     }
 
-#if EINSUM_USE_SSE1 && @float32@
+#if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    a = _mm_shuffle_ps(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
-    accum_sse = _mm_add_ps(a, accum_sse);
-    _mm_store_ss(&accum, accum_sse);
-#elif EINSUM_USE_SSE2 && @float64@
+    a = npyv_reverse_f32(accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    accum_sse = npyv_add_f32(a, accum_sse);
+    npyv_storel_f32(&accum, accum_sse);
+#elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = _mm_shuffle_pd(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
-    accum_sse = _mm_add_pd(a, accum_sse);
-    _mm_store_sd(&accum, accum_sse);
+    a = npyv_reverse_f64(accum_sse);
+    accum_sse = npyv_add_f64(a, accum_sse);
+    npyv_storel_f64(&accum, accum_sse);
 #endif
 
     /* Finish off the loop */
@@ -1831,6 +1627,8 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 }
 
 /**end repeat**/
+
+typedef void (*sum_of_products_fn)(int, char **, npy_intp const*, npy_intp);
 
 /* These tables need to match up with the type enum */
 static sum_of_products_fn
