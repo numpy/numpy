@@ -1989,3 +1989,13 @@ def test_integer_repeat(int_func):
         val = val.byteswap()
     res = hashlib.md5(val.view(np.int8)).hexdigest()
     assert_(res == md5)
+
+
+def test_broadcast_size_error():
+    # GH-16833
+    with pytest.raises(ValueError):
+        random.binomial(1, [0.3, 0.7], size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], 0.3, size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], [0.3, 0.7], size=(2, 1))
