@@ -45,5 +45,17 @@ NPYV_IMPL_NEON_MEM(f32, float)
 #if NPY_SIMD_F64
 NPYV_IMPL_NEON_MEM(f64, double)
 #endif
-
+// prefetch data from cache
+NPY_FINLINE void prefetch(const char *ptr)
+{
+#if defined __GNUC__
+    __builtin_prefetch(ptr);
+#elif defined _MSC_VER
+    __prefetch(ptr);
+#else
+    (void)ptr;
+    (void)offset;
+#endif
+}
+#define npyv_prefetch(PTR, INDEX) prefetch((char*)(PTR))
 #endif // _NPY_SIMD_NEON_MEMORY_H

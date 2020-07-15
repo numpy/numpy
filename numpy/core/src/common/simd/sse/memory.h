@@ -71,4 +71,6 @@ NPYV_IMPL_SSE_MEM_INT(npy_int64,  s64)
 #define npyv_storeh_f32(PTR, VEC) npyv_storeh_u32((npy_uint32*)(PTR), _mm_castps_si128(VEC))
 #define npyv_storeh_f64(PTR, VEC) npyv_storeh_u32((npy_uint32*)(PTR), _mm_castpd_si128(VEC))
 
+// prefetch data from cache
+#define npyv_prefetch(PTR, INDEX) _mm_prefetch((char*)(PTR), (npy_uint32)(INDEX))
 #endif // _NPY_SIMD_SSE_MEMORY_H
