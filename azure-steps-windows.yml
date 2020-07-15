@@ -4,7 +4,7 @@ steps:
     versionSpec: $(PYTHON_VERSION)
     addToPath: true
     architecture: $(PYTHON_ARCH)
-- script: python -m pip install --upgrade pip setuptools wheel
+- script: python -m pip install --upgrade pip
   displayName: 'Install tools'
 - script: python -m pip install -r test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
