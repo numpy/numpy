@@ -341,9 +341,6 @@ def build_project(args):
 
     """
 
-    # from setuptools v49.2.0, setuptools warns if distutils is imported first,
-    # so pre-emptively import setuptools
-    import setuptools
     import distutils.sysconfig
 
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
