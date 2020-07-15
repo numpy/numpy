@@ -63,6 +63,19 @@ NPY_FINLINE npyv_f64x2 npyv_combine_f64(__m256d a, __m256d b)
 #define npyv_combine_u64 npyv__combine
 #define npyv_combine_s64 npyv__combine
 
+//reverse a vector every 32/64 bits
+NPY_FINLINE npyv_f32 npyv__reverse_f32(__m256 a)
+{
+    return _mm256_shuffle_ps(a, a, _MM_SHUFFLE(3,2,1,0));
+}
+
+NPY_FINLINE npyv_f64 npyv__reverse_f64(__m256d a)
+{
+    return _mm256_shuffle_pd(a, a, _MM_SHUFFLE2(0,1));
+}
+#define npyv_reverse_f32 npyv__reverse_f32
+#define npyv_reverse_f64 npyv__reverse_f64
+
 // interleave two vectors
 #define NPYV_IMPL_AVX2_ZIP_U(T_VEC, LEN)                    \
     NPY_FINLINE T_VEC##x2 npyv_zip_u##LEN(T_VEC a, T_VEC b) \

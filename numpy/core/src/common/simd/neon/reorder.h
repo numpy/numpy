@@ -52,7 +52,22 @@
     #define npyv_combineh_s64(A, B) vcombine_s64(vget_high_s64(A), vget_high_s64(B))
     #define npyv_combineh_f32(A, B) vcombine_f32(vget_high_f32(A), vget_high_f32(B))
 #endif
+// reverse a vector
+NPY_FINLINE npyv_f32 npyv__reverse_f32(npyv_f32 a)
+{
+    float32x2_t a10 = vget_low_f32(vreinterpretq_f32_m128(a));
+	float32x2_t a32 = vget_high_f32(vreinterpretq_f32_m128(a));
+	return vreinterpretq_m128_f32(vcombine_f32(a10, a32));
+}
+#ifdef __aarch64__
+NPY_FINLINE npyv_f64 npyv__reverse_f64(npyv_f64 a)
+{
+    return vcombine_f64(vget_high_f64(a), vget_low_f64(a));
+}
+#define npyv_reverse_f64 npyv__reverse_f64
+#endif
 
+#define npyv_reverse_f32 npyv__reverse_f32
 // combine two vectors from lower and higher parts of two other vectors
 #define NPYV_IMPL_NEON_COMBINE(T_VEC, SFX)                     \
     NPY_FINLINE T_VEC##x2 npyv_combine_##SFX(T_VEC a, T_VEC b) \
