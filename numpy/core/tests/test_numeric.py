@@ -2521,7 +2521,7 @@ class TestCreationFuncs:
         self.check_function(np.zeros)
 
     def test_ones(self):
-        self.check_function(np.zeros)
+        self.check_function(np.ones)
 
     def test_empty(self):
         self.check_function(np.empty)
