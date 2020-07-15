@@ -1224,121 +1224,6 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 }
 
-static PyObject*
-_make_along_axis_idx(npy_intp *arr_shape, int arr_size, PyObject* indices, int axis) {
-
-    PyObject *dest_dims = NULL;
-    PyObject *fancy_index = NULL;
-    int smaller = 0;
-    int indices_ndim = PyArray_NDIM((PyArrayObject*)indices);
-    if (!PyArray_ISINTEGER((PyArrayObject*)indices)) {
-        PyErr_SetString(PyExc_IndexError, "indices must be an integer array");
-        return NULL;
-    }
-
-    if (arr_size != indices_ndim) {
-        PyErr_SetString(PyExc_ValueError, "indices and array must have same number of dimensions");
-        return NULL;
-    }
-    dest_dims  = PyList_New(0);
-    if (dest_dims == NULL) {
-        goto fail;
-    }
-    for (int i=0; i < axis; i++){
-        PyObject *tmp = Py_BuildValue("i", i);
-        if( PyList_Append(dest_dims, tmp) < -1) {
-            Py_DECREF(tmp);
-            goto fail;
-        }
-        Py_DECREF(tmp);
-    }
-
-    if (PyList_Append(dest_dims, Py_None) < 0) {
-        Py_DECREF(Py_None);
-        goto fail;
-    }
-    Py_DECREF(Py_None);
-    for (int i=axis+1; i < indices_ndim; i++){
-        PyObject *tmp = Py_BuildValue("i", i);
-        if( PyList_Append(dest_dims, tmp) < -1) {
-            Py_DECREF(tmp);
-            goto fail;
-        }
-        Py_DECREF(tmp);
-    }
-
-    fancy_index = PyList_New(0);
-    if (fancy_index == NULL) {
-        goto fail;
-    }
-    smaller = arr_size < PyList_Size(dest_dims) ? arr_size : PyList_Size(dest_dims);
-    for (int i=0; i < smaller; i++) {
-        PyObject *dim = PyList_GET_ITEM(dest_dims, i);
-        if (dim == Py_None) {
-           if (PyList_Append(fancy_index, indices) < -1) {
-                goto fail;
-           }
-
-        }
-        else {
-            // Define index shape of ones
-            PyObject *ind_shape = PyList_New(0);
-            if (ind_shape == NULL){
-                goto fail;
-            }
-            for (int j=0;j<PyLong_AsLong(dim); j++){
-                if (PyList_Append(ind_shape, Py_BuildValue("i", 1)) < -1) {
-                    Py_DECREF(ind_shape);
-                    goto fail;
-                }
-            }
-            if (PyList_Append(ind_shape, Py_BuildValue("i", -1)) < -1) {
-                Py_DECREF(ind_shape);
-                goto fail;
-            }
-            for (int j=PyLong_AsLong(dim)+1;j<indices_ndim; j++){
-                if (PyList_Append(ind_shape, Py_BuildValue("i", 1)) < -1) {
-                    Py_DECREF(ind_shape);
-                    goto fail;
-                }
-            }
-            PyObject *ind_shape_tuple = PyList_AsTuple(ind_shape);
-            Py_DECREF(ind_shape);
-            if (ind_shape_tuple == NULL) {
-                goto fail;
-            }
-            PyObject *range_arr = PyArray_Arange(0.0,(double)arr_shape[i],1.0, NPY_INT64);
-            range_arr = PyArray_Reshape((PyArrayObject*)range_arr, ind_shape_tuple);
-            if (range_arr == NULL) {
-                Py_DECREF(ind_shape_tuple);
-                Py_DECREF(dim);
-                goto fail;
-            }
-            if (PyList_Append(fancy_index, range_arr) < -1){
-                Py_DECREF(ind_shape_tuple);
-                Py_DECREF(range_arr);
-                Py_DECREF(dim);
-                goto fail;
-            }
-            Py_DECREF(ind_shape_tuple);
-            Py_DECREF(range_arr);
-        }
-        Py_DECREF(dim);
-    }
-    PyObject *fancy_tuple =  PyList_AsTuple(fancy_index);
-    if (fancy_tuple == NULL) {
-        goto fail;
-    }
-    Py_DECREF(dest_dims);
-    Py_DECREF(fancy_index);
-    return fancy_tuple;
-
-    fail:
-        Py_XDECREF(dest_dims);
-        Py_XDECREF(fancy_index);
-        return NULL;
-}
-
 static PyObject *
 array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1380,33 +1265,18 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-    /* WIP: The below code is for discussion
-     * purposes use take_along_axis followed by lexsort.
-     */
     if (by != Py_None && by != NULL) {
-        PyObject *indices_obj = PyArray_LexSort(by, axis);
-        PyArrayObject *sorted_out = NULL;
-        if (indices_obj == NULL) {
+        if (!PyTuple_CheckExact(by) && !PyList_CheckExact(by)) {
+            by = PyTuple_Pack(1, by);
+            if (by == NULL) {
+                return NULL;
+            }
+        }
+        PyObject *ret = PyArray_KeySort(self, by, axis);
+        if (ret == NULL){
             return NULL;
         }
-        if (axis == -1) {
-            axis = PyArray_NDIM(self)-1;
-        }
-        PyObject *fancy_tuple = _make_along_axis_idx(PyArray_SHAPE(self),
-                                PyArray_NDIM(self), indices_obj, axis);
-        if (fancy_tuple == NULL) {
-            return NULL;
-        }
-        sorted_out = (PyArrayObject *) array_subscript_asarray(self, fancy_tuple);
-        Py_DECREF(indices_obj);
-        if (sorted_out == NULL) {
-            return NULL;
-        }
-        if (PyArray_CopyInto(self, sorted_out) < 0) {
-            Py_DECREF(sorted_out);
-            return NULL;
-        }
-        Py_DECREF(sorted_out);
+        Py_DECREF(ret);
         Py_RETURN_NONE;
     }
     if (order == Py_None) {

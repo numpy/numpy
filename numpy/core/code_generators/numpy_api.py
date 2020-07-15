@@ -350,6 +350,8 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
+    'PyArray_KeySort':                      (304,),
+    # End of trial API
 }
 
 ufunc_types_api = {

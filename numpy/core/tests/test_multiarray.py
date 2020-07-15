@@ -1755,9 +1755,9 @@ class TestMethods:
         assert_equal(b, e, msg)
         # Test sorting complex numbers by absolute value
         msg = "Test sorting comple xnumbers by absolute value"
-        carr = np.arange(4, dtype=complex)[::-1].reshape(2, 2)
-        carr_out = np.arange([[2+0j, 3+0j], [0+0j, 1+0j]])
-        carr.sort(axis=1, by=(np.absolute(carr),))
+        carr = np.arange(4, dtype=np.complex128)[::-1].reshape(2, 2)
+        carr_out = np.array([[2+0j, 3+0j], [0+0j, 1+0j]], dtype=np.complex128)
+        carr.sort(axis=1, by=np.absolute(carr))
         assert_equal(carr, carr_out, msg)
 
     def test_sort(self):

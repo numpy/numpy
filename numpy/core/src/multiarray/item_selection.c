@@ -14,6 +14,7 @@
 
 #include "npy_pycompat.h"
 
+#include "mapping.h"
 #include "multiarraymodule.h"
 #include "common.h"
 #include "arrayobject.h"
@@ -1749,6 +1750,296 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     return NULL;
 }
 
+/*NUMPY_API
+ *Keysort an array providing indices that will sort a collection of arrays
+ *lexicographically.  The first key is sorted on first, followed by the second key
+ *-- requires that arg"merge"sort is available for each sort_key
+ *
+ *Returns None on success, returns NULL on failure
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_KeySort(PyArrayObject *self, PyObject *sort_keys, int axis)
+{
+    PyArrayObject **mps;
+    PyArrayIterObject **its;
+    PyArrayObject *ret = NULL;
+    PyArrayIterObject *sit = NULL;
+    npy_intp n, N, size, i, j, aelsize;
+    npy_intp astride, *iptr, selstride;
+    int nd;
+    int needcopy = 0;
+    int elsize;
+    int maxelsize;
+    int object = 0;
+    PyArray_ArgSortFunc *argsort;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!PySequence_Check(sort_keys)
+           || ((n = PySequence_Size(sort_keys)) <= 0)) {
+        PyErr_SetString(PyExc_TypeError,
+                "need sequence of keys with len > 0 in keysort");
+        return NULL;
+    }
+    mps = (PyArrayObject **) PyArray_malloc(n * sizeof(PyArrayObject *));
+    if (mps == NULL) {
+        return PyErr_NoMemory();
+    }
+    its = (PyArrayIterObject **) PyArray_malloc(n * sizeof(PyArrayIterObject *));
+    if (its == NULL) {
+        PyArray_free(mps);
+        return PyErr_NoMemory();
+    }
+    for (i = 0; i < n; i++) {
+        mps[i] = NULL;
+        its[i] = NULL;
+    }
+    for (i = 0; i < n; i++) {
+        PyObject *obj;
+        obj = PySequence_GetItem(sort_keys, i);
+        if (obj == NULL) {
+            goto fail;
+        }
+        mps[i] = (PyArrayObject *)PyArray_FROM_O(obj);
+        Py_DECREF(obj);
+        if (mps[i] == NULL) {
+            goto fail;
+        }
+        if (i > 0) {
+            if ((PyArray_NDIM(mps[i]) != PyArray_NDIM(mps[0]))
+                || (!PyArray_CompareLists(PyArray_DIMS(mps[i]),
+                                       PyArray_DIMS(mps[0]),
+                                       PyArray_NDIM(mps[0])))) {
+                PyErr_SetString(PyExc_ValueError,
+                                "all keys need to be the same shape");
+                goto fail;
+            }
+        }
+        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_STABLESORT]
+                && !PyArray_DESCR(mps[i])->f->compare) {
+            PyErr_Format(PyExc_TypeError,
+                         "item %zd type does not have compare function", i);
+            goto fail;
+        }
+        if (!object
+            && PyDataType_FLAGCHK(PyArray_DESCR(mps[i]), NPY_NEEDS_PYAPI)) {
+            object = 1;
+        }
+    }
+
+    /* Now we can check the axis */
+    nd = PyArray_NDIM(mps[0]);
+    /*
+    * Special case letting axis={-1,0} slip through for scalars,
+    * for backwards compatibility reasons.
+    */
+    if (nd == 0 && (axis == 0 || axis == -1)) {
+        /* TODO: can we deprecate this? */
+    }
+    else if (check_and_adjust_axis(&axis, nd) < 0) {
+        goto fail;
+    }
+    if ((nd == 0) || (PyArray_SIZE(mps[0]) <= 1)) {
+        /* empty/single element case */
+        // Nothing to do here just return
+        goto finish;
+    }
+
+    for (i = 0; i < n; i++) {
+        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
+                (PyObject *)mps[i], &axis);
+        if (its[i] == NULL) {
+            goto fail;
+        }
+    }
+    /* Now do the sorting */
+    sit = (PyArrayIterObject *)
+            PyArray_IterAllButAxis((PyObject *)self, &axis);
+    if (sit == NULL) {
+        goto fail;
+    }
+    if (!object) {
+        NPY_BEGIN_THREADS;
+    }
+    size = sit->size;
+    N = PyArray_DIMS(mps[0])[axis];
+    selstride = PyArray_STRIDE(self, axis);
+    aelsize = (npy_intp)PyArray_ITEMSIZE(self);
+    maxelsize = PyArray_DESCR(mps[0])->elsize;
+    needcopy = (selstride != PyArray_DESCR(self)->elsize);
+    for (j = 0; j < n; j++) {
+        needcopy = needcopy
+            || PyArray_ISBYTESWAPPED(mps[j])
+            || !(PyArray_FLAGS(mps[j]) & NPY_ARRAY_ALIGNED)
+            || (PyArray_STRIDES(mps[j])[axis] != (npy_intp)PyArray_DESCR(mps[j])->elsize);
+        if (PyArray_DESCR(mps[j])->elsize > maxelsize) {
+            maxelsize = PyArray_DESCR(mps[j])->elsize;
+        }
+    }
+    assert(N > 0);  /* Guaranteed and assumed by indbuffer */
+    char *indbuffer = PyDataMem_NEW(N * sizeof(npy_intp));
+    if (indbuffer == NULL) {
+       goto fail;
+    }
+    if (needcopy) {
+        char *valbuffer;
+        int *swaps;
+        npy_intp valbufsize = N * maxelsize;
+        if (NPY_UNLIKELY(valbufsize) == 0) {
+            valbufsize = 1;  /* Ensure allocation is not empty */
+        }
+
+        valbuffer = PyDataMem_NEW(valbufsize);
+        if (valbuffer == NULL) {
+            PyDataMem_FREE(indbuffer);
+            goto fail;
+        }
+        swaps = malloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
+        if (swaps == NULL) {
+            PyDataMem_FREE(valbuffer);
+            PyDataMem_FREE(indbuffer);
+            goto fail;
+        }
+
+        for (j = 0; j < n; j++) {
+            swaps[j] = PyArray_ISBYTESWAPPED(mps[j]);
+        }
+        while (size--) {
+            iptr = (npy_intp *)indbuffer;
+            for (i = 0; i < N; i++) {
+                *iptr++ = i;
+            }
+            for (j = 0; j < n; j++) {
+                int rcode;
+                elsize = PyArray_DESCR(mps[j])->elsize;
+                astride = PyArray_STRIDES(mps[j])[axis];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
+                if(argsort == NULL) {
+                    argsort = npy_atimsort;
+                }
+                _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize,
+                                             its[j]->dataptr, astride, N, elsize);
+                if (swaps[j]) {
+                    _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
+                }
+                rcode = argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]);
+                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
+                            && PyErr_Occurred())) {
+                    PyDataMem_FREE(valbuffer);
+                    PyDataMem_FREE(indbuffer);
+                    free(swaps);
+                    goto fail;
+                }
+                PyArray_ITER_NEXT(its[j]);
+            }
+            char *slicebuffer = PyDataMem_NEW(N*aelsize);
+            _unaligned_strided_byte_copy(slicebuffer, aelsize, sit->dataptr,
+                                         selstride, N, aelsize);
+            npy_intp dims[1] = {N};
+            PyObject *indarray = PyArray_SimpleNewFromData(1, dims, NPY_INTP, indbuffer);
+            PyObject *slice = PyArray_SimpleNewFromData(1, dims, PyArray_TYPE(self), slicebuffer);
+            if(indarray == NULL || slice == NULL){
+               PyDataMem_FREE(valbuffer);
+               PyDataMem_FREE(indbuffer);
+               PyDataMem_FREE(slicebuffer);
+               Py_XDECREF(indarray);
+               Py_XDECREF(slice);
+               free(swaps);
+               goto fail;
+            }
+            PyArrayObject *sorted_slice = (PyArrayObject*)
+                array_subscript_asarray((PyArrayObject *)slice, indarray);
+            if (sorted_slice == NULL) {
+               PyDataMem_FREE(valbuffer);
+               PyDataMem_FREE(indbuffer);
+               PyDataMem_FREE(slicebuffer);
+               Py_DECREF(indarray);
+               Py_DECREF(slice);
+               free(swaps);
+               goto fail;
+            }
+            _unaligned_strided_byte_copy(sit->dataptr, selstride, (char*)PyArray_DATA(sorted_slice),
+                                        PyArray_STRIDE(sorted_slice, 0), N, aelsize);
+            PyArray_ITER_NEXT(sit);
+            PyDataMem_FREE(slicebuffer);
+        }
+        PyDataMem_FREE(valbuffer);
+        PyDataMem_FREE(indbuffer);
+        free(swaps);
+    }
+    else {
+        while (size--) {
+            iptr = (npy_intp *)indbuffer;
+            for (i = 0; i < N; i++) {
+                *iptr++ = i;
+            }
+            for (j = 0; j < n; j++) {
+                int rcode;
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
+                if(argsort == NULL) {
+                    argsort = npy_atimsort;
+                }
+                rcode = argsort(its[j]->dataptr,
+                        (npy_intp *)indbuffer, N, mps[j]);
+                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
+                            && PyErr_Occurred())) {
+                    goto fail;
+                }
+
+                PyArray_ITER_NEXT(its[j]);
+            }
+            npy_intp dims[1] = {N};
+            PyObject *indarray = PyArray_SimpleNewFromData(1, dims, NPY_INTP, indbuffer);
+            PyObject *slice = PyArray_SimpleNewFromData(1, dims, PyArray_TYPE(self), sit->dataptr);
+            if (indarray == NULL || slice == NULL){
+                PyDataMem_FREE(indbuffer);
+                Py_XDECREF(indarray);
+                Py_XDECREF(slice);
+                 goto fail;
+            }
+            PyArrayObject *sorted_slice = (PyArrayObject*)
+                array_subscript_asarray((PyArrayObject*)slice, indarray);
+            if (sorted_slice == NULL) {
+                PyDataMem_FREE(indbuffer);
+                Py_DECREF(indarray);
+                Py_DECREF(slice);
+                goto fail;
+            }
+
+            memcpy(sit->dataptr, (char*)PyArray_DATA(sorted_slice), N*aelsize);
+            PyArray_ITER_NEXT(sit);
+        }
+        PyDataMem_FREE(indbuffer);
+    }
+
+    if (!object) {
+        NPY_END_THREADS;
+    }
+
+ finish:
+    for (i = 0; i < n; i++) {
+        Py_XDECREF(mps[i]);
+        Py_XDECREF(its[i]);
+    }
+    Py_XDECREF(sit);
+    PyArray_free(mps);
+    PyArray_free(its);
+    Py_RETURN_NONE;
+
+ fail:
+    NPY_END_THREADS;
+    if (!PyErr_Occurred()) {
+        /* Out of memory during sorting or buffer creation */
+        PyErr_NoMemory();
+    }
+    Py_XDECREF(sit);
+    for (i = 0; i < n; i++) {
+        Py_XDECREF(mps[i]);
+        Py_XDECREF(its[i]);
+    }
+    PyArray_free(mps);
+    PyArray_free(its);
+    return NULL;
+}
 
 /*NUMPY_API
  *

@@ -999,6 +999,11 @@ def sort(a, axis=-1, kind=None, order=None, by=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
+
+
+    if by is not None and not isinstance(by, tuple):
+        by = (by,)
+
     a.sort(axis=axis, kind=kind, order=order, by=by)
     return a
 
