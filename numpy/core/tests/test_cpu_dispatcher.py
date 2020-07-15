@@ -1,11 +1,8 @@
 from numpy.core._multiarray_umath import __cpu_features__, __cpu_baseline__, __cpu_dispatch__
 from numpy.core import _umath_tests
-from numpy.core import multiarray
 from numpy.testing import assert_equal
-import pytest
 
-@pytest.mark.parametrize('func', (_umath_tests.test_dispatch, multiarray.test_dispatch))
-def test_dispatcher(func):
+def test_dispatcher():
     """
     Testing the utilites of the CPU dispatcher
     """
@@ -30,7 +27,7 @@ def test_dispatcher(func):
             highest_sfx = "_" + feature
         all_sfx.append("func" + "_" + feature)
 
-    test = func()
+    test = _umath_tests.test_dispatch()
     assert_equal(test["func"], "func" + highest_sfx)
     assert_equal(test["var"], "var"  + highest_sfx)
 
