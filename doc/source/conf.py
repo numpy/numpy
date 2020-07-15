@@ -88,7 +88,7 @@ pygments_style = 'sphinx'
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
-    app.add_lexer('NumPyC', NumPyLexer(stripnl=False))
+    app.add_lexer('NumPyC', NumPyLexer)
 
 # -----------------------------------------------------------------------------
 # HTML output

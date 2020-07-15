@@ -2423,6 +2423,16 @@ def test_broadcast_size_error():
     with pytest.raises(ValueError):
         random.standard_gamma(shape, out=out)
 
+    # 2 arg
+    with pytest.raises(ValueError):
+        random.binomial(1, [0.3, 0.7], size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], 0.3, size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], [0.3, 0.7], size=(2, 1))
+    with pytest.raises(ValueError):
+        random.multinomial([2, 2], [.3, .7], size=(2, 1))
+
     # 3 arg
     a = random.chisquare(5, size=3)
     b = random.chisquare(5, size=(4, 3))

@@ -1,5 +1,5 @@
 branches:
-    only:
+    except:
        - master
        - maintenance/*
 
