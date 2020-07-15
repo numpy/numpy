@@ -31,6 +31,8 @@
 #define npyv_combineh_f32(A, B) ((npyv_f32)npyv__combineh(A, B))
 #define npyv_combineh_f64       vec_mergel
 
+#define npyv_reverse_f32  ((void)0)
+#define npyv_reverse_f64  ((void)0)
 /*
  * combine: combine two vectors from lower and higher parts of two other vectors
  * zip: interleave two vectors

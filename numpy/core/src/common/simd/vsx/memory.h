@@ -156,6 +156,7 @@ NPY_FINLINE void prefetch(const char *ptr)
     __prefetch(ptr);
 #else
     (void)ptr;
+    (void)offset;
 #endif
 }
 #define npyv_prefetch(PTR, INDEX) prefetch((char*)(PTR))
