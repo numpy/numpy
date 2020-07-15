@@ -92,5 +92,5 @@ NPYV_IMPL_AVX512_MEM_INT(npy_int64,  s64)
 #define npyv_storeh_f64(PTR, VEC) _mm256_storeu_pd(PTR, npyv512_higher_pd256(VEC))
 
 // prefetch data from cache
-#define npyv_prefetch(PTR, INDEX) _mm_prefetch((char*)(PTR), (npy_uint32)(INDEX))
+#define npyv_prefetch(PTR, INDEX) _mm512_prefetch((char*)(PTR), (npy_uint32)(INDEX))
 #endif // _NPY_SIMD_AVX512_MEMORY_H

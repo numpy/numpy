@@ -67,5 +67,5 @@ NPYV_IMPL_AVX2_MEM_INT(npy_int64,  s64)
 #define npyv_storeh_f32(PTR, VEC) _mm_storeu_ps(PTR, _mm256_extractf128_ps(VEC, 1))
 #define npyv_storeh_f64(PTR, VEC) _mm_storeu_pd(PTR, _mm256_extractf128_pd(VEC, 1))
 
-#define npyv_prefetch(PTR, INDEX) _mm_prefetch((char*)(PTR), (npy_uint32)(INDEX))
+#define npyv_prefetch(PTR, INDEX) _mm256_prefetch((char*)(PTR), (npy_uint32)(INDEX))
 #endif // _NPY_SIMD_AVX2_MEMORY_H
