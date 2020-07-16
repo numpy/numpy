@@ -31,8 +31,24 @@
 #define npyv_combineh_f32(A, B) ((npyv_f32)npyv__combineh(A, B))
 #define npyv_combineh_f64       vec_mergel
 
-#define npyv_reverse_f32  ((void)0)
-#define npyv_reverse_f64  ((void)0)
+#if (defined(__GNUC__) && __GNUC__ >= 8) || (defined(__clang__) && __clang_major__ >= 6)
+    #define npyv_reverse_f32 vec_reve
+    #define npyv_reverse_f64 vec_reve
+#else
+    // missing on old versions of clang and gcc
+    NPY_FINLINE npyv_f32 npyv_reverse_f32(npyv_f32 a)
+    {
+        const npyv_u8 perm = npyv_set_u8(12,13,14,15, 8,9,10,11, 4,5,6,7, 0,1,2,3);
+        return vec_perm(a, a, perm);
+    }
+    #ifdef __clang__
+        NPY_FINLINE npyv_f64 npyv_reverse_f64(npyv_f64 a)
+        { return vec_xxpermdi(a, a, 2); }
+    #else
+        NPY_FINLINE npyv_f64 npyv_reverse_f64(npyv_f64 a)
+        { __asm__("xxswapd %x0,%x1" : "=wa" (a) : "wa" (a)); return a; }
+    #endif
+#endif
 /*
  * combine: combine two vectors from lower and higher parts of two other vectors
  * zip: interleave two vectors
