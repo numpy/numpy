@@ -63,14 +63,9 @@ NPY_FINLINE npyv_f64x2 npyv_combine_f64(__m256d a, __m256d b)
 #define npyv_combine_u64 npyv__combine
 #define npyv_combine_s64 npyv__combine
 
-// reverse vector lanes
-NPY_FINLINE __m256 npyv_reverse_f32(__m256 a)
-{
-    const __m256i rev_perm = _mm256_set_epi32(0, 1, 2, 3, 4, 5, 6, 7);
-    return _mm256_permutevar8x32_ps(a, rev_perm);
-}
-
-#define npyv_reverse_f64(A) _mm256_permute4x64_pd(A, _MM_SHUFFLE(0, 1, 2, 3))
+// shuffle vector lanes
+#define  npyv_shuffle_f32 _mm256_shuffle_ps
+#define  npyv_shuffle_f64 _mm256_shuffle_pd
 
 // interleave two vectors
 #define NPYV_IMPL_AVX2_ZIP_U(T_VEC, LEN)                    \
