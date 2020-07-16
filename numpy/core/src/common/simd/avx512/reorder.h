@@ -72,19 +72,18 @@ NPY_FINLINE npyv_f64x2 npyv_combine_f64(__m512d a, __m512d b)
 #define npyv_combine_u64 npyv__combine
 #define npyv_combine_s64 npyv__combine
 
-//reverse a vector every 32/64 bits
-NPY_FINLINE npyv_f32 npyv__reverse_f32(__m512 a)
+// reverse vector lanes
+NPY_FINLINE __m512 npyv_reverse_f32(__m512 a)
 {
-    return _mm512_shuffle_ps(a, a, _MM_SHUFFLE(3,2,1,0));
+    const __m512i rev_perm = _mm512_set_epi32(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    return _mm512_permutexvar_ps(rev_perm, a);
 }
 
-NPY_FINLINE npyv_f64 npyv__reverse_f64(__m512d a)
+NPY_FINLINE __m512d npyv_reverse_f64(__m512d a)
 {
-    return _mm512_shuffle_pd(a, a, _MM_SHUFFLE2(0,1));
+    const __m512i rev_perm = _mm512_set_epi64(0, 1, 2, 3, 4, 5, 6, 7);
+    return _mm512_permutexvar_pd(rev_perm, a);
 }
-#define npyv_reverse_f32 npyv__reverse_f32
-#define npyv_reverse_f64 npyv__reverse_f64
-
 // interleave two vectors
 #ifndef NPY_HAVE_AVX512BW
     NPYV_IMPL_AVX512_FROM_AVX2_2ARG(npyv__unpacklo_epi8,  _mm256_unpacklo_epi8)
