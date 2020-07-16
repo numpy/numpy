@@ -25,6 +25,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+            validate_output_shape
         )
 
 np.import_array()
@@ -2809,6 +2810,7 @@ cdef class Generator:
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
+            validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -3606,7 +3608,7 @@ cdef class Generator:
         Now, do one experiment throwing the dice 10 time, and 10 times again,
         and another throwing the dice 20 times, and 20 times again:
 
-        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=2)
+        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=(2, 2))
         array([[[2, 4, 0, 1, 2, 1],
                 [1, 3, 0, 3, 1, 2]],
                [[1, 4, 4, 4, 4, 3],
@@ -3661,6 +3663,7 @@ cdef class Generator:
                 temp = np.empty(size, dtype=np.int8)
                 temp_arr = <np.ndarray>temp
                 it = np.PyArray_MultiIterNew2(on, temp_arr)
+                validate_output_shape(it.shape, temp_arr)
             shape = it.shape + (d,)
             multin = np.zeros(shape, dtype=np.int64)
             mnarr = <np.ndarray>multin
