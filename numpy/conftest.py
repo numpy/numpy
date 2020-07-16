@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
+import tempfile
 
 import hypothesis
 import pytest
@@ -13,11 +14,23 @@ from numpy.core._multiarray_tests import get_fpu_mode
 _old_fpu_mode = None
 _collect_results = {}
 
+# Use a known and persistent tmpdir for hypothesis' caches, which
+# can be automatically cleared by the OS or user.
+hypothesis.configuration.set_hypothesis_home_dir(
+    os.path.join(tempfile.gettempdir(), ".hypothesis")
+)
 # See https://hypothesis.readthedocs.io/en/latest/settings.html
 hypothesis.settings.register_profile(
     name="numpy-profile", deadline=None, print_blob=True,
 )
-hypothesis.settings.load_profile("numpy-profile")
+# We try loading the profile defined by np.test(), which disables the
+# database and forces determinism, and fall back to the profile defined
+# above if we're running pytest directly.  The odd dance is required
+# because np.test() executes this file *after* its own setup code.
+try:
+    hypothesis.settings.load_profile("np.test() profile")
+except hypothesis.errors.InvalidArgument:  # profile not found
+    hypothesis.settings.load_profile("numpy-profile")
 
 
 def pytest_configure(config):

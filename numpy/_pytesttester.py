@@ -125,6 +125,9 @@ class PytestTester:
         import pytest
         import warnings
 
+        # Imported after pytest to enable assertion rewriting
+        import hypothesis
+
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
 
@@ -187,6 +190,14 @@ class PytestTester:
 
         pytest_args += ["--pyargs"] + list(tests)
 
+        # This configuration is picked up by numpy.conftest, and ensures that
+        # running `np.test()` is deterministic and does not write any files.
+        # See https://hypothesis.readthedocs.io/en/latest/settings.html
+        hypothesis.settings.register_profile(
+            name="np.test() profile",
+            deadline=None, print_blob=True, database=None, derandomize=True,
+            suppress_health_check=hypothesis.HealthCheck.all(),
+        )
 
         # run tests.
         _show_numpy_info()
