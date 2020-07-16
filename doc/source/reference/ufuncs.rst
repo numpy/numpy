@@ -338,11 +338,11 @@ advanced usage and will not typically be used.
     .. versionadded:: 1.13
 
     Operations where ufunc input and output operands have memory overlap are
-    now defined to be the same as for equivalent operations where there
-    is no memory overlap.  Operations affected make temporary copies,
+    defined to be the same as for equivalent operations where there
+    is no memory overlap.  Operations affected make temporary copies
     as needed to eliminate data dependency.  As detecting these cases
     is computationally expensive, a heuristic is used, which may in rare
-    cases result to needless temporary copies.  For operations where the
+    cases result in needless temporary copies.  For operations where the
     data dependency is simple enough for the heuristic to analyze,
     temporary copies will not be made even if the arrays overlap, if it
     can be deduced copies are not necessary.  As an example,
