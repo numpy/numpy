@@ -26,7 +26,7 @@ By constructing a new Python type you make available a new object for
 Python. The ndarray object is an example of a new type defined in C.
 New types are defined in C by two basic steps:
 
-1. creating a C-structure (usually named :c:type:`Py{Name}Object`) that is
+1. creating a C-structure (usually named ``Py{Name}Object``) that is
    binary- compatible with the :c:type:`PyObject` structure itself but holds
    the additional information needed for that particular object;
 
@@ -1204,7 +1204,7 @@ ScalarArrayTypes
 There is a Python type for each of the different built-in data types
 that can be present in the array Most of these are simple wrappers
 around the corresponding data type in C. The C-names for these types
-are :c:data:`Py{TYPE}ArrType_Type` where ``{TYPE}`` can be
+are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
 
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
