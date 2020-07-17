@@ -3,7 +3,7 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from .overrides import set_module
+from .overrides import array_function_dispatch, set_module
 from .multiarray import array
 
 
@@ -11,8 +11,12 @@ __all__ = [
     "asarray", "asanyarray", "ascontiguousarray", "asfortranarray", "require",
 ]
 
+def _asarray_dispatcher(a, dtype=None, order=None, like=None):
+    return (like,)
+
+@array_function_dispatch(_asarray_dispatcher)
 @set_module('numpy')
-def asarray(a, dtype=None, order=None):
+def asarray(a, dtype=None, order=None, like=None):
     """Convert the input to an array.
 
     Parameters
