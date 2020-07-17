@@ -59,25 +59,25 @@
 NPY_FINLINE float32x4_t npy_shuffle_ps_1032(float32x4_t a, float32x4_t b)
 {
     float32x2_t a32 = vget_high_f32(vreinterpretq_f32_m128(a));
-	float32x2_t b10 = vget_low_f32(vreinterpretq_f32_m128(b));
-	return vreinterpretq_m128_f32(vcombine_f32(a32, b10));
+    float32x2_t b10 = vget_low_f32(vreinterpretq_f32_m128(b));
+    return vreinterpretq_m128_f32(vcombine_f32(a32, b10));
 }
 
 NPY_FINLINE float32x4_t npy_shuffle_ps_2301(float32x4_t a, float32x4_t b)
 {
     float32x2_t a01 = vrev64_f32(vget_low_f32(vreinterpretq_f32_m128(a)));
-	float32x2_t b23 = vrev64_f32(vget_high_f32(vreinterpretq_f32_m128(b)));
-	return vreinterpretq_m128_f32(vcombine_f32(a01, b23));
+    float32x2_t b23 = vrev64_f32(vget_high_f32(vreinterpretq_f32_m128(b)));
+    return vreinterpretq_m128_f32(vcombine_f32(a01, b23));
 }
 
 NPY_FINLINE float32x4_t npy_shuffle_ps_default(float32x4_t a, float32x4_t b, int imm8)
 {
     float32x4_t ret;
-	ret = vmovq_n_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), (imm) & 0x3));
-	ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), ((imm) >> 2) & 0x3), ret, 1);
-	ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 4) & 0x3), ret, 2);
-	ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 6) & 0x3), ret, 3);
-	vreinterpretq_m128_f32(ret);
+    ret = vmovq_n_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), (imm) & 0x3));
+    ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), ((imm) >> 2) & 0x3), ret, 1);
+    ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 4) & 0x3), ret, 2);
+    ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 6) & 0x3), ret, 3);
+    vreinterpretq_m128_f32(ret);
 }
 
 // shuffle vector lanes
@@ -85,11 +85,11 @@ NPY_FINLINE float32x4_t npyv_shuffle_f32(float32x4_t a, float32x4_t b, int imm8)
 {
     float32x4_t ret;
     switch (imm8)
-	{
-		case _MM_SHUFFLE(1, 0, 3, 2): ret = npy_shuffle_ps_1032((a), (b)); break;
-		case _MM_SHUFFLE(2, 3, 0, 1): ret = npy_shuffle_ps_2301((a), (b)); break;
-		default: ret = npy_shuffle_ps_default((a), (b), (imm8)); break;
-	}
+    {
+        case _MM_SHUFFLE(1, 0, 3, 2): ret = npy_shuffle_ps_1032((a), (b)); break;
+        case _MM_SHUFFLE(2, 3, 0, 1): ret = npy_shuffle_ps_2301((a), (b)); break;
+        default: ret = npy_shuffle_ps_default((a), (b), (imm8)); break;
+    }
     return ret;
 }
 #ifdef __aarch64__
