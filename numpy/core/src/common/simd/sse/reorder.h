@@ -62,8 +62,8 @@ NPY_FINLINE npyv_f64x2 npyv_combine_f64(__m128d a, __m128d b)
 #define npyv_combine_s64 npyv__combine
 
 // shuffle vector lanes
-#define  npyv_shuffle_f32 _mm_shuffle_ps
-#define  npyv_shuffle_f64 _mm_shuffle_pd
+#define npyv_shuffle_f32 _mm_shuffle_ps
+#define npyv_shuffle_f64 _mm_shuffle_pd
 
 // interleave two vectors
 #define NPYV_IMPL_SSE_ZIP(T_VEC, SFX, INTR_SFX)            \
