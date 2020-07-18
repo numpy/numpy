@@ -4368,6 +4368,19 @@ def delete(arr, obj, axis=None):
             return new
 
     if isinstance(obj, (int, integer)) and not isinstance(obj, bool):
+        single_value = True
+    else:
+        single_value = False
+        _obj = obj
+        obj = np.asarray(obj)
+        if obj.size == 0 and not isinstance(_obj, np.ndarray):
+            obj = obj.astype(intp)
+
+        if obj.shape == (1,):
+            obj = obj.item()
+            single_value = True
+
+    if single_value:
         # optimization for a single value
         if (obj < -N or obj >= N):
             raise IndexError(
@@ -4384,11 +4397,6 @@ def delete(arr, obj, axis=None):
         slobj2[axis] = slice(obj+1, None)
         new[tuple(slobj)] = arr[tuple(slobj2)]
     else:
-        _obj = obj
-        obj = np.asarray(obj)
-        if obj.size == 0 and not isinstance(_obj, np.ndarray):
-            obj = obj.astype(intp)
-
         if obj.dtype == bool:
             if obj.shape != (N,):
                 raise ValueError('boolean array argument obj to delete '
