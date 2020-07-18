@@ -124,11 +124,11 @@ if __NUMPY_SETUP__:
 else:
     try:
         from numpy.__config__ import show as show_config
-    except ImportError:
+    except ImportError as e:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
-        raise ImportError(msg)
+        raise ImportError(msg) from e
 
     from .version import git_revision as __git_revision__
     from .version import version as __version__
