@@ -577,15 +577,18 @@ class TestSaveTxt:
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
-            # The test takes at least 6GB of memory, writes a file larger than 4GB
-            test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                                   for i in range(800000)], dtype=object)
-            with tempdir() as tmpdir:
-                try:
-                    np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
-                except MemoryError:
-                    memoryerror_raised.value = True
-                    raise
+            try:
+                # The test takes at least 6GB of memory, writes a file larger
+                # than 4GB
+                test_data = np.asarray([np.random.rand(
+                                        np.random.randint(50,100),4)
+                                        for i in range(800000)], dtype=object)
+                with tempdir() as tmpdir:
+                    np.savez(os.path.join(tmpdir, 'test.npz'),
+                             test_data=test_data)
+            except MemoryError:
+                memoryerror_raised.value = True
+                raise
         # run in a subprocess to ensure memory is released on PyPy, see gh-15775
         # Use an object in shared memory to re-raise the MemoryError exception
         # in our process if needed, see gh-16889
