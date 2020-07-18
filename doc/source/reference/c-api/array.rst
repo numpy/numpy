@@ -3120,15 +3120,15 @@ the C-API is needed then some additional steps must be taken.
     Internally, these #defines work as follows:
 
         * If neither is defined, the C-API is declared to be
-          :c:type:`static void**`, so it is only visible within the
+          ``static void**``, so it is only visible within the
           compilation unit that #includes numpy/arrayobject.h.
         * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
           :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
-          be :c:type:`void**`, so that it will also be visible to other
+          be ``void**``, so that it will also be visible to other
           compilation units.
         * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
           whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
-          declared to be :c:type:`extern void**`, so it is expected to
+          declared to be ``extern void**``, so it is expected to
           be defined in another compilation unit.
         * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
           also changes the name of the variable holding the C-API, which
