@@ -808,7 +808,8 @@ General check of Python Type
     conversion occurs. Otherwise, out will contain a borrowed
     reference to :c:data:`Py_NotImplemented` and no error condition is set.
 
-.. c:function:: PyArray_HasArrayInterfaceType(op, dtype, context, out)
+.. c:function:: PyArray_HasArrayInterfaceType(PyObject *op,
+        PyArray_Descr *dtype, PyObject *context, PyObject *out)
 
     If ``op`` implements any part of the array interface, then ``out``
     will contain a new reference to the newly created ndarray using
@@ -819,38 +820,40 @@ General check of Python Type
     that looks for the :obj:`~numpy.class.__array__` attribute. `context` is
     unused.
 
-.. c:function:: PyArray_IsZeroDim(op)
+.. c:function:: PyArray_IsZeroDim(PyObject *op)
 
     Evaluates true if *op* is an instance of (a subclass of)
     :c:data:`PyArray_Type` and has 0 dimensions.
 
-.. c:function:: PyArray_IsScalar(op, cls)
+.. c:var:: cls
+
+.. c:macro:: PyArray_IsScalar(PyObject *op, cls)
 
     Evaluates true if *op* is an instance of :c:data:`Py{cls}ArrType_Type`.
 
-.. c:function:: PyArray_CheckScalar(op)
+.. c:function:: PyArray_CheckScalar(PyObject *op)
 
     Evaluates true if *op* is either an array scalar (an instance of a
     sub-type of :c:data:`PyGenericArr_Type` ), or an instance of (a
     sub-class of) :c:data:`PyArray_Type` whose dimensionality is 0.
 
-.. c:function:: PyArray_IsPythonNumber(op)
+.. c:function:: PyArray_IsPythonNumber(PyObject *op)
 
     Evaluates true if *op* is an instance of a builtin numeric type (int,
     float, complex, long, bool)
 
-.. c:function:: PyArray_IsPythonScalar(op)
+.. c:function:: PyArray_IsPythonScalar(PyObject *op)
 
     Evaluates true if *op* is a builtin Python scalar object (int,
     float, complex, bytes, str, long, bool).
 
-.. c:function:: PyArray_IsAnyScalar(op)
+.. c:function:: PyArray_IsAnyScalar(PyObject *op)
 
     Evaluates true if *op* is either a Python scalar object (see
     :c:func:`PyArray_IsPythonScalar`) or an array scalar (an instance of a sub-
     type of :c:data:`PyGenericArr_Type` ).
 
-.. c:function:: PyArray_CheckAnyScalar(op)
+.. c:function:: PyArray_CheckAnyScalar(PyObject *op)
 
     Evaluates true if *op* is a Python scalar object (see
     :c:func:`PyArray_IsPythonScalar`), an array scalar (an instance of a
@@ -989,12 +992,12 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
 
     Type has fields associated with it.
 
-.. c:function:: PyArray_ISNOTSWAPPED(m)
+.. c:function:: PyArray_ISNOTSWAPPED(PyArrayObject *m)
 
     Evaluates true if the data area of the ndarray *m* is in machine
     byte-order according to the array's data-type descriptor.
 
-.. c:function:: PyArray_ISBYTESWAPPED(m)
+.. c:function:: PyArray_ISBYTESWAPPED(PyArrayObject *m)
 
     Evaluates true if the data area of the ndarray *m* is **not** in
     machine byte-order according to the array's data-type descriptor.
@@ -1019,9 +1022,9 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     Special case of :c:func:`PyArray_EquivTypes` (...) that does not accept
     flexible data types but may be easier to call.
 
-.. c:function:: int PyArray_EquivByteorders({byteorder} b1, {byteorder} b2)
+.. c:function:: int PyArray_EquivByteorders(int b1, int b2)
 
-    True if byteorder characters ( :c:data:`NPY_LITTLE`,
+    True if byteorder characters *b1* and *b2* ( :c:data:`NPY_LITTLE`,
     :c:data:`NPY_BIG`, :c:data:`NPY_NATIVE`, :c:data:`NPY_IGNORE` ) are
     either equal or equivalent as to their specification of a native
     byte order. Thus, on a little-endian machine :c:data:`NPY_LITTLE`
@@ -1142,8 +1145,8 @@ Converting data types
     storing the max value of the input types converted to a string or unicode.
 
 .. c:function:: PyArray_Descr* PyArray_ResultType( \
-        npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, \
-        PyArray_Descr**dtypes)
+        npy_intp narrs, PyArrayObject **arrs, npy_intp ndtypes, \
+        PyArray_Descr **dtypes)
 
     .. versionadded:: 1.6
 
@@ -1538,7 +1541,7 @@ Flag checking
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_CHKFLAGS(PyObject *arr, flags)
+.. c:function:: PyArray_CHKFLAGS(PyObject *arr, int flags)
 
     The first parameter, arr, must be an ndarray or subclass. The
     parameter, *flags*, should be an integer consisting of bitwise
@@ -2425,12 +2428,12 @@ an element copier function as a primitive.::
     functions should never set the Python exception on error, because
     they may be called from a multi-threaded context.
 
-.. c:function:: NPY_AUXDATA_FREE(auxdata)
+.. c:function:: NPY_AUXDATA_FREE(NpyAuxData *auxdata)
 
     A macro which calls the auxdata's free function appropriately,
     does nothing if auxdata is NULL.
 
-.. c:function:: NPY_AUXDATA_CLONE(auxdata)
+.. c:function:: NPY_AUXDATA_CLONE(NpyAuxData *auxdata)
 
     A macro which calls the auxdata's clone function appropriately,
     returning a deep copy of the auxiliary data.
