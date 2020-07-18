@@ -13,7 +13,8 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
-from multiprocessing import Process
+from multiprocessing import Process, Value
+from ctypes import c_bool
 
 import numpy as np
 import numpy.ma as ma
@@ -574,16 +575,29 @@ class TestSaveTxt:
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        def check_large_zip():
-            # The test takes at least 6GB of memory, writes a file larger than 4GB
-            test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                                   for i in range(800000)], dtype=object)
-            with tempdir() as tmpdir:
-                np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip(memoryerror_raised):
+            memoryerror_raised.value = False
+            try:
+                # The test takes at least 6GB of memory, writes a file larger
+                # than 4GB
+                test_data = np.asarray([np.random.rand(
+                                        np.random.randint(50,100),4)
+                                        for i in range(800000)], dtype=object)
+                with tempdir() as tmpdir:
+                    np.savez(os.path.join(tmpdir, 'test.npz'),
+                             test_data=test_data)
+            except MemoryError:
+                memoryerror_raised.value = True
+                raise
         # run in a subprocess to ensure memory is released on PyPy, see gh-15775
-        p = Process(target=check_large_zip)
+        # Use an object in shared memory to re-raise the MemoryError exception
+        # in our process if needed, see gh-16889
+        memoryerror_raised = Value(c_bool)
+        p = Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()
         p.join()
+        if memoryerror_raised.value:
+            raise MemoryError("Child process raised a MemoryError exception")
         assert p.exitcode == 0
 
 class LoadTxtBase:
