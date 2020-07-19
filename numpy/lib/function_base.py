@@ -4376,7 +4376,7 @@ def delete(arr, obj, axis=None):
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
 
-        if obj.shape == (1,):
+        elif obj.shape == (1,):
             obj = obj.item()
             single_value = True
 
