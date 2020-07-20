@@ -100,7 +100,6 @@ NPY_FINLINE float32x4_t npyv_shuffle_f32(float32x4_t a, float32x4_t b, int imm8)
     }
 #endif
 
-#define npyv_reverse_f32 npyv__reverse_f32
 // combine two vectors from lower and higher parts of two other vectors
 #define NPYV_IMPL_NEON_COMBINE(T_VEC, SFX)                     \
     NPY_FINLINE T_VEC##x2 npyv_combine_##SFX(T_VEC a, T_VEC b) \
