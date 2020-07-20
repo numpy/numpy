@@ -1601,7 +1601,7 @@ def trim_zeros(filt, trim='fb'):
 
     Parameters
     ----------
-    filt : array_like, 1 dimension
+    filt : 1-D array or sequence
         Input array.
     trim : str, optional
         A string with 'f' representing trim from front and 'b' to trim from
