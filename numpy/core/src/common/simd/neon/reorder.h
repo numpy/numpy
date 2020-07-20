@@ -70,7 +70,7 @@ NPY_FINLINE float32x4_t npy_shuffle_ps_2301(float32x4_t a, float32x4_t b)
     return vreinterpretq_m128_f32(vcombine_f32(a01, b23));
 }
 
-NPY_FINLINE float32x4_t npy_shuffle_ps_default(float32x4_t a, float32x4_t b, int imm8)
+NPY_FINLINE float32x4_t npy_shuffle_ps_default(float32x4_t a, float32x4_t b, npy_uint8 imm8)
 {
     float32x4_t ret;
     ret = vmovq_n_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), (imm) & 0x3));
