@@ -1594,7 +1594,10 @@ def _trim_zeros(filt, trim=None):
 @array_function_dispatch(_trim_zeros)
 def trim_zeros(filt, trim='fb'):
     """
-    Trim the leading and/or trailing zeros from a 1-D array or sequence.
+    Trim all leading and/or trailing elements which evaluate to ``False``.
+
+    .. versionchanged:: 1.20.0
+        Trim any element which evaluates to ``False`` instead of just zeros.
 
     Parameters
     ----------
@@ -1622,7 +1625,7 @@ def trim_zeros(filt, trim='fb'):
     In practice all leading and/or trailing elements will be trimmed as
     long as they evaluate to ``False``.
 
-    >>> b = np.array(('', '', '' ,'a', 'b', 'c', '', 'b', 'a', ''))
+    >>> b = np.array(['', '', '' ,'a', 'b', 'c', '', 'b', 'a', ''])
     >>> np.trim_zeros(b)
     array(['a', 'b', 'c', '', 'b', 'a'], dtype='<U1')
 
@@ -1656,12 +1659,9 @@ def trim_zeros(filt, trim='fb'):
             return filt[len_arr:]
 
     if 'B' in trim_upper:
-        last = len_arr -arr[::-1].argmax()
-        # `last == len(arr)` if all elements in `arr` are zero;
-        # `arr[last]` will thus raise an IndexError
-        try:
-            arr[last]
-        except IndexError:
+        last = len_arr - arr[::-1].argmax()
+        # If `last == 0 and arr[0] is False` then all elements are False
+        if not last and not arr[last]:
             return filt[len_arr:]
 
     return filt[first:last]
