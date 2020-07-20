@@ -1208,6 +1208,24 @@ class TestTrimZeros:
         res = trim_zeros(arr)
         assert_array_equal(arr, res)
 
+    def test_deprecation(self):
+        arr = np.random.rand(10, 10).tolist()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            try:
+                trim_zeros(arr)
+            except Exception as ex:
+                assert isinstance(ex, DeprecationWarning)
+                assert isinstance(ex.__cause__, ValueError)
+            else:
+                raise Assertion('Failed to raise an exception')
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            out = trim_zeros(arr)
+            assert_allclose(out, arr)
+
 
 class TestExtins:
 

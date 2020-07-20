@@ -1625,6 +1625,23 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
+    try:
+        return _trim_zeros_new(filt, trim)
+    except Exception as ex:
+        warning = DeprecationWarning(
+            "in the future trim_zeros will require a 1-D array as input"
+            "which is compatible with ndarray.astype(bool)"
+        )
+        warning.__cause__ = ex
+        warnings.warn(warning, stacklevel=3)
+
+        # Fall back to the old implementation if an exception is encountered
+        # Note that the same exception may or may not raised here as well
+        return _trim_zeros_old(filt, trim)
+
+
+def _trim_zeros_new(filt, trim='fb'):
+    """Newer optimized implementation of ``trim_zeros()``."""
     arr = np.asanyarray(filt).astype(bool, copy=False)
 
     if arr.ndim != 1:
@@ -1647,6 +1664,32 @@ def trim_zeros(filt, trim='fb'):
         if not arr[last - 1]:
             return filt[:0]
 
+    return filt[first:last]
+
+
+def _trim_zeros_old(filt, trim='fb'):
+    """
+    Older unoptimized implementation of ``trim_zeros()``.
+
+    Used as fallback in case an exception is encountered
+    in ``_trim_zeros_new()``.
+
+    """
+    first = 0
+    trim = trim.upper()
+    if 'F' in trim:
+        for i in filt:
+            if i != 0.:
+                break
+            else:
+                first = first + 1
+    last = len(filt)
+    if 'B' in trim:
+        for i in filt[::-1]:
+            if i != 0.:
+                break
+            else:
+                last = last - 1
     return filt[first:last]
 
 
