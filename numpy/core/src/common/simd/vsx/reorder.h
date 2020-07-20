@@ -32,7 +32,9 @@
 #define npyv_combineh_f64       vec_mergel
 
 #if (defined(__GNUC__) && __GNUC__ >= 8) || (defined(__clang__) && __clang_major__ >= 6)
-    #define npyv_shuffle_f32 vec_reve
+    // TODO: add simulation of shuffle
+    #define npyv_shuffle_f32 ((void)0)
+    // https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.cbcpx01/bif_vec_reve.htm?view=embed
     #define npyv_shuffle_f64 vec_reve
 #else
     // missing on old versions of clang and gcc
