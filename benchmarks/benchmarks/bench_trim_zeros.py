@@ -6,15 +6,12 @@ _FLOAT = np.dtype('float64')
 _COMPLEX = np.dtype('complex128')
 _INT = np.dtype('int64')
 _BOOL = np.dtype('bool')
-_VOID = np.dtype([('a', 'int64'), ('b', 'float64'), ('c', bool)])
-_STR = np.dtype('U32')
-_BYTES = np.dtype('S32')
 
 
 class TrimZeros(Benchmark):
     param_names = ["dtype", "size"]
     params = [
-        [_INT, _FLOAT, _COMPLEX, _BOOL, _STR, _BYTES, _VOID],
+        [_INT, _FLOAT, _COMPLEX, _BOOL],
         [3000, 30_000, 300_000]
     ]
 

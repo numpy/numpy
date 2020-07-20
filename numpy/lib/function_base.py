@@ -1594,10 +1594,7 @@ def _trim_zeros(filt, trim=None):
 @array_function_dispatch(_trim_zeros)
 def trim_zeros(filt, trim='fb'):
     """
-    Trim all leading and/or trailing elements which evaluate to ``False``.
-
-    .. versionchanged:: 1.20.0
-        Trim any element which evaluates to ``False`` instead of just zeros.
+    Trim the leading and/or trailing zeros from a 1-D array or sequence.
 
     Parameters
     ----------
@@ -1622,25 +1619,13 @@ def trim_zeros(filt, trim='fb'):
     >>> np.trim_zeros(a, 'b')
     array([0, 0, 0, ..., 0, 2, 1])
 
-    >>> b = np.array(['', '', '' ,'a', 'b', 'c', '', 'b', 'a', ''])
-    >>> np.trim_zeros(b)
-    array(['a', 'b', 'c', '', 'b', 'a'], dtype='<U1')
-
     The input data type is preserved, list/tuple in means list/tuple out.
 
     >>> np.trim_zeros([0, 1, 2, 0])
     [1, 2]
 
     """
-    try:
-        arr = np.asanyarray(filt, dtype=bool)
-
-    # str/bytes and structured arrays cannot be directly converted into bool arrays
-    except (TypeError, ValueError):
-        arr_any = np.asanyarray(filt)
-        _arr = arr_any.view(bool)
-        _arr.shape = arr_any.shape + (arr_any.dtype.itemsize,)
-        arr = _arr.any(axis=-1)
+    arr = np.asanyarray(filt).astype(bool, copy=False)
 
     if arr.ndim != 1:
         raise ValueError('trim_zeros requires an array of exactly one dimension')
