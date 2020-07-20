@@ -38,11 +38,8 @@
     #define npyv_shuffle_f64 vec_reve
 #else
     // missing on old versions of clang and gcc
-    NPY_FINLINE npyv_f32 npyv_shuffle_f32(npyv_f32 a, npyv_f32 b, int imm8)
-    {
-        const npyv_u8 perm = npyv_set_u8(12,13,14,15, 8,9,10,11, 4,5,6,7, 0,1,2,3);
-        return vec_perm(a, a, perm);
-    }
+    // TODO: add simulation of shuffle
+    #define npyv_shuffle_f32 ((void)0)
     #ifdef __clang__
         NPY_FINLINE npyv_f64 npyv_shuffle_f64(npyv_f64 a, npyv_f64 b, int imm8)
         { return vec_xxpermdi(a, b, 2); }
