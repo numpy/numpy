@@ -1169,7 +1169,7 @@ class TestTrimZeros:
     a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
     b = a.astype(float)
     c = a.astype(complex)
-    d = a.astype([('a', int), ('b', float), ('c', bool)])
+    d = a.astype([('a', int, (2, 3)), ('b', float), ('c', bool)])
 
     e = np.array([None, [], 1, False, 'b', 3.0, range(4), b''], dtype=object)
     f = np.array(['', '', 'a', '', 'b', 'c', 'd', ''])
@@ -1200,13 +1200,12 @@ class TestTrimZeros:
     def test_all_zero(self):
         for _arr in self.values():
             arr = np.zeros_like(_arr, dtype=_arr.dtype)
-            ref = np.zeros((), dtype=_arr.dtype)
 
             res1 = trim_zeros(arr, trim='B')
-            assert_array_equal(res1, ref)
+            assert len(res1) == 0
 
             res2 = trim_zeros(arr, trim='f')
-            assert_array_equal(res2, ref)
+            assert len(res2) == 0
 
 
 class TestExtins:
