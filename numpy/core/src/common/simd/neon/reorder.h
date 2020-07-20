@@ -86,9 +86,9 @@ NPY_FINLINE float32x4_t npyv_shuffle_f32(float32x4_t a, float32x4_t b, int imm8)
     float32x4_t ret;
     switch (imm8)
     {
-        case _MM_SHUFFLE(1, 0, 3, 2): ret = npy_shuffle_ps_1032((a), (b)); break;
-        case _MM_SHUFFLE(2, 3, 0, 1): ret = npy_shuffle_ps_2301((a), (b)); break;
-        default: ret = npy_shuffle_ps_default((a), (b), (imm8)); break;
+        case _MM_SHUFFLE(1, 0, 3, 2): ret = npy_shuffle_ps_1032(a, b); break;
+        case _MM_SHUFFLE(2, 3, 0, 1): ret = npy_shuffle_ps_2301(a, b); break;
+        default: ret = npy_shuffle_ps_default(a, b, imm8); break;
     }
     return ret;
 }
