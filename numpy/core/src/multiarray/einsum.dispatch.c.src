@@ -9,8 +9,7 @@
  */
 /**
  * @targets $maxopt baseline
- * SSE2 (AVX2 FMA3) AVX512F
- * VSX2
+ * SSE2 (AVX2 FMA3)
  * NEON ASIMDDP
  */
 #include "einsum_p.h"
@@ -22,6 +21,10 @@
         const int unroll_by = npyv_nlanes_f64 * 4;
     #endif
 #endif
+
+#define _MM_SHUFFLE(fp3,fp2,fp1,fp0) (((fp3) << 6) | ((fp2) << 4) | \
+                                     ((fp1) << 2) | ((fp0)))
+
 
 /**begin repeat
  * #name = byte, short, int, long, longlong,
@@ -642,8 +645,9 @@ finish_after_unrolled_loop:
         }
 
         /* Add the four SSE values and put in accum */
-        a = npyv_reverse_f32(accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = npyv_add_f32(a, accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = npyv_add_f32(a, accum_sse);
         npyv_storel_f32(&accum, accum_sse);
 
@@ -674,7 +678,7 @@ finish_after_unrolled_loop:
         }
 
         /* Add the two SSE2 values and put in accum */
-        a = npyv_reverse_f64(accum_sse);
+        a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
         accum_sse = npyv_add_f64(a, accum_sse);
         npyv_storel_f64(&accum, accum_sse);
         
@@ -728,13 +732,14 @@ finish_after_unrolled_loop:
 
 #if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = npyv_reverse_f32(accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
     accum_sse = npyv_add_f32(a, accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = npyv_add_f32(a, accum_sse);
     npyv_storel_f32(&accum, accum_sse);
 #elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = npyv_reverse_f64(accum_sse);
+    a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
     accum_sse = npyv_add_f64(a, accum_sse);
     npyv_storel_f64(&accum, accum_sse);
 #endif
@@ -793,8 +798,9 @@ finish_after_unrolled_loop:
             data1 += unroll_by;
         }
         /* Add the four SSE values and put in accum */
-        a = npyv_reverse_f32(accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = npyv_add_f32(a, accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = npyv_add_f32(a, accum_sse);
         npyv_storel_f32(&accum, accum_sse);
 
@@ -820,7 +826,7 @@ finish_after_unrolled_loop:
             data1 += unroll_by;
         }
         /* Add the two SSE2 values and put in accum */
-        a = npyv_reverse_f64(accum_sse);
+        a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
         accum_sse = npyv_add_f64(a, accum_sse);
         npyv_storel_f64(&accum, accum_sse);
 
@@ -865,13 +871,14 @@ finish_after_unrolled_loop:
 
 #if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = npyv_reverse_f32(accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
     accum_sse = npyv_add_f32(a, accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = npyv_add_f32(a, accum_sse);
     npyv_storel_f32(&accum, accum_sse);
 #elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = npyv_reverse_f64(accum_sse);
+    a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
     accum_sse = npyv_add_f64(a, accum_sse);
     npyv_storel_f64(&accum, accum_sse);
 #endif
@@ -930,8 +937,9 @@ finish_after_unrolled_loop:
             data0 += unroll_by;
         }
         /* Add the four SSE values and put in accum */
-        a = npyv_reverse_f32(accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = npyv_add_f32(a, accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = npyv_add_f32(a, accum_sse);
         npyv_storel_f32(&accum, accum_sse);
         /* Finish off the loop */
@@ -956,7 +964,7 @@ finish_after_unrolled_loop:
             data0 += unroll_by;
         }
         /* Add the two SSE2 values and put in accum */
-        a = npyv_reverse_f64(accum_sse);
+        a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
         accum_sse = npyv_add_f64(a, accum_sse);
         npyv_storel_f64(&accum, accum_sse);
         /* Finish off the loop */
@@ -1000,13 +1008,14 @@ finish_after_unrolled_loop:
 
 #if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = npyv_reverse_f32(accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
     accum_sse = npyv_add_f32(a, accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = npyv_add_f32(a, accum_sse);
     npyv_storel_f32(&accum, accum_sse);
 #elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = npyv_reverse_f64(accum_sse);
+    a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
     accum_sse = npyv_add_f64(a, accum_sse);
     npyv_storel_f64(&accum, accum_sse);
 #endif
@@ -1183,8 +1192,9 @@ finish_after_unrolled_loop:
         }
 
         /* Add the four SSE values and put in accum */
-        a = npyv_reverse_f32(accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
         accum_sse = npyv_add_f32(a, accum_sse);
+        a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
         accum_sse = npyv_add_f32(a, accum_sse);
         npyv_storel_f32(&accum, accum_sse);
 
@@ -1213,7 +1223,7 @@ finish_after_unrolled_loop:
         }
 
         /* Add the two SSE2 values and put in accum */
-        a = npyv_reverse_f64(accum_sse);
+        a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
         accum_sse = npyv_add_f64(a, accum_sse);
         npyv_storel_f64(&accum, accum_sse);
 
@@ -1272,13 +1282,14 @@ finish_after_unrolled_loop:
 
 #if NPY_SIMD && @float32@
     /* Add the four SSE values and put in accum */
-    a = npyv_reverse_f32(accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(2,3,0,1));
     accum_sse = npyv_add_f32(a, accum_sse);
+    a = npyv_shuffle_f32(accum_sse, accum_sse, _MM_SHUFFLE(1,0,3,2));
     accum_sse = npyv_add_f32(a, accum_sse);
     npyv_storel_f32(&accum, accum_sse);
 #elif NPY_SIMD_F64 && @float64@
     /* Add the two SSE2 values and put in accum */
-    a = npyv_reverse_f64(accum_sse);
+    a = npyv_shuffle_f64(accum_sse, accum_sse, _MM_SHUFFLE2(0,1));
     accum_sse = npyv_add_f64(a, accum_sse);
     npyv_storel_f64(&accum, accum_sse);
 #endif
