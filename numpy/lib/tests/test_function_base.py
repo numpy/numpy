@@ -1207,6 +1207,11 @@ class TestTrimZeros:
             res2 = trim_zeros(arr, trim='f')
             assert len(res2) == 0
 
+    def test_size_zero(self):
+        arr = np.zeros(0)
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
 
 class TestExtins:
 

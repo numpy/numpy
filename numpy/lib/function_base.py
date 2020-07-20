@@ -1644,6 +1644,8 @@ def trim_zeros(filt, trim='fb'):
 
     if arr.ndim != 1:
         raise ValueError('trim_zeros requires an array of exactly one dimension')
+    elif not len(arr):
+        return filt
 
     trim_upper = trim.upper()
     len_arr = len(arr)
