@@ -1644,8 +1644,8 @@ def trim_zeros(filt, trim='fb'):
 
     if 'B' in trim_upper:
         last = len_arr - arr[::-1].argmax()
-        # If `last == len(arr) and arr[-1] is False` then all elements are False
-        if last == len_arr and not arr[-1]:
+        # If `arr[last - 1] is False` then so are all other elements
+        if not arr[last - 1]:
             return filt[len_arr:]
 
     return filt[first:last]
