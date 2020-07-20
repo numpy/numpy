@@ -2430,9 +2430,10 @@ class TestRegression:
             assert b'numpy.core.multiarray' in s
 
     def test_object_casting_errors(self):
-        # gh-11993
+        # gh-11993 update to ValueError (see gh-16909), since strings can in
+        # principle be converted to complex, but this string cannot.
         arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
-        assert_raises(TypeError, arr.astype, 'c8')
+        assert_raises(ValueError, arr.astype, 'c8')
 
     def test_eff1d_casting(self):
         # gh-12711
