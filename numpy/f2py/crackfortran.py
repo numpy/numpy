@@ -2558,7 +2558,10 @@ def get_parameters(vars, global_params={}):
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
 
-            params[n] = param_eval(n, vars[n], v, g_params, params)
+            try:
+                params[n] = param_eval(n, vars[n], v, g_params, params)
+            except Exception as msg:
+                outmess('get_parameters: got "%s" on %s\n' % (msg, repr(n)))
 
             if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
@@ -2738,7 +2741,7 @@ def analyzevars(block):
                         # the dimension for this variable depends on a
                         # previously defined (scalar) parameter
                         d = str(params[d])
-                    if d[:d.find("(")] in params:
+                    if d.find("(") != -1 and d[:d.find("(")] in params:
                         # the dimension for this variable depends on a
                         # previously defined (array) parameter
                         d = param_parse(d, params)
@@ -2959,39 +2962,51 @@ analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z', re.I)
 
 
 def param_eval(n, varsn, v, g_params, params):
-    # Creates a dictionary of indices and values for each parameter in a
-    # parameter array to be evaluated later.
-    #
-    # WARNING: It is not possible to initialize multidimensional array
-    # parameters e.g. dimension(-3:1, 4, 3:5) at this point. This is because in
-    # Fortran initialization through array constructor requires the RESHAPE
-    # intrinsic function. Since the right-hand side of the parameter declaration
-    # is not executed in f2py, but rather at the compiled c/fortran extension, later, it is not possible
-    # to execute a reshape of a parameter array.
-    # One issue remains: if the user wants to access the array parameter from python,
-    # we should either
-    # 1) allow them to access the parameter array using python standard indexing (which
-    #    is often incompatible with the original fortran indexing)
-    # 2) allow the parameter array to be accessed in python as a dictionary with fortran
-    #    indices as keys
-    # We are choosing 2 for now.
-    if any(a[:9] == 'dimension' for a in varsn['attrspec']):
+    """
+    Creates a dictionary of indices and values for each parameter in a
+    parameter array to be evaluated later.
+
+    WARNING: It is not possible to initialize multidimensional array
+    parameters e.g. dimension(-3:1, 4, 3:5) at this point. This is because in
+    Fortran initialization through array constructor requires the RESHAPE
+    intrinsic function. Since the right-hand side of the parameter declaration
+    is not executed in f2py, but rather at the compiled c/fortran extension,
+    later, it is not possible to execute a reshape of a parameter array.
+    One issue remains: if the user wants to access the array parameter from
+    python, we should either
+    1) allow them to access the parameter array using python standard indexing
+       (which is often incompatible with the original fortran indexing)
+    2) allow the parameter array to be accessed in python as a dictionary with
+       fortran indices as keys
+    We are choosing 2 for now.
+    """
+    dim_attrspecs = [item[9:] for item in varsn['attrspec']
+                     if item[:9] == 'dimension']
+    if len(dim_attrspecs) > 1:
+        raise ValueError('dimension may appear at most once.')
+    elif dim_attrspecs:
         # This is an array parameter.
         # First, we parse the dimension information
-        a = [item[9:] for item in varsn['attrspec'] if item[:9] == 'dimension'][0]
-        dimrange = a.lstrip('(').rstrip(')')
+        a = dim_attrspecs[0]
+        a = a.strip()
+        if a[0] != "(" or a[-1] != ")":
+            raise ValueError(f'dimension for {n} can\'t be parsed')
+        dimrange = a[1:-1]
         dimrange = dimrange.split(',')
         if len(dimrange) == 1:
             # e.g. dimension(2) or dimension(-1:1)
             dimrange = dimrange[0].split(':')
             # now, dimrange is a list of 1 or 2 elements
             if len(dimrange) == 1:
-                dimrange = range(1, int(dimrange[0])+1)
+                bound = param_parse(dimrange[0], params)
+                dimrange = range(1, int(bound)+1)
             else:
-                dimrange = range(int(dimrange[0]), int(dimrange[1])+1)
+                lbound = param_parse(dimrange[0], params)
+                ubound = param_parse(dimrange[1], params)
+                dimrange = range(int(lbound), int(ubound)+1)
         else:
-            print(n)
-            raise Exception('param_eval: multidimensional array parameters not supported: %s\n' % repr(n))
+            outmess('param_eval: multidimensional array parameters not'
+                    ' supported: %s\n' % repr(n))
 
         # Parse parameter value
         v = v.lstrip('(/').rstrip('/)').split(',')
@@ -3017,9 +3032,54 @@ def param_eval(n, varsn, v, g_params, params):
 
 
 def param_parse(d, params):
-    # Recursively parse array parameter dimensions
-    dname = d[:d.find("(")]
-    ddims = d[d.find("(") + 1:d.rfind(")")]
+    """Recursively parse array dimensions.
+
+    Parses the declaration of an array variable or parameter
+    `dimension` keyword, and is called recursively if the
+    dimension for this array is a previously defined parameter
+    (found in `params`).
+
+    Parameters
+    ----------
+    d : str
+        Fortran expression describing the dimension of an array.
+    params : dict
+        Previously parsed parameters declared in the Fortran source file.
+
+    Returns
+    -------
+    out : str
+        Parsed dimension expression.
+
+    Examples
+    --------
+
+    * If the line being analyzed is
+
+      `integer, parameter, dimension(2) :: pa = (/ 3, 5 /)`
+
+      then `d = 2` and we return immediately, with
+
+      `param_parse(d, params) = '2'`
+
+    * If the line being analyzed is
+
+      `integer, parameter, dimension(pa(1)) :: pb = (/1, 2, 3/)`
+
+      then `d = pa(1)`; since `pa` is a previously parsed parameter,
+      and `pa(1) = 3`, we call `param_parse` recursively, to obtain
+
+      `param_parse(d, params) = '3'`
+
+    Notes
+    -----
+    The return values are strings.
+    """
+    if d.find("(") != -1:
+        dname = d[:d.find("(")]
+        ddims = d[d.find("(")+1:d.rfind(")")]
+    else:
+        return str(d)
     if '(' in ddims:
         # this dimension expression is an array element
         if ddims[:ddims.find("(")] in params:
