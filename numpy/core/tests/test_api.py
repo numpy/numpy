@@ -317,6 +317,29 @@ def test_string_to_boolean_cast_errors(dtype, out_dtype):
         with assert_raises(ValueError):
             arr.astype(out_dtype)
 
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("scalar_type",
+        [np.complex64, np.complex128, np.clongdouble])
+def test_string_to_complex_cast(str_type, scalar_type):
+    value = scalar_type(b"1+3j")
+    assert scalar_type(value) == 1+3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
+    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    arr = np.zeros(1, dtype=scalar_type)
+    arr[0] = value
+    assert arr[0] == 1+3j
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_none_to_nan_cast(dtype):
+    # Note that at the time of writing this test, the scalar constructors
+    # reject None
+    arr = np.zeros(1, dtype=dtype)
+    arr[0] = None
+    assert np.isnan(arr)[0]
+    assert np.isnan(np.array(None, dtype=dtype))[()]
+    assert np.isnan(np.array([None], dtype=dtype))[0]
+    assert np.isnan(np.array(None).astype(dtype))[()]
+
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
 
