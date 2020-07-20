@@ -1644,16 +1644,22 @@ def trim_zeros(filt, trim='fb'):
 
     if arr.ndim != 1:
         raise ValueError('trim_zeros requires an array of exactly one dimension')
-    elif not arr.any():
-        return filt[len(arr):]
 
     trim_upper = trim.upper()
+    len_arr = len(arr)
     first = last = None
 
     if 'F' in trim_upper:
         first = arr.argmax()
+        # If `arr[first] is False` then so are all other elements
+        if not arr[first]:
+            return filt[len_arr:]
+
     if 'B' in trim_upper:
-        last = len(arr) - arr[::-1].argmax()
+        last = len_arr - arr[::-1].argmax()
+        # If `last == 0 and arr[0] is False` then all elements are False
+        if not last and not arr[last]:
+            return filt[len_arr:]
 
     return filt[first:last]
 
