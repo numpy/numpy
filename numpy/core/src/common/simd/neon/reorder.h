@@ -77,7 +77,7 @@ NPY_FINLINE float32x4_t npy_shuffle_ps_default(float32x4_t a, float32x4_t b, int
     ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), ((imm) >> 2) & 0x3), ret, 1);
     ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 4) & 0x3), ret, 2);
     ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 6) & 0x3), ret, 3);
-    vreinterpretq_m128_f32(ret);
+    return vreinterpretq_m128_f32(ret);
 }
 
 // shuffle vector lanes
