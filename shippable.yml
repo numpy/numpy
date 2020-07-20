@@ -1,7 +1,7 @@
 branches:
-    except:
-       - master
-       - maintenance/*
+    only:
+        - master
+        - maintenance/*
 
 language: python
 
