@@ -675,7 +675,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     >>> fig = plt.figure(figsize=(7, 3))
     >>> ax = fig.add_subplot(131, title='imshow: square bins')
-    >>> plt.imshow(H, interpolation='nearest', origin='low',
+    >>> plt.imshow(H, interpolation='nearest', origin='lower',
     ...         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
     <matplotlib.image.AxesImage object at 0x...>
 
