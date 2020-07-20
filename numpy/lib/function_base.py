@@ -1622,9 +1622,6 @@ def trim_zeros(filt, trim='fb'):
     >>> np.trim_zeros(a, 'b')
     array([0, 0, 0, ..., 0, 2, 1])
 
-    In practice all leading and/or trailing elements will be trimmed as
-    long as they evaluate to ``False``.
-
     >>> b = np.array(['', '', '' ,'a', 'b', 'c', '', 'b', 'a', ''])
     >>> np.trim_zeros(b)
     array(['a', 'b', 'c', '', 'b', 'a'], dtype='<U1')
