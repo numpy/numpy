@@ -1968,7 +1968,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             else:
                 # Set to a default converter (but w/ different missing values)
                 zipit = zip(missing_values, filling_values)
-                converters = [StringConverter(dtype, locked=True,
+                converters = [StringConverter(dtype_flat[0], locked=True,
                                               missing_values=miss, default=fill)
                               for (miss, fill) in zipit]
         # Update the converters to use the user-defined ones

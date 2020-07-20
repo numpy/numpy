@@ -1918,6 +1918,15 @@ M   33  21.99
                         dtype=[(_, float) for _ in "abc"])
         assert_equal(mtest, ctrl)
 
+    def test_single_col_w_implicit_names(self):
+        # Test single column w implicit names
+        data = 'a_row_to_skip\na_header\n5\n6'
+        mtest = np.genfromtxt(TextIO(data), skip_header=1, delimiter=",", names=True, usecols=0)
+        # Note that squeeze doesn't work when specifying names
+        ctrl = np.array([(5,), (6,)],
+                        dtype=[('a_header', int)])
+        assert_equal(mtest, ctrl)
+
     def test_easy_structured_dtype(self):
         # Test easy structured dtype
         data = "0, 1, 2.3\n4, 5, 6.7"
