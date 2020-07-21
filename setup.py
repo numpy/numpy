@@ -56,7 +56,7 @@ Operating System :: MacOS
 MAJOR               = 1
 MINOR               = 19
 MICRO               = 1
-ISRELEASED          = False
+ISRELEASED          = True
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 
@@ -189,7 +189,7 @@ def check_submodules():
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
             raise ValueError('Submodule not clean: {}'.format(line))
-            
+
 
 
 class concat_license_files():
