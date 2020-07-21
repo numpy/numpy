@@ -23,7 +23,7 @@ in docstrings::
 
 or in RST-based documentations::
 
-    $ python refguide_check.py --rst docs
+    $ python refguide_check.py --rst doc
 """
 import copy
 import doctest
