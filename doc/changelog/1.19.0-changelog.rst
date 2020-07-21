@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 126 people contributed to this release.  People with a "+" by their
+A total of 125 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * Alex Henrie
@@ -24,7 +24,6 @@ names contributed a patch for the first time.
 * Chris Barker
 * Chris Holland +
 * Christian Kastner +
-* Chunlin +
 * Chunlin Fang +
 * Damien Caliste +
 * Dan Allan

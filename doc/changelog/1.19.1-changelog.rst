@@ -1,17 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.19.1 Release Notes
-==========================
-
-NumPy 1.19.1 fixes several bugs found in the 1.19.0 release, replaces several
-functions deprecated in the upcoming Python-3.9 release, has improved support
-for AIX, and has a number of development related updates to keep CI working
-with recent upstream changes.
-
-This release supports Python 3.6-3.8. Cython >= 0.29.21 needs to be used when
-building with Python 3.9 for testing purposes.
-
 
 Contributors
 ============
@@ -34,7 +20,6 @@ names contributed a patch for the first time.
 * Sayed Adel
 * Sebastian Berg
 * Tyler Reddy
-
 
 Pull requests merged
 ====================
