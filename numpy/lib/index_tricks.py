@@ -769,7 +769,7 @@ def fill_diagonal(a, val, wrap=False):
     a : array, at least 2-D.
       Array whose diagonal is to be filled, it gets modified in-place.
 
-    val : scalar or array_like optional
+    val : scalar or array_like
       Scalar value or array representing the value to be written on the diagonal, its type must be compatible with
       that of the array a.
 
