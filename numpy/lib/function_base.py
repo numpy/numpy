@@ -1630,7 +1630,7 @@ def trim_zeros(filt, trim='fb'):
     except Exception as ex:
         warning = DeprecationWarning(
             "in the future trim_zeros will require a 1-D array as input"
-            "which is compatible with ndarray.astype(bool)"
+            "that is compatible with ndarray.astype(bool)"
         )
         warning.__cause__ = ex
         warnings.warn(warning, stacklevel=3)
