@@ -770,7 +770,7 @@ def fill_diagonal(a, val, wrap=False):
       Array whose diagonal is to be filled, it gets modified in-place.
 
     val : scalar or array_like
-      Value or values to write on the diagonal; type must be compatible with that of array a. If an array of values, the range of values must be equal to the 
+      Value or values to write on the diagonal; type must be compatible with that of array a. If an array of values, the length of values must be equal to the 
       main diagonal to fill.
 
     wrap : bool
