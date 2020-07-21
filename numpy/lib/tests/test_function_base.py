@@ -1221,10 +1221,8 @@ class TestTrimZeros:
             else:
                 raise Assertion('Failed to raise an exception')
 
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            out = trim_zeros(arr)
-            assert_allclose(out, arr)
+        out = nfb._trim_zeros_old(arr)
+        assert_allclose(out, arr)
 
 
 class TestExtins:
