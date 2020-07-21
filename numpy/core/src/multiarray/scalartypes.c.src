@@ -2571,6 +2571,31 @@ void_dealloc(PyVoidScalarObject *v)
     Py_TYPE(v)->tp_free(v);
 }
 
+
+static PyObject *
+object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
+{
+    /*
+     * Object scalars should not actually exist, if they exist we should
+     * consider it to be a bug.
+     */
+    static PyObject *visibleDeprecationWarning = NULL;
+    npy_cache_import("numpy", "VisibleDeprecationWarning",
+                     &visibleDeprecationWarning);
+    if (visibleDeprecationWarning == NULL) {
+        return NULL;
+    }
+    if (PyErr_WarnEx(visibleDeprecationWarning,
+            "Creating a NumPy object scalar.  NumPy object scalars should "
+            "never be created.  If you see this message please inform the "
+            "NumPy developers.  Since this message should never be shown "
+            "this will raise a TypeError in the future.", 1) < 0) {
+        return NULL;
+    }
+    return gentype_alloc(type, items);
+}
+
+
 static void
 object_arrtype_dealloc(PyObject *v)
 {
@@ -3298,6 +3323,7 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.object_",
     .tp_basicsize = sizeof(PyObjectScalarObject),
+    .tp_alloc = object_arrtype_alloc,
     .tp_dealloc = (destructor)object_arrtype_dealloc,
     .tp_as_sequence = &object_arrtype_as_sequence,
     .tp_as_mapping = &object_arrtype_as_mapping,
