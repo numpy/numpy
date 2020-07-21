@@ -81,7 +81,7 @@ dtype
 The ``_DTypeLike`` type tries to avoid creation of dtype objects using
 dictionary of fields like below:
 
-.. code-below:: python
+.. code-block:: python
     >>> x = np.dtype({"field1": (float, 1), "field2": (int, 3)})
 
 Although this is valid Numpy code, the type checker will complain about it,
