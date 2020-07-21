@@ -1219,7 +1219,7 @@ class TestTrimZeros:
                 assert isinstance(ex, DeprecationWarning)
                 assert isinstance(ex.__cause__, ValueError)
             else:
-                raise Assertion('Failed to raise an exception')
+                raise AssertionError('Failed to raise an exception')
 
         out = nfb._trim_zeros_old(arr)
         assert_allclose(out, arr)
