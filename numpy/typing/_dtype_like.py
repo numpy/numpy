@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, List, Sequence, Tuple, Union, TYPE_CHECKING
+from typing import Any, List, Sequence, Tuple, Union, TYPE_CHECKING
 
 from numpy import dtype
 from ._shape import _ShapeLike
@@ -57,8 +57,13 @@ DtypeLike = Union[
     # {'names': ..., 'formats': ..., 'offsets': ..., 'titles': ...,
     #  'itemsize': ...}
     _DtypeDict,
-    # {'field1': ..., 'field2': ..., ...}
-    Dict[str, Tuple[_DtypeLikeNested, int]],
     # (base_dtype, new_dtype)
     Tuple[_DtypeLikeNested, _DtypeLikeNested],
 ]
+
+# NOTE: while it is possible to provide the dtype as a dict of
+# dtype-like objects (e.g. `{'field1': ..., 'field2': ..., ...}`),
+# this syntax is officially discourged and
+# therefore not included in the Union defining `DtypeLike`.
+#
+# See https://github.com/numpy/numpy/issues/16891 for more details.

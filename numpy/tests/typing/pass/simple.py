@@ -62,8 +62,6 @@ np.dtype(shape_like_dtype)
 object_dtype = [("field1", object)]
 np.dtype(object_dtype)
 
-np.dtype({"col1": ("U10", 0), "col2": ("float32", 10)})
-np.dtype((np.int32, {"real": (np.int16, 0), "imag": (np.int16, 2)}))
 np.dtype((np.int32, (np.int8, 4)))
 
 # Dtype comparision
