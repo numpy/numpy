@@ -27,4 +27,14 @@ NPY_NO_EXPORT int
 PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
                                                 PyObject *obj);
 
+/*
+ *Keysort an array providing indices that will sort a collection of arrays
+ *lexicographically.  The first key is sorted on first, followed by the second key
+ *-- requires that arg"merge"sort is available for each sort_key
+ *
+ *Returns None on success, returns NULL on failure
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_KeySort(PyArrayObject *self, PyObject *sort_keys, int axis);
+
 #endif

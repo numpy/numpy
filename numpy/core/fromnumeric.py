@@ -837,12 +837,12 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None, by=None):
+def _sort_dispatcher(a, axis=None, kind=None, order=None, *, by=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None, by=None):
+def sort(a, axis=-1, kind=None, order=None, *, by=None):
     """
     Return a sorted copy of an array.
 
@@ -869,10 +869,13 @@ def sort(a, axis=-1, kind=None, order=None, by=None):
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
 
-    by: tuple or object, optional
+    by: sequence of array-likes, optional
         With a given array `a` sort the elements not by arithmetic
         order, but by any arbitrary order defined by tuple, there can
-        be multiple keys in a tuple form , or just a single object
+        be multiple keys in a tuple/list form.
+        Tuple/List contains k (N,)-shaped sequences
+        The `k` different "columns" to be sorted.  The last column (or row if
+        `keys` is a 2D array) is the primary sort key.
 
     Returns
     -------
@@ -992,7 +995,6 @@ def sort(a, axis=-1, kind=None, order=None, by=None):
           dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
 
     """
-
     if axis is None:
         # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
@@ -1000,9 +1002,8 @@ def sort(a, axis=-1, kind=None, order=None, by=None):
     else:
         a = asanyarray(a).copy(order="K")
 
-
-    if by is not None and not isinstance(by, tuple):
-        by = (by,)
+    if by is not None and not isinstance(by, (tuple, list)):
+        raise TypeError("\'by\' is expected to be of a sequence type.")
 
     a.sort(axis=axis, kind=kind, order=order, by=by)
     return a

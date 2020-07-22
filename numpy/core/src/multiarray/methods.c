@@ -29,6 +29,7 @@
 #include "methods.h"
 #include "alloc.h"
 #include "mapping.h"
+#include "item_selection.h"
 
 /* NpyArg_ParseKeywords
  *
@@ -1229,7 +1230,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis=-1;
     int val;
-    NPY_SORTKIND sortkind = NPY_QUICKSORT;
+    NPY_SORTKIND sortkind = -1;
     PyObject *order = NULL;
     PyObject *by = NULL;
     PyArray_Descr *saved = NULL;
@@ -1237,7 +1238,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
     static char *kwlist[] = {"axis", "kind", "order", "by", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&OO:sort", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O$O:sort", kwlist,
                                     &axis,
                                     PyArray_SortkindConverter, &sortkind,
                                     &order, &by)) {
@@ -1266,18 +1267,23 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
     }
     if (by != Py_None && by != NULL) {
-        if (!PyTuple_CheckExact(by) && !PyList_CheckExact(by)) {
-            by = PyTuple_Pack(1, by);
-            if (by == NULL) {
-                return NULL;
-            }
+        if (sortkind == -1) {
+            sortkind = NPY_STABLESORT;
         }
-        PyObject *ret = PyArray_KeySort(self, by, axis);
-        if (ret == NULL){
+        if (sortkind != NPY_STABLESORT) {
+            PyErr_SetString(PyExc_ValueError, "When using by argument " \
+                            "sort-kind can be only \'stable\'.");
             return NULL;
         }
-        Py_DECREF(ret);
-        Py_RETURN_NONE;
+        if (!PyTuple_CheckExact(by) && !PyList_CheckExact(by)) {
+            PyErr_SetString(PyExc_TypeError, "\'by\' is expected to be"\
+                               "of a sequence type.");
+            return NULL;
+        }
+        return PyArray_KeySort(self, by, axis);
+    }
+    if (sortkind == -1) {
+        sortkind = NPY_QUICKSORT;
     }
     if (order == Py_None) {
         order = NULL;

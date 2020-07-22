@@ -1748,17 +1748,30 @@ class TestMethods:
         assert_raises(ValueError, lambda: a.transpose(0, 1, 2))
 
     def test_sort_by(self):
-        msg = "Test sorting by absolute values as keys"
         a = np.array([-2, -3, -4, -1, -6])
         b = np.sort(a, by=(np.absolute(a),))
         e = np.array([-1, -2, -3, -4, -6])
-        assert_equal(b, e, msg)
+        assert_equal(b, e)
         # Test sorting complex numbers by absolute value
-        msg = "Test sorting comple xnumbers by absolute value"
         carr = np.arange(4, dtype=np.complex128)[::-1].reshape(2, 2)
         carr_out = np.array([[2+0j, 3+0j], [0+0j, 1+0j]], dtype=np.complex128)
-        carr.sort(axis=1, by=np.absolute(carr))
-        assert_equal(carr, carr_out, msg)
+        carr.sort(axis=1, by=(np.absolute(carr),))
+        assert_equal(carr, carr_out)
+        #Testing sort by real, imag
+        carr = np.array([1 + 1j, 1-1j], dtype=np.complex128)
+        carr_out = np.array([1-1j, 1+1j], dtype=np.complex128)
+        carr.sort(by=(carr.imag, carr.real))
+        assert_equal(carr, carr_out)
+        # Look for different shape error
+        carr = np.array([[1+1j, 1-1j]], dtype=np.complex128)
+        assert_raises(ValueError, carr.sort, by=(carr.imag[0],))
+        # Only stable sort test
+        carr = np.array([[1+1j, 1-1j]], dtype=np.complex128)
+        assert_raises(ValueError, carr.sort, kind='quicksort')
+        # Passing empty tuple test
+        arr = np.array([4,1,7])
+        new_arr = np.sort(arr, by=())
+        assert_equal(arr, new_arr)
 
     def test_sort(self):
         # test ordering for floats and complex containing nans. It is only
@@ -1831,14 +1844,13 @@ class TestMethods:
         bi = (b * (1+1j)).astype(cdtype)
         setattr(ai, part, 1)
         setattr(bi, part, 1)
-        for kind in self.sort_kinds:
-            msg = "complex sort, %s part == 1, kind=%s" % (part, kind)
-            c = ai.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
-            c = bi.copy()
-            c.sort(kind=kind)
-            assert_equal(c, ai, msg)
+        msg = "complex sort, %s part == 1, kind=%s" % (part, 'stable')
+        c = ai.copy()
+        c.sort(kind='stable')
+        assert_equal(c, ai, msg)
+        c = bi.copy()
+        c.sort(kind='stable')
+        assert_equal(c, ai, msg)
 
     def test_sort_complex_byte_swapping(self):
         # test sorting of complex arrays requiring byte-swapping, gh-5441
