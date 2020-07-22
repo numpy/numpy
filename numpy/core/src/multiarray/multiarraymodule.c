@@ -1582,13 +1582,16 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     npy_bool subok = NPY_FALSE;
     npy_bool copy = NPY_TRUE;
     int ndmin = 0, nd;
+    PyObject* like;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     int flags = 0;
 
+    PyObject* array_function_result = NULL;
+
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
+                         "ndmin", "like", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_Format(PyExc_TypeError,
@@ -1596,6 +1599,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                      "%zd were given", PyTuple_GET_SIZE(args));
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function("array", args, kws);
+    if (array_function_result != NULL)
+        return array_function_result;
 
     /* super-fast path for ndarray argument calls */
     if (PyTuple_GET_SIZE(args) == 0) {
@@ -1674,13 +1681,14 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&iO:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
-                &ndmin)) {
+                &ndmin,
+                &like)) {
         goto clean_type;
     }
 
