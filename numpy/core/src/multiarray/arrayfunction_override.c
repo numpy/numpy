@@ -208,16 +208,11 @@ call_array_function(PyObject* argument, PyObject* method,
 }
 
 
-/*
- * Implements the __array_function__ protocol for a function, as described in
- * in NEP-18. See numpy.core.overrides for a full docstring.
- */
 NPY_NO_EXPORT PyObject *
-array_implement_array_function(
-    PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
+array_implement_array_function_internal(
+    PyObject *implementation, PyObject *public_api, PyObject *relevant_args,
+    PyObject *args, PyObject *kwargs)
 {
-    PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
-
     PyObject *types = NULL;
     PyObject *implementing_args[NPY_MAXARGS];
     PyObject *array_function_methods[NPY_MAXARGS];
@@ -227,12 +222,6 @@ array_implement_array_function(
     PyObject *result = NULL;
 
     static PyObject *errmsg_formatter = NULL;
-
-    if (!PyArg_UnpackTuple(
-            positional_args, "implement_array_function", 5, 5,
-            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
-        return NULL;
-    }
 
     relevant_args = PySequence_Fast(
         relevant_args,
@@ -271,7 +260,12 @@ array_implement_array_function(
         }
     }
     if (!any_overrides) {
-        result = PyObject_Call(implementation, args, kwargs);
+        // We only call the __array_function__ implementation if it's a Python
+        // dispatch. C dispatches don't have an `implementation` so we just
+        // return and let the originating C call to continue.
+        if (implementation != NULL) {
+            result = PyObject_Call(implementation, args, kwargs);
+        }
         goto cleanup;
     }
 
@@ -335,6 +329,62 @@ cleanup:
     Py_XDECREF(types);
     Py_DECREF(relevant_args);
     return result;
+}
+
+
+/*
+ * Implements the __array_function__ protocol for a Python function, as described in
+ * in NEP-18. See numpy.core.overrides for a full docstring.
+ */
+NPY_NO_EXPORT PyObject *
+array_implement_array_function(
+    PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
+{
+    PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
+
+    if (!PyArg_UnpackTuple(
+            positional_args, "implement_array_function", 5, 5,
+            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
+        return NULL;
+    }
+
+    return array_implement_array_function_internal(
+        implementation, public_api, relevant_args, args, kwargs);
+}
+
+
+/*
+ * Implements the __array_function__ protocol for a C function. Added as an extension
+ * to NEP-18 in an effort to bring NEP-35 to life with minimal dispatch overhead.
+ */
+NPY_NO_EXPORT PyObject *
+array_implement_c_array_function(
+    const char *function_name, PyObject *args, PyObject *kwargs)
+{
+    if (kwargs == NULL)
+        return NULL;
+
+    PyObject *relevant_args;
+
+    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
+     * in downstream libraries.
+     */
+    PyObject *like_key = PyUnicode_FromString("like");
+    if (PyDict_CheckExact(kwargs) && PyDict_Contains(kwargs, like_key)) {
+        relevant_args = PyTuple_Pack(1, PyDict_GetItem(kwargs, like_key));
+        PyDict_DelItem(kwargs, like_key);
+    }
+    else {
+        return NULL;
+    }
+    Py_DECREF(like_key);
+
+    PyObject *numpy_module_name = PyUnicode_FromString("numpy");
+    PyObject *numpy_module = PyImport_Import(numpy_module_name);
+    PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
+
+    return array_implement_array_function_internal(
+        NULL, public_api, relevant_args, args, kwargs);
 }
 
 
