@@ -1558,6 +1558,14 @@ DOUBLE_exp(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
         *(npy_double *)op1 = npy_exp(in1);
     }
 }
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const npy_double in1 = *(npy_double *)ip1;
+        *(npy_double *)op1 = npy_log(in1);
+    }
+}
 
 /**begin repeat
  * #isa = avx512f, fma#
@@ -1700,6 +1708,16 @@ DOUBLE_exp_avx512f(char **args, npy_intp const *dimensions, npy_intp const *step
     }
 }
 
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+DOUBLE_log_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_avx512f_log_DOUBLE(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const npy_double in1 = *(npy_double *)ip1;
+            *(npy_double *)op1 = npy_log(in1);
+        }
+    }
+}
 
 /**begin repeat
  * Float types

@@ -726,6 +726,7 @@ defdict = {
           None,
           TD('e', f='log', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
+          TD('d', simd=[('avx512f', 'd')]),
           TD('fdg' + cmplx, f='log'),
           TD(P, f='log'),
           ),

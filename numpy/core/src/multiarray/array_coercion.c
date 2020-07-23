@@ -434,7 +434,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
         };
     Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_REFCNT(&arr_fields) = 1;
+    Py_SET_REFCNT(&arr_fields, 1);
 
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*

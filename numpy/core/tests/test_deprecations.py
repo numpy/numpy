@@ -678,3 +678,18 @@ class TestDeprecatedGlobals(_DeprecationTestCase):
         # from np.compat
         self.assert_deprecated(lambda: np.long)
         self.assert_deprecated(lambda: np.unicode)
+
+
+class TestMatrixInOuter(_DeprecationTestCase):
+    # 2020-05-13 NumPy 1.20.0
+    message = (r"add.outer\(\) was passed a numpy matrix as "
+               r"(first|second) argument.")
+
+    def test_deprecated(self):
+        arr = np.array([1, 2, 3])
+        m = np.array([1, 2, 3]).view(np.matrix)
+        self.assert_deprecated(np.add.outer, args=(m, m), num=2)
+        self.assert_deprecated(np.add.outer, args=(arr, m))
+        self.assert_deprecated(np.add.outer, args=(m, arr))
+        self.assert_not_deprecated(np.add.outer, args=(arr, arr))
+

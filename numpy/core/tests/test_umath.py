@@ -657,6 +657,19 @@ class TestLog:
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.log(xf), yf)
 
+    def test_log_strides(self):
+        np.random.seed(42)
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        sizes = np.arange(2,100)
+        for ii in sizes:
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=100.0,size=ii))
+            x_special = x_f64.copy()
+            x_special[3:-1:4] = 1.0
+            y_true = np.log(x_f64)
+            y_special = np.log(x_special)
+            for jj in strides:
+                assert_array_almost_equal_nulp(np.log(x_f64[::jj]), y_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.log(x_special[::jj]), y_special[::jj], nulp=2)
 
 class TestExp:
     def test_exp_values(self):
@@ -3270,3 +3283,39 @@ def test_outer_subclass_preserve(arr):
     class foo(np.ndarray): pass
     actual = np.multiply.outer(arr.view(foo), arr.view(foo))
     assert actual.__class__.__name__ == 'foo'
+
+def test_outer_bad_subclass():
+    class BadArr1(np.ndarray):
+        def __array_finalize__(self, obj):
+            # The outer call reshapes to 3 dims, try to do a bad reshape.
+            if self.ndim == 3:
+                self.shape = self.shape + (1,)
+
+        def __array_prepare__(self, obj, context=None):
+            return obj
+
+    class BadArr2(np.ndarray):
+        def __array_finalize__(self, obj):
+            if isinstance(obj, BadArr2):
+                # outer inserts 1-sized dims. In that case disturb them.
+                if self.shape[-1] == 1:
+                    self.shape = self.shape[::-1]
+
+        def __array_prepare__(self, obj, context=None):
+            return obj
+
+    for cls in [BadArr1, BadArr2]:
+        arr = np.ones((2, 3)).view(cls)
+        with assert_raises(TypeError) as a:
+            # The first array gets reshaped (not the second one)
+            np.add.outer(arr, [1, 2])
+
+        # This actually works, since we only see the reshaping error:
+        arr = np.ones((2, 3)).view(cls)
+        assert type(np.add.outer([1, 2], arr)) is cls
+
+def test_outer_exceeds_maxdims():
+    deep = np.ones((1,) * 17)
+    with assert_raises(ValueError):
+        np.add.outer(deep, deep)
+

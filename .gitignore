@@ -75,6 +75,7 @@ doc/cdoc/build
 ./.shelf
 MANIFEST
 .cache
+pip-wheel-metadata
 
 # Paver generated files #
 #########################
@@ -106,6 +107,11 @@ Thumbs.db
 ##########################
 /.pytest_cache
 
+# doc build generated files #
+#############################
+doc/source/savefig/
+
+
 # Things specific to this project #
 ###################################
 numpy/core/__svn_version__.py
@@ -118,6 +124,7 @@ numpy/version.py
 site.cfg
 setup.cfg
 .tox
+numpy/random/lib/npyrandom.lib
 numpy/core/include/numpy/__multiarray_api.c
 numpy/core/include/numpy/__ufunc_api.c
 numpy/core/include/numpy/__umath_generated.c
@@ -166,9 +173,9 @@ numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
-numpy/core/src/umath/_umath_tests.dispatch.avx2.c
-numpy/core/src/umath/_umath_tests.dispatch.h
-numpy/core/src/umath/_umath_tests.dispatch.sse41.c
+numpy/core/src/multiarray/einsum.dispatch.c
+numpy/core/src/*/*.dispatch.*.c
+numpy/core/src/*/*.dispatch.h
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/**/generated/
@@ -198,3 +205,4 @@ tools/swig/test/Tensor.py
 tools/swig/test/Vector.py
 tools/swig/test/Vector_wrap.cxx
 tools/swig/test/Array.py
+

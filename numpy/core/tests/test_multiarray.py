@@ -1390,6 +1390,21 @@ class TestStructured:
         assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
 
+    def test_structured_asarray_is_view(self):
+        # A scalar viewing an array preserves its view even when creating a
+        # new array. This test documents behaviour, it may not be the best
+        # desired behaviour.
+        arr = np.array([1], dtype="i,i")
+        scalar = arr[0]
+        assert not scalar.flags.owndata  # view into the array
+        assert np.asarray(scalar).base is scalar
+        # But never when a dtype is passed in:
+        assert np.asarray(scalar, dtype=scalar.dtype).base is None
+        # A scalar which owns its data does not have this property.
+        # It is not easy to create one, one method is to use pickle:
+        scalar = pickle.loads(pickle.dumps(scalar))
+        assert scalar.flags.owndata
+        assert np.asarray(scalar).base is None
 
 class TestBool:
     def test_test_interning(self):
