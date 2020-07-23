@@ -770,8 +770,10 @@ def fill_diagonal(a, val, wrap=False):
       Array whose diagonal is to be filled, it gets modified in-place.
 
     val : scalar or array_like
-      Value or values to write on the diagonal; type must be compatible with that of array a. If an array of values, the length of values must be equal to the 
-      main diagonal to fill.
+      Value(s) to write on the diagonal. If `val` is scalar, the value is
+      written along the diagonal. If array-like, the flattened `val` is
+      written along the diagonal, repeating if necessary to fill all
+      diagonal entries.
 
     wrap : bool
       For tall matrices in NumPy version up to 1.6.2, the
