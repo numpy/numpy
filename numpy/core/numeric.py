@@ -270,10 +270,11 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     return res
 
 
-def _full_dispatcher(shape, fill_value, dtype=None, order='C', like=None):
+def _full_dispatcher(shape, fill_value, dtype=None, order=None, like=None):
     return(like,)
 
 
+@array_function_dispatch(_full_dispatcher)
 @set_module('numpy')
 def full(shape, fill_value, dtype=None, order='C', like=None):
     """
