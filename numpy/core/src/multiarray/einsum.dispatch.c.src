@@ -9,7 +9,8 @@
  */
 /**
  * @targets $maxopt baseline
- * SSE2 (AVX2 FMA3)
+ * SSE2 (AVX2 FMA3) AVX512F
+ * VSX2
  * NEON ASIMDDP
  */
 #include "einsum_p.h"

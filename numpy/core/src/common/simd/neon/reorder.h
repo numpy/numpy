@@ -58,26 +58,26 @@
 
 NPY_FINLINE float32x4_t npy_shuffle_ps_1032(float32x4_t a, float32x4_t b)
 {
-    float32x2_t a32 = vget_high_f32(vreinterpretq_f32_m128(a));
-    float32x2_t b10 = vget_low_f32(vreinterpretq_f32_m128(b));
-    return vreinterpretq_m128_f32(vcombine_f32(a32, b10));
+    float32x2_t a32 = vget_high_f32(a);
+    float32x2_t b10 = vget_low_f32(b);
+    return vcombine_f32(a32, b10);
 }
 
 NPY_FINLINE float32x4_t npy_shuffle_ps_2301(float32x4_t a, float32x4_t b)
 {
-    float32x2_t a01 = vrev64_f32(vget_low_f32(vreinterpretq_f32_m128(a)));
-    float32x2_t b23 = vrev64_f32(vget_high_f32(vreinterpretq_f32_m128(b)));
-    return vreinterpretq_m128_f32(vcombine_f32(a01, b23));
+    float32x2_t a01 = vrev64_f32(vget_low_f32(a));
+    float32x2_t b23 = vrev64_f32(vget_high_f32(b));
+    return vcombine_f32(a01, b23);
 }
 
 NPY_FINLINE float32x4_t npy_shuffle_ps_default(float32x4_t a, float32x4_t b, npy_uint8 imm8)
 {
     float32x4_t ret;
-    ret = vmovq_n_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), (imm) & 0x3));
-    ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(a), ((imm) >> 2) & 0x3), ret, 1);
-    ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 4) & 0x3), ret, 2);
-    ret = vsetq_lane_f32(vgetq_lane_f32(vreinterpretq_f32_m128(b), ((imm) >> 6) & 0x3), ret, 3);
-    return vreinterpretq_m128_f32(ret);
+    ret = vmovq_n_f32(vgetq_lane_f32(a, imm8 & 0x3));
+    ret = vsetq_lane_f32(vgetq_lane_f32(a, (imm8 >> 2) & 0x3), ret, 1);
+    ret = vsetq_lane_f32(vgetq_lane_f32(b, (imm8 >> 4) & 0x3), ret, 2);
+    ret = vsetq_lane_f32(vgetq_lane_f32(b, (imm8 >> 6) & 0x3), ret, 3);
+    return ret;
 }
 
 // shuffle vector lanes
@@ -94,7 +94,7 @@ NPY_FINLINE float32x4_t npyv_shuffle_f32(float32x4_t a, float32x4_t b, int imm8)
 }
 #ifdef __aarch64__
     // in fact it's revert operation
-    NPY_FINLINE float32x4_t npyv_shuffle_f64(float32x4_t a, float32x4_t b, int imm8)
+    NPY_FINLINE float64x2_t npyv_shuffle_f64(float64x2_t a, float64x2_t b, int imm8)
     {
         return vcombine_f64(vget_high_f64(a), vget_low_f64(b));
     }
