@@ -237,15 +237,6 @@ array_implement_array_function_internal(
         goto cleanup;
     }
 
-    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
-     * in downstream libraries.
-     */
-    PyObject *like_key = PyUnicode_FromString("like");
-    if (PyDict_CheckExact(kwargs) && PyDict_Contains(kwargs, like_key)) {
-        PyDict_DelItem(kwargs, like_key);
-    }
-    Py_DECREF(like_key);
-
     /*
      * Handle the typical case of no overrides. This is merely an optimization
      * if some arguments are ndarray objects, but is also necessary if no
@@ -348,6 +339,15 @@ array_implement_array_function(
         return NULL;
     }
 
+    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
+     * in downstream libraries.
+     */
+    PyObject *like_key = PyUnicode_FromString("like");
+    if (PyDict_CheckExact(kwargs) && PyDict_Contains(kwargs, like_key)) {
+        PyDict_DelItem(kwargs, like_key);
+    }
+    Py_DECREF(like_key);
+
     return array_implement_array_function_internal(
         implementation, public_api, relevant_args, args, kwargs);
 }
@@ -367,7 +367,8 @@ array_implement_c_array_function(
     PyObject *relevant_args;
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
-     * in downstream libraries.
+     * in downstream libraries. If that key isn't present, return NULL and
+     * let originating call to continue.
      */
     PyObject *like_key = PyUnicode_FromString("like");
     if (PyDict_CheckExact(kwargs) && PyDict_Contains(kwargs, like_key)) {
