@@ -701,6 +701,7 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
+    void *_buffer_info;  /* private buffer info, tagged to allow warning */
 } PyArrayObject_fields;
 
 /*
@@ -720,7 +721,7 @@ typedef struct tagPyArrayObject {
 } PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
+#define NPY_SIZEOF_PYARRAYOBJECT (PyArray_Type.tp_basicsize)
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {

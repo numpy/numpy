@@ -67,8 +67,11 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
     const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
 
     obj = (PyObject *)PyObject_Malloc(size);
+    if (obj == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
     /*
-     * Fixme. Need to check for no memory.
      * If we don't need to zero memory, we could use
      * PyObject_{New, NewVar} for this whole function.
      */
@@ -2596,16 +2599,30 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     .tp_basicsize = sizeof(PyObject),
 };
 
+
+static PyObject *
+void_alloc(PyTypeObject *type, Py_ssize_t items)
+{
+    PyVoidScalarObject *self = (PyVoidScalarObject *)gentype_alloc(type, items);
+    if (self == NULL) {
+        return NULL;
+    }
+    self->_buffer_info = buffer_info_tag(NULL);
+    return (PyObject *)self;
+}
+
+
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    _dealloc_cached_buffer_info((PyObject *)v);
-
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
+    if (_buffer_info_free(v->_buffer_info, (PyObject *)v) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -3014,6 +3031,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             npy_free_cache(destptr, memu);
             return PyErr_NoMemory();
         }
+        ((PyVoidScalarObject *)ret)->_buffer_info = buffer_info_tag(NULL);
         ((PyVoidScalarObject *)ret)->obval = destptr;
         Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
         ((PyVoidScalarObject *)ret)->descr =
@@ -4010,6 +4028,7 @@ initialize_numeric_types(void)
     /**end repeat**/
 
     PyStringArrType_Type.tp_itemsize = sizeof(char);
+    PyVoidArrType_Type.tp_alloc = void_alloc;
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;

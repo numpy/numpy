@@ -432,9 +432,11 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
 static void
 array_dealloc(PyArrayObject *self)
 {
-    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *) self;
 
-    _dealloc_cached_buffer_info((PyObject*)self);
+    if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
 
     if (fa->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);
@@ -1731,6 +1733,7 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
     /* nitems will always be 0 */
     PyObject *obj = PyObject_Malloc(type->tp_basicsize);
     PyObject_Init(obj, type);
+
     return obj;
 }
 
@@ -1745,7 +1748,7 @@ array_free(PyObject * v)
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.ndarray",
-    .tp_basicsize = NPY_SIZEOF_PYARRAYOBJECT,
+    .tp_basicsize = sizeof(PyArrayObject_fields),
     /* methods */
     .tp_dealloc = (destructor)array_dealloc,
     .tp_repr = (reprfunc)array_repr,

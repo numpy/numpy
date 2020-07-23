@@ -1,0 +1,17 @@
+Size of ``np.ndarray`` and ``np.void_`` changed
+-----------------------------------------------
+The size of the ``PyArrayObject`` and ``PyVoidScalarObject``
+structures have changed.  This also modifies the header
+definition::
+
+    #define NPY_SIZEOF_PYARRAYOBJECT (PyArray_Type.tp_basicsize)
+
+since the size should not be considered a compile time constant.
+
+In the case that your code subclasses any of these on the C-level,
+it will have to be recompiled and should add guards against such
+size changes for the future.  NumPy will attempt to give a graceful
+warning, but in many cases crashes are likely if this is done.
+
+We are not aware of any user impacted by this change. If your
+project is, please get in touch with the NumPy developers.
