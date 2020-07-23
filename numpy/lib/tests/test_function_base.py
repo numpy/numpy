@@ -1740,6 +1740,9 @@ class TestDigitize:
         # gh-11022
         x = 2**54  # loses precision in a float
         assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
+        assert_equal(np.digitize(x, [x - 1, x + 1], False, True), 1)
+        with assert_raises(RuntimeError):
+            np.digitize(x, [x - 1, 2 ** 63 - 1], False, True)
 
     @pytest.mark.xfail(
         reason="gh-11022: np.core.multiarray._monoticity loses precision")
@@ -1747,6 +1750,8 @@ class TestDigitize:
         # gh-11022
         x = 2**54  # loses precision in a float
         assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
+        with assert_raises(RuntimeError):
+            np.digitize(x, [-2 ** 63 - 1, x + 1], False, True)
 
 
 class TestUnwrap:
