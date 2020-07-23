@@ -4839,6 +4839,19 @@ def digitize(x, bins, right=False):
     if mono == 0:
         raise ValueError("bins must be monotonically increasing or decreasing")
 
+    if edge:
+        # =========  =============  ============================ ===== =====
+        # `right`    order of bins  returned index `i` satisfies delta index
+        # =========  =============  ============================ ===== =====
+        # ``False``  increasing     ``bins[i-1] <= x < bins[i]``   1    -1
+        # ``True``   increasing     ``bins[i-1] < x <= bins[i]``   -1    0
+        # ``False``  decreasing     ``bins[i-1] > x >= bins[i]``   1    0
+        # ``True``   decreasing     ``bins[i-1] >= x > bins[i]``   -1    -1
+        # =========  =============  ============================ ===== =====
+        delta = -1 if right else 1
+        idx = -1 if delta == mono else 0
+        bins[idx] = np.nextafter(bins[idx], bins[idx] + delta)
+
     # this is backwards because the arguments below are swapped
     side = 'left' if right else 'right'
     if mono == -1:
