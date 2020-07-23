@@ -4733,12 +4733,12 @@ def append(arr, values, axis=None):
     return concatenate((arr, values), axis=axis)
 
 
-def _digitize_dispatcher(x, bins, right=None, edge=None):
+def _digitize_dispatcher(x, bins, right=None, *, edge=None):
     return (x, bins)
 
 
 @array_function_dispatch(_digitize_dispatcher)
-def digitize(x, bins, right=False, edge=False):
+def digitize(x, bins, right=False, *, edge=False):
     """
     Return the indices of the bins to which each value in input array belongs.
 

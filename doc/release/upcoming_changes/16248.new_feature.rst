@@ -1,6 +1,6 @@
 Digitize Keyword Egde
 ---------------------
-A keyword argument has been added to `np.digitize` so that the
+A keyword-only argument has been added to `np.digitize` so that the
 edge case is covered in the last bin. For example,
 
 ```
