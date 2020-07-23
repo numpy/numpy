@@ -954,6 +954,9 @@ cdef inline bint is_integer_object(object obj):
 
     `isinstance(val, (int, np.integer)) and not isinstance(val, bool)`
 
+    Cython cannot optimize this into a C call on its own because
+    np.integer is not available as a C type.
+
     Parameters
     ----------
     val : object
@@ -972,7 +975,10 @@ cdef inline bint is_integer_object(object obj):
 
 cdef inline bint is_float_object(object obj):
     """
-    Cython equivalent of `isinstance(val, (float, np.float_))`
+    Cython equivalent of `isinstance(val, (float, np.floating))`
+
+    Cython cannot optimize this into a C call on its own because
+    np.floating is not available as a C type.
 
     Parameters
     ----------
@@ -988,7 +994,10 @@ cdef inline bint is_float_object(object obj):
 
 cdef inline bint is_complex_object(object obj):
     """
-    Cython equivalent of `isinstance(val, (complex, np.complex_))`
+    Cython equivalent of `isinstance(val, (complex, np.complexfloating))`
+
+    Cython cannot optimize this into a C call on its own because
+    np.complexfloating is not available as a C type.
 
     Parameters
     ----------
@@ -1005,6 +1014,9 @@ cdef inline bint is_complex_object(object obj):
 cdef inline bint is_bool_object(object obj):
     """
     Cython equivalent of `isinstance(val, (bool, np.bool_))`
+
+    Cython cannot optimize this into a C call on its own because
+    np.bool_ is not available as a C type.
 
     Parameters
     ----------
