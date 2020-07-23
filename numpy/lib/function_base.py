@@ -4850,7 +4850,11 @@ def digitize(x, bins, right=False):
         # =========  =============  ============================ ===== =====
         delta = -1 if right else 1
         idx = -1 if delta == mono else 0
-        bins[idx] = np.nextafter(bins[idx], bins[idx] + delta)
+        if np.issubdtype(bins.dtype, _nx.integer):
+            bins = _nx.int64(bins)
+            bins[idx] += delta
+        else:
+            bins[idx] = np.nextafter(bins[idx], bins[idx] + delta)
 
     # this is backwards because the arguments below are swapped
     side = 'left' if right else 'right'
