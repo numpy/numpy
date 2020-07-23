@@ -425,3 +425,47 @@ class TestNumPyFunctions:
         # note: the internal implementation of np.sum() calls the .sum() method
         array = np.array(1).view(MyArray)
         assert_equal(np.sum(array), 'summed')
+
+
+class TestArrayLike:
+
+    @requires_array_function
+    def test_array_like(self):
+        class MyArray():
+
+            def __init__(self, function=None):
+                self.function = function
+
+            def __array_function__(self, func, types, args, kwargs):
+                try:
+                    my_func = getattr(MyArray, func.__name__)
+                except AttributeError:
+                    return NotImplemented
+                return my_func(*args, **kwargs)
+
+            def array(*args, **kwargs):
+                return MyArray(MyArray.array)
+
+            def asarray(*args, **kwargs):
+                return MyArray.array(*args, **kwargs)
+
+            def ones(*args, **kwargs):
+                return MyArray(MyArray.ones)
+
+            def full(*args, **kwargs):
+                return MyArray(MyArray.full)
+
+
+        ref = MyArray.array()
+
+        array_like = np.array(1, like=ref)
+        assert type(array_like) is MyArray and array_like.function is MyArray.array
+
+        asarray_like = np.asarray(1, like=ref)
+        assert type(asarray_like) is MyArray and asarray_like.function is MyArray.array
+
+        ones_like = np.ones(1, like=ref)
+        assert type(ones_like) is MyArray and ones_like.function is MyArray.ones
+
+        full_like = np.full(1, 2, dtype=np.int64, like=ref)
+        assert type(full_like) is MyArray and full_like.function is MyArray.full
