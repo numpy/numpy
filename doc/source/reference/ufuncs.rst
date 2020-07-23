@@ -298,6 +298,11 @@ them by defining certain special methods.  For details, see
 :class:`ufunc`
 ==============
 
+.. autosummary::
+   :toctree: generated/
+
+   numpy.ufunc
+
 .. _ufuncs.kwargs:
 
 Optional keyword arguments
