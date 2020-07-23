@@ -1712,12 +1712,6 @@ class TestDigitize:
         bins = [1, 1, 0]
         assert_array_equal(digitize(x, bins, False), [3, 2, 0, 0])
         assert_array_equal(digitize(x, bins, True), [3, 3, 2, 0])
-        bins = [-1, 0, 1, 2]
-        assert_array_equal(digitize(x, bins, False, True), [1, 2, 3, 3])
-        assert_array_equal(digitize(x, bins, True, True), [1, 1, 2, 3])
-        bins = [2, 1, 0, -1]
-        assert_array_equal(digitize(x, bins, False, True), [3, 2, 1, 1])
-        assert_array_equal(digitize(x, bins, True, True), [3, 3, 2, 1])
         bins = [1, 1, 1, 1]
         assert_array_equal(digitize(x, bins, False), [0, 0, 4, 4])
         assert_array_equal(digitize(x, bins, True), [0, 0, 0, 4])
@@ -1746,7 +1740,6 @@ class TestDigitize:
         # gh-11022
         x = 2**54  # loses precision in a float
         assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
-        assert_equal(np.digitize(x, [x - 1, x + 1], False, True), 1)
 
     @pytest.mark.xfail(
         reason="gh-11022: np.core.multiarray._monoticity loses precision")
