@@ -8,13 +8,15 @@
 
 
 NPY_VISIBILITY_HIDDEN PyObject * npy_arrayfunction_str_like = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_arrayfunction_str_numpy = NULL;
 
 static int
 intern_strings(void)
 {
     npy_arrayfunction_str_like = PyUString_InternFromString("like");
+    npy_arrayfunction_str_numpy = PyUString_InternFromString("numpy");
 
-    return npy_arrayfunction_str_like && -1;
+    return npy_arrayfunction_str_like && npy_arrayfunction_str_numpy;
 }
 
 
@@ -381,13 +383,15 @@ NPY_NO_EXPORT PyObject *
 array_implement_c_array_function(
     const char *function_name, PyObject *args, PyObject *kwargs)
 {
+    PyObject *relevant_args;
+    PyObject *numpy_module = NULL, *public_api = NULL;
+    PyObject *result = NULL;
+
     if (kwargs == NULL)
         return NULL;
 
     if (!intern_strings())
         goto err;
-
-    PyObject *relevant_args;
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
@@ -403,11 +407,20 @@ array_implement_c_array_function(
         return NULL;
     }
 
-    PyObject *numpy_module_name = PyUnicode_FromString("numpy");
-    PyObject *numpy_module = PyImport_Import(numpy_module_name);
-    PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
+    numpy_module = PyImport_Import(npy_arrayfunction_str_numpy);
+    if (numpy_module != NULL) {
+        PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
+        if (public_api == NULL || !PyCallable_Check(public_api)) {
+            if (PyErr_Occurred()) {
+                PyErr_Format(PyExc_RuntimeError,
+                             "cannot import numpy.%s or it is not callable.",
+                             function_name);
+            }
+            goto cleanup;
+        }
+    }
 
-    return array_implement_array_function_internal(
+    result = array_implement_array_function_internal(
         NULL, public_api, relevant_args, args, kwargs);
 
 err:
@@ -415,7 +428,10 @@ err:
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load arrayfunction_override module.");
     }
-    return NULL;
+cleanup:
+    Py_XDECREF(numpy_module);
+    Py_XDECREF(public_api);
+    return result;
 }
 
 
