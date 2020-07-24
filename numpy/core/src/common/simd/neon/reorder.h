@@ -55,6 +55,7 @@
 
 #define _MM_SHUFFLE(fp3,fp2,fp1,fp0) (((fp3) << 6) | ((fp2) << 4) | \
                                      ((fp1) << 2) | ((fp0)))
+#define _MM_SHUFFLE2(x,y) (((x)<<1) | (y))
 
 NPY_FINLINE float32x4_t npy_shuffle_ps_1032(float32x4_t a, float32x4_t b)
 {
@@ -80,7 +81,12 @@ NPY_FINLINE float32x4_t npy_shuffle_ps_default(float32x4_t a, float32x4_t b, npy
     return ret;
 }
 
-// shuffle vector lanes
+/* shuffle vector lanes: 
+ * Arranges the single-precision (32-bit) floating-point elements of
+ * two vectors in a specific order and assign them to the target,Eg:
+ * _MM_SHUFFLE(1, 0, 3, 2) means combine element 1 and 0 of vector a with
+ * element 3 and 2 of verctor b.
+ */
 NPY_FINLINE float32x4_t npyv_shuffle_f32(float32x4_t a, float32x4_t b, int imm8)
 {
     float32x4_t ret;
@@ -93,10 +99,23 @@ NPY_FINLINE float32x4_t npyv_shuffle_f32(float32x4_t a, float32x4_t b, int imm8)
     return ret;
 }
 #ifdef __aarch64__
-    // in fact it's revert operation
+    /* shuffle vector lanes: 
+    * Arranges the double-precision (64-bit) floating-point elements of
+    * two vectors in a specific order and assign them to the target, Eg:
+    * _MM_SHUFFLE2(1, 0) means combine element 1 of vector a with
+    * element 0 of verctor b.
+    */
     NPY_FINLINE float64x2_t npyv_shuffle_f64(float64x2_t a, float64x2_t b, int imm8)
     {
-        return vcombine_f64(vget_high_f64(a), vget_low_f64(b));
+        float64x2_t ret;
+        switch (imm8)
+        {
+            case _MM_SHUFFLE2(0, 0): ret = vcombine_f64(vget_low_f64(a), vget_low_f64(b)); break;
+            case _MM_SHUFFLE2(0, 1): ret = vcombine_f64(vget_low_f64(a), vget_high_f64(b)); break;
+            case _MM_SHUFFLE2(1, 0): ret = vcombine_f64(vget_high_f64(a), vget_low_f64(b)); break;
+            case _MM_SHUFFLE2(1, 1): ret = vcombine_f64(vget_high_f64(a), vget_high_f64(b)); break;
+        }
+        return ret;
     }
 #endif
 
