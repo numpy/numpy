@@ -1221,7 +1221,58 @@ PyArray_DiscoverDTypeAndShape(
         }
         else if (fixed_DType->type_num != NPY_OBJECT) {
             /* Only object DType supports ragged cases unify error */
-            if (!too_deep) {
+
+            /*
+             * We used to let certain ragged arrays pass if they also
+             * support e.g. conversion using `float(arr)`, which currently
+             * works for arrays with only one element.
+             * Thus we catch at least most of such cases here and give a
+             * DeprecationWarning instead of an error.
+             * Note that some of these will actually error later on when
+             * attempting to do the actual assign.
+             */
+            int deprecate_single_element_ragged = 0;
+            coercion_cache_obj *current = *coercion_cache_head;
+            while (current != NULL) {
+                if (current->sequence) {
+                    if (current->depth == ndim) {
+                        /*
+                         * Assume that only array-likes will allow the deprecated
+                         * behaviour
+                         */
+                        deprecate_single_element_ragged = 0;
+                        break;
+                    }
+                    /* check next converted sequence/array-like */
+                    current = current->next;
+                    continue;
+                }
+                PyArrayObject *arr = (PyArrayObject *)(current->arr_or_sequence);
+                assert(PyArray_NDIM(arr) + current->depth >= ndim);
+                if (PyArray_NDIM(arr) != ndim - current->depth) {
+                    /* This array is not compatible with the final shape */
+                    if (PyArray_SIZE(arr) != 1) {
+                        deprecate_single_element_ragged = 0;
+                        break;
+                    }
+                    deprecate_single_element_ragged = 1;
+                }
+                current = current->next;
+            }
+
+            if (deprecate_single_element_ragged) {
+                /* Deprecated 2019-07-24, NumPy 1.20 */
+                if (DEPRECATE(
+                        "setting an array element with a sequence. "
+                        "This was supported in some cases where the elements "
+                        "are arrays with a single element. For example "
+                        "`np.array([1, np.array([2])], dtype=int)`. "
+                        "In the future this will raise the same ValueError as "
+                        "`np.array([1, [2]], dtype=int)`.") < 0) {
+                    goto fail;
+                }
+            }
+            else if (!too_deep) {
                 PyObject *shape = PyArray_IntTupleFromIntp(ndim, out_shape);
                 PyErr_Format(PyExc_ValueError,
                         "setting an array element with a sequence. The "

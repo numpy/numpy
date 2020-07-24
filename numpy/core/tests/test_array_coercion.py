@@ -441,7 +441,7 @@ class TestNested:
         for i in range(np.MAXDIMS - 1):
             nested = [nested]
 
-        with pytest.raises(ValueError):
+        with pytest.warns(DeprecationWarning):
             # It will refuse to assign the array into
             np.array(nested, dtype="float64")
 
