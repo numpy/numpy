@@ -5,7 +5,7 @@ import datetime
 import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
-    assert_raises_regex,
+    assert_raises_regex, assert_array_equal
     )
 from numpy.compat import pickle
 
@@ -244,7 +244,6 @@ class TestDateTime:
         assert_equal(np.datetime64('1980-01-25T14:36:22.5'),
                      np.datetime64(datetime.datetime(1980, 1, 25,
                                                 14, 36, 22, 500000)))
-
         # Construction with time units from a date is okay
         assert_equal(np.datetime64('1920-03-13', 'h'),
                      np.datetime64('1920-03-13T00'))
@@ -262,6 +261,18 @@ class TestDateTime:
                      np.datetime64('1920-03'))
         assert_equal(np.datetime64('1920-03-13T18:33:12.5', 'Y'),
                      np.datetime64('1920'))
+
+        # Construction from numpy types
+        assert_array_equal(np.datetime64(np.int32(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.int64(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.uint(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.uint32(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
+        assert_array_equal(np.datetime64(np.uint64(1262304000), 's'),
+                     np.datetime64(1262304000, 's'))
 
     def test_datetime_scalar_construction_timezone(self):
         # verify that supplying an explicit timezone works, but is deprecated
@@ -428,6 +439,18 @@ class TestDateTime:
         expected = np.array(datetime.timedelta(seconds=20),
                             np.timedelta64)
         assert_equal(actual, expected)
+
+        # Construction from numpy types
+        assert_array_equal(np.timedelta64(np.int32(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.int64(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.uint(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.uint32(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
+        assert_array_equal(np.timedelta64(np.uint64(1262304000), 's'),
+                     np.timedelta64(1262304000, 's'))
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
