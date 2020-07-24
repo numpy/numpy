@@ -587,7 +587,7 @@ class TestArrayLikes:
                 pass
 
             @property
-            def __array__struct(self):
+            def __array_struct__(self):
                 pass
 
             def __array__(self):
