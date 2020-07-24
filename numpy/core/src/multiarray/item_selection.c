@@ -1788,27 +1788,48 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArrayObject *ap3 = NULL;
     PyArrayObject *sorter = NULL;
     PyArrayObject *ret = NULL;
-    PyArray_Descr *dtype;
+    PyArray_Descr *dtype, *dtype_temp;
     int ap1_flags = NPY_ARRAY_NOTSWAPPED | NPY_ARRAY_ALIGNED;
     PyArray_BinSearchFunc *binsearch = NULL;
+    PyArray_TransferBinSearchFunc *transferbinsearch = NULL;
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
+    PyArray_TransferArgBinSearchFunc *transferargbinsearch = NULL;
+    PyArray_StridedUnaryOp *transfer = NULL;
+    NpyAuxData *transfer_data = NULL;
+    int out_needs_api = 0;
+    int aligned = 0;
     NPY_BEGIN_THREADS_DEF;
+
+    if (PyArray_NDIM(op1) != 1) {
+        PyErr_SetString(PyExc_ValueError, "Haystack array must be 1-D");
+        return NULL;
+    }
 
     /* Find common type */
     dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
     if (dtype == NULL) {
         return NULL;
     }
+    /* ensure that dtype is NBO */
+    if (!PyArray_ISNBO(dtype->byteorder)) {
+        dtype_temp = PyArray_DescrNewByteorder(dtype, NPY_NATIVE);
+        Py_DECREF(dtype);
+        if (dtype_temp == NULL) {
+            return NULL;
+        }
+        dtype = dtype_temp;
+    }
     /* refs to dtype we own = 1 */
 
     /* Look for binary search function */
     if (perm) {
-        argbinsearch = get_argbinsearch_func(dtype, side);
+        get_argbinsearch_func(dtype, side, &argbinsearch, &transferargbinsearch);
     }
     else {
-        binsearch = get_binsearch_func(dtype, side);
+        get_binsearch_func(dtype, side, &binsearch, &transferbinsearch);
     }
-    if (binsearch == NULL && argbinsearch == NULL) {
+    if (binsearch == NULL && transferbinsearch == NULL
+        && argbinsearch == NULL && transferargbinsearch == NULL) {
         PyErr_SetString(PyExc_TypeError, "compare not supported for type");
         /* refs to dtype we own = 1 */
         Py_DECREF(dtype);
@@ -1831,18 +1852,40 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         return NULL;
     }
 
-    /*
-     * If the needle (ap2) is larger than the haystack (op1) we copy the
-     * haystack to a contiguous array for improved cache utilization.
+    /* Copy just the elements of op1 that are needed if it has the wrong type
+     * or is not aligned but it is larger than 100 elements and larger than the
+     * needle (ap2). Otherwise, make a copy.  In the event that the needle is
+     * large, we also force a continuous copy to improve cache utilization.
      */
-    if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
-        ap1_flags |= NPY_ARRAY_CARRAY_RO;
+    if ((PyArray_EquivTypes(dtype, PyArray_DESCR(op1)) == NPY_FALSE
+       || !PyArray_ISALIGNED(op1)) && PyArray_SIZE(op1) > 100
+       && PyArray_SIZE(ap2)*10 < PyArray_SIZE(op1)
+       && (transferbinsearch || transferargbinsearch)) {
+        aligned = copycast_isaligned(1, PyArray_SHAPE(op1), PyArray_DESCR(op1),
+                    PyArray_BYTES(op1), PyArray_STRIDES(op1));
+        if (PyArray_GetDTypeTransferFunction(aligned, PyArray_STRIDES(op1)[0],
+                    0, PyArray_DESCR(op1), dtype, 1, &transfer, &transfer_data,
+                    &out_needs_api) != NPY_SUCCEED) {
+            /* Can this fail but prompt_types above succeed?
+             * Fall back to copying if it does. */
+            ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
+                                        1, 1, ap1_flags, NULL);
+            /* refs to dtype we own = 0, array creation steals one even on failure */
+            if (ap1 == NULL) {
+                goto fail;
+            }
+        }
     }
-    ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
-                                1, 1, ap1_flags, NULL);
-    /* refs to dtype we own = 0, array creation steals one even on failure */
-    if (ap1 == NULL) {
-        goto fail;
+    else {
+        if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
+            ap1_flags |= NPY_ARRAY_CARRAY_RO;
+        }
+        ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
+                                    1, 1, ap1_flags, NULL);
+        /* refs to dtype we own = 0, array creation steals one even on failure */
+        if (ap1 == NULL) {
+            goto fail;
+        }
     }
 
     if (perm) {
@@ -1870,7 +1913,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                         "could not parse sorter argument");
             goto fail;
         }
-        if (PyArray_SIZE(sorter) != PyArray_SIZE(ap1)) {
+        if (PyArray_SIZE(sorter) != PyArray_SIZE(op1)) {
             PyErr_SetString(PyExc_ValueError,
                         "sorter.size must equal a.size");
             goto fail;
@@ -1887,29 +1930,61 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     }
 
     if (ap3 == NULL) {
-        /* do regular binsearch */
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
-        binsearch((const char *)PyArray_DATA(ap1),
-                  (const char *)PyArray_DATA(ap2),
-                  (char *)PyArray_DATA(ret),
-                  PyArray_SIZE(ap1), PyArray_SIZE(ap2),
-                  PyArray_STRIDES(ap1)[0], PyArray_DESCR(ap2)->elsize,
-                  NPY_SIZEOF_INTP, ap2);
+        if (ap1 == NULL) {
+            /* do binsearch with transfer func */
+            /* we are ignoring out_needs_api from above assuming that checking
+             * ap2 is sufficient */
+            transferbinsearch(PyArray_BYTES(op1),
+                      PyArray_BYTES(ap2),
+                      PyArray_BYTES(ret),
+                      PyArray_SIZE(op1), PyArray_SIZE(ap2),
+                      PyArray_STRIDES(op1)[0], PyArray_ITEMSIZE(ap2), NPY_SIZEOF_INTP,
+                      PyArray_ITEMSIZE(op1),
+                      transfer, transfer_data,
+                      ap2);
+        }
+        else {
+            /* do regular binsearch */
+            binsearch((const char *)PyArray_DATA(ap1),
+                      (const char *)PyArray_DATA(ap2),
+                      (char *)PyArray_DATA(ret),
+                      PyArray_SIZE(ap1), PyArray_SIZE(ap2),
+                      PyArray_STRIDES(ap1)[0], PyArray_DESCR(ap2)->elsize,
+                      NPY_SIZEOF_INTP, ap2);
+        }
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+        NPY_AUXDATA_FREE(transfer_data);
     }
     else {
-        /* do binsearch with a sorter array */
         int error = 0;
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
-        error = argbinsearch((const char *)PyArray_DATA(ap1),
-                             (const char *)PyArray_DATA(ap2),
-                             (const char *)PyArray_DATA(sorter),
-                             (char *)PyArray_DATA(ret),
-                             PyArray_SIZE(ap1), PyArray_SIZE(ap2),
-                             PyArray_STRIDES(ap1)[0],
-                             PyArray_DESCR(ap2)->elsize,
-                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
+        if (ap1 == NULL) {
+            /* do binsearch with sorter array and tranfer function */
+            error = transferargbinsearch(PyArray_BYTES(op1),
+                                 (const char *)PyArray_DATA(ap2),
+                                 (const char *)PyArray_DATA(sorter),
+                                 (char *)PyArray_DATA(ret),
+                                 PyArray_SIZE(op1), PyArray_SIZE(ap2),
+                                 PyArray_STRIDES(op1)[0],
+                                 PyArray_DESCR(ap2)->elsize,
+                                 PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP,
+                                 PyArray_ITEMSIZE(op1), transfer, transfer_data,
+                                 ap2);
+         }
+        else {
+            /* do binsearch with a sorter array */
+            error = argbinsearch((const char *)PyArray_DATA(ap1),
+                                 (const char *)PyArray_DATA(ap2),
+                                 (const char *)PyArray_DATA(sorter),
+                                 (char *)PyArray_DATA(ret),
+                                 PyArray_SIZE(ap1), PyArray_SIZE(ap2),
+                                 PyArray_STRIDES(ap1)[0],
+                                 PyArray_DESCR(ap2)->elsize,
+                                 PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
+        }
         NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+        NPY_AUXDATA_FREE(transfer_data);
         if (error < 0) {
             PyErr_SetString(PyExc_ValueError,
                         "Sorter index out of range.");
@@ -1918,7 +1993,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         Py_DECREF(ap3);
         Py_DECREF(sorter);
     }
-    Py_DECREF(ap1);
+    Py_XDECREF(ap1);
     Py_DECREF(ap2);
     return (PyObject *)ret;
 
@@ -1928,6 +2003,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     Py_XDECREF(ap3);
     Py_XDECREF(sorter);
     Py_XDECREF(ret);
+    NPY_AUXDATA_FREE(transfer_data);
     return NULL;
 }
 

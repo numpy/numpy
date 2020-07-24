@@ -1,7 +1,11 @@
 #ifndef __NPY_BINSEARCH_H__
 #define __NPY_BINSEARCH_H__
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#include "lowlevel_strided_loops.h"
 #include "npy_sort.h"
+
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
 
@@ -12,20 +16,35 @@ typedef void (PyArray_BinSearchFunc)(const char*, const char*, char*,
                                      npy_intp, npy_intp, npy_intp,
                                      PyArrayObject*);
 
+typedef void (PyArray_TransferBinSearchFunc)(char*, const char*, char*,
+                                     npy_intp, npy_intp,
+                                     npy_intp, npy_intp, npy_intp,
+                                     npy_intp, PyArray_StridedUnaryOp*, NpyAuxData*,
+                                     PyArrayObject*);
+
 typedef int (PyArray_ArgBinSearchFunc)(const char*, const char*,
                                        const char*, char*,
                                        npy_intp, npy_intp, npy_intp,
                                        npy_intp, npy_intp, npy_intp,
                                        PyArrayObject*);
 
+typedef int (PyArray_TransferArgBinSearchFunc)(char*, const char*,
+                                       const char*, char*,
+                                       npy_intp, npy_intp, npy_intp,
+                                       npy_intp, npy_intp, npy_intp,
+                                       npy_intp, PyArray_StridedUnaryOp*, NpyAuxData*,
+                                       PyArrayObject*);
+
 typedef struct {
     int typenum;
     PyArray_BinSearchFunc *binsearch[NPY_NSEARCHSIDES];
+    PyArray_TransferBinSearchFunc *transferbinsearch[NPY_NSEARCHSIDES];
 } binsearch_map;
 
 typedef struct {
     int typenum;
     PyArray_ArgBinSearchFunc *argbinsearch[NPY_NSEARCHSIDES];
+    PyArray_TransferArgBinSearchFunc *transferargbinsearch[NPY_NSEARCHSIDES];
 } argbinsearch_map;
 
 /**begin repeat
@@ -45,6 +64,12 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
                         npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
                         PyArrayObject *unused);
+NPY_VISIBILITY_HIDDEN void
+transferbinsearch_@side@_@suff@(char *arr, const char *key, char *ret,
+                        npy_intp arr_len, npy_intp key_len,
+                        npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
+                        npy_intp arr_itemsize, PyArray_StridedUnaryOp *transfer,
+                        NpyAuxData *transfer_data, PyArrayObject *NOT_USED);
 NPY_VISIBILITY_HIDDEN int
 argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            const char *sort, char *ret,
@@ -52,6 +77,14 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            npy_intp arr_str, npy_intp key_str,
                            npy_intp sort_str, npy_intp ret_str,
                            PyArrayObject *unused);
+NPY_VISIBILITY_HIDDEN int
+transferargbinsearch_@side@_@suff@(char *arr, const char *key,
+                           const char *sort, char *ret,
+                           npy_intp arr_len, npy_intp key_len,
+                           npy_intp arr_str, npy_intp key_str,
+                           npy_intp sort_str, npy_intp ret_str,
+                           npy_intp arr_itemsize, PyArray_StridedUnaryOp *transfer,
+                           NpyAuxData *transfer_data, PyArrayObject *unused);
 /**end repeat1**/
 
 NPY_VISIBILITY_HIDDEN void
@@ -90,6 +123,10 @@ static @arg@binsearch_map _@arg@binsearch_map[] = {
             &@arg@binsearch_left_@suff@,
             &@arg@binsearch_right_@suff@,
         },
+        {
+            &transfer@arg@binsearch_left_@suff@,
+            &transfer@arg@binsearch_right_@suff@
+        }
     },
     /**end repeat1**/
 };
@@ -99,8 +136,10 @@ static PyArray_@Arg@BinSearchFunc *gen@arg@binsearch_map[] = {
     &npy_@arg@binsearch_right,
 };
 
-static NPY_INLINE PyArray_@Arg@BinSearchFunc*
-get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
+static NPY_INLINE void
+get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side,
+    PyArray_@Arg@BinSearchFunc **func,
+    PyArray_Transfer@Arg@BinSearchFunc **transferfunc)
 {
     npy_intp nfuncs = ARRAY_SIZE(_@arg@binsearch_map);
     npy_intp min_idx = 0;
@@ -108,7 +147,9 @@ get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
     int type = dtype->type_num;
 
     if (side >= NPY_NSEARCHSIDES) {
-        return NULL;
+        (*func)= NULL;
+        (*transferfunc) = NULL;
+        return;
     }
 
     /*
@@ -128,14 +169,19 @@ get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 
     if (min_idx < nfuncs &&
             _@arg@binsearch_map[min_idx].typenum == type) {
-        return _@arg@binsearch_map[min_idx].@arg@binsearch[side];
+        (*func) = _@arg@binsearch_map[min_idx].@arg@binsearch[side];
+        (*transferfunc) = _@arg@binsearch_map[min_idx].transfer@arg@binsearch[side];
+        return;
     }
 
     if (dtype->f->compare) {
-        return gen@arg@binsearch_map[side];
+        (*func) = gen@arg@binsearch_map[side];
+        (*transferfunc) = NULL;
+        return;
     }
 
-    return NULL;
+    (*func) = NULL;
+    (*transferfunc) = NULL;
 }
 /**end repeat**/
 
