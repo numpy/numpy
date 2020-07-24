@@ -67,4 +67,147 @@ NPYV_IMPL_AVX2_MEM_INT(npy_int64,  s64)
 #define npyv_storeh_f32(PTR, VEC) _mm_storeu_ps(PTR, _mm256_extractf128_ps(VEC, 1))
 #define npyv_storeh_f64(PTR, VEC) _mm_storeu_pd(PTR, _mm256_extractf128_pd(VEC, 1))
 
+/***************************
+ * Non-contiguous Load
+ ***************************/
+//// 8
+NPY_FINLINE npyv_u8 npyv_loadn_u8(const npy_uint8 *ptr, int stride)
+{
+    const __m256i steps = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+    const __m256i idx = _mm256_mullo_epi32(_mm256_set1_epi32(stride), steps);
+    const __m256i cut32 = _mm256_set1_epi32(0xFF);
+    const __m256i sort_odd = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+    __m256i a = _mm256_i32gather_epi32((const int*)ptr, idx, 1);
+    __m256i b = _mm256_i32gather_epi32((const int*)(ptr + stride*8), idx, 1);
+    __m256i c = _mm256_i32gather_epi32((const int*)(ptr + stride*16), idx, 1);
+    __m256i d = _mm256_i32gather_epi32((const int*)((ptr-3/*overflow guard*/) + stride*24), idx, 1);
+            a = _mm256_and_si256(a, cut32);
+            b = _mm256_and_si256(b, cut32);
+            c = _mm256_and_si256(c, cut32);
+            d = _mm256_srli_epi32(d, 24);
+            a = _mm256_packus_epi32(a, b);
+            c = _mm256_packus_epi32(c, d);
+    return _mm256_permutevar8x32_epi32(_mm256_packus_epi16(a, c), sort_odd);
+}
+NPY_FINLINE npyv_s8 npyv_loadn_s8(const npy_int8 *ptr, int stride)
+{ return npyv_loadn_u8((const npy_uint8 *)ptr, stride); }
+//// 16
+NPY_FINLINE npyv_u16 npyv_loadn_u16(const npy_uint16 *ptr, int stride)
+{
+    const __m256i steps = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+    const __m256i idx = _mm256_mullo_epi32(_mm256_set1_epi32(stride), steps);
+    const __m256i cut32 = _mm256_set1_epi32(0xFF);
+    __m256i a = _mm256_i32gather_epi32((const int*)ptr, idx, 2);
+    __m256i b = _mm256_i32gather_epi32((const int*)((ptr-1/*overflow guard*/) + stride*8), idx, 2);
+            a = _mm256_and_si256(a, cut32);
+            b = _mm256_srli_epi32(b, 16);
+    return npyv256_shuffle_odd(_mm256_packus_epi16(a, b));
+}
+NPY_FINLINE npyv_s16 npyv_loadn_s16(const npy_int16 *ptr, int stride)
+{ return npyv_loadn_u16((const npy_uint16 *)ptr, stride); }
+//// 32
+NPY_FINLINE npyv_u32 npyv_loadn_u32(const npy_uint32 *ptr, int stride)
+{
+    const __m256i steps = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+    const __m256i idx = _mm256_mullo_epi32(_mm256_set1_epi32(stride), steps);
+    return _mm256_i32gather_epi32((const int*)ptr, idx, 4);
+}
+NPY_FINLINE npyv_s32 npyv_loadn_s32(const npy_int32 *ptr, int stride)
+{ return npyv_loadn_u32((const npy_uint32*)ptr, stride); }
+NPY_FINLINE npyv_f32 npyv_loadn_f32(const float *ptr, int stride)
+{ return _mm256_castsi256_ps(npyv_loadn_u32((const npy_uint32*)ptr, stride)); }
+//// 64
+NPY_FINLINE npyv_u64 npyv_loadn_u64(const npy_uint64 *ptr, int stride)
+{
+    const __m128i steps = _mm_setr_epi32(0, 1, 2, 3);
+    const __m128i idx = _mm_mullo_epi32(_mm_set1_epi32(stride), steps);
+    return _mm256_i32gather_epi64((const void*)ptr, idx, 8);
+}
+NPY_FINLINE npyv_s64 npyv_loadn_s64(const npy_int64 *ptr, int stride)
+{ return npyv_loadn_u64((const npy_uint64*)ptr, stride); }
+NPY_FINLINE npyv_f64 npyv_loadn_f64(const double *ptr, int stride)
+{ return _mm256_castsi256_pd(npyv_loadn_u64((const npy_uint64*)ptr, stride)); }
+
+/***************************
+ * Non-contiguous Store
+ ***************************/
+ //// 8
+NPY_FINLINE void npyv_storen_u8(npy_uint8 *ptr, int stride, npyv_u8 a)
+{
+    __m128i a0 = _mm256_castsi256_si128(a);
+    __m128i a1 = _mm256_extracti128_si256(a, 1);
+    #define NPYV_IMPL_AVX2_STOREN8(VEC, EI, I) \
+        { \
+            unsigned e = (unsigned)_mm_extract_epi32(VEC, EI); \
+            ptr[stride*(I+0)] = (npy_uint8)e; \
+            ptr[stride*(I+1)] = (npy_uint8)(e >> 8); \
+            ptr[stride*(I+2)] = (npy_uint8)(e >> 16); \
+            ptr[stride*(I+3)] = (npy_uint8)(e >> 24); \
+        }
+    NPYV_IMPL_AVX2_STOREN8(a0, 0, 0)
+    NPYV_IMPL_AVX2_STOREN8(a0, 1, 4)
+    NPYV_IMPL_AVX2_STOREN8(a0, 2, 8)
+    NPYV_IMPL_AVX2_STOREN8(a0, 3, 12)
+    NPYV_IMPL_AVX2_STOREN8(a1, 0, 16)
+    NPYV_IMPL_AVX2_STOREN8(a1, 1, 20)
+    NPYV_IMPL_AVX2_STOREN8(a1, 2, 24)
+    NPYV_IMPL_AVX2_STOREN8(a1, 3, 28)
+}
+NPY_FINLINE void npyv_storen_s8(npy_int8 *ptr, int stride, npyv_s8 a)
+{ npyv_storen_u8((npy_uint8*)ptr, stride, a); }
+//// 16
+NPY_FINLINE void npyv_storen_u16(npy_uint16 *ptr, int stride, npyv_u16 a)
+{
+    __m128i a0 = _mm256_castsi256_si128(a);
+    __m128i a1 = _mm256_extracti128_si256(a, 1);
+    #define NPYV_IMPL_AVX2_STOREN16(VEC, EI, I) \
+        { \
+            unsigned e = (unsigned)_mm_extract_epi32(VEC, EI); \
+            ptr[stride*(I+0)] = (npy_uint16)e; \
+            ptr[stride*(I+1)] = (npy_uint16)(e >> 16); \
+        }
+    NPYV_IMPL_AVX2_STOREN16(a0, 0, 0)
+    NPYV_IMPL_AVX2_STOREN16(a0, 1, 2)
+    NPYV_IMPL_AVX2_STOREN16(a0, 2, 4)
+    NPYV_IMPL_AVX2_STOREN16(a0, 3, 6)
+    NPYV_IMPL_AVX2_STOREN16(a1, 0, 8)
+    NPYV_IMPL_AVX2_STOREN16(a1, 1, 10)
+    NPYV_IMPL_AVX2_STOREN16(a1, 2, 12)
+    NPYV_IMPL_AVX2_STOREN16(a1, 3, 14)
+}
+NPY_FINLINE void npyv_storen_s16(npy_int16 *ptr, int stride, npyv_s16 a)
+{ npyv_storen_u16((npy_uint16*)ptr, stride, a); }
+//// 32
+NPY_FINLINE void npyv_storen_s32(npy_int32 *ptr, int stride, npyv_s32 a)
+{
+    __m128i a0 = _mm256_castsi256_si128(a);
+    __m128i a1 = _mm256_extracti128_si256(a, 1);
+    ptr[stride * 0] = _mm_cvtsi128_si32(a0);
+    ptr[stride * 1] = _mm_extract_epi32(a0, 1);
+    ptr[stride * 2] = _mm_extract_epi32(a0, 2);
+    ptr[stride * 3] = _mm_extract_epi32(a0, 3);
+    ptr[stride * 4] = _mm_cvtsi128_si32(a1);
+    ptr[stride * 5] = _mm_extract_epi32(a1, 1);
+    ptr[stride * 6] = _mm_extract_epi32(a1, 2);
+    ptr[stride * 7] = _mm_extract_epi32(a1, 3);
+}
+NPY_FINLINE void npyv_storen_u32(npy_uint32 *ptr, int stride, npyv_u32 a)
+{ npyv_storen_s32((npy_int32*)ptr, stride, a); }
+NPY_FINLINE void npyv_storen_f32(float *ptr, int stride, npyv_f32 a)
+{ npyv_storen_s32((npy_int32*)ptr, stride, _mm256_castps_si256(a)); }
+//// 64
+NPY_FINLINE void npyv_storen_f64(double *ptr, int stride, npyv_f64 a)
+{
+    __m128d a0 = _mm256_castpd256_pd128(a);
+    __m128d a1 = _mm256_extractf128_pd(a, 1);
+    _mm_storel_pd(ptr + stride * 0, a0);
+    _mm_storeh_pd(ptr + stride * 1, a0);
+    _mm_storel_pd(ptr + stride * 2, a1);
+    _mm_storeh_pd(ptr + stride * 3, a1);
+}
+NPY_FINLINE void npyv_storen_u64(npy_uint64 *ptr, int stride, npyv_u64 a)
+{ npyv_storen_f64((double*)ptr, stride, _mm256_castsi256_pd(a)); }
+NPY_FINLINE void npyv_storen_s64(npy_int64 *ptr, int stride, npyv_s64 a)
+{ npyv_storen_f64((double*)ptr, stride, _mm256_castsi256_pd(a)); }
+
 #endif // _NPY_SIMD_AVX2_MEMORY_H
