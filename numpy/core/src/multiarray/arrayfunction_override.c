@@ -7,6 +7,17 @@
 #include "multiarraymodule.h"
 
 
+NPY_VISIBILITY_HIDDEN PyObject * npy_arrayfunction_str_like = NULL;
+
+static int
+intern_strings(void)
+{
+    npy_arrayfunction_str_like = PyUString_InternFromString("like");
+
+    return npy_arrayfunction_str_like && -1;
+}
+
+
 /* Return the ndarray.__array_function__ method. */
 static PyObject *
 get_ndarray_array_function(void)
@@ -333,6 +344,9 @@ array_implement_array_function(
 {
     PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
 
+    if (!intern_strings())
+        goto err;
+
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
             &implementation, &public_api, &relevant_args, &args, &kwargs)) {
@@ -342,14 +356,20 @@ array_implement_array_function(
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries.
      */
-    PyObject *like_key = PyUnicode_FromString("like");
-    if (PyDict_CheckExact(kwargs) && PyDict_Contains(kwargs, like_key)) {
-        PyDict_DelItem(kwargs, like_key);
+    if (PyDict_CheckExact(kwargs) &&
+            PyDict_Contains(kwargs, npy_arrayfunction_str_like)) {
+        PyDict_DelItem(kwargs, npy_arrayfunction_str_like);
     }
-    Py_DECREF(like_key);
 
     return array_implement_array_function_internal(
         implementation, public_api, relevant_args, args, kwargs);
+
+err:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load arrayfunction_override.");
+    }
+    return NULL;
 }
 
 
@@ -364,21 +384,24 @@ array_implement_c_array_function(
     if (kwargs == NULL)
         return NULL;
 
+    if (!intern_strings())
+        goto err;
+
     PyObject *relevant_args;
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
      * let originating call to continue.
      */
-    PyObject *like_key = PyUnicode_FromString("like");
-    if (PyDict_CheckExact(kwargs) && PyDict_Contains(kwargs, like_key)) {
-        relevant_args = PyTuple_Pack(1, PyDict_GetItem(kwargs, like_key));
-        PyDict_DelItem(kwargs, like_key);
+    if (PyDict_CheckExact(kwargs) &&
+            PyDict_Contains(kwargs, npy_arrayfunction_str_like)) {
+        relevant_args = PyTuple_Pack(1,
+                PyDict_GetItem(kwargs, npy_arrayfunction_str_like));
+        PyDict_DelItem(kwargs, npy_arrayfunction_str_like);
     }
     else {
         return NULL;
     }
-    Py_DECREF(like_key);
 
     PyObject *numpy_module_name = PyUnicode_FromString("numpy");
     PyObject *numpy_module = PyImport_Import(numpy_module_name);
@@ -386,6 +409,13 @@ array_implement_c_array_function(
 
     return array_implement_array_function_internal(
         NULL, public_api, relevant_args, args, kwargs);
+
+err:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load arrayfunction_override module.");
+    }
+    return NULL;
 }
 
 
