@@ -1681,7 +1681,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&iO:array", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i$O:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,

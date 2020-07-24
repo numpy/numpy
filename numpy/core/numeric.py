@@ -141,13 +141,13 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     return res
 
 
-def _ones_dispatcher(shape, dtype=None, order=None, like=None):
+def _ones_dispatcher(shape, dtype=None, order=None, *, like=None):
     return(like,)
 
 
 @array_function_dispatch(_ones_dispatcher)
 @set_module('numpy')
-def ones(shape, dtype=None, order='C', like=None):
+def ones(shape, dtype=None, order='C', *, like=None):
     """
     Return a new array of given shape and type, filled with ones.
 
@@ -270,13 +270,13 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     return res
 
 
-def _full_dispatcher(shape, fill_value, dtype=None, order=None, like=None):
+def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
     return(like,)
 
 
 @array_function_dispatch(_full_dispatcher)
 @set_module('numpy')
-def full(shape, fill_value, dtype=None, order='C', like=None):
+def full(shape, fill_value, dtype=None, order='C', *, like=None):
     """
     Return a new array of given shape and type, filled with `fill_value`.
 

@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 @set_module('numpy')
-def asarray(a, dtype=None, order=None, like=None):
+def asarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an array.
 
     Parameters
