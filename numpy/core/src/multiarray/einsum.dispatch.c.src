@@ -236,11 +236,12 @@ static void
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data1 = (@type@ *)dataptr[1];
     @type@ *data_out = (@type@ *)dataptr[2];
-    npy_intp pack_size;
 #if NPY_SIMD && @float32@
     npyv_f32 a, b;
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, b;
+    npy_intp pack_size;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
@@ -351,11 +352,12 @@ static void
     @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
     @type@ *data1 = (@type@ *)dataptr[1];
     @type@ *data_out = (@type@ *)dataptr[2];
-    npy_intp pack_size;
 #if NPY_SIMD && @float32@
     npyv_f32 a, b, value0_sse;
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, b, value0_sse;
+    npy_intp pack_size;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outcontig_two (%d)\n",
@@ -478,11 +480,12 @@ static void
     @type@ *data0 = (@type@ *)dataptr[0];
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
     @type@ *data_out = (@type@ *)dataptr[2];
-    npy_intp pack_size;
 #if NPY_SIMD && @float32@
     npyv_f32 a, b, value1_sse;
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, b, value1_sse;
+    npy_intp pack_size;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outcontig_two (%d)\n",
@@ -592,11 +595,12 @@ static void
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data1 = (@type@ *)dataptr[1];
     @temptype@ accum = 0;
-    npy_intp pack_size;
 #if NPY_SIMD && @float32@
     npyv_f32 a, accum_sse = npyv_zero_f32();
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, accum_sse = npyv_zero_f64();
+    npy_intp pack_size;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_contig_outstride0_two (%d)\n",
@@ -749,11 +753,12 @@ static void
     @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
     @type@ *data1 = (@type@ *)dataptr[1];
     @temptype@ accum = 0;
-    npy_intp pack_size;
 #if NPY_SIMD && @float32@
     npyv_f32 a, accum_sse = npyv_zero_f32();
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, accum_sse = npyv_zero_f64();
+    npy_intp pack_size;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_stride0_contig_outstride0_two (%d)\n",
@@ -886,11 +891,12 @@ static void
     @type@ *data0 = (@type@ *)dataptr[0];
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
     @temptype@ accum = 0;
-    npy_intp pack_size;
 #if NPY_SIMD && @float32@
     npyv_f32 a, accum_sse = npyv_zero_f32();
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, accum_sse = npyv_zero_f64();
+    npy_intp pack_size;
 #endif
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_stride0_outstride0_two (%d)\n",
@@ -1117,7 +1123,6 @@ static void
 @name@_sum_of_products_contig_outstride0_one(int nop, char **dataptr,
                                 npy_intp const *strides, npy_intp count)
 {
-    npy_intp pack_size;
 #if @complex@
     @temptype@ accum_re = 0, accum_im = 0;
     @temptype@ *data0 = (@temptype@ *)dataptr[0];
@@ -1128,8 +1133,10 @@ static void
 
 #if NPY_SIMD && @float32@
     npyv_f32 a, accum_sse = npyv_zero_f32();
+    npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
     npyv_f64 a, accum_sse = npyv_zero_f64();
+    npy_intp pack_size;
 #endif
 
 
