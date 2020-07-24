@@ -1261,7 +1261,7 @@ PyArray_DiscoverDTypeAndShape(
             }
 
             if (deprecate_single_element_ragged) {
-                /* Deprecated 2019-07-24, NumPy 1.20 */
+                /* Deprecated 2020-07-24, NumPy 1.20 */
                 if (DEPRECATE(
                         "setting an array element with a sequence. "
                         "This was supported in some cases where the elements "
