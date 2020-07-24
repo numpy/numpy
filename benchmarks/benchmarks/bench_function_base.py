@@ -285,3 +285,27 @@ class Where(Benchmark):
 
     def time_2_broadcast(self):
         np.where(self.cond, self.d, 0)
+
+class SearchSorted(Benchmark):
+    params = [[1, 10, 100, 1000, 10000, 100000],
+              [10, 1000, 10000, 100000, 1000000],
+              ['sorted', 'random'],
+              [('f8', 'f8'), ('i8', 'i8'), ('i4', 'i8'), ('i8', 'i4'),  ('i4', 'u4')],]
+
+    param_names = ['needlesize', 'haystacksize', 'needletype', 'dtype']
+
+    def setup(self, needlesize, haystacksize, needletype, dtype):
+        self.random = np.random.RandomState(3333).random_integers(0, haystacksize, needlesize).astype(dtype[1])
+        self.sorted = np.sort(self.random)
+        if needletype == 'sorted':
+            self.needle = self.sorted
+        else:
+            self.needle = self.random
+        self.haystack = np.arange(haystacksize, dtype=dtype[0])
+        self.sorter = np.arange(haystacksize, dtype=np.intp)
+
+    def time_searchsorted(self, *args):
+        self.haystack.searchsorted(self.needle)
+
+    def time_argsearchsorted(self, *args):
+        self.haystack.searchsorted(self.needle, sorter=self.sorter)
