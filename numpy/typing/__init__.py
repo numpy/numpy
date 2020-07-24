@@ -34,7 +34,7 @@ differences.
 ArrayLike
 ~~~~~~~~~
 
-The ``ArrayLike`` static type tries to avoid creating object arrays. For
+The ``ArrayLike`` type tries to avoid creating object arrays. For
 example,
 
 .. code-block:: python
@@ -78,7 +78,7 @@ method to create a view of the array with a different dtype.
 dtype
 ~~~~~
 
-The ``_DTypeLike`` static type tries to avoid creation of dtype objects using
+The ``DTypeLike`` type tries to avoid creation of dtype objects using
 dictionary of fields like below:
 
 .. code-block:: python
