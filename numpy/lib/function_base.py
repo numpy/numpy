@@ -4733,12 +4733,12 @@ def append(arr, values, axis=None):
     return concatenate((arr, values), axis=axis)
 
 
-def _digitize_dispatcher(x, bins, right=None):
+def _digitize_dispatcher(x, bins, right=None, edge=None):
     return (x, bins)
 
 
 @array_function_dispatch(_digitize_dispatcher)
-def digitize(x, bins, right=False):
+def digitize(x, bins, right=False, edge=False):
     """
     Return the indices of the bins to which each value in input array belongs.
 
@@ -4767,6 +4767,10 @@ def digitize(x, bins, right=False):
         does not include the right edge. The left bin end is open in this
         case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
         monotonically increasing bins.
+    edge : bool, optional
+        Whether to include the last right edge if right==False or the first
+        left edge if right==True so that the whole interval from the least
+        to the greatest value of bins is covered.
 
     Returns
     -------
@@ -4782,7 +4786,7 @@ def digitize(x, bins, right=False):
 
     See Also
     --------
-    bincount, histogram, unique, searchsorted
+    bincount, histogram, unique, nextafter, searchsorted
 
     Notes
     -----
@@ -4852,7 +4856,7 @@ def digitize(x, bins, right=False):
         idx = -1 if delta == mono else 0
         if np.issubdtype(bins.dtype, _nx.integer):
             bins = _nx.int64(bins)
-            if bins[idx] in (2 ** 63 - 1, -2 ** 63 + 1):
+            if bins[idx] >= 2 ** 63 - 1 or bins[idx] <= -2 ** 63 + 1:
                 raise RuntimeError('Overflow, bin values exceed 64-bit '
                                    'precision')
             bins[idx] += delta
