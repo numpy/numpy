@@ -48,8 +48,11 @@ class TypeDescription:
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
+    dispatch: list
+        Available SIMD ufunc loops, dispatched at runtime in specified order
+        Currently only supported for simples types (see make_arrays)
     """
-    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None, dispatch=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -62,6 +65,7 @@ class TypeDescription:
             out = out.replace('P', type)
         self.out = out
         self.simd = simd
+        self.dispatch = dispatch
 
     def finish_signature(self, nin, nout):
         if self.in_ is None:
@@ -86,7 +90,7 @@ def build_func_data(types, f):
     func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
-def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
+def TD(types, f=None, astype=None, in_=None, out=None, simd=None, dispatch=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -115,7 +119,14 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
             simdt = [k for k, v in simd if t in v]
         else:
             simdt = []
-        tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype, simd=simdt))
+        # [(dispatch file name without extension '.dispatch.c*', list of types)]
+        if dispatch:
+            dispt = [k for k, v in dispatch if t in v]
+        else:
+            dispt = []
+        tds.append(TypeDescription(
+            t, f=fd, in_=i, out=o, astype=astype, simd=simdt, dispatch=dispt
+        ))
     return tds
 
 class Ufunc:
@@ -1024,6 +1035,16 @@ def make_arrays(funcdict):
                         """).format(
                             ISA=vt.upper(), isa=vt,
                             fname=name, type=tname, idx=k
+                        ))
+                if t.dispatch is not None:
+                    for dname in t.dispatch:
+                        code2list.append(textwrap.dedent("""\
+                        #ifndef NPY_DISABLE_OPTIMIZATION
+                        #include "{dname}.dispatch.h"
+                        #endif
+                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name})
+                        """).format(
+                            dname=dname, name=name, tname=tname, k=k
                         ))
             else:
                 funclist.append('NULL')
