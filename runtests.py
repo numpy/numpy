@@ -163,9 +163,9 @@ def main(argv):
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
-    else:
-        _temp = __import__(PROJECT_MODULE)
-        site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
+    #else:
+        #_temp = __import__(PROJECT_MODULE)
+        #site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
 
     extra_argv = args.args[:]
     if not args.bench:
