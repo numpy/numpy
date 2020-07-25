@@ -31,23 +31,7 @@
 #define npyv_combineh_f32(A, B) ((npyv_f32)npyv__combineh(A, B))
 #define npyv_combineh_f64       vec_mergel
 
-#if (defined(__GNUC__) && __GNUC__ >= 8) || (defined(__clang__) && __clang_major__ >= 6)
-    // TODO: add simulation of shuffle
-    #define npyv_shuffle_f32 ((void)0)
-    // https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.cbcpx01/bif_vec_reve.htm?view=embed
-    #define npyv_shuffle_f64 vec_reve
-#else
-    // missing on old versions of clang and gcc
-    // TODO: add simulation of shuffle
-    #define npyv_shuffle_f32 ((void)0)
-    #ifdef __clang__
-        NPY_FINLINE npyv_f64 npyv_shuffle_f64(npyv_f64 a, npyv_f64 b, int imm8)
-        { return vec_xxpermdi(a, b, 2); }
-    #else
-        NPY_FINLINE npyv_f64 npyv_shuffle_f64(npyv_f64 a, npyv_f64 b, int imm8)
-        { __asm__("xxswapd %x0,%x1" : "=wa" (a) : "wa" (b)); return a; }
-    #endif
-#endif
+
 /*
  * combine: combine two vectors from lower and higher parts of two other vectors
  * zip: interleave two vectors
