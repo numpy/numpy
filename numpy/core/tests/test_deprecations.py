@@ -693,3 +693,16 @@ class TestMatrixInOuter(_DeprecationTestCase):
         self.assert_deprecated(np.add.outer, args=(m, arr))
         self.assert_not_deprecated(np.add.outer, args=(arr, arr))
 
+
+class TestRaggedArray(_DeprecationTestCase):
+    # 2020-07-24, NumPy 1.20.0
+    message = "setting an array element with a sequence"
+
+    def test_deprecated(self):
+        arr = np.ones((1, 1))
+        # Deprecated if the array is a leave node:
+        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64))
+        # And when it is an assignment into a lower dimensional subarray:
+        self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
