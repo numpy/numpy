@@ -99,7 +99,6 @@ NPY_FINLINE float npyv_sum_f32(__m128 a)
     __m128 t2 = _mm_add_ps(a, t1);
     __m128 t3 = _mm_shuffle_ps(t2, t2, 1);
     __m128 t4 = _mm_add_ss(t2, t3);
-    printf("fastest sum");
     return _mm_cvtss_f32(t4);
 }
 
