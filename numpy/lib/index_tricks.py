@@ -154,15 +154,15 @@ class nd_grid:
                     start = 0
                 if step is None:
                     step = 1
-                if isinstance(step, complex):
+                if isinstance(step, (_nx.complexfloating, complex)):
                     size.append(int(abs(step)))
                     typ = float
                 else:
                     size.append(
                         int(math.ceil((key[k].stop - start)/(step*1.0))))
-                if (isinstance(step, float) or
-                        isinstance(start, float) or
-                        isinstance(key[k].stop, float)):
+                if (isinstance(step, (_nx.floating, float)) or
+                        isinstance(start, (_nx.floating, float)) or
+                        isinstance(key[k].stop, (_nx.floating, float))):
                     typ = float
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
@@ -176,7 +176,7 @@ class nd_grid:
                     start = 0
                 if step is None:
                     step = 1
-                if isinstance(step, complex):
+                if isinstance(step, (_nx.complexfloating, complex)):
                     step = int(abs(step))
                     if step != 1:
                         step = (key[k].stop - start)/float(step-1)
@@ -194,7 +194,7 @@ class nd_grid:
             start = key.start
             if start is None:
                 start = 0
-            if isinstance(step, complex):
+            if isinstance(step, (_nx.complexfloating, complex)):
                 step = abs(step)
                 length = int(step)
                 if step != 1:
@@ -344,7 +344,7 @@ class AxisConcatenator:
                     start = 0
                 if step is None:
                     step = 1
-                if isinstance(step, complex):
+                if isinstance(step, (_nx.complexfloating, complex)):
                     size = int(abs(step))
                     newobj = linspace(start, stop, num=size)
                 else:
