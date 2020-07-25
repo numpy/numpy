@@ -1581,6 +1581,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
     For integer arguments the function is equivalent to the Python built-in
     `range` function, but returns an ndarray rather than a list.
 
+    When using a non-integer step, such as 0.1, it is often better to use 
+    `numpy.linspace`. See the warnings section below for more information.
+
     Parameters
     ----------
     start : integer or real, optional
