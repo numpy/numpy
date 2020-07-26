@@ -460,7 +460,7 @@ def repeat(a, repeats, axis=None):
     --------
     tile : Tile an array.
     unique : Find the unique elements of an array.
-    
+
     Examples
     --------
     >>> np.repeat(3, 4)
@@ -3450,7 +3450,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where 
+    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where
     ``x = abs(a - a.mean())**2``.
 
     The average squared deviation is typically calculated as ``x.sum() / N``,
@@ -3700,3 +3700,18 @@ def alltrue(*args, **kwargs):
     numpy.all : Equivalent function; see for details.
     """
     return all(*args, **kwargs)
+
+@array_function_dispatch(_all_dispatcher, verify=False)
+def rollingmean(a, range=2):
+    """
+    return ndarray of the rolling mean (moving average, rolling average, moving mean, or running average) of given range.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose rolling mean is desired.
+    range: int
+        Range of rolling mean
+    """
+    cumsum = cumsum(insert(a, 0, 0))
+    return (cumsum[range:] - cumsum[:-range]) / float(range)
