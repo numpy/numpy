@@ -3713,5 +3713,6 @@ def rollingmean(a, range=2):
     range: int
         Range of rolling mean
     """
+    
     cumsum = cumsum(insert(a, 0, 0))
     return (cumsum[range:] - cumsum[:-range]) / float(range)
