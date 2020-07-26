@@ -3704,7 +3704,8 @@ def alltrue(*args, **kwargs):
 
 def rollingmean(a, range=2):
     """
-    return ndarray of the rolling mean (moving average, rolling average, moving mean, or running average) of given range.
+    Returns ndarray of the rolling mean (moving average, rolling average,
+    moving mean, or running average) of given range.
 
     Parameters
     ----------
@@ -3712,6 +3713,15 @@ def rollingmean(a, range=2):
         Array containing numbers whose rolling mean is desired.
     range: int
         Range of rolling mean
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2, 3, 4, 5]])
+    >>> np.rollingmean(a)
+    array([1.5, 2.5, 3.5, 4.5])
+    >>> a = np.array([[1,2,3],[4,5,6]])
+    >>> np.rollingmean(a)
+    array([1.5, 2.5, 3.5, 4.5, 5.5])
     """
 
     cumsum = cumsum(insert(a, 0, 0))
