@@ -23,8 +23,8 @@ __all__ = [
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round_',
-    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
-    'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze', 'std',
+    'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var', 'rollingmean',
 ]
 
 _gentype = types.GeneratorType
@@ -3701,7 +3701,7 @@ def alltrue(*args, **kwargs):
     """
     return all(*args, **kwargs)
 
-@array_function_dispatch(_all_dispatcher, verify=False)
+
 def rollingmean(a, range=2):
     """
     return ndarray of the rolling mean (moving average, rolling average, moving mean, or running average) of given range.
@@ -3713,6 +3713,6 @@ def rollingmean(a, range=2):
     range: int
         Range of rolling mean
     """
-    
+
     cumsum = cumsum(insert(a, 0, 0))
     return (cumsum[range:] - cumsum[:-range]) / float(range)
