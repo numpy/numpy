@@ -3138,8 +3138,8 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
     #if defined(__ARM_NEON__) || defined (__ARM_NEON)
         uint8x16_t zero = vdupq_n_u8(0);
         for(; i < n - (n % 32); i+=32) {
-            uint8x16_t d1 = vld1q_u8((char *)&ip[i]);
-            uint8x16_t d2 = vld1q_u8((char *)&ip[i + 16]);
+            uint8x16_t d1 = vld1q_u8((uint8_t *)&ip[i]);
+            uint8x16_t d2 = vld1q_u8((uint8_t *)&ip[i + 16]);
             d1 = vceqq_u8(d1, zero);
             d2 = vceqq_u8(d2, zero);
             if(_mm_movemask_epi8_neon(vminq_u8(d1, d2)) != 0xFFFF) {
