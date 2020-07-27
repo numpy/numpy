@@ -4,6 +4,18 @@ steps:
     versionSpec: $(PYTHON_VERSION)
     addToPath: true
     architecture: $(PYTHON_ARCH)
+  condition: not(contains(variable.PYTHON_VERSION, 'PyPy'))
+- bash: |
+    set -e
+    echo $PATH
+    wget -q http://buildbot.pypy.org/nightly/py3.6/pypy-c-jit-latest-win32.zip -O pypy.zip
+    mkdir -p pypy3
+    unzip -d pypy3 pypy.zip
+    mv pypy3/pypy-c-*/* pypy3
+    cp pypy3/pypy3.exe pypy3/python.exe
+    export PATH=pypy3:$PATH
+  condition: contains(variable.PYTHON_VERSION, 'PyPy')
+  displayName: "Install PyPy pre-release"
 - script: python -m pip install --upgrade pip
   displayName: 'Install tools'
 - script: python -m pip install -r test_requirements.txt
