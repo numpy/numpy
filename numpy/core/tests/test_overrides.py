@@ -469,3 +469,26 @@ class TestArrayLike:
 
         full_like = np.full(1, 2, dtype=np.int64, like=ref)
         assert type(full_like) is MyArray and full_like.function is MyArray.full
+
+
+    @requires_array_function
+    def test_exception_handling(self):
+        class MyArray():
+
+            def __array_function__(self, func, types, args, kwargs):
+                try:
+                    my_func = getattr(MyArray, func.__name__)
+                except AttributeError:
+                    return NotImplemented
+                return my_func(*args, **kwargs)
+
+            def array(*args, **kwargs):
+                if 'value_error' in kwargs:
+                    raise ValueError
+                return MyArray()
+
+
+        ref = MyArray.array()
+
+        with assert_raises(ValueError):
+            np.array(1, value_error=True, like=ref)
