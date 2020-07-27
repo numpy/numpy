@@ -589,7 +589,6 @@ finish_after_unrolled_loop:
 #if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1)) {
-        printf("doing SIMD");
         /* Unroll the loop by UNROLL_BY */
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
