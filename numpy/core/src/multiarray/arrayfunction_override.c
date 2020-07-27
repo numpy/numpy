@@ -346,8 +346,13 @@ array_implement_array_function(
 {
     PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
 
-    if (!intern_strings())
-        goto err;
+    if (!intern_strings()) {
+        if (PyErr_Occurred()) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "cannot load arrayfunction_override.");
+        }
+        return NULL;
+    }
 
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
@@ -365,13 +370,6 @@ array_implement_array_function(
 
     return array_implement_array_function_internal(
         implementation, public_api, relevant_args, args, kwargs);
-
-err:
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load arrayfunction_override.");
-    }
-    return NULL;
 }
 
 
@@ -381,7 +379,8 @@ err:
  */
 NPY_NO_EXPORT PyObject *
 array_implement_c_array_function(
-    const char *function_name, PyObject *args, PyObject *kwargs)
+    const char *function_name, PyObject *args, PyObject *kwargs,
+    PyObject **err_type, PyObject **err_value, PyObject **err_traceback)
 {
     PyObject *relevant_args;
     PyObject *numpy_module = NULL, *public_api = NULL;
@@ -390,8 +389,13 @@ array_implement_c_array_function(
     if (kwargs == NULL)
         return NULL;
 
-    if (!intern_strings())
-        goto err;
+    if (!intern_strings()) {
+        if (PyErr_Occurred()) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "cannot load arrayfunction_override.");
+        }
+        goto cleanup;
+    }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
@@ -423,11 +427,9 @@ array_implement_c_array_function(
     result = array_implement_array_function_internal(
         NULL, public_api, relevant_args, args, kwargs);
 
-err:
-    if (PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load arrayfunction_override module.");
-    }
+    if (PyErr_Occurred())
+        PyErr_Fetch(err_type, err_value, err_traceback);
+
 cleanup:
     Py_XDECREF(numpy_module);
     Py_XDECREF(public_api);
