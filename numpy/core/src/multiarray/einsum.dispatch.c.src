@@ -8,10 +8,9 @@
  * See LICENSE.txt for the license.
  */
 /**
- * @targets $maxopt baseline
- * SSE2 (AVX2 FMA3) AVX512F
- * VSX2
- * NEON ASIMDDP
+ * @targets $werror baseline
+ * SSE2 SSE41 AVX2
+ * NEON ASIMD ASIMDHP
  */
 #include "einsum_p.h"
 
@@ -260,15 +259,13 @@ finish_after_unrolled_loop:
         /* Unroll the loop by UNROLL_BY */
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
-
-/**begin repeat2
- * #i = 0, 1#
- */
-            pack_size = @i@ * UNROLL_BY / 2;
-            a = npyv_mul_f32(npyv_loada_f32(data0+pack_size), npyv_loada_f32(data1+pack_size));
-            b = npyv_add_f32(a, npyv_loada_f32(data_out+pack_size));
-            npyv_storea_f32(data_out+pack_size, b);
-/**end repeat2**/
+            // two simd pack in one round
+            for(int i = 0; i < 2; i++) {
+                pack_size = i * UNROLL_BY / 2;
+                a = npyv_mul_f32(npyv_loada_f32(data0+pack_size), npyv_loada_f32(data1+pack_size));
+                b = npyv_add_f32(a, npyv_loada_f32(data_out+pack_size));
+                npyv_storea_f32(data_out+pack_size, b);
+            }
             data0 += UNROLL_BY;
             data1 += UNROLL_BY;
             data_out += UNROLL_BY;
@@ -284,15 +281,12 @@ finish_after_unrolled_loop:
         /* Unroll the loop by UNROLL_BY */
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
-
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-            pack_size = @i@ * UNROLL_BY / 4;
-            a = npyv_mul_f64(npyv_loada_f64(data0+pack_size), npyv_loada_f64(data1+pack_size));
-            b = npyv_add_f64(a, npyv_loada_f64(data_out+pack_size));
-            npyv_storea_f64(data_out+pack_size, b);
-/**end repeat2**/
+            for (int i  = 0; i < 4; i++) {
+                pack_size = i * UNROLL_BY / 4;
+                a = npyv_mul_f64(npyv_loada_f64(data0+pack_size), npyv_loada_f64(data1+pack_size));
+                b = npyv_add_f64(a, npyv_loada_f64(data_out+pack_size));
+                npyv_storea_f64(data_out+pack_size, b);
+            }
             data0 += UNROLL_BY;
             data1 += UNROLL_BY;
             data_out += UNROLL_BY;
@@ -307,23 +301,19 @@ finish_after_unrolled_loop:
         count -= UNROLL_BY;
 
 #if NPY_SIMD && @float32@
-/**begin repeat2
- * #i = 0, 1#
- */
-        pack_size = @i@ * UNROLL_BY / 2;
-        a = npyv_mul_f32(npyv_load_f32(data0+pack_size), npyv_load_f32(data1+pack_size));
-        b = npyv_add_f32(a, npyv_load_f32(data_out+pack_size));
-        npyv_store_f32(data_out+pack_size, b);
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            pack_size = i * UNROLL_BY / 2;
+            a = npyv_mul_f32(npyv_load_f32(data0+pack_size), npyv_load_f32(data1+pack_size));
+            b = npyv_add_f32(a, npyv_load_f32(data_out+pack_size));
+            npyv_store_f32(data_out+pack_size, b);
+        }
 #elif NPY_SIMD_F64 && @float64@
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        pack_size = @i@ * UNROLL_BY / 4;
-        a = npyv_mul_f64(npyv_load_f64(data0+pack_size), npyv_load_f64(data1+pack_size));
-        b = npyv_add_f64(a, npyv_load_f64(data_out+pack_size));
-        npyv_store_f64(data_out+pack_size, b);
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            pack_size = i * UNROLL_BY / 4;
+            a = npyv_mul_f64(npyv_load_f64(data0+pack_size), npyv_load_f64(data1+pack_size));
+            b = npyv_add_f64(a, npyv_load_f64(data_out+pack_size));
+            npyv_store_f64(data_out+pack_size, b);
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
         data_out[i] = @to@(@from@(data0[i]) *
@@ -379,14 +369,12 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1#
- */
-            pack_size = @i@ * UNROLL_BY / 2;
-            a = npyv_mul_f32(value0_sse, npyv_loada_f32(data1+pack_size));
-            b = npyv_add_f32(a, npyv_loada_f32(data_out+pack_size));
-            npyv_storea_f32(data_out+pack_size, b);
-/**end repeat2**/
+            for (int i  = 0; i < 2; i++) {
+                pack_size = i * UNROLL_BY / 2;
+                a = npyv_mul_f32(value0_sse, npyv_loada_f32(data1+pack_size));
+                b = npyv_add_f32(a, npyv_loada_f32(data_out+pack_size));
+                npyv_storea_f32(data_out+pack_size, b);
+            }
             data1 += UNROLL_BY;
             data_out += UNROLL_BY;
         }
@@ -408,14 +396,12 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-            pack_size = @i@ * UNROLL_BY / 4;
-            a = npyv_mul_f64(value0_sse, npyv_loada_f64(data1+pack_size));
-            b = npyv_add_f64(a, npyv_loada_f64(data_out+pack_size));
-            npyv_storea_f64(data_out+pack_size, b);
-/**end repeat2**/
+            for (int i  = 0; i < 4; i++) {
+                pack_size = i * UNROLL_BY / 4;
+                a = npyv_mul_f64(value0_sse, npyv_loada_f64(data1+pack_size));
+                b = npyv_add_f64(a, npyv_loada_f64(data_out+pack_size));
+                npyv_storea_f64(data_out+pack_size, b);
+            }
             data1 += UNROLL_BY;
             data_out += UNROLL_BY;
         }
@@ -435,23 +421,19 @@ finish_after_unrolled_loop:
         count -= UNROLL_BY;
 
 #if NPY_SIMD && @float32@
-/**begin repeat2
- * #i = 0, 1#
- */
-        pack_size = @i@ * UNROLL_BY / 2;
-        a = npyv_mul_f32(value0_sse, npyv_load_f32(data1+pack_size));
-        b = npyv_add_f32(a, npyv_load_f32(data_out+pack_size));
-        npyv_store_f32(data_out+pack_size, b);
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            pack_size = i * UNROLL_BY / 2;
+            a = npyv_mul_f32(value0_sse, npyv_load_f32(data1+pack_size));
+            b = npyv_add_f32(a, npyv_load_f32(data_out+pack_size));
+            npyv_store_f32(data_out+pack_size, b);
+        }
 #elif NPY_SIMD_F64 && @float64@
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        pack_size = @i@ * UNROLL_BY / 4;
-        a = npyv_mul_f64(value0_sse, npyv_load_f64(data1+pack_size));
-        b = npyv_add_f64(a, npyv_load_f64(data_out+pack_size));
-        npyv_store_f64(data_out+pack_size, b);
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            pack_size = i * UNROLL_BY / 4;
+            a = npyv_mul_f64(value0_sse, npyv_load_f64(data1+pack_size));
+            b = npyv_add_f64(a, npyv_load_f64(data_out+pack_size));
+            npyv_store_f64(data_out+pack_size, b);
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
         data_out[i] = @to@(value0 *
@@ -506,14 +488,12 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1#
- */
-            pack_size = @i@ * UNROLL_BY / 2;
-            a = npyv_mul_f32(npyv_loada_f32(data0+pack_size), value1_sse);
-            b = npyv_add_f32(a, npyv_loada_f32(data_out+pack_size));
-            npyv_storea_f32(data_out+pack_size, b);
-/**end repeat2**/
+            for (int i  = 0; i < 2; i++) {
+                pack_size = i * UNROLL_BY / 2;
+                a = npyv_mul_f32(npyv_loada_f32(data0+pack_size), value1_sse);
+                b = npyv_add_f32(a, npyv_loada_f32(data_out+pack_size));
+                npyv_storea_f32(data_out+pack_size, b);
+            }
             data0 += UNROLL_BY;
             data_out += UNROLL_BY;
         }
@@ -530,14 +510,12 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-            pack_size = @i@ * UNROLL_BY / 4;
-            a = npyv_mul_f64(npyv_loada_f64(data0+pack_size), value1_sse);
-            b = npyv_add_f64(a, npyv_loada_f64(data_out+pack_size));
-            npyv_storea_f64(data_out+pack_size, b);
-/**end repeat2**/
+            for (int i  = 0; i < 4; i++) {
+                pack_size = i * UNROLL_BY / 4;
+                a = npyv_mul_f64(npyv_loada_f64(data0+pack_size), value1_sse);
+                b = npyv_add_f64(a, npyv_loada_f64(data_out+pack_size));
+                npyv_storea_f64(data_out+pack_size, b);
+            }
             data0 += UNROLL_BY;
             data_out += UNROLL_BY;
         }
@@ -552,23 +530,19 @@ finish_after_unrolled_loop:
         count -= UNROLL_BY;
 
 #if NPY_SIMD && @float32@
-/**begin repeat2
- * #i = 0, 1#
- */
-        pack_size = @i@ * UNROLL_BY / 2;
-        a = npyv_mul_f32(npyv_load_f32(data0+pack_size), value1_sse);
-        b = npyv_add_f32(a, npyv_load_f32(data_out+pack_size));
-        npyv_store_f32(data_out+pack_size, b);
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            pack_size = i * UNROLL_BY / 2;
+            a = npyv_mul_f32(npyv_load_f32(data0+pack_size), value1_sse);
+            b = npyv_add_f32(a, npyv_load_f32(data_out+pack_size));
+            npyv_store_f32(data_out+pack_size, b);
+        }
 #elif NPY_SIMD_F64 && @float64@
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        pack_size = @i@ * UNROLL_BY / 4;
-        a = npyv_mul_f64(npyv_load_f64(data0+pack_size), value1_sse);
-        b = npyv_add_f64(a, npyv_load_f64(data_out+pack_size));
-        npyv_store_f64(data_out+pack_size, b);
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            pack_size = i * UNROLL_BY / 4;
+            a = npyv_mul_f64(npyv_load_f64(data0+pack_size), value1_sse);
+            b = npyv_add_f64(a, npyv_load_f64(data_out+pack_size));
+            npyv_store_f64(data_out+pack_size, b);
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
         data_out[i] = @to@(@from@(data0[i]) *
@@ -615,6 +589,7 @@ finish_after_unrolled_loop:
 #if NPY_SIMD && @float32@
     /* Use aligned instructions if possible */
     if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1)) {
+        printf("doing SIMD");
         /* Unroll the loop by UNROLL_BY */
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
@@ -622,17 +597,15 @@ finish_after_unrolled_loop:
             npyv_prefetch(data0 + 512, 1);
             npyv_prefetch(data1 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1#
- */
             /*
              * NOTE: This accumulation changes the order, so will likely
              *       produce slightly different results.
              */
-            pack_size = @i@ * UNROLL_BY / 2;
-            a = npyv_mul_f32(npyv_loada_f32(data0+pack_size), npyv_loada_f32(data1+pack_size));
-            accum_sse = npyv_add_f32(accum_sse, a);
-/**end repeat2**/
+            for (int i  = 0; i < 2; i++) {
+                pack_size = i * UNROLL_BY / 2;
+                a = npyv_mul_f32(npyv_loada_f32(data0+pack_size), npyv_loada_f32(data1+pack_size));
+                accum_sse = npyv_add_f32(accum_sse, a);
+            }
             data0 += UNROLL_BY;
             data1 += UNROLL_BY;
         }
@@ -652,17 +625,15 @@ finish_after_unrolled_loop:
             npyv_prefetch(data0 + 512, 1);
             npyv_prefetch(data1 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
             /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 4;
-            a = npyv_mul_f64(npyv_loada_f64(data0+pack_size), npyv_loada_f64(data1+pack_size));
-            accum_sse = npyv_add_f64(accum_sse, a);
-/**end repeat2**/
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            for (int i  = 0; i < 4; i++) {
+                pack_size = i * UNROLL_BY / 4;
+                a = npyv_mul_f64(npyv_loada_f64(data0+pack_size), npyv_loada_f64(data1+pack_size));
+                accum_sse = npyv_add_f64(accum_sse, a);
+            }
             data0 += UNROLL_BY;
             data1 += UNROLL_BY;
         }
@@ -683,32 +654,28 @@ finish_after_unrolled_loop:
         npyv_prefetch(data0 + 512, 1);
         npyv_prefetch(data1 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 2;
-        a = npyv_mul_f32(npyv_load_f32(data0+pack_size), npyv_load_f32(data1+pack_size));
-        accum_sse = npyv_add_f32(accum_sse, a);
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 2;
+            a = npyv_mul_f32(npyv_load_f32(data0+pack_size), npyv_load_f32(data1+pack_size));
+            accum_sse = npyv_add_f32(accum_sse, a);
+        }
 #elif NPY_SIMD_F64 && @float64@
         npyv_prefetch(data0 + 512, 1);
         npyv_prefetch(data1 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 4;
-        a = npyv_mul_f64(npyv_load_f64(data0+pack_size), npyv_load_f64(data1+pack_size));
-        accum_sse = npyv_add_f64(accum_sse, a);
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 4;
+            a = npyv_mul_f64(npyv_load_f64(data0+pack_size), npyv_load_f64(data1+pack_size));
+            accum_sse = npyv_add_f64(accum_sse, a);
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
         accum += @from@(data0[i]) * @from@(data1[i]);
@@ -738,10 +705,10 @@ static void
     @type@ *data1 = (@type@ *)dataptr[1];
     @temptype@ accum = 0;
 #if NPY_SIMD && @float32@
-    npyv_f32 a, accum_sse = npyv_zero_f32();
+    npyv_f32 accum_sse = npyv_zero_f32();
     npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
-    npyv_f64 a, accum_sse = npyv_zero_f64();
+    npyv_f64 accum_sse = npyv_zero_f64();
     npy_intp pack_size;
 #endif
 
@@ -765,16 +732,14 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1#
- */
-            /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 2;
-            accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data1+pack_size));
-/**end repeat2**/
+            for (int i  = 0; i < 2; i++) {
+                /*
+                * NOTE: This accumulation changes the order, so will likely
+                *       produce slightly different results.
+                */
+                pack_size = i * UNROLL_BY / 2;
+                accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data1+pack_size));
+            }
             data1 += UNROLL_BY;
         }
         /* Add the four SSE values and put in accum */
@@ -790,16 +755,14 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-            /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 4;
-            accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data1+pack_size));
-/**end repeat2**/
+            for (int i  = 0; i < 4; i++) {
+                /*
+                * NOTE: This accumulation changes the order, so will likely
+                *       produce slightly different results.
+                */
+                pack_size = i * UNROLL_BY / 4;
+                accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data1+pack_size));
+            }
             data1 += UNROLL_BY;
         }
         /* Add the two SSE2 values and put in accum */
@@ -815,27 +778,23 @@ finish_after_unrolled_loop:
         count -= UNROLL_BY;
 
 #if NPY_SIMD && @float32@
-/**begin repeat2
- * #i = 0, 1#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 2;
-        accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data1+pack_size));
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 2;
+            accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data1+pack_size));
+        }
 #elif NPY_SIMD_F64 && @float64@
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 4;
-        accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data1+pack_size));
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 4;
+            accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data1+pack_size));
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
         accum += @from@(data1[i]);
@@ -864,10 +823,10 @@ static void
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
     @temptype@ accum = 0;
 #if NPY_SIMD && @float32@
-    npyv_f32 a, accum_sse = npyv_zero_f32();
+    npyv_f32 accum_sse = npyv_zero_f32();
     npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
-    npyv_f64 a, accum_sse = npyv_zero_f64();
+    npyv_f64 accum_sse = npyv_zero_f64();
     npy_intp pack_size;
 #endif
 
@@ -891,16 +850,14 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1#
- */
-            /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 2;
-            accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data0+pack_size));
-/**end repeat2**/
+            for (int i  = 0; i < 2; i++) {
+                /*
+                * NOTE: This accumulation changes the order, so will likely
+                *       produce slightly different results.
+                */
+                pack_size = i * UNROLL_BY / 2;
+                accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data0+pack_size));
+            }
             data0 += UNROLL_BY;
         }
         /* Add the four SSE values and put in accum */
@@ -915,16 +872,14 @@ finish_after_unrolled_loop:
         while (count >= UNROLL_BY) {
             count -= UNROLL_BY;
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-            /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 4;
-            accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data0+pack_size));
-/**end repeat2**/
+            for (int i  = 0; i < 4; i++) {
+                /*
+                * NOTE: This accumulation changes the order, so will likely
+                *       produce slightly different results.
+                */
+                pack_size = i * UNROLL_BY / 4;
+                accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data0+pack_size));
+            }
             data0 += UNROLL_BY;
         }
         /* Add the two SSE2 values and put in accum */
@@ -939,27 +894,23 @@ finish_after_unrolled_loop:
         count -= UNROLL_BY;
 
 #if NPY_SIMD && @float32@
-/**begin repeat2
- * #i = 0, 1#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 2;
-        accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data0+pack_size));
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 2;
+            accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data0+pack_size));
+        }
 #elif NPY_SIMD_F64 && @float64@
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 4;
-        accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data0+pack_size));
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 4;
+            accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data0+pack_size));
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
         accum += @from@(data0[i]);
@@ -1092,10 +1043,10 @@ static void
 #endif
 
 #if NPY_SIMD && @float32@
-    npyv_f32 a, accum_sse = npyv_zero_f32();
+    npyv_f32 accum_sse = npyv_zero_f32();
     npy_intp pack_size;
 #elif NPY_SIMD_F64 && @float64@
-    npyv_f64 a, accum_sse = npyv_zero_f64();
+    npyv_f64 accum_sse = npyv_zero_f64();
     npy_intp pack_size;
 #endif
 
@@ -1133,16 +1084,14 @@ finish_after_unrolled_loop:
 
             npyv_prefetch(data0 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1#
- */
-            /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 2;
-            accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data0+pack_size));
-/**end repeat2**/
+            for (int i  = 0; i < 2; i++) {
+                /*
+                * NOTE: This accumulation changes the order, so will likely
+                *       produce slightly different results.
+                */
+                pack_size = i * UNROLL_BY / 2;
+                accum_sse = npyv_add_f32(accum_sse, npyv_loada_f32(data0+pack_size));
+            }
             data0 += UNROLL_BY;
         }
         /* Add the four SSE values and put in accum */
@@ -1159,16 +1108,14 @@ finish_after_unrolled_loop:
 
             npyv_prefetch(data0 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-            /*
-             * NOTE: This accumulation changes the order, so will likely
-             *       produce slightly different results.
-             */
-            pack_size = @i@ * UNROLL_BY / 4;
-            accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data0+pack_size));
-/**end repeat2**/
+            for (int i  = 0; i < 4; i++) {
+                /*
+                * NOTE: This accumulation changes the order, so will likely
+                *       produce slightly different results.
+                */
+                pack_size = i * UNROLL_BY / 4;
+                accum_sse = npyv_add_f64(accum_sse, npyv_loada_f64(data0+pack_size));
+            }
             data0 += UNROLL_BY;
         }
         accum = npyv_sum_f64(accum_sse);
@@ -1184,29 +1131,25 @@ finish_after_unrolled_loop:
 #if NPY_SIMD && @float32@
         npyv_prefetch(data0 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 2;
-        accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data0+pack_size));
-/**end repeat2**/
+        for (int i  = 0; i < 2; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 2;
+            accum_sse = npyv_add_f32(accum_sse, npyv_load_f32(data0+pack_size));
+        }
 #elif NPY_SIMD_F64 && @float64@
         npyv_prefetch(data0 + 512, 1);
 
-/**begin repeat2
- * #i = 0, 1, 2, 3#
- */
-        /*
-         * NOTE: This accumulation changes the order, so will likely
-         *       produce slightly different results.
-         */
-        pack_size = @i@ * UNROLL_BY / 4;
-        accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data0+pack_size));
-/**end repeat2**/
+        for (int i  = 0; i < 4; i++) {
+            /*
+            * NOTE: This accumulation changes the order, so will likely
+            *       produce slightly different results.
+            */
+            pack_size = i * UNROLL_BY / 4;
+            accum_sse = npyv_add_f64(accum_sse, npyv_load_f64(data0+pack_size));
+        }
 #else
     for (int i = 0; i < UNROLL_BY; i++) {
 #if !@complex@
