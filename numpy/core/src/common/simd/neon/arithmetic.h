@@ -90,7 +90,7 @@ NPY_FINLINE float npyv_sum_f32(float32x4_t a)
 #ifdef __aarch64__
     NPY_FINLINE double npyv_sum_f64(float64x2_t a)
     {
-        return vget_low_f64(a)+vget_high_f64(a);
+        return vget_lane_f64(vget_low_f64(a) + vget_high_f64(a), 0);
     }
 #endif
 
