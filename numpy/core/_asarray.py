@@ -3,7 +3,7 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from .overrides import set_module
+from .overrides import array_function_dispatch, set_module
 from .multiarray import array
 
 
@@ -11,6 +11,12 @@ __all__ = [
     "asarray", "asanyarray", "ascontiguousarray", "asfortranarray", "require",
 ]
 
+
+def _asarray_dispatcher(a, dtype=None, order=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_asarray_dispatcher)
 @set_module('numpy')
 def asarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an array.
@@ -83,11 +89,12 @@ def asarray(a, dtype=None, order=None, *, like=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order, like=like)
+    return array(a, dtype, copy=False, order=order)
 
 
+@array_function_dispatch(_asarray_dispatcher)
 @set_module('numpy')
-def asanyarray(a, dtype=None, order=None):
+def asanyarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
 
     Parameters
@@ -140,11 +147,16 @@ def asanyarray(a, dtype=None, order=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order, subok=True)
+    return array(a, dtype, copy=False, order=order, subok=True, like=like)
 
 
+def _asarray_contiguous_fortran_dispatcher(a, dtype=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_asarray_contiguous_fortran_dispatcher)
 @set_module('numpy')
-def ascontiguousarray(a, dtype=None):
+def ascontiguousarray(a, dtype=None, *, like=None):
     """
     Return a contiguous array (ndim >= 1) in memory (C order).
 
@@ -181,11 +193,12 @@ def ascontiguousarray(a, dtype=None):
     so it will not preserve 0-d arrays.  
 
     """
-    return array(a, dtype, copy=False, order='C', ndmin=1)
+    return array(a, dtype, copy=False, order='C', ndmin=1, like=like)
 
 
+@array_function_dispatch(_asarray_contiguous_fortran_dispatcher)
 @set_module('numpy')
-def asfortranarray(a, dtype=None):
+def asfortranarray(a, dtype=None, *, like=None):
     """
     Return an array (ndim >= 1) laid out in Fortran order in memory.
 
@@ -222,11 +235,16 @@ def asfortranarray(a, dtype=None):
     so it will not preserve 0-d arrays.  
 
     """
-    return array(a, dtype, copy=False, order='F', ndmin=1)
+    return array(a, dtype, copy=False, order='F', ndmin=1, like=like)
 
 
+def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_require_dispatcher)
 @set_module('numpy')
-def require(a, dtype=None, requirements=None):
+def require(a, dtype=None, requirements=None, *, like=None):
     """
     Return an ndarray of the provided type that satisfies requirements.
 
@@ -300,7 +318,7 @@ def require(a, dtype=None, requirements=None):
                       'O': 'O', 'OWNDATA': 'O',
                       'E': 'E', 'ENSUREARRAY': 'E'}
     if not requirements:
-        return asanyarray(a, dtype=dtype)
+        return asanyarray(a, dtype=dtype, like=like)
     else:
         requirements = {possible_flags[x.upper()] for x in requirements}
 
@@ -320,7 +338,7 @@ def require(a, dtype=None, requirements=None):
         order = 'C'
         requirements.remove('C')
 
-    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
+    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok, like=like)
 
     for prop in requirements:
         if not arr.flags[prop]:
