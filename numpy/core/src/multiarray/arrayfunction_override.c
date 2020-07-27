@@ -346,27 +346,20 @@ array_implement_array_function(
 {
     PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
 
-    if (!intern_strings()) {
-        if (PyErr_Occurred()) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "cannot load arrayfunction_override.");
-        }
+    if (!intern_strings())
         return NULL;
-    }
 
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
-            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
+            &implementation, &public_api, &relevant_args, &args, &kwargs))
         return NULL;
-    }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries.
      */
     if (PyDict_CheckExact(kwargs) &&
-            PyDict_Contains(kwargs, npy_arrayfunction_str_like)) {
+            PyDict_Contains(kwargs, npy_arrayfunction_str_like))
         PyDict_DelItem(kwargs, npy_arrayfunction_str_like);
-    }
 
     return array_implement_array_function_internal(
         implementation, public_api, relevant_args, args, kwargs);
@@ -379,8 +372,7 @@ array_implement_array_function(
  */
 NPY_NO_EXPORT PyObject *
 array_implement_c_array_function(
-    const char *function_name, PyObject *args, PyObject *kwargs,
-    PyObject **err_type, PyObject **err_value, PyObject **err_traceback)
+    const char *function_name, PyObject *args, PyObject *kwargs)
 {
     PyObject *relevant_args;
     PyObject *numpy_module = NULL, *public_api = NULL;
@@ -389,13 +381,8 @@ array_implement_c_array_function(
     if (kwargs == NULL)
         return NULL;
 
-    if (!intern_strings()) {
-        if (PyErr_Occurred()) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "cannot load arrayfunction_override.");
-        }
+    if (!intern_strings())
         goto cleanup;
-    }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
@@ -414,21 +401,18 @@ array_implement_c_array_function(
     numpy_module = PyImport_Import(npy_arrayfunction_str_numpy);
     if (numpy_module != NULL) {
         public_api = PyObject_GetAttrString(numpy_module, function_name);
-        if (public_api == NULL || !PyCallable_Check(public_api)) {
-            if (PyErr_Occurred()) {
-                PyErr_Format(PyExc_RuntimeError,
-                             "cannot import numpy.%s or it is not callable.",
-                             function_name);
-            }
+        if (public_api == NULL)
+            goto cleanup;
+        if (!PyCallable_Check(public_api)) {
+            PyErr_Format(PyExc_RuntimeError,
+                         "numpy.%s is not callable.",
+                         function_name);
             goto cleanup;
         }
     }
 
     result = array_implement_array_function_internal(
         NULL, public_api, relevant_args, args, kwargs);
-
-    if (PyErr_Occurred())
-        PyErr_Fetch(err_type, err_value, err_traceback);
 
 cleanup:
     Py_XDECREF(numpy_module);

@@ -1589,9 +1589,6 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     int flags = 0;
 
     PyObject* array_function_result = NULL;
-    PyObject* err_type = NULL;
-    PyObject* err_value = NULL;
-    PyObject* err_traceback = NULL;
 
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
                          "ndmin", "like", NULL};
@@ -1603,15 +1600,11 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function(
-            "array", args, kws, &err_type, &err_value, &err_traceback);
-    if (array_function_result != NULL) {
+    array_function_result = array_implement_c_array_function("array", args, kws);
+    if (array_function_result != NULL)
         return array_function_result;
-    }
-    else if (err_type != NULL) {
-        PyErr_Restore(err_type, err_value, err_traceback);
+    else if (PyErr_Occurred())
         return NULL;
-    }
 
     /* super-fast path for ndarray argument calls */
     if (PyTuple_GET_SIZE(args) == 0) {

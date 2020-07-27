@@ -11,8 +11,7 @@ array__get_implementing_args(
 
 NPY_NO_EXPORT PyObject *
 array_implement_c_array_function(
-    const char *function_name, PyObject *args, PyObject *kwargs,
-    PyObject **err_type, PyObject **err_value, PyObject **err_traceback);
+    const char *function_name, PyObject *args, PyObject *kwargs);
 
 NPY_NO_EXPORT PyObject *
 array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
