@@ -54,48 +54,64 @@ NPY_FINLINE __m128i npyv_shr_s64(__m128i a, int c)
 // AND
 #define npyv_and_u8  _mm_and_si128
 #define npyv_and_s8  _mm_and_si128
+#define npyv_and_b8  _mm_and_si128
 #define npyv_and_u16 _mm_and_si128
 #define npyv_and_s16 _mm_and_si128
+#define npyv_and_b16 _mm_and_si128
 #define npyv_and_u32 _mm_and_si128
 #define npyv_and_s32 _mm_and_si128
+#define npyv_and_b32 _mm_and_si128
 #define npyv_and_u64 _mm_and_si128
 #define npyv_and_s64 _mm_and_si128
+#define npyv_and_b64 _mm_and_si128
 #define npyv_and_f32 _mm_and_ps
 #define npyv_and_f64 _mm_and_pd
 
 // OR
 #define npyv_or_u8  _mm_or_si128
 #define npyv_or_s8  _mm_or_si128
+#define npyv_or_b8  _mm_or_si128
 #define npyv_or_u16 _mm_or_si128
 #define npyv_or_s16 _mm_or_si128
+#define npyv_or_b16 _mm_or_si128
 #define npyv_or_u32 _mm_or_si128
 #define npyv_or_s32 _mm_or_si128
+#define npyv_or_b32 _mm_or_si128
 #define npyv_or_u64 _mm_or_si128
 #define npyv_or_s64 _mm_or_si128
+#define npyv_or_b64 _mm_or_si128
 #define npyv_or_f32 _mm_or_ps
 #define npyv_or_f64 _mm_or_pd
 
 // XOR
 #define npyv_xor_u8  _mm_xor_si128
 #define npyv_xor_s8  _mm_xor_si128
+#define npyv_xor_b8  _mm_xor_si128
 #define npyv_xor_u16 _mm_xor_si128
 #define npyv_xor_s16 _mm_xor_si128
+#define npyv_xor_b16 _mm_xor_si128
 #define npyv_xor_u32 _mm_xor_si128
 #define npyv_xor_s32 _mm_xor_si128
+#define npyv_xor_b32 _mm_xor_si128
 #define npyv_xor_u64 _mm_xor_si128
 #define npyv_xor_s64 _mm_xor_si128
+#define npyv_xor_b64 _mm_xor_si128
 #define npyv_xor_f32 _mm_xor_ps
 #define npyv_xor_f64 _mm_xor_pd
 
 // NOT
 #define npyv_not_u8(A) _mm_xor_si128(A, _mm_set1_epi32(-1))
 #define npyv_not_s8  npyv_not_u8
+#define npyv_not_b8  npyv_not_u8
 #define npyv_not_u16 npyv_not_u8
 #define npyv_not_s16 npyv_not_u8
+#define npyv_not_b16 npyv_not_u8
 #define npyv_not_u32 npyv_not_u8
 #define npyv_not_s32 npyv_not_u8
+#define npyv_not_b32 npyv_not_u8
 #define npyv_not_u64 npyv_not_u8
 #define npyv_not_s64 npyv_not_u8
+#define npyv_not_b64 npyv_not_u8
 #define npyv_not_f32(A) _mm_xor_ps(A, _mm_castsi128_ps(_mm_set1_epi32(-1)))
 #define npyv_not_f64(A) _mm_xor_pd(A, _mm_castsi128_pd(_mm_set1_epi32(-1)))
 

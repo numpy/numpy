@@ -48,12 +48,16 @@
 // AND
 #define npyv_and_u8  vandq_u8
 #define npyv_and_s8  vandq_s8
+#define npyv_and_b8  vandq_u8
 #define npyv_and_u16 vandq_u16
 #define npyv_and_s16 vandq_s16
+#define npyv_and_b16 vandq_u16
 #define npyv_and_u32 vandq_u32
 #define npyv_and_s32 vandq_s32
+#define npyv_and_b32 vandq_u32
 #define npyv_and_u64 vandq_u64
 #define npyv_and_s64 vandq_s64
+#define npyv_and_b64 vandq_u64
 #define npyv_and_f32(A, B) \
     vreinterpretq_f32_u8(vandq_u8(vreinterpretq_u8_f32(A), vreinterpretq_u8_f32(B)))
 #define npyv_and_f64(A, B) \
@@ -62,12 +66,16 @@
 // OR
 #define npyv_or_u8  vorrq_u8
 #define npyv_or_s8  vorrq_s8
+#define npyv_or_b8  vorrq_u8
 #define npyv_or_u16 vorrq_u16
 #define npyv_or_s16 vorrq_s16
+#define npyv_or_b16 vorrq_u16
 #define npyv_or_u32 vorrq_u32
 #define npyv_or_s32 vorrq_s32
+#define npyv_or_b32 vorrq_u32
 #define npyv_or_u64 vorrq_u64
 #define npyv_or_s64 vorrq_s64
+#define npyv_or_b64 vorrq_u64
 #define npyv_or_f32(A, B) \
     vreinterpretq_f32_u8(vorrq_u8(vreinterpretq_u8_f32(A), vreinterpretq_u8_f32(B)))
 #define npyv_or_f64(A, B) \
@@ -76,12 +84,16 @@
 // XOR
 #define npyv_xor_u8  veorq_u8
 #define npyv_xor_s8  veorq_s8
+#define npyv_xor_b8  veorq_u8
 #define npyv_xor_u16 veorq_u16
 #define npyv_xor_s16 veorq_s16
+#define npyv_xor_b16 veorq_u16
 #define npyv_xor_u32 veorq_u32
 #define npyv_xor_s32 veorq_s32
+#define npyv_xor_b32 veorq_u32
 #define npyv_xor_u64 veorq_u64
 #define npyv_xor_s64 veorq_s64
+#define npyv_xor_b64 veorq_u64
 #define npyv_xor_f32(A, B) \
     vreinterpretq_f32_u8(veorq_u8(vreinterpretq_u8_f32(A), vreinterpretq_u8_f32(B)))
 #define npyv_xor_f64(A, B) \
@@ -90,12 +102,16 @@
 // NOT
 #define npyv_not_u8  vmvnq_u8
 #define npyv_not_s8  vmvnq_s8
+#define npyv_not_b8  vmvnq_u8
 #define npyv_not_u16 vmvnq_u16
 #define npyv_not_s16 vmvnq_s16
+#define npyv_not_b16 vmvnq_u16
 #define npyv_not_u32 vmvnq_u32
 #define npyv_not_s32 vmvnq_s32
+#define npyv_not_b32 vmvnq_u32
 #define npyv_not_u64(A) vreinterpretq_u64_u8(vmvnq_u8(vreinterpretq_u8_u64(A)))
 #define npyv_not_s64(A) vreinterpretq_s64_u8(vmvnq_u8(vreinterpretq_u8_s64(A)))
+#define npyv_not_b64(A) vreinterpretq_u64_u8(vmvnq_u8(vreinterpretq_u8_u64(A)))
 #define npyv_not_f32(A) vreinterpretq_f32_u8(vmvnq_u8(vreinterpretq_u8_f32(A)))
 #define npyv_not_f64(A) vreinterpretq_f64_u8(vmvnq_u8(vreinterpretq_u8_f64(A)))
 
