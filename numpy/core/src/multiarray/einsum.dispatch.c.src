@@ -8,8 +8,8 @@
  * See LICENSE.txt for the license.
  */
 /**
- * @targets $werror baseline
- * SSE2 SSE41 AVX2
+ * @targets $maxopt baseline
+ * SSE2 (AVX2 FMA3) AVX512F
  * NEON ASIMD ASIMDHP
  */
 #include "einsum_p.h"
