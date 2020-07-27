@@ -409,7 +409,7 @@ array_implement_c_array_function(
 
     numpy_module = PyImport_Import(npy_arrayfunction_str_numpy);
     if (numpy_module != NULL) {
-        PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
+        public_api = PyObject_GetAttrString(numpy_module, function_name);
         if (public_api == NULL || !PyCallable_Check(public_api)) {
             if (PyErr_Occurred()) {
                 PyErr_Format(PyExc_RuntimeError,
@@ -424,7 +424,7 @@ array_implement_c_array_function(
         NULL, public_api, relevant_args, args, kwargs);
 
 err:
-    if (!PyErr_Occurred()) {
+    if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load arrayfunction_override module.");
     }
