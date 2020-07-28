@@ -455,6 +455,12 @@ class TestArrayLike:
             def full(*args, **kwargs):
                 return MyArray(MyArray.full)
 
+            def zeros(*args, **kwargs):
+                return MyArray(MyArray.zeros)
+
+            def empty(*args, **kwargs):
+                return MyArray(MyArray.empty)
+
 
         ref = MyArray.array()
 
@@ -467,8 +473,14 @@ class TestArrayLike:
         ones_like = np.ones(1, like=ref)
         assert type(ones_like) is MyArray and ones_like.function is MyArray.ones
 
-        full_like = np.full(1, 2, dtype=np.int64, like=ref)
+        full_like = np.full(1, 2, like=ref)
         assert type(full_like) is MyArray and full_like.function is MyArray.full
+
+        zeros_like = np.zeros(1, like=ref)
+        assert type(zeros_like) is MyArray and zeros_like.function is MyArray.zeros
+
+        empty_like = np.empty(1, like=ref)
+        assert type(empty_like) is MyArray and empty_like.function is MyArray.empty
 
 
     @requires_array_function
