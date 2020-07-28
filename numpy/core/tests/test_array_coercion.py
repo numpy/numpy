@@ -570,3 +570,30 @@ class TestArrayLikes:
         with pytest.raises(ValueError):
             # The error type does not matter much here.
             np.array([obj])
+
+    def test_arraylike_classes(self):
+        # The classes of array-likes should generally be acceptable to be
+        # stored inside a numpy (object) array.  This tests all of the
+        # special attributes (since all are checked during coercion).
+        arr = np.array(np.int64)
+        assert arr[()] is np.int64
+        arr = np.array([np.int64])
+        assert arr[0] is np.int64
+
+        # This also works for properties/unbound methods:
+        class ArrayLike:
+            @property
+            def __array_interface__(self):
+                pass
+
+            @property
+            def __array_struct__(self):
+                pass
+
+            def __array__(self):
+                pass
+
+        arr = np.array(ArrayLike)
+        assert arr[()] is ArrayLike
+        arr = np.array([ArrayLike])
+        assert arr[0] is ArrayLike
