@@ -233,6 +233,7 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
+    from distutils.version import LooseVersion
 
     def _is_using_old_gcc(obj):
         is_old_gcc = False
@@ -242,11 +243,10 @@ def get_build_overrides():
                 out = subprocess.run([cc, '-dumpversion'],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
+                                     universal_newlines=True,
                                     )
-                # will print something like b'4.2.1\n'
-                ver_parts = out.stdout.split(b'.')
-                if int(ver_parts[0]) < 6:
-                    # perhaps 5 is OK?
+                # will print something like '4.2.1\n'
+                if LooseVersion(out.stdout) < LooseVersion('5.0'):
                     is_old_gcc = True
         return is_old_gcc
 
