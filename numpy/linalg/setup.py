@@ -72,13 +72,18 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
     )
 
+    if os.environ.get('CC') == 'xlc':
+        extra_libs = ['xl']
+    else:
+        extra_libs = []
+
     # umath_linalg module
     config.add_extension(
         '_umath_linalg',
         sources=['umath_linalg.c.src', get_lapack_lite_sources],
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
-        libraries=['npymath'],
+        libraries=['npymath'] + extra_libs,
     )
     return config
 

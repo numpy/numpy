@@ -710,12 +710,24 @@ def configuration(parent_package='',top_path=None):
     #                     multiarray_tests module                         #
     #######################################################################
 
+    # NOTE: LIBRARY_PATH must be set to pick up libxl.a
+    # this variable is not set by default on a typical
+    # Power9 node with an xlc module loaded
+    # NOTE: 'xlc' is probably too specific re: case
+    # sensitivity, etc.
+    # also, probably better to use a proper distutils
+    # variable where C compiler info is stored
+    if os.environ.get('CC') == 'xlc':
+        extra_libs = ['xl']
+    else:
+        extra_libs = []
+
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
                              join('src', 'common', 'mem_overlap.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
                              join('src', 'common', 'npy_extint128.h')],
-                    libraries=['npymath'])
+                    libraries=['npymath'] + extra_libs)
 
     #######################################################################
     #             _multiarray_umath module - common part                  #
@@ -938,7 +950,7 @@ def configuration(parent_package='',top_path=None):
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         libraries=['npymath', 'npysort'],
+                         libraries=['npymath', 'npysort'] + extra_libs,
                          extra_info=extra_info)
 
     #######################################################################
