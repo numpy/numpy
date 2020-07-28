@@ -1827,19 +1827,28 @@ static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"shape", "dtype", "order", NULL};
+    static char *kwlist[] = {"shape", "dtype", "order", "like", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
+    PyObject *like = NULL;
     npy_bool is_f_order;
+    PyObject *array_function_result = NULL;
     PyArrayObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:empty", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&$O:empty", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &like)) {
         goto fail;
     }
+
+    array_function_result = array_implement_c_array_function("empty", args, kwds);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
 
     switch (order) {
         case NPY_CORDER:
@@ -1994,19 +2003,28 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape", "dtype", "order", NULL};
+    static char *kwlist[] = {"shape", "dtype", "order", "like", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
+    PyObject *like = NULL;
     npy_bool is_f_order = NPY_FALSE;
+    PyObject *array_function_result = NULL;
     PyArrayObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:zeros", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&$O:zeros", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &like)) {
         goto fail;
     }
+
+    array_function_result = array_implement_c_array_function("zeros", args, kwds);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
 
     switch (order) {
         case NPY_CORDER:
