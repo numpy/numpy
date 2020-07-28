@@ -519,6 +519,7 @@ class str_(character):
 def array(
     object: object,
     dtype: DtypeLike = ...,
+    *,
     copy: bool = ...,
     order: Optional[str] = ...,
     subok: bool = ...,
