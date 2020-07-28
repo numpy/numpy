@@ -8,6 +8,7 @@ Support code for building Python extensions on Windows.
 
 """
 import os
+import platform
 import sys
 import subprocess
 import re
@@ -265,16 +266,19 @@ def find_python_dll():
 
     # search in the file system for possible candidates
     major_version, minor_version = tuple(sys.version_info[:2])
-    patterns = ['python%d%d.dll']
-
-    for pat in patterns:
-        dllname = pat % (major_version, minor_version)
-        print("Looking for %s" % dllname)
-        for folder in lib_dirs:
-            dll = os.path.join(folder, dllname)
-            if os.path.exists(dll):
-                return dll
-
+    implementation = platform.python_implementation()
+    if implementation == 'CPython':
+        dllname = f'python{major_version}{minor_version}.dll'
+    elif implementation == 'PyPy':
+        dllname = f'libpypy{major_version}-c.dll'
+    else:
+        dllname = 'Unknown platform {implementation}' 
+    print("Looking for %s" % dllname)
+    for folder in lib_dirs:
+        dll = os.path.join(folder, dllname)
+        if os.path.exists(dll):
+            return dll
+ 
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):

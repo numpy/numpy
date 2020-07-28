@@ -24,7 +24,8 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
+    break_cycles
     )
 from numpy.testing._private.utils import requires_memory
 
@@ -2387,6 +2388,9 @@ class TestPathUsage:
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
 
     def test_save_load_memmap_readwrite(self):
         # Test that pathlib.Path instances can be written mem-mapped.
@@ -2398,6 +2402,9 @@ class TestPathUsage:
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 
