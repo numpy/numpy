@@ -520,6 +520,7 @@ def array(
     object: object,
     dtype: DtypeLike = ...,
     copy: bool = ...,
+    order: Optional[str] = ...,
     subok: bool = ...,
     ndmin: int = ...,
 ) -> ndarray: ...
