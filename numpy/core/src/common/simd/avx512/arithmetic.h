@@ -140,7 +140,7 @@ NPY_FINLINE __m256 get_low_f32(__m512 a)
 
 NPY_FINLINE __m256 get_high_f32(__m512 a)
 {
-    return _mm256_castpd_ps(_mm512_extractf64x4_pd(_mm512_castps_pd(a),1));
+    return _mm512_extractf32x8_ps(a, 1);
 }
 
 NPY_FINLINE __m256d get_low_f64(__m512d a)
