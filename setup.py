@@ -235,24 +235,25 @@ def get_build_overrides():
     from numpy.distutils.command.build_ext import build_ext
     from distutils.version import LooseVersion
 
-    def _is_using_old_gcc(obj):
-        is_old_gcc = False
-        if obj.compiler.compiler_type == 'unix':
-            cc = obj.compiler.compiler[0]
-            if "gcc" in cc:
-                out = subprocess.run([cc, '-dumpversion'],
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     universal_newlines=True,
-                                    )
-                # will print something like '4.2.1\n'
-                if LooseVersion(out.stdout) < LooseVersion('5.0'):
-                    is_old_gcc = True
-        return is_old_gcc
+    def _needs_gcc_c99_flag(obj):
+        if obj.compiler.compiler_type != 'unix':
+            return False
+
+        cc = obj.compiler.compiler[0]
+        if "gcc" not in cc:
+            return False
+
+        # will print something like '4.2.1\n'
+        out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, universal_newlines=True)
+        # -std=c99 is default from this version on
+        if LooseVersion(out.stdout) >= LooseVersion('5.0'):
+            return False
+        return True
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
-            if _is_using_old_gcc(self):
+            if _needs_gcc_c99_flag(self):
                 args = build_info.get('extra_compiler_args') or []
                 args.append('-std=c99')
                 build_info['extra_compiler_args'] = args
@@ -260,7 +261,7 @@ def get_build_overrides():
 
     class new_build_ext(build_ext):
         def build_extension(self, ext):
-            if _is_using_old_gcc(self):
+            if _needs_gcc_c99_flag(self):
                 if '-std=c99' not in ext.extra_compile_args:
                     ext.extra_compile_args.append('-std=c99')
             build_ext.build_extension(self, ext)
