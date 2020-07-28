@@ -3855,7 +3855,7 @@ neon_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
     }
 
 #elif defined __aarch32__
-    const npy_intp vector_size_bytes = 16;
+    const npy_intp vector_size_bytes = 8;
     const @Nvtype64@ b = @Nvpre@ld1_dup_@Nvsuf@(ip2);
     LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
     op[i] = ip1[i] @OP@ ip2[0];
