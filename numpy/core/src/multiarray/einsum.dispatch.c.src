@@ -14,12 +14,8 @@
  */
 #include "einsum_p.h"
 
-#if NPY_SIMD || NPY_SIMD_F64
-    #if NPY_SIMD_WIDTH > 32
-        #define UNROLL_BY npyv_nlanes_f64 * 2
-    #else
-        #define UNROLL_BY npyv_nlanes_f64 * 4
-    #endif
+#if NPY_SIMD
+    #define UNROLL_BY npyv_nlanes_f64 * 4
 #else
     #define UNROLL_BY 8
 #endif
@@ -253,6 +249,7 @@ finish_after_unrolled_loop:
         return;
     }
 #if NPY_SIMD && @float32@
+    printf("NPY_SIMD:%d\n",NPY_SIMD);
     /* Use aligned instructions if possible */
     if (EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1) &&
         EINSUM_IS_ALIGNED(data_out)) {

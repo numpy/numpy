@@ -124,7 +124,6 @@ numpy/version.py
 site.cfg
 setup.cfg
 .tox
-numpy/random/lib/npyrandom.lib
 numpy/core/include/numpy/__multiarray_api.c
 numpy/core/include/numpy/__ufunc_api.c
 numpy/core/include/numpy/__umath_generated.c
