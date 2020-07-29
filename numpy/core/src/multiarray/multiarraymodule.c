@@ -2078,15 +2078,23 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     Py_ssize_t nin = -1;
     char *sep = NULL;
     Py_ssize_t s;
-    static char *kwlist[] = {"string", "dtype", "count", "sep", NULL};
+    static char *kwlist[] = {"string", "dtype", "count", "sep", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *descr = NULL;
+    PyObject *array_function_result = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s:fromstring", kwlist,
-                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep)) {
+                "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
+                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like)) {
         Py_XDECREF(descr);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function("fromstring", args, keywds);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
 
     /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
@@ -2110,18 +2118,26 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", NULL};
+    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *type = NULL;
+    PyObject *array_function_result = NULL;
     int own;
     npy_off_t orig_pos = 0, offset = 0;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT ":fromfile", kwlist,
-                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset)) {
+                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT "$O:fromfile", kwlist,
+                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset, &like)) {
         Py_XDECREF(type);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function("fromfile", args, keywds);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
 
     file = NpyPath_PathlikeToFspath(file);
     if (file == NULL) {
@@ -2189,15 +2205,24 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *iter;
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"iter", "dtype", "count", NULL};
+    static char *kwlist[] = {"iter", "dtype", "count", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *descr = NULL;
+    PyObject *array_function_result = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist,
-                &iter, PyArray_DescrConverter, &descr, &nin)) {
+                "OO&|" NPY_SSIZE_T_PYFMT "$O:fromiter", kwlist,
+                &iter, PyArray_DescrConverter, &descr, &nin, &like)) {
         Py_XDECREF(descr);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function("fromiter", args, keywds);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
+
     return PyArray_FromIter(iter, descr, (npy_intp)nin);
 }
 
@@ -2206,15 +2231,24 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 {
     PyObject *obj = NULL;
     Py_ssize_t nin = -1, offset = 0;
-    static char *kwlist[] = {"buffer", "dtype", "count", "offset", NULL};
+    static char *kwlist[] = {"buffer", "dtype", "count", "offset", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *type = NULL;
+    PyObject *array_function_result = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT ":frombuffer", kwlist,
-                &obj, PyArray_DescrConverter, &type, &nin, &offset)) {
+                "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT "$O:frombuffer", kwlist,
+                &obj, PyArray_DescrConverter, &type, &nin, &offset, &like)) {
         Py_XDECREF(type);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function("frombuffer", args, keywds);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
+
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
@@ -2794,17 +2828,27 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 static PyObject *
 array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
-    static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
+    PyObject *like = NULL;
+    PyObject *array_function_result = NULL;
+    static char *kwd[]= {"start", "stop", "step", "dtype", "like", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&$O:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
-                PyArray_DescrConverter2, &typecode)) {
+                PyArray_DescrConverter2, &typecode,
+                &like)) {
         Py_XDECREF(typecode);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function("arange", args, kws);
+    if (array_function_result != NULL)
+        return array_function_result;
+    else if (PyErr_Occurred())
+        return NULL;
+
     range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
     Py_XDECREF(typecode);
 
