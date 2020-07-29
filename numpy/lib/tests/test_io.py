@@ -2347,11 +2347,12 @@ M   33  21.99
         # Regression test for gh-4341
         # Unpacking should work on structured arrays
         txt = TextIO("M 21 72\nF 35 58")
-        dt = {'names': ('a', 'b', 'c'), 'formats': ('|S1', '<i4', '<f4')}
+        dt = {'names': ('a', 'b', 'c'), 'formats': ('S1', 'i4', 'f4')}
         a, b, c = np.genfromtxt(txt, dtype=dt, unpack=True)
-        assert_(a.dtype.str == '|S1')
-        assert_(b.dtype.str == '<i4')
-        assert_(c.dtype.str == '<f4')
+        print(a.dtype.str, b.dtype.str, c.dtype.str)
+        assert_equal(a.dtype, np.dtype('S1'))
+        assert_equal(b.dtype, np.dtype('i4'))
+        assert_equal(c.dtype, np.dtype('f4'))
         assert_array_equal(a, np.array([b'M', b'F']))
         assert_array_equal(b, np.array([21, 35]))
         assert_array_equal(c, np.array([72.,  58.]))
@@ -2370,7 +2371,7 @@ M   33  21.99
         # Regression test for gh-4341
         # Unpacking should work when structured dtype has only one field
         txt = TextIO("21\n35")
-        dt = {'names': ('a',), 'formats': ('<i4',)}
+        dt = {'names': ('a',), 'formats': ('i4',)}
         expected = np.array([21, 35], dtype=np.int32)
         test = np.genfromtxt(txt, dtype=dt, unpack=True)
         assert_array_equal(expected, test)
@@ -2381,7 +2382,7 @@ M   33  21.99
         # Unpacking a scalar should give zero-dim output,
         # even if dtype is structured
         txt = TextIO("1")
-        dt = {'names': ('a',), 'formats': ('<i4',)}
+        dt = {'names': ('a',), 'formats': ('i4',)}
         expected = np.array((1,), dtype=np.int32)
         test = np.genfromtxt(txt, dtype=dt, unpack=True)
         assert_array_equal(expected, test)
