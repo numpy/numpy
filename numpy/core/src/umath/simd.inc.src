@@ -42,8 +42,9 @@
 #else
 #define vector_size_bytes 8
 #endif
-#define VECTOR_SIZE_BYTES 16
 #endif
+
+#define VECTOR_SIZE_BYTES 16
 
 /*
  * MAX_STEP_SIZE is used to determine if we need to use SIMD version of the ufunc.
