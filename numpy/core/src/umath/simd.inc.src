@@ -3745,7 +3745,6 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
  *  #Nvtype64 = float32x2_t, float64x1_t#
  *  #Nvpre = v, v#
  *  #Nvsuf = f32, f64#
- *  #double = 0, 1#
  */
 
 
