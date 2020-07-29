@@ -3843,69 +3843,8 @@ neon_binary_scalar@scalar_loc@_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ *
     }
 }
 /**end repeat2**/
-/*
-static void
-neon_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
-{
-#ifdef __aarch64__
-    const @Nvtype128@ a = @Nvpre@ld1q_dup_@Nvsuf@(ip1);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-    op[i] = ip1[0] @OP@ ip2[i];
-    LOOP_BLOCKED(@type@, vector_size_bytes) {
-        @Nvtype128@ b = @Nvpre@ld1q_@Nvsuf@(&ip2[i]);
-        @Nvtype128@ c = @Nvpre@@VOP@q_@Nvsuf@(a, b);
-        @Nvpre@st1q_@Nvsuf@(&op[i], c);
-    }
-
-#elif __aarch32__
-    const @Nvtype64@ a = @Nvpre@ld1_dup_@Nvsuf@(ip1);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-    op[i] = ip1[0] @OP@ ip2[i];
-    LOOP_BLOCKED(@type@, vector_size_bytes) {
-        @Nvtype64@ b = @Nvpre@ld1_@Nvsuf@(&ip2[i]);
-        @Nvtype64@ c = @Nvpre@@VOP@_@Nvsuf@(a, b);
-        @Nvpre@st1_@Nvsuf@(&op[i], c);
-    }
-
-#endif
-    LOOP_BLOCKED_END {
-        op[i] = ip1[0] @OP@ ip2[i];
-    }
-}
-
-
-static void
-neon_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
-{
-#ifdef __aarch64__
-    const @Nvtype128@ b = @Nvpre@ld1q_dup_@Nvsuf@(ip2);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-    op[i] = ip1[i] @OP@ ip2[0];
-    LOOP_BLOCKED(@type@, vector_size_bytes) {
-        @Nvtype128@ a = @Nvpre@ld1q_@Nvsuf@(&ip1[i]);
-        @Nvtype128@ c = @Nvpre@@VOP@q_@Nvsuf@(a, b);
-        @Nvpre@st1q_@Nvsuf@(&op[i], c);
-    }
-
-#elif __aarch32__
-    const @Nvtype64@ b = @Nvpre@ld1_dup_@Nvsuf@(ip2);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-    op[i] = ip1[i] @OP@ ip2[0];
-    LOOP_BLOCKED(@type@, vector_size_bytes) {
-        @Nvtype64@ a = @Nvpre@ld1_@Nvsuf@(&ip1[i]);
-        @Nvtype64@ c = @Nvpre@@VOP@_@Nvsuf@(a, b);
-        @Nvpre@st1_@Nvsuf@(&op[i], c);
-    }
-
-#endif
-    LOOP_BLOCKED_END {
-        op[i] = ip1[i] @OP@ ip2[0];
-    }
-}
-*/
-
 /**end repeat1**/
 /**end repeat**/
 
-#endif /* NPY_HAVENEON */
+#endif /* NPY_HAVE_NEON */
 #endif
