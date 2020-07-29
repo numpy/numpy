@@ -3788,7 +3788,7 @@ neon_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
         LOOP_BLOCKED(@type@, vector_size_bytes) {
             @Nvtype64@ a = @Nvpre@ld1_@Nvsuf@(&ip1[i]);
             @Nvtype64@ c = @Nvpre@@VOP@_@Nvsuf@(a, a);
-            @Nvpre@st1q_@Nvsuf@(&op[i], c);
+            @Nvpre@st1_@Nvsuf@(&op[i], c);
         }
     }
     else {
