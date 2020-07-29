@@ -461,6 +461,20 @@ class TestArrayLike:
             def empty(*args, **kwargs):
                 return MyArray(MyArray.empty)
 
+            def arange(*args, **kwargs):
+                return MyArray(MyArray.arange)
+
+            def frombuffer(*args, **kwargs):
+                return MyArray(MyArray.frombuffer)
+
+            def fromfile(*args, **kwargs):
+                return MyArray(MyArray.fromfile)
+
+            def fromiter(*args, **kwargs):
+                return MyArray(MyArray.fromiter)
+
+            def fromstring(*args, **kwargs):
+                return MyArray(MyArray.fromstring)
 
         ref = MyArray.array()
 
@@ -481,6 +495,21 @@ class TestArrayLike:
 
         empty_like = np.empty(1, like=ref)
         assert type(empty_like) is MyArray and empty_like.function is MyArray.empty
+
+        arange_like = np.arange(1, like=ref)
+        assert type(arange_like) is MyArray and arange_like.function is MyArray.arange
+
+        frombuffer_like = np.frombuffer(b'\x00' * 8, dtype=int, like=ref)
+        assert type(frombuffer_like) is MyArray and frombuffer_like.function is MyArray.frombuffer
+
+        fromfile_like = np.fromfile("data.npy", like=ref)
+        assert type(fromfile_like) is MyArray and fromfile_like.function is MyArray.fromfile
+
+        fromiter_like = np.fromiter(range(2), int, like=ref)
+        assert type(fromiter_like) is MyArray and fromiter_like.function is MyArray.fromiter
+
+        fromstring_like = np.fromstring('1,2', dtype=int, sep=',', like=ref)
+        assert type(fromstring_like) is MyArray and fromstring_like.function is MyArray.fromstring
 
 
     @requires_array_function
