@@ -1390,7 +1390,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     rfft2 : The forward two-dimensional FFT of real input,
             of which `irfft2` is the inverse.
-    fft : The one-dimensional FFT, with definitions and conventions used.
+    rfft : The one-dimensional FFT for real input.
     irfft : The inverse of the one-dimensional FFT of real input.
     irfftn : Compute the inverse of the N-dimensional FFT of real input.
 
