@@ -28,21 +28,11 @@
 #undef __AVX512F__
 #endif
 #endif
-#ifdef NPY_HAVE_NEON
-#include <arm_neon.h>
-#endif
+#include "simd/simd.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <float.h>
 #include <string.h> /* for memcpy */
-
-#ifdef NPY_HAVE_NEON
-#ifdef __aarch64__
-#define vector_size_bytes 16
-#else
-#define vector_size_bytes 8
-#endif
-#endif
 
 #define VECTOR_SIZE_BYTES 16
 
@@ -516,6 +506,7 @@ run_unary_avx512f_log_DOUBLE(char **args, npy_intp const *dimensions, npy_intp c
  *  #type = npy_float, npy_double, npy_longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #vector = 1, 1, 0#
+ *  #VECTOR = NPY_SIMD, NPY_SIMD_F64, 0 #
  */
 
 /**begin repeat1
@@ -564,16 +555,16 @@ static void
 sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
                                   npy_intp n);
 
-#elif @vector@ && defined NPY_HAVE_NEON
+#elif @VECTOR@
 
 static void
-neon_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
+simd_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
                           npy_intp n);
 static void
-neon_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
+simd_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
                                   npy_intp n);
 static void
-neon_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
+simd_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2,
                                   npy_intp n);
 
 #endif
@@ -607,23 +598,23 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp 
         sse2_binary_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
-#elif @vector@ && defined NPY_HAVE_NEON
+#elif @VECTOR@
     @type@ * ip1 = (@type@ *)args[0];
     @type@ * ip2 = (@type@ *)args[1];
     @type@ * op = (@type@ *)args[2];
     npy_intp n = dimensions[0];
     /* argument one scalar */
-    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), vector_size_bytes)) {
-        neon_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
+    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        simd_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
     /* argument two scalar */
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), vector_size_bytes)) {
-        neon_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        simd_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
-    else if (IS_BLOCKABLE_BINARY(sizeof(@type@), vector_size_bytes)) {
-        neon_binary_@kind@_@TYPE@(op, ip1, ip2, n);
+    else if (IS_BLOCKABLE_BINARY(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        simd_binary_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
 #endif
@@ -3739,17 +3730,13 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
 
 #endif /* NPY_HAVE_SSE2_INTRINSICS */
 
-#ifdef NPY_HAVE_NEON
 /**begin repeat
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
- *  #scalarf = npy_sqrtf, npy_sqrt#
- *  #Nvtype128 = float32x4_t, float64x2_t#
- *  #Nvtype64 = float32x2_t, float64x1_t#
- *  #Nvpre = v, v#
- *  #Nvsuf = f32, f64#
+ *  #sfx = f32, f64#
+ *  #CHK =    , _F64#
  */
-
+#if NPY_SIMD@CHK@
 
 /**begin repeat1
 * Arithmetic
@@ -3759,93 +3746,64 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
 */
 
 static void
-neon_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+simd_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-#ifdef  __aarch64__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH)
         op[i] = ip1[i] @OP@ ip2[i];
     /* lots of specializations, to squeeze out max performance */
     if (ip1 == ip2) {
-        LOOP_BLOCKED(@type@, vector_size_bytes) {
-            @Nvtype128@ a = @Nvpre@ld1q_@Nvsuf@(&ip1[i]);
-            @Nvtype128@ c = @Nvpre@@VOP@q_@Nvsuf@(a, a);
-            @Nvpre@st1q_@Nvsuf@(&op[i], c);
+        LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
+            npyv_@sfx@ a = npyv_load_@sfx@(&ip1[i]);
+            npyv_@sfx@ c = npyv_@VOP@_@sfx@(a, a);
+            npyv_store_@sfx@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, vector_size_bytes) {
-            @Nvtype128@ a = @Nvpre@ld1q_@Nvsuf@(&ip1[i]);
-            @Nvtype128@ b = @Nvpre@ld1q_@Nvsuf@(&ip2[i]);
-            @Nvtype128@ c = @Nvpre@@VOP@q_@Nvsuf@(a, b);
-            @Nvpre@st1q_@Nvsuf@(&op[i], c);
+        LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
+            npyv_@sfx@ a = npyv_load_@sfx@(&ip1[i]);
+            npyv_@sfx@ b = npyv_load_@sfx@(&ip2[i]);
+            npyv_@sfx@ c = npyv_@VOP@_@sfx@(a, b);
+            npyv_store_@sfx@(&op[i], c);
         }
     }
-
-#else
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-        op[i] = ip1[i] @OP@ ip2[i];
-    /* lots of specializations, to squeeze out max performance */
-    if (ip1 == ip2) {
-        LOOP_BLOCKED(@type@, vector_size_bytes) {
-            @Nvtype64@ a = @Nvpre@ld1_@Nvsuf@(&ip1[i]);
-            @Nvtype64@ c = @Nvpre@@VOP@_@Nvsuf@(a, a);
-            @Nvpre@st1_@Nvsuf@(&op[i], c);
-        }
-    }
-    else {
-        LOOP_BLOCKED(@type@, vector_size_bytes) {
-            @Nvtype64@ a = @Nvpre@ld1_@Nvsuf@(&ip1[i]);
-            @Nvtype64@ b = @Nvpre@ld1_@Nvsuf@(&ip2[i]);
-            @Nvtype64@ c = @Nvpre@@VOP@_@Nvsuf@(a, b);
-            @Nvpre@st1_@Nvsuf@(&op[i], c);
-        }
-    }
-
-#endif
     LOOP_BLOCKED_END {
         op[i] = ip1[i] @OP@ ip2[i];
     }
 }
-/**begin repeat2
- * scalar1 & scalar2
- *
- * # scalar_loc = 1, 2#
- * # vector_loc = 2, 1#
- * # ip1ind = 0, i#
- * # ip2ind = i, 0#
- */
 
 static void
-neon_binary_scalar@scalar_loc@_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+simd_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-#ifdef __aarch64__
-    const @Nvtype128@ v@scalar_loc@ = @Nvpre@ld1q_dup_@Nvsuf@(ip@scalar_loc@);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-    op[i] = ip1[@ip1ind@] @OP@ ip2[@ip2ind@];
-    LOOP_BLOCKED(@type@, vector_size_bytes) {
-        @Nvtype128@ v@vector_loc@ = @Nvpre@ld1q_@Nvsuf@(&ip@vector_loc@[i]);
-        @Nvtype128@ v3 = @Nvpre@@VOP@q_@Nvsuf@(v1, v2);
-        @Nvpre@st1q_@Nvsuf@(&op[i], v3);
+    const npyv_@sfx@ v1 = npyv_setall_@sfx@(ip1[0]);
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH)
+    op[i] = ip1[0] @OP@ ip2[i];
+    LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
+        npyv_@sfx@ v2 = npyv_load_@sfx@(&ip2[i]);
+        npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+        npyv_store_@sfx@(&op[i], v3);
     }
-
-#else
-    const @Nvtype64@ v@scalar_loc@ = @Nvpre@ld1_dup_@Nvsuf@(ip@scalar_loc@);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
-    op[i] = ip1[@ip1ind@] @OP@ ip2[@ip2ind@];
-    LOOP_BLOCKED(@type@, vector_size_bytes) {
-        @Nvtype64@ v@vector_loc@ = @Nvpre@ld1_@Nvsuf@(&ip@vector_loc@[i]);
-        @Nvtype64@ v3 = @Nvpre@@VOP@_@Nvsuf@(v1, v2);
-        @Nvpre@st1_@Nvsuf@(&op[i], v3);
-    }
-
-#endif
     LOOP_BLOCKED_END {
-        op[i] = ip1[@ip1ind@] @OP@ ip2[@ip2ind@];
+        op[i] = ip1[0] @OP@ ip2[i];
     }
 }
-/**end repeat2**/
+
+static void
+simd_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+{
+    const npyv_@sfx@ v2 = npyv_setall_@sfx@(ip2[0]);
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH)
+    op[i] = ip1[i] @OP@ ip2[0];
+    LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
+        npyv_@sfx@ v1 = npyv_load_@sfx@(&ip1[i]);
+        npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+        npyv_store_@sfx@(&op[i], v3);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = ip1[i] @OP@ ip2[0];
+    }
+}
 /**end repeat1**/
+#endif /* NPY_SIMD@CHK@ */
 /**end repeat**/
 
-#endif /* NPY_HAVE_NEON */
 #endif
