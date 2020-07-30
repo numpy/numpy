@@ -3727,14 +3727,15 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
 /**end repeat**/
 
 #undef VECTOR_SIZE_BYTES
-
 #else  /* NPY_HAVE_SSE2_INTRINSICS */
+
 /**begin repeat
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
  *  #sfx = f32, f64#
  *  #CHK =    , _F64#
  */
+
 #if NPY_SIMD@CHK@
 
 /**begin repeat1
@@ -3747,8 +3748,9 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
 static void
 simd_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH) {
         op[i] = ip1[i] @OP@ ip2[i];
+    }
     /* lots of specializations, to squeeze out max performance */
     if (ip1 == ip2) {
         LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
@@ -3774,8 +3776,9 @@ static void
 simd_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     const npyv_@sfx@ v1 = npyv_setall_@sfx@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH)
-    op[i] = ip1[0] @OP@ ip2[i];
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH) {
+        op[i] = ip1[0] @OP@ ip2[i];
+    }
     LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
         npyv_@sfx@ v2 = npyv_load_@sfx@(&ip2[i]);
         npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
@@ -3790,8 +3793,9 @@ static void
 simd_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     const npyv_@sfx@ v2 = npyv_setall_@sfx@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH)
-    op[i] = ip1[i] @OP@ ip2[0];
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH) {
+        op[i] = ip1[i] @OP@ ip2[0];
+    }
     LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
         npyv_@sfx@ v1 = npyv_load_@sfx@(&ip1[i]);
         npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
