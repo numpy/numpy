@@ -1537,10 +1537,10 @@ def unwrap(p, discont=pi, axis=-1):
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd + pi, 2*pi) - pi
-    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    ddmod = mod(dd + discont, 2 * discont) - discont
+    _nx.copyto(ddmod, discont, where=(ddmod == -discont) & (dd > 0))
     ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
+    _nx.copyto(ph_correct, 0, where=abs(dd) < discont * 1.5)
     up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
