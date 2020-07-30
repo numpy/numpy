@@ -430,8 +430,67 @@ class TestNumPyFunctions:
 
 class TestArrayLike:
 
+    @pytest.mark.parametrize('function, args, kwargs', [
+        ('array',
+         (1,),
+         {}),
+        ('asarray',
+         (1,),
+         {}),
+        ('ascontiguousarray',
+         (1,),
+         {}),
+        ('asfortranarray',
+         (1,),
+         {}),
+        ('require',
+         (np.arange(6).reshape(2, 3),),
+         {'requirements': ['A', 'F']}),
+        ('empty',
+         (1,),
+         {}),
+        ('full',
+         (1, 2),
+         {}),
+        ('ones',
+         (1,),
+         {}),
+        ('zeros',
+         (1,),
+         {}),
+        ('arange',
+         (3,),
+         {}),
+        ('tri',
+         (3,),
+         {}),
+        ('eye',
+         (3,),
+         {}),
+        ('identity',
+         (3,),
+         {}),
+        ('frombuffer',
+         (b'\x00' * 8,),
+         {'dtype': int}),
+        ('fromfile',
+         ('data.npy',),
+         {}),
+        ('fromiter',
+         (range(3), int),
+         {}),
+        ('fromstring',
+         ('1,2',),
+         {'dtype': int, 'sep': ','}),
+        ('loadtxt',
+         (StringIO('0 1\n2 3'),),
+         {}),
+        ('genfromtxt',
+         (StringIO(u'1,2.1'),),
+         {'dtype': [('int', 'i8'), ('float', 'f8')], 'delimiter': ','}),
+        ])
     @requires_array_function
-    def test_array_like(self):
+    def test_array_like_clean(self, function, args, kwargs):
         class MyArray():
 
             def __init__(self, function=None):
@@ -444,115 +503,21 @@ class TestArrayLike:
                     return NotImplemented
                 return my_func(*args, **kwargs)
 
-            def array(*args, **kwargs):
-                return MyArray(MyArray.array)
+        def add_method(name):
+            def _definition(*args, **kwargs):
+                return MyArray(getattr(MyArray, name))
+            setattr(MyArray, name, _definition)
 
-            def asarray(*args, **kwargs):
-                return MyArray.array(*args, **kwargs)
-
-            def ones(*args, **kwargs):
-                return MyArray(MyArray.ones)
-
-            def full(*args, **kwargs):
-                return MyArray(MyArray.full)
-
-            def zeros(*args, **kwargs):
-                return MyArray(MyArray.zeros)
-
-            def empty(*args, **kwargs):
-                return MyArray(MyArray.empty)
-
-            def arange(*args, **kwargs):
-                return MyArray(MyArray.arange)
-
-            def frombuffer(*args, **kwargs):
-                return MyArray(MyArray.frombuffer)
-
-            def fromfile(*args, **kwargs):
-                return MyArray(MyArray.fromfile)
-
-            def fromfunction(*args, **kwargs):
-                return MyArray(MyArray.fromfunction)
-
-            def fromiter(*args, **kwargs):
-                return MyArray(MyArray.fromiter)
-
-            def fromstring(*args, **kwargs):
-                return MyArray(MyArray.fromstring)
-
-            def tri(*args, **kwargs):
-                return MyArray(MyArray.tri)
-
-            def eye(*args, **kwargs):
-                return MyArray(MyArray.eye)
-
-            def identity(*args, **kwargs):
-                return MyArray(MyArray.identity)
-
-            def loadtxt(*args, **kwargs):
-                return MyArray(MyArray.loadtxt)
-
-            def genfromtxt(*args, **kwargs):
-                return MyArray(MyArray.genfromtxt)
+        add_method('array')
+        add_method(function)
+        np_func = getattr(np, function)
+        my_func = getattr(MyArray, function)
 
         ref = MyArray.array()
 
-        array_like = np.array(1, like=ref)
-        assert type(array_like) is MyArray and array_like.function is MyArray.array
-
-        asarray_like = np.asarray(1, like=ref)
-        assert type(asarray_like) is MyArray and asarray_like.function is MyArray.array
-
-        ones_like = np.ones(1, like=ref)
-        assert type(ones_like) is MyArray and ones_like.function is MyArray.ones
-
-        full_like = np.full(1, 2, like=ref)
-        assert type(full_like) is MyArray and full_like.function is MyArray.full
-
-        zeros_like = np.zeros(1, like=ref)
-        assert type(zeros_like) is MyArray and zeros_like.function is MyArray.zeros
-
-        empty_like = np.empty(1, like=ref)
-        assert type(empty_like) is MyArray and empty_like.function is MyArray.empty
-
-        arange_like = np.arange(1, like=ref)
-        assert type(arange_like) is MyArray and arange_like.function is MyArray.arange
-
-        frombuffer_like = np.frombuffer(b'\x00' * 8, dtype=int, like=ref)
-        assert type(frombuffer_like) is MyArray and frombuffer_like.function is MyArray.frombuffer
-
-        fromfile_like = np.fromfile("data.npy", like=ref)
-        assert type(fromfile_like) is MyArray and fromfile_like.function is MyArray.fromfile
-
-        fromfunction_like = np.fromfunction(lambda i: i * 2, (3,), dtype=int, like=ref)
-        assert type(fromfunction_like) is MyArray and fromfunction_like.function is MyArray.fromfunction
-
-        fromiter_like = np.fromiter(range(2), int, like=ref)
-        assert type(fromiter_like) is MyArray and fromiter_like.function is MyArray.fromiter
-
-        fromstring_like = np.fromstring('1,2', dtype=int, sep=',', like=ref)
-        assert type(fromstring_like) is MyArray and fromstring_like.function is MyArray.fromstring
-
-        tri_like = np.tri(3, like=ref)
-        assert type(tri_like) is MyArray and tri_like.function is MyArray.tri
-
-        eye_like = np.eye(3, like=ref)
-        assert type(eye_like) is MyArray and eye_like.function is MyArray.eye
-
-        identity_like = np.identity(3, like=ref)
-        assert type(identity_like) is MyArray and identity_like.function is MyArray.identity
-
-        loadtxt_like = np.loadtxt(StringIO("0 1\n2 3"), like=ref)
-        assert type(loadtxt_like) is MyArray and loadtxt_like.function is MyArray.loadtxt
-
-        genfromtxt_like = np.genfromtxt(
-            StringIO(u"1,2.1"),
-            dtype=[("int", "i8"), ("float", "f8")],
-            delimiter=",",
-            like=ref
-        )
-        assert type(genfromtxt_like) is MyArray and genfromtxt_like.function is MyArray.genfromtxt
-
+        array_like = np_func(*args, **kwargs, like=ref)
+        assert type(array_like) is MyArray
+        assert array_like.function is my_func
 
     @requires_array_function
     def test_exception_handling(self):
@@ -569,7 +534,6 @@ class TestArrayLike:
                 if 'value_error' in kwargs:
                     raise ValueError
                 return MyArray()
-
 
         ref = MyArray.array()
 
