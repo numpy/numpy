@@ -1,5 +1,6 @@
 import inspect
 import sys
+from io import StringIO
 from unittest import mock
 
 import numpy as np
@@ -470,11 +471,29 @@ class TestArrayLike:
             def fromfile(*args, **kwargs):
                 return MyArray(MyArray.fromfile)
 
+            def fromfunction(*args, **kwargs):
+                return MyArray(MyArray.fromfunction)
+
             def fromiter(*args, **kwargs):
                 return MyArray(MyArray.fromiter)
 
             def fromstring(*args, **kwargs):
                 return MyArray(MyArray.fromstring)
+
+            def tri(*args, **kwargs):
+                return MyArray(MyArray.tri)
+
+            def eye(*args, **kwargs):
+                return MyArray(MyArray.eye)
+
+            def identity(*args, **kwargs):
+                return MyArray(MyArray.identity)
+
+            def loadtxt(*args, **kwargs):
+                return MyArray(MyArray.loadtxt)
+
+            def genfromtxt(*args, **kwargs):
+                return MyArray(MyArray.genfromtxt)
 
         ref = MyArray.array()
 
@@ -505,11 +524,34 @@ class TestArrayLike:
         fromfile_like = np.fromfile("data.npy", like=ref)
         assert type(fromfile_like) is MyArray and fromfile_like.function is MyArray.fromfile
 
+        fromfunction_like = np.fromfunction(lambda i: i * 2, (3,), dtype=int, like=ref)
+        assert type(fromfunction_like) is MyArray and fromfunction_like.function is MyArray.fromfunction
+
         fromiter_like = np.fromiter(range(2), int, like=ref)
         assert type(fromiter_like) is MyArray and fromiter_like.function is MyArray.fromiter
 
         fromstring_like = np.fromstring('1,2', dtype=int, sep=',', like=ref)
         assert type(fromstring_like) is MyArray and fromstring_like.function is MyArray.fromstring
+
+        tri_like = np.tri(3, like=ref)
+        assert type(tri_like) is MyArray and tri_like.function is MyArray.tri
+
+        eye_like = np.eye(3, like=ref)
+        assert type(eye_like) is MyArray and eye_like.function is MyArray.eye
+
+        identity_like = np.identity(3, like=ref)
+        assert type(identity_like) is MyArray and identity_like.function is MyArray.identity
+
+        loadtxt_like = np.loadtxt(StringIO("0 1\n2 3"), like=ref)
+        assert type(loadtxt_like) is MyArray and loadtxt_like.function is MyArray.loadtxt
+
+        genfromtxt_like = np.genfromtxt(
+            StringIO(u"1,2.1"),
+            dtype=[("int", "i8"), ("float", "f8")],
+            delimiter=",",
+            like=ref
+        )
+        assert type(genfromtxt_like) is MyArray and genfromtxt_like.function is MyArray.genfromtxt
 
 
     @requires_array_function
