@@ -60,6 +60,12 @@
 #define npyv_mul_f32 vmulq_f32
 #define npyv_mul_f64 vmulq_f64
 
+#if NPYV_SIMD_F64 || defined(NPY_HAVE_NEON_VFPV4)
+    #define npyv_muladd_f32(A, B, C) vfmaq_f32(C, A, B)
+#else
+    #define npyv_muladd_f32(A, B, C) vmlaq_f32(C, A, B)
+#endif
+#define npyv_muladd_f64(A, B, C) vfmaq_f64(C, A, B)
 /***************************
  * Division
  ***************************/
