@@ -14,37 +14,6 @@
  */
 #include "einsum_p.h"
 
-#if NPY_SIMD
-    // TODO: move them to NPYV pathes
-    #if defined NPY_HAVE_AVX512F
-        #define npyv_muladd_f32 _mm512_fmadd_ps
-        #define npyv_muladd_f64 _mm512_fmadd_pd
-    #elif defined NPY_HAVE_AVX2
-        #ifdef NPY_HAVE_FMA3
-            #define npyv_muladd_f32 _mm256_fmadd_ps
-            #define npyv_muladd_f64 _mm256_fmadd_pd
-        #endif
-    #elif defined NPY_HAVE_FMA3
-        #define npyv_muladd_f32 _mm_fmadd_ps
-        #define npyv_muladd_f64 _mm_fmadd_pd
-    #endif
-    #ifdef NPY_HAVE_NEON
-        #if NPYV_SIMD_F64 || defined(NPY_HAVE_NEON_VFPV4)
-            #define npyv_muladd_f32(A, B, C) vfmaq_f32(C, A, B)
-        #else
-            #define npyv_muladd_f32(A, B, C) vmlaq_f32(C, A, B)
-        #endif
-        #define npyv_muladd_f64(A, B, C) vfmaq_f64(C, A, B)
-    #endif
-    #ifdef NPY_HAVE_VSX2
-        #define npyv_muladd_f32 vec_madd
-        #define npyv_muladd_f64 vec_madd
-    #endif
-    #ifndef npyv_muladd_f32
-        #define npyv_muladd_f32(a, b, c) npyv_add_f32(npyv_mul_f32(a, b), c)
-        #define npyv_muladd_f64(a, b, c) npyv_add_f64(npyv_mul_f64(a, b), c)
-    #endif
-#endif
 /**begin repeat
  * #name = byte, short, int, long, longlong,
  *         ubyte, ushort, uint, ulong, ulonglong,
