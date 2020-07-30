@@ -4,14 +4,20 @@ from typing import Any, List, Sequence, Tuple, Union, TYPE_CHECKING
 from numpy import dtype
 from ._shape import _ShapeLike
 
+if sys.version_info >= (3, 8):
+    from typing import Protocol, TypedDict
+    HAVE_PROTOCOL = True
+else:
+    try:
+        from typing_extensions import Protocol, TypedDict
+    except ImportError:
+        HAVE_PROTOCOL = False
+    else:
+        HAVE_PROTOCOL = True
+
 _DtypeLikeNested = Any  # TODO: wait for support for recursive types
 
-if TYPE_CHECKING:
-    if sys.version_info >= (3, 8):
-        from typing import Protocol, TypedDict
-    else:
-        from typing_extensions import Protocol, TypedDict
-
+if TYPE_CHECKING or HAVE_PROTOCOL:
     # Mandatory keys
     class _DtypeDictBase(TypedDict):
         names: Sequence[str]
@@ -28,9 +34,9 @@ if TYPE_CHECKING:
     class _SupportsDtype(Protocol):
         dtype: _DtypeLikeNested
 
-else:  # runtime-only placeholders
-    _DtypeDict = 'numpy.typing._dtype_like._DtypeDict'
-    _SupportsDtype = 'numpy.typing._dtype_like._SupportsDtype'
+else:
+    _DtypeDict = Any
+    _SupportsDtype = Any
 
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
