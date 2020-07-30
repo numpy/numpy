@@ -19,7 +19,7 @@
 #include "common.h"
 #include "ctors.h"
 
-#define EINSUM_IS_ALIGNED(x) ((((npy_intp)x)&0xf) == 0)
+#define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_EINSUM_DBG_TRACING 0
