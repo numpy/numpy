@@ -104,12 +104,12 @@
 #define npyv_div_f64 vec_div
 
 // TODO: Horizontal add: Calculates the sum of all vector elements.
-NPY_FINLINE float npyv_sum_f32(__vector a)
+NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
     return 0.0;
 }
 
-NPY_FINLINE double npyv_sum_f64(__vector a)
+NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 {
     return 0.0;
 }
