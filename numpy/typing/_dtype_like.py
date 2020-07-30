@@ -26,7 +26,7 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
     # Mandatory + optional keys
     class _DtypeDict(_DtypeDictBase, total=False):
         offsets: Sequence[int]
-        titles: Sequence[Any]  # Elements should be valid as dict keys
+        titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
         itemsize: int
         aligned: bool
 
