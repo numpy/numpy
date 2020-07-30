@@ -1764,8 +1764,13 @@ def indices(dimensions, dtype=int, sparse=False):
     return res
 
 
+def _fromfunction_dispatcher(function, shape, *, dtype=None, like=None, **kwargs):
+    return (like,)
+
+
+@array_function_dispatch(_fromfunction_dispatcher)
 @set_module('numpy')
-def fromfunction(function, shape, *, dtype=float, **kwargs):
+def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
 
@@ -2092,8 +2097,13 @@ def _maketup(descr, val):
         return tuple(res)
 
 
+def _identity_dispatcher(n, dtype=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_identity_dispatcher)
 @set_module('numpy')
-def identity(n, dtype=None):
+def identity(n, dtype=None, *, like=None):
     """
     Return the identity array.
 
@@ -2122,7 +2132,7 @@ def identity(n, dtype=None):
 
     """
     from numpy import eye
-    return eye(n, dtype=dtype)
+    return eye(n, dtype=dtype, like=like)
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):

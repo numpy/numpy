@@ -149,8 +149,12 @@ def flipud(m):
     return m[::-1, ...]
 
 
-@set_module('numpy')
-def eye(N, M=None, k=0, dtype=float, order='C'):
+def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_eye_dispatcher)
+def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -343,8 +347,13 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
+def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_tri_dispatcher)
 @set_module('numpy')
-def tri(N, M=None, k=0, dtype=float):
+def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
 

@@ -789,10 +789,17 @@ def _getconv(dtype):
 _loadtxt_chunksize = 50000
 
 
+def _loadtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+                        converters=None, skiprows=None, usecols=None, unpack=None,
+                        ndmin=None, encoding=None, max_rows=None, *, like=None):
+    return (like,)
+
+
+@array_function_dispatch(_loadtxt_dispatcher)
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None):
+            ndmin=0, encoding='bytes', max_rows=None, *, like=None):
     r"""
     Load data from a text file.
 
@@ -1553,6 +1560,18 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
+def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+                           skip_header=None, skip_footer=None, converters=None,
+                           missing_values=None, filling_values=None, usecols=None,
+                           names=None, excludelist=None, deletechars=None,
+                           replace_space=None, autostrip=None, case_sensitive=None,
+                           defaultfmt=None, unpack=None, usemask=None, loose=None,
+                           invalid_raise=None, max_rows=None, encoding=None, *,
+                           like=None):
+    return (like,)
+
+
+@array_function_dispatch(_genfromtxt_dispatcher)
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
@@ -1561,7 +1580,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes'):
+               invalid_raise=True, max_rows=None, encoding='bytes', *,
+               like=None):
     """
     Load data from a text file, with missing values handled as specified.
 
