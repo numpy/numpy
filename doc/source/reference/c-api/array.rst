@@ -1142,8 +1142,8 @@ Converting data types
     storing the max value of the input types converted to a string or unicode.
 
 .. c:function:: PyArray_Descr* PyArray_ResultType( \
-        npy_intp narrs, PyArrayObject**arrs, npy_intp ndtypes, \
-        PyArray_Descr**dtypes)
+        npy_intp narrs, PyArrayObject **arrs, npy_intp ndtypes, \
+        PyArray_Descr **dtypes)
 
     .. versionadded:: 1.6
 
