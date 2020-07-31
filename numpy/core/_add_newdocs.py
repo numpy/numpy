@@ -6073,7 +6073,7 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     """
-    newbyteorder(new_order='S')
+    newbyteorder(new_order='S', /)
 
     Return a new `dtype` with a different byte order.
 
