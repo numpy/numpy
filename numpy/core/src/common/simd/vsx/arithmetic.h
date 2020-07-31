@@ -106,12 +106,13 @@
 // TODO: Horizontal add: Calculates the sum of all vector elements.
 NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
-    return 0.0;
+    return vec_extract(a, 0) + vec_extract(a, 1) +
+    vec_extract(a, 2) + vec_extract(a, 3);
 }
 
 NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
 {
-    return 0.0;
+    return vec_extract(a, 0) + vec_extract(a, 1);
 }
 
 #endif // _NPY_SIMD_VSX_ARITHMETIC_H
