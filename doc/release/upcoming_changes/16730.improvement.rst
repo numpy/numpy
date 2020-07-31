@@ -1,0 +1,9 @@
+Use f90 compiler specified in command line args
+--------------------------------------------------------
+
+The compiler command selection for Fortran Portland Group Compiler is changed in `numpy.distutils.fcompiler`.
+This only affects the linking command.
+This forces the use of the executable provided by the command line option (if provided)
+instead of the pgfortran executable.
+If no executable is provided to the command line option it defaults to the pgf90 executable,
+wich is an alias for pgfortran according to the PGI documentation.

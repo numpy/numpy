@@ -899,7 +899,7 @@ def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
 @array_function_dispatch(_structured_to_unstructured_dispatcher)
 def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     """
-    Converts and n-D structured array into an (n+1)-D unstructured array.
+    Converts an n-D structured array into an (n+1)-D unstructured array.
 
     The new array will have a new last dimension equal in size to the
     number of field-elements of the input array. If not supplied, the output
@@ -996,7 +996,7 @@ def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
 def unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
-    Converts and n-D unstructured array into an (n-1)-D structured array.
+    Converts an n-D unstructured array into an (n-1)-D structured array.
 
     The last dimension of the input array is converted into a structure, with
     number of field-elements equal to the size of the last dimension of the
