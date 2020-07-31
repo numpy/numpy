@@ -22,39 +22,39 @@ Data type sizes
 The :c:data:`NPY_SIZEOF_{CTYPE}` constants are defined so that sizeof
 information is available to the pre-processor.
 
-.. c:var:: NPY_SIZEOF_SHORT
+.. c:macro:: NPY_SIZEOF_SHORT
 
     sizeof(short)
 
-.. c:var:: NPY_SIZEOF_INT
+.. c:macro:: NPY_SIZEOF_INT
 
     sizeof(int)
 
-.. c:var:: NPY_SIZEOF_LONG
+.. c:macro:: NPY_SIZEOF_LONG
 
     sizeof(long)
 
-.. c:var:: NPY_SIZEOF_LONGLONG
+.. c:macro:: NPY_SIZEOF_LONGLONG
 
     sizeof(longlong) where longlong is defined appropriately on the
     platform.
 
-.. c:var:: NPY_SIZEOF_PY_LONG_LONG
+.. c:macro:: NPY_SIZEOF_PY_LONG_LONG
 
 
-.. c:var:: NPY_SIZEOF_FLOAT
+.. c:macro:: NPY_SIZEOF_FLOAT
 
     sizeof(float)
 
-.. c:var:: NPY_SIZEOF_DOUBLE
+.. c:macro:: NPY_SIZEOF_DOUBLE
 
     sizeof(double)
 
-.. c:var:: NPY_SIZEOF_LONG_DOUBLE
+.. c:macro:: NPY_SIZEOF_LONG_DOUBLE
 
     sizeof(longdouble) (A macro defines **NPY_SIZEOF_LONGDOUBLE** as well.)
 
-.. c:var:: NPY_SIZEOF_PY_INTPTR_T
+.. c:macro:: NPY_SIZEOF_PY_INTPTR_T
 
     Size of a pointer on this platform (sizeof(void \*)) (A macro defines
     NPY_SIZEOF_INTP as well.)
@@ -63,15 +63,15 @@ information is available to the pre-processor.
 Platform information
 --------------------
 
-.. c:var:: NPY_CPU_X86
-.. c:var:: NPY_CPU_AMD64
-.. c:var:: NPY_CPU_IA64
-.. c:var:: NPY_CPU_PPC
-.. c:var:: NPY_CPU_PPC64
-.. c:var:: NPY_CPU_SPARC
-.. c:var:: NPY_CPU_SPARC64
-.. c:var:: NPY_CPU_S390
-.. c:var:: NPY_CPU_PARISC
+.. c:macro:: NPY_CPU_X86
+.. c:macro:: NPY_CPU_AMD64
+.. c:macro:: NPY_CPU_IA64
+.. c:macro:: NPY_CPU_PPC
+.. c:macro:: NPY_CPU_PPC64
+.. c:macro:: NPY_CPU_SPARC
+.. c:macro:: NPY_CPU_SPARC64
+.. c:macro:: NPY_CPU_S390
+.. c:macro:: NPY_CPU_PARISC
 
     .. versionadded:: 1.3.0
 
@@ -80,11 +80,11 @@ Platform information
 
     Defined in ``numpy/npy_cpu.h``
 
-.. c:var:: NPY_LITTLE_ENDIAN
+.. c:macro:: NPY_LITTLE_ENDIAN
 
-.. c:var:: NPY_BIG_ENDIAN
+.. c:macro:: NPY_BIG_ENDIAN
 
-.. c:var:: NPY_BYTE_ORDER
+.. c:macro:: NPY_BYTE_ORDER
 
     .. versionadded:: 1.3.0
 
@@ -106,17 +106,17 @@ Platform information
 Compiler directives
 -------------------
 
-.. c:var:: NPY_LIKELY
-.. c:var:: NPY_UNLIKELY
-.. c:var:: NPY_UNUSED
+.. c:macro:: NPY_LIKELY
+.. c:macro:: NPY_UNLIKELY
+.. c:macro:: NPY_UNUSED
 
 
 Interrupt Handling
 ------------------
 
-.. c:var:: NPY_INTERRUPT_H
-.. c:var:: NPY_SIGSETJMP
-.. c:var:: NPY_SIGLONGJMP
-.. c:var:: NPY_SIGJMP_BUF
-.. c:var:: NPY_SIGINT_ON
-.. c:var:: NPY_SIGINT_OFF
+.. c:macro:: NPY_INTERRUPT_H
+.. c:macro:: NPY_SIGSETJMP
+.. c:macro:: NPY_SIGLONGJMP
+.. c:macro:: NPY_SIGJMP_BUF
+.. c:macro:: NPY_SIGINT_ON
+.. c:macro:: NPY_SIGINT_OFF

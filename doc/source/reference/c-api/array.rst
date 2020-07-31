@@ -428,44 +428,44 @@ From other objects
     have :c:data:`NPY_ARRAY_DEFAULT` as its flags member. The *context*
     argument is unused.
 
-    .. c:var:: NPY_ARRAY_C_CONTIGUOUS
+    .. c:macro:: NPY_ARRAY_C_CONTIGUOUS
 
         Make sure the returned array is C-style contiguous
 
-    .. c:var:: NPY_ARRAY_F_CONTIGUOUS
+    .. c:macro:: NPY_ARRAY_F_CONTIGUOUS
 
         Make sure the returned array is Fortran-style contiguous.
 
-    .. c:var:: NPY_ARRAY_ALIGNED
+    .. c:macro:: NPY_ARRAY_ALIGNED
 
         Make sure the returned array is aligned on proper boundaries for its
         data type. An aligned array has the data pointer and every strides
         factor as a multiple of the alignment factor for the data-type-
         descriptor.
 
-    .. c:var:: NPY_ARRAY_WRITEABLE
+    .. c:macro:: NPY_ARRAY_WRITEABLE
 
         Make sure the returned array can be written to.
 
-    .. c:var:: NPY_ARRAY_ENSURECOPY
+    .. c:macro:: NPY_ARRAY_ENSURECOPY
 
         Make sure a copy is made of *op*. If this flag is not
         present, data is not copied if it can be avoided.
 
-    .. c:var:: NPY_ARRAY_ENSUREARRAY
+    .. c:macro:: NPY_ARRAY_ENSUREARRAY
 
         Make sure the result is a base-class ndarray. By
         default, if *op* is an instance of a subclass of
         ndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
-    .. c:var:: NPY_ARRAY_FORCECAST
+    .. c:macro:: NPY_ARRAY_FORCECAST
 
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is raised.
 
-    .. c:var:: NPY_ARRAY_WRITEBACKIFCOPY
+    .. c:macro:: NPY_ARRAY_WRITEBACKIFCOPY
 
         If *op* is already an array, but does not satisfy the
         requirements, then a copy is made (which will satisfy the
@@ -478,67 +478,67 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, or if it is not already an array, then an error is raised.
 
-    .. c:var:: NPY_ARRAY_UPDATEIFCOPY
+    .. c:macro:: NPY_ARRAY_UPDATEIFCOPY
 
         Deprecated. Use :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, which is similar.
         This flag "automatically" copies the data back when the returned
         array is deallocated, which is not supported in all python
         implementations.
 
-    .. c:var:: NPY_ARRAY_BEHAVED
+    .. c:macro:: NPY_ARRAY_BEHAVED
 
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`
 
-    .. c:var:: NPY_ARRAY_CARRAY
+    .. c:macro:: NPY_ARRAY_CARRAY
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
 
-    .. c:var:: NPY_ARRAY_CARRAY_RO
+    .. c:macro:: NPY_ARRAY_CARRAY_RO
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:var:: NPY_ARRAY_FARRAY
+    .. c:macro:: NPY_ARRAY_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
 
-    .. c:var:: NPY_ARRAY_FARRAY_RO
+    .. c:macro:: NPY_ARRAY_FARRAY_RO
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:var:: NPY_ARRAY_DEFAULT
+    .. c:macro:: NPY_ARRAY_DEFAULT
 
         :c:data:`NPY_ARRAY_CARRAY`
 
-    .. c:var:: NPY_ARRAY_IN_ARRAY
+    .. c:macro:: NPY_ARRAY_IN_ARRAY
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:var:: NPY_ARRAY_IN_FARRAY
+    .. c:macro:: NPY_ARRAY_IN_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:var:: NPY_OUT_ARRAY
+    .. c:macro:: NPY_OUT_ARRAY
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:var:: NPY_ARRAY_OUT_ARRAY
+    .. c:macro:: NPY_ARRAY_OUT_ARRAY
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
         :c:data:`NPY_ARRAY_WRITEABLE`
 
-    .. c:var:: NPY_ARRAY_OUT_FARRAY
+    .. c:macro:: NPY_ARRAY_OUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
 
-    .. c:var:: NPY_ARRAY_INOUT_ARRAY
+    .. c:macro:: NPY_ARRAY_INOUT_ARRAY
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
         :c:data:`NPY_ARRAY_UPDATEIFCOPY`
 
-    .. c:var:: NPY_ARRAY_INOUT_FARRAY
+    .. c:macro:: NPY_ARRAY_INOUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
@@ -574,7 +574,7 @@ From other objects
     did not have the _ARRAY_ macro namespace in them. That form
     of the constant names is deprecated in 1.7.
 
-.. c:var:: NPY_ARRAY_NOTSWAPPED
+.. c:macro:: NPY_ARRAY_NOTSWAPPED
 
     Make sure the returned array has a data-type descriptor that is in
     machine byte-order, over-riding any specification in the *dtype*
@@ -585,11 +585,11 @@ From other objects
     not in machine byte- order), then a new data-type descriptor is
     created and used with its byte-order field set to native.
 
-.. c:var:: NPY_ARRAY_BEHAVED_NS
+.. c:macro:: NPY_ARRAY_BEHAVED_NS
 
     :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \| :c:data:`NPY_ARRAY_NOTSWAPPED`
 
-.. c:var:: NPY_ARRAY_ELEMENTSTRIDES
+.. c:macro:: NPY_ARRAY_ELEMENTSTRIDES
 
     Make sure the returned array has strides that are multiples of the
     element size.
@@ -1343,7 +1343,7 @@ Special functions for NPY_OBJECT
     Precondition: ``arr`` is a copy of ``base`` (though possibly with different
     strides, ordering, etc.) Set the UPDATEIFCOPY flag and ``arr->base`` so
     that when ``arr`` is destructed, it will copy any changes back to ``base``.
-    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase``.
+    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase`.
 
     Returns 0 for success, -1 for failure.
 
@@ -1397,12 +1397,12 @@ In versions 1.6 and earlier of NumPy, the following flags
 did not have the _ARRAY_ macro namespace in them. That form
 of the constant names is deprecated in 1.7.
 
-.. c:var:: NPY_ARRAY_C_CONTIGUOUS
+.. c:macro:: NPY_ARRAY_C_CONTIGUOUS
 
     The data area is in C-style contiguous order (last index varies the
     fastest).
 
-.. c:var:: NPY_ARRAY_F_CONTIGUOUS
+.. c:macro:: NPY_ARRAY_F_CONTIGUOUS
 
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
@@ -1423,22 +1423,22 @@ of the constant names is deprecated in 1.7.
 
     .. seealso:: :ref:`Internal memory layout of an ndarray <arrays.ndarray>`
 
-.. c:var:: NPY_ARRAY_OWNDATA
+.. c:macro:: NPY_ARRAY_OWNDATA
 
     The data area is owned by this array.
 
-.. c:var:: NPY_ARRAY_ALIGNED
+.. c:macro:: NPY_ARRAY_ALIGNED
 
     The data area and all array elements are aligned appropriately.
 
-.. c:var:: NPY_ARRAY_WRITEABLE
+.. c:macro:: NPY_ARRAY_WRITEABLE
 
     The data area can be written to.
 
     Notice that the above 3 flags are defined so that a new, well-
     behaved array has these flags defined as true.
 
-.. c:var:: NPY_ARRAY_WRITEBACKIFCOPY
+.. c:macro:: NPY_ARRAY_WRITEBACKIFCOPY
 
     The data area represents a (well-behaved) copy whose information
     should be transferred back to the original when
@@ -1457,7 +1457,7 @@ of the constant names is deprecated in 1.7.
     would have returned an error because :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
     would not have been possible.
 
-.. c:var:: NPY_ARRAY_UPDATEIFCOPY
+.. c:macro:: NPY_ARRAY_UPDATEIFCOPY
 
     A deprecated version of :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` which
     depends upon ``dealloc`` to trigger the writeback. For backwards
@@ -1474,31 +1474,31 @@ for ``flags`` which can be any of :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
 Combinations of array flags
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. c:var:: NPY_ARRAY_BEHAVED
+.. c:macro:: NPY_ARRAY_BEHAVED
 
     :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`
 
-.. c:var:: NPY_ARRAY_CARRAY
+.. c:macro:: NPY_ARRAY_CARRAY
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
 
-.. c:var:: NPY_ARRAY_CARRAY_RO
+.. c:macro:: NPY_ARRAY_CARRAY_RO
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-.. c:var:: NPY_ARRAY_FARRAY
+.. c:macro:: NPY_ARRAY_FARRAY
 
     :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_BEHAVED`
 
-.. c:var:: NPY_ARRAY_FARRAY_RO
+.. c:macro:: NPY_ARRAY_FARRAY_RO
 
     :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
-.. c:var:: NPY_ARRAY_DEFAULT
+.. c:macro:: NPY_ARRAY_DEFAULT
 
     :c:data:`NPY_ARRAY_CARRAY`
 
-.. c:var:: NPY_ARRAY_UPDATE_ALL
+.. c:macro:: NPY_ARRAY_UPDATE_ALL
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED`
 
@@ -1509,27 +1509,18 @@ Flag-like constants
 These constants are used in :c:func:`PyArray_FromAny` (and its macro forms) to
 specify desired properties of the new array.
 
-.. c:var:: NPY_ARRAY_FORCECAST
+.. c:macro:: NPY_ARRAY_FORCECAST
 
     Cast to the desired type, even if it can't be done without losing
     information.
 
-.. c:var:: NPY_ARRAY_ENSURECOPY
+.. c:macro:: NPY_ARRAY_ENSURECOPY
 
     Make sure the resulting array is a copy of the original.
 
-.. c:var:: NPY_ARRAY_ENSUREARRAY
+.. c:macro:: NPY_ARRAY_ENSUREARRAY
 
     Make sure the resulting object is an actual ndarray, and not a sub-class.
-
-.. c:var:: NPY_ARRAY_NOTSWAPPED
-
-    Only used in :c:func:`PyArray_CheckFromAny` to over-ride the byteorder
-    of the data-type object passed in.
-
-.. c:var:: NPY_ARRAY_BEHAVED_NS
-
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \| :c:data:`NPY_ARRAY_NOTSWAPPED`
 
 
 Flag checking
@@ -1876,16 +1867,16 @@ Item selection and manipulation
     created. The *clipmode* argument determines behavior for when
     entries in *self* are not between 0 and len(*op*).
 
-    .. c:var:: NPY_RAISE
+    .. c:macro:: NPY_RAISE
 
         raise a ValueError;
 
-    .. c:var:: NPY_WRAP
+    .. c:macro:: NPY_WRAP
 
         wrap values < 0 by adding len(*op*) and values >=len(*op*)
         by subtracting len(*op*) until they are in range;
 
-    .. c:var:: NPY_CLIP
+    .. c:macro:: NPY_CLIP
 
         all values are clipped to the region [0, len(*op*) ).
 
@@ -2263,7 +2254,7 @@ Array Functions
 
     See the :func:`~numpy.einsum` function for more details.
 
-.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject \* op)
+.. c:function:: PyObject* PyArray_CopyAndTranspose(PyObject * op)
 
     A specialized copy and transpose function that works only for 2-d
     arrays. The returned array is a transposed copy of *op*.
@@ -2453,7 +2444,7 @@ this useful approach to looping over an array.
     it easy to loop over an N-dimensional non-contiguous array in
     C-style contiguous fashion.
 
-.. c:function:: PyObject* PyArray_IterAllButAxis(PyObject* arr, int \*axis)
+.. c:function:: PyObject* PyArray_IterAllButAxis(PyObject* arr, int* axis)
 
     Return an array iterator that will iterate over all axes but the
     one provided in *\*axis*. The returned iterator cannot be used
@@ -2960,7 +2951,7 @@ to.
     the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable buffer
     interface.
 
-.. c:function:: int PyArray_AxisConverter(PyObject \* obj, int* axis)
+.. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 
     Convert a Python object, *obj*, representing an axis argument to
     the proper value for passing to the functions that take an integer
@@ -3120,15 +3111,15 @@ the C-API is needed then some additional steps must be taken.
     Internally, these #defines work as follows:
 
         * If neither is defined, the C-API is declared to be
-          :c:type:`static void**`, so it is only visible within the
+          ``static void**``, so it is only visible within the
           compilation unit that #includes numpy/arrayobject.h.
         * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
           :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
-          be :c:type:`void**`, so that it will also be visible to other
+          be ``void**``, so that it will also be visible to other
           compilation units.
         * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
           whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
-          declared to be :c:type:`extern void**`, so it is expected to
+          declared to be ``extern void**``, so it is expected to
           be defined in another compilation unit.
         * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
           also changes the name of the variable holding the C-API, which
@@ -3388,15 +3379,15 @@ Group 2
 Priority
 ^^^^^^^^
 
-.. c:var:: NPY_PRIORITY
+.. c:macro:: NPY_PRIORITY
 
     Default priority for arrays.
 
-.. c:var:: NPY_SUBTYPE_PRIORITY
+.. c:macro:: NPY_SUBTYPE_PRIORITY
 
     Default subtype priority.
 
-.. c:var:: NPY_SCALAR_PRIORITY
+.. c:macro:: NPY_SCALAR_PRIORITY
 
     Default scalar priority (very small)
 
@@ -3411,15 +3402,15 @@ Priority
 Default buffers
 ^^^^^^^^^^^^^^^
 
-.. c:var:: NPY_BUFSIZE
+.. c:macro:: NPY_BUFSIZE
 
     Default size of the user-settable internal buffers.
 
-.. c:var:: NPY_MIN_BUFSIZE
+.. c:macro:: NPY_MIN_BUFSIZE
 
     Smallest size of user-settable internal buffers.
 
-.. c:var:: NPY_MAX_BUFSIZE
+.. c:macro:: NPY_MAX_BUFSIZE
 
     Largest size allowed for the user-settable buffers.
 
@@ -3427,38 +3418,38 @@ Default buffers
 Other constants
 ^^^^^^^^^^^^^^^
 
-.. c:var:: NPY_NUM_FLOATTYPE
+.. c:macro:: NPY_NUM_FLOATTYPE
 
     The number of floating-point types
 
-.. c:var:: NPY_MAXDIMS
+.. c:macro:: NPY_MAXDIMS
 
     The maximum number of dimensions allowed in arrays.
 
-.. c:var:: NPY_MAXARGS
+.. c:macro:: NPY_MAXARGS
 
     The maximum number of array arguments that can be used in functions.
 
-.. c:var:: NPY_VERSION
+.. c:macro:: NPY_VERSION
 
     The current version of the ndarray object (check to see if this
     variable is defined to guarantee the numpy/arrayobject.h header is
     being used).
 
-.. c:var:: NPY_FALSE
+.. c:macro:: NPY_FALSE
 
     Defined as 0 for use with Bool.
 
-.. c:var:: NPY_TRUE
+.. c:macro:: NPY_TRUE
 
     Defined as 1 for use with Bool.
 
-.. c:var:: NPY_FAIL
+.. c:macro:: NPY_FAIL
 
     The return value of failed converter functions which are called using
     the "O&" syntax in :c:func:`PyArg_ParseTuple`-like functions.
 
-.. c:var:: NPY_SUCCEED
+.. c:macro:: NPY_SUCCEED
 
     The return value of successful converter functions which are called
     using the "O&" syntax in :c:func:`PyArg_ParseTuple`-like functions.

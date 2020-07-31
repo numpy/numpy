@@ -21,17 +21,17 @@ Constants
 
 .. c:var:: PyUFunc_{VALUE}
 
-    .. c:var:: PyUFunc_One
+    .. c:macro:: PyUFunc_One
 
-    .. c:var:: PyUFunc_Zero
+    .. c:macro:: PyUFunc_Zero
 
-    .. c:var:: PyUFunc_MinusOne
+    .. c:macro:: PyUFunc_MinusOne
 
-    .. c:var:: PyUFunc_ReorderableNone
+    .. c:macro:: PyUFunc_ReorderableNone
 
-    .. c:var:: PyUFunc_None
+    .. c:macro:: PyUFunc_None
 
-    .. c:var:: PyUFunc_IdentityValue
+    .. c:macro:: PyUFunc_IdentityValue
 
 
 Macros
@@ -459,9 +459,9 @@ structure.
 Importing the API
 -----------------
 
-.. c:var:: PY_UFUNC_UNIQUE_SYMBOL
+.. c:macro:: PY_UFUNC_UNIQUE_SYMBOL
 
-.. c:var:: NO_IMPORT_UFUNC
+.. c:macro:: NO_IMPORT_UFUNC
 
 .. c:function:: void import_ufunc(void)
 
