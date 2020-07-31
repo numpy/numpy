@@ -1628,6 +1628,7 @@ def trim_zeros(filt, trim='fb'):
     try:
         return _trim_zeros_new(filt, trim)
     except Exception as ex:
+        # Numpy 1.20.0, 2020-07-31
         warning = DeprecationWarning(
             "in the future trim_zeros will require a 1-D array as input"
             "that is compatible with ndarray.astype(bool)"
@@ -1636,7 +1637,7 @@ def trim_zeros(filt, trim='fb'):
         warnings.warn(warning, stacklevel=3)
 
         # Fall back to the old implementation if an exception is encountered
-        # Note that the same exception may or may not raised here as well
+        # Note that the same exception may or may not be raised here as well
         return _trim_zeros_old(filt, trim)
 
 
