@@ -1,32 +1,27 @@
 # NumPy static imports for Cython
 #
 # If any of the PyArray_* functions are called, import_array must be
-# called first.
-#
-# This also defines backwards-compatibility buffer acquisition
-# code for use in Python 2.x (or Python <= 2.5 when NumPy starts
-# implementing PEP-3118 directly).
-#
-# Because of laziness, the format string of the buffer is statically
-# allocated. Increase the size if this is not enough, or submit a
-# patch to do this properly.
+# called first.  This is done automatically by Cython 3.0+ if a call
+# is not detected inside of the module.
 #
 # Author: Dag Sverre Seljebotn
 #
 
-DEF _buffer_format_string_len = 255
-
-cimport cpython.buffer as pybuf
 from cpython.ref cimport Py_INCREF
-from cpython.mem cimport PyObject_Malloc, PyObject_Free
-from cpython.object cimport PyObject, PyTypeObject
-from cpython.buffer cimport PyObject_GetBuffer
-from cpython.type cimport type
+from cpython.object cimport PyObject, PyTypeObject, PyObject_TypeCheck
 cimport libc.stdio as stdio
 
+
+cdef extern from *:
+    # Leave a marker that the NumPy declarations came from NumPy itself and not from Cython.
+    # See https://github.com/cython/cython/issues/3573
+    """
+    /* Using NumPy API declarations from "numpy/__init__.cython-30.pxd" */
+    """
+
+
 cdef extern from "Python.h":
-    ctypedef int Py_intptr_t
-    bint PyObject_TypeCheck(object obj, PyTypeObject* type)
+    ctypedef Py_ssize_t Py_intptr_t
 
 cdef extern from "numpy/arrayobject.h":
     ctypedef Py_intptr_t npy_intp
@@ -228,16 +223,13 @@ cdef extern from "numpy/arrayobject.h":
         # this field via the inline helper method PyDataType_SHAPE.
         cdef PyArray_ArrayDescr* subarray
 
-    ctypedef extern class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
+    ctypedef extern class numpy.flatiter [object PyArrayIterObject]:
         # Use through macros
         pass
 
-    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
-        cdef int numiter
-        cdef npy_intp size, index
-        cdef int nd
-        cdef npy_intp *dimensions
-        cdef void **iters
+    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject]:
+        # Use through macros
+        pass
 
     ctypedef struct PyArrayObject:
         # For use in situations where ndarray can't replace PyArrayObject*,
@@ -247,17 +239,56 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef class numpy.ndarray [object PyArrayObject, check_size ignore]:
         cdef __cythonbufferdefaults__ = {"mode": "strided"}
 
-        cdef:
-            # Only taking a few of the most commonly used and stable fields.
-            # One should use PyArray_* macros instead to access the C fields.
-            char *data
-            int ndim "nd"
-            npy_intp *shape "dimensions"
-            npy_intp *strides
-            dtype descr  # deprecated since NumPy 1.7 !
-            PyObject* base #  NOT PUBLIC, DO NOT USE !
+        # NOTE: no field declarations since direct access is deprecated since NumPy 1.7
+        # Instead, we use properties that map to the corresponding C-API functions.
 
+        @property
+        cdef inline PyObject* base(self) nogil:
+            """Returns a borrowed reference to the object owning the data/memory.
+            """
+            return PyArray_BASE(self)
 
+        @property
+        cdef inline dtype descr(self):
+            """Returns an owned reference to the dtype of the array.
+            """
+            return <dtype>PyArray_DESCR(self)
+
+        @property
+        cdef inline int ndim(self) nogil:
+            """Returns the number of dimensions in the array.
+            """
+            return PyArray_NDIM(self)
+
+        @property
+        cdef inline npy_intp *shape(self) nogil:
+            """Returns a pointer to the dimensions/shape of the array.
+            The number of elements matches the number of dimensions of the array (ndim).
+            Can return NULL for 0-dimensional arrays.
+            """
+            return PyArray_DIMS(self)
+
+        @property
+        cdef inline npy_intp *strides(self) nogil:
+            """Returns a pointer to the strides of the array.
+            The number of elements matches the number of dimensions of the array (ndim).
+            """
+            return PyArray_STRIDES(self)
+
+        @property
+        cdef inline npy_intp size(self) nogil:
+            """Returns the total size (in number of elements) of the array.
+            """
+            return PyArray_SIZE(self)
+
+        @property
+        cdef inline char* data(self) nogil:
+            """The pointer to the data buffer as a char*.
+            This is provided for legacy reasons to avoid direct struct field access.
+            For new code that needs this access, you probably want to cast the result
+            of `PyArray_DATA()` instead, which returns a 'void*'.
+            """
+            return PyArray_BYTES(self)
 
     ctypedef unsigned char      npy_bool
 
@@ -363,7 +394,10 @@ cdef extern from "numpy/arrayobject.h":
 
     PyObject *PyArray_BASE(ndarray) nogil  # returns borrowed reference!
     PyArray_Descr *PyArray_DESCR(ndarray) nogil  # returns borrowed reference to dtype!
+    PyArray_Descr *PyArray_DTYPE(ndarray) nogil  # returns borrowed reference to dtype! NP 1.7+ alias for descr.
     int PyArray_FLAGS(ndarray) nogil
+    void PyArray_CLEARFLAGS(ndarray, int flags) nogil  # Added in NumPy 1.7
+    void PyArray_ENABLEFLAGS(ndarray, int flags) nogil  # Added in NumPy 1.7
     npy_intp PyArray_ITEMSIZE(ndarray) nogil
     int PyArray_TYPE(ndarray arr) nogil
 
@@ -419,7 +453,7 @@ cdef extern from "numpy/arrayobject.h":
 
     bint PyArray_SAFEALIGNEDCOPY(ndarray) nogil
     bint PyArray_ISNBO(char) nogil              # works on ndarray.byteorder
-    bint PyArray_IsNativeByteOrder(char) nogil # works on ndarray.byteorder
+    bint PyArray_IsNativeByteOrder(char) nogil  # works on ndarray.byteorder
     bint PyArray_ISNOTSWAPPED(ndarray) nogil
     bint PyArray_ISBYTESWAPPED(ndarray) nogil
 
@@ -829,6 +863,7 @@ cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset
     return f
 
 
+
 cdef extern from "numpy/ndarrayobject.h":
     PyTypeObject PyTimedeltaArrType_Type
     PyTypeObject PyDatetimeArrType_Type
@@ -876,7 +911,7 @@ cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
-    ctypedef extern class numpy.ufunc [object PyUFuncObject, check_size ignore]:
+    ctypedef extern class numpy.ufunc [object PyUFuncObject]:
         cdef:
             int nin, nout, nargs
             int identity
@@ -1009,13 +1044,6 @@ cdef inline int import_ufunc() except -1:
         _import_umath()
     except Exception:
         raise ImportError("numpy.core.umath failed to import")
-
-cdef extern from *:
-    # Leave a marker that the NumPy declarations came from this file
-    # See https://github.com/cython/cython/issues/3573
-    """
-    /* NumPy API declarations from "numpy/__init__.pxd" */
-    """
 
 
 cdef inline bint is_timedelta64_object(object obj):
