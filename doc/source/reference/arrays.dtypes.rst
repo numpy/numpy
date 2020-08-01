@@ -122,14 +122,12 @@ constructor:
 What can be converted to a data-type object is described below:
 
 :class:`dtype` object
-
    .. index::
       triple: dtype; construction; from dtype
 
    Used as-is.
 
 None
-
    .. index::
       triple: dtype; construction; from None
 
@@ -139,7 +137,6 @@ None
    triple: dtype; construction; from type
 
 Array-scalar types
-
     The 24 built-in :ref:`array scalar type objects
     <arrays.scalars.built-in>` all convert to an associated data-type object.
     This is true for their sub-classes as well.
@@ -155,7 +152,6 @@ Array-scalar types
        >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
-
     .. deprecated NumPy 1.19::
 
         The use of generic types is deprecated. This is because it can be
@@ -177,7 +173,6 @@ Generic types
     =====================================================  ===============
 
 Built-in Python types
-
     Several python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
@@ -209,7 +204,6 @@ Built-in Python types
         that such types may map to a specific (new) dtype in the future.
 
 Types with ``.dtype``
-
     Any type object with a ``dtype`` attribute: The attribute will be
     accessed and used directly. The attribute must return something
     that is convertible into a dtype object.
@@ -223,7 +217,6 @@ prepended with ``'>'`` (:term:`big-endian`), ``'<'``
 specify the byte order.
 
 One-character strings
-
     Each built-in data-type has a character code
     (the updated Numeric typecodes), that uniquely identifies it.
 
@@ -235,7 +228,6 @@ One-character strings
        >>> dt = np.dtype('d')  # double-precision floating-point number
 
 Array-protocol type strings (see :ref:`arrays.interface`)
-
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
    where it is interpreted as the number of characters.  The item size
@@ -278,7 +270,6 @@ Array-protocol type strings (see :ref:`arrays.interface`)
     used.
 
 String with comma-separated fields
-
    A short-hand notation for specifying the format of a structured data type is
    a comma-separated string of basic formats.
 
@@ -310,7 +301,6 @@ String with comma-separated fields
       >>> dt = np.dtype("a3, 3u8, (3,4)a10")
 
 Type strings
-
    Any string in :obj:`numpy.sctypeDict`.keys():
 
    .. admonition:: Example
@@ -322,7 +312,6 @@ Type strings
    triple: dtype; construction; from tuple
 
 ``(flexible_dtype, itemsize)``
-
     The first argument must be an object that is converted to a
     zero-sized flexible data-type object, the second argument is
     an integer providing the desired itemsize.
@@ -333,7 +322,6 @@ Type strings
        >>> dt = np.dtype(('U', 10))   # 10-character unicode string
 
 ``(fixed_dtype, shape)``
-
     .. index::
        pair: dtype; sub-array
 
@@ -354,7 +342,6 @@ Type strings
    triple: dtype; construction; from list
 
 ``[(field_name, field_dtype, field_shape), ...]``
-
    *obj* should be a list of fields where each field is described by a
    tuple of length 2 or 3. (Equivalent to the ``descr`` item in the
    :obj:`__array_interface__` attribute.)
@@ -394,7 +381,6 @@ Type strings
    triple: dtype; construction; from dict
 
 ``{'names': ..., 'formats': ..., 'offsets': ..., 'titles': ..., 'itemsize': ...}``
-
     This style has two required and three optional keys.  The *names*
     and *formats* keys are required. Their respective values are
     equal-length lists with the field names and the field formats.
@@ -436,7 +422,6 @@ Type strings
 
 
 ``{'field1': ..., 'field2': ..., ...}``
-
     This usage is discouraged, because it is ambiguous with the
     other dict-based construction method. If you have a field
     called 'names' and a field called 'formats' there will be
@@ -458,7 +443,6 @@ Type strings
        ...                'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
-
     In NumPy 1.7 and later, this form allows `base_dtype` to be interpreted as
     a structured dtype. Arrays created with this dtype will have underlying
     dtype `base_dtype` but will have fields and flags taken from `new_dtype`.
