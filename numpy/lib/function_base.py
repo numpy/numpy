@@ -1487,37 +1487,44 @@ def _unwrap_dispatcher(p, discont=None, axis=None):
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=pi, axis=-1):
+# def _unwrap_dispatcher(p, discont=None, axis=None, *, min_val=None, max_val=None):
+#     return (p,)
+
+
+# @array_function_dispatch(_unwrap_dispatcher)
+def unwrap(p, interval_size= 2*pi, discont=None, axis=-1):
     """
-    Unwrap by changing deltas between values to 2*pi complement.
-
-    Unwrap radian phase `p` by changing absolute jumps greater than
-    `discont` to their 2*pi complement along the given axis.
-
+    Unwrap by changing deltas between values to complement.
+    
+    For the default case where `interval_size= 2*pi`, `discont=pi`,
+    It unwraps radian phase `p` by changing absolute jumps greater 
+    than `discont` to their 2*pi complement along the given axis.
+    
+    In general it unwrapps a signal `p` by changing absolute jumps 
+    greater than `discont` to their `interval_size` complementary values.
+    
     Parameters
     ----------
     p : array_like
         Input array.
+    interval_size: float, optional
+        size of the range over which the input wraps.
     discont : float, optional
-        Maximum discontinuity between values, default is ``pi``.
+        Maximum discontinuity between values, default is ``interval_size/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
-
     Returns
     -------
     out : ndarray
         Output array.
-
     See Also
     --------
     rad2deg, deg2rad
-
     Notes
     -----
-    If the discontinuity in `p` is smaller than ``pi``, but larger than
-    `discont`, no unwrapping is done because taking the 2*pi complement
-    would only make the discontinuity larger.
-
+    If the discontinuity in `p` is smaller than ``interval_size/2``, 
+    but larger than `discont`, no unwrapping is done because taking 
+    the complement would only make the discontinuity larger.
     Examples
     --------
     >>> phase = np.linspace(0, np.pi, num=5)
@@ -1526,16 +1533,28 @@ def unwrap(p, discont=pi, axis=-1):
     array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
     >>> np.unwrap(phase)
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
-
+    >>> unwrap([0, 1, 2, -1, 0], interval_size=4)
+    array([0., 1., 2., 3., 4.])
+    >>> unwrap([ 1, 2, 3, 4, 5, 6, 1, 2, 3], interval_size=6)
+    array([1., 2., 3., 4., 5., 6., 7., 8., 9.])
+    >>> unwrap([2, 3, 4, 5, 2, 3, 4, 5], interval_size=4)
+    array([2., 3., 4., 5., 6., 7., 8., 9.])
+    >>> phase_deg = np.mod(np.linspace(0,720,19), 360) - 180
+    >>> unwrap(phase_deg, interval_size=360)
+    array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+        180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
+        540.])
     """
+    if discont is None:
+        discont = interval_size/2
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd + pi, 2*pi) - pi
-    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    ddmod = mod(dd + interval_size/2, interval_size) - interval_size/2
+    _nx.copyto(ddmod, interval_size/2, where=(ddmod == -interval_size/2) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype='d')
