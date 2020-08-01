@@ -83,7 +83,7 @@
 #define npyv_and_s32 _mm512_and_si512
 #define npyv_and_u64 _mm512_and_si512
 #define npyv_and_s64 _mm512_and_si512
-#define npyv_and_b32 _kand_mask16
+#define npyv_and_b32 _mm512_kand
 #ifdef NPY_HAVE_AVX512BW
     #define npyv_and_b8  _kand_mask64
     #define npyv_and_b16 _kand_mask32
@@ -96,7 +96,7 @@
     #define npyv_and_f32 _mm512_and_ps
     #define npyv_and_f64 _mm512_and_pd
 #else
-    #define npyv_and_b64(A, B) ((__mmask8)_kand_mask16((__mmask16)(A), (__mmask16)(B)))
+    #define npyv_and_b64(A, B) ((__mmask8)_mm512_kand((__mmask16)(A), (__mmask16)(B)))
     NPYV_IMPL_AVX512_FROM_SI512_PS_2ARG(npyv_and_f32, _mm512_and_si512)
     NPYV_IMPL_AVX512_FROM_SI512_PD_2ARG(npyv_and_f64, _mm512_and_si512)
 #endif
@@ -109,7 +109,7 @@
 #define npyv_or_s32 _mm512_or_si512
 #define npyv_or_u64 _mm512_or_si512
 #define npyv_or_s64 _mm512_or_si512
-#define npyv_or_b32 _kor_mask16
+#define npyv_or_b32 _mm512_kor
 #ifdef NPY_HAVE_AVX512BW
     #define npyv_or_b8  _kor_mask64
     #define npyv_or_b16 _kor_mask32
@@ -122,7 +122,7 @@
     #define npyv_or_f32 _mm512_or_ps
     #define npyv_or_f64 _mm512_or_pd
 #else
-    #define npyv_or_b64(A, B) ((__mmask8)_kor_mask16((__mmask16)(A), (__mmask16)(B)))
+    #define npyv_or_b64(A, B) ((__mmask8)_mm512_kor((__mmask16)(A), (__mmask16)(B)))
     NPYV_IMPL_AVX512_FROM_SI512_PS_2ARG(npyv_or_f32, _mm512_or_si512)
     NPYV_IMPL_AVX512_FROM_SI512_PD_2ARG(npyv_or_f64, _mm512_or_si512)
 #endif
@@ -135,7 +135,7 @@
 #define npyv_xor_s32 _mm512_xor_si512
 #define npyv_xor_u64 _mm512_xor_si512
 #define npyv_xor_s64 _mm512_xor_si512
-#define npyv_xor_b32 _kxor_mask16
+#define npyv_xor_b32 _mm512_kxor
 #ifdef NPY_HAVE_AVX512BW
     #define npyv_xor_b8  _kxor_mask64
     #define npyv_xor_b16 _kxor_mask32
@@ -148,7 +148,7 @@
     #define npyv_xor_f32 _mm512_xor_ps
     #define npyv_xor_f64 _mm512_xor_pd
 #else
-    #define npyv_xor_b64(A, B) ((__mmask8)_kxor_mask16((__mmask16)(A), (__mmask16)(B)))
+    #define npyv_xor_b64(A, B) ((__mmask8)_mm512_kxor((__mmask16)(A), (__mmask16)(B)))
     NPYV_IMPL_AVX512_FROM_SI512_PS_2ARG(npyv_xor_f32, _mm512_xor_si512)
     NPYV_IMPL_AVX512_FROM_SI512_PD_2ARG(npyv_xor_f64, _mm512_xor_si512)
 #endif
@@ -161,7 +161,7 @@
 #define npyv_not_s32 npyv_not_u8
 #define npyv_not_u64 npyv_not_u8
 #define npyv_not_s64 npyv_not_u8
-#define npyv_not_b32 _knot_mask16
+#define npyv_not_b32 _mm512_knot
 #ifdef NPY_HAVE_AVX512BW
     #define npyv_not_b8  _knot_mask64
     #define npyv_not_b16 _knot_mask32
@@ -174,7 +174,7 @@
     #define npyv_not_f32(A) _mm512_xor_ps(A, _mm512_castsi512_ps(_mm512_set1_epi32(-1)))
     #define npyv_not_f64(A) _mm512_xor_pd(A, _mm512_castsi512_pd(_mm512_set1_epi32(-1)))
 #else
-    #define npyv_not_b64(A, B) ((__mmask8)_knot_mask16((__mmask16)(A), (__mmask16)(B)))
+    #define npyv_not_b64(A) ((__mmask8)_mm512_knot((__mmask16)(A))
     #define npyv_not_f32(A) _mm512_castsi512_ps(npyv_not_u32(_mm512_castps_si512(A)))
     #define npyv_not_f64(A) _mm512_castsi512_pd(npyv_not_u64(_mm512_castpd_si512(A)))
 #endif
