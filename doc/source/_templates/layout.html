@@ -1,11 +1,35 @@
 {% extends "!layout.html" %}
 
+{%- block extrahead %}
+<style>
+  .main {
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+  }
+  div.top-scipy-org-logo-header {
+    background-color: #fafafa;
+    border-bottom: 2px solid #013243; /* Warm Black */
+    margin-top: 0;
+    box-shadow: none;
+  }
+  div.top-scipy-org-logo-header img {
+    height: 100px;
+    padding-left: 27px;
+  }
+  div.spc-navbar .nav-pills > li > a {
+    background-color: #4d77cf; /* Han Blue */
+  }
+</style>
+{{ super() }}
+{% endblock %}
+
 {%- block header %}
 <div class="container">
-  <div class="top-scipy-org-logo-header" style="background-color: #a2bae8;">
+  <div class="top-scipy-org-logo-header">
     <a href="{{ pathto('index') }}">
-      <img border=0 alt="NumPy" src="{{ pathto('_static/numpy_logo.png', 1) }}"></a>
-    </div>
+      <img border=0 alt="NumPy" src="{{ pathto('_static/numpylogo.svg', 1) }}">
+    </a>
   </div>
 </div>
 
