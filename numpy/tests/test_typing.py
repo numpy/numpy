@@ -13,7 +13,9 @@ except ImportError:
 try:
     import mypyc
 except ImportError:
-    pytest.skip("tests too slow without mypyc", allow_module_level=True)
+    mark_slow_without_mypyc = pytest.mark.slow
+else:
+    mark_slow_without_mypyc = lambda f: f
 
 
 TESTS_DIR = os.path.join(
@@ -41,7 +43,7 @@ def get_test_cases(directory):
                     id=relpath,
                 )
 
-
+@mark_slow_without_mypyc
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_success(path):
     stdout, stderr, exitcode = api.run([
@@ -54,7 +56,7 @@ def test_success(path):
     assert exitcode == 0, stdout
     assert re.match(r"Success: no issues found in \d+ source files?", stdout.strip())
 
-
+@mark_slow_without_mypyc
 @pytest.mark.parametrize("path", get_test_cases(FAIL_DIR))
 def test_fail(path):
     stdout, stderr, exitcode = api.run([
@@ -103,6 +105,7 @@ def test_fail(path):
             pytest.fail(f"Error {repr(errors[lineno])} not found")
 
 
+@mark_slow_without_mypyc
 @pytest.mark.parametrize("path", get_test_cases(REVEAL_DIR))
 def test_reveal(path):
     stdout, stderr, exitcode = api.run([
@@ -133,6 +136,7 @@ def test_reveal(path):
         assert marker in error_line
 
 
+@mark_slow_without_mypyc
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_code_runs(path):
     path_without_extension, _ = os.path.splitext(path)
