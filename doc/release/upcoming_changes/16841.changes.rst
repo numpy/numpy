@@ -1,4 +1,5 @@
-Output if ``dtype`` of ``linspace`` is int
-----------------------------------------------------
-- If the ``dtype`` of the ``linspace`` is int, round down it and casted it.
-- To use it, write ``np.linspace(..., dtype=np.int)``
+`np.linspace` on integers now use floor
+---------------------------------------
+When using a `int` dtype in `np.linspace`, previously float values would
+be rounded towards zero. Now `np.floor` is used instead, which rounds toward
+``-inf``. This changes the results for negative values.
