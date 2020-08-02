@@ -8,9 +8,13 @@ import pytest
 try:
     from mypy import api
 except ImportError:
-    NO_MYPY = True
-else:
-    NO_MYPY = False
+    pytest.skip("Mypy is not installed", allow_module_level=True)
+
+try:
+    import mypyc
+except ImportError:
+    pytest.skip("tests too slow without mypyc", allow_module_level=True)
+
 
 TESTS_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
@@ -38,7 +42,6 @@ def get_test_cases(directory):
                 )
 
 
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_success(path):
     stdout, stderr, exitcode = api.run([
@@ -52,7 +55,6 @@ def test_success(path):
     assert re.match(r"Success: no issues found in \d+ source files?", stdout.strip())
 
 
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(FAIL_DIR))
 def test_fail(path):
     stdout, stderr, exitcode = api.run([
@@ -101,7 +103,6 @@ def test_fail(path):
             pytest.fail(f"Error {repr(errors[lineno])} not found")
 
 
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(REVEAL_DIR))
 def test_reveal(path):
     stdout, stderr, exitcode = api.run([
@@ -132,7 +133,6 @@ def test_reveal(path):
         assert marker in error_line
 
 
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_code_runs(path):
     path_without_extension, _ = os.path.splitext(path)
