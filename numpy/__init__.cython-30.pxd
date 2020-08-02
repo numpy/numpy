@@ -223,11 +223,11 @@ cdef extern from "numpy/arrayobject.h":
         # this field via the inline helper method PyDataType_SHAPE.
         cdef PyArray_ArrayDescr* subarray
 
-    ctypedef extern class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
+    ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
         pass
 
-    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
+    ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
         # Use through macros
         pass
 
@@ -911,7 +911,7 @@ cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
-    ctypedef extern class numpy.ufunc [object PyUFuncObject, check_size ignore]:
+    ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
         cdef:
             int nin, nout, nargs
             int identity
