@@ -550,4 +550,4 @@ Glossary
       Responsiblity for managing views and copies falls to the programmer.
       NumPy reports whether arrays share memory wih
       :doc:`numpy.shares_memory <reference/generated/numpy.shares_memory>`,
-      but an exact answer isn't always possible; see the link.
+      but an exact answer isn't always feasible; see the link.
