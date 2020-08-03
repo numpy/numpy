@@ -584,6 +584,294 @@ fail:
     Py_XDECREF(core_dim_sizes);
     return NULL;
 }
+/*
+ ********************************************************************************
+ ** A simple hack to get the elapsed time of executing the inner loop of ufunc **
+ ********************************************************************************
+ */
+#if defined(_POSIX_THREADS) && (defined(__linux) || defined(__linux__))
+    #include <pthread.h>
+    #define CTIMING_AFFINITY
+#endif
+#if defined(_WIN32) || defined(WINCE)
+    #include <windows.h>
+#elif defined(__MACH__) && defined(__APPLE__)
+    #include <mach/mach.h>
+    #include <mach/mach_time.h>
+#else
+    #include <sys/time.h>
+    #include <time.h>
+#endif
+
+static struct
+{
+    PyUFuncGenericFunction gfunctions[128];
+    PyTypeObject type;
+    double frequency;
+#ifdef CTIMING_AFFINITY
+    cpu_set_t cpuset;
+    int have_affinity;
+#endif
+} ctiming;
+
+typedef struct
+{
+    PyObject *elapsed_ticks;
+    npy_uint32 iteration;
+    npy_uint32 warmup;
+} ctiming_attr;
+
+typedef struct
+{
+    void *cfunc_data;
+    PyUFuncGenericFunction cfunc;
+    ctiming_attr *attr;
+} ctiming_data;
+
+typedef struct
+{
+    char **args;
+    npy_intp const *dimensions;
+    npy_intp const *steps;
+    void *data;
+    npy_int64 elapsed;
+} ctiming_targ;
+
+// From (getTickCount) opencv/modules/core/src/system.cpp
+static NPY_INLINE npy_int64
+ctiming_tick_count(void)
+{
+#if defined(_WIN32) || defined(WINCE)
+    LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+    return (npy_int64)counter.QuadPart;
+#elif defined(__linux) || defined(__linux__)
+    struct timespec tp;
+    clock_gettime(CLOCK_MONOTONIC, &tp);
+    return (npy_int64)tp.tv_sec*1000000000 + tp.tv_nsec;
+#elif defined(__MACH__) && defined (__APPLE__)
+    return (npy_int64)mach_absolute_time();
+#else
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    return (npy_int64)tv.tv_sec*1000000 + tv.tv_usec;
+#endif
+}
+// From (getTickFrequency) opencv/modules/core/src/system.cpp
+static NPY_INLINE double
+ctiming_frequency(void)
+{
+#if defined(_WIN32) || defined(WINCE)
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    return (double)freq.QuadPart;
+#elif defined(__linux) || defined(__linux__)
+    return 1e9;
+#elif defined(__MACH__) && defined(__APPLE__)
+    static double freq = 0;
+    if (freq == 0) {
+        mach_timebase_info_data_t sTimebaseInfo;
+        mach_timebase_info(&sTimebaseInfo);
+        freq = sTimebaseInfo.denom*1e9/sTimebaseInfo.numer;
+    }
+    return freq;
+#else
+    return 1e6;
+#endif
+}
+
+static npy_int64
+ctiming_run(char **args, npy_intp const *dimensions, npy_intp const *steps, ctiming_data data)
+{
+    npy_int64 warmup = (npy_int64)data.attr->warmup;
+    PyUFuncGenericFunction cfunc = data.cfunc;
+    while (warmup--) {
+        cfunc(args, dimensions, steps, data.cfunc_data);
+    }
+    npy_int64 before, elapsed;
+    npy_int64 iteration = (npy_int64)data.attr->iteration;
+    if (iteration == 1) {
+        before = ctiming_tick_count();
+        cfunc(args, dimensions, steps, data.cfunc_data);
+        elapsed = ctiming_tick_count() - before;
+    } else {
+        before = ctiming_tick_count();
+        while (iteration--) {
+            cfunc(args, dimensions, steps, data.cfunc_data);
+        }
+        elapsed = ctiming_tick_count() - before;
+    }
+    return elapsed;
+}
+
+#ifdef CTIMING_AFFINITY
+static void *
+ctiming_thfunc(void *_arg)
+{
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &ctiming.cpuset);
+    ctiming_targ *targ = _arg;
+    targ->elapsed = ctiming_run(targ->args, targ->dimensions, targ->steps, *((ctiming_data*)targ->data));
+    return NULL;
+}
+#endif
+
+static void
+ctiming_gfunc(char **args, npy_intp const *dimensions, npy_intp const *steps, void *_data)
+{
+    ctiming_data *data = (ctiming_data*)_data;
+    ctiming_attr *attr = data->attr;
+    npy_int64 elapsed;
+
+#ifdef CTIMING_AFFINITY
+    if (ctiming.have_affinity) {
+        ctiming_targ arg = {args, dimensions, steps, data, 0};
+        pthread_t thread;
+        pthread_create(&thread, NULL, ctiming_thfunc, &arg);
+        pthread_join(thread, NULL);
+        elapsed = arg.elapsed;
+    }
+#else
+    if (0) {}
+#endif
+    else {
+        elapsed = ctiming_run(args, dimensions, steps, *data);
+    }
+    PyObject *item = PyLong_FromLongLong(elapsed);
+    if (item) {
+        PyList_Append(attr->elapsed_ticks, item);
+    }
+}
+
+static PyObject *
+ctiming_method(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    npy_uint32 iteration = 1, warmup = 0;
+    if (!PyArg_ParseTuple(args, "O|II", &ufunc, &iteration, &warmup)) {
+        return NULL;
+    }
+    if (!PyObject_IsInstance((PyObject *)ufunc, (PyObject *)&PyUFunc_Type)) {
+        PyErr_Format(PyExc_TypeError, "ufunc is required");
+        return NULL;
+    }
+
+    ctiming_data **data = (ctiming_data**)PyArray_malloc(
+        sizeof(ctiming_attr) + ((sizeof(ctiming_data) + sizeof(ctiming_data*)) * ufunc->ntypes)
+    );
+    if (data == NULL) {
+        return PyErr_NoMemory();
+    }
+    PyUFuncObject *n_ufunc = PyObject_GC_New(PyUFuncObject, &ctiming.type);
+    if (n_ufunc == NULL) {
+        PyArray_free(data);
+        return NULL;
+    }
+    memcpy(((PyObject*)n_ufunc)+1, ((PyObject*)ufunc)+1, sizeof(PyUFuncObject) - sizeof(PyObject));
+
+    PyObject *elapsed_ticks = PyList_New(0);
+    if (elapsed_ticks == NULL) {
+        PyArray_free(data);
+        Py_DECREF(n_ufunc);
+        return NULL;
+    }
+
+    ctiming_attr *data_attr = (ctiming_attr*)&data[ufunc->ntypes];
+    data_attr->iteration = iteration;
+    data_attr->warmup = warmup;
+    data_attr->elapsed_ticks = elapsed_ticks;
+
+    ctiming_data *data_offset = (ctiming_data*)(data_attr + 1);
+    for (int i = 0; i < n_ufunc->ntypes; ++i) {
+        data[i] = data_offset + i;
+        data[i]->cfunc_data = n_ufunc->data[i];
+        data[i]->cfunc = n_ufunc->functions[i];
+        data[i]->attr = data_attr;
+    }
+    n_ufunc->data = (void**)data;
+    n_ufunc->functions = ctiming.gfunctions;
+    return (PyObject*)n_ufunc;
+}
+
+static PyObject *
+ctiming_elapsed(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    if (!PyArg_ParseTuple(args, "O", &ufunc)) {
+        return NULL;
+    }
+    if (!PyObject_IsInstance((PyObject *)ufunc, (PyObject *)&ctiming.type)) {
+        PyErr_Format(PyExc_TypeError, "wrapped ufunc is required");
+        return NULL;
+    }
+    PyObject *elapsed_ticks = ((ctiming_data*)ufunc->data[0])->attr->elapsed_ticks;
+    Py_INCREF(elapsed_ticks);
+    return elapsed_ticks;
+}
+
+static PyObject *
+ctiming_set_affinity(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+#ifdef CTIMING_AFFINITY
+    PyObject *obj;
+    if (!PyArg_ParseTuple(args, "O", &obj)) {
+        return NULL;
+    }
+    PyObject *seq_obj = PySequence_Fast(obj, "expected a sequence");
+    if (seq_obj == NULL) {
+        return NULL;
+    }
+    CPU_ZERO(&ctiming.cpuset);
+    PyObject **seq_items = PySequence_Fast_ITEMS(seq_obj);
+    Py_ssize_t seq_size = PySequence_Fast_GET_SIZE(seq_obj);
+    for (Py_ssize_t i = 0; i < seq_size; ++i) {
+        CPU_SET(PyLong_AsLong(seq_items[i]), &ctiming.cpuset);
+        if (PyErr_Occurred()) {
+            Py_DECREF(seq_obj);
+            return NULL;
+        }
+    }
+    Py_DECREF(seq_obj);
+    ctiming.have_affinity = 1;
+#else
+    (void) args;
+#endif
+    Py_RETURN_NONE;
+}
+
+static void
+ctiming_dealloc(PyUFuncObject *ufunc)
+{
+    PyObject_GC_UnTrack((PyObject*)ufunc);
+    ctiming_data *data = (ctiming_data*)ufunc->data[0];
+    Py_DECREF(data->attr->elapsed_ticks);
+    PyArray_free(ufunc->data);
+    PyObject_GC_Del(ufunc);
+}
+
+static int
+ctiming_init(PyObject *mod)
+{
+    memcpy(&ctiming.type, &PyUFunc_Type, sizeof(PyTypeObject));
+    ctiming.type.tp_name = "numpy.ufunc_ctiming";
+    ctiming.type.tp_dealloc = (destructor)ctiming_dealloc;
+
+    for (int i = 0; i < 128; ++i) {
+        ctiming.gfunctions[i] = ctiming_gfunc;
+    }
+
+    ctiming.frequency = ctiming_frequency();
+    PyObject *frequency = PyFloat_FromDouble(ctiming.frequency);
+    if (frequency == NULL) {
+        return -1;
+    }
+    // number of clock-cycles per second
+    if (PyModule_AddObject(mod, "ctiming_frequency", frequency)) {
+        Py_DECREF(frequency);
+        return -1;
+    }
+    return 0;
+}
 
 // Testing the utilites of the CPU dispatcher
 #ifndef NPY_DISABLE_OPTIMIZATION
@@ -638,6 +926,22 @@ static PyMethodDef UMath_TestsMethods[] = {
      "internals. \n",
      },
     {"test_dispatch", UMath_Tests_test_dispatch, METH_NOARGS, NULL},
+    {"ctiming", ctiming_method, METH_VARARGS,
+     "Timing the call of ufunc C function.\n"
+     "Arguments: ufunc iteration(default:1) warmup(default:0)\n"
+     "Returns a wrapped ufunc that can be used to determine "
+     "elapsed time of executing the inner loop of ufunc\n"
+    },
+    {"ctiming_elapsed", ctiming_elapsed, METH_VARARGS,
+     "Returns mutable list of elapsed ticks(clock-cycles)\n"
+     "NOTE: use attr 'ctiming_frequency' to get the number of"
+     "clock-cycles per second\n"
+     "Arguments: wrapped_ufunc\n"
+    },
+    {"ctiming_set_affinity", ctiming_set_affinity, METH_VARARGS,
+     "Set the CPU affinity for the running wrapped ufunc\n"
+     "Arguments: affinity(sequence of CPUs numbers)\n"
+    },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -690,6 +994,10 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
+        return NULL;
+    }
+    if (ctiming_init(m) < 0) {
+        Py_DECREF(m);
         return NULL;
     }
     return m;
