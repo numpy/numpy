@@ -489,6 +489,7 @@ static void
     #endif
     }
     /**end repeat2**/
+npyv_cleanup();
 #endif // NPYV check for @type@
 /**
  * Unroll by four scalars in case of:
