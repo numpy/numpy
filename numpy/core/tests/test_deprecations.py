@@ -710,11 +710,17 @@ class TestRaggedArray(_DeprecationTestCase):
 
 class TestTrimZeros(_DeprecationTestCase):
     # Numpy 1.20.0, 2020-07-31
-    def test_deprecated(self):
-        # Expects a 1D array-like objects
-        a = np.random.rand(10, 10).tolist()
-        self.assert_deprecated(np.trim_zeros, args=(a,))
+    @pytest.mark.parametrize("arr", [np.random.rand(10, 10).tolist(),
+                                     np.random.rand(10).astype(str)])
+    def test_deprecated(self, arr):
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            try:
+                np.trim_zeros(arr)
+            except DeprecationWarning as ex:
+                assert_(isinstance(ex.__cause__, ValueError))
+            else:
+                raise AssertionError("No error raised during function call")
 
-        # Must be compatible with ndarray.astype(str)
-        b = np.random.rand(10).astype(str)
-        self.assert_deprecated(np.trim_zeros, args=(b,))
+        out = np.lib.function_base._trim_zeros_old(arr)
+        assert_array_equal(arr, out)
