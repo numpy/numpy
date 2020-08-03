@@ -85,9 +85,7 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 #ifdef NPY_HAVE_FMA3
     #define npyv_muladd_f32 _mm_fmadd_ps
     #define npyv_muladd_f64 _mm_fmadd_pd
-#endif
-
-#ifndef npyv_muladd_f32
+#else
     #define npyv_muladd_f32(a, b, c) npyv_add_f32(npyv_mul_f32(a, b), c)
     #define npyv_muladd_f64(a, b, c) npyv_add_f64(npyv_mul_f64(a, b), c)
 #endif
