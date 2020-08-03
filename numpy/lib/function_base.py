@@ -1482,7 +1482,7 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None):
+def _unwrap_dispatcher(p, discont=None, axis=None, *, interval_size=2*pi):
     return (p,)
 
 
