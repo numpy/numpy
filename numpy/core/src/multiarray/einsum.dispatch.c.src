@@ -730,6 +730,7 @@ static void
     }
     /**end repeat2**/
     accum = npyv_sum_@sfx@(vaccum);
+npyv_cleanup();
 #endif // NPYV check for @type@
 /**
  * Unroll by four scalars in case of:
