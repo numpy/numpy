@@ -39,6 +39,15 @@ Hermitian FFTs
    hfft      Hermitian discrete Fourier transform.
    ihfft     Inverse Hermitian discrete Fourier transform.
 
+Chebyshev FFTs
+--------------
+
+.. autosummary::
+   :toctree: generated/
+
+   chebyfft  Discrete Chebyshev (cosine) transform.
+   ichebyfft Inverse discrete Chebyshev (cosine) transform.
+
 Helper routines
 ---------------
 

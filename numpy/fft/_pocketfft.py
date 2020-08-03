@@ -17,6 +17,8 @@ fft2(a, s=None, axes=(-2,-1), norm="backward")
 ifft2(a, s=None, axes=(-2, -1), norm="backward")
 rfft2(a, s=None, axes=(-2,-1), norm="backward")
 irfft2(a, s=None, axes=(-2, -1), norm="backward")
+chebyfft(a, n=None, axis=-1)
+ichebyfft(a, n=None, axis=-1)
 
 i = inverse transform
 r = transform of purely real data
@@ -29,7 +31,7 @@ behavior.)
 """
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn',
-           'chebyfft', 'chebyifft']
+           'chebyfft', 'ichebyfft']
 
 import functools
 
@@ -1421,8 +1423,8 @@ def chebyfft(a, n=None, axis=-1):
         If it is larger, the input is padded with zeros.  If `n` is not given,
         the length of the input along the axis specified by `axis` is used.
     axis : int, optional
-        Axis over which to compute the FFT.  If not given, the last axis is
-        used.
+        Axis over which to compute the transform.
+        If not given, the last axis is used.
 
     Returns
     -------
@@ -1451,12 +1453,64 @@ def chebyfft(a, n=None, axis=-1):
     aext = append(a[n-1:0:-1], a[0:n-1])
 
     # Forward Fourier transform of the even extension.
-    # Since input is real, -k and k coefficients are complex conjugates;
+    # Since input is real, -i and i coefficients are complex conjugates;
     # since input also even, they must also be pairwise equal; so all
-    # coefficients are real, and -k and k coefficients are pairwise equal.
-    # The real FFT is used, so that only (2n-2)//2 + 1 = n coeffs are
-    # returned instead of all 2n-2.
+    # coefficients are real, and -i and i coefficients are pairwise equal.
+    # The real FFT is used, so only (2n-2)//2 + 1 = n coeffs are returned,
+    # instead of all 2n-2.
 
     output = 2.*real(rfft(aext, norm="forward"))
+
+    return output
+
+
+@array_function_dispatch(_fftn_dispatcher)
+def ichebyfft(a, n=None, axis=-1):
+    """
+    Compute inverse 1D Chebyshev (cosine) transform using inverse real FFT.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+        If complex, imaginary part is silently discarded.
+    n : int, optional
+        Length of the transformed axis of the output.
+        If `n` is smaller than the length of the input, the input is cropped.
+        If it is larger, the input is padded with zeros.  If `n` is not given,
+        the length of the input along the axis specified by `axis` is used.
+    axis : int, optional
+        Axis over which to compute the transform.
+        If not given, the last axis is used.
+
+    Returns
+    -------
+    output : real ndarray
+        The truncated or zero-padded input, transformed along the axis
+        indicated by `axis`, or the last one if `axis` is not specified.
+        The length of the transformed axis is `n`.
+
+    Raises
+    ------
+    IndexError
+        If `axis` is larger than the last axis of `a`.
+
+    """
+    a = real(asarray(a))
+    if n is None:
+        n = a.shape[axis]
+
+    # n real Chebyshev coeffs correspond to 2n-2 Fourier coefficients, with
+    # -i and i coefficients pairwise equal. The inverse real FFT is used, so
+    # only (2n-2)//2 + 1 = n coeffs are needed as input, divided by 2 to get
+    # the values right.
+
+    afou = irfft(.5*a + 0.j, norm="forward")
+
+    # The inverse transform yields the even extension of the desired output,
+    # i.e. an even vector on [0,2pi]. "Half" of that is the inverse transform
+    # of the Chebyshev coeffs, which gets mirrored to its original form.
+
+    output = afou[n-1::-1]
 
     return output
