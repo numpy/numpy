@@ -1,4 +1,4 @@
-# NumPy static imports for Cython
+# NumPy static imports for Cython >= 3.0
 #
 # If any of the PyArray_* functions are called, import_array must be
 # called first.  This is done automatically by Cython 3.0+ if a call
