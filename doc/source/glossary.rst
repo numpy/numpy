@@ -2,474 +2,552 @@
 Glossary
 ********
 
-.. toctree::
+..  glossary::
 
-.. glossary::
+    (`n`,)
 
-   along an axis
-       Axes are defined for arrays with more than one dimension.  A
-       2-dimensional array has two corresponding axes: the first running
-       vertically downwards across rows (axis 0), and the second running
-       horizontally across columns (axis 1).
-
-       Many operations can take place along one of these axes.  For example,
-       we can sum each row of an array, in which case we operate along
-       columns, or axis 1::
-
-         >>> x = np.arange(12).reshape((3,4))
-
-         >>> x
-         array([[ 0,  1,  2,  3],
-                [ 4,  5,  6,  7],
-                [ 8,  9, 10, 11]])
-
-         >>> x.sum(axis=1)
-         array([ 6, 22, 38])
-
-   array
-       A homogeneous container of numerical elements.  Each element in the
-       array occupies a fixed amount of memory (hence homogeneous), and
-       can be a numerical element of a single type (such as float, int
-       or complex) or a combination (such as ``(float, int, float)``).  Each
-       array has an associated data-type (or ``dtype``), which describes
-       the numerical type of its elements::
-
-         >>> x = np.array([1, 2, 3], float)
-
-         >>> x
-         array([ 1.,  2.,  3.])
-
-         >>> x.dtype # floating point number, 64 bits of memory per element
-         dtype('float64')
+      A tuple with one element.The trailing comma distinguishes a one-element
+      tuple from a parenthesized ``n``.
 
 
-         # More complicated data type: each array element is a combination of
-         # and integer and a floating point number
-         >>> np.array([(1, 2.0), (3, 4.0)], dtype=[('x', np.int64), ('y', float)])
-         array([(1, 2.), (3, 4.)], dtype=[('x', '<i8'), ('y', '<f8')])
+    -1
 
-       Fast element-wise operations, called a :term:`ufunc`, operate on arrays.
+      Used as a dimension entry, ``-1`` instructs NumPy to choose the length
+      that will keep the total number of elements the same.
 
-   array_like
-       Any sequence that can be interpreted as an ndarray.  This includes
-       nested lists, tuples, scalars and existing arrays.
 
-   attribute
-       A property of an object that can be accessed using ``obj.attribute``,
-       e.g., ``shape`` is an attribute of an array::
+    ``...``
 
-         >>> x = np.array([1, 2, 3])
-         >>> x.shape
-         (3,)
+      **When indexing an array**, shorthand that the missing axes, if they
+      exist, are full slices.
 
-   big-endian
-       When storing a multi-byte value in memory as a sequence of bytes, the
-       sequence addresses/sends/stores the most significant byte first (lowest
-       address) and the least significant byte last (highest address). Common in
-       micro-processors and used for transmission of data over network protocols.
+      ..  code:: python
 
-   BLAS
-       `Basic Linear Algebra Subprograms <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
+        >>> a.shape
+        (2, 3, 4)
 
-   broadcast
-       NumPy can do operations on arrays whose shapes are mismatched::
+        >>> a[...].shape
+        (2, 3, 4)
 
-         >>> x = np.array([1, 2])
-         >>> y = np.array([[3], [4]])
+        >>> a[...,0].shape
+        (2, 3)
 
-         >>> x
-         array([1, 2])
+        >>> a[0,...].shape
+        (3, 4)
 
-         >>> y
-         array([[3],
-                [4]])
+        >>> a[0,...,0].shape
+        (3,)
 
-         >>> x + y
-         array([[4, 5],
-                [5, 6]])
+       It can be used at most once: ::
 
-       See `basics.broadcasting` for more information.
+        >>> a[0,...,0,...].shape
+        ---------------------------------------------------------------------------
+        IndexError                                Traceback (most recent call last)
+        <ipython-input-45-e12b83e31ec3> in <module>
+        ----> 1 a[0,...,0,...].shape
 
-   C order
-       See `row-major`
+        IndexError: an index can only have a single ellipsis ('...')
 
-   column-major
-       A way to represent items in a N-dimensional array in the 1-dimensional
-       computer memory. In column-major order, the leftmost index "varies the
-       fastest": for example the array::
+      For more, see the article on
+      :doc:`Indexing. <reference/arrays.indexing>`
 
-            [[1, 2, 3],
-             [4, 5, 6]]
+      **In printouts**, NumPy substitutes ``...`` for the middle elements of
+      large arrays. To see the entire array, use
+      :doc:`numpy.printoptions. <reference/generated/numpy.printoptions>`
 
-       is represented in the column-major order as::
 
-           [1, 4, 2, 5, 3, 6]
+    ``:``
 
-       Column-major order is also known as the Fortran order, as the Fortran
-       programming language uses it.
+      The Python
+      `slice <https://docs.python.org/3/glossary.html#term-slice>`_
+      operator. In ndarrays, slicing can be applied to every
+      axis:
 
-   decorator
-       An operator that transforms a function.  For example, a ``log``
-       decorator may be defined to print debugging information upon
-       function execution::
+      ..  code:: python
 
-         >>> def log(f):
-         ...     def new_logging_func(*args, **kwargs):
-         ...         print("Logging call with parameters:", args, kwargs)
-         ...         return f(*args, **kwargs)
-         ...
-         ...     return new_logging_func
+          >>> a = np.arange(24).reshape(2,3,4)
+          a
+          array([[[ 0,  1,  2,  3],
+                  [ 4,  5,  6,  7],
+                  [ 8,  9, 10, 11]],
 
-       Now, when we define a function, we can "decorate" it using ``log``::
+                 [[12, 13, 14, 15],
+                  [16, 17, 18, 19],
+                  [20, 21, 22, 23]]])
 
-         >>> @log
-         ... def add(a, b):
-         ...     return a + b
+          >>> a[1:,-2:,:-1]
+          array([[[16, 17, 18],
+                  [20, 21, 22]]])
 
-       Calling ``add`` then yields:
+      Trailing slices can be omitted:
 
-       >>> add(1, 2)
-       Logging call with parameters: (1, 2) {}
-       3
+      ..  code:: python
 
-   dictionary
-       Resembling a language dictionary, which provides a mapping between
-       words and descriptions thereof, a Python dictionary is a mapping
-       between two objects::
+          >>> a[1] == a[1,:,:]
+          array([[ True,  True,  True,  True],
+                 [ True,  True,  True,  True],
+                 [ True,  True,  True,  True]])
 
-         >>> x = {1: 'one', 'two': [1, 2]}
+      In contrast to Python, where slicing creates a copy, in NumPy slicing
+      creates a :term:`view`.
 
-       Here, `x` is a dictionary mapping keys to values, in this case
-       the integer 1 to the string "one", and the string "two" to
-       the list ``[1, 2]``.  The values may be accessed using their
-       corresponding keys::
+      For more, see
+      `Indexing. <https://numpy.org/doc/stable/reference/arrays.indexing#combining-advanced-and-basic-indexing>`_
 
-         >>> x[1]
-         'one'
+    ``<``
 
-         >>> x['two']
-         [1, 2]
+      In a dtype declaration, indicates that the data is
+      `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
+      (the bracket is big on the right). ::
 
-       Note that dictionaries are not stored in any specific order.  Also,
-       most mutable (see *immutable* below) objects, such as lists, may not
-       be used as keys.
+        >>> dt = np.dtype('<f') # little-endian single-precision float
 
-       For more information on dictionaries, read the
-       `Python tutorial <https://docs.python.org/tutorial/>`_.
 
-   field
-       In a :term:`structured data type`, each sub-type is called a `field`.
+    ``>``
+
+      In a dtype declaration, indicates that the data is
+      `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
+      (the bracket is big on the left). ::
+
+        >>> dt = np.dtype('>H') # big-endian unsigned short
+
+
+    advanced indexing
+
+      Rather than using a scalar or slice as an index, an axis can be
+      indexed with an array, providing fine-grained selection. This is
+      known as
+      `advanced indexing <https://numpy.org/devdocs/reference/arrays.indexing.html#advanced-indexing>`_
+      or ``fancy indexing``.
+
+
+    axis
+
+      Another term for an array dimension. Axes are numbered left to right;
+      axis 0 is the first element in the shape tuple.
+
+      In a two-dimensional vector, the elements of axis 0 are rows and the
+      elements of axis 1 are columns.
+
+      In higher dimensions the picture changes. NumPy prints
+      higher-dimensional vectors as replications of row-by-column building
+      blocks, as in this three-dimensional vector:
+
+      ..  code:: python
+
+          >>> a
+          array([[[ 0,  1,  2],
+                  [ 3,  4,  5]],
+
+                 [[ 6,  7,  8],
+                  [ 9, 10, 11]]])
+
+          >>> a.shape
+          (2, 2, 3)
+
+      ``a`` is depicted as a two-element array whose elements are 2x3 vectors.
+      From this point of view, rows and columns are the final two axes,
+      respectively, in any shape.
+
+      This rule helps you anticipate how a vector will be printed, and
+      conversely how to find the index of any of the printed elements. For
+      instance, in the example, the last two values of 8's index must be 0 and
+      2. Since 8 appears in the second of the two 2x3's, the first index must
+      be 1:
+
+        >>> a[1,0,2]
+        8
+
+      A convenient way to count dimensions in a printed vector is to
+      count ``[`` symbols after the open-parenthesis. This is
+      useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
+
+      ..  code:: python
+
+          >>> a.shape
+          (2, 3)
+          >>> a
+          array([[0, 1, 2],
+                 [3, 4, 5]])
+
+          >>> a.shape
+          (1, 2, 3)
+          >>> a
+          array([[[0, 1, 2],
+                  [3, 4, 5]]])
+
+
+    along an axis
+
+      The result of an operation along an axis X is a vector in which X
+      disappears. This can surprise new users expecting the opposite.
+
+      The operation can be visualized this way:
+
+      Imagine a slice of array ``a`` where axis X has a fixed index
+      and the other dimensions are left full (``:``).
+
+        >>> a.shape
+        (2,3,4)
+        >>> a[:,0,:].shape
+        (2,4)
+
+      The slice has ``a``'s shape with the X dimension deleted. Saying an
+      operation ``op`` is ``performed along X`` means that ``op`` takes as its
+      operands slices having every value of X:
+
+         >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
+         array([[ True,  True,  True,  True],
+                [ True,  True,  True,  True]])
+
+
+    array
+
+      Used synonymously in the NumPy docs with `ndarray`, NumPy's basic structure.
+      See :doc:`Array objects. <reference/arrays>`
+
+
+    array_like
+
+      Any `sequence <https://docs.python.org/3/glossary.html#term-sequence>`_
+      that can be interpreted as an ndarray.  In addition to ndarrays
+      this category includes lists (possibly nested and with
+      different element types), tuples, and scalars. Any argument accepted by
+      :doc:`numpy.array <reference/generated/numpy.array>`
+      is array_like.
+
+      ..  code::
+
+          >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)])
+
+          >>> x
+          array([[1.+0.j, 2.+0.j],
+                 [0.+0.j, 0.+0.j],
+                 [1.+1.j, 3.+0.j]])
+
+
+    array scalar
+
+      For uniformity in handling operands, NumPy treats
+      a :doc:`scalar <reference/arrays.scalars>` as an array of zero dimension.
+
+
+    `attribute <https://docs.python.org/3/glossary.html#term-attribute>`_
+      \
+
+
+    .base
+
+      If an array does not own its memory, then its ``.base`` attribute
+      returns the object whose memory the array is referencing. That object
+      may may be borrowing the memory from still another object, so the
+      owning object may be ``a.base.base.base...``. Despite advice to the
+      contrary, testing ``base`` is not a surefire way to determine if two
+      arrays are `views. <#term-view>`_
+
+
+    `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
+       \
+
+
+    `BLAS <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
+       \
+
+
+    broadcast
+
+      ``broadcasting`` is NumPy's ability to process ndarrays of
+      different sizes as if all were the same size.
+
+      When NumPy operates on two arrays, it works element by
+      element -- for instance, ``c = a * b`` is
+
+      ..  code::
+
+          c[0,0,0] = a[0,0,0] * b[0,0,0]
+          c[0,0,1] = a[0,0,1] * b[0,0,1]
+          ...
+
+      Ordinarily this means the shapes of a and b must be identical. But in
+      some cases, NumPy can fill "missing" axes or "too-short" dimensions
+      with duplicate data so shapes will match. The duplication costs
+      no memory or time. See :doc:`Broadcasting. <user/basics.broadcasting>`
+
+
+    C order
+
+      Same as `row-major. <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+
+
+    `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+      \
+
+
+    copy
+
+      See :term:`view`.
+
+
+    `decorator <https://docs.python.org/3/glossary.html#term-decorator>`_
+       \
+
+
+    `dictionary <https://docs.python.org/3/glossary.html#term-dictionary>`_
+       \
+
+
+    dimension
+
+      See :term:`axis`.
+
+
+    dtype
+
+      The datatype describing the (identically typed) elements in an ndarray.
+      It can be changed to reinterpret the array contents. See
+      :doc:`Data type objects (dtype). <reference/arrays.dtypes>`
+
+
+    fancy indexing
+
+       Another term for :term:`advanced indexing`.
+
+
+    field
+
+       In a :term:`structured data type`, each subtype is called a `field`.
        The `field` has a name (a string), a type (any valid dtype), and
-       an optional `title`. See :ref:`arrays.dtypes`
+       an optional :term:`title`. See :ref:`arrays.dtypes`.
 
-   Fortran order
-       See `column-major`
 
-   flattened
-       Collapsed to a one-dimensional array. See `numpy.ndarray.flatten`
-       for details.
+    Fortran order
 
-   homogeneous
-       Describes a block of memory comprised of blocks, each block comprised of 
-       items and of the same size, and blocks are interpreted in exactly the
-       same way. In the simplest case each block contains a single item, for
-       instance int32 or float64.
+       Same as `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
 
-   immutable
-       An object that cannot be modified after execution is called
-       immutable.  Two common examples are strings and tuples.
 
-   instance
-       A class definition gives the blueprint for constructing an object::
+    flattened
 
-         >>> class House:
-         ...     wall_colour = 'white'
+       See :term:`ravel`.
 
-       Yet, we have to *build* a house before it exists::
 
-         >>> h = House() # build a house
+    homogeneous
 
-       Now, ``h`` is called a ``House`` instance.  An instance is therefore
-       a specific realisation of a class.
+      All elements of a homogeneous array have the same type. ndarrays, in
+      contrast to Python lists, are homogeneous. The type can be complicated,
+      as in a :term:`structured array`, but all elements have that type.
 
-   iterable
-       A sequence that allows "walking" (iterating) over items, typically
-       using a loop such as::
+      NumPy `object arrays <#term-object-array>`_, which contain references to
+      Python objects, fill the role of heterogeneous arrays.
 
-         >>> x = [1, 2, 3]
-         >>> [item**2 for item in x]
-         [1, 4, 9]
 
-       It is often used in combination with ``enumerate``::
-         >>> keys = ['a','b','c']
-         >>> for n, k in enumerate(keys):
-         ...     print("Key %d: %s" % (n, k))
-         ...
-         Key 0: a
-         Key 1: b
-         Key 2: c
+    `immutable <https://docs.python.org/3/glossary.html#term-immutable>`_
+       \
 
-   itemsize
+
+    `iterable <https://docs.python.org/3/glossary.html#term-iterable>`_
+      \
+
+
+    itemsize
+
        The size of the dtype element in bytes.
 
-   list
-       A Python container that can hold any number of objects or items.
-       The items do not have to be of the same type, and can even be
-       lists themselves::
 
-         >>> x = [2, 2.0, "two", [2, 2.0]]
-
-       The list `x` contains 4 items, each which can be accessed individually::
-
-         >>> x[2] # the string 'two'
-         'two'
-
-         >>> x[3] # a list, containing an integer 2 and a float 2.0
-         [2, 2.0]
-
-       It is also possible to select more than one item at a time,
-       using *slicing*::
-
-         >>> x[0:2] # or, equivalently, x[:2]
-         [2, 2.0]
-
-       In code, arrays are often conveniently expressed as nested lists::
+    `list <https://docs.python.org/3/glossary.html#term-list>`_
+       \
 
 
-         >>> np.array([[1, 2], [3, 4]])
-         array([[1, 2],
-                [3, 4]])
-
-       For more information, read the section on lists in the `Python
-       tutorial <https://docs.python.org/tutorial/>`_.  For a mapping
-       type (key-value), see *dictionary*.
-
-   little-endian
-       When storing a multi-byte value in memory as a sequence of bytes, the
-       sequence addresses/sends/stores the least significant byte first (lowest
-       address) and the most significant byte last (highest address). Common in
-       x86 processors.
-
-   mask
-       A boolean array, used to select only certain elements for an operation::
-
-         >>> x = np.arange(5)
-         >>> x
-         array([0, 1, 2, 3, 4])
-
-         >>> mask = (x > 2)
-         >>> mask
-         array([False, False, False, True,  True])
-
-         >>> x[mask] = -1
-         >>> x
-         array([ 0,  1,  2,  -1, -1])
-
-   masked array
-       Array that suppressed values indicated by a mask::
-
-         >>> x = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
-         >>> x
-         masked_array(data=[--, 2.0, --],
-                      mask=[ True, False,  True],
-                fill_value=1e+20)
-
-         >>> x + [1, 2, 3]
-         masked_array(data=[--, 4.0, --],
-                      mask=[ True, False,  True],
-                fill_value=1e+20)
+    `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
+       \
 
 
-       Masked arrays are often used when operating on arrays containing
-       missing or invalid entries.
+    mask
 
-   matrix
-       A 2-dimensional ndarray that preserves its two-dimensional nature
-       throughout operations.  It has certain special operations, such as ``*``
-       (matrix multiplication) and ``**`` (matrix power), defined::
+       The boolean array used to select elements in a :term:`masked array`.
 
-         >>> x = np.mat([[1, 2], [3, 4]])
-         >>> x
-         matrix([[1, 2],
-                 [3, 4]])
 
-         >>> x**2
-         matrix([[ 7, 10],
-               [15, 22]])
+    masked array
 
-   method
-       A function associated with an object.  For example, each ndarray has a
-       method called ``repeat``::
+      Bad or missing data can be cleanly ignored by putting it in a masked
+      array, which has an internal boolean array indicating invalid
+      entries. Operations with masked arrays ignore these entries.
 
-         >>> x = np.array([1, 2, 3])
-         >>> x.repeat(2)
-         array([1, 1, 2, 2, 3, 3])
-
-   ndarray
-       See *array*.
-
-   record array
-       An :term:`ndarray` with :term:`structured data type` which has been
-       subclassed as ``np.recarray`` and whose dtype is of type ``np.record``,
-       making the fields of its data type to be accessible by attribute.
-
-   reference
-       If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
-       ``a`` and ``b`` are different names for the same Python object.
-
-   row-major
-       A way to represent items in a N-dimensional array in the 1-dimensional
-       computer memory. In row-major order, the rightmost index "varies
-       the fastest": for example the array::
-
-            [[1, 2, 3],
-             [4, 5, 6]]
-
-       is represented in the row-major order as::
-
-           [1, 2, 3, 4, 5, 6]
-
-       Row-major order is also known as the C order, as the C programming
-       language uses it. New NumPy arrays are by default in row-major order.
-
-   self
-       Often seen in method signatures, ``self`` refers to the instance
-       of the associated class.  For example:
-
-         >>> class Paintbrush:
-         ...     color = 'blue'
-         ...
-         ...     def paint(self):
-         ...         print("Painting the city %s!" % self.color)
-         ...
-         >>> p = Paintbrush()
-         >>> p.color = 'red'
-         >>> p.paint() # self refers to 'p'
-         Painting the city red!
-
-   slice
-       Used to select only certain elements from a sequence:
-
-       >>> x = range(5)
-       >>> x
-       [0, 1, 2, 3, 4]
-
-       >>> x[1:3] # slice from 1 to 3 (excluding 3 itself)
-       [1, 2]
-
-       >>> x[1:5:2] # slice from 1 to 5, but skipping every second element
-       [1, 3]
-
-       >>> x[::-1] # slice a sequence in reverse
-       [4, 3, 2, 1, 0]
-
-       Arrays may have more than one dimension, each which can be sliced
-       individually:
-
-       >>> x = np.array([[1, 2], [3, 4]])
-       >>> x
-       array([[1, 2],
-              [3, 4]])
-
-       >>> x[:, 1]
-       array([2, 4])
-
-   structure
-       See :term:`structured data type`
-
-   structured data type
-       A data type composed of other datatypes
-
-   subarray data type
-       A :term:`structured data type` may contain a :term:`ndarray` with its
-       own dtype and shape:
-
-       >>> dt = np.dtype([('a', np.int32), ('b', np.float32, (3,))])
-       >>> np.zeros(3, dtype=dt)
-       array([(0, [0., 0., 0.]), (0, [0., 0., 0.]), (0, [0., 0., 0.])],
-             dtype=[('a', '<i4'), ('b', '<f4', (3,))])
-
-   title
-       In addition to field names, structured array fields may have an
-       associated :ref:`title <titles>` which is an alias to the name and is
-       commonly used for plotting.
-
-   tuple
-       A sequence that may contain a variable number of types of any
-       kind.  A tuple is immutable, i.e., once constructed it cannot be
-       changed.  Similar to a list, it can be indexed and sliced::
-
-         >>> x = (1, 'one', [1, 2])
-         >>> x
-         (1, 'one', [1, 2])
-
-         >>> x[0]
-         1
-
-         >>> x[:2]
-         (1, 'one')
-
-       A useful concept is "tuple unpacking", which allows variables to
-       be assigned to the contents of a tuple::
-
-         >>> x, y = (1, 2)
-         >>> x, y = 1, 2
-
-       This is often used when a function returns multiple values:
-
-         >>> def return_many():
-         ...     return 1, 'alpha', None
-
-         >>> a, b, c = return_many()
-         >>> a, b, c
-         (1, 'alpha', None)
-
+         >>> a = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
          >>> a
-         1
-         >>> b
-         'alpha'
+         masked_array(data = [-- 2.0 --],
+                      mask = [ True False  True],
+                fill_value = 1e+20)
 
-   ufunc
-       Universal function.  A fast element-wise, :term:`vectorized
-       <vectorization>` array operation.  Examples include ``add``, ``sin`` and
-       ``logical_or``.
+         >>> a + [1, 2, 3]
+         masked_array(data = [-- 4.0 --],
+                      mask = [ True False  True],
+                fill_value = 1e+20)
 
-   vectorization
-       Optimizing a looping block by specialized code. In a traditional sense,
-       vectorization performs the same operation on multiple elements with
-       fixed strides between them via specialized hardware. Compilers know how
-       to take advantage of well-constructed loops to implement such
-       optimizations. NumPy uses :ref:`vectorization <whatis-vectorization>`
-       to mean any optimization via specialized code performing the same
-       operations on multiple elements, typically achieving speedups by
-       avoiding some of the overhead in looking up and converting the elements.
-
-   view
-       An array that does not own its data, but refers to another array's
-       data instead.  For example, we may create a view that only shows
-       every second element of another array::
-
-         >>> x = np.arange(5)
-         >>> x
-         array([0, 1, 2, 3, 4])
-
-         >>> y = x[::2]
-         >>> y
-         array([0, 2, 4])
-
-         >>> x[0] = 3 # changing x changes y as well, since y is a view on x
-         >>> y
-         array([3, 2, 4])
-
-   wrapper
-       Python is a high-level (highly abstracted, or English-like) language.
-       This abstraction comes at a price in execution speed, and sometimes
-       it becomes necessary to use lower level languages to do fast
-       computations.  A wrapper is code that provides a bridge between
-       high and the low level languages, allowing, e.g., Python to execute
-       code written in C or Fortran.
-
-       Examples include ctypes, SWIG and Cython (which wraps C and C++)
-       and f2py (which wraps Fortran).
+      See :doc:`Masked arrays. <reference/maskedarray>`
 
 
+    matrix
+
+      NumPy's two-dimensional
+      :doc:`matrix class <reference/generated/numpy.matrix>`
+      should no longer be used; use regular ndarrays.
+
+
+    ndarray
+
+       See :term:`array`.
+
+
+    object array
+
+      An array whose dtype is ``object``; that is, it contains references to
+      Python objects. Indexing the array dereferences the Python objects, so
+      unlike other ndarrays, an object array has the ability to hold
+      heterogeneous objects.
+
+
+    ravel
+
+      :doc:`numpy.ravel \
+      <reference/generated/numpy.ravel>`
+      and :doc:`numpy.flatten \
+      <reference/generated/numpy.ndarray.flatten>`
+      both flatten an ndarray. ``ravel`` will return a view if possible;
+      ``flatten`` always returns a copy.
+
+      Flattening collapses a multimdimensional array to a single dimension;
+      details of how this is done (for instance, whether ``a[n+1]`` should be
+      the next row or next column) are parameters.
+
+
+    record array
+
+       A :term:`structured array` with an additional way to access
+       fields -- ``a.field`` in addition to ``a['field']``. See
+       :doc:`numpy.recarray. <reference/generated/numpy.recarray>`
+
+
+    `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+       \
+
+    shape
+
+      A tuple showing the length of each dimension of an ndarray. The
+      length of the tuple itself is the number of dimensions
+      (:doc:`numpy.ndim <reference/generated/numpy.ndarray.ndim>`).
+      The product of the tuple elements is the number of elements in the
+      array.
+
+
+    :term:`slice <:>`
+      \
+
+
+    stride
+
+      Tuple of bytes to step in each dimension when traversing an array.
+      The byte offset of element :math:`(i_0, i_1, ..., i_n)` in an array `a` is: ::
+
+          offset = sum(np.array(i) * a.strides)
+
+      Stride is computed automatically from an array's dtype and
+      shape, but can be directly specified using
+      :doc:`as_strided. </reference/generated/numpy.lib.stride_tricks.as_strided>`
+
+      To see how striding underlies the power of NumPy views, see
+      `The NumPy array: a structure for efficient numerical computation. \
+      <https://arxiv.org/pdf/1102.1523.pdf>`_
+
+
+    structured array
+
+      Array whose :term:`dtype` is a :term:`structured data type`.
+
+
+    structured data type
+
+      Users can create arbitrarily complex :term:`dtypes <dtype>`
+      that can include other arrays and dtypes. These composite dtypes are called
+      :doc:`structured data types. <user/basics.rec>`
+
+
+    subarray
+
+      An array nested in a :term:`structured data type`:
+
+      ..  code:: python
+
+        >>> dt = np.dtype([('a', np.int32), ('b', np.float32, (3,))])
+        >>> np.zeros(3, dtype=dt)
+        array([(0, [0., 0., 0.]), (0, [0., 0., 0.]), (0, [0., 0., 0.])],
+              dtype=[('a', '<i4'), ('b', '<f4', (3,))])
+
+
+    subarray data type
+
+      An element of a strctured datatype that behaves like an ndarray.
+
+      ..
+        The entry is in numpy.doc.structured_arrays:51 and
+        so can't be deleted.
+
+
+    title
+
+      An alias for a field name in a structured datatype.
+
+      ..
+        The entry is referenced in numpy.doc.structured_arrays:242
+        and so can't be deleted.
+
+
+    `tuple <https://docs.python.org/3/glossary.html#term-tuple>`_
+      \
+
+
+    type
+
+      In NumPy, a synonym for :term:`dtype`. For the more general Python
+      meaning,
+      `see here. <https://docs.python.org/3/glossary.html#term-type>`_
+
+
+    ufunc
+
+      NumPy's fast element-by-element computation (:term:`vectorization`) is
+      structured so as to leave the choice of function open. A function used
+      in vectorization is called a ``ufunc``, short for ``universal
+      function``. NumPy routines have built-in ufuncs, but users can also
+      :doc:`write their own. <reference/ufuncs>`
+
+
+    vectorization
+
+      NumPy hands off array processing to C, where looping and computation are
+      much faster than in Python. To exploit this, programmers using NumPy
+      eliminate Python loops in favor of array-to-array operations.
+      :term:`vectorization` can refer both to the C offloading and to
+      structuring NumPy code to leverage it.
+
+
+    view
+
+      Without changing underlying data, NumPy can make one array masquerade as
+      any number of other arrays with different types, shapes, and even
+      content. This is much faster than creating those arrays.
+
+      An array created this way is a ``view``, and the performance gain often
+      makes an array created as a view preferable to one created as a new
+      array.
+
+      But because a view shares data with the original array, a write in one
+      array can affect the other, even though they appear to be different
+      arrays. If this is an problem, a view can't be used; the second array
+      needs to be physically distinct -- a ``copy``.
+
+      Some NumPy routines always return views, some always return copies, some
+      may return one or the other, and for some the choice can be specified.
+      Responsiblity for managing views and copies falls to the programmer.
+      NumPy reports whether arrays share memory wih
+      :doc:`numpy.shares_memory <reference/generated/numpy.shares_memory>`,
+      but an exact answer isn't always possible; see the link.
