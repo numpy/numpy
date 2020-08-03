@@ -1,0 +1,14 @@
+Arbitrary `interval_size` option for ``numpy.unwrap``
+-----------------------------------------------------
+The size of the interval, over which phases are unwraped, is not restricted to `2 * pi` 
+anymore. This is especially useful for unwrapping degrees but can also be used for other
+intervals.
+
+.. code:: python
+
+    >>> phase_deg = np.mod(np.linspace(0,720,19), 360) - 180
+    >>> unwrap(phase_deg, interval_size=360)
+    array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+        180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
+        540.])
+
