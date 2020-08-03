@@ -66,6 +66,10 @@ add_docstring(
     """)
 
 
+# Avoid extra getattr calls in verify_matching_signatures
+_Parameter_empty = inspect.Parameter.empty
+
+
 def verify_matching_signatures(implementation, dispatcher):
     """Verify that a dispatcher function has the right signature."""
     implementation_sig = inspect.signature(implementation)
@@ -74,10 +78,10 @@ def verify_matching_signatures(implementation, dispatcher):
     implementation_sig_with_none_defaults = inspect.Signature(
         parameters=[
             p.replace(
-                annotation=inspect.Parameter.empty,
+                annotation=_Parameter_empty,
                 default=(
-                    inspect.Parameter.empty
-                    if p.default is inspect.Parameter.empty
+                    _Parameter_empty
+                    if p.default is _Parameter_empty
                     else None
                 ),
             )
