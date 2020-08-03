@@ -132,7 +132,7 @@ stages:
         otool -L /usr/local/lib/libopenblas*
       displayName: 'install pre-built openblas'
       condition: eq(variables['USE_OPENBLAS'], '1')
-    - script: python -m pip install --upgrade pip setuptools wheel
+    - script: python -m pip install --upgrade pip 'setuptools<49.2.0' wheel
       displayName: 'Install tools'
     - script: |
         python -m pip install -r test_requirements.txt
@@ -247,7 +247,7 @@ stages:
       displayName: 'add gcc 4.8'
     - script: |
             # python3 has no setuptools, so install one to get us going
-            python3 -m pip install --user --upgrade pip setuptools!=49.2.0
+            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
             python3 -m pip install --user -r test_requirements.txt
             CPPFLAGS='' CC=gcc-4.8 F77=gfortran-5 F90=gfortran-5 \
             python3 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
