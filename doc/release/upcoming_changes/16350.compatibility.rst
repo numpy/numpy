@@ -1,0 +1,8 @@
+Writing to the result of `numpy.broadcast_arrays` will export readonly buffers
+------------------------------------------------------------------------------
+
+In NumPy 1.17 `numpy.broadcast_arrays` started warning when the resulting array
+was written to. This warning was skipped when the array was used through the
+buffer interface (e.g. ``memoryview(arr)``). The same thing will now occur for the
+two protocols ``__array_interface__``, and ``__array_struct__`` returning read-only
+buffers instead of giving a warning.

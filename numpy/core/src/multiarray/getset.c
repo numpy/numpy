@@ -244,8 +244,9 @@ array_dataptr_get(PyArrayObject *self)
 {
     return Py_BuildValue("NO",
                          PyLong_FromVoidPtr(PyArray_DATA(self)),
-                         (PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE ? Py_False :
-                          Py_True));
+                         ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE) &&
+                          !(PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) ?
+                         Py_False : Py_True);
 }
 
 static PyObject *
@@ -274,10 +275,6 @@ array_interface_get(PyArrayObject *self)
         return NULL;
     }
 
-    if (array_might_be_written(self) < 0) {
-        Py_DECREF(dict);
-        return NULL;
-    }
     int ret;
 
     /* dataptr */
@@ -626,11 +623,6 @@ array_struct_get(PyArrayObject *self)
     PyArrayInterface *inter;
     PyObject *ret;
 
-    if (PyArray_ISWRITEABLE(self)) {
-        if (array_might_be_written(self) < 0) {
-            return NULL;
-        }
-    }
     inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
         return PyErr_NoMemory();
@@ -640,6 +632,11 @@ array_struct_get(PyArrayObject *self)
     inter->typekind = PyArray_DESCR(self)->kind;
     inter->itemsize = PyArray_DESCR(self)->elsize;
     inter->flags = PyArray_FLAGS(self);
+    if (inter->flags & NPY_ARRAY_WARN_ON_WRITE) {
+        /* Export a warn-on-write array as read-only */
+        inter->flags = inter->flags & ~NPY_ARRAY_WARN_ON_WRITE;
+        inter->flags = inter->flags & ~NPY_ARRAY_WRITEABLE;
+    }
     /* reset unused flags */
     inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_UPDATEIFCOPY |NPY_ARRAY_OWNDATA);
     if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NPY_ARRAY_NOTSWAPPED;
