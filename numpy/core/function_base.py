@@ -34,6 +34,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     .. versionchanged:: 1.16.0
         Non-scalar `start` and `stop` are now supported.
 
+    .. versionchanged:: 1.20.0
+        Values are rounded towards ``-inf`` instead of ``0`` when an
+        integer ``dtype`` is specified.
+
     Parameters
     ----------
     start : array_like
