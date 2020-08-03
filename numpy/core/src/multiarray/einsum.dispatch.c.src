@@ -11,6 +11,7 @@
  * @targets $maxopt baseline
  * SSE2 (AVX2 FMA3) AVX512F
  * NEON NEON_VFPV4
+ * VSX VSX2
  */
 #include "einsum_p.h"
 
