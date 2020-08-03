@@ -1,10 +1,11 @@
 `np.genfromtxt` now correctly unpacks structured arrays
 -------------------------------------------------------------------------
 Previously, `genfromtxt` failed to unpack if it was called with ``unpack=True``
-and a structured datatype was inferred or passed to the ``dtype`` argument.
+and a structured datatype was passed to the ``dtype`` argument
+(or ``dtype=None`` was passed and a structured datatype was inferred).
 
 Structured arrays will now correctly unpack into a list of arrays,
 one for each column::
 
-    >>> np.genfromtxt(StringIO("21 58.0 \n 35 72.0"), unpack=True)
+    >>> np.genfromtxt(StringIO("21 58.0 \n 35 72.0"), dtype=None, unpack=True)
     [array([21, 35]), array([58., 72.])]
