@@ -522,24 +522,28 @@ def array(
     copy: bool = ...,
     subok: bool = ...,
     ndmin: int = ...,
+    *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def zeros(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
     order: Optional[str] = ...
+    *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def ones(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
     order: Optional[str] = ...
+    *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def empty(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
     order: Optional[str] = ...
+    *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def zeros_like(
@@ -619,13 +623,14 @@ def indices(
 def fromfunction(
     function: Callable,
     shape: Tuple[int, int],
+    *,
     like: ArrayLike = ...,
     **kwargs,
 ) -> Any: ...
 def isscalar(element: Any) -> bool: ...
 def binary_repr(num: int, width: Optional[int] = ...) -> str: ...
 def base_repr(number: int, base: int = ..., padding: int = ...) -> str: ...
-def identity(n: int, dtype: DtypeLike = ..., like: ArrayLike = ...) -> ndarray: ...
+def identity(n: int, dtype: DtypeLike = ..., *, like: ArrayLike = ...) -> ndarray: ...
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
