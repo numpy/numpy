@@ -6,7 +6,7 @@ Glossary
 
     (`n`,)
 
-      A tuple with one element.The trailing comma distinguishes a one-element
+      A tuple with one element. The trailing comma distinguishes a one-element
       tuple from a parenthesized ``n``.
 
 
@@ -48,8 +48,7 @@ Glossary
 
         IndexError: an index can only have a single ellipsis ('...')
 
-      For more, see the article on
-      :doc:`Indexing. <reference/arrays.indexing>`
+      For details, see :doc:`Indexing. <reference/arrays.indexing>`
 
       **In printouts**, NumPy substitutes ``...`` for the middle elements of
       large arrays. To see the entire array, use
@@ -91,8 +90,8 @@ Glossary
       In contrast to Python, where slicing creates a copy, in NumPy slicing
       creates a :term:`view`.
 
-      For more, see
-      `Indexing. <https://numpy.org/doc/stable/reference/arrays.indexing#combining-advanced-and-basic-indexing>`_
+      For details, see :ref:`Combining advanced and basic indexing <combining-advanced-and-basic-indexing>`.
+
 
     ``<``
 
@@ -114,11 +113,70 @@ Glossary
 
     advanced indexing
 
-      Rather than using a scalar or slice as an index, an axis can be
-      indexed with an array, providing fine-grained selection. This is
-      known as
-      `advanced indexing <https://numpy.org/devdocs/reference/arrays.indexing.html#advanced-indexing>`_
+      Rather than using a :doc:`scalar <reference/arrays.scalars>` or slice as
+      an index, an axis can be indexed with an array, providing fine-grained
+      selection. This is known as :ref:`advanced indexing<advanced-indexing>`
       or ``fancy indexing``.
+
+
+    along an axis
+
+      The result of an operation along an :term:`axis` X is an array in which X
+      disappears. This can surprise new users expecting the opposite.
+
+      The operation can be visualized this way:
+
+      Imagine a slice of array ``a`` where axis X has a fixed index
+      and the other dimensions are left full (``:``).
+
+        >>> a.shape
+        (2,3,4)
+        >>> a[:,0,:].shape
+        (2,4)
+
+      The slice has ``a``'s shape with the X dimension deleted. Saying an
+      operation ``op`` is ``performed along X`` means that ``op`` takes as its
+      operands slices having every value of X:
+
+         >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
+         array([[ True,  True,  True,  True],
+                [ True,  True,  True,  True]])
+
+
+    array
+
+      Used synonymously in the NumPy docs with
+      :doc:`ndarray <reference/arrays>`, NumPy's basic structure.
+
+
+    array_like
+
+      Any :doc:`scalar <reference/arrays.scalars>` or
+      `sequence <https://docs.python.org/3/glossary.html#term-sequence>`_
+      that can be interpreted as an ndarray.  In addition to ndarrays
+      and scalars this category includes lists (possibly nested and with
+      different element types) and tuples. Any argument accepted by
+      :doc:`numpy.array <reference/generated/numpy.array>`
+      is array_like.
+
+      ..  code::
+
+          >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)])
+
+          >>> x
+          array([[1.+0.j, 2.+0.j],
+                 [0.+0.j, 0.+0.j],
+                 [1.+1.j, 3.+0.j]])
+
+
+    array scalar
+
+      For uniformity in handling operands, NumPy treats
+      a :doc:`scalar <reference/arrays.scalars>` as an array of zero dimension.
+
+
+    `attribute <https://docs.python.org/3/glossary.html#term-attribute>`_
+      \
 
 
     axis
@@ -177,68 +235,10 @@ Glossary
                   [3, 4, 5]]])
 
 
-    along an axis
-
-      The result of an operation along an axis X is a vector in which X
-      disappears. This can surprise new users expecting the opposite.
-
-      The operation can be visualized this way:
-
-      Imagine a slice of array ``a`` where axis X has a fixed index
-      and the other dimensions are left full (``:``).
-
-        >>> a.shape
-        (2,3,4)
-        >>> a[:,0,:].shape
-        (2,4)
-
-      The slice has ``a``'s shape with the X dimension deleted. Saying an
-      operation ``op`` is ``performed along X`` means that ``op`` takes as its
-      operands slices having every value of X:
-
-         >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
-         array([[ True,  True,  True,  True],
-                [ True,  True,  True,  True]])
-
-
-    array
-
-      Used synonymously in the NumPy docs with `ndarray`, NumPy's basic structure.
-      See :doc:`Array objects. <reference/arrays>`
-
-
-    array_like
-
-      Any `sequence <https://docs.python.org/3/glossary.html#term-sequence>`_
-      that can be interpreted as an ndarray.  In addition to ndarrays
-      this category includes lists (possibly nested and with
-      different element types), tuples, and scalars. Any argument accepted by
-      :doc:`numpy.array <reference/generated/numpy.array>`
-      is array_like.
-
-      ..  code::
-
-          >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)])
-
-          >>> x
-          array([[1.+0.j, 2.+0.j],
-                 [0.+0.j, 0.+0.j],
-                 [1.+1.j, 3.+0.j]])
-
-
-    array scalar
-
-      For uniformity in handling operands, NumPy treats
-      a :doc:`scalar <reference/arrays.scalars>` as an array of zero dimension.
-
-
-    `attribute <https://docs.python.org/3/glossary.html#term-attribute>`_
-      \
-
-
     .base
 
-      If an array does not own its memory, then its ``.base`` attribute
+      If an array does not own its memory, then its
+      :doc:`base <reference/generated/numpy.ndarray.base>` attribute
       returns the object whose memory the array is referencing. That object
       may may be borrowing the memory from still another object, so the
       owning object may be ``a.base.base.base...``. Despite advice to the
@@ -271,7 +271,7 @@ Glossary
       Ordinarily this means the shapes of a and b must be identical. But in
       some cases, NumPy can fill "missing" axes or "too-short" dimensions
       with duplicate data so shapes will match. The duplication costs
-      no memory or time. See :doc:`Broadcasting. <user/basics.broadcasting>`
+      no memory or time. For details, see :doc:`Broadcasting. <user/basics.broadcasting>`
 
 
     C order
@@ -304,7 +304,7 @@ Glossary
     dtype
 
       The datatype describing the (identically typed) elements in an ndarray.
-      It can be changed to reinterpret the array contents. See
+      It can be changed to reinterpret the array contents. For details, see
       :doc:`Data type objects (dtype). <reference/arrays.dtypes>`
 
 
@@ -315,9 +315,10 @@ Glossary
 
     field
 
-       In a :term:`structured data type`, each subtype is called a `field`.
-       The `field` has a name (a string), a type (any valid dtype), and
-       an optional :term:`title`. See :ref:`arrays.dtypes`.
+       In a :term:`structured data type`, each subtype is called a
+       :doc:`field <reference/generated/numpy.dtype.fields>`.
+       A field has a name (a string), a type (any valid dtype), and
+       an optional :term:`title`. For details, see :ref:`arrays.dtypes`.
 
 
     Fortran order
@@ -383,7 +384,7 @@ Glossary
                       mask = [ True False  True],
                 fill_value = 1e+20)
 
-      See :doc:`Masked arrays. <reference/maskedarray>`
+      For details, see :doc:`Masked arrays. <reference/maskedarray>`
 
 
     matrix
@@ -423,12 +424,15 @@ Glossary
     record array
 
        A :term:`structured array` with an additional way to access
-       fields -- ``a.field`` in addition to ``a['field']``. See
+       fields -- ``a.field`` in addition to ``a['field']``. For details, see
        :doc:`numpy.recarray. <reference/generated/numpy.recarray>`
 
 
     `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
-       \
+      \
+
+    :doc:`scalar <reference/arrays.scalars>`
+      \
 
     shape
 
@@ -436,7 +440,8 @@ Glossary
       length of the tuple itself is the number of dimensions
       (:doc:`numpy.ndim <reference/generated/numpy.ndarray.ndim>`).
       The product of the tuple elements is the number of elements in the
-      array.
+      array. For details, see
+      :doc:`numpy.ndarray.shape <reference/generated/numpy.ndarray.shape>`.
 
 
     :term:`slice <:>`
@@ -445,14 +450,18 @@ Glossary
 
     stride
 
-      Tuple of bytes to step in each dimension when traversing an array.
-      The byte offset of element :math:`(i_0, i_1, ..., i_n)` in an array `a` is: ::
-
-          offset = sum(np.array(i) * a.strides)
+      Physical memory is one-dimensional; ``stride`` maps an index in an
+      N-dimensional ndarray to an address in memory. For an N-dimensional
+      array, stride is an N-element tuple; advancing from index ``i`` to index
+      ``i+1`` on axis ``n`` means adding ``a.strides[n]`` bytes to the
+      address.
 
       Stride is computed automatically from an array's dtype and
       shape, but can be directly specified using
-      :doc:`as_strided. </reference/generated/numpy.lib.stride_tricks.as_strided>`
+      :doc:`as_strided. <reference/generated/numpy.lib.stride_tricks.as_strided>`
+
+      For details, see
+      :doc:`numpy.ndarray.strides <reference/generated/numpy.ndarray.strides>`.
 
       To see how striding underlies the power of NumPy views, see
       `The NumPy array: a structure for efficient numerical computation. \
@@ -548,6 +557,6 @@ Glossary
       Some NumPy routines always return views, some always return copies, some
       may return one or the other, and for some the choice can be specified.
       Responsiblity for managing views and copies falls to the programmer.
-      NumPy reports whether arrays share memory wih
+      NumPy reports whether arrays share memory
       :doc:`numpy.shares_memory <reference/generated/numpy.shares_memory>`,
       but an exact answer isn't always feasible; see the link.
