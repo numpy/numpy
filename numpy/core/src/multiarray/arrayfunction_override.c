@@ -392,6 +392,8 @@ array_implement_c_array_function(
             PyDict_Contains(kwargs, npy_arrayfunction_str_like)) {
         relevant_args = PyTuple_Pack(1,
                 PyDict_GetItem(kwargs, npy_arrayfunction_str_like));
+        if (relevant_args == NULL)
+            return NULL;
         PyDict_DelItem(kwargs, npy_arrayfunction_str_like);
     }
     else {
