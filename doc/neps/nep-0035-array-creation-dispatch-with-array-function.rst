@@ -8,7 +8,7 @@ NEP 35 — Array Creation Dispatching With __array_function__
 :Status: Draft
 :Type: Standards Track
 :Created: 2019-10-15
-:Updated: 2019-10-15
+:Updated: 2020-08-04
 :Resolution:
 
 Abstract
