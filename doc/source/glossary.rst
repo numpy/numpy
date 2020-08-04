@@ -19,34 +19,32 @@ Glossary
     ``...``
 
       **When indexing an array**, shorthand that the missing axes, if they
-      exist, are full slices.
+      exist, are full slices. ::
 
-      ..  code:: python
+          >>> a.shape
+          (2, 3, 4)
 
-        >>> a.shape
-        (2, 3, 4)
+          >>> a[...].shape
+          (2, 3, 4)
 
-        >>> a[...].shape
-        (2, 3, 4)
+          >>> a[...,0].shape
+          (2, 3)
 
-        >>> a[...,0].shape
-        (2, 3)
+          >>> a[0,...].shape
+          (3, 4)
 
-        >>> a[0,...].shape
-        (3, 4)
+          >>> a[0,...,0].shape
+          (3,)
 
-        >>> a[0,...,0].shape
-        (3,)
+      It can be used at most once: ::
 
-       It can be used at most once: ::
+          >>> a[0,...,0,...].shape
+          ---------------------------------------------------------------------------
+          IndexError                                Traceback (most recent call last)
+          <ipython-input-45-e12b83e31ec3> in <module>
+          ----> 1 a[0,...,0,...].shape
 
-        >>> a[0,...,0,...].shape
-        ---------------------------------------------------------------------------
-        IndexError                                Traceback (most recent call last)
-        <ipython-input-45-e12b83e31ec3> in <module>
-        ----> 1 a[0,...,0,...].shape
-
-        IndexError: an index can only have a single ellipsis ('...')
+          IndexError: an index can only have a single ellipsis ('...')
 
       For details, see :doc:`Indexing. <reference/arrays.indexing>`
 
@@ -60,9 +58,7 @@ Glossary
       The Python
       `slice <https://docs.python.org/3/glossary.html#term-slice>`_
       operator. In ndarrays, slicing can be applied to every
-      axis:
-
-      ..  code:: python
+      axis: ::
 
           >>> a = np.arange(24).reshape(2,3,4)
           a
@@ -78,9 +74,7 @@ Glossary
           array([[[16, 17, 18],
                   [20, 21, 22]]])
 
-      Trailing slices can be omitted:
-
-      ..  code:: python
+      Trailing slices can be omitted: ::
 
           >>> a[1] == a[1,:,:]
           array([[ True,  True,  True,  True],
@@ -127,7 +121,7 @@ Glossary
       The operation can be visualized this way:
 
       Imagine a slice of array ``a`` where axis X has a fixed index
-      and the other dimensions are left full (``:``).
+      and the other dimensions are left full (``:``). ::
 
         >>> a.shape
         (2,3,4)
@@ -136,7 +130,7 @@ Glossary
 
       The slice has ``a``'s shape with the X dimension deleted. Saying an
       operation ``op`` is ``performed along X`` means that ``op`` takes as its
-      operands slices having every value of X:
+      operands slices having every value of X: ::
 
          >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
          array([[ True,  True,  True,  True],
@@ -157,9 +151,7 @@ Glossary
       and scalars this category includes lists (possibly nested and with
       different element types) and tuples. Any argument accepted by
       :doc:`numpy.array <reference/generated/numpy.array>`
-      is array_like.
-
-      ..  code::
+      is array_like. ::
 
           >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)])
 
@@ -172,7 +164,8 @@ Glossary
     array scalar
 
       For uniformity in handling operands, NumPy treats
-      a :doc:`scalar <reference/arrays.scalars>` as an array of zero dimension.
+      a :doc:`scalar <reference/arrays.scalars>` as an array of zero
+      dimension.
 
 
     `attribute <https://docs.python.org/3/glossary.html#term-attribute>`_
@@ -189,19 +182,17 @@ Glossary
 
       In higher dimensions the picture changes. NumPy prints
       higher-dimensional vectors as replications of row-by-column building
-      blocks, as in this three-dimensional vector:
+      blocks, as in this three-dimensional vector: ::
 
-      ..  code:: python
+        >>> a
+        array([[[ 0,  1,  2],
+                [ 3,  4,  5]],
 
-          >>> a
-          array([[[ 0,  1,  2],
-                  [ 3,  4,  5]],
+               [[ 6,  7,  8],
+                [ 9, 10, 11]]])
 
-                 [[ 6,  7,  8],
-                  [ 9, 10, 11]]])
-
-          >>> a.shape
-          (2, 2, 3)
+        >>> a.shape
+        (2, 2, 3)
 
       ``a`` is depicted as a two-element array whose elements are 2x3 vectors.
       From this point of view, rows and columns are the final two axes,
@@ -218,21 +209,19 @@ Glossary
 
       A convenient way to count dimensions in a printed vector is to
       count ``[`` symbols after the open-parenthesis. This is
-      useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
+      useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape: ::
 
-      ..  code:: python
+        >>> a.shape
+        (2, 3)
+        >>> a
+        array([[0, 1, 2],
+               [3, 4, 5]])
 
-          >>> a.shape
-          (2, 3)
-          >>> a
-          array([[0, 1, 2],
-                 [3, 4, 5]])
-
-          >>> a.shape
-          (1, 2, 3)
-          >>> a
-          array([[[0, 1, 2],
-                  [3, 4, 5]]])
+        >>> a.shape
+        (1, 2, 3)
+        >>> a
+        array([[[0, 1, 2],
+                [3, 4, 5]]])
 
 
     .base
@@ -243,7 +232,7 @@ Glossary
       may may be borrowing the memory from still another object, so the
       owning object may be ``a.base.base.base...``. Despite advice to the
       contrary, testing ``base`` is not a surefire way to determine if two
-      arrays are `views. <#term-view>`_
+      arrays are :term:`view`\ s.
 
 
     `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
@@ -260,9 +249,7 @@ Glossary
       different sizes as if all were the same size.
 
       When NumPy operates on two arrays, it works element by
-      element -- for instance, ``c = a * b`` is
-
-      ..  code::
+      element -- for instance, ``c = a * b`` is ::
 
           c[0,0,0] = a[0,0,0] * b[0,0,0]
           c[0,0,1] = a[0,0,1] * b[0,0,1]
@@ -371,7 +358,7 @@ Glossary
 
       Bad or missing data can be cleanly ignored by putting it in a masked
       array, which has an internal boolean array indicating invalid
-      entries. Operations with masked arrays ignore these entries.
+      entries. Operations with masked arrays ignore these entries. ::
 
          >>> a = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
          >>> a
@@ -482,9 +469,7 @@ Glossary
 
     subarray
 
-      An array nested in a :term:`structured data type`:
-
-      ..  code:: python
+      An array nested in a :term:`structured data type`: ::
 
         >>> dt = np.dtype([('a', np.int32), ('b', np.float32, (3,))])
         >>> np.zeros(3, dtype=dt)
@@ -497,17 +482,11 @@ Glossary
       An element of a strctured datatype that behaves like an ndarray.
 
       ..
-        The entry is in numpy.doc.structured_arrays:51 and
-        so can't be deleted.
 
 
     title
 
       An alias for a field name in a structured datatype.
-
-      ..
-        The entry is referenced in numpy.doc.structured_arrays:242
-        and so can't be deleted.
 
 
     `tuple <https://docs.python.org/3/glossary.html#term-tuple>`_
