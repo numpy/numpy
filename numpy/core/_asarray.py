@@ -167,7 +167,7 @@ def asanyarray(a, dtype=None, order=None, *, like=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order, subok=True, like=like)
+    return array(a, dtype, copy=False, order=order, subok=True)
 
 
 def _asarray_contiguous_fortran_dispatcher(a, dtype=None, *, like=None):
@@ -223,7 +223,7 @@ def ascontiguousarray(a, dtype=None, *, like=None):
     so it will not preserve 0-d arrays.  
 
     """
-    return array(a, dtype, copy=False, order='C', ndmin=1, like=like)
+    return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
 @array_function_dispatch(_asarray_contiguous_fortran_dispatcher)
@@ -275,7 +275,7 @@ def asfortranarray(a, dtype=None, *, like=None):
     so it will not preserve 0-d arrays.  
 
     """
-    return array(a, dtype, copy=False, order='F', ndmin=1, like=like)
+    return array(a, dtype, copy=False, order='F', ndmin=1)
 
 
 def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
