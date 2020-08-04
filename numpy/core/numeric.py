@@ -162,6 +162,16 @@ def ones(shape, dtype=None, order='C', *, like=None):
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -292,6 +302,16 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1791,6 +1811,16 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     dtype : data-type, optional
         Data-type of the coordinate arrays passed to `function`.
         By default, `dtype` is float.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -2116,6 +2146,16 @@ def identity(n, dtype=None, *, like=None):
         Number of rows (and columns) in `n` x `n` output.
     dtype : data-type, optional
         Data-type of the output.  Defaults to ``float``.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------

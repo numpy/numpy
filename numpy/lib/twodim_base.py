@@ -175,6 +175,16 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         column-major (Fortran-style) order in memory.
 
         .. versionadded:: 1.14.0
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -370,6 +380,16 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         and `k` > 0 is above.  The default is 0.
     dtype : dtype, optional
         Data type of the returned array.  The default is float.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------

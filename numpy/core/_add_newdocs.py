@@ -786,7 +786,8 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
+    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
+          like=None)
 
     Create an array.
 
@@ -829,6 +830,16 @@ add_newdoc('numpy.core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
         needed to meet this requirement.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -899,7 +910,7 @@ add_newdoc('numpy.core.multiarray', 'array',
 
 add_newdoc('numpy.core.multiarray', 'empty',
     """
-    empty(shape, dtype=float, order='C')
+    empty(shape, dtype=float, order='C', *, like=None)
 
     Return a new array of given shape and type, without initializing entries.
 
@@ -914,6 +925,16 @@ add_newdoc('numpy.core.multiarray', 'empty',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -964,7 +985,7 @@ add_newdoc('numpy.core.multiarray', 'scalar',
 
 add_newdoc('numpy.core.multiarray', 'zeros',
     """
-    zeros(shape, dtype=float, order='C')
+    zeros(shape, dtype=float, order='C', *, like=None)
 
     Return a new array of given shape and type, filled with zeros.
 
@@ -979,6 +1000,16 @@ add_newdoc('numpy.core.multiarray', 'zeros',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1025,7 +1056,7 @@ add_newdoc('numpy.core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy.core.multiarray', 'fromstring',
     """
-    fromstring(string, dtype=float, count=-1, sep='')
+    fromstring(string, dtype=float, count=-1, sep='', *, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1058,6 +1089,16 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             text, the binary mode of `fromstring` will first encode it into
             bytes using either utf-8 (python 3) or the default encoding
             (python 2), neither of which produce sane results.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1122,7 +1163,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
-    fromiter(iterable, dtype, count=-1)
+    fromiter(iterable, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
 
@@ -1135,6 +1176,16 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1156,7 +1207,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
 
 add_newdoc('numpy.core.multiarray', 'fromfile',
     """
-    fromfile(file, dtype=float, count=-1, sep='', offset=0)
+    fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
 
@@ -1195,6 +1246,16 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Only permitted for binary files.
 
         .. versionadded:: 1.17.0
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     See also
     --------
@@ -1245,7 +1306,7 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
 
 add_newdoc('numpy.core.multiarray', 'frombuffer',
     """
-    frombuffer(buffer, dtype=float, count=-1, offset=0)
+    frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
 
@@ -1259,6 +1320,16 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
         Start reading the buffer from this offset (in bytes); default: 0.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Notes
     -----
@@ -1293,7 +1364,7 @@ add_newdoc('numpy.core.multiarray', 'correlate',
 
 add_newdoc('numpy.core.multiarray', 'arange',
     """
-    arange([start,] stop[, step,], dtype=None)
+    arange([start,] stop[, step,], dtype=None, *, like=None)
 
     Return evenly spaced values within a given interval.
 
@@ -1322,6 +1393,16 @@ add_newdoc('numpy.core.multiarray', 'arange',
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+    like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
