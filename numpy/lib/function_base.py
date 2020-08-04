@@ -433,7 +433,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
         Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style), 
+        'C' row-major (C-style),
         'F' column-major (Fortran-style) memory representation.
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
@@ -1625,6 +1625,57 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
+    try:
+        return _trim_zeros_new(filt, trim)
+    except Exception as ex:
+        # Numpy 1.20.0, 2020-07-31
+        warning = DeprecationWarning(
+            "in the future trim_zeros will require a 1-D array as input "
+            "that is compatible with ndarray.astype(bool)"
+        )
+        warning.__cause__ = ex
+        warnings.warn(warning, stacklevel=3)
+
+        # Fall back to the old implementation if an exception is encountered
+        # Note that the same exception may or may not be raised here as well
+        return _trim_zeros_old(filt, trim)
+
+
+def _trim_zeros_new(filt, trim='fb'):
+    """Newer optimized implementation of ``trim_zeros()``."""
+    arr = np.asanyarray(filt).astype(bool, copy=False)
+
+    if arr.ndim != 1:
+        raise ValueError('trim_zeros requires an array of exactly one dimension')
+    elif not len(arr):
+        return filt
+
+    trim_upper = trim.upper()
+    first = last = None
+
+    if 'F' in trim_upper:
+        first = arr.argmax()
+        # If `arr[first] is False` then so are all other elements
+        if not arr[first]:
+            return filt[:0]
+
+    if 'B' in trim_upper:
+        last = len(arr) - arr[::-1].argmax()
+        # If `arr[last - 1] is False` then so are all other elements
+        if not arr[last - 1]:
+            return filt[:0]
+
+    return filt[first:last]
+
+
+def _trim_zeros_old(filt, trim='fb'):
+    """
+    Older unoptimized implementation of ``trim_zeros()``.
+
+    Used as fallback in case an exception is encountered
+    in ``_trim_zeros_new()``.
+
+    """
     first = 0
     trim = trim.upper()
     if 'F' in trim:
@@ -2546,11 +2597,11 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     for backwards compatibility with previous versions of this function.  These
     arguments had no effect on the return values of the function and can be
     safely ignored in this and previous versions of numpy.
-    
+
     Examples
-    --------   
+    --------
     In this example we generate two random arrays, ``xarr`` and ``yarr``, and
-    compute the row-wise and column-wise Pearson correlation coefficients, 
+    compute the row-wise and column-wise Pearson correlation coefficients,
     ``R``. Since ``rowvar`` is  true by  default, we first find the row-wise
     Pearson correlation coefficients between the variables of ``xarr``.
 
@@ -2566,11 +2617,11 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     array([[ 1.        ,  0.99256089, -0.68080986],
            [ 0.99256089,  1.        , -0.76492172],
            [-0.68080986, -0.76492172,  1.        ]])
-    
-    If we add another set of variables and observations ``yarr``, we can 
+
+    If we add another set of variables and observations ``yarr``, we can
     compute the row-wise Pearson correlation coefficients between the
     variables in ``xarr`` and ``yarr``.
-   
+
     >>> yarr = rng.random((3, 3))
     >>> yarr
     array([[0.45038594, 0.37079802, 0.92676499],
@@ -2592,7 +2643,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
              1.        ]])
 
     Finally if we use the option ``rowvar=False``, the columns are now
-    being treated as the variables and we will find the column-wise Pearson 
+    being treated as the variables and we will find the column-wise Pearson
     correlation coefficients between variables in ``xarr`` and ``yarr``.
 
     >>> R3 = np.corrcoef(xarr, yarr, rowvar=False)

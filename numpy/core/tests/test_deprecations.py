@@ -615,7 +615,7 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_deprecated(round, args=(scalar,))
             self.assert_deprecated(round, args=(scalar, 0))
             self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-    
+
     def test_not_deprecated(self):
         for scalar_type in self.not_deprecated_types:
             scalar = scalar_type(0)
@@ -706,3 +706,21 @@ class TestRaggedArray(_DeprecationTestCase):
         # And when it is an assignment into a lower dimensional subarray:
         self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
         self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
+
+
+class TestTrimZeros(_DeprecationTestCase):
+    # Numpy 1.20.0, 2020-07-31
+    @pytest.mark.parametrize("arr", [np.random.rand(10, 10).tolist(),
+                                     np.random.rand(10).astype(str)])
+    def test_deprecated(self, arr):
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            try:
+                np.trim_zeros(arr)
+            except DeprecationWarning as ex:
+                assert_(isinstance(ex.__cause__, ValueError))
+            else:
+                raise AssertionError("No error raised during function call")
+
+        out = np.lib.function_base._trim_zeros_old(arr)
+        assert_array_equal(arr, out)
