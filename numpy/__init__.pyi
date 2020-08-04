@@ -572,7 +572,8 @@ def full(
     shape: _ShapeLike,
     fill_value: Any,
     dtype: DtypeLike = ...,
-    order: str = ...
+    order: str = ...,
+    *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def full_like(
