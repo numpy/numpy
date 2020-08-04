@@ -325,11 +325,18 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                 ufunc_name);
         return -1;
     }
-
     /*
      * Use the default type resolution if there's a custom data type
      * or object arrays.
      */
+    if (PyArray_ISCOMPLEX(operands[0]) &&
+        PyArray_ISCOMPLEX(operands[1]) &&
+        strcmp(ufunc_get_name_cstr(ufunc), "equal") != 0 &&
+        strcmp(ufunc_get_name_cstr(ufunc), "not_equal") != 0) {
+            PyErr_WarnEx(PyExc_DeprecationWarning,
+            "Ordering Comparisons (>, <, >=, <=) on complex types is being deprecated", 1);
+
+    }
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
     if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
@@ -465,7 +472,14 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         PyArray_Descr **out_dtypes)
 {
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-
+    if (PyArray_ISCOMPLEX(operands[0]) &&
+        (strcmp(ufunc_name, "maximum") == 0 ||
+        strcmp(ufunc_name, "minimum") == 0 ||
+        strcmp(ufunc_name, "fmax") == 0 ||
+        strcmp(ufunc_name, "fmin") == 0)) {
+            PyErr_WarnEx(PyExc_DeprecationWarning,
+            "Ordering Comparisons (>, <, >=, <=) on complex types is being deprecated", 1);
+    }
     if (ufunc->nin < 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
                 "to use uniform operation type resolution but has "
