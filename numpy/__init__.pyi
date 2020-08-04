@@ -524,7 +524,6 @@ def array(
     order: Optional[str] = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def zeros(
