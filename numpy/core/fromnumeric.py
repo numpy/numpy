@@ -2057,7 +2057,7 @@ def clip(a, a_min, a_max, out=None, **kwargs):
 
     Parameters
     ----------
-    a : array_like
+    a : scalar or array_like
         Array containing elements to clip.
     a_min : scalar or array_like or None
         Minimum value. If None, clipping is not performed on lower
