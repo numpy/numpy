@@ -202,7 +202,7 @@ def main(argv):
         import warnings; warnings.filterwarnings("always")
         import IPython
         import numpy as np
-        IPython.embed(user_ns={"np": np})
+        IPython.embed(colors='neutral', user_ns={"np": np})
         sys.exit(0)
 
     if args.shell:

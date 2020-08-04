@@ -178,6 +178,9 @@ class NpzFile(Mapping):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
+    # Make __exit__ safe if zipfile_factory raises an exception
+    zip = None
+    fid = None
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None):
@@ -197,8 +200,6 @@ class NpzFile(Mapping):
         self.f = BagObj(self)
         if own_fid:
             self.fid = fid
-        else:
-            self.fid = None
 
     def __enter__(self):
         return self

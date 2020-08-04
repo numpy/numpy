@@ -124,11 +124,11 @@ if __NUMPY_SETUP__:
 else:
     try:
         from numpy.__config__ import show as show_config
-    except ImportError:
+    except ImportError as e:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
         your python interpreter from there."""
-        raise ImportError(msg)
+        raise ImportError(msg) from e
 
     from .version import git_revision as __git_revision__
     from .version import version as __version__
@@ -295,7 +295,7 @@ else:
                    "by incorrect BLAS library being linked in, or by mixing "
                    "package managers (pip, conda, apt, ...). Search closed "
                    "numpy issues for similar problems.")
-            raise RuntimeError(msg.format(__file__))
+            raise RuntimeError(msg.format(__file__)) from None
 
     _sanity_check()
     del _sanity_check

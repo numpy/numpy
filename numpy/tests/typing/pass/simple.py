@@ -18,6 +18,14 @@ array == 1
 array.dtype == float
 
 # Array creation routines checks
+np.array(1, dtype=float)
+np.array(1, copy=False)
+np.array(1, order='F')
+np.array(1, order=None)
+np.array(1, subok=True)
+np.array(1, ndmin=3)
+np.array(1, str, copy=True, order='C', subok=False, ndmin=2)
+
 ndarray_func(np.zeros([1, 2]))
 ndarray_func(np.ones([1, 2]))
 ndarray_func(np.empty([1, 2]))
@@ -54,8 +62,6 @@ np.dtype(shape_like_dtype)
 object_dtype = [("field1", object)]
 np.dtype(object_dtype)
 
-np.dtype({"col1": ("U10", 0), "col2": ("float32", 10)})
-np.dtype((np.int32, {"real": (np.int16, 0), "imag": (np.int16, 2)}))
 np.dtype((np.int32, (np.int8, 4)))
 
 # Dtype comparision

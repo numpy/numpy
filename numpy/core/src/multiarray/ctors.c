@@ -1748,6 +1748,15 @@ PyArray_FromStructInterface(PyObject *input)
         }
     }
     if (!NpyCapsule_Check(attr)) {
+        if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
+            /*
+             * If the input is a class `attr` should be a property-like object.
+             * This cannot be interpreted as an array, but is a valid.
+             * (Needed due to the lookup being on the instance rather than type)
+             */
+            Py_DECREF(attr);
+            return Py_NotImplemented;
+        }
         goto fail;
     }
     inter = NpyCapsule_AsVoidPtr(attr);
@@ -1844,8 +1853,8 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin,
-                                                    "__array_interface__");
+    iface = PyArray_LookupSpecial_OnInstance(origin, "__array_interface__");
+
     if (iface == NULL) {
         if (PyErr_Occurred()) {
             PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
@@ -1853,6 +1862,16 @@ PyArray_FromInterface(PyObject *origin)
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
+        if (PyType_Check(origin) && PyObject_HasAttrString(iface, "__get__")) {
+            /*
+             * If the input is a class `iface` should be a property-like object.
+             * This cannot be interpreted as an array, but is a valid.
+             * (Needed due to the lookup being on the instance rather than type)
+             */
+            Py_DECREF(iface);
+            return Py_NotImplemented;
+        }
+
         Py_DECREF(iface);
         PyErr_SetString(PyExc_ValueError,
                 "Invalid __array_interface__ value, must be a dict");
@@ -2117,6 +2136,16 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
         if (PyErr_Occurred()) {
             PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
         }
+        return Py_NotImplemented;
+    }
+    if (PyType_Check(op) && PyObject_HasAttrString(array_meth, "__get__")) {
+        /*
+         * If the input is a class `array_meth` may be a property-like object.
+         * This cannot be interpreted as an array (called), but is a valid.
+         * Trying `array_meth.__call__()` on this should not be useful.
+         * (Needed due to the lookup being on the instance rather than type)
+         */
+        Py_DECREF(array_meth);
         return Py_NotImplemented;
     }
     if (typecode == NULL) {

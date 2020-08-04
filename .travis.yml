@@ -111,7 +111,7 @@ jobs:
 
     - python: 3.7
       os: linux
-      arch: aarch64
+      arch: arm64
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1

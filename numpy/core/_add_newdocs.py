@@ -4538,10 +4538,8 @@ add_newdoc('numpy.core', 'ufunc',
 
     A detailed explanation of ufuncs can be found in the docs for :ref:`ufuncs`.
 
-    Calling ufuncs:
-    ===============
+    **Calling ufuncs:** ``op(*x[, out], where=True, **kwargs)``
 
-    op(*x[, out], where=True, **kwargs)
     Apply `op` to the arguments `*x` elementwise, broadcasting the arguments.
 
     The broadcasting rules are:
