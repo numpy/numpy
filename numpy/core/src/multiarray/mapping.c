@@ -554,7 +554,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * and only the result of nonzero is checked for legality.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
-                        && PyArray_SIZE(arr) == PyArray_SIZE(self)) {
+                        && PyArray_CompareLists(PyArray_DIMS(arr),
+                                                PyArray_DIMS(self),
+                                                PyArray_NDIM(arr))) {
 
                     index_type = HAS_BOOL;
                     indices[curr_idx].type = HAS_BOOL;

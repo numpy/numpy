@@ -7,8 +7,8 @@ import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal, assert_warns,
-    HAS_REFCOUNT,
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_warns, HAS_REFCOUNT,
     )
 
 
@@ -1238,6 +1238,26 @@ class TestBooleanIndexing:
         a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
         assert_raises(IndexError, lambda: a[False, [0, 1], ...])
 
+
+    def test_boolean_indexing_fast_path(self):
+        # These used to either give the wrong error, or incorrectly give no
+        # error.
+        a = np.ones((3, 3))
+        idx1 = np.array([[False]*9])
+        idx2 = np.array([[False]*10])
+        idx3 = np.array([[False]*8 + [True]])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 0; "
+            "dimension is 3 but corresponding boolean dimension is 1",
+            lambda: a[idx1])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 0; "
+            "dimension is 3 but corresponding boolean dimension is 1",
+            lambda: a[idx2])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 0; "
+            "dimension is 3 but corresponding boolean dimension is 1",
+            lambda: a[idx3])
 
 class TestArrayToIndexDeprecation:
     """Creating an an index from array not 0-D is an error.
