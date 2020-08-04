@@ -132,7 +132,7 @@ data.
     # Read the names of the geographic locations from the first two
     # columns, skipping the first seven rows
     locations = np.genfromtxt(filename, dtype=np.unicode_, delimiter=",",
-                              skip_header=7, usecols=(0, 1),
+                              skip_header=7, usecols=(0, 2),
                               encoding="utf-8-sig")
     # Read the numeric data from just the first 14 days
     nbcases = np.genfromtxt(filename, dtype=np.int_, delimiter=",",
