@@ -2057,13 +2057,13 @@ def clip(a, a_min, a_max, out=None, **kwargs):
 
     Parameters
     ----------
-    a : scalar or array_like
+    a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like or None
+    a_min : array_like or None
         Minimum value. If None, clipping is not performed on lower
         interval edge. Not more than one of `a_min` and `a_max` may be
         None.
-    a_max : scalar or array_like or None
+    a_max : array_like or None
         Maximum value. If None, clipping is not performed on upper
         interval edge. Not more than one of `a_min` and `a_max` may be
         None. If `a_min` or `a_max` are array_like, then the three
