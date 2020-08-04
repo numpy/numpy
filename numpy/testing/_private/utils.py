@@ -247,6 +247,7 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
                   verbose=True, names=('ACTUAL', 'DESIRED'), precision=8):
     msg = ['\n' + header]
     if err_msg:
+        err_msg = str(err_msg)
         if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
             msg = [msg[0] + ' ' + err_msg]
         else:
@@ -2519,4 +2520,3 @@ def _no_tracing(func):
             finally:
                 sys.settrace(original_trace)
         return wrapper
-
