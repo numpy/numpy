@@ -2173,7 +2173,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ``allclose(a, b)`` to evaluate to True.  The same is true for
     `equal` but not `array_equal`.
 
-    ``allclose`` is currently not defined for non-numeric data types.
+    `allclose` is not defined for non-numeric data types.
 
     Examples
     --------
