@@ -115,10 +115,10 @@ Glossary
           >>> a = np.arange(24).reshape(2,3,4)
           <BLANKLINE>
           >>> a.shape
-          (2,3,4)
+          (2, 3, 4)
           <BLANKLINE>
           >>> a[:,0,:].shape
-          (2,4)
+          (2, 4)
 
       The slice has ``a``'s shape with the X dimension deleted. Saying an
       operation ``op`` is ``performed along X`` means that ``op`` takes as its
