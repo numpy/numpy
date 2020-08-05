@@ -21,22 +21,19 @@ Glossary
       **When indexing an array**, shorthand that the missing axes, if they
       exist, are full slices.
 
-      ..  doctest::
-          :skipif: True
+        >>> a = np.arange(24).reshape(2,3,4)
 
-          (2, 3, 4)
+        >>> a[...].shape
+        (2, 3, 4)
 
-          >>> a[...].shape
-          (2, 3, 4)
+        >>> a[...,0].shape
+        (2, 3)
 
-          >>> a[...,0].shape
-          (2, 3)
+        >>> a[0,...].shape
+        (3, 4)
 
-          >>> a[0,...].shape
-          (3, 4)
-
-          >>> a[0,...,0].shape
-          (3,)
+        >>> a[0,...,0].shape
+        (3,)
 
       It can be used at most once:
 
@@ -63,7 +60,7 @@ Glossary
       The Python
       `slice <https://docs.python.org/3/glossary.html#term-slice>`_
       operator. In ndarrays, slicing can be applied to every
-      axis: ::
+      axis:
 
           >>> a = np.arange(24).reshape(2,3,4)
           a
@@ -128,21 +125,17 @@ Glossary
       Imagine a slice of array ``a`` where axis X has a fixed index
       and the other dimensions are left full (``:``).
 
-      ..  doctest::
-          :skipif: True
+          >>> a = np.arange(24).reshape(2,3,4)
 
           >>> a.shape
-          >>> a.shape
           (2,3,4)
+
           >>> a[:,0,:].shape
           (2,4)
 
       The slice has ``a``'s shape with the X dimension deleted. Saying an
       operation ``op`` is ``performed along X`` means that ``op`` takes as its
       operands slices having every value of X:
-
-      ..  doctest::
-          :skipif: True
 
           >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
           array([[ True,  True,  True,  True],
@@ -196,9 +189,7 @@ Glossary
       higher-dimensional vectors as replications of row-by-column building
       blocks, as in this three-dimensional vector:
 
-      ..  doctest::
-          :skipif: True
-
+          >>>  a = np.arange(12).reshape(2,2,3)
           >>> a
           array([[[ 0,  1,  2],
                   [ 3,  4,  5]],
@@ -219,9 +210,6 @@ Glossary
       2. Since 8 appears in the second of the two 2x3's, the first index must
       be 1:
 
-      ..  doctest::
-          :skipif: True
-
         >>> a[1,0,2]
         8
 
@@ -229,15 +217,14 @@ Glossary
       count ``[`` symbols after the open-parenthesis. This is
       useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
 
-      ..  doctest::
-          :skipif: True
-
+        >>> a = np.arange(6).reshape(2,3)
         >>> a.shape
         (2, 3)
         >>> a
         array([[0, 1, 2],
                [3, 4, 5]])
 
+        >>> a = np.arange(6).reshape(1,2,3)
         >>> a.shape
         (1, 2, 3)
         >>> a
@@ -270,10 +257,7 @@ Glossary
       different sizes as if all were the same size.
 
       When NumPy operates on two arrays, it works element by
-      element -- for instance, ``c = a * b`` is
-
-      ..  doctest::
-          :skipif: True
+      element -- for instance, ``c = a * b`` is ::
 
           c[0,0,0] = a[0,0,0] * b[0,0,0]
           c[0,0,1] = a[0,0,1] * b[0,0,1]
