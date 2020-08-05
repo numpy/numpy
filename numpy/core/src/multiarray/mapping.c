@@ -547,10 +547,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
             if ((index_ndim == 1) && allow_boolean) {
                 /*
                  * If shapes match exactly, this can be optimized as a single
-                 * boolean index. The reason for that is that fancy indexing
-                 * uses nonzero, and only the result of nonzero is checked for
-                 * legality. Otherwise, if the shapes don't match and it isn't
-                 * the scalar case checked below, it should be an error.
+                 * boolean index. When the dimensions are identical but the shapes are not,
+                 * this is always an error. The check ensures that these errors are raised
+                 * and match those of the generic path.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
                         && PyArray_CompareLists(PyArray_DIMS(arr),
