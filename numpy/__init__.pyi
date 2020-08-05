@@ -529,21 +529,21 @@ def array(
 def zeros(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...
+    order: Optional[str] = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def ones(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...
+    order: Optional[str] = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def empty(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...
+    order: Optional[str] = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
