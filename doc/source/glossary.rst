@@ -42,7 +42,7 @@ Glossary
         IndexError                                Traceback (most recent call last)
         <ipython-input-45-e12b83e31ec3> in <module>
         ----> 1 a[0,...,0,...].shape
-
+        <BLANKLINE>
         IndexError: an index can only have a single ellipsis ('...')
 
       For details, see :doc:`Indexing. <reference/arrays.indexing>`
@@ -64,7 +64,7 @@ Glossary
           array([[[ 0,  1,  2,  3],
                   [ 4,  5,  6,  7],
                   [ 8,  9, 10, 11]],
-
+          <BLANKLINE>
                  [[12, 13, 14, 15],
                   [16, 17, 18, 19],
                   [20, 21, 22, 23]]])
@@ -190,12 +190,9 @@ Glossary
           >>> a
           array([[[ 0,  1,  2],
                   [ 3,  4,  5]],
-
+          <BLANKLINE>
                  [[ 6,  7,  8],
                   [ 9, 10, 11]]])
-
-          >>> a.shape
-          (2, 2, 3)
 
       ``a`` is depicted as a two-element array whose elements are 2x3 vectors.
       From this point of view, rows and columns are the final two axes,
@@ -370,7 +367,6 @@ Glossary
         masked_array(data=[--, 2.0, --],
                      mask=[ True, False,  True],
                fill_value=1e+20)
-
 
          >>> a + [1, 2, 3]
          masked_array(data=[--, 4.0, --],
