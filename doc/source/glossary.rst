@@ -159,7 +159,7 @@ Glossary
       dimension.
 
 
-    `attribute <https://docs.python.org/3/glossary.html#term-attribute>`_
+    :term:`attribute <python:attribute>`
       \
 
 
@@ -266,11 +266,11 @@ Glossary
       See :term:`view`.
 
 
-    `decorator <https://docs.python.org/3/glossary.html#term-decorator>`_
+    :term:`decorator <python:decorator>`
        \
 
 
-    `dictionary <https://docs.python.org/3/glossary.html#term-dictionary>`_
+    :term:`dictionary <python:dictionary>`
        \
 
 
@@ -319,11 +319,11 @@ Glossary
       Python objects, fill the role of heterogeneous arrays.
 
 
-    `immutable <https://docs.python.org/3/glossary.html#term-immutable>`_
+    :term:`immutable <python:immutable>`
        \
 
 
-    `iterable <https://docs.python.org/3/glossary.html#term-iterable>`_
+    :term:`iterable <python:iterable>`
       \
 
 
@@ -332,7 +332,7 @@ Glossary
        The size of the dtype element in bytes.
 
 
-    `list <https://docs.python.org/3/glossary.html#term-list>`_
+    :term:`list <python:list>`
        \
 
 
