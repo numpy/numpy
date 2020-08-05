@@ -342,8 +342,7 @@ array_implement_array_function(
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries.
      */
-    if (PyDict_CheckExact(kwargs) &&
-            PyDict_Contains(kwargs, npy_ma_str_like)) {
+    if (kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
         PyDict_DelItem(kwargs, npy_ma_str_like);
     }
 
@@ -372,8 +371,7 @@ array_implement_c_array_function(
      * in downstream libraries. If that key isn't present, return NULL and
      * let originating call to continue.
      */
-    if (PyDict_CheckExact(kwargs) &&
-            PyDict_Contains(kwargs, npy_ma_str_like)) {
+    if (PyDict_Contains(kwargs, npy_ma_str_like)) {
         relevant_args = PyTuple_Pack(1,
                 PyDict_GetItem(kwargs, npy_ma_str_like));
         if (relevant_args == NULL) {
