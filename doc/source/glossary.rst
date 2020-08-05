@@ -44,8 +44,7 @@ Glossary
 
     ``:``
 
-      The Python
-      `slice <https://docs.python.org/3/glossary.html#term-slice>`_
+      The Python :term:`python:slice`
       operator. In ndarrays, slicing can be applied to every
       axis:
 
@@ -138,7 +137,7 @@ Glossary
     array_like
 
       Any :doc:`scalar <reference/arrays.scalars>` or
-      `sequence <https://docs.python.org/3/glossary.html#term-sequence>`_
+      :term:`python:sequence`
       that can be interpreted as an ndarray.  In addition to ndarrays
       and scalars this category includes lists (possibly nested and with
       different element types) and tuples. Any argument accepted by
@@ -488,8 +487,7 @@ Glossary
     type
 
       In NumPy, a synonym for :term:`dtype`. For the more general Python
-      meaning,
-      `see here. <https://docs.python.org/3/glossary.html#term-type>`_
+      meaning, :term:`see here. <python:type>`.
 
 
     ufunc
