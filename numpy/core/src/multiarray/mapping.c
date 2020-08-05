@@ -539,19 +539,18 @@ prepare_index(PyArrayObject *self, PyObject *index,
             /*
              * There are two types of boolean indices (which are equivalent,
              * for the most part though). A single boolean index of matching
-             * dimensionality and size is a boolean index.
-             * If this is not the case, it is instead expanded into (multiple)
-             * integer array indices.
+             * shape is a boolean index. If this is not the case, it is
+             * instead expanded into (multiple) integer array indices.
              */
             PyArrayObject *nonzero_result[NPY_MAXDIMS];
 
             if ((index_ndim == 1) && allow_boolean) {
                 /*
-                 * If ndim and size match, this can be optimized as a single
-                 * boolean index. The size check is necessary only to support
-                 * old non-matching sizes by using fancy indexing instead.
-                 * The reason for that is that fancy indexing uses nonzero,
-                 * and only the result of nonzero is checked for legality.
+                 * If shapes match exactly, this can be optimized as a single
+                 * boolean index. The reason for that is that fancy indexing
+                 * uses nonzero, and only the result of nonzero is checked for
+                 * legality. Otherwise, if the shapes don't match and it isn't
+                 * the scalar case checked below, it should be an error.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
                         && PyArray_CompareLists(PyArray_DIMS(arr),
