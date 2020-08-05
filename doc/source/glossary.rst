@@ -58,7 +58,7 @@ Glossary
                  [[12, 13, 14, 15],
                   [16, 17, 18, 19],
                   [20, 21, 22, 23]]])
-
+          <BLANKLINE>
           >>> a[1:,-2:,:-1]
           array([[[16, 17, 18],
                   [20, 21, 22]]])
@@ -113,10 +113,10 @@ Glossary
       and the other dimensions are left full (``:``).
 
           >>> a = np.arange(24).reshape(2,3,4)
-
+          <BLANKLINE>
           >>> a.shape
           (2,3,4)
-
+          <BLANKLINE>
           >>> a[:,0,:].shape
           (2,4)
 
@@ -221,7 +221,7 @@ Glossary
       If an array does not own its memory, then its
       :doc:`base <reference/generated/numpy.ndarray.base>` attribute
       returns the object whose memory the array is referencing. That object
-      may may be borrowing the memory from still another object, so the
+      may be borrowing the memory from still another object, so the
       owning object may be ``a.base.base.base...``. Despite advice to the
       contrary, testing ``base`` is not a surefire way to determine if two
       arrays are :term:`view`\ s.
