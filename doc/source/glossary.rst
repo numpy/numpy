@@ -480,10 +480,6 @@ Glossary
       An alias for a field name in a structured datatype.
 
 
-    `tuple <https://docs.python.org/3/glossary.html#term-tuple>`_
-      \
-
-
     type
 
       In NumPy, a synonym for :term:`dtype`. For the more general Python
