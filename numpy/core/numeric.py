@@ -2254,7 +2254,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `atol` should be carefully selected for the use case at hand. A zero value
     for `atol` will result in `False` if either `a` or `b` is zero.
 
-    ``isclose`` is currently not defined for non-numeric data types.
+    `isclose` is not defined for non-numeric data types.
 
     Examples
     --------
