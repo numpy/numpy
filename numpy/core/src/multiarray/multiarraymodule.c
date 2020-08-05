@@ -4403,6 +4403,8 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 
 static int
 intern_strings(void)
@@ -4419,12 +4421,15 @@ intern_strings(void)
     npy_ma_str_ndmin = PyUString_InternFromString("ndmin");
     npy_ma_str_axis1 = PyUString_InternFromString("axis1");
     npy_ma_str_axis2 = PyUString_InternFromString("axis2");
+    npy_ma_str_like = PyUString_InternFromString("like");
+    npy_ma_str_numpy = PyUString_InternFromString("numpy");
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
            npy_ma_str_ufunc && npy_ma_str_implementation &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
+           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2 &&
+           npy_ma_str_like && npy_ma_str_numpy;
 }
 
 static struct PyModuleDef moduledef = {

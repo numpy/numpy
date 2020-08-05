@@ -7,19 +7,6 @@
 #include "multiarraymodule.h"
 
 
-NPY_VISIBILITY_HIDDEN PyObject * npy_arrayfunction_str_like = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_arrayfunction_str_numpy = NULL;
-
-static int
-intern_strings(void)
-{
-    npy_arrayfunction_str_like = PyUString_InternFromString("like");
-    npy_arrayfunction_str_numpy = PyUString_InternFromString("numpy");
-
-    return npy_arrayfunction_str_like && npy_arrayfunction_str_numpy;
-}
-
-
 /* Return the ndarray.__array_function__ method. */
 static PyObject *
 get_ndarray_array_function(void)
@@ -346,9 +333,6 @@ array_implement_array_function(
 {
     PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
 
-    if (!intern_strings())
-        return NULL;
-
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
             &implementation, &public_api, &relevant_args, &args, &kwargs))
@@ -358,8 +342,8 @@ array_implement_array_function(
      * in downstream libraries.
      */
     if (PyDict_CheckExact(kwargs) &&
-            PyDict_Contains(kwargs, npy_arrayfunction_str_like))
-        PyDict_DelItem(kwargs, npy_arrayfunction_str_like);
+            PyDict_Contains(kwargs, npy_ma_str_like))
+        PyDict_DelItem(kwargs, npy_ma_str_like);
 
     return array_implement_array_function_internal(
         implementation, public_api, relevant_args, args, kwargs);
@@ -381,26 +365,23 @@ array_implement_c_array_function(
     if (kwargs == NULL)
         return NULL;
 
-    if (!intern_strings())
-        goto cleanup;
-
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
      * let originating call to continue.
      */
     if (PyDict_CheckExact(kwargs) &&
-            PyDict_Contains(kwargs, npy_arrayfunction_str_like)) {
+            PyDict_Contains(kwargs, npy_ma_str_like)) {
         relevant_args = PyTuple_Pack(1,
-                PyDict_GetItem(kwargs, npy_arrayfunction_str_like));
+                PyDict_GetItem(kwargs, npy_ma_str_like));
         if (relevant_args == NULL)
             return NULL;
-        PyDict_DelItem(kwargs, npy_arrayfunction_str_like);
+        PyDict_DelItem(kwargs, npy_ma_str_like);
     }
     else {
         return NULL;
     }
 
-    numpy_module = PyImport_Import(npy_arrayfunction_str_numpy);
+    numpy_module = PyImport_Import(npy_ma_str_numpy);
     if (numpy_module != NULL) {
         public_api = PyObject_GetAttrString(numpy_module, function_name);
         if (public_api == NULL)
