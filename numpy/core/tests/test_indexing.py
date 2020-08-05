@@ -1258,6 +1258,13 @@ class TestBooleanIndexing:
             "boolean index did not match indexed array along dimension 0; "
             "dimension is 3 but corresponding boolean dimension is 1",
             lambda: a[idx3])
+        a = np.ones((1, 1, 2))
+        idx = np.array([[[True], [False]]])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 1; "
+            "dimension is 1 but corresponding boolean dimension is 2",
+            lambda: a[idx])
+
 
 class TestArrayToIndexDeprecation:
     """Creating an an index from array not 0-D is an error.
