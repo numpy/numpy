@@ -2173,6 +2173,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ``allclose(a, b)`` to evaluate to True.  The same is true for
     `equal` but not `array_equal`.
 
+    `allclose` is not defined for non-numeric data types.
+
     Examples
     --------
     >>> np.allclose([1e10,1e-7], [1.00001e10,1e-8])
@@ -2251,6 +2253,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     are significantly smaller than one, it can result in false positives.
     `atol` should be carefully selected for the use case at hand. A zero value
     for `atol` will result in `False` if either `a` or `b` is zero.
+
+    `isclose` is not defined for non-numeric data types.
 
     Examples
     --------
