@@ -352,11 +352,12 @@ array_implement_array_function(
 
 
 /*
- * Implements the __array_function__ protocol for a C function. Added as an extension
- * to NEP-18 in an effort to bring NEP-35 to life with minimal dispatch overhead.
+ * Implements the __array_function__ protocol for C array creation functions
+ * only. Added as an extension to NEP-18 in an effort to bring NEP-35 to
+ * life with minimal dispatch overhead.
  */
 NPY_NO_EXPORT PyObject *
-array_implement_c_array_function(
+array_implement_c_array_function_creation(
     const char *function_name, PyObject *args, PyObject *kwargs)
 {
     PyObject *relevant_args;
