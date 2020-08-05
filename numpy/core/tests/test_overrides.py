@@ -505,6 +505,7 @@ class TestArrayLike:
 
         def add_method(name):
             def _definition(*args, **kwargs):
+                assert 'like' not in kwargs
                 return MyArray(getattr(MyArray, name))
             setattr(MyArray, name, _definition)
 
