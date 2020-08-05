@@ -37,16 +37,13 @@ Glossary
 
       It can be used at most once:
 
-      ..  doctest::
-          :skipif: True
+        >>> a[0,...,0,...].shape
+        ---------------------------------------------------------------------------
+        IndexError                                Traceback (most recent call last)
+        <ipython-input-45-e12b83e31ec3> in <module>
+        ----> 1 a[0,...,0,...].shape
 
-          >>> a[0,...,0,...].shape
-          ---------------------------------------------------------------------------
-          IndexError                                Traceback (most recent call last)
-          <ipython-input-45-e12b83e31ec3> in <module>
-          ----> 1 a[0,...,0,...].shape
-
-          IndexError: an index can only have a single ellipsis ('...')
+        IndexError: an index can only have a single ellipsis ('...')
 
       For details, see :doc:`Indexing. <reference/arrays.indexing>`
 
@@ -63,7 +60,7 @@ Glossary
       axis:
 
           >>> a = np.arange(24).reshape(2,3,4)
-          a
+          >>> a
           array([[[ 0,  1,  2,  3],
                   [ 4,  5,  6,  7],
                   [ 8,  9, 10, 11]],
@@ -189,7 +186,7 @@ Glossary
       higher-dimensional vectors as replications of row-by-column building
       blocks, as in this three-dimensional vector:
 
-          >>>  a = np.arange(12).reshape(2,2,3)
+          >>> a = np.arange(12).reshape(2,2,3)
           >>> a
           array([[[ 0,  1,  2],
                   [ 3,  4,  5]],
@@ -368,16 +365,17 @@ Glossary
       array, which has an internal boolean array indicating invalid
       entries. Operations with masked arrays ignore these entries. ::
 
-         >>> a = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
-         >>> a
-         masked_array(data = [-- 2.0 --],
-                      mask = [ True False  True],
-                fill_value = 1e+20)
+        >>> a = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
+        >>> a
+        masked_array(data=[--, 2.0, --],
+                     mask=[ True, False,  True],
+               fill_value=1e+20)
+
 
          >>> a + [1, 2, 3]
-         masked_array(data = [-- 4.0 --],
-                      mask = [ True False  True],
-                fill_value = 1e+20)
+         masked_array(data=[--, 4.0, --],
+                      mask=[ True, False,  True],
+                fill_value=1e+20)
 
       For details, see :doc:`Masked arrays. <reference/maskedarray>`
 
