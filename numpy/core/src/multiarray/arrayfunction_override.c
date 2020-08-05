@@ -335,15 +335,17 @@ array_implement_array_function(
 
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
-            &implementation, &public_api, &relevant_args, &args, &kwargs))
+            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
         return NULL;
+    }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries.
      */
     if (PyDict_CheckExact(kwargs) &&
-            PyDict_Contains(kwargs, npy_ma_str_like))
+            PyDict_Contains(kwargs, npy_ma_str_like)) {
         PyDict_DelItem(kwargs, npy_ma_str_like);
+    }
 
     return array_implement_array_function_internal(
         implementation, public_api, relevant_args, args, kwargs);
@@ -362,8 +364,9 @@ array_implement_c_array_function(
     PyObject *numpy_module = NULL, *public_api = NULL;
     PyObject *result = NULL;
 
-    if (kwargs == NULL)
+    if (kwargs == NULL) {
         return NULL;
+    }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
@@ -373,8 +376,9 @@ array_implement_c_array_function(
             PyDict_Contains(kwargs, npy_ma_str_like)) {
         relevant_args = PyTuple_Pack(1,
                 PyDict_GetItem(kwargs, npy_ma_str_like));
-        if (relevant_args == NULL)
+        if (relevant_args == NULL) {
             return NULL;
+        }
         PyDict_DelItem(kwargs, npy_ma_str_like);
     }
     else {
@@ -384,8 +388,9 @@ array_implement_c_array_function(
     numpy_module = PyImport_Import(npy_ma_str_numpy);
     if (numpy_module != NULL) {
         public_api = PyObject_GetAttrString(numpy_module, function_name);
-        if (public_api == NULL)
+        if (public_api == NULL) {
             goto cleanup;
+        }
         if (!PyCallable_Check(public_api)) {
             PyErr_Format(PyExc_RuntimeError,
                          "numpy.%s is not callable.",
