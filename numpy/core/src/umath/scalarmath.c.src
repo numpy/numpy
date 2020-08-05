@@ -794,15 +794,8 @@ static PyObject *
 {
     PyObject *ret;
     @type@ arg1, arg2;
-    /*
-     * NOTE: In gcc >= 4.1, the compiler will reorder floating point
-     *       operations and floating point error state checks. In
-     *       particular, the arithmetic operations were being reordered
-     *       so that the errors weren't caught.  Declaring this output
-     *       variable volatile was the minimal fix for the issue.
-     *       (Ticket #1671)
-     */
-    volatile @otype@ out;
+    @otype@ out;
+
 #if @twoout@
     @otype@ out2;
     PyObject *obj;
