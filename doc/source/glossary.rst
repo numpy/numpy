@@ -19,9 +19,11 @@ Glossary
     ``...``
 
       **When indexing an array**, shorthand that the missing axes, if they
-      exist, are full slices. ::
+      exist, are full slices.
 
-          >>> a.shape
+      ..  doctest::
+          :skipif: True
+
           (2, 3, 4)
 
           >>> a[...].shape
@@ -36,7 +38,10 @@ Glossary
           >>> a[0,...,0].shape
           (3,)
 
-      It can be used at most once: ::
+      It can be used at most once:
+
+      ..  doctest::
+          :skipif: True
 
           >>> a[0,...,0,...].shape
           ---------------------------------------------------------------------------
@@ -121,20 +126,27 @@ Glossary
       The operation can be visualized this way:
 
       Imagine a slice of array ``a`` where axis X has a fixed index
-      and the other dimensions are left full (``:``). ::
+      and the other dimensions are left full (``:``).
 
-        >>> a.shape
-        (2,3,4)
-        >>> a[:,0,:].shape
-        (2,4)
+      ..  doctest::
+          :skipif: True
+
+          >>> a.shape
+          >>> a.shape
+          (2,3,4)
+          >>> a[:,0,:].shape
+          (2,4)
 
       The slice has ``a``'s shape with the X dimension deleted. Saying an
       operation ``op`` is ``performed along X`` means that ``op`` takes as its
-      operands slices having every value of X: ::
+      operands slices having every value of X:
 
-         >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
-         array([[ True,  True,  True,  True],
-                [ True,  True,  True,  True]])
+      ..  doctest::
+          :skipif: True
+
+          >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
+          array([[ True,  True,  True,  True],
+                 [ True,  True,  True,  True]])
 
 
     array
@@ -153,9 +165,9 @@ Glossary
       :doc:`numpy.array <reference/generated/numpy.array>`
       is array_like. ::
 
-          >>> x = np.array([[1,2.0],[0,0],(1+1j,3.)])
+          >>> a = np.array([[1,2.0],[0,0],(1+1j,3.)])
 
-          >>> x
+          >>> a
           array([[1.+0.j, 2.+0.j],
                  [0.+0.j, 0.+0.j],
                  [1.+1.j, 3.+0.j]])
@@ -182,17 +194,20 @@ Glossary
 
       In higher dimensions the picture changes. NumPy prints
       higher-dimensional vectors as replications of row-by-column building
-      blocks, as in this three-dimensional vector: ::
+      blocks, as in this three-dimensional vector:
 
-        >>> a
-        array([[[ 0,  1,  2],
-                [ 3,  4,  5]],
+      ..  doctest::
+          :skipif: True
 
-               [[ 6,  7,  8],
-                [ 9, 10, 11]]])
+          >>> a
+          array([[[ 0,  1,  2],
+                  [ 3,  4,  5]],
 
-        >>> a.shape
-        (2, 2, 3)
+                 [[ 6,  7,  8],
+                  [ 9, 10, 11]]])
+
+          >>> a.shape
+          (2, 2, 3)
 
       ``a`` is depicted as a two-element array whose elements are 2x3 vectors.
       From this point of view, rows and columns are the final two axes,
@@ -204,12 +219,18 @@ Glossary
       2. Since 8 appears in the second of the two 2x3's, the first index must
       be 1:
 
+      ..  doctest::
+          :skipif: True
+
         >>> a[1,0,2]
         8
 
       A convenient way to count dimensions in a printed vector is to
       count ``[`` symbols after the open-parenthesis. This is
-      useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape: ::
+      useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
+
+      ..  doctest::
+          :skipif: True
 
         >>> a.shape
         (2, 3)
@@ -249,7 +270,10 @@ Glossary
       different sizes as if all were the same size.
 
       When NumPy operates on two arrays, it works element by
-      element -- for instance, ``c = a * b`` is ::
+      element -- for instance, ``c = a * b`` is
+
+      ..  doctest::
+          :skipif: True
 
           c[0,0,0] = a[0,0,0] * b[0,0,0]
           c[0,0,1] = a[0,0,1] * b[0,0,1]
