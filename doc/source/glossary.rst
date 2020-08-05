@@ -35,17 +35,7 @@ Glossary
         >>> a[0,...,0].shape
         (3,)
 
-      It can be used at most once:
-
-        >>> a[0,...,0,...].shape
-        ---------------------------------------------------------------------------
-        IndexError                                Traceback (most recent call last)
-        <ipython-input-45-e12b83e31ec3> in <module>
-        ----> 1 a[0,...,0,...].shape
-        <BLANKLINE>
-        IndexError: an index can only have a single ellipsis ('...')
-
-      For details, see :doc:`Indexing. <reference/arrays.indexing>`
+      It can be used at most once; ``a[...,0,...]`` raises an ``IndexError``.
 
       **In printouts**, NumPy substitutes ``...`` for the middle elements of
       large arrays. To see the entire array, use
