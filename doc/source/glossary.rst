@@ -471,7 +471,7 @@ Glossary
 
     subarray data type
 
-      An element of a strctured datatype that behaves like an ndarray.
+      An element of a structured datatype that behaves like an ndarray.
 
       ..
 
@@ -528,6 +528,7 @@ Glossary
       Some NumPy routines always return views, some always return copies, some
       may return one or the other, and for some the choice can be specified.
       Responsiblity for managing views and copies falls to the programmer.
-      NumPy reports whether arrays share memory
-      :doc:`numpy.shares_memory <reference/generated/numpy.shares_memory>`,
-      but an exact answer isn't always feasible; see the link.
+      :doc:`numpy.shares_memory <reference/generated/numpy.shares_memory>`
+      will check whether ``b`` is a view of ``a``,
+      but an exact answer isn't always feasible, as the documentation page
+      explains.
