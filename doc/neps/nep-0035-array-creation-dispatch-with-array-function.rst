@@ -8,7 +8,7 @@ NEP 35 — Array Creation Dispatching With __array_function__
 :Status: Draft
 :Type: Standards Track
 :Created: 2019-10-15
-:Updated: 2020-08-04
+:Updated: 2020-08-06
 :Resolution:
 
 Abstract
@@ -125,7 +125,7 @@ the module too.
         module='numpy', docs_from_dispatcher=False, verify=False)
 
     @array_function_nodocs_from_c_func_and_dispatcher(_multiarray_umath.array)
-    def array(a, dtype=None, copy=True, order='K', subok=False, ndmin=0, *,
+    def array(a, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
               like=None):
         return (like,)
 
