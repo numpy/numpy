@@ -7,8 +7,8 @@ import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal, assert_warns,
-    HAS_REFCOUNT,
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_warns, HAS_REFCOUNT,
     )
 
 
@@ -1237,6 +1237,41 @@ class TestBooleanIndexing:
         a[False, True, ...].shape == (0, 2, 3, 4)
         a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
         assert_raises(IndexError, lambda: a[False, [0, 1], ...])
+
+
+    def test_boolean_indexing_fast_path(self):
+        # These used to either give the wrong error, or incorrectly give no
+        # error.
+        a = np.ones((3, 3))
+
+        # This used to incorrectly work (and give an array of shape (0,))
+        idx1 = np.array([[False]*9])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 0; "
+            "dimension is 3 but corresponding boolean dimension is 1",
+            lambda: a[idx1])
+
+        # This used to incorrectly give a ValueError: operands could not be broadcast together
+        idx2 = np.array([[False]*8 + [True]])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 0; "
+            "dimension is 3 but corresponding boolean dimension is 1",
+            lambda: a[idx2])
+
+        # This is the same as it used to be. The above two should work like this.
+        idx3 = np.array([[False]*10])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 0; "
+            "dimension is 3 but corresponding boolean dimension is 1",
+            lambda: a[idx3])
+
+        # This used to give ValueError: non-broadcastable operand
+        a = np.ones((1, 1, 2))
+        idx = np.array([[[True], [False]]])
+        assert_raises_regex(IndexError,
+            "boolean index did not match indexed array along dimension 1; "
+            "dimension is 1 but corresponding boolean dimension is 2",
+            lambda: a[idx])
 
 
 class TestArrayToIndexDeprecation:
