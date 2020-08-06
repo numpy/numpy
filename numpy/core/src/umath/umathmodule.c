@@ -198,6 +198,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
      */
     char *newdocstr = malloc(strlen(docstr) + 1);
     if (!newdocstr) {
+        Py_DECREF(tmp);
         return PyErr_NoMemory();
     }
     strcpy(newdocstr, docstr);
