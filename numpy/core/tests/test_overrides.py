@@ -1,5 +1,7 @@
 import inspect
+import os
 import sys
+import tempfile
 from io import StringIO
 from unittest import mock
 
@@ -430,6 +432,35 @@ class TestNumPyFunctions:
 
 class TestArrayLike:
 
+    class MyArray():
+
+        def __init__(self, function=None):
+            self.function = function
+
+        def __array_function__(self, func, types, args, kwargs):
+            try:
+                my_func = getattr(TestArrayLike.MyArray, func.__name__)
+            except AttributeError:
+                return NotImplemented
+            return my_func(*args, **kwargs)
+
+    def add_method(name, enable_value_error=False):
+        def _definition(*args, **kwargs):
+            # Check that `like=` isn't propagated downstream
+            assert 'like' not in kwargs
+
+            return TestArrayLike.MyArray(getattr(TestArrayLike.MyArray, name))
+        setattr(TestArrayLike.MyArray, name, _definition)
+
+    def call(func, args, kwargs, like=None):
+        # Evaluate expression, needed for tests using StringIO. This
+        # requiremente is due to pytest not creating a new object for
+        # each parametrized run, so we need to ensure it hasn't been
+        # already consumed by creating a new one.
+        if isinstance(args, str):
+            args = eval(args)
+        return func(*args, **kwargs, like=like)
+
     @pytest.mark.parametrize('function, args, kwargs', [
         ('array',
          (1,),
@@ -473,9 +504,6 @@ class TestArrayLike:
         ('frombuffer',
          (b'\x00' * 8,),
          {'dtype': int}),
-        ('fromfile',
-         ('data.npy',),
-         {}),
         ('fromiter',
          (range(3), int),
          {}),
@@ -483,42 +511,67 @@ class TestArrayLike:
          ('1,2',),
          {'dtype': int, 'sep': ','}),
         ('loadtxt',
-         (StringIO('0 1\n2 3'),),
+         "(StringIO('0 1\\n2 3'),)",
          {}),
         ('genfromtxt',
-         (StringIO(u'1,2.1'),),
+         "(StringIO(u'1,2.1'),)",
          {'dtype': [('int', 'i8'), ('float', 'f8')], 'delimiter': ','}),
         ])
+    @pytest.mark.parametrize('numpy_ref', [True, False])
     @requires_array_function
-    def test_array_like_clean(self, function, args, kwargs):
-        class MyArray():
-
-            def __init__(self, function=None):
-                self.function = function
-
-            def __array_function__(self, func, types, args, kwargs):
-                try:
-                    my_func = getattr(MyArray, func.__name__)
-                except AttributeError:
-                    return NotImplemented
-                return my_func(*args, **kwargs)
-
-        def add_method(name):
-            def _definition(*args, **kwargs):
-                assert 'like' not in kwargs
-                return MyArray(getattr(MyArray, name))
-            setattr(MyArray, name, _definition)
-
-        add_method('array')
-        add_method(function)
+    def test_array_like_clean(self, function, args, kwargs, numpy_ref):
+        TestArrayLike.add_method('array')
+        TestArrayLike.add_method(function)
         np_func = getattr(np, function)
-        my_func = getattr(MyArray, function)
+        my_func = getattr(TestArrayLike.MyArray, function)
 
-        ref = MyArray.array()
+        if numpy_ref is True:
+            ref = np.array(1)
+        else:
+            ref = TestArrayLike.MyArray.array()
 
-        array_like = np_func(*args, **kwargs, like=ref)
-        assert type(array_like) is MyArray
-        assert array_like.function is my_func
+        array_like = TestArrayLike.call(np_func, args, kwargs, like=ref)
+        if numpy_ref is True:
+            assert type(array_like) is np.ndarray
+            np_arr = TestArrayLike.call(np_func, args, kwargs)
+
+            # Special-case np.empty to ensure values match
+            if function == "empty":
+                np_arr.fill(1)
+                array_like.fill(1)
+
+            assert_equal(array_like, np_arr)
+        else:
+            assert type(array_like) is TestArrayLike.MyArray
+            assert array_like.function is my_func
+
+    @pytest.mark.parametrize('numpy_ref', [True, False])
+    def test_array_like_fromfile(self, numpy_ref):
+        TestArrayLike.add_method('array')
+        TestArrayLike.add_method("fromfile")
+
+        if numpy_ref is True:
+            ref = np.array(1)
+        else:
+            ref = TestArrayLike.MyArray.array()
+
+        data = np.random.random(5)
+
+        fname = tempfile.mkstemp()[1]
+        data.tofile(fname)
+
+        array_like = np.fromfile(fname, like=ref)
+        if numpy_ref is True:
+            assert type(array_like) is np.ndarray
+            np_res = np.fromfile(fname, like=ref)
+            assert_equal(np_res, data)
+            assert_equal(array_like, np_res)
+        else:
+            assert type(array_like) is TestArrayLike.MyArray
+            assert array_like.function is TestArrayLike.MyArray.fromfile
+
+        if os.path.exists(fname):
+            os.remove(fname)
 
     @requires_array_function
     def test_exception_handling(self):
