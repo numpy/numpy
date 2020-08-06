@@ -1232,7 +1232,7 @@ def amin(
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
 
-# TODO: `np.prod()``: For object arrays `initial` does not necasarily
+# TODO: `np.prod()``: For object arrays `initial` does not necessarily
 # have to be a numerical scalar.
 # The only requirement is that it is compatible
 # with the `.__mul__()` method(s) of the passed array's elements.
