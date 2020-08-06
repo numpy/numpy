@@ -1,26 +1,8 @@
 {% extends "!layout.html" %}
 
 {%- block extrahead %}
-<style>
-  .main {
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-  }
-  div.top-scipy-org-logo-header {
-    background-color: #fafafa;
-    border-bottom: 2px solid #013243; /* Warm Black */
-    margin-top: 0;
-    box-shadow: none;
-  }
-  div.top-scipy-org-logo-header img {
-    height: 100px;
-    padding-left: 27px;
-  }
-  div.spc-navbar .nav-pills > li > a {
-    background-color: #4d77cf; /* Han Blue */
-  }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital@0;1&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../source/_static/numpy.css" type="text/css" >
 {{ super() }}
 {% endblock %}
 
