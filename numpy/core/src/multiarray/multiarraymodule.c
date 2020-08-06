@@ -1600,11 +1600,11 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function_creation("array", args, kws);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "array", args, kws);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     /* super-fast path for ndarray argument calls */
     if (PyTuple_GET_SIZE(args) == 0) {
@@ -1844,11 +1844,11 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    array_function_result = array_implement_c_array_function_creation("empty", args, kwds);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "empty", args, kwds);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     switch (order) {
         case NPY_CORDER:
@@ -2020,11 +2020,11 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    array_function_result = array_implement_c_array_function_creation("zeros", args, kwds);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "zeros", args, kwds);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     switch (order) {
         case NPY_CORDER:
@@ -2090,11 +2090,11 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function_creation("fromstring", args, keywds);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "fromstring", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
@@ -2133,11 +2133,11 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function_creation("fromfile", args, keywds);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "fromfile", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     file = NpyPath_PathlikeToFspath(file);
     if (file == NULL) {
@@ -2217,11 +2217,11 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function_creation("fromiter", args, keywds);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "fromiter", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     return PyArray_FromIter(iter, descr, (npy_intp)nin);
 }
@@ -2243,11 +2243,11 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function_creation("frombuffer", args, keywds);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "frombuffer", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -2843,11 +2843,11 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
         return NULL;
     }
 
-    array_function_result = array_implement_c_array_function_creation("arange", args, kws);
-    if (array_function_result != NULL)
+    array_function_result = array_implement_c_array_function_creation(
+            "arange", args, kws);
+    if (array_function_result != Py_NotImplemented) {
         return array_function_result;
-    else if (PyErr_Occurred())
-        return NULL;
+    }
 
     range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
     Py_XDECREF(typecode);

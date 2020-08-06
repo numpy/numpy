@@ -208,9 +208,22 @@ call_array_function(PyObject* argument, PyObject* method,
 }
 
 
+/**
+ * Internal handler for the array-function dispatching. The helper returns
+ * either the result, or NotImplemented (as a borrowed reference).
+ *
+ * @param public_api The public API symbol used for dispatching
+ * @param relevant_args Arguments which may implement __array_function__
+ * @param args Original arguments
+ * @param kwargs Original keyword arguments
+ *
+ * @returns The result of the dispatched version, or a borrowed reference
+ *          to NotImplemented to indicate the default implementation should
+ *          be used.
+ */
 NPY_NO_EXPORT PyObject *
 array_implement_array_function_internal(
-    PyObject *implementation, PyObject *public_api, PyObject *relevant_args,
+    PyObject *public_api, PyObject *relevant_args,
     PyObject *args, PyObject *kwargs)
 {
     PyObject *types = NULL;
@@ -251,12 +264,11 @@ array_implement_array_function_internal(
         }
     }
     if (!any_overrides) {
-        // We only call the __array_function__ implementation if it's a Python
-        // dispatch. C dispatches don't have an `implementation` so we just
-        // return and let the originating C call to continue.
-        if (implementation != NULL) {
-            result = PyObject_Call(implementation, args, kwargs);
-        }
+        /*
+         * When the default implementation should be called, return
+         * `Py_NotImplemented` to indicate this.
+         */
+        result = Py_NotImplemented;
         goto cleanup;
     }
 
@@ -346,8 +358,13 @@ array_implement_array_function(
         PyDict_DelItem(kwargs, npy_ma_str_like);
     }
 
-    return array_implement_array_function_internal(
-        implementation, public_api, relevant_args, args, kwargs);
+    PyObject *res = array_implement_array_function_internal(
+        public_api, relevant_args, args, kwargs);
+
+    if (res == Py_NotImplemented) {
+        return PyObject_Call(implementation, args, kwargs);
+    }
+    return res;
 }
 
 
@@ -365,7 +382,7 @@ array_implement_c_array_function_creation(
     PyObject *result = NULL;
 
     if (kwargs == NULL) {
-        return NULL;
+        return Py_NotImplemented;
     }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
@@ -381,7 +398,7 @@ array_implement_c_array_function_creation(
         PyDict_DelItem(kwargs, npy_ma_str_like);
     }
     else {
-        return NULL;
+        return Py_NotImplemented;
     }
 
     numpy_module = PyImport_Import(npy_ma_str_numpy);
@@ -399,7 +416,7 @@ array_implement_c_array_function_creation(
     }
 
     result = array_implement_array_function_internal(
-        NULL, public_api, relevant_args, args, kwargs);
+            public_api, relevant_args, args, kwargs);
 
 cleanup:
     Py_XDECREF(numpy_module);
