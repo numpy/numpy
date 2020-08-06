@@ -1243,21 +1243,29 @@ class TestBooleanIndexing:
         # These used to either give the wrong error, or incorrectly give no
         # error.
         a = np.ones((3, 3))
+
+        # This used to incorrectly work (and give an array of shape (0,))
         idx1 = np.array([[False]*9])
-        idx2 = np.array([[False]*10])
-        idx3 = np.array([[False]*8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along dimension 0; "
             "dimension is 3 but corresponding boolean dimension is 1",
             lambda: a[idx1])
+
+        # This used to incorrectly give a ValueError: operands could not be broadcast together
+        idx2 = np.array([[False]*8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along dimension 0; "
             "dimension is 3 but corresponding boolean dimension is 1",
             lambda: a[idx2])
+
+        # This is the same as it used to be. The above two should work like this.
+        idx3 = np.array([[False]*10])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along dimension 0; "
             "dimension is 3 but corresponding boolean dimension is 1",
             lambda: a[idx3])
+
+        # This used to give ValueError: non-broadcastable operand
         a = np.ones((1, 1, 2))
         idx = np.array([[[True], [False]]])
         assert_raises_regex(IndexError,
