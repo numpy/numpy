@@ -449,6 +449,9 @@ class TestArrayLike:
             # Check that `like=` isn't propagated downstream
             assert 'like' not in kwargs
 
+            if enable_value_error and 'value_error' in kwargs:
+                raise ValueError
+
             return TestArrayLike.MyArray(getattr(TestArrayLike.MyArray, name))
         setattr(TestArrayLike.MyArray, name, _definition)
 
@@ -575,21 +578,9 @@ class TestArrayLike:
 
     @requires_array_function
     def test_exception_handling(self):
-        class MyArray():
+        TestArrayLike.add_method('array', enable_value_error=True)
 
-            def __array_function__(self, func, types, args, kwargs):
-                try:
-                    my_func = getattr(MyArray, func.__name__)
-                except AttributeError:
-                    return NotImplemented
-                return my_func(*args, **kwargs)
-
-            def array(*args, **kwargs):
-                if 'value_error' in kwargs:
-                    raise ValueError
-                return MyArray()
-
-        ref = MyArray.array()
+        ref = TestArrayLike.MyArray.array()
 
         with assert_raises(ValueError):
             np.array(1, value_error=True, like=ref)
