@@ -1,5 +1,4 @@
 import inspect
-import os
 import sys
 import tempfile
 from io import StringIO
@@ -572,9 +571,6 @@ class TestArrayLike:
         else:
             assert type(array_like) is TestArrayLike.MyArray
             assert array_like.function is TestArrayLike.MyArray.fromfile
-
-        if os.path.exists(fname):
-            os.remove(fname)
 
     @requires_array_function
     def test_exception_handling(self):
