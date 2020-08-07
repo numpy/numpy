@@ -495,12 +495,10 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         res = -1;
         goto finish;
     }
-    stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata);
-    NPY_AUXDATA_FREE(transferdata);
-
-    if (needs_api && PyErr_Occurred()) {
+    if (stransfer(item, 0, data, 0, 1, tmp_descr->elsize, transferdata) < 0) {
         res = -1;
     }
+    NPY_AUXDATA_FREE(transferdata);
 
   finish:
     if (PyDataType_REFCHK(tmp_descr)) {
