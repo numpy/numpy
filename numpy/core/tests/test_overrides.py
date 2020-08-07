@@ -454,61 +454,28 @@ class TestArrayLike:
             return TestArrayLike.MyArray(getattr(TestArrayLike.MyArray, name))
         setattr(TestArrayLike.MyArray, name, _definition)
 
+    def func_args(*args, **kwargs):
+        return args, kwargs
+
     @pytest.mark.parametrize('function, args, kwargs', [
-        ('array',
-         (1,),
-         {}),
-        ('asarray',
-         (1,),
-         {}),
-        ('ascontiguousarray',
-         (1,),
-         {}),
-        ('asfortranarray',
-         (1,),
-         {}),
-        ('require',
-         (np.arange(6).reshape(2, 3),),
-         {'requirements': ['A', 'F']}),
-        ('empty',
-         (1,),
-         {}),
-        ('full',
-         (1, 2),
-         {}),
-        ('ones',
-         (1,),
-         {}),
-        ('zeros',
-         (1,),
-         {}),
-        ('arange',
-         (3,),
-         {}),
-        ('tri',
-         (3,),
-         {}),
-        ('eye',
-         (3,),
-         {}),
-        ('identity',
-         (3,),
-         {}),
-        ('frombuffer',
-         (b'\x00' * 8,),
-         {'dtype': int}),
-        ('fromiter',
-         (range(3), int),
-         {}),
-        ('fromstring',
-         ('1,2',),
-         {'dtype': int, 'sep': ','}),
-        ('loadtxt',
-         lambda: (StringIO('0 1\n2 3'),),
-         {}),
-        ('genfromtxt',
-         lambda: (StringIO(u'1,2.1'),),
-         {'dtype': [('int', 'i8'), ('float', 'f8')], 'delimiter': ','}),
+        ('array', *func_args((1,))),
+        ('asarray', *func_args((1,))),
+        ('ascontiguousarray', *func_args((2, 3))),
+        ('asfortranarray', *func_args((2, 3))),
+        ('require', *func_args((np.arange(6).reshape(2, 3),),
+                               requirements=['A', 'F'])),
+        ('empty', *func_args((1,))),
+        ('full', *func_args((1,), 2)),
+        ('ones', *func_args((1,))),
+        ('zeros', *func_args((1,))),
+        ('arange', *func_args(3)),
+        ('frombuffer', *func_args(b'\x00' * 8, dtype=int)),
+        ('fromiter', *func_args(range(3), dtype=int)),
+        ('fromstring', *func_args('1,2', dtype=int, sep=',')),
+        ('loadtxt', *func_args(lambda: StringIO('0 1\n2 3'))),
+        ('genfromtxt', *func_args(lambda: StringIO(u'1,2.1'),
+                                  dtype=[('int', 'i8'), ('float', 'f8')],
+                                  delimiter=',')),
         ])
     @pytest.mark.parametrize('numpy_ref', [True, False])
     @requires_array_function
@@ -523,13 +490,13 @@ class TestArrayLike:
         else:
             ref = TestArrayLike.MyArray.array()
 
-        like_args = args() if callable(args) else args
+        like_args = tuple(a() if callable(a) else a for a in args)
         array_like = np_func(*like_args, **kwargs, like=ref)
 
         if numpy_ref is True:
             assert type(array_like) is np.ndarray
 
-            np_args = args() if callable(args) else args
+            np_args = tuple(a() if callable(a) else a for a in args)
             np_arr = np_func(*np_args, **kwargs)
 
             # Special-case np.empty to ensure values match
