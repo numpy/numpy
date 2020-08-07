@@ -402,18 +402,20 @@ array_implement_c_array_function_creation(
     }
 
     numpy_module = PyImport_Import(npy_ma_str_numpy);
-    if (numpy_module != NULL) {
-        public_api = PyObject_GetAttrString(numpy_module, function_name);
-        Py_DECREF(numpy_module);
-        if (public_api == NULL) {
-            goto cleanup;
-        }
-        if (!PyCallable_Check(public_api)) {
-            PyErr_Format(PyExc_RuntimeError,
-                         "numpy.%s is not callable.",
-                         function_name);
-            goto cleanup;
-        }
+    if (numpy_module == NULL) {
+        return NULL;
+    }
+
+    public_api = PyObject_GetAttrString(numpy_module, function_name);
+    Py_DECREF(numpy_module);
+    if (public_api == NULL) {
+        return NULL;
+    }
+    if (!PyCallable_Check(public_api)) {
+        PyErr_Format(PyExc_RuntimeError,
+                     "numpy.%s is not callable.",
+                     function_name);
+        goto cleanup;
     }
 
     result = array_implement_array_function_internal(
