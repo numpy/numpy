@@ -404,6 +404,7 @@ array_implement_c_array_function_creation(
     numpy_module = PyImport_Import(npy_ma_str_numpy);
     if (numpy_module != NULL) {
         public_api = PyObject_GetAttrString(numpy_module, function_name);
+        Py_DECREF(numpy_module);
         if (public_api == NULL) {
             goto cleanup;
         }
@@ -419,7 +420,6 @@ array_implement_c_array_function_creation(
             public_api, relevant_args, args, kwargs);
 
 cleanup:
-    Py_XDECREF(numpy_module);
     Py_XDECREF(public_api);
     return result;
 }
