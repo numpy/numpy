@@ -504,27 +504,15 @@ class TestArrayLike:
          ('1,2',),
          {'dtype': int, 'sep': ','}),
         ('loadtxt',
-         None,
+         lambda: (StringIO('0 1\n2 3'),),
          {}),
         ('genfromtxt',
-         None,
+         lambda: (StringIO(u'1,2.1'),),
          {'dtype': [('int', 'i8'), ('float', 'f8')], 'delimiter': ','}),
         ])
     @pytest.mark.parametrize('numpy_ref', [True, False])
     @requires_array_function
     def test_array_like(self, function, args, kwargs, numpy_ref):
-        def _get_data():
-            # Pytest will not parametrize objects multiple times, due
-            # to that StringIO objects will be "consumed" by the first
-            # test and fail after, thus we create new objects for
-            # each usage.
-            if function == 'loadtxt':
-                return (StringIO('0 1\n2 3'),)
-            elif function == 'genfromtxt':
-                return (StringIO(u'1,2.1'),)
-            else:
-                return args
-
         TestArrayLike.add_method('array')
         TestArrayLike.add_method(function)
         np_func = getattr(np, function)
@@ -535,12 +523,14 @@ class TestArrayLike:
         else:
             ref = TestArrayLike.MyArray.array()
 
-        array_like = np_func(*_get_data(), **kwargs, like=ref)
+        like_args = args() if callable(args) else args
+        array_like = np_func(*like_args, **kwargs, like=ref)
 
         if numpy_ref is True:
             assert type(array_like) is np.ndarray
 
-            np_arr = np_func(*_get_data(), **kwargs)
+            np_args = args() if callable(args) else args
+            np_arr = np_func(*np_args, **kwargs)
 
             # Special-case np.empty to ensure values match
             if function == "empty":
