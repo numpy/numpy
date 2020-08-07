@@ -38,11 +38,10 @@ NPY_FINLINE npyv_b8 npyv_pack_b16(npyv_b16 a, npyv_b16 b)
 // pack four 32-bit boolean vectors into one 8-bit boolean vector
 NPY_FINLINE npyv_b8 npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d)
 {
-    const __m256i perm = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
     __m256i ab = _mm256_packs_epi32(a, b);
     __m256i cd = _mm256_packs_epi32(c, d);
-    __m256i abcd = _mm256_packs_epi16(ab, cd);
-    return _mm256_permutevar8x32_epi32(abcd, perm);
+    __m256i abcd = npyv_pack_b16(ab, cd);
+    return _mm256_shuffle_epi32(abcd, _MM_SHUFFLE(3, 1, 2, 0));
 }
 // pack eight 64-bit boolean vectors into one 8-bit boolean vector
 NPY_FINLINE npyv_b16 npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,

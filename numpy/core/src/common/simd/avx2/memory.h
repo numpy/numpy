@@ -117,6 +117,19 @@ NPY_FINLINE npyv_s32 npyv_loadn_s32(const npy_int32 *ptr, int stride)
 NPY_FINLINE npyv_f32 npyv_loadn_f32(const float *ptr, int stride)
 { return _mm256_castsi256_ps(npyv_loadn_u32((const npy_uint32*)ptr, stride)); }
 //// 64
+NPY_FINLINE npyv_f64 npyv_loadn_f64(const double *ptr, int stride)
+{
+    __m128d a0 = _mm_castsi128_pd(_mm_loadl_epi64((const __m128i*)ptr));
+    __m128d a2 = _mm_castsi128_pd(_mm_loadl_epi64((const __m128i*)(ptr + stride*2)));
+    __m128d a01 = _mm_loadh_pd(a0, ptr + stride);
+    __m128d a23 = _mm_loadh_pd(a2, ptr + stride*3);
+    return _mm256_insertf128_pd(_mm256_castpd128_pd256(a01), a23, 1);
+}
+NPY_FINLINE npyv_u64 npyv_loadn_u64(const npy_uint64 *ptr, int stride)
+{ return _mm256_castpd_si256(npyv_loadn_f64((const double*)ptr, stride)); }
+NPY_FINLINE npyv_s64 npyv_loadn_s64(const npy_int64 *ptr, int stride)
+{ return _mm256_castpd_si256(npyv_loadn_f64((const double*)ptr, stride)); }
+/*
 NPY_FINLINE npyv_u64 npyv_loadn_u64(const npy_uint64 *ptr, int stride)
 {
     const __m128i steps = _mm_setr_epi32(0, 1, 2, 3);
@@ -127,6 +140,7 @@ NPY_FINLINE npyv_s64 npyv_loadn_s64(const npy_int64 *ptr, int stride)
 { return npyv_loadn_u64((const npy_uint64*)ptr, stride); }
 NPY_FINLINE npyv_f64 npyv_loadn_f64(const double *ptr, int stride)
 { return _mm256_castsi256_pd(npyv_loadn_u64((const npy_uint64*)ptr, stride)); }
+*/
 
 /***************************
  * Non-contiguous Store
