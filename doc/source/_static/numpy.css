@@ -17,9 +17,20 @@ body {
   width: 100%;
 }
 
-div.top-scipy-org-logo-header {
+.container > div {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Expand header bg*/
+.container:first-child {
   background-color: #fafafa;
   border-bottom: 2px solid #013243; /* warm black */
+}
+
+div.top-scipy-org-logo-header {
+  background-color: #fafafa;
+  border-style: none;
   margin-top: 0;
   box-shadow: none;
 }
@@ -36,14 +47,23 @@ div#spc-section-body h1, h2, h3, h4, h5, h6 {
   font-family: 'Lato', sans-serif;
 }
 
+/* Separation from sidebar */
+div.bodywrapper {
+  padding-left: 1.5rem;
+}
+
 dt:target, span.highlighted {
   background-color: #fff7e6; /* diluted mustard */
+}
+
+div#spc-section-body {
+  max-width: 100%; /* override div.body */
 }
 
 div#spc-section-body h1 {
   color: #013243; /* warm black */
   font-weight: 700;
-  font-size: 320%;
+  font-size: 340%;
   text-align: right;
   letter-spacing: -2px;
   word-spacing: .03em;
@@ -92,7 +112,6 @@ div.spc-rightsidebar ul {
   /* For hang indents */
   padding-left: 0.7em;
   text-indent: -0.7em;
-  margin-right: 1rem;
 }
 
 /* How far down the sidebar starts */
@@ -136,6 +155,8 @@ div.spc-rightsidebar p.topless a {
   display: block;
   font-size: 90%;
   line-height: 150%;
-  margin-left: 0.7rem;
   color: #446ccf; /* han blue */
+  /* For hang indents */
+  padding-left: 0.7em;
+  text-indent: -0.7em;
 }
