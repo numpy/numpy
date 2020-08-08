@@ -13,6 +13,10 @@ body {
   line-height: 150%;
 }
 
+.container {
+  width: 100%;
+}
+
 div.top-scipy-org-logo-header {
   background-color: #fafafa;
   border-bottom: 2px solid #013243; /* warm black */
@@ -20,7 +24,7 @@ div.top-scipy-org-logo-header {
   box-shadow: none;
 }
 div.top-scipy-org-logo-header img {
-  height: 110px;
+  height: 125px;
   padding-left: 27px;
 }
 
@@ -29,51 +33,51 @@ div.spc-navbar .nav-pills > li > a {
 }
 
 div#spc-section-body h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lato', sans-serif;
+  font-family: 'Lato', sans-serif;
 }
 
 dt:target, span.highlighted {
-    background-color: #fff7e6; /* diluted mustard */
+  background-color: #fff7e6; /* diluted mustard */
 }
 
 div#spc-section-body h1 {
-    color: #013243; /* warm black */
-    font-weight: 700;
-    font-size: 320%;
-    text-align: right;
-    letter-spacing: -2px;
-    word-spacing: .03em;
-    margin-top: 4.5rem;
-    margin-bottom: 4.9rem;
-    line-height: 110%;
+  color: #013243; /* warm black */
+  font-weight: 700;
+  font-size: 320%;
+  text-align: right;
+  letter-spacing: -2px;
+  word-spacing: .03em;
+  margin-top: 4.5rem;
+  margin-bottom: 4.9rem;
+  line-height: 110%;
 }
 
 div#spc-section-body h2 {
-    color: #4d77cf; /* han blue */
-    letter-spacing: -1px;
-    font-size: 200%;
-    font-weight: 400;
-    word-spacing: .05em;
-    margin-top: 2.5rem;
+  color: #4d77cf; /* han blue */
+  letter-spacing: -1px;
+  font-size: 200%;
+  font-weight: 400;
+  word-spacing: .05em;
+  margin-top: 2.5rem;
 }
 
 div#spc-section-body h3 {
-    letter-spacing: -1px;
-    word-spacing: .05em;
+  letter-spacing: -1px;
+  word-spacing: .05em;
 }
 
 div#spc-section-body li, dd {
-    line-height: 150%;
+  line-height: 150%;
 }
 
 div#spc-section-body pre {
-    font-size: 100%;
-    line-height: 150%;
+  font-size: 100%;
+  line-height: 150%;
 }
 
 /* Don't print "Table of Contents" heading */
 div.spc-rightsidebar h3 {
-    display: none;
+  display: none;
 }
 
 /* Don't show the page title in TOC */
@@ -105,7 +109,7 @@ div.spc-rightsidebar ul > li > ul > li {
 
 /* Extra space between first and second level headings */
 div.spc-rightsidebar ul > li > ul > li > ul > li:first-child {
-    padding-top: 0.1rem;
+  padding-top: 0.1rem;
 }
 
 div.spc-rightsidebar a {
@@ -113,8 +117,8 @@ div.spc-rightsidebar a {
 }
 
 div.spc-rightsidebar ul > li > ul > li > ul > li {
-    padding-top: 0%;
-    font-size: 80%;
+  padding-top: 0;
+  font-size: 80%;
 }
 
 /* Next/Previous headings */
