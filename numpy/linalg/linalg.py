@@ -2811,3 +2811,320 @@ def _multi_dot(arrays, order, i, j, out=None):
         return dot(_multi_dot(arrays, order, i, order[i, j]),
                    _multi_dot(arrays, order, order[i, j] + 1, j),
                    out=out)
+
+"""
+    Return an Automatically regularized least-squares solution to a 
+    linear matrix equation.
+
+    Computes the vector x that approximatively solves the equation
+    ``a * x = b``. The equation may be under-, well-, or over-determined
+    (i.e., the number of linearly independent rows of `a` can be less than,
+    equal to, or greater than its number of linearly independent columns).
+    If `a` is square and of full rank and NOT badly conditioned, then `x` 
+    (but for round-off error) is the "exact" solution of the equation. 
+    
+    But if the system is badly conditioned and produces a solution of unreasonably
+    large size or other diagnosed bad behavior then this routine automatically determines
+    a "usable rank" for the problem. Then it uses that to estimate the average 
+    (Root-Mean-Square) error in the right hand side values.
+    From that it computes the appropriate Tikhonov regularization parameter, lambda,
+    adn computes a solution. 
+    
+    In other words, when solving 
+       A*x=b, 
+    if the Singular Value Decomposition of A is 
+       A=U*S*Vt, 
+    then autoreg returns, except for coding details, the solution
+       x = V*R*Ut*b 
+    where 
+       R[i]=(S[i]/(S[i]**2 + lambda**2)
+    where lambda is as estimated by the just described process.
+    
+    Calls: 
+           x = autoreg(A,b)
+           x, ur, sigma, lambda = autoreg2(A,b)     , for details
+           x = autoregnn(A,b)    , to force the solution to be non-negative
+    ----------
+    A : (M, N) array_like "Coefficient" matrix.
+    b : (M) 1-D array_like Ordinate or "dependent variable" values. 
+
+    Returns
+    -------
+    x : (N) ndarray
+        Least-squares solution, with minimal residual, if the system is well behaved.
+        Regularized solution, with larger residual, if the system is badly conditioned.
+        Regularized and non-negative solution if solvenn() is called, possibly with yet
+        larger residual.
+    ur: the "usable rank" : int
+    sigma : estimate Right hand Side RMS error: float
+    lambda : the estimated Tikhonov regularization parameter: float
+
+    Raises
+    ------
+    Autoreg is believed to be protected from virtually all calculation faults.
+    However, Autoreg calls this package's SVD algorithm, which may raise this:
+    
+    LinAlgError:
+        If computation does not converge.
+
+    Examples
+    --------
+    See documentation of lstsq in this package for a standard least-square example.
+    These routines will behave the same as lstsq when the system is well behaved.
+    Here is a tiny example of an ill-conditioned system as handled by autoreg.
+
+    x + y = 2
+    x + 1.01 y =3
+    
+    Then A = array([[ 1.,  1.],
+                    [ 1.,  1.01.]])
+    and b = array([2.0, 3.0])
+    
+    Then standard solvers like lstsq will return:
+    x = [-98. , 100.]
+    
+    But autoreg.solve(A,b) will recognize the violation of the Picard Condition and return
+    x = [1.12216 , 1.12779]
+
+    Beware that the results of any equation solver, and especially this one, should always
+    be checked for appropriateness for your problem. Especially check the residual by
+    examining A*x - b.
+    
+    For more details and examples see http://www.rejones7.net/autorej/ .
+    
+    References
+    
+    Re Picard Condition: "The discrete picard condition for discrete ill-posed problems", 
+    Per Christian Chansen, 1990     https://link.springer.com/article/10.1007/BF01933214
+    
+    Re Nonnegative solutions: "Solving Least Squares Problems", by Charles L. Lawson 
+    and Richard J. Hanson. Prentice-Hall 1974
+    
+    Re autoreg algorithms: "Solving Linear Algebraic Systems Arising in the Solution of 
+    Integral Equations of the First Kind", Dissertation by Rondall E. Jones, 1985, U. of N.M.
+    Advisor: Cleve B. Moler, creator of MatLab and co-founder of MathWorks.
+
+"""
+from math import sqrt
+import numpy as np
+import sys
+
+# Compute two-norm of x[:] with no overflow even if values are very large.
+# If x=[1.0 , 2.0 , 1.0E200, 5.0], then numpy.linalg.norm(x)
+# incorrectly gives "inf" as the answer.
+# Two_norm(x) correctly gives 1.0E200 as the answer.
+def two_norm(x):
+    ln = len(x)
+    if ln == 0:
+        return 0.0
+    y=abs(x)
+    mx=max(y)
+    if (mx==0.0): return 0.0
+    sm=0.0
+    for i in range(0,ln):
+        sm += (x[i]/mx)**2
+    return mx*sqrt(sm)
+
+
+# compute root-mean-square of values in x(:)
+def rms(x):
+    s = two_norm(x)
+    return s / sqrt(len(x))
+
+
+# compute all sums of width w in g[0] to g[m-1].
+# if g=[0.5,1.0,4.0,9.0], then "compute_mov_sums(g,2,4)" returns
+# an array of three sums: g[0]+g[1]=1.5, g[1]+g[2]=5.0, g[2]+g[3]=13.0
+def compute_mov_sums(g, w, m):
+    numsums = m - w + 1
+    sums = np.zeros(numsums)
+    for i in range(0, numsums):
+        s = 0.0
+        for j in range(i, i + w):
+            s += g[j]
+        sums[i] = s
+        return sums
+
+
+# sensitivity tracking to detect large instability
+def splita(mg, g):
+    # initialize
+    sensitivity = g[0]
+    small = sensitivity
+    local = sensitivity
+    urank = 1
+    for i in range(1, mg):  # start with 2nd row; (i=1; i<mg; i++)
+        sensitivity = g[i]
+        if sensitivity > 15.0 * small and sensitivity > local:
+            break
+        if sensitivity < small:
+            small = small + 0.40 * (sensitivity - small)
+        else:
+            small = small + 0.02 * (sensitivity - small)
+        local = local + 0.40 * (sensitivity - local)
+        urank = i + 1
+    return urank
+
+
+def splitb(mg, g):
+    # look for usable rank via moving averages
+    gg = np.zeros(mg)
+    for i in range(0, mg):
+        gg[i] = g[i] * g[i]
+    w = min(int((mg + 3) / 4), 6)
+    sums = compute_mov_sums(gg, w, mg)
+    ilow = np.where(sums == min(sums))[0][0]
+    # estimate a nominal value that should see a big rise later
+    sum = 0.0
+    for i in range(0, ilow):
+        sum += abs(gg[i])
+    gnom = sum / float(ilow+1)
+    # see if the moving average ever gets much larger
+    bad = 10.0 * gnom
+    ibad = 0
+    for i in range(ilow + 1, mg - w + 1):
+        if sums[i] > bad:
+            ibad = i
+            break
+    if ibad <= 0:
+        urank = mg  # leave urank alone
+    else:
+        urank = ibad + w - 1
+    return urank
+
+
+# for a given ur, and Tikhonov lambdah, compute resulting RHS RMS error
+def rmslambdah(A, b, U, S, Vt, ur, lamb):
+    mn = S.shape[0]
+    ps = np.zeros(mn)
+    for i in range(0, ur):
+        ps[i] = 1.0 / (S[i] + lamb ** 2 / S[i]) if S[i] > 0.0 else 0.
+    for i in range(ur, mn):
+        ps[i] = 0.0
+    # best to do multiplies from right end....
+    xa = np.transpose(Vt).dot(np.diag(ps).dot(np.transpose(U).dot(b)))
+    res = b - A.dot(xa)
+    r = rms(res)
+    return xa, r
+
+
+# Given 'my sigma' as the error estimate for the R.H.Side RMS error,
+# discrep finds the Tikonov Regularization parameter 'lambdah'
+# that fits this error estimate
+def discrep(A, b, U, S, Vt, ur, mysigma):
+    lo = 0.0  # for minimum achievable residual
+    hi = 0.33 * float(S[0])  # for ridiculously large residual
+    lamb = 0.0
+    # bisect until hopefully we nail exactly the residual we want...but quit eventually
+    for k in range(0, 50):
+        lamb = (lo + hi) * 0.5
+        xa, check = rmslambdah(A, b, U, S, Vt, ur, lamb)
+        if abs(check - mysigma) < 0.0001 * mysigma:
+            break  # close enough!
+        if check > mysigma:
+            hi = lamb
+        else:
+            lo = lamb
+    return lamb
+
+# main solver---------------------
+def autoreg2(A, b): 
+    m = A.shape[0]
+    n = A.shape[1]
+    mn = min(m, n)
+    if (m<2) or (n<2): return 0.0 , 0, 0.0, 0.0
+    if (np.count_nonzero(A)==0): return 0.0 , 0, 0.0, 0.0
+    if (np.count_nonzero(b)==0): return 0.0 , 0, 0.0, 0.0
+
+    U, S, Vt = np.linalg.svd(A, full_matrices=False)
+    beta = np.matmul(np.transpose(U), b)
+    # compute contributions to norm of solution
+    k = 0  # rank of A so far
+    g = np.zeros(mn)
+    sense = 0.0
+    si = 0.0
+    for i in range(0, mn):
+        si = S[i]
+        if si == 0.0:
+            break
+        sense = beta[i] / si
+        if sense < 0.0:
+            sense = -sense
+        g[i] = sense
+        k = i + 1
+    if k <= 0:
+        return np.zeros(n)  # zero system
+    # two-stage search for break in Picard Condition Vector
+    ura = splita(k, g)
+    ur = splitb(ura, g)
+    if ur >= mn:
+        # problem is not ill-conditioned
+        x, check = rmslambdah(A, b, U, S, Vt, ur, 0.0)
+        sigma = 0.0
+        lambdah = 0.0
+    else:
+        # from urb, determine sigma, then lambda, then solution
+        Utb = np.matmul(np.transpose(U), b)
+        sigma = rms(Utb[ur:mn])
+        lambdah = discrep(A, b, U, S, Vt, ur, sigma)
+        x, check = rmslambdah(A, b, U, S, Vt, ur, lambdah)
+    return x, ur, sigma, lambdah
+
+def autoreg(A, b): 
+  x, ur, sigma, lambdah = autoreg2(A, b)
+  return x
+
+# call to solve with auto regularization and force nonnegativity
+def autoregnn(A, b):
+    m = A.shape[0]
+    n = A.shape[1]
+    mn = min(m, n)
+    if (m<2) or (n<2): return 0.0 , 0, 0.0, 0.0
+    if (np.count_nonzero(A)==0): return 0.0 , 0, 0.0, 0.0
+    if (np.count_nonzero(b)==0): return 0.0 , 0, 0.0, 0.0
+    
+    x, ur, sigma, lambdah =autoreg2(A, b)
+    # see if unconstrained solution is already non-negative
+    if min(x) >= 0.0:
+        return x
+    # the approach here is to actually delete columns, for speed,
+    # rather than just zero out columns and thereby complicate the SVD.
+    C = A
+    cols = [0] * n  # list of active column numbers
+    for i in range(1, n):
+        cols[i] = i
+    xt = x
+    nn = n
+    for i in range(1, nn):
+        # choose a column to zero
+        p = -1
+        worst = 0.0
+        for j in range(0, nn):
+            if xt[j] < worst:
+                p = j
+                worst = xt[p]
+        if p < 0:
+            break
+        # remove column p and resolve
+        C = np.delete(C, p, 1)
+        cols.pop(p)
+        nn -= 1
+        U, S, Vt = np.linalg.svd(C, full_matrices=False)
+        ms = len(S)
+        ps = np.zeros(ms)
+        if lambdah == 0.0:
+            for i in range(0, ms):
+                ps[i] = (1.0 / S[i]) if S[i] > 0.0 else 0.0
+        else:
+            for i in range(0, ms):
+                #usual formula rewritten t0 avoid overflow
+                ps[i] = 1.0 / (S[i] + lambdah ** 2 / S[i]) if S[i] > 0.0 else 0.0
+        xt = np.transpose(Vt).dot(np.diag(ps).dot(np.transpose(U).dot(b)))
+    if nn == n:  # if did nothing
+        return xn
+    # rebuild full solution vector
+    xn = np.zeros(n)
+    for j in range(0, nn):
+        xn[int(cols[j])] = xt[j]
+    return xn
+
