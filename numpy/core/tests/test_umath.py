@@ -1153,7 +1153,7 @@ class TestLdexp:
 
 class TestMaximum(_FilterInvalids):
     def test_reduce(self):
-        dflt = np.typecodes['AllFloat']
+        dflt = np.typecodes['AllFloat'][:-3]
         dint = np.typecodes['AllInteger']
         seq1 = np.arange(11)
         seq2 = seq1[::-1]
@@ -1173,10 +1173,6 @@ class TestMaximum(_FilterInvalids):
             assert_equal(func(tmp1), np.nan)
             assert_equal(func(tmp2), np.nan)
 
-    def test_reduce_complex(self):
-        assert_equal(np.maximum.reduce([1, 2j]), 1)
-        assert_equal(np.maximum.reduce([1+3j, 2j]), 1+3j)
-
     def test_float_nans(self):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
@@ -1194,14 +1190,6 @@ class TestMaximum(_FilterInvalids):
             z = np.array(float('nan'), object)
             assert_(np.maximum(x, y) == 1.0)
             assert_(np.maximum(z, y) == 1.0)
-
-    def test_complex_nans(self):
-        nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=complex)
-            out = np.array([nan, nan, nan], dtype=complex)
-            assert_equal(np.maximum(arg1, arg2), out)
 
     def test_object_array(self):
         arg1 = np.arange(5, dtype=object)
@@ -1224,7 +1212,7 @@ class TestMaximum(_FilterInvalids):
 
 class TestMinimum(_FilterInvalids):
     def test_reduce(self):
-        dflt = np.typecodes['AllFloat']
+        dflt = np.typecodes['AllFloat'][:-3]
         dint = np.typecodes['AllInteger']
         seq1 = np.arange(11)
         seq2 = seq1[::-1]
@@ -1244,10 +1232,6 @@ class TestMinimum(_FilterInvalids):
             assert_equal(func(tmp1), np.nan)
             assert_equal(func(tmp2), np.nan)
 
-    def test_reduce_complex(self):
-        assert_equal(np.minimum.reduce([1, 2j]), 2j)
-        assert_equal(np.minimum.reduce([1+3j, 2j]), 2j)
-
     def test_float_nans(self):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
@@ -1265,14 +1249,6 @@ class TestMinimum(_FilterInvalids):
             z = np.array(float('nan'), object)
             assert_(np.minimum(x, y) == 1.0)
             assert_(np.minimum(z, y) == 1.0)
-
-    def test_complex_nans(self):
-        nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=complex)
-            out = np.array([nan, nan, nan], dtype=complex)
-            assert_equal(np.minimum(arg1, arg2), out)
 
     def test_object_array(self):
         arg1 = np.arange(5, dtype=object)
@@ -1294,7 +1270,7 @@ class TestMinimum(_FilterInvalids):
 
 class TestFmax(_FilterInvalids):
     def test_reduce(self):
-        dflt = np.typecodes['AllFloat']
+        dflt = np.typecodes['AllFloat'][:-3]
         dint = np.typecodes['AllInteger']
         seq1 = np.arange(11)
         seq2 = seq1[::-1]
@@ -1314,10 +1290,6 @@ class TestFmax(_FilterInvalids):
             assert_equal(func(tmp1), 9)
             assert_equal(func(tmp2), 9)
 
-    def test_reduce_complex(self):
-        assert_equal(np.fmax.reduce([1, 2j]), 1)
-        assert_equal(np.fmax.reduce([1+3j, 2j]), 1+3j)
-
     def test_float_nans(self):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
@@ -1325,18 +1297,10 @@ class TestFmax(_FilterInvalids):
         out = np.array([0,   0,   nan])
         assert_equal(np.fmax(arg1, arg2), out)
 
-    def test_complex_nans(self):
-        nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=complex)
-            out = np.array([0,    0, nan], dtype=complex)
-            assert_equal(np.fmax(arg1, arg2), out)
-
 
 class TestFmin(_FilterInvalids):
     def test_reduce(self):
-        dflt = np.typecodes['AllFloat']
+        dflt = np.typecodes['AllFloat'][:-3]
         dint = np.typecodes['AllInteger']
         seq1 = np.arange(11)
         seq2 = seq1[::-1]
@@ -1356,24 +1320,12 @@ class TestFmin(_FilterInvalids):
             assert_equal(func(tmp1), 1)
             assert_equal(func(tmp2), 1)
 
-    def test_reduce_complex(self):
-        assert_equal(np.fmin.reduce([1, 2j]), 2j)
-        assert_equal(np.fmin.reduce([1+3j, 2j]), 2j)
-
     def test_float_nans(self):
         nan = np.nan
         arg1 = np.array([0,   nan, nan])
         arg2 = np.array([nan, 0,   nan])
         out = np.array([0,   0,   nan])
         assert_equal(np.fmin(arg1, arg2), out)
-
-    def test_complex_nans(self):
-        nan = np.nan
-        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
-            arg1 = np.array([0, cnan, cnan], dtype=complex)
-            arg2 = np.array([cnan, 0, cnan], dtype=complex)
-            out = np.array([0,    0, nan], dtype=complex)
-            assert_equal(np.fmin(arg1, arg2), out)
 
 
 class TestBool:
@@ -1388,7 +1340,7 @@ class TestBool:
         input1 = [0, 0, 3, 2]
         input2 = [0, 4, 0, 2]
 
-        typecodes = (np.typecodes['AllFloat']
+        typecodes = (np.typecodes['AllFloat'][:-3]
                      + np.typecodes['AllInteger']
                      + '?')     # boolean
         for dtype in map(np.dtype, typecodes):
@@ -1638,7 +1590,7 @@ class TestMinMax:
         # and put it before the call to an intrisic function that causes
         # invalid status to be set. Also make sure warnings are not emitted
         for n in (2, 4, 8, 16, 32):
-            for dt in (np.float32, np.float16, np.complex64):
+            for dt in (np.float32, np.float16, np.float64):
                 for r in np.diagflat(np.array([np.nan] * n, dtype=dt)):
                     assert_equal(np.min(r), np.nan)
 
@@ -3228,27 +3180,6 @@ def test_reduceat_empty():
     result = np.add.reduceat(x, [], axis=1)
     assert_equal(result.dtype, x.dtype)
     assert_equal(result.shape, (5, 0))
-
-def test_complex_nan_comparisons():
-    nans = [complex(np.nan, 0), complex(0, np.nan), complex(np.nan, np.nan)]
-    fins = [complex(1, 0), complex(-1, 0), complex(0, 1), complex(0, -1),
-            complex(1, 1), complex(-1, -1), complex(0, 0)]
-
-    with np.errstate(invalid='ignore'):
-        for x in nans + fins:
-            x = np.array([x])
-            for y in nans + fins:
-                y = np.array([y])
-
-                if np.isfinite(x) and np.isfinite(y):
-                    continue
-
-                assert_equal(x < y, False, err_msg="%r < %r" % (x, y))
-                assert_equal(x > y, False, err_msg="%r > %r" % (x, y))
-                assert_equal(x <= y, False, err_msg="%r <= %r" % (x, y))
-                assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
-                assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
-
 
 def test_rint_big_int():
     # np.rint bug for large integer values on Windows 32-bit and MKL

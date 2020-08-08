@@ -330,12 +330,13 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
      * or object arrays.
      */
     if (PyArray_ISCOMPLEX(operands[0]) &&
-        PyArray_ISCOMPLEX(operands[1]) &&
-        strcmp(ufunc_get_name_cstr(ufunc), "equal") != 0 &&
-        strcmp(ufunc_get_name_cstr(ufunc), "not_equal") != 0) {
+        PyArray_ISCOMPLEX(operands[1]) &&(
+        strcmp(ufunc_name, "greater") == 0 ||
+        strcmp(ufunc_name, "greater_equal") == 0 ||
+        strcmp(ufunc_name, "less") == 0 ||
+        strcmp(ufunc_name, "less_equal") == 0)) {
             PyErr_WarnEx(PyExc_DeprecationWarning,
             "Ordering Comparisons (>, <, >=, <=) on complex types is being deprecated", 1);
-
     }
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -471,13 +472,21 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         PyObject *type_tup,
         PyArray_Descr **out_dtypes)
 {
+
+    static PyObject *visibleDeprecationWarning = NULL;
+    npy_cache_import(
+        "numpy", "VisibleDeprecationWarning",
+         &visibleDeprecationWarning);
+    if (visibleDeprecationWarning == NULL) {
+                return -1;
+    }
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     if (PyArray_ISCOMPLEX(operands[0]) &&
         (strcmp(ufunc_name, "maximum") == 0 ||
         strcmp(ufunc_name, "minimum") == 0 ||
         strcmp(ufunc_name, "fmax") == 0 ||
         strcmp(ufunc_name, "fmin") == 0)) {
-            PyErr_WarnEx(PyExc_DeprecationWarning,
+            PyErr_WarnEx(visibleDeprecationWarning,
             "Ordering Comparisons (>, <, >=, <=) on complex types is being deprecated", 1);
     }
     if (ufunc->nin < 1) {

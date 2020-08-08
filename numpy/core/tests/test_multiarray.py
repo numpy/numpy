@@ -2633,7 +2633,7 @@ class TestMethods:
             assert_raises(ValueError, np.argpartition, d, 9, axis=1)
             assert_raises(ValueError, np.argpartition, d, 11, axis=None)
 
-            td = [(dt, s) for dt in [np.int32, np.float32, np.complex64]
+            td = [(dt, s) for dt in [np.int32, np.float32, np.float64]
                   for s in (9, 16)]
             for dt, s in td:
                 aae = assert_array_equal
@@ -4101,19 +4101,6 @@ class TestArgmax:
         ([0, 1, 2, np.nan, 3], 3),
         ([np.nan, 0, 1, 2, 3], 0),
         ([np.nan, 0, np.nan, 2, 3], 0),
-        ([0, 1, 2, 3, complex(0, np.nan)], 4),
-        ([0, 1, 2, 3, complex(np.nan, 0)], 4),
-        ([0, 1, 2, complex(np.nan, 0), 3], 3),
-        ([0, 1, 2, complex(0, np.nan), 3], 3),
-        ([complex(0, np.nan), 0, 1, 2, 3], 0),
-        ([complex(np.nan, np.nan), 0, 1, 2, 3], 0),
-        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, 1)], 0),
-        ([complex(np.nan, np.nan), complex(np.nan, 2), complex(np.nan, 1)], 0),
-        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, np.nan)], 0),
-
-        ([complex(0, 0), complex(0, 2), complex(0, 1)], 1),
-        ([complex(1, 0), complex(0, 2), complex(0, 1)], 0),
-        ([complex(1, 0), complex(0, 2), complex(1, 1)], 2),
 
         ([np.datetime64('1923-04-14T12:43:12'),
           np.datetime64('1994-06-21T14:43:15'),
@@ -4243,19 +4230,7 @@ class TestArgmin:
         ([0, 1, 2, np.nan, 3], 3),
         ([np.nan, 0, 1, 2, 3], 0),
         ([np.nan, 0, np.nan, 2, 3], 0),
-        ([0, 1, 2, 3, complex(0, np.nan)], 4),
-        ([0, 1, 2, 3, complex(np.nan, 0)], 4),
-        ([0, 1, 2, complex(np.nan, 0), 3], 3),
-        ([0, 1, 2, complex(0, np.nan), 3], 3),
-        ([complex(0, np.nan), 0, 1, 2, 3], 0),
-        ([complex(np.nan, np.nan), 0, 1, 2, 3], 0),
-        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, 1)], 0),
-        ([complex(np.nan, np.nan), complex(np.nan, 2), complex(np.nan, 1)], 0),
-        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, np.nan)], 0),
 
-        ([complex(0, 0), complex(0, 2), complex(0, 1)], 0),
-        ([complex(1, 0), complex(0, 2), complex(0, 1)], 2),
-        ([complex(1, 0), complex(0, 2), complex(1, 1)], 1),
 
         ([np.datetime64('1923-04-14T12:43:12'),
           np.datetime64('1994-06-21T14:43:15'),
