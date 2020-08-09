@@ -378,7 +378,7 @@ array_implement_c_array_function_creation(
     const char *function_name, PyObject *args, PyObject *kwargs)
 {
     PyObject *relevant_args;
-    PyObject *numpy_module = NULL, *public_api = NULL;
+    PyObject *numpy_module, *public_api;
     PyObject *result = NULL;
 
     if (kwargs == NULL) {
@@ -389,17 +389,16 @@ array_implement_c_array_function_creation(
      * in downstream libraries. If that key isn't present, return NULL and
      * let originating call to continue.
      */
-    if (PyDict_Contains(kwargs, npy_ma_str_like)) {
-        relevant_args = PyTuple_Pack(1,
-                PyDict_GetItem(kwargs, npy_ma_str_like));
-        if (relevant_args == NULL) {
-            return NULL;
-        }
-        PyDict_DelItem(kwargs, npy_ma_str_like);
-    }
-    else {
+    if (!PyDict_Contains(kwargs, npy_ma_str_like)) {
         return Py_NotImplemented;
     }
+
+    relevant_args = PyTuple_Pack(1,
+            PyDict_GetItem(kwargs, npy_ma_str_like));
+    if (relevant_args == NULL) {
+        return NULL;
+    }
+    PyDict_DelItem(kwargs, npy_ma_str_like);
 
     numpy_module = PyImport_Import(npy_ma_str_numpy);
     if (numpy_module == NULL) {
@@ -422,7 +421,7 @@ array_implement_c_array_function_creation(
             public_api, relevant_args, args, kwargs);
 
 cleanup:
-    Py_XDECREF(public_api);
+    Py_DECREF(public_api);
     return result;
 }
 
