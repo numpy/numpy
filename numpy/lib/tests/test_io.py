@@ -2364,7 +2364,6 @@ M   33  21.99
         txt = TextIO("M 21 72\nF 35 58")
         dt = {'names': ('a', 'b', 'c'), 'formats': ('S1', 'i4', 'f4')}
         a, b, c = np.genfromtxt(txt, dtype=dt, unpack=True)
-        print(a.dtype.str, b.dtype.str, c.dtype.str)
         assert_equal(a.dtype, np.dtype('S1'))
         assert_equal(b.dtype, np.dtype('i4'))
         assert_equal(c.dtype, np.dtype('f4'))
@@ -2377,7 +2376,7 @@ M   33  21.99
         # Unpacking should work when dtype=None
         txt = TextIO("M 21 72.\nF 35 58.")
         expected = (np.array(["M", "F"]), np.array([21, 35]), np.array([72., 58.]))
-        test = np.genfromtxt(txt, dtype=None, unpack=True, encoding=None)
+        test = np.genfromtxt(txt, dtype=None, unpack=True, encoding="utf-8")
         for arr, result in zip(expected, test):
             assert_array_equal(arr, result)
             assert_equal(arr.dtype, result.dtype)
