@@ -13,6 +13,19 @@ ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
 
+array_function_like_doc = (
+    """like : array_like
+        Reference array-like object created by a downstream library, such
+        as CuPy, Dask, xarray, etc. If specified, the function will be
+        dispatched to the downstream library, provided it supports the
+        __array_function__ protocol. This will bypass the NumPy's
+        implementation and be computed by the downstream library, the
+        result is thus returned by that library, which may be of the
+        same type as the array provided here, or any other type.
+    """
+)
+
+
 add_docstring(
     implement_array_function,
     """

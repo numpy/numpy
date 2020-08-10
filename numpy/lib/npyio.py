@@ -14,7 +14,7 @@ from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
-from numpy.core.overrides import set_module
+from numpy.core.overrides import array_function_like_doc, set_module
 from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -867,14 +867,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         is to read all the lines.
 
         .. versionadded:: 1.16.0
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -1689,14 +1682,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to None the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -2414,3 +2400,14 @@ def recfromcsv(fname, **kwargs):
     else:
         output = output.view(np.recarray)
     return output
+
+
+# Add documentation for ``like=`` keyword argument
+loadtxt.__doc__ = loadtxt.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
+genfromtxt.__doc__ = genfromtxt.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)

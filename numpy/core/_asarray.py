@@ -3,7 +3,11 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from .overrides import array_function_dispatch, set_module
+from .overrides import (
+    array_function_dispatch,
+    array_function_like_doc,
+    set_module,
+)
 from .multiarray import array
 
 
@@ -36,14 +40,7 @@ def asarray(a, dtype=None, order=None, *, like=None):
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
         Defaults to 'C'.
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -122,14 +119,7 @@ def asanyarray(a, dtype=None, order=None, *, like=None):
         'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
         'K' (keep) preserve input order
         Defaults to 'C'.
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -186,14 +176,7 @@ def ascontiguousarray(a, dtype=None, *, like=None):
         Input array.
     dtype : str or dtype object, optional
         Data-type of returned array.
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -238,14 +221,7 @@ def asfortranarray(a, dtype=None, *, like=None):
         Input array.
     dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -308,14 +284,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
        * 'WRITEABLE' ('W')    - ensure a writable array
        * 'OWNDATA' ('O')      - ensure an array that owns its own data
        * 'ENSUREARRAY', ('E') - ensure a base array, instead of a subclass
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -395,3 +364,26 @@ def require(a, dtype=None, requirements=None, *, like=None):
             arr = arr.copy(order)
             break
     return arr
+
+
+# Add documentation for ``like=`` keyword argument
+asarray.__doc__ = asarray.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
+asanyarray.__doc__ = asanyarray.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
+ascontiguousarray.__doc__ = ascontiguousarray.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
+asfortranarray.__doc__ = asfortranarray.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
+require.__doc__ = require.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)

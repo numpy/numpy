@@ -8,7 +8,7 @@ from numpy.core.numeric import (
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
-from numpy.core.overrides import set_module
+from numpy.core.overrides import array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
 
@@ -175,14 +175,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         column-major (Fortran-style) order in memory.
 
         .. versionadded:: 1.14.0
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -380,14 +373,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         and `k` > 0 is above.  The default is 0.
     dtype : dtype, optional
         Data type of the returned array.  The default is float.
-    like : array_like
-        Reference array-like object created by a downstream library, such
-        as CuPy, Dask, xarray, etc. If specified, the function will be
-        dispatched to the downstream library, provided it supports the
-        __array_function__ protocol. This will bypass the NumPy's
-        implementation and be computed by the downstream library, the
-        result is thus returned by that library, which may be of the
-        same type as the array provided here, or any other type.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
@@ -1042,3 +1028,14 @@ def triu_indices_from(arr, k=0):
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
     return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])
+
+
+# Add documentation for ``like=`` keyword argument
+eye.__doc__ = eye.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
+tri.__doc__ = tri.__doc__.replace(
+    "${ARRAY_FUNCTION_LIKE}",
+    array_function_like_doc,
+)
