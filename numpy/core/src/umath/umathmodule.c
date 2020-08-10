@@ -173,25 +173,22 @@ PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyUFuncObject *ufunc;
-    PyObject *str, *tmp;
-    char *docstr, *newdocstr;
-
+    PyObject *str;
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                         &PyUnicode_Type, &str)) {
         return NULL;
     }
-    tmp = PyUnicode_AsUTF8String(str);
+    if (ufunc->doc != NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot change docstring of ufunc with non-NULL docstring");
+        return NULL;
+    }
+
+    PyObject *tmp = PyUnicode_AsUTF8String(str);
     if (tmp == NULL) {
         return NULL;
     }
-    docstr = PyBytes_AS_STRING(tmp);
-
-    if (NULL != ufunc->doc) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot change docstring of ufunc with non-NULL docstring");
-        Py_DECREF(tmp);
-        return NULL;
-    }
+    char *docstr = PyBytes_AS_STRING(tmp);
 
     /*
      * This introduces a memory leak, as the memory allocated for the doc
@@ -199,7 +196,11 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
      * this should not be a problem since the user would have to
      * repeatedly create, document, and throw away ufuncs.
      */
-    newdocstr = malloc(strlen(docstr) + 1);
+    char *newdocstr = malloc(strlen(docstr) + 1);
+    if (!newdocstr) {
+        Py_DECREF(tmp);
+        return PyErr_NoMemory();
+    }
     strcpy(newdocstr, docstr);
     ufunc->doc = newdocstr;
 
@@ -232,30 +233,28 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 
-/* intern some strings used in ufuncs */
+/* intern some strings used in ufuncs, returns 0 on success */
 static int
 intern_strings(void)
 {
-    npy_um_str_out = PyUString_InternFromString("out");
-    npy_um_str_where = PyUString_InternFromString("where");
-    npy_um_str_axes = PyUString_InternFromString("axes");
-    npy_um_str_axis = PyUString_InternFromString("axis");
-    npy_um_str_keepdims = PyUString_InternFromString("keepdims");
-    npy_um_str_casting = PyUString_InternFromString("casting");
-    npy_um_str_order = PyUString_InternFromString("order");
-    npy_um_str_dtype = PyUString_InternFromString("dtype");
-    npy_um_str_subok = PyUString_InternFromString("subok");
-    npy_um_str_signature = PyUString_InternFromString("signature");
-    npy_um_str_sig = PyUString_InternFromString("sig");
-    npy_um_str_extobj = PyUString_InternFromString("extobj");
-    npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__");
-    npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__");
-    npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__");
-    npy_um_str_ufunc = PyUString_InternFromString("__array_ufunc__");
-    npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME);
-
-    return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&
-        npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;
+    if (!(npy_um_str_out = PyUString_InternFromString("out"))) return -1;
+    if (!(npy_um_str_where = PyUString_InternFromString("where"))) return -1;
+    if (!(npy_um_str_axes = PyUString_InternFromString("axes"))) return -1;
+    if (!(npy_um_str_axis = PyUString_InternFromString("axis"))) return -1;
+    if (!(npy_um_str_keepdims = PyUString_InternFromString("keepdims"))) return -1;
+    if (!(npy_um_str_casting = PyUString_InternFromString("casting"))) return -1;
+    if (!(npy_um_str_order = PyUString_InternFromString("order"))) return -1;
+    if (!(npy_um_str_dtype = PyUString_InternFromString("dtype"))) return -1;
+    if (!(npy_um_str_subok = PyUString_InternFromString("subok"))) return -1;
+    if (!(npy_um_str_signature = PyUString_InternFromString("signature"))) return -1;
+    if (!(npy_um_str_sig = PyUString_InternFromString("sig"))) return -1;
+    if (!(npy_um_str_extobj = PyUString_InternFromString("extobj"))) return -1;
+    if (!(npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__"))) return -1;
+    if (!(npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__"))) return -1;
+    if (!(npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__"))) return -1;
+    if (!(npy_um_str_ufunc = PyUString_InternFromString("__array_ufunc__"))) return -1;
+    if (!(npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME))) return -1;
+    return 0;
 }
 
 /* Setup the umath part of the module */
@@ -326,7 +325,7 @@ int initumath(PyObject *m)
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
 
-    if (!intern_strings()) {
+    if (intern_strings() < 0) {
         PyErr_SetString(PyExc_RuntimeError,
            "cannot intern umath strings while initializing _multiarray_umath.");
         return -1;

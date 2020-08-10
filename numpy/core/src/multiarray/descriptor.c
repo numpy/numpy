@@ -885,7 +885,17 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         new->metadata = conv->metadata;
         Py_XINCREF(new->metadata);
     }
-    new->flags = conv->flags;
+    /*
+     * Certain flags must be inherited from the fields.  This is needed
+     * only for void dtypes (or subclasses of it such as a record dtype).
+     * For other dtypes, the field part will only be used for direct field
+     * access and thus flag inheritance should not be necessary.
+     * (We only allow object fields if the dtype is object as well.)
+     * This ensures copying over of the NPY_FROM_FIELDS "inherited" flags.
+     */
+    if (new->type_num == NPY_VOID) {
+        new->flags = conv->flags;
+    }
     Py_DECREF(conv);
     return new;
 
@@ -1801,9 +1811,10 @@ static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
     if (self->fields == Py_None) {
-        fprintf(stderr, "*** Reference count error detected: \n" \
-                "an attempt was made to deallocate %d (%c) ***\n",
+        fprintf(stderr, "*** Reference count error detected: "
+                "an attempt was made to deallocate the dtype %d (%c) ***\n",
                 self->type_num, self->type);
+        assert(0);
         Py_INCREF(self);
         Py_INCREF(self);
         return;

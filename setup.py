@@ -161,7 +161,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
     config.add_data_files(('numpy', 'LICENSE.txt'))
-    config.add_data_files(('numpy', 'numpy/__init__.pxd'))
+    config.add_data_files(('numpy', 'numpy/*.pxd'))
 
     config.get_version('numpy/version.py') # sets config.version
 
@@ -403,6 +403,16 @@ def parse_setuppy_commands():
     return True
 
 
+def get_docs_url():
+    if not ISRELEASED:
+        return "https://numpy.org/devdocs"
+    else:
+        # For releaeses, this URL ends up on pypi.
+        # By pinning the version, users looking at old PyPI releases can get
+        # to the associated docs easily.
+        return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
+
+
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
@@ -437,7 +447,7 @@ def setup_package():
         download_url = "https://pypi.python.org/pypi/numpy",
         project_urls={
             "Bug Tracker": "https://github.com/numpy/numpy/issues",
-            "Documentation": "https://docs.scipy.org/doc/numpy/",
+            "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
         license = 'BSD',

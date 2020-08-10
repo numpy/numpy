@@ -37,7 +37,6 @@ Example::
 import os
 import shutil
 import io
-from contextlib import closing
 
 from numpy.core.overrides import set_module
 
@@ -333,12 +332,9 @@ class DataSource:
 
         # TODO: Doesn't handle compressed files!
         if self._isurl(path):
-            try:
-                with closing(urlopen(path)) as openedurl:
-                    with _open(upath, 'wb') as f:
-                        shutil.copyfileobj(openedurl, f)
-            except URLError:
-                raise URLError("URL not found: %s" % path)
+            with urlopen(path) as openedurl:
+                with _open(upath, 'wb') as f:
+                    shutil.copyfileobj(openedurl, f)
         else:
             shutil.copyfile(path, upath)
         return upath

@@ -395,7 +395,9 @@ class object_(generic):
 class datetime64:
     @overload
     def __init__(
-        self, __value: Union[datetime64, str, dt.datetime] = ..., __format: str = ...
+        self,
+        __value: Union[None, datetime64, str, dt.datetime] = ...,
+        __format: str = ...
     ) -> None: ...
     @overload
     def __init__(self, __value: int, __format: str) -> None: ...
@@ -453,19 +455,20 @@ class inexact(number): ...  # type: ignore
 class floating(inexact, _real_generic): ...  # type: ignore
 
 class float16(floating):
-    def __init__(self, __value: SupportsFloat = ...) -> None: ...
+    def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
 
 class float32(floating):
-    def __init__(self, __value: SupportsFloat = ...) -> None: ...
+    def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
 
 class float64(floating):
-    def __init__(self, __value: SupportsFloat = ...) -> None: ...
+    def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
 
 class complexfloating(inexact): ...  # type: ignore
 
 class complex64(complexfloating):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsFloat, SupportsComplex] = ...
+        self,
+        __value: Union[None, SupportsInt, SupportsFloat, SupportsComplex] = ...
     ) -> None: ...
     @property
     def real(self) -> float32: ...
@@ -474,7 +477,8 @@ class complex64(complexfloating):
 
 class complex128(complexfloating):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsFloat, SupportsComplex] = ...
+        self,
+        __value: Union[None, SupportsInt, SupportsFloat, SupportsComplex] = ...
     ) -> None: ...
     @property
     def real(self) -> float64: ...
@@ -515,7 +519,9 @@ class str_(character):
 def array(
     object: object,
     dtype: DtypeLike = ...,
+    *,
     copy: bool = ...,
+    order: Optional[str] = ...,
     subok: bool = ...,
     ndmin: int = ...,
 ) -> ndarray: ...
@@ -824,6 +830,8 @@ tanh: ufunc
 true_divide: ufunc
 trunc: ufunc
 
+abs = absolute
+
 # Warnings
 class ModuleDeprecationWarning(DeprecationWarning): ...
 class VisibleDeprecationWarning(UserWarning): ...
@@ -884,6 +892,9 @@ _ScalarGenericDT = TypeVar(
     "_ScalarGenericDT", bound=Union[dt.datetime, dt.timedelta, generic]
 )
 
+_Number = TypeVar('_Number', bound=number)
+_NumberLike = Union[int, float, complex, number, bool_]
+
 # An array-like object consisting of integers
 _Int = Union[int, integer]
 _Bool = Union[bool, bool_]
@@ -898,6 +909,11 @@ _ArrayLikeIntOrBool = Union[
     Sequence[_IntOrBool],
     Sequence[_ArrayLikeIntNested],
     Sequence[_ArrayLikeBoolNested],
+]
+_ArrayLikeBool = Union[
+    _Bool,
+    Sequence[_Bool],
+    ndarray
 ]
 
 # The signature of take() follows a common theme with its overloads:
@@ -1060,3 +1076,164 @@ def compress(
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
 ) -> ndarray: ...
+@overload
+def clip(
+    a: _Number,
+    a_min: ArrayLike,
+    a_max: Optional[ArrayLike],
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> _Number: ...
+@overload
+def clip(
+    a: _Number,
+    a_min: None,
+    a_max: ArrayLike,
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> _Number: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: ArrayLike,
+    a_max: Optional[ArrayLike],
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> Union[number, ndarray]: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: None,
+    a_max: ArrayLike,
+    out: Optional[ndarray] = ...,
+    **kwargs: Any,
+) -> Union[number, ndarray]: ...
+@overload
+def sum(
+    a: _Number,
+    axis: Optional[_ShapeLike] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> _Number: ...
+@overload
+def sum(
+    a: ArrayLike,
+    axis: _ShapeLike = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> Union[number, ndarray]: ...
+@overload
+def all(
+    a: ArrayLike,
+    axis: None = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+) -> bool_: ...
+@overload
+def all(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+) -> Union[bool_, ndarray]: ...
+@overload
+def any(
+    a: ArrayLike,
+    axis: None = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+) -> bool_: ...
+@overload
+def any(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+) -> Union[bool_, ndarray]: ...
+def cumsum(
+    a: ArrayLike,
+    axis: Optional[int] = ...,
+    dtype: DtypeLike = ...,
+    out: Optional[ndarray] = ...,
+) -> ndarray: ...
+@overload
+def ptp(
+    a: _Number,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+) -> _Number: ...
+@overload
+def ptp(
+    a: ArrayLike,
+    axis: None = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+) -> number: ...
+@overload
+def ptp(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+) -> Union[number, ndarray]: ...
+@overload
+def amax(
+    a: _Number,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> _Number: ...
+@overload
+def amax(
+    a: ArrayLike,
+    axis: None = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> number: ...
+@overload
+def amax(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> Union[number, ndarray]: ...
+@overload
+def amin(
+    a: _Number,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> _Number: ...
+@overload
+def amin(
+    a: ArrayLike,
+    axis: None = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> number: ...
+@overload
+def amin(
+    a: ArrayLike,
+    axis: Optional[_ShapeLike] = ...,
+    out: Optional[ndarray] = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike = ...,
+    where: _ArrayLikeBool = ...,
+) -> Union[number, ndarray]: ...

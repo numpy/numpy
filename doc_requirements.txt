@@ -2,3 +2,4 @@ sphinx>=2.2.0,<3.0
 ipython
 scipy
 matplotlib
+pandas

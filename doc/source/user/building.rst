@@ -31,7 +31,7 @@ Building NumPy requires the following software installed:
    MSVC and Clang compilers. Compilers from other vendors such as Intel,
    Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only supported
    in the form of community feedback, and may not work out of the box.
-   GCC 4.x (and later) compilers are recommended.
+   GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64) GCC 8.x (and later) are recommended.
 
 3) Linear Algebra libraries
 
@@ -110,6 +110,8 @@ a library is to use ldd on the library. If libg2c.so is a dependency, this
 means that g77 has been used (note: g77 is no longer supported for building NumPy).
 If libgfortran.so is a dependency, gfortran has been used. If both are dependencies,
 this means both have been used, which is almost always a very bad idea.
+
+.. _accelerated-blas-lapack-libraries:
 
 Accelerated BLAS/LAPACK libraries
 ---------------------------------

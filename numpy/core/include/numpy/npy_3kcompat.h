@@ -65,6 +65,8 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)), (void)0)
     /* Introduced in https://github.com/python/cpython/commit/b10dc3e7a11fcdb97e285882eba6da92594f90f9 */
     #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)), (void)0)
+    /* Introduced in https://github.com/python/cpython/commit/c86a11221df7e37da389f9c6ce6e47ea22dc44ff */
+    #define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)), (void)0)
 #endif
 
 

@@ -1,79 +1,18 @@
-
-/* Signal handling:
-
-This header file defines macros that allow your code to handle
-interrupts received during processing.  Interrupts that
-could reasonably be handled:
-
-SIGINT, SIGABRT, SIGALRM, SIGSEGV
-
-****Warning***************
-
-Do not allow code that creates temporary memory or increases reference
-counts of Python objects to be interrupted unless you handle it
-differently.
-
-**************************
-
-The mechanism for handling interrupts is conceptually simple:
-
-  - replace the signal handler with our own home-grown version
-     and store the old one.
-  - run the code to be interrupted -- if an interrupt occurs
-     the handler should basically just cause a return to the
-     calling function for finish work.
-  - restore the old signal handler
-
-Of course, every code that allows interrupts must account for
-returning via the interrupt and handle clean-up correctly.  But,
-even still, the simple paradigm is complicated by at least three
-factors.
-
- 1) platform portability (i.e. Microsoft says not to use longjmp
-     to return from signal handling.  They have a __try  and __except
-     extension to C instead but what about mingw?).
-
- 2) how to handle threads: apparently whether signals are delivered to
-    every thread of the process or the "invoking" thread is platform
-    dependent. --- we don't handle threads for now.
-
- 3) do we need to worry about re-entrance.  For now, assume the
-    code will not call-back into itself.
-
-Ideas:
-
- 1) Start by implementing an approach that works on platforms that
-    can use setjmp and longjmp functionality and does nothing
-    on other platforms.
-
- 2) Ignore threads --- i.e. do not mix interrupt handling and threads
-
- 3) Add a default signal_handler function to the C-API but have the rest
-    use macros.
-
-
-Simple Interface:
-
-
-In your C-extension: around a block of code you want to be interruptible
-with a SIGINT
-
-NPY_SIGINT_ON
-[code]
-NPY_SIGINT_OFF
-
-In order for this to work correctly, the
-[code] block must not allocate any memory or alter the reference count of any
-Python objects.  In other words [code] must be interruptible so that continuation
-after NPY_SIGINT_OFF will only be "missing some computations"
-
-Interrupt handling does not work well with threads.
-
-*/
-
-/* Add signal handling macros
-   Make the global variable and signal handler part of the C-API
-*/
+/*
+ * This API is only provided because it is part of publicly exported
+ * headers. Its use is considered DEPRECATED, and it will be removed
+ * eventually.
+ * (This includes the _PyArray_SigintHandler and _PyArray_GetSigintBuf
+ * functions which are however, public API, and not headers.)
+ *
+ * Instead of using these non-threadsafe macros consider periodically
+ * querying `PyErr_CheckSignals()` or `PyOS_InterruptOccurred()` will work.
+ * Both of these require holding the GIL, although cpython could add a
+ * version of `PyOS_InterruptOccurred()` which does not. Such a version
+ * actually exists as private API in Python 3.10, and backported to 3.9 and 3.8,
+ * see also https://bugs.python.org/issue41037 and
+ * https://github.com/python/cpython/pull/20599).
+ */
 
 #ifndef NPY_INTERRUPT_H
 #define NPY_INTERRUPT_H

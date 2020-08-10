@@ -20,8 +20,8 @@ add_docstring(
 
     All arguments are required, and can only be passed by position.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     implementation : function
         Function that implements the operation on NumPy array without
         overrides when called like ``implementation(*args, **kwargs)``.

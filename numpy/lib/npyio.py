@@ -178,6 +178,9 @@ class NpzFile(Mapping):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
+    # Make __exit__ safe if zipfile_factory raises an exception
+    zip = None
+    fid = None
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None):
@@ -197,8 +200,6 @@ class NpzFile(Mapping):
         self.f = BagObj(self)
         if own_fid:
             self.fid = fid
-        else:
-            self.fid = None
 
     def __enter__(self):
         return self
@@ -1084,8 +1085,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             fh = iter(fname)
             fencoding = getattr(fname, 'encoding', 'latin1')
-    except TypeError:
-        raise ValueError('fname must be a string, file handle, or generator')
+    except TypeError as e:
+        raise ValueError(
+            'fname must be a string, file handle, or generator'
+        ) from e
 
     # input may be a python2 io stream
     if encoding is not None:
@@ -1686,7 +1689,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
            <https://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
-    ---------
+    --------
     >>> from io import StringIO
     >>> import numpy as np
 
@@ -1771,10 +1774,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid = fname
             fid_ctx = contextlib_nullcontext(fid)
         fhd = iter(fid)
-    except TypeError:
+    except TypeError as e:
         raise TypeError(
             "fname must be a string, filehandle, list of strings, "
-            "or generator. Got %s instead." % type(fname))
+            "or generator. Got %s instead." % type(fname)) from e
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,

@@ -29,3 +29,12 @@ If you are writing new C code, please follow the style described in
 Suggested ways to work on your development version (compile and run
 the tests without interfering with system packages) are described in
 ``doc/source/dev/development_environment.rst``.
+
+### A note on feature enhancements/API changes
+
+If you are interested in adding a new feature to NumPy, consider
+submitting your feature proposal to the [mailing list][mail], 
+which is the preferred forum for discussing new features and
+API changes.
+
+[mail]: https://mail.python.org/mailman/listinfo/numpy-discussion

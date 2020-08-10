@@ -183,16 +183,16 @@ Some useful aliases of the above types are
 
 Other useful related constants are
 
-.. c:var:: NPY_NTYPES
+.. c:macro:: NPY_NTYPES
 
     The total number of built-in NumPy types. The enumeration covers
     the range from 0 to NPY_NTYPES-1.
 
-.. c:var:: NPY_NOTYPE
+.. c:macro:: NPY_NOTYPE
 
     A signal value guaranteed not to be a valid type enumeration number.
 
-.. c:var:: NPY_USERDEF
+.. c:macro:: NPY_USERDEF
 
     The start of type numbers used for Custom Data types.
 

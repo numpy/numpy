@@ -537,6 +537,22 @@ def test_deprecate_ragged_arrays():
         np.array(arg)
 
 
+class TestTooDeepDeprecation(_VisibleDeprecationTestCase):
+    # NumPy 1.20, 2020-05-08
+    # This is a bit similar to the above ragged array deprecation case.
+    message = re.escape("Creating an ndarray from nested sequences exceeding")
+
+    def test_deprecation(self):
+        nested = [1]
+        for i in range(np.MAXDIMS - 1):
+            nested = [nested]
+        self.assert_not_deprecated(np.array, args=(nested,))
+        self.assert_not_deprecated(np.array,
+                args=(nested,), kwargs=dict(dtype=object))
+
+        self.assert_deprecated(np.array, args=([nested],))
+
+
 class TestToString(_DeprecationTestCase):
     # 2020-03-06 1.19.0
     message = re.escape("tostring() is deprecated. Use tobytes() instead.")
@@ -599,7 +615,7 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_deprecated(round, args=(scalar,))
             self.assert_deprecated(round, args=(scalar, 0))
             self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-    
+
     def test_not_deprecated(self):
         for scalar_type in self.not_deprecated_types:
             scalar = scalar_type(0)
@@ -662,3 +678,49 @@ class TestDeprecatedGlobals(_DeprecationTestCase):
         # from np.compat
         self.assert_deprecated(lambda: np.long)
         self.assert_deprecated(lambda: np.unicode)
+
+
+class TestMatrixInOuter(_DeprecationTestCase):
+    # 2020-05-13 NumPy 1.20.0
+    message = (r"add.outer\(\) was passed a numpy matrix as "
+               r"(first|second) argument.")
+
+    def test_deprecated(self):
+        arr = np.array([1, 2, 3])
+        m = np.array([1, 2, 3]).view(np.matrix)
+        self.assert_deprecated(np.add.outer, args=(m, m), num=2)
+        self.assert_deprecated(np.add.outer, args=(arr, m))
+        self.assert_deprecated(np.add.outer, args=(m, arr))
+        self.assert_not_deprecated(np.add.outer, args=(arr, arr))
+
+
+class TestRaggedArray(_DeprecationTestCase):
+    # 2020-07-24, NumPy 1.20.0
+    message = "setting an array element with a sequence"
+
+    def test_deprecated(self):
+        arr = np.ones((1, 1))
+        # Deprecated if the array is a leave node:
+        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64))
+        # And when it is an assignment into a lower dimensional subarray:
+        self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
+
+
+class TestTrimZeros(_DeprecationTestCase):
+    # Numpy 1.20.0, 2020-07-31
+    @pytest.mark.parametrize("arr", [np.random.rand(10, 10).tolist(),
+                                     np.random.rand(10).astype(str)])
+    def test_deprecated(self, arr):
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            try:
+                np.trim_zeros(arr)
+            except DeprecationWarning as ex:
+                assert_(isinstance(ex.__cause__, ValueError))
+            else:
+                raise AssertionError("No error raised during function call")
+
+        out = np.lib.function_base._trim_zeros_old(arr)
+        assert_array_equal(arr, out)

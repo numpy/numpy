@@ -89,3 +89,38 @@ np.ravel(a, order="bob")  # E: Argument "order" to "ravel" has incompatible type
 np.compress(
     [True], A, axis=1.0  # E: Argument "axis" to "compress" has incompatible type
 )
+
+np.clip(a, 1, 2, out=1)  # E: No overload variant of "clip" matches argument type
+np.clip(1, None, None)  # E: No overload variant of "clip" matches argument type
+
+np.sum(a, axis=1.0)  # E: No overload variant of "sum" matches argument type
+np.sum(a, keepdims=1.0)  # E: No overload variant of "sum" matches argument type
+np.sum(a, initial=[1])  # E: No overload variant of "sum" matches argument type
+
+np.all(a, axis=1.0)  # E: No overload variant of "all" matches argument type
+np.all(a, keepdims=1.0)  # E: No overload variant of "all" matches argument type
+np.all(a, out=1.0)  # E: No overload variant of "all" matches argument type
+
+np.any(a, axis=1.0)  # E: No overload variant of "any" matches argument type
+np.any(a, keepdims=1.0)  # E: No overload variant of "any" matches argument type
+np.any(a, out=1.0)  # E: No overload variant of "any" matches argument type
+
+np.cumsum(a, axis=1.0)  # E: Argument "axis" to "cumsum" has incompatible type
+np.cumsum(a, dtype=1.0)  # E: Argument "dtype" to "cumsum" has incompatible type
+np.cumsum(a, out=1.0)  # E: Argument "out" to "cumsum" has incompatible type
+
+np.ptp(a, axis=1.0)  # E: No overload variant of "ptp" matches argument type
+np.ptp(a, keepdims=1.0)  # E: No overload variant of "ptp" matches argument type
+np.ptp(a, out=1.0)  # E: No overload variant of "ptp" matches argument type
+
+np.amax(a, axis=1.0)  # E: No overload variant of "amax" matches argument type
+np.amax(a, keepdims=1.0)  # E: No overload variant of "amax" matches argument type
+np.amax(a, out=1.0)  # E: No overload variant of "amax" matches argument type
+np.amax(a, initial=[1.0])  # E: No overload variant of "amax" matches argument type
+np.amax(a, where=[1.0])  # E: List item 0 has incompatible type
+
+np.amin(a, axis=1.0)  # E: No overload variant of "amin" matches argument type
+np.amin(a, keepdims=1.0)  # E: No overload variant of "amin" matches argument type
+np.amin(a, out=1.0)  # E: No overload variant of "amin" matches argument type
+np.amin(a, initial=[1.0])  # E: No overload variant of "amin" matches argument type
+np.amin(a, where=[1.0])  # E: List item 0 has incompatible type

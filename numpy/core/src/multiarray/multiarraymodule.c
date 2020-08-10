@@ -35,6 +35,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 /* Internal APIs */
 #include "alloc.h"
+#include "abstractdtypes.h"
+#include "array_coercion.h"
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
@@ -823,6 +825,9 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     PyObject* ret = NULL;
 
     typenum = PyArray_ObjectType(op1, 0);
+    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
@@ -912,6 +917,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     NPY_BEGIN_THREADS_DEF;
 
     typenum = PyArray_ObjectType(op1, 0);
+    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
@@ -3796,36 +3804,6 @@ _PyArray_GetSigintBuf(void)
 
 
 static PyObject *
-test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    int kind = 0;
-    int a = 0;
-
-    if (!PyArg_ParseTuple(args, "|i:test_interrupt", &kind)) {
-        return NULL;
-    }
-    if (kind) {
-        Py_BEGIN_ALLOW_THREADS;
-        while (a >= 0) {
-            if ((a % 1000 == 0) && PyOS_InterruptOccurred()) {
-                break;
-            }
-            a += 1;
-        }
-        Py_END_ALLOW_THREADS;
-    }
-    else {
-        NPY_SIGINT_ON
-        while(a >= 0) {
-            a += 1;
-        }
-        NPY_SIGINT_OFF
-    }
-    return PyInt_FromLong(a);
-}
-
-
-static PyObject *
 array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_work,
                          int raise_exceptions)
 {
@@ -3975,6 +3953,7 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return PyInt_FromLong(axis);
 }
 
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4119,9 +4098,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"_vec_string",
         (PyCFunction)_vec_string,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"test_interrupt",
-        (PyCFunction)test_interrupt,
-        METH_VARARGS, NULL},
     {"_insert", (PyCFunction)arr_insert,
         METH_VARARGS | METH_KEYWORDS,
         "Insert vals sequentially into equivalent 1-d positions "
@@ -4151,6 +4127,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
+    {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4618,6 +4596,9 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
 
     if (set_typeinfo(d) != 0) {
+        goto err;
+    }
+    if (initialize_and_map_pytypes_to_dtypes() < 0) {
         goto err;
     }
     if (initumath(m) != 0) {

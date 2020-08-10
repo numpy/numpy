@@ -385,14 +385,14 @@ that should be repeated using a variable expansion similar to the
 named repeat rules of the Fortran-specific repeats.
 
 NumPy Distutils preprocesses C source files (extension: :file:`.c.src`) written
-in a custom templating language to generate C code. The :c:data:`@` symbol is
+in a custom templating language to generate C code. The ``@`` symbol is
 used to wrap macro-style variables to empower a string substitution mechanism
 that might describe (for instance) a set of data types.
 
-The template language blocks are delimited by :c:data:`/**begin repeat`
-and :c:data:`/**end repeat**/` lines, which may also be nested using
-consecutively numbered delimiting lines such as :c:data:`/**begin repeat1`
-and :c:data:`/**end repeat1**/`:
+The template language blocks are delimited by ``/**begin repeat``
+and ``/**end repeat**/`` lines, which may also be nested using
+consecutively numbered delimiting lines such as ``/**begin repeat1``
+and ``/**end repeat1**/``:
 
 1. "/\**begin repeat "on a line by itself marks the beginning of
 a segment that should be repeated.

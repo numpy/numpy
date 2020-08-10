@@ -68,12 +68,26 @@ the following code is valid:
 
 .. code-block:: python
 
-    x = np.array([1, 2])
-    x.dtype = np.bool_
+    >>> x = np.array([1, 2])
+    >>> x.dtype = np.bool_
 
 This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should insted use the `numpy.ndarray.view`
 method to create a view of the array with a different dtype.
+
+dtype
+~~~~~
+
+The ``DTypeLike`` type tries to avoid creation of dtype objects using
+dictionary of fields like below:
+
+.. code-block:: python
+
+    >>> x = np.dtype({"field1": (float, 1), "field2": (int, 3)})
+
+Although this is valid Numpy code, the type checker will complain about it,
+since its usage is discouraged.
+Please see : https://numpy.org/devdocs/reference/arrays.dtypes.html
 
 """
 from ._array_like import _SupportsArray, ArrayLike

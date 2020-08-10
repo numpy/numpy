@@ -5,6 +5,10 @@ import decimal
 from fractions import Fraction
 import math
 import pytest
+import hypothesis
+from hypothesis.extra.numpy import arrays
+import hypothesis.strategies as st
+
 
 import numpy as np
 from numpy import ma
@@ -1162,25 +1166,47 @@ class TestAngle:
 
 class TestTrimZeros:
 
-    """
-    Only testing for integer splits.
+    a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
+    b = a.astype(float)
+    c = a.astype(complex)
+    d = np.array([None, [], 1, False, 'b', 3.0, range(4), b''], dtype=object)
 
-    """
+    def values(self):
+        attr_names = ('a', 'b', 'c', 'd')
+        return (getattr(self, name) for name in attr_names)
 
     def test_basic(self):
-        a = np.array([0, 0, 1, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 2, 3, 4]))
+        slc = np.s_[2:-1]
+        for arr in self.values():
+            res = trim_zeros(arr)
+            assert_array_equal(res, arr[slc])
 
     def test_leading_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 4]))
+        slc = np.s_[:-1]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='b')
+            assert_array_equal(res, arr[slc])
 
     def test_trailing_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 0, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 0, 4]))
+        slc = np.s_[2:]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='F')
+            assert_array_equal(res, arr[slc])
+
+    def test_all_zero(self):
+        for _arr in self.values():
+            arr = np.zeros_like(_arr, dtype=_arr.dtype)
+
+            res1 = trim_zeros(arr, trim='B')
+            assert len(res1) == 0
+
+            res2 = trim_zeros(arr, trim='f')
+            assert len(res2) == 0
+
+    def test_size_zero(self):
+        arr = np.zeros(0)
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
 
 
 class TestExtins:
@@ -3103,6 +3129,74 @@ class TestQuantile:
         p = p.tolist()
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
+
+    def test_quantile_monotonic(self):
+        # GH 14685
+        # test that the return value of quantile is monotonic if p0 is ordered
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9,
+                                         8, 8, 7]) * 0.1, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+    @hypothesis.given(
+            arr=arrays(dtype=np.float64,
+                       shape=st.integers(min_value=3, max_value=1000),
+                       elements=st.floats(allow_infinity=False, allow_nan=False,
+                                          min_value=-1e300, max_value=1e300)))
+    def test_quantile_monotonic_hypo(self, arr):
+        p0 = np.arange(0, 1, 0.01)
+        quantile = np.quantile(arr, p0)
+        assert_equal(np.sort(quantile), quantile)
+
+
+class TestLerp:
+    @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      t1=st.floats(allow_nan=False, allow_infinity=False,
+                                   min_value=0, max_value=1),
+                      a = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300),
+                      b = st.floats(allow_nan=False, allow_infinity=False,
+                                    min_value=-1e300, max_value=1e300))
+    def test_lerp_monotonic(self, t0, t1, a, b):
+        l0 = np.lib.function_base._lerp(a, b, t0)
+        l1 = np.lib.function_base._lerp(a, b, t1)
+        if t0 == t1 or a == b:
+            assert l0 == l1  # uninteresting
+        elif (t0 < t1) == (a < b):
+            assert l0 <= l1
+        else:
+            assert l0 >= l1
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_bounded(self, t, a, b):
+        if a <= b:
+            assert a <= np.lib.function_base._lerp(a, b, t) <= b
+        else:
+            assert b <= np.lib.function_base._lerp(a, b, t) <= a
+
+    @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=0, max_value=1),
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
+    def test_lerp_symmetric(self, t, a, b):
+        # double subtraction is needed to remove the extra precision of t < 0.5
+        left = np.lib.function_base._lerp(a, b, 1 - (1 - t))
+        right = np.lib.function_base._lerp(b, a, 1 - t)
+        assert left == right
+
+    def test_lerp_0d_inputs(self):
+        a = np.array(2)
+        b = np.array(5)
+        t = np.array(0.2)
+        assert np.lib.function_base._lerp(a, b, t) == 2.6
 
 
 class TestMedian:

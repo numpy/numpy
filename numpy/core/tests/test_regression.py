@@ -2325,6 +2325,10 @@ class TestRegression:
         # allowed as a special case due to existing use, see gh-2798
         a = np.ones(1, dtype=('O', [('name', 'O')]))
         assert_equal(a[0], 1)
+        # In particular, the above union dtype (and union dtypes in general)
+        # should mainly behave like the main (object) dtype:
+        assert a[0] is a.item()
+        assert type(a[0]) is int
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
@@ -2423,9 +2427,10 @@ class TestRegression:
             assert b'numpy.core.multiarray' in s
 
     def test_object_casting_errors(self):
-        # gh-11993
+        # gh-11993 update to ValueError (see gh-16909), since strings can in
+        # principle be converted to complex, but this string cannot.
         arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
-        assert_raises(TypeError, arr.astype, 'c8')
+        assert_raises(ValueError, arr.astype, 'c8')
 
     def test_eff1d_casting(self):
         # gh-12711
@@ -2450,7 +2455,8 @@ class TestRegression:
         class T:
             __array_interface__ = {}
 
-        np.array([T()])
+        with assert_raises(ValueError):
+            np.array([T()])
 
     def test_2d__array__shape(self):
         class T(object):

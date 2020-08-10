@@ -1504,6 +1504,17 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #include <emmintrin.h>
 #endif
 
+#ifdef NPY_HAVE_NEON
+    typedef npy_uint64 uint64_unaligned __attribute__((aligned(16)));
+    static NPY_INLINE int32_t
+    sign_mask(uint8x16_t input)
+    {
+        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
+        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
+        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
+    }
+#endif
 /*
  * This function packs boolean values in the input array into the bits of a
  * byte array. Truth values are determined as usual: 0 is false, everything
@@ -1543,6 +1554,7 @@ pack_inner(const char *inptr,
                 a = npy_bswap8(a);
                 b = npy_bswap8(b);
             }
+            
             /* note x86 can load unaligned */
             __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
@@ -1550,6 +1562,34 @@ pack_inner(const char *inptr,
             v = _mm_cmpeq_epi8(v, zero);
             /* extract msb of 16 bytes and pack it into 16 bit */
             r = _mm_movemask_epi8(v);
+            /* store result */
+            memcpy(outptr, &r, 1);
+            outptr += out_stride;
+            memcpy(outptr, (char*)&r + 1, 1);
+            outptr += out_stride;
+            inptr += 16;
+        }
+    }
+#elif defined NPY_HAVE_NEON
+    if (in_stride == 1 && element_size == 1 && n_out > 2) {
+        /* don't handle non-full 8-byte remainder */
+        npy_intp vn_out = n_out - (remain ? 1 : 0);
+        vn_out -= (vn_out & 1);
+        for (index = 0; index < vn_out; index += 2) {
+            unsigned int r;
+            npy_uint64 a = *((uint64_unaligned*)inptr);
+            npy_uint64 b = *((uint64_unaligned*)(inptr + 8));
+            if (order == 'b') {
+                a = npy_bswap8(a);
+                b = npy_bswap8(b);
+            }
+            uint64x2_t v = vcombine_u64(vcreate_u64(a), vcreate_u64(b));
+            uint64x2_t zero = vdupq_n_u64(0);
+            /* false -> 0x00 and true -> 0xFF */
+            v = vreinterpretq_u64_u8(vmvnq_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero))));
+            /* extract msb of 16 bytes and pack it into 16 bit */
+            uint8x16_t input = vreinterpretq_u8_u64(v);
+            r = sign_mask(input);
             /* store result */
             memcpy(outptr, &r, 1);
             outptr += out_stride;

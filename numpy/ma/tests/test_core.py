@@ -215,6 +215,17 @@ class TestMaskedArray:
         y = array([1, 2, 3], mask=x._mask, copy=True)
         assert_(not np.may_share_memory(x.mask, y.mask))
 
+    def test_masked_singleton_array_creation_warns(self):
+        # The first works, but should not (ideally), there may be no way
+        # to solve this, however, as long as `np.ma.masked` is an ndarray.
+        np.array(np.ma.masked)
+        with pytest.warns(UserWarning):
+            # Tries to create a float array, using `float(np.ma.masked)`.
+            # We may want to define this is invalid behaviour in the future!
+            # (requiring np.ma.masked to be a known NumPy scalar probably
+            # with a DType.)
+            np.array([3., np.ma.masked])
+
     def test_creation_with_list_of_maskedarrays(self):
         # Tests creating a masked array from a list of masked arrays.
         x = array(np.arange(5), mask=[1, 0, 0, 0, 0])

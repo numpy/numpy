@@ -132,10 +132,9 @@ def poly2lag(pol):
 
     """
     [pol] = pu.as_series([pol])
-    deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1):
-        res = lagadd(lagmulx(res), pol[i])
+    for p in pol[::-1]:
+        res = lagadd(lagmulx(res), p)
     return res
 
 
@@ -1626,7 +1625,6 @@ class Laguerre(ABCPolyBase):
     _fromroots = staticmethod(lagfromroots)
 
     # Virtual properties
-    nickname = 'lag'
     domain = np.array(lagdomain)
     window = np.array(lagdomain)
     basis_name = 'L'

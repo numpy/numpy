@@ -22,6 +22,7 @@
 #include "item_selection.h"
 #include "mem_overlap.h"
 #include "array_assign.h"
+#include "array_coercion.h"
 
 
 #define HAS_INTEGER 1
@@ -538,22 +539,22 @@ prepare_index(PyArrayObject *self, PyObject *index,
             /*
              * There are two types of boolean indices (which are equivalent,
              * for the most part though). A single boolean index of matching
-             * dimensionality and size is a boolean index.
-             * If this is not the case, it is instead expanded into (multiple)
-             * integer array indices.
+             * shape is a boolean index. If this is not the case, it is
+             * instead expanded into (multiple) integer array indices.
              */
             PyArrayObject *nonzero_result[NPY_MAXDIMS];
 
             if ((index_ndim == 1) && allow_boolean) {
                 /*
-                 * If ndim and size match, this can be optimized as a single
-                 * boolean index. The size check is necessary only to support
-                 * old non-matching sizes by using fancy indexing instead.
-                 * The reason for that is that fancy indexing uses nonzero,
-                 * and only the result of nonzero is checked for legality.
+                 * If shapes match exactly, this can be optimized as a single
+                 * boolean index. When the dimensions are identical but the shapes are not,
+                 * this is always an error. The check ensures that these errors are raised
+                 * and match those of the generic path.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
-                        && PyArray_SIZE(arr) == PyArray_SIZE(self)) {
+                        && PyArray_CompareLists(PyArray_DIMS(arr),
+                                                PyArray_DIMS(self),
+                                                PyArray_NDIM(arr))) {
 
                     index_type = HAS_BOOL;
                     indices[curr_idx].type = HAS_BOOL;
@@ -1754,7 +1755,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
         if (get_item_pointer(self, &item, indices, 1) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
     }
@@ -1832,7 +1833,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (get_item_pointer(self, &item, indices, index_num) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
         /* integers do not store objects in indices */

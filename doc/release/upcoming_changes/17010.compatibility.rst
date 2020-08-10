@@ -1,0 +1,24 @@
+Boolean array indices with mismatching shapes now properly give ``IndexError``
+------------------------------------------------------------------------------
+
+Previously, if a boolean array index matched the size of the indexed array but
+not the shape, it was incorrectly allowed in some cases. In other cases, it
+gave an error, but the error was incorrectly a ``ValueError`` with a message
+about broadcasting instead of the correct ``IndexError``.
+
+For example, the following used to incorrectly give ``ValueError: operands
+could not be broadcast together with shapes (2,2) (1,4)``:
+
+.. code:: python
+
+   np.empty((2, 2))[np.array([[True, False, False, False]])]
+
+And the following used to incorrectly return ``array([], dtype=float64)``:
+
+.. code:: python
+
+   np.empty((2, 2))[np.array([[False, False, False, False]])]
+
+Both now correctly give ``IndexError: boolean index did not match indexed
+array along dimension 0; dimension is 2 but corresponding boolean dimension is
+1``.

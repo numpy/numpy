@@ -2206,7 +2206,6 @@ execute_complex(PyObject *a1, int is_forward, double fct)
     double *dptr = (double *)PyArray_DATA(data);
     int fail=0;
     Py_BEGIN_ALLOW_THREADS;
-    NPY_SIGINT_ON;
     plan = make_cfft_plan(npts);
     if (!plan) fail=1;
     if (!fail)
@@ -2217,7 +2216,6 @@ execute_complex(PyObject *a1, int is_forward, double fct)
           dptr += npts*2;
       }
     if (plan) destroy_cfft_plan(plan);
-    NPY_SIGINT_OFF;
     Py_END_ALLOW_THREADS;
     if (fail) {
       Py_XDECREF(data);
@@ -2258,7 +2256,6 @@ execute_real_forward(PyObject *a1, double fct)
              *dptr = (double *)PyArray_DATA(data);
 
       Py_BEGIN_ALLOW_THREADS;
-      NPY_SIGINT_ON;
       plan = make_rfft_plan(npts);
       if (!plan) fail=1;
       if (!fail)
@@ -2272,7 +2269,6 @@ execute_real_forward(PyObject *a1, double fct)
             dptr += npts;
       }
       if (plan) destroy_rfft_plan(plan);
-      NPY_SIGINT_OFF;
       Py_END_ALLOW_THREADS;
     }
     if (fail) {
@@ -2303,7 +2299,6 @@ execute_real_backward(PyObject *a1, double fct)
              *dptr = (double *)PyArray_DATA(data);
 
       Py_BEGIN_ALLOW_THREADS;
-      NPY_SIGINT_ON;
       plan = make_rfft_plan(npts);
       if (!plan) fail=1;
       if (!fail) {
@@ -2316,7 +2311,6 @@ execute_real_backward(PyObject *a1, double fct)
         }
       }
       if (plan) destroy_rfft_plan(plan);
-      NPY_SIGINT_OFF;
       Py_END_ALLOW_THREADS;
     }
     if (fail) {

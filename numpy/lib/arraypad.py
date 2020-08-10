@@ -207,23 +207,20 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     """
     edge_pair = _get_edges(padded, axis, width_pair)
 
-    left_ramp = np.linspace(
-        start=end_value_pair[0],
-        stop=edge_pair[0].squeeze(axis),  # Dimensions is replaced by linspace
-        num=width_pair[0],
-        endpoint=False,
-        dtype=padded.dtype,
-        axis=axis,
+    left_ramp, right_ramp = (
+        np.linspace(
+            start=end_value,
+            stop=edge.squeeze(axis), # Dimension is replaced by linspace
+            num=width,
+            endpoint=False,
+            dtype=padded.dtype,
+            axis=axis
+        )
+        for end_value, edge, width in zip(
+            end_value_pair, edge_pair, width_pair
+        )
     )
-
-    right_ramp = np.linspace(
-        start=end_value_pair[1],
-        stop=edge_pair[1].squeeze(axis),  # Dimension is replaced by linspace
-        num=width_pair[1],
-        endpoint=False,
-        dtype=padded.dtype,
-        axis=axis,
-    )
+        
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
@@ -783,7 +780,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
     try:
         unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     except KeyError:
-        raise ValueError("mode '{}' is not supported".format(mode))
+        raise ValueError("mode '{}' is not supported".format(mode)) from None
     if unsupported_kwargs:
         raise ValueError("unsupported keyword arguments for mode '{}': {}"
                          .format(mode, unsupported_kwargs))
