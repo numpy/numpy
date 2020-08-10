@@ -220,6 +220,7 @@ array_implement_array_function_internal(
 {
     PyObject *implementing_args[NPY_MAXARGS];
     PyObject *array_function_methods[NPY_MAXARGS];
+    PyObject *types = NULL;
 
     PyObject *result = NULL;
 
@@ -266,7 +267,7 @@ array_implement_array_function_internal(
      * We use a tuple, because it's the fastest Python collection to create
      * and has the bonus of being immutable.
      */
-    PyObject *types = PyTuple_New(num_implementing_args);
+    types = PyTuple_New(num_implementing_args);
     if (types == NULL) {
         goto cleanup;
     }
@@ -366,8 +367,6 @@ NPY_NO_EXPORT PyObject *
 array_implement_c_array_function_creation(
     const char *function_name, PyObject *args, PyObject *kwargs)
 {
-    PyObject *result = NULL;
-
     if (kwargs == NULL) {
         return Py_NotImplemented;
     }
@@ -398,16 +397,15 @@ array_implement_c_array_function_creation(
         return NULL;
     }
     if (!PyCallable_Check(public_api)) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "numpy.%s is not callable.",
-                     function_name);
-        goto cleanup;
+        Py_DECREF(public_api);
+        return PyErr_Format(PyExc_RuntimeError,
+                            "numpy.%s is not callable.",
+                            function_name);
     }
 
-    result = array_implement_array_function_internal(
+    PyObject* result = array_implement_array_function_internal(
             public_api, relevant_args, args, kwargs);
 
-cleanup:
     Py_DECREF(public_api);
     return result;
 }
