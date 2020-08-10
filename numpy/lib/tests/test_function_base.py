@@ -1743,6 +1743,11 @@ class TestDigitize:
         assert_equal(np.digitize(x, [x - 1, x + 1], False, True), 1)
         with assert_raises(RuntimeError):
             np.digitize(x, [x - 1, 2 ** 63 - 1], False, True)
+        bins = np.uint64([0, 2**64 - 1])
+        with assert_raises(RuntimeError):
+            np.digitize(x, bins, False, True)
+        bins = np.uint64([0, 2**64 - 2])
+        assert_equal(np.digitize(x, bins, False, True), 1)
 
     @pytest.mark.xfail(
         reason="gh-11022: np.core.multiarray._monoticity loses precision")

@@ -4855,11 +4855,16 @@ def digitize(x, bins, right=False, edge=False):
         delta = -1 if right else 1
         idx = -1 if delta == mono else 0
         if np.issubdtype(bins.dtype, _nx.integer):
-            if abs(bins[idx]) >= 2 ** 63 - 1:
-                raise RuntimeError('Overflow, bin values exceed 64-bit '
-                                   'precision')
-            bins = _nx.int64(bins)
-            bins[idx] += delta
+            if any(abs(bins) >= 2**63 - 1):
+                if np.issubdtype(bins.dtype, _nx.uint64  # unsigned case
+                                 ) and bins[idx] < 2**64 - 1:
+                    bins[idx] += _nx.uint64(delta)
+                else:
+                    raise RuntimeError('Overflow, bin values exceed 64-bit '
+                                       'precision')
+            else:
+                bins = _nx.int64(bins)
+                bins[idx] += delta
         else:
             bins[idx] = np.nextafter(bins[idx], bins[idx] + delta)
 
