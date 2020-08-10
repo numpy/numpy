@@ -1590,8 +1590,8 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
     PyObject* array_function_result = NULL;
 
-    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", "like", NULL};
+    static char *kwd[] = {"object", "dtype", "copy", "order", "subok",
+                          "ndmin", "like", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_Format(PyExc_TypeError,
@@ -2830,7 +2830,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     PyObject *like = NULL;
     PyObject *array_function_result = NULL;
-    static char *kwd[]= {"start", "stop", "step", "dtype", "like", NULL};
+    static char *kwd[] = {"start", "stop", "step", "dtype", "like", NULL};
     PyArray_Descr *typecode = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&$O:arange", kwd,
