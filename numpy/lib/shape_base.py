@@ -758,8 +758,8 @@ def array_split(ary, indices_or_sections, axis=0):
     >>> np.array_split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
 
-    >>> c = np.arange(9)
-    >>> np.array_split(c, 4)
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
     [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
