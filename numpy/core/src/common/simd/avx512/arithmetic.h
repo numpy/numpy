@@ -103,6 +103,9 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_mul_f32 _mm512_mul_ps
 #define npyv_mul_f64 _mm512_mul_pd
 
+#define npyv_muladd_f32 _mm512_fmadd_ps
+#define npyv_muladd_f64 _mm512_fmadd_pd
+
 // saturated
 // TODO: after implment Packs intrins
 
@@ -112,5 +115,27 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 // TODO: emulate integer division
 #define npyv_div_f32 _mm512_div_ps
 #define npyv_div_f64 _mm512_div_pd
+NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
+{
+    __m512 h64   = _mm512_shuffle_f32x4(a, a, _MM_SHUFFLE(3, 2, 3, 2));
+    __m512 sum32 = _mm512_add_ps(a, h64);
+    __m512 h32   = _mm512_shuffle_f32x4(sum32, sum32, _MM_SHUFFLE(1, 0, 3, 2));
+    __m512 sum16 = _mm512_add_ps(sum32, h32);
+    __m512 h16   = _mm512_permute_ps(sum16, _MM_SHUFFLE(1, 0, 3, 2));
+    __m512 sum8  = _mm512_add_ps(sum16, h16);
+    __m512 h4    = _mm512_permute_ps(sum8, _MM_SHUFFLE(2, 3, 0, 1));
+    __m512 sum4  = _mm512_add_ps(sum8, h4);
+    return _mm_cvtss_f32(_mm512_castps512_ps128(sum4));
+}
+NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
+{
+    __m512d h64   = _mm512_shuffle_f64x2(a, a, _MM_SHUFFLE(3, 2, 3, 2));
+    __m512d sum32 = _mm512_add_pd(a, h64);
+    __m512d h32   = _mm512_permutex_pd(sum32, _MM_SHUFFLE(1, 0, 3, 2));
+    __m512d sum16 = _mm512_add_pd(sum32, h32);
+    __m512d h16   = _mm512_permute_pd(sum16, _MM_SHUFFLE(2, 3, 0, 1));
+    __m512d sum8  = _mm512_add_pd(sum16, h16);
+    return _mm_cvtsd_f64(_mm512_castpd512_pd128(sum8));
+}
 
 #endif // _NPY_SIMD_AVX512_ARITHMETIC_H
