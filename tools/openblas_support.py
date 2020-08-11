@@ -224,7 +224,7 @@ def unpack_windows_zip(fname):
 def unpack_targz(fname):
     target = os.path.join(gettempdir(), 'openblas')
     if not os.path.exists(target):
-        os.mkdir(target)
+        os.makedirs(target)
     with tarfile.open(fname, 'r') as zf:
         # Strip common prefix from paths when unpacking
         prefix = os.path.commonpath(zf.getnames())
