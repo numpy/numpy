@@ -2136,10 +2136,8 @@ class Test_I0:
 
     def test_complex(self):
         a = np.array([0, 1 + 2j])
-        res = i0(a)
-        exp = np.array([1.0 + 0.0j, 0.18785373+0.64616944j])
-        assert_allclose(res, exp)
-
+        with pytest.raises(ValueError, match="i0 requires real input"):
+            res = i0(a)
 
 class TestKaiser:
 

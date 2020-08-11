@@ -3146,12 +3146,12 @@ def i0(x):
 
     Parameters
     ----------
-    x : array_like
+    x : array_like of float
         Argument of the Bessel function.
 
     Returns
     -------
-    out : ndarray, shape = x.shape, dtype = float or complex
+    out : ndarray, shape = x.shape, dtype = float
         The modified Bessel function evaluated at each of the elements of `x`.
 
     See Also
@@ -3184,21 +3184,17 @@ def i0(x):
     --------
     >>> np.i0(0.)
     array(1.0)  # may vary
-    >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
+    >>> np.i0([0, 1, 2, 3])
+    array([1.        , 1.26606588, 2.2795853 , 4.88079259])  # may vary
 
     """
     x = np.asanyarray(x)
-    if x.dtype.kind != 'c':
-        x = np.abs(x)  # x must be positive for sqrt to be real
-    ind1 = (np.abs(x) <= 8.0)
-    y1 = _i0_1(x[ind1])
-    ind2 = ~ind1
-    y2 = _i0_2(x[ind2])
-    y = np.empty_like(x, dtype=np.common_type(y1, y2))
-    y[ind1] = y1
-    y[ind2] = y2
-    return y
+    if x.dtype.kind == 'c':
+        raise ValueError("i0 requires real input")
+    if x.dtype.kind != 'f':
+        x = x.astype(float)
+    x = np.abs(x)
+    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
 ## End of cephes code for i0
 
