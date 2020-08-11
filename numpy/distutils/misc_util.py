@@ -1900,7 +1900,7 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            with open(branch_cache_fn, 'r'):
+            with open(branch_cache_fn, 'r') as f:
                 for line in f:
                     branch1, revision1  = line.split()[:2]
                     if revision1==revision0:
