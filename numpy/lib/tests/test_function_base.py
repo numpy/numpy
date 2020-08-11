@@ -1169,10 +1169,9 @@ class TestTrimZeros:
     a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
     b = a.astype(float)
     c = a.astype(complex)
-    d = np.array([None, [], 1, False, 'b', 3.0, range(4), b''], dtype=object)
 
     def values(self):
-        attr_names = ('a', 'b', 'c', 'd')
+        attr_names = ('a', 'b', 'c')
         return (getattr(self, name) for name in attr_names)
 
     def test_basic(self):
