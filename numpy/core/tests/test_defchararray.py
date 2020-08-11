@@ -179,6 +179,12 @@ class TestComparisons:
     def test_less(self):
         assert_array_equal((self.A < self.B), [[True, False], [False, False]])
 
+    def test_type(self):
+        out1 = np.char.equal(self.A, self.B)
+        out2 = np.char.equal('a', 'a')
+        assert_(isinstance(out1, np.ndarray))
+        assert_(isinstance(out2, np.ndarray))
+
 class TestComparisonsMixed1(TestComparisons):
     """Ticket #1276"""
 
