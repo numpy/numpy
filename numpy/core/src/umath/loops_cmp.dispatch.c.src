@@ -32,27 +32,30 @@ is_overlap(char *src, npy_intp ssrc, char *dst, npy_intp sdst, int wstep)
 #define CONTIG  0
 #define NCONTIG 1
 #define SCALAR  2
-
 /**begin repeat
- * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONGLONG, ULONGLONG, FLOAT, DOUBLE#
- * #sfx  = s8,   u8,    s16,   u16,    s32, u32,  s64,      u64,       f32,   f64#
- * #bsfx = b8,   b8,    b16,   b16,    b32, b32,  b64,      b64,       b32,   b64#
- * #len  = 8,    8,     16,    16,     32,  32,   64,       64,        32,    64#
- * #VCHK = NPY_SIMD*9,                                                        NPY_SIMD_F64#
- * #CLR  = 0*8,                                                        1,     1#
+ * #TYPE  = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONGLONG, ULONGLONG, FLOAT, DOUBLE#
+ * #sfx   = s8,   u8,    s16,   u16,    s32, u32,  s64,      u64,       f32,   f64#
+ * #bsfx  = b8,   b8,    b16,   b16,    b32, b32,  b64,      b64,       b32,   b64#
+ * #len   = 8,    8,     16,    16,     32,  32,   64,       64,        32,    64#
+ * #VCHK  = NPY_SIMD*9,                                                        NPY_SIMD_F64#
+ * #CLR   = 0*8,                                                        1,     1#
+ * #UMAP  = 1,    0,     1,     0,      1,   0,    1,        0,         0,     0#
+ * #FLOATK = 0*8, 1, 1#
  */
 /**begin repeat1
  * #kind   = equal, not_equal, greater, greater_equal, logical_and, logical_or#
  * #intrin = cmpeq, cmpneq,    cmpgt,   cmpge,         and,         or#
  * #OP     = ==,    !=,        >,       >=,            &&,          ||#
  * #LOGIC  = 0,     0,         0,       0,             1,           1#
- * #SWAP   = 1,     1,         0,       0,             1,           1#
+ * #KMAP   = 1,     1,         0,       0,             1,           1#
  */
 /**begin repeat2
- * #S0TYPE = CONTIG, CONTIG,  NCONTIG, NCONTIG, SCALAR, SCALAR#
- * #S1TYPE = CONTIG, CONTIG,  NCONTIG, CONTIG,  CONTIG, NCONTIG#
- * #D0TYPE = CONTIG, NCONTIG, CONTIG,  CONTIG,  CONTIG, CONTIG#
+ * #S0TYPE = CONTIG, CONTIG,  NCONTIG, NCONTIG, SCALAR, SCALAR,  CONTIG,  CONTIG, NCONTIG#
+ * #S1TYPE = CONTIG, CONTIG,  NCONTIG, CONTIG,  CONTIG, NCONTIG, NCONTIG, SCALAR, SCALAR#
+ * #D0TYPE = CONTIG, NCONTIG, CONTIG,  CONTIG,  CONTIG, CONTIG,  CONTIG,  CONTIG, CONTIG#
+ * #SWAP   = 0,      0,       0,       0,       0,      0,       1,       1,      1#
  */
+#if (!@UMAP@ || !@KMAP@) && (!@KMAP@ || !@SWAP@)
 static void @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@
 (char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
@@ -143,7 +146,7 @@ static void @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@
             #if @S0TYPE@ == SCALAR
                 npyv_@bsfx@ v_mask@N@ = npyv_@intrin@_@sfx@(v_scalar0, v_src1@N@);
             #elif @S1TYPE@ == SCALAR
-                npyv_@bsfx@ v_mask@N@ = npyv_@intrin@_@sfx@(v_src1@N@, v_scalar1);
+                npyv_@bsfx@ v_mask@N@ = npyv_@intrin@_@sfx@(v_src0@N@, v_scalar1);
             #else
                 npyv_@bsfx@ v_mask@N@ = npyv_@intrin@_@sfx@(v_src0@N@, v_src1@N@);
             #endif
@@ -196,6 +199,7 @@ static void @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@
         *dst = src00 @OP@ src10;
     }
 }
+#endif // swap between src0 and src1
 /**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
@@ -204,12 +208,15 @@ static void @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@
  * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONGLONG, ULONGLONG, FLOAT, DOUBLE#
  * #sfx  = s8,   u8,    s16,   u16,    s32, u32,  s64,      u64,       f32,   f64#
  * #CLR  = 0*8,                                                        1,     1#
+ * #UMAP = 1,    0,     1,     0,      1,   0,    1,        0,         0,     0#     
  */
 /**begin repeat1
  * #kind = equal, not_equal, greater, greater_equal, logical_and, logical_or#
  * #SWAP = 1,     1,         0,       0,             1,           1#
  * #OP   = ==,    !=,        >,       >=,            &&,          ||#
+ * #KMAP = 1,     1,         0,       0,             1,           1#
  */
+#if (!@UMAP@ || !@UMAP@) || !@KMAP@
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -236,7 +243,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@(args, dimensions, steps);
     }
     /**end repeat2**/
-    #if @SWAP@
+    #if @KMAP@ // Swap between src0 and src1
         /**begin repeat2
          * #S0TYPE = SCALAR, NCONTIG, SCALAR#
          * #S1TYPE = CONTIG,  CONTIG, NCONTIG#
@@ -251,7 +258,20 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@(nargs, dimensions, nsteps);
         }
         /**end repeat2**/
-    #endif // SWAP
+    #else
+        /**begin repeat2
+         * #S0TYPE = CONTIG, CONTIG,  NCONTIG#
+         * #S1TYPE = SCALAR, NCONTIG, SCALAR#
+         * #D0TYPE = CONTIG, CONTIG,  CONTIG#
+         * #COND   = d0==dz && s0==sz && s1==0,
+                     d0==dz && s0==sz,
+                     d0==dz && s1==0#
+         */
+        else if (@COND@) {
+            @TYPE@_@kind@_@S0TYPE@_@S1TYPE@_@D0TYPE@(args, dimensions, steps);
+        }
+        /**end repeat2**/
+    #endif // Swap between src0 and src1
     else if (s0==sz && s1==sz) {
         @TYPE@_@kind@_CONTIG_CONTIG_NCONTIG(args, dimensions, steps);
     }
@@ -269,6 +289,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     npy_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
+#endif
 /**end repeat1**/
 /**end repeat**/
 
@@ -292,6 +313,20 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_less_equal)
     npy_intp nsteps[3] = {steps[1], steps[0], steps[2]};
     NPY_CPU_DISPATCH_CURFX(@TYPE@_greater_equal)(nargs, dimensions, nsteps, func);
 }
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = BYTE, SHORT, INT, LONGLONG#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, logical_and, logical_or#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
+{
+    NPY_CPU_DISPATCH_CURFX(U@TYPE@_@kind@)(args, dimensions, steps, func);
+}
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
