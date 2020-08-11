@@ -3183,9 +3183,9 @@ def i0(x):
     Examples
     --------
     >>> np.i0(0.)
-    array(1.0)  # may vary
+    array(1.0)
     >>> np.i0([0, 1, 2, 3])
-    array([1.        , 1.26606588, 2.2795853 , 4.88079259])  # may vary
+    array([1.        , 1.26606588, 2.2795853 , 4.88079259])
 
     """
     x = np.asanyarray(x)
