@@ -264,7 +264,7 @@ class DataSource:
 
         """
         fname, ext = os.path.splitext(filename)
-        return ext in _file_openers.keys()
+        return ext in _file_openers
 
     def _iswritemode(self, mode):
         """Test if the given mode will open a file for writing."""
