@@ -3189,6 +3189,8 @@ def i0(x):
 
     """
     x = np.asanyarray(x)
+    if x.dtype.kind != 'c':
+        x = np.abs(x)  # x must be positive for sqrt to be real
     ind1 = (np.abs(x) <= 8.0)
     y1 = _i0_1(x[ind1])
     ind2 = ~ind1
