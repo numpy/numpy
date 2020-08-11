@@ -1,35 +1,22 @@
 {% extends "!layout.html" %}
 
 {%- block extrahead %}
-<style>
-  .main {
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-  }
-  div.top-scipy-org-logo-header {
-    background-color: #fafafa;
-    border-bottom: 2px solid #013243; /* Warm Black */
-    margin-top: 0;
-    box-shadow: none;
-  }
-  div.top-scipy-org-logo-header img {
-    height: 100px;
-    padding-left: 27px;
-  }
-  div.spc-navbar .nav-pills > li > a {
-    background-color: #4d77cf; /* Han Blue */
-  }
-</style>
 {{ super() }}
+<link rel="stylesheet" href="{{ pathto('_static/numpy.css', 1) }}" type="text/css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
 {% endblock %}
 
 {%- block header %}
 <div class="container">
   <div class="top-scipy-org-logo-header">
-    <a href="{{ pathto('index') }}">
+    <a href="https://numpy.org">
       <img border=0 alt="NumPy" src="{{ pathto('_static/numpylogo.svg', 1) }}">
     </a>
+    <span id="algolia-searchbar">
+    <form action="" method="get">
+      <input type="text" aria-labelledby="search-documentation" placeholder="Search">
+    </form>
+    </span>
   </div>
 </div>
 
@@ -52,3 +39,17 @@
 {%- endif %}
 {{ super() }}
 {% endblock %}
+
+{%- block footer %}
+{{ super() }}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript"> docsearch({
+apiKey: 'c8367ae0f87be4fd19cb01bae97ef4f2',
+indexName: 'numpy',
+inputSelector: 'form input[type=text]',
+algoliaOptions: { 'facetFilters': ["tags:devdocs,stable"] },
+debug: false // Set debug to true if you want to inspect the dropdown
+});
+</script>
+{% endblock %}
+

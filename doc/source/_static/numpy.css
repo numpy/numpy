@@ -1,0 +1,32 @@
+.main {
+  -moz-box-shadow: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+div.top-scipy-org-logo-header {
+  background-color: #fafafa;
+  border-bottom: 2px solid #013243; /* Warm Black */
+  margin-top: 0;
+  box-shadow: none;
+}
+div.top-scipy-org-logo-header img {
+  height: 100px;
+  padding-left: 27px;
+  display: inline-block;
+}
+
+#algolia-searchbar {
+  float: right;
+  padding-top:36px;
+  padding-right: 27px;
+}
+
+div.spc-navbar .nav-pills > li > a {
+  background-color: #4d77cf; /* Han Blue */
+}
+
+/* Eliminate the Quick Search boxes in the sidebar;
+the search results get clipped by the sidebar margin */
+#searchbox {
+  visibility: hidden;
+}
