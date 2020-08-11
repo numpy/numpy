@@ -715,8 +715,7 @@ class system_info:
         AliasedOptionError :
             in case more than one of the options are found
         """
-        found = map(lambda opt: self.cp.has_option(self.section, opt), options)
-        found = list(found)
+        found = [self.cp.has_option(self.section, opt) for opt in options]
         if sum(found) == 1:
             return options[found.index(True)]
         elif sum(found) == 0:
