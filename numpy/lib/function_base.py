@@ -3190,7 +3190,7 @@ def i0(x):
     """
     x = np.asanyarray(x)
     if x.dtype.kind == 'c':
-        raise ValueError("i0 requires real input")
+        raise TypeError("i0 not supported for complex values")
     if x.dtype.kind != 'f':
         x = x.astype(float)
     x = np.abs(x)
