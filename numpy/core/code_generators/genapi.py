@@ -306,7 +306,7 @@ def write_file(filename, data):
             if data == f.read():
                 return
 
-    with open(filename, 'w') as fid:
+    with open(filename, 'wb') as fid:
         fid.write(data)
 
 
