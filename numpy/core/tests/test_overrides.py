@@ -443,7 +443,12 @@ class TestArrayLike:
                 return NotImplemented
             return my_func(*args, **kwargs)
 
-    def add_method(name, enable_value_error=False):
+    class MyNoArrayFunctionArray():
+
+        def __init__(self, function=None):
+            self.function = function
+
+    def add_method(name, arr_class, enable_value_error=False):
         def _definition(*args, **kwargs):
             # Check that `like=` isn't propagated downstream
             assert 'like' not in kwargs
@@ -451,13 +456,13 @@ class TestArrayLike:
             if enable_value_error and 'value_error' in kwargs:
                 raise ValueError
 
-            return TestArrayLike.MyArray(getattr(TestArrayLike.MyArray, name))
-        setattr(TestArrayLike.MyArray, name, _definition)
+            return arr_class(getattr(arr_class, name))
+        setattr(arr_class, name, _definition)
 
     def func_args(*args, **kwargs):
         return args, kwargs
 
-    @pytest.mark.parametrize('function, args, kwargs', [
+    _array_tests = [
         ('array', *func_args((1,))),
         ('asarray', *func_args((1,))),
         ('ascontiguousarray', *func_args((2, 3))),
@@ -476,12 +481,14 @@ class TestArrayLike:
         ('genfromtxt', *func_args(lambda: StringIO(u'1,2.1'),
                                   dtype=[('int', 'i8'), ('float', 'f8')],
                                   delimiter=',')),
-        ])
+    ]
+
+    @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     @pytest.mark.parametrize('numpy_ref', [True, False])
     @requires_array_function
     def test_array_like(self, function, args, kwargs, numpy_ref):
-        TestArrayLike.add_method('array')
-        TestArrayLike.add_method(function)
+        TestArrayLike.add_method('array', TestArrayLike.MyArray)
+        TestArrayLike.add_method(function, TestArrayLike.MyArray)
         np_func = getattr(np, function)
         my_func = getattr(TestArrayLike.MyArray, function)
 
@@ -509,10 +516,39 @@ class TestArrayLike:
             assert type(array_like) is TestArrayLike.MyArray
             assert array_like.function is my_func
 
+    @pytest.mark.parametrize('function, args, kwargs', _array_tests)
+    @pytest.mark.parametrize('numpy_ref', [True, False])
+    @requires_array_function
+    def test_no_array_function_like(self, function, args, kwargs, numpy_ref):
+        TestArrayLike.add_method('array', TestArrayLike.MyNoArrayFunctionArray)
+        TestArrayLike.add_method(function, TestArrayLike.MyNoArrayFunctionArray)
+        np_func = getattr(np, function)
+        my_func = getattr(TestArrayLike.MyNoArrayFunctionArray, function)
+
+        if numpy_ref is True:
+            ref = np.array(1)
+        else:
+            ref = TestArrayLike.MyNoArrayFunctionArray.array()
+
+        like_args = tuple(a() if callable(a) else a for a in args)
+        array_like = np_func(*like_args, **kwargs, like=ref)
+
+        assert type(array_like) is np.ndarray
+        if numpy_ref is True:
+            np_args = tuple(a() if callable(a) else a for a in args)
+            np_arr = np_func(*np_args, **kwargs)
+
+            # Special-case np.empty to ensure values match
+            if function == "empty":
+                np_arr.fill(1)
+                array_like.fill(1)
+
+            assert_equal(array_like, np_arr)
+
     @pytest.mark.parametrize('numpy_ref', [True, False])
     def test_array_like_fromfile(self, numpy_ref):
-        TestArrayLike.add_method('array')
-        TestArrayLike.add_method("fromfile")
+        TestArrayLike.add_method('array', TestArrayLike.MyArray)
+        TestArrayLike.add_method("fromfile", TestArrayLike.MyArray)
 
         if numpy_ref is True:
             ref = np.array(1)
@@ -536,7 +572,11 @@ class TestArrayLike:
 
     @requires_array_function
     def test_exception_handling(self):
-        TestArrayLike.add_method('array', enable_value_error=True)
+        TestArrayLike.add_method(
+            'array',
+            TestArrayLike.MyArray,
+            enable_value_error=True,
+        )
 
         ref = TestArrayLike.MyArray.array()
 
