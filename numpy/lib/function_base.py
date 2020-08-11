@@ -1644,12 +1644,13 @@ def trim_zeros(filt, trim='fb'):
 def _trim_zeros_new(filt, trim='fb'):
     """Newer optimized implementation of ``trim_zeros()``."""
     arr_any = np.asanyarray(filt)
-    with warnings.catch_warnings():
-        # not all dtypes support elementwise comparisons with `0` (e.g. str)
-        warnings.simplefilter('error', FutureWarning)
-        arr = arr_any != 0 if arr_any.dtype != bool else arr_any
+    arr = arr_any != 0 if arr_any.dtype != bool else arr_any
 
-    if arr.ndim != 1:
+    if arr is False:
+        # not all dtypes support elementwise comparisons with `0` (e.g. str);
+        # they will return `False` instead
+        raise TypeError('elementwise comparison failed; unsupported data type')
+    elif arr.ndim != 1:
         raise ValueError('trim_zeros requires an array of exactly one dimension')
     elif not len(arr):
         return filt
