@@ -94,10 +94,25 @@
 #define npyv_mul_f32 vec_mul
 #define npyv_mul_f64 vec_mul
 
+#define npyv_muladd_f32 vec_madd
+#define npyv_muladd_f64 vec_madd
+
 /***************************
  * Division
  ***************************/
 #define npyv_div_f32 vec_div
 #define npyv_div_f64 vec_div
+
+// TODO: Horizontal add: Calculates the sum of all vector elements.
+NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
+{
+    return vec_extract(a, 0) + vec_extract(a, 1) +
+    vec_extract(a, 2) + vec_extract(a, 3);
+}
+
+NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
+{
+    return vec_extract(a, 0) + vec_extract(a, 1);
+}
 
 #endif // _NPY_SIMD_VSX_ARITHMETIC_H
