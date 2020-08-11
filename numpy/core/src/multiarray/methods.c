@@ -1616,7 +1616,7 @@ _getlist_pkl(PyArrayObject *self)
     }
     while (iter->index < iter->size) {
         theobject = getitem(iter->dataptr, self);
-        PyList_SET_ITEM(list, (int) iter->index, theobject);
+        PyList_SET_ITEM(list, iter->index, theobject);
         PyArray_ITER_NEXT(iter);
     }
     Py_DECREF(iter);
@@ -1636,7 +1636,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
         return -1;
     }
     while(iter->index < iter->size) {
-        theobject = PyList_GET_ITEM(list, (int) iter->index);
+        theobject = PyList_GET_ITEM(list, iter->index);
         setitem(theobject, iter->dataptr, self);
         PyArray_ITER_NEXT(iter);
     }
