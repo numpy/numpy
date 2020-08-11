@@ -108,7 +108,7 @@ class Lstsq(Benchmark):
 
 class Einsum(Benchmark):
     param_names = ['dtype']
-    params = [[np.float64]]
+    params = [[np.float32, np.float64]]
     def setup(self, dtype):
         self.a = np.arange(2900, dtype=dtype)
         self.b = np.arange(3000, dtype=dtype)
