@@ -194,7 +194,7 @@ def _commastring(astr):
         if order in ['|', '=', _nbo]:
             order = ''
         dtype = order + dtype
-        if (repeats == ''):
+        if repeats in ('', '()'):
             newitem = dtype
         else:
             newitem = (dtype, ast.literal_eval(repeats))
