@@ -214,6 +214,19 @@ else:
     __all__.remove('Arrayterator')
     del Arrayterator
 
+    # These names were removed in NumPy 1.20.  For at least one release,
+    # attempts to access these names in the numpy namespace will have an
+    # error message that refers to NEP 32 and points to the numpy_financial
+    # library.
+    _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
+                        'ppmt', 'pv', 'rate']
+    __expired_attrs__ = {
+        name: (f'In accordance with NEP 32, the function {name} was removed '
+               'from NumPy version 1.20.  A replacement for this function '
+               'is available in the numpy_financial library: '
+               'https://pypi.org/project/numpy-financial')
+        for name in _financial_names}
+
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
@@ -228,6 +241,14 @@ else:
         # module level getattr is only supported in 3.7 onwards
         # https://www.python.org/dev/peps/pep-0562/
         def __getattr__(attr):
+            # Raise AttributeError for expired attributes
+            try:
+                msg = __expired_attrs__[attr]
+            except KeyError:
+                pass
+            else:
+                raise AttributeError(msg)
+
             # Emit warnings for deprecated attributes
             try:
                 val, msg = __deprecated_attrs__[attr]
