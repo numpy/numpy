@@ -1,0 +1,23 @@
+Casting errors interrupt Iteration
+----------------------------------
+NumPy sometimes has issues reporting errors during casting
+correctly. This is rare, since the vast majority of casts
+will never result in errors.
+However, in some cases of casting errors less of the result
+may be written back. The state of arrays involved in errors
+should *always* be considered undefined.
+Possible changes occur for:
+
+* Universal functions when casting is unsafe (rare)
+* Advanced index assignments
+* The lowlevel `numpy.nditer` API.
+
+For users of the ``NpyIter`` C-API such cast errors will now
+cause the `iternext()` function to return 0 and thus abort
+iteration.
+Currently, there is no API to detect such an error directly.
+It is necessary to check ``PyErr_Occurred()``, which
+may be problematic in combination with ``NpyIter_Reset``.
+These issues always existed, but new API could be added
+if required by users.
+
