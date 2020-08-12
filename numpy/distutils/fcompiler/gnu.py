@@ -23,11 +23,6 @@ def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
 
 
-
-_EXTRAFLAGS = []
-
-
-
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
     compiler_aliases = ('g77', )
@@ -295,11 +290,11 @@ class Gnu95FCompiler(GnuFCompiler):
     executables = {
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_f90' : [None, "-Wall", "-g",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
