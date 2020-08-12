@@ -399,59 +399,6 @@ set_fp_invalid_or_clear(int error_occurred)
 
 #define UMATH_LINALG_MODULE_NAME "_umath_linalg"
 
-static float s_one;
-static float s_zero;
-static float s_minus_one;
-static float s_ninf;
-static float s_nan;
-static double d_one;
-static double d_zero;
-static double d_minus_one;
-static double d_ninf;
-static double d_nan;
-static npy_cfloat c_one;
-static npy_cfloat c_zero;
-static npy_cfloat c_minus_one;
-static npy_cfloat c_ninf;
-static npy_cfloat c_nan;
-static npy_cdouble z_one;
-static npy_cdouble z_zero;
-static npy_cdouble z_minus_one;
-static npy_cdouble z_ninf;
-static npy_cdouble z_nan;
-
-static void init_constants(void)
-{
-    /*
-       this is needed as NPY_INFINITY and NPY_NAN macros
-       can't be used as initializers. I prefer to just set
-       all the constants the same way.
-    */
-    s_one  = 1.0f;
-    s_zero = 0.0f;
-    s_minus_one = -1.0f;
-    s_ninf = -NPY_INFINITYF;
-    s_nan = NPY_NANF;
-
-    d_one  = 1.0;
-    d_zero = 0.0;
-    d_minus_one = -1.0;
-    d_ninf = -NPY_INFINITY;
-    d_nan = NPY_NAN;
-
-    c_one = npy_cpackf(1.0f, 0.0f);
-    c_zero = npy_cpackf(0.0f, 0.0f);
-    c_minus_one = npy_cpackf(-1.0f, 0.0f);
-    c_ninf = npy_cpackf(-NPY_INFINITYF, 0.0f);
-    c_nan = npy_cpackf(NPY_NANF, NPY_NANF);
-
-    z_one = npy_cpack(1.0, 0.0);
-    z_zero = npy_cpack(0.0, 0.0);
-    z_minus_one = npy_cpack(-1.0, 0.0);
-    z_ninf = npy_cpack(-NPY_INFINITY, 0.0);
-    z_nan = npy_cpack(NPY_NAN, NPY_NAN);
-}
-
 /*
  *****************************************************************************
  **               Structs used for data rearrangement                       **
@@ -714,8 +661,9 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
     #typ = float, double, npy_cfloat, npy_cdouble#
     #copy = scopy, dcopy, ccopy, zcopy#
-    #nan = s_nan, d_nan, c_nan, z_nan#
-    #zero = s_zero, d_zero, c_zero, z_zero#
+    #suffix = f,  , f,  #
+    #SUFFIX = F,  , F,  #
+    #cmplx =  0, 0, 1, 1#
  */
 static NPY_INLINE void *
 linearize_@TYPE@_matrix(void *dst_in,
@@ -816,30 +764,18 @@ static NPY_INLINE void
 nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
 {
     @typ@ *dst = (@typ@ *) dst_in;
+#if @cmplx@
+    @typ@ nan = npy_cpack@suffix@(NPY_NAN@SUFFIX@, NPY_NAN@SUFFIX@);
+#else
+    @typ@ nan = NPY_NAN@SUFFIX@;
+#endif
 
     int i, j;
     for (i = 0; i < data->rows; i++) {
         @typ@ *cp = dst;
         ptrdiff_t cs = data->column_strides/sizeof(@typ@);
         for (j = 0; j < data->columns; ++j) {
-            *cp = @nan@;
-            cp += cs;
-        }
-        dst += data->row_strides/sizeof(@typ@);
-    }
-}
-
-static NPY_INLINE void
-zero_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
-{
-    @typ@ *dst = (@typ@ *) dst_in;
-
-    int i, j;
-    for (i = 0; i < data->rows; i++) {
-        @typ@ *cp = dst;
-        ptrdiff_t cs = data->column_strides/sizeof(@typ@);
-        for (j = 0; j < data->columns; ++j) {
-            *cp = @zero@;
+            *cp = nan;
             cp += cs;
         }
         dst += data->row_strides/sizeof(@typ@);
@@ -853,18 +789,26 @@ zero_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = float, double, npy_cfloat, npy_cdouble#
    #cblas_type = s, d, c, z#
+   #suffix = f,  , f,  #
+   #cmplx = 0, 0, 1, 1#
  */
 static NPY_INLINE void
 identity_@TYPE@_matrix(void *ptr, size_t n)
 {
     size_t i;
     @typ@ *matrix = (@typ@*) ptr;
+#if @cmplx@
+    @typ@ one = npy_cpack@suffix@(1.0@suffix@, 0.0@suffix@);
+#else
+    @typ@ one = 1.0@suffix@;
+#endif
+
     /* in IEEE floating point, zeroes are represented as bitwise 0 */
     memset(matrix, 0, n*n*sizeof(@typ@));
 
     for (i = 0; i < n; ++i)
     {
-        *matrix = @cblas_type@_one;
+        *matrix = one;
         matrix += n+1;
     }
 }
@@ -875,7 +819,8 @@ identity_@TYPE@_matrix(void *ptr, size_t n)
 
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = float, double, npy_cfloat, npy_cdouble#
-   #cblas_type = s, d, c, z#
+   #suffix = f,  , f,  #
+   #cmplx = 0, 0, 1, 1#
  */
 
 static NPY_INLINE void
@@ -883,10 +828,16 @@ triu_@TYPE@_matrix(void *ptr, size_t n)
 {
     size_t i, j;
     @typ@ *matrix = (@typ@*)ptr;
+#if @cmplx@
+    @typ@ zero = npy_cpack@suffix@(0.0@suffix@, 0.0@suffix@);
+#else
+    @typ@ zero = 0.0@suffix@;
+#endif
+
     matrix += n;
     for (i = 1; i < n; ++i) {
         for (j = 0; j < i; ++j) {
-            matrix[j] = @cblas_type@_zero;
+            matrix[j] = zero;
         }
         matrix += n;
     }
@@ -1013,6 +964,9 @@ static NPY_INLINE @typ@
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
    #basetyp = npy_float, npy_double, npy_float, npy_double#
    #cblas_type = s, d, c, z#
+   #suffix = f,  , f,  #
+   #SUFFIX = F,  , F,  #
+   #cmplx = 0, 0, 1, 1#
 */
 
 static NPY_INLINE void
@@ -1036,18 +990,32 @@ static NPY_INLINE void
             change_sign += (pivots[i] != (i+1));
         }
 
-        memcpy(sign,
-               (change_sign % 2)?
-                   &@cblas_type@_minus_one :
-                   &@cblas_type@_one
-               , sizeof(*sign));
+        if (change_sign % 2) {
+#if @cmplx@
+            *sign = npy_cpack@suffix@(-1.0@suffix@, 0.0@suffix@);
+#else
+            *sign = -1.0@suffix@;
+#endif
+        }
+        else {
+#if @cmplx@
+            *sign = npy_cpack@suffix@(1.0@suffix@, 0.0@suffix@);
+#else
+            *sign = 1.0@suffix@;
+#endif
+        }
+
         @TYPE@_slogdet_from_factored_diagonal(src, m, sign, logdet);
     } else {
         /*
           if getrf fails, use 0 as sign and -inf as logdet
         */
-        memcpy(sign, &@cblas_type@_zero, sizeof(*sign));
-        memcpy(logdet, &@cblas_type@_ninf, sizeof(*logdet));
+#if @cmplx@
+        *sign = npy_cpack@suffix@(0.0@suffix@, 0.0@suffix@);
+#else
+        *sign = 0.0@suffix@;
+#endif
+        *logdet = -NPY_INFINITY@SUFFIX@;
     }
 }
 
@@ -3614,7 +3582,6 @@ PyObject *PyInit__umath_linalg(void)
     PyObject *d;
     PyObject *version;
 
-    init_constants();
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
         return NULL;
