@@ -3,3 +3,4 @@ ipython
 scipy
 matplotlib
 pandas
+pydata-sphinx-theme
