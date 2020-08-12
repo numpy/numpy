@@ -43,6 +43,6 @@
 typedef void (*sum_of_products_fn)(int, char **, npy_intp const*, npy_intp);
 
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT sum_of_products_fn einsum_get_sum_of_products_function,
-    (int nop, int type_num, npy_intp itemsize,npy_intp const *fixed_strides))
+    (int nop, int type_num, npy_intp itemsize, npy_intp const *fixed_strides))
 
 #endif // _NPY_EINSUM_P_H_
