@@ -68,14 +68,8 @@ dbg_stack_trace()
 
 typedef CBLAS_INT         fortran_int;
 
-typedef struct { float r, i; } f2c_complex;
-typedef struct { double r, i; } f2c_doublecomplex;
-/* typedef long int (*L_fp)(); */
-
 typedef float             fortran_real;
 typedef double            fortran_doublereal;
-typedef f2c_complex       fortran_complex;
-typedef f2c_doublecomplex fortran_doublecomplex;
 
 extern fortran_int
 FNAME(sgeev)(char *jobvl, char *jobvr, fortran_int *n,
@@ -91,20 +85,20 @@ FNAME(dgeev)(char *jobvl, char *jobvr, fortran_int *n,
              fortran_int *info);
 extern fortran_int
 FNAME(cgeev)(char *jobvl, char *jobvr, fortran_int *n,
-             f2c_doublecomplex a[], fortran_int *lda,
-             f2c_doublecomplex w[],
-             f2c_doublecomplex vl[], fortran_int *ldvl,
-             f2c_doublecomplex vr[], fortran_int *ldvr,
-             f2c_doublecomplex work[], fortran_int *lwork,
+             npy_cdouble a[], fortran_int *lda,
+             npy_cdouble w[],
+             npy_cdouble vl[], fortran_int *ldvl,
+             npy_cdouble vr[], fortran_int *ldvr,
+             npy_cdouble work[], fortran_int *lwork,
              double rwork[],
              fortran_int *info);
 extern fortran_int
 FNAME(zgeev)(char *jobvl, char *jobvr, fortran_int *n,
-             f2c_doublecomplex a[], fortran_int *lda,
-             f2c_doublecomplex w[],
-             f2c_doublecomplex vl[], fortran_int *ldvl,
-             f2c_doublecomplex vr[], fortran_int *ldvr,
-             f2c_doublecomplex work[], fortran_int *lwork,
+             npy_cdouble a[], fortran_int *lda,
+             npy_cdouble w[],
+             npy_cdouble vl[], fortran_int *ldvl,
+             npy_cdouble vr[], fortran_int *ldvr,
+             npy_cdouble work[], fortran_int *lwork,
              double rwork[],
              fortran_int *info);
 
@@ -120,15 +114,15 @@ FNAME(dsyevd)(char *jobz, char *uplo, fortran_int *n,
               fortran_int *info);
 extern fortran_int
 FNAME(cheevd)(char *jobz, char *uplo, fortran_int *n,
-              f2c_complex a[], fortran_int *lda,
-              float w[], f2c_complex work[],
+              npy_cfloat a[], fortran_int *lda,
+              float w[], npy_cfloat work[],
               fortran_int *lwork, float rwork[], fortran_int *lrwork, fortran_int iwork[],
               fortran_int *liwork,
               fortran_int *info);
 extern fortran_int
 FNAME(zheevd)(char *jobz, char *uplo, fortran_int *n,
-              f2c_doublecomplex a[], fortran_int *lda,
-              double w[], f2c_doublecomplex work[],
+              npy_cdouble a[], fortran_int *lda,
+              double w[], npy_cdouble work[],
               fortran_int *lwork, double rwork[], fortran_int *lrwork, fortran_int iwork[],
               fortran_int *liwork,
               fortran_int *info);
@@ -147,18 +141,18 @@ FNAME(dgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               fortran_int *info);
 extern fortran_int
 FNAME(cgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
-              f2c_complex a[], fortran_int *lda,
-              f2c_complex b[], fortran_int *ldb,
+              npy_cfloat a[], fortran_int *lda,
+              npy_cfloat b[], fortran_int *ldb,
               float s[], float *rcond, fortran_int *rank,
-              f2c_complex work[], fortran_int *lwork,
+              npy_cfloat work[], fortran_int *lwork,
               float rwork[], fortran_int iwork[],
               fortran_int *info);
 extern fortran_int
 FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
-              f2c_doublecomplex a[], fortran_int *lda,
-              f2c_doublecomplex b[], fortran_int *ldb,
+              npy_cdouble a[], fortran_int *lda,
+              npy_cdouble b[], fortran_int *ldb,
               double s[], double *rcond, fortran_int *rank,
-              f2c_doublecomplex work[], fortran_int *lwork,
+              npy_cdouble work[], fortran_int *lwork,
               double rwork[], fortran_int iwork[],
               fortran_int *info);
 
@@ -176,15 +170,15 @@ FNAME(dgesv)(fortran_int *n, fortran_int *nrhs,
              fortran_int *info);
 extern fortran_int
 FNAME(cgesv)(fortran_int *n, fortran_int *nrhs,
-             f2c_complex a[], fortran_int *lda,
+             npy_cfloat a[], fortran_int *lda,
              fortran_int ipiv[],
-             f2c_complex b[], fortran_int *ldb,
+             npy_cfloat b[], fortran_int *ldb,
              fortran_int *info);
 extern fortran_int
 FNAME(zgesv)(fortran_int *n, fortran_int *nrhs,
-             f2c_doublecomplex a[], fortran_int *lda,
+             npy_cdouble a[], fortran_int *lda,
              fortran_int ipiv[],
-             f2c_doublecomplex b[], fortran_int *ldb,
+             npy_cdouble b[], fortran_int *ldb,
              fortran_int *info);
 
 extern fortran_int
@@ -199,12 +193,12 @@ FNAME(dgetrf)(fortran_int *m, fortran_int *n,
               fortran_int *info);
 extern fortran_int
 FNAME(cgetrf)(fortran_int *m, fortran_int *n,
-              f2c_complex a[], fortran_int *lda,
+              npy_cfloat a[], fortran_int *lda,
               fortran_int ipiv[],
               fortran_int *info);
 extern fortran_int
 FNAME(zgetrf)(fortran_int *m, fortran_int *n,
-              f2c_doublecomplex a[], fortran_int *lda,
+              npy_cdouble a[], fortran_int *lda,
               fortran_int ipiv[],
               fortran_int *info);
 
@@ -218,11 +212,11 @@ FNAME(dpotrf)(char *uplo, fortran_int *n,
               fortran_int *info);
 extern fortran_int
 FNAME(cpotrf)(char *uplo, fortran_int *n,
-              f2c_complex a[], fortran_int *lda,
+              npy_cfloat a[], fortran_int *lda,
               fortran_int *info);
 extern fortran_int
 FNAME(zpotrf)(char *uplo, fortran_int *n,
-              f2c_doublecomplex a[], fortran_int *lda,
+              npy_cdouble a[], fortran_int *lda,
               fortran_int *info);
 
 extern fortran_int
@@ -237,17 +231,17 @@ FNAME(dgesdd)(char *jobz, fortran_int *m, fortran_int *n,
               fortran_int *lwork, fortran_int iwork[], fortran_int *info);
 extern fortran_int
 FNAME(cgesdd)(char *jobz, fortran_int *m, fortran_int *n,
-              f2c_complex a[], fortran_int *lda,
-              float s[], f2c_complex u[], fortran_int *ldu,
-              f2c_complex vt[], fortran_int *ldvt,
-              f2c_complex work[], fortran_int *lwork,
+              npy_cfloat a[], fortran_int *lda,
+              float s[], npy_cfloat u[], fortran_int *ldu,
+              npy_cfloat vt[], fortran_int *ldvt,
+              npy_cfloat work[], fortran_int *lwork,
               float rwork[], fortran_int iwork[], fortran_int *info);
 extern fortran_int
 FNAME(zgesdd)(char *jobz, fortran_int *m, fortran_int *n,
-              f2c_doublecomplex a[], fortran_int *lda,
-              double s[], f2c_doublecomplex u[], fortran_int *ldu,
-              f2c_doublecomplex vt[], fortran_int *ldvt,
-              f2c_doublecomplex work[], fortran_int *lwork,
+              npy_cdouble a[], fortran_int *lda,
+              double s[], npy_cdouble u[], fortran_int *ldu,
+              npy_cdouble vt[], fortran_int *ldvt,
+              npy_cdouble work[], fortran_int *lwork,
               double rwork[], fortran_int iwork[], fortran_int *info);
 
 extern fortran_int
@@ -262,13 +256,13 @@ FNAME(dpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
               fortran_int *info);
 extern fortran_int
 FNAME(cpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
-              f2c_complex a[], fortran_int *lda,
-              f2c_complex b[], fortran_int *ldb,
+              npy_cfloat a[], fortran_int *lda,
+              npy_cfloat b[], fortran_int *ldb,
               fortran_int *info);
 extern fortran_int
 FNAME(zpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
-              f2c_doublecomplex a[], fortran_int *lda,
-              f2c_doublecomplex b[], fortran_int *ldb,
+              npy_cdouble a[], fortran_int *lda,
+              npy_cdouble b[], fortran_int *ldb,
               fortran_int *info);
 
 extern fortran_int
@@ -281,11 +275,11 @@ FNAME(dpotri)(char *uplo, fortran_int *n,
               fortran_int *info);
 extern fortran_int
 FNAME(cpotri)(char *uplo, fortran_int *n,
-              f2c_complex a[], fortran_int *lda,
+              npy_cfloat a[], fortran_int *lda,
               fortran_int *info);
 extern fortran_int
 FNAME(zpotri)(char *uplo, fortran_int *n,
-              f2c_doublecomplex a[], fortran_int *lda,
+              npy_cdouble a[], fortran_int *lda,
               fortran_int *info);
 
 extern fortran_int
@@ -298,12 +292,12 @@ FNAME(dcopy)(fortran_int *n,
              double *sy, fortran_int *incy);
 extern fortran_int
 FNAME(ccopy)(fortran_int *n,
-             f2c_complex *sx, fortran_int *incx,
-             f2c_complex *sy, fortran_int *incy);
+             npy_cfloat *sx, fortran_int *incx,
+             npy_cfloat *sy, fortran_int *incy);
 extern fortran_int
 FNAME(zcopy)(fortran_int *n,
-             f2c_doublecomplex *sx, fortran_int *incx,
-             f2c_doublecomplex *sy, fortran_int *incy);
+             npy_cdouble *sx, fortran_int *incx,
+             npy_cdouble *sy, fortran_int *incy);
 
 extern float
 FNAME(sdot)(fortran_int *n,
@@ -314,21 +308,21 @@ FNAME(ddot)(fortran_int *n,
             double *sx, fortran_int *incx,
             double *sy, fortran_int *incy);
 extern void
-FNAME(cdotu)(f2c_complex *ret, fortran_int *n,
-             f2c_complex *sx, fortran_int *incx,
-             f2c_complex *sy, fortran_int *incy);
+FNAME(cdotu)(npy_cfloat *ret, fortran_int *n,
+             npy_cfloat *sx, fortran_int *incx,
+             npy_cfloat *sy, fortran_int *incy);
 extern void
-FNAME(zdotu)(f2c_doublecomplex *ret, fortran_int *n,
-             f2c_doublecomplex *sx, fortran_int *incx,
-             f2c_doublecomplex *sy, fortran_int *incy);
+FNAME(zdotu)(npy_cdouble *ret, fortran_int *n,
+             npy_cdouble *sx, fortran_int *incx,
+             npy_cdouble *sy, fortran_int *incy);
 extern void
-FNAME(cdotc)(f2c_complex *ret, fortran_int *n,
-             f2c_complex *sx, fortran_int *incx,
-             f2c_complex *sy, fortran_int *incy);
+FNAME(cdotc)(npy_cfloat *ret, fortran_int *n,
+             npy_cfloat *sx, fortran_int *incx,
+             npy_cfloat *sy, fortran_int *incy);
 extern void
-FNAME(zdotc)(f2c_doublecomplex *ret, fortran_int *n,
-             f2c_doublecomplex *sx, fortran_int *incx,
-             f2c_doublecomplex *sy, fortran_int *incy);
+FNAME(zdotc)(npy_cdouble *ret, fortran_int *n,
+             npy_cdouble *sx, fortran_int *incx,
+             npy_cdouble *sy, fortran_int *incy);
 
 extern fortran_int
 FNAME(sgemm)(char *transa, char *transb,
@@ -349,19 +343,19 @@ FNAME(dgemm)(char *transa, char *transb,
 extern fortran_int
 FNAME(cgemm)(char *transa, char *transb,
              fortran_int *m, fortran_int *n, fortran_int *k,
-             f2c_complex *alpha,
-             f2c_complex *a, fortran_int *lda,
-             f2c_complex *b, fortran_int *ldb,
-             f2c_complex *beta,
-             f2c_complex *c, fortran_int *ldc);
+             npy_cfloat *alpha,
+             npy_cfloat *a, fortran_int *lda,
+             npy_cfloat *b, fortran_int *ldb,
+             npy_cfloat *beta,
+             npy_cfloat *c, fortran_int *ldc);
 extern fortran_int
 FNAME(zgemm)(char *transa, char *transb,
              fortran_int *m, fortran_int *n, fortran_int *k,
-             f2c_doublecomplex *alpha,
-             f2c_doublecomplex *a, fortran_int *lda,
-             f2c_doublecomplex *b, fortran_int *ldb,
-             f2c_doublecomplex *beta,
-             f2c_doublecomplex *c, fortran_int *ldc);
+             npy_cdouble *alpha,
+             npy_cdouble *a, fortran_int *lda,
+             npy_cdouble *b, fortran_int *ldb,
+             npy_cdouble *beta,
+             npy_cdouble *c, fortran_int *ldc);
 
 
 #define LAPACK_T(FUNC)                                          \
@@ -408,18 +402,6 @@ set_fp_invalid_or_clear(int error_occurred)
 
 #define UMATH_LINALG_MODULE_NAME "_umath_linalg"
 
-typedef union {
-    fortran_complex f;
-    npy_cfloat npy;
-    float array[2];
-} COMPLEX_t;
-
-typedef union {
-    fortran_doublecomplex f;
-    npy_cdouble npy;
-    double array[2];
-} DOUBLECOMPLEX_t;
-
 static float s_one;
 static float s_zero;
 static float s_minus_one;
@@ -430,16 +412,16 @@ static double d_zero;
 static double d_minus_one;
 static double d_ninf;
 static double d_nan;
-static COMPLEX_t c_one;
-static COMPLEX_t c_zero;
-static COMPLEX_t c_minus_one;
-static COMPLEX_t c_ninf;
-static COMPLEX_t c_nan;
-static DOUBLECOMPLEX_t z_one;
-static DOUBLECOMPLEX_t z_zero;
-static DOUBLECOMPLEX_t z_minus_one;
-static DOUBLECOMPLEX_t z_ninf;
-static DOUBLECOMPLEX_t z_nan;
+static npy_cfloat c_one;
+static npy_cfloat c_zero;
+static npy_cfloat c_minus_one;
+static npy_cfloat c_ninf;
+static npy_cfloat c_nan;
+static npy_cdouble z_one;
+static npy_cdouble z_zero;
+static npy_cdouble z_minus_one;
+static npy_cdouble z_ninf;
+static npy_cdouble z_nan;
 
 static void init_constants(void)
 {
@@ -460,27 +442,17 @@ static void init_constants(void)
     d_ninf = -NPY_INFINITY;
     d_nan = NPY_NAN;
 
-    c_one.array[0]  = 1.0f;
-    c_one.array[1]  = 0.0f;
-    c_zero.array[0] = 0.0f;
-    c_zero.array[1] = 0.0f;
-    c_minus_one.array[0] = -1.0f;
-    c_minus_one.array[1] = 0.0f;
-    c_ninf.array[0] = -NPY_INFINITYF;
-    c_ninf.array[1] = 0.0f;
-    c_nan.array[0] = NPY_NANF;
-    c_nan.array[1] = NPY_NANF;
+    c_one = npy_cpackf(1.0f, 0.0f);
+    c_zero = npy_cpackf(0.0f, 0.0f);
+    c_minus_one = npy_cpackf(-1.0f, 0.0f);
+    c_ninf = npy_cpackf(-NPY_INFINITYF, 0.0f);
+    c_nan = npy_cpackf(NPY_NANF, NPY_NANF);
 
-    z_one.array[0]  = 1.0;
-    z_one.array[1]  = 0.0;
-    z_zero.array[0] = 0.0;
-    z_zero.array[1] = 0.0;
-    z_minus_one.array[0] = -1.0;
-    z_minus_one.array[1] = 0.0;
-    z_ninf.array[0] = -NPY_INFINITY;
-    z_ninf.array[1] = 0.0;
-    z_nan.array[0] = NPY_NAN;
-    z_nan.array[1] = NPY_NAN;
+    z_one = npy_cpack(1.0, 0.0);
+    z_zero = npy_cpack(0.0, 0.0);
+    z_minus_one = npy_cpack(-1.0, 0.0);
+    z_ninf = npy_cpack(-NPY_INFINITY, 0.0);
+    z_nan = npy_cpack(NPY_NAN, NPY_NAN);
 }
 
 /*
@@ -743,7 +715,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 
 /**begin repeat
     #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
-    #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+    #typ = float, double, npy_cfloat, npy_cdouble#
     #copy = scopy, dcopy, ccopy, zcopy#
     #nan = s_nan, d_nan, c_nan, z_nan#
     #zero = s_zero, d_zero, c_zero, z_zero#
@@ -882,7 +854,7 @@ zero_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
                /* identity square matrix generation */
 /**begin repeat
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
-   #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+   #typ = float, double, npy_cfloat, npy_cdouble#
    #cblas_type = s, d, c, z#
  */
 static NPY_INLINE void
@@ -905,7 +877,7 @@ identity_@TYPE@_matrix(void *ptr, size_t n)
 /**begin repeat
 
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
-   #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+   #typ = float, double, npy_cfloat, npy_cdouble#
    #cblas_type = s, d, c, z#
  */
 
@@ -1293,7 +1265,6 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
    #TYPE = CFLOAT, CDOUBLE#
    #typ = npy_cfloat, npy_cdouble#
    #basetyp = npy_float, npy_double#
-   #ftyp = fortran_complex, fortran_doublecomplex#
    #fbasetyp = fortran_real, fortran_doublereal#
    #lapack_func = cheevd, zheevd#
 */
@@ -1346,7 +1317,7 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
 
     /* Work size query */
     {
-        @ftyp@ query_work_size;
+        @typ@ query_work_size;
         @fbasetyp@ query_rwork_size;
         fortran_int query_iwork_size;
 
@@ -1555,7 +1526,7 @@ typedef struct gesv_params_struct
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
    #ftyp = fortran_real, fortran_doublereal,
-           fortran_complex, fortran_doublecomplex#
+           npy_cfloat, npy_cdouble#
    #lapack_func = sgesv, dgesv, cgesv, zgesv#
 */
 
@@ -1741,7 +1712,7 @@ typedef struct potr_params_struct
 
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #ftyp = fortran_real, fortran_doublereal,
-           fortran_complex, fortran_doublecomplex#
+           npy_cfloat, npy_cdouble#
    #lapack_func = spotrf, dpotrf, cpotrf, zpotrf#
  */
 
@@ -1907,9 +1878,10 @@ dump_geev_params(const char *name, GEEV_PARAMS_t* params)
    #TYPE = FLOAT, DOUBLE#
    #CTYPE = CFLOAT, CDOUBLE#
    #typ = float, double#
-   #complextyp = COMPLEX_t, DOUBLECOMPLEX_t#
+   #complextyp = npy_cfloat, npy_cdouble#
    #lapack_func = sgeev, dgeev#
    #zero = 0.0f, 0.0#
+   #suffix = f,  #
 */
 
 static NPY_INLINE fortran_int
@@ -2013,8 +1985,7 @@ mk_@TYPE@_complex_array_from_real(@complextyp@ *c, const @typ@ *re, size_t n)
 {
     size_t iter;
     for (iter = 0; iter < n; ++iter) {
-        c[iter].array[0] = re[iter];
-        c[iter].array[1] = @zero@;
+        c[iter] = npy_cpack@suffix@(re[iter], 0.0@suffix@);
     }
 }
 
@@ -2026,8 +1997,7 @@ mk_@TYPE@_complex_array(@complextyp@ *c,
 {
     size_t iter;
     for (iter = 0; iter < n; ++iter) {
-        c[iter].array[0] = re[iter];
-        c[iter].array[1] = im[iter];
+        c[iter] = npy_cpack@suffix@(re[iter], im[iter]);
     }
 }
 
@@ -2040,10 +2010,8 @@ mk_@TYPE@_complex_array_conjugate_pair(@complextyp@ *c,
     for (iter = 0; iter < n; ++iter) {
         @typ@ re = r[iter];
         @typ@ im = r[iter+n];
-        c[iter].array[0] = re;
-        c[iter].array[1] = im;
-        c[iter+n].array[0] = re;
-        c[iter+n].array[1] = -im;
+        c[iter] = npy_cpack@suffix@(re, im);
+        c[iter+n] = npy_cpack@suffix@(re, -im);
     }
 }
 
@@ -2105,10 +2073,10 @@ process_@lapack_func@_results(GEEV_PARAMS_t *params)
 
 /**begin repeat
    #TYPE = CFLOAT, CDOUBLE#
-   #typ = COMPLEX_t, DOUBLECOMPLEX_t#
-   #ftyp = fortran_complex, fortran_doublecomplex#
+   #typ = npy_cfloat, npy_cdouble#
    #realtyp = float, double#
    #lapack_func = cgeev, zgeev#
+   #suffix = f,  #
  */
 
 static NPY_INLINE fortran_int
@@ -2137,10 +2105,10 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     npy_uint8 *mem_buff2 = NULL;
     npy_uint8 *a, *w, *vl, *vr, *work, *rwork;
     size_t safe_n = n;
-    size_t a_size = safe_n * safe_n * sizeof(@ftyp@);
-    size_t w_size = safe_n * sizeof(@ftyp@);
-    size_t vl_size = jobvl=='V'? safe_n * safe_n * sizeof(@ftyp@) : 0;
-    size_t vr_size = jobvr=='V'? safe_n * safe_n * sizeof(@ftyp@) : 0;
+    size_t a_size = safe_n * safe_n * sizeof(@typ@);
+    size_t w_size = safe_n * sizeof(@typ@);
+    size_t vl_size = jobvl=='V'? safe_n * safe_n * sizeof(@typ@) : 0;
+    size_t vr_size = jobvr=='V'? safe_n * safe_n * sizeof(@typ@) : 0;
     size_t rwork_size = 2 * safe_n * sizeof(@realtyp@);
     size_t work_count = 0;
     size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size;
@@ -2183,12 +2151,12 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
             goto error;
         }
 
-        work_count = (size_t) work_size_query.array[0];
+        work_count = (size_t)npy_creal@suffix@( work_size_query);
         /* Fix a bug in lapack 3.0.0 */
         if(work_count == 0) work_count = 1;
     }
 
-    mem_buff2 = malloc(work_count*sizeof(@ftyp@));
+    mem_buff2 = malloc(work_count*sizeof(@typ@));
     if (!mem_buff2) {
         goto error;
     }
@@ -2219,7 +2187,7 @@ process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
 /**begin repeat
    #TYPE = FLOAT, DOUBLE, CDOUBLE#
    #COMPLEXTYPE = CFLOAT, CDOUBLE, CDOUBLE#
-   #ftype = fortran_real, fortran_doublereal, fortran_doublecomplex#
+   #ftype = fortran_real, fortran_doublereal, npy_cdouble#
    #lapack_func = sgeev, dgeev, zgeev#
  */
 
@@ -2567,10 +2535,10 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
 /**begin repeat
    #TYPE = CFLOAT, CDOUBLE#
-   #ftyp = fortran_complex, fortran_doublecomplex#
    #frealtyp = fortran_real, fortran_doublereal#
-   #typ = COMPLEX_t, DOUBLECOMPLEX_t#
+   #typ = npy_cfloat, npy_cdouble#
    #lapack_func = cgesdd, zgesdd#
+   #suffix = f,  #
  */
 
 static NPY_INLINE fortran_int
@@ -2613,14 +2581,14 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     safe_u_row_count = u_row_count;
     safe_vt_column_count = vt_column_count;
 
-    a_size = safe_m * safe_n * sizeof(@ftyp@);
+    a_size = safe_m * safe_n * sizeof(@typ@);
     s_size = safe_min_m_n * sizeof(@frealtyp@);
-    u_size = safe_u_row_count * safe_m * sizeof(@ftyp@);
-    vt_size = safe_n * safe_vt_column_count * sizeof(@ftyp@);
+    u_size = safe_u_row_count * safe_m * sizeof(@typ@);
+    vt_size = safe_n * safe_vt_column_count * sizeof(@typ@);
     rwork_size = 'N'==jobz?
         (7 * safe_min_m_n) :
         (5*safe_min_m_n * safe_min_m_n + 5*safe_min_m_n);
-    rwork_size *= sizeof(@ftyp@);
+    rwork_size *= sizeof(@typ@);
     iwork_size = 8 * safe_min_m_n* sizeof(fortran_int);
 
     mem_buff = malloc(a_size +
@@ -2658,7 +2626,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
     /* Work size query */
     {
-        @ftyp@ work_size_query;
+        @typ@ work_size_query;
 
         params->LWORK = -1;
         params->WORK = &work_size_query;
@@ -2667,10 +2635,10 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
             goto error;
         }
 
-        work_count = (fortran_int)((@typ@*)&work_size_query)->array[0];
+        work_count = (fortran_int)npy_creal@suffix@(*((@typ@*)&work_size_query));
         /* Fix a bug in lapack 3.0.0 */
         if(work_count == 0) work_count = 1;
-        work_size = (size_t)work_count * sizeof(@ftyp@);
+        work_size = (size_t)work_count * sizeof(@typ@);
     }
 
     mem_buff2 = malloc(work_size);
@@ -3013,10 +2981,10 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
 
 /**begin repeat
    #TYPE=CFLOAT,CDOUBLE#
-   #ftyp=fortran_complex,fortran_doublecomplex#
    #frealtyp=fortran_real,fortran_doublereal#
-   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
+   #typ=npy_cfloat,npy_cdouble#
    #lapack_func=cgelsd,zgelsd#
+   #suffix=f, #
  */
 
 static inline fortran_int
@@ -3051,8 +3019,8 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
     size_t safe_n = n;
     size_t safe_nrhs = nrhs;
 
-    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
-    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
+    size_t a_size = safe_m * safe_n * sizeof(@typ@);
+    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@typ@);
     size_t s_size = safe_min_m_n * sizeof(@frealtyp@);
 
     fortran_int work_count;
@@ -3081,7 +3049,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
 
     {
         /* compute optimal work size */
-        @ftyp@ work_size_query;
+        @typ@ work_size_query;
         @frealtyp@ rwork_size_query;
         fortran_int iwork_size_query;
 
@@ -3093,9 +3061,9 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
         if (call_@lapack_func@(params) != 0)
             goto error;
 
-        work_count = (fortran_int)work_size_query.r;
+        work_count = (fortran_int)npy_creal@suffix@(work_size_query);
 
-        work_size  = (size_t )work_size_query.r * sizeof(@ftyp@);
+        work_size  = (size_t )npy_creal@suffix@(work_size_query) * sizeof(@typ@);
         rwork_size = (size_t)rwork_size_query * sizeof(@frealtyp@);
         iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
     }
@@ -3131,10 +3099,9 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
    #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
    #lapack_func=sgelsd,dgelsd,cgelsd,zgelsd#
    #dot_func=sdot,ddot,cdotc,zdotc#
-   #typ     = npy_float, npy_double, npy_cfloat, npy_cdouble#
    #basetyp = npy_float, npy_double, npy_float,  npy_double#
-   #ftyp = fortran_real, fortran_doublereal,
-           fortran_complex, fortran_doublecomplex#
+   #typ = fortran_real, fortran_doublereal,
+           npy_cfloat, npy_cdouble#
    #cmplx = 0, 0, 1, 1#
  */
 static inline void
@@ -3203,9 +3170,9 @@ static void
                     /* Compute the residuals as the square sum of each column */
                     int i;
                     char *resid = args[4];
-                    @ftyp@ *components = (@ftyp@ *)params.B + n;
+                    @typ@ *components = (@typ@ *)params.B + n;
                     for (i = 0; i < nrhs; i++) {
-                        @ftyp@ *vector = components + i*m;
+                        @typ@ *vector = components + i*m;
                         /* Numpy and fortran floating types are the same size,
                          * so this cast is safe */
                         @basetyp@ abs2 = @TYPE@_abs2((@typ@ *)vector, excess);
