@@ -3193,24 +3193,17 @@ def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
 
-    Usually denoted :math:`I_0`.  This function does broadcast, but will *not*
-    "up-cast" int dtype arguments unless accompanied by at least one float or
-    complex dtype argument (see Raises below).
+    Usually denoted :math:`I_0`.
 
     Parameters
     ----------
-    x : array_like, dtype float or complex
+    x : array_like of float
         Argument of the Bessel function.
 
     Returns
     -------
-    out : ndarray, shape = x.shape, dtype = x.dtype
+    out : ndarray, shape = x.shape, dtype = float
         The modified Bessel function evaluated at each of the elements of `x`.
-
-    Raises
-    ------
-    TypeError: array cannot be safely cast to required type
-        If argument consists exclusively of int dtypes.
 
     See Also
     --------
@@ -3241,12 +3234,16 @@ def i0(x):
     Examples
     --------
     >>> np.i0(0.)
-    array(1.0)  # may vary
-    >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
+    array(1.0)
+    >>> np.i0([0, 1, 2, 3])
+    array([1.        , 1.26606588, 2.2795853 , 4.88079259])
 
     """
     x = np.asanyarray(x)
+    if x.dtype.kind == 'c':
+        raise TypeError("i0 not supported for complex values")
+    if x.dtype.kind != 'f':
+        x = x.astype(float)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 

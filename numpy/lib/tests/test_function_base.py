@@ -2111,8 +2111,9 @@ class Test_I0:
             i0(0.5),
             np.array(1.0634833707413234))
 
-        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549])
-        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049])
+        # need at least one test above 8, as the implementation is piecewise
+        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549, 10.0])
+        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049, 2815.71662847])
         assert_almost_equal(i0(A), expected)
         assert_almost_equal(i0(-A), expected)
 
@@ -2149,6 +2150,10 @@ class Test_I0:
 
         assert_array_equal(exp, res)
 
+    def test_complex(self):
+        a = np.array([0, 1 + 2j])
+        with pytest.raises(TypeError, match="i0 not supported for complex values"):
+            res = i0(a)
 
 class TestKaiser:
 
