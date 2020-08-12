@@ -68,9 +68,6 @@ dbg_stack_trace()
 
 typedef CBLAS_INT         fortran_int;
 
-typedef float             fortran_real;
-typedef double            fortran_doublereal;
-
 extern fortran_int
 FNAME(sgeev)(char *jobvl, char *jobvr, fortran_int *n,
              float a[], fortran_int *lda, float wr[], float wi[],
@@ -1167,7 +1164,7 @@ typedef struct eigh_params_struct {
 /**begin repeat
    #TYPE = FLOAT, DOUBLE#
    #typ = npy_float, npy_double#
-   #ftyp = fortran_real, fortran_doublereal#
+   #ftyp = npy_float, npy_double#
    #lapack_func = ssyevd, dsyevd#
 */
 
@@ -1265,7 +1262,7 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
    #TYPE = CFLOAT, CDOUBLE#
    #typ = npy_cfloat, npy_cdouble#
    #basetyp = npy_float, npy_double#
-   #fbasetyp = fortran_real, fortran_doublereal#
+   #fbasetyp = npy_float, npy_double#
    #lapack_func = cheevd, zheevd#
 */
 static NPY_INLINE fortran_int
@@ -1525,7 +1522,7 @@ typedef struct gesv_params_struct
 /**begin repeat
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
-   #ftyp = fortran_real, fortran_doublereal,
+   #ftyp = npy_float, npy_double,
            npy_cfloat, npy_cdouble#
    #lapack_func = sgesv, dgesv, cgesv, zgesv#
 */
@@ -1711,7 +1708,7 @@ typedef struct potr_params_struct
 /**begin repeat
 
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
-   #ftyp = fortran_real, fortran_doublereal,
+   #ftyp = npy_float, npy_double,
            npy_cfloat, npy_cdouble#
    #lapack_func = spotrf, dpotrf, cpotrf, zpotrf#
  */
@@ -2187,7 +2184,7 @@ process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
 /**begin repeat
    #TYPE = FLOAT, DOUBLE, CDOUBLE#
    #COMPLEXTYPE = CFLOAT, CDOUBLE, CDOUBLE#
-   #ftype = fortran_real, fortran_doublereal, npy_cdouble#
+   #ftype = npy_float, npy_double, npy_cdouble#
    #lapack_func = sgeev, dgeev, zgeev#
  */
 
@@ -2415,7 +2412,7 @@ compute_urows_vtcolumns(char jobz,
 /**begin repeat
    #TYPE = FLOAT, DOUBLE#
    #lapack_func = sgesdd, dgesdd#
-   #ftyp = fortran_real, fortran_doublereal#
+   #ftyp = npy_float, npy_double#
  */
 
 static NPY_INLINE fortran_int
@@ -2535,7 +2532,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
 
 /**begin repeat
    #TYPE = CFLOAT, CDOUBLE#
-   #frealtyp = fortran_real, fortran_doublereal#
+   #frealtyp = npy_float, npy_double#
    #typ = npy_cfloat, npy_cdouble#
    #lapack_func = cgesdd, zgesdd#
    #suffix = f,  #
@@ -2872,7 +2869,7 @@ dump_gelsd_params(const char *name,
 /**begin repeat
    #TYPE=FLOAT,DOUBLE#
    #lapack_func=sgelsd,dgelsd#
-   #ftyp=fortran_real,fortran_doublereal#
+   #ftyp=npy_float,npy_double#
  */
 
 static inline fortran_int
@@ -2981,7 +2978,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
 
 /**begin repeat
    #TYPE=CFLOAT,CDOUBLE#
-   #frealtyp=fortran_real,fortran_doublereal#
+   #frealtyp=npy_float,npy_double#
    #typ=npy_cfloat,npy_cdouble#
    #lapack_func=cgelsd,zgelsd#
    #suffix=f, #
@@ -3100,8 +3097,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
    #lapack_func=sgelsd,dgelsd,cgelsd,zgelsd#
    #dot_func=sdot,ddot,cdotc,zdotc#
    #basetyp = npy_float, npy_double, npy_float,  npy_double#
-   #typ = fortran_real, fortran_doublereal,
-           npy_cfloat, npy_cdouble#
+   #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
    #cmplx = 0, 0, 1, 1#
  */
 static inline void
