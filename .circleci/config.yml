@@ -16,12 +16,11 @@ jobs:
       - checkout
 
       - run:
-          name: install dependencies
+          name: create virtual environment, install dependencies
           command: |
             python3 -m venv venv
             ln -s $(which python3) venv/bin/python3.6
             . venv/bin/activate
-            pip install cython sphinx==2.3.1 matplotlib ipython
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
 
@@ -30,10 +29,9 @@ jobs:
           command: |
             . venv/bin/activate
             pip install --upgrade pip 'setuptools<49.2.0'
-            pip install cython
+            pip install -r test_requirements.txt
             pip install .
-            pip install scipy
-            pip install pandas
+            pip install -r doc_requirements.txt
 
       - run:
           name: create release notes
