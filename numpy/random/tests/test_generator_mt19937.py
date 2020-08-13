@@ -1074,6 +1074,13 @@ class TestRandomDist:
         y = random.permuted([])
         assert_array_equal(y, [])
 
+    @pytest.mark.parametrize('outshape', [(2, 3), 5])
+    def test_permuted_out_with_wrong_shape(self, outshape):
+        a = np.array([1, 2, 3])
+        out = np.zeros(outshape, dtype=a.dtype)
+        with pytest.raises(ValueError, match='same shape'):
+            random.permuted(a, out=out)
+
     def test_beta(self):
         random = Generator(MT19937(self.seed))
         actual = random.beta(.1, .9, size=(3, 2))

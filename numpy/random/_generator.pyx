@@ -4263,6 +4263,8 @@ cdef class Generator:
         else:
             if type(out) is not np.ndarray:
                 raise TypeError('out must be a numpy array')
+            if out.shape != x.shape:
+                raise ValueError('out must have the same shape as x')
             out[...] = x
 
         if axis is None:
