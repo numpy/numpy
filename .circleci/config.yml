@@ -67,8 +67,8 @@ jobs:
           path: doc/build/html/
 
 
-     #  - store_artifacts:
-     #      path: doc/neps/_build/html/
+      - store_artifacts:
+          path: doc/neps/_build/html/
      #      destination: neps
 
       - add_ssh_keys:
