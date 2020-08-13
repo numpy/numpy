@@ -1480,9 +1480,9 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
          * should be no subarray scalars (they would be arrays).
          */
         PyErr_Format(PyExc_RuntimeError,
-                "dtype changed while creating an array from a python object. "
-                "This should not be possible. Please notify the NumPy "
-                "developers you see this message.",
+                "dtype changed from %R to %R while creating an array from a "
+                "python object. This should not be possible. Please notify the "
+                "NumPy developers you see this message.",
                 PyArray_DESCR(ret), dtype, PyArray_DESCR(ret));
         Py_DECREF(ret);
         return NULL;
