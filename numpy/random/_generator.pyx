@@ -4262,7 +4262,7 @@ cdef class Generator:
             out = x.copy()
         else:
             if type(out) is not np.ndarray:
-                raise ValueError('out must be a numpy array')
+                raise TypeError('out must be a numpy array')
             out[...] = x
 
         if axis is None:
