@@ -338,10 +338,10 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
          * Sanity check, only subarray dtypes should be modified, and there
          * should be no subarray scalars (they would be arrays).
          */
-        PyErr_SetString(PyExc_RuntimeError,
-                "dtype changed while creating an array from a scalar. This "
+        PyErr_Format(PyExc_RuntimeError,
+                "dtype changed from %R to %R while creating an array from a scalar. This "
                 "should not be possible. Please notify the NumPy developers "
-                "you see this message");
+                "you see this message", outcode, PyArray_DESCR(r));
         Py_DECREF(r);
         return NULL;
     }
