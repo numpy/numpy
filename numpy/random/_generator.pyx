@@ -5,6 +5,7 @@ import warnings
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
 cimport cython
 import numpy as np
@@ -4275,7 +4276,7 @@ cdef class Generator:
 
         it = np.PyArray_IterAllButAxis(out, &ax)
 
-        buf = malloc(itemsize)
+        buf = PyMem_Malloc(itemsize)
         if buf == NULL:
             raise MemoryError('memory allocation failed in permuted')
 
@@ -4285,7 +4286,7 @@ cdef class Generator:
                              <char *>np.PyArray_ITER_DATA(it), <char *>buf)
                 np.PyArray_ITER_NEXT(it)
 
-        free(buf)
+        PyMem_Free(buf)
         return out
 
     def shuffle(self, object x, axis=0):
