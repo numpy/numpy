@@ -639,21 +639,33 @@ _buffer_get_info(PyObject *obj, npy_bool f_contiguous)
     item_list = PyDict_GetItem(_buffer_info_cache, key);
 
     if (item_list != NULL) {
+        Py_ssize_t item_list_length = PyList_GET_SIZE(item_list);
         Py_INCREF(item_list);
-        if (PyList_GET_SIZE(item_list) > 0) {
-            item = PyList_GetItem(item_list, PyList_GET_SIZE(item_list) - 1);
+        if (item_list_length > 0) {
+            item = PyList_GetItem(item_list, item_list_length - 1);
             old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
 
-            /*
-             * TODO: In rare cases when an array is both C- and
-             *       F-contiguous, and buffers are exported alternating
-             *       we may always have a cache miss even though the correct
-             *       info had already been exported before (causing a memory
-             *       leak).
-             */
             if (_buffer_info_cmp(info, old_info) == 0) {
                 _buffer_info_free(info);
                 info = old_info;
+            }
+            else if (item_list_length > 1 && info->ndim > 1) {
+                /*
+                 * Some arrays are C- and F-contiguous and if they have more
+                 * than one dimension, the buffer-info may differ between the
+                 * two due to RELAXED_STRIDES_CHECKING.
+                 * If we export both buffers, the first stored one may be the
+                 * one for the other contiguity, so check both in this case.
+                 * This is generally very unlikely in all other cases, since
+                 * in all other cases the first one will match unless array
+                 * metadata was modified in-place (which is discouraged).
+                 */
+                item = PyList_GetItem(item_list, item_list_length - 2);
+                old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
+                if (_buffer_info_cmp(info, old_info) == 0) {
+                    _buffer_info_free(info);
+                    info = old_info;
+                }
             }
         }
     }

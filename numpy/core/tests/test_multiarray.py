@@ -7207,6 +7207,21 @@ class TestNewBufferProtocol:
                     arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
 
+    @pytest.mark.valgrind_error(reason="leaks buffer info cache temporarily.")
+    @pytest.mark.skipif(not np.ones((10, 1), order="C").flags.f_contiguous,
+            reason="Test is unnecessary (but fails) without relaxed strides.")
+    def test_relaxed_strides_buffer_info_leak(self, arr=np.ones((1, 10))):
+        """Test that alternating export of C- and F-order buffers from
+        an array which is both C- and F-order when relaxed strides is
+        active works.
+        This test defines array in the signature to ensure leaking more
+        references every time the test is run (catching the leak with
+        pytest-leaks).
+        """
+        for i in range(10):
+            _multiarray_tests.get_buffer_info(arr, ['F_CONTIGUOUS'])
+            _multiarray_tests.get_buffer_info(arr, ['C_CONTIGUOUS'])
+
     def test_out_of_order_fields(self):
         dt = np.dtype(dict(
             formats=['<i4', '<i4'],
