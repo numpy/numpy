@@ -1169,9 +1169,10 @@ class TestTrimZeros:
     a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
     b = a.astype(float)
     c = a.astype(complex)
+    d = a.astype(object)
 
     def values(self):
-        attr_names = ('a', 'b', 'c')
+        attr_names = ('a', 'b', 'c', 'd')
         return (getattr(self, name) for name in attr_names)
 
     def test_basic(self):
@@ -1204,6 +1205,22 @@ class TestTrimZeros:
 
     def test_size_zero(self):
         arr = np.zeros(0)
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
+    @pytest.mark.parametrize(
+        'arr',
+        [np.array([0, 2**62, 0]),
+         np.array([0, 2**63, 0]),
+         np.array([0, 2**64, 0])]
+    )
+    def test_overflow(self, arr):
+        slc = np.s_[1:2]
+        res = trim_zeros(arr)
+        assert_array_equal(res, arr[slc])
+
+    def test_no_trim(self):
+        arr = np.array([None, 1, None])
         res = trim_zeros(arr)
         assert_array_equal(arr, res)
 
