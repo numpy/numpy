@@ -115,6 +115,18 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 // TODO: emulate integer division
 #define npyv_div_f32 _mm512_div_ps
 #define npyv_div_f64 _mm512_div_pd
+
+/***************************
+ * Reduce Sum
+ * there are three ways to implement reduce sum for AVX512:
+ * 1- split(256) /add /split(128) /add /hadd /hadd /extract
+ * 2- shuff(cross) /add /shuff(cross) /add /shuff /add /shuff /add /extract
+ * 3- _mm512_reduce_add_ps/pd
+ * The first one is been widely used by many projects while the second one is used by Intel Compiler and here
+ * the reason why the second preferred by intel compiler maybe because the latency of hadd increased by (2-3)
+ * starting from Skylake-X which makes two extra shuffles(non-cross) cheaper. check https://godbolt.org/z/s3G9Er for more clarification.
+ * The third one is almost the same as the second one but only works for intel compiler/GCC 7.1/Clang 4.
+ ***************************/
 NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
     __m512 h64   = _mm512_shuffle_f32x4(a, a, _MM_SHUFFLE(3, 2, 3, 2));
