@@ -1634,11 +1634,12 @@ def trim_zeros(filt, trim='fb'):
             "that supports elementwise comparisons with zero"
         )
         warning.__cause__ = ex
-        warnings.warn(warning, stacklevel=3)
 
-        # Fall back to the old implementation if an exception is encountered
-        # Note that the same exception may or may not be raised here as well
-        return _trim_zeros_old(filt, trim)
+    # Fall back to the old implementation if an exception is encountered
+    # Note that the same exception may or may not be raised here as well
+    ret = _trim_zeros_old(filt, trim)
+    warnings.warn(warning, stacklevel=3)
+    return ret
 
 
 def _trim_zeros_new(filt, trim='fb'):
