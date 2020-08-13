@@ -4259,7 +4259,7 @@ cdef class Generator:
         x = np.asarray(x)
 
         if out is None:
-            out = x.copy()
+            out = x.copy(order='K')
         else:
             if type(out) is not np.ndarray:
                 raise TypeError('out must be a numpy array')
