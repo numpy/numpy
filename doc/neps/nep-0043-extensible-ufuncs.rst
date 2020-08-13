@@ -96,6 +96,10 @@ A UFunc call consists of into multiple steps:
    * Setting (and potentially finding) the inner-loop function.  Finding
      the inner-loop function could allow specialized implementations in the
      future.
+     For example casting currently use one function for contiguous casts
+     and another function for generic strided casts to optimize speed.
+     Reductions do similar optimizations, however these currently handled
+     inside the inner-loop function itself.
    * Signal whether the inner-loop requires the Python API, or whether
      the GIL may be released.
 
@@ -139,12 +143,13 @@ This gives the following function definitions:
 
       int resolve_descriptors(
               PyUFuncObject *ufunc, PyArray_DTypeMeta *DTypes[nargs],
-              PyArray_Descr *in_dtypes[nargs], PyArray_Descr *out_dtypes[nargs]);
+              PyArray_Descr *in_dtypes[nin+nout],
+              PyArray_Descr *out_dtypes[nin+nout]);
 
-  The function writes ``out_dtypes`` based on ``in_dtypes``.  This typically
-  means filling in the descriptor of the output(s).  In many cases also the
-  input descriptor(s) have to be set, e.g. to ensure native byte order when
-  needed by the inner-loop.
+  The function writes ``out_dtypes`` based on the given ``in_dtypes``.
+  This typically means filling in the descriptor of the output(s).
+  Although often also the input descriptor(s) have to be found,
+  e.g. to ensure native byte order when needed by the inner-loop.
 
 * Define a new structure to be passed in the inner-loop, which can be
   partially modified by the setup/teardown as well::
@@ -156,27 +161,51 @@ This gives the following function definitions:
           /* The exact operand dtypes of the inner-loop */
           PyArray_Descr const *dtypes;
           /* 
-           * The Python threadstate (if the GIL was released) or NULL.
-           * Will always be NULL, if `needs_api` was indicated.
+           * Reserved always NULL field, for potentially passing in the
+           * PyThreadState or PyInterpreterState in the future.
            */
-          PyThreadState const *tstate;
-          /* Per-loop user data, equivalent to the current void* */
+          void *reserved;  
+          /* Per-loop (global) user data, equivalent to the current void* */
           void const *user_loop_data;
-          /* User data potentially filled by the setup function. */
-          void *user_data;
       } PyArray_UFuncData
   
   This structure may be appended to include additional information in future
-  versions of NumPy.
+  versions of NumPy and includes all constant loop metadata.
+
+  **TODO:** We could version the PyArray_UFuncData struct.
+
+* An additional ``void *user_data`` which will usually be typed to extend
+  the existing ``NpyAuxData *`` struct::
+  
+        struct {
+            NpyAuxData_FreeFunc *free;
+            NpyAuxData_CloneFunc *clone;
+            /* To allow for a bit of expansion without breaking the ABI */
+           void *reserved[2];
+        } NpyAuxData;
+
+  This struct is currently mainly used for the NumPy internal casting
+  machinery and as of now both ``free`` and ``clone`` must be provided,
+  although this could be relaxed.
+
+  Unlike NumPy casts, the vast majority of ufuncs currently does not require
+  this additional scratch-space, but may need simple flagging capability
+  for example for implementing warnings (see Error and Warning Handling below).
+  To simplify this NumPy will pass a single zero initialized ``npy_intp *``
+  when ``user_data`` is not set. 
 
 * The *optional* setup function::
 
       innerloop *
-      setup(PyArray_UFuncData *data, int *needs_api, npy_intp *fixed_strides);
+      setup(PyArray_UFuncData *data, int *needs_api, npy_intp *fixed_strides,
+            void *user_data);
   
   Is passed the above struct and may modify (only) the ``user_data`` slot
   and potentially further slots in the future.  The function returns
   the inner-loop or ``NULL`` to indicate an error.
+
+  **TODO:** did I note whether this is initially public? I do not think it
+  has to be...
 
 * The inner-loop function::
 
@@ -186,18 +215,14 @@ This gives the following function definitions:
   of the additional return value and passing ``PyArray_UfuncData *`` instead
   of the previous ``void *`` representing ``user_loop_data``.
   The inner-loop shall return 0 to indicate continued (successful) execution.
-  Any non-zero value will terminate the iteration.  The inner-loop shall
-  return a *negative* value (e.g. -1) with a Python exception set.  
+  A non-zero return value will terminate the iteration.
+  The inner-loop shall return a *negative* value (e.g. -1) with a Python
+  exception set when an error occurred.
 
-* The *optional* teardown function::
-
-     int teardown(int return_value, PyArray_UFuncData *data);
-
-  Teardown function, may return ``-1`` if an error is set.  If an error
-  was already set previously it will be stored. Any previous error
-  will be cleared before calling ``teardown``.
-  The return value of the inner-loop is passed in to allow simple error
-  flagging (e.g. warnings) if desired.
+* Teardown of ``user_data`` is handled by the ``user_data->free`` field.
+  The ``user_data->clone``
+  ``NpyAuxData *`` is existing public API in NumPy, however, it is currently
+  de-facto only used for internal casting.
 
 * A flag to ask NumPy to perform floating point error checking (after custom
   setup and before user teardown).
@@ -205,6 +230,7 @@ This gives the following function definitions:
 To simplify setup and not require the implementation of setup/teardown for
 the majority of ufuncs, NumPy provides floating error setup and teardown
 if flagged during registration.
+
 
 **Notes**
 
@@ -221,12 +247,61 @@ The main alternative would be extending the signature either by only a
 return value giving a much higher burden to implement a user setup.
 
 
+**Error and Warning Handling**
+
+In general inner-loops should set errors right away. However, they may also run
+without the GIL. This requires locking the GIL, setting a Python error
+and returning ``-1`` to indicate an error occurred::
+
+    int
+    inner_loop(..., PyArray_UFuncData *data)
+    {
+        NPY_ALLOW_C_API_DEF
+
+        for (npy_intp i = 0; i < N; i++) {
+            /* calculation */
+            if (error_occurred) {
+                NPY_ALLOW_C_API;
+                PyErr_SetString(PyExc_ValueError,
+                    "Error occurred inside inner_loop.");
+                NPY_DISABLE_C_API
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+This may be problematic in the future for Python subinterpreter support,
+in which case the interpreter state or threadstate shall be passed in
+(i.e. the reserved, currently NULL field).
+
+Floating point error is special, since it requires checking the hardware
+state, which may be costly to do on every call (and inconvenient), NumPy
+will handle these, if flagged by the ``UFuncImpl``.
+
+In an initial *alternative* draft, error setting was allowed to be done
+at teardown time similar to how floating point errors require checking.
+We decide against allowing this pattern because it requires additional
+checks if the computation is paused.  While this does not happen for
+ufuncs currently, it does happen for casting within ``np.nditer``.
+
+In general, we expect that errors can always be set immediately.
+Warnings, should typically be given once *per call*, and not repeated
+if the warning applies to multiple elements.
+To make warning setting from inside the inner-loop function simpler,
+or possibly do other things.  A single `npy_intp *user_data` is passed
+instead of ``user_data`` if ``user_data`` is otherwise unused.
+This allows to store a flag and avoids giving the warning more than once.
+For any more complex use-cases, ``NpyAuxData *user_data`` has to be allocated.
+
+**TODO:** I am not sure about this approach to scratch-space, but it would be
+nice if we can have a simple default.  The alternative is to make a simple
+extended ``NpyAuxData *``, to not require the user to implement it.
+Or...?
+
+
 Reusing existing Loops/Implementations
 """"""""""""""""""""""""""""""""""""""
-
-*TODO: Do we need to make both easy? Or maybe even neither? I personally prefer
-the design of having a class factory here (point 1).  I realize that many
-users seem to find the second version.*
 
 For many DTypes adding additional C-level (or python level) loops will be
 sufficient and require no more than a single strided loop implementation.
@@ -240,49 +315,68 @@ In Python, this can be achieved by simply calling into the original ufunc
 more time from ``resolve_descriptors``).
 
 For better performance in C, and for large arrays, it is desirable to reuse
-an existing implementation fully, so that the inner-loop does not need
-to be wrapped.
-The preferred solution to this is allow one additional method of setting
-up a UFunc loop conveniently without the need of directly exposing the
-the inner structure immediately.
-
-There are two potential settings here, shown with two different approaches
-for implementing a ``Unit`` DType.
-
-1. An abstract Unit DType with subclasses for each numeric dtype (these
-   could be dynamically created).  Such a ``Unit[Float64]("m")`` instance
-   has a well defined signature with respect to type promotion.
-2. A concrete Unit DType which parametrizes the numeric dtype making it
-   ``Unit(float64, "m")``.
-
-The difference between the two, is that in the first case a ``UFuncImpl``
-can be created which *wraps* a single existing ``UFuncImpl`` and after that
-dispatching can be cached.  The creation of this ``UFuncImpl`` can further
-occur dynamically in the *promotion* step.
-To fall back to the existing loop, we allow creation of a wrapped loop
-from an existing (bound) ``UFuncImpl``.
+an existing ``UFuncImpl`` as much as possible, so that its inner-loop function
+can be used directly without any overhead.
+We will thus allow to create ``UFuncImpl`` by passing in an existing
+``UFuncImpl``.
 
 This wrapped loop will have two additional methods:
 
 * ``view_inputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
   user input descriptors with descriptors matching the wrapped loop.
   It must be possible to *view* the inputs as the output.
+  For example for ``Unit[Float64]("m") + Unit[Float32]("km")`` this will
+  return ``float64 + int32``. The original ``resolve_descriptors`` will
+  convert this to ``float64 + float64``.
+
 * ``wrap_outputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
   resolved descriptors with with the desired actual loop descriptors.
   The original ``resolve_descriptors`` function will be called between these
   two calls, so that the output descriptors may not be set in the first call.
+  In the above example it will use the ``float64`` as returned (which might
+  have changed the byte-order), and further resolve the physical unit making
+  the final signature::
+  
+      ``Unit[Float64]("m") + Unit[Float64]("m") -> Unit[Float64]("m")``
+
+  the UFunc machinery will take care of casting the "km" input to "m".
+
 
 The ``view_inputs`` method allows passing the correct inputs into the
 original ``resolve_descriptors`` function, while ``wrap_outputs`` ensures
 the correct descriptors are used for output allocation and input buffering casts.
 
-The second use-case can be implemented within the inner-loop and
-``resolve_descriptors`` functions.
-This will incur additional overheads, partially because the loop dispatch
-effectively has to be done twice, but mostly because an efficient
-implementation will require direct access to the original
-setup/teardown, etc. functions.
-Such functionality can be added at a later time.
+An important use case for this is that of an abstract Unit DType
+with subclasses for each numeric dtype (which could be dynamically created)::
+
+    Unit[Float64]("m")
+    # with Unit[Float64] being the concrete DType:
+    isinstance(Unit[Float64], Unit)  # is True
+
+Such a ``Unit[Float64]("m")`` instance has a well defined signature with
+respect to type promotion.
+The author of the ``Unit`` DType can implement most necessary logic by
+wrapping the existing math functions and using the two additional methods
+above.
+Using the *promotion* step, this will allow to create a register a single
+promoter for the abstract ``Unit`` DType with the ``ufunc``.
+The promoter can then add the wrapped concrete ``UFuncImpl`` dynamically
+at promotion time, and NumPy can cache (or store it) after the first call.
+
+**Alternative use-case:**
+
+A different use-case is that of a ``Unit(float64, "m")`` DType, where
+the numerical type is part of the DType parameter.
+This approach is possible, but will require a custom ``UFuncImpl``
+which wraps existing loops.
+It must also always require require two steps of dispatching
+(one to the ``Unit`` DType and a second one for the numerical type).
+
+Further, the efficient implementation will require the ability to
+fetch and reuse the inner-loop function from another ``UFuncImpl``.
+(Which is probably necessary for users like Numba, but it is uncertain
+whether it should be a common pattern and it cannot be accessible from
+Python itself.)
 
 
 Details for ``resolve_descriptors``
