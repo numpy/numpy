@@ -36,7 +36,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     .. versionchanged:: 1.20.0
         Values are rounded towards ``-inf`` instead of ``0`` when an
-        integer ``dtype`` is specified.
+        integer ``dtype`` is specified. The old behavior can
+        still be obtained with ``np.linspace(start, stop, num).astype(int)``
 
     Parameters
     ----------
