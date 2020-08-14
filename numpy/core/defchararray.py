@@ -24,7 +24,6 @@ from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.core.overrides import set_module
 from numpy.core import overrides
-from numpy.compat import asbytes
 import numpy
 
 __all__ = [
@@ -452,7 +451,7 @@ def center(a, width, fillchar=' '):
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
-        fillchar = asbytes(fillchar)
+        fillchar = numpy.asanyarray(fillchar, dtype=numpy.string_)
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
 
@@ -997,7 +996,7 @@ def ljust(a, width, fillchar=' '):
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
-        fillchar = asbytes(fillchar)
+        fillchar = numpy.asanyarray(fillchar, dtype=numpy.string_)
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
 
@@ -1267,7 +1266,7 @@ def rjust(a, width, fillchar=' '):
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
-        fillchar = asbytes(fillchar)
+        fillchar = numpy.asanyarray(fillchar, dtype=numpy.string_)
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
 
