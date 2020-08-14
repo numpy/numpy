@@ -30,6 +30,14 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             validate_output_shape
         )
 
+cdef extern from "numpy/arrayobject.h":
+    #int PyArray_SetWritebackIfCopyBase(np.ndarray, np.ndarray)
+    int PyArray_ResolveWritebackIfCopy(np.ndarray)
+    object PyArray_FromArray(object, object, int)
+
+    enum:
+        NPY_ARRAY_WRITEBACKIFCOPY
+
 np.import_array()
 
 cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
@@ -4184,7 +4192,7 @@ cdef class Generator:
 
         Parameters
         ----------
-        x : array_like
+        x : array_like, at least one-dimensional
             Array to be shuffled.
         axis : int, optional
             Slices of `x` in this axis are shuffled. Each slice
@@ -4255,6 +4263,9 @@ cdef class Generator:
         cdef np.npy_intp axlen, axstride, itemsize
         cdef void *buf
         cdef np.flatiter it
+        cdef np.ndarray to_shuffle
+        cdef int status
+        cdef int flags
 
         x = np.asarray(x)
 
@@ -4268,7 +4279,25 @@ cdef class Generator:
             out[...] = x
 
         if axis is None:
-            self.shuffle(out.flat)
+            if x.ndim > 1:
+                if not (np.PyArray_FLAGS(out) & (np.NPY_ARRAY_C_CONTIGUOUS |
+                                                 np.NPY_ARRAY_F_CONTIGUOUS)): 
+                    flags = (np.NPY_ARRAY_C_CONTIGUOUS |
+                             NPY_ARRAY_WRITEBACKIFCOPY)
+                    to_shuffle = PyArray_FromArray(out, <object>NULL, flags)
+                    self.shuffle(to_shuffle.ravel(order='K'))
+                    # Because we only execute this block if out is not
+                    # contiguous, we know this call will always result in a
+                    # copy of to_shuffle back to out. I.e. status will be 1.
+                    status = PyArray_ResolveWritebackIfCopy(to_shuffle)
+                    assert status == 1
+                else:
+                    # out is n-d with n > 1, but is either C- or F-contiguous,
+                    # so we know out.ravel(order='A') is a view.
+                    self.shuffle(out.ravel(order='A'))
+            else:
+                # out is 1-d
+                self.shuffle(out)
             return out
 
         ax = normalize_axis_index(axis, np.ndim(out))
