@@ -129,4 +129,6 @@ class TestParameters(util.F2PyTest):
         y = self.module.foo_array_any_index(x)
         assert_equal(y, x.reshape((2, 3), order='F'))
 
-
+    def test_constant_array_delims(self):
+        x = self.module.foo_array_delims()
+        assert_equal(x, 9)

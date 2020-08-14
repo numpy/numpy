@@ -3009,7 +3009,7 @@ def param_eval(n, varsn, v, g_params, params):
                     ' supported: %s\n' % repr(n))
 
         # Parse parameter value
-        v = v.lstrip('(/').rstrip('/)').split(',')
+        v = v.strip('()').strip('/').split(',')
         v_eval = []
         for item in v:
             try:

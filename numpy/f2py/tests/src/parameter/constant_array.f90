@@ -28,3 +28,16 @@ subroutine foo_array_any_index(x, y)
 
   return
 end subroutine
+
+subroutine foo_array_delims(x)
+  implicit none
+  integer, parameter :: dp = selected_real_kind(15)
+  integer, parameter, dimension(2) :: myparamarray = (/ (6), 1 /)
+  integer, parameter, dimension(3) :: test = (/2, 1, (3)/)
+  real(dp), intent(out) :: x
+
+  x = myparamarray(1)+test(3)
+
+  return
+end subroutine
+
