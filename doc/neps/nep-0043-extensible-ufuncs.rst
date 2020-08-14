@@ -60,6 +60,87 @@ and certain additional features. But depending on the input DTypes, they
 have to perform a different operation.  In general these operations are
 registered by users, e.g. implementers of a user-defined DTypes.
 
+
+Introduction to General Concepts
+""""""""""""""""""""""""""""""""
+
+Universal functions as described above are much like a Python method
+defined on the DType of the array when considering a ufunc with only
+a single input::
+
+    res = np.positive(arr)
+
+could be implemented (conceptional) as:
+
+    positive_impl = arr.dtype.positive
+    res = positive_impl(arr)
+
+However, unlike methods, ``positive_impl`` is not stored on the dtype itself
+a choice that this NEP does not wish to modify.
+It is rather the implementation for ``np.positive`` for a specific DType.
+Current NumPy partially exposes this "choice of implementation" using
+the ``dtype`` (or more exact ``signature``) attribute in universal functions,
+although these are rarely used:
+
+    np.positive(arr, dtype=np.float64)
+
+forces NumPy to use the ``positive_impl`` written specifically for the Float64
+DType.
+This NEP requires to partially represent this implementation explicitly::
+
+    positive_impl = np.positive.resolve_impl(type(arr.dtype))
+
+Although, this ``positive_impl`` and ``resolve_impl`` is required for certain
+functionality, the following code::
+
+    res = positive_impl(arr)
+
+is not part of this NEP, as it is not central to the proposal.
+
+As mentioned above, in general NumPy universal functions can take many
+inputs, requiring looking up the implementation by considering all of them
+making NumPy ufunc "multi-methods" with respect to the input *DTypes*::
+
+    add_impl = np.add.resolve_impl(type(arr1.dtype), type(arr2.dtype))
+
+This NEP strives to define the minimal set of API necessary to achieve
+the above lists of steps and make it fully extensible for authors of both
+custom ufuncs and DTypes.
+There are two distinct API design decisions as part of this NEP:
+
+1. For the above to work, we must also define::
+
+       np.positive.resolve_impl(MyDateTime)
+
+   In the case of multiple inputs, often *promotion* must occur:
+   ``float32 + float64`` is actually handled by the implementation for
+   ``float64 + float64``.  NumPy automatically converts (casts) the first
+   argument.
+
+   This is described in the "Promotion and Dispatching" section and
+   step 2 in the list included in the next section
+   (The Steps involved in a UFunc call).
+
+2. The definition of the ``UFuncImpl`` specification, to allow users
+   to add new "implementations" to a UFunc. This defines how the user
+   can implement a new ``positive_impl`` for their custom DType and
+   includes all necessary information to adapt steps 3-7 in the list
+   in the next section (The Steps involved in a UFunc call)::
+   
+       positive_impl = np.positive.resolve_impl(MyDateTime)
+
+   exists and::
+
+       np.positive(my_datetime_array)
+
+   can succeed.
+   
+   This is described in the "UFuncImpl Specifications" and following sections.
+
+
+The Steps involved in a UFunc Call
+""""""""""""""""""""""""""""""""""
+
 A UFunc call consists of into multiple steps:
 
 1. Resolution of ``__array_ufunc__`` for container types, such as a Dask
@@ -121,6 +202,12 @@ The following sections go into more details, and are seperated into the
 two main topics of *promotion and dispatching* and the further C-API
 provided to the user for the ufunc execution.
 
+
+UFuncImpl Registration
+""""""""""""""""""""""
+
+*TODO:* we need to briefly mention registration, even if the details of
+how to register it are in the specs or even later!
 
 UFuncImpl Specifications
 """"""""""""""""""""""""
@@ -407,38 +494,63 @@ initially private ``setup``), from within the ``float64+float64->float64``
 implementation only.
 
 
-Bound UFuncImpl
-"""""""""""""""
+``ufunc.resolve_impl``
+""""""""""""""""""""""
 
-The ``UFuncImpl`` is much like a bound method on an object, which in Python
-are passed the ``self`` argument.  There are some small difference in that
-a ``UFuncImpl`` represents a set of such bound methods.
+In the Introduction we describe use the following pattern::
 
-With respect to a ``UFuncImpl``, the normally passed ``self`` argument
-represents the following set of information:
+    positive_impl = np.positive.resolve_impl(type(arr.dtype))
 
-* The ufunc itself, which may be useful for information such as the ufunc's name
-  but is also required to match up information such as the ``ufunc.signature``.
-* The DTypes involved, which are thus passed into all of the methods of the
-  ``UFuncImpl`` in some form or another.
+where ``positive_impl`` is defined by the ``UFuncImpl`` specifications above.
 
-Both of these are *not* stored on the ``UFuncImpl`` itself and just like
-methods, most of the time ``UFuncImpl`` should only be used indirectly by
-calling the ufunc it is bound to.
-It is possible to bind a single ``UFuncImpl`` to multiple ufuncs.
-Note that the ufunc itself can hold on weakly to most ``DTypes`` to allow
-correct cleanup of ``UFuncImpl`` if used correctly.  However, when
-the *output* DTypes are not also input DTypes they have to referenced strongly.
+The ``UFuncImpl`` as defined above does not encompass all information included
+in the UFunc and is explicitly passed the ``DTypes`` it is registered for.
+This is to ensure that ``UFuncImpl`` is both lightweight and could be deleted
+more easily in the event that a ``DType`` itself is deleted (making the
+``UFuncImpl`` inaccessible.
 
-In principle it is be possible to define unbound ``UFuncImpl`` as a full
-Python object.  This will *not* be possible initially, since it would require
-careful duplication of many of the ufunc's metadata on the ``UFuncImpl``
+For the reader wishing more details/thoughts, the pattern is rather more
+similar to::
+
+    class BoundUFuncImpl:
+        def __init__(self, ufunc, DTypes):
+            self.ufunc = ufunc
+            self.DTypes = DTypes
+
+        @staticmethod
+        def resolve_descriptors(ufunc, DTypes, input_dtypes):
+            raise NotImplementedError
+
+        @staticmethod
+        def inner_loop(ufunc, DTypes, input_dtypes):
+            raise NotImplementedError
+
+Note the use of ``staticmethod`` in the example.  This bears some
+similarity to methods: A method is passed the ``self`` argument, but
+a method is otherwise a function, without any state of its own.
+In this regard, ``UFuncImpl`` defines the "unbound method"::
+
+    integer = 8
+    unbound_conjugate = type(integer).conjugate
+
+while::
+
+    conjugate_impl = np.conjugate.resolve_impl(type(arr.dtype))
+
+corresponds to the "bound method"::
+
+    integer.conjugate
+
+which is passed the relevant metadata (ufunc and DTypes), in a similar way
+that a method is passed ``self``.
+The current NEP does not allow the representation of the "unbound method"
+as a Python object as of now.
 
 
-Promotion and Discovery
-"""""""""""""""""""""""
+Promotion and Dispatching
+"""""""""""""""""""""""""
 
-NumPy ufuncs are multimethods in the sense that they operate on multiple
+NumPy ufuncs are multi-methods in the sense that they operate on multiple
 DTypes at once.  While the input (and outpyt) dtypes are attached to numpy
 arrays, the ``ndarray`` type itself does not carry the information of which
 function to apply to the data.
