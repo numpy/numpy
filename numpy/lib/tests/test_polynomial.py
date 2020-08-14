@@ -243,6 +243,12 @@ class TestPolynomial:
         assert_equal(q.coeffs.dtype, np.complex128)
         assert_equal(r.coeffs.dtype, np.complex128)
         assert_equal(q*a + r, b)
+        
+        d = np.poly1d([1, 2, 3])
+        c = [1, 2, 3]
+        s, t = np.polydiv(d, c)
+        assert_equal(isinstance(s, np.poly1d) == True)
+        assert_equal(isinstance(t, np.poly1d) == True)
 
     def test_poly_coeffs_mutable(self):
         """ Coefficients should be modifiable """
