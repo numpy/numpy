@@ -345,6 +345,11 @@ class TestMethods:
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
+        C = np.char.center([b'a', b'b'], 3, fillchar=[b'a', b'b'])
+        tgt = [b'aaa', b'bbb']
+        assert_(issubclass(C.dtype.type, np.string_))
+        assert_array_equal(C, tgt)
+
     def test_decode(self):
         A = np.char.array([b'\\u03a3'])
         assert_(A.decode('unicode-escape')[0] == '\u03a3')
@@ -383,6 +388,11 @@ class TestMethods:
         C = np.char.ljust(b'FOO', [[10, 20], [15, 8]])
         tgt = [[b'FOO       ', b'FOO                 '],
                [b'FOO            ', b'FOO     ']]
+        assert_(issubclass(C.dtype.type, np.string_))
+        assert_array_equal(C, tgt)
+
+        C = np.char.center([b'a', b'b'], 3, fillchar=[b'a', b'b'])
+        tgt = [b'aaa', b'bbb']
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
@@ -448,6 +458,11 @@ class TestMethods:
         C = np.char.rjust(b'FOO', [[10, 20], [15, 8]])
         tgt = [[b'       FOO', b'                 FOO'],
                [b'            FOO', b'     FOO']]
+        assert_(issubclass(C.dtype.type, np.string_))
+        assert_array_equal(C, tgt)
+
+        C = np.char.center([b'a', b'b'], 3, fillchar=[b'a', b'b'])
+        tgt = [b'aaa', b'bbb']
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
