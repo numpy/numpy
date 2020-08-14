@@ -20,7 +20,6 @@ def _asarray_dispatcher(a, dtype=None, order=None, *, like=None):
     return (like,)
 
 
-@array_function_dispatch(_asarray_dispatcher)
 @set_module('numpy')
 def asarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an array.
@@ -96,10 +95,17 @@ def asarray(a, dtype=None, order=None, *, like=None):
     True
 
     """
+    if like is not None:
+        return _asarray_with_like(a, dtype=dtype, order=order, like=like)
+
     return array(a, dtype, copy=False, order=order)
 
 
-@array_function_dispatch(_asarray_dispatcher)
+@array_function_dispatch(_asarray_dispatcher, function=asarray)
+def _asarray_with_like(a, dtype=None, order=None, *, like=None):
+    pass
+
+
 @set_module('numpy')
 def asanyarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
@@ -157,14 +163,21 @@ def asanyarray(a, dtype=None, order=None, *, like=None):
     True
 
     """
+    if like is not None:
+        return _asanyarray_with_like(a, dtype=dtype, order=order, like=like)
+
     return array(a, dtype, copy=False, order=order, subok=True)
+
+
+@array_function_dispatch(_asarray_dispatcher, function=asanyarray)
+def _asanyarray_with_like(a, dtype=None, order=None, *, like=None):
+    pass
 
 
 def _asarray_contiguous_fortran_dispatcher(a, dtype=None, *, like=None):
     return (like,)
 
 
-@array_function_dispatch(_asarray_contiguous_fortran_dispatcher)
 @set_module('numpy')
 def ascontiguousarray(a, dtype=None, *, like=None):
     """
@@ -206,10 +219,20 @@ def ascontiguousarray(a, dtype=None, *, like=None):
     so it will not preserve 0-d arrays.  
 
     """
+    if like is not None:
+        return _ascontiguousarray_with_like(a, dtype=dtype, like=like)
+
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
-@array_function_dispatch(_asarray_contiguous_fortran_dispatcher)
+@array_function_dispatch(
+    _asarray_contiguous_fortran_dispatcher,
+    function=ascontiguousarray,
+)
+def _ascontiguousarray_with_like(a, dtype=None, *, like=None):
+    pass
+
+
 @set_module('numpy')
 def asfortranarray(a, dtype=None, *, like=None):
     """
@@ -251,14 +274,24 @@ def asfortranarray(a, dtype=None, *, like=None):
     so it will not preserve 0-d arrays.  
 
     """
+    if like is not None:
+        return _asfortranarray_with_like(a, dtype=dtype, like=like)
+
     return array(a, dtype, copy=False, order='F', ndmin=1)
+
+
+@array_function_dispatch(
+    _asarray_contiguous_fortran_dispatcher,
+    function=asfortranarray,
+)
+def _asfortranarray_with_like(a, dtype=None, *, like=None):
+    pass
 
 
 def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
     return (like,)
 
 
-@array_function_dispatch(_require_dispatcher)
 @set_module('numpy')
 def require(a, dtype=None, requirements=None, *, like=None):
     """
@@ -330,6 +363,14 @@ def require(a, dtype=None, requirements=None, *, like=None):
       UPDATEIFCOPY : False
 
     """
+    if like is not None:
+        return _require_with_like(
+            a,
+            dtype=dtype,
+            requirements=requirements,
+            like=like,
+        )
+
     possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
                       'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
                       'A': 'A', 'ALIGNED': 'A',
@@ -364,6 +405,11 @@ def require(a, dtype=None, requirements=None, *, like=None):
             arr = arr.copy(order)
             break
     return arr
+
+
+@array_function_dispatch(_require_dispatcher, function=require)
+def _require_with_like(a, dtype=None, requirements=None, *, like=None):
+    pass
 
 
 # Add documentation for ``like=`` keyword argument

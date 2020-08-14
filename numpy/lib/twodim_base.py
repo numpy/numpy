@@ -153,7 +153,6 @@ def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
     return (like,)
 
 
-@array_function_dispatch(_eye_dispatcher)
 def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
@@ -201,6 +200,8 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
            [0.,  0.,  0.]])
 
     """
+    if like is not None:
+        return _eye_with_like(N, M=M, k=k, dtype=dtype, order=order, like=like)
     if M is None:
         M = N
     m = zeros((N, M), dtype=dtype, order=order)
@@ -212,6 +213,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         i = (-k) * M
     m[:M-k].flat[i::M+1] = 1
     return m
+
+
+@array_function_dispatch(_eye_dispatcher, function=eye)
+def _eye_with_like(N, M=None, k=None, dtype=None, order=None, *, like=None):
+    pass
 
 
 def _diag_dispatcher(v, k=None):
@@ -354,7 +360,6 @@ def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
     return (like,)
 
 
-@array_function_dispatch(_tri_dispatcher)
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
@@ -396,6 +401,9 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
            [1.,  1.,  0.,  0.,  0.]])
 
     """
+    if like is not None:
+        return _tri_with_like(N, M=M, k=k, dtype=dtype, like=like)
+
     if M is None:
         M = N
 
@@ -406,6 +414,11 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     m = m.astype(dtype, copy=False)
 
     return m
+
+
+@array_function_dispatch(_tri_dispatcher, function=tri)
+def _tri_with_like(N, M=None, k=None, dtype=None, *, like=None):
+    pass
 
 
 def _trilu_dispatcher(m, k=None):

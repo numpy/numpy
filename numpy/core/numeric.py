@@ -145,7 +145,6 @@ def _ones_dispatcher(shape, dtype=None, order=None, *, like=None):
     return(like,)
 
 
-@array_function_dispatch(_ones_dispatcher)
 @set_module('numpy')
 def ones(shape, dtype=None, order='C', *, like=None):
     """
@@ -197,9 +196,17 @@ def ones(shape, dtype=None, order='C', *, like=None):
            [1.,  1.]])
 
     """
+    if like is not None:
+        return _ones_with_like(shape, dtype=dtype, order=order, like=like)
+
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
+
+
+@array_function_dispatch(_ones_dispatcher, function=ones)
+def _ones_with_like(shape, dtype=None, order=None, *, like=None):
+    pass
 
 
 def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -277,7 +284,6 @@ def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
     return(like,)
 
 
-@array_function_dispatch(_full_dispatcher)
 @set_module('numpy')
 def full(shape, fill_value, dtype=None, order='C', *, like=None):
     """
@@ -325,12 +331,20 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
            [1, 2]])
 
     """
+    if like is not None:
+        return _full_with_like(shape, fill_value, dtype=dtype, order=order, like=like)
+
     if dtype is None:
         fill_value = asarray(fill_value)
         dtype = fill_value.dtype
     a = empty(shape, dtype, order)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
+
+
+@array_function_dispatch(_full_dispatcher, function=full)
+def _full_with_like(shape, fill_value, dtype=None, order=None, *, like=None):
+    pass
 
 
 def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None, shape=None):
@@ -1774,7 +1788,6 @@ def _fromfunction_dispatcher(function, shape, *, dtype=None, like=None, **kwargs
     return (like,)
 
 
-@array_function_dispatch(_fromfunction_dispatcher)
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
@@ -1830,8 +1843,16 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
            [2, 3, 4]])
 
     """
+    if like is not None:
+        return _fromfunction_with_like(function, shape, dtype=dtype, like=like, **kwargs)
+
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
+
+
+@array_function_dispatch(_fromfunction_dispatcher, function=fromfunction)
+def _fromfunction_with_like(function, shape, *, dtype=None, like=None, **kwargs):
+    pass
 
 
 def _frombuffer(buf, dtype, shape, order):
@@ -2110,7 +2131,6 @@ def _identity_dispatcher(n, dtype=None, *, like=None):
     return (like,)
 
 
-@array_function_dispatch(_identity_dispatcher)
 @set_module('numpy')
 def identity(n, dtype=None, *, like=None):
     """
@@ -2143,8 +2163,16 @@ def identity(n, dtype=None, *, like=None):
            [0.,  0.,  1.]])
 
     """
+    if like is not None:
+        return _identity_with_like(n, dtype=dtype, like=like)
+
     from numpy import eye
     return eye(n, dtype=dtype, like=like)
+
+
+@array_function_dispatch(_identity_dispatcher, function=identity)
+def _identity_with_like(n, dtype=None, *, like=None):
+    pass
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
