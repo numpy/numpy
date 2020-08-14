@@ -465,6 +465,7 @@ class TestArrayLike:
     _array_tests = [
         ('array', *func_args((1,))),
         ('asarray', *func_args((1,))),
+        ('asanyarray', *func_args((1,))),
         ('ascontiguousarray', *func_args((2, 3))),
         ('asfortranarray', *func_args((2, 3))),
         ('require', *func_args((np.arange(6).reshape(2, 3),),
