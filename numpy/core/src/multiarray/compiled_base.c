@@ -1,19 +1,4 @@
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#include <Python.h>
-#include <structmember.h>
-#include <string.h>
-
-#define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
-#include "numpy/npy_3kcompat.h"
-#include "numpy/npy_math.h"
-#include "npy_config.h"
-#include "templ_common.h" /* for npy_mul_with_overflow_intp */
-#include "lowlevel_strided_loops.h" /* for npy_bswap8 */
-#include "alloc.h"
-#include "ctors.h"
-#include "common.h"
-
+#include "compiled_base.h"
 
 /*
  * Returns -1 if the array is monotonic decreasing,
@@ -1500,26 +1485,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     Py_RETURN_NONE;
 }
 
-#if defined NPY_HAVE_SSE2_INTRINSICS
-#include <emmintrin.h>
-#endif
-
-#ifdef NPY_HAVE_NEON
-    typedef npy_uint64 uint64_unaligned __attribute__((aligned(16)));
-    static NPY_INLINE int32_t
-    sign_mask(uint8x16_t input)
-    {
-        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
-    }
-#endif
-/*
- * This function packs boolean values in the input array into the bits of a
- * byte array. Truth values are determined as usual: 0 is false, everything
- * else is true.
- */
 static NPY_INLINE void
 pack_inner(const char *inptr,
            npy_intp element_size,   /* in bytes */
@@ -1530,114 +1495,11 @@ pack_inner(const char *inptr,
            npy_intp out_stride,
            char order)
 {
-    /*
-     * Loop through the elements of inptr.
-     * Determine whether or not it is nonzero.
-     *  Yes: set corresponding bit (and adjust build value)
-     *  No:  move on
-     * Every 8th value, set the value of build and increment the outptr
-     */
-    npy_intp index = 0;
-    int remain = n_in % 8;              /* uneven bits */
-
-#if defined NPY_HAVE_SSE2_INTRINSICS && defined HAVE__M_FROM_INT64
-    if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        __m128i zero = _mm_setzero_si128();
-        /* don't handle non-full 8-byte remainder */
-        npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
-        for (index = 0; index < vn_out; index += 2) {
-            unsigned int r;
-            npy_uint64 a = *(npy_uint64*)inptr;
-            npy_uint64 b = *(npy_uint64*)(inptr + 8);
-            if (order == 'b') {
-                a = npy_bswap8(a);
-                b = npy_bswap8(b);
-            }
-            
-            /* note x86 can load unaligned */
-            __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
-            /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = _mm_cmpeq_epi8(v, zero);
-            v = _mm_cmpeq_epi8(v, zero);
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            r = _mm_movemask_epi8(v);
-            /* store result */
-            memcpy(outptr, &r, 1);
-            outptr += out_stride;
-            memcpy(outptr, (char*)&r + 1, 1);
-            outptr += out_stride;
-            inptr += 16;
-        }
-    }
-#elif defined NPY_HAVE_NEON
-    if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        /* don't handle non-full 8-byte remainder */
-        npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
-        for (index = 0; index < vn_out; index += 2) {
-            unsigned int r;
-            npy_uint64 a = *((uint64_unaligned*)inptr);
-            npy_uint64 b = *((uint64_unaligned*)(inptr + 8));
-            if (order == 'b') {
-                a = npy_bswap8(a);
-                b = npy_bswap8(b);
-            }
-            uint64x2_t v = vcombine_u64(vcreate_u64(a), vcreate_u64(b));
-            uint64x2_t zero = vdupq_n_u64(0);
-            /* false -> 0x00 and true -> 0xFF */
-            v = vreinterpretq_u64_u8(vmvnq_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero))));
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            uint8x16_t input = vreinterpretq_u8_u64(v);
-            r = sign_mask(input);
-            /* store result */
-            memcpy(outptr, &r, 1);
-            outptr += out_stride;
-            memcpy(outptr, (char*)&r + 1, 1);
-            outptr += out_stride;
-            inptr += 16;
-        }
-    }
-#endif
-
-    if (remain == 0) {                  /* assumes n_in > 0 */
-        remain = 8;
-    }
-    /* Don't reset index. Just handle remainder of above block */
-    for (; index < n_out; index++) {
-        unsigned char build = 0;
-        int i, maxi;
-        npy_intp j;
-
-        maxi = (index == n_out - 1) ? remain : 8;
-        if (order == 'b') {
-            for (i = 0; i < maxi; i++) {
-                build <<= 1;
-                for (j = 0; j < element_size; j++) {
-                    build |= (inptr[j] != 0);
-                }
-                inptr += in_stride;
-            }
-            if (index == n_out - 1) {
-                build <<= 8 - remain;
-            }
-        }
-        else
-        {
-            for (i = 0; i < maxi; i++) {
-                build >>= 1;
-                for (j = 0; j < element_size; j++) {
-                    build |= (inptr[j] != 0) ? 128 : 0;
-                }
-                inptr += in_stride;
-            }
-            if (index == n_out - 1) {
-                build >>= 8 - remain;
-            }
-        }
-        *outptr = (char)build;
-        outptr += out_stride;
-    }
+    #ifndef NPY_DISABLE_OPTIMIZATION
+        #include "compiled_base.dispatch.h"
+    #endif
+    NPY_CPU_DISPATCH_CALL(return compiled_base_pack_inner,
+    (inptr, element_size, n_in, in_stride, outptr, n_out, out_stride, order))
 }
 
 static PyObject *
