@@ -14,13 +14,13 @@ NEP 42 — Implementation of New DataTypes
 
     This NEP is third in a series:
 
-    - :ref:`NEP 40 <NEP40>` (`under consideration`) details issues with the previous dtype implementation.
+    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
 
-    - :ref:`NEP 41 <NEP41>` (`accepted`) provides an overview and broad design.
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
 
-    - NEP 42 (`this document`) details API additions specifically related to datatypes.
+    - NEP 42 (this document) describes the new design's datatype-related APIs.
 
-    - NEP 43 (`to be written`) details API additions related to universal functions.
+    - NEP 43 describes the new design's API for universal functions.
 
 
 Abstract
@@ -138,7 +138,7 @@ Abstract Dtypes offer multiple benefits:
    ``Float64Unit``. Then ``Unit(np.float64, "m")`` (``m`` for meters)
    could be identical to ``Float64Unit("m")``.
 
-An perfect illustration of the use of abstract classes is the Pandas
+An perfect illustration of the use of abstract classes is the pandas
 ``Categorical`` type, which can contain integers or general Python objects.
 NumPy needs a Dtype that it can assign a Categorical to, but it also needs
 Dtypes like ``CategoricalInt64`` and ``Categorical Object`` such that
@@ -155,7 +155,7 @@ Under the rules of this hierarchy:
 
 1. Abstract DTypes have no instances. Instantiating an abstract DType must return
    a concrete subclass or raise an error. Raising an error is the default behavior
-   and may required initially).
+   and may required initially.
 
 2. Abstract DTypes may used as be superclasses, but may also act like Python's
    abstract base classes (ABC). It may be possible to simply use/inherit from
@@ -179,7 +179,7 @@ concrete classes.
 The DType class requires C-side storage of methods
 and additional information; this will be implemented by a ``DTypeMeta``
 class. Each ``DType`` class is an instance of ``DTypeMeta`` with a
-well-defined and extensible interface. This is an implementation detail
+well-defined and extensible interface. ``DTypeMeta`` is an implementation detail
 that the end-user will not need to be aware of.
 
 .. _hierarchy_figure:
