@@ -3,4 +3,4 @@ ipython
 scipy
 matplotlib
 pandas
-pydata-sphinx-theme
+pydata-sphinx-theme==0.3.1

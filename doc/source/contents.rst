@@ -12,5 +12,5 @@ NumPy Documentation
    Development <dev/index>
 
 .. This is not really the index page, that is found in
-   _templates/intexcontent.html The toctree content here will be added to the
+   _templates/indexcontent.html The toctree content here will be added to the
    top of the template header
