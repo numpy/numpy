@@ -53,7 +53,7 @@ multiple-dispatching in the future.
 Detailed Description
 --------------------
 
-NEP 41 and NEP 42 layed out the general proposed structure into DType
+NEP 41 and NEP 42 laid out the general proposed structure into DType
 classes (similar to the current type numbers) and dtype instances.
 Universal functions have a fairly fixed signature of multiple input arrays
 and certain additional features. But depending on the input DTypes, they
@@ -70,7 +70,7 @@ a single input::
 
     res = np.positive(arr)
 
-could be implemented (conceptional) as:
+could be implemented (conceptionally) as:
 
     positive_impl = arr.dtype.positive
     res = positive_impl(arr)
@@ -103,29 +103,29 @@ making NumPy ufunc "multi-methods" with respect to the input *DTypes*::
 
     add_impl = np.add.resolve_impl(type(arr1.dtype), type(arr2.dtype))
 
-This NEP strives to define the minimal set of API necessary to achieve
+This NEP strives to define the minimal API necessary to achieve
 the above lists of steps and make it fully extensible for authors of both
 custom ufuncs and DTypes.
 There are two distinct API design decisions as part of this NEP:
 
 1. For the above to work, we must also define::
 
-       np.positive.resolve_impl(MyDateTime)
+       np.positive.resolve_impl(MyDType)
 
    In the case of multiple inputs, often *promotion* must occur:
    ``float32 + float64`` is actually handled by the implementation for
    ``float64 + float64``.  NumPy automatically converts (casts) the first
    argument.
 
-   This is described in the "Promotion and Dispatching" section and
-   step 2 in the list included in the next section
-   (The Steps involved in a UFunc call).
+   This is described in the :ref:`Promotion and Dispatching" <promotion_and_dispatching>`
+   section and step 2 of the
+   :ref:`The Steps involved in a UFunc call <steps_of_a_ufunc_call>` section.
 
 2. The definition of the ``UFuncImpl`` specification, to allow users
    to add new "implementations" to a UFunc. This defines how the user
    can implement a new ``positive_impl`` for their custom DType and
-   includes all necessary information to adapt steps 3-7 in the list
-   in the next section (The Steps involved in a UFunc call)::
+   includes all necessary information to adapt steps 3-7 of the
+   :ref:`The Steps involved in a UFunc call <steps_of_a_ufunc_call>` section.
    
        positive_impl = np.positive.resolve_impl(MyDateTime)
 
@@ -135,8 +135,11 @@ There are two distinct API design decisions as part of this NEP:
 
    can succeed.
    
-   This is described in the "UFuncImpl Specifications" and following sections.
+   This is described in the :ref:`"UFuncImpl Specifications" <ufuncimpl_spects>`
+   and following sections.
 
+
+.. _steps_of_a_ufunc_call:
 
 The Steps involved in a UFunc Call
 """"""""""""""""""""""""""""""""""
@@ -166,7 +169,8 @@ A UFunc call consists of into multiple steps:
 
 4. Preparing the actual iteration. This step is largely handled by ``NpyIter`` (the iterator).
 
-   * Allocate all ouputs and potentially copies (or buffers).
+   * Allocate all outputs and temporary buffers which are necessary perform
+     casts.
    * Finds the best iteration order, which includes information such as
      a broadcasted stride always being 0.
 
@@ -208,6 +212,8 @@ UFuncImpl Registration
 
 *TODO:* we need to briefly mention registration, even if the details of
 how to register it are in the specs or even later!
+
+.. _ufuncimpl_spects::
 
 UFuncImpl Specifications
 """"""""""""""""""""""""
@@ -546,6 +552,8 @@ that a method is passed ``self``.
 The current NEP does not allow the representation of the "unbound method"
 as a Python object as of now.
 
+
+.. _promotion_and_dispatching::
 
 Promotion and Dispatching
 """""""""""""""""""""""""
