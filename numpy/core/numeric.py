@@ -204,7 +204,7 @@ def ones(shape, dtype=None, order='C', *, like=None):
     return a
 
 
-@array_function_dispatch(_ones_dispatcher, function=ones)
+@array_function_dispatch(_ones_dispatcher, public_api=ones)
 def _ones_with_like(shape, dtype=None, order=None, *, like=None):
     pass
 
@@ -342,7 +342,7 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
     return a
 
 
-@array_function_dispatch(_full_dispatcher, function=full)
+@array_function_dispatch(_full_dispatcher, public_api=full)
 def _full_with_like(shape, fill_value, dtype=None, order=None, *, like=None):
     pass
 
@@ -1850,7 +1850,7 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     return function(*args, **kwargs)
 
 
-@array_function_dispatch(_fromfunction_dispatcher, function=fromfunction)
+@array_function_dispatch(_fromfunction_dispatcher, public_api=fromfunction)
 def _fromfunction_with_like(function, shape, *, dtype=None, like=None, **kwargs):
     pass
 
@@ -2170,7 +2170,7 @@ def identity(n, dtype=None, *, like=None):
     return eye(n, dtype=dtype, like=like)
 
 
-@array_function_dispatch(_identity_dispatcher, function=identity)
+@array_function_dispatch(_identity_dispatcher, public_api=identity)
 def _identity_with_like(n, dtype=None, *, like=None):
     pass
 

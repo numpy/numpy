@@ -215,7 +215,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     return m
 
 
-@array_function_dispatch(_eye_dispatcher, function=eye)
+@array_function_dispatch(_eye_dispatcher, public_api=eye)
 def _eye_with_like(N, M=None, k=None, dtype=None, order=None, *, like=None):
     pass
 
@@ -416,7 +416,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     return m
 
 
-@array_function_dispatch(_tri_dispatcher, function=tri)
+@array_function_dispatch(_tri_dispatcher, public_api=tri)
 def _tri_with_like(N, M=None, k=None, dtype=None, *, like=None):
     pass
 
