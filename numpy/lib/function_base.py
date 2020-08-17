@@ -1559,7 +1559,7 @@ def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi, min_val=None, max_va
     offset = 0
     if (not min_val is None) and (not max_val is None):
         interval_size = max_val - min_val
-        slice0list = [slice(None, None)]*nd     # full slices
+        slice0list = [slice(None)]*nd     # full slices
         slice0list[axis] = 0
         slice0 = tuple(slice0list)
         offset_mul = (p[slice0] - min_val)//interval_size
