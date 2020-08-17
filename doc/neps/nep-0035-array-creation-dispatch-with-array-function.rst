@@ -27,34 +27,49 @@ Motivation and Scope
 Many are the libraries implementing the NumPy API, such as Dask for graph
 computing, CuPy for GPGPU computing, xarray for N-D labeled arrays, etc. All
 the libraries mentioned have yet another thing in common: they have also adopted
-the ``__array_function__`` protocol. The protocol defines a mechanism allowing a
-user to directly use the NumPy API as a dispatcher based on the input array
-type. In essence, dispatching means users are able to pass a downstream array,
-such as a Dask array, directly to one of NumPy's compute functions, and NumPy
-will be able to automatically recognize that and send the work back to Dask's
-implementation of that function, which will define the return value. For
-example:
+the ``__array_function__`` protocol; a protocol that allows NumPy to understand
+and treat downstream objects as if they are the native ``numpy.ndarray`` object.
+Hence the community while using various libraries still benefits from a unified
+NumPy API. This not only brings great convenience for standardization but also
+removes the burden of learning a new API and rewriting code for every new
+object. In more technical terms, this mechanism of the protocol is called a
+"dispatcher", which is the terminology we use from here onwards when referring
+to that.
+
 
 .. code:: python
 
     x = dask.array.arange(5)    # Creates dask.array
-    np.sum(a)                   # Returns dask.array
+    np.diff(x)                  # Returns dask.array
 
 Note above how we called Dask's implementation of ``sum`` via the NumPy
-namespace by calling ``np.sum``, and the same would apply if we had a CuPy
+namespace by calling ``np.diff``, and the same would apply if we had a CuPy
 array or any other array from a library that adopts ``__array_function__``.
 This allows writing code that is agnostic to the implementation library, thus
 users can write their code once and still be able to use different array
 implementations according to their needs.
 
-Unfortunately, ``__array_function__`` has limitations, one of them being array
-creation functions. In the example above, NumPy was able to call Dask's
-implementation because the input array was a Dask array. The same is not true
-for array creation functions, in the example the input of ``arange`` is simply
-the integer ``5``, not providing any information of the array type that should
-be the result, that's where a reference array passed by the ``like=`` argument
-proposed here can be of help, as it provides NumPy with the information
-required to create the expected type of array.
+Obviously, having a protocol in-place is useful if the arrays are created
+elsewhere and let NumPy handle them. But still these arrays have to be started
+in their native library and brought back. Instead if it was possible to create
+these objects through NumPy API then there would be an almost complete
+experience, all using NumPy syntax. For example, say we have some CuPy array
+``cp_arr`` , and want a similar CuPy array with identity matrix. We could still
+write the following:
+
+.. code:: python
+     x = cupy.identity(3)
+
+Instead, the better way would be using to only use the NumPy API, this could now
+be achieved with:
+
+.. code:: python
+    x = np.identity(3, like=cp_arr)
+
+As if by magic, ``x`` will also be a CuPy array, as NumPy was capable to infer
+that from the type of ``cp_arr``. Note that this last step would not be possible
+without ``like=``, as it would be impossible for the NumPy to know the user
+expects a CuPy array based only on the integer input.
 
 The new ``like=`` keyword proposed is solely intended to identify the downstream
 library where to dispatch and the object is used only as reference, meaning that
@@ -149,6 +164,13 @@ are created with correct types. Without the ``like=`` argument, it would be
 impossible to ensure ``my_pad`` creates a padding array with a type matching
 that of the input array, which would cause cause a ``TypeError`` exception to
 be raised by CuPy, as discussed above would happen to the CuPy case alone.
+
+Current NumPy users who don't use other arrays from downstream libraries should
+have no impact in their current usage of the NumPy API. In the event of the
+user passing a NumPy array to ``like=``, that will continue to work as if no
+array was passed via that argument. However, this is advised against, as
+internally there will be additional checks required that will have an impact in
+performance.
 
 Backward Compatibility
 ----------------------
