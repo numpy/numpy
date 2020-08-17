@@ -30,10 +30,9 @@
  * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
  *
  */
-typedef void (PyArray_StridedUnaryOp)(char *dst, npy_intp dst_stride,
-                                    char *src, npy_intp src_stride,
-                                    npy_intp N, npy_intp src_itemsize,
-                                    NpyAuxData *transferdata);
+typedef int (PyArray_StridedUnaryOp)(
+        char *dst, npy_intp dst_stride, char *src, npy_intp src_stride,
+        npy_intp N, npy_intp src_itemsize, NpyAuxData *transferdata);
 
 /*
  * This is for pointers to functions which behave exactly as
@@ -43,31 +42,10 @@ typedef void (PyArray_StridedUnaryOp)(char *dst, npy_intp dst_stride,
  * In particular, the 'i'-th element is operated on if and only if
  * mask[i*mask_stride] is true.
  */
-typedef void (PyArray_MaskedStridedUnaryOp)(char *dst, npy_intp dst_stride,
-                                    char *src, npy_intp src_stride,
-                                    npy_bool *mask, npy_intp mask_stride,
-                                    npy_intp N, npy_intp src_itemsize,
-                                    NpyAuxData *transferdata);
-
-/*
- * This function pointer is for binary operations that input two
- * arbitrarily strided one-dimensional array segments and output
- * an arbitrarily strided array segment of the same size.
- * It may be a fully general function, or a specialized function
- * when the strides or item size have particular known values.
- *
- * Examples of binary operations are the basic arithmetic operations,
- * logical operators AND, OR, and many others.
- *
- * The 'transferdata' parameter is slightly special, following a
- * generic auxiliary data pattern defined in ndarraytypes.h
- * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
- *
- */
-typedef void (PyArray_StridedBinaryOp)(char *dst, npy_intp dst_stride,
-                                    char *src0, npy_intp src0_stride,
-                                    char *src1, npy_intp src1_stride,
-                                    npy_intp N, NpyAuxData *transferdata);
+typedef int (PyArray_MaskedStridedUnaryOp)(
+        char *dst, npy_intp dst_stride, char *src, npy_intp src_stride,
+        npy_bool *mask, npy_intp mask_stride,
+        npy_intp N, npy_intp src_itemsize, NpyAuxData *transferdata);
 
 /*
  * Gives back a function pointer to a specialized function for copying
@@ -271,6 +249,7 @@ PyArray_CastRawArrays(npy_intp count,
  * The return value is the number of elements it couldn't copy.  A return value
  * of 0 means all elements were copied, a larger value means the end of
  * the n-dimensional array was reached before 'count' elements were copied.
+ * A negative return value indicates an error occurred.
  *
  * ndim:
  *      The number of dimensions of the n-dimensional array.

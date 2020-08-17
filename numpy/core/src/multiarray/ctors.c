@@ -2391,16 +2391,21 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     src_count = *src_countptr;
     dst_data = dst_dataptr[0];
     src_data = src_dataptr[0];
+    int res = 0;
     for(;;) {
         /* Transfer the biggest amount that fits both */
         count = (src_count < dst_count) ? src_count : dst_count;
-        stransfer(dst_data, dst_stride,
-                    src_data, src_stride,
-                    count, src_itemsize, transferdata);
+        if (stransfer(
+                dst_data, dst_stride, src_data, src_stride,
+                count, src_itemsize, transferdata) < 0) {
+            res = -1;
+            break;
+        }
 
         /* If we exhausted the dst block, refresh it */
         if (dst_count == count) {
-            if (!dst_iternext(dst_iter)) {
+            res = dst_iternext(dst_iter);
+            if (!res) {
                 break;
             }
             dst_count = *dst_countptr;
@@ -2413,7 +2418,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
         /* If we exhausted the src block, refresh it */
         if (src_count == count) {
-            if (!src_iternext(src_iter)) {
+            res = src_iternext(src_iter);
+            if (!res) {
                 break;
             }
             src_count = *src_countptr;
@@ -2430,8 +2436,11 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
-
-    return PyErr_Occurred() ? -1 : 0;
+    if (res > 0) {
+        /* The iteration stopped successfully, do not report an error */
+        return 0;
+    }
+    return res;
 }
 
 /*NUMPY_API

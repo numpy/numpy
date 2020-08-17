@@ -2880,3 +2880,68 @@ def test_warn_noclose():
                         casting='equiv', op_dtypes=[np.dtype('f4')])
         del it
         assert len(sup.log) == 1
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize(["in_dtype", "buf_dtype"],
+        [("i", "O"), ("O", "i"),  # most simple cases
+         ("i,O", "O,O"),  # structured partially only copying O
+         ("O,i", "i,O"),  # structured casting to and from O
+         ])
+@pytest.mark.parametrize("steps", [1, 2, 3])
+def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    count = sys.getrefcount(value)
+
+    it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
+            flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
+    for step in range(steps):
+        # The iteration finishes in 3 steps, the first two are partial
+        next(it)
+
+    # Note that resetting does not free references
+    del it
+    assert count == sys.getrefcount(value)
+
+    # Repeat the test with `iternext`
+    it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
+                   flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
+    for step in range(steps):
+        it.iternext()
+
+    del it  # should ensure cleanup
+    assert count == sys.getrefcount(value)
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize(["in_dtype", "buf_dtype"],
+         [("O", "i"),  # most simple cases
+          ("O,i", "i,O"),  # structured casting to and from O
+          ])
+def test_partial_iteration_error(in_dtype, buf_dtype):
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    if in_dtype == "O":
+        arr[int(np.BUFSIZE * 1.5)] = None
+    else:
+        arr[int(np.BUFSIZE * 1.5)]["f0"] = None
+
+    count = sys.getrefcount(value)
+
+    it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
+            flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
+    with pytest.raises(TypeError):
+        # pytest.raises seems to have issues with the error originating
+        # in the for loop, so manually unravel:
+        next(it)
+        next(it)  # raises TypeError
+
+    # Repeat the test with `iternext` after resetting, the buffers should
+    # already be cleared from any references, so resetting is sufficient.
+    it.reset()
+    with pytest.raises(TypeError):
+        it.iternext()
+        it.iternext()
+
+    assert count == sys.getrefcount(value)
