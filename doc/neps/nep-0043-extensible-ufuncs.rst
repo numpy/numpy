@@ -135,7 +135,7 @@ There are two distinct API design decisions as part of this NEP:
 
    can succeed.
    
-   This is described in the :ref:`"UFuncImpl Specifications" <ufuncimpl_spects>`
+   This is described in the :ref:`"UFuncImpl Specifications" <ufuncimpl_specs>`
    and following sections.
 
 
@@ -213,7 +213,7 @@ UFuncImpl Registration
 *TODO:* we need to briefly mention registration, even if the details of
 how to register it are in the specs or even later!
 
-.. _ufuncimpl_spects::
+.. _ufuncimpl_specs::
 
 UFuncImpl Specifications
 """"""""""""""""""""""""
@@ -225,7 +225,7 @@ Briefly, NumPy currently relies fully on strided inner-loops and, this
 will be the only allowed method of defining a ufunc initially.
 With additional setup and teardown functionality, as well as the
 ``adapt_descriptors`` function mirroring the same functionality as required
-for casting (see also NEP 42 ``CastingImpl``).
+for casting (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``).
 This gives the following function definitions:
 
 * Similar to casting, also ufuncs may need to find the correct output DType
@@ -558,9 +558,10 @@ as a Python object as of now.
 Promotion and Dispatching
 """""""""""""""""""""""""
 
-NumPy ufuncs are multi-methods in the sense that they operate on multiple
-DTypes at once.  While the input (and outpyt) dtypes are attached to numpy
-arrays, the ``ndarray`` type itself does not carry the information of which
+NumPy ufuncs are multi-methods in the sense that they operate on (or with)
+multiple DTypes at once.
+While the input (and outpyt) dtypes are attached to NumPy arrays,
+the ``ndarray`` type itself does not carry the information of which
 function to apply to the data.
 
 For example, given the input::
@@ -571,24 +572,23 @@ For example, given the input::
 
 has to find the correct ``UfuncImpl`` to perform the operation.
 Ideally, there is an exact match defined, e.g. if the above was written
-as ``np.add(arr1, arr1)``, a ``UFuncImpl[Int64, Int64, out=Int64]`` matches
-exactly can be used.
-However, in the above example there is no direct match, requireing a
+as ``np.add(arr1, arr1)``, the ``UFuncImpl[Int64, Int64, out=Int64]`` matches
+exactly and can be used.
+However, in the above example there is no direct match, requiring a
 promotion step.
 
-**Implementation:**
+**Description of the Promotion and Dispatching Process:**
 
 1. By default any UFunc has a promotion which uses the common DType of all
    inputs and tries again.  This is well defined for most mathematical
    functions, but can be disabled or customized if necessary.
 
-2. Users can *register* new Promoters just as they can register new UFuncImpl.
-   These will use abstract DTypes to allow matching a large variation of
-   signatures.
+2. Users can *register* new Promoters just as they can register a
+   new ``UFuncImpl``.  These will use abstract DTypes to allow matching
+   a large variation of signatures.
    The return value of a promotion function shall be a new ``UFuncImpl``
-   and must consistent over multiple calls with the same input (or return
-   ``NotImplemented`` to indicate an invalid promotion).  This allows
-   caching of the result.
+   or ``NotImplemented``.  It must be consistent over multiple calls with
+   the same input to allow allows caching of the result.
 
 The signature of a promotion function consists is defined by::
 
@@ -598,10 +598,12 @@ Note that DTypes may contain the outputs DType, however, normally the
 output DType should *not* affect which ``UFuncImpl`` is chosen.
 
 In most cases, it should not be necessary to add a custom promotion function,
-however, an example which needs this is for example multiplication with a
-unit.  For example ``timedelta64`` can be multiplied with most integers.
-However, we may only have a loop defined for ``timedelta64 * int64``,
-multiplying with ``int32`` will fail.
+however, an example which requires this is multiplication with a
+unit.
+In NumPy ``timedelta64`` can be multiplied with most integers.
+However, NumPy only defines a loop (``UFuncImpl``) for ``timedelta64 * int64``
+so that multiplying with ``int32`` would fail.
+
 To allow this, the following promoter can be registered for
 ``[Timedelta64, Integral, None]``::
 
@@ -616,21 +618,23 @@ To allow this, the following promoter can be registered for
         return ufunc.resolve_impl(tuple(res))
 
 In this case, just as a ``Timedelta64 * int64`` and ``int64 * timedelta64``
-``UFuncImpl`` is necessary, a second promoter has to be registered to handle
-the case where the integer is passed first.
+``UFuncImpl`` is necessary, a second promoter will have to be registered to
+handle the case where the integer is passed first.
 
-Promoters and UFUncImpls are discovered by using the best matching one first.
+Promoter and ``UFuncImpl`` are discovered by finding the best matching one.
 Initially, it will be an error if ``NotImplemented`` is returned or if two
 promoters match the input equally well *unless* the mismatch occurs due to
-unspecified output arguments.  When two signatures are identical for all
-inputs, but differ in the output the first one registered is used.
-In all other cases, the creation of a new ``AbstractDType`` should allow to
+unspecified output arguments:
+When two signatures are identical for all inputs, but differ in the output
+the first one registered is used.
+In all other cases, the use of a more precise ``AbstractDType`` will allow to
 resolve any disambiguities.
-This allows support of loops specialization if an output is supplied
+
+This above rules enable loop specialization if an output is supplied
 or the full loop is specified.  It should not typically be necessary,
 but allows resolving ``np.logic_or``, etc. which have both
 ``Object, Object->Bool`` and ``Object, Object->Object`` loops (using the
-first by default).  In principle it could be used to add loops by-passing
+first by default).  In principle it can be used to add loops by-passing
 casting, such as ``float32 + float32 -> float64`` *without* casting both
 inputs to ``float64``.
 
@@ -647,28 +651,29 @@ defined on a different ufunc.
 
 In the above the promoters use a multiple dispatching style type resolution
 while the current UFunc machinery rather uses the first
-"safe" loop (see also NEP 40) in an ordered hierarchy.
+"safe" loop (see also :ref:`NEP 40 <NEP40>`) in an ordered hierarchy.
 
 While the "safe" casting rule seems not restrictive enough, we could imagine
 using a new "promote" casting rule, or the common-DType logic to find the
 best matching loop by upcasting the inputs as necessary.
 
-The downside to this approach upcasting alone will allow to upcast results
-beyond what is expected by users.
+One downside to this approach is that upcasting alone allows upcasting the
+result beyond what is expected by users:
 Currently (which will remain supported as a fallback) any ufunc which defines
-only a float64 loop will also work for float16 and float32 by *upcasting*,
-leading to this example::
+only a float64 loop will also work for float16 and float32 by *upcasting*::
 
     >>> from scipy.special import erf
     >>> erf(np.array([4.], dtype=np.float16))  # float16
     array([1.], dtype=float32)
 
-with a float32 result.
-Thus, it is impossible to change this to a float16 result without possibly
-changing the result of following code.
+with a float32 result.  It is impossible to change the ``erf`` function to
+return a float16 result without possibly changing the result of following code.
 In general, we argue that automatic upcasting should not occur in cases
-where a a less precise loop can be reasonably defined, *unless* the ufunc
+where a less precise loop can be reasonably defined, *unless* the ufunc
 author defines this behaviour intentionally.
+
+This considerations means that upcasting has to be limited by some additional
+method.
 
 *Alternative 1:*
 
@@ -677,19 +682,35 @@ limit upcasting the input from ``float16 -> float32`` either using generic
 logic on the DTypes or the UFunc itself (or a combination of both).
 The UFunc cannot do this easily on its own, since it cannot know all possible
 DTypes which register loops.
-Consider the two loops ``float16 * float16`` with a ``float32 * float32`` loop
-defined and ``timedelta64 * int32`` with a ``timedelta64 * int16`` loop defined.
+Consider the two examples:
+
+First (should be rejected):
+
+* Input: ``float16 * float16``
+* Existing loop: ``float32 * float32``
+
+Second (should be accepted):
+
+* Input: ``timedelta64 * int32``
+* Existing loop: ``timedelta64 * int16``
+
+
 This requires either:
 
-* The timedelta64 to somehow signal that the int64 upcast is always fine
-  if it is involved in the operation.
-* The ``float32 * float32`` loop to reject upcasting.
+1. The ``timedelta64`` to somehow signal that the ``int64`` upcast is
+  always supported if it is involved in the operation.
+2. The ``float32 * float32`` loop to reject upcasting.
 
-Signaling that upcasts are OK in this context seems hard.  For the
-second rule in most cases a simple ``np.common_dtype`` rule will work,
-although only if the loop is homogeneous.
-This option will thus require adding a function to check whether input
-is a valid upcast to each loop individually.
+Implementing the first approach requires signaling that upcasts are
+acceptable in the specific context.  This would require additional hooks
+and may not be simple for complex DTypes.
+
+For the second approach in most cases a simple ``np.common_dtype`` rule will
+work for initial dispatching, however, even this is only clearly the case
+for homogeneous loops.
+This option will require adding a function to check whether the input
+is a valid upcast to each loop individually, which seems problematic.
+In many cases a default could be provided (homogeneous signature).
 
 *Alternative 2:*
 
@@ -729,20 +750,21 @@ are the best solution:
 2. The promotion logic will usually err on the safe side: A newly added
    loop cannot be misused unless a promoter is added as well.
 3. They put the burden of carefully thinking of whether the logic is correct
-   on the programmer generalizing it.  (Compared to Alternative 2)
+   on the programmer adding new loops to a UFunc.  (Compared to Alternative 2)
 4. In case of incorrect existing promotion, writing a promoter to restrict
    or refine a generic rule is possible.  In general a promotion rule should
-   never return an *incorrect* promotion, but if it the promotion is incorrect
-   for a newly added loop, the loop can add a promoter to refine the logic. 
+   never return an *incorrect* promotion, but if it the existing promotion
+   logic fails or is incorrect for a newly added loop, the loop can add a
+   new promoter to refine the logic.
 
-The option of having each loop verify that no upcast occurs is probably
-the best alternative, but does not allow dynamically adding new loops,
-and in most cases promoters should be able the same with less code.
-The main downsides of general promoters is that they allow a possibly
+The option of having each loop verify that no upcast occured is probably
+the best alternative, but does not include the ability to dynamically
+adding new loops.
+
+The main downsides of general promoters is that they allow a possible
 very large complexity.
 A third-party library *could* add incorrect promotions to NumPy, however,
 this is already possible by adding new incorrect loops.
-It may be possible to catch some cases like this.
 In general we believe we can rely on downstream projects to use this
 power and complexity carefully and responsibly.
 
@@ -818,7 +840,7 @@ Discussion
 
 There is a large space of possible implementations with many discussions
 in various places, as well as initial thoughts and design documents.
-These are listed in the discussion of NEP 40 and not repeated here for
+These are listed in the discussion of :ref:`NEP 40 <NEP40>` and not repeated here for
 brevity.
 
 A long discussion which touches many of these points and points towards
