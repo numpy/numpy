@@ -5,7 +5,7 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 """
 from .overrides import (
     array_function_dispatch,
-    array_function_like_doc,
+    set_array_function_like_doc,
     set_module,
 )
 from .multiarray import array
@@ -413,23 +413,8 @@ def _require_with_like(a, dtype=None, requirements=None, *, like=None):
 
 
 # Add documentation for ``like=`` keyword argument
-asarray.__doc__ = asarray.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-asanyarray.__doc__ = asanyarray.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-ascontiguousarray.__doc__ = ascontiguousarray.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-asfortranarray.__doc__ = asfortranarray.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-require.__doc__ = require.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
+set_array_function_like_doc(asarray)
+set_array_function_like_doc(asanyarray)
+set_array_function_like_doc(ascontiguousarray)
+set_array_function_like_doc(asfortranarray)
+set_array_function_like_doc(require)

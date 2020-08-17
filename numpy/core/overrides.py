@@ -12,16 +12,21 @@ from numpy.compat._inspect import getargspec
 ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
-
 array_function_like_doc = (
     """like : array_like
         Reference object to allow the creation of arrays which are not
         NumPy arrays. If an array-like passed in as ``like`` supports
         the ``__array_function__`` protocol, the result will be defined
         by it. In this case, it ensures the creation of an array object
-        compatible with that passed in via this argument.
-    """
+        compatible with that passed in via this argument."""
 )
+
+def set_array_function_like_doc(public_api):
+    if public_api.__doc__ is not None:
+        public_api.__doc__ = public_api.__doc__.replace(
+            "${ARRAY_FUNCTION_LIKE}",
+            array_function_like_doc,
+        )
 
 
 add_docstring(

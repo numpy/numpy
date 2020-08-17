@@ -21,7 +21,7 @@ from .multiarray import (
 from . import overrides
 from . import umath
 from . import shape_base
-from .overrides import array_function_like_doc, set_module
+from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
@@ -2532,19 +2532,7 @@ extend_all(_ufunc_config)
 
 
 # Add documentation for ``like=`` keyword argument
-ones.__doc__ = ones.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-full.__doc__ = full.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-fromfunction.__doc__ = fromfunction.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-identity.__doc__ = identity.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
+set_array_function_like_doc(ones)
+set_array_function_like_doc(full)
+set_array_function_like_doc(fromfunction)
+set_array_function_like_doc(identity)

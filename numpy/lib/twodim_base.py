@@ -8,7 +8,7 @@ from numpy.core.numeric import (
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
-from numpy.core.overrides import array_function_like_doc, set_module
+from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
 
@@ -1045,11 +1045,5 @@ def triu_indices_from(arr, k=0):
 
 
 # Add documentation for ``like=`` keyword argument
-eye.__doc__ = eye.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-tri.__doc__ = tri.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
+set_array_function_like_doc(eye)
+set_array_function_like_doc(tri)

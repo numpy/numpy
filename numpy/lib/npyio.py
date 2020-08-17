@@ -14,7 +14,7 @@ from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
-from numpy.core.overrides import array_function_like_doc, set_module
+from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -2443,11 +2443,5 @@ def recfromcsv(fname, **kwargs):
 
 
 # Add documentation for ``like=`` keyword argument
-loadtxt.__doc__ = loadtxt.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
-genfromtxt.__doc__ = genfromtxt.__doc__.replace(
-    "${ARRAY_FUNCTION_LIKE}",
-    array_function_like_doc,
-)
+set_array_function_like_doc(loadtxt)
+set_array_function_like_doc(genfromtxt)
