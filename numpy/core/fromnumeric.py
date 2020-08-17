@@ -2066,8 +2066,7 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     a_max : array_like or None
         Maximum value. If None, clipping is not performed on upper
         interval edge. Not more than one of `a_min` and `a_max` may be
-        None. If `a_min` or `a_max` are array_like, then the three
-        arrays will be broadcasted to match their shapes.
+        None. `a_min` and  `a_max` are broadcast against `a`.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
