@@ -4,7 +4,7 @@ setuptools<49.2.0
 hypothesis==5.26.0
 pytest==6.0.1
 pytz==2020.1
-pytest-cov==2.10.0
+pytest-cov==2.10.1
 pickle5; python_version == '3.7'
 pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending
