@@ -813,26 +813,55 @@ When in doubt, ask on the NumPy mailing list or issue tracker!
 Implementation
 --------------
 
-Internally a few implementation details have to be decided. These will be
-fully opaque to the user and can be changed at a later time.
+The implementation unfortunately will require large maintenance of the
+UFunc machinery, since both the actual UFunc loop calls, as well as the
+the initial dispatching steps have to be modified.
 
-This includes:
+In general, the correct ``UFuncImpl``, also those returned by a promoter,
+will be cached (or stored) inside a hashtable for efficient lookup.
 
-* How ``CastingImpl`` lookup, and thus the decision whether a cast is possible,
-  is defined. (This is speed relevant, although mainly during a transition
-  phase where NEP 43 is not yet implemented).
-  Thus, it is not very relevant to the NEP. It is only necessary to ensure fast
-  lookup during the transition phase for the current builtin Numerical types.
 
-* How the mapping from a python scalar (e.g. ``3.``) to the DType is
-  implemented.
 
-The main steps for implementation are outlined in :ref:`NEP 41 <NEP41>`.
-This includes the internal restructure for how casting and array-coercion
-works.
-After this the new public API will be added incrementally.
-This includes replacements for certain slots which are occasionally
-directly used on the dtype (e.g. ``dtype->f->setitem``).
+Backwards Compatibility
+-----------------------
+
+The general backwards compatibility issues have also been listed
+previously in NEP 41.
+
+The vast majority of users should not see any changes beyond those typical
+for NumPy released.
+There are two main users (or use-cases) impacted by the proposed changes:
+
+1. The Numba package uses direct access to the NumPy C-loops and modifies
+   the NumPy ufunc struct directly for its own purposes.
+
+2. E.g. Astropy uses its own type resolver, meaning that a default switch over
+   from the existing type resolution to a new default Promoter may not
+   be fully smooth.
+
+This NEP will try hard to maintain backward compatibility as much as
+possible.  Most existing NumPy loops currently do not require any of the
+additional parameter defined here, and currently user-defined registered
+loops must remain supported.
+Numba will require these to be stored and looked up the same way as
+previously.
+
+In general, NumPy this effort will try to remain compatible with Numba,
+but full compatibility is hard to guarantee.
+Numba is expected to adapt to the new NumPy release.
+
+**TODO:** We should discuss this part, basically, I think we can go quite
+far, but in practice we have to see what is practical...
+
+Legacy type resolvers as used by Astropy should keep working
+in most cases, although Astropy has signaled willingness in updating their
+code.
+
+The masked type resolvers specifically are unlikely to remain supported
+but have no known users (this even includes NumPy, which only uses the default
+itself).
+
+
 
 
 Discussion
