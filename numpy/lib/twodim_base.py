@@ -153,6 +153,7 @@ def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
     return (like,)
 
 
+@set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
