@@ -90,9 +90,6 @@ since its usage is discouraged.
 Please see : https://numpy.org/devdocs/reference/arrays.dtypes.html
 
 """
-from ._array_like import _SupportsArray, ArrayLike
-from ._shape import _Shape, _ShapeLike
-from ._dtype_like import DtypeLike
 from ._scalars import (
     _DatetimeLike,
     _TimedeltaLike,
@@ -105,4 +102,8 @@ from ._scalars import (
     _BytesLike,
     _CharacterLike,
     _VoidLike,
+    _ScalarLike,
 )
+from ._array_like import _SupportsArray, ArrayLike
+from ._shape import _Shape, _ShapeLike
+from ._dtype_like import DtypeLike

@@ -15,6 +15,7 @@ from numpy.typing import (
     _StrLike,
     _BytesLike,
     _DatetimeLike,
+    _ScalarLike,
 )
 
 from typing import (
@@ -907,17 +908,9 @@ _Number = TypeVar("_Number", bound=number)
 
 # An array-like object consisting of integers
 _IntOrBool = Union[_IntLike, _BoolLike]
-_ArrayLikeIntNested = ArrayLike  # TODO: wait for support for recursive types
-_ArrayLikeBoolNested = ArrayLike  # TODO: wait for support for recursive types
 
 # Integers and booleans can generally be used interchangeably
-_ArrayLikeIntOrBool = Union[
-    _IntOrBool,
-    ndarray,
-    Sequence[_IntOrBool],
-    Sequence[_ArrayLikeIntNested],
-    Sequence[_ArrayLikeBoolNested],
-]
+_ArrayLikeIntOrBool = ArrayLike[_IntOrBool]
 _ArrayLikeBool = Union[
     _BoolLike,
     Sequence[_BoolLike],
@@ -939,7 +932,7 @@ def take(
 ) -> _ScalarGenericDT: ...
 @overload
 def take(
-    a: _Scalar,
+    a: _ScalarLike,
     indices: int,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
@@ -1048,7 +1041,7 @@ def argmin(
 @overload
 def searchsorted(
     a: ArrayLike,
-    v: _Scalar,
+    v: _ScalarLike,
     side: _Side = ...,
     sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
 ) -> integer: ...

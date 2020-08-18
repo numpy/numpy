@@ -1,8 +1,9 @@
 import sys
-from typing import Any, overload, Sequence, TYPE_CHECKING, Union
+from typing import Any, overload, Sequence, TYPE_CHECKING, Union, TypeVar
 
 from numpy import ndarray
 from ._dtype_like import DtypeLike
+from ._scalars import _ScalarLike
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -31,4 +32,5 @@ else:
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
+_ScalarType = TypeVar('_ScalarType', bound=_ScalarLike)
+ArrayLike = Union[_ScalarType, _SupportsArray, Sequence]

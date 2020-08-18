@@ -16,4 +16,9 @@ _StrLike = Union[str, np.str_]
 _BytesLike = Union[bytes, np.bytes_]
 _CharacterLike = Union[str, bytes, np.character]
 
+# _VoidLike is technically not a scalar, but it's close enough
 _VoidLike = Union[tuple, np.void]
+
+_ScalarLike = Union[
+    datetime, timedelta, int, float, complex, str, bytes, tuple, np.generic
+]
