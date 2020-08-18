@@ -513,6 +513,13 @@ def CCompiler_customize(self, dist, need_cxx=0):
 
 
     # check if compiler supports gcc style automatic dependencies
+    if self.compiler[0] == 'xlc':
+        # remove unsupported options or options
+        # causing issues with IBM xlc builds
+        # TODO: substitute equivalents where possible
+        self.compiler_so.remove('-fwrapv')
+        self.compiler_so.remove('-O3')
+        #self.compiler_so.append('-O2')
     # run on every extension so skip for known good compilers
     if hasattr(self, 'compiler') and ('gcc' in self.compiler[0] or
                                       'g++' in self.compiler[0] or

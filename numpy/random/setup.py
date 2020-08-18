@@ -37,9 +37,14 @@ def configuration(parent_package='', top_path=None):
 
     EXTRA_LINK_ARGS = []
     EXTRA_LIBRARIES = ['npyrandom']
+    if os.environ.get('CC') == 'xlc':
+        extra_libs = ['xl']
+    else:
+        extra_libs = []
     if os.name != 'nt':
         # Math lib
         EXTRA_LIBRARIES.append('m')
+    EXTRA_LIBRARIES += extra_libs
     # Some bit generators exclude GCC inlining
     EXTRA_COMPILE_ARGS = ['-U__GNUC_GNU_INLINE__']
 
