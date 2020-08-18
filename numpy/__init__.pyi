@@ -911,11 +911,7 @@ _IntOrBool = Union[_IntLike, _BoolLike]
 
 # Integers and booleans can generally be used interchangeably
 _ArrayLikeIntOrBool = ArrayLike[_IntOrBool]
-_ArrayLikeBool = Union[
-    _BoolLike,
-    Sequence[_BoolLike],
-    ndarray
-]
+_ArrayLikeBool = ArrayLike[_BoolLike]
 
 # The signature of take() follows a common theme with its overloads:
 # 1. A generic comes in; the same generic comes out
