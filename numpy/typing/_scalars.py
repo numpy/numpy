@@ -6,9 +6,13 @@ import numpy as np
 _DatetimeLike = Union[datetime, np.datetime64]
 _TimedeltaLike = Union[timedelta, np.timedelta64]
 
+# NOTE: mypy has special rules which ensures that `int` is treated as
+# a `float` (and `complex`) superclass, however these rules do not apply
+# to its `np.generic` counterparts.
+# Solution: manually add them them to the unions below
 _IntLike = Union[int, np.integer]
-_FloatLike = Union[float, np.floating]
-_ComplexLike = Union[complex, np.complexfloating]
+_FloatLike = Union[float, np.floating, np.integer]
+_ComplexLike = Union[complex, np.complexfloating, np.floating, np.integer]
 _BoolLike = Union[bool, np.bool_]
 _NumberLike = Union[int, float, complex, timedelta, np.number, np.bool_]
 
