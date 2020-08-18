@@ -908,10 +908,22 @@ _Number = TypeVar("_Number", bound=number)
 
 # An array-like object consisting of integers
 _IntOrBool = Union[_IntLike, _BoolLike]
+_ArrayLikeIntNested = ArrayLike  # TODO: wait for support for recursive types
+_ArrayLikeBoolNested = ArrayLike  # TODO: wait for support for recursive types
 
 # Integers and booleans can generally be used interchangeably
-_ArrayLikeIntOrBool = ArrayLike[_IntOrBool]
-_ArrayLikeBool = ArrayLike[_BoolLike]
+_ArrayLikeIntOrBool = Union[
+    _IntOrBool,
+    ndarray,
+    Sequence[_IntOrBool],
+    Sequence[_ArrayLikeIntNested],
+    Sequence[_ArrayLikeBoolNested],
+]
+_ArrayLikeBool = Union[
+    _BoolLike,
+    Sequence[_BoolLike],
+    ndarray
+]
 
 # The signature of take() follows a common theme with its overloads:
 # 1. A generic comes in; the same generic comes out

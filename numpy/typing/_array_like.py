@@ -1,9 +1,8 @@
 import sys
-from typing import Any, overload, Sequence, TYPE_CHECKING, Union, TypeVar
+from typing import Any, overload, Sequence, TYPE_CHECKING, Union
 
 from numpy import ndarray
 from ._dtype_like import DtypeLike
-from ._scalars import _ScalarLike
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -25,11 +24,6 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 else:
     _SupportsArray = Any
 
-_ScalarType = TypeVar('_ScalarType', bound=_ScalarLike)
-
-# TODO: wait for support for recursive types
-_ArrayLikeNested = Sequence[Sequence[Any]]
-
 # TODO: support buffer protocols once
 #
 # https://bugs.python.org/issue27501
@@ -37,4 +31,4 @@ _ArrayLikeNested = Sequence[Sequence[Any]]
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-ArrayLike = Union[_ScalarType, Sequence[_ScalarType], _SupportsArray, _ArrayLikeNested]
+ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
