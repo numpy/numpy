@@ -93,3 +93,16 @@ Please see : https://numpy.org/devdocs/reference/arrays.dtypes.html
 from ._array_like import _SupportsArray, ArrayLike
 from ._shape import _Shape, _ShapeLike
 from ._dtype_like import DtypeLike
+from ._scalars import (
+    _DatetimeLike,
+    _TimedeltaLike,
+    _IntLike,
+    _FloatLike,
+    _ComplexLike,
+    _BoolLike,
+    _NumberLike,
+    _StrLike,
+    _BytesLike,
+    _CharacterLike,
+    _VoidLike,
+)

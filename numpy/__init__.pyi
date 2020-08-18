@@ -4,7 +4,18 @@ import datetime as dt
 from abc import abstractmethod
 
 from numpy.core._internal import _ctypes
-from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
+from numpy.typing import (
+    ArrayLike,
+    DtypeLike,
+    _Shape,
+    _ShapeLike,
+    _IntLike,
+    _BoolLike,
+    _NumberLike,
+    _StrLike,
+    _BytesLike,
+    _DatetimeLike,
+)
 
 from typing import (
     Any,
@@ -396,7 +407,7 @@ class datetime64:
     @overload
     def __init__(
         self,
-        __value: Union[None, datetime64, str, dt.datetime] = ...,
+        __value: Union[None, _DatetimeLike, _StrLike] = ...,
         __format: str = ...
     ) -> None: ...
     @overload
@@ -488,7 +499,7 @@ class complex128(complexfloating):
 class flexible(_real_generic): ...  # type: ignore
 
 class void(flexible):
-    def __init__(self, __value: Union[int, integer, bool_, bytes, bytes_]): ...
+    def __init__(self, __value: Union[_IntLike, _BoolLike, _BytesLike]): ...
 
 class character(_real_generic): ...  # type: ignore
 
@@ -497,7 +508,7 @@ class bytes_(character):
     def __init__(self, __value: object = ...) -> None: ...
     @overload
     def __init__(
-        self, __value: Union[str, str_], encoding: str = ..., errors: str = ...
+        self, __value: _StrLike, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
 class str_(character):
@@ -505,7 +516,7 @@ class str_(character):
     def __init__(self, __value: object = ...) -> None: ...
     @overload
     def __init__(
-        self, __value: Union[bytes, bytes_], encoding: str = ..., errors: str = ...
+        self, __value: _BytesLike, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
 # TODO(alan): Platform dependent types
@@ -892,13 +903,10 @@ _ScalarGenericDT = TypeVar(
     "_ScalarGenericDT", bound=Union[dt.datetime, dt.timedelta, generic]
 )
 
-_Number = TypeVar('_Number', bound=number)
-_NumberLike = Union[int, float, complex, number, bool_]
+_Number = TypeVar("_Number", bound=number)
 
 # An array-like object consisting of integers
-_Int = Union[int, integer]
-_Bool = Union[bool, bool_]
-_IntOrBool = Union[_Int, _Bool]
+_IntOrBool = Union[_IntLike, _BoolLike]
 _ArrayLikeIntNested = ArrayLike  # TODO: wait for support for recursive types
 _ArrayLikeBoolNested = ArrayLike  # TODO: wait for support for recursive types
 
@@ -911,8 +919,8 @@ _ArrayLikeIntOrBool = Union[
     Sequence[_ArrayLikeBoolNested],
 ]
 _ArrayLikeBool = Union[
-    _Bool,
-    Sequence[_Bool],
+    _BoolLike,
+    Sequence[_BoolLike],
     ndarray
 ]
 
