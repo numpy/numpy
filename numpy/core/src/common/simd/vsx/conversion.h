@@ -29,4 +29,8 @@
 #define npyv_cvt_b32_f32(A) ((npyv_b32) A)
 #define npyv_cvt_b64_f64(A) ((npyv_b64) A)
 
+// convert integer vectors between different sizes
+#define npyv_cvt_u64_u8(A) ((npyv_u8) A)
+#define npyv_cvt_u8_u64(A) ((npyv_u64) A)
+
 #endif // _NPY_SIMD_VSX_CVT_H

@@ -29,4 +29,8 @@
 #define npyv_cvt_b32_f32(BL) vreinterpretq_u32_f32(BL)
 #define npyv_cvt_b64_f64(BL) vreinterpretq_u64_f64(BL)
 
+// convert integer vectors between different sizes
+#define npyv_cvt_u64_u8(A) vreinterpretq_u8_u64(A)
+#define npyv_cvt_u8_u64(A) vreinterpretq_u64_u8(A)
+
 #endif // _NPY_SIMD_NEON_CVT_H

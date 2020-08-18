@@ -29,4 +29,8 @@
 #define npyv_cvt_b32_f32(BL) _mm256_castps_si256(BL)
 #define npyv_cvt_b64_f64(BL) _mm256_castpd_si256(BL)
 
+// convert integer vectors between different sizes
+#define npyv_cvt_u64_u8(A) A
+#define npyv_cvt_u8_u64(A) A
+
 #endif // _NPY_SIMD_AVX2_CVT_H

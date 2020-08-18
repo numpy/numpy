@@ -48,10 +48,10 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
                 v = npyv_setf_u64(a[1], a[0]);
             }
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = npyv_cmpeq_u8(v, zero);
-            v = npyv_cmpeq_u8(v, zero);
+            v = npyv_cvt_u8_u64(npyv_cmpeq_u8(npyv_cvt_u64_u8(v), npyv_cvt_u64_u8(zero)));
+            v = npyv_cvt_u8_u64(npyv_cmpeq_u8(npyv_cvt_u64_u8(v), npyv_cvt_u64_u8(zero)));
             /* extract msb of 16 bytes and pack it into 16 bit */
-            r = npyv_movemask_u8(v);
+            r = npyv_movemask_u8(npyv_cvt_u64_u8(v));
             /* store result */
             for (int i = 0; i < vstep; i++) {
                 memcpy(outptr, (char*)&r + i, 1);
