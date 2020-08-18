@@ -25,6 +25,11 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
 else:
     _SupportsArray = Any
 
+_ScalarType = TypeVar('_ScalarType', bound=_ScalarLike)
+
+# TODO: wait for support for recursive types
+_ArrayLikeNested = Sequence[Sequence[Any]]
+
 # TODO: support buffer protocols once
 #
 # https://bugs.python.org/issue27501
@@ -32,5 +37,4 @@ else:
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-_ScalarType = TypeVar('_ScalarType', bound=_ScalarLike)
-ArrayLike = Union[_ScalarType, _SupportsArray, Sequence]
+ArrayLike = Union[_ScalarType, Sequence[_ScalarType], _SupportsArray, _ArrayLikeNested]
