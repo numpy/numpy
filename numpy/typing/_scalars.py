@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Tuple, Any
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -16,9 +16,18 @@ _StrLike = Union[str, np.str_]
 _BytesLike = Union[bytes, np.bytes_]
 _CharacterLike = Union[str, bytes, np.character]
 
-# _VoidLike is technically not a scalar, but it's close enough
-_VoidLike = Union[tuple, np.void]
-
+_VoidLikeNested = Any  # TODO: wait for support for recursive types
 _ScalarLike = Union[
-    datetime, timedelta, int, float, complex, str, bytes, tuple, np.generic
+    datetime,
+    timedelta,
+    int,
+    float,
+    complex,
+    str,
+    bytes,
+    Tuple[_VoidLikeNested, ...],
+    np.generic,
 ]
+
+# _VoidLike is technically not a scalar, but it's close enough
+_VoidLike = Union[Tuple[_ScalarLike, ...], np.void]
