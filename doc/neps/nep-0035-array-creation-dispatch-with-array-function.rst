@@ -128,7 +128,7 @@ many smaller problems and merges their results to reach the final result. To
 break the problem down into smaller ones, Dask also breaks arrays into smaller
 arrays that it calls "chunks". A Dask array can thus consist of one or more
 chunks and they may be of different types. However, in the context of
-``__array_function__``, Dask only allows chunks of the same type, for example,
+``__array_function__``, Dask only allows chunks of the same type; for example,
 a Dask array can be formed of several NumPy arrays or several CuPy arrays, but
 not a mix of both.
 
