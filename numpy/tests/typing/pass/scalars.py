@@ -96,3 +96,41 @@ np.void(True)
 np.void(np.bool_(True))
 np.void(b"test")
 np.void(np.bytes_("test"))
+
+# Test that numpy and builtin scalars can be used interchangeably
+
+def func_float(a: float) -> None:
+    pass
+
+def func_int(a: int) -> None:
+    pass
+
+def func_complex(a: complex) -> None:
+    pass
+
+def func_str(a: str) -> None:
+    pass
+
+def func_bytes(a: bytes) -> None:
+    pass
+
+func_float(1.0)
+func_float(1)
+func_float(np.float32(1))
+func_float(np.int32(1))
+
+func_int(1)
+func_int(np.int32(1))
+
+func_complex(1j)
+func_complex(1.0)
+func_complex(1)
+func_complex(np.complex64(1))
+func_complex(np.float32(1))
+func_complex(np.int32(1))
+
+func_str("a")
+func_str(np.str_("a"))
+
+func_bytes(b"a")
+func_bytes(np.bytes_("a"))
