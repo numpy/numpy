@@ -24,14 +24,14 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
     npy_intp index = 0;
     int remain = n_in % 8;              /* uneven bits */
 
-#if defined NPY_SIMD
+#if defined(NPY_HAVE_SSE) || defined(NPY_HAVE_AVX2) || defined(NPY_HAVE_NEON)
     if (in_stride == 1 && element_size == 1 && n_out > 2) {
         npyv_u64 zero = npyv_zero_u64();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
         const int vstep = npyv_nlanes_u64;
         vn_out -= (vn_out & (vstep - 1));
-        // Maximum paraller abillity: handle 8 64bits at one time
+        // Maximum paraller abillity: handle four 64bits at one time
         npy_uint64 a[4];
         for (index = 0; index < vn_out; index += vstep) {
             unsigned int r;
