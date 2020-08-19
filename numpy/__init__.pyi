@@ -1,5 +1,5 @@
 import builtins
-import sys
+import sys as _sys
 import datetime as dt
 from abc import abstractmethod
 
@@ -33,16 +33,39 @@ from typing import (
     Union,
 )
 
-if sys.version_info[0] < 3:
+if _sys.version_info[0] < 3:
     class SupportsBytes: ...
 
 else:
     from typing import SupportsBytes
 
-if sys.version_info >= (3, 8):
+if _sys.version_info >= (3, 8):
     from typing import Literal, Protocol
 else:
     from typing_extensions import Literal, Protocol
+
+# Ensures that the stubs are picked up
+from . import (
+    char,
+    compat,
+    core,
+    ctypeslib,
+    emath,
+    fft,
+    lib,
+    linalg,
+    ma,
+    math,
+    matrixlib,
+    os,
+    polynomial,
+    random,
+    rec,
+    sys,
+    testing,
+    version,
+    warnings,
+)
 
 # TODO: remove when the full numpy namespace is defined
 def __getattr__(name: str) -> Any: ...
@@ -187,7 +210,7 @@ class _ArrayOrScalarCommon(
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
-    if sys.version_info[0] < 3:
+    if _sys.version_info[0] < 3:
         def __oct__(self) -> str: ...
         def __hex__(self) -> str: ...
         def __nonzero__(self) -> bool: ...
@@ -214,7 +237,7 @@ class _ArrayOrScalarCommon(
     def __mul__(self, other): ...
     def __rmul__(self, other): ...
     def __imul__(self, other): ...
-    if sys.version_info[0] < 3:
+    if _sys.version_info[0] < 3:
         def __div__(self, other): ...
         def __rdiv__(self, other): ...
         def __idiv__(self, other): ...
@@ -248,7 +271,7 @@ class _ArrayOrScalarCommon(
     def __or__(self, other): ...
     def __ror__(self, other): ...
     def __ior__(self, other): ...
-    if sys.version_info[:2] >= (3, 5):
+    if _sys.version_info[:2] >= (3, 5):
         def __matmul__(self, other): ...
         def __rmatmul__(self, other): ...
     def __neg__(self: _ArraySelf) -> _ArraySelf: ...
@@ -426,7 +449,7 @@ class timedelta64(signedinteger):
     @overload
     def __add__(self, other: datetime64) -> datetime64: ...
     def __sub__(self, other: Union[timedelta64, int]) -> timedelta64: ...
-    if sys.version_info[0] < 3:
+    if _sys.version_info[0] < 3:
         @overload
         def __div__(self, other: timedelta64) -> float: ...
         @overload
