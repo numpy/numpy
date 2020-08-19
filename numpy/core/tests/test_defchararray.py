@@ -345,8 +345,8 @@ class TestMethods:
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
-        C = np.char.center([b'a', b'b'], 3, fillchar=[b'a', b'b'])
-        tgt = [b'aaa', b'bbb']
+        C = np.char.center([b'a', b'b'], 3, fillchar=[b'b', b'a'])
+        tgt = [b'bab', b'aba']
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
@@ -391,8 +391,8 @@ class TestMethods:
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
-        C = np.char.center([b'a', b'b'], 3, fillchar=[b'a', b'b'])
-        tgt = [b'aaa', b'bbb']
+        C = np.char.ljust([b'a', b'b'], 3, fillchar=[b'b', b'a'])
+        tgt = [b'abb', b'baa']
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
@@ -461,8 +461,8 @@ class TestMethods:
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
-        C = np.char.center([b'a', b'b'], 3, fillchar=[b'a', b'b'])
-        tgt = [b'aaa', b'bbb']
+        C = np.char.rjust([b'a', b'b'], 3, fillchar=[b'b', b'a'])
+        tgt = [b'bba', b'aab']
         assert_(issubclass(C.dtype.type, np.string_))
         assert_array_equal(C, tgt)
 
