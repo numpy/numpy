@@ -24,9 +24,8 @@ Motivation and Scope
 --------------------
 
 Many libraries implement the NumPy API, such as Dask for graph
-computing, CuPy for GPGPU computing, xarray for N-D labeled arrays, etc. All
-the libraries mentioned have yet another thing in common: they have also adopted
-the ``__array_function__`` protocol; a protocol that allows NumPy to understand
+computing, CuPy for GPGPU computing, xarray for N-D labeled arrays, etc. Underneath,
+they have adopted the ``__array_function__`` protocol which allows NumPy to understand
 and treat downstream objects as if they are the native ``numpy.ndarray`` object.
 Hence the community while using various libraries still benefits from a unified
 NumPy API. This not only brings great convenience for standardization but also
