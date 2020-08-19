@@ -1237,3 +1237,7 @@ def amin(
     initial: _NumberLike = ...,
     where: _ArrayLikeBool = ...,
 ) -> Union[number, ndarray]: ...
+def rollingmean(
+    a: _ArrayLike,
+    range: Optional[int] = ...,
+) -> ndarray: ...

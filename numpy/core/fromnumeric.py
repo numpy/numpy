@@ -23,8 +23,8 @@ __all__ = [
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round_',
-    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
-    'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze', 'std',
+    'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var', 'rollingmean',
 ]
 
 _gentype = types.GeneratorType
@@ -460,7 +460,7 @@ def repeat(a, repeats, axis=None):
     --------
     tile : Tile an array.
     unique : Find the unique elements of an array.
-    
+
     Examples
     --------
     >>> np.repeat(3, 4)
@@ -3445,7 +3445,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where 
+    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where
     ``x = abs(a - a.mean())**2``.
 
     The average squared deviation is typically calculated as ``x.sum() / N``,
@@ -3695,3 +3695,29 @@ def alltrue(*args, **kwargs):
     numpy.all : Equivalent function; see for details.
     """
     return all(*args, **kwargs)
+
+
+def rollingmean(a, range=2):
+    """
+    Returns ndarray of the rolling mean (moving average, rolling average,
+    moving mean, or running average) of given range.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose rolling mean is desired.
+    range: int
+        Range of rolling mean
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2, 3, 4, 5]])
+    >>> np.rollingmean(a)
+    array([1.5, 2.5, 3.5, 4.5])
+    >>> a = np.array([[1,2,3],[4,5,6]])
+    >>> np.rollingmean(a)
+    array([1.5, 2.5, 3.5, 4.5, 5.5])
+    """
+
+    cumsum = cumsum(insert(a, 0, 0))
+    return (cumsum[range:] - cumsum[:-range]) / float(range)
