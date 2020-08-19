@@ -56,12 +56,14 @@ experience, all using NumPy syntax. For example, say we have some CuPy array
 write the following:
 
 .. code:: python
+
      x = cupy.identity(3)
 
 Instead, the better way would be using to only use the NumPy API, this could now
 be achieved with:
 
 .. code:: python
+
     x = np.identity(3, like=cp_arr)
 
 As if by magic, ``x`` will also be a CuPy array, as NumPy was capable to infer
@@ -165,12 +167,30 @@ that are not of much use elsewhere.
 
 To enable proper identification of the array type we use Dask's utility function
 ``meta_from_array``, which was introduced as part of the work to support
-``__array_function__``, allowing Dask to handle ``_meta`` appropriately. That
-function is primarily targeted at the library's internal usage to ensure chunks
-are created with correct types. Without the ``like=`` argument, it would be
-impossible to ensure ``my_pad`` creates a padding array with a type matching
-that of the input array, which would cause a ``TypeError`` exception to
-be raised by CuPy, as discussed above would happen to the CuPy case alone.
+``__array_function__``, allowing Dask to handle ``_meta`` appropriately. Readers
+can think of ``meta_from_array`` as a special function that just returns the
+type of the underlying Dask array, for example:
+
+.. code:: python
+
+    np_arr = da.arange(5)
+    cp_arr = da.from_array(cupy.arange(5))
+
+    meta_from_array(np_arr)  # Returns a numpy.ndarray
+    meta_from_array(cp_arr)  # Returns a cupy.ndarray
+
+Since the value returned by ``meta_from_array`` is a NumPy-like array, we can
+just pass that directly into the ``like=`` argument.
+
+The ``meta_from_array`` function is primarily targeted at the library's internal
+usage to ensure chunks are created with correct types. Without the ``like=``
+argument, it would be impossible to ensure ``my_pad`` creates a padding array
+with a type matching that of the input array, which would cause a ``TypeError``
+exception to be raised by CuPy, as discussed above would happen to the CuPy case
+alone. Combining Dask's internal handling of meta arrays and the proposed
+``like=`` argument, it now becomes possible to handle cases involving creation
+of non-NumPy arrays, which is likely the heaviest limitation Dask currently
+faces from the ``__array_function__`` protocol.
 
 Backward Compatibility
 ----------------------
