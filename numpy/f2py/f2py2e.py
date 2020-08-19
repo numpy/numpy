@@ -29,18 +29,14 @@ from . import __version__
 from . import capi_maps
 
 f2py_version = __version__.version
+numpy_version = __version__.version
 errmess = sys.stderr.write
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
 
-try:
-    from numpy import __version__ as numpy_version
-except ImportError:
-    numpy_version = 'N/A'
-
-__usage__ = """\
-Usage:
+__usage__ =\
+f"""Usage:
 
 1) To construct extension module sources:
 
@@ -97,8 +93,8 @@ Options:
   --[no-]latex-doc Create (or not) <modulename>module.tex.
                    Default is --no-latex-doc.
   --short-latex    Create 'incomplete' LaTeX document (without commands
-                   \\documentclass, \\tableofcontents, and \\begin{document},
-                   \\end{document}).
+                   \\documentclass, \\tableofcontents, and \\begin{{document}},
+                   \\end{{document}}).
 
   --[no-]rest-doc Create (or not) <modulename>module.rst.
                    Default is --no-rest-doc.
@@ -167,12 +163,12 @@ Extra options (only effective with -c):
   array. Integer <int> sets the threshold for array sizes when
   a message should be shown.
 
-Version:     %s
-numpy Version: %s
+Version:     {f2py_version}
+numpy Version: {numpy_version}
 Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
+http://cens.ioc.ee/projects/f2py2e/"""
 
 
 def scaninputline(inputline):

@@ -13,8 +13,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.19 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 
