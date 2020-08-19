@@ -15,11 +15,10 @@ Abstract
 --------
 
 We propose the introduction of a new keyword argument ``like=`` to all array
-creation functions, this argument permits the creation of an array based on
-a non-NumPy reference array passed via that argument, resulting in an array
-defined by the downstream library implementing that type, which also implements
-the ``__array_function__`` protocol. With this we address one of that
-protocol's shortcomings, as described by NEP 18 [1]_.
+creation functions to address one of the shortcomings of ``__array_function__``,
+as described by NEP 18 [1]_. The ``like=`` keyword argument will create an
+instance of the argument's type, enabling direct creation of non-NumPy arrays.
+The target array type must implement the ``__array_function__`` protocol.
 
 Motivation and Scope
 --------------------
