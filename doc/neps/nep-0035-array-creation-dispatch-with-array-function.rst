@@ -124,7 +124,7 @@ strictly on arrays, which are the objects we can use ``__array_function__``
 with.
 
 Dask uses a graph computing model, meaning it breaks down a large problem in
-many smaller problems and merge their results to reach the final result. To
+many smaller problems and merges their results to reach the final result. To
 break the problem down into smaller ones, Dask also breaks arrays into smaller
 arrays, that it calls "chunks". A Dask array can thus consist of one or more
 chunks and they may be of different types. However, in the context of
