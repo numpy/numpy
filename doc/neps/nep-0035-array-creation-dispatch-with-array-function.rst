@@ -87,6 +87,12 @@ of the keyword-only argument standard described in PEP-3102 [2]_ to implement
 Usage and Impact
 ----------------
 
+NumPy users who don't use other arrays from downstream libraries can continue
+to use array creation routines without a ``like=`` argument. Using
+``like=np.ndarray`` will work as if no array was passed via that argument.
+However, this will incur additional checks that will negatively impact
+performance.
+
 To understand the intended use for ``like=``, and before we move to more complex
 cases, consider the following illustrative example consisting only of NumPy and
 CuPy arrays:
@@ -162,13 +168,6 @@ are created with correct types. Without the ``like=`` argument, it would be
 impossible to ensure ``my_pad`` creates a padding array with a type matching
 that of the input array, which would cause a ``TypeError`` exception to
 be raised by CuPy, as discussed above would happen to the CuPy case alone.
-
-Current NumPy users who don't use other arrays from downstream libraries should
-have no impact in their current usage of the NumPy API. In the event of the
-user passing a NumPy array to ``like=``, that will continue to work as if no
-array was passed via that argument. However, this is advised against, as
-internally there will be additional checks required that will have an impact in
-performance.
 
 Backward Compatibility
 ----------------------
