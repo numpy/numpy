@@ -305,7 +305,7 @@ that adopt ``__array_function__`` already, because of that we still believe the
 that proposal wouldn't necessarily be considered a direct alternative to the
 present NEP, as it would replace NEP 18 entirely, upon which this builds.
 Discussion on details about this new proposal and why that would require rework
-by downstream libraries is beyond the scopy of the present proposal.
+by downstream libraries is beyond the scope of the present proposal.
 
 Discussion
 ----------
