@@ -288,9 +288,11 @@ There are two downsides to the implementation above for C functions:
 2.  To follow current implementation standards, documentation should be attached
     directly to the Python source code.
 
-The first version of this proposal suggested the C implementation above as one
-viable solution. However, due to the downsides pointed above we have decided to
-implement that entirely in C. Please refer to [implementation]_ for details.
+The first version of this proposal suggested the implementation above as one
+viable solution for NumPy functions implemented in C. However, due to the
+downsides pointed above we have decided to discard any changes on the Python
+side and resolve those issues with a pure-C implementation . Please refer to
+[implementation]_ for details.
 
 Alternatives
 ------------
