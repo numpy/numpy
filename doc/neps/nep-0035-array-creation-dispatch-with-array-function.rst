@@ -293,8 +293,8 @@ There are two downsides to the implementation above for C functions:
 
 The first version of this proposal suggested the implementation above as one
 viable solution for NumPy functions implemented in C. However, due to the
-downsides pointed above we have decided to discard any changes on the Python
-side and resolve those issues with a pure-C implementation . Please refer to
+downsides pointed out above we have decided to discard any changes on the Python
+side and resolve those issues with a pure-C implementation. Please refer to
 [implementation]_ for details.
 
 Alternatives
