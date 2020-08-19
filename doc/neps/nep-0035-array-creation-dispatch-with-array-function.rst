@@ -146,19 +146,22 @@ array we would use for padding, as seen below:
     import dask.array as da
     from dask.array.utils import meta_from_array
 
-    def my_pad(arr, padding):
+    def my_dask_pad(arr, padding):
         padding = np.array(padding, like=meta_from_array(arr))
         return np.concatenate((padding, arr, padding))
 
     # Returns dask.array<concatenate, shape=(9,), dtype=int64, chunksize=(5,), chunktype=numpy.ndarray>
-    my_pad(da.arange(5), [-1, -1])
+    my_dask_pad(da.arange(5), [-1, -1])
 
     # Returns dask.array<concatenate, shape=(9,), dtype=int64, chunksize=(5,), chunktype=cupy.ndarray>
-    my_pad(da.from_array(cupy.arange(5)), [-1, -1])
+    my_dask_pad(da.from_array(cupy.arange(5)), [-1, -1])
 
 Note how ``chunktype`` in the return value above changes from
-``numpy.ndarray`` in the first ``my_pad`` call to ``cupy.ndarray`` in the
-second.
+``numpy.ndarray`` in the first ``my_dask_pad`` call to ``cupy.ndarray`` in the
+second. We have also renamed the function to ``my_dask_pad`` in this example
+with the intent to make it clear that this is how Dask would implement such
+functionality, should it need to do so, as it requires Dask's internal tools
+that are not of much use elsewhere.
 
 To enable proper identification of the array type we use Dask's utility function
 ``meta_from_array``, which was introduced as part of the work to support
