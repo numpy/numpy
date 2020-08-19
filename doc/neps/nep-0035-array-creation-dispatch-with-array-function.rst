@@ -52,7 +52,7 @@ elsewhere and let NumPy handle them. But still these arrays have to be started
 in their native library and brought back. Instead if it was possible to create
 these objects through NumPy API then there would be an almost complete
 experience, all using NumPy syntax. For example, say we have some CuPy array
-``cp_arr`` , and want a similar CuPy array with identity matrix. We could still
+``cp_arr``, and want a similar CuPy array with identity matrix. We could still
 write the following:
 
 .. code:: python
