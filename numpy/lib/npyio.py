@@ -85,8 +85,8 @@ class BagObj:
     def __getattribute__(self, key):
         try:
             return object.__getattribute__(self, '_obj')[key]
-        except KeyError:
-            raise AttributeError(key)
+        except KeyError as e:
+            raise AttributeError(key) from e
 
     def __dir__(self):
         """
@@ -446,9 +446,10 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                                  "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except Exception:
+            except Exception as e:
                 raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file))
+                    "Failed to interpret file %s as a pickle" % repr(file)
+                ) from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):

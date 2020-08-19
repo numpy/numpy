@@ -49,8 +49,8 @@ class WindowsParser:
         import ctypes  # guarded import for systems without ctypes
         try:
             ctypes.windll
-        except AttributeError:
-            raise NotImplementedError
+        except AttributeError as e:
+            raise NotImplementedError from e
 
         # Windows has special parsing rules for the executable (no quotes),
         # that we do not care about - insert a dummy element

@@ -685,8 +685,8 @@ class StringConverter:
             if self.func is int:
                 try:
                     np.array(value, dtype=self.type)
-                except OverflowError:
-                    raise ValueError
+                except OverflowError as e:
+                    raise ValueError from e
 
             # We're still here so we can now return the new value
             return new_value

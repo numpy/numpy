@@ -31,8 +31,8 @@ class AVX_UFunc(Benchmark):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, ufuncname)
-        except AttributeError:
-            raise NotImplementedError()
+        except AttributeError as e:
+            raise NotImplementedError() from e
         N = 10000
         self.arr = np.ones(stride*N, dtype)
 
@@ -65,8 +65,8 @@ class AVX_BFunc(Benchmark):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, ufuncname)
-        except AttributeError:
-            raise NotImplementedError()
+        except AttributeError as e:
+            raise NotImplementedError() from e
         N = 10000
         self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
         self.arr2 = np.array(np.random.rand(stride*N), dtype=dtype)
@@ -106,8 +106,8 @@ class AVX_cmplx_arithmetic(Benchmark):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, bfuncname)
-        except AttributeError:
-            raise NotImplementedError()
+        except AttributeError as e:
+            raise NotImplementedError() from e
         N = 10000
         self.arr1 = np.ones(stride*N, dtype)
         self.arr2 = np.ones(stride*N, dtype)
