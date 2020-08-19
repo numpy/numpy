@@ -108,7 +108,7 @@ CuPy arrays:
 Note in the ``my_pad`` function above how ``arr`` is used as a reference to
 dictate what array type padding should have, before concatenating the arrays to
 produce the result. On the other hand, if ``like=`` wasn't used, the NumPy case
-case would still work, but CuPy wouldn't allow this kind of automatic
+would still work, but CuPy wouldn't allow this kind of automatic
 conversion, ultimately raising a
 ``TypeError: Only cupy arrays can be concatenated`` exception.
 
