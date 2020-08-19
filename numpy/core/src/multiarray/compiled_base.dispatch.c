@@ -1,6 +1,6 @@
 /**
  * @targets $maxopt baseline
- * SSE2
+ * SSE2 AVX2
  * VSX VSX2
  * NEON ASIMDDP
  */
@@ -29,8 +29,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
         npyv_u64 zero = npyv_zero_u64();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
         const int vstep = npyv_nlanes_u64;
+        vn_out -= (vn_out & (vstep - 1));
+        // Maximum paraller abillity: handle 8 64bits at one time
         npy_uint64 a[4];
         for (index = 0; index < vn_out; index += vstep) {
             unsigned int r;
@@ -43,9 +44,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
             /* note x86 can load unaligned */
             npyv_u64 v;
             if (vstep == 4) {
-                v = npyv_setf_u64(a[3], a[2], a[1], a[0]);
+                v = npyv_set_u64(a[0], a[1], a[2], a[3]);
             } else {
-                v = npyv_setf_u64(a[1], a[0]);
+                v = npyv_set_u64(a[0], a[1]);
             }
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
             v = npyv_cvt_u8_u64(npyv_cmpeq_u8(npyv_cvt_u64_u8(v), npyv_cvt_u64_u8(zero)));
