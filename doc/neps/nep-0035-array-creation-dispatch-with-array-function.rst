@@ -42,7 +42,7 @@ to that.
     x = dask.array.arange(5)    # Creates dask.array
     np.diff(x)                  # Returns dask.array
 
-Note above how we called Dask's implementation of ``sum`` via the NumPy
+Note above how we called Dask's implementation of ``diff`` via the NumPy
 namespace by calling ``np.diff``, and the same would apply if we had a CuPy
 array or any other array from a library that adopts ``__array_function__``.
 This allows writing code that is agnostic to the implementation library, thus
