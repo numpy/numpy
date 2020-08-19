@@ -23,7 +23,7 @@ The target array type must implement the ``__array_function__`` protocol.
 Motivation and Scope
 --------------------
 
-Many are the libraries implementing the NumPy API, such as Dask for graph
+Many libraries implement the NumPy API, such as Dask for graph
 computing, CuPy for GPGPU computing, xarray for N-D labeled arrays, etc. All
 the libraries mentioned have yet another thing in common: they have also adopted
 the ``__array_function__`` protocol; a protocol that allows NumPy to understand
