@@ -1,4 +1,8 @@
 from typing import Any
 
-# TODO: remove when the full numpy namespace is defined
-def __getattr__(name: str) -> Any: ...
+load_library: Any
+ndpointer: Any
+ctypes_load_library: Any
+c_intp: Any
+as_ctypes: Any
+as_array: Any

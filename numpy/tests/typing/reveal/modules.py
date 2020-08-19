@@ -18,5 +18,5 @@ reveal_type(np.rec)  # E: ModuleType
 reveal_type(np.testing)  # E: ModuleType
 reveal_type(np.version)  # E: ModuleType
 
-# TODO: Remove when annotations have been added to `np.linalg.norm`
-reveal_type(np.linalg.norm)  # E: Any
+# TODO: Remove when annotations have been added to `np.testing.assert_equal`
+reveal_type(np.testing.assert_equal)  # E: Any

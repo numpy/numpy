@@ -1,4 +1,11 @@
 from typing import Any
 
-# TODO: remove when the full numpy namespace is defined
-def __getattr__(name: str) -> Any: ...
+sqrt: Any
+log: Any
+log2: Any
+logn: Any
+log10: Any
+power: Any
+arccos: Any
+arcsin: Any
+arctanh: Any
