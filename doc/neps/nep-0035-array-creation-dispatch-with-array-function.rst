@@ -162,7 +162,7 @@ To enable proper identification of the array type we use Dask's utility function
 function is primarily targeted at the library's internal usage to ensure chunks
 are created with correct types. Without the ``like=`` argument, it would be
 impossible to ensure ``my_pad`` creates a padding array with a type matching
-that of the input array, which would cause cause a ``TypeError`` exception to
+that of the input array, which would cause a ``TypeError`` exception to
 be raised by CuPy, as discussed above would happen to the CuPy case alone.
 
 Current NumPy users who don't use other arrays from downstream libraries should
