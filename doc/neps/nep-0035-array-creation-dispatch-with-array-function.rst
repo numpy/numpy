@@ -303,7 +303,7 @@ by NEP 37 [6]_, which would require considerable rework by downstream libraries
 that adopt ``__array_function__`` already, because of that we still believe the
 ``like=`` argument is beneficial for NumPy and downstream libraries. However,
 that proposal wouldn't necessarily be considered a direct alternative to the
-present NEP, as it would replace NEP 18 entirely, on which this builds upon.
+present NEP, as it would replace NEP 18 entirely, upon which this builds.
 Discussion on details about this new proposal and why that would require rework
 by downstream libraries is beyond the scopy of the present proposal.
 
