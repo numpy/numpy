@@ -132,9 +132,9 @@ chunks and they may be of different types. However, in the context of
 a Dask array can be formed of several NumPy arrays or several CuPy arrays, but
 not a mix of both.
 
-To avoid mismatched types during compute, Dask keeps an attribute ``_meta`` as
-part of its array throughout computation, this attribute is used to both predict
-the output type at graph creation time and to create any intermediary arrays
+To avoid mismatched types during computation, Dask keeps an attribute ``_meta`` as
+part of its array throughout computation: this attribute is used to both predict
+the output type at graph creation time, and to create any intermediary arrays
 that are necessary within some function's computation. Going back to our
 previous example, we can use ``_meta`` information to identify what kind of
 array we would use for padding, as seen below:
