@@ -55,15 +55,12 @@ from . import (
     lib,
     linalg,
     ma,
-    math,
     matrixlib,
-    os,
     polynomial,
     random,
     rec,
     testing,
     version,
-    warnings,
 )
 
 # TODO: remove when the full numpy namespace is defined

@@ -11,7 +11,6 @@ reveal_type(np.fft)  # E: ModuleType
 reveal_type(np.lib)  # E: ModuleType
 reveal_type(np.linalg)  # E: ModuleType
 reveal_type(np.ma)  # E: ModuleType
-reveal_type(np.math)  # E: ModuleType
 reveal_type(np.matrixlib)  # E: ModuleType
 reveal_type(np.polynomial)  # E: ModuleType
 reveal_type(np.random)  # E: ModuleType
