@@ -409,10 +409,19 @@ class datetime64:
     ) -> None: ...
     @overload
     def __init__(self, __value: int, __format: str) -> None: ...
-    def __add__(self, other: Union[timedelta64, int]) -> datetime64: ...
-    def __sub__(self, other: Union[timedelta64, datetime64, int]) -> timedelta64: ...
+    def __add__(self, other: int) -> datetime64: ...
+    def __sub__(self, other: Union[datetime64, int]) -> timedelta64: ...
 
-class integer(number, _real_generic): ...  # type: ignore
+class integer(number, _real_generic, int):  # type: ignore
+    # Methods which are implemented by `int` but are absent from `np.integer`
+    __ceil__: None  # type: ignore
+    __floor__: None  # type: ignore
+    __trunc__: None  # type: ignore
+    as_integer_ratio: None  # type: ignore
+    bit_length: None  # type: ignore
+    from_bytes: None  # type: ignore
+    to_bytes: None  # type: ignore
+
 class signedinteger(integer): ...  # type: ignore
 
 class int8(signedinteger):
@@ -429,21 +438,21 @@ class int64(signedinteger):
 
 class timedelta64(signedinteger):
     def __init__(self, __value: Any = ..., __format: str = ...) -> None: ...
-    @overload
-    def __add__(self, other: Union[timedelta64, int]) -> timedelta64: ...
+    @overload  # type: ignore[override]
+    def __add__(self, other: int) -> timedelta64: ...
     @overload
     def __add__(self, other: datetime64) -> datetime64: ...
-    def __sub__(self, other: Union[timedelta64, int]) -> timedelta64: ...
+    def __sub__(self, other: int) -> timedelta64: ...
     if sys.version_info[0] < 3:
         @overload
         def __div__(self, other: timedelta64) -> float: ...
         @overload
         def __div__(self, other: float) -> timedelta64: ...
-    @overload
+    @overload # type: ignore[override]
     def __truediv__(self, other: timedelta64) -> float: ...
     @overload
     def __truediv__(self, other: float) -> timedelta64: ...
-    def __mod__(self, other: timedelta64) -> timedelta64: ...
+    def __mod__(self, other: timedelta64) -> timedelta64: ...  # type: ignore[override]
 
 class unsignedinteger(integer): ...  # type: ignore
 
@@ -460,7 +469,7 @@ class uint64(unsignedinteger):
     def __init__(self, __value: SupportsInt = ...) -> None: ...
 
 class inexact(number): ...  # type: ignore
-class floating(inexact, _real_generic): ...  # type: ignore
+class floating(inexact, _real_generic, float): ...  # type: ignore
 
 _FloatType = TypeVar('_FloatType', bound=floating)
 
@@ -473,7 +482,7 @@ class float32(floating):
 class float64(floating):
     def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
 
-class complexfloating(inexact, Generic[_FloatType]):  # type: ignore
+class complexfloating(inexact, Generic[_FloatType], complex):  # type: ignore
     @property
     def real(self) -> _FloatType: ...
     @property
@@ -495,24 +504,24 @@ class complex128(complexfloating[float64]):
 class flexible(_real_generic): ...  # type: ignore
 
 class void(flexible):
-    def __init__(self, __value: Union[int, integer, bool_, bytes, bytes_]): ...
+    def __init__(self, __value: Union[int, bool_, bytes]): ...
 
 class character(_real_generic): ...  # type: ignore
 
-class bytes_(character):
+class bytes_(character, bytes):
     @overload
     def __init__(self, __value: object = ...) -> None: ...
     @overload
     def __init__(
-        self, __value: Union[str, str_], encoding: str = ..., errors: str = ...
+        self, __value: str, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
-class str_(character):
+class str_(character, str):
     @overload
     def __init__(self, __value: object = ...) -> None: ...
     @overload
     def __init__(
-        self, __value: Union[bytes, bytes_], encoding: str = ..., errors: str = ...
+        self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
 # TODO(alan): Platform dependent types
@@ -927,9 +936,8 @@ _Number = TypeVar('_Number', bound=number)
 _NumberLike = Union[int, float, complex, number, bool_]
 
 # An array-like object consisting of integers
-_Int = Union[int, integer]
 _Bool = Union[bool, bool_]
-_IntOrBool = Union[_Int, _Bool]
+_IntOrBool = Union[int, bool_]
 _ArrayLikeIntNested = ArrayLike  # TODO: wait for support for recursive types
 _ArrayLikeBoolNested = ArrayLike  # TODO: wait for support for recursive types
 
