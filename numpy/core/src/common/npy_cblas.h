@@ -59,6 +59,32 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 #undef BLASINT
 #undef BLASNAME
 
+
+/*
+ * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
+ * (BLAS won't handle negative or zero strides the way we want).
+ */
+static NPY_INLINE CBLAS_INT
+blas_stride(npy_intp stride, unsigned itemsize)
+{
+    /*
+     * Should probably check pointer alignment also, but this may cause
+     * problems if we require complex to be 16 byte aligned.
+     */
+    if (stride > 0 && (stride % itemsize) == 0) {
+        stride /= itemsize;
+#ifndef HAVE_BLAS_ILP64
+        if (stride <= INT_MAX) {
+#else
+        if (stride <= NPY_MAX_INT64) {
+#endif
+            return stride;
+        }
+    }
+    return 0;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
