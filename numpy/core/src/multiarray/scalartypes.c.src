@@ -1147,12 +1147,16 @@ gentype_sizeof(PyObject *self)
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {
-    PyArrayInterface *arrif;
-    PyObject *context;
-
-    arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
-    context = (PyObject *)PyCapsule_GetContext(ptr);
-    Py_DECREF(context);
+    PyArrayInterface *arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
+    if (arrif == NULL) {
+        PyErr_WriteUnraisable(ptr);
+        return;
+    }
+    PyObject *context = (PyObject *)PyCapsule_GetContext(ptr);
+    if (context == NULL && PyErr_Occurred()) {
+        PyErr_WriteUnraisable(ptr);
+    }
+    Py_XDECREF(context);
     Py_XDECREF(arrif->descr);
     PyArray_free(arrif->shape);
     PyArray_free(arrif);
