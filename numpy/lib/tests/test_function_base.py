@@ -1757,7 +1757,7 @@ class TestUnwrap:
         # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
     
-    def test_minmax(self):
+    def test_period(self):
         # check that unwrap removes jumps greater that 255
         assert_array_equal(unwrap([1, 1 + 256], interval_size=255), [1, 2])
         # check that unwrap maintains continuity
