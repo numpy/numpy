@@ -58,6 +58,19 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
     return sum
 
 
+cdef inline void _shuffle_raw_wrap(bitgen_t *bitgen, np.npy_intp n,
+                                   np.npy_intp first, np.npy_intp itemsize,
+                                   np.npy_intp stride,
+                                   char* data, char* buf) nogil:
+    # We trick gcc into providing a specialized implementation for
+    # the most common case, yielding a ~33% performance improvement.
+    # Note that apparently, only one branch can ever be specialized.
+    if itemsize == sizeof(np.npy_intp):
+        _shuffle_raw(bitgen, n, first, sizeof(np.npy_intp), stride, data, buf)
+    else:
+        _shuffle_raw(bitgen, n, first, itemsize, stride, data, buf)
+
+
 cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
                               np.npy_intp first, np.npy_intp itemsize,
                               np.npy_intp stride,
@@ -83,6 +96,7 @@ cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
         Location of buffer (itemsize)
     """
     cdef np.npy_intp i, j
+
     for i in reversed(range(first, n)):
         j = random_interval(bitgen, i)
         string.memcpy(buf, data + j * stride, itemsize)
@@ -4311,11 +4325,24 @@ cdef class Generator:
         if buf == NULL:
             raise MemoryError('memory allocation failed in permuted')
 
-        with self.lock, nogil:
-            while np.PyArray_ITER_NOTDONE(it):
-                _shuffle_raw(&self._bitgen, axlen, 0, itemsize, axstride,
-                             <char *>np.PyArray_ITER_DATA(it), <char *>buf)
-                np.PyArray_ITER_NEXT(it)
+        if out.dtype.hasobject:
+            # Keep the GIL when shuffling an object array.
+            with self.lock:
+                while np.PyArray_ITER_NOTDONE(it):
+                    _shuffle_raw_wrap(&self._bitgen, axlen, 0, itemsize,
+                                      axstride,
+                                      <char *>np.PyArray_ITER_DATA(it),
+                                      <char *>buf)
+                    np.PyArray_ITER_NEXT(it)
+        else:
+            # out is not an object array, so we can release the GIL.
+            with self.lock, nogil:
+                while np.PyArray_ITER_NOTDONE(it):
+                    _shuffle_raw_wrap(&self._bitgen, axlen, 0, itemsize,
+                                      axstride,
+                                      <char *>np.PyArray_ITER_DATA(it),
+                                      <char *>buf)
+                    np.PyArray_ITER_NEXT(it)
 
         PyMem_Free(buf)
         return out
@@ -4382,16 +4409,15 @@ cdef class Generator:
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
             buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
-            with self.lock, nogil:
-                # We trick gcc into providing a specialized implementation for
-                # the most common case, yielding a ~33% performance improvement.
-                # Note that apparently, only one branch can ever be specialized.
-                if itemsize == sizeof(np.npy_intp):
-                    _shuffle_raw(&self._bitgen, n, 1, sizeof(np.npy_intp),
-                                 stride, x_ptr, buf_ptr)
-                else:
-                    _shuffle_raw(&self._bitgen, n, 1, itemsize, stride, x_ptr,
-                                 buf_ptr)
+            if x.dtype.hasobject:
+                with self.lock:
+                    _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
+                                      x_ptr, buf_ptr)
+            else:
+                # Same as above, but the GIL is released.
+                with self.lock, nogil:
+                    _shuffle_raw_wrap(&self._bitgen, n, 1, itemsize, stride,
+                                      x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim and x.size:
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
