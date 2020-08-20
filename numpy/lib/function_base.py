@@ -1482,7 +1482,7 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None, *, interval_size=2*pi):
+def _unwrap_dispatcher(p, discont=None, axis=None, *, interval_size=None):
     return (p,)
 
 
@@ -1551,11 +1551,13 @@ def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi):
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
     ddmod = mod(dd + interval_size/2, interval_size) - interval_size/2
+    # the above line made `ddmod[abs(dd) == interval_size/2] == -interval_size/2`.
+    # correct these such that `ddmod[abs(dd) == interval_size/2] == sign(dd)*interval_size/2`.
     _nx.copyto(ddmod, interval_size/2, where=(ddmod == -interval_size/2) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype='d')
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis) 
+    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 
 
