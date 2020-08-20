@@ -462,6 +462,15 @@ class TestArrayLike:
     def func_args(*args, **kwargs):
         return args, kwargs
 
+    @requires_array_function
+    def test_array_like_not_implemented(self):
+        TestArrayLike.add_method('array', TestArrayLike.MyArray)
+
+        ref = TestArrayLike.MyArray.array()
+
+        with assert_raises_regex(TypeError, 'no implementation found'):
+            array_like = np.asarray(1, like=ref)
+
     _array_tests = [
         ('array', *func_args((1,))),
         ('asarray', *func_args((1,))),
