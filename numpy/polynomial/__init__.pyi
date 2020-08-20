@@ -1,4 +1,9 @@
 from typing import Any
 
-# TODO: remove when the full numpy namespace is defined
-def __getattr__(name: str) -> Any: ...
+Polynomial: Any
+Chebyshev: Any
+Legendre: Any
+Hermite: Any
+HermiteE: Any
+Laguerre: Any
+set_default_printstyle: Any
