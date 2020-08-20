@@ -31,9 +31,8 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
         )
 
 cdef extern from "numpy/arrayobject.h":
-    #int PyArray_SetWritebackIfCopyBase(np.ndarray, np.ndarray)
     int PyArray_ResolveWritebackIfCopy(np.ndarray)
-    object PyArray_FromArray(object, object, int)
+    object PyArray_FromArray(np.PyArrayObject *, object, int)
 
     enum:
         NPY_ARRAY_WRITEBACKIFCOPY
@@ -4298,7 +4297,7 @@ cdef class Generator:
                                                  np.NPY_ARRAY_F_CONTIGUOUS)): 
                     flags = (np.NPY_ARRAY_C_CONTIGUOUS |
                              NPY_ARRAY_WRITEBACKIFCOPY)
-                    to_shuffle = PyArray_FromArray(out, <object>NULL, flags)
+                    to_shuffle = PyArray_FromArray(<np.PyArrayObject *>out, <object>NULL, flags)
                     self.shuffle(to_shuffle.ravel(order='K'))
                     # Because we only execute this block if out is not
                     # contiguous, we know this call will always result in a
