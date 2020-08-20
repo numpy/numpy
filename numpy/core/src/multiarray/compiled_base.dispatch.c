@@ -1,7 +1,6 @@
 /**
  * @targets $maxopt baseline
  * SSE2 AVX2
- * VSX VSX2
  * NEON ASIMDDP
  */
 #include "compiled_base.h"
@@ -34,8 +33,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
         for (index = 0; index < vn_out; index += vstep) {
             // Maximum paraller abillity: handle four 64bits at one time
             npy_uint64 a[4];
-            unsigned int r;
-            for(int i = 0; i < vstep; i++) {
+            for (int i = 0; i < vstep; i++) {
                 a[i] = *(npy_uint64*)(inptr + 8 * i);
                 if (order == 'b') {
                     a[i] = npy_bswap8(a[i]);
@@ -49,10 +47,10 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
                 v = npyv_set_u64(a[0], a[1]);
             }
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = npyv_cvt_u8_u64(npyv_cmpeq_u8(npyv_cvt_u64_u8(v), npyv_cvt_u64_u8(zero)));
-            v = npyv_cvt_u8_u64(npyv_cmpeq_u8(npyv_cvt_u64_u8(v), npyv_cvt_u64_u8(zero)));
+            v = npyv_reinterpret_u8_u64(npyv_cmpeq_u8(npyv_reinterpret_u8_u64(v), npyv_reinterpret_u8_u64(zero)));
+            v = npyv_reinterpret_u8_u64(npyv_cmpeq_u8(npyv_reinterpret_u8_u64(v), npyv_reinterpret_u8_u64(zero)));
             /* extract msb of 16 bytes and pack it into 16 bit */
-            r = npyv_movemask_u8(npyv_cvt_u64_u8(v));
+            unsigned int r = npyv_movemask_u8(npyv_reinterpret_u8_u64(v));
             /* store result */
             for (int i = 0; i < vstep; i++) {
                 memcpy(outptr, (char*)&r + i, 1);
