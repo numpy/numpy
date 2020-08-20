@@ -53,6 +53,7 @@ class ClangCL(MSVCCompiler):
         MSVCCompiler.initialize(self)
 
         self.cc = _find_exe("clang-cl.exe")
+        self.linker = _find_exe("lld-link.exe")
         if self.cc is None:
             raise FileNotFoundError(
                 "Unable to locate clang-cl.exe. It should be on the path"
@@ -60,6 +61,11 @@ class ClangCL(MSVCCompiler):
         for opt in ("/GL", "/GL-", "/Ox"):
             if opt in self.compile_options:
                 self.compile_options.remove(opt)
+        ltcg = "/LTCG"
+        ldflags = self._ldflags
+        for key in ldflags:
+            if ltcg in ldflags[key]:
+                ldflags[key].remove(ltcg)
         self.compile_options.extend(
             [
                 "/O2",
