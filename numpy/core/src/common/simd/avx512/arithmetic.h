@@ -122,10 +122,14 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
  * 1- split(256) /add /split(128) /add /hadd /hadd /extract
  * 2- shuff(cross) /add /shuff(cross) /add /shuff /add /shuff /add /extract
  * 3- _mm512_reduce_add_ps/pd
- * The first one is been widely used by many projects while the second one is used by Intel Compiler and here
- * the reason why the second preferred by intel compiler maybe because the latency of hadd increased by (2-3)
- * starting from Skylake-X which makes two extra shuffles(non-cross) cheaper. check https://godbolt.org/z/s3G9Er for more clarification.
- * The third one is almost the same as the second one but only works for intel compiler/GCC 7.1/Clang 4.
+ * The first one is been widely used by many projects
+ * 
+ * the second one is used by Intel Compiler, maybe because the
+ * latency of hadd increased by (2-3) starting from Skylake-X which makes two
+ * extra shuffles(non-cross) cheaper. check https://godbolt.org/z/s3G9Er for more info.
+ * 
+ * The third one is almost the same as the second one but only works for
+ * intel compiler/GCC 7.1/Clang 4, we still need to support older GCC.
  ***************************/
 NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
