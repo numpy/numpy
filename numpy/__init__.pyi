@@ -465,7 +465,8 @@ class uint64(unsignedinteger):
 
 class inexact(number): ...  # type: ignore
 class floating(inexact, _real_generic, float):  # type: ignore
-    # Methods which are implemented by `float` but are absent from `np.floating`
+    # Methods which are implemented by `float` but are absent
+    # from `np.floating` (xref gh-13375)
     __trunc__: None  # type: ignore
     fromhex: None  # type: ignore
     hex: None  # type: ignore
@@ -485,7 +486,7 @@ class float64(floating):
     # (as `np.float64` is actually a proper `float` subclass)
     def __trunc__(self) -> int: ...  # type: ignore[override]
     @classmethod
-    def fromhex(cls, __s: str) -> float: ...  # type: ignore[override]
+    def fromhex(cls, __s: str) -> float64: ...  # type: ignore[override]
     def hex(self) -> str: ...  # type: ignore[override]
     def is_integer(self) -> bool: ...  # type: ignore[override]
 
