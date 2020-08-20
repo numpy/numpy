@@ -36,10 +36,29 @@ Simple random data
 
 Permutations
 ============
+The methods for randomly permuting a sequence are
 
-The methods `Generator.shuffle`, `Generator.permutation` and
-`Generator.permuted` are used for randomly permuting an input array.
-The following describes the important differences among these methods.
+.. autosummary::
+   :toctree: generated/
+
+   ~numpy.random.Generator.shuffle
+   ~numpy.random.Generator.permutation
+   ~numpy.random.Generator.permuted
+
+The following table summarizes the behaviors of the methods.
+
++--------------+-------------------+------------------+
+| method       | copy/in-place     | axis handling    |
++==============+===================+==================+
+| shuffle      | in-place          | as if 1d         |
++--------------+-------------------+------------------+
+| permutation  | copy              | as if 1d         |
++--------------+-------------------+------------------+
+| permuted     | either (use 'out' | axis independent |
+|              | for in-place)     |                  |
++--------------+-------------------+------------------+
+
+The following subsections provide more details about the differences.
 
 In-place vs. copy
 ~~~~~~~~~~~~~~~~~
@@ -51,6 +70,8 @@ By default, `Generator.permuted` returns a copy.  To operate in-place with
 `Generator.permuted`, pass the same array as the first argument *and* as
 the value of the ``out`` parameter.  For example,
 
+    >>> rg = np.random.default_rng()
+    >>> x = np.arange(0, 15).reshape(3, 5)
     >>> x
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
@@ -82,9 +103,9 @@ array, and  ``axis=1`` will rearrange the columns.  For example
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
     >>> rg.permutation(x, axis=1)
-    array([[ 0,  1,  4,  3,  2],  # random
-           [ 5,  6,  9,  8,  7],
-           [10, 11, 14, 13, 12]])
+    array([[ 1,  3,  2,  0,  4],  # random
+           [ 6,  8,  7,  5,  9],
+           [11, 13, 12, 10, 14]])
 
 Note that the columns have been rearranged "in bulk": the values within
 each column have not changed.
@@ -114,31 +135,6 @@ For example,
     >>> rg.shuffle(a)  # shuffle the list in-place
     >>> a
     ['B', 'D', 'A', 'E', 'C']  # random
-
-
-Permutation methods summary
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The methods for randomly permuting a sequence are
-
-.. autosummary::
-   :toctree: generated/
-
-   ~numpy.random.Generator.shuffle
-   ~numpy.random.Generator.permutation
-   ~numpy.random.Generator.permuted
-
-The following table summarizes the behaviors of the methods.
-
-+--------------+-------------------+------------------+
-| method       | copy/in-place     | axis handling    |
-+==============+===================+==================+
-| shuffle      | in-place          | as if 1d         |
-+--------------+-------------------+------------------+
-| permutation  | copy              | as if 1d         |
-+--------------+-------------------+------------------+
-| permuted     | either (use 'out' | axis independent |
-|              | for in-place)     |                  |
-+--------------+-------------------+------------------+
 
 Distributions
 =============
