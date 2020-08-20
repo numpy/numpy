@@ -14,7 +14,7 @@ from numpy.testing import (
         assert_raises_regex, assert_warns, suppress_warnings,
         _assert_valid_refcount, HAS_REFCOUNT,
         )
-from numpy.testing._private.utils import _no_tracing
+from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
 
 try:
@@ -2490,3 +2490,16 @@ class TestRegression:
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
+
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @requires_memory(free_bytes=9e9)
+    def test_dot_big_stride(self):
+        # gh-17111
+        # blas stride = stride//itemsize > int32 max
+        int32_max = np.iinfo(np.int32).max
+        n = int32_max + 3
+        a = np.empty([n], dtype=np.float32)
+        b = a[::n-1]
+        b[...] = 1
+        assert b.strides[0] > int32_max * b.dtype.itemsize
+        assert np.dot(b, b) == 2.0
