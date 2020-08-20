@@ -15,7 +15,7 @@
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
 
-#include "arrayobject.h"
+#include "ndarrayobject.h"
 #include "array_coercion.h"
 #include "templ_common.h"
 #include "array_assign.h"

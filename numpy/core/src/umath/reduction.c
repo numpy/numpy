@@ -14,7 +14,7 @@
 #include <Python.h>
 
 #include "npy_config.h"
-#include <numpy/arrayobject.h>
+#include <numpy/ndarrayobject.h>
 
 #include "npy_config.h"
 #include "npy_pycompat.h"

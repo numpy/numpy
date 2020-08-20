@@ -6,7 +6,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 
 #include "abstractdtypes.h"
 #include "array_coercion.h"

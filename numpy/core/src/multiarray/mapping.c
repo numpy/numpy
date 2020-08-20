@@ -5,8 +5,8 @@
 /*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
-#include "arrayobject.h"
+#include "numpy/ndarrayobject.h"
+#include "ndarrayobject.h"
 
 #include "npy_config.h"
 

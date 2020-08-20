@@ -4,14 +4,13 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
 
-#include "arrayobject.h"
 #include "iterators.h"
 #include "ctors.h"
 #include "common.h"

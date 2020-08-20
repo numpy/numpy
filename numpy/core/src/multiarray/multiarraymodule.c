@@ -22,7 +22,7 @@
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #include <numpy/npy_common.h>
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
@@ -39,7 +39,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "array_coercion.h"
 #include "arrayfunction_override.h"
 #include "arraytypes.h"
-#include "arrayobject.h"
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"

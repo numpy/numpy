@@ -876,7 +876,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
 
 /*
- * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
+ * NOTE: there are also internal flags defined in multiarray/ndarrayobject.h,
  * which start at bit 31 and work down.
  */
 

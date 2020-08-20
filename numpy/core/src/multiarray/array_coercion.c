@@ -7,7 +7,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "lowlevel_strided_loops.h"
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 
 #include "descriptor.h"
 #include "convert_datatype.h"

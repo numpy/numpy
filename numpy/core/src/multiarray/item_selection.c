@@ -4,7 +4,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
@@ -16,7 +16,6 @@
 
 #include "multiarraymodule.h"
 #include "common.h"
-#include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
