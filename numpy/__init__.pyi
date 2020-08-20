@@ -464,7 +464,12 @@ class uint64(unsignedinteger):
     def __init__(self, __value: SupportsInt = ...) -> None: ...
 
 class inexact(number): ...  # type: ignore
-class floating(inexact, _real_generic, float): ...  # type: ignore
+class floating(inexact, _real_generic, float):  # type: ignore
+    # Methods which are implemented by `float` but are absent from `np.floating`
+    __trunc__: None  # type: ignore
+    fromhex: None  # type: ignore
+    hex: None  # type: ignore
+    is_integer: None  # type: ignore
 
 _FloatType = TypeVar('_FloatType', bound=floating)
 
@@ -476,6 +481,13 @@ class float32(floating):
 
 class float64(floating):
     def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
+    # Renable the previously disabled `float` methods
+    # (as `np.float64` is actually a proper `float` subclass)
+    def __trunc__(self) -> int: ...  # type: ignore[override]
+    @classmethod
+    def fromhex(cls, __s: str) -> float: ...  # type: ignore[override]
+    def hex(self) -> str: ...  # type: ignore[override]
+    def is_integer(self) -> bool: ...  # type: ignore[override]
 
 class complexfloating(inexact, Generic[_FloatType], complex):  # type: ignore
     @property
