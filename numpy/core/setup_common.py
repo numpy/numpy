@@ -285,7 +285,8 @@ def check_long_double_representation(cmd):
         src, obj = cmd._compile(body, None, None, 'c')
         cmd.temp_files.append("_configtest")
         cmd.compiler.link_executable([obj], "_configtest")
-        ltype = long_double_representation(pyod("_configtest"))
+        ext = ".exe" if sys.platform == "win32" else ""
+        ltype = long_double_representation(pyod(f"_configtest{ext}"))
         return ltype
     finally:
         cmd._clean()

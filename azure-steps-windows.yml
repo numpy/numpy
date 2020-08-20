@@ -52,6 +52,7 @@ steps:
     choco install -y llvm --force --version=12.0.1
   displayName: 'Install LLVM for Clang-CL builds'
   condition: eq(variables['CLANG_CL'], 1)
+
 # NOTE: for Windows builds it seems much more tractable to use runtests.py
 # vs. manual setup.py and then runtests.py for testing only
 
