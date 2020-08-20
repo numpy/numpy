@@ -3,8 +3,6 @@ import numpy as np
 reveal_type(np)  # E: ModuleType
 
 reveal_type(np.char)  # E: ModuleType
-reveal_type(np.compat)  # E: ModuleType
-reveal_type(np.core)  # E: ModuleType
 reveal_type(np.ctypeslib)  # E: ModuleType
 reveal_type(np.emath)  # E: ModuleType
 reveal_type(np.fft)  # E: ModuleType
