@@ -25,11 +25,12 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB, the basic data type is a multidimensional array of
-       double precision floating point numbers.  Most expressions take such
-       arrays and return such arrays.  Operations on the 2-D instances of
-       these arrays are designed to act more or less like matrix operations
-       in linear algebra.
+   * - In MATLAB®, the you can create multidimensional arrays. By default,
+     MATLAB® creates two dimensional arrays of double precision floating point
+     numbers.  Most expressions take such arrays and return such arrays.
+     Operations on the 2-D instances of these arrays are designed to act 
+     like matrix operations in linear algebra.
+
      - In NumPy the basic type is a multidimensional ``array``.  Operations
        on these arrays in all dimensionalities including 2D are element-wise
        operations.  One needs to use specific functions for linear algebra
@@ -73,6 +74,7 @@ Short answer
 
 **Use arrays**.
 
+-  They support multidimensional array algebra that is supported in MATLAB
 -  They are the standard vector/matrix/tensor type of numpy. Many numpy
    functions return arrays, not matrices.
 -  There is a clear distinction between element-wise operations and
@@ -206,7 +208,7 @@ General Purpose Equivalents
    :header-rows: 1
 
    * - **MATLAB**
-     - **numpy**
+     - **NumPy**
      - **Notes**
 
    * - ``help func``
@@ -221,6 +223,23 @@ General Purpose Equivalents
      - ``source(func)`` or ``func??`` (in Ipython)
      - print source for *func* (if not a native function)
 
+   * - ``%``
+     - ``#``
+     - comment a line of code
+
+   * - ::
+
+         for i=1:3
+             fprintf('%i\n',i)
+         end
+
+     - ::
+
+         for i in range(1,4):
+            print(i)
+
+     - use a for-loop to print the numbers 1, 2, and 3
+
    * - ``a && b``
      - ``a and b``
      - short-circuiting logical  AND operator (Python native operator);
@@ -231,13 +250,38 @@ General Purpose Equivalents
      - short-circuiting logical OR operator (Python native operator);
        scalar arguments only
 
+   * - ::
+
+         a=1
+         if a==0
+             fprintf('a=o')
+         elseif a==1:
+             fprintf('a=1')
+         end
+
+     - ::
+
+         a=1
+         if a==0:
+             print('a=0')
+         elif a==1:
+             print('a=1')
+
+     - create an if-else if to check if ``a`` is 0 or 1 and print result
+
    * - ``1*i``, ``1*j``,  ``1i``, ``1j``
      - ``1j``
      - complex numbers
 
    * - ``eps``
-     - ``np.spacing(1)``
-     - Distance between 1 and the nearest floating point number.
+     - ``np.finfo(float).eps`` or ``np.spacing(1)``
+     - Distance between 1 and the nearest 64-bit floating point number.
+
+   * - ``load data.mat``
+     - ``scipy.io.loadmat('data.mat')``
+     - load variables saved to the file ``data.mat`` note, if saving files from
+       MATLAB/Octave use a recent binary format. Python's ``loadmat`` will
+       create a dictionary with arrays and further information
 
    * - ``ode45``
      - ``scipy.integrate.solve_ivp(f)``
@@ -277,7 +321,7 @@ Linear Algebra Equivalents
 
    * - ``[ 1 2 3; 4 5 6 ]``
      - ``array([[1.,2.,3.], [4.,5.,6.]])``
-     - 2x3 matrix literal
+     - 2D array defined as 2x3 matrix
 
    * - ``[ a b; c d ]``
      - ``block([[a,b], [c,d]])``
@@ -285,28 +329,28 @@ Linear Algebra Equivalents
 
    * - ``a(end)``
      - ``a[-1]``
-     - access last element in the 1xn matrix ``a``
+     - access last element in MATLAB vector (1xn or nx1) or 1D NumPy array
+       ``a`` (length n)
 
    * - ``a(2,5)``
      - ``a[1,4]``
-     - access element in second row, fifth column
+     - access element in second row, fifth column in a 2D array, ``a``
 
    * - ``a(2,:)``
      - ``a[1]`` or  ``a[1,:]``
-     - entire second row of ``a``
+     - entire second row of a 2D array, ``a``
 
    * - ``a(1:5,:)``
      - ``a[0:5]`` or ``a[:5]`` or ``a[0:5,:]``
-     - the first five rows of ``a``
+     - the first five rows of a 2D array, ``a``
 
    * - ``a(end-4:end,:)``
      - ``a[-5:]``
-     - the last five rows of ``a``
+     - the last five rows of a 2D array, ``a``
 
    * - ``a(1:3,5:9)``
-     - ``a[0:3][:,4:9]``
-     - rows one to three and columns five to nine of ``a``.  This gives
-       read-only access.
+     - ``a[0:3,4:9]``
+     - rows one to three and columns five to nine of a 2D array, ``a``. 
 
    * - ``a([2,4,5],[1,3])``
      - ``a[ix_([1,3,4],[0,2])]``
@@ -361,7 +405,7 @@ Linear Algebra Equivalents
        values ``False`` and ``True``.
 
    * - ``find(a>0.5)``
-     - ``nonzero(a>0.5)``
+     - ``where(a>0.5)``
      - find the indices where (``a`` > 0.5)
 
    * - ``a(:,find(v>0.5))``
@@ -429,16 +473,28 @@ Linear Algebra Equivalents
 
    * - ``diag(a)``
      - ``diag(a)``
-     - vector of diagonal elements of ``a``
+     - returns a vector of the diagonal elements of 2D array, ``a``
 
-   * - ``diag(a,0)``
-     - ``diag(a,0)``
-     - square diagonal matrix whose nonzero values are the elements of
-       ``a``
+   * - ``diag(v,0)``
+     - ``diag(v,0)``
+     - returns a square diagonal matrix whose nonzero values are the elements of
+       vector, ``v``
 
-   * - ``rand(3,4)``
-     - ``random.rand(3,4)`` or ``random.random_sample((3, 4))``
-     - random 3x4 matrix
+   * - ::
+         
+         rng(42,'twister')
+         rand(3,4)
+
+     - ::
+
+         from numpy.random import default_rng
+         rng=default_rng(42)
+         rng.random(3,4) 
+
+       or older version: ``random.rand((3, 4))``
+
+     - generate a random 3x4 matrix with default random number generator and
+       seed = 42
 
    * - ``linspace(1,3,4)``
      - ``linspace(1,3,4)``
@@ -474,8 +530,9 @@ Linear Algebra Equivalents
      - concatenate rows of ``a`` and ``b``
 
    * - ``max(max(a))``
-     - ``a.max()``
-     - maximum element of ``a`` (with ndims(a)<=2 for MATLAB)
+     - ``a.max()`` or ``nanmax(a)``
+     - maximum element of ``a`` (with ndims(a)<=2 for MATLAB, if there are
+       NaN's, ``nanmax`` will ignore these and return largest value)
 
    * - ``max(a)``
      - ``a.max(0)``
@@ -537,19 +594,26 @@ Linear Algebra Equivalents
      - ``U, S, Vh = linalg.svd(a), V = Vh.T``
      - singular value decomposition of ``a``
 
-   * - ``chol(a)``
-     - ``linalg.cholesky(a).T``
+   * - ``rank(a)``
+     - ``matrix_rank(a)``
+     - return the rank of 2D array, ``a``
+
+   * - ``c=chol(a)`` where ``a==c'*c``
+     - ``c=linalg.cholesky(a)`` where ``a==c@c.T``
      - cholesky factorization of a matrix (``chol(a)`` in MATLAB returns an
        upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower
        triangular matrix)
 
    * - ``[V,D]=eig(a)``
      - ``D,V = linalg.eig(a)``
-     - eigenvalues and eigenvectors of ``a``
+     - eigenvalues :math:`\lambda` and eigenvectors :math:`\bar{v}` of ``a``,
+       where :math:`\lambda\bar{v}=\mathbf{a}\bar{v}`
 
    * - ``[V,D]=eig(a,b)``
      - ``D,V = scipy.linalg.eig(a,b)``
-     - eigenvalues and eigenvectors of ``a``, ``b``
+     - eigenvalues :math:`\lambda` and eigenvectors :math:`\bar{v}` of
+       ``a``, ``b``
+       where :math:`\lambda\mathbf{b}\bar{v}=\mathbf{a}\bar{v}`
 
    * - ``[V,D]=eigs(a,k)``
      -
@@ -559,9 +623,9 @@ Linear Algebra Equivalents
      - ``Q,R = scipy.linalg.qr(a)``
      - QR decomposition
 
-   * - ``[L,U,P]=lu(a)``
-     - ``L,U = scipy.linalg.lu(a)`` or ``LU,P=scipy.linalg.lu_factor(a)``
-     - LU decomposition (note: P(MATLAB) == transpose(P(numpy)) )
+   * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
+     - ``P,L,U = scipy.linalg.lu(a)`` where ``a==P@L@U``
+     - LU decomposition (note: P(Matlab) == transpose(P(numpy)) )
 
    * - ``conjgrad``
      - ``scipy.sparse.linalg.cg``
@@ -576,28 +640,30 @@ Linear Algebra Equivalents
      - inverse Fourier transform of ``a``
 
    * - ``sort(a)``
-     - ``sort(a)`` or ``a.sort()``
-     - sort the matrix
+     - ``sort(a)`` or ``a.sort(axis=0)``
+     - sort each column of a 2D matrix, ``a``
 
-   * - ``[b,I] = sortrows(a,i)``
-     - ``I = argsort(a[:,i]), b=a[I,:]``
-     - sort the rows of the matrix
+   * - ``sort(a,2)``
+     - ``sort(a,axis=1)`` or ``a.sort(axis=1)
+     - sort the each row of 2D matrix, ``a``
 
-   * - ``regress(y,X)``
-     - ``linalg.lstsq(X,y)``
-     - multilinear regression
+   * - ``Z\y``
+     - ``linalg.lstsq(Z,y)``
+     - perform a linear regression of the form :math:`\mathbf{Zx}=\mathbf{y}`
 
    * - ``decimate(x, q)``
-     - ``scipy.signal.resample(x, len(x)/q)``
+     - ``scipy.signal.resample(x, np.ceil(len(x)/q))``
      - downsample with low-pass filtering
 
    * - ``unique(a)``
      - ``unique(a)``
-     -
+     - returns a vector of unique values in array ``a``
 
    * - ``squeeze(a)``
      - ``a.squeeze()``
-     -
+     - remove singleton dimensions of array ``a`` Note that MATLAB will always
+       return arrays of 2D or higher while NumPy will return arrays of 0D or
+       higher
 
 .. _numpy-for-matlab-users.notes:
 
@@ -696,18 +762,26 @@ this is just an example, not a statement of "best practices"):
 
     # Make all numpy available via shorter 'np' prefix
     import numpy as np
+    # 
+    # Make the SciPy linear algebra functions available as linalg.func()
+    # e.g. linalg.lu, linalg.eig (for general l*B@u==A@u solution)
+    from scipy import linalg
+    #
+    # Define a Hermitian function
+    def hermitian(A, **kwargs):
+        return np.conj(A,**kwargs).T
+    # Make a shortcut for hermitian:
+    #    hermitian(A) --> H(A)
+    H = hermitian
+
+To use the deprecated `matrix` and other `matlib` functions:
+
+::
+    
     # Make all matlib functions accessible at the top level via M.func()
     import numpy.matlib as M
     # Make some matlib functions accessible directly at the top level via, e.g. rand(3,3)
-    from numpy.matlib import rand,zeros,ones,empty,eye
-    # Define a Hermitian function
-    def hermitian(A, **kwargs):
-        return np.transpose(A,**kwargs).conj()
-    # Make some shortcuts for transpose,hermitian:
-    #    np.transpose(A) --> T(A)
-    #    hermitian(A) --> H(A)
-    T = np.transpose
-    H = hermitian
+    from numpy.matlib import matrix,rand,zeros,ones,empty,eye
 
 Links
 =====
