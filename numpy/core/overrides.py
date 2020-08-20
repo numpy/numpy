@@ -191,7 +191,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         return decorator
 
     def decorator(implementation):
-        if callable(public_api):
+        if public_api is not None:
             implementation = public_api
 
         if verify:
