@@ -25,11 +25,11 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB®, the you can create multidimensional arrays. By default,
-     MATLAB® creates two dimensional arrays of double precision floating point
-     numbers.  Most expressions take such arrays and return such arrays.
-     Operations on the 2-D instances of these arrays are designed to act 
-     like matrix operations in linear algebra.
+   * - In MATLAB®, you can create multidimensional arrays. By default,
+       MATLAB® creates two dimensional arrays of double precision floating point
+       numbers.  Most expressions take such arrays and return arrays.
+       Operations on the 2-D instances of these arrays are designed to act 
+       like matrix operations in linear algebra.
 
      - In NumPy the basic type is a multidimensional ``array``.  Operations
        on these arrays in all dimensionalities including 2D are element-wise
@@ -43,16 +43,18 @@ Some Key Differences
      - Python uses 0 (zero) based indexing. The initial element of a
        sequence is found using a[0].
 
-   * - MATLAB's scripting language was created for doing linear algebra.
-       The syntax for basic matrix operations is nice and clean, but the API
-       for adding GUIs and making full-fledged applications is more or less
+   * - MATLAB®'s scripting language was created for doing linear algebra.
+       Matlab's syntax for some array manipulations is more compact than
+       NumPy's.The syntax for basic matrix operations is nice and clean, but the
+       API for adding GUIs and making full-fledged applications is more or less
        an afterthought.
-     - NumPy is  based on Python, which was designed from the outset to be
-       an excellent general-purpose programming language.  While MATLAB's
-       syntax for some array manipulations is more compact than
-       NumPy's, NumPy (by virtue of being an add-on to Python) can do many
-       things that MATLAB just cannot, for instance dealing properly with
-       stacks of matrices.
+     - NumPy is  based on Python, which was designed from the outset to be an
+       excellent general-purpose programming language.  The advantage to NumPy
+       is access to Python libraries including: `SciPy
+       <https://www.scipy.org/>`_, `Matplotlib <https://matplotlib.org/>`_,
+       `Pandas <https://pandas.pydata.org/>`_, `OpenCV <https://opencv.org/>`_,
+       and more. In addition to Python-specific packages, many scientific
+       computing softwares use Python as a scripting language. 
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent actually creating copies until they
@@ -61,126 +63,6 @@ Some Key Differences
        are views into an array.
 
 
-'array' or 'matrix'? Which should I use?
-========================================
-
-Historically, NumPy has provided a special matrix type, `np.matrix`, which
-is a subclass of ndarray which makes binary operations linear algebra
-operations. You may see it used in some existing code instead of `np.array`.
-So, which one to use?
-
-Short answer
-------------
-
-**Use arrays**.
-
--  They support multidimensional array algebra that is supported in MATLAB
--  They are the standard vector/matrix/tensor type of numpy. Many numpy
-   functions return arrays, not matrices.
--  There is a clear distinction between element-wise operations and
-   linear algebra operations.
--  You can have standard vectors or row/column vectors if you like.
-
-Until Python 3.5 the only disadvantage of using the array type was that you
-had to use ``dot`` instead of ``*`` to multiply (reduce) two tensors
-(scalar product, matrix vector multiplication etc.). Since Python 3.5 you
-can use the matrix multiplication ``@`` operator.
-
-Given the above, we intend to deprecate ``matrix`` eventually.
-
-Long answer
------------
-
-NumPy contains both an ``array`` class and a ``matrix`` class. The
-``array`` class is intended to be a general-purpose n-dimensional array
-for many kinds of numerical computing, while ``matrix`` is intended to
-facilitate linear algebra computations specifically. In practice there
-are only a handful of key differences between the two.
-
--  Operators ``*`` and ``@``, functions ``dot()``, and ``multiply()``:
-
-   -  For ``array``, **``*`` means element-wise multiplication**, while
-      **``@`` means matrix multiplication**; they have associated functions
-      ``multiply()`` and ``dot()``.  (Before python 3.5, ``@`` did not exist
-      and one had to use ``dot()`` for matrix multiplication).
-   -  For ``matrix``, **``*`` means matrix multiplication**, and for
-      element-wise multiplication one has to use the ``multiply()`` function.
-
--  Handling of vectors (one-dimensional arrays)
-
-   -  For ``array``, the **vector shapes 1xN, Nx1, and N are all different
-      things**. Operations like ``A[:,1]`` return a one-dimensional array of
-      shape N, not a two-dimensional array of shape Nx1. Transpose on a
-      one-dimensional ``array`` does nothing.
-   -  For ``matrix``, **one-dimensional arrays are always upconverted to 1xN
-      or Nx1 matrices** (row or column vectors). ``A[:,1]`` returns a
-      two-dimensional matrix of shape Nx1.
-
--  Handling of higher-dimensional arrays (ndim > 2)
-
-   -  ``array`` objects **can have number of dimensions > 2**;
-   -  ``matrix`` objects **always have exactly two dimensions**.
-
--  Convenience attributes
-
-   -  ``array`` **has a .T attribute**, which returns the transpose of
-      the data.
-   -  ``matrix`` **also has .H, .I, and .A attributes**, which return
-      the conjugate transpose, inverse, and ``asarray()`` of the matrix,
-      respectively.
-
--  Convenience constructor
-
-   -  The ``array`` constructor **takes (nested) Python sequences as
-      initializers**. As in, ``array([[1,2,3],[4,5,6]])``.
-   -  The ``matrix`` constructor additionally **takes a convenient
-      string initializer**. As in ``matrix("[1 2 3; 4 5 6]")``.
-
-There are pros and cons to using both:
-
--  ``array``
-
-   -  ``:)`` Element-wise multiplication is easy: ``A*B``.
-   -  ``:(`` You have to remember that matrix multiplication has its own
-      operator, ``@``.
-   -  ``:)`` You can treat one-dimensional arrays as *either* row or column
-      vectors. ``A @ v`` treats ``v`` as a column vector, while
-      ``v @ A`` treats ``v`` as a row vector. This can save you having to
-      type a lot of transposes.
-   -  ``:)`` ``array`` is the "default" NumPy type, so it gets the most
-      testing, and is the type most likely to be returned by 3rd party
-      code that uses NumPy.
-   -  ``:)`` Is quite at home handling data of any number of dimensions.
-   -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
-      with that.
-   -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
-      element-wise.
-   -  ``:(`` Sparse matrices from ``scipy.sparse`` do not interact as well
-      with arrays.
-
--  ``matrix``
-
-   -  ``:\\`` Behavior is more like that of MATLAB matrices.
-   -  ``<:(`` Maximum of two-dimensional. To hold three-dimensional data you
-      need ``array`` or perhaps a Python list of ``matrix``.
-   -  ``<:(`` Minimum of two-dimensional. You cannot have vectors. They must be
-      cast as single-column or single-row matrices.
-   -  ``<:(`` Since ``array`` is the default in NumPy, some functions may
-      return an ``array`` even if you give them a ``matrix`` as an
-      argument. This shouldn't happen with NumPy functions (if it does
-      it's a bug), but 3rd party code based on NumPy may not honor type
-      preservation like NumPy does.
-   -  ``:)`` ``A*B`` is matrix multiplication, so it looks just like you write
-      it in linear algebra (For Python >= 3.5 plain arrays have the same
-      convenience with the ``@`` operator).
-   -  ``<:(`` Element-wise multiplication requires calling a function,
-      ``multiply(A,B)``.
-   -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
-      does not work element-wise but ``/`` does.
-   -  Interaction with ``scipy.sparse`` is a bit cleaner.
-
-The ``array`` is thus much more advisable to use.  Indeed, we intend to
-deprecate ``matrix`` eventually.
 
 Table of Rough MATLAB-NumPy Equivalents
 =======================================
@@ -216,7 +98,7 @@ General Purpose Equivalents
      - get help on the function *func*
 
    * - ``which func``
-     - `see note HELP <numpy-for-matlab-users.notes>`__
+     - `see note HELP <numpy-for-matlab-users.notes>`_
      - find out where *func* is defined
 
    * - ``type func``
@@ -615,9 +497,9 @@ Linear Algebra Equivalents
        ``a``, ``b``
        where :math:`\lambda\mathbf{b}\bar{v}=\mathbf{a}\bar{v}`
 
-   * - ``[V,D]=eigs(a,k)``
-     -
-     - find the ``k`` largest eigenvalues and eigenvectors of ``a``
+   * - ``[V,D]=eigs(a,3)``
+     - ``D,V = scipy.sparse.linalg.eigs(a,k=3)``
+     - find the ``k=3`` largest eigenvalues and eigenvectors of 2D array, ``a``
 
    * - ``[Q,R,P]=qr(a,0)``
      - ``Q,R = scipy.linalg.qr(a)``
@@ -698,10 +580,9 @@ numpy to have a similarly terse range construction mechanism. Note that
 *indexed* using square brackets, which allows the use of Python's slice
 syntax in the arguments.
 
-\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in MATLAB &
-and \| are logical AND/OR. The difference should be clear to anyone with
-significant programming experience. The two can appear to work the same,
-but there are important differences. If you would have used MATLAB's &
+\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in Matlab &
+and \| are logical AND/OR. The two can appear to work the same,
+but there are important differences. If you would have used Matlab's &
 or \| operators, you should use the NumPy ufuncs
 logical\_and/logical\_or. The notable differences between MATLAB's and
 NumPy's & and \| operators are:
@@ -733,6 +614,127 @@ back this doesn't matter. But if you are converting reshapes from MATLAB
 code which relies on the scan order, then this MATLAB code: z =
 reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in
 NumPy.
+
+'array' or 'matrix'? Which should I use?
+========================================
+
+Historically, NumPy has provided a special matrix type, `np.matrix`, which
+is a subclass of ndarray which makes binary operations linear algebra
+operations. You may see it used in some existing code instead of `np.array`.
+So, which one to use?
+
+Short answer
+------------
+
+**Use arrays**.
+
+-  They support multidimensional array algebra that is supported in MATLAB
+-  They are the standard vector/matrix/tensor type of numpy. Many numpy
+   functions return arrays, not matrices.
+-  There is a clear distinction between element-wise operations and
+   linear algebra operations.
+-  You can have standard vectors or row/column vectors if you like.
+
+Until Python 3.5 the only disadvantage of using the array type was that you
+had to use ``dot`` instead of ``*`` to multiply (reduce) two tensors
+(scalar product, matrix vector multiplication etc.). Since Python 3.5 you
+can use the matrix multiplication ``@`` operator.
+
+Given the above, we intend to deprecate ``matrix`` eventually.
+
+Long answer
+-----------
+
+NumPy contains both an ``array`` class and a ``matrix`` class. The
+``array`` class is intended to be a general-purpose n-dimensional array
+for many kinds of numerical computing, while ``matrix`` is intended to
+facilitate linear algebra computations specifically. In practice there
+are only a handful of key differences between the two.
+
+-  Operators ``*`` and ``@``, functions ``dot()``, and ``multiply()``:
+
+   -  For ``array``, **``*`` means element-wise multiplication**, while
+      **``@`` means matrix multiplication**; they have associated functions
+      ``multiply()`` and ``dot()``.  (Before python 3.5, ``@`` did not exist
+      and one had to use ``dot()`` for matrix multiplication).
+   -  For ``matrix``, **``*`` means matrix multiplication**, and for
+      element-wise multiplication one has to use the ``multiply()`` function.
+
+-  Handling of vectors (one-dimensional arrays)
+
+   -  For ``array``, the **vector shapes 1xN, Nx1, and N are all different
+      things**. Operations like ``A[:,1]`` return a one-dimensional array of
+      shape N, not a two-dimensional array of shape Nx1. Transpose on a
+      one-dimensional ``array`` does nothing.
+   -  For ``matrix``, **one-dimensional arrays are always upconverted to 1xN
+      or Nx1 matrices** (row or column vectors). ``A[:,1]`` returns a
+      two-dimensional matrix of shape Nx1.
+
+-  Handling of higher-dimensional arrays (ndim > 2)
+
+   -  ``array`` objects **can have number of dimensions > 2**;
+   -  ``matrix`` objects **always have exactly two dimensions**.
+
+-  Convenience attributes
+
+   -  ``array`` **has a .T attribute**, which returns the transpose of
+      the data.
+   -  ``matrix`` **also has .H, .I, and .A attributes**, which return
+      the conjugate transpose, inverse, and ``asarray()`` of the matrix,
+      respectively.
+
+-  Convenience constructor
+
+   -  The ``array`` constructor **takes (nested) Python sequences as
+      initializers**. As in, ``array([[1,2,3],[4,5,6]])``.
+   -  The ``matrix`` constructor additionally **takes a convenient
+      string initializer**. As in ``matrix("[1 2 3; 4 5 6]")``.
+
+There are pros and cons to using both:
+
+-  ``array``
+
+   -  ``:)`` Element-wise multiplication is easy: ``A*B``.
+   -  ``:(`` You have to remember that matrix multiplication has its own
+      operator, ``@``.
+   -  ``:)`` You can treat one-dimensional arrays as *either* row or column
+      vectors. ``A @ v`` treats ``v`` as a column vector, while
+      ``v @ A`` treats ``v`` as a row vector. This can save you having to
+      type a lot of transposes.
+   -  ``:)`` ``array`` is the "default" NumPy type, so it gets the most
+      testing, and is the type most likely to be returned by 3rd party
+      code that uses NumPy.
+   -  ``:)`` Is quite at home handling data of any number of dimensions.
+   -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
+      with that.
+   -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
+      element-wise.
+   -  ``:(`` Sparse matrices from ``scipy.sparse`` do not interact as well
+      with arrays.
+
+-  ``matrix``
+
+   -  ``:\\`` Behavior is more like that of MATLAB® matrices.
+   -  ``<:(`` Maximum of two-dimensional. To hold three-dimensional data you
+      need ``array`` or perhaps a Python list of ``matrix``.
+   -  ``<:(`` Minimum of two-dimensional. You cannot have vectors. They must be
+      cast as single-column or single-row matrices.
+   -  ``<:(`` Since ``array`` is the default in NumPy, some functions may
+      return an ``array`` even if you give them a ``matrix`` as an
+      argument. This shouldn't happen with NumPy functions (if it does
+      it's a bug), but 3rd party code based on NumPy may not honor type
+      preservation like NumPy does.
+   -  ``:)`` ``A*B`` is matrix multiplication, so it looks just like you write
+      it in linear algebra (For Python >= 3.5 plain arrays have the same
+      convenience with the ``@`` operator).
+   -  ``<:(`` Element-wise multiplication requires calling a function,
+      ``multiply(A,B)``.
+   -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
+      does not work element-wise but ``/`` does.
+   -  Interaction with ``scipy.sparse`` is a bit cleaner.
+
+The ``array`` is thus much more advisable to use.  Indeed, we intend to
+deprecate ``matrix`` eventually.
 
 Customizing Your Environment
 ============================
@@ -791,5 +793,10 @@ cross-reference.
 
 An extensive list of tools for scientific work with python can be
 found in the `topical software page <https://scipy.org/topical-software.html>`__.
+
+See
+`List of Python software: scripting
+<https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
+for a list of Scientific packages that use Python as a scripting language
 
 MATLAB® and SimuLink® are registered trademarks of The MathWorks.
