@@ -1482,18 +1482,19 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None, *, interval_size=2*pi, min_val=None, max_val=None):
+def _unwrap_dispatcher(p, discont=None, axis=None, *, interval_size=2*pi):
     return (p,)
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi, min_val=None, max_val=None):
+def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi):
     """
     Unwrap by changing deltas between values to complement.
     
     For the default case where `interval_size= 2*pi`, `discont=pi`,
     It unwraps radian phase `p` by changing absolute jumps greater 
-    than `discont` to their 2*pi complement along the given axis.
+    than `discont` to their 2*pi complement along the given axis. Jumps equal 
+    to `discont` are not changed.
     
     In general it unwrapps a signal `p` by changing absolute jumps 
     greater than `discont` to their `interval_size` complementary values.
@@ -1507,19 +1508,7 @@ def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi, min_val=None, max_va
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
     interval_size: float, optional
-        Size of the range over which the input wraps. By default, it is 2 pi.
-        If ``min_val`` and ``max_val`` are given, ``interval_size`` is ignored
-        and the interval size is ``max_val - min_val``. 
-    min_val, max_val: float, optional
-        Boundaries of the interval over which the input array is expected to 
-        wrap. By default, they are ``None`` and the interval is considered as 
-        ``[-interval_size, interval_size]``. In case the first value of the 
-        phase input array, ``p[0]``, is outside of the interval 
-        ``[min_val, max_val]`` it will be corrected by an integral multiple of 
-        the interval size such that it will be within the 
-        boundaries.
-        Both boundaries require each other. If only one boundary is 
-        provided without the other, it will be ignored. 
+        Size of the range over which the input wraps. By default, it is ``2 pi``.
     
     Returns
     -------
@@ -1556,15 +1545,6 @@ def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi, min_val=None, max_va
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
-    offset = 0
-    if (not min_val is None) and (not max_val is None):
-        interval_size = max_val - min_val
-        slice0list = [slice(None)]*nd     # full slices
-        slice0list[axis] = 0
-        slice0 = tuple(slice0list)
-        offset_mul = (p[slice0] - min_val)//interval_size
-        slice0list[axis] = None
-        offset = -offset_mul[tuple(slice0list)]*interval_size
     if discont is None:
         discont = interval_size/2
     slice1 = [slice(None, None)]*nd     # full slices
@@ -1574,7 +1554,6 @@ def unwrap(p, discont=None, axis=-1, *, interval_size=2*pi, min_val=None, max_va
     _nx.copyto(ddmod, interval_size/2, where=(ddmod == -interval_size/2) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    p += offset
     up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis) 
     return up
