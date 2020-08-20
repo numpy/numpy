@@ -31,9 +31,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
         npy_intp vn_out = n_out - (remain ? 1 : 0);
         const int vstep = npyv_nlanes_u64;
         vn_out -= (vn_out & (vstep - 1));
-        // Maximum paraller abillity: handle four 64bits at one time
-        npy_uint64 a[4];
         for (index = 0; index < vn_out; index += vstep) {
+            // Maximum paraller abillity: handle four 64bits at one time
+            npy_uint64 a[4];
             unsigned int r;
             for(int i = 0; i < vstep; i++) {
                 a[i] = *(npy_uint64*)(inptr + 8 * i);
@@ -69,14 +69,11 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
     /* Don't reset index. Just handle remainder of above block */
     for (; index < n_out; index++) {
         unsigned char build = 0;
-        int i, maxi;
-        npy_intp j;
-
-        maxi = (index == n_out - 1) ? remain : 8;
+        int maxi = (index == n_out - 1) ? remain : 8;
         if (order == 'b') {
-            for (i = 0; i < maxi; i++) {
+            for (int i = 0; i < maxi; i++) {
                 build <<= 1;
-                for (j = 0; j < element_size; j++) {
+                for (npy_intp j = 0; j < element_size; j++) {
                     build |= (inptr[j] != 0);
                 }
                 inptr += in_stride;
@@ -87,9 +84,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
         }
         else
         {
-            for (i = 0; i < maxi; i++) {
+            for (int i = 0; i < maxi; i++) {
                 build >>= 1;
-                for (j = 0; j < element_size; j++) {
+                for (npy_intp j = 0; j < element_size; j++) {
                     build |= (inptr[j] != 0) ? 128 : 0;
                 }
                 inptr += in_stride;
