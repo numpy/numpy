@@ -132,7 +132,7 @@
 #endif
 
 #if defined(_MSC_VER)
-        #define NPY_INLINE __inline
+        #define NPY_INLINE inline
 #elif defined(__GNUC__)
     #if defined(__STRICT_ANSI__)
          #define NPY_INLINE __inline__

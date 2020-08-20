@@ -395,7 +395,8 @@ def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
     string)."""
     hide = '__attribute__((visibility("hidden")))'
-    if config.check_gcc_function_attribute(hide, 'hideme'):
+    # Never check on Windows even when using GCC/Clang
+    if config.check_gcc_function_attribute(hide, 'hideme') and not (sys.platform == 'win32' or os.name == 'nt'):
         return hide
     else:
         return ''
