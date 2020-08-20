@@ -1081,6 +1081,12 @@ class TestRandomDist:
         with pytest.raises(ValueError, match='same shape'):
             random.permuted(a, out=out)
 
+    def test_permuted_out_with_wrong_type(self):
+        out = np.zeros((3, 5), dtype=np.int32)
+        x = np.ones((3, 5))
+        with pytest.raises(TypeError, match='Cannot cast'):
+            random.permuted(x, axis=1, out=out)
+
     def test_beta(self):
         random = Generator(MT19937(self.seed))
         actual = random.beta(.1, .9, size=(3, 2))

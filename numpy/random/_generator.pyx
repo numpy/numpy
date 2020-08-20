@@ -4276,7 +4276,7 @@ cdef class Generator:
                 raise TypeError('out must be a numpy array')
             if out.shape != x.shape:
                 raise ValueError('out must have the same shape as x')
-            out[...] = x
+            np.copyto(out, x, casting='safe')
 
         if axis is None:
             if x.ndim > 1:
