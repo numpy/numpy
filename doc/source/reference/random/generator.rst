@@ -41,6 +41,31 @@ The methods `Generator.shuffle`, `Generator.permutation` and
 `Generator.permuted` are used for randomly permuting an input array.
 The following describes the important differences among these methods.
 
+In-place vs. copy
+~~~~~~~~~~~~~~~~~
+The main difference between `Generator.shuffle` and `Generator.permutation`
+is that `Generator.shuffle` operates in-place, while `Generator.permutation`
+returns a copy.
+
+By default, `Generator.permuted` returns a copy.  To operate in-place with
+`Generator.permuted`, pass the same array as the first argument *and* as
+the value of the ``out`` parameter.  For example,
+
+    >>> x
+    array([[ 0,  1,  2,  3,  4],
+           [ 5,  6,  7,  8,  9],
+           [10, 11, 12, 13, 14]])
+    >>> y = rg.permuted(x, axis=1, out=x)
+    >>> x
+    array([[ 1,  0,  2,  4,  3],  # random
+           [ 6,  7,  8,  9,  5],
+           [10, 14, 11, 13, 12]])
+
+Note that when ``out`` is given, the return value is ``out``:
+
+    >>> y is x
+    True
+
 Handling the ``axis`` parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 An important distinction for these methods is how they handle the ``axis``
@@ -78,33 +103,22 @@ In this example, the values within each row (i.e. the values along
 ``axis=1``) have been shuffled independently.  This is not a "bulk"
 shuffle of the columns.
 
-In-place vs. copy
-~~~~~~~~~~~~~~~~~
-The main difference between `Generator.shuffle` and `Generator.permutation`
-is that `Generator.shuffle` operates in-place, while `Generator.permutation`
-returns a copy.
+Shuffling non-NumPy sequences
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`Generator.shuffle` works on non-NumPy sequences.  That is, if it is given
+a sequence that is not a NumPy array, it shuffles that sequence in-place.
+For example,
 
-By default, `Generator.permuted` returns a copy.  To operate in-place with
-`Generator.permuted`, pass the same array as the first argument *and* as
-the value of the ``out`` parameter.  For example,
+    >>> rg = np.random.default_rng()
+    >>> a = ['A', 'B', 'C', 'D', 'E']
+    >>> rg.shuffle(a)  # shuffle the list in-place
+    >>> a
+    ['B', 'D', 'A', 'E', 'C']  # random
 
-    >>> x
-    array([[ 0,  1,  2,  3,  4],
-           [ 5,  6,  7,  8,  9],
-           [10, 11, 12, 13, 14]])
-    >>> y = rg.permuted(x, axis=1, out=x)
-    >>> x
-    array([[ 1,  0,  2,  4,  3],  # random
-           [ 6,  7,  8,  9,  5],
-           [10, 14, 11, 13, 12]])
 
-Note that when ``out`` is given, the return value is ``out``:
-
-    >>> y is x
-    True
-
-Permutation methods
-~~~~~~~~~~~~~~~~~~~
+Permutation methods summary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The methods for randomly permuting a sequence are
 
 .. autosummary::
    :toctree: generated/
@@ -112,6 +126,19 @@ Permutation methods
    ~numpy.random.Generator.shuffle
    ~numpy.random.Generator.permutation
    ~numpy.random.Generator.permuted
+
+The following table summarizes the behaviors of the methods.
+
++--------------+-------------------+------------------+
+| method       | copy/in-place     | axis handling    |
++==============+===================+==================+
+| shuffle      | in-place          | as if 1d         |
++--------------+-------------------+------------------+
+| permutation  | copy              | as if 1d         |
++--------------+-------------------+------------------+
+| permuted     | either (use 'out' | axis independent |
+|              | for in-place)     |                  |
++--------------+-------------------+------------------+
 
 Distributions
 =============
