@@ -1550,13 +1550,21 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd + period/2, period) - period/2
-     # for `mask = (abs(dd) == period/2)`, the above line made `ddmod[mask] == -period/2`.
-    # correct these such that `ddmod[mask] == sign(dd[mask])*period/2`.
-    _nx.copyto(ddmod, period/2, where=(ddmod == -period/2) & (dd > 0))
+    dtype = np.result_type(dd, period)
+    if _nx.issubdtype(dtype, _nx.integer):
+        interval_low = -(period // 2)
+        interval_high = -interval_low
+    else:
+        interval_low = -period / 2
+        interval_high = -interval_low
+    ddmod = mod(dd - interval_low, period) + interval_low
+    if period % 2 == 0:
+        # for `mask = (abs(dd) == period/2)`, the above line made `ddmod[mask] == -period/2`.
+        # correct these such that `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high, where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype='d')
+    up = array(p, copy=True, dtype=dtype)
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 
