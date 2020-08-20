@@ -22,7 +22,7 @@ array_function_like_doc = (
 
         .. note::
             The ``like`` keyword is an experimental feature pending on
-            acceptance of `NEP 35 <NEP35>`_."""
+            acceptance of :ref:`NEP 35 <NEP35>`."""
 )
 
 def set_array_function_like_doc(public_api):
