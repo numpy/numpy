@@ -720,9 +720,8 @@ class TestTrimZeros(_DeprecationTestCase):
          (np.random.rand(10).astype(str), (FutureWarning, TypeError))]
     )
     def test_deprecated(self, arr, exc_type):
-        simple_filter = warnings.simplefilter
         with warnings.catch_warnings():
-            simple_filter('error', DeprecationWarning)
+            warnings.simplefilter('error', DeprecationWarning)
             try:
                 np.trim_zeros(arr)
             except DeprecationWarning as ex:
