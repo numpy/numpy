@@ -278,7 +278,7 @@ def unique(ar, return_index=False, return_inverse=False,
         ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.AxisError(axis, ar.ndim)
+        raise np.AxisError(axis, ar.ndim) from None
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
