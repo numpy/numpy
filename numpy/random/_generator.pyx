@@ -13,7 +13,6 @@ cimport numpy as np
 from numpy.core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
-from libc.stdlib cimport malloc, free
 from libc cimport string
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
