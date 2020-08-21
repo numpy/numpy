@@ -22,7 +22,7 @@
     #include "compiled_base.dispatch.h"
 #endif
 
-NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void compiled_base_pack_inner,
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void simd_compiled_base_pack_inner,
 (const char *inptr, npy_intp element_size, npy_intp n_in, npy_intp in_stride, char *outptr, npy_intp n_out, npy_intp out_stride, char order))
 
 NPY_NO_EXPORT PyObject *

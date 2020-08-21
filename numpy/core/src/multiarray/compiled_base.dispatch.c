@@ -1,6 +1,7 @@
 /**
  * @targets $maxopt baseline
- * SSE2 AVX2
+ * SSE2 AVX2 AVX512F
+ * VSX VSX2
  * NEON ASIMDDP
  */
 #include "compiled_base.h"
@@ -10,7 +11,7 @@
  * byte array. Truth values are determined as usual: 0 is false, everything
  * else is true.
  */
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(simd_compiled_base_pack_inner)
 (const char *inptr, npy_intp element_size,  npy_intp n_in, npy_intp in_stride, char *outptr, npy_intp n_out, npy_intp out_stride, char order)
 {
     /*
@@ -23,34 +24,28 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(compiled_base_pack_inner)
     npy_intp index = 0;
     int remain = n_in % 8;              /* uneven bits */
 
-#if defined(NPY_HAVE_SSE) || defined(NPY_HAVE_AVX2) || defined(NPY_HAVE_NEON)
+#ifdef NPY_SIMD
     if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        npyv_u64 zero = npyv_zero_u64();
+        npyv_u8 v_zero = npyv_zero_u8();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
         const int vstep = npyv_nlanes_u64;
         vn_out -= (vn_out & (vstep - 1));
         for (index = 0; index < vn_out; index += vstep) {
-            // Maximum paraller abillity: handle four 64bits at one time
-            npy_uint64 a[4];
+            // Maximum paraller abillity: handle eight 64bits at one time
+            npy_uint64 a[8];
             for (int i = 0; i < vstep; i++) {
                 a[i] = *(npy_uint64*)(inptr + 8 * i);
-                if (order == 'b') {
+                
+            }
+            if (order == 'b') {
+                for (int i = 0; i < vstep; i++) {
                     a[i] = npy_bswap8(a[i]);
                 }
             }
-            /* note x86 can load unaligned */
-            npyv_u64 v;
-            if (vstep == 4) {
-                v = npyv_set_u64(a[0], a[1], a[2], a[3]);
-            } else {
-                v = npyv_set_u64(a[0], a[1]);
-            }
-            /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = npyv_reinterpret_u8_u64(npyv_cmpeq_u8(npyv_reinterpret_u8_u64(v), npyv_reinterpret_u8_u64(zero)));
-            v = npyv_reinterpret_u8_u64(npyv_cmpeq_u8(npyv_reinterpret_u8_u64(v), npyv_reinterpret_u8_u64(zero)));
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            unsigned int r = npyv_movemask_u8(npyv_reinterpret_u8_u64(v));
+            npyv_u8 v = npyv_set_u64(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+            npyv_b8 bmask = npyv_cmpneq_u8(v, v_zero);
+            npy_uint64 r = npyv_movemask_b8(bmask);
             /* store result */
             for (int i = 0; i < vstep; i++) {
                 memcpy(outptr, (char*)&r + i, 1);

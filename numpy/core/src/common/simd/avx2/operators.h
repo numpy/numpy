@@ -198,6 +198,6 @@ NPY_FINLINE __m256i npyv_cmpge_u32(__m256i a, __m256i b)
 #define npyv_cmpge_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_GE_OQ))
 
 // Create mask from the most significant bit of each 8-bit element
-#define npyv_movemask_u8(a) _mm256_movemask_epi8(a)
+#define npyv_movemask_b8(a) _mm256_movemask_epi8(a)
 
 #endif // _NPY_SIMD_AVX2_OPERATORS_H
