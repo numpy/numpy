@@ -1284,15 +1284,9 @@ PyArray_DiscoverDTypeAndShape(
          * the correct default.
          */
         if (fixed_DType != NULL) {
-            if (fixed_DType->default_descr == NULL) {
-                Py_INCREF(fixed_DType->singleton);
-                *out_descr = fixed_DType->singleton;
-            }
-            else {
-                *out_descr = fixed_DType->default_descr(fixed_DType);
-                if (*out_descr == NULL) {
-                    goto fail;
-                }
+            *out_descr = fixed_DType->default_descr(fixed_DType);
+            if (*out_descr == NULL) {
+                goto fail;
             }
         }
     }

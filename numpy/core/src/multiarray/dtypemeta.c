@@ -194,6 +194,14 @@ discover_datetime_and_timedelta_from_pyobject(
 
 
 static PyArray_Descr *
+nonparametric_default_descr(PyArray_DTypeMeta *cls)
+{
+    Py_INCREF(cls->singleton);
+    return cls->singleton;
+}
+
+
+static PyArray_Descr *
 flexible_default_descr(PyArray_DTypeMeta *cls)
 {
     PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
@@ -399,6 +407,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->kind = descr->kind;
 
     /* Strings and voids have (strange) logic around scalars. */
+    dtype_class->default_descr = nonparametric_default_descr;
+
     dtype_class->is_known_scalar_type = python_builtins_are_known_scalar_types;
 
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
