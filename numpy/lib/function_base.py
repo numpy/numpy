@@ -1552,13 +1552,12 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     slice1 = tuple(slice1)
     dtype = np.result_type(dd, period)
     if _nx.issubdtype(dtype, _nx.integer):
-        interval_low = -(period // 2)
-        interval_high = -interval_low
-        boundary_ambiguous = (period % 2 == 0)
+        interval_high, rem = divmod(period, 2) 
+        boundary_ambiguous = rem == 0
     else:
-        interval_low = -period / 2
-        interval_high = -interval_low
+        interval_high = period / 2
         boundary_ambiguous = True
+    interval_low = -interval_high
     ddmod = mod(dd - interval_low, period) + interval_low
     if boundary_ambiguous:
         # for `mask = (abs(dd) == period/2)`, the above line made `ddmod[mask] == -period/2`.
