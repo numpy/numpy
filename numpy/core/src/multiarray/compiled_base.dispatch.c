@@ -36,14 +36,14 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(simd_compiled_base_pack_inner)
             npy_uint64 a[8];
             for (int i = 0; i < vstep; i++) {
                 a[i] = *(npy_uint64*)(inptr + 8 * i);
-                
             }
             if (order == 'b') {
                 for (int i = 0; i < vstep; i++) {
                     a[i] = npy_bswap8(a[i]);
                 }
             }
-            npyv_u8 v = npyv_set_u64(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+            npyv_u8 v = npyv_reinterpret_u8_u64(npyv_set_u64(a[0], a[1], a[2], a[3],
+                                                            a[4], a[5], a[6], a[7]));
             npyv_b8 bmask = npyv_cmpneq_u8(v, v_zero);
             npy_uint64 r = npyv_movemask_b8(bmask);
             /* store result */
