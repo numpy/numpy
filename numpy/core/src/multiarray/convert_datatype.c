@@ -1019,7 +1019,7 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
  * Returns a new reference to type if it is already NBO, otherwise
  * returns a copy converted to NBO.
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 ensure_dtype_nbo(PyArray_Descr *type)
 {
     if (PyArray_ISNBO(type->byteorder)) {
