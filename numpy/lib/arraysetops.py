@@ -300,10 +300,10 @@ def unique(ar, return_index=False, return_inverse=False,
             # array with shape `(len(ar),)`.  Because `dtype` in this case has
             # itemsize 0, the total size of the result is still 0 bytes.
             consolidated = np.empty(len(ar), dtype=dtype)
-    except TypeError:
+    except TypeError as e:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+        raise TypeError(msg.format(dt=ar.dtype)) from e
 
     def reshape_uniq(uniq):
         n = len(uniq)
