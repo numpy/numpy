@@ -941,7 +941,7 @@ def configuration(parent_package='',top_path=None):
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         libraries=['npymath', 'npysort'],
+                         libraries=['npysort'],
                          extra_info=extra_info)
 
     #######################################################################
