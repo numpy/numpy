@@ -47,8 +47,10 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 
 #ifdef HAVE_BLAS_ILP64
 #define CBLAS_INT npy_int64
+#define CBLAS_INT_MAX NPY_MAX_INT64
 #else
 #define CBLAS_INT int
+#define CBLAS_INT_MAX INT_MAX
 #endif
 
 #define BLASNAME(name) CBLAS_FUNC(name)
@@ -73,16 +75,23 @@ blas_stride(npy_intp stride, unsigned itemsize)
      */
     if (stride > 0 && (stride % itemsize) == 0) {
         stride /= itemsize;
-#ifndef HAVE_BLAS_ILP64
-        if (stride <= INT_MAX) {
-#else
-        if (stride <= NPY_MAX_INT64) {
-#endif
+        if (stride <= CBLAS_INT_MAX) {
             return stride;
         }
     }
     return 0;
 }
+
+/*
+ * Define a chunksize for CBLAS.
+ *
+ * The chunksize is the greatest power of two less than CBLAS_INT_MAX.
+ */
+#if NPY_MAX_INTP > CBLAS_INT_MAX
+# define NPY_CBLAS_CHUNK  (CBLAS_INT_MAX / 2 + 1)
+#else
+# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
+#endif
 
 
 #ifdef __cplusplus
