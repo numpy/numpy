@@ -292,19 +292,6 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
-/*
- * Define a chunksize for CBLAS. CBLAS counts in integers.
- */
-#if NPY_MAX_INTP > INT_MAX
-# ifndef HAVE_BLAS_ILP64
-#  define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
-# else
-#  define NPY_CBLAS_CHUNK  (NPY_MAX_INT64 / 2 + 1)
-# endif
-#else
-# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
-#endif
-
 #include "ucsnarrow.h"
 
 /*
