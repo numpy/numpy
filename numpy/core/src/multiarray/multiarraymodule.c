@@ -3796,36 +3796,6 @@ _PyArray_GetSigintBuf(void)
 
 
 static PyObject *
-test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    int kind = 0;
-    int a = 0;
-
-    if (!PyArg_ParseTuple(args, "|i:test_interrupt", &kind)) {
-        return NULL;
-    }
-    if (kind) {
-        Py_BEGIN_ALLOW_THREADS;
-        while (a >= 0) {
-            if ((a % 1000 == 0) && PyOS_InterruptOccurred()) {
-                break;
-            }
-            a += 1;
-        }
-        Py_END_ALLOW_THREADS;
-    }
-    else {
-        NPY_SIGINT_ON
-        while(a >= 0) {
-            a += 1;
-        }
-        NPY_SIGINT_OFF
-    }
-    return PyInt_FromLong(a);
-}
-
-
-static PyObject *
 array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_work,
                          int raise_exceptions)
 {
@@ -4119,9 +4089,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"_vec_string",
         (PyCFunction)_vec_string,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"test_interrupt",
-        (PyCFunction)test_interrupt,
-        METH_VARARGS, NULL},
     {"_insert", (PyCFunction)arr_insert,
         METH_VARARGS | METH_KEYWORDS,
         "Insert vals sequentially into equivalent 1-d positions "
