@@ -66,11 +66,12 @@ class _TestConfFeatures(FakeCCompilerOpt):
 
         self.test_implies(error_msg, search_in, feature_name, feature_dict)
         self.test_group(error_msg, search_in, feature_name, feature_dict)
+        self.test_extra_checks(error_msg, search_in, feature_name, feature_dict)
 
     def test_option_types(self, error_msg, option, val):
         for tp, available in (
             ((str, list), (
-                "implies", "headers", "flags", "group", "detect"
+                "implies", "headers", "flags", "group", "detect", "extra_checks"
             )),
             ((str,),  ("disable",)),
             ((int,),  ("interest",)),
@@ -96,7 +97,7 @@ class _TestConfFeatures(FakeCCompilerOpt):
 
     def test_duplicates(self, error_msg, option, val):
         if option not in (
-            "implies", "headers", "flags", "group", "detect"
+            "implies", "headers", "flags", "group", "detect", "extra_checks"
         ) : return
 
         if isinstance(val, str):
@@ -148,6 +149,24 @@ class _TestConfFeatures(FakeCCompilerOpt):
                 continue
             raise AssertionError(error_msg + \
                 "in option '%s', '%s' already exists as a feature name" % (
+                option, f
+            ))
+
+    def test_extra_checks(self, error_msg, search_in, feature_name, feature_dict):
+        if feature_dict.get("disabled") is not None:
+            return
+        extra_checks = feature_dict.get("extra_checks", "")
+        if not extra_checks:
+            return
+        if isinstance(extra_checks, str):
+            extra_checks = extra_checks.split()
+
+        for f in extra_checks:
+            impl_dict = search_in.get(f)
+            if not impl_dict or "disable" in impl_dict:
+                continue
+            raise AssertionError(error_msg + \
+                "in option '%s', extra test case '%s' already exists as a feature name" % (
                 option, f
             ))
 
