@@ -1647,7 +1647,7 @@ def _trim_zeros_new(filt, trim='fb'):
     arr_any = np.asanyarray(filt)
     arr = arr_any != 0 if arr_any.dtype != bool else arr_any
 
-    if arr is False:
+    if isinstance(arr, bool):
         # not all dtypes support elementwise comparisons with `0` (e.g. str);
         # they will return `False` instead
         raise TypeError('elementwise comparison failed; unsupported data type')

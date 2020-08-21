@@ -713,7 +713,7 @@ class TestTrimZeros(_DeprecationTestCase):
     @pytest.mark.parametrize(
         "arr,exc_type",
         [(np.random.rand(10, 10).tolist(), ValueError),
-         (np.random.rand(10).astype(str), FutureWarning)]
+         (np.random.rand(10).astype(str), (FutureWarning, TypeError))]
     )
     def test_deprecated(self, arr, exc_type):
         with warnings.catch_warnings():
