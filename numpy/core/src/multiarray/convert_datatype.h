@@ -49,4 +49,7 @@ npy_set_invalid_cast_error(
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptFlexibleDType(PyArray_Descr *data_dtype, PyArray_Descr *flex_dtype);
 
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
+
 #endif

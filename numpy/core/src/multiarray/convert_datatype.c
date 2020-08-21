@@ -1031,6 +1031,55 @@ ensure_dtype_nbo(PyArray_Descr *type)
     }
 }
 
+
+/**
+ * This function should possibly become public API eventually.  At this
+ * time it is implemented by falling back to `PyArray_AdaptFlexibleDType`.
+ * We will use `CastingImpl[from, to].adjust_descriptors(...)` to implement
+ * this logic.
+ * Before that, the API needs to be reviewed though.
+ *
+ * WARNING: This function currently does not guarantee that `descr` can
+ *          actually be cast to the given DType.
+ *
+ * @param descr The dtype instance to adapt "cast"
+ * @param given_DType The DType class for which we wish to find an instance able
+ *        to represent `descr`.
+ * @returns Instance of `given_DType`. If `given_DType` is parametric the
+ *          descr may be adapted to hold it.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
+{
+    if (NPY_DTYPE(descr) == given_DType) {
+        Py_INCREF(descr);
+        return descr;
+    }
+    if (!given_DType->parametric) {
+        /*
+         * Don't actually do anything, the default is always the result
+         * of any cast.
+         */
+        return given_DType->default_descr(given_DType);
+    }
+    if (PyObject_TypeCheck((PyObject *)descr, (PyTypeObject *)given_DType)) {
+        Py_INCREF(descr);
+        return descr;
+    }
+
+    if (!given_DType->legacy) {
+        PyErr_SetString(PyExc_NotImplementedError,
+                "Must use casting to find the correct DType for a parametric "
+                "user DType. This is not yet implemented (this error should be "
+                "unreachable).");
+        return NULL;
+    }
+
+    PyArray_Descr *flex_dtype = PyArray_DescrNew(given_DType->singleton);
+    return PyArray_AdaptFlexibleDType(descr, flex_dtype);
+}
+
+
 /*NUMPY_API
  * Produces the smallest size and lowest kind type to which both
  * input types can be cast.
