@@ -1554,11 +1554,13 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     if _nx.issubdtype(dtype, _nx.integer):
         interval_low = -(period // 2)
         interval_high = -interval_low
+        boundary_ambiguous = (period % 2 == 0)
     else:
         interval_low = -period / 2
         interval_high = -interval_low
+        boundary_ambiguous = True
     ddmod = mod(dd - interval_low, period) + interval_low
-    if period % 2 == 0:
+    if boundary_ambiguous:
         # for `mask = (abs(dd) == period/2)`, the above line made `ddmod[mask] == -period/2`.
         # correct these such that `ddmod[mask] == sign(dd[mask])*period/2`.
         _nx.copyto(ddmod, interval_high, where=(ddmod == interval_low) & (dd > 0))
