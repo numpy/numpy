@@ -710,6 +710,10 @@ class TestRaggedArray(_DeprecationTestCase):
 
 class TestTrimZeros(_DeprecationTestCase):
     # Numpy 1.20.0, 2020-07-31
+
+    # NOTE: An issue was encountered on `MacPython/numpy-wheels` where failed
+    # elementwise comparisons would not issue a `FutureWarning`; a `TypeError`
+    # will be raised in such scenario (see gh-17126)
     @pytest.mark.parametrize(
         "arr,exc_type",
         [(np.random.rand(10, 10).tolist(), ValueError),
