@@ -1628,6 +1628,3 @@ def set_string_function(f, repr=True):
             return multiarray.set_string_function(_default_array_str, 0)
     else:
         return multiarray.set_string_function(f, repr)
-
-set_string_function(_default_array_str, False)
-set_string_function(_default_array_repr, True)
