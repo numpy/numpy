@@ -292,43 +292,6 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
-/*
- * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
- * (BLAS won't handle negative or zero strides the way we want).
- */
-static NPY_INLINE int
-blas_stride(npy_intp stride, unsigned itemsize)
-{
-    /*
-     * Should probably check pointer alignment also, but this may cause
-     * problems if we require complex to be 16 byte aligned.
-     */
-    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
-        stride /= itemsize;
-#ifndef HAVE_BLAS_ILP64
-        if (stride <= INT_MAX) {
-#else
-        if (stride <= NPY_MAX_INT64) {
-#endif
-            return stride;
-        }
-    }
-    return 0;
-}
-
-/*
- * Define a chunksize for CBLAS. CBLAS counts in integers.
- */
-#if NPY_MAX_INTP > INT_MAX
-# ifndef HAVE_BLAS_ILP64
-#  define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
-# else
-#  define NPY_CBLAS_CHUNK  (NPY_MAX_INT64 / 2 + 1)
-# endif
-#else
-# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
-#endif
-
 #include "ucsnarrow.h"
 
 /*
