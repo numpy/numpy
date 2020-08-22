@@ -1,7 +1,3 @@
-/*
- * DON'T INCLUDE THIS DIRECTLY.
- */
-
 #ifndef NPY_NDARRAYOBJECT_H
 #define NPY_NDARRAYOBJECT_H
 #ifdef __cplusplus

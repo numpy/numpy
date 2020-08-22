@@ -2,7 +2,7 @@
 #define _MULTIARRAYMODULE
 
 #include <Python.h>
-#include <numpy/arrayobject.h>
+#include <numpy/ndarrayobject.h>
 
 #include "npy_pycompat.h"
 

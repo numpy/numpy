@@ -10,7 +10,7 @@ extern "C" {
 #define NO_IMPORT_ARRAY
 #endif
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_f2py_ARRAY_API
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/npy_3kcompat.h"
 
 

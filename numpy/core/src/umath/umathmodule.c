@@ -23,7 +23,7 @@
 
 #include "npy_config.h"
 
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "abstract.h"

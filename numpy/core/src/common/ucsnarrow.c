@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"

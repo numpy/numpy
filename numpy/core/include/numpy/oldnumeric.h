@@ -1,3 +1,4 @@
+/* Use this instead of ndarrayobject.h to support NPY_NO_PREFIX */
 #include "arrayobject.h"
 
 #ifndef PYPY_VERSION

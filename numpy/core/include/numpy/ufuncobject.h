@@ -232,7 +232,9 @@ typedef struct _tagPyUFuncObject {
 
 } PyUFuncObject;
 
+/* Use this instead of ndarrayobject.h to support NPY_NO_PREFIX */
 #include "arrayobject.h"
+
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
 /* the core dimension's size will be determined by the operands. */
 #define UFUNC_CORE_DIM_SIZE_INFERRED 0x0002

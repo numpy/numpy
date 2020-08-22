@@ -6,7 +6,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -18,7 +18,6 @@
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
-#include "arrayobject.h"
 #include "mem_overlap.h"
 #include "alloc.h"
 #include "npy_buffer.h"

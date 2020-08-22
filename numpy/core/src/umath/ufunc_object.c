@@ -33,7 +33,7 @@
 
 #include "npy_pycompat.h"
 
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
 #include "lowlevel_strided_loops.h"

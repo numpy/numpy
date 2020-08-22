@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <Python.h>
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 
 #include "get_attr_string.h"
 
