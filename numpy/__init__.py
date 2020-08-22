@@ -215,9 +215,8 @@ else:
     del Arrayterator
 
     # These names were removed in NumPy 1.20.  For at least one release,
-    # attempts to access these names in the numpy namespace will have an
-    # error message that refers to NEP 32 and points to the numpy_financial
-    # library.
+    # attempts to access these names in the numpy namespace will trigger
+    # a warning, and calling the function will raise an exception.
     _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
                         'ppmt', 'pv', 'rate']
     __expired_attrs__ = {
@@ -241,13 +240,19 @@ else:
         # module level getattr is only supported in 3.7 onwards
         # https://www.python.org/dev/peps/pep-0562/
         def __getattr__(attr):
-            # Raise AttributeError for expired attributes
+            # Warn for expired attributes, and return a dummy function
+            # that always raises an exception.
             try:
                 msg = __expired_attrs__[attr]
             except KeyError:
                 pass
             else:
-                raise AttributeError(msg)
+                warnings.warn(msg, RuntimeWarning)
+
+                def _expired(*args, **kwds):
+                    raise RuntimeError(msg)
+
+                return _expired
 
             # Emit warnings for deprecated attributes
             try:
