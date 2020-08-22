@@ -21,6 +21,7 @@ from numpy.distutils.misc_util import (
     )
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
+from numpy.distutils.pyas_template import process_file as process_pyas_file
 
 def subst_vars(target, source, d):
     """Substitute any occurrence of @foo@ by d['foo'] from source file into
@@ -414,7 +415,11 @@ class build_src(build_ext.build_ext):
             include_dirs = extension.include_dirs
         for source in sources:
             (base, ext) = os.path.splitext(source)
-            if ext == '.src':  # Template file
+            (base2, ext2) = os.path.splitext(base)
+            is_pyas_tpl = ext2 == '.pyas'
+            if is_pyas_tpl:
+                base = base2 + ext
+            if is_pyas_tpl or ext == '.src':  # Template file
                 if self.inplace:
                     target_dir = os.path.dirname(base)
                 else:
@@ -422,14 +427,18 @@ class build_src(build_ext.build_ext):
                 self.mkpath(target_dir)
                 target_file = os.path.join(target_dir, os.path.basename(base))
                 if (self.force or newer_group([source] + depends, target_file)):
-                    if _f_pyf_ext_match(base):
-                        log.info("from_template:> %s" % (target_file))
-                        outstr = process_f_file(source)
+                    if is_pyas_tpl:
+                        log.info("pyas_tpl:> %s" % (target_file))
+                        process_pyas_file(source, target_file)
                     else:
-                        log.info("conv_template:> %s" % (target_file))
-                        outstr = process_c_file(source)
-                    with open(target_file, 'w') as fid:
-                        fid.write(outstr)
+                        if _f_pyf_ext_match(base):
+                            log.info("from_template:> %s" % (target_file))
+                            outstr = process_f_file(source)
+                        else:
+                            log.info("conv_template:> %s" % (target_file))
+                            outstr = process_c_file(source)
+                        with open(target_file, 'w') as fid:
+                            fid.write(outstr)
                 if _header_ext_match(target_file):
                     d = os.path.dirname(target_file)
                     if d not in include_dirs:
