@@ -902,7 +902,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
-            join('src', 'umath', 'loops_cmp.dispatch.c.src'),
+            join('src', 'umath', 'loops_cmp.dispatch.pyas.c'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h.src'),
