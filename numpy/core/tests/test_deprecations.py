@@ -733,10 +733,8 @@ class TestTrimZeros(_DeprecationTestCase):
         out = np.lib.function_base._trim_zeros_old(arr)
         assert_array_equal(arr, out)
 
-    @pytest.mark.parametrize(
-        "arr", [np.random.rand(10).astype(str), np.zeros((), dtype=str)]
-    )
-    def test_type_error(self, arr):
+    def test_type_error(self):
+        arr = np.random.rand(10).astype(str)
         simple_filter = warnings.simplefilter
         with warnings.catch_warnings(), pytest.raises(TypeError):
             simple_filter('ignore', FutureWarning)
