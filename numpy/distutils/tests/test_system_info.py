@@ -277,7 +277,7 @@ class TestSystemInfoReading:
 
             # Also, the values will be taken from a section named '[DEFAULT]'
             with open(cfg, 'r') as fid:
-                dflt = fid.read().replace('mkl', 'DEFAULT')
+                dflt = fid.read().replace('[mkl]', '[DEFAULT]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(dflt)
             info = mkl_info()
