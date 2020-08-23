@@ -735,7 +735,5 @@ class TestTrimZeros(_DeprecationTestCase):
 
     def test_type_error(self):
         arr = np.random.rand(10).astype(str)
-        simple_filter = warnings.simplefilter
-        with warnings.catch_warnings(), pytest.raises(TypeError):
-            simple_filter('ignore', FutureWarning)
+        with pytest.warns(FutureWarning), pytest.raises(TypeError):
             np.lib.function_base._trim_zeros_new(arr)
