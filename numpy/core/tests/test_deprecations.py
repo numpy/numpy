@@ -737,3 +737,8 @@ class TestTrimZeros(_DeprecationTestCase):
         arr = np.random.rand(10).astype(str)
         with pytest.warns(FutureWarning), pytest.raises(TypeError):
             np.lib.function_base._trim_zeros_new(arr)
+
+    def test_warning(self):
+        arr = [0, 0, [1], 0]
+        with pytest.warns(np.VisibleDeprecationWarning):
+            np.lib.function_base._trim_zeros_new(arr)
