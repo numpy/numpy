@@ -25,7 +25,7 @@ def linspace(
     endpoint: bool = ...,
     retstep: Literal[False] = ...,
     dtype: DtypeLike = ...,
-    axis: int = ...,
+    axis: SupportsIndex = ...,
 ) -> ndarray: ...
 @overload
 def linspace(
@@ -35,7 +35,7 @@ def linspace(
     endpoint: bool = ...,
     retstep: Literal[True] = ...,
     dtype: DtypeLike = ...,
-    axis: int = ...,
+    axis: SupportsIndex = ...,
 ) -> Tuple[ndarray, inexact]: ...
 def logspace(
     start: _ArrayLikeNumber,
@@ -44,7 +44,7 @@ def logspace(
     endpoint: bool = ...,
     base: _ArrayLikeNumber = ...,
     dtype: DtypeLike = ...,
-    axis: int = ...,
+    axis: SupportsIndex = ...,
 ) -> ndarray: ...
 def geomspace(
     start: _ArrayLikeNumber,
@@ -52,5 +52,5 @@ def geomspace(
     num: SupportsIndex = ...,
     endpoint: bool = ...,
     dtype: DtypeLike = ...,
-    axis: int = ...,
+    axis: SupportsIndex = ...,
 ) -> ndarray: ...
