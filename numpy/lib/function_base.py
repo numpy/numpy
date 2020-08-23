@@ -1504,8 +1504,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     p : array_like
         Input array.
     discont : float, optional
-        Maximum discontinuity between values, default is ``period/2``.
-        Values below ``period/2`` are treated as if they were ``period/2``.
+        Maximum discontinuity between values, default is ``period/2``. 
+        Values below ``period/2`` are treated as if they were ``period/2``. To have an effect
+        different from the default, `discont` should be larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
     period: float, optional
