@@ -717,7 +717,7 @@ class TestTrimZeros(_DeprecationTestCase):
     @pytest.mark.parametrize(
         "arr,exc_type",
         [(np.random.rand(10, 10).tolist(), ValueError),
-         (np.random.rand(10).astype(str), (FutureWarning, TypeError))]
+         (np.array(["0", "a", "b", ""]), (FutureWarning, TypeError))]
     )
     def test_deprecated(self, arr, exc_type):
         with warnings.catch_warnings():
@@ -734,7 +734,7 @@ class TestTrimZeros(_DeprecationTestCase):
         assert_array_equal(arr, out)
 
     def test_type_error(self):
-        arr = np.random.rand(10).astype(str)
+        arr = np.array(["0", "a", "b", ""])
         with pytest.warns(FutureWarning), pytest.raises(TypeError):
             np.lib.function_base._trim_zeros_new(arr)
 
