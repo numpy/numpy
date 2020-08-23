@@ -7,7 +7,10 @@ from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
 if sys.version_info >= (3, 8):
     from typing import SupportsIndex, Literal
 else:
-    from typing_extensions import SupportsIndex, Literal
+    from typing_extensions import Literal, Protocol
+
+    class SupportsIndex(Protocol):
+        def __index__(self) -> int: ...
 
 # TODO: wait for support for recursive types
 _ArrayLikeNested = Sequence[Sequence[Any]]
