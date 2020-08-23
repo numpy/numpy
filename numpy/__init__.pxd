@@ -21,7 +21,6 @@ cdef extern from "Python.h":
     bint PyBool_Check(object obj)
 
 cdef extern from "numpy/arrayobject.h":
-    PyTypeObject PyFloatingArrType_Type
     ctypedef Py_intptr_t npy_intp
     ctypedef size_t npy_uintp
 
@@ -947,6 +946,10 @@ cdef extern from *:
     /* NumPy API declarations from "numpy/__init__.pxd" */
     """
 
+cdef extern from "numpy/scalartypes.h":
+    ctypedef class numpy.floating [object PyObject]:
+        pass
+
 
 cdef inline bint is_integer_object(object obj):
     """
@@ -988,8 +991,7 @@ cdef inline bint is_float_object(object obj):
     -------
     is_float : bool
     """
-    return (isinstance(obj, float) or
-            (PyObject_TypeCheck(obj, &PyFloatingArrType_Type)))
+    return isinstance(obj, (float, floating))
 
 
 cdef inline bint is_complex_object(object obj):
