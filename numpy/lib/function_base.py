@@ -1489,15 +1489,15 @@ def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
 @array_function_dispatch(_unwrap_dispatcher)
 def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     """
-    Unwrap by changing deltas between values to complement.
-    
-    For the default case where `period= 2*pi`, `discont=pi`,
-    It unwraps radian phase `p` by changing absolute jumps greater 
-    than `discont` to their 2*pi complement along the given axis. Jumps equal 
-    to `discont` are not changed.
-    
-    In general it unwrapps a signal `p` by changing absolute jumps 
-    greater than `discont` to their `period` complementary values.
+    Unwrap by taking the complement of large deltas with respect to the period.
+
+    This unwraps a signal `p` by changing elements which have an absolute
+    difference from their predecessor of more than ``max(discont, period/2)``
+    to their `period`-complementary values.
+
+    For the default case where `period` is :math:`2\pi` and is `discont` is :math:`\pi`,
+    this unwraps a radian phase `p` such that adjacent differences are never
+    greater than :math:`\pi` by adding :math:`2k\pi` for some integer :math:`k`.
     
     Parameters
     ----------
@@ -1505,6 +1505,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
         Input array.
     discont : float, optional
         Maximum discontinuity between values, default is ``period/2``.
+        Values below ``period/2`` are treated as if they were ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
     period: float, optional
