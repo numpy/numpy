@@ -44,6 +44,17 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, Protocol
 
+from numpy.core.function_base import (
+    linspace,
+    logspace,
+    geomspace,
+)
+
+# Add an object to `__all__` if their stubs are defined in an external file;
+# their stubs will not be recognized otherwise.
+# NOTE: This is redundant for objects defined within this file.
+__all__ = ["linspace", "logspace", "geomspace"]
+
 # TODO: remove when the full numpy namespace is defined
 def __getattr__(name: str) -> Any: ...
 
