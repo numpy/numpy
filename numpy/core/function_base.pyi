@@ -1,7 +1,7 @@
 import sys
 from typing import overload, Tuple, Union, Sequence, Any
 
-from numpy import ndarray, floating, _NumberLike
+from numpy import ndarray, inexact, _NumberLike
 from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
 
 if sys.version_info >= (3, 8):
@@ -36,7 +36,7 @@ def linspace(
     retstep: Literal[True] = ...,
     dtype: DtypeLike = ...,
     axis: int = ...,
-) -> Tuple[ndarray, floating]: ...
+) -> Tuple[ndarray, inexact]: ...
 def logspace(
     start: _ArrayLikeNumber,
     stop: _ArrayLikeNumber,

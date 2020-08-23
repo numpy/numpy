@@ -7,6 +7,7 @@ np.linspace(0j, 2)
 np.linspace(0, 2, num=10)
 np.linspace(0, 2, endpoint=True)
 np.linspace(0, 2, retstep=True)
+np.linspace(0j, 2j, retstep=True)
 np.linspace(0, 2, dtype=bool)
 np.linspace([0, 1], [2, 3], axis=1)
 
