@@ -741,4 +741,5 @@ class TestTrimZeros(_DeprecationTestCase):
     def test_warning(self):
         arr = [0, 0, [1], 0]
         with pytest.warns(np.VisibleDeprecationWarning):
-            np.lib.function_base._trim_zeros_new(arr)
+            out = np.lib.function_base._trim_zeros_new(arr)
+            assert_array_equal(out, arr[2:3])
