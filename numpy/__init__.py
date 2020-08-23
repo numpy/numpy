@@ -219,7 +219,7 @@ else:
     # a warning, and calling the function will raise an exception.
     _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
                         'ppmt', 'pv', 'rate']
-    __expired_attrs__ = {
+    __expired_functions__ = {
         name: (f'In accordance with NEP 32, the function {name} was removed '
                'from NumPy version 1.20.  A replacement for this function '
                'is available in the numpy_financial library: '
@@ -243,7 +243,7 @@ else:
             # Warn for expired attributes, and return a dummy function
             # that always raises an exception.
             try:
-                msg = __expired_attrs__[attr]
+                msg = __expired_functions__[attr]
             except KeyError:
                 pass
             else:
