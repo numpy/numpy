@@ -1,7 +1,7 @@
 import sys
 from typing import overload, Tuple, Union, Sequence, Any
 
-from numpy import ndarray, floating, number, _NumberLike
+from numpy import ndarray, floating, _NumberLike
 from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
 
 if sys.version_info >= (3, 8):
