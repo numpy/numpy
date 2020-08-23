@@ -14,4 +14,4 @@ cffi
 # - Mypy doesn't currently work on Python 3.9
 # - Python 3.6 doesn't work because it doesn't understand py.typed
 mypy==0.782; platform_python_implementation != "PyPy" and python_version > "3.6"
-typing_extensions
+typing_extensions>=3.7.4.3
