@@ -109,7 +109,7 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
                     errtype, name);
             goto fail;
         }
-        args = Py_BuildValue("NN", PyUString_FromString(errtype),
+        args = Py_BuildValue("NN", PyUnicode_FromString(errtype),
                 PyInt_FromLong((long) retstatus));
         if (args == NULL) {
             goto fail;

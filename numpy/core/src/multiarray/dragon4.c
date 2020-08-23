@@ -3093,7 +3093,7 @@ Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\
@@ -3130,7 +3130,7 @@ Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\

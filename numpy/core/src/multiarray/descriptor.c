@@ -472,7 +472,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         if (PyUnicode_GetLength(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
-                name = PyUString_FromFormat("f%d", i);
+                name = PyUnicode_FromFormat("f%d", i);
                 if (name == NULL) {
                     goto fail;
                 }
@@ -673,7 +673,7 @@ _convert_from_list(PyObject *obj, int align)
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         PyTuple_SET_ITEM(tup, 1, size_obj);
-        PyObject *key = PyUString_FromFormat("f%d", i);
+        PyObject *key = PyUnicode_FromFormat("f%d", i);
         if (!key) {
             Py_DECREF(tup);
             goto fail;
@@ -1887,10 +1887,10 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
         size >>= 2;
     }
     if (self->type_num == NPY_OBJECT) {
-        ret = PyUString_FromFormat("%c%c", endian, basic_);
+        ret = PyUnicode_FromFormat("%c%c", endian, basic_);
     }
     else {
-        ret = PyUString_FromFormat("%c%c%d", endian, basic_, size);
+        ret = PyUnicode_FromFormat("%c%c%d", endian, basic_, size);
     }
     if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData *meta;
@@ -1974,7 +1974,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
         if (dobj == NULL) {
             return NULL;
         }
-        PyTuple_SET_ITEM(dobj, 0, PyUString_FromString(""));
+        PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
         PyTuple_SET_ITEM(dobj, 1, arraydescr_protocol_typestr_get(self));
         res = PyList_New(1);
         if (res == NULL) {
@@ -2450,7 +2450,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         if (self->type_num == NPY_UNICODE) {
             elsize >>= 2;
         }
-        obj = PyUString_FromFormat("%c%d",self->kind, elsize);
+        obj = PyUnicode_FromFormat("%c%d",self->kind, elsize);
     }
     PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(NOO)", obj, Py_False, Py_True));
 
@@ -2492,7 +2492,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         PyTuple_SET_ITEM(state, 0, PyInt_FromLong(3));
     }
 
-    PyTuple_SET_ITEM(state, 1, PyUString_FromFormat("%c", endian));
+    PyTuple_SET_ITEM(state, 1, PyUnicode_FromFormat("%c", endian));
     PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
     if (PyDataType_HASFIELDS(self)) {
         Py_INCREF(self->names);
@@ -2894,7 +2894,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
-            errmsg = PyUString_FromString("Invalid datetime dtype (metadata, c_metadata): ");
+            errmsg = PyUnicode_FromString("Invalid datetime dtype (metadata, c_metadata): ");
             PyUString_ConcatAndDel(&errmsg, PyObject_Repr(metadata));
             PyErr_SetObject(PyExc_ValueError, errmsg);
             Py_DECREF(errmsg);
@@ -3393,7 +3393,7 @@ arraydescr_field_subset_view(PyArray_Descr *self, PyObject *ind)
         /* disallow duplicate field indices */
         if (PyDict_Contains(fields, name)) {
             PyObject *msg = NULL;
-            PyObject *fmt = PyUString_FromString(
+            PyObject *fmt = PyUnicode_FromString(
                                    "duplicate field of name {!r}");
             if (fmt != NULL) {
                 msg = PyObject_CallMethod(fmt, "format", "O", name);

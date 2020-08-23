@@ -1435,14 +1435,14 @@ raise_if_datetime64_metadata_cast_error(char *object_type,
     }
     else {
         PyObject *errmsg;
-        errmsg = PyUString_FromFormat("Cannot cast %s "
+        errmsg = PyUnicode_FromFormat("Cannot cast %s "
                     "from metadata ", object_type);
         errmsg = append_metastr_to_string(src_meta, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
+                PyUnicode_FromString(" to "));
         errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
+                PyUnicode_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
         Py_DECREF(errmsg);
@@ -1467,14 +1467,14 @@ raise_if_timedelta64_metadata_cast_error(char *object_type,
     }
     else {
         PyObject *errmsg;
-        errmsg = PyUString_FromFormat("Cannot cast %s "
+        errmsg = PyUnicode_FromFormat("Cannot cast %s "
                     "from metadata ", object_type);
         errmsg = append_metastr_to_string(src_meta, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
+                PyUnicode_FromString(" to "));
         errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
+                PyUnicode_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
         Py_DECREF(errmsg);
@@ -1601,15 +1601,15 @@ compute_datetime_metadata_greatest_common_divisor(
 
 incompatible_units: {
         PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot get "
+        errmsg = PyUnicode_FromString("Cannot get "
                     "a common metadata divisor for "
                     "NumPy datetime metadata ");
         errmsg = append_metastr_to_string(meta1, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
+                PyUnicode_FromString(" and "));
         errmsg = append_metastr_to_string(meta2, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" because they have "
+                PyUnicode_FromString(" because they have "
                     "incompatible nonlinear base time units"));
         PyErr_SetObject(PyExc_TypeError, errmsg);
         Py_DECREF(errmsg);
@@ -1617,12 +1617,12 @@ incompatible_units: {
     }
 units_overflow: {
         PyObject *errmsg;
-        errmsg = PyUString_FromString("Integer overflow "
+        errmsg = PyUnicode_FromString("Integer overflow "
                     "getting a common metadata divisor for "
                     "NumPy datetime metadata ");
         errmsg = append_metastr_to_string(meta1, 0, errmsg);
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
+                PyUnicode_FromString(" and "));
         errmsg = append_metastr_to_string(meta2, 0, errmsg);
         PyErr_SetObject(PyExc_OverflowError, errmsg);
         Py_DECREF(errmsg);
@@ -1747,7 +1747,7 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
     }
 
     PyTuple_SET_ITEM(dt_tuple, 0,
-            PyUString_FromString(_datetime_strings[meta->base]));
+            PyUnicode_FromString(_datetime_strings[meta->base]));
     PyTuple_SET_ITEM(dt_tuple, 1,
             PyInt_FromLong(meta->num));
 
@@ -1771,7 +1771,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
 
     if (!PyTuple_Check(tuple)) {
         PyObject *errmsg;
-        errmsg = PyUString_FromString("Require tuple for tuple to NumPy "
+        errmsg = PyUnicode_FromString("Require tuple for tuple to NumPy "
                                       "datetime metadata conversion, not ");
         PyUString_ConcatAndDel(&errmsg, PyObject_Repr(tuple));
         PyErr_SetObject(PyExc_TypeError, errmsg);
@@ -1973,7 +1973,7 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
     if (meta->base == NPY_FR_GENERIC) {
         /* Without brackets, give a string "generic" */
         if (skip_brackets) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString("generic"));
+            PyUString_ConcatAndDel(&ret, PyUnicode_FromString("generic"));
             return ret;
         }
         /* But with brackets, append nothing */
@@ -1994,18 +1994,18 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 
     if (num == 1) {
         if (skip_brackets) {
-            res = PyUString_FromFormat("%s", basestr);
+            res = PyUnicode_FromFormat("%s", basestr);
         }
         else {
-            res = PyUString_FromFormat("[%s]", basestr);
+            res = PyUnicode_FromFormat("[%s]", basestr);
         }
     }
     else {
         if (skip_brackets) {
-            res = PyUString_FromFormat("%d%s", num, basestr);
+            res = PyUnicode_FromFormat("%d%s", num, basestr);
         }
         else {
-            res = PyUString_FromFormat("[%d%s]", num, basestr);
+            res = PyUnicode_FromFormat("[%d%s]", num, basestr);
         }
     }
 
