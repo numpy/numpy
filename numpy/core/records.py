@@ -40,7 +40,7 @@ from collections import Counter, OrderedDict
 from . import numeric as sb
 from . import numerictypes as nt
 from numpy.compat import (
-    isfileobj, os_fspath, contextlib_nullcontext
+    os_fspath, contextlib_nullcontext
 )
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
@@ -847,13 +847,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     return _array
 
 def get_remaining_size(fd):
+    pos = fd.tell()
     try:
-        fn = fd.fileno()
-    except AttributeError:
-        return os.path.getsize(fd.name) - fd.tell()
-    st = os.fstat(fn)
-    size = st.st_size - fd.tell()
-    return size
+        fd.seek(0, 2)
+        return fd.tell() - pos
+    finally:
+        fd.seek(pos, 0)
 
 def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
@@ -911,7 +910,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, int):
         shape = (shape,)
 
-    if isfileobj(fd):
+    if hasattr(fd, 'readinto'):
+        # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface. 
+        # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
         ctx = contextlib_nullcontext(fd)
     else:
@@ -1036,7 +1037,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     array('def', dtype='<U3')
     """
 
-    if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
+    if ((isinstance(obj, (type(None), str)) or hasattr(obj, 'readinto')) and
            formats is None and dtype is None):
         raise ValueError("Must define formats (or dtype) if object is "
                          "None, string, or an open file")
@@ -1078,7 +1079,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             new = new.copy()
         return new
 
-    elif isfileobj(obj):
+    elif hasattr(obj, 'readinto'):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, ndarray):

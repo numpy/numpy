@@ -1631,21 +1631,27 @@ def trim_zeros(filt, trim='fb'):
         # Numpy 1.20.0, 2020-07-31
         warning = DeprecationWarning(
             "in the future trim_zeros will require a 1-D array as input "
-            "that is compatible with ndarray.astype(bool)"
+            "that supports elementwise comparisons with zero"
         )
         warning.__cause__ = ex
-        warnings.warn(warning, stacklevel=3)
 
-        # Fall back to the old implementation if an exception is encountered
-        # Note that the same exception may or may not be raised here as well
-        return _trim_zeros_old(filt, trim)
+    # Fall back to the old implementation if an exception is encountered
+    # Note that the same exception may or may not be raised here as well
+    ret = _trim_zeros_old(filt, trim)
+    warnings.warn(warning, stacklevel=3)
+    return ret
 
 
 def _trim_zeros_new(filt, trim='fb'):
     """Newer optimized implementation of ``trim_zeros()``."""
-    arr = np.asanyarray(filt).astype(bool, copy=False)
+    arr_any = np.asanyarray(filt)
+    arr = arr_any != 0 if arr_any.dtype != bool else arr_any
 
-    if arr.ndim != 1:
+    if arr is False:
+        # not all dtypes support elementwise comparisons with `0` (e.g. str);
+        # they will return `False` instead
+        raise TypeError('elementwise comparison failed; unsupported data type')
+    elif arr.ndim != 1:
         raise ValueError('trim_zeros requires an array of exactly one dimension')
     elif not len(arr):
         return filt
@@ -1985,8 +1991,8 @@ class vectorize:
         .. versionadded:: 1.7.0
 
     cache : bool, optional
-       If `True`, then cache the first function call that determines the number
-       of outputs if `otypes` is not provided.
+        If `True`, then cache the first function call that determines the number
+        of outputs if `otypes` is not provided.
 
         .. versionadded:: 1.7.0
 
@@ -3193,24 +3199,17 @@ def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
 
-    Usually denoted :math:`I_0`.  This function does broadcast, but will *not*
-    "up-cast" int dtype arguments unless accompanied by at least one float or
-    complex dtype argument (see Raises below).
+    Usually denoted :math:`I_0`.
 
     Parameters
     ----------
-    x : array_like, dtype float or complex
+    x : array_like of float
         Argument of the Bessel function.
 
     Returns
     -------
-    out : ndarray, shape = x.shape, dtype = x.dtype
+    out : ndarray, shape = x.shape, dtype = float
         The modified Bessel function evaluated at each of the elements of `x`.
-
-    Raises
-    ------
-    TypeError: array cannot be safely cast to required type
-        If argument consists exclusively of int dtypes.
 
     See Also
     --------
@@ -3241,12 +3240,16 @@ def i0(x):
     Examples
     --------
     >>> np.i0(0.)
-    array(1.0)  # may vary
-    >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
+    array(1.0)
+    >>> np.i0([0, 1, 2, 3])
+    array([1.        , 1.26606588, 2.2795853 , 4.88079259])
 
     """
     x = np.asanyarray(x)
+    if x.dtype.kind == 'c':
+        raise TypeError("i0 not supported for complex values")
+    if x.dtype.kind != 'f':
+        x = x.astype(float)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 

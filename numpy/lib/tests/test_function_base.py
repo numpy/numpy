@@ -1169,7 +1169,7 @@ class TestTrimZeros:
     a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
     b = a.astype(float)
     c = a.astype(complex)
-    d = np.array([None, [], 1, False, 'b', 3.0, range(4), b''], dtype=object)
+    d = a.astype(object)
 
     def values(self):
         attr_names = ('a', 'b', 'c', 'd')
@@ -1205,6 +1205,22 @@ class TestTrimZeros:
 
     def test_size_zero(self):
         arr = np.zeros(0)
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
+    @pytest.mark.parametrize(
+        'arr',
+        [np.array([0, 2**62, 0]),
+         np.array([0, 2**63, 0]),
+         np.array([0, 2**64, 0])]
+    )
+    def test_overflow(self, arr):
+        slc = np.s_[1:2]
+        res = trim_zeros(arr)
+        assert_array_equal(res, arr[slc])
+
+    def test_no_trim(self):
+        arr = np.array([None, 1, None])
         res = trim_zeros(arr)
         assert_array_equal(arr, res)
 
@@ -2111,8 +2127,9 @@ class Test_I0:
             i0(0.5),
             np.array(1.0634833707413234))
 
-        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549])
-        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049])
+        # need at least one test above 8, as the implementation is piecewise
+        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549, 10.0])
+        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049, 2815.71662847])
         assert_almost_equal(i0(A), expected)
         assert_almost_equal(i0(-A), expected)
 
@@ -2149,6 +2166,10 @@ class Test_I0:
 
         assert_array_equal(exp, res)
 
+    def test_complex(self):
+        a = np.array([0, 1 + 2j])
+        with pytest.raises(TypeError, match="i0 not supported for complex values"):
+            res = i0(a)
 
 class TestKaiser:
 

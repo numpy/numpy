@@ -4,4 +4,4 @@ The ``trim_zeros`` function will, in the future, require an array with the
 following two properties:
 
 * It must be 1D.
-* It must be convertable into a boolean array.
+* It must support elementwise comparisons with zero.
