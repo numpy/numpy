@@ -826,7 +826,7 @@ _array_nonzero(PyArrayObject *mp)
     n = PyArray_SIZE(mp);
     if (n == 1) {
         int res;
-        if (Npy_EnterRecursiveCall(" while converting array to bool")) {
+        if (Py_EnterRecursiveCall(" while converting array to bool")) {
             return -1;
         }
         res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
@@ -880,7 +880,7 @@ array_scalar_forward(PyArrayObject *v,
     /* Need to guard against recursion if our array holds references */
     if (PyDataType_REFCHK(PyArray_DESCR(v))) {
         PyObject *res;
-        if (Npy_EnterRecursiveCall(where) != 0) {
+        if (Py_EnterRecursiveCall(where) != 0) {
             Py_DECREF(scalar);
             return NULL;
         }

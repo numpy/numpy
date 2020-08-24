@@ -2231,8 +2231,8 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
     }
     else if (PySlice_Check(op)) {
         Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength;
-        if (NpySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
-                                  &istart, &iend, &istep, &islicelength) < 0) {
+        if (PySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
+                                 &istart, &iend, &istep, &islicelength) < 0) {
             return NULL;
         }
         if (istep != 1) {
@@ -2280,8 +2280,8 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     }
     else if (PySlice_Check(op)) {
         Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength = 0;
-        if (NpySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
-                                  &istart, &iend, &istep, &islicelength) < 0) {
+        if (PySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
+                                 &istart, &iend, &istep, &islicelength) < 0) {
             return -1;
         }
         if (istep != 1) {
