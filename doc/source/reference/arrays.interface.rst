@@ -199,9 +199,9 @@ array using only one attribute lookup and a well-defined C-structure.
 
 .. c:var:: __array_struct__
 
-   A :c:type: `PyCObject` whose :c:data:`voidptr` member contains a
+   A :c:type:`PyCapsule` whose ``pointer`` member contains a
    pointer to a filled :c:type:`PyArrayInterface` structure.  Memory
-   for the structure is dynamically created and the :c:type:`PyCObject`
+   for the structure is dynamically created and the :c:type:`PyCapsule`
    is also created with an appropriate destructor so the retriever of
    this attribute simply has to apply :c:func:`Py_DECREF()` to the
    object returned by this attribute when it is finished.  Also,
@@ -211,7 +211,7 @@ array using only one attribute lookup and a well-defined C-structure.
    must also not reallocate their memory if other objects are
    referencing them.
 
-The PyArrayInterface structure is defined in ``numpy/ndarrayobject.h``
+The :c:type:`PyArrayInterface` structure is defined in ``numpy/ndarrayobject.h``
 as::
 
   typedef struct {
@@ -240,13 +240,14 @@ flag is present.
 
 .. admonition:: New since June 16, 2006:
 
-   In the past most implementations used the "desc" member of the
-   :c:type:`PyCObject` itself (do not confuse this with the "descr" member of
+   In the past most implementations used the ``desc`` member of the ``PyCObject``
+   (now :c:type:`PyCapsule`) itself (do not confuse this with the "descr" member of
    the :c:type:`PyArrayInterface` structure above --- they are two separate
    things) to hold the pointer to the object exposing the interface.
-   This is now an explicit part of the interface.  Be sure to own a
-   reference to the object when the :c:type:`PyCObject` is created using
-   :c:type:`PyCObject_FromVoidPtrAndDesc`.
+   This is now an explicit part of the interface.  Be sure to take a
+   reference to the object and call :c:func:`PyCapsule_SetContext` before
+   returning the :c:type:`PyCapsule`, and configure a destructor to decref this
+   reference.
 
 
 Type description examples
@@ -315,25 +316,35 @@ largely aesthetic.  In particular:
 1. The PyArrayInterface structure had no descr member at the end
    (and therefore no flag ARR_HAS_DESCR)
 
-2. The desc member of the PyCObject returned from __array_struct__ was
+2. The ``context`` member of the :c:type:`PyCapsule` (formally the ``desc``
+   member of the ``PyCObject``) returned from ``__array_struct__`` was
    not specified.  Usually, it was the object exposing the array (so
    that a reference to it could be kept and destroyed when the
-   C-object was destroyed).  Now it must be a tuple whose first
-   element is a string with "PyArrayInterface Version #" and whose
-   second element is the object exposing the array.
+   C-object was destroyed). It is now an explicit requirement that this field
+   be used in some way to hold a reference to the owning object.
 
-3. The tuple returned from __array_interface__['data'] used to be a
+   .. note::
+
+       Until August 2020, this said:
+
+           Now it must be a tuple whose first element is a string with "PyArrayInterface Version #" and whose
+           second element is the object exposing the array.
+
+       This design was retracted in <https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html>, and is an error to have relied
+       upon in the intermediate 14 years.
+
+3. The tuple returned from ``__array_interface__['data']`` used to be a
    hex-string (now it is an integer or a long integer).
 
-4. There was no __array_interface__ attribute instead all of the keys
-   (except for version) in the __array_interface__ dictionary were
+4. There was no ``__array_interface__`` attribute instead all of the keys
+   (except for version) in the ``__array_interface__`` dictionary were
    their own attribute: Thus to obtain the Python-side information you
    had to access separately the attributes:
 
-   * __array_data__
-   * __array_shape__
-   * __array_strides__
-   * __array_typestr__
-   * __array_descr__
-   * __array_offset__
-   * __array_mask__
+   * ``__array_data__``
+   * ``__array_shape__``
+   * ``__array_strides__``
+   * ``__array_typestr__``
+   * ``__array_descr__``
+   * ``__array_offset__``
+   * ``__array_mask__``
