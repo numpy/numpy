@@ -514,22 +514,22 @@ are not yet fully clear, we anticipate, and accept the following changes:
 
 * **C-API**:
 
-    * In old versions of NumPy ``PyArray_DescrCheck`` is a macro which uses
-      ``type(dtype) is np.dtype``. When compiling against an old NumPy version,
-      the macro may have to be replaced with the corresponding
-      ``PyObject_IsInstance`` call. (If this is a problem, we could backport
-      fixing the macro)
+  * In old versions of NumPy ``PyArray_DescrCheck`` is a macro which uses
+    ``type(dtype) is np.dtype``. When compiling against an old NumPy version,
+    the macro may have to be replaced with the corresponding
+    ``PyObject_IsInstance`` call. (If this is a problem, we could backport
+    fixing the macro)
 
-   * The UFunc machinery changes will break *limited* parts of the current
-     implementation. Replacing e.g. the default ``TypeResolver`` is expected
-     to remain supported for a time, although optimized masked inner loop iteration
-     (which is not even used *within* NumPy) will no longer be supported.
+  * The UFunc machinery changes will break *limited* parts of the current
+    implementation. Replacing e.g. the default ``TypeResolver`` is expected
+    to remain supported for a time, although optimized masked inner loop iteration
+    (which is not even used *within* NumPy) will no longer be supported.
 
-   * All functions currently defined on the dtypes, such as
-     ``PyArray_Descr->f->nonzero``, will be defined and accessed differently.
-     This means that in the long run lowlevel access code will
-     have to be changed to use the new API. Such changes are expected to be
-     necessary in very few project.
+  * All functions currently defined on the dtypes, such as
+    ``PyArray_Descr->f->nonzero``, will be defined and accessed differently.
+    This means that in the long run lowlevel access code will
+    have to be changed to use the new API. Such changes are expected to be
+    necessary in very few project.
 
 * **dtype implementors (C-API)**:
 
@@ -541,16 +541,16 @@ are not yet fully clear, we anticipate, and accept the following changes:
     At least in some code paths, a similar mechanism is already used.
 
   * The ``scalarkind`` slot and registration of scalar casting will be
-     removed/ignored without replacement.
-     It currently allows partial value-based casting.
-     The ``PyArray_ScalarKind`` function will continue to work for builtin types,
-     but will not be used internally and be deprecated.
+    removed/ignored without replacement.
+    It currently allows partial value-based casting.
+    The ``PyArray_ScalarKind`` function will continue to work for builtin types,
+    but will not be used internally and be deprecated.
 
-   * Currently user dtypes are defined as instances of ``np.dtype``.
-     The creation works by the user providing a prototype instance.
-     NumPy will need to modify at least the type during registration.
-     This has no effect for either ``rational`` or ``quaternion`` and mutation
-     of the structure seems unlikely after registration.
+  * Currently user dtypes are defined as instances of ``np.dtype``.
+    The creation works by the user providing a prototype instance.
+    NumPy will need to modify at least the type during registration.
+    This has no effect for either ``rational`` or ``quaternion`` and mutation
+    of the structure seems unlikely after registration.
 
 Since there is a fairly large API surface concerning datatypes, further changes
 or the limitation certain function to currently existing datatypes is

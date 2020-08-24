@@ -931,7 +931,7 @@ _descriptor_from_pep3118_format(char const *s)
     }
     *p = '\0';
 
-    str = PyUString_FromStringAndSize(buf, strlen(buf));
+    str = PyUnicode_FromStringAndSize(buf, strlen(buf));
     if (str == NULL) {
         free(buf);
         return NULL;

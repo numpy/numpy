@@ -1991,8 +1991,8 @@ class vectorize:
         .. versionadded:: 1.7.0
 
     cache : bool, optional
-       If `True`, then cache the first function call that determines the number
-       of outputs if `otypes` is not provided.
+        If `True`, then cache the first function call that determines the number
+        of outputs if `otypes` is not provided.
 
         .. versionadded:: 1.7.0
 

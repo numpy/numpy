@@ -3318,7 +3318,6 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
                         void **out_innerloopdata)
 {
     int i;
-    PyUFunc_Loop1d *funcdata;
 
     NPY_UF_DBG_PRINT1("Getting binary op function for type number %d\n",
                                 *otype);
@@ -3336,7 +3335,10 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
             return -1;
         }
         else if (obj != NULL) {
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
             while (funcdata != NULL) {
                 int *types = funcdata->arg_types;
 
@@ -5190,9 +5192,12 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
             result = -1;
         }
         else {
-            PyUFunc_Loop1d *current;
             int cmp = 1;
-            current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
+            PyUFunc_Loop1d *current = PyCapsule_GetPointer(cobj, NULL);
+            if (current == NULL) {
+                result = -1;
+                goto done;
+            }
             while (current != NULL) {
                 cmp = cmp_arg_types(current->arg_types,
                     arg_typenums, ufunc->nargs);
@@ -5226,6 +5231,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         }
     }
 
+done:
     PyArray_free(arg_typenums);
 
     Py_DECREF(key);
@@ -5294,7 +5300,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     }
     /* If it's not there, then make one and return. */
     else if (cobj == NULL) {
-        cobj = NpyCapsule_FromVoidPtr((void *)funcdata, _loop1d_list_free);
+        cobj = PyCapsule_New((void *)funcdata, NULL, _loop1d_list_free);
         if (cobj == NULL) {
             goto fail;
         }
@@ -5312,7 +5318,10 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
          * is exactly like this one, then just replace.
          * Otherwise insert.
          */
-        current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
+        current = PyCapsule_GetPointer(cobj, NULL);
+        if (current == NULL) {
+            goto fail;
+        }
         while (current != NULL) {
             cmp = cmp_arg_types(current->arg_types, newtypes, ufunc->nargs);
             if (cmp >= 0) {
@@ -5383,7 +5392,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_repr(PyUFuncObject *ufunc)
 {
-    return PyUString_FromFormat("<ufunc '%s'>", ufunc->name);
+    return PyUnicode_FromFormat("<ufunc '%s'>", ufunc->name);
 }
 
 static int
@@ -5995,7 +6004,7 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     }
     if (ufunc->doc != NULL) {
         PyUString_ConcatAndDel(&doc,
-            PyUString_FromFormat("\n\n%s", ufunc->doc));
+            PyUnicode_FromFormat("\n\n%s", ufunc->doc));
     }
     return doc;
 }
@@ -6051,7 +6060,7 @@ ufunc_get_types(PyUFuncObject *ufunc)
             t[ni + 2 + j] = _typecharfromnum(ufunc->types[n]);
             n++;
         }
-        str = PyUString_FromStringAndSize(t, no + ni + 2);
+        str = PyUnicode_FromStringAndSize(t, no + ni + 2);
         PyList_SET_ITEM(list, k, str);
     }
     PyArray_free(t);
@@ -6061,7 +6070,7 @@ ufunc_get_types(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_name(PyUFuncObject *ufunc)
 {
-    return PyUString_FromString(ufunc->name);
+    return PyUnicode_FromString(ufunc->name);
 }
 
 static PyObject *
@@ -6077,7 +6086,7 @@ ufunc_get_signature(PyUFuncObject *ufunc)
     if (!ufunc->core_enabled) {
         Py_RETURN_NONE;
     }
-    return PyUString_FromString(ufunc->core_signature);
+    return PyUnicode_FromString(ufunc->core_signature);
 }
 
 #undef _typecharfromnum

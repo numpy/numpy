@@ -1755,7 +1755,7 @@ broadcast_error: {
         char *tmpstr;
 
         if (op_axes == NULL) {
-            errmsg = PyUString_FromString("operands could not be broadcast "
+            errmsg = PyUnicode_FromString("operands could not be broadcast "
                                           "together with shapes ");
             if (errmsg == NULL) {
                 return 0;
@@ -1776,7 +1776,7 @@ broadcast_error: {
                 }
             }
             if (itershape != NULL) {
-                tmp = PyUString_FromString("and requested shape ");
+                tmp = PyUnicode_FromString("and requested shape ");
                 if (tmp == NULL) {
                     Py_DECREF(errmsg);
                     return 0;
@@ -1801,7 +1801,7 @@ broadcast_error: {
             Py_DECREF(errmsg);
         }
         else {
-            errmsg = PyUString_FromString("operands could not be broadcast "
+            errmsg = PyUnicode_FromString("operands could not be broadcast "
                                           "together with remapped shapes "
                                           "[original->remapped]: ");
             for (iop = 0; iop < nop; ++iop) {
@@ -1843,7 +1843,7 @@ broadcast_error: {
                 }
             }
             if (itershape != NULL) {
-                tmp = PyUString_FromString("and requested shape ");
+                tmp = PyUnicode_FromString("and requested shape ");
                 if (tmp == NULL) {
                     Py_DECREF(errmsg);
                     return 0;
@@ -1877,11 +1877,11 @@ operand_different_than_broadcast: {
 
         /* Start of error message */
         if (op_flags[iop] & NPY_ITER_READONLY) {
-            errmsg = PyUString_FromString("non-broadcastable operand "
+            errmsg = PyUnicode_FromString("non-broadcastable operand "
                                           "with shape ");
         }
         else {
-            errmsg = PyUString_FromString("non-broadcastable output "
+            errmsg = PyUnicode_FromString("non-broadcastable output "
                                           "operand with shape ");
         }
         if (errmsg == NULL) {
@@ -1913,7 +1913,7 @@ operand_different_than_broadcast: {
                 }
             }
 
-            tmp = PyUString_FromString(" [remapped to ");
+            tmp = PyUnicode_FromString(" [remapped to ");
             if (tmp == NULL) {
                 return 0;
             }
@@ -1932,7 +1932,7 @@ operand_different_than_broadcast: {
             }
         }
 
-        tmp = PyUString_FromString(" doesn't match the broadcast shape ");
+        tmp = PyUnicode_FromString(" doesn't match the broadcast shape ");
         if (tmp == NULL) {
             return 0;
         }

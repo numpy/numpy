@@ -133,7 +133,7 @@ NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char const *c_str)
 {
     PyArray_Descr *descr = NULL;
-    PyObject *stringobj = PyString_FromString(c_str);
+    PyObject *stringobj = PyBytes_FromString(c_str);
 
     if (stringobj == NULL) {
         return NULL;
@@ -264,10 +264,10 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     for (i = 0; i < n && vals[i] < 0; i++);
 
     if (i == n) {
-        return PyUString_FromFormat("()%s", ending);
+        return PyUnicode_FromFormat("()%s", ending);
     }
     else {
-        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        ret = PyUnicode_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
         if (ret == NULL) {
             return NULL;
         }
@@ -275,10 +275,10 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 
     for (; i < n; ++i) {
         if (vals[i] < 0) {
-            tmp = PyUString_FromString(",newaxis");
+            tmp = PyUnicode_FromString(",newaxis");
         }
         else {
-            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+            tmp = PyUnicode_FromFormat(",%" NPY_INTP_FMT, vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
@@ -292,10 +292,10 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     }
 
     if (i == 1) {
-        tmp = PyUString_FromFormat(",)%s", ending);
+        tmp = PyUnicode_FromFormat(",)%s", ending);
     }
     else {
-        tmp = PyUString_FromFormat(")%s", ending);
+        tmp = PyUnicode_FromFormat(")%s", ending);
     }
     PyUString_ConcatAndDel(&ret, tmp);
     return ret;
@@ -310,7 +310,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
              *shape1 = NULL, *shape2 = NULL,
              *shape1_i = NULL, *shape2_j = NULL;
 
-    format = PyUString_FromString("shapes %s and %s not aligned:"
+    format = PyUnicode_FromString("shapes %s and %s not aligned:"
                                   " %d (dim %d) != %d (dim %d)");
 
     shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
@@ -333,7 +333,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
         goto end;
     }
 
-    errmsg = PyUString_Format(format, fmt_args);
+    errmsg = PyUnicode_Format(format, fmt_args);
     if (errmsg != NULL) {
         PyErr_SetObject(PyExc_ValueError, errmsg);
     }

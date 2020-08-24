@@ -671,7 +671,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     d = PyModule_GetDict(m);
 
-    version = PyString_FromString("0.1");
+    version = PyUnicode_FromString("0.1");
     PyDict_SetItemString(d, "__version__", version);
     Py_DECREF(version);
 

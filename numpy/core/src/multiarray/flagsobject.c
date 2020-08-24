@@ -711,7 +711,7 @@ arrayflags_print(PyArrayFlagsObject *self)
     if (fl & NPY_ARRAY_WARN_ON_WRITE) {
         _warn_on_write = "  (with WARN_ON_WRITE=True)";
     }
-    return PyUString_FromFormat(
+    return PyUnicode_FromFormat(
                         "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s%s\n"
                         "  %s : %s\n  %s : %s\n"

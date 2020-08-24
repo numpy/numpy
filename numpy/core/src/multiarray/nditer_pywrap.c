@@ -1142,7 +1142,7 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
                     "results.", 1) < 0) {
                 PyObject *s;
 
-                s = PyUString_FromString("npyiter_dealloc");
+                s = PyUnicode_FromString("npyiter_dealloc");
                 if (s) {
                     PyErr_WriteUnraisable(s);
                     Py_DECREF(s);
