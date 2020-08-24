@@ -5383,7 +5383,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_repr(PyUFuncObject *ufunc)
 {
-    return PyUString_FromFormat("<ufunc '%s'>", ufunc->name);
+    return PyUnicode_FromFormat("<ufunc '%s'>", ufunc->name);
 }
 
 static int
@@ -5995,7 +5995,7 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     }
     if (ufunc->doc != NULL) {
         PyUString_ConcatAndDel(&doc,
-            PyUString_FromFormat("\n\n%s", ufunc->doc));
+            PyUnicode_FromFormat("\n\n%s", ufunc->doc));
     }
     return doc;
 }
@@ -6051,7 +6051,7 @@ ufunc_get_types(PyUFuncObject *ufunc)
             t[ni + 2 + j] = _typecharfromnum(ufunc->types[n]);
             n++;
         }
-        str = PyUString_FromStringAndSize(t, no + ni + 2);
+        str = PyUnicode_FromStringAndSize(t, no + ni + 2);
         PyList_SET_ITEM(list, k, str);
     }
     PyArray_free(t);
@@ -6061,7 +6061,7 @@ ufunc_get_types(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_name(PyUFuncObject *ufunc)
 {
-    return PyUString_FromString(ufunc->name);
+    return PyUnicode_FromString(ufunc->name);
 }
 
 static PyObject *
@@ -6077,7 +6077,7 @@ ufunc_get_signature(PyUFuncObject *ufunc)
     if (!ufunc->core_enabled) {
         Py_RETURN_NONE;
     }
-    return PyUString_FromString(ufunc->core_signature);
+    return PyUnicode_FromString(ufunc->core_signature);
 }
 
 #undef _typecharfromnum

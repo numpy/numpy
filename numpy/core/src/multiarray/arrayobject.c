@@ -416,7 +416,7 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
         PyObject * s;
 
-        s = PyUString_FromString("array_dealloc");
+        s = PyUnicode_FromString("array_dealloc");
         if (s) {
             PyErr_WriteUnraisable(s);
             Py_DECREF(s);

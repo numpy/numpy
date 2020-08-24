@@ -4335,18 +4335,18 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 static int
 intern_strings(void)
 {
-    npy_ma_str_array = PyUString_InternFromString("__array__");
-    npy_ma_str_array_prepare = PyUString_InternFromString("__array_prepare__");
-    npy_ma_str_array_wrap = PyUString_InternFromString("__array_wrap__");
-    npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
-    npy_ma_str_ufunc = PyUString_InternFromString("__array_ufunc__");
-    npy_ma_str_implementation = PyUString_InternFromString("_implementation");
-    npy_ma_str_order = PyUString_InternFromString("order");
-    npy_ma_str_copy = PyUString_InternFromString("copy");
-    npy_ma_str_dtype = PyUString_InternFromString("dtype");
-    npy_ma_str_ndmin = PyUString_InternFromString("ndmin");
-    npy_ma_str_axis1 = PyUString_InternFromString("axis1");
-    npy_ma_str_axis2 = PyUString_InternFromString("axis2");
+    npy_ma_str_array = PyUnicode_InternFromString("__array__");
+    npy_ma_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
+    npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
+    npy_ma_str_array_finalize = PyUnicode_InternFromString("__array_finalize__");
+    npy_ma_str_ufunc = PyUnicode_InternFromString("__array_ufunc__");
+    npy_ma_str_implementation = PyUnicode_InternFromString("_implementation");
+    npy_ma_str_order = PyUnicode_InternFromString("order");
+    npy_ma_str_copy = PyUnicode_InternFromString("copy");
+    npy_ma_str_dtype = PyUnicode_InternFromString("dtype");
+    npy_ma_str_ndmin = PyUnicode_InternFromString("ndmin");
+    npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
+    npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
@@ -4506,7 +4506,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyDict_SetItemString(d, "tracemalloc_domain", s);
     Py_DECREF(s);
 
-    s = PyUString_FromString("3.1");
+    s = PyUnicode_FromString("3.1");
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 

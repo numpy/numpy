@@ -36,15 +36,15 @@ npy_casting_to_py_object(NPY_CASTING casting)
 {
     switch (casting) {
         case NPY_NO_CASTING:
-            return PyUString_FromString("no");
+            return PyUnicode_FromString("no");
         case NPY_EQUIV_CASTING:
-            return PyUString_FromString("equiv");
+            return PyUnicode_FromString("equiv");
         case NPY_SAFE_CASTING:
-            return PyUString_FromString("safe");
+            return PyUnicode_FromString("safe");
         case NPY_SAME_KIND_CASTING:
-            return PyUString_FromString("same_kind");
+            return PyUnicode_FromString("same_kind");
         case NPY_UNSAFE_CASTING:
-            return PyUString_FromString("unsafe");
+            return PyUnicode_FromString("unsafe");
         default:
             return PyInt_FromLong(casting);
     }
