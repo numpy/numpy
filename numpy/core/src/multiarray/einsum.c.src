@@ -27,6 +27,16 @@
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
 
+static sum_of_products_fn
+get_sum_of_products_function(int nop, int type_num, npy_intp itemsize, npy_intp const *fixed_strides)
+{
+    #ifndef NPY_DISABLE_OPTIMIZATION
+        #include "einsum.dispatch.h"
+    #endif
+    NPY_CPU_DISPATCH_CALL(return einsum_get_sum_of_products_function,
+        (nop, type_num, itemsize, fixed_strides))
+}
+
 /*
  * Parses the subscripts for one operand into an output of 'ndim'
  * labels. The resulting 'op_labels' array will have:

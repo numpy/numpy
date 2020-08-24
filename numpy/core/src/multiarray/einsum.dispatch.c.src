@@ -13,8 +13,8 @@
  * NEON NEON_VFPV4
  * VSX VSX2
  */
-#include "einsum_p.h"
-
+#include "einsum_sumprod.h"
+#include "einsum_debug.h"
 /**begin repeat
  * #name = byte, short, int, long, longlong,
  *         ubyte, ushort, uint, ulong, ulonglong,
