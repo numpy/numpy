@@ -868,11 +868,14 @@ PyArray_NewFromDescr_int(
 
         func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
         if (func && func != Py_None) {
-            if (NpyCapsule_Check(func)) {
+            if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
-                cfunc = NpyCapsule_AsVoidPtr(func);
+                cfunc = PyCapsule_GetPointer(func, NULL);
                 Py_DECREF(func);
+                if (cfunc == NULL) {
+                    goto fail;
+                }
                 if (cfunc((PyArrayObject *)fa, obj) < 0) {
                     goto fail;
                 }
@@ -1747,7 +1750,7 @@ PyArray_FromStructInterface(PyObject *input)
             return Py_NotImplemented;
         }
     }
-    if (!NpyCapsule_Check(attr)) {
+    if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
             /*
              * If the input is a class `attr` should be a property-like object.
@@ -1759,7 +1762,10 @@ PyArray_FromStructInterface(PyObject *input)
         }
         goto fail;
     }
-    inter = NpyCapsule_AsVoidPtr(attr);
+    inter = PyCapsule_GetPointer(attr, NULL);
+    if (inter == NULL) {
+        goto fail;
+    }
     if (inter->two != 2) {
         goto fail;
     }
