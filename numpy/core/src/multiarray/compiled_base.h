@@ -14,16 +14,8 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
-#include "simd/simd.h"
 #include "ctors.h"
 #include "common.h"
-
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "compiled_base.dispatch.h"
-#endif
-
-NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void simd_compiled_base_pack_inner,
-(const char *inptr, npy_intp element_size, npy_intp n_in, npy_intp in_stride, char *outptr, npy_intp n_out, npy_intp out_stride, char order))
 
 NPY_NO_EXPORT PyObject *
 arr_insert(PyObject *, PyObject *, PyObject *);

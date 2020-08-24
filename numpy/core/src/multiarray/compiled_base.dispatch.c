@@ -4,7 +4,7 @@
  * VSX VSX2
  * NEON ASIMDDP
  */
-#include "compiled_base.h"
+#include "compiled_base_pack_inner.h"
 
 /*
  * This function packs boolean values in the input array into the bits of a
@@ -24,7 +24,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(simd_compiled_base_pack_inner)
     npy_intp index = 0;
     int remain = n_in % 8;              /* uneven bits */
 
-#ifdef NPY_SIMD
+#if NPY_SIMD
     if (in_stride == 1 && element_size == 1 && n_out > 2) {
         npyv_u8 v_zero = npyv_zero_u8();
         /* don't handle non-full 8-byte remainder */
