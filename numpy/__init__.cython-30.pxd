@@ -329,8 +329,8 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef long double  npy_float128
 
     ctypedef struct npy_cfloat:
-        double real
-        double imag
+        float real
+        float imag
 
     ctypedef struct npy_cdouble:
         double real
