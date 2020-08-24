@@ -1676,7 +1676,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
                      Py_BuildValue("ONc",
                                    (PyObject *)Py_TYPE(self),
                                    Py_BuildValue("(N)",
-                                                 PyInt_FromLong(0)),
+                                                 PyLong_FromLong(0)),
                                    /* dummy data-type */
                                    'b'));
 
@@ -1701,7 +1701,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+    PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
     PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self,
                                                       "shape"));
     descr = PyArray_DESCR(self);

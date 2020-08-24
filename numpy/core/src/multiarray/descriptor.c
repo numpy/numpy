@@ -386,7 +386,7 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         for (int i=0; i < shape.len; i++) {
             PyTuple_SET_ITEM(newdescr->subarray->shape, i,
-                             PyInt_FromLong((long)shape.ptr[i]));
+                             PyLong_FromLong((long)shape.ptr[i]));
 
             if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
                 Py_DECREF(newdescr);
@@ -537,7 +537,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
-        PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
+        PyTuple_SET_ITEM(tup, 1, PyLong_FromLong((long) totalsize));
 
         /*
          * Title can be "meta-data".  Only insert it
@@ -660,7 +660,7 @@ _convert_from_list(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        PyObject *size_obj = PyInt_FromLong((long) totalsize);
+        PyObject *size_obj = PyLong_FromLong((long) totalsize);
         if (!size_obj) {
             Py_DECREF(conv);
             goto fail;
@@ -1112,7 +1112,7 @@ _convert_from_dict(PyObject *obj, int align)
         /* Build item to insert (descr, offset, [title])*/
         int len = 2;
         PyObject *title = NULL;
-        PyObject *ind = PyInt_FromLong(i);
+        PyObject *ind = PyLong_FromLong(i);
         if (titles) {
             title=PyObject_GetItem(titles, ind);
             if (title && title != Py_None) {
@@ -1166,7 +1166,7 @@ _convert_from_dict(PyObject *obj, int align)
                 goto fail;
             }
 
-            PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(offset));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(offset));
             /* Flag whether the fields are specified out of order */
             if (offset < totalsize) {
                 has_out_of_order_fields = 1;
@@ -1190,7 +1190,7 @@ _convert_from_dict(PyObject *obj, int align)
             if (align && _align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-            PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(totalsize));
             totalsize += newdescr->elsize;
         }
         if (len == 3) {
@@ -1950,7 +1950,7 @@ arraydescr_ndim_get(PyArray_Descr *self)
     Py_ssize_t ndim;
 
     if (!PyDataType_HASSUBARRAY(self)) {
-        return PyInt_FromLong(0);
+        return PyLong_FromLong(0);
     }
 
     /*
@@ -1958,7 +1958,7 @@ arraydescr_ndim_get(PyArray_Descr *self)
      * for tuple argument
      */
     ndim = PyTuple_Size(self->subarray->shape);
-    return PyInt_FromLong(ndim);
+    return PyLong_FromLong(ndim);
 }
 
 
@@ -2010,7 +2010,7 @@ arraydescr_isbuiltin_get(PyArray_Descr *self)
     if (PyTypeNum_ISUSERDEF(self->type_num)) {
         val = 2;
     }
-    return PyInt_FromLong(val);
+    return PyLong_FromLong(val);
 }
 
 static int
@@ -2391,11 +2391,11 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
     PyTuple_SET_ITEM(dt_tuple, 0,
             PyBytes_FromString(_datetime_strings[meta->base]));
     PyTuple_SET_ITEM(dt_tuple, 1,
-            PyInt_FromLong(meta->num));
+            PyLong_FromLong(meta->num));
     PyTuple_SET_ITEM(dt_tuple, 2,
-            PyInt_FromLong(1));
+            PyLong_FromLong(1));
     PyTuple_SET_ITEM(dt_tuple, 3,
-            PyInt_FromLong(1));
+            PyLong_FromLong(1));
 
     PyTuple_SET_ITEM(ret, 1, dt_tuple);
 
@@ -2468,7 +2468,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     if (PyDataType_ISDATETIME(self)) {
         PyObject *newobj;
         state = PyTuple_New(9);
-        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+        PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
         /*
          * newobj is a tuple of the Python metadata dictionary
          * and tuple of date_time info (str, num)
@@ -2483,13 +2483,13 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     else if (self->metadata) {
         state = PyTuple_New(9);
-        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+        PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
         Py_INCREF(self->metadata);
         PyTuple_SET_ITEM(state, 8, self->metadata);
     }
     else { /* Use version 3 pickle format */
         state = PyTuple_New(8);
-        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(3));
+        PyTuple_SET_ITEM(state, 0, PyLong_FromLong(3));
     }
 
     PyTuple_SET_ITEM(state, 1, PyUString_FromFormat("%c", endian));
@@ -2516,9 +2516,9 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         elsize = -1;
         alignment = -1;
     }
-    PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
-    PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->flags));
+    PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
+    PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
+    PyTuple_SET_ITEM(state, 7, PyLong_FromLong(self->flags));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2628,7 +2628,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     default:
         /* raise an error */
         if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyInt_AsLong(PyTuple_GET_ITEM(args, 0));
+            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
         }
         else {
             version = -1;
@@ -2651,7 +2651,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     if (version == 1 || version == 0) {
         if (fields != Py_None) {
             PyObject *key, *list;
-            key = PyInt_FromLong(-1);
+            key = PyLong_FromLong(-1);
             list = PyDict_GetItemWithError(fields, key);
             if (!list) {
                 if (!PyErr_Occurred()) {

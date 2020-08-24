@@ -28,7 +28,7 @@
 static PyObject *
 array_ndim_get(PyArrayObject *self)
 {
-    return PyInt_FromLong(PyArray_NDIM(self));
+    return PyLong_FromLong(PyArray_NDIM(self));
 }
 
 static PyObject *
@@ -318,7 +318,7 @@ array_interface_get(PyArrayObject *self)
         return NULL;
     }
 
-    obj = PyInt_FromLong(3);
+    obj = PyLong_FromLong(3);
     ret = PyDict_SetItemString(dict, "version", obj);
     Py_DECREF(obj);
     if (ret < 0) {
@@ -413,7 +413,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
 static PyObject *
 array_itemsize_get(PyArrayObject *self)
 {
-    return PyInt_FromLong((long) PyArray_DESCR(self)->elsize);
+    return PyLong_FromLong((long) PyArray_DESCR(self)->elsize);
 }
 
 static PyObject *
@@ -421,13 +421,13 @@ array_size_get(PyArrayObject *self)
 {
     npy_intp size=PyArray_SIZE(self);
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) size);
+    return PyLong_FromLong((long) size);
 #else
     if (size > NPY_MAX_LONG || size < NPY_MIN_LONG) {
         return PyLong_FromLongLong(size);
     }
     else {
-        return PyInt_FromLong((long) size);
+        return PyLong_FromLong((long) size);
     }
 #endif
 }
@@ -437,13 +437,13 @@ array_nbytes_get(PyArrayObject *self)
 {
     npy_intp nbytes = PyArray_NBYTES(self);
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) nbytes);
+    return PyLong_FromLong((long) nbytes);
 #else
     if (nbytes > NPY_MAX_LONG || nbytes < NPY_MIN_LONG) {
         return PyLong_FromLongLong(nbytes);
     }
     else {
-        return PyInt_FromLong((long) nbytes);
+        return PyLong_FromLong((long) nbytes);
     }
 #endif
 }

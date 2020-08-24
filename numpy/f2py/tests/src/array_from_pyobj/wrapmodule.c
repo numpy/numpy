@@ -55,7 +55,7 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
     if (tmp == NULL) {
         goto fail;
     }
-    dims[i] = (npy_intp)PyInt_AsLong(tmp);
+    dims[i] = (npy_intp)PyLong_AsLong(tmp);
     Py_DECREF(tmp);
     if (dims[i] == -1 && PyErr_Occurred()) {
         goto fail;
@@ -107,8 +107,8 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
   dimensions = PyTuple_New(PyArray_NDIM(arr));
   strides = PyTuple_New(PyArray_NDIM(arr));
   for (i=0;i<PyArray_NDIM(arr);++i) {
-    PyTuple_SetItem(dimensions,i,PyInt_FromLong(PyArray_DIM(arr,i)));
-    PyTuple_SetItem(strides,i,PyInt_FromLong(PyArray_STRIDE(arr,i)));
+    PyTuple_SetItem(dimensions,i,PyLong_FromLong(PyArray_DIM(arr,i)));
+    PyTuple_SetItem(strides,i,PyLong_FromLong(PyArray_STRIDE(arr,i)));
   }
   return Py_BuildValue("siNNO(cciii)ii",s,PyArray_NDIM(arr),
                        dimensions,strides,
@@ -157,7 +157,7 @@ PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
   Py_DECREF(s);
 
 #define ADDCONST(NAME, CONST)              \
-    s = PyInt_FromLong(CONST);             \
+    s = PyLong_FromLong(CONST);             \
     PyDict_SetItemString(d, NAME, s);      \
     Py_DECREF(s)
 

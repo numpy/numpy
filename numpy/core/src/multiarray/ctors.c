@@ -300,12 +300,12 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     }
     if (tuple) {
         for (i = 0; i < numnew; i++) {
-            mydim[i] = (npy_intp) PyInt_AsLong(
+            mydim[i] = (npy_intp) PyLong_AsLong(
                     PyTuple_GET_ITEM(old->subarray->shape, i));
         }
     }
     else {
-        mydim[0] = (npy_intp) PyInt_AsLong(old->subarray->shape);
+        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
     }
 
     if (newstrides) {
@@ -1836,8 +1836,6 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
     return ret;
 }
 
-#define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
-
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *origin)
@@ -1999,7 +1997,7 @@ PyArray_FromInterface(PyObject *origin)
                 goto fail;
             }
         }
-        else if (PyIntOrLong_Check(dataptr)) {
+        else if (PyLong_Check(dataptr)) {
             data = PyLong_AsVoidPtr(dataptr);
         }
         else {
@@ -2750,7 +2748,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         return -1;
     }
 
-    zero = PyInt_FromLong(0);
+    zero = PyLong_FromLong(0);
     if (!zero) {
         Py_DECREF(*next);
         *next = NULL;
@@ -2895,14 +2893,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_INCREF(dtype);
     }
     if (!step || step == Py_None) {
-        step = PyInt_FromLong(1);
+        step = PyLong_FromLong(1);
     }
     else {
         Py_XINCREF(step);
     }
     if (!stop || stop == Py_None) {
         stop = start;
-        start = PyInt_FromLong(0);
+        start = PyLong_FromLong(0);
     }
     else {
         Py_INCREF(start);

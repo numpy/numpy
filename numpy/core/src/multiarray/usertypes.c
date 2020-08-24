@@ -268,7 +268,7 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
             return -1;
         }
     }
-    key = PyInt_FromLong(totype);
+    key = PyLong_FromLong(totype);
     if (PyErr_Occurred()) {
         return -1;
     }

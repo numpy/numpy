@@ -169,7 +169,7 @@ NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
 {
     if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyObject *zero = PyInt_FromLong(0);
+        PyObject *zero = PyLong_FromLong(0);
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
         if (PyErr_Occurred()) {
@@ -373,10 +373,7 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
     off  = PyTuple_GET_ITEM(value, 1);
 
-    if (PyInt_Check(off)) {
-        *offset = PyInt_AsSsize_t(off);
-    }
-    else if (PyLong_Check(off)) {
+    if (PyLong_Check(off)) {
         *offset = PyLong_AsSsize_t(off);
     }
     else {

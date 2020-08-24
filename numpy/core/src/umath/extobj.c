@@ -110,7 +110,7 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
             goto fail;
         }
         args = Py_BuildValue("NN", PyUString_FromString(errtype),
-                PyInt_FromLong((long) retstatus));
+                PyLong_FromLong((long) retstatus));
         if (args == NULL) {
             goto fail;
         }
@@ -212,7 +212,7 @@ _extract_pyvals(PyObject *ref, const char *name, int *bufsize,
     }
 
     if (bufsize != NULL) {
-        *bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
+        *bufsize = PyLong_AsLong(PyList_GET_ITEM(ref, 0));
         if (error_converting(*bufsize)) {
             return -1;
         }
@@ -229,7 +229,7 @@ _extract_pyvals(PyObject *ref, const char *name, int *bufsize,
     }
 
     if (errmask != NULL) {
-        *errmask = PyInt_AsLong(PyList_GET_ITEM(ref, 1));
+        *errmask = PyLong_AsLong(PyList_GET_ITEM(ref, 1));
         if (*errmask < 0) {
             if (PyErr_Occurred()) {
                 return -1;

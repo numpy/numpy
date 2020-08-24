@@ -403,7 +403,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         }
     }
     /* Python integer */
-    else if (PyLong_Check(obj) || PyInt_Check(obj)) {
+    else if (PyLong_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
         if (error_converting(ll_v)) {

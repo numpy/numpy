@@ -307,7 +307,7 @@ arrayflags_farray_get(PyArrayFlagsObject *self)
 static PyObject *
 arrayflags_num_get(PyArrayFlagsObject *self)
 {
-    return PyInt_FromLong(self->flags);
+    return PyLong_FromLong(self->flags);
 }
 
 /* relies on setflags order being write, align, uic */

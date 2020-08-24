@@ -46,7 +46,7 @@ npy_casting_to_py_object(NPY_CASTING casting)
         case NPY_UNSAFE_CASTING:
             return PyUString_FromString("unsafe");
         default:
-            return PyInt_FromLong(casting);
+            return PyLong_FromLong(casting);
     }
 }
 
@@ -1356,7 +1356,7 @@ find_userloop(PyUFuncObject *ufunc,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1764,7 +1764,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1831,7 +1831,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }

@@ -133,7 +133,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
         /* Fill new memory with zeros */
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
-            PyObject *zero = PyInt_FromLong(0);
+            PyObject *zero = PyLong_FromLong(0);
             char *optr;
             optr = PyArray_BYTES(self) + oldnbytes;
             npy_intp n_new = newsize - oldsize;
