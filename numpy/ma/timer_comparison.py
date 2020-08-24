@@ -100,9 +100,9 @@ class ModuleTester:
                                     header=header,
                                     names=('x', 'y'))
                 assert cond, msg
-        except ValueError:
+        except ValueError as e:
             msg = build_err_msg([x, y], err_msg, header=header, names=('x', 'y'))
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
     def assert_array_equal(self, x, y, err_msg=''):
         """
