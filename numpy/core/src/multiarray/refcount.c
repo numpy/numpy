@@ -292,7 +292,7 @@ static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 {
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
-        if ((obj == Py_None) || (PyInt_Check(obj) && PyInt_AsLong(obj)==0)) {
+        if ((obj == Py_None) || (PyInt_Check(obj) && PyLong_AsLong(obj)==0)) {
             return;
         }
         else {

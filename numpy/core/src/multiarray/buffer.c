@@ -267,7 +267,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
             child = (PyArray_Descr*)PyTuple_GetItem(item, 0);
             offset_obj = PyTuple_GetItem(item, 1);
-            new_offset = PyInt_AsLong(offset_obj);
+            new_offset = PyLong_AsLong(offset_obj);
             if (error_converting(new_offset)) {
                 return -1;
             }

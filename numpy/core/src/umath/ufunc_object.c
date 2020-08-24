@@ -2432,15 +2432,15 @@ _get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
     switch(ufunc->identity) {
     case PyUFunc_One:
         *reorderable = 1;
-        return PyInt_FromLong(1);
+        return PyLong_FromLong(1);
 
     case PyUFunc_Zero:
         *reorderable = 1;
-        return PyInt_FromLong(0);
+        return PyLong_FromLong(0);
 
     case PyUFunc_MinusOne:
         *reorderable = 1;
-        return PyInt_FromLong(-1);
+        return PyLong_FromLong(-1);
 
     case PyUFunc_ReorderableNone:
         *reorderable = 1;
@@ -3325,7 +3325,7 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
     /* If the type is custom and there are userloops, search for it here */
     if (ufunc->userloops != NULL && PyTypeNum_ISUSERDEF(*otype)) {
         PyObject *key, *obj;
-        key = PyInt_FromLong(*otype);
+        key = PyLong_FromLong(*otype);
         if (key == NULL) {
             return -1;
         }
@@ -4836,8 +4836,8 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (res == NULL) {
         return NULL;
     }
-    PyList_SET_ITEM(res, 0, PyInt_FromLong(NPY_BUFSIZE));
-    PyList_SET_ITEM(res, 1, PyInt_FromLong(UFUNC_ERR_DEFAULT));
+    PyList_SET_ITEM(res, 0, PyLong_FromLong(NPY_BUFSIZE));
+    PyList_SET_ITEM(res, 1, PyLong_FromLong(UFUNC_ERR_DEFAULT));
     PyList_SET_ITEM(res, 2, Py_None); Py_INCREF(Py_None);
     return res;
 }
@@ -5157,7 +5157,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         return -1;
     }
 
-    key = PyInt_FromLong((long) user_dtype->type_num);
+    key = PyLong_FromLong((long) user_dtype->type_num);
     if (key == NULL) {
         return -1;
     }
@@ -5263,7 +5263,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     if (ufunc->userloops == NULL) {
         ufunc->userloops = PyDict_New();
     }
-    key = PyInt_FromLong((long) usertype);
+    key = PyLong_FromLong((long) usertype);
     if (key == NULL) {
         return -1;
     }
@@ -6012,25 +6012,25 @@ ufunc_get_doc(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->nin);
+    return PyLong_FromLong(ufunc->nin);
 }
 
 static PyObject *
 ufunc_get_nout(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->nout);
+    return PyLong_FromLong(ufunc->nout);
 }
 
 static PyObject *
 ufunc_get_nargs(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->nargs);
+    return PyLong_FromLong(ufunc->nargs);
 }
 
 static PyObject *
 ufunc_get_ntypes(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->ntypes);
+    return PyLong_FromLong(ufunc->ntypes);
 }
 
 static PyObject *

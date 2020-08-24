@@ -398,7 +398,7 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
     const int optimize_fpexps = 1;
 
     if (PyInt_Check(o2)) {
-        *out_exponent = (double)PyInt_AsLong(o2);
+        *out_exponent = (double)PyLong_AsLong(o2);
         return NPY_INTPOS_SCALAR;
     }
     if (optimize_fpexps && PyFloat_Check(o2)) {
@@ -448,7 +448,7 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
             }
             return NPY_NOSCALAR;
         }
-        val = PyInt_AsSsize_t(value);
+        val = PyLong_AsSsize_t(value);
         if (error_converting(val)) {
             PyErr_Clear();
             return NPY_NOSCALAR;

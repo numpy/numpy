@@ -2810,7 +2810,7 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) {
         return NULL;
     }
-    return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
+    return PyLong_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
 /*NUMPY_API
@@ -3950,7 +3950,7 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return PyInt_FromLong(axis);
+    return PyLong_FromLong(axis);
 }
 
 
@@ -4292,13 +4292,13 @@ set_flaginfo(PyObject *d)
     newd = PyDict_New();
 
 #define _addnew(key, val, one)                                       \
-    PyDict_SetItemString(newd, #key, s=PyInt_FromLong(val));    \
+    PyDict_SetItemString(newd, #key, s=PyLong_FromLong(val));    \
     Py_DECREF(s);                                               \
-    PyDict_SetItemString(newd, #one, s=PyInt_FromLong(val));    \
+    PyDict_SetItemString(newd, #one, s=PyLong_FromLong(val));    \
     Py_DECREF(s)
 
 #define _addone(key, val)                                            \
-    PyDict_SetItemString(newd, #key, s=PyInt_FromLong(val));    \
+    PyDict_SetItemString(newd, #key, s=PyLong_FromLong(val));    \
     Py_DECREF(s)
 
     _addnew(OWNDATA, NPY_ARRAY_OWNDATA, O);
@@ -4502,7 +4502,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      */
     PyDict_SetItemString (d, "error", PyExc_Exception);
 
-    s = PyInt_FromLong(NPY_TRACE_DOMAIN);
+    s = PyLong_FromLong(NPY_TRACE_DOMAIN);
     PyDict_SetItemString(d, "tracemalloc_domain", s);
     Py_DECREF(s);
 
@@ -4548,7 +4548,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     Py_DECREF(s);
 
 #define ADDCONST(NAME)                          \
-    s = PyInt_FromLong(NPY_##NAME);             \
+    s = PyLong_FromLong(NPY_##NAME);             \
     PyDict_SetItemString(d, #NAME, s);          \
     Py_DECREF(s)
 
