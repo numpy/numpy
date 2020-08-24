@@ -2585,9 +2585,10 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArrayObject *arr;
     PyArray_Descr *dtype;
     PyObject *c;
+
     if (PyArray_SIZE(self) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
+        PyErr_SetString(PyExc_TypeError,
+                "only length-1 arrays can be converted to Python scalars");
         return NULL;
     }
 
@@ -2598,38 +2599,18 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
     if (!PyArray_CanCastArrayTo(self, dtype, NPY_SAME_KIND_CASTING) &&
             !(PyArray_TYPE(self) == NPY_OBJECT)) {
-        PyObject *err, *msg_part;
+        PyObject *descr = (PyObject*)PyArray_DESCR(self);
+
         Py_DECREF(dtype);
-        err = PyString_FromString("unable to convert ");
-        if (err == NULL) {
-            return NULL;
-        }
-        msg_part = PyObject_Repr((PyObject*)PyArray_DESCR(self));
-        if (msg_part == NULL) {
-            Py_DECREF(err);
-            return NULL;
-        }
-        PyString_ConcatAndDel(&err, msg_part);
-        if (err == NULL) {
-            return NULL;
-        }
-        msg_part = PyString_FromString(", to complex.");
-        if (msg_part == NULL) {
-            Py_DECREF(err);
-            return NULL;
-        }
-        PyString_ConcatAndDel(&err, msg_part);
-        if (err == NULL) {
-            return NULL;
-        }
-        PyErr_SetObject(PyExc_TypeError, err);
-        Py_DECREF(err);
+        PyErr_Format(PyExc_TypeError,
+                "Unable to convert %R to complex", descr);
         return NULL;
     }
 
     if (PyArray_TYPE(self) == NPY_OBJECT) {
         /* let python try calling __complex__ on the object. */
         PyObject *args, *res;
+
         Py_DECREF(dtype);
         args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
         if (args == NULL) {

@@ -106,7 +106,7 @@ get_bool_setdstone_transfer_function(npy_intp dst_stride,
 /*************************** COPY REFERENCES *******************************/
 
 /* Moves references from src to dst */
-static void
+static int
 _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -131,10 +131,11 @@ _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /* Copies references from src to dst */
-static void
+static int
 _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -158,6 +159,7 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -188,7 +190,7 @@ static NpyAuxData *_strided_zero_pad_data_clone(NpyAuxData *data)
  * Does a strided to strided zero-padded copy for the case where
  * dst_itemsize > src_itemsize
  */
-static void
+static int
 _strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -205,13 +207,14 @@ _strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /*
  * Does a strided to strided zero-padded copy for the case where
  * dst_itemsize < src_itemsize
  */
-static void
+static int
 _strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -226,13 +229,14 @@ _strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /*
  * Does a strided to strided zero-padded or truncated copy for the case where
  * unicode swapping is needed.
  */
-static void
+static int
 _strided_to_strided_unicode_copyswap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -260,6 +264,7 @@ _strided_to_strided_unicode_copyswap(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -379,7 +384,7 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -395,47 +400,50 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
             *todata = d->todata,
             *fromdata = d->fromdata;
     char *bufferin = d->bufferin, *bufferout = d->bufferout;
-    npy_bool init_dest = d->init_dest, out_needs_api = d->out_needs_api;
+    npy_bool init_dest = d->init_dest;
 
     for(;;) {
-        /*
-         * The caller does not know if a previous call resulted in a Python
-         * exception. Much of the Python API is unsafe while an exception is in
-         * flight, so just skip all the work. Someone higher in the call stack
-         * will check for errors and propagate them.
-         */
-        if (out_needs_api && PyErr_Occurred()) {
-            return;
-        }
         if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
-            tobuffer(bufferin, inner_src_itemsize, src, src_stride,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    src_itemsize, todata);
+            if (tobuffer(
+                    bufferin, inner_src_itemsize, src, src_stride,
+                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE, src_itemsize, todata) < 0) {
+                return -1;
+            }
             if (init_dest) {
                 memset(bufferout, 0,
-                        dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
+                       dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
             }
-            wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    inner_src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    dst_itemsize, fromdata);
+            if (wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
+                        NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                        inner_src_itemsize, wrappeddata) < 0) {
+                return -1;
+            }
+            if (frombuffer(dst, dst_stride, bufferout, dst_itemsize,
+                           NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                           dst_itemsize, fromdata) < 0) {
+                return -1;
+            }
             N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
             src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
             dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
         }
         else {
-            tobuffer(bufferin, inner_src_itemsize, src, src_stride, N,
-                                            src_itemsize, todata);
+            if (tobuffer(bufferin, inner_src_itemsize, src, src_stride,
+                         N, src_itemsize, todata) < 0) {
+                return -1;
+            }
             if (init_dest) {
                 memset(bufferout, 0, dst_itemsize*N);
             }
-            wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize, N,
-                                            inner_src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize, N,
-                                            dst_itemsize, fromdata);
-            return;
+            if (wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
+                        N, inner_src_itemsize, wrappeddata) < 0) {
+                return -1;
+            }
+            if (frombuffer(dst, dst_stride, bufferout, dst_itemsize,
+                           N, dst_itemsize, fromdata) < 0) {
+                return -1;
+            }
+            return 0;
         }
     }
 }
@@ -538,7 +546,7 @@ static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_wrap_copy_swap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -546,7 +554,9 @@ _strided_to_strided_wrap_copy_swap(char *dst, npy_intp dst_stride,
 {
     _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
 
+    /* We assume that d->copyswapn should not be able to error. */
     d->copyswapn(dst, dst_stride, src, src_stride, N, d->swap, d->arr);
+    return 0;
 }
 
 /* This only gets used for custom data types and for Unicode when swapping */
@@ -603,6 +613,7 @@ typedef struct {
     NpyAuxData base;
     PyArray_VectorUnaryFunc *castfunc;
     PyArrayObject *aip, *aop;
+    npy_bool needs_api;
 } _strided_cast_data;
 
 /* strided cast data free function */
@@ -630,7 +641,7 @@ static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -639,17 +650,29 @@ _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
     _strided_cast_data *d = (_strided_cast_data *)data;
     PyArray_VectorUnaryFunc *castfunc = d->castfunc;
     PyArrayObject *aip = d->aip, *aop = d->aop;
+    npy_bool needs_api = d->needs_api;
 
     while (N > 0) {
         castfunc(src, dst, 1, aip, aop);
+        /*
+         * Since error handling in ufuncs is not ideal (at the time of
+         * writing this, an error could be in process before calling this
+         * function. For most of NumPy history these checks were completely
+         * missing, so this is hopefully OK for the time being (until ufuncs
+         * are fixed).
+         */
+        if (needs_api && PyErr_Occurred()) {
+            return -1;
+        }
         dst += dst_stride;
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
 /* This one requires src be of type NPY_OBJECT */
-static void
+static int
 _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -658,31 +681,49 @@ _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
     _strided_cast_data *d = (_strided_cast_data *)data;
     PyArray_VectorUnaryFunc *castfunc = d->castfunc;
     PyArrayObject *aip = d->aip, *aop = d->aop;
+    npy_bool needs_api = d->needs_api;
     PyObject *src_ref;
 
     while (N > 0) {
         castfunc(src, dst, 1, aip, aop);
-
-        /* After casting, decrement the source ref */
+        /*
+         * See comment in `_aligned_strided_to_strided_cast`, an error could
+         * in principle be set before `castfunc` is called.
+         */
+        if (needs_api && PyErr_Occurred()) {
+            return -1;
+        }
+        /* After casting, decrement the source ref and set it to NULL */
         NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        NPY_DT_DBG_REFTRACE("dec src ref (cast object -> not object)", src_ref);
         Py_XDECREF(src_ref);
+        memset(src, 0, sizeof(PyObject *));
+        NPY_DT_DBG_REFTRACE("dec src ref (cast object -> not object)", src_ref);
 
         dst += dst_stride;
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp NPY_UNUSED(itemsize),
                         NpyAuxData *data)
 {
     _strided_cast_data *d = (_strided_cast_data *)data;
+    npy_bool needs_api = d->needs_api;
 
     d->castfunc(src, dst, N, d->aip, d->aop);
+    /*
+     * See comment in `_aligned_strided_to_strided_cast`, an error could
+     * in principle be set before `castfunc` is called.
+     */
+    if (needs_api && PyErr_Occurred()) {
+        return -1;
+    }
+    return 0;
 }
 
 static int
@@ -777,7 +818,7 @@ static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -792,12 +833,12 @@ _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
 
         if (convert_datetime_to_datetimestruct(&d->src_meta,
                                                dt, &dts) < 0) {
-            dt = NPY_DATETIME_NAT;
+            return -1;
         }
         else {
             if (convert_datetimestruct_to_datetime(&d->dst_meta,
                                                    &dts, &dt) < 0) {
-                dt = NPY_DATETIME_NAT;
+                return -1;
             }
         }
 
@@ -807,9 +848,10 @@ _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -838,9 +880,10 @@ _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _aligned_strided_to_strided_datetime_cast(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp src_stride,
@@ -870,9 +913,10 @@ _aligned_strided_to_strided_datetime_cast(char *dst,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -888,28 +932,26 @@ _strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
 
         if (convert_datetime_to_datetimestruct(&d->src_meta,
                                                dt, &dts) < 0) {
-            /* For an error, produce a 'NaT' string */
-            dts.year = NPY_DATETIME_NAT;
+            return -1;
         }
 
         /* Initialize the destination to all zeros */
         memset(dst, 0, dst_itemsize);
 
-        /*
-         * This may also raise an error, but the caller needs
-         * to use PyErr_Occurred().
-         */
-        make_iso_8601_datetime(&dts, dst, dst_itemsize,
+        if (make_iso_8601_datetime(&dts, dst, dst_itemsize,
                                 0, 0, d->src_meta.base, -1,
-                                NPY_UNSAFE_CASTING);
+                                NPY_UNSAFE_CASTING) < 0) {
+            return -1;
+        }
 
         dst += dst_stride;
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -934,7 +976,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
             if (parse_iso_8601_datetime(tmp_buffer, src_itemsize,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
                                     &dts, NULL, NULL) < 0) {
-                dt = NPY_DATETIME_NAT;
+                return -1;
             }
         }
         /* Otherwise parse the data in place */
@@ -942,7 +984,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
             if (parse_iso_8601_datetime(src, tmp - src,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
                                     &dts, NULL, NULL) < 0) {
-                dt = NPY_DATETIME_NAT;
+                return -1;
             }
         }
 
@@ -950,7 +992,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
         if (dt != NPY_DATETIME_NAT &&
                 convert_datetimestruct_to_datetime(&d->dst_meta,
                                                &dts, &dt) < 0) {
-            dt = NPY_DATETIME_NAT;
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -959,6 +1001,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
 /*
@@ -1422,6 +1465,7 @@ get_nbo_cast_transfer_function(int aligned,
     data->base.free = &_strided_cast_data_free;
     data->base.clone = &_strided_cast_data_clone;
     data->castfunc = castfunc;
+    data->needs_api = *out_needs_api;
     /*
      * TODO: This is a hack so the cast functions have an array.
      *       The cast functions shouldn't need that.  Also, since we
@@ -1652,7 +1696,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_one_to_n(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -1664,18 +1708,19 @@ _strided_to_strided_one_to_n(char *dst, npy_intp dst_stride,
     npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
 
     while (N > 0) {
-        subtransfer(dst, dst_itemsize,
-                    src, 0,
-                    subN, src_itemsize,
-                    subdata);
+        if (subtransfer(
+                dst, dst_itemsize, src, 0, subN, src_itemsize, subdata) < 0) {
+            return -1;
+        }
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -1688,21 +1733,21 @@ _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
     npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
 
     while (N > 0) {
-        subtransfer(dst, dst_itemsize,
-                    src, 0,
-                    subN, src_itemsize,
-                    subdata);
+        if (subtransfer(
+                dst, dst_itemsize, src, 0, subN, src_itemsize, subdata) < 0) {
+            return -1;
+        }
 
-
-        stransfer_finish_src(NULL, 0,
-                            src, 0,
-                            1, src_itemsize,
-                            data_finish_src);
+        if (stransfer_finish_src(
+                NULL, 0, src, 0, 1, src_itemsize, data_finish_src) < 0) {
+            return -1;
+        }
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /*
@@ -1846,7 +1891,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_n_to_n(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -1859,18 +1904,19 @@ _strided_to_strided_n_to_n(char *dst, npy_intp dst_stride,
                 dst_subitemsize = d->dst_itemsize;
 
     while (N > 0) {
-        subtransfer(dst, dst_subitemsize,
-                    src, src_subitemsize,
-                    subN, src_subitemsize,
-                    subdata);
-
+        if (subtransfer(
+                dst, dst_subitemsize, src, src_subitemsize,
+                subN, src_subitemsize, subdata) < 0) {
+            return -1;
+        }
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _contig_to_contig_n_to_n(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -1882,10 +1928,12 @@ _contig_to_contig_n_to_n(char *dst, npy_intp NPY_UNUSED(dst_stride),
     npy_intp subN = d->N, src_subitemsize = d->src_itemsize,
                 dst_subitemsize = d->dst_itemsize;
 
-    subtransfer(dst, dst_subitemsize,
-                src, src_subitemsize,
-                subN*N, src_subitemsize,
-                subdata);
+    if (subtransfer(
+            dst, dst_subitemsize, src, src_subitemsize,
+            subN*N, src_subitemsize, subdata) < 0) {
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -2049,7 +2097,7 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -2072,10 +2120,11 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
             count = offsetruns[run].count;
             dst_ptr = dst + loop_index*dst_subitemsize;
             if (offset != -1) {
-                subtransfer(dst_ptr, dst_subitemsize,
-                            src + offset, src_subitemsize,
-                            count, src_subitemsize,
-                            subdata);
+                if (subtransfer(
+                        dst_ptr, dst_subitemsize, src + offset, src_subitemsize,
+                        count, src_subitemsize, subdata) < 0) {
+                    return -1;
+                }
             }
             else {
                 memset(dst_ptr, 0, count*dst_subitemsize);
@@ -2087,10 +2136,11 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
-static void
+static int
 _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -2118,16 +2168,19 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
             count = offsetruns[run].count;
             dst_ptr = dst + loop_index*dst_subitemsize;
             if (offset != -1) {
-                subtransfer(dst_ptr, dst_subitemsize,
-                            src + offset, src_subitemsize,
-                            count, src_subitemsize,
-                            subdata);
+                if (subtransfer(
+                        dst_ptr, dst_subitemsize, src + offset, src_subitemsize,
+                        count, src_subitemsize, subdata) < 0) {
+                    return -1;
+                }
             }
             else {
                 if (stransfer_decdstref != NULL) {
-                    stransfer_decdstref(NULL, 0, dst_ptr, dst_subitemsize,
-                                        count, dst_subitemsize,
-                                        data_decdstref);
+                    if (stransfer_decdstref(
+                            NULL, 0, dst_ptr, dst_subitemsize,
+                            count, dst_subitemsize, data_decdstref) < 0) {
+                        return -1;
+                    }
                 }
                 memset(dst_ptr, 0, count*dst_subitemsize);
             }
@@ -2135,15 +2188,18 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
         }
 
         if (stransfer_decsrcref != NULL) {
-            stransfer_decsrcref(NULL, 0, src, src_subitemsize,
-                                    src_subN, src_subitemsize,
-                                    data_decsrcref);
+            if (stransfer_decsrcref(
+                    NULL, 0, src, src_subitemsize,
+                    src_subN, src_subitemsize, data_decsrcref) < 0) {
+                return -1;
+            }
         }
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -2500,7 +2556,7 @@ static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -2515,11 +2571,13 @@ _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
         field = &d->fields;
         if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
             for (i = 0; i < field_count; ++i, ++field) {
-                field->stransfer(dst + field->dst_offset, dst_stride,
-                                 src + field->src_offset, src_stride,
-                                 NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                 field->src_itemsize,
-                                 field->data);
+                if (field->stransfer(
+                        dst + field->dst_offset, dst_stride,
+                        src + field->src_offset, src_stride,
+                        NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                        field->src_itemsize, field->data) < 0) {
+                    return -1;
+                }
             }
             N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
             src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
@@ -2527,13 +2585,15 @@ _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
         }
         else {
             for (i = 0; i < field_count; ++i, ++field) {
-                field->stransfer(dst + field->dst_offset, dst_stride,
-                                 src + field->src_offset, src_stride,
-                                 N,
-                                 field->src_itemsize,
-                                 field->data);
+                if (field->stransfer(
+                        dst + field->dst_offset, dst_stride,
+                        src + field->src_offset, src_stride,
+                        N,
+                        field->src_itemsize, field->data) < 0) {
+                    return -1;
+                }
             }
-            return;
+            return 0;
         }
     }
 }
@@ -2947,7 +3007,8 @@ static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void _strided_masked_wrapper_decsrcref_transfer_function(
+static int
+_strided_masked_wrapper_decsrcref_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_bool *mask, npy_intp mask_stride,
@@ -2969,8 +3030,11 @@ static void _strided_masked_wrapper_decsrcref_transfer_function(
         /* Skip masked values, still calling decsrcref for move_references */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 1);
-        decsrcref_stransfer(NULL, 0, src, src_stride,
-                            subloopsize, src_itemsize, decsrcref_transferdata);
+        if (decsrcref_stransfer(
+                NULL, 0, src, src_stride,
+                subloopsize, src_itemsize, decsrcref_transferdata) < 0) {
+            return -1;
+        }
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
@@ -2981,15 +3045,20 @@ static void _strided_masked_wrapper_decsrcref_transfer_function(
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
-        unmasked_stransfer(dst, dst_stride, src, src_stride,
-                            subloopsize, src_itemsize, unmasked_transferdata);
+        if (unmasked_stransfer(
+                dst, dst_stride, src, src_stride,
+                subloopsize, src_itemsize, unmasked_transferdata) < 0) {
+            return -1;
+        }
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
     }
+    return 0;
 }
 
-static void _strided_masked_wrapper_transfer_function(
+static int
+_strided_masked_wrapper_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_bool *mask, npy_intp mask_stride,
@@ -3020,18 +3089,22 @@ static void _strided_masked_wrapper_transfer_function(
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
-        unmasked_stransfer(dst, dst_stride, src, src_stride,
-                            subloopsize, src_itemsize, unmasked_transferdata);
+        if (unmasked_stransfer(
+                dst, dst_stride, src, src_stride,
+                subloopsize, src_itemsize, unmasked_transferdata) < 0) {
+            return -1;
+        }
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
     }
+    return 0;
 }
 
 
 /************************* DEST BOOL SETONE *******************************/
 
-static void
+static int
 _null_to_strided_set_bool_one(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3046,9 +3119,10 @@ _null_to_strided_set_bool_one(char *dst,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _null_to_contig_set_bool_one(char *dst,
                         npy_intp NPY_UNUSED(dst_stride),
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3058,6 +3132,7 @@ _null_to_contig_set_bool_one(char *dst,
     /* bool type is one byte, so can just use the char */
 
     memset(dst, 1, N);
+    return 0;
 }
 
 /* Only for the bool type, sets the destination to 1 */
@@ -3101,7 +3176,7 @@ static NpyAuxData *_dst_memset_zero_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _null_to_strided_memset_zero(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3116,9 +3191,10 @@ _null_to_strided_memset_zero(char *dst,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _null_to_contig_memset_zero(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3129,9 +3205,10 @@ _null_to_contig_memset_zero(char *dst,
     npy_intp dst_itemsize = d->dst_itemsize;
 
     memset(dst, 0, N*dst_itemsize);
+    return 0;
 }
 
-static void
+static int
 _null_to_strided_reference_setzero(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3143,17 +3220,15 @@ _null_to_strided_reference_setzero(char *dst,
     while (N > 0) {
         NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
 
-        /* Release the reference in dst */
+        /* Release the reference in dst and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec dest ref (to set zero)", dst_ref);
         Py_XDECREF(dst_ref);
-
-        /* Set it to zero */
-        dst_ref = NULL;
-        NPY_COPY_PYOBJECT_PTR(dst, &dst_ref);
+        memset(dst, 0, sizeof(PyObject *));
 
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 NPY_NO_EXPORT int
@@ -3250,7 +3325,7 @@ get_setdstzero_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static void
+static int
 _dec_src_ref_nop(char *NPY_UNUSED(dst),
                         npy_intp NPY_UNUSED(dst_stride),
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3259,9 +3334,10 @@ _dec_src_ref_nop(char *NPY_UNUSED(dst),
                         NpyAuxData *NPY_UNUSED(data))
 {
     /* NOP */
+    return 0;
 }
 
-static void
+static int
 _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
                         npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp src_stride,
@@ -3271,15 +3347,16 @@ _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
 {
     PyObject *src_ref = NULL;
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-
-        /* Release the reference in src */
+        /* Release the reference in src and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec src ref (null dst)", src_ref);
+        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
         Py_XDECREF(src_ref);
+        memset(src, 0, sizeof(PyObject *));
 
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
 

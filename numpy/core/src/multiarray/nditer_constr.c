@@ -476,7 +476,10 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             }
 
             /* Prepare the next buffers and set iterend/size */
-            npyiter_copy_to_buffers(iter, NULL);
+            if (npyiter_copy_to_buffers(iter, NULL) < 0) {
+                NpyIter_Deallocate(iter);
+                return NULL;
+            }
         }
     }
 
@@ -642,21 +645,27 @@ NpyIter_Copy(NpyIter *iter)
 }
 
 /*NUMPY_API
- * Deallocate an iterator
+ * Deallocate an iterator.
+ *
+ * To correctly work when an error is in progress, we have to check
+ * `PyErr_Occurred()`. This is necessary when buffers are not finalized
+ * or WritebackIfCopy is used. We could avoid that check by exposing a new
+ * function which is passed in whether or not a Python error is already set.
  */
 NPY_NO_EXPORT int
 NpyIter_Deallocate(NpyIter *iter)
 {
+    int success = PyErr_Occurred() == NULL;
+
     npy_uint32 itflags;
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop;
     PyArray_Descr **dtype;
     PyArrayObject **object;
     npyiter_opitflags *op_itflags;
-    npy_bool resolve = 1;
 
     if (iter == NULL) {
-        return NPY_SUCCEED;
+        return success;
     }
 
     itflags = NIT_ITFLAGS(iter);
@@ -667,13 +676,23 @@ NpyIter_Deallocate(NpyIter *iter)
 
     /* Deallocate any buffers and buffering data */
     if (itflags & NPY_ITFLAG_BUFFER) {
+        /* Ensure no data is held by the buffers before they are cleared */
+        if (success) {
+            if (npyiter_copy_from_buffers(iter) < 0) {
+                success = NPY_FAIL;
+            }
+        }
+        else {
+            npyiter_clear_buffers(iter);
+        }
+
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         char **buffers;
         NpyAuxData **transferdata;
 
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
-        for(iop = 0; iop < nop; ++iop, ++buffers) {
+        for (iop = 0; iop < nop; ++iop, ++buffers) {
             PyArray_free(*buffers);
         }
         /* read bufferdata */
@@ -694,12 +713,12 @@ NpyIter_Deallocate(NpyIter *iter)
 
     /*
      * Deallocate all the dtypes and objects that were iterated and resolve
-     * any writeback buffers created by the iterator
+     * any writeback buffers created by the iterator.
      */
-    for(iop = 0; iop < nop; ++iop, ++dtype, ++object) {
+    for (iop = 0; iop < nop; ++iop, ++dtype, ++object) {
         if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
-            if (resolve && PyArray_ResolveWritebackIfCopy(*object) < 0) {
-                resolve = 0;
+            if (success && PyArray_ResolveWritebackIfCopy(*object) < 0) {
+                success = 0;
             }
             else {
                 PyArray_DiscardWritebackIfCopy(*object);
@@ -711,11 +730,9 @@ NpyIter_Deallocate(NpyIter *iter)
 
     /* Deallocate the iterator memory */
     PyObject_Free(iter);
-    if (resolve == 0) {
-        return NPY_FAIL;
-    }
-    return NPY_SUCCEED;
+    return success;
 }
+
 
 /* Checks 'flags' for (C|F)_ORDER_INDEX, MULTI_INDEX, and EXTERNAL_LOOP,
  * setting the appropriate internal flags in 'itflags'.

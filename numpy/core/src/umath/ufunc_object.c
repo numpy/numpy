@@ -1536,7 +1536,14 @@ iterator_loop(PyUFuncObject *ufunc,
 
         NPY_END_THREADS;
     }
-    return NpyIter_Deallocate(iter);
+    /*
+     * Currently `innerloop` may leave an error set, in this case
+     * NpyIter_Deallocate will always return an error as well.
+     */
+    if (NpyIter_Deallocate(iter) == NPY_FAIL) {
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -3233,9 +3240,13 @@ PyUFunc_GenericFunction_int(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Check whether any errors occurred during the loop */
+    /*
+     * Check whether any errors occurred during the loop. The loops should
+     * indicate this in retval, but since the inner-loop currently does not
+     * report errors, this does not happen in all branches (at this time).
+     */
     if (PyErr_Occurred() ||
-        _check_ufunc_fperr(errormask, extobj, ufunc_name) < 0) {
+            _check_ufunc_fperr(errormask, extobj, ufunc_name) < 0) {
         retval = -1;
         goto fail;
     }
@@ -3997,8 +4008,17 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
 finish:
     Py_XDECREF(op_dtypes[0]);
-    NpyIter_Deallocate(iter);
-    NpyIter_Deallocate(iter_inner);
+    int res = 0;
+    if (!NpyIter_Deallocate(iter)) {
+        res = -1;
+    }
+    if (!NpyIter_Deallocate(iter_inner)) {
+        res = -1;
+    }
+    if (res < 0) {
+        Py_DECREF(out);
+        return NULL;
+    }
 
     return (PyObject *)out;
 
@@ -4379,7 +4399,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
 finish:
     Py_XDECREF(op_dtypes[0]);
-    NpyIter_Deallocate(iter);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_DECREF(out);
+        return NULL;
+    }
 
     return (PyObject *)out;
 
@@ -4388,7 +4411,6 @@ fail:
     Py_XDECREF(op_dtypes[0]);
 
     NpyIter_Deallocate(iter);
-
     return NULL;
 }
 
