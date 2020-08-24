@@ -946,7 +946,7 @@ cdef extern from *:
     /* NumPy API declarations from "numpy/__init__.pxd" */
     """
 
-cdef extern from "numpy/scalartypes.h":
+cdef extern from *:
     ctypedef class numpy.floating [object PyObject]:
         pass
 
