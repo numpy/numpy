@@ -1809,37 +1809,19 @@ PyArray_FromStructInterface(PyObject *input)
  */
 NPY_NO_EXPORT int
 _is_default_descr(PyObject *descr, PyObject *typestr) {
-    PyObject *tuple, *name, *typestr2;
-    PyObject *tmp = NULL;
-    int ret = 0;
-
     if (!PyList_Check(descr) || PyList_GET_SIZE(descr) != 1) {
         return 0;
     }
-    tuple = PyList_GET_ITEM(descr, 0);
+    PyObject *tuple = PyList_GET_ITEM(descr, 0);
     if (!(PyTuple_Check(tuple) && PyTuple_GET_SIZE(tuple) == 2)) {
         return 0;
     }
-    name = PyTuple_GET_ITEM(tuple, 0);
+    PyObject *name = PyTuple_GET_ITEM(tuple, 0);
     if (!(PyUnicode_Check(name) && PyUnicode_GetLength(name) == 0)) {
         return 0;
     }
-    typestr2 = PyTuple_GET_ITEM(tuple, 1);
-    /* Allow unicode type strings */
-    if (PyUnicode_Check(typestr2)) {
-        tmp = PyUnicode_AsASCIIString(typestr2);
-        if (tmp == NULL) {
-            return 0;
-        }
-        typestr2 = tmp;
-    }
-    if (PyBytes_Check(typestr2) &&
-            PyObject_RichCompareBool(typestr, typestr2, Py_EQ)) {
-        ret = 1;
-    }
-    Py_XDECREF(tmp);
-
-    return ret;
+    PyObject *typestr2 = PyTuple_GET_ITEM(tuple, 1);
+    return PyObject_RichCompareBool(typestr, typestr2, Py_EQ);
 }
 
 /*NUMPY_API*/
@@ -1893,26 +1875,15 @@ PyArray_FromInterface(PyObject *origin)
         return NULL;
     }
 
-    /* Allow unicode type strings */
-    if (PyUnicode_Check(attr)) {
-        PyObject *tmp = PyUnicode_AsASCIIString(attr);
-        if (tmp == NULL) {
-            goto fail;
-        }
-        attr = tmp;
-    }
-    else {
-        Py_INCREF(attr);
-    }
-
-    if (!PyBytes_Check(attr)) {
+    /* allow bytes for backwards compatibility */
+    if (!PyBytes_Check(attr) && !PyUnicode_Check(attr)) {
         PyErr_SetString(PyExc_TypeError,
                     "__array_interface__ typestr must be a string");
         goto fail;
     }
+
     /* Get dtype from type string */
-    dtype = _array_typedescr_fromstr(PyString_AS_STRING(attr));
-    if (dtype == NULL) {
+    if (PyArray_DescrConverter(attr, &dtype) != NPY_SUCCEED) {
         goto fail;
     }
 
@@ -1926,16 +1897,24 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
         PyArray_Descr *new_dtype = NULL;
+        if (descr != NULL) {
+            int is_default = _is_default_descr(descr, attr);
+            if (is_default < 0) {
+                goto fail;
+            }
+            if (!is_default) {
+                if (PyArray_DescrConverter2(descr, &new_dtype) != NPY_SUCCEED) {
+                    goto fail;
+                }
+                if (new_dtype != NULL) {
+                    Py_DECREF(dtype);
+                    dtype = new_dtype;
+                }
+            }
 
-        if (descr != NULL && !_is_default_descr(descr, attr) &&
-                PyArray_DescrConverter2(descr, &new_dtype) == NPY_SUCCEED &&
-                new_dtype != NULL) {
-            Py_DECREF(dtype);
-            dtype = new_dtype;
         }
-    }
 
-    Py_DECREF(attr);  /* Pairs with the unicode handling above */
+    }
 
     /* Get shape tuple from interface specification */
     attr = _PyDict_GetItemStringWithError(iface, "shape");
