@@ -13,8 +13,15 @@
  * NEON NEON_VFPV4
  * VSX VSX2
  */
+
+#define _MULTIARRAYMODULE
+#include <npy_pycompat.h>
+#include <numpy/halffloat.h>
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
+#include "simd/simd.h"
+#include "common.h"
+
 /**begin repeat
  * #name = byte, short, int, long, longlong,
  *         ubyte, ushort, uint, ulong, ulonglong,
