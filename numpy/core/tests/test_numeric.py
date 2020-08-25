@@ -14,6 +14,7 @@ from numpy.testing import (
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_warns, assert_array_max_ulp, HAS_REFCOUNT
     )
+from numpy.core._rational_tests import rational
 
 from hypothesis import assume, given, strategies as st
 from hypothesis.extra import numpy as hynp
@@ -862,6 +863,30 @@ class TestTypes:
         assert_equal(np.promote_types('>M8', '>M8'), np.dtype('M8'))
         assert_equal(np.promote_types('<m8', '<m8'), np.dtype('m8'))
         assert_equal(np.promote_types('>m8', '>m8'), np.dtype('m8'))
+
+    def test_can_cast_and_promote_usertypes(self):
+        # The rational type defines safe casting for signed integers,
+        # boolean. Rational itself *does* cast safely to double.
+        # (rational does not actually cast to all signed integers, e.g.
+        # int64 can be both long and longlong and it registers only the first)
+        valid_types = ["int8", "int16", "int32", "int64", "bool"]
+        invalid_types = "BHILQP" + "FDG" + "mM" + "f" + "V"
+
+        rational_dt = np.dtype(rational)
+        for numpy_dtype in valid_types:
+            numpy_dtype = np.dtype(numpy_dtype)
+            assert np.can_cast(numpy_dtype, rational_dt)
+            assert np.promote_types(numpy_dtype, rational_dt) is rational_dt
+
+        for numpy_dtype in invalid_types:
+            numpy_dtype = np.dtype(numpy_dtype)
+            assert not np.can_cast(numpy_dtype, rational_dt)
+            with pytest.raises(TypeError):
+                np.promote_types(numpy_dtype, rational_dt)
+
+        double_dt = np.dtype("double")
+        assert np.can_cast(rational_dt, double_dt)
+        assert np.promote_types(double_dt, rational_dt) is double_dt
 
     def test_promote_types_strings(self):
         assert_equal(np.promote_types('bool', 'S'), np.dtype('S5'))
