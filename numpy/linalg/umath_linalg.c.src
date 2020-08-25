@@ -399,6 +399,26 @@ set_fp_invalid_or_clear(int error_occurred)
 
 #define UMATH_LINALG_MODULE_NAME "_umath_linalg"
 
+#define s_nan NPY_NANF
+#define d_nan NPY_NAN
+#define c_nan npy_cpackf(NPY_NANF, NPY_NANF)
+#define z_nan npy_cpack(NPY_NAN, NPY_NAN)
+
+#define s_one 1.0f
+#define d_one 1.0
+#define c_one npy_cpackf(1.0f, 0.0f)
+#define z_one npy_cpack(1.0, 0.0)
+
+#define s_zero 0.0f;
+#define d_zero 0.0
+#define c_zero npy_cpackf(0.0f, 0.0f)
+#define z_zero npy_cpack(0.0, 0.0)
+
+#define s_minus_one -1.0f
+#define d_minus_one -1.0
+#define c_minus_one npy_cpackf(-1.0f, 0.0f)
+#define z_minus_one npy_cpack(-1.0, 0.0)
+
 /*
  *****************************************************************************
  **               Structs used for data rearrangement                       **
@@ -661,9 +681,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
     #typ = float, double, npy_cfloat, npy_cdouble#
     #copy = scopy, dcopy, ccopy, zcopy#
-    #suffix = f,  , f,  #
-    #SUFFIX = F,  , F,  #
-    #cmplx =  0, 0, 1, 1#
+    #cblas_type = s, d, c, z#
  */
 static NPY_INLINE void *
 linearize_@TYPE@_matrix(void *dst_in,
@@ -764,80 +782,49 @@ static NPY_INLINE void
 nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
 {
     @typ@ *dst = (@typ@ *) dst_in;
-#if @cmplx@
-    @typ@ nan = npy_cpack@suffix@(NPY_NAN@SUFFIX@, NPY_NAN@SUFFIX@);
-#else
-    @typ@ nan = NPY_NAN@SUFFIX@;
-#endif
 
     int i, j;
     for (i = 0; i < data->rows; i++) {
         @typ@ *cp = dst;
         ptrdiff_t cs = data->column_strides/sizeof(@typ@);
         for (j = 0; j < data->columns; ++j) {
-            *cp = nan;
+            *cp = @cblas_type@_nan;
             cp += cs;
         }
         dst += data->row_strides/sizeof(@typ@);
     }
 }
 
-/**end repeat**/
-
                /* identity square matrix generation */
-/**begin repeat
-   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
-   #typ = float, double, npy_cfloat, npy_cdouble#
-   #cblas_type = s, d, c, z#
-   #suffix = f,  , f,  #
-   #cmplx = 0, 0, 1, 1#
- */
+
 static NPY_INLINE void
 identity_@TYPE@_matrix(void *ptr, size_t n)
 {
     size_t i;
     @typ@ *matrix = (@typ@*) ptr;
-#if @cmplx@
-    @typ@ one = npy_cpack@suffix@(1.0@suffix@, 0.0@suffix@);
-#else
-    @typ@ one = 1.0@suffix@;
-#endif
 
     /* in IEEE floating point, zeroes are represented as bitwise 0 */
     memset(matrix, 0, n*n*sizeof(@typ@));
 
     for (i = 0; i < n; ++i)
     {
-        *matrix = one;
+        *matrix = @cblas_type@_one;
         matrix += n+1;
     }
 }
-/**end repeat**/
 
          /* lower/upper triangular matrix using blas (in place) */
-/**begin repeat
-
-   #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
-   #typ = float, double, npy_cfloat, npy_cdouble#
-   #suffix = f,  , f,  #
-   #cmplx = 0, 0, 1, 1#
- */
 
 static NPY_INLINE void
 triu_@TYPE@_matrix(void *ptr, size_t n)
 {
     size_t i, j;
     @typ@ *matrix = (@typ@*)ptr;
-#if @cmplx@
-    @typ@ zero = npy_cpack@suffix@(0.0@suffix@, 0.0@suffix@);
-#else
-    @typ@ zero = 0.0@suffix@;
-#endif
 
     matrix += n;
     for (i = 1; i < n; ++i) {
         for (j = 0; j < i; ++j) {
-            matrix[j] = zero;
+            matrix[j] = @cblas_type@_zero;
         }
         matrix += n;
     }
@@ -964,9 +951,7 @@ static NPY_INLINE @typ@
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
    #basetyp = npy_float, npy_double, npy_float, npy_double#
    #cblas_type = s, d, c, z#
-   #suffix = f,  , f,  #
    #SUFFIX = F,  , F,  #
-   #cmplx = 0, 0, 1, 1#
 */
 
 static NPY_INLINE void
@@ -991,18 +976,10 @@ static NPY_INLINE void
         }
 
         if (change_sign % 2) {
-#if @cmplx@
-            *sign = npy_cpack@suffix@(-1.0@suffix@, 0.0@suffix@);
-#else
-            *sign = -1.0@suffix@;
-#endif
+            *sign = @cblas_type@_minus_one;
         }
         else {
-#if @cmplx@
-            *sign = npy_cpack@suffix@(1.0@suffix@, 0.0@suffix@);
-#else
-            *sign = 1.0@suffix@;
-#endif
+            *sign = @cblas_type@_one;
         }
 
         @TYPE@_slogdet_from_factored_diagonal(src, m, sign, logdet);
@@ -1010,11 +987,7 @@ static NPY_INLINE void
         /*
           if getrf fails, use 0 as sign and -inf as logdet
         */
-#if @cmplx@
-        *sign = npy_cpack@suffix@(0.0@suffix@, 0.0@suffix@);
-#else
-        *sign = 0.0@suffix@;
-#endif
+        *sign = @cblas_type@_zero;
         *logdet = -NPY_INFINITY@SUFFIX@;
     }
 }
