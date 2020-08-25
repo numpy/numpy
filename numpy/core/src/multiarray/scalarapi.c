@@ -138,7 +138,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
-            return (void *)PyString_AS_STRING(scalar);
+            return (void *)PyBytes_AS_STRING(scalar);
         }
         if (_CHK(Unicode)) {
             /* Treat this the same as the NPY_UNICODE base class */
