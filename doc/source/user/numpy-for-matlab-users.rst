@@ -61,7 +61,7 @@ Some Key Differences
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent actually creating copies until they
        are actually needed.  Slice operations copy parts of the array.
-     - In NumPy arrays have pass-by-reference semantics.  Slice operations
+     - In NumPy, arrays have pass-by-reference semantics.  Slice operations
        are views into an array.
 
 
@@ -138,9 +138,9 @@ General Purpose Equivalents
 
          a=1
          if a==0
-             fprintf('a=o')
+             fprintf('a=0\n')
          elseif a==1
-             fprintf('a=1')
+             fprintf('a=1\n')
          end
 
      - ::
@@ -151,7 +151,7 @@ General Purpose Equivalents
          elif a==1:
              print('a=1')
 
-     - create an if-else if to check if ``a`` is 0 or 1 and print result
+     - create an if-else statement to check if ``a`` is 0 or 1 and print result
 
    * - ``1*i``, ``1*j``,  ``1i``, ``1j``
      - ``1j``
