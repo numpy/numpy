@@ -25,17 +25,17 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB®, you can create multidimensional arrays. By default,
-       MATLAB® creates two dimensional arrays of double precision floating point
-       numbers.  Most expressions take such arrays and return arrays.
-       Operations on the 2-D instances of these arrays are designed to act 
-       like matrix operations in linear algebra.
-
-     - In NumPy the basic type is a multidimensional ``array``.  Operations
-       on these arrays in all dimensionalities including 2D are element-wise
-       operations.  One needs to use specific functions for linear algebra
-       (though for matrix multiplication, one can use the ``@`` operator
-       in python 3.5 and above).
+   * - In MATLAB®, the basic type is a multidimensional array. By default, MATLAB®
+       creates two dimensional arrays of double precision floating point numbers.
+       Operations on the 2D instances of these arrays are designed to act like
+       matrix operations in linear algebra. Most expressions take such arrays and
+       return arrays.
+     - In NumPy, the basic type is a multidimensional ``array``. By default,
+       NumPy creates 0-D or 1-D arrays for inputs of numbers or lists,
+       respectively.  Operations on these arrays in all dimensionalities
+       including 2D are element-wise operations.  One needs to use specific
+       functions for linear algebra (though for matrix multiplication, one can
+       use the ``@`` operator in python 3.5 and above).
 
    * - MATLAB uses 1 (one) based indexing. The initial element of a
        sequence is found using a(1).
@@ -43,9 +43,9 @@ Some Key Differences
      - Python uses 0 (zero) based indexing. The initial element of a
        sequence is found using a[0].
 
-   * - MATLAB®'s scripting language was created for doing linear algebra.
-       MATLAB's syntax for some array manipulations is more compact than
-       NumPy's.The syntax for basic matrix operations is nice and clean, but the
+   * - MATLAB®'s scripting language was created for doing linear algebra so the
+       syntax for some array manipulations is more compact than
+       NumPy's. The syntax for basic matrix operations is nice and clean, but the
        API for adding GUIs and making full-fledged applications is more or less
        an afterthought.
      - NumPy is  based on Python, which was designed from the outset to be an
