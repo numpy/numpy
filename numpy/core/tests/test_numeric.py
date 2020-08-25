@@ -922,6 +922,110 @@ class TestTypes:
         assert_equal(np.promote_types('u8', 'S1'), np.dtype('S20'))
         assert_equal(np.promote_types('u8', 'S30'), np.dtype('S30'))
 
+    @pytest.mark.parametrize("dtype",
+           list(np.typecodes["All"]) +
+           ["i,i", "S3", "S100", "U3", "U100", rational])
+    def test_promote_identical_types_metadata(self, dtype):
+        # The same type passed in twice to promote types always
+        # preserves metadata
+        metadata = {1: 1}
+        dtype = np.dtype(dtype, metadata=metadata)
+
+        res = np.promote_types(dtype, dtype)
+        assert res.metadata == dtype.metadata
+
+        # byte-swapping preserves and makes the dtype native:
+        dtype = dtype.newbyteorder()
+        if dtype.isnative:
+            # The type does not have byte swapping
+            return
+
+        res = np.promote_types(dtype, dtype)
+        if res.char in "?bhilqpBHILQPefdgFDGOmM":
+            # Metadata is lost for simple promotions (they create a new dtype)
+            assert res.metadata is None
+        else:
+            assert res.metadata == metadata
+        if dtype.kind != "V":
+            # the result is native (except for structured void)
+            assert res.isnative
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            itertools.product(
+                list(np.typecodes["All"]) +
+                ["i,i", "S3", "S100", "U3", "U100", rational],
+                repeat=2))
+    def test_promote_types_metadata(self, dtype1, dtype2):
+        """Metadata handling in promotion does not appear formalized
+        right now in NumPy. This test should thus be considered to
+        document behaviour, rather than test the correct definition of it.
+
+        This test is very ugly, it was useful for rewriting part of the
+        promotion, but probably should eventually be replaced/deleted
+        (i.e. when metadata handling in promotion is better defined).
+        """
+        metadata1 = {1: 1}
+        metadata2 = {2: 2}
+        dtype1 = np.dtype(dtype1, metadata=metadata1)
+        dtype2 = np.dtype(dtype2, metadata=metadata2)
+
+        try:
+            res = np.promote_types(dtype1, dtype2)
+        except TypeError:
+            # Promotion failed, this test only checks metadata
+            return
+
+        # The rules for when metadata is preserved and which dtypes metadta
+        # will be used are very confusing and depend on multiple paths.
+        # This long if statement attempts to reproduce this:
+        if dtype1.type is rational or dtype2.type is rational:
+            # User dtype promotion preserves byte-order here:
+            if np.can_cast(res, dtype1):
+                assert res.metadata == dtype1.metadata
+            else:
+                assert res.metadata == dtype2.metadata
+
+        elif res.char in "?bhilqpBHILQPefdgFDGOmM":
+            # All simple types lose metadata (due to using promotion table):
+            assert res.metadata is None
+        elif res.kind in "SU" and dtype1 == dtype2:
+            # Strings give precedence to the second dtype:
+            assert res is dtype2
+        elif res == dtype1:
+            # If one result is the result, it is usually returned unchanged:
+            assert res is dtype1
+        elif res == dtype2:
+            # If one result is the result, it is usually returned unchanged:
+            assert res is dtype2
+        elif dtype1.kind == "S" and dtype2.kind == "U":
+            # Promotion creates a new unicode dtype from scratch
+            assert res.metadata is None
+        elif dtype1.kind == "U" and dtype2.kind == "S":
+            # Promotion creates a new unicode dtype from scratch
+            assert res.metadata is None
+        elif res.kind in "SU" and dtype2.kind != res.kind:
+            # We build on top of dtype1:
+            assert res.metadata == dtype1.metadata
+        elif res.kind in "SU" and res.kind == dtype1.kind:
+            assert res.metadata == dtype1.metadata
+        elif res.kind in "SU" and res.kind == dtype2.kind:
+            assert res.metadata == dtype2.metadata
+        else:
+            assert res.metadata is None
+
+        # Try again for byteswapped version
+        dtype1 = dtype1.newbyteorder()
+        assert dtype1.metadata == metadata1
+        res_bs = np.promote_types(dtype1, dtype2)
+        if res_bs.names is not None:
+            # Structured promotion doesn't remove byteswap:
+            assert res_bs.newbyteorder() == res
+        else:
+            assert res_bs == res
+        assert res_bs.metadata == res.metadata
+
+
     def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
         assert_(np.can_cast(np.float64, complex))
