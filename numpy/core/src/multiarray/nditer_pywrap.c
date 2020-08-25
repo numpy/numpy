@@ -1268,6 +1268,10 @@ npyiter_iternext(NewNpyArrayIterObject *self)
         Py_RETURN_TRUE;
     }
     else {
+        if (PyErr_Occurred()) {
+            /* casting error, buffer cleanup will occur at reset or dealloc */
+            return NULL;
+        }
         self->finished = 1;
         Py_RETURN_FALSE;
     }
@@ -1483,6 +1487,10 @@ npyiter_next(NewNpyArrayIterObject *self)
      */
     if (self->started) {
         if (!self->iternext(self->iter)) {
+            /*
+             * A casting error may be set here (or no error causing a
+             * StopIteration). Buffers may only be cleaned up later.
+             */
             self->finished = 1;
             return NULL;
         }

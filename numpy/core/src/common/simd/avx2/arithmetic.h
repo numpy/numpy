@@ -82,19 +82,20 @@
 // Horizontal add: Calculates the sum of all vector elements.
 NPY_FINLINE float npyv_sum_f32(__m256 a)
 {
-    __m128 t1 = _mm_add_ps(_mm256_castps256_ps128(a), _mm256_extractf128_ps(a,1));
-    __m128 t2 = _mm_movehdup_ps(t1);
-    __m128 t3 = _mm_add_ps(t1, t2);
-    __m128 t4 = _mm_movehl_ps(t3, t3);
-    __m128 t5 = _mm_add_ss(t3, t4);
-    return _mm_cvtss_f32(t5);
+    __m256 sum_halves = _mm256_hadd_ps(a, a);
+    sum_halves = _mm256_hadd_ps(sum_halves, sum_halves);
+    __m128 lo = _mm256_castps256_ps128(sum_halves);
+    __m128 hi = _mm256_extractf128_ps(sum_halves, 1);
+    __m128 sum = _mm_add_ps(lo, hi);
+    return _mm_cvtss_f32(sum);
 }
 
 NPY_FINLINE double npyv_sum_f64(__m256d a)
 {
-    __m128d t1 = _mm_add_pd(_mm256_castpd256_pd128(a), _mm256_extractf128_pd(a,1));
-    __m128d t2 = _mm_unpackhi_pd(t1, t1);
-    __m128d t3 = _mm_add_sd(t2, t1);
-    return _mm_cvtsd_f64(t3);
+    __m256d sum_halves = _mm256_hadd_pd(a, a);
+    __m128d lo = _mm256_castpd256_pd128(sum_halves);
+    __m128d hi = _mm256_extractf128_pd(sum_halves, 1);
+    __m128d sum = _mm_add_pd(lo, hi);
+    return _mm_cvtsd_f64(sum);
 }
 #endif // _NPY_SIMD_AVX2_ARITHMETIC_H

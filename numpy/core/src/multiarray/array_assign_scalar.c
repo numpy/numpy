@@ -82,16 +82,21 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, 0,
-                    shape_it[0], src_itemsize, transferdata);
+        if (stransfer(
+                dst_data, dst_strides_it[0], src_data, 0,
+                shape_it[0], src_itemsize, transferdata) < 0) {
+            goto fail;
+        }
     } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
                             shape_it, dst_data, dst_strides_it);
 
     NPY_END_THREADS;
-
     NPY_AUXDATA_FREE(transferdata);
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return 0;
+fail:
+    NPY_END_THREADS;
+    NPY_AUXDATA_FREE(transferdata);
+    return -1;
 }
 
 /*

@@ -249,7 +249,10 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
     memcpy(prev_dataptrs, NAD_PTRS(axisdata), NPY_SIZEOF_INTP*nop);
 
     /* Write back to the arrays */
-    npyiter_copy_from_buffers(iter);
+    if (npyiter_copy_from_buffers(iter) < 0) {
+        npyiter_clear_buffers(iter);
+        return 0;
+    }
 
     /* Check if we're past the end */
     if (NIT_ITERINDEX(iter) >= NIT_ITEREND(iter)) {
@@ -262,7 +265,10 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
     }
 
     /* Prepare the next buffers and set iterend/size */
-    npyiter_copy_to_buffers(iter, prev_dataptrs);
+    if (npyiter_copy_to_buffers(iter, prev_dataptrs) < 0) {
+        npyiter_clear_buffers(iter);
+        return 0;
+    }
 
     return 1;
 }
@@ -303,7 +309,10 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
 
     /* Write back to the arrays */
-    npyiter_copy_from_buffers(iter);
+    if (npyiter_copy_from_buffers(iter) < 0) {
+        npyiter_clear_buffers(iter);
+        return 0;
+    }
 
     /* Check if we're past the end */
     if (NIT_ITERINDEX(iter) >= NIT_ITEREND(iter)) {
@@ -316,7 +325,10 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
 
     /* Prepare the next buffers and set iterend/size */
-    npyiter_copy_to_buffers(iter, NULL);
+    if (npyiter_copy_to_buffers(iter, NULL) < 0) {
+        npyiter_clear_buffers(iter);
+        return 0;
+    }
 
     return 1;
 }

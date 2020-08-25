@@ -217,7 +217,7 @@ array_protocol_descr_get(PyArrayObject *self)
     if (dobj == NULL) {
         return NULL;
     }
-    PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
     PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
     res = PyList_New(1);
     if (res == NULL) {

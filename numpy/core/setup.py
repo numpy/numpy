@@ -790,6 +790,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
             join('src', 'multiarray', 'dragon4.h'),
+            join('src', 'multiarray', 'einsum_debug.h'),
+            join('src', 'multiarray', 'einsum_sumprod.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),

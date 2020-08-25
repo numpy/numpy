@@ -1,5 +1,6 @@
 import warnings
 import itertools
+import sys
 
 import pytest
 
@@ -11,7 +12,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose,
+    assert_allclose, HAS_REFCOUNT,
     )
 from numpy.compat import pickle
 
@@ -2074,3 +2075,60 @@ def test_ufunc_warn_with_nan(ufunc):
     else:
         raise ValueError('ufunc with more than 2 inputs')
 
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_ufunc_casterrors():
+    # Tests that casting errors are correctly reported and buffers are
+    # cleared.
+    # The following array can be added to itself as an object array, but
+    # the result cannot be cast to an integer output:
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * int(np.BUFSIZE * 1.5) +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.ones(len(arr), dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # Output casting failure:
+        np.add(arr, arr, out=out, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+    with pytest.raises(ValueError):
+        # Input casting failure:
+        np.add(arr, arr, out=out, dtype=np.intp, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize("offset",
+        [0, np.BUFSIZE//2, int(1.5*np.BUFSIZE)])
+def test_reduce_casterrors(offset):
+    # Test reporting of casting errors in reductions, we test various
+    # offsets to where the casting error will occur, since these may occur
+    # at different places during the reduction procedure. For example
+    # the first item may be special.
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.array(-1, dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # This is an unsafe cast, but we currently always allow that:
+        np.add.reduce(arr, dtype=np.intp, out=out)
+    assert count == sys.getrefcount(value)
+    # If an error occurred during casting, the operation is done at most until
+    # the error occurs (the result of which would be `value * offset`) and -1
+    # if the error happened immediately.
+    # This does not define behaviour, the output is invalid and thus undefined
+    assert out[()] < value * offset
