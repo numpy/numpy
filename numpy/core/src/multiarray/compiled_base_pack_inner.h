@@ -1,8 +1,8 @@
 #ifndef _NPY_PRIVATE__COMPILED_BASE_PACK_INNER_H_
 #define _NPY_PRIVATE__COMPILED_BASE_PACK_INNER_H_
-#include <string.h>
-#include "simd/simd.h"
-#include "lowlevel_strided_loops.h" /* for npy_bswap8 */
+#include <numpy/ndarraytypes.h>
+#include "npy_cpu_dispatch.h"
+
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "compiled_base.dispatch.h"
 #endif

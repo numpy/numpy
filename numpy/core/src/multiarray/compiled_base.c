@@ -1,5 +1,18 @@
-#include "compiled_base.h"
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#include <Python.h>
+#include <structmember.h>
+#include <string.h>
 
+#define _MULTIARRAYMODULE
+#include "numpy/arrayobject.h"
+#include "numpy/npy_3kcompat.h"
+#include "numpy/npy_math.h"
+#include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "lowlevel_strided_loops.h" /* for npy_bswap8 */
+#include "alloc.h"
+#include "ctors.h"
+#include "common.h"
 /*
  * Returns -1 if the array is monotonic decreasing,
  * +1 if the array is monotonic increasing,

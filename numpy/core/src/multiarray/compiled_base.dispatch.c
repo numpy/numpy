@@ -4,6 +4,9 @@
  * VSX VSX2
  * NEON ASIMDDP
  */
+#include <string.h>
+#include "simd/simd.h"
+#include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "compiled_base_pack_inner.h"
 
 /*
