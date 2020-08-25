@@ -262,23 +262,13 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4, data_out += vstepx4) {
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
-            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
-            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
-            /**end repeat3**/
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(a@i@, b@i@, c@i@);
-            /**end repeat3**/
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
-            /**end repeat3**/
+            for (int i = 0; i < 4; i++) {
+                npyv_@sfx@ a = npyv_@ld@_@sfx@(data0 + vstep * i);
+                npyv_@sfx@ b = npyv_@ld@_@sfx@(data1 + vstep * i);
+                npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
+                npyv_@sfx@ abc = npyv_muladd_@sfx@(a, b, c);
+                npyv_@st@_@sfx@(data_out + vstep * i, abc);
+            }
         }
     #elif @unroll_by@ == 2
         const int vstepx2 = vstep * 2;
@@ -367,22 +357,12 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data1 += vstepx4, data_out += vstepx4) {
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
-            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
-            /**end repeat3**/
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(va_scalar, b@i@, c@i@);
-            /**end repeat3**/
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
-            /**end repeat3**/
+            for (int i = 0; i < 4; i++) {
+                npyv_@sfx@ b = npyv_@ld@_@sfx@(data1 + vstep * i);
+                npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
+                npyv_@sfx@ abc = npyv_muladd_@sfx@(va_scalar, b, c);
+                npyv_@st@_@sfx@(data_out + vstep * i, abc);
+            }
         }
     #elif @unroll_by@ == 2
         const int vstepx2 = vstep * 2;
@@ -464,22 +444,12 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data_out += vstepx4) {
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
-            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
-            /**end repeat3**/
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(a@i@, vb_scalar, c@i@);
-            /**end repeat3**/
-            /**begin repeat3
-             * #i = 0, 1, 2, 3#
-             */
-            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
-            /**end repeat3**/
+            for (int i = 0; i < 4; i++) {
+                npyv_@sfx@ a = npyv_@ld@_@sfx@(data0 + vstep * i);
+                npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
+                npyv_@sfx@ abc = npyv_muladd_@sfx@(a, vb_scalar, c);
+                npyv_@st@_@sfx@(data_out + vstep * i, abc);
+            }
         }
     #elif @unroll_by@ == 2
         const int vstepx2 = vstep * 2;
