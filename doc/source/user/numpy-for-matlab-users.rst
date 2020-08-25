@@ -44,7 +44,7 @@ Some Key Differences
        sequence is found using a[0].
 
    * - MATLAB®'s scripting language was created for doing linear algebra.
-       Matlab's syntax for some array manipulations is more compact than
+       MATLAB's syntax for some array manipulations is more compact than
        NumPy's.The syntax for basic matrix operations is nice and clean, but the
        API for adding GUIs and making full-fledged applications is more or less
        an afterthought.
@@ -53,8 +53,10 @@ Some Key Differences
        is access to Python libraries including: `SciPy
        <https://www.scipy.org/>`_, `Matplotlib <https://matplotlib.org/>`_,
        `Pandas <https://pandas.pydata.org/>`_, `OpenCV <https://opencv.org/>`_,
-       and more. In addition to Python-specific packages, many scientific
-       computing softwares use Python as a scripting language. 
+       and more. In addition to Python-specific packages, many `scientific
+       computing softwares
+       <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
+       use Python as a scripting language. 
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent actually creating copies until they
@@ -105,9 +107,9 @@ General Purpose Equivalents
      - ``source(func)`` or ``func??`` (in Ipython)
      - print source for *func* (if not a native function)
 
-   * - ``%``
-     - ``#``
-     - comment a line of code
+   * - ``% comment``
+     - ``# comment``
+     - comment a line of code ``comment``
 
    * - ::
 
@@ -137,7 +139,7 @@ General Purpose Equivalents
          a=1
          if a==0
              fprintf('a=o')
-         elseif a==1:
+         elseif a==1
              fprintf('a=1')
          end
 
@@ -157,7 +159,8 @@ General Purpose Equivalents
 
    * - ``eps``
      - ``np.finfo(float).eps`` or ``np.spacing(1)``
-     - Distance between 1 and the nearest 64-bit floating point number.
+     - Upper bound to relative error due to rounding in 64-bit floating point
+       arithmetic.
 
    * - ``load data.mat``
      - ``scipy.io.loadmat('data.mat')``
@@ -312,11 +315,11 @@ Linear Algebra Equivalents
 
    * - ``y=x``
      - ``y = x.copy()``
-     - numpy assigns by reference
+     - NumPy assigns by reference
 
    * - ``y=x(2,:)``
      - ``y = x[1,:].copy()``
-     - numpy slices are by reference
+     - NumPy slices are by reference
 
    * - ``y=x(:)``
      - ``y = x.flatten()``
@@ -507,7 +510,7 @@ Linear Algebra Equivalents
 
    * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
      - ``P,L,U = scipy.linalg.lu(a)`` where ``a==P@L@U``
-     - LU decomposition (note: P(Matlab) == transpose(P(numpy)) )
+     - LU decomposition (note: P(MATLAB) == transpose(P(NumPy)) )
 
    * - ``conjgrad``
      - ``scipy.sparse.linalg.cg``
@@ -575,14 +578,14 @@ Dijkstra <https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html
 and a 'slice' index (inside parentheses); however, in Python, constructs
 like ``0:5`` can *only* be used as a slice index (inside square
 brackets). Thus the somewhat quirky ``r_`` object was created to allow
-numpy to have a similarly terse range construction mechanism. Note that
+NumPy to have a similarly terse range construction mechanism. Note that
 ``r_`` is not called like a function or a constructor, but rather
 *indexed* using square brackets, which allows the use of Python's slice
 syntax in the arguments.
 
-\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in Matlab &
+\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in MATLAB &
 and \| are logical AND/OR. The two can appear to work the same,
-but there are important differences. If you would have used Matlab's &
+but there are important differences. If you would have used MATLAB's &
 or \| operators, you should use the NumPy ufuncs
 logical\_and/logical\_or. The notable differences between MATLAB's and
 NumPy's & and \| operators are:
@@ -629,7 +632,7 @@ Short answer
 **Use arrays**.
 
 -  They support multidimensional array algebra that is supported in MATLAB
--  They are the standard vector/matrix/tensor type of numpy. Many numpy
+-  They are the standard vector/matrix/tensor type of NumpY. Many NumPy
    functions return arrays, not matrices.
 -  There is a clear distinction between element-wise operations and
    linear algebra operations.
