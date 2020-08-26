@@ -17,7 +17,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
-#include <numpy/npy_cpu.h>
 
 #include "npy_pycompat.h"
 
@@ -114,18 +113,18 @@ _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
 {
     PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+        memcpy(&src_ref, src, sizeof(src_ref));
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
 
         /* Release the reference in dst */
         NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
         Py_XDECREF(dst_ref);
         /* Move the reference */
         NPY_DT_DBG_REFTRACE("move src ref", src_ref);
-        NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
+        memcpy(dst, &src_ref, sizeof(src_ref));
         /* Set the source reference to NULL */
         src_ref = NULL;
-        NPY_COPY_PYOBJECT_PTR(src, &src_ref);
+        memcpy(src, &src_ref, sizeof(src_ref));
 
         src += src_stride;
         dst += dst_stride;
@@ -143,12 +142,12 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
 {
     PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+        memcpy(&src_ref, src, sizeof(src_ref));
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
 
         /* Copy the reference */
         NPY_DT_DBG_REFTRACE("copy src ref", src_ref);
-        NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
+        memcpy(dst, &src_ref, sizeof(src_ref));
         /* Claim the reference */
         Py_XINCREF(src_ref);
         /* Release the reference in dst */
@@ -694,7 +693,7 @@ _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
             return -1;
         }
         /* After casting, decrement the source ref and set it to NULL */
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
+        memcpy(&src_ref, src, sizeof(src_ref));
         Py_XDECREF(src_ref);
         memset(src, 0, sizeof(PyObject *));
         NPY_DT_DBG_REFTRACE("dec src ref (cast object -> not object)", src_ref);
@@ -3218,7 +3217,7 @@ _null_to_strided_reference_setzero(char *dst,
     PyObject *dst_ref = NULL;
 
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
 
         /* Release the reference in dst and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec dest ref (to set zero)", dst_ref);
@@ -3349,7 +3348,7 @@ _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
     while (N > 0) {
         /* Release the reference in src and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec src ref (null dst)", src_ref);
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
+        memcpy(&src_ref, src, sizeof(src_ref));
         Py_XDECREF(src_ref);
         memset(src, 0, sizeof(PyObject *));
 
