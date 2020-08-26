@@ -84,16 +84,14 @@ class _TestConfFeatures(FakeCCompilerOpt):
             if not isinstance(val, tp):
                 error_tp = [t.__name__ for t in (*tp,)]
                 error_tp = ' or '.join(error_tp)
-                raise AssertionError(error_msg + \
+                raise AssertionError(error_msg +
                     "expected '%s' type for option '%s' not '%s'" % (
                      error_tp, option, type(val).__name__
                 ))
             break
 
         if not found_it:
-            raise AssertionError(error_msg + \
-                "invalid option name '%s'" % option
-            )
+            raise AssertionError(error_msg + "invalid option name '%s'" % option)
 
     def test_duplicates(self, error_msg, option, val):
         if option not in (
@@ -104,9 +102,7 @@ class _TestConfFeatures(FakeCCompilerOpt):
             val = val.split()
 
         if len(val) != len(set(val)):
-            raise AssertionError(error_msg + \
-                "duplicated values in option '%s'" % option
-            )
+            raise AssertionError(error_msg + "duplicated values in option '%s'" % option)
 
     def test_implies(self, error_msg, search_in, feature_name, feature_dict):
         if feature_dict.get("disabled") is not None:
@@ -118,21 +114,15 @@ class _TestConfFeatures(FakeCCompilerOpt):
             implies = implies.split()
 
         if feature_name in implies:
-            raise AssertionError(error_msg + \
-                "feature implies itself"
-            )
+            raise AssertionError(error_msg + "feature implies itself")
 
         for impl in implies:
             impl_dict = search_in.get(impl)
             if impl_dict is not None:
                 if "disable" in impl_dict:
-                    raise AssertionError(error_msg + \
-                        "implies disabled feature '%s'" % impl
-                    )
+                    raise AssertionError(error_msg + "implies disabled feature '%s'" % impl)
                 continue
-            raise AssertionError(error_msg + \
-                "implies non-exist feature '%s'" % impl
-            )
+            raise AssertionError(error_msg + "implies non-exist feature '%s'" % impl)
 
     def test_group(self, error_msg, search_in, feature_name, feature_dict):
         if feature_dict.get("disabled") is not None:
@@ -147,10 +137,9 @@ class _TestConfFeatures(FakeCCompilerOpt):
             impl_dict = search_in.get(f)
             if not impl_dict or "disable" in impl_dict:
                 continue
-            raise AssertionError(error_msg + \
-                "in option '%s', '%s' already exists as a feature name" % (
-                option, f
-            ))
+            raise AssertionError(error_msg +
+                "in option 'group', '%s' already exists as a feature name" % f
+            )
 
     def test_extra_checks(self, error_msg, search_in, feature_name, feature_dict):
         if feature_dict.get("disabled") is not None:
@@ -165,10 +154,9 @@ class _TestConfFeatures(FakeCCompilerOpt):
             impl_dict = search_in.get(f)
             if not impl_dict or "disable" in impl_dict:
                 continue
-            raise AssertionError(error_msg + \
-                "in option '%s', extra test case '%s' already exists as a feature name" % (
-                option, f
-            ))
+            raise AssertionError(error_msg +
+                "in option 'extra_checks', extra test case '%s' already exists as a feature name" % f
+            )
 
 class TestConfFeatures(unittest.TestCase):
     def __init__(self, methodName="runTest"):
