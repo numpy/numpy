@@ -330,8 +330,10 @@ largely aesthetic.  In particular:
            Now it must be a tuple whose first element is a string with "PyArrayInterface Version #" and whose
            second element is the object exposing the array.
 
-       This design was retracted in <https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html>, and is an error to have relied
-       upon in the intermediate 14 years.
+       This design was retracted almost immediately after it was proposed, in
+       <https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html>.
+       Despite 14 years of documentation to the contrary, at no point was it valid
+       to assume that ``__array_interface__`` capsules held this tuple content.
 
 3. The tuple returned from ``__array_interface__['data']`` used to be a
    hex-string (now it is an integer or a long integer).
