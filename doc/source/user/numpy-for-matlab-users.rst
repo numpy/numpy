@@ -119,7 +119,7 @@ General Purpose Equivalents
 
      - ::
 
-         for i in range(1,4):
+         for i in range(1, 4):
             print(i)
 
      - use a for-loop to print the numbers 1, 2, and 3
