@@ -1,6 +1,9 @@
 #ifndef _NPY_MULTIARRAY_EINSUM_SUMPROD_H
 #define _NPY_MULTIARRAY_EINSUM_SUMPROD_H
 
+#include "simd/simd.h"
+#include "common.h"
+
 #define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 
 #ifndef NPY_DISABLE_OPTIMIZATION

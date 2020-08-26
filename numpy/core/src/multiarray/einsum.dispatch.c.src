@@ -1,12 +1,13 @@
 /*
- * This file contains the implementation of the 'einsum' function,
- * which provides an einstein-summation operation.
+ * This file provides optimized sum of product implementations used internally
+ * by einsum.
  *
  * Copyright (c) 2011 by Mark Wiebe (mwwiebe@gmail.com)
  * The University of British Columbia
  *
  * See LICENSE.txt for the license.
  */
+ 
 /**
  * @targets $maxopt baseline
  * SSE2 (AVX2 FMA3) AVX512F
@@ -14,13 +15,11 @@
  * VSX VSX2
  */
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <npy_pycompat.h>
 #include <numpy/halffloat.h>
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
-#include "simd/simd.h"
-#include "common.h"
 
 /**begin repeat
  * #name = byte, short, int, long, longlong,
@@ -262,6 +261,9 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4, data_out += vstepx4) {
+#ifdef __GNUC__
+#pragma GCC ivdep
+#endif
             for (int i = 0; i < 4; i++) {
                 npyv_@sfx@ a = npyv_@ld@_@sfx@(data0 + vstep * i);
                 npyv_@sfx@ b = npyv_@ld@_@sfx@(data1 + vstep * i);
@@ -357,6 +359,9 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data1 += vstepx4, data_out += vstepx4) {
+#ifdef __GNUC__
+#pragma GCC ivdep
+#endif
             for (int i = 0; i < 4; i++) {
                 npyv_@sfx@ b = npyv_@ld@_@sfx@(data1 + vstep * i);
                 npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
@@ -444,6 +449,9 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data_out += vstepx4) {
+#ifdef __GNUC__
+#pragma GCC ivdep
+#endif
             for (int i = 0; i < 4; i++) {
                 npyv_@sfx@ a = npyv_@ld@_@sfx@(data0 + vstep * i);
                 npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
