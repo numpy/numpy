@@ -300,12 +300,12 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     }
     if (tuple) {
         for (i = 0; i < numnew; i++) {
-            mydim[i] = (npy_intp) PyInt_AsLong(
+            mydim[i] = (npy_intp) PyLong_AsLong(
                     PyTuple_GET_ITEM(old->subarray->shape, i));
         }
     }
     else {
-        mydim[0] = (npy_intp) PyInt_AsLong(old->subarray->shape);
+        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
     }
 
     if (newstrides) {
@@ -868,11 +868,14 @@ PyArray_NewFromDescr_int(
 
         func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
         if (func && func != Py_None) {
-            if (NpyCapsule_Check(func)) {
+            if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
-                cfunc = NpyCapsule_AsVoidPtr(func);
+                cfunc = PyCapsule_GetPointer(func, NULL);
                 Py_DECREF(func);
+                if (cfunc == NULL) {
+                    goto fail;
+                }
                 if (cfunc((PyArrayObject *)fa, obj) < 0) {
                     goto fail;
                 }
@@ -1747,7 +1750,7 @@ PyArray_FromStructInterface(PyObject *input)
             return Py_NotImplemented;
         }
     }
-    if (!NpyCapsule_Check(attr)) {
+    if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
             /*
              * If the input is a class `attr` should be a property-like object.
@@ -1759,7 +1762,10 @@ PyArray_FromStructInterface(PyObject *input)
         }
         goto fail;
     }
-    inter = NpyCapsule_AsVoidPtr(attr);
+    inter = PyCapsule_GetPointer(attr, NULL);
+    if (inter == NULL) {
+        goto fail;
+    }
     if (inter->two != 2) {
         goto fail;
     }
@@ -1835,8 +1841,6 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
 
     return ret;
 }
-
-#define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
 
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
@@ -1999,7 +2003,7 @@ PyArray_FromInterface(PyObject *origin)
                 goto fail;
             }
         }
-        else if (PyIntOrLong_Check(dataptr)) {
+        else if (PyLong_Check(dataptr)) {
             data = PyLong_AsVoidPtr(dataptr);
         }
         else {
@@ -2391,16 +2395,21 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     src_count = *src_countptr;
     dst_data = dst_dataptr[0];
     src_data = src_dataptr[0];
+    int res = 0;
     for(;;) {
         /* Transfer the biggest amount that fits both */
         count = (src_count < dst_count) ? src_count : dst_count;
-        stransfer(dst_data, dst_stride,
-                    src_data, src_stride,
-                    count, src_itemsize, transferdata);
+        if (stransfer(
+                dst_data, dst_stride, src_data, src_stride,
+                count, src_itemsize, transferdata) < 0) {
+            res = -1;
+            break;
+        }
 
         /* If we exhausted the dst block, refresh it */
         if (dst_count == count) {
-            if (!dst_iternext(dst_iter)) {
+            res = dst_iternext(dst_iter);
+            if (!res) {
                 break;
             }
             dst_count = *dst_countptr;
@@ -2413,7 +2422,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
         /* If we exhausted the src block, refresh it */
         if (src_count == count) {
-            if (!src_iternext(src_iter)) {
+            res = src_iternext(src_iter);
+            if (!res) {
                 break;
             }
             src_count = *src_countptr;
@@ -2430,8 +2440,11 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
-
-    return PyErr_Occurred() ? -1 : 0;
+    if (res > 0) {
+        /* The iteration stopped successfully, do not report an error */
+        return 0;
+    }
+    return res;
 }
 
 /*NUMPY_API
@@ -2741,7 +2754,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         return -1;
     }
 
-    zero = PyInt_FromLong(0);
+    zero = PyLong_FromLong(0);
     if (!zero) {
         Py_DECREF(*next);
         *next = NULL;
@@ -2886,14 +2899,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_INCREF(dtype);
     }
     if (!step || step == Py_None) {
-        step = PyInt_FromLong(1);
+        step = PyLong_FromLong(1);
     }
     else {
         Py_XINCREF(step);
     }
     if (!stop || stop == Py_None) {
         stop = start;
-        start = PyInt_FromLong(0);
+        start = PyLong_FromLong(0);
     }
     else {
         Py_INCREF(start);

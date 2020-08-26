@@ -248,13 +248,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
                 PyTuple_SET_ITEM(tupobj,0,obj);
-                obj = PyUString_FromString((const char *)format);
+                obj = PyUnicode_FromString((const char *)format);
                 if (obj == NULL) {
                     Py_DECREF(tupobj);
                     Py_DECREF(it);
                     return -1;
                 }
-                strobj = PyUString_Format(obj, tupobj);
+                strobj = PyUnicode_Format(obj, tupobj);
                 Py_DECREF(obj);
                 Py_DECREF(tupobj);
                 if (strobj == NULL) {
@@ -403,7 +403,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         }
     }
     /* Python integer */
-    else if (PyLong_Check(obj) || PyInt_Check(obj)) {
+    else if (PyLong_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
         if (error_converting(ll_v)) {

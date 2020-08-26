@@ -202,7 +202,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 \tif (PyErr_Occurred())
 \t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}
 \td = PyModule_GetDict(m);
-\ts = PyString_FromString(\"$R""" + """evision: $\");
+\ts = PyUnicode_FromString(\"$R""" + """evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
 \tPy_DECREF(s);
 \ts = PyUnicode_FromString(

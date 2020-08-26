@@ -380,7 +380,7 @@ PyArray_ScalarFromObject(PyObject *object)
     }
     /*
      * Booleans in Python are implemented as a subclass of integers,
-     * so PyBool_Check must be called before PyInt_Check.
+     * so PyBool_Check must be called before PyLong_Check.
      */
     if (PyBool_Check(object)) {
         if (object == Py_True) {
@@ -395,7 +395,7 @@ PyArray_ScalarFromObject(PyObject *object)
         if (ret == NULL) {
             return NULL;
         }
-        PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
+        PyArrayScalar_VAL(ret, Long) = PyLong_AsLong(object);
     }
     else if (PyFloat_Check(object)) {
         ret = PyArrayScalar_New(Double);

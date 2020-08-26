@@ -756,11 +756,11 @@ def array_split(ary, indices_or_sections, axis=0):
     --------
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
 
-    >>> x = np.arange(7.0)
-    >>> np.array_split(x, 3)
-        [array([0.,  1.,  2.]), array([3.,  4.]), array([5.,  6.])]
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
     try:

@@ -269,7 +269,7 @@ Functions
 .. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
 
     A simple interface to the IEEE error-flag checking support. The
-    *errmask* argument is a mask of :c:data:`UFUNC_MASK_{ERR}` bitmasks
+    *errmask* argument is a mask of ``UFUNC_MASK_{ERR}`` bitmasks
     indicating which errors to check for (and how to check for
     them). The *errobj* must be a Python tuple with two elements: a
     string containing the name which will be used in any communication

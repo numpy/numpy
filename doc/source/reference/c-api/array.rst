@@ -826,7 +826,7 @@ General check of Python Type
 
 .. c:function:: PyArray_IsScalar(op, cls)
 
-    Evaluates true if *op* is an instance of :c:data:`Py{cls}ArrType_Type`.
+    Evaluates true if *op* is an instance of ``Py{cls}ArrType_Type``.
 
 .. c:function:: PyArray_CheckScalar(op)
 

@@ -267,7 +267,7 @@ information is currently provided and will be defined on the class:
   deprecated. This may be relaxed if a use-case arises.
 
 Additionally, existing methods (and C-side fields) will be provided.
-However, the fields ``kind`` and and ``char`` will be set to ``\0``
+However, the fields ``kind`` and ``char`` will be set to ``\0``
 (NULL character) on the C-side.
 While discouraged, except for NumPy builtin types, ``kind`` both will return
 the ``__qualname__`` of the object to ensure uniqueness for all DTypes.
@@ -307,7 +307,7 @@ is the ``np.datetime64`` scalar.
 
 A potential DType such as ``Categorical`` will not be required to have a clear type
 associated with it. Instead, the ``type`` may be ``object`` and the
-categoircal's values are arbitrary objects.
+categorical's values are arbitrary objects.
 Unlike with well-defined scalars, this ``type`` cannot
 not be used for the dtype discovery necessary for coercion
 (compare section `DType Discovery during Array Coercion`_).
@@ -659,7 +659,7 @@ should be "minutes".
 Common DType Operations
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Numpy currently provides functions like ``np.result_type`` and
+NumPy currently provides functions like ``np.result_type`` and
 ``np.promote_types`` for determining common types.
 These differ in that ``np.result_type`` can take arrays and scalars as input
 and implements value based promotion [1]_.
@@ -972,7 +972,7 @@ In general we could implement certain casts, such as ``int8`` to ``int24``
 even if the user only provides an ``int16 -> int24`` cast.
 This proposal currently does not provide this functionality.  However,
 it could be extended in the future to either find such casts dynamically,
-or at least allow ``adjust_descriptors`` to return arbitray ``dtypes``.
+or at least allow ``adjust_descriptors`` to return arbitrary ``dtypes``.
 If ``CastingImpl[Int8, Int24].adjust_descriptors((int8, int24))`` returns
 ``(int16, int24)``, the actual casting process could be extended to include
 the ``int8 -> int16`` cast.  Unlike the above example, which is limited

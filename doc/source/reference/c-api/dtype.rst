@@ -30,7 +30,7 @@ Enumerated Types
 There is a list of enumerated types defined providing the basic 24
 data types plus some useful generic names. Whenever the code requires
 a type number, one of these enumerated types is requested. The types
-are all called :c:data:`NPY_{NAME}`:
+are all called ``NPY_{NAME}``:
 
 .. c:var:: NPY_BOOL
 
@@ -199,7 +199,7 @@ Other useful related constants are
 The various character codes indicating certain types are also part of
 an enumerated list. References to type characters (should they be
 needed at all) should always use these enumerations. The form of them
-is :c:data:`NPY_{NAME}LTR` where ``{NAME}`` can be
+is ``NPY_{NAME}LTR`` where ``{NAME}`` can be
 
     **BOOL**, **BYTE**, **UBYTE**, **SHORT**, **USHORT**, **INT**,
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
@@ -247,8 +247,8 @@ Max and min values for integers
 Number of bits in data types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All :c:data:`NPY_SIZEOF_{CTYPE}` constants have corresponding
-:c:data:`NPY_BITSOF_{CTYPE}` constants defined. The :c:data:`NPY_BITSOF_{CTYPE}`
+All ``NPY_SIZEOF_{CTYPE}`` constants have corresponding
+``NPY_BITSOF_{CTYPE}`` constants defined. The ``NPY_BITSOF_{CTYPE}``
 constants provide the number of bits in the data type.  Specifically,
 the available ``{CTYPE}s`` are
 
@@ -263,7 +263,7 @@ All of the numeric data types (integer, floating point, and complex)
 have constants that are defined to be a specific enumerated type
 number. Exactly which enumerated type a bit-width type refers to is
 platform dependent. In particular, the constants available are
-:c:data:`PyArray_{NAME}{BITS}` where ``{NAME}`` is **INT**, **UINT**,
+``PyArray_{NAME}{BITS}`` where ``{NAME}`` is **INT**, **UINT**,
 **FLOAT**, **COMPLEX** and ``{BITS}`` can be 8, 16, 32, 64, 80, 96, 128,
 160, 192, 256, and 512.  Obviously not all bit-widths are available on
 all platforms for all the kinds of numeric types. Commonly 8-, 16-,
@@ -397,8 +397,8 @@ There are also typedefs for signed integers, unsigned integers,
 floating point, and complex floating point types of specific bit-
 widths. The available type names are
 
-    :c:type:`npy_int{bits}`, :c:type:`npy_uint{bits}`, :c:type:`npy_float{bits}`,
-    and :c:type:`npy_complex{bits}`
+    ``npy_int{bits}``, ``npy_uint{bits}``, ``npy_float{bits}``,
+    and ``npy_complex{bits}``
 
 where ``{bits}`` is the number of bits in the type and can be **8**,
 **16**, **32**, **64**, 128, and 256 for integer types; 16, **32**

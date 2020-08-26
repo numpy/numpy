@@ -92,11 +92,14 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             PyObject *key;
             PyObject *cobj;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             cobj = PyDict_GetItem(obj, key);
             Py_DECREF(key);
-            if (cobj && NpyCapsule_Check(cobj)) {
-                castfunc = NpyCapsule_AsVoidPtr(cobj);
+            if (cobj && PyCapsule_CheckExact(cobj)) {
+                castfunc = PyCapsule_GetPointer(cobj, NULL);
+                if (castfunc == NULL) {
+                    return NULL;
+                }
             }
         }
     }
@@ -1989,7 +1992,7 @@ PyArray_Zero(PyArrayObject *arr)
     }
 
     if (zero_obj == NULL) {
-        zero_obj = PyInt_FromLong((long) 0);
+        zero_obj = PyLong_FromLong((long) 0);
         if (zero_obj == NULL) {
             return NULL;
         }
@@ -2035,7 +2038,7 @@ PyArray_One(PyArrayObject *arr)
     }
 
     if (one_obj == NULL) {
-        one_obj = PyInt_FromLong((long) 1);
+        one_obj = PyLong_FromLong((long) 1);
         if (one_obj == NULL) {
             return NULL;
         }

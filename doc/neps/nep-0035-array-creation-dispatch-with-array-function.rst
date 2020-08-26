@@ -8,7 +8,7 @@ NEP 35 — Array Creation Dispatching With __array_function__
 :Status: Draft
 :Type: Standards Track
 :Created: 2019-10-15
-:Updated: 2019-10-15
+:Updated: 2020-08-06
 :Resolution:
 
 Abstract
@@ -55,6 +55,10 @@ allowing them to create new arrays for internal usage based on arrays passed
 by the user, preventing unnecessary creation of NumPy arrays that will
 ultimately lead to an additional conversion into a downstream array type.
 
+Support for Python 2.7 has been dropped since NumPy 1.17, therefore we should
+make use of the keyword-only argument standard described in PEP-3102 [4]_ to
+implement the ``like=``, thus preventing it from being passed by position.
+
 Implementation
 --------------
 
@@ -66,7 +70,7 @@ numerical ranges such as ``range`` and ``linspace``, as well as the ``empty``
 family of functions, even though that may be redundant, since there exists
 already specializations for those with the naming format ``empty_like``. As of
 the writing of this NEP, a complete list of array creation functions can be
-found in [4]_.
+found in [5]_.
 
 This newly proposed keyword shall be removed by the ``__array_function__``
 mechanism from the keyword dictionary before dispatching. The purpose for this
@@ -93,12 +97,12 @@ with ``overrides.array_function_dispatch``:
 
 .. code:: python
 
-    def _asarray_decorator(a, dtype=None, order=None, like=None):
+    def _asarray_decorator(a, dtype=None, order=None, *, like=None):
         return (like,)
 
     @set_module('numpy')
     @array_function_dispatch(_asarray_decorator)
-    def asarray(a, dtype=None, order=None, like=None):
+    def asarray(a, dtype=None, order=None, *, like=None):
         return array(a, dtype, copy=False, order=order)
 
 Note in the example above that the implementation remains unchanged, the only
@@ -121,7 +125,8 @@ the module too.
         module='numpy', docs_from_dispatcher=False, verify=False)
 
     @array_function_nodocs_from_c_func_and_dispatcher(_multiarray_umath.array)
-    def array(a, dtype=None, copy=True, order='K', subok=False, ndmin=0, like=None):
+    def array(a, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
+              like=None):
         return (like,)
 
 There are two downsides to the implementation above for C functions:
@@ -180,7 +185,9 @@ References and Footnotes
 
 .. [3] `NEP 31 — Context-local and global overrides of the NumPy API <https://github.com/numpy/numpy/pull/14389>`_.
 
-.. [4] `Array creation routines <https://docs.scipy.org/doc/numpy-1.17.0/reference/routines.array-creation.html>`_.
+.. [4] `PEP 3102 — Keyword-Only Arguments <https://www.python.org/dev/peps/pep-3102/>`_.
+
+.. [5] `Array creation routines <https://docs.scipy.org/doc/numpy-1.17.0/reference/routines.array-creation.html>`_.
 
 Copyright
 ---------
