@@ -12,7 +12,6 @@
 #include "abstractdtypes.h"
 #include "usertypes.h"
 
-#include "common.h"
 #include "npy_buffer.h"
 
 #include "get_attr_string.h"
