@@ -1,13 +1,17 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "structmember.h"
+
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
 
 #include "abstractdtypes.h"
 #include "array_coercion.h"
 #include "common.h"
+
 
 static PyArray_Descr *
 discover_descriptor_from_pyint(
