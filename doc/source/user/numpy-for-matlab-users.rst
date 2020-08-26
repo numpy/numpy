@@ -373,7 +373,7 @@ Linear Algebra Equivalents
      - ::
 
          from numpy.random import default_rng
-         rng=default_rng(42)
+         rng = default_rng(42)
          rng.random(3,4) 
 
        or older version: ``random.rand((3, 4))``
