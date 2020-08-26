@@ -377,7 +377,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
                       'O': 'O', 'OWNDATA': 'O',
                       'E': 'E', 'ENSUREARRAY': 'E'}
     if not requirements:
-        return asanyarray(a, dtype=dtype, like=like)
+        return asanyarray(a, dtype=dtype)
     else:
         requirements = {possible_flags[x.upper()] for x in requirements}
 
@@ -397,7 +397,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
         order = 'C'
         requirements.remove('C')
 
-    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok, like=like)
+    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
 
     for prop in requirements:
         if not arr.flags[prop]:
