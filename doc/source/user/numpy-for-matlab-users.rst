@@ -484,7 +484,7 @@ Linear Algebra Equivalents
      - return the rank of 2D array, ``a``
 
    * - ``c=chol(a)`` where ``a==c'*c``
-     - ``c=linalg.cholesky(a)`` where ``a==c@c.T``
+     - ``c = linalg.cholesky(a)`` where ``a == c@c.T``
      - cholesky factorization of a matrix (``chol(a)`` in MATLAB returns an
        upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower
        triangular matrix)
