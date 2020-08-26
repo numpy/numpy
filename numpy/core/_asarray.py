@@ -102,9 +102,9 @@ def asarray(a, dtype=None, order=None, *, like=None):
     return array(a, dtype, copy=False, order=order)
 
 
-@array_function_dispatch(_asarray_dispatcher, public_api=asarray)
-def _asarray_with_like(a, dtype=None, order=None, *, like=None):
-    pass
+_asarray_with_like = array_function_dispatch(
+    _asarray_dispatcher
+)(asarray)
 
 
 @set_array_function_like_doc
@@ -171,9 +171,9 @@ def asanyarray(a, dtype=None, order=None, *, like=None):
     return array(a, dtype, copy=False, order=order, subok=True)
 
 
-@array_function_dispatch(_asarray_dispatcher, public_api=asanyarray)
-def _asanyarray_with_like(a, dtype=None, order=None, *, like=None):
-    pass
+_asanyarray_with_like = array_function_dispatch(
+    _asarray_dispatcher
+)(asanyarray)
 
 
 def _asarray_contiguous_fortran_dispatcher(a, dtype=None, *, like=None):
@@ -228,12 +228,9 @@ def ascontiguousarray(a, dtype=None, *, like=None):
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
-@array_function_dispatch(
-    _asarray_contiguous_fortran_dispatcher,
-    public_api=ascontiguousarray,
-)
-def _ascontiguousarray_with_like(a, dtype=None, *, like=None):
-    pass
+_ascontiguousarray_with_like = array_function_dispatch(
+    _asarray_contiguous_fortran_dispatcher
+)(ascontiguousarray)
 
 
 @set_array_function_like_doc
@@ -284,12 +281,9 @@ def asfortranarray(a, dtype=None, *, like=None):
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 
-@array_function_dispatch(
-    _asarray_contiguous_fortran_dispatcher,
-    public_api=asfortranarray,
-)
-def _asfortranarray_with_like(a, dtype=None, *, like=None):
-    pass
+_asfortranarray_with_like = array_function_dispatch(
+    _asarray_contiguous_fortran_dispatcher
+)(asfortranarray)
 
 
 def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
@@ -412,6 +406,6 @@ def require(a, dtype=None, requirements=None, *, like=None):
     return arr
 
 
-@array_function_dispatch(_require_dispatcher, public_api=require)
-def _require_with_like(a, dtype=None, requirements=None, *, like=None):
-    pass
+_require_with_like = array_function_dispatch(
+    _require_dispatcher
+)(require)
