@@ -332,7 +332,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
 
         for (i = 0; i < nsize; i++) {
             Py_INCREF(zero);
-            NPY_COPY_PYOBJECT_PTR(optr, &zero);
+            memcpy(optr, &zero, sizeof(zero));
             optr += sizeof(zero);
         }
     }

@@ -1508,14 +1508,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else {
         PyObject *itemp, *otemp;
         PyObject *res;
-        NPY_COPY_PYOBJECT_PTR(&itemp, iptr);
-        NPY_COPY_PYOBJECT_PTR(&otemp, optr);
+        memcpy(&itemp, iptr, sizeof(itemp));
+        memcpy(&otemp, optr, sizeof(otemp));
         Py_XINCREF(itemp);
         /* call deepcopy on this argument */
         res = PyObject_CallFunctionObjArgs(deepcopy, itemp, visit, NULL);
         Py_XDECREF(itemp);
         Py_XDECREF(otemp);
-        NPY_COPY_PYOBJECT_PTR(optr, &res);
+        memcpy(optr, &res, sizeof(res));
     }
 
 }

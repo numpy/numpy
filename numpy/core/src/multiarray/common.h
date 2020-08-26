@@ -2,7 +2,6 @@
 #define _NPY_PRIVATE_COMMON_H_
 #include "structmember.h"
 #include <numpy/npy_common.h>
-#include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
 #include "npy_import.h"
