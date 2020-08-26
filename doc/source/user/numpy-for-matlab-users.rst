@@ -145,10 +145,10 @@ General Purpose Equivalents
 
      - ::
 
-         a=1
-         if a==0:
+         a = 1
+         if a == 0:
              print('a=0')
-         elif a==1:
+         elif a == 1:
              print('a=1')
 
      - create an if-else statement to check if ``a`` is 0 or 1 and print result
