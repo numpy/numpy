@@ -153,6 +153,7 @@ def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     """
@@ -361,6 +362,7 @@ def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
@@ -1042,8 +1044,3 @@ def triu_indices_from(arr, k=0):
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
     return triu_indices(arr.shape[-2], k=k, m=arr.shape[-1])
-
-
-# Add documentation for ``like=`` keyword argument
-set_array_function_like_doc(eye)
-set_array_function_like_doc(tri)

@@ -796,6 +796,7 @@ def _loadtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
@@ -1589,6 +1590,7 @@ def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
@@ -2440,8 +2442,3 @@ def recfromcsv(fname, **kwargs):
     else:
         output = output.view(np.recarray)
     return output
-
-
-# Add documentation for ``like=`` keyword argument
-set_array_function_like_doc(loadtxt)
-set_array_function_like_doc(genfromtxt)

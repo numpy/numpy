@@ -31,6 +31,7 @@ def set_array_function_like_doc(public_api):
             "${ARRAY_FUNCTION_LIKE}",
             array_function_like_doc,
         )
+    return public_api
 
 
 add_docstring(

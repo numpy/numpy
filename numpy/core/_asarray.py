@@ -20,6 +20,7 @@ def _asarray_dispatcher(a, dtype=None, order=None, *, like=None):
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def asarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an array.
@@ -106,6 +107,7 @@ def _asarray_with_like(a, dtype=None, order=None, *, like=None):
     pass
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def asanyarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
@@ -178,6 +180,7 @@ def _asarray_contiguous_fortran_dispatcher(a, dtype=None, *, like=None):
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def ascontiguousarray(a, dtype=None, *, like=None):
     """
@@ -233,6 +236,7 @@ def _ascontiguousarray_with_like(a, dtype=None, *, like=None):
     pass
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def asfortranarray(a, dtype=None, *, like=None):
     """
@@ -292,6 +296,7 @@ def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def require(a, dtype=None, requirements=None, *, like=None):
     """
@@ -410,11 +415,3 @@ def require(a, dtype=None, requirements=None, *, like=None):
 @array_function_dispatch(_require_dispatcher, public_api=require)
 def _require_with_like(a, dtype=None, requirements=None, *, like=None):
     pass
-
-
-# Add documentation for ``like=`` keyword argument
-set_array_function_like_doc(asarray)
-set_array_function_like_doc(asanyarray)
-set_array_function_like_doc(ascontiguousarray)
-set_array_function_like_doc(asfortranarray)
-set_array_function_like_doc(require)

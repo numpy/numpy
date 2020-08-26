@@ -145,6 +145,7 @@ def _ones_dispatcher(shape, dtype=None, order=None, *, like=None):
     return(like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def ones(shape, dtype=None, order='C', *, like=None):
     """
@@ -284,6 +285,7 @@ def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
     return(like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def full(shape, fill_value, dtype=None, order='C', *, like=None):
     """
@@ -1788,6 +1790,7 @@ def _fromfunction_dispatcher(function, shape, *, dtype=None, like=None, **kwargs
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
@@ -2131,6 +2134,7 @@ def _identity_dispatcher(n, dtype=None, *, like=None):
     return (like,)
 
 
+@set_array_function_like_doc
 @set_module('numpy')
 def identity(n, dtype=None, *, like=None):
     """
@@ -2533,10 +2537,3 @@ extend_all(numerictypes)
 extend_all(arrayprint)
 extend_all(_asarray)
 extend_all(_ufunc_config)
-
-
-# Add documentation for ``like=`` keyword argument
-set_array_function_like_doc(ones)
-set_array_function_like_doc(full)
-set_array_function_like_doc(fromfunction)
-set_array_function_like_doc(identity)
