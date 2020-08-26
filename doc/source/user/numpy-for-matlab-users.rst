@@ -290,7 +290,7 @@ Linear Algebra Equivalents
        values ``False`` and ``True``.
 
    * - ``find(a>0.5)``
-     - ``where(a>0.5)``
+     - ``nonzero(a>0.5)``
      - find the indices where (``a`` > 0.5)
 
    * - ``a(:,find(v>0.5))``
