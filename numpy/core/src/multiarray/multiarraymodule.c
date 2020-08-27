@@ -1956,9 +1956,9 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                     return NULL;
                 }
             }
-            if (!PyString_Check(obj)) {
+            if (!PyBytes_Check(obj)) {
                 PyErr_SetString(PyExc_TypeError,
-                        "initializing object must be a string");
+                        "initializing object must be a bytes object");
                 Py_XDECREF(tmpobj);
                 return NULL;
             }
@@ -1968,7 +1968,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 Py_XDECREF(tmpobj);
                 return NULL;
             }
-            dptr = PyString_AS_STRING(obj);
+            dptr = PyBytes_AS_STRING(obj);
         }
     }
     ret = PyArray_Scalar(dptr, typecode, NULL);

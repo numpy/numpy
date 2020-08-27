@@ -138,7 +138,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
-            return (void *)PyString_AS_STRING(scalar);
+            return (void *)PyBytes_AS_STRING(scalar);
         }
         if (_CHK(Unicode)) {
             /* Treat this the same as the NPY_UNICODE base class */
@@ -755,8 +755,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     }
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
-            destptr = PyString_AS_STRING(obj);
-            ((PyStringObject *)obj)->ob_shash = -1;
+            destptr = PyBytes_AS_STRING(obj);
+            ((PyBytesObject *)obj)->ob_shash = -1;
             memcpy(destptr, data, itemsize);
             return obj;
         }

@@ -127,26 +127,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     return 0;
 }
 
-
-/* new reference */
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *c_str)
-{
-    PyArray_Descr *descr = NULL;
-    PyObject *stringobj = PyBytes_FromString(c_str);
-
-    if (stringobj == NULL) {
-        return NULL;
-    }
-    if (PyArray_DescrConverter(stringobj, &descr) != NPY_SUCCEED) {
-        Py_DECREF(stringobj);
-        return NULL;
-    }
-    Py_DECREF(stringobj);
-    return descr;
-}
-
-
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
 {
