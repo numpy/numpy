@@ -1225,6 +1225,10 @@ class TestTrimZeros:
         assert_array_equal(arr, res)
 
 
+    def test_list_to_list(self):
+        res = trim_zeros(self.a.tolist())
+        assert isinstance(res, list)
+
 class TestExtins:
 
     def test_basic(self):

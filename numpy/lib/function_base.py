@@ -1625,63 +1625,7 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
-    try:
-        return _trim_zeros_new(filt, trim)
-    except Exception as ex:
-        # Numpy 1.20.0, 2020-07-31
-        warning = DeprecationWarning(
-            "in the future trim_zeros will require a 1-D array as input "
-            "that supports elementwise comparisons with zero"
-        )
-        warning.__cause__ = ex
 
-    # Fall back to the old implementation if an exception is encountered
-    # Note that the same exception may or may not be raised here as well
-    ret = _trim_zeros_old(filt, trim)
-    warnings.warn(warning, stacklevel=3)
-    return ret
-
-
-def _trim_zeros_new(filt, trim='fb'):
-    """Newer optimized implementation of ``trim_zeros()``."""
-    arr_any = np.asanyarray(filt)
-    arr = arr_any != 0 if arr_any.dtype != bool else arr_any
-
-    if arr is False:
-        # not all dtypes support elementwise comparisons with `0` (e.g. str);
-        # they will return `False` instead
-        raise TypeError('elementwise comparison failed; unsupported data type')
-    elif arr.ndim != 1:
-        raise ValueError('trim_zeros requires an array of exactly one dimension')
-    elif not len(arr):
-        return filt
-
-    trim_upper = trim.upper()
-    first = last = None
-
-    if 'F' in trim_upper:
-        first = arr.argmax()
-        # If `arr[first] is False` then so are all other elements
-        if not arr[first]:
-            return filt[:0]
-
-    if 'B' in trim_upper:
-        last = len(arr) - arr[::-1].argmax()
-        # If `arr[last - 1] is False` then so are all other elements
-        if not arr[last - 1]:
-            return filt[:0]
-
-    return filt[first:last]
-
-
-def _trim_zeros_old(filt, trim='fb'):
-    """
-    Older unoptimized implementation of ``trim_zeros()``.
-
-    Used as fallback in case an exception is encountered
-    in ``_trim_zeros_new()``.
-
-    """
     first = 0
     trim = trim.upper()
     if 'F' in trim:
