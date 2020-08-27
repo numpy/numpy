@@ -165,7 +165,7 @@ General Purpose Equivalents
    * - ``load data.mat``
      - ``scipy.io.loadmat('data.mat')``
      - Load MATLAB variables saved to the file ``data.mat``. (Note: if saving files from
-       MATLAB/Octave use a recent binary format. Python's ``loadmat`` will
+       MATLAB/Octave use a recent binary format, Python's ``loadmat`` will
        create a dictionary with arrays and further information)
 
    * - ``ode45``
