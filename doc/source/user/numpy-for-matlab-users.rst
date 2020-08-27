@@ -480,7 +480,7 @@ Linear Algebra Equivalents
      - singular value decomposition of ``a``
 
    * - ``rank(a)``
-     - ``matrix_rank(a)``
+     - ``linalg.matrix_rank(a)``
      - return the rank of 2D array, ``a``
 
    * - ``c=chol(a)`` where ``a==c'*c``
