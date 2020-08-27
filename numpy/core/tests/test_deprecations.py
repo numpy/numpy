@@ -707,24 +707,3 @@ class TestRaggedArray(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
         self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
 
-
-class TestTrimZeros(_DeprecationTestCase):
-    # Numpy 1.20.0, 2020-07-31
-    @pytest.mark.parametrize(
-        "arr,exc_type",
-        [(np.random.rand(10, 10).tolist(), ValueError),
-         (np.random.rand(10).astype(str), FutureWarning)]
-    )
-    def test_deprecated(self, arr, exc_type):
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', DeprecationWarning)
-            try:
-                np.trim_zeros(arr)
-            except DeprecationWarning as ex:
-                ex_cause = ex.__cause__
-                assert_(isinstance(ex_cause, exc_type))
-            else:
-                raise AssertionError("No error raised during function call")
-
-        out = np.lib.function_base._trim_zeros_old(arr)
-        assert_array_equal(arr, out)
