@@ -524,15 +524,28 @@ def array(
     order: Optional[str] = ...,
     subok: bool = ...,
     ndmin: int = ...,
+    like: ArrayLike = ...,
 ) -> ndarray: ...
 def zeros(
-    shape: _ShapeLike, dtype: DtypeLike = ..., order: Optional[str] = ...
+    shape: _ShapeLike,
+    dtype: DtypeLike = ...,
+    order: Optional[str] = ...,
+    *,
+    like: ArrayLike = ...,
 ) -> ndarray: ...
 def ones(
-    shape: _ShapeLike, dtype: DtypeLike = ..., order: Optional[str] = ...
+    shape: _ShapeLike,
+    dtype: DtypeLike = ...,
+    order: Optional[str] = ...,
+    *,
+    like: ArrayLike = ...,
 ) -> ndarray: ...
 def empty(
-    shape: _ShapeLike, dtype: DtypeLike = ..., order: Optional[str] = ...
+    shape: _ShapeLike,
+    dtype: DtypeLike = ...,
+    order: Optional[str] = ...,
+    *,
+    like: ArrayLike = ...,
 ) -> ndarray: ...
 def zeros_like(
     a: ArrayLike,
@@ -556,7 +569,12 @@ def empty_like(
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
 def full(
-    shape: _ShapeLike, fill_value: Any, dtype: DtypeLike = ..., order: str = ...
+    shape: _ShapeLike,
+    fill_value: Any,
+    dtype: DtypeLike = ...,
+    order: str = ...,
+    *,
+    like: ArrayLike = ...,
 ) -> ndarray: ...
 def full_like(
     a: ArrayLike,
@@ -604,11 +622,17 @@ def cross(
 def indices(
     dimensions: Sequence[int], dtype: dtype = ..., sparse: bool = ...
 ) -> Union[ndarray, Tuple[ndarray, ...]]: ...
-def fromfunction(function: Callable, shape: Tuple[int, int], **kwargs) -> Any: ...
+def fromfunction(
+    function: Callable,
+    shape: Tuple[int, int],
+    *,
+    like: ArrayLike = ...,
+    **kwargs,
+) -> Any: ...
 def isscalar(element: Any) -> bool: ...
 def binary_repr(num: int, width: Optional[int] = ...) -> str: ...
 def base_repr(number: int, base: int = ..., padding: int = ...) -> str: ...
-def identity(n: int, dtype: DtypeLike = ...) -> ndarray: ...
+def identity(n: int, dtype: DtypeLike = ..., *, like: ArrayLike = ...) -> ndarray: ...
 def allclose(
     a: ArrayLike,
     b: ArrayLike,

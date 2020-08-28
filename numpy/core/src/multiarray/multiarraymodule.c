@@ -1582,19 +1582,28 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     npy_bool subok = NPY_FALSE;
     npy_bool copy = NPY_TRUE;
     int ndmin = 0, nd;
+    PyObject* like;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     int flags = 0;
 
-    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
+    PyObject* array_function_result = NULL;
+
+    static char *kwd[] = {"object", "dtype", "copy", "order", "subok",
+                          "ndmin", "like", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_Format(PyExc_TypeError,
                      "array() takes from 1 to 2 positional arguments but "
                      "%zd were given", PyTuple_GET_SIZE(args));
         return NULL;
+    }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "array", args, kws);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
     }
 
     /* super-fast path for ndarray argument calls */
@@ -1674,13 +1683,14 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i$O:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
-                &ndmin)) {
+                &ndmin,
+                &like)) {
         goto clean_type;
     }
 
@@ -1817,18 +1827,27 @@ static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"shape", "dtype", "order", NULL};
+    static char *kwlist[] = {"shape", "dtype", "order", "like", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
+    PyObject *like = NULL;
     npy_bool is_f_order;
+    PyObject *array_function_result = NULL;
     PyArrayObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:empty", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&$O:empty", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &like)) {
         goto fail;
+    }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "empty", args, kwds);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
     }
 
     switch (order) {
@@ -1984,18 +2003,27 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape", "dtype", "order", NULL};
+    static char *kwlist[] = {"shape", "dtype", "order", "like", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
+    PyObject *like = NULL;
     npy_bool is_f_order = NPY_FALSE;
+    PyObject *array_function_result = NULL;
     PyArrayObject *ret = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:zeros", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&$O:zeros", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &like)) {
         goto fail;
+    }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "zeros", args, kwds);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
     }
 
     switch (order) {
@@ -2050,14 +2078,22 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     Py_ssize_t nin = -1;
     char *sep = NULL;
     Py_ssize_t s;
-    static char *kwlist[] = {"string", "dtype", "count", "sep", NULL};
+    static char *kwlist[] = {"string", "dtype", "count", "sep", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *descr = NULL;
+    PyObject *array_function_result = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "s#|O&" NPY_SSIZE_T_PYFMT "s:fromstring", kwlist,
-                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep)) {
+                "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
+                &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like)) {
         Py_XDECREF(descr);
         return NULL;
+    }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "fromstring", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
     }
 
     /* binary mode, condition copied from PyArray_FromString */
@@ -2082,17 +2118,25 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", NULL};
+    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *type = NULL;
+    PyObject *array_function_result = NULL;
     int own;
     npy_off_t orig_pos = 0, offset = 0;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT ":fromfile", kwlist,
-                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset)) {
+                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT "$O:fromfile", kwlist,
+                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset, &like)) {
         Py_XDECREF(type);
         return NULL;
+    }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "fromfile", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
     }
 
     file = NpyPath_PathlikeToFspath(file);
@@ -2161,15 +2205,24 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *iter;
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"iter", "dtype", "count", NULL};
+    static char *kwlist[] = {"iter", "dtype", "count", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *descr = NULL;
+    PyObject *array_function_result = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist,
-                &iter, PyArray_DescrConverter, &descr, &nin)) {
+                "OO&|" NPY_SSIZE_T_PYFMT "$O:fromiter", kwlist,
+                &iter, PyArray_DescrConverter, &descr, &nin, &like)) {
         Py_XDECREF(descr);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "fromiter", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
+    }
+
     return PyArray_FromIter(iter, descr, (npy_intp)nin);
 }
 
@@ -2178,15 +2231,24 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 {
     PyObject *obj = NULL;
     Py_ssize_t nin = -1, offset = 0;
-    static char *kwlist[] = {"buffer", "dtype", "count", "offset", NULL};
+    static char *kwlist[] = {"buffer", "dtype", "count", "offset", "like", NULL};
+    PyObject *like = NULL;
     PyArray_Descr *type = NULL;
+    PyObject *array_function_result = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT ":frombuffer", kwlist,
-                &obj, PyArray_DescrConverter, &type, &nin, &offset)) {
+                "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT "$O:frombuffer", kwlist,
+                &obj, PyArray_DescrConverter, &type, &nin, &offset, &like)) {
         Py_XDECREF(type);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "frombuffer", args, keywds);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
+    }
+
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
@@ -2766,17 +2828,27 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 static PyObject *
 array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
-    static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
+    PyObject *like = NULL;
+    PyObject *array_function_result = NULL;
+    static char *kwd[] = {"start", "stop", "step", "dtype", "like", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&$O:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
-                PyArray_DescrConverter2, &typecode)) {
+                PyArray_DescrConverter2, &typecode,
+                &like)) {
         Py_XDECREF(typecode);
         return NULL;
     }
+
+    array_function_result = array_implement_c_array_function_creation(
+            "arange", args, kws);
+    if (array_function_result != Py_NotImplemented) {
+        return array_function_result;
+    }
+
     range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
     Py_XDECREF(typecode);
 
@@ -4331,6 +4403,8 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_like = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 
 static int
 intern_strings(void)
@@ -4347,12 +4421,15 @@ intern_strings(void)
     npy_ma_str_ndmin = PyUnicode_InternFromString("ndmin");
     npy_ma_str_axis1 = PyUnicode_InternFromString("axis1");
     npy_ma_str_axis2 = PyUnicode_InternFromString("axis2");
+    npy_ma_str_like = PyUnicode_InternFromString("like");
+    npy_ma_str_numpy = PyUnicode_InternFromString("numpy");
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
            npy_ma_str_ufunc && npy_ma_str_implementation &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
+           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2 &&
+           npy_ma_str_like && npy_ma_str_numpy;
 }
 
 static struct PyModuleDef moduledef = {

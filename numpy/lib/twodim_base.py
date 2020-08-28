@@ -8,7 +8,7 @@ from numpy.core.numeric import (
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
-from numpy.core.overrides import set_module
+from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
 
@@ -149,8 +149,13 @@ def flipud(m):
     return m[::-1, ...]
 
 
+def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def eye(N, M=None, k=0, dtype=float, order='C'):
+def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -171,6 +176,9 @@ def eye(N, M=None, k=0, dtype=float, order='C'):
         column-major (Fortran-style) order in memory.
 
         .. versionadded:: 1.14.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -194,6 +202,8 @@ def eye(N, M=None, k=0, dtype=float, order='C'):
            [0.,  0.,  0.]])
 
     """
+    if like is not None:
+        return _eye_with_like(N, M=M, k=k, dtype=dtype, order=order, like=like)
     if M is None:
         M = N
     m = zeros((N, M), dtype=dtype, order=order)
@@ -205,6 +215,11 @@ def eye(N, M=None, k=0, dtype=float, order='C'):
         i = (-k) * M
     m[:M-k].flat[i::M+1] = 1
     return m
+
+
+_eye_with_like = array_function_dispatch(
+    _eye_dispatcher
+)(eye)
 
 
 def _diag_dispatcher(v, k=None):
@@ -343,8 +358,13 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
+def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def tri(N, M=None, k=0, dtype=float):
+def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
 
@@ -361,6 +381,9 @@ def tri(N, M=None, k=0, dtype=float):
         and `k` > 0 is above.  The default is 0.
     dtype : dtype, optional
         Data type of the returned array.  The default is float.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -381,6 +404,9 @@ def tri(N, M=None, k=0, dtype=float):
            [1.,  1.,  0.,  0.,  0.]])
 
     """
+    if like is not None:
+        return _tri_with_like(N, M=M, k=k, dtype=dtype, like=like)
+
     if M is None:
         M = N
 
@@ -391,6 +417,11 @@ def tri(N, M=None, k=0, dtype=float):
     m = m.astype(dtype, copy=False)
 
     return m
+
+
+_tri_with_like = array_function_dispatch(
+    _tri_dispatcher
+)(tri)
 
 
 def _trilu_dispatcher(m, k=None):

@@ -12,6 +12,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 from numpy.core import numerictypes as _numerictypes
 from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
+from numpy.core.overrides import array_function_like_doc
 
 ###############################################################################
 #
@@ -786,7 +787,8 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0)
+    array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
+          like=None)
 
     Create an array.
 
@@ -829,6 +831,9 @@ add_newdoc('numpy.core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
         needed to meet this requirement.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -895,11 +900,14 @@ add_newdoc('numpy.core.multiarray', 'array',
     matrix([[1, 2],
             [3, 4]])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'empty',
     """
-    empty(shape, dtype=float, order='C')
+    empty(shape, dtype=float, order='C', *, like=None)
 
     Return a new array of given shape and type, without initializing entries.
 
@@ -914,6 +922,9 @@ add_newdoc('numpy.core.multiarray', 'empty',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -946,7 +957,10 @@ add_newdoc('numpy.core.multiarray', 'empty',
     array([[-1073741821, -1067949133],
            [  496041986,    19249760]])                     #uninitialized
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'scalar',
     """
@@ -964,7 +978,7 @@ add_newdoc('numpy.core.multiarray', 'scalar',
 
 add_newdoc('numpy.core.multiarray', 'zeros',
     """
-    zeros(shape, dtype=float, order='C')
+    zeros(shape, dtype=float, order='C', *, like=None)
 
     Return a new array of given shape and type, filled with zeros.
 
@@ -979,6 +993,9 @@ add_newdoc('numpy.core.multiarray', 'zeros',
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1013,7 +1030,10 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     array([(0, 0), (0, 0)],
           dtype=[('x', '<i4'), ('y', '<i4')])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
@@ -1025,7 +1045,7 @@ add_newdoc('numpy.core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy.core.multiarray', 'fromstring',
     """
-    fromstring(string, dtype=float, count=-1, sep='')
+    fromstring(string, dtype=float, count=-1, sep='', *, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1058,6 +1078,9 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             text, the binary mode of `fromstring` will first encode it into
             bytes using either utf-8 (python 3) or the default encoding
             (python 2), neither of which produce sane results.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1081,7 +1104,10 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     >>> np.fromstring('1, 2', dtype=int, sep=',')
     array([1, 2])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     """
@@ -1122,7 +1148,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
-    fromiter(iterable, dtype, count=-1)
+    fromiter(iterable, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
 
@@ -1135,6 +1161,9 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1152,11 +1181,14 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'fromfile',
     """
-    fromfile(file, dtype=float, count=-1, sep='', offset=0)
+    fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
 
@@ -1195,6 +1227,9 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Only permitted for binary files.
 
         .. versionadded:: 1.17.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     See also
     --------
@@ -1241,11 +1276,14 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
     array([((10, 0), 98.25)],
           dtype=[('time', [('min', '<i8'), ('sec', '<i8')]), ('temp', '<f8')])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', 'frombuffer',
     """
-    frombuffer(buffer, dtype=float, count=-1, offset=0)
+    frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
 
@@ -1259,6 +1297,9 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
         Start reading the buffer from this offset (in bytes); default: 0.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Notes
     -----
@@ -1283,7 +1324,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     >>> np.frombuffer(b'\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
     array([1, 2, 3], dtype=uint8)
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core', 'fastCopyAndTranspose',
     """_fastCopyAndTranspose(a)""")
@@ -1293,7 +1337,7 @@ add_newdoc('numpy.core.multiarray', 'correlate',
 
 add_newdoc('numpy.core.multiarray', 'arange',
     """
-    arange([start,] stop[, step,], dtype=None)
+    arange([start,] stop[, step,], dtype=None, *, like=None)
 
     Return evenly spaced values within a given interval.
 
@@ -1322,6 +1366,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1350,7 +1397,10 @@ add_newdoc('numpy.core.multiarray', 'arange',
     >>> np.arange(3,7,2)
     array([3, 5])
 
-    """)
+    """.replace(
+        "${ARRAY_FUNCTION_LIKE}",
+        array_function_like_doc,
+    ))
 
 add_newdoc('numpy.core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()

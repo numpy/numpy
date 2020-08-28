@@ -14,7 +14,7 @@ from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
-from numpy.core.overrides import set_module
+from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -790,10 +790,17 @@ def _getconv(dtype):
 _loadtxt_chunksize = 50000
 
 
+def _loadtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+                        converters=None, skiprows=None, usecols=None, unpack=None,
+                        ndmin=None, encoding=None, max_rows=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None):
+            ndmin=0, encoding='bytes', max_rows=None, *, like=None):
     r"""
     Load data from a text file.
 
@@ -860,6 +867,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         is to read all the lines.
 
         .. versionadded:: 1.16.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -916,6 +926,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
            [ 19.22,  64.31],
            [-17.57,  63.94]])
     """
+
+    if like is not None:
+        return _loadtxt_with_like(
+            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            converters=converters, skiprows=skiprows, usecols=usecols,
+            unpack=unpack, ndmin=ndmin, encoding=encoding,
+            max_rows=max_rows, like=like
+        )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Nested functions used by loadtxt.
@@ -1199,6 +1217,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return X.T
     else:
         return X
+
+
+_loadtxt_with_like = array_function_dispatch(
+    _loadtxt_dispatcher
+)(loadtxt)
 
 
 def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
@@ -1554,6 +1577,18 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
+def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+                           skip_header=None, skip_footer=None, converters=None,
+                           missing_values=None, filling_values=None, usecols=None,
+                           names=None, excludelist=None, deletechars=None,
+                           replace_space=None, autostrip=None, case_sensitive=None,
+                           defaultfmt=None, unpack=None, usemask=None, loose=None,
+                           invalid_raise=None, max_rows=None, encoding=None, *,
+                           like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
@@ -1562,7 +1597,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes'):
+               invalid_raise=True, max_rows=None, encoding='bytes', *,
+               like=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1659,6 +1695,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to None the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1737,6 +1776,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
       dtype=[('f0', 'S12'), ('f1', 'S12')])
 
     """
+
+    if like is not None:
+        return _genfromtxt_with_like(
+            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            skip_header=skip_header, skip_footer=skip_footer,
+            converters=converters, missing_values=missing_values,
+            filling_values=filling_values, usecols=usecols, names=names,
+            excludelist=excludelist, deletechars=deletechars,
+            replace_space=replace_space, autostrip=autostrip,
+            case_sensitive=case_sensitive, defaultfmt=defaultfmt,
+            unpack=unpack, usemask=usemask, loose=loose,
+            invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
+            like=like
+        )
+
     if max_rows is not None:
         if skip_footer:
             raise ValueError(
@@ -2248,6 +2302,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if unpack:
         return output.squeeze().T
     return output.squeeze()
+
+
+_genfromtxt_with_like = array_function_dispatch(
+    _genfromtxt_dispatcher
+)(genfromtxt)
 
 
 def ndfromtxt(fname, **kwargs):
