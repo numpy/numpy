@@ -1717,6 +1717,10 @@ parse_datetime_unit_from_string(char const *str, Py_ssize_t len, char const *met
                 return NPY_FR_as;
         }
     }
+    else if (len == 3 && !strncmp(str, "\xce\xbcs", 3)) {
+        /* greek small letter mu, utf8-encoded */
+        return NPY_FR_us;
+    }
     else if (len == 7 && !strncmp(str, "generic", 7)) {
         return NPY_FR_GENERIC;
     }
