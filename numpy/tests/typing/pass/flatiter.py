@@ -3,7 +3,7 @@ import numpy as np
 a = np.random.rand(5).flat
 
 a.base
-a.copy
+a.copy()
 a.coords
 a.index
 iter(a)

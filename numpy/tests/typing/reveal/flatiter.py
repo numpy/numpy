@@ -3,7 +3,7 @@ import numpy as np
 a: "np.flatiter[np.ndarray]"
 
 reveal_type(a.base)  # E: numpy.ndarray*
-reveal_type(a.copy)  # E: numpy.ndarray*
+reveal_type(a.copy())  # E: numpy.ndarray*
 reveal_type(a.coords)  # E: tuple[builtins.int]
 reveal_type(a.index)  # E: int
 reveal_type(iter(a))  # E: Iterator[numpy.generic*]
