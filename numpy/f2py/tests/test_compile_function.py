@@ -68,19 +68,15 @@ def test_f2py_init_compile(extra_args):
         # check for compile success return value
         assert_equal(ret_val, 0)
 
-        # we are not currently able to import the Python-Fortran
-        # interface module on Windows / Appveyor, even though we do get
-        # successful compilation on that platform with Python 3.x
-        if sys.platform != 'win32':
-            # check for sensible result of Fortran function; that means
-            # we can import the module name in Python and retrieve the
-            # result of the sum operation
-            return_check = import_module(modname)
-            calc_result = return_check.foo()
-            assert_equal(calc_result, 15)
-            # Removal from sys.modules, is not as such necessary. Even with
-            # removal, the module (dict) stays alive.
-            del sys.modules[modname]
+        # check for sensible result of Fortran function; that means
+        # we can import the module name in Python and retrieve the
+        # result of the sum operation
+        return_check = import_module(modname)
+        calc_result = return_check.foo()
+        assert_equal(calc_result, 15)
+        # Removal from sys.modules, is not as such necessary. Even with
+        # removal, the module (dict) stays alive.
+        del sys.modules[modname]
 
 
 def test_f2py_init_compile_failure():

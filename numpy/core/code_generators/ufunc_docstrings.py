@@ -1049,7 +1049,7 @@ add_newdoc('numpy.core.umath', 'divide',
     Behavior on division by zero can be changed using ``seterr``.
 
     In Python 2, when both ``x1`` and ``x2`` are of an integer type,
-    ``divide`` will behave like ``floor_divide``. In Python 3, it behaves
+    ``divide`` behaved like ``floor_divide``. In Python 3, it behaves
     like ``true_divide``.
 
     Examples
