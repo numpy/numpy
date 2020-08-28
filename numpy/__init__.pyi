@@ -4,7 +4,7 @@ import datetime as dt
 from abc import abstractmethod
 
 from numpy.core._internal import _ctypes
-from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike, _SupportsArray
+from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
 
 from typing import (
     Any,
@@ -148,7 +148,7 @@ _ArrayLikeInt = Union[
     integer,
     Sequence[Union[int, integer]],
     Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
-    _SupportsArray
+    ndarray
 ]
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
