@@ -2890,17 +2890,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *old_metadata, *errmsg;
         PyArray_DatetimeMetaData temp_dt_data;
-
-        if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
-            errmsg = PyUnicode_FromString("Invalid datetime dtype (metadata, c_metadata): ");
-            PyUString_ConcatAndDel(&errmsg, PyObject_Repr(metadata));
-            PyErr_SetObject(PyExc_ValueError, errmsg);
-            Py_DECREF(errmsg);
-            return NULL;
-        }
-
         if (convert_datetime_metadata_tuple_to_datetime_metadata(
                                     PyTuple_GET_ITEM(metadata, 1),
                                     &temp_dt_data,
@@ -2908,7 +2898,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             return NULL;
         }
 
-        old_metadata = self->metadata;
+        PyObject *old_metadata = self->metadata;
         self->metadata = PyTuple_GET_ITEM(metadata, 0);
         memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
                (char *) &temp_dt_data,
