@@ -2900,8 +2900,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
         PyObject *old_metadata = self->metadata;
         self->metadata = PyTuple_GET_ITEM(metadata, 0);
-        memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
-               (char *) &temp_dt_data,
+        memcpy(&((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
+               &temp_dt_data,
                sizeof(PyArray_DatetimeMetaData));
         Py_XINCREF(self->metadata);
         Py_XDECREF(old_metadata);
