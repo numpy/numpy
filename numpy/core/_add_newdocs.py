@@ -5491,6 +5491,39 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
+    """
+    Either ``None`` or a readonly dictionary of metadata (mappingproxy).
+
+    The metadata field can be set using any dictionary at data-type
+    creation. Note that whether or not operations on arrays with metadata
+    attached to their datatypes is currently not well defined and should
+    not be relied on.
+
+    Examples
+    --------
+
+    >>> dt = np.dtype(float, metadata={"key": "value"})
+    >>> dt.metadata["key"]
+    'value'
+    >>> arr = np.array([1, 2, 3], dtype=dt)
+    >>> arr.dtype.metadata
+    mappingproxy({'key': 'value'})
+
+    Some operations may preserve metadata (identical data types):
+
+    >>> (arr + arr).dtype.metadata
+    mappingproxy({'key': 'value'})
+
+    But for example, adding two arrays with different metadata does not
+    propagate either one:
+
+    >>> dt2 = np.dtype(float, metadata={"key2": "value2"})
+    >>> arr2 = np.array([3, 2, 1], dtype=dt2)
+    >>> (arr + arr2).dtype.metadata is None
+    True  # The metadata field is cleared so None is returned
+    """))
+
 add_newdoc('numpy.core.multiarray', 'dtype', ('name',
     """
     A bit-width name for this data-type.
