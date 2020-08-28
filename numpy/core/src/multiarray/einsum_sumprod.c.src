@@ -8,13 +8,6 @@
  * See LICENSE.txt for the license.
  */
  
-/**
- * @targets $maxopt baseline
- * SSE2 (AVX2 FMA3) AVX512F
- * NEON NEON_VFPV4
- * VSX VSX2
- */
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/halffloat.h>
@@ -1481,8 +1474,9 @@ static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
 /**end repeat**/
 }; /* End of _unnspecialized_table */
 
-NPY_NO_EXPORT sum_of_products_fn NPY_CPU_DISPATCH_CURFX(einsum_get_sum_of_products_function)
-(int nop, int type_num, npy_intp itemsize,npy_intp const *fixed_strides)
+NPY_VISIBILITY_HIDDEN sum_of_products_fn
+get_sum_of_products_function(int nop, int type_num,
+                             npy_intp itemsize, npy_intp const *fixed_strides)
 {
     int iop;
 
