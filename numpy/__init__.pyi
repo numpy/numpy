@@ -4,7 +4,7 @@ import datetime as dt
 from abc import abstractmethod
 
 from numpy.core._internal import _ctypes
-from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
+from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike, _SupportsArray
 
 from typing import (
     Any,
@@ -143,6 +143,14 @@ class _flagsobj:
     def __getitem__(self, key: str) -> bool: ...
     def __setitem__(self, key: str, value: bool) -> None: ...
 
+_ArrayLikeInt = Union[
+    int,
+    integer,
+    Sequence[Union[int, integer]],
+    Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
+    _SupportsArray
+]
+
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
 
 class flatiter(Generic[_ArraySelf]):
@@ -155,6 +163,14 @@ class flatiter(Generic[_ArraySelf]):
     def copy(self) -> _ArraySelf: ...
     def __iter__(self: _FlatIterSelf) -> _FlatIterSelf: ...
     def __next__(self) -> generic: ...
+    def __len__(self) -> int: ...
+    @overload
+    def __getitem__(self, key: Union[int, integer]) -> generic: ...
+    @overload
+    def __getitem__(
+        self, key: Union[_ArrayLikeInt, slice, ellipsis],
+    ) -> _ArraySelf: ...
+    def __array__(self, __dtype: DtypeLike = ...) -> ndarray: ...
 
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
