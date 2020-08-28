@@ -143,7 +143,7 @@ _wrapped_func_source = textwrap.dedent("""
 
 
 def array_function_dispatch(dispatcher, module=None, verify=True,
-                            docs_from_dispatcher=False, public_api=None):
+                            docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
 
     See NEP-18 for example usage.
@@ -169,13 +169,6 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         If True, copy docs from the dispatcher function onto the dispatched
         function, rather than from the implementation. This is useful for
         functions defined in C, which otherwise don't have docstrings.
-    public_api: callable or None
-        If function is callable, it will replace the function passed as
-        implementation. This is useful when the function being decorated
-        is just a helper and not the de-facto implementation with the
-        expected signature, particularly its name. Currently only supported
-        for the like= parameter to avoid decorating the actual implementation
-        due to performance reasons.
 
     Returns
     -------
@@ -192,9 +185,6 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         return decorator
 
     def decorator(implementation):
-        if public_api is not None:
-            implementation = public_api
-
         if verify:
             verify_matching_signatures(implementation, dispatcher)
 
@@ -218,26 +208,24 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         }
         exec(source_object, scope)
 
-        _public_api = scope[implementation.__name__]
+        public_api = scope[implementation.__name__]
 
         if module is not None:
-            _public_api.__module__ = module
+            public_api.__module__ = module
 
-        _public_api._implementation = implementation
+        public_api._implementation = implementation
 
-        return _public_api
+        return public_api
 
     return decorator
 
 
 def array_function_from_dispatcher(
-        implementation, module=None, verify=True, docs_from_dispatcher=True,
-        public_api=None):
+        implementation, module=None, verify=True, docs_from_dispatcher=True):
     """Like array_function_dispatcher, but with function arguments flipped."""
 
     def decorator(dispatcher):
         return array_function_dispatch(
             dispatcher, module, verify=verify,
-            docs_from_dispatcher=docs_from_dispatcher,
-            public_api=public_api)(implementation)
+            docs_from_dispatcher=docs_from_dispatcher)(implementation)
     return decorator
