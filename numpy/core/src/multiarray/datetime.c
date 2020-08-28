@@ -1764,22 +1764,16 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                                         PyArray_DatetimeMetaData *out_meta,
                                         npy_bool from_pickle)
 {
-    char *basestr = NULL;
-    Py_ssize_t len = 0, tuple_size;
     int den = 1;
-    PyObject *unit_str = NULL;
 
     if (!PyTuple_Check(tuple)) {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromString("Require tuple for tuple to NumPy "
-                                      "datetime metadata conversion, not ");
-        PyUString_ConcatAndDel(&errmsg, PyObject_Repr(tuple));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyErr_Format(PyExc_TypeError,
+                "Require tuple for tuple to NumPy "
+                "datetime metadata conversion, not %R", tuple);
         return -1;
     }
 
-    tuple_size = PyTuple_GET_SIZE(tuple);
+    Py_ssize_t tuple_size = PyTuple_GET_SIZE(tuple);
     if (tuple_size < 2 || tuple_size > 4) {
         PyErr_SetString(PyExc_TypeError,
                         "Require tuple of size 2 to 4 for "
@@ -1787,7 +1781,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         return -1;
     }
 
-    unit_str = PyTuple_GET_ITEM(tuple, 0);
+    PyObject *unit_str = PyTuple_GET_ITEM(tuple, 0);
     Py_INCREF(unit_str);
     if (PyUnicode_Check(unit_str)) {
         /* Allow unicode format strings: convert to bytes */
@@ -1798,6 +1792,9 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         }
         unit_str = tmp;
     }
+
+    Py_ssize_t len;
+    char *basestr;
     if (PyBytes_AsStringAndSize(unit_str, &basestr, &len) < 0) {
         Py_DECREF(unit_str);
         return -1;
@@ -1837,11 +1834,10 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         if (from_pickle) {
             /* if (event == 1) */
             PyObject *one = PyLong_FromLong(1);
-            int equal_one;
             if (one == NULL) {
                 return -1;
             }
-            equal_one = PyObject_RichCompareBool(event, one, Py_EQ);
+            int equal_one = PyObject_RichCompareBool(event, one, Py_EQ);
             Py_DECREF(one);
             if (equal_one == -1) {
                 return -1;
