@@ -1,4 +1,3 @@
-#include "Python.h"
 #include <stdint.h>
 #include "numpy/random/distributions.h"
 #include "logfactorial.h"
