@@ -5496,9 +5496,9 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     Either ``None`` or a readonly dictionary of metadata (mappingproxy).
 
     The metadata field can be set using any dictionary at data-type
-    creation. Note that whether or not operations on arrays with metadata
-    attached to their datatypes is currently not well defined and should
-    not be relied on.
+    creation. Note that whether operations on arrays with metadata
+    attached to their datatypes propagate that metadata is currently
+    not well defined and should not be relied on.
 
     Examples
     --------
