@@ -3273,7 +3273,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """
-    arr.newbyteorder(new_order='S')
+    arr.newbyteorder(new_order='S', /)
 
     Return the array with the same data viewed with a different byte order.
 
@@ -5697,7 +5697,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('type',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     """
-    newbyteorder(new_order='S')
+    newbyteorder(new_order='S', /)
 
     Return a new dtype with a different byte order.
 
@@ -6073,7 +6073,7 @@ add_newdoc('numpy.core.numerictypes', 'generic',
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     """
-    newbyteorder(new_order='S')
+    newbyteorder(new_order='S', /)
 
     Return a new `dtype` with a different byte order.
 

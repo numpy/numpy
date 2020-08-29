@@ -48,6 +48,7 @@ else:
 def __getattr__(name: str) -> Any: ...
 
 _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
+_ByteOrder = Literal["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
 class dtype:
     names: Optional[Tuple[str, ...]]
@@ -103,7 +104,7 @@ class dtype:
     def ndim(self) -> int: ...
     @property
     def subdtype(self) -> Optional[Tuple[dtype, _Shape]]: ...
-    def newbyteorder(self, new_order: str = ...) -> dtype: ...
+    def newbyteorder(self, __new_order: _ByteOrder = ...) -> dtype: ...
     # Leave str and type for end to avoid having to use `builtins.str`
     # everywhere. See https://github.com/python/mypy/issues/3775
     @property
@@ -156,6 +157,10 @@ class flatiter(Generic[_ArraySelf]):
     def __iter__(self: _FlatIterSelf) -> _FlatIterSelf: ...
     def __next__(self) -> generic: ...
 
+_OrderKACF = Optional[Literal["K", "A", "C", "F"]]
+_OrderACF = Optional[Literal["A", "C", "F"]]
+_OrderCF = Optional[Literal["C", "F"]]
+
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
 class _ArrayOrScalarCommon(
@@ -197,8 +202,8 @@ class _ArrayOrScalarCommon(
         def __bytes__(self) -> bytes: ...
     def __str__(self) -> str: ...
     def __repr__(self) -> str: ...
-    def __copy__(self: _ArraySelf, order: str = ...) -> _ArraySelf: ...
-    def __deepcopy__(self: _ArraySelf, memo: dict) -> _ArraySelf: ...
+    def __copy__(self: _ArraySelf) -> _ArraySelf: ...
+    def __deepcopy__(self: _ArraySelf, __memo: Optional[dict] = ...) -> _ArraySelf: ...
     def __lt__(self, other): ...
     def __le__(self, other): ...
     def __eq__(self, other): ...
@@ -259,6 +264,7 @@ class _ArrayOrScalarCommon(
     def __getattr__(self, name) -> Any: ...
 
 _BufferType = Union[ndarray, bytes, bytearray, memoryview]
+_Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
 
 class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     @property
@@ -276,7 +282,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
         buffer: _BufferType = ...,
         offset: int = ...,
         strides: _ShapeLike = ...,
-        order: Optional[str] = ...,
+        order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
     @property
     def dtype(self) -> _Dtype: ...
@@ -302,7 +308,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def itemset(self, __value: Any) -> None: ...
     @overload
     def itemset(self, __item: _ShapeLike, __value: Any) -> None: ...
-    def tobytes(self, order: Optional[str] = ...) -> bytes: ...
+    def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     def tofile(
         self, fid: Union[IO[bytes], str], sep: str = ..., format: str = ...
     ) -> None: ...
@@ -311,13 +317,13 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def astype(
         self: _ArraySelf,
         dtype: DtypeLike,
-        order: str = ...,
-        casting: str = ...,
+        order: _OrderKACF = ...,
+        casting: _Casting = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> _ArraySelf: ...
     def byteswap(self: _ArraySelf, inplace: bool = ...) -> _ArraySelf: ...
-    def copy(self: _ArraySelf, order: str = ...) -> _ArraySelf: ...
+    def copy(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     @overload
     def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
     @overload
@@ -336,10 +342,12 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     # Shape manipulation
     @overload
     def reshape(
-        self: _ArraySelf, shape: Sequence[int], *, order: str = ...
+        self: _ArraySelf, shape: Sequence[int], *, order: _OrderACF = ...
     ) -> _ArraySelf: ...
     @overload
-    def reshape(self: _ArraySelf, *shape: int, order: str = ...) -> _ArraySelf: ...
+    def reshape(
+        self: _ArraySelf, *shape: int, order: _OrderACF = ...
+    ) -> _ArraySelf: ...
     @overload
     def resize(self, new_shape: Sequence[int], *, refcheck: bool = ...) -> None: ...
     @overload
@@ -349,8 +357,8 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     @overload
     def transpose(self: _ArraySelf, *axes: int) -> _ArraySelf: ...
     def swapaxes(self: _ArraySelf, axis1: int, axis2: int) -> _ArraySelf: ...
-    def flatten(self: _ArraySelf, order: str = ...) -> _ArraySelf: ...
-    def ravel(self: _ArraySelf, order: str = ...) -> _ArraySelf: ...
+    def flatten(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
+    def ravel(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def squeeze(
         self: _ArraySelf, axis: Union[int, Tuple[int, ...]] = ...
     ) -> _ArraySelf: ...
@@ -521,7 +529,7 @@ def array(
     dtype: DtypeLike = ...,
     *,
     copy: bool = ...,
-    order: Optional[str] = ...,
+    order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
     like: ArrayLike = ...,
@@ -529,42 +537,42 @@ def array(
 def zeros(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...,
+    order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def ones(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...,
+    order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def empty(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...,
+    order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def zeros_like(
     a: ArrayLike,
     dtype: DtypeLike = ...,
-    order: str = ...,
+    order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[Union[int, Sequence[int]]] = ...,
 ) -> ndarray: ...
 def ones_like(
     a: ArrayLike,
     dtype: DtypeLike = ...,
-    order: str = ...,
+    order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
 def empty_like(
     a: ArrayLike,
     dtype: DtypeLike = ...,
-    order: str = ...,
+    order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
@@ -572,7 +580,7 @@ def full(
     shape: _ShapeLike,
     fill_value: Any,
     dtype: DtypeLike = ...,
-    order: str = ...,
+    order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
@@ -580,7 +588,7 @@ def full_like(
     a: ArrayLike,
     fill_value: Any,
     dtype: DtypeLike = ...,
-    order: str = ...,
+    order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
@@ -590,8 +598,11 @@ def count_nonzero(
 def isfortran(a: ndarray) -> bool: ...
 def argwhere(a: ArrayLike) -> ndarray: ...
 def flatnonzero(a: ArrayLike) -> ndarray: ...
-def correlate(a: ArrayLike, v: ArrayLike, mode: str = ...) -> ndarray: ...
-def convolve(a: ArrayLike, v: ArrayLike, mode: str = ...) -> ndarray: ...
+
+_CorrelateMode = Literal["valid", "same", "full"]
+
+def correlate(a: ArrayLike, v: ArrayLike, mode: _CorrelateMode = ...) -> ndarray: ...
+def convolve(a: ArrayLike, v: ArrayLike, mode: _CorrelateMode = ...) -> ndarray: ...
 def outer(a: ArrayLike, b: ArrayLike, out: ndarray = ...) -> ndarray: ...
 def tensordot(
     a: ArrayLike,
@@ -713,10 +724,8 @@ class ufunc:
         axes: List[Any] = ...,
         axis: int = ...,
         keepdims: bool = ...,
-        # TODO: make this precise when we can use Literal.
-        casting: str = ...,
-        # TODO: make this precise when we can use Literal.
-        order: Optional[str] = ...,
+        casting: _Casting = ...,
+        order: _OrderKACF = ...,
         dtype: DtypeLike = ...,
         subok: bool = ...,
         signature: Union[str, Tuple[str]] = ...,
@@ -895,7 +904,6 @@ def find_common_type(
 
 # Functions from np.core.fromnumeric
 _Mode = Literal["raise", "wrap", "clip"]
-_Order = Literal["C", "F", "A"]
 _PartitionKind = Literal["introselect"]
 _SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
 _Side = Literal["left", "right"]
@@ -977,7 +985,7 @@ def take(
     out: Optional[ndarray] = ...,
     mode: _Mode = ...,
 ) -> Union[_ScalarNumpy, ndarray]: ...
-def reshape(a: ArrayLike, newshape: _ShapeLike, order: _Order = ...) -> ndarray: ...
+def reshape(a: ArrayLike, newshape: _ShapeLike, order: _OrderACF = ...) -> ndarray: ...
 @overload
 def choose(
     a: _ScalarIntOrBool,
@@ -1091,7 +1099,7 @@ def trace(
     dtype: DtypeLike = ...,
     out: Optional[ndarray] = ...,
 ) -> Union[number, ndarray]: ...
-def ravel(a: ArrayLike, order: _Order = ...) -> ndarray: ...
+def ravel(a: ArrayLike, order: _OrderKACF = ...) -> ndarray: ...
 def nonzero(a: ArrayLike) -> Tuple[ndarray, ...]: ...
 def shape(a: ArrayLike) -> _Shape: ...
 def compress(
