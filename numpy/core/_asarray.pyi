@@ -1,7 +1,7 @@
 import sys
 from typing import TypeVar, Optional, Union, Iterable, Tuple, overload
 
-from numpy import ndarray
+from numpy import ndarray, _OrderKACF
 from numpy.typing import ArrayLike, DtypeLike
 
 if sys.version_info >= (3, 8):
@@ -14,7 +14,7 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 def asarray(
     a: object,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...,
+    order: _OrderKACF = ...,
     *,
     like: ArrayLike = ...
 ) -> ndarray: ...
@@ -22,7 +22,7 @@ def asarray(
 def asanyarray(
     a: _ArrayType,
     dtype: None = ...,
-    order: Optional[str] = ...,
+    order: _OrderKACF = ...,
     *,
     like: ArrayLike = ...
 ) -> _ArrayType: ...
@@ -30,7 +30,7 @@ def asanyarray(
 def asanyarray(
     a: object,
     dtype: DtypeLike = ...,
-    order: Optional[str] = ...,
+    order: _OrderKACF = ...,
     *,
     like: ArrayLike = ...
 ) -> ndarray: ...
