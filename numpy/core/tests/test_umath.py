@@ -3011,9 +3011,11 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s' % f)
             assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s' % f)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason='0.7071j != 0.7071j, apparently',
-                       strict=True)
+    @pytest.mark.xfail(
+        sys.platform == 'cygwin',
+        reason='Cygwin does not use the sign of zero for branch cuts along an axis',
+        strict=True,
+    )
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)
@@ -3039,9 +3041,11 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason='square root faces small loss of precision',
-                       strict=True)
+    @pytest.mark.xfail(
+        sys.platform == 'cygwin',
+        reason='Cygwin does not use sign of zero for branch cuts along an axis',
+        strict=True,
+    )
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)
