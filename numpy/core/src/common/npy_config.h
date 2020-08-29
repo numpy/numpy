@@ -138,6 +138,9 @@
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
 
+/* modfl seems to be segfaulting at the moment */
+#undef HAVE_MODFL
+
 #endif
 
 /* powl gives zero division warning on OS X, see gh-8307 */
