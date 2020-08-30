@@ -35,7 +35,6 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
         /* accept bytes input */
         PyObject *obj_str = PyUnicode_FromEncodedObject(obj, NULL, NULL);
         if (obj_str == NULL) {
-            Py_DECREF(obj);
             return 0;
         }
         obj = obj_str;
