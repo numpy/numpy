@@ -1654,8 +1654,9 @@ class TestDateTime:
                      '1959-10-13T12:34:56')
         assert_equal(np.datetime_as_string(np.datetime64(datetime, 'ms')),
                      '1959-10-13T12:34:56.789')
-        assert_equal(np.datetime_as_string(np.datetime64(datetime, 'us')),
-                     '1959-10-13T12:34:56.789012')
+        for us in ['us', 'μs', b'us']:  # check non-ascii and bytes too
+            assert_equal(np.datetime_as_string(np.datetime64(datetime, us)),
+                         '1959-10-13T12:34:56.789012')
 
         datetime = '1969-12-31T23:34:56.789012345678901234'
 
