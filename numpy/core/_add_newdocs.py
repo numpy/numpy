@@ -4746,7 +4746,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     Let :math:`array.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
     :math:`ufunc.reduce(array, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
     the result of iterating `j` over :math:`range(N_i)`, cumulatively applying
-    ufunc to each :math:`a[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
+    ufunc to each :math:`array[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
     For a one-dimensional array, reduce produces results equivalent to:
     ::
 
@@ -4953,7 +4953,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     Performs a (local) reduce with specified slices over a single axis.
 
     For i in ``range(len(indices))``, `reduceat` computes
-    ``ufunc.reduce(a[indices[i]:indices[i+1]])``, which becomes the i-th
+    ``ufunc.reduce(array[indices[i]:indices[i+1]])``, which becomes the i-th
     generalized "row" parallel to `axis` in the final result (i.e., in a
     2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
     `axis = 1`, it becomes the i-th column).  There are three exceptions to this:
