@@ -44,7 +44,7 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
     }
 
 
-    if (PyBytes_Check(obj)) {
+    if (PyUnicode_Check(obj)) {
         Py_ssize_t len;
         char const *str = PyUnicode_AsUTF8AndSize(obj, &len);
         if (str == NULL) {
