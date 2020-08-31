@@ -5496,9 +5496,15 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     Either ``None`` or a readonly dictionary of metadata (mappingproxy).
 
     The metadata field can be set using any dictionary at data-type
-    creation. Note that whether operations on arrays with metadata
-    attached to their datatypes propagate that metadata is currently
-    not well defined and should not be relied on.
+    creation. NumPy currently has no uniform approach to propagating
+    metadata; although some array operations preserve it there is no
+    guarantee that others will.
+
+    .. warning::
+
+        Although used in certain projects this feature was long undocumented
+        and is not well supported. Some aspects of metadata propagation
+        are expected to change in the future.
 
     Examples
     --------
@@ -5510,13 +5516,13 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
     >>> arr.dtype.metadata
     mappingproxy({'key': 'value'})
 
-    Some operations may preserve metadata (identical data types):
+    Adding arrays with identical datatypes currently preserves the metadata:
 
     >>> (arr + arr).dtype.metadata
     mappingproxy({'key': 'value'})
 
-    But for example, adding two arrays with different metadata does not
-    propagate either one:
+    But if the arrays have different dtype metadata, the metadata may be 
+    dropped:
 
     >>> dt2 = np.dtype(float, metadata={"key2": "value2"})
     >>> arr2 = np.array([3, 2, 1], dtype=dt2)
