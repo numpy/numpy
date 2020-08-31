@@ -21,7 +21,6 @@ import builtins
 from decimal import Decimal
 
 import numpy as np
-from numpy.compat import strchar
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
@@ -2031,7 +2030,7 @@ class TestMethods:
             strtype = '>i2'
         else:
             strtype = '<i2'
-        mydtype = [('name', strchar + '5'), ('col2', strtype)]
+        mydtype = [('name', 'U5'), ('col2', strtype)]
         r = np.array([('a', 1), ('b', 255), ('c', 3), ('d', 258)],
                      dtype=mydtype)
         r.sort(order='col2')
