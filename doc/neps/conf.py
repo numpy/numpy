@@ -45,7 +45,7 @@ templates_path = ['../source/_templates/']
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'content'
 
 # General information about the project.
 project = u'NumPy Enhancement Proposals'
@@ -82,69 +82,21 @@ todo_include_todos = False
 
 ## -- Options for HTML output ----------------------------------------------
 #
-## The theme to use for HTML and HTML Help pages.  See the documentation for
-## a list of builtin themes.
-##
-#html_theme = 'alabaster'
-#
-## Theme options are theme-specific and customize the look and feel of a theme
-## further.  For a list of options available for each theme, see the
-## documentation.
-##
-## html_theme_options = {}
-#
-## Add any paths that contain custom static files (such as style sheets) here,
-## relative to this directory. They are copied after the builtin static files,
-## so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ['_static']
-#
-## Custom sidebar templates, must be a dictionary that maps document names
-## to template names.
-##
-## This is required for the alabaster theme
-## refs: https://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-#html_sidebars = {
-#    '**': [
-#        'relations.html',  # needs 'show_related': True theme option to display
-#        'searchbox.html',
-#    ]
-#}
 
-## -----------------------------------------------------------------------------
-# HTML output
-# -----------------------------------------------------------------------------
+html_theme = 'pydata_sphinx_theme'
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
-if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
-                       "via git submodule init && git submodule update")
+html_logo = '../source/_static/numpylogo.svg'
 
-html_theme = 'scipy'
-html_theme_path = [themedir]
-
-#if 'scipyorg' in tags:
-if True:
-    # Build for the scipy.org website
-    html_theme_options = {
-        "edit_link": True,
-        "sidebar": "right",
-        "scipy_org_logo": True,
-        "rootlinks": [("https://scipy.org/", "Scipy.org"),
-                      ("https://docs.scipy.org/", "Docs")]
-    }
-else:
-    # Default build
-    html_theme_options = {
-        "edit_link": False,
-        "sidebar": "left",
-        "scipy_org_logo": False,
-        "rootlinks": []
-    }
-    html_sidebars = {'index': 'indexsidebar.html'}
-
-#html_additional_pages = {
-#    'index': 'indexcontent.html',
-#}
+html_theme_options = {
+  "github_url": "https://github.com/numpy/numpy",
+  "twitter_url": "https://twitter.com/numpy_team",
+  "external_links": [
+      {"name": "Wishlist",
+       "url": "https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22",
+      },
+  ],
+  "show_prev_next": False,
+}
 
 html_title = "%s" % (project)
 html_static_path = ['../source/_static']
