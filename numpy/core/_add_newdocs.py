@@ -4739,7 +4739,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
+    reduce(a, /, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -5055,7 +5055,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
     r"""
-    outer(A, B, **kwargs)
+    outer(A, B, /, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
 
@@ -5125,7 +5125,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
 add_newdoc('numpy.core', 'ufunc', ('at',
     """
-    at(a, indices, b=None)
+    at(a, indices, b=None, /)
 
     Performs unbuffered in place operation on operand 'a' for elements
     specified by 'indices'. For addition ufunc, this method is equivalent to
