@@ -1400,7 +1400,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
         }
 
         Py_ssize_t len = 0;
-        char *str = PyUnicode_AsUTF8AndSize(strobj, &len);
+        char const *str = PyUnicode_AsUTF8AndSize(strobj, &len);
         if (str == NULL) {
             Py_DECREF(strobj);
             goto fail;
@@ -1447,7 +1447,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
         }
         else {
             Py_INCREF(timezone_obj);
-            strobj = unit_in;
+            strobj = timezone_obj;
         }
 
         Py_SETREF(timezone_obj, strobj);
