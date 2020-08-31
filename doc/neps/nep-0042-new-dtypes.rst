@@ -50,10 +50,10 @@ stand on its own; both are needed.
     But design principles and choices should not change significantly.
 
 
-Detailed Description
---------------------
+Detailed Description – Overview
+-------------------------------
 
-Class hierarchy is laid out in NEP 41; here we define a corresponding API.
+Class hierarchy is laid out in NEP 41; here we define a corresponding DType API.
 Though we describe the API in terms of C-API slots, conceptually these translate
 identically to Python methods.
 
@@ -62,6 +62,52 @@ and in addition show how the API enables all use cases.
 
 Each section begins by motivating an issue or describing
 a problem. A design description follows, occasionally listing alternatives.
+
+In correspondence to the implementation steps summarized in NEP 41,
+the following is structured into following groups:
+
+1. The *DType class:* The class hierarchy, its relation to the Python
+   scalar types and important attributes.
+
+2. *Casting and common DType:* to provide the functionality which allows
+   casting from one dtype to another:
+
+   .. python::
+
+       >>> arr = np.arange(10)
+       >>> arr.astype(UserDType)
+
+   Or the "can cast" operation:
+   
+   .. python::
+   
+       >>> np.can_cast(np.int32, np.float64)
+       True
+
+   as well as finding a common dtype, for example to allow
+   concatenating two arrays:
+
+   .. python::
+
+       >>> arr1 = np.arange(10, dtype=np.int32)
+       >>> arr2 = np.ones(10, dtype=np.float32)
+       >>> concatenated_arr = np.concatenate((arr1, arr2))
+       >>> concatenated_arr.dtype
+       dtype('float64')
+
+3. *Array-coercion:* describing the implementation and API to allow creating
+   and filling an array, for example:
+
+   .. python::
+
+       arr = np.array(["string", "long string"])
+
+   or instead create an array with a user defined ``Categorial`` DType.
+
+4. *C-API:* definition, to allow users to define their own DTypes based
+   on the previously introduced methods and functionality.
+
+
 
 
 Nomenclature
