@@ -4739,7 +4739,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, /, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
+    reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
