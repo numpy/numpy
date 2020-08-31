@@ -1805,28 +1805,28 @@ class TestFilterwindows:
     def test_hanning(self):
         # check symmetry
         w = hanning(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
 
     def test_hamming(self):
         # check symmetry
         w = hamming(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
 
     def test_bartlett(self):
         # check symmetry
         w = bartlett(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
     def test_blackman(self):
         # check symmetry
         w = blackman(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
