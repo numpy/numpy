@@ -1042,7 +1042,7 @@ def make_arrays(funcdict):
                         #ifndef NPY_DISABLE_OPTIMIZATION
                         #include "{dname}.dispatch.h"
                         #endif
-                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name})
+                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name});
                         """).format(
                             dname=dname, name=name, tname=tname, k=k
                         ))
