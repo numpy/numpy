@@ -4948,7 +4948,7 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
 add_newdoc('numpy.core', 'ufunc', ('reduceat',
     """
-    reduceat(a, indices, axis=0, dtype=None, out=None)
+    reduceat(array, indices, axis=0, dtype=None, out=None)
 
     Performs a (local) reduce with specified slices over a single axis.
 
