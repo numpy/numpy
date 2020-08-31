@@ -2733,8 +2733,8 @@ def blackman(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.42 - 0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
 
 @set_module('numpy')
@@ -2842,8 +2842,8 @@ def bartlett(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0 - 2.0*n/(M-1))
+    n = arange(1-M, M, 2)
+    return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
 
 @set_module('numpy')
@@ -2946,8 +2946,8 @@ def hanning(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.5 - 0.5*cos(2.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.5 + 0.5*cos(pi*n/(M-1))
 
 
 @set_module('numpy')
@@ -3046,8 +3046,8 @@ def hamming(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.54 + 0.46*cos(pi*n/(M-1))
 
 
 ## Code from cephes for i0
