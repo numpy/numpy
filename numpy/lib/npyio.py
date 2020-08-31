@@ -23,7 +23,7 @@ from ._iotools import (
     )
 
 from numpy.compat import (
-    asbytes, asstr, asunicode, bytes, os_fspath, os_PathLike,
+    asbytes, asstr, asunicode, os_fspath, os_PathLike,
     pickle, contextlib_nullcontext
     )
 
