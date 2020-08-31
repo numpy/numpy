@@ -1294,8 +1294,6 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 
 /**end repeat**/
 
-typedef void (*sum_of_products_fn)(int, char **, npy_intp const*, npy_intp);
-
 /* These tables need to match up with the type enum */
 static sum_of_products_fn
 _contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
