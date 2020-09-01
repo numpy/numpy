@@ -45,9 +45,8 @@ Some Key Differences
 
    * - MATLAB's scripting language was created for linear algebra so the
        syntax for some array manipulations is more compact than
-       NumPy's. The syntax for basic matrix operations is nice and clean, but the
-       API for adding GUIs and making full-fledged applications is more or less
-       an afterthought.
+       NumPy's. On the other hand, the API for adding GUIs and creating 
+       full-fledged applications is more or less an afterthought.
      - NumPy is  based on Python, which was designed from the outset to be an
        excellent general-purpose programming language.  The advantage to NumPy
        is access to Python libraries including: `SciPy
