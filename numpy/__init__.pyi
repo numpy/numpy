@@ -512,7 +512,7 @@ class complex128(complexfloating[float64]):
 class flexible(_real_generic): ...  # type: ignore
 
 class void(flexible):
-    def __init__(self, __value: Union[int, bool_, bytes]): ...
+    def __init__(self, __value: Union[int, bool_, bytes, bytes_]): ...
 
 class character(_real_generic): ...  # type: ignore
 
