@@ -28,9 +28,8 @@ Some Key Differences
 
    * - In MATLAB, the basic type is a multidimensional array. By default, MATLAB
        creates two-dimensional arrays of double precision floating point numbers.
-       Operations on the 2D instances of these arrays are designed to act like
-       matrix operations in linear algebra. Most expressions take such arrays and
-       return arrays.
+       Operations on the 2D instances of these arrays are modeled on
+       matrix operations in linear algebra. 
      - In NumPy, the basic type is a multidimensional ``array``. By default,
        NumPy creates 0D or 1D arrays for inputs of numbers or lists,
        respectively.  Operations on these arrays in all dimensionalities
