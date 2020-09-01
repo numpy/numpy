@@ -9,9 +9,9 @@ Introduction
 
 MATLAB® and NumPy/SciPy have a lot in common. But there are many
 differences. NumPy and SciPy were created to do numerical and scientific
-computing in the most natural way with Python, not to be MATLAB® clones.
+computing in the most natural way with Python, not to be MATLAB clones.
 This page is intended to be a place to collect wisdom about the
-differences, mostly for the purpose of helping proficient MATLAB® users
+differences, mostly for the purpose of helping proficient MATLAB users
 become proficient NumPy and SciPy users.
 
 .. raw:: html
@@ -25,7 +25,7 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB®, the basic data type is a multidimensional array of
+   * - In MATLAB, the basic data type is a multidimensional array of
        double precision floating point numbers.  Most expressions take such
        arrays and return such arrays.  Operations on the 2-D instances of
        these arrays are designed to act more or less like matrix operations
@@ -36,13 +36,13 @@ Some Key Differences
        (though for matrix multiplication, one can use the ``@`` operator
        in python 3.5 and above).
 
-   * - MATLAB® uses 1 (one) based indexing. The initial element of a
+   * - MATLAB uses 1 (one) based indexing. The initial element of a
        sequence is found using a(1).
        :ref:`See note INDEXING <numpy-for-matlab-users.notes>`
      - Python uses 0 (zero) based indexing. The initial element of a
        sequence is found using a[0].
 
-   * - MATLAB®'s scripting language was created for doing linear algebra.
+   * - MATLAB's scripting language was created for doing linear algebra.
        The syntax for basic matrix operations is nice and clean, but the API
        for adding GUIs and making full-fledged applications is more or less
        an afterthought.
@@ -53,7 +53,7 @@ Some Key Differences
        things that Matlab just cannot, for instance dealing properly with
        stacks of matrices.
 
-   * - In MATLAB®, arrays have pass-by-value semantics, with a lazy
+   * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent actually creating copies until they
        are actually needed.  Slice operations copy parts of the array.
      - In NumPy arrays have pass-by-reference semantics.  Slice operations
@@ -158,7 +158,7 @@ There are pros and cons to using both:
 
 -  ``matrix``
 
-   -  ``:\\`` Behavior is more like that of MATLAB® matrices.
+   -  ``:\\`` Behavior is more like that of MATLAB matrices.
    -  ``<:(`` Maximum of two-dimensional. To hold three-dimensional data you
       need ``array`` or perhaps a Python list of ``matrix``.
    -  ``<:(`` Minimum of two-dimensional. You cannot have vectors. They must be
@@ -183,7 +183,7 @@ deprecate ``matrix`` eventually.
 Table of Rough MATLAB-NumPy Equivalents
 =======================================
 
-The table below gives rough equivalents for some common MATLAB®
+The table below gives rough equivalents for some common MATLAB
 expressions. **These are not exact equivalents**, but rather should be
 taken as hints to get you going in the right direction. For more detail
 read the built-in documentation on the NumPy functions.
@@ -272,7 +272,7 @@ Linear Algebra Equivalents
    * - ``size(a,n)``
      - ``a.shape[n-1]``
      - get the number of elements of the n-th dimension of array ``a``. (Note
-       that MATLAB® uses 1 based indexing while Python uses 0 based indexing,
+       that MATLAB uses 1 based indexing while Python uses 0 based indexing,
        See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
@@ -613,7 +613,7 @@ but the commands ``help`` and ``source`` will usually list the filename
 where the function is located. Python also has an ``inspect`` module (do
 ``import inspect``) which provides a ``getfile`` that often works.
 
-\ **INDEXING**: MATLAB® uses one based indexing, so the initial element
+\ **INDEXING**: MATLAB uses one based indexing, so the initial element
 of a sequence has index 1. Python uses zero based indexing, so the
 initial element of a sequence has index 0. Confusion and flamewars arise
 because each has advantages and disadvantages. One based indexing is
@@ -623,7 +623,7 @@ indexing <https://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q
 See also `a text by prof.dr. Edsger W.
 Dijkstra <https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
 
-\ **RANGES**: In MATLAB®, ``0:5`` can be used as both a range literal
+\ **RANGES**: In MATLAB, ``0:5`` can be used as both a range literal
 and a 'slice' index (inside parentheses); however, in Python, constructs
 like ``0:5`` can *only* be used as a slice index (inside square
 brackets). Thus the somewhat quirky ``r_`` object was created to allow
@@ -671,7 +671,7 @@ NumPy.
 Customizing Your Environment
 ============================
 
-In MATLAB® the main tool available to you for customizing the
+In MATLAB the main tool available to you for customizing the
 environment is to modify the search path with the locations of your
 favorite functions. You can put such customizations into a startup
 script that MATLAB will run on startup.
@@ -685,7 +685,7 @@ NumPy, or rather Python, has similar facilities.
    interpreter is started, define the ``PYTHONSTARTUP`` environment
    variable to contain the name of your startup script.
 
-Unlike MATLAB®, where anything on your path can be called immediately,
+Unlike MATLAB, where anything on your path can be called immediately,
 with Python you need to first do an 'import' statement to make functions
 in a particular file accessible.
 
@@ -712,10 +712,10 @@ this is just an example, not a statement of "best practices"):
 Links
 =====
 
-See http://mathesaurus.sf.net/ for another MATLAB®/NumPy
+See http://mathesaurus.sf.net/ for another MATLAB/NumPy
 cross-reference.
 
 An extensive list of tools for scientific work with python can be
 found in the `topical software page <https://scipy.org/topical-software.html>`__.
 
-MATLAB® and SimuLink® are registered trademarks of The MathWorks.
+MATLAB and SimuLink® are registered trademarks of The MathWorks.
