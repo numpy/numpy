@@ -496,7 +496,7 @@ class float32(floating):
         self, __value: Union[None, str, bytes, SupportsFloat, SupportsIndex] = ...
     ) -> None: ...
 
-class float64(floating):
+class float64(floating, float):
     def __init__(
         self, __value: Union[None, str, bytes, SupportsFloat, SupportsIndex] = ...
     ) -> None: ...
@@ -516,7 +516,7 @@ class complex64(complexfloating[float32]):
         ] = ...,
     ) -> None: ...
 
-class complex128(complexfloating[float64]):
+class complex128(complexfloating[float64], complex):
     def __init__(
         self,
         __value: Union[
@@ -531,7 +531,7 @@ class void(flexible):
 
 class character(_real_generic): ...  # type: ignore
 
-class bytes_(character):
+class bytes_(character, bytes):
     @overload
     def __init__(self, __value: object = ...) -> None: ...
     @overload
@@ -539,7 +539,7 @@ class bytes_(character):
         self, __value: str, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
-class str_(character):
+class str_(character, str):
     @overload
     def __init__(self, __value: object = ...) -> None: ...
     @overload
