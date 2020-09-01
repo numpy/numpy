@@ -8,18 +8,15 @@
  * See LICENSE.txt for the license.
  */
  
-/**
- * @targets $maxopt baseline
- * SSE2 (AVX2 FMA3) AVX512F
- * NEON NEON_VFPV4
- * VSX VSX2
- */
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/halffloat.h>
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
+#include "simd/simd.h"
+#include "common.h"
+
+#define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 
 /**begin repeat
  * #name = byte, short, int, long, longlong,
@@ -261,16 +258,23 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4, data_out += vstepx4) {
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for (int i = 0; i < 4; i++) {
-                npyv_@sfx@ a = npyv_@ld@_@sfx@(data0 + vstep * i);
-                npyv_@sfx@ b = npyv_@ld@_@sfx@(data1 + vstep * i);
-                npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
-                npyv_@sfx@ abc = npyv_muladd_@sfx@(a, b, c);
-                npyv_@st@_@sfx@(data_out + vstep * i, abc);
-            }
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
+            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
+            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(a@i@, b@i@, c@i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
+            /**end repeat3**/
         }
     #elif @unroll_by@ == 2
         const int vstepx2 = vstep * 2;
@@ -359,15 +363,22 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data1 += vstepx4, data_out += vstepx4) {
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for (int i = 0; i < 4; i++) {
-                npyv_@sfx@ b = npyv_@ld@_@sfx@(data1 + vstep * i);
-                npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
-                npyv_@sfx@ abc = npyv_muladd_@sfx@(va_scalar, b, c);
-                npyv_@st@_@sfx@(data_out + vstep * i, abc);
-            }
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ b@i@ = npyv_@ld@_@sfx@(data1 + vstep * @i@);
+            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(va_scalar, b@i@, c@i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
+            /**end repeat3**/
         }
     #elif @unroll_by@ == 2
         const int vstepx2 = vstep * 2;
@@ -449,15 +460,22 @@ static void
     #if @unroll_by@ == 4
         const int vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data_out += vstepx4) {
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for (int i = 0; i < 4; i++) {
-                npyv_@sfx@ a = npyv_@ld@_@sfx@(data0 + vstep * i);
-                npyv_@sfx@ c = npyv_@ld@_@sfx@(data_out + vstep * i);
-                npyv_@sfx@ abc = npyv_muladd_@sfx@(a, vb_scalar, c);
-                npyv_@st@_@sfx@(data_out + vstep * i, abc);
-            }
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data0 + vstep * @i@);
+            npyv_@sfx@ c@i@ = npyv_@ld@_@sfx@(data_out + vstep * @i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@sfx@ abc@i@ = npyv_muladd_@sfx@(a@i@, vb_scalar, c@i@);
+            /**end repeat3**/
+            /**begin repeat3
+             * #i = 0, 1, 2, 3#
+             */
+            npyv_@st@_@sfx@(data_out + vstep * @i@, abc@i@);
+            /**end repeat3**/
         }
     #elif @unroll_by@ == 2
         const int vstepx2 = vstep * 2;
@@ -1276,8 +1294,6 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 
 /**end repeat**/
 
-typedef void (*sum_of_products_fn)(int, char **, npy_intp const*, npy_intp);
-
 /* These tables need to match up with the type enum */
 static sum_of_products_fn
 _contig_outstride0_unary_specialization_table[NPY_NTYPES] = {
@@ -1456,8 +1472,9 @@ static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
 /**end repeat**/
 }; /* End of _unnspecialized_table */
 
-NPY_NO_EXPORT sum_of_products_fn NPY_CPU_DISPATCH_CURFX(einsum_get_sum_of_products_function)
-(int nop, int type_num, npy_intp itemsize,npy_intp const *fixed_strides)
+NPY_VISIBILITY_HIDDEN sum_of_products_fn
+get_sum_of_products_function(int nop, int type_num,
+                             npy_intp itemsize, npy_intp const *fixed_strides)
 {
     int iop;
 
