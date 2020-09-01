@@ -43,7 +43,7 @@ Some Key Differences
      - Python uses 0 (zero) based indexing. The initial element of a
        sequence is found using a[0].
 
-   * - MATLAB's scripting language was created for doing linear algebra so the
+   * - MATLAB's scripting language was created for linear algebra so the
        syntax for some array manipulations is more compact than
        NumPy's. The syntax for basic matrix operations is nice and clean, but the
        API for adding GUIs and making full-fledged applications is more or less
