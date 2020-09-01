@@ -279,7 +279,7 @@ class memmap(ndarray):
             # same as memmap copies (e.g. memmap + 1)
             else:
                 self.filename = None
-
+        f_ctx.close()
         return self
 
     def __array_finalize__(self, obj):
