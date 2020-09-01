@@ -59,7 +59,7 @@ Some Key Differences
        use Python as a scripting language. 
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
-       copy-on-write scheme to prevent actually creating copies until they
+       copy-on-write scheme to prevent creating copies until they
        are actually needed.  Slice operations copy parts of the array.
      - In NumPy, arrays have pass-by-reference semantics.  Slice operations
        are views into an array.
