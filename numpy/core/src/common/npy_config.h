@@ -138,8 +138,10 @@
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
 
-/* modfl seems to be segfaulting at the moment */
+/* modfl segfaults on 64-bit Cygwin 3.1.5-3.1.7 */
+#ifdef __x86_64__
 #undef HAVE_MODFL
+#endif
 
 #endif
 
