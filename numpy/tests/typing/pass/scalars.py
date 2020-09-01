@@ -108,12 +108,6 @@ def func_int(a: int) -> None:
 def func_complex(a: complex) -> None:
     pass
 
-def func_str(a: str) -> None:
-    pass
-
-def func_bytes(a: bytes) -> None:
-    pass
-
 func_float(1.0)
 func_float(1)
 func_float(np.float32(1))
@@ -128,9 +122,3 @@ func_complex(1)
 func_complex(np.complex64(1))
 func_complex(np.float32(1))
 func_complex(np.int32(1))
-
-func_str("a")
-func_str(np.str_("a"))
-
-func_bytes(b"a")
-func_bytes(np.bytes_("a"))
