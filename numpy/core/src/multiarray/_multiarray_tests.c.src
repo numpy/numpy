@@ -9,8 +9,6 @@
 #include "common.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
-#include "common.h"
-
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -1902,7 +1900,7 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, val);
     }
 
-    return PyUString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 

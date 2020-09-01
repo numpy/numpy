@@ -16,7 +16,6 @@
 #include "npy_config.h"
 #include <numpy/arrayobject.h>
 
-#include "npy_config.h"
 #include "npy_pycompat.h"
 #include "ctors.h"
 

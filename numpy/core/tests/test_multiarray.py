@@ -7436,6 +7436,18 @@ def test_array_interface_offset():
     arr1 = np.asarray(DummyArray())
     assert_equal(arr1, arr[1:])
 
+def test_array_interface_unicode_typestr():
+    arr = np.array([1, 2, 3], dtype='int32')
+    interface = dict(arr.__array_interface__)
+    interface['typestr'] = '\N{check mark}'
+
+    class DummyArray:
+        __array_interface__ = interface
+
+    # should not be UnicodeEncodeError
+    with pytest.raises(TypeError):
+        np.asarray(DummyArray())
+
 def test_flat_element_deletion():
     it = np.ones(3).flat
     try:

@@ -249,7 +249,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     NPY_END_THREADS
     Py_DECREF(arr_x);
 
-    return PyInt_FromLong(monotonic);
+    return PyLong_FromLong(monotonic);
 }
 
 /*

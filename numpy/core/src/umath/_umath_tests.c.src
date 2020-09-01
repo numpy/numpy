@@ -480,7 +480,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    if (PyString_Check(signature)) {
+    if (PyBytes_Check(signature)) {
         sig_str = signature;
     } else if (PyUnicode_Check(signature)) {
         sig_str = PyUnicode_AsUTF8String(signature);
@@ -493,7 +493,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
-        1, PyString_AS_STRING(sig_str));
+        1, PyBytes_AS_STRING(sig_str));
     if (sig_str != signature) {
         Py_DECREF(sig_str);
     }

@@ -9,7 +9,8 @@ Tutorial: Masked Arrays
    import numpy as np
    np.random.seed(1)
 
-**Prerequisites**
+Prerequisites
+-------------
 
 Before reading this tutorial, you should know a bit of Python. If you
 would like to refresh your memory, take a look at the
@@ -18,13 +19,15 @@ would like to refresh your memory, take a look at the
 If you want to be able to run the examples in this tutorial, you should also
 have `matplotlib <https://matplotlib.org/>`_ installed on your computer.
 
-**Learner profile**
+Learner profile
+---------------
 
 This tutorial is for people who have a basic understanding of NumPy and want to
 understand how masked arrays and the :mod:`numpy.ma` module can be used in
 practice.
 
-**Learning Objectives**
+Learning Objectives
+-------------------
 
 After this tutorial, you should be able to:
 
@@ -33,7 +36,8 @@ After this tutorial, you should be able to:
 - Decide when the use of masked arrays is appropriate in some of your
   applications
 
-**What are masked arrays?**
+What are masked arrays?
+-----------------------
 
 Consider the following problem. You have a dataset with missing or invalid
 entries. If you're doing any kind of processing on this data, and want to
@@ -63,7 +67,8 @@ combination of:
 - A ``fill_value``, a value that may be used to replace the invalid entries
   in order to return a standard :class:`numpy.ndarray`.
 
-**When can they be useful?**
+When can they be useful?
+------------------------
 
 There are a few situations where masked arrays can be more useful than just
 eliminating the invalid entries of an array:
@@ -84,7 +89,8 @@ comes with a specific implementation of most :term:`NumPy universal functions
 functions and operations on masked data. The output is then a masked array.
 We'll see some examples of how this works in practice below.
 
-**Using masked arrays to see COVID-19 data**
+Using masked arrays to see COVID-19 data
+----------------------------------------
 
 From `Kaggle <https://www.kaggle.com/atilamadai/covid19>`_ it is possible to
 download a dataset with initial data about the COVID-19 outbreak in the
@@ -149,7 +155,8 @@ can read more about the :func:`numpy.genfromtxt` function from
 the :func:`Reference Documentation <numpy.genfromtxt>` or from the
 :doc:`Basic IO tutorial <basics.io.genfromtxt>`.
 
-**Exploring the data**
+Exploring the data
+------------------
 
 First of all, we can plot the whole set of data we have and see what it looks
 like. In order to get a readable plot, we select only a few of the dates to
@@ -194,7 +201,8 @@ the :func:`numpy.sum` function to sum all the selected rows (``axis=0``):
 Something's wrong with this data - we are not supposed to have negative values
 in a cumulative data set. What's going on?
 
-**Missing data**
+Missing data
+------------
 
 Looking at the data, here's what we find: there is a period with
 **missing data**:
@@ -308,7 +316,8 @@ Mainland China:
 It's clear that masked arrays are the right solution here. We cannot represent
 the missing data without mischaracterizing the evolution of the curve.
 
-**Fitting Data**
+Fitting Data
+------------
 
 One possibility we can think of is to interpolate the missing data to estimate
 the number of cases in late January. Observe that we can select the masked
@@ -367,7 +376,8 @@ after the beginning of the records:
     plt.title("COVID-19 cumulative cases from Jan 21 to Feb 3 2020 - Mainland China\n"
               "Cubic estimate for 7 days after start");
 
-**More reading**
+More reading
+------------
 
 Topics not covered in this tutorial can be found in the documentation:
 

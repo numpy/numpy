@@ -685,8 +685,8 @@ True
 True
 >>> # Take a view of a view
 >>> v2 = v1[1:]
->>> # base points to the view it derived from
->>> v2.base is v1
+>>> # base points to the original array that it was derived from
+>>> v2.base is arr
 True
 
 In general, if the array owns its own memory, as for ``arr`` in this

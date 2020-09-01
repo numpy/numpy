@@ -108,6 +108,8 @@ def main(argv):
                         help="Start IPython shell with PYTHONPATH set")
     parser.add_argument("--shell", action="store_true",
                         help="Start Unix shell with PYTHONPATH set")
+    parser.add_argument("--mypy", action="store_true",
+                        help="Run mypy on files with NumPy on the MYPYPATH")
     parser.add_argument("--debug", "-g", action="store_true",
                         help="Debug build")
     parser.add_argument("--parallel", "-j", type=int, default=0,
@@ -131,7 +133,7 @@ def main(argv):
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
-                        help="Arguments to pass to Nose, asv, Python or shell")
+                        help="Arguments to pass to pytest, asv, mypy, Python or shell")
     args = parser.parse_args(argv)
 
     if args.durations < 0:
@@ -210,6 +212,35 @@ def main(argv):
         print("Spawning a shell ({})...".format(shell))
         subprocess.call([shell] + extra_argv)
         sys.exit(0)
+
+    if args.mypy:
+        try:
+            import mypy.api
+        except ImportError:
+            raise RuntimeError(
+                "Mypy not found. Please install it by running "
+                "pip install -r test_requirements.txt from the repo root"
+            )
+
+        os.environ['MYPYPATH'] = site_dir
+        # By default mypy won't color the output since it isn't being
+        # invoked from a tty.
+        os.environ['MYPY_FORCE_COLOR'] = '1'
+
+        config = os.path.join(
+            site_dir,
+            "numpy",
+            "tests",
+            "typing",
+            "mypy.ini",
+        )
+
+        report, errors, status = mypy.api.run(
+            ['--config-file', config] + args.args
+        )
+        print(report, end='')
+        print(errors, end='', file=sys.stderr)
+        sys.exit(status)
 
     if args.coverage:
         dst_dir = os.path.join(ROOT_DIR, 'build', 'coverage')
