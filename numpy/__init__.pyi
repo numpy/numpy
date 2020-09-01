@@ -537,7 +537,7 @@ class void(flexible):
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
 
-class character(generic): ...  # type: ignore
+class character(flexible): ...  # type: ignore
 
 class bytes_(character, bytes):
     @overload
