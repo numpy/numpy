@@ -25,7 +25,7 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB®, the basic type is a multidimensional array. By default, MATLAB®
+   * - In MATLAB, the basic type is a multidimensional array. By default, MATLAB
        creates two dimensional arrays of double precision floating point numbers.
        Operations on the 2D instances of these arrays are designed to act like
        matrix operations in linear algebra. Most expressions take such arrays and
@@ -35,7 +35,7 @@ Some Key Differences
        respectively.  Operations on these arrays in all dimensionalities
        including 2D are element-wise operations.  One needs to use specific
        functions for linear algebra (though for matrix multiplication, one can
-       use the ``@`` operator in python 3.5 and above).
+       use the ``@`` operator in Python 3.5 and above).
 
    * - MATLAB uses 1 (one) based indexing. The initial element of a
        sequence is found using a(1).
@@ -43,7 +43,7 @@ Some Key Differences
      - Python uses 0 (zero) based indexing. The initial element of a
        sequence is found using a[0].
 
-   * - MATLAB®'s scripting language was created for doing linear algebra so the
+   * - MATLAB's scripting language was created for doing linear algebra so the
        syntax for some array manipulations is more compact than
        NumPy's. The syntax for basic matrix operations is nice and clean, but the
        API for adding GUIs and making full-fledged applications is more or less
@@ -96,7 +96,7 @@ General Purpose Equivalents
      - **Notes**
 
    * - ``help func``
-     - ``info(func)`` or ``help(func)`` or ``func?`` (in Ipython)
+     - ``info(func)`` or ``help(func)`` or ``func?`` (in IPython)
      - get help on the function *func*
 
    * - ``which func``
@@ -104,7 +104,7 @@ General Purpose Equivalents
      - find out where *func* is defined
 
    * - ``type func``
-     - ``source(func)`` or ``func??`` (in Ipython)
+     - ``source(func)`` or ``func??`` (in IPython)
      - print source for *func* (if not a native function)
 
    * - ``% comment``
@@ -510,7 +510,7 @@ Linear Algebra Equivalents
 
    * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
      - ``P,L,U = scipy.linalg.lu(a)`` where ``a==P@L@U``
-     - LU decomposition (note: P(MATLAB) == transpose(P(NumPy)) )
+     - LU decomposition (note: P(MATLAB) == transpose(P(NumPy)))
 
    * - ``conjgrad``
      - ``scipy.sparse.linalg.cg``
@@ -587,29 +587,30 @@ NumPy to have a similarly terse range construction mechanism. Note that
 *indexed* using square brackets, which allows the use of Python's slice
 syntax in the arguments.
 
-\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in MATLAB &
-and \| are logical AND/OR. The two can appear to work the same,
-but there are important differences. If you would have used MATLAB's &
-or \| operators, you should use the NumPy ufuncs
-logical\_and/logical\_or. The notable differences between MATLAB's and
-NumPy's & and \| operators are:
+\ **LOGICOPS**: ``&`` or ``|`` in NumPy is bitwise AND/OR, while in MATLAB &
+and ``|`` are logical AND/OR. The two can appear to work the same,
+but there are important differences. If you would have used MATLAB's ``&``
+or ``|`` operators, you should use the NumPy ufuncs
+``logical_and``/``logical_or``. The notable differences between MATLAB's and
+NumPy's ``&`` and ``|`` operators are:
 
 -  Non-logical {0,1} inputs: NumPy's output is the bitwise AND of the
    inputs. MATLAB treats any non-zero value as 1 and returns the logical
-   AND. For example (3 & 4) in NumPy is 0, while in MATLAB both 3 and 4
-   are considered logical true and (3 & 4) returns 1.
+   AND. For example ``(3 & 4)`` in NumPy is ``0``, while in MATLAB both ``3``
+   and ``4``
+   are considered logical true and ``(3 & 4)`` returns ``1``.
 
 -  Precedence: NumPy's & operator is higher precedence than logical
-   operators like < and >; MATLAB's is the reverse.
+   operators like ``<`` and ``>``; MATLAB's is the reverse.
 
 If you know you have boolean arguments, you can get away with using
-NumPy's bitwise operators, but be careful with parentheses, like this: z
-= (x > 1) & (x < 2). The absence of NumPy operator forms of logical\_and
-and logical\_or is an unfortunate consequence of Python's design.
+NumPy's bitwise operators, but be careful with parentheses, like this: ``z
+= (x > 1) & (x < 2)``. The absence of NumPy operator forms of ``logical_and``
+and ``logical_or`` is an unfortunate consequence of Python's design.
 
 **RESHAPE and LINEAR INDEXING**: MATLAB always allows multi-dimensional
 arrays to be accessed using scalar or linear indices, NumPy does not.
-Linear indices are common in MATLAB programs, e.g. find() on a matrix
+Linear indices are common in MATLAB programs, e.g. ``find()`` on a matrix
 returns them, whereas NumPy's find behaves differently. When converting
 MATLAB code it might be necessary to first reshape a matrix to a linear
 sequence, perform some indexing operations and then reshape back. As
@@ -618,8 +619,8 @@ possible to do this fairly efficiently. Note that the scan order used by
 reshape in NumPy defaults to the 'C' order, whereas MATLAB uses the
 Fortran order. If you are simply converting to a linear sequence and
 back this doesn't matter. But if you are converting reshapes from MATLAB
-code which relies on the scan order, then this MATLAB code: z =
-reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in
+code which relies on the scan order, then this MATLAB code: ``z =
+reshape(x,3,4);`` should become ``z = x.reshape(3,4,order='F').copy()`` in
 NumPy.
 
 'array' or 'matrix'? Which should I use?
@@ -636,7 +637,7 @@ Short answer
 **Use arrays**.
 
 -  They support multidimensional array algebra that is supported in MATLAB
--  They are the standard vector/matrix/tensor type of NumpY. Many NumPy
+-  They are the standard vector/matrix/tensor type of NumPy. Many NumPy
    functions return arrays, not matrices.
 -  There is a clear distinction between element-wise operations and
    linear algebra operations.
@@ -662,7 +663,7 @@ are only a handful of key differences between the two.
 
    -  For ``array``, **``*`` means element-wise multiplication**, while
       **``@`` means matrix multiplication**; they have associated functions
-      ``multiply()`` and ``dot()``.  (Before python 3.5, ``@`` did not exist
+      ``multiply()`` and ``dot()``.  (Before Python 3.5, ``@`` did not exist
       and one had to use ``dot()`` for matrix multiplication).
    -  For ``matrix``, **``*`` means matrix multiplication**, and for
       element-wise multiplication one has to use the ``multiply()`` function.
@@ -721,7 +722,7 @@ There are pros and cons to using both:
 
 -  ``matrix``
 
-   -  ``:\\`` Behavior is more like that of MATLAB® matrices.
+   -  ``:\\`` Behavior is more like that of MATLAB matrices.
    -  ``<:(`` Maximum of two-dimensional. To hold three-dimensional data you
       need ``array`` or perhaps a Python list of ``matrix``.
    -  ``<:(`` Minimum of two-dimensional. You cannot have vectors. They must be
@@ -798,7 +799,7 @@ Links
 See http://mathesaurus.sf.net/ for another MATLAB/NumPy
 cross-reference.
 
-An extensive list of tools for scientific work with python can be
+An extensive list of tools for scientific work with Python can be
 found in the `topical software page <https://scipy.org/topical-software.html>`__.
 
 See
@@ -806,4 +807,4 @@ See
 <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
 for a list of Scientific packages that use Python as a scripting language
 
-MATLAB® and SimuLink® are registered trademarks of The MathWorks.
+MATLAB and SimuLink® are registered trademarks of The MathWorks.
