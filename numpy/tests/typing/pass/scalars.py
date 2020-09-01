@@ -1,4 +1,6 @@
+import sys
 import datetime as dt
+
 import numpy as np
 
 
@@ -29,7 +31,6 @@ np.complex64(C())
 np.complex128(3j)
 np.complex128(C())
 np.complex128(None)
-np.complex64(D())
 np.complex64("1.2")
 np.complex128(b"2j")
 
@@ -39,7 +40,6 @@ np.int32(4)
 np.int64(-1)
 np.uint8(B())
 np.uint32()
-np.uint64(D())
 np.int32("1")
 np.int64(b"2")
 
@@ -49,7 +49,11 @@ np.float64(3.0)
 np.float64(None)
 np.float32("1")
 np.float16(b"2.5")
-np.float32(D())
+
+if sys.version_info >= (3, 8):
+    np.uint64(D())
+    np.float32(D())
+    np.complex64(D())
 
 np.bytes_(b"hello")
 np.bytes_("hello", 'utf-8')
