@@ -289,6 +289,7 @@ def _stride_comb_iter(x):
         # new array with different strides, but same data
         xi = np.empty(new_shape, dtype=x.dtype)
         xi.view(np.uint32).fill(0xdeadbeef)
+        xi.flags.writeable = True
         xi = xi[slices]
         xi[...] = x
         xi = xi.view(x.__class__)

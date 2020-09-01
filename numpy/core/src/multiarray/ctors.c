@@ -31,6 +31,7 @@
 
 #include "get_attr_string.h"
 #include "array_coercion.h"
+#include "arrayobject.h"  /* from this directory */
 
 /*
  * Reading from a file or a string.
@@ -552,6 +553,7 @@ PyArray_AssignFromCache_Recursive(
             else {
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
+                PyArray_CLEARFLAGS(view, NPY_ARRAY_WARN_ON_WRITE);
                 if (view < 0) {
                     goto fail;
                 }
