@@ -27,7 +27,7 @@ Some Key Differences
 .. list-table::
 
    * - In MATLAB, the basic type is a multidimensional array. By default, MATLAB
-       creates two dimensional arrays of double precision floating point numbers.
+       creates two-dimensional arrays of double precision floating point numbers.
        Operations on the 2D instances of these arrays are designed to act like
        matrix operations in linear algebra. Most expressions take such arrays and
        return arrays.
