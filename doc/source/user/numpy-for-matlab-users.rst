@@ -7,12 +7,13 @@ NumPy for MATLAB users
 Introduction
 ============
 
-MATLAB® and NumPy/SciPy have a lot in common. But there are many
-differences. NumPy and SciPy were created to do numerical and scientific
-computing in the most natural way with Python, not to be MATLAB clones.
-This page is intended to be a place to collect wisdom about the
-differences, mostly for the purpose of helping proficient MATLAB users
-become proficient NumPy and SciPy users.
+MATLAB® and NumPy have a lot in common, but NumPy was created to work with
+Python, not to be a MATLAB clone.  This guide will help MATLAB users get started
+with NumPy. NumPy and SciPy were created to do numerical and scientific
+computing in the most natural way with Python, not to be MATLAB clones.  This
+page is intended to be a place to collect wisdom about the differences, mostly
+for the purpose of helping proficient MATLAB users become proficient NumPy and
+SciPy users.
 
 .. raw:: html
 
@@ -31,7 +32,7 @@ Some Key Differences
        matrix operations in linear algebra. Most expressions take such arrays and
        return arrays.
      - In NumPy, the basic type is a multidimensional ``array``. By default,
-       NumPy creates 0-D or 1-D arrays for inputs of numbers or lists,
+       NumPy creates 0D or 1D arrays for inputs of numbers or lists,
        respectively.  Operations on these arrays in all dimensionalities
        including 2D are element-wise operations.  One needs to use specific
        functions for linear algebra (though for matrix multiplication, one can
