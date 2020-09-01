@@ -39,10 +39,6 @@ a new ``DType`` class that serves as the extension point for new dtypes.
 is a subclass of ``np.dtype``. ``np.dtype[float64]`` will also denote this
 class.
 
-This document focuses on datatype-related API additions; NEP 43 proposes
-additions related to universal functions. Neither set of changes is meant to
-stand on its own; both are needed.
-
 .. note::
 
     This NEP is preliminary. User input or implementation needs may
@@ -50,8 +46,31 @@ stand on its own; both are needed.
     But design principles and choices should not change significantly.
 
 
-Detailed Description – Overview
--------------------------------
+Motivation and Scope
+--------------------
+
+The changes proposed in this NEP are motivated by the creation
+of fully featured dtypes outside of NumPy.  These dtypes should be able
+to represent a large variety of use cases: From physical units (such as
+meters) to domain specific representation for geometrical objects.
+
+To allow the creation of new DTypes outside of NumPy, it is a necessary first
+step to ensure that all code inside NumPy itself is written in a way that
+the DType becomes interchangeable.
+The primary goal and scope of this NEP is thus to restructure and consolidate
+NumPy's functionality around the new, minimal but extensible, DType class.
+This consolidation process will naturally allow the creation of the user
+defined DTypes motivated in NEP 41.
+Since the internal and external DType API will be largely identical
+the design choices here directly affect future implementers of user DTypes.
+
+This document focuses on datatype-related API additions; NEP 43 proposes
+additions related to universal functions. Neither set of changes is meant to
+stand on its own; both are required to allow fully featured DTypes.
+
+
+Overview
+--------
 
 Class hierarchy is laid out in NEP 41; here we define a corresponding DType API.
 Though we describe the API in terms of C-API slots, conceptually these translate
@@ -60,58 +79,123 @@ identically to Python methods.
 We describe also the implementation of *abstract* DTypes,
 and in addition show how the API enables all use cases.
 
-Each section begins by motivating an issue or describing
+Each part begins by motivating an issue or describing
 a problem. A design description follows, occasionally listing alternatives.
-
 In correspondence to the implementation steps summarized in NEP 41,
-the following is structured into following groups:
+this is structured into following sections:
 
-1. The *DType class:* The class hierarchy, its relation to the Python
+1. :ref:`DType class: <dtype_class>` The class hierarchy, its relation to the Python
    scalar types and important attributes.
 
-2. *Casting and common DType:* to provide the functionality which allows
-   casting from one dtype to another:
+2. *Casting and common DType:* to provide for example the functionality which
+   allows casting from one dtype to another:
 
-   .. python::
+   .. code:: python
 
        >>> arr = np.arange(10)
        >>> arr.astype(UserDType)
 
-   Or the "can cast" operation:
-   
-   .. python::
-   
-       >>> np.can_cast(np.int32, np.float64)
-       True
-
-   as well as finding a common dtype, for example to allow
-   concatenating two arrays:
-
-   .. python::
-
-       >>> arr1 = np.arange(10, dtype=np.int32)
-       >>> arr2 = np.ones(10, dtype=np.float32)
-       >>> concatenated_arr = np.concatenate((arr1, arr2))
-       >>> concatenated_arr.dtype
-       dtype('float64')
-
 3. *Array-coercion:* describing the implementation and API to allow creating
    and filling an array, for example:
 
-   .. python::
+   .. code:: python
 
        arr = np.array(["string", "long string"])
 
    or instead create an array with a user defined ``Categorial`` DType.
 
-4. *C-API:* definition, to allow users to define their own DTypes based
+4. *Public C-API:* definition, to allow users to define their own DTypes based
    on the previously introduced methods and functionality.
 
+Summary – DType Class
+"""""""""""""""""""""
 
+The following pseudo-code lists the main methods defined in the sections below
+to provide an overview for the final result.
+
+Besides the class hierarchy, the first part discusses a few attributes
+and properties, including the following:
+
+.. code:: python
+
+    class DType(DTypeMeta):
+        type : type
+        parametric : bool
+
+        @property
+        def canonical(self): -> bool
+            raise NotImplementedError
+
+        def ensure_canonical(self : DType): -> DType
+            raise NotImplementedError
+
+The Casting and common DType section, describes the following methods.
+A large part of the functionality is provided by the "methods" stored
+in `_castingimpl` and described below:
+
+.. code:: python
+        
+        @classmethod
+        def common_dtype(cls : DTypeMeta, other : DTypeMeta): -> DTypeMeta 
+            raise NotImplementedError
+
+        def common_instance(self : DType, other : DType): -> DType
+            raise NotImplementedError
+ 
+        # A mapping of "methods" each detailing how to cast to another DType
+        # (further specified at the end of the section)
+        _castingimpl = {}
+
+Array-coercion related functions:
+
+.. code:: python
+
+        def __dtype_setitem__(self, item_pointer, value):
+            raise NotImplementedError
+
+        def __dtype_getitem__(self, item_pointer, base_obj): -> object
+            raise NotImplementedError
+
+        @classmethod
+        def __discover_descr_from_pyobject__(cls, obj : object): -> DType
+            raise NotImplementedError
+
+        # initially private:
+        @classmethod
+        def _known_scalar_type(cls, obj : object): -> bool
+            raise NotImplementedError
+
+
+The casting implementation above further requires the following:
+
+.. code:: python
+
+    casting = Union["safe", "same_kind", "unsafe"]
+
+    class CastingImpl:
+        # Object describing and performing the cast
+        default_casting : casting
+
+        def resolve_descriptors(self, Tuple[DType] : input): -> casting, Tuple[DType]
+            raise NotImplementedError
+
+        # initially private:
+        def _get_loop(...): -> "lowlevel c function"
+            raise NotImplementedError
+
+It will be seen in NEP 43, that this ``CastingImpl`` object can be used
+identically in the implementation of universal functions.
+
+We believe that these (class)method represent a minimal set to consolidate
+all current functionality in NumPy, while also providing the flexibility
+necessary for complex user defined DTypes.
 
 
 Nomenclature
 """"""""""""
+
+Because NumPy did previously not have a notion of a DType class, we
+review the following terms:
 
 - ``dtype`` denotes the dtype *instance*, which is the object
   attached to a numpy array.
@@ -127,9 +211,17 @@ the ``dtype.num`` and ``dtype.char``, a distinction illustrated in the
 :ref:`dtype hierarchy figure <hierarchy_figure>`.
 
 Classes for numeric types do exist in NumPy -- for example, ``np.float64`` --
-but these aren't Dtypes but rather the corresponding scalar classes (see also
+but these aren't DTypes but rather the corresponding scalar classes (see also
 NEP 40 and 41 for discussion on why these are largely unrelated to the
 proposed changes).
+
+
+
+
+.. _dtype_class:
+
+DType Class
+-----------
 
 
 Proposed access to DType class
