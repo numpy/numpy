@@ -79,8 +79,9 @@ commands in Python:
 
 ::
 
-    from numpy import *
-    import scipy.linalg
+    import numpy as np
+    from scipy import io, integrate, linalg, signal
+    from scipy.sparse.linalg import eigs
 
 Also assume below that if the Notes talk about "matrix" that the
 arguments are two-dimensional entities.
@@ -109,7 +110,7 @@ General Purpose Equivalents
 
    * - ``% comment``
      - ``# comment``
-     - comment a line of code ``comment``
+     - comment a line of code with the text ``comment``
 
    * - ::
 
@@ -163,17 +164,17 @@ General Purpose Equivalents
        arithmetic.
 
    * - ``load data.mat``
-     - ``scipy.io.loadmat('data.mat')``
+     - ``io.loadmat('data.mat')``
      - Load MATLAB variables saved to the file ``data.mat``. (Note: if saving files from
        MATLAB/Octave use a recent binary format, Python's ``loadmat`` will
        create a dictionary with arrays and further information)
 
    * - ``ode45``
-     - ``scipy.integrate.solve_ivp(f)``
+     - ``integrate.solve_ivp(f)``
      - integrate an ODE with Runge-Kutta 4,5
 
    * - ``ode15s``
-     - ``scipy.integrate.solve_ivp(f, method='BDF')``
+     - ``integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
 
 Linear Algebra Equivalents
@@ -187,16 +188,16 @@ Linear Algebra Equivalents
      - Notes
 
    * - ``ndims(a)``
-     - ``ndim(a)`` or ``a.ndim``
-     - get the number of dimensions of an array
+     - ``np.ndim(a)`` or ``a.ndim``
+     - get the number of dimensions of the array, ``a``
 
    * - ``numel(a)``
-     - ``size(a)`` or ``a.size``
-     - get the number of elements of an array
+     - ``np.size(a)`` or ``a.size``
+     - get the number of elements of the array, ``a``
 
    * - ``size(a)``
-     - ``shape(a)`` or ``a.shape``
-     - get the "size" of the matrix
+     - ``np.shape(a)`` or ``a.shape``
+     - get the "size" of the array, ``a``
 
    * - ``size(a,n)``
      - ``a.shape[n-1]``
@@ -205,11 +206,11 @@ Linear Algebra Equivalents
        See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
-     - ``array([[1.,2.,3.], [4.,5.,6.]])``
+     - ``np.array([[1.,2.,3.], [4.,5.,6.]])``
      - 2D array defined as 2x3 matrix
 
    * - ``[ a b; c d ]``
-     - ``block([[a,b], [c,d]])``
+     - ``np.block([[a,b], [c,d]])``
      - construct a matrix from blocks ``a``, ``b``, ``c``, and ``d``
 
    * - ``a(end)``
@@ -238,12 +239,12 @@ Linear Algebra Equivalents
      - rows one to three and columns five to nine of a 2D array, ``a``. 
 
    * - ``a([2,4,5],[1,3])``
-     - ``a[ix_([1,3,4],[0,2])]``
+     - ``a[np.ix_([1,3,4],[0,2])]``
      - rows 2,4 and 5 and columns 1 and 3.  This allows the matrix to be
        modified, and doesn't require a regular slice.
 
    * - ``a(3:2:21,:)``
-     - ``a[ 2:21:2,:]``
+     - ``a[2:21:2,:]``
      - every other row of ``a``, starting with the third and going to the
        twenty-first
 
@@ -252,11 +253,11 @@ Linear Algebra Equivalents
      - every other row of ``a``, starting with the first
 
    * - ``a(end:-1:1,:)``  or ``flipud(a)``
-     -  ``a[ ::-1,:]``
+     -  ``a[::-1,:]``
      - ``a`` with rows in reverse order
 
    * - ``a([1:end 1],:)``
-     -  ``a[r_[:len(a),0]]``
+     -  ``a[np.r_[:len(a),0]]``
      - ``a`` with copy of the first row appended to the end
 
    * - ``a.'``
@@ -290,11 +291,11 @@ Linear Algebra Equivalents
        values ``False`` and ``True``.
 
    * - ``find(a>0.5)``
-     - ``nonzero(a>0.5)``
+     - ``np.nonzero(a>0.5)``
      - find the indices where (``a`` > 0.5)
 
    * - ``a(:,find(v>0.5))``
-     - ``a[:,nonzero(v>0.5)[0]]``
+     - ``a[:,np.nonzero(v>0.5)[0]]``
      - extract the columms of ``a`` where vector v > 0.5
 
    * - ``a(:,find(v>0.5))``
@@ -327,41 +328,41 @@ Linear Algebra Equivalents
        same data ordering as in MATLAB, use ``x.flatten('F')``.
 
    * - ``1:10``
-     - ``arange(1.,11.)`` or ``r_[1.:11.]`` or  ``r_[1:10:10j]``
+     - ``np.arange(1.,11.)`` or ``np.r_[1.:11.]`` or  ``np.r_[1:10:10j]``
      - create an increasing vector (see note :ref:`RANGES
        <numpy-for-matlab-users.notes>`)
 
    * - ``0:9``
-     - ``arange(10.)`` or  ``r_[:10.]`` or  ``r_[:9:10j]``
+     - ``np.arange(10.)`` or  ``np.r_[:10.]`` or  ``np.r_[:9:10j]``
      - create an increasing vector (see note :ref:`RANGES
        <numpy-for-matlab-users.notes>`)
 
    * - ``[1:10]'``
-     - ``arange(1.,11.)[:, newaxis]``
+     - ``np.arange(1.,11.)[:, newaxis]``
      - create a column vector
 
    * - ``zeros(3,4)``
-     - ``zeros((3,4))``
+     - ``np.zeros((3,4))``
      - 3x4 two-dimensional array full of 64-bit floating point zeros
 
    * - ``zeros(3,4,5)``
-     - ``zeros((3,4,5))``
+     - ``np.zeros((3,4,5))``
      - 3x4x5 three-dimensional array full of 64-bit floating point zeros
 
    * - ``ones(3,4)``
-     - ``ones((3,4))``
+     - ``np.ones((3,4))``
      - 3x4 two-dimensional array full of 64-bit floating point ones
 
    * - ``eye(3)``
-     - ``eye(3)``
+     - ``np.eye(3)``
      - 3x3 identity matrix
 
    * - ``diag(a)``
-     - ``diag(a)``
+     - ``np.diag(a)``
      - returns a vector of the diagonal elements of 2D array, ``a``
 
    * - ``diag(v,0)``
-     - ``diag(v,0)``
+     - ``np.diag(v,0)``
      - returns a square diagonal matrix whose nonzero values are the elements of
        vector, ``v``
 
@@ -382,19 +383,19 @@ Linear Algebra Equivalents
        seed = 42
 
    * - ``linspace(1,3,4)``
-     - ``linspace(1,3,4)``
+     - ``np.linspace(1,3,4)``
      - 4 equally spaced samples between 1 and 3, inclusive
 
    * - ``[x,y]=meshgrid(0:8,0:5)``
-     - ``mgrid[0:9.,0:6.]`` or ``meshgrid(r_[0:9.],r_[0:6.]``
+     - ``np.mgrid[0:9.,0:6.]`` or ``np.meshgrid(r_[0:9.],r_[0:6.]``
      - two 2D arrays: one of x values, the other of y values
 
    * -
-     - ``ogrid[0:9.,0:6.]`` or ``ix_(r_[0:9.],r_[0:6.]``
+     - ``ogrid[0:9.,0:6.]`` or ``np.ix_(np.r_[0:9.],np.r_[0:6.]``
      - the best way to eval functions on a grid
 
    * - ``[x,y]=meshgrid([1,2,4],[2,4,5])``
-     - ``meshgrid([1,2,4],[2,4,5])``
+     - ``np.meshgrid([1,2,4],[2,4,5])``
      -
 
    * -
@@ -402,20 +403,20 @@ Linear Algebra Equivalents
      - the best way to eval functions on a grid
 
    * - ``repmat(a, m, n)``
-     - ``tile(a, (m, n))``
+     - ``np.tile(a, (m, n))``
      - create m by n copies of ``a``
 
    * - ``[a b]``
-     - ``concatenate((a,b),1)`` or ``hstack((a,b))`` or
-       ``column_stack((a,b))`` or ``c_[a,b]``
+     - ``np.concatenate((a,b),1)`` or ``np.hstack((a,b))`` or
+       ``np.column_stack((a,b))`` or ``np.c_[a,b]``
      - concatenate columns of ``a`` and ``b``
 
    * - ``[a; b]``
-     - ``concatenate((a,b))`` or ``vstack((a,b))`` or ``r_[a,b]``
+     - ``np.concatenate((a,b))`` or ``np.vstack((a,b))`` or ``np.r_[a,b]``
      - concatenate rows of ``a`` and ``b``
 
    * - ``max(max(a))``
-     - ``a.max()`` or ``nanmax(a)``
+     - ``a.max()`` or ``np.nanmax(a)``
      - maximum element of ``a`` (with ndims(a)<=2 for MATLAB, if there are
        NaN's, ``nanmax`` will ignore these and return largest value)
 
@@ -428,12 +429,12 @@ Linear Algebra Equivalents
      - maximum element of each row of matrix ``a``
 
    * - ``max(a,b)``
-     - ``maximum(a, b)``
+     - ``np.maximum(a, b)``
      - compares ``a`` and ``b`` element-wise, and returns the maximum value
        from each pair
 
    * - ``norm(v)``
-     - ``sqrt(v @ v)`` or ``np.linalg.norm(v)``
+     - ``np.sqrt(v @ v)`` or ``np.linalg.norm(v)``
      - L2 norm of vector ``v``
 
    * - ``a & b``
@@ -442,7 +443,7 @@ Linear Algebra Equivalents
        LOGICOPS <numpy-for-matlab-users.notes>`
 
    * - ``a | b``
-     - ``logical_or(a,b)``
+     - ``np.logical_or(a,b)``
      - element-by-element OR operator (NumPy ufunc) :ref:`See note LOGICOPS
        <numpy-for-matlab-users.notes>`
 
@@ -479,10 +480,6 @@ Linear Algebra Equivalents
      - ``U, S, Vh = linalg.svd(a), V = Vh.T``
      - singular value decomposition of ``a``
 
-   * - ``rank(a)``
-     - ``linalg.matrix_rank(a)``
-     - return the rank of 2D array, ``a``
-
    * - ``c=chol(a)`` where ``a==c'*c``
      - ``c = linalg.cholesky(a)`` where ``a == c@c.T``
      - cholesky factorization of a matrix (``chol(a)`` in MATLAB returns an
@@ -495,45 +492,45 @@ Linear Algebra Equivalents
        where :math:`\lambda\bar{v}=\mathbf{a}\bar{v}`
 
    * - ``[V,D]=eig(a,b)``
-     - ``D,V = scipy.linalg.eig(a,b)``
+     - ``D,V = linalg.eig(a,b)``
      - eigenvalues :math:`\lambda` and eigenvectors :math:`\bar{v}` of
        ``a``, ``b``
        where :math:`\lambda\mathbf{b}\bar{v}=\mathbf{a}\bar{v}`
 
    * - ``[V,D]=eigs(a,3)``
-     - ``D,V = scipy.sparse.linalg.eigs(a,k=3)``
+     - ``D,V = eigs(a,k=3)``
      - find the ``k=3`` largest eigenvalues and eigenvectors of 2D array, ``a``
 
    * - ``[Q,R,P]=qr(a,0)``
-     - ``Q,R = scipy.linalg.qr(a)``
+     - ``Q,R = linalg.qr(a)``
      - QR decomposition
 
    * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
-     - ``P,L,U = scipy.linalg.lu(a)`` where ``a==P@L@U``
+     - ``P,L,U = linalg.lu(a)`` where ``a==P@L@U``
      - LU decomposition (note: P(MATLAB) == transpose(P(NumPy)))
 
    * - ``conjgrad``
-     - ``scipy.sparse.linalg.cg``
+     - ``cg``
      - Conjugate gradients solver
 
    * - ``fft(a)``
-     - ``fft(a)``
+     - ``np.fft(a)``
      - Fourier transform of ``a``
 
    * - ``ifft(a)``
-     - ``ifft(a)``
+     - ``np.ifft(a)``
      - inverse Fourier transform of ``a``
 
    * - ``sort(a)``
-     - ``sort(a)`` or ``a.sort(axis=0)``
+     - ``np.sort(a)`` or ``a.sort(axis=0)``
      - sort each column of a 2D matrix, ``a``
 
    * - ``sort(a,2)``
-     - ``sort(a,axis=1)`` or ``a.sort(axis=1)``
+     - ``np.sort(a,axis=1)`` or ``a.sort(axis=1)``
      - sort the each row of 2D matrix, ``a``
 
    * - ``[b,I]=sortrows(a,1)``
-     - ``I=argsort(a[:,0]); b=a[I,:]``
+     - ``I=np.argsort(a[:,0]); b=a[I,:]``
      - save the array ``a`` as array ``b`` with rows sorted by the first column
 
    * - ``Z\y``
@@ -541,11 +538,11 @@ Linear Algebra Equivalents
      - perform a linear regression of the form :math:`\mathbf{Zx}=\mathbf{y}`
 
    * - ``decimate(x, q)``
-     - ``scipy.signal.resample(x, np.ceil(len(x)/q))``
+     - ``signal.resample(x, np.ceil(len(x)/q))``
      - downsample with low-pass filtering
 
    * - ``unique(a)``
-     - ``unique(a)``
+     - ``np.unique(a)``
      - returns a vector of unique values in array ``a``
 
    * - ``squeeze(a)``
