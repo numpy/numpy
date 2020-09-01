@@ -517,7 +517,7 @@ class complex64(complexfloating[float32]):
     def __init__(
         self,
         __value: Union[
-            None, str, bytes, SupportsInt, SupportsFloat, SupportsComplex, SupportsIndex
+            None, str, bytes, SupportsFloat, SupportsComplex, SupportsIndex
         ] = ...,
     ) -> None: ...
 
@@ -525,7 +525,7 @@ class complex128(complexfloating[float64], complex):
     def __init__(
         self,
         __value: Union[
-            None, str, bytes, SupportsInt, SupportsFloat, SupportsComplex, SupportsIndex
+            None, str, bytes, SupportsFloat, SupportsComplex, SupportsIndex
         ] = ...,
     ) -> None: ...
 
