@@ -5497,12 +5497,12 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('metadata',
 
     The metadata field can be set using any dictionary at data-type
     creation. NumPy currently has no uniform approach to propagating
-    metadata; although some array operations preserve it there is no
+    metadata; although some array operations preserve it, there is no
     guarantee that others will.
 
     .. warning::
 
-        Although used in certain projects this feature was long undocumented
+        Although used in certain projects, this feature was long undocumented
         and is not well supported. Some aspects of metadata propagation
         are expected to change in the future.
 
