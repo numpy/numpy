@@ -388,19 +388,25 @@ class generic(_ArrayOrScalarCommon):
     @property
     def base(self) -> None: ...
 
-class _real_generic(generic):  # type: ignore
+class number(generic):  # type: ignore
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
 
-class number(generic): ...  # type: ignore
-
-class bool_(_real_generic):
+class bool_(generic):
     def __init__(self, __value: object = ...) -> None: ...
+    @property
+    def real(self: _ArraySelf) -> _ArraySelf: ...
+    @property
+    def imag(self: _ArraySelf) -> _ArraySelf: ...
 
 class object_(generic):
     def __init__(self, __value: object = ...) -> None: ...
+    @property
+    def real(self: _ArraySelf) -> _ArraySelf: ...
+    @property
+    def imag(self: _ArraySelf) -> _ArraySelf: ...
 
 class datetime64:
     @overload
@@ -414,7 +420,7 @@ class datetime64:
     def __add__(self, other: Union[timedelta64, int]) -> datetime64: ...
     def __sub__(self, other: Union[timedelta64, datetime64, int]) -> timedelta64: ...
 
-class integer(number, _real_generic): ...  # type: ignore
+class integer(number): ...  # type: ignore
 class signedinteger(integer): ...  # type: ignore
 
 class int8(signedinteger):
@@ -482,7 +488,7 @@ class uint64(unsignedinteger):
     ) -> None: ...
 
 class inexact(number): ...  # type: ignore
-class floating(inexact, _real_generic): ...  # type: ignore
+class floating(inexact): ...  # type: ignore
 
 _FloatType = TypeVar('_FloatType', bound=floating)
 
@@ -503,9 +509,9 @@ class float64(floating, float):
 
 class complexfloating(inexact, Generic[_FloatType]):  # type: ignore
     @property
-    def real(self) -> _FloatType: ...
+    def real(self) -> _FloatType: ...  # type: ignore[override]
     @property
-    def imag(self) -> _FloatType: ...
+    def imag(self) -> _FloatType: ...  # type: ignore[override]
     def __abs__(self) -> _FloatType: ...  # type: ignore[override]
 
 class complex64(complexfloating[float32]):
@@ -524,12 +530,16 @@ class complex128(complexfloating[float64], complex):
         ] = ...,
     ) -> None: ...
 
-class flexible(_real_generic): ...  # type: ignore
+class flexible(generic): ...  # type: ignore
 
 class void(flexible):
     def __init__(self, __value: Union[int, integer, bool_, bytes]): ...
+    @property
+    def real(self: _ArraySelf) -> _ArraySelf: ...
+    @property
+    def imag(self: _ArraySelf) -> _ArraySelf: ...
 
-class character(_real_generic): ...  # type: ignore
+class character(generic): ...  # type: ignore
 
 class bytes_(character, bytes):
     @overload
