@@ -382,6 +382,8 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 
+_CharLike = Union[str, bytes]
+
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
@@ -412,11 +414,11 @@ class datetime64(generic):
     @overload
     def __init__(
         self,
-        __value: Union[None, datetime64, str, bytes, dt.datetime] = ...,
-        __format: Union[str, bytes] = ...,
+        __value: Union[None, datetime64, _CharLike, dt.datetime] = ...,
+        __format: Union[_CharLike, Tuple[_CharLike, _IntLike]] = ...,
     ) -> None: ...
     @overload
-    def __init__(self, __value: int, __format: Union[str, bytes]) -> None: ...
+    def __init__(self, __value: int, __format: Union[_CharLike, Tuple[_CharLike, _IntLike]]) -> None: ...
     def __add__(self, other: Union[timedelta64, int]) -> datetime64: ...
     def __sub__(self, other: Union[timedelta64, datetime64, int]) -> timedelta64: ...
     def __rsub__(self, other: Union[datetime64, int]) -> timedelta64: ...
@@ -426,29 +428,29 @@ class signedinteger(integer): ...  # type: ignore
 
 class int8(signedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class int16(signedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class int32(signedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class int64(signedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class timedelta64(signedinteger):
     def __init__(
         self,
-        __value: Union[None, int, str, bytes, dt.timedelta, timedelta64] = ...,
-        __format: Union[str, bytes] = ...,
+        __value: Union[None, int, _CharLike, dt.timedelta, timedelta64] = ...,
+        __format: Union[_CharLike, Tuple[_CharLike, _IntLike]] = ...,
     ) -> None: ...
     @overload
     def __add__(self, other: Union[timedelta64, int]) -> timedelta64: ...
@@ -465,22 +467,22 @@ class unsignedinteger(integer): ...  # type: ignore
 
 class uint8(unsignedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class uint16(unsignedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class uint32(unsignedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class uint64(unsignedinteger):
     def __init__(
-        self, __value: Union[SupportsInt, SupportsIndex, str, bytes] = ...
+        self, __value: Union[SupportsInt, SupportsIndex, _CharLike] = ...
     ) -> None: ...
 
 class inexact(number): ...  # type: ignore
@@ -490,17 +492,17 @@ _FloatType = TypeVar('_FloatType', bound=floating)
 
 class float16(floating):
     def __init__(
-        self, __value: Union[None, str, bytes, SupportsFloat, SupportsIndex] = ...
+        self, __value: Union[None, _CharLike, SupportsFloat, SupportsIndex] = ...
     ) -> None: ...
 
 class float32(floating):
     def __init__(
-        self, __value: Union[None, str, bytes, SupportsFloat, SupportsIndex] = ...
+        self, __value: Union[None, _CharLike, SupportsFloat, SupportsIndex] = ...
     ) -> None: ...
 
 class float64(floating, float):
     def __init__(
-        self, __value: Union[None, str, bytes, SupportsFloat, SupportsIndex] = ...
+        self, __value: Union[None, _CharLike, SupportsFloat, SupportsIndex] = ...
     ) -> None: ...
 
 class complexfloating(inexact, Generic[_FloatType]):  # type: ignore
@@ -514,7 +516,7 @@ class complex64(complexfloating[float32]):
     def __init__(
         self,
         __value: Union[
-            None, str, bytes, SupportsFloat, SupportsComplex, SupportsIndex
+            None, _CharLike, SupportsFloat, SupportsComplex, SupportsIndex
         ] = ...,
     ) -> None: ...
 
@@ -522,7 +524,7 @@ class complex128(complexfloating[float64], complex):
     def __init__(
         self,
         __value: Union[
-            None, str, bytes, SupportsFloat, SupportsComplex, SupportsIndex
+            None, _CharLike, SupportsFloat, SupportsComplex, SupportsIndex
         ] = ...,
     ) -> None: ...
 
@@ -965,9 +967,9 @@ _Number = TypeVar('_Number', bound=number)
 _NumberLike = Union[int, float, complex, number, bool_]
 
 # An array-like object consisting of integers
-_Int = Union[int, integer]
-_Bool = Union[bool, bool_]
-_IntOrBool = Union[_Int, _Bool]
+_IntLike = Union[int, integer]
+_BoolLike = Union[bool, bool_]
+_IntOrBool = Union[_IntLike, _BoolLike]
 _ArrayLikeIntNested = ArrayLike  # TODO: wait for support for recursive types
 _ArrayLikeBoolNested = ArrayLike  # TODO: wait for support for recursive types
 
@@ -980,8 +982,8 @@ _ArrayLikeIntOrBool = Union[
     Sequence[_ArrayLikeBoolNested],
 ]
 _ArrayLikeBool = Union[
-    _Bool,
-    Sequence[_Bool],
+    _BoolLike,
+    Sequence[_BoolLike],
     ndarray
 ]
 
