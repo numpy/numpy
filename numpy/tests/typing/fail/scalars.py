@@ -40,8 +40,8 @@ td_64 % 1  # E: Unsupported operand types
 # TODO: Revisit this once annotations are added to the
 # `_ArrayOrScalarCommon` magic methods.
 
-# td_64 / dt_64  No overload
-# td_64 % dt_64  Unsupported operand types
+# td_64 / dt_64  # E: No overload
+# td_64 % dt_64  # E: Unsupported operand types
 
 
 class A:

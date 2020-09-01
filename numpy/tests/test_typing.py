@@ -89,7 +89,7 @@ def test_fail(path):
 
     for i, line in enumerate(lines):
         lineno = i + 1
-        if " E:" not in line and lineno not in errors:
+        if line.startswith('#') or (" E:" not in line and lineno not in errors):
             continue
 
         target_line = lines[lineno - 1]
