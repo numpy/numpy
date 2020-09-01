@@ -65,7 +65,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "compiled_base.h"
 #include "mem_overlap.h"
-#include "alloc.h"
 #include "typeinfo.h"
 
 #include "get_attr_string.h"
