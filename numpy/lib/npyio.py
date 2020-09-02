@@ -712,44 +712,14 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     zipf = zipfile_factory(file, mode="w", compression=compression)
 
-    if sys.version_info >= (3, 6):
-        # Since Python 3.6 it is possible to write directly to a ZIP file.
-        for key, val in namedict.items():
-            fname = key + '.npy'
-            val = np.asanyarray(val)
-            # always force zip64, gh-10776
-            with zipf.open(fname, 'w', force_zip64=True) as fid:
-                format.write_array(fid, val,
-                                   allow_pickle=allow_pickle,
-                                   pickle_kwargs=pickle_kwargs)
-    else:
-        # Stage arrays in a temporary file on disk, before writing to zip.
-
-        # Import deferred for startup time improvement
-        import tempfile
-        # Since target file might be big enough to exceed capacity of a global
-        # temporary directory, create temp file side-by-side with the target file.
-        file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-        fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
-        os.close(fd)
-        try:
-            for key, val in namedict.items():
-                fname = key + '.npy'
-                fid = open(tmpfile, 'wb')
-                try:
-                    format.write_array(fid, np.asanyarray(val),
-                                       allow_pickle=allow_pickle,
-                                       pickle_kwargs=pickle_kwargs)
-                    fid.close()
-                    fid = None
-                    zipf.write(tmpfile, arcname=fname)
-                except IOError as exc:
-                    raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-                finally:
-                    if fid:
-                        fid.close()
-        finally:
-            os.remove(tmpfile)
+    for key, val in namedict.items():
+        fname = key + '.npy'
+        val = np.asanyarray(val)
+        # always force zip64, gh-10776
+        with zipf.open(fname, 'w', force_zip64=True) as fid:
+            format.write_array(fid, val,
+                               allow_pickle=allow_pickle,
+                               pickle_kwargs=pickle_kwargs)
 
     zipf.close()
 
