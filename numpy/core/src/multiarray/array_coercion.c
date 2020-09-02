@@ -548,7 +548,7 @@ update_shape(int curr_ndim, int *max_ndim,
             success = -1;
             if (!sequence) {
                 /* Remove dimensions that we cannot use: */
-                *max_ndim -= new_ndim + i;
+                *max_ndim -= new_ndim - i;
             }
             else {
                 assert(i == 0);
