@@ -286,12 +286,14 @@ class TestSystemInfoReading:
             os.chdir(previousDir)
         
 
-def test_distutils_parse_order():
-    from numpy.distutils.system_info import _parse_order
+def test_distutils_parse_env_order():
+    from numpy.distutils.system_info import _parse_env_order
+    env = 'NPY_TESTS_DISTUTILS_PARSE_ENV_ORDER'
 
     base_order = list('abcdef')
 
-    order, reject, unknown = _parse_order(base_order, 'b,i,e,f')
+    os.environ[env] = 'b,i,e,f'
+    order, reject, unknown = _parse_env_order(base_order, env)
     assert len(order) == 3
     assert order == list('bef')
     assert len(reject) == len(base_order) - 3
@@ -299,7 +301,8 @@ def test_distutils_parse_order():
     assert len(unknown) == 1
 
     for prefix in '^!':
-        order, reject, unknown = _parse_order(base_order, f'{prefix}b,i,e')
+        os.environ[env] = f'{prefix}b,i,e'
+        order, reject, unknown = _parse_env_order(base_order, env)
         assert len(order) == 4
         assert order == list('acdf')
         assert len(reject) == len(base_order) - 4
@@ -307,7 +310,9 @@ def test_distutils_parse_order():
         assert len(unknown) == 1
 
     with pytest.raises(ValueError):
-        _parse_order(base_order, 'b,^e,i')
+        os.environ[env] = 'b,^e,i'
+        _parse_env_order(base_order, env)
 
     with pytest.raises(ValueError):
-        _parse_order(base_order, '!b,^e,i')
+        os.environ[env] = '!b,^e,i'
+        _parse_env_order(base_order, env)
