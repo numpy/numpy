@@ -147,7 +147,7 @@ and properties, including the following:
 .. code-block:: python
     :dedent: 0
 
-    class DType(DTypeMeta):
+    class DType(np.dtype):
         type : type
         parametric : bool
 
