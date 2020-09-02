@@ -65,7 +65,7 @@ Some Key Differences
 
 
 
-Table of Rough MATLAB-NumPy Equivalents
+Rough equivalents
 =======================================
 
 The table below gives rough equivalents for some common MATLAB
