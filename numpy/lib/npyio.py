@@ -1520,7 +1520,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     -----
     Dtypes for structured arrays can be specified in several forms, but all
     forms specify at least the data type and field name. For details see
-    `doc.structured_arrays`.
+    `basics.rec`.
 
     Examples
     --------
