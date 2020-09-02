@@ -1039,6 +1039,56 @@ class TestRandomDist:
         assert_raises(np.AxisError, random.permutation, arr, 3)
         assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
 
+    @pytest.mark.parametrize("dtype", [int, object])
+    @pytest.mark.parametrize("axis, expected",
+                             [(None, np.array([[3, 7, 0, 9, 10, 11],
+                                               [8, 4, 2, 5,  1,  6]])),
+                              (0, np.array([[6, 1, 2, 9, 10, 11],
+                                            [0, 7, 8, 3,  4,  5]])),
+                              (1, np.array([[ 5, 3,  4, 0, 2, 1],
+                                            [11, 9, 10, 6, 8, 7]]))])
+    def test_permuted(self, dtype, axis, expected):
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6).astype(dtype)
+        random.permuted(x, axis=axis, out=x)
+        assert_array_equal(x, expected)
+
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6).astype(dtype)
+        y = random.permuted(x, axis=axis)
+        assert y.dtype == dtype
+        assert_array_equal(y, expected)
+
+    def test_permuted_with_strides(self):
+        random = Generator(MT19937(self.seed))
+        x0 = np.arange(22).reshape(2, 11)
+        x1 = x0.copy()
+        x = x0[:, ::3]
+        y = random.permuted(x, axis=1, out=x)
+        expected = np.array([[0, 9, 3, 6],
+                             [14, 20, 11, 17]])
+        assert_array_equal(y, expected)
+        x1[:, ::3] = expected
+        # Verify that the original x0 was modified in-place as expected.
+        assert_array_equal(x1, x0)
+
+    def test_permuted_empty(self):
+        y = random.permuted([])
+        assert_array_equal(y, [])
+
+    @pytest.mark.parametrize('outshape', [(2, 3), 5])
+    def test_permuted_out_with_wrong_shape(self, outshape):
+        a = np.array([1, 2, 3])
+        out = np.zeros(outshape, dtype=a.dtype)
+        with pytest.raises(ValueError, match='same shape'):
+            random.permuted(a, out=out)
+
+    def test_permuted_out_with_wrong_type(self):
+        out = np.zeros((3, 5), dtype=np.int32)
+        x = np.ones((3, 5))
+        with pytest.raises(TypeError, match='Cannot cast'):
+            random.permuted(x, axis=1, out=out)
+
     def test_beta(self):
         random = Generator(MT19937(self.seed))
         actual = random.beta(.1, .9, size=(3, 2))
