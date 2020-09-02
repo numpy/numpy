@@ -50,7 +50,7 @@ Some Key Differences
        an excellent general-purpose programming language.  While Matlab's
        syntax for some array manipulations is more compact than
        NumPy's, NumPy (by virtue of being an add-on to Python) can do many
-       things that Matlab just cannot, for instance dealing properly with
+       things that MATLAB just cannot, for instance dealing properly with
        stacks of matrices.
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
