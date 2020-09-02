@@ -794,9 +794,10 @@ are not aware of each other.
 
 
 **Notes:** The proposed ``CastingImpl`` is designed to be compatible with the
-``UFuncImpl`` proposed in NEP 43.
+``PyArrayMethod`` proposed in NEP 43 as part of restructuring ufuncs to handle
+new DTypes.
 While initially it will be a distinct object or C-struct, the aim is that
-``CastingImpl`` can be a subclass or extension of ``UFuncImpl``.
+``CastingImpl`` can be a subclass or extension of ``PyArrayMethod``.
 Once this happens, this may naturally allow the use of a ``CastingImpl`` to
 pass around a specialized casting function directly.
 
@@ -1303,21 +1304,22 @@ succeed (return 0).
 
 Although verbose, the API shall mimic the one for creating a new DType.
 The ``PyArrayCastingImpl_Spec`` will include a field for ``dtypes`` and
-identical to a ``PyArrayUFuncImpl_Spec``::
+identical to a ``PyArrayMethod_Spec``:
+
+.. code-block:: C
 
     typedef struct{
-      int needs_api;                 /* whether the cast requires the API */
-      PyArray_DTypeMeta *in_dtype;   /* input DType class */
-      PyArray_DTypeMeta *out_dtype;  /* output DType class */
+      int flags;                    /* e.g. whether the cast requires the API */
+      int nin, nout;                /*  */
+      NPY_CASTING default_casting;  /* whether */
+      PyArray_DTypeMeta *dtypes;    /* input and output DType class */
       /* NULL terminated slots defining the methods */
       PyType_Slot *slots;
-    } PyArrayUFuncImpl_Spec;
+    } PyArraMethod_Spec;
 
-The actual creation function ``PyArrayCastingImpl_FromSpec()`` will additionally
-require a ``casting`` parameter to define the default (maximum) casting safety.
-The internal representation of ufuncs and casting implementations may differ
-initially if it makes implementation simpler, but should be kept opaque to
-allow future merging.
+The focus differs between casting and general ufuncs.  For example for casts
+``nin == nout == 1`` is always correct, while for ufuncs ``casting`` is
+expected to be usually `"safe"`.
 
 **TODO:** It may be possible to make this closer to the ufuncs or even
 to use a single ``*_FromSpec`` function.  This will become clearer as NEP 43
