@@ -1213,10 +1213,10 @@ all of this information will be copied during instantiation.
 their DType, up to defining a full type object and in the future possibly even
 extending the ``PyArrayDTypeMeta_Type`` struct.
 We have to decide on how (and what) to make available to the user initially.
-A proposed initial solution may be to simply allow inheriting from an existing
-class.
-Further this prevents overriding some slots, such as `==` which may not be
-desirable.
+A possible initial solution may be to only allow inheriting from an existing
+class: ``class MyDType(np.dtype, MyBaseclass)``.
+If ``np.dtype`` is first in the method resolution order, this also prevents
+overriding some slots, such as `==` which may not be desirable.
 
 
 The proposed method slots are (prepended with ``NPY_dt_``), these are
@@ -1239,6 +1239,7 @@ Non-parametric dtypes do not have to implement:
 * ``ensure_canonical`` (uses ``default_descr`` instead)
 
 Which will be correct for most dtypes *which do not store metadata*.
+Further, ``common_dtype`` will by default return always ``NotImplemented``.
 
 Other slots may be replaced by convenience versions, e.g. sorting methods
 can be defined by providing:
@@ -1254,7 +1255,8 @@ functions such as:
   If the sortkind is not understood it may be allowed to return ``NotImplemented``.
 
 in the future. However, for example sorting is likely better solved by the
-implementation of multiple generalized ufuncs which are called internally.
+implementation of multiple generalized ufuncs, wrapping it into an object
+similar to the ``CastingImpl``.
 
 **Limitations:** Using the above ``PyArrayDTypeMeta_Spec`` struct, the structure itself can
 only be extended clumsily (e.g. by adding a version tag to the ``slots``
@@ -1318,7 +1320,7 @@ initially if it makes implementation simpler, but should be kept opaque to
 allow future merging.
 
 **TODO:** It may be possible to make this closer to the ufuncs or even
-to use a single FromSpec.  This will become clearer as NEP 43
+to use a single ``*_FromSpec`` function.  This will become clearer as NEP 43
 is finalized.
 
 **Notes:** We may initially allow users to define only a single loop.
@@ -1330,16 +1332,16 @@ as:
 * strided inner loop
 * scalar inner loop
 
-or more likely through an additional ``get_inner_loop`` function that has
+or more likely through exposure of the ``get_loop`` function which is passed
 additional information, such as the fixed strides (similar to our internal API).
 
-The above example does not yet include the definition of setup/teardown
-functionality, which may overlap with ``get_inner_loop``.
-Since these are similar to the UFunc machinery, this should be defined in
+The above example does not yet include additional setup and error handling
+requirements.
+Since these are similar to the UFunc machinery, this will be defined in
 detail in NEP 43 and then incorporated identically into casting.
 
-Also the ``needs_api`` decision may actually be moved into a setup function,
-and removed or mainly provided as a convenience flag.
+For example the ``needs_api`` decision may actually be moved into the
+``get_loop`` function, and only provided as a convenience/default flag.
 
 The slots/methods used will be prefixed ``NPY_uf_`` for similarity to the ufunc
 machinery.
