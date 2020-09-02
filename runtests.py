@@ -372,7 +372,7 @@ def build_project(args):
 
     """
 
-    import distutils.sysconfig
+    import sysconfig
 
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
                for fn in PROJECT_ROOT_FILES]
@@ -388,7 +388,7 @@ def build_project(args):
 
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
-    cvars = distutils.sysconfig.get_config_vars()
+    cvars = sysconfig.get_config_vars()
     compiler = env.get('CC') or cvars.get('CC', '')
     if 'gcc' in compiler:
         # Check that this isn't clang masquerading as gcc.
@@ -445,7 +445,7 @@ def build_project(args):
         os.makedirs(site_dir)
     if not os.path.exists(site_dir_noarch):
         os.makedirs(site_dir_noarch)
-    env['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
+    env['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 

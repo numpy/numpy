@@ -171,7 +171,7 @@ from configparser import RawConfigParser as ConfigParser
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
-import distutils.sysconfig
+import sysconfig
 from numpy.distutils import log
 from distutils.util import get_platform
 
@@ -187,6 +187,7 @@ import distutils.ccompiler
 import tempfile
 import shutil
 
+__all__ = ['system_info']
 
 # Determine number of bits
 import platform
@@ -255,7 +256,7 @@ def libpaths(paths, bits):
 
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
-                        os.path.join(distutils.sysconfig.EXEC_PREFIX,
+                        os.path.join(sysconfig.EXEC_PREFIX,
                                      'libs')]
     default_runtime_dirs = []
     default_include_dirs = []
@@ -2498,13 +2499,13 @@ class _numpy_info(system_info):
             except AttributeError:
                 pass
 
-            include_dirs.append(distutils.sysconfig.get_python_inc(
+            include_dirs.append(distutils.get_python_inc(
                                         prefix=os.sep.join(prefix)))
         except ImportError:
             pass
-        py_incl_dir = distutils.sysconfig.get_python_inc()
+        py_incl_dir = sysconfig.get_python_inc()
         include_dirs.append(py_incl_dir)
-        py_pincl_dir = distutils.sysconfig.get_python_inc(plat_specific=True)
+        py_pincl_dir = sysconfig.get_python_inc(plat_specific=True)
         if py_pincl_dir not in include_dirs:
             include_dirs.append(py_pincl_dir)
         for d in default_include_dirs:
@@ -2631,8 +2632,8 @@ class boost_python_info(system_info):
                 break
         if not src_dir:
             return
-        py_incl_dirs = [distutils.sysconfig.get_python_inc()]
-        py_pincl_dir = distutils.sysconfig.get_python_inc(plat_specific=True)
+        py_incl_dirs = [sysconfig.get_python_inc()]
+        py_pincl_dir = sysconfig.get_python_inc(plat_specific=True)
         if py_pincl_dir not in py_incl_dirs:
             py_incl_dirs.append(py_pincl_dir)
         srcs_dir = os.path.join(src_dir, 'libs', 'python', 'src')

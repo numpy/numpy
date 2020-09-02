@@ -10,7 +10,7 @@ import shutil
 import multiprocessing
 import textwrap
 
-import distutils
+import sysconfig
 from distutils.errors import DistutilsError
 try:
     from threading import local as tlocal
@@ -661,7 +661,7 @@ def get_shared_lib_extension(is_python_ext=False):
     Linux, but not on OS X.
 
     """
-    confvars = distutils.sysconfig.get_config_vars()
+    confvars = sysconfig.get_config_vars()
     # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
     so_ext = confvars.get('EXT_SUFFIX', None)
     if so_ext is None:

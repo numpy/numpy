@@ -26,7 +26,8 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         self.compiler_so = ccomp
     # ensure OPT environment variable is read
     if 'OPT' in os.environ:
-        from distutils.sysconfig import get_config_vars
+        # XXX who uses this?
+        from sysconfig import get_config_vars
         opt = " ".join(os.environ['OPT'].split())
         gcv_opt = " ".join(get_config_vars('OPT')[0].split())
         ccomp_s = " ".join(self.compiler_so)
