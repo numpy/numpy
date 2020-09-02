@@ -537,6 +537,13 @@ Attributes providing additional information:
    dtype.alignment
    dtype.base
 
+Metadata attached by the user:
+
+.. autosummary::
+   :toctree: generated/
+
+    dtype.metadata
+
 
 Methods
 -------
