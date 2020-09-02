@@ -1621,7 +1621,7 @@ identical to a ``PyArrayMethod_Spec``:
       PyArray_DTypeMeta *dtypes;    /* input and output DType class */
       /* NULL terminated slots defining the methods */
       PyType_Slot *slots;
-    } PyArraMethod_Spec;
+    } PyArrayMethod_Spec;
 
 The focus differs between casting and general ufuncs.  For example for casts
 ``nin == nout == 1`` is always correct, while for ufuncs ``casting`` is
