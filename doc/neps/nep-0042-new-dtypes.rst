@@ -69,6 +69,28 @@ This document focuses on datatype-related API additions; NEP 43 proposes
 additions related to universal functions. Neither set of changes is meant to
 stand on its own; both are needed.
 
+Usage and Impact
+----------------
+
+Please see :ref`NEP 41 <NEP41>` for examples of new DTypes which will
+become possible based on this work.
+The methods and attributes defined in this NEP are expected to become
+public API and an overview can be found in the Section `Summary – DType Class`_.
+
+Backward compatibility
+----------------------
+
+This NEP has little direct backward compatibility concerns.
+The currently used API to write create new user defined dtypes will need
+to be deprecated eventually.
+
+In general the consolidation of existing NumPy functionality will lead to
+small changes in behaviour, usually due to current small and rarely noticed
+inconsistencies.
+These changes are not expected to be larger than those during a typical
+NumPy release. Some larger backward compatibility issues are noted
+in :ref`NEP 41 <NEP41>`, although these generally only affect heavy users
+of the NumPy C-API.
 
 Overview
 --------
@@ -88,34 +110,36 @@ A design description follows, sometimes with alternatives.
 In correspondence to the implementation steps summarized in NEP 41,
 this is structured into following sections:
 
-1. :ref:`DType class: <dtype_class>` The class hierarchy, its relation to the Python
-   scalar types and important attributes.
+1. The `DType class`_ section describes the class hierarchy,
+   its relation to the Python scalar types and important attributes.
 
-2. *Casting and common DType:* to provide for example the functionality which
-   allows casting from one dtype to another:
+2. `Casting and common DType`_ to provide for example
+   the functionality which allows casting from one dtype to another:
 
    .. code:: python
 
        >>> arr = np.arange(10)
        >>> arr.astype(UserDType)
 
-3. *Array-coercion:* describing the implementation and API to allow creating
-   and filling an array, for example:
+3. `Array Coercion`_ describing the implementation
+   of item access and storage as well as finding the correct shape and
+   dtype when creating an array. For example:
 
    .. code:: python
 
        arr = np.array(["string", "long string"])
 
-   or instead create an array with a user defined ``Categorial`` DType.
+   has to find the correct string length.
 
-4. *Public C-API:* definition, to allow users to define their own DTypes based
-   on the previously introduced methods and functionality.
+4. `Public C-API`_ defines the design concepts, to allow users to define their
+   own DTypes based on the previously introduced methods and functionality.
+
 
 Summary – DType Class
 """""""""""""""""""""
 
-The following pseudo-code lists the main methods defined in the sections below
-to provide an overview for the final result.
+The following pseudo-code lists the main attributes defined in the sections below.
+These are given here to provide an overview of the final result.
 The Python methods here are illustrative; this is not the Python API, which
 will need to be proposed in a later NEP.
 For readability they're presented as Python methods, with
@@ -124,59 +148,63 @@ the equivalent C-side slot signature and the C-API for defining Datatypes.
 Besides the class hierarchy, the first part discusses a few attributes
 and properties, including the following:
 
-.. code:: python
+.. code-block:: python
+    :dedent: 0
 
     class DType(DTypeMeta):
         type : type
         parametric : bool
 
         @property
-        def canonical(self): -> bool
+        def canonical(self) -> bool:
             raise NotImplementedError
 
-        def ensure_canonical(self : DType): -> DType
+        def ensure_canonical(self : DType) -> DType:
             raise NotImplementedError
 
-The Casting and common DType section, describes the following methods.
+The Casting and common DType part, describes the following methods.
 A large part of the functionality is provided by the "methods" stored
 in `_castingimpl` and described below:
 
-.. code:: python
-        
+.. code-block:: python
+    :dedent: 0
+
         @classmethod
-        def common_dtype(cls : DTypeMeta, other : DTypeMeta): -> DTypeMeta 
+        def common_dtype(cls : DTypeMeta, other : DTypeMeta) -> DTypeMeta :
             raise NotImplementedError
 
-        def common_instance(self : DType, other : DType): -> DType
+        def common_instance(self : DType, other : DType) -> DType:
             raise NotImplementedError
  
         # A mapping of "methods" each detailing how to cast to another DType
         # (further specified at the end of the section)
         _castingimpl = {}
 
-Array-coercion related functions:
+Array-coercion related part includes:
 
-.. code:: python
+.. code-block:: python
+    :dedent: 0
 
         def __dtype_setitem__(self, item_pointer, value):
             raise NotImplementedError
 
-        def __dtype_getitem__(self, item_pointer, base_obj): -> object
+        def __dtype_getitem__(self, item_pointer, base_obj) -> object:
             raise NotImplementedError
 
         @classmethod
-        def __discover_descr_from_pyobject__(cls, obj : object): -> DType
+        def __discover_descr_from_pyobject__(cls, obj : object) -> DType:
             raise NotImplementedError
 
         # initially private:
         @classmethod
-        def _known_scalar_type(cls, obj : object): -> bool
+        def _known_scalar_type(cls, obj : object) -> bool:
             raise NotImplementedError
 
 
-The casting implementation above further requires the following:
+The casting implementation part above further requires the following:
 
-.. code:: python
+.. code-block:: python
+    :dedent: 0
 
     casting = Union["safe", "same_kind", "unsafe"]
 
@@ -184,15 +212,15 @@ The casting implementation above further requires the following:
         # Object describing and performing the cast
         default_casting : casting
 
-        def resolve_descriptors(self, Tuple[DType] : input): -> casting, Tuple[DType]
+        def resolve_descriptors(self, Tuple[DType] : input) -> (casting, Tuple[DType]):
             raise NotImplementedError
 
         # initially private:
-        def _get_loop(...): -> "lowlevel c function"
+        def _get_loop(...) -> lowlevel_C_loop:
             raise NotImplementedError
 
 It will be seen in NEP 43, that this ``CastingImpl`` object can be used
-identically in the implementation of universal functions.
+identically as part of the implementation of universal functions.
 
 We believe that these (class)method represent a minimal set to consolidate
 all current functionality in NumPy, while also providing the flexibility
@@ -406,9 +434,10 @@ unit, and unlike a float64 has no canonical representation. The associated
 clear type associated with it. Instead, the ``type`` may be ``object`` and the
 categorical's values are arbitrary objects. In contrast to well-defined
 scalars, this ``type`` cannot not be used for the dtype discovery necessary
-for coercion (compare section `DType Discovery during Array Coercion`_).
+for coercion (compare section `DType discovery during array coercion`_).
 
 
+.. _casting:
 
 Casting and common DType
 ------------------------
@@ -422,7 +451,7 @@ Finally, we will show how casting an array from one dtype to another using
 
 
 Common DType operations
-^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""
 
 NumPy currently provides functions like ``np.result_type`` and
 ``np.promote_types`` for determining common types.
@@ -564,10 +593,9 @@ implement a new higher precision datetime, then::
 would return ``HighPrecisionDatetime``, and the below casting may need to
 decide how to handle the datetime unit.
 
-----
 
 Casting
-^^^^^^^
+"""""""
 
 Perhaps the most complex and interesting DType operation is casting.
 Casting is much like a typical universal function on
@@ -635,7 +663,7 @@ Each ``CastingImpl`` has a specific DType signature:
 ``CastingImpl[InputDtype, RequestedDtype]``.
 And implements the following methods and attributes:
 
-* ``resolve_descriptors(self, Tuple[DType] : input): -> casting, Tuple[DType]``.
+* ``resolve_descriptors(self, Tuple[DType] : input) -> casting, Tuple[DType]``.
   Here ``casting`` signals the casting safeness (safe, unsafe, or same-kind)
   and the output dtype tuple is used for more multi-step casting (see below).
 * ``get_transferfunction(...) -> function handling cast`` (signature to be decided).
@@ -816,7 +844,6 @@ Its ``resolve_descriptors`` functions may look like::
 
 
 
-
 Array Coercion
 --------------
 
@@ -827,7 +854,7 @@ Further, it requires the ability to find the correct dtype when a user did
 not provide the dtype explicitly.
 
 Coercion to and from Python objects
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""
 
 **Motivation:** When storing a single value in an array or taking it out,
 it is necessary to coerce (convert) it to and from the low-level
@@ -926,10 +953,9 @@ will fail.
     point type.  If the scalar is a subclass of a different high precision
     floating point type (e.g. ``np.float128``) then this will lose precision.
 
-----
 
 DType discovery during array coercion
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""""
 
 An important step in the use of NumPy arrays is creation of the array
 from collections of generic Python objects.
@@ -1016,8 +1042,8 @@ A new ``DType`` must be created for the subclass.
 
 .. note::
 
-    Python integers do not have a clear/concrete NumPy type associated with
-    them right now. This is because during array coercion NumPy currently
+    Python integers do not have a clear/concrete NumPy type associated
+    right now. This is because during array coercion NumPy currently
     finds the first type capable of representing their value in the list
     of `long`, `unsigned long`, `int64`, `unsigned int64`, and `object`
     (on many machines `long` is 64 bit).
@@ -1146,9 +1172,10 @@ operation, this allows it to automatically find that the datetime64 unit
 should be "minutes".
 
 
+.. _c-api:
 
-C-API
------
+Public C-API
+------------
 
 A Python side API shall not be defined here. This is a general side approach.
 
@@ -1385,7 +1412,6 @@ can be changed later. Among them:
   implemented.
 
 
-
 Discussion
 ----------
 
@@ -1402,7 +1428,7 @@ References
      np.array([1.2], dtype=np.float32) + 1.
 
    to return a ``uint8`` or ``float32`` array respectively.  This is
-   further described in the documentation of `numpy.result_type`.
+   further described in the documentation for :func:`numpy.result_type`.
 
 
 Copyright
