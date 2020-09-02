@@ -500,6 +500,7 @@ class TestNested:
         assert res[0] is arr
         assert res[1] is mismatch_first_dim
 
+
 class TestBadSequences:
     # These are tests for bad objects passed into `np.array`, in general
     # these have undefined behaviour.  In the old code they partially worked
