@@ -536,7 +536,7 @@ Similarly to tuples, structured scalars can also be indexed with an integer::
 Thus, tuples might be thought of as the native Python equivalent to numpy's
 structured types, much like native python integers are the equivalent to
 numpy's integer types. Structured scalars may be converted to a tuple by
-calling :func:`ndarray.item`::
+calling `numpy.ndarray.item`::
 
  >>> scalar.item(), type(scalar.item())
  ((1, 4.0, 3.0), <class 'tuple'>)
@@ -576,12 +576,12 @@ Record Arrays
 
 As an optional convenience numpy provides an ndarray subclass,
 :class:`numpy.recarray`, and associated helper functions in the
-:mod:`numpy.rec` submodule, that allows access to fields of structured arrays
-by attribute instead of only by index. Record arrays also use a special
-datatype, :class:`numpy.record`, that allows field access by attribute on the
-structured scalars obtained from the array.
+:mod:`numpy.lib.recfunctions` submodule, that allows access to fields of
+structured arrays by attribute instead of only by index. Record arrays also use
+a special datatype, :class:`numpy.record`, that allows field access by
+attribute on the structured scalars obtained from the array.
 
-The simplest way to create a record array is with :func:`numpy.rec.array`::
+The simplest way to create a record array is with ``numpy.rec.array``::
 
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
@@ -646,7 +646,7 @@ will still be accessible by index.
 
 
 Recarray Helper Functions
-*************************
+-------------------------
 
 .. automodule:: numpy.lib.recfunctions
     :members:
