@@ -59,7 +59,7 @@ Some Key Differences
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent creating copies until they
-       are actually needed.  Slice operations copy parts of the array.
+       are needed.  Slice operations copy parts of the array.
      - In NumPy, arrays have pass-by-reference semantics.  Slice operations
        are views into an array.
 
