@@ -941,7 +941,7 @@ class TestTypes:
             return
 
         res = np.promote_types(dtype, dtype)
-        if res.char in "?bhilqpBHILQPefdgFDGOmM":
+        if res.char in "?bhilqpBHILQPefdgFDGOmM" or dtype.type is rational:
             # Metadata is lost for simple promotions (they create a new dtype)
             assert res.metadata is None
         else:
@@ -976,41 +976,20 @@ class TestTypes:
             # Promotion failed, this test only checks metadata
             return
 
-        # The rules for when metadata is preserved and which dtypes metadta
-        # will be used are very confusing and depend on multiple paths.
-        # This long if statement attempts to reproduce this:
-        if dtype1.type is rational or dtype2.type is rational:
-            # User dtype promotion preserves byte-order here:
-            if np.can_cast(res, dtype1):
-                assert res.metadata == dtype1.metadata
-            else:
-                assert res.metadata == dtype2.metadata
-
-        elif res.char in "?bhilqpBHILQPefdgFDGOmM":
+        if res.char in "?bhilqpBHILQPefdgFDGOmM" or res.type is rational:
             # All simple types lose metadata (due to using promotion table):
             assert res.metadata is None
-        elif res.kind in "SU" and dtype1 == dtype2:
-            # Strings give precedence to the second dtype:
-            assert res is dtype2
         elif res == dtype1:
             # If one result is the result, it is usually returned unchanged:
             assert res is dtype1
         elif res == dtype2:
-            # If one result is the result, it is usually returned unchanged:
-            assert res is dtype2
-        elif dtype1.kind == "S" and dtype2.kind == "U":
-            # Promotion creates a new unicode dtype from scratch
-            assert res.metadata is None
-        elif dtype1.kind == "U" and dtype2.kind == "S":
-            # Promotion creates a new unicode dtype from scratch
-            assert res.metadata is None
-        elif res.kind in "SU" and dtype2.kind != res.kind:
-            # We build on top of dtype1:
-            assert res.metadata == dtype1.metadata
-        elif res.kind in "SU" and res.kind == dtype1.kind:
-            assert res.metadata == dtype1.metadata
-        elif res.kind in "SU" and res.kind == dtype2.kind:
-            assert res.metadata == dtype2.metadata
+            # dtype1 may have been cast to the same type/kind as dtype2.
+            # If the resulting dtype is identical we currently pick the cast
+            # version of dtype1, which lost the metadata:
+            if np.promote_types(dtype1, dtype2.kind) == dtype2:
+                res.metadata is None
+            else:
+                res.metadata == metadata2
         else:
             assert res.metadata is None
 
