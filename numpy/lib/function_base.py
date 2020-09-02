@@ -1488,7 +1488,7 @@ def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
 
 @array_function_dispatch(_unwrap_dispatcher)
 def unwrap(p, discont=None, axis=-1, *, period=2*pi):
-    """
+    r"""
     Unwrap by taking the complement of large deltas with respect to the period.
 
     This unwraps a signal `p` by changing elements which have an absolute
