@@ -414,6 +414,89 @@ def get_standard_file(fname):
     return filenames
 
 
+def _parse_order(base_order, order_str):
+    """ Parse the list of `order_str` by splitting with "," and only returning elements from `base_order`
+
+    This method will sequence `order_str` and check for their invidual elements in `base_order`.
+
+    The items in `order_str` may be negated via '^item' or '!itema,itemb'.
+    The `order_str` must start with ^ to negate all options.
+
+    Raises
+    ------
+    ValueError: for mixed negated and non-negated orders or multiple negated orders
+
+    Parameters
+    ----------
+    base_order : list of str
+       the base list of orders
+    order_str : str or None
+       the orders to be parsed, if none, `base_order` is returned
+
+    Returns
+    -------
+    allow_order : list of str
+        allowed orders in lower-case
+    reject_order : list of str
+        rejected orders in lower-case
+    unknown_order : list of str
+        for values not overlapping with `base_order`
+    """
+    # ensure all base-orders are lower-case (for easier comparison)
+    base_order = [order.lower() for order in base_order]
+    if order_str is None:
+        return base_order, [], []
+
+    neg = order_str.startswith('^') or order_str.startswith('!')
+    # Check format
+    order_str_l = list(order_str)
+    sum_neg = order_str_l.count('^') + order_str_l.count('!')
+    if neg:
+        if sum_neg > 1:
+            raise ValueError(f"Orders must only contain a single (prefixed) negation, do not mix negated an non-negated items: {order_str}")
+        # remove prefix
+        order_str = order_str[1:]
+    elif sum_neg > 0:
+        raise ValueError(f"Orders must not mix negated an non-negated items: {order_str}")
+
+    # Split and lower case
+    orders = order_str.lower().split(',')
+
+    # to inform callee about non-overlapping elements
+    unknown_order = []
+
+    # if negated, we have to remove from the order
+    if neg:
+        allow_order = base_order.copy()
+        reject_order = []
+
+        for order in orders:
+            if order not in base_order:
+                unknown_order.append(order)
+                continue
+
+            if order in allow_order:
+                allow_order.remove(order)
+            if order not in reject_order:
+                reject_order.append(order)
+
+    else:
+        allow_order = []
+        reject_order = base_order.copy()
+
+        for order in orders:
+            if order not in base_order:
+                unknown_order.append(order)
+                continue
+
+            if order not in allow_order:
+                allow_order.append(order)
+            if order in reject_order:
+                reject_order.remove(order)
+
+    return allow_order, reject_order, unknown_order
+
+
 def get_info(name, notfound_action=0):
     """
     notfound_action:
@@ -1766,23 +1849,11 @@ class lapack_opt_info(system_info):
 
     def calc_info(self):
         user_order = os.environ.get(self.order_env_var_name, None)
-        if user_order is None:
-            lapack_order = self.lapack_order
-        else:
-            # the user has requested the order of the
-            # check they are all in the available list, a COMMA SEPARATED list
-            user_order = user_order.lower().split(',')
-            non_existing = []
-            lapack_order = []
-            for order in user_order:
-                if order in self.lapack_order:
-                    lapack_order.append(order)
-                elif len(order) > 0:
-                    non_existing.append(order)
-            if len(non_existing) > 0:
-                raise ValueError("lapack_opt_info user defined "
-                                 "LAPACK order has unacceptable "
-                                 "values: {}".format(non_existing))
+        lapack_order, _, unknown_order = _parse_order(self.lapack_order, user_order)
+        if len(unknown_order) > 0:
+            raise ValueError("lapack_opt_info user defined "
+                             "LAPACK order has unacceptable "
+                             "values: {}".format(unknown_order))
 
         for lapack in lapack_order:
             if self._calc_info(lapack):
@@ -1911,21 +1982,9 @@ class blas_opt_info(system_info):
 
     def calc_info(self):
         user_order = os.environ.get(self.order_env_var_name, None)
-        if user_order is None:
-            blas_order = self.blas_order
-        else:
-            # the user has requested the order of the
-            # check they are all in the available list
-            user_order = user_order.lower().split(',')
-            non_existing = []
-            blas_order = []
-            for order in user_order:
-                if order in self.blas_order:
-                    blas_order.append(order)
-                elif len(order) > 0:
-                    non_existing.append(order)
-            if len(non_existing) > 0:
-                raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
+        blas_order, _, unknown_order = _parse_order(self.blas_order, user_order)
+        if len(unknown_order) > 0:
+            raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
 
         for blas in blas_order:
             if self._calc_info(blas):

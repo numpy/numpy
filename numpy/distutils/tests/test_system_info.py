@@ -285,3 +285,29 @@ class TestSystemInfoReading:
         finally:
             os.chdir(previousDir)
         
+
+def test_distutils_parse_order():
+    from numpy.distutils.system_info import _parse_order
+
+    base_order = list('abcdef')
+
+    order, reject, unknown = _parse_order(base_order, 'b,i,e,f')
+    assert len(order) == 3
+    assert order == list('bef')
+    assert len(reject) == len(base_order) - 3
+    assert reject == list('acd')
+    assert len(unknown) == 1
+
+    for prefix in '^!':
+        order, reject, unknown = _parse_order(base_order, f'{prefix}b,i,e')
+        assert len(order) == 4
+        assert order == list('acdf')
+        assert len(reject) == len(base_order) - 4
+        assert reject == list('be')
+        assert len(unknown) == 1
+
+    with pytest.raises(ValueError):
+        _parse_order(base_order, 'b,^e,i')
+
+    with pytest.raises(ValueError):
+        _parse_order(base_order, '!b,^e,i')
