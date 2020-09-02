@@ -360,7 +360,7 @@ The ``converters`` argument
 Usually, defining a dtype is sufficient to define how the sequence of
 strings must be converted.  However, some additional control may sometimes
 be required.  For example, we may want to make sure that a date in a format
-``YYYY/MM/DD`` is converted to a :py:class:`~datetime.datetime` object, or that
+``YYYY/MM/DD`` is converted to a :class:`~datetime.datetime` object, or that
 a string like ``xx%`` is properly converted to a float between 0 and 1.  In
 such cases, we should define conversion functions with the ``converters``
 arguments.

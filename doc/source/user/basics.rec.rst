@@ -576,10 +576,10 @@ Record Arrays
 
 As an optional convenience numpy provides an ndarray subclass,
 :class:`numpy.recarray`, and associated helper functions in the
-:mod:`numpy.lib.recfunctions` submodule, that allows access to fields of
-structured arrays by attribute instead of only by index. Record arrays also use
-a special datatype, :class:`numpy.record`, that allows field access by
-attribute on the structured scalars obtained from the array.
+:mod:`numpy.lib.recfunctions` submodule (aliased as ``numpy.rec``), that allows
+access to fields of structured arrays by attribute instead of only by index.
+Record arrays also use a special datatype, :class:`numpy.record`, that allows
+field access by attribute on the structured scalars obtained from the array.
 
 The simplest way to create a record array is with ``numpy.rec.array``::
 

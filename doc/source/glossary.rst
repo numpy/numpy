@@ -45,9 +45,8 @@ Glossary
 
          # More complicated data type: each array element is a combination of
          # and integer and a floating point number
-         >>> np.array([(1, 2.0), (3, 4.0)], dtype=[('x', int), ('y', float)])
-         array([(1, 2.0), (3, 4.0)],
-               dtype=[('x', '<i4'), ('y', '<f8')])
+         >>> np.array([(1, 2.0), (3, 4.0)], dtype=[('x', np.int64), ('y', float)])
+         array([(1, 2.), (3, 4.)], dtype=[('x', '<i8'), ('y', '<f8')])
 
        Fast element-wise operations, called a :term:`ufunc`, operate on arrays.
 
@@ -271,14 +270,14 @@ Glossary
 
          >>> x = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
          >>> x
-         masked_array(data = [-- 2.0 --],
-                      mask = [ True False  True],
-                fill_value = 1e+20)
+         masked_array(data=[--, 2.0, --],
+                      mask=[ True, False,  True],
+                fill_value=1e+20)
 
          >>> x + [1, 2, 3]
-         masked_array(data = [-- 4.0 --],
-                      mask = [ True False  True],
-                fill_value = 1e+20)
+         masked_array(data=[--, 4.0, --],
+                      mask=[ True, False,  True],
+                fill_value=1e+20)
 
 
        Masked arrays are often used when operating on arrays containing
