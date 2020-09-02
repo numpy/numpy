@@ -4739,14 +4739,14 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
+    reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
-    Reduces `a`'s dimension by one, by applying ufunc along one axis.
+    Reduces `array`'s dimension by one, by applying ufunc along one axis.
 
-    Let :math:`a.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
-    :math:`ufunc.reduce(a, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
+    Let :math:`array.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
+    :math:`ufunc.reduce(array, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
     the result of iterating `j` over :math:`range(N_i)`, cumulatively applying
-    ufunc to each :math:`a[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
+    ufunc to each :math:`array[k_0, ..,k_{i-1}, j, k_{i+1}, .., k_{M-1}]`.
     For a one-dimensional array, reduce produces results equivalent to:
     ::
 
@@ -4759,7 +4759,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
     Parameters
     ----------
-    a : array_like
+    array : array_like
         The array to act on.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a reduction is performed.
@@ -4792,7 +4792,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
+        the result will broadcast correctly against the original `array`.
 
         .. versionadded:: 1.7.0
     initial : scalar, optional
@@ -4806,7 +4806,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
-        of `a`, and selects elements to include in the reduction. Note
+        of `array`, and selects elements to include in the reduction. Note
         that for ufuncs like ``minimum`` that do not have an identity
         defined, one has to pass in also ``initial``.
 
@@ -4948,28 +4948,28 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
 add_newdoc('numpy.core', 'ufunc', ('reduceat',
     """
-    reduceat(a, indices, axis=0, dtype=None, out=None)
+    reduceat(array, indices, axis=0, dtype=None, out=None)
 
     Performs a (local) reduce with specified slices over a single axis.
 
     For i in ``range(len(indices))``, `reduceat` computes
-    ``ufunc.reduce(a[indices[i]:indices[i+1]])``, which becomes the i-th
+    ``ufunc.reduce(array[indices[i]:indices[i+1]])``, which becomes the i-th
     generalized "row" parallel to `axis` in the final result (i.e., in a
     2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
     `axis = 1`, it becomes the i-th column).  There are three exceptions to this:
 
     * when ``i = len(indices) - 1`` (so for the last index),
-      ``indices[i+1] = a.shape[axis]``.
+      ``indices[i+1] = array.shape[axis]``.
     * if ``indices[i] >= indices[i + 1]``, the i-th generalized "row" is
-      simply ``a[indices[i]]``.
-    * if ``indices[i] >= len(a)`` or ``indices[i] < 0``, an error is raised.
+      simply ``array[indices[i]]``.
+    * if ``indices[i] >= len(array)`` or ``indices[i] < 0``, an error is raised.
 
     The shape of the output depends on the size of `indices`, and may be
-    larger than `a` (this happens if ``len(indices) > a.shape[axis]``).
+    larger than `array` (this happens if ``len(indices) > array.shape[axis]``).
 
     Parameters
     ----------
-    a : array_like
+    array : array_like
         The array to act on.
     indices : array_like
         Paired indices, comma separated (not colon), specifying slices to
@@ -4999,14 +4999,15 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     -----
     A descriptive example:
 
-    If `a` is 1-D, the function `ufunc.accumulate(a)` is the same as
-    ``ufunc.reduceat(a, indices)[::2]`` where `indices` is
+    If `array` is 1-D, the function `ufunc.accumulate(array)` is the same as
+    ``ufunc.reduceat(array, indices)[::2]`` where `indices` is
     ``range(len(array) - 1)`` with a zero placed
     in every other element:
-    ``indices = zeros(2 * len(a) - 1)``, ``indices[1::2] = range(1, len(a))``.
+    ``indices = zeros(2 * len(array) - 1)``,
+    ``indices[1::2] = range(1, len(array))``.
 
-    Don't be fooled by this attribute's name: `reduceat(a)` is not
-    necessarily smaller than `a`.
+    Don't be fooled by this attribute's name: `reduceat(array)` is not
+    necessarily smaller than `array`.
 
     Examples
     --------
@@ -5055,7 +5056,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
 
 add_newdoc('numpy.core', 'ufunc', ('outer',
     r"""
-    outer(A, B, **kwargs)
+    outer(A, B, /, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
 
@@ -5125,7 +5126,7 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
 add_newdoc('numpy.core', 'ufunc', ('at',
     """
-    at(a, indices, b=None)
+    at(a, indices, b=None, /)
 
     Performs unbuffered in place operation on operand 'a' for elements
     specified by 'indices'. For addition ufunc, this method is equivalent to
