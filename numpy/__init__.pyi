@@ -462,6 +462,8 @@ class uint64(unsignedinteger):
 class inexact(number): ...  # type: ignore
 class floating(inexact, _real_generic): ...  # type: ignore
 
+_FloatType = TypeVar('_FloatType', bound=floating)
+
 class float16(floating):
     def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
 
@@ -471,27 +473,24 @@ class float32(floating):
 class float64(floating):
     def __init__(self, __value: Optional[SupportsFloat] = ...) -> None: ...
 
-class complexfloating(inexact): ...  # type: ignore
+class complexfloating(inexact, Generic[_FloatType]):  # type: ignore
+    @property
+    def real(self) -> _FloatType: ...
+    @property
+    def imag(self) -> _FloatType: ...
+    def __abs__(self) -> _FloatType: ...  # type: ignore[override]
 
-class complex64(complexfloating):
+class complex64(complexfloating[float32]):
     def __init__(
         self,
         __value: Union[None, SupportsInt, SupportsFloat, SupportsComplex] = ...
     ) -> None: ...
-    @property
-    def real(self) -> float32: ...
-    @property
-    def imag(self) -> float32: ...
 
-class complex128(complexfloating):
+class complex128(complexfloating[float64]):
     def __init__(
         self,
         __value: Union[None, SupportsInt, SupportsFloat, SupportsComplex] = ...
     ) -> None: ...
-    @property
-    def real(self) -> float64: ...
-    @property
-    def imag(self) -> float64: ...
 
 class flexible(_real_generic): ...  # type: ignore
 

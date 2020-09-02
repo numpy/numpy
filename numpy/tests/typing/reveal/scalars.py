@@ -28,3 +28,6 @@ reveal_type(td - 1)  # E: numpy.timedelta64
 reveal_type(td / 1.0)  # E: numpy.timedelta64
 reveal_type(td / td)  # E: float
 reveal_type(td % td)  # E: numpy.timedelta64
+
+reveal_type(np.complex64().real)  # E: numpy.float32
+reveal_type(np.complex128().imag)  # E: numpy.float64
