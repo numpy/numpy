@@ -1,7 +1,7 @@
 .. _numpy-for-matlab-users:
 
 ======================
-NumPy for Matlab users
+NumPy for MATLAB users
 ======================
 
 Introduction
@@ -47,10 +47,10 @@ Some Key Differences
        for adding GUIs and making full-fledged applications is more or less
        an afterthought.
      - NumPy is  based on Python, which was designed from the outset to be
-       an excellent general-purpose programming language.  While Matlab's
+       an excellent general-purpose programming language.  While MATLAB's
        syntax for some array manipulations is more compact than
        NumPy's, NumPy (by virtue of being an add-on to Python) can do many
-       things that Matlab just cannot, for instance dealing properly with
+       things that MATLAB just cannot, for instance dealing properly with
        stacks of matrices.
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
@@ -356,7 +356,7 @@ Linear Algebra Equivalents
 
    * - ``(a>0.5)``
      - ``(a>0.5)``
-     - matrix whose i,jth element is (a_ij > 0.5).  The Matlab result is an
+     - matrix whose i,jth element is (a_ij > 0.5).  The MATLAB result is an
        array of 0s and 1s.  The NumPy result is an array of the boolean
        values ``False`` and ``True``.
 
@@ -395,7 +395,7 @@ Linear Algebra Equivalents
    * - ``y=x(:)``
      - ``y = x.flatten()``
      - turn array into vector (note that this forces a copy). To obtain the
-       same data ordering as in Matlab, use ``x.flatten('F')``.
+       same data ordering as in MATLAB, use ``x.flatten('F')``.
 
    * - ``1:10``
      - ``arange(1.,11.)`` or ``r_[1.:11.]`` or  ``r_[1:10:10j]``
@@ -475,7 +475,7 @@ Linear Algebra Equivalents
 
    * - ``max(max(a))``
      - ``a.max()``
-     - maximum element of ``a`` (with ndims(a)<=2 for matlab)
+     - maximum element of ``a`` (with ndims(a)<=2 for MATLAB)
 
    * - ``max(a)``
      - ``a.max(0)``
@@ -539,7 +539,7 @@ Linear Algebra Equivalents
 
    * - ``chol(a)``
      - ``linalg.cholesky(a).T``
-     - cholesky factorization of a matrix (``chol(a)`` in matlab returns an
+     - cholesky factorization of a matrix (``chol(a)`` in MATLAB returns an
        upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower
        triangular matrix)
 
@@ -561,7 +561,7 @@ Linear Algebra Equivalents
 
    * - ``[L,U,P]=lu(a)``
      - ``L,U = scipy.linalg.lu(a)`` or ``LU,P=scipy.linalg.lu_factor(a)``
-     - LU decomposition (note: P(Matlab) == transpose(P(numpy)) )
+     - LU decomposition (note: P(MATLAB) == transpose(P(numpy)) )
 
    * - ``conjgrad``
      - ``scipy.sparse.linalg.cg``
@@ -632,39 +632,39 @@ numpy to have a similarly terse range construction mechanism. Note that
 *indexed* using square brackets, which allows the use of Python's slice
 syntax in the arguments.
 
-\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in Matlab &
+\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in MATLAB &
 and \| are logical AND/OR. The difference should be clear to anyone with
 significant programming experience. The two can appear to work the same,
-but there are important differences. If you would have used Matlab's &
+but there are important differences. If you would have used MATLAB's &
 or \| operators, you should use the NumPy ufuncs
-logical\_and/logical\_or. The notable differences between Matlab's and
+logical\_and/logical\_or. The notable differences between MATLAB's and
 NumPy's & and \| operators are:
 
 -  Non-logical {0,1} inputs: NumPy's output is the bitwise AND of the
-   inputs. Matlab treats any non-zero value as 1 and returns the logical
-   AND. For example (3 & 4) in NumPy is 0, while in Matlab both 3 and 4
+   inputs. MATLAB treats any non-zero value as 1 and returns the logical
+   AND. For example (3 & 4) in NumPy is 0, while in MATLAB both 3 and 4
    are considered logical true and (3 & 4) returns 1.
 
 -  Precedence: NumPy's & operator is higher precedence than logical
-   operators like < and >; Matlab's is the reverse.
+   operators like < and >; MATLAB's is the reverse.
 
 If you know you have boolean arguments, you can get away with using
 NumPy's bitwise operators, but be careful with parentheses, like this: z
 = (x > 1) & (x < 2). The absence of NumPy operator forms of logical\_and
 and logical\_or is an unfortunate consequence of Python's design.
 
-**RESHAPE and LINEAR INDEXING**: Matlab always allows multi-dimensional
+**RESHAPE and LINEAR INDEXING**: MATLAB always allows multi-dimensional
 arrays to be accessed using scalar or linear indices, NumPy does not.
-Linear indices are common in Matlab programs, e.g. find() on a matrix
+Linear indices are common in MATLAB programs, e.g. find() on a matrix
 returns them, whereas NumPy's find behaves differently. When converting
-Matlab code it might be necessary to first reshape a matrix to a linear
+MATLAB code it might be necessary to first reshape a matrix to a linear
 sequence, perform some indexing operations and then reshape back. As
 reshape (usually) produces views onto the same storage, it should be
 possible to do this fairly efficiently. Note that the scan order used by
-reshape in NumPy defaults to the 'C' order, whereas Matlab uses the
+reshape in NumPy defaults to the 'C' order, whereas MATLAB uses the
 Fortran order. If you are simply converting to a linear sequence and
-back this doesn't matter. But if you are converting reshapes from Matlab
-code which relies on the scan order, then this Matlab code: z =
+back this doesn't matter. But if you are converting reshapes from MATLAB
+code which relies on the scan order, then this MATLAB code: z =
 reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in
 NumPy.
 
