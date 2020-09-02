@@ -718,4 +718,4 @@ cross-reference.
 An extensive list of tools for scientific work with python can be
 found in the `topical software page <https://scipy.org/topical-software.html>`__.
 
-MATLAB and SimuLink® are registered trademarks of The MathWorks.
+MATLAB® and SimuLink® are registered trademarks of The MathWorks.
