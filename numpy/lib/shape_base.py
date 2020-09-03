@@ -865,12 +865,12 @@ def split(ary, indices_or_sections, axis=0):
     """
     try:
         len(indices_or_sections)
-    except TypeError:
+    except TypeError as e:
         sections = indices_or_sections
         N = ary.shape[axis]
         if N % sections:
             raise ValueError(
-                'array split does not result in an equal division')
+                'array split does not result in an equal division') from e
     return array_split(ary, indices_or_sections, axis)
 
 
