@@ -9,11 +9,7 @@ Introduction
 
 MATLAB® and NumPy have a lot in common, but NumPy was created to work with
 Python, not to be a MATLAB clone.  This guide will help MATLAB users get started
-with NumPy. NumPy and SciPy were created to do numerical and scientific
-computing in the most natural way with Python, not to be MATLAB clones.  This
-page is intended to be a place to collect wisdom about the differences, mostly
-for the purpose of helping proficient MATLAB users become proficient NumPy and
-SciPy users.
+with NumPy. 
 
 .. raw:: html
 
