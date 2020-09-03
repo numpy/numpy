@@ -532,7 +532,7 @@ Linear Algebra Equivalents
      - sort the each row of 2D matrix, ``a``
 
    * - ``[b,I]=sortrows(a,1)``
-     - ``I=np.argsort(a[:,0]); b=a[I,:]``
+     - ``I = np.argsort(a[:,0]); b = a[I,:]``
      - save the array ``a`` as array ``b`` with rows sorted by the first column
 
    * - ``Z\y``
