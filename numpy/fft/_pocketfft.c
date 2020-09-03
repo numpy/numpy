@@ -366,8 +366,8 @@ NOINLINE static void pass2b (size_t ido, size_t l1, const cmplx * restrict cc,
         PMC (CH(i+1,k,0),t,CC(i+1,0,k),CC(i+1,1,k))
         A_EQ_B_MUL_C (CH(i+1,k,1),WA(0,i+1),t)
       }
-      float64x2x2_t c,d,tmp,twd;
       LOOP_BLOCKED(cmplx, 32){
+        float64x2x2_t c,d,tmp,twd;
         VLDCC(c,i+1,0,k)
         VLDCC(d,i+1,1,k)
         VADDC(tmp,c,d)
@@ -413,8 +413,8 @@ NOINLINE static void pass2f (size_t ido, size_t l1, const cmplx * restrict cc,
         PMC (CH(i+1,k,0),t,CC(i+1,0,k),CC(i+1,1,k))
         A_EQ_CB_MUL_C (CH(i+1,k,1),WA(0,i+1),t)
       }
-      float64x2x2_t c,d,tmp,twd;
       LOOP_BLOCKED(cmplx, 32){
+        float64x2x2_t c,d,tmp,twd;
         VLDCC(c,i+1,0,k)
         VLDCC(d,i+1,1,k)
         VADDC(tmp,c,d)
@@ -571,8 +571,8 @@ NOINLINE static void pass4b (size_t ido, size_t l1, const cmplx * restrict cc,
         A_EQ_B_MUL_C (CH(i+1,k,2),wa1,c3)
         A_EQ_B_MUL_C (CH(i+1,k,3),wa2,c4)
       }
-      float64x2x2_t c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
       LOOP_BLOCKED(cmplx, 32){
+        float64x2x2_t c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
         VLDCC(c1,i+1,0,k) VLDCC(c3,i+1,2,k)
         VLDCC(c2,i+1,1,k) VLDCC(c4,i+1,3,k)
         VLDWA(wa0,0,i+1)
@@ -662,8 +662,8 @@ NOINLINE static void pass4f (size_t ido, size_t l1, const cmplx * restrict cc,
         A_EQ_CB_MUL_C (CH(i+1,k,2),wa1,c3)
         A_EQ_CB_MUL_C (CH(i+1,k,3),wa2,c4)
       }
-      float64x2x2_t c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
       LOOP_BLOCKED(cmplx, 32) {
+        float64x2x2_t c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
         VLDCC(c1,i+1,0,k) VLDCC(c3,i+1,2,k)
         VLDCC(c2,i+1,1,k) VLDCC(c4,i+1,3,k)
         VLDWA(wa0,0,i+1)
