@@ -26,11 +26,13 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB, the basic type is a multidimensional array. Array
-       assignments in MATLAB are stored as 2D arrays of double precision
-       floating point numbers, unless you specify the number of
-       dimensions and type.  Operations on the 2D instances of these
-       arrays are modeled on matrix operations in linear algebra. 
+   * - In MATLAB, the basic type, even for scalars, is a
+       multidimensional array. Array assignments in MATLAB are stored as
+       2D arrays of double precision floating point numbers, unless you
+       specify the number of dimensions and type.  Operations on the 2D
+       instances of these arrays are modeled on matrix operations in
+       linear algebra. 
+
      - In NumPy, the basic type is a multidimensional ``array``.  Array
        assignments in NumPy are usually stored as ND arrays with the
        minimum type required to hold the objects in sequence, unless you
