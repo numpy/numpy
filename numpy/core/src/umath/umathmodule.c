@@ -75,7 +75,8 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     int nin, nout, i, nargs;
     PyUFunc_PyFuncData *fdata;
     PyUFuncObject *self;
-    char *fname, *str, *types, *doc;
+    const char *fname = NULL;
+    char *str, *types, *doc;
     Py_ssize_t fname_len = -1;
     void * ptr, **data;
     int offset[2];
@@ -95,12 +96,12 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 
     pyname = PyObject_GetAttrString(function, "__name__");
     if (pyname) {
-        (void) PyString_AsStringAndSize(pyname, &fname, &fname_len);
+        fname = PyUnicode_AsUTF8AndSize(pyname, &fname_len);
     }
-    if (PyErr_Occurred()) {
+    if (fname == NULL) {
+        PyErr_Clear();
         fname = "?";
         fname_len = 1;
-        PyErr_Clear();
     }
 
     /*

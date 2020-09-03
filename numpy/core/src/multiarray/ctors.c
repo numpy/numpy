@@ -1977,10 +1977,10 @@ PyArray_FromInterface(PyObject *origin)
                     "(data pointer integer, read-only flag)");
             goto fail;
         }
+
         dataptr = PyTuple_GET_ITEM(attr, 0);
-        if (PyString_Check(dataptr)) {
-            res = sscanf(PyString_AsString(dataptr),
-                         "%p", (void **)&data);
+        if (PyBytes_Check(dataptr)) {
+            res = sscanf(PyBytes_AsString(dataptr), "%p", (void **)&data);
             if (res < 1) {
                 PyErr_SetString(PyExc_TypeError,
                         "__array_interface__ data string cannot be converted");
@@ -1989,6 +1989,9 @@ PyArray_FromInterface(PyObject *origin)
         }
         else if (PyLong_Check(dataptr)) {
             data = PyLong_AsVoidPtr(dataptr);
+            if (data == NULL && PyErr_Occurred()) {
+                goto fail;
+            }
         }
         else {
             PyErr_SetString(PyExc_TypeError,
