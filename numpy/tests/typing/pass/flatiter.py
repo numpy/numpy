@@ -1,6 +1,6 @@
 import numpy as np
 
-a = np.random.rand(5).flat
+a = np.empty((2, 2)).flat
 
 a.base
 a.copy()
