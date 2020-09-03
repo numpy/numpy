@@ -40,12 +40,12 @@ typedef struct {
  *         cfloat, cdouble, clongdouble, datetime, timedelta#
  */
 
-NPY_VISIBILITY_HIDDEN void
+NPY_NO_EXPORT void
 binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
                         npy_intp arr_len, npy_intp key_len,
                         npy_intp arr_str, npy_intp key_str, npy_intp ret_str,
                         PyArrayObject *unused);
-NPY_VISIBILITY_HIDDEN int
+NPY_NO_EXPORT int
 argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            const char *sort, char *ret,
                            npy_intp arr_len, npy_intp key_len,
@@ -54,12 +54,12 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
                            PyArrayObject *unused);
 /**end repeat1**/
 
-NPY_VISIBILITY_HIDDEN void
+NPY_NO_EXPORT void
 npy_binsearch_@side@(const char *arr, const char *key, char *ret,
                      npy_intp arr_len, npy_intp key_len,
                      npy_intp arr_str, npy_intp key_str,
                      npy_intp ret_str, PyArrayObject *cmp);
-NPY_VISIBILITY_HIDDEN int
+NPY_NO_EXPORT int
 npy_argbinsearch_@side@(const char *arr, const char *key,
                         const char *sort, char *ret,
                         npy_intp arr_len, npy_intp key_len,
