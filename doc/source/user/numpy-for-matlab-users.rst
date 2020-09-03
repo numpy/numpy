@@ -21,7 +21,7 @@ SciPy users.
    table.docutils td { border: solid 1px #ccc; }
    </style>
 
-Some Key Differences
+Some key differences
 ====================
 
 .. list-table::
@@ -52,8 +52,8 @@ Some Key Differences
        syntax for some array manipulations is more compact than
        NumPy's. On the other hand, the API for adding GUIs and creating 
        full-fledged applications is more or less an afterthought.
-     - NumPy is  based on Python, which was designed from the outset to be an
-       excellent general-purpose programming language.  The advantage to NumPy
+     - NumPy is  based on Python, a
+       general-purpose language.  The advantage to NumPy
        is access to Python libraries including: `SciPy
        <https://www.scipy.org/>`_, `Matplotlib <https://matplotlib.org/>`_,
        `Pandas <https://pandas.pydata.org/>`_, `OpenCV <https://opencv.org/>`_,
@@ -74,9 +74,9 @@ Rough equivalents
 =======================================
 
 The table below gives rough equivalents for some common MATLAB
-expressions. **These are not exact equivalents**, but rather should be
-taken as hints to get you going in the right direction. For more detail
-read the built-in documentation on the NumPy functions.
+expressions. These are similar expressions, not equivalents. For
+details, see the `documentation
+<https://numpy.org/doc/stable/reference/routines.html>`_. 
 
 In the table below, it is assumed that you have executed the following
 commands in Python:
@@ -90,7 +90,7 @@ commands in Python:
 Also assume below that if the Notes talk about "matrix" that the
 arguments are two-dimensional entities.
 
-General Purpose Equivalents
+General purpose equivalents
 ---------------------------
 
 .. list-table::
@@ -181,7 +181,7 @@ General Purpose Equivalents
      - ``integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
 
-Linear Algebra Equivalents
+Linear algebra equivalents
 --------------------------
 
 .. list-table::
