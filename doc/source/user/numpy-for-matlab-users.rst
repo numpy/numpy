@@ -32,10 +32,10 @@ Some Key Differences
        matrix operations in linear algebra. 
      - In NumPy, the basic type is a multidimensional ``array``. By default,
        NumPy creates 0D or 1D arrays for inputs of numbers or lists,
-       respectively.  Operations on these arrays in all dimensionalities
-       including 2D are element-wise operations.  One needs to use specific
-       functions for linear algebra (though for matrix multiplication, one can
-       use the ``@`` operator in Python 3.5 and above).
+       respectively.  NumPy performs operations element-by-element, so multiplying
+       2D arrays with `*` is not a matrix multiplication -- it's an element-by-element 
+       multiplication. (The `@` operator, available since Python 3.5, can be used
+       for conventional matrix multiplication.)
 
    * - MATLAB uses 1 (one) based indexing. The initial element of a
        sequence is found using a(1).
