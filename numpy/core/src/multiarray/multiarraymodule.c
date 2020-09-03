@@ -362,7 +362,8 @@ PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
-                          PyArrayObject* ret)
+                          PyArrayObject* ret, PyArray_Descr *dtype,
+                          NPY_CASTING casting)
 {
     int iarrays, idim, ndim;
     npy_intp shape[NPY_MAXDIMS];
@@ -426,6 +427,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
     }
 
     if (ret != NULL) {
+        assert(dtype == NULL);
         if (PyArray_NDIM(ret) != ndim) {
             PyErr_SetString(PyExc_ValueError,
                             "Output array has wrong dimensionality");
@@ -445,10 +447,16 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         /* Get the priority subtype for the array */
         PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-        /* Get the resulting dtype from combining all the arrays */
-        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
         if (dtype == NULL) {
-            return NULL;
+            /* Get the resulting dtype from combining all the arrays */
+            dtype = (PyArray_Descr *)PyArray_ResultType(
+                                                narrays, arrays, 0, NULL);
+            if (dtype == NULL) {
+                return NULL;
+            }
+        }
+        else {
+            Py_INCREF(dtype);
         }
 
         /*
@@ -494,7 +502,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
         /* Copy the data for this array */
         if (PyArray_AssignArray((PyArrayObject *)sliding_view, arrays[iarrays],
-                            NULL, NPY_SAME_KIND_CASTING) < 0) {
+                            NULL, casting) < 0) {
             Py_DECREF(sliding_view);
             Py_DECREF(ret);
             return NULL;
@@ -514,7 +522,9 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
-                                    NPY_ORDER order, PyArrayObject *ret)
+                                   NPY_ORDER order, PyArrayObject *ret,
+                                   PyArray_Descr *dtype, NPY_CASTING casting,
+                                   npy_bool casting_not_passed)
 {
     int iarrays;
     npy_intp shape = 0;
@@ -541,7 +551,10 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
     }
 
+    int out_passed = 0;
     if (ret != NULL) {
+        assert(dtype == NULL);
+        out_passed = 1;
         if (PyArray_NDIM(ret) != 1) {
             PyErr_SetString(PyExc_ValueError,
                             "Output array must be 1D");
@@ -560,10 +573,16 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         /* Get the priority subtype for the array */
         PyTypeObject *subtype = PyArray_GetSubType(narrays, arrays);
 
-        /* Get the resulting dtype from combining all the arrays */
-        PyArray_Descr *dtype = PyArray_ResultType(narrays, arrays, 0, NULL);
         if (dtype == NULL) {
-            return NULL;
+            /* Get the resulting dtype from combining all the arrays */
+            dtype = (PyArray_Descr *)PyArray_ResultType(
+                                            narrays, arrays, 0, NULL);
+            if (dtype == NULL) {
+                return NULL;
+            }
+        }
+        else {
+            Py_INCREF(dtype);
         }
 
         stride = dtype->elsize;
@@ -593,9 +612,36 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         return NULL;
     }
 
+    int give_deprecation_warning = 1;  /* To give warning for just one input array. */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         /* Adjust the window dimensions for this array */
         sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
+
+        if (!PyArray_CanCastArrayTo(
+                arrays[iarrays], PyArray_DESCR(ret), casting)) {
+            /* This should be an error, but was previously allowed here. */
+            if (casting_not_passed && out_passed) {
+                /* NumPy 1.20, 2020-09-03 */
+                if (give_deprecation_warning && DEPRECATE(
+                        "concatenate() with `axis=None` will use same-kind "
+                        "casting by default in the future. Please use "
+                        "`casting='unsafe'` to retain the old behaviour. "
+                        "In the future this will be a TypeError.") < 0) {
+                    Py_DECREF(sliding_view);
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+                give_deprecation_warning = 0;
+            }
+            else {
+                npy_set_invalid_cast_error(
+                        PyArray_DESCR(arrays[iarrays]), PyArray_DESCR(ret),
+                        casting, PyArray_NDIM(arrays[iarrays]) == 0);
+                Py_DECREF(sliding_view);
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
 
         /* Copy the data for this array */
         if (PyArray_CopyAsFlat((PyArrayObject *)sliding_view, arrays[iarrays],
@@ -614,8 +660,21 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     return ret;
 }
 
+
+/**
+ * Implementation for np.concatenate
+ *
+ * @param op Sequence of arrays to concatenate
+ * @param axis Axis to concatenate along
+ * @param ret output array to fill
+ * @param dtype Forced output array dtype (cannot be combined with ret)
+ * @param casting Casting mode used
+ * @param casting_not_passed Deprecation helper
+ */
 NPY_NO_EXPORT PyObject *
-PyArray_ConcatenateInto(PyObject *op, int axis, PyArrayObject *ret)
+PyArray_ConcatenateInto(PyObject *op,
+        int axis, PyArrayObject *ret, PyArray_Descr *dtype,
+        NPY_CASTING casting, npy_bool casting_not_passed)
 {
     int iarrays, narrays;
     PyArrayObject **arrays;
@@ -623,6 +682,12 @@ PyArray_ConcatenateInto(PyObject *op, int axis, PyArrayObject *ret)
     if (!PySequence_Check(op)) {
         PyErr_SetString(PyExc_TypeError,
                         "The first input argument needs to be a sequence");
+        return NULL;
+    }
+    if (ret != NULL && dtype != NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "concatenate() only takes `out` or `dtype` as an "
+                "argument, but both were provided.");
         return NULL;
     }
 
@@ -651,10 +716,13 @@ PyArray_ConcatenateInto(PyObject *op, int axis, PyArrayObject *ret)
     }
 
     if (axis >= NPY_MAXDIMS) {
-        ret = PyArray_ConcatenateFlattenedArrays(narrays, arrays, NPY_CORDER, ret);
+        ret = PyArray_ConcatenateFlattenedArrays(
+                narrays, arrays, NPY_CORDER, ret, dtype,
+                casting, casting_not_passed);
     }
     else {
-        ret = PyArray_ConcatenateArrays(narrays, arrays, axis, ret);
+        ret = PyArray_ConcatenateArrays(
+                narrays, arrays, axis, ret, dtype, casting);
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
@@ -686,7 +754,16 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_Concatenate(PyObject *op, int axis)
 {
-    return PyArray_ConcatenateInto(op, axis, NULL);
+    /* retain legacy behaviour for casting */
+    NPY_CASTING casting;
+    if (axis >= NPY_MAXDIMS) {
+        casting = NPY_UNSAFE_CASTING;
+    }
+    else {
+        casting = NPY_SAME_KIND_CASTING;
+    }
+    return PyArray_ConcatenateInto(
+            op, axis, NULL, NULL, casting, 0);
 }
 
 static int
@@ -2259,11 +2336,27 @@ array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *a0;
     PyObject *out = NULL;
+    PyArray_Descr *dtype = NULL;
+    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+    PyObject *casting_obj = NULL;
+    PyObject *res;
     int axis = 0;
-    static char *kwlist[] = {"seq", "axis", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:concatenate", kwlist,
-                &a0, PyArray_AxisConverter, &axis, &out)) {
+    static char *kwlist[] = {"seq", "axis", "out", "dtype", "casting", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O$O&O:concatenate", kwlist,
+                &a0, PyArray_AxisConverter, &axis, &out,
+                PyArray_DescrConverter2, &dtype, &casting_obj)) {
+        return NULL;
+    }
+    int casting_not_passed = 0;
+    if (casting_obj == NULL) {
+        /*
+         * Casting was not passed in, needed for deprecation only.
+         * This should be simplified once the deprecation is finished.
+         */
+        casting_not_passed = 1;
+    }
+    else if (!PyArray_CastingConverter(casting_obj, &casting)) {
+        Py_XDECREF(dtype);
         return NULL;
     }
     if (out != NULL) {
@@ -2272,10 +2365,14 @@ array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         }
         else if (!PyArray_Check(out)) {
             PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            Py_XDECREF(dtype);
             return NULL;
         }
     }
-    return PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out);
+    res = PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out, dtype,
+            casting, casting_not_passed);
+    Py_XDECREF(dtype);
+    return res;
 }
 
 static PyObject *
