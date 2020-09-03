@@ -528,7 +528,7 @@ Linear Algebra Equivalents
      - sort each column of a 2D matrix, ``a``
 
    * - ``sort(a,2)``
-     - ``np.sort(a,axis=1)`` or ``a.sort(axis=1)``
+     - ``np.sort(a, axis=1)`` or ``a.sort(axis=1)``
      - sort the each row of 2D matrix, ``a``
 
    * - ``[b,I]=sortrows(a,1)``
