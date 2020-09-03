@@ -256,7 +256,7 @@ def libpaths(paths, bits):
 
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
-                        os.path.join(sysconfig.EXEC_PREFIX,
+                        os.path.join(sysconfig.get_config_var('exec_prefix'),
                                      'libs')]
     default_runtime_dirs = []
     default_include_dirs = []
