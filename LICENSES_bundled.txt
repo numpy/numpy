@@ -3,17 +3,17 @@ compatibly licensed.  We list these here.
 
 Name: Numpydoc
 Files: doc/sphinxext/numpydoc/*
-License: BSD-2-clause
+License: BSD-2-Clause
   For details, see doc/sphinxext/LICENSE.txt
 
 Name: scipy-sphinx-theme
 Files: doc/scipy-sphinx-theme/*
-License: BSD-3-clause AND PSF-2.0 AND Apache-2.0
+License: BSD-3-Clause AND PSF-2.0 AND Apache-2.0
   For details, see doc/scipy-sphinx-theme/LICENSE.txt
 
 Name: lapack-lite
 Files: numpy/linalg/lapack_lite/*
-License: BSD-3-clause
+License: BSD-3-Clause
   For details, see numpy/linalg/lapack_lite/LICENSE.txt
 
 Name: tempita
