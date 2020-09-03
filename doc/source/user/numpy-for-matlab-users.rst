@@ -26,22 +26,25 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB, the basic type is a multidimensional array. By default, MATLAB
-       creates two-dimensional arrays of double precision floating point numbers.
-       Operations on the 2D instances of these arrays are modeled on
-       matrix operations in linear algebra. 
-     - In NumPy, the basic type is a multidimensional ``array``. By default,
-       NumPy creates 0D or 1D arrays for inputs of numbers or lists,
-       respectively.  NumPy performs operations element-by-element, so multiplying
-       2D arrays with `*` is not a matrix multiplication -- it's an element-by-element 
-       multiplication. (The `@` operator, available since Python 3.5, can be used
-       for conventional matrix multiplication.)
+   * - In MATLAB, the basic type is a multidimensional array. Array
+       assignments in MATLAB are stored as 2D arrays of double precision
+       floating point numbers, unless you specify the number of
+       dimensions and type.  Operations on the 2D instances of these
+       arrays are modeled on matrix operations in linear algebra. 
+     - In NumPy, the basic type is a multidimensional ``array``.  Array
+       assignments in NumPy are usually stored as ND arrays with the
+       minimum type required to hold the objects in sequence, unless you
+       specify the number of dimensions and type. NumPy performs
+       operations element-by-element, so multiplying 2D arrays with
+       ``*`` is not a matrix multiplication -- it's an
+       element-by-element multiplication. (The ``@`` operator, available
+       since Python 3.5, can be used for conventional matrix
+       multiplication.)
 
-   * - MATLAB uses 1 (one) based indexing. The initial element of a
-       sequence is found using a(1).
+   * - MATLAB numbers indices from 1; ``a(1)`` is the first element.
        :ref:`See note INDEXING <numpy-for-matlab-users.notes>`
-     - Python uses 0 (zero) based indexing. The initial element of a
-       sequence is found using a[0].
+     - NumPy, like Python, numbers indices from 0; ``a[0]`` is the first
+       element.
 
    * - MATLAB's scripting language was created for linear algebra so the
        syntax for some array manipulations is more compact than
