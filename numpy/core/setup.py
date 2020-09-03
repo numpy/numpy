@@ -930,7 +930,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
-                                 npymath_sources + common_src +
+                                 common_src +
                                  [generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
