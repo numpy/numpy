@@ -153,16 +153,16 @@ class _Config:
             least one applicable flag. see `feature_can_autovec()`
 
         "extra_checks": str or list, optional
-            Extra test cases names for the CPU feature that need to be tested
+            Extra test case names for the CPU feature that need to be tested
             against the compiler.
 
-            Each test case name must has a C file located at 'conf_check_path'
-            contains at least one intrinsic or function related to the test case
-            named extra_xxxx.c where xxxx is the case name in lower case.
+            Each test case must have a C file named ``extra_xxxx.c``, where
+            ``xxxx`` is the case name in lower case, under 'conf_check_path'.
+            It should contain at least one intrinsic or function related to the test case.
 
             If the compiler able to successfully compile the C file then `CCompilerOpt`
-            will add C #definition for it into the main dispatch header, e.g.
-            #define {conf_c_prefix}_XXXX where XXXX is the case name in upper case.
+            will add a C ``#define`` for it into the main dispatch header, e.g.
+            ```#define {conf_c_prefix}_XXXX`` where ``XXXX`` is the case name in upper case.
 
         **NOTES**:
             * space can be used as separator with options that supports "str or list"
@@ -1529,7 +1529,7 @@ class _Feature:
                 self.conf_check_path, "extra_%s.c" % chk.lower()
             )
             if not os.path.exists(test_path):
-                self.dist_fatal("extra check file is not exist", test_path)
+                self.dist_fatal("extra check file does not exist", test_path)
 
             is_supported = self.dist_test(test_path, flags + self.cc_flags["werror"])
             if is_supported:
