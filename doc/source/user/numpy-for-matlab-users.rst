@@ -743,7 +743,7 @@ There are pros and cons to using both:
 The ``array`` is thus much more advisable to use.  Indeed, we intend to
 deprecate ``matrix`` eventually.
 
-Customizing Your Environment
+Customizing your environment
 ============================
 
 In MATLAB the main tool available to you for customizing the
