@@ -3009,7 +3009,7 @@ def param_eval(n, varsn, v, g_params, params):
                     ' supported: %s\n' % repr(n))
 
         # Parse parameter value
-        v = v.strip('()').strip('/').split(',')
+        v = (v[2:-2] if v.startswith('(/') else v).split(',')
         v_eval = []
         for item in v:
             try:
@@ -3060,7 +3060,9 @@ def param_parse(d, params):
 
       then `d = 2` and we return immediately, with
 
-      `param_parse(d, params) = '2'`
+    >>> d = '2'
+    >>> param_parse(d, params)
+    2
 
     * If the line being analyzed is
 
@@ -3069,11 +3071,10 @@ def param_parse(d, params):
       then `d = pa(1)`; since `pa` is a previously parsed parameter,
       and `pa(1) = 3`, we call `param_parse` recursively, to obtain
 
-      `param_parse(d, params) = '3'`
+    >>> d = 'pa(1)'
+    >>> param_parse(d, params)
+    3
 
-    Notes
-    -----
-    The return values are strings.
     """
     if d.find("(") != -1:
         dname = d[:d.find("(")]
