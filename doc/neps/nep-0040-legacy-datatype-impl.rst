@@ -253,6 +253,8 @@ types such as ``np.inexact`` (see figure below).
 In fact, some control flow within NumPy currently uses
 ``issubclass(a.dtype.type, np.inexact)``.
 
+.. _nep-0040_dtype-hierarchy:
+
 .. figure:: _static/nep-0040_dtype-hierarchy.png
 
    **Figure:** Hierarchy of NumPy scalar types reproduced from the reference
@@ -335,7 +337,7 @@ Each of these signatures is associated with a single inner-loop function defined
 in C, which does the actual calculation, and may be called multiple times.
 
 The main step in finding the correct inner-loop function is to call a
-:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from 
+:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from
 the provided input arrays
 and will determine the full type signature (including output dtype) to be executed.
 
@@ -366,7 +368,7 @@ It is currently only possible for user defined functions to be found/resolved
 if any of the inputs (or the outputs) has the user datatype, since it uses the
 `OO->O` signature.
 For example, given that a ufunc loop to implement ``fraction_divide(int, int)
--> Fraction`` has been implemented, 
+-> Fraction`` has been implemented,
 the call ``fraction_divide(4, 5)`` (with no specific output dtype) will fail
 because the loop that
 includes the user datatype ``Fraction`` (as output) can only be found if any of
@@ -572,7 +574,7 @@ Related Work
 ------------
 
 * Julia types are an interesting blueprint for a type hierarchy, and define
-  abstract and concrete types [julia-types]_. 
+  abstract and concrete types [julia-types]_.
 
 * In Julia promotion can occur based on abstract types. If a promoter is
   defined, it will cast the inputs and then Julia can then retry to find
@@ -607,7 +609,7 @@ the following provides a subset for more recent ones:
 
   * https://hackmd.io/ok21UoAQQmOtSVk6keaJhw and https://hackmd.io/s/ryTFaOPHE
     (2019-04-30) Proposals for subclassing implementation approach.
-  
+
   * Discussion about the calling convention of ufuncs and need for more
     powerful UFuncs: https://github.com/numpy/numpy/issues/12518
 

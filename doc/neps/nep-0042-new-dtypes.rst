@@ -66,69 +66,79 @@ A Python-side exposure of these methods is not in scope of this NEP.
 
 This document focuses on datatype-related API additions; NEP 43 proposes
 additions related to universal functions. Neither set of changes is meant to
-stand on its own; both are needed.
+stand on its own; both will be needed.
 
 Usage and Impact
 ----------------
 
-:ref:`NEP 41 <NEP41>` illustrates new DTypes that this work will make possible.
-The methods and attributes in this NEP are expected to become a public API; an
-overview appears in the Section `Summary  DType Class`_.
+:ref:`NEP 41 <NEP41>` gives examples of new user dtypes that this work will
+make possible. Methods and attributes in this NEP are expected to
+become a public API; an overview appears in the Section `Summary  DType
+Class`_.
 
 Backward compatibility
 ----------------------
 
-This NEP is largely free of backward-compatibility concerns. The main issues
-are noted in :ref:`NEP 41 <NEP41>` and will mostly affect heavy users of the
-NumPy C-API.
+The disruption is expected to be no greater than that of a typical NumPy
+release.
 
-Eventually we will want to deprecate the API currently used for creating
-user-defined dtypes.
+- The main issues are noted in :ref:`NEP 41 <NEP41>` and will mostly affect
+  heavy users of the NumPy C-API.
 
-Small, rarely noticed inconsistencies are likely to change; the disruption is
-expected to be no greater than that of a typical NumPy release.
+- Eventually we will want to deprecate the API currently used for creating
+  user-defined dtypes.
+
+- Small, rarely noticed inconsistencies are likely to change. Examples:
+
+  - ``np.array(np.complex128(np.nan), dtype=float)`` behaves differently from
+    ``np.array(np.complex128(np.nan)).astype(dtype=float)``
+  - ``np.array([array_like])`` sometimes behaves differently from
+    ``np.array([np.array(array_like)])``
+  - array operations may or may not preserve dtype metadata
+
 
 Overview
 --------
 
-The creation of a DType class and the Class hierarchy is laid out in NEP 41.
-This NEP
+Any support of dtypes must consider:
 
-- Defines a corresponding API. Though we describe the API in terms of C-API
-  slots, conceptually these translate identically to Python methods.
+- How shape and dtype are determined when an array is created
+- How array elements are stored and accessed
+- The rules for casting dtypes to other dtypes
 
-- Describes the implementation of *abstract* DTypes
+In addition:
 
-- Shows how the new API enables all use cases.
+- We want dtypes to comprise a class hierarchy open to new types and to
+  subhierarchies, as motivated in :ref:`NEP 41 <NEP41>`.
 
-We begin each part with a desirable outcome or current problem.
-A design description follows, sometimes with alternatives.
-In correspondence to the implementation steps summarized in NEP 41,
-this is structured into following sections:
+And to provide this,
 
-1. The `DType class`_ section describes the class hierarchy,
-   its relation to the Python scalar types and important attributes.
+- We need to define a user API.
 
-2. `Casting and common DType`_ to provide for example
-   the functionality which allows casting from one dtype to another:
+All these are the subjects of this NEP.
 
-   .. code:: python
+- `DType class`_  describes the class hierarchy, its relation to the Python
+  scalar types, and its important attributes.
 
-       >>> arr = np.arange(10)
-       >>> arr.astype(UserDType)
+- `Casting`_ describes the functionality that will support dtype casting:
 
-3. `Array Coercion`_ describing the implementation
-   of item access and storage as well as finding the correct shape and
-   dtype when creating an array. For example:
+  .. code:: python
 
-   .. code:: python
+     >>> arr = np.arange(10)
+     >>> arr.astype(UserDType)
 
-       arr = np.array(["string", "long string"])
+- `Array coercion`_ describes the implementation of item access and storage and how
+  shape and dtype are determined when creating an array. For
+  example:
 
-   has to find the correct string length.
+  .. code:: python
 
-4. `Public C-API`_ defines the design concepts, to allow users to define their
-   own DTypes based on the previously introduced methods and functionality.
+     >>> arr = np.array(["string", "long string"])
+
+  has to find a string length.
+
+- `Public C-API`_ describes the functionality for users to define their own
+  DTypes.
 
 
 Summary  DType Class
@@ -158,7 +168,7 @@ and properties, including the following:
         def ensure_canonical(self : DType) -> DType:
             raise NotImplementedError
 
-The Casting and common DType part, describes the following methods.
+The Casting part, describes the following methods.
 A large part of the functionality is provided by the "methods" stored
 in `_castingimpl` and described below:
 
@@ -226,8 +236,8 @@ necessary for complex user defined DTypes.
 Nomenclature
 """"""""""""
 
-Because NumPy did previously not have a notion of a DType class, we
-review the following terms:
+Because NumPy has had no notion of a DType class, we review the following
+terms:
 
 - ``dtype`` denotes the dtype *instance*; this is the object
   attached to a numpy array.
@@ -239,14 +249,14 @@ review the following terms:
   dtype instances from DType classes.
 
 Note that the notion of dtype class is currently represented mainly as
-the ``dtype.num`` and ``dtype.char``, a distinction illustrated in the
+the ``dtype.num`` and ``dtype.char``, a distinction illustrated below in the
 :ref:`dtype hierarchy figure <hierarchy_figure>`.
 
-Classes for numeric types do exist in NumPy -- for example, ``np.float64`` --
-but these aren't Dtypes but rather the corresponding scalar classes (see also
-NEP 40 and 41 for discussion on why these are largely unrelated to the
-proposed changes).
-
+Perhaps confusingly, NumPy already has a class hierarchy for numeric types, as
+seen :ref:`in the figure <nep-0040_dtype-hierarchy>` of NEP 40, and the new
+DType hierarchy will resemble it. But the existing hierarchy is for scalar
+types, not DTypes, and its existence is largely irrelevant here, as NEP 40 and
+41 explain in detail.
 
 .. _dtype_class:
 
@@ -331,11 +341,8 @@ and ``CategoricalObject`` subclasses.
 
 These same choices are made in the
 `Julia language <https://docs.julialang.org/en/v1/manual/types/#man-abstract-types-1>`_.
-They help avoid the bad coupling that results from
-subclassing concrete types. For example, it might seem reasonable to make ``Datetime64``
-a subclass of ``Int64``, reasoning that a datetime
-is just an integer with a unit attached. But the ``can_cast`` in ``Int64``
-makes no sense for a ``Datetime64``.
+They help avoid unintended vulnerabilities to implementation changes that result from
+subclassing types that were not written to be subclassed.
 
 End-users would not notice or need to know the rule against inheriting from
 concrete classes.
@@ -435,8 +442,8 @@ for coercion (compare section `DType discovery during array coercion`_).
 
 .. _casting:
 
-Casting and common DType
-------------------------
+Casting
+--------
 
 In this section we review the operation related to casting one array from
 another.  This includes finding the "common dtype" which is currently
@@ -1196,7 +1203,7 @@ In the future a function "``known_scalartype``" may be added to allow a user
 dtype to signal which Python scalars it can store directly.
 
 
-**Implementation:** The pseudo-code implementation for setting a single item in an array
+**Implementation:** The pseudocode implementation for setting a single item in an array
 from an arbitrary Python object ``value`` is (note that some
 functions are only defined below)::
 
