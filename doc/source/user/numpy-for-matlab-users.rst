@@ -535,8 +535,8 @@ Linear Algebra Equivalents
      - ``I = np.argsort(a[:,0]); b = a[I,:]``
      - save the array ``a`` as array ``b`` with rows sorted by the first column
 
-   * - ``Z\y``
-     - ``linalg.lstsq(Z,y)``
+   * - ``x = Z\y``
+     - ``x = linalg.lstsq(Z,y)``
      - perform a linear regression of the form :math:`\mathbf{Zx}=\mathbf{y}`
 
    * - ``decimate(x, q)``
