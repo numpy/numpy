@@ -1,6 +1,7 @@
 import functools
 import sys
 import math
+import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
@@ -659,7 +660,15 @@ class ndindex:
         Increment the multi-dimensional index by one.
 
         This method is for backward compatibility only: do not use.
+
+        .. deprecated:: 1.20.0
+            This method has been advised against since numpy 1.8.0, but only
+            started emitting DeprecationWarning as of this version.
         """
+        # NumPy 1.20.0, 2020-09-08
+        warnings.warn(
+            "`ndindex.ndincr()` is deprecated, use `next(ndindex)` instead",
+            DeprecationWarning, stacklevel=2)
         next(self)
 
     def __next__(self):
