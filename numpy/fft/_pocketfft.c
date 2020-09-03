@@ -20,6 +20,25 @@
 #include <stdlib.h>
 
 #include "npy_config.h"
+
+#ifdef NPY_HAVE_NEON
+#include "lowlevel_strided_loops.h"
+#include "arm_neon.h"
+
+/* align var to alignment */
+#define LOOP_BLOCK_ALIGN_VAR(var, type, alignment)\
+    npy_intp i, peel = npy_aligned_block_offset(var, sizeof(type),\
+                                                alignment, n);\
+    for(i = 0; i < peel; i++)
+
+#define LOOP_BLOCKED(type, vsize)\
+    for(; i < npy_blocked_end(peel, sizeof(type), vsize, n);\
+            i += (vsize / sizeof(type)))
+
+#define LOOP_BLOCKED_END\
+    for (; i < n; i++)
+#endif
+
 #define restrict NPY_RESTRICT
 
 #define RALLOC(type,num) \
@@ -309,6 +328,25 @@ typedef struct cfftp_plan_i * cfftp_plan;
 /* a *= b */
 #define MULPMSIGNCEQ(a,b) { double xtmp=a.r; a.r=b.r*a.r-sign*b.i*a.i; a.i=b.r*a.i+sign*b.i*xtmp; }
 
+#ifdef NPY_HAVE_NEON
+#define VLDCH(reg,a,b,c) reg=vld2q_f64((double*)&CH(a,b,c));
+#define VLDCC(reg,a,b,c) reg=vld2q_f64((double*)&CC(a,b,c));
+#define VLDWA(reg,x,i) reg=vld2q_f64((double*)&WA(x,i));
+#define VSTCH(reg,a,b,c) vst2q_f64((double*)&CH(a,b,c),reg);
+#define VADD(c,a,b,k,i,j) { c.val[k] = vaddq_f64(a.val[i],b.val[j]); }
+#define VSUB(c,a,b,k,i,j) { c.val[k] = vsubq_f64(a.val[i],b.val[j]); }
+#define VADDC(c,a,b) { VADD(c,a,b,0,0,0) VADD(c,a,b,1,1,1) }
+#define VSUBC(c,a,b) { VSUB(c,a,b,0,0,0) VSUB(c,a,b,1,1,1) }
+#define VPMC(c,d,a,b) { VADDC(c,a,b) VSUBC(d,a,b) }
+#define VPMCR90(c,d,a,b) { VSUB(c,a,b,0,0,1) VADD(c,a,b,1,1,0) VADD(d,a,b,0,0,1) VSUB(d,a,b,1,1,0) }
+#define VPMCRM90(c,d,a,b) { VADD(c,a,b,0,0,1) VSUB(c,a,b,1,1,0) VSUB(d,a,b,0,0,1) VADD(d,a,b,1,1,0) }
+#define VMUL(c,a,b,k,i,j) { c.val[k] = vmulq_f64(a.val[i],b.val[j]);}
+#define VMLA(c,a,b,k,i,j) { c.val[k] = vmlaq_f64(c.val[k],a.val[i],b.val[j]);}
+#define VMLS(c,a,b,k,i,j) { c.val[k] = vmlsq_f64(c.val[k],a.val[i],b.val[j]);}
+#define VA_EQ_B_MUL_C(c,a,b) { VMUL(c,a,b,0,0,0) VMUL(c,a,b,1,0,1) VMLS(c,a,b,0,1,1) VMLA(c,a,b,1,1,0) }
+#define VA_EQ_CB_MUL_C(c,a,b) { VMUL(c,a,b,0,0,0) VMUL(c,a,b,1,0,1) VMLA(c,a,b,0,1,1) VMLS(c,a,b,1,1,0) } 
+#endif
+
 NOINLINE static void pass2b (size_t ido, size_t l1, const cmplx * restrict cc,
   cmplx * restrict ch, const cmplx * restrict wa)
   {
@@ -321,12 +359,38 @@ NOINLINE static void pass2b (size_t ido, size_t l1, const cmplx * restrict cc,
     for (size_t k=0; k<l1; ++k)
       {
       PMC (CH(0,k,0),CH(0,k,1),CC(0,0,k),CC(0,1,k))
+#ifdef NPY_HAVE_NEON
+      npy_intp n = ido-1;
+      LOOP_BLOCK_ALIGN_VAR(ch+1, cmplx, 32){
+        cmplx t;
+        PMC (CH(i+1,k,0),t,CC(i+1,0,k),CC(i+1,1,k))
+        A_EQ_B_MUL_C (CH(i+1,k,1),WA(0,i+1),t)
+      }
+      float64x2x2_t c,d,tmp,twd;
+      LOOP_BLOCKED(cmplx, 32){
+        VLDCC(c,i+1,0,k)
+        VLDCC(d,i+1,1,k)
+        VADDC(tmp,c,d)
+        VSTCH(tmp,i+1,k,0)
+        VSUBC(tmp,c,d)
+        VLDWA(twd,0,i+1)
+        VA_EQ_B_MUL_C(c,twd,tmp)
+        VSTCH(c,i+1,k,1)
+      }
+      LOOP_BLOCKED_END {
+        cmplx t;
+        PMC (CH(i+1,k,0),t,CC(i+1,0,k),CC(i+1,1,k))
+        A_EQ_B_MUL_C (CH(i+1,k,1),WA(0,i+1),t)
+      }
+#else
+//    scalr operations
       for (size_t i=1; i<ido; ++i)
         {
         cmplx t;
         PMC (CH(i,k,0),t,CC(i,0,k),CC(i,1,k))
         A_EQ_B_MUL_C (CH(i,k,1),WA(0,i),t)
         }
+#endif
       }
   }
 
@@ -342,12 +406,37 @@ NOINLINE static void pass2f (size_t ido, size_t l1, const cmplx * restrict cc,
     for (size_t k=0; k<l1; ++k)
       {
       PMC (CH(0,k,0),CH(0,k,1),CC(0,0,k),CC(0,1,k))
+#ifdef NPY_HAVE_NEON
+      npy_intp n = ido-1;
+      LOOP_BLOCK_ALIGN_VAR(ch+1, cmplx, 32){
+        cmplx t;
+        PMC (CH(i+1,k,0),t,CC(i+1,0,k),CC(i+1,1,k))
+        A_EQ_CB_MUL_C (CH(i+1,k,1),WA(0,i+1),t)
+      }
+      float64x2x2_t c,d,tmp,twd;
+      LOOP_BLOCKED(cmplx, 32){
+        VLDCC(c,i+1,0,k)
+        VLDCC(d,i+1,1,k)
+        VADDC(tmp,c,d)
+        VSTCH(tmp,i+1,k,0)
+        VSUBC(tmp,c,d)
+        VLDWA(twd,0,i+1)
+        VA_EQ_CB_MUL_C(c,twd,tmp)
+        VSTCH(c,i+1,k,1)
+      }
+      LOOP_BLOCKED_END {
+        cmplx t;
+        PMC (CH(i+1,k,0),t,CC(i+1,0,k),CC(i+1,1,k))
+        A_EQ_CB_MUL_C (CH(i+1,k,1),WA(0,i+1),t)
+      }
+#else
       for (size_t i=1; i<ido; ++i)
         {
         cmplx t;
         PMC (CH(i,k,0),t,CC(i,0,k),CC(i,1,k))
         A_EQ_CB_MUL_C (CH(i,k,1),WA(0,i),t)
         }
+#endif
       }
   }
 
@@ -467,6 +556,54 @@ NOINLINE static void pass4b (size_t ido, size_t l1, const cmplx * restrict cc,
       PMC(CH(0,k,0),CH(0,k,2),t2,t3)
       PMC(CH(0,k,1),CH(0,k,3),t1,t4)
       }
+#ifdef NPY_HAVE_NEON
+      npy_intp n = ido-1;
+      LOOP_BLOCK_ALIGN_VAR(ch+1, cmplx, 32){
+        cmplx c2, c3, c4, t1, t2, t3, t4;
+        cmplx cc0=CC(i+1,0,k), cc1=CC(i+1,1,k),cc2=CC(i+1,2,k),cc3=CC(i+1,3,k);
+        PMC(t2,t1,cc0,cc2)
+        PMC(t3,t4,cc1,cc3)
+        ROT90(t4)
+        cmplx wa0=WA(0,i+1), wa1=WA(1,i+1),wa2=WA(2,i+1);
+        PMC(CH(i+1,k,0),c3,t2,t3)
+        PMC(c2,c4,t1,t4)
+        A_EQ_B_MUL_C (CH(i+1,k,1),wa0,c2)
+        A_EQ_B_MUL_C (CH(i+1,k,2),wa1,c3)
+        A_EQ_B_MUL_C (CH(i+1,k,3),wa2,c4)
+      }
+      float64x2x2_t c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
+      LOOP_BLOCKED(cmplx, 32){
+        VLDCC(c1,i+1,0,k) VLDCC(c3,i+1,2,k)
+        VLDCC(c2,i+1,1,k) VLDCC(c4,i+1,3,k)
+        VLDWA(wa0,0,i+1)
+        VLDWA(wa1,1,i+1)
+        VLDWA(wa2,2,i+1)
+        VPMC(t2,t1,c1,c3)
+        VPMC(t3,t4,c2,c4)
+        VPMC(c1,c3,t2,t3)
+        VPMCR90(c2,c4,t1,t4)
+        VA_EQ_B_MUL_C(t1,wa0,c2)
+        VA_EQ_B_MUL_C(t2,wa1,c3)
+        VA_EQ_B_MUL_C(t3,wa2,c4)
+        VSTCH(c1,i+1,k,0)
+        VSTCH(t1,i+1,k,1)
+        VSTCH(t2,i+1,k,2)
+        VSTCH(t3,i+1,k,3)
+      }
+      LOOP_BLOCKED_END {
+        cmplx c2, c3, c4, t1, t2, t3, t4;
+        cmplx cc0=CC(i+1,0,k), cc1=CC(i+1,1,k),cc2=CC(i+1,2,k),cc3=CC(i+1,3,k);
+        PMC(t2,t1,cc0,cc2)
+        PMC(t3,t4,cc1,cc3)
+        ROT90(t4)
+        cmplx wa0=WA(0,i+1), wa1=WA(1,i+1),wa2=WA(2,i+1);
+        PMC(CH(i+1,k,0),c3,t2,t3)
+        PMC(c2,c4,t1,t4)
+        A_EQ_B_MUL_C (CH(i+1,k,1),wa0,c2)
+        A_EQ_B_MUL_C (CH(i+1,k,2),wa1,c3)
+        A_EQ_B_MUL_C (CH(i+1,k,3),wa2,c4)
+      }
+#else
       for (size_t i=1; i<ido; ++i)
         {
         cmplx c2, c3, c4, t1, t2, t3, t4;
@@ -481,6 +618,7 @@ NOINLINE static void pass4b (size_t ido, size_t l1, const cmplx * restrict cc,
         A_EQ_B_MUL_C (CH(i,k,2),wa1,c3)
         A_EQ_B_MUL_C (CH(i,k,3),wa2,c4)
         }
+#endif
       }
   }
 NOINLINE static void pass4f (size_t ido, size_t l1, const cmplx * restrict cc,
@@ -509,6 +647,54 @@ NOINLINE static void pass4f (size_t ido, size_t l1, const cmplx * restrict cc,
       PMC(CH(0,k,0),CH(0,k,2),t2,t3)
       PMC (CH(0,k,1),CH(0,k,3),t1,t4)
       }
+#ifdef NPY_HAVE_NEON
+      npy_intp n = ido-1;
+      LOOP_BLOCK_ALIGN_VAR(ch+1,cmplx,32) {
+        cmplx c2, c3, c4, t1, t2, t3, t4;
+        cmplx cc0=CC(i+1,0,k), cc1=CC(i+1,1,k),cc2=CC(i+1,2,k),cc3=CC(i+1,3,k);
+        PMC(t2,t1,cc0,cc2)
+        PMC(t3,t4,cc1,cc3)
+        ROTM90(t4)
+        cmplx wa0=WA(0,i+1), wa1=WA(1,i+1),wa2=WA(2,i+1);
+        PMC(CH(i+1,k,0),c3,t2,t3)
+        PMC(c2,c4,t1,t4)
+        A_EQ_CB_MUL_C (CH(i+1,k,1),wa0,c2)
+        A_EQ_CB_MUL_C (CH(i+1,k,2),wa1,c3)
+        A_EQ_CB_MUL_C (CH(i+1,k,3),wa2,c4)
+      }
+      float64x2x2_t c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
+      LOOP_BLOCKED(cmplx, 32) {
+        VLDCC(c1,i+1,0,k) VLDCC(c3,i+1,2,k)
+        VLDCC(c2,i+1,1,k) VLDCC(c4,i+1,3,k)
+        VLDWA(wa0,0,i+1)
+        VLDWA(wa1,1,i+1)
+        VLDWA(wa2,2,i+1)
+        VPMC(t2,t1,c1,c3)
+        VPMC(t3,t4,c2,c4)
+        VPMC(c1,c3,t2,t3)
+        VPMCRM90(c2,c4,t1,t4)
+        VA_EQ_CB_MUL_C(t1,wa0,c2) 
+        VA_EQ_CB_MUL_C(t2,wa1,c3) 
+        VA_EQ_CB_MUL_C(t3,wa2,c4) 
+        VSTCH(c1,i+1,k,0)
+        VSTCH(t1,i+1,k,1)
+        VSTCH(t2,i+1,k,2)
+        VSTCH(t3,i+1,k,3)
+      }
+      LOOP_BLOCKED_END {
+        cmplx c2, c3, c4, t1, t2, t3, t4;
+        cmplx cc0=CC(i+1,0,k), cc1=CC(i+1,1,k),cc2=CC(i+1,2,k),cc3=CC(i+1,3,k);
+        PMC(t2,t1,cc0,cc2)
+        PMC(t3,t4,cc1,cc3)
+        ROTM90(t4)
+        cmplx wa0=WA(0,i+1), wa1=WA(1,i+1),wa2=WA(2,i+1);
+        PMC(CH(i+1,k,0),c3,t2,t3)
+        PMC(c2,c4,t1,t4)
+        A_EQ_CB_MUL_C (CH(i+1,k,1),wa0,c2)
+        A_EQ_CB_MUL_C (CH(i+1,k,2),wa1,c3)
+        A_EQ_CB_MUL_C (CH(i+1,k,3),wa2,c4)
+      }
+#else
       for (size_t i=1; i<ido; ++i)
         {
         cmplx c2, c3, c4, t1, t2, t3, t4;
@@ -523,6 +709,7 @@ NOINLINE static void pass4f (size_t ido, size_t l1, const cmplx * restrict cc,
         A_EQ_CB_MUL_C (CH(i,k,2),wa1,c3)
         A_EQ_CB_MUL_C (CH(i,k,3),wa2,c4)
         }
+#endif
       }
   }
 
@@ -954,6 +1141,26 @@ NOINLINE WARN_UNUSED_RESULT static int pass_all(cfftp_plan plan, cmplx c[], doub
 #undef ADDC
 #undef PMC
 
+#ifdef NPY_HAVE_NEON
+#undef VA_EQ_CB_MUL_C
+#undef VA_EQ_B_MUL_C
+#undef VMLS
+#undef VMLA
+#undef VMUL
+#undef VPMCRM90
+#undef VPMCR90
+#undef VPMC
+#undef VSUBC
+#undef VADDC
+#undef VSUB
+#undef VADD
+#undef VSTCH
+#undef VLDWA
+#undef VLDCC
+#undef VLDCH
+#endif 
+
+//complex fourier transform
 NOINLINE WARN_UNUSED_RESULT
 static int cfftp_forward(cfftp_plan plan, double c[], double fct)
   { return pass_all(plan,(cmplx *)c, fct, -1); }
