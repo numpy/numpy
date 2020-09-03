@@ -621,7 +621,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
                 arrays[iarrays], PyArray_DESCR(ret), casting)) {
             /* This should be an error, but was previously allowed here. */
             if (casting_not_passed && out_passed) {
-                /* NumPy 1.19, 2020-04-30 */
+                /* NumPy 1.20, 2020-09-03 */
                 if (give_deprecation_warning && DEPRECATE(
                         "concatenate() with `axis=None` will use same-kind "
                         "casting by default in the future. Please use "

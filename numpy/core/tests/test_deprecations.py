@@ -709,6 +709,7 @@ class TestRaggedArray(_DeprecationTestCase):
 
 
 class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
+    # NumPy 1.20, 2020-09-03
     message = "concatenate with `axis=None` will use same-kind casting"
 
     def test_deprecated(self):
