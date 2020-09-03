@@ -406,7 +406,7 @@ NOINLINE static void pass2f (size_t ido, size_t l1, const cmplx * restrict cc,
     for (size_t k=0; k<l1; ++k)
       {
       PMC (CH(0,k,0),CH(0,k,1),CC(0,0,k),CC(0,1,k))
-#if NPY_HAVE_NEON
+#ifdef NPY_HAVE_NEON
       npy_intp n = ido-1;
       LOOP_BLOCK_ALIGN_VAR(ch+1, cmplx, 32){
         cmplx t;
