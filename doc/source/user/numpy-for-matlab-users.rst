@@ -123,7 +123,8 @@ General purpose equivalents
          for i in range(1, 4):
             print(i)
 
-     - use a for-loop to print the numbers 1, 2, and 3
+     - use a for-loop to print the numbers 1, 2, and 3 using `range
+       <https://docs.python.org/3/library/functions.html#func-range>`_
 
    * - ``a && b``
      - ``a and b``
@@ -136,23 +137,42 @@ General purpose equivalents
        scalar arguments only
 
    * - ::
+        
+        >> 4 == 4
+        ans = 1
+        >> 4 == 5
+        ans = 0
 
-         a=1
-         if a==0
-             fprintf('a=0\n')
-         elseif a==1
-             fprintf('a=1\n')
+     - ::
+
+        >>> 4 == 4
+        True
+        >>> 4 == 5
+        False
+
+     - The `boolean objects
+       <https://docs.python.org/3/library/stdtypes.html?highlight=boolean#boolean-values>`_
+       in Python are ``True`` and ``False``, as opposed to MATLAB
+       logical types of ``1`` and ``0``. 
+
+   * - ::
+
+         a=4
+         if a==4
+             fprintf('a = 4\n')
+         elseif a==5
+             fprintf('a = 5\n')
          end
 
      - ::
 
-         a = 1
-         if a == 0:
-             print('a=0')
-         elif a == 1:
-             print('a=1')
+         a = 4
+         if a == 4:
+             print('a = 4')
+         elif a == 5: 
+             print('a = 5')
 
-     - create an if-else statement to check if ``a`` is 0 or 1 and print result
+     - create an if-else statement to check if ``a`` is 4 or 5 and print result
 
    * - ``1*i``, ``1*j``,  ``1i``, ``1j``
      - ``1j``
@@ -206,11 +226,11 @@ Linear algebra equivalents
        See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
-     - ``np.array([[1.,2.,3.], [4.,5.,6.]])``
-     - 2D array defined as 2x3 matrix
+     - ``np.array([[1. ,2. ,3.], [4. ,5. ,6.]])``
+     - define a 2x3 2D array
 
    * - ``[ a b; c d ]``
-     - ``np.block([[a,b], [c,d]])``
+     - ``np.block([[a, b], [c, d]])``
      - construct a matrix from blocks ``a``, ``b``, ``c``, and ``d``
 
    * - ``a(end)``
@@ -219,15 +239,15 @@ Linear algebra equivalents
        ``a`` (length n)
 
    * - ``a(2,5)``
-     - ``a[1,4]``
+     - ``a[1, 4]``
      - access element in second row, fifth column in a 2D array, ``a``
 
    * - ``a(2,:)``
-     - ``a[1]`` or  ``a[1,:]``
+     - ``a[1]`` or  ``a[1, :]``
      - entire second row of a 2D array, ``a``
 
    * - ``a(1:5,:)``
-     - ``a[0:5]`` or ``a[:5]`` or ``a[0:5,:]``
+     - ``a[0:5]`` or ``a[:5]`` or ``a[0:5, :]``
      - the first five rows of a 2D array, ``a``
 
    * - ``a(end-4:end,:)``
@@ -235,11 +255,11 @@ Linear algebra equivalents
      - the last five rows of a 2D array, ``a``
 
    * - ``a(1:3,5:9)``
-     - ``a[0:3,4:9]``
+     - ``a[0:3, 4:9]``
      - rows one to three and columns five to nine of a 2D array, ``a``. 
 
    * - ``a([2,4,5],[1,3])``
-     - ``a[np.ix_([1,3,4],[0,2])]``
+     - ``a[np.ix_([1, 3, 4], [0, 2])]``
      - rows 2,4 and 5 and columns 1 and 3.  This allows the matrix to be
        modified, and doesn't require a regular slice.
 
@@ -284,30 +304,30 @@ Linear algebra equivalents
      - ``a**3``
      - element-wise exponentiation
 
-   * - ``(a>0.5)``
-     - ``(a>0.5)``
+   * - ``(a > 0.5)``
+     - ``(a > 0.5)``
      - matrix whose i,jth element is (a_ij > 0.5).  The MATLAB result is an
-       array of 0s and 1s.  The NumPy result is an array of the boolean
-       values ``False`` and ``True``.
+       array of logical types 0 and 1.  The NumPy result is an array of the boolean
+       types ``False`` and ``True``.
 
-   * - ``find(a>0.5)``
-     - ``np.nonzero(a>0.5)``
+   * - ``find(a > 0.5)``
+     - ``np.nonzero(a > 0.5)``
      - find the indices where (``a`` > 0.5)
 
-   * - ``a(:,find(v>0.5))``
-     - ``a[:,np.nonzero(v>0.5)[0]]``
+   * - ``a(:,find(v > 0.5))``
+     - ``a[:,np.nonzero(v > 0.5)[0]]``
      - extract the columms of ``a`` where vector v > 0.5
 
    * - ``a(:,find(v>0.5))``
-     - ``a[:,v.T>0.5]``
+     - ``a[:, v.T > 0.5]``
      - extract the columms of ``a`` where column vector v > 0.5
 
    * - ``a(a<0.5)=0``
-     - ``a[a<0.5]=0``
+     - ``a[a < 0.5]=0``
      - ``a`` with elements less than 0.5 zeroed out
 
    * - ``a .* (a>0.5)``
-     - ``a * (a>0.5)``
+     - ``a * (a > 0.5)``
      - ``a`` with elements less than 0.5 zeroed out
 
    * - ``a(:) = 3``
@@ -319,7 +339,7 @@ Linear algebra equivalents
      - NumPy assigns by reference
 
    * - ``y=x(2,:)``
-     - ``y = x[1,:].copy()``
+     - ``y = x[1, :].copy()``
      - NumPy slices are by reference
 
    * - ``y=x(:)``
@@ -328,7 +348,7 @@ Linear algebra equivalents
        same data ordering as in MATLAB, use ``x.flatten('F')``.
 
    * - ``1:10``
-     - ``np.arange(1.,11.)`` or ``np.r_[1.:11.]`` or  ``np.r_[1:10:10j]``
+     - ``np.arange(1., 11.)`` or ``np.r_[1.:11.]`` or  ``np.r_[1:10:10j]``
      - create an increasing vector (see note :ref:`RANGES
        <numpy-for-matlab-users.notes>`)
 
@@ -342,15 +362,15 @@ Linear algebra equivalents
      - create a column vector
 
    * - ``zeros(3,4)``
-     - ``np.zeros((3,4))``
+     - ``np.zeros((3, 4))``
      - 3x4 two-dimensional array full of 64-bit floating point zeros
 
    * - ``zeros(3,4,5)``
-     - ``np.zeros((3,4,5))``
+     - ``np.zeros((3, 4, 5))``
      - 3x4x5 three-dimensional array full of 64-bit floating point zeros
 
    * - ``ones(3,4)``
-     - ``np.ones((3,4))``
+     - ``np.ones((3, 4))``
      - 3x4 two-dimensional array full of 64-bit floating point ones
 
    * - ``eye(3)``
@@ -362,7 +382,7 @@ Linear algebra equivalents
      - returns a vector of the diagonal elements of 2D array, ``a``
 
    * - ``diag(v,0)``
-     - ``np.diag(v,0)``
+     - ``np.diag(v, 0)``
      - returns a square diagonal matrix whose nonzero values are the elements of
        vector, ``v``
 
@@ -375,11 +395,11 @@ Linear algebra equivalents
 
          from numpy.random import default_rng
          rng = default_rng(42)
-         rng.random(3,4) 
+         rng.random(3, 4) 
 
        or older version: ``random.rand((3, 4))``
 
-     - generate a random 3x4 matrix with default random number generator and
+     - generate a random 3x4 array with default random number generator and
        seed = 42
 
    * - ``linspace(1,3,4)``
@@ -422,11 +442,11 @@ Linear algebra equivalents
 
    * - ``max(a)``
      - ``a.max(0)``
-     - maximum element of each column of matrix ``a``
+     - maximum element of each column of array ``a``
 
    * - ``max(a,[],2)``
      - ``a.max(1)``
-     - maximum element of each row of matrix ``a``
+     - maximum element of each row of array ``a``
 
    * - ``max(a,b)``
      - ``np.maximum(a, b)``
@@ -457,18 +477,18 @@ Linear algebra equivalents
 
    * - ``inv(a)``
      - ``linalg.inv(a)``
-     - inverse of square matrix ``a``
+     - inverse of square 2D array ``a``
 
    * - ``pinv(a)``
      - ``linalg.pinv(a)``
-     - pseudo-inverse of matrix ``a``
+     - pseudo-inverse of 2D array ``a``
 
    * - ``rank(a)``
      - ``linalg.matrix_rank(a)``
-     - matrix rank of a 2D array / matrix ``a``
+     - matrix rank of a 2D array ``a``
 
    * - ``a\b``
-     - ``linalg.solve(a,b)`` if ``a`` is square; ``linalg.lstsq(a,b)``
+     - ``linalg.solve(a, b)`` if ``a`` is square; ``linalg.lstsq(a, b)``
        otherwise
      - solution of a x = b for x
 
@@ -482,9 +502,9 @@ Linear algebra equivalents
 
    * - ``c=chol(a)`` where ``a==c'*c``
      - ``c = linalg.cholesky(a)`` where ``a == c@c.T``
-     - cholesky factorization of a matrix (``chol(a)`` in MATLAB returns an
-       upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower
-       triangular matrix)
+     - Cholesky factorization of a 2D array (``chol(a)`` in MATLAB returns an
+       upper triangular 2D array, but ``linalg.cholesky(a)`` returns a lower
+       triangular 2D array)
 
    * - ``[V,D]=eig(a)``
      - ``D,V = linalg.eig(a)``
@@ -492,13 +512,13 @@ Linear algebra equivalents
        where :math:`\lambda\bar{v}=\mathbf{a}\bar{v}`
 
    * - ``[V,D]=eig(a,b)``
-     - ``D,V = linalg.eig(a,b)``
+     - ``D,V = linalg.eig(a, b)``
      - eigenvalues :math:`\lambda` and eigenvectors :math:`\bar{v}` of
        ``a``, ``b``
        where :math:`\lambda\mathbf{b}\bar{v}=\mathbf{a}\bar{v}`
 
    * - ``[V,D]=eigs(a,3)``
-     - ``D,V = eigs(a,k=3)``
+     - ``D,V = eigs(a, k = 3)``
      - find the ``k=3`` largest eigenvalues and eigenvectors of 2D array, ``a``
 
    * - ``[Q,R,P]=qr(a,0)``
@@ -506,7 +526,7 @@ Linear algebra equivalents
      - QR decomposition
 
    * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
-     - ``P,L,U = linalg.lu(a)`` where ``a==P@L@U``
+     - ``P,L,U = linalg.lu(a)`` where ``a == P@L@U``
      - LU decomposition (note: P(MATLAB) == transpose(P(NumPy)))
 
    * - ``conjgrad``
@@ -523,18 +543,18 @@ Linear algebra equivalents
 
    * - ``sort(a)``
      - ``np.sort(a)`` or ``a.sort(axis=0)``
-     - sort each column of a 2D matrix, ``a``
+     - sort each column of a 2D array, ``a``
 
-   * - ``sort(a,2)``
-     - ``np.sort(a, axis=1)`` or ``a.sort(axis=1)``
-     - sort the each row of 2D matrix, ``a``
+   * - ``sort(a, 2)``
+     - ``np.sort(a, axis = 1)`` or ``a.sort(axis = 1)``
+     - sort the each row of 2D array, ``a``
 
    * - ``[b,I]=sortrows(a,1)``
-     - ``I = np.argsort(a[:,0]); b = a[I,:]``
+     - ``I = np.argsort(a[:, 0]); b = a[I,:]``
      - save the array ``a`` as array ``b`` with rows sorted by the first column
 
    * - ``x = Z\y``
-     - ``x = linalg.lstsq(Z,y)``
+     - ``x = linalg.lstsq(Z, y)``
      - perform a linear regression of the form :math:`\mathbf{Zx}=\mathbf{y}`
 
    * - ``decimate(x, q)``
@@ -558,7 +578,7 @@ Notes
 
 \ **Submatrix**: Assignment to a submatrix can be done with lists of
 indexes using the ``ix_`` command. E.g., for 2d array ``a``, one might
-do: ``ind=[1,3]; a[np.ix_(ind,ind)]+=100``.
+do: ``ind=[1, 3]; a[np.ix_(ind, ind)] += 100``.
 
 \ **HELP**: There is no direct equivalent of MATLAB's ``which`` command,
 but the commands ``help`` and ``source`` will usually list the filename
