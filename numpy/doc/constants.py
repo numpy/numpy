@@ -137,7 +137,7 @@ add_newdoc('numpy', 'newaxis',
 
     See Also
     --------
-    `numpy.doc.indexing`
+    numpy.doc.indexing
 
     Examples
     --------
