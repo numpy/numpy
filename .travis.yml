@@ -33,7 +33,34 @@ jobs:
       python: 3.8
 
     - stage: Comprehensive tests
-      python: 3.6
+      python: 3.7
+      os: linux
+      arch: ppc64le
+      env:
+       # use OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
+       - ATLAS=None
+
+    - python: 3.7
+      os: linux
+      arch: s390x
+      env:
+       # use OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
+       - NPY_USE_BLAS_ILP64=1
+       - ATLAS=None
+
+    - python: 3.7
+      os: linux
+      arch: arm64
+      env:
+       # use OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
+       - ATLAS=None
+
+
+
+    - python: 3.6
     - python: 3.7
     - python: 3.9-dev
 
@@ -90,31 +117,6 @@ jobs:
       env:
        - BLAS=None
        - LAPACK=None
-       - ATLAS=None
-
-    - python: 3.7
-      os: linux
-      arch: ppc64le
-      env:
-       # use OpenBLAS build, not system ATLAS
-       - DOWNLOAD_OPENBLAS=1
-       - ATLAS=None
-
-    - python: 3.7
-      os: linux
-      arch: s390x
-      env:
-       # use OpenBLAS build, not system ATLAS
-       - DOWNLOAD_OPENBLAS=1
-       - NPY_USE_BLAS_ILP64=1
-       - ATLAS=None
-
-    - python: 3.7
-      os: linux
-      arch: arm64
-      env:
-       # use OpenBLAS build, not system ATLAS
-       - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
 
