@@ -44,6 +44,8 @@ of the current implementation of dtypes as well as a discussion.
 In many cases subsections will be split roughly to first describe the
 current implementation and then follow with an "Issues and Discussion" section.
 
+.. _parametric-datatype-discussion:
+
 Parametric Datatypes
 ^^^^^^^^^^^^^^^^^^^^
 
