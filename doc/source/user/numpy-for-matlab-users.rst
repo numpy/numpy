@@ -30,7 +30,7 @@ Some key differences
        linear algebra. 
 
      - In NumPy, the basic type is a multidimensional ``array``.  Array
-       assignments in NumPy are usually stored as ND arrays with the
+       assignments in NumPy are usually stored as n-dimensional arrays with the
        minimum type required to hold the objects in sequence, unless you
        specify the number of dimensions and type. NumPy performs
        operations element-by-element, so multiplying 2D arrays with
