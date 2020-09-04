@@ -1,6 +1,6 @@
-========================================
+==============================================================================
 NEP 42 — Implementation of New DataTypes
-========================================
+==============================================================================
 
 :title: Extensible Datatypes for NumPy
 :Author: Sebastian Berg
@@ -23,61 +23,63 @@ NEP 42 — Implementation of New DataTypes
     - NEP 43 describes the new design's API for universal functions.
 
 
+******************************************************************************
 Abstract
---------
+******************************************************************************
 
-NumPy's implementation of dtypes is monolithic: Types are written as a single
-Python class in which each datatype is a special instance. A function like
-``can_cast`` builds in explicit logic for each standard datatype; user-defined
-types are locked out. In addition, the code is difficult to maintain,
-and its poor encapsulation means that modifications to a single datatype touch
-code involving others.
+NumPy's dtype architecture is monolithic, built around a single class that
+handles each dtype as an instance. There's no principled way to expand it to
+new dtypes, and the code is difficult to read and maintain.
 
-As detailed in NEP 41, we propose instead to make each datatype a subclass of
-a new ``DType`` class that will serve as the extension point for new dtypes.
-``np.dtype("float64")`` will return an instance of a ``Float64`` class, which
-is a subclass of ``np.dtype``. ``np.dtype[float64]`` will also denote this
-class.
+As NEP 41 explains, we are proposing a new architecture that is modular and
+open to user additions. dtypes will derive from a new ``DType`` class serving
+as the extension point for new types. ``np.dtype("float64")`` will return an
+instance of a ``Float64`` class, which is a subclass of the root class
+``np.dtype``.
 
 .. note::
 
-    This NEP is preliminary. Details of the private and external APIs
-    may change to reflect user comments and implementation constraints.
-    The underlying principles and choices should not change significantly.
+    Details of the private and external APIs may change to reflect user
+    comments and implementation constraints. The underlying principles and
+    choices should not change significantly.
 
 
-Motivation and Scope
---------------------
+******************************************************************************
+Motivation and scope
+******************************************************************************
 
 Our goal is to allow user code to create fully featured dtypes for a broad
 variety of uses, from physical units (such as meters) to domain-specific
-representations of geometric objects. NumPy's current dtype architecture makes
-such extensions so difficult as to be rarely attempted and never fully
-successful.
+representations of geometric objects. NEP 41 describes a number of these new
+dtypes and their benefits.
 
-A necessary first step is to modularize the dtype architecture. This NEP
-focuses on restructuring the NumPy code around a new DType class that is both
-minimal and extensible, clearing the way for the user-defined dtypes that NEP
-41 motivates in detail. Since the private and external DType APIs will be
-largely identical, design choices here directly affect future implementers of
-user DTypes.
+Any design supporting dtypes must consider:
 
-A Python-side exposure of these methods is not in scope of this NEP.
+- How shape and dtype are determined when an array is created
+- How array elements are stored and accessed
+- The rules for casting dtypes to other dtypes
 
-This document focuses on datatype-related API additions; NEP 43 proposes
-additions related to universal functions. Neither set of changes is meant to
-stand on its own; both will be needed.
+In addition:
 
-Usage and Impact
-----------------
+- We want dtypes to comprise a class hierarchy open to new types and to
+  subhierarchies, as motivated in :ref:`NEP 41 <NEP41>`.
 
-:ref:`NEP 41 <NEP41>` gives examples of new user dtypes that this work will
-make possible. Methods and attributes in this NEP are expected to
-become a public API; an overview appears in the Section `Summary  DType
-Class`_.
+And to provide this,
 
+- We need to define a user API.
+
+All these are the subjects of this NEP.
+
+The API here and in NEP 43 is entirely on the C side. A Python-side exposure
+of these methods will be proposed in a future NEP.
+
+NEP 42 and NEP 43 together detail the API and design of the new architecture,
+with this document focused on datatypes and NEP 43 focused on universal
+functions.
+
+******************************************************************************
 Backward compatibility
-----------------------
+******************************************************************************
 
 The disruption is expected to be no greater than that of a typical NumPy
 release.
@@ -97,25 +99,39 @@ release.
   - array operations may or may not preserve dtype metadata
 
 
-Overview
---------
+******************************************************************************
+Usage and Impact
+******************************************************************************
 
-Any support of dtypes must consider:
+Private and external DType APIs will be largely identical; design choices here
+directly affect future implementers of user DTypes.
 
-- How shape and dtype are determined when an array is created
-- How array elements are stored and accessed
-- The rules for casting dtypes to other dtypes
+Before giving usage examples, we define terms and introduce the main
+components of the design.
 
-In addition:
+Nomenclature
+==============================================================================
 
-- We want dtypes to comprise a class hierarchy open to new types and to
-  subhierarchies, as motivated in :ref:`NEP 41 <NEP41>`.
+- ``dtype`` denotes the dtype *instance*; this is the object
+  attached to a numpy array.
 
-And to provide this,
+- ``DType`` means any subclass of the base type ``np.dtype``.
 
-- We need to define a user API.
+- On the C level we use ``descriptor`` or ``descr`` to mean
+  *dtype instance*. In the proposed C-API, these terms will distinguish
+  dtype instances from DType classes.
 
-All these are the subjects of this NEP.
+.. note::
+   Perhaps confusingly, NumPy already has a class hierarchy for numeric types, as
+   seen :ref:`in the figure <nep-0040_dtype-hierarchy>` of NEP 40, and the new
+   DType hierarchy will resemble it. But the existing hierarchy is for scalar
+   types, not DTypes, and its existence is largely irrelevant here, as NEP 40 and
+   41 explain.
+
+.. _dtype_class:
+
+Design components
+==============================================================================
 
 - `DType class`_  describes the class hierarchy, its relation to the Python
   scalar types, and its important attributes.
@@ -140,9 +156,8 @@ All these are the subjects of this NEP.
 - `Public C-API`_ describes the functionality for users to define their own
   DTypes.
 
-
-Summary  DType Class
-"""""""""""""""""""""
+Examples
+==============================================================================
 
 The following pseudo-code lists the main attributes defined in the sections below.
 These are given here to provide an overview of the final result.
@@ -233,42 +248,16 @@ all current functionality in NumPy, while also providing the flexibility
 necessary for complex user defined DTypes.
 
 
-Nomenclature
-""""""""""""
-
-Because NumPy has had no notion of a DType class, we review the following
-terms:
-
-- ``dtype`` denotes the dtype *instance*; this is the object
-  attached to a numpy array.
-
-- ``DType`` means any subclass of the base type ``np.dtype``.
-
-- On the C level we use ``descriptor`` or ``descr`` to mean
-  *dtype instance*. In the proposed C-API, these terms will distinguish
-  dtype instances from DType classes.
-
-Note that the notion of dtype class is currently represented mainly as
-the ``dtype.num`` and ``dtype.char``, a distinction illustrated below in the
-:ref:`dtype hierarchy figure <hierarchy_figure>`.
-
-Perhaps confusingly, NumPy already has a class hierarchy for numeric types, as
-seen :ref:`in the figure <nep-0040_dtype-hierarchy>` of NEP 40, and the new
-DType hierarchy will resemble it. But the existing hierarchy is for scalar
-types, not DTypes, and its existence is largely irrelevant here, as NEP 40 and
-41 explain in detail.
-
-.. _dtype_class:
-
+******************************************************************************
 DType Class
------------
+******************************************************************************
 
 This section reviews some more basic properties of the propsed DType class
 including the type hierarchy and the proposal to use *abstract* DTypes in
 that context.
 
 Proposed access to DType class
-""""""""""""""""""""""""""""""
+==============================================================================
 
 **Motivation:** To create a dtype instance from a scalar type users
 call ``np.dtype``
@@ -294,7 +283,7 @@ abstract) DTypes.
 
 
 Hierarchy of DTypes and abstract DTypes
-"""""""""""""""""""""""""""""""""""""""
+==============================================================================
 
 **Motivation:** We envision a user-extensible DType class hierarchy built on
 abstract classes:
@@ -359,7 +348,7 @@ that the end-user will not need to be aware of.
 
 
 Methods and Attributes of the DType
-"""""""""""""""""""""""""""""""""""
+==============================================================================
 
 Some DType methods may be similar to or even reuse existing Python slots. Thus
 user-defined DTypes should not use Python special slots (for instance, defining
@@ -442,8 +431,9 @@ for coercion (compare section `DType discovery during array coercion`_).
 
 .. _casting:
 
+******************************************************************************
 Casting
---------
+******************************************************************************
 
 In this section we review the operation related to casting one array from
 another.  This includes finding the "common dtype" which is currently
@@ -545,7 +535,7 @@ will fail.
 ----
 
 DType discovery during array coercion
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================================================================
 
 An important step in the use of NumPy arrays is creation of the array
 from collections of generic Python objects.
@@ -764,19 +754,20 @@ should be "minutes".
 ----
 
 Common DType operations
-"""""""""""""""""""""""
+==============================================================================
 
 NumPy currently provides functions like ``np.result_type`` and
 ``np.promote_types`` for determining common types.
 These differ in that ``np.result_type`` can take arrays and scalars as input
 and implements value based promotion [1]_.
 
-To distinguish between the promotion occurring during universal function application,
-we will call it "common type" operation here.
+To distinguish between the promotion occurring during universal function
+application, we will call it "common type" operation here.
 
-**Motivation:** Common type operations are vital for array coercion when different input types are mixed.
-They also provide the logic currently used to decide the output dtype of
-``np.concatenate()`` and on their own are quite useful.
+**Motivation:** Common type operations are vital for array coercion when
+different input types are mixed. They also provide the logic currently used to
+decide the output dtype of ``np.concatenate()`` and on their own are quite
+useful.
 
 Furthermore, common type operations may be used to find the correct dtype
 to use for functions with different inputs (including universal functions).
@@ -791,18 +782,19 @@ This includes an interesting distinction:
    not the same as ``np.concatenate(float_arr, string_arr)).dtype``.)
 2. Array coercion and concatenation require the common dtype *instance*.
 
-**Implementation:** The implementation of the common dtype (instance) determination
-has some overlap with casting.
-Casting from a specific dtype (Float64) to a String needs to find
-the correct string length (a step that is mainly necessary for parametric dtypes).
+**Implementation:** The implementation of the common dtype (instance)
+determination has some overlap with casting. Casting from a specific dtype
+(Float64) to a String needs to find the correct string length (a step that is
+mainly necessary for parametric dtypes).
 
 We propose the following implementation:
 
-1. ``__common_dtype__(cls, other : DTypeMeta) -> DTypeMeta`` answers what the common
-   DType class is given two DType class objects.
-   It may return ``NotImplemented`` to defer to ``other``.
-   (For abstract DTypes, subclasses get precedence, concrete types are always
-   leaves, so always get preference or are tried from left to right).
+1. ``__common_dtype__(cls, other : DTypeMeta) -> DTypeMeta`` answers what the
+   common DType class is given two DType class objects. It may return
+   ``NotImplemented`` to defer to ``other``. (For abstract DTypes, subclasses
+   get precedence, concrete types are always leaves, so always get preference
+   or are tried from left to right).
+
 2. ``__common_instance__(self: SelfT, other : SelfT) -> SelfT`` is used when
    two instances of the same DType are given.
    For built-in dtypes (that are not parametric), this
@@ -811,9 +803,9 @@ We propose the following implementation:
    for non-parametric user dtypes.
 
 These two cases do *not* cover the case where two different dtype instances
-need to be promoted. For example `">float64"` and `"S8"`.
-The solution is partially "outsourced" to the casting machinery by
-splitting the operation up into three steps:
+need to be promoted. For example `">float64"` and `"S8"`. The solution is
+partially "outsourced" to the casting machinery by splitting the operation up
+into three steps:
 
 1. ``Float64.__common_dtype__(type(>float64), type(S8))``
    returns `String` (or defers to ``String.__common_dtype__``).
@@ -821,15 +813,13 @@ splitting the operation up into three steps:
    to `"S32"` (see below for how casting will be defined).
 3. ``String.__common_instance__("S8", "S32")`` returns the final `"S32"`.
 
-The main reason for this is to avoid the need to implement
-identical functionality multiple times.
-The design (together with casting) naturally separates the concerns of
-different Datatypes.
-In the above example, Float64 does not need to know about the cast.
-While the casting machinery (``CastingImpl[Float64, String]``)
-could include the third step, it is not required to do so and the string
-can always be extended (e.g. with new encodings) without extending the
-``CastingImpl[Float64, String]``.
+The main reason for this is to avoid the need to implement identical
+functionality multiple times. The design (together with casting) naturally
+separates the concerns of different Datatypes. In the above example, Float64
+does not need to know about the cast. While the casting machinery
+(``CastingImpl[Float64, String]``) could include the third step, it is not
+required to do so and the string can always be extended (e.g. with new
+encodings) without extending the ``CastingImpl[Float64, String]``.
 
 This means the implementation will work like this::
 
@@ -859,10 +849,10 @@ This means the implementation will work like this::
 
 Some of these steps may be optimized for non-parametric DTypes.
 
-**Note:** A currently implemented fallback for the ``__common_dtype__`` operation
-is to use the "safe" casting logic.
-Since ``int16`` can safely cast to ``int64``, it is clear that
-``np.promote_types(int16, int64)`` should be ``int64``.
+**Note:** A currently implemented fallback for the ``__common_dtype__``
+operation is to use the "safe" casting logic. Since ``int16`` can safely cast
+to ``int64``, it is clear that ``np.promote_types(int16, int64)`` should be
+``int64``.
 
 However, this cannot define all such operations, and will fail for example for::
 
@@ -891,15 +881,14 @@ In principle common DType could be defined only based on "safe casting" rules,
 if we order all DTypes and find the first one both can cast to safely.
 However, the issue with this approach is that a newly added DType can change
 the behaviour of an existing program.  For example, a new ``int24`` would be
-the first valid common type for ``int16`` and ``uint16``, demoting the currently
-defined behavior of ``int32``.
-This API extension could be allowed in the future, while adding it may be
-more involved, the current proposal for defining casts is fully opaque in
-this regard and thus extensible.
+the first valid common type for ``int16`` and ``uint16``, demoting the
+currently defined behavior of ``int32``. This API extension could be allowed
+in the future, while adding it may be more involved, the current proposal for
+defining casts is fully opaque in this regard and thus extensible.
 
-**Example:** ``object`` always chooses ``object`` as the common DType.  For ``datetime64``
-type promotion is defined with no other datatype, but if someone were to
-implement a new higher precision datetime, then::
+**Example:** ``object`` always chooses ``object`` as the common DType.  For
+``datetime64`` type promotion is defined with no other datatype, but if
+someone were to implement a new higher precision datetime, then::
 
     HighPrecisionDatetime.__common_dtype__(np.dtype[np.datetime64])
 
@@ -908,15 +897,15 @@ decide how to handle the datetime unit.
 
 
 Casting
-"""""""
+==============================================================================
 
-Perhaps the most complex and interesting DType operation is casting.
-Casting is much like a typical universal function on
-arrays, converting one input to a new output. There are two key distinctions:
+Perhaps the most complex and interesting DType operation is casting. Casting
+is much like a typical universal function on arrays, converting one input to a
+new output. There are two key distinctions:
 
 1. Casting always requires an explicit output datatype.
-2. The NumPy iterator API requires access to functions that are lower-level than
-   what universal functions currently need
+2. The NumPy iterator API requires access to functions that are lower-level
+   than what universal functions currently need
 
 Casting can be complex, and may not implement all details of each input
 datatype (such as non-native byte order or unaligned access). Thus casting
@@ -948,21 +937,20 @@ Where the first case is also noted in NEP 40 and 41 as a design goal, since
 ``np.String`` could also be an abstract DType as mentioned above.
 
 The implementation of casting should also come with as little duplicate
-implementation as necessary, i.e. to avoid unnecessary methods on the
-DTypes.
+implementation as necessary, i.e. to avoid unnecessary methods on the DTypes.
 Furthermore, it is desirable that casting is implemented similar to universal
 functions.
 
 Analogous to the above, the following also need to be defined:
 
 1. ``np.can_cast(dtype, DType, "safe")`` (instance to class)
-2. ``np.can_cast(dtype, other_dtype, "safe")`` (casting an instance to another instance)
+2. ``np.can_cast(dtype, other_dtype, "safe")`` (casting an instance to another
+   instance)
 
-overloading the meaning of ``dtype`` to mean either class or instance
-(on the Python level).
-The question of ``np.can_cast(DType, OtherDType, "safe")`` is also a
-possibility and may be used internally.
-However, it is initially not necessary to expose to Python.
+overloading the meaning of ``dtype`` to mean either class or instance (on the
+Python level). The question of ``np.can_cast(DType, OtherDType, "safe")`` is
+also a possibility and may be used internally. However, it is initially not
+necessary to expose to Python.
 
 
 **Implementation:** During DType creation, DTypes will have the ability to
@@ -995,6 +983,7 @@ with the signature.
 **Performing the cast**
 
 .. _cast_figure:
+
 .. figure:: _static/casting_flow.svg
     :figclass: align-center
 
@@ -1028,45 +1017,43 @@ In this case the result of ``(int24, "S8")`` defines the correct cast:
 
 **Casting safety**
 
-To answer the question of casting safety
-``np.can_cast(int24, "S20", casting="safe")``, only the ``resolve_descriptors``
-function is required and called is in the same way as in
-`the figure describing a cast <cast_figure>`_.
+To answer the question of casting safety ``np.can_cast(int24, "S20",
+casting="safe")``, only the ``resolve_descriptors`` function is required and
+called is in the same way as in `the figure describing a cast <cast_figure>`_.
 In this case, the calls to ``resolve_descriptors``, will also provide the
-information that ``int24 -> "S8"`` as well as ``"S8" -> "S20"`` are safe casts,
-and thus also the ``int24 -> "S20"`` is a safe cast.
+information that ``int24 -> "S8"`` as well as ``"S8" -> "S20"`` are safe
+casts, and thus also the ``int24 -> "S20"`` is a safe cast.
 
-The casting safety can currently be "equivalent" when a cast is both safe
-and can be performed using only a view.
-The information that a cast is a simple "view" will instead be handled by
-an additional flag.  Thus the ``casting`` can have the 6 values in total:
-safe, unsafe, same-kind as well as safe+view, unsafe+view, same-kind+view.
-Where the current "equivalent" is the same as safe+view.
+The casting safety can currently be "equivalent" when a cast is both safe and
+can be performed using only a view. The information that a cast is a simple
+"view" will instead be handled by an additional flag.  Thus the ``casting``
+can have the 6 values in total: safe, unsafe, same-kind as well as safe+view,
+unsafe+view, same-kind+view. Where the current "equivalent" is the same as
+safe+view.
 
-(For more information on the ``adjust_descriptor`` signature see the
-C-API section below.)
+(For more information on the ``adjust_descriptor`` signature see the C-API
+section below.)
 
 
 **Casting between instances of the same DType**
 
 In general one of the casting implementations define by the DType implementor
 must be ``CastingImpl[DType, DType]`` (unless there is only a singleton
-instance).
-To keep the casting to as few steps as possible, this implementation must
-be capable any conversions between all instances of this DType.
+instance). To keep the casting to as few steps as possible, this
+implementation must be capable any conversions between all instances of this
+DType.
 
 
 **General multistep casting**
 
 In general we could implement certain casts, such as ``int8`` to ``int24``
-even if the user only provides an ``int16 -> int24`` cast.
-This proposal currently does not provide this functionality.  However,
-it could be extended in the future to either find such casts dynamically,
-or at least allow ``resolve_descriptors`` to return arbitrary ``dtypes``.
-If ``CastingImpl[Int8, Int24].resolve_descriptors((int8, int24))`` returns
-``(int16, int24)``, the actual casting process could be extended to include
-the ``int8 -> int16`` cast.  Unlike the above example, which is limited
-to at most three steps.
+even if the user only provides an ``int16 -> int24`` cast. This proposal
+currently does not provide this functionality.  However, it could be extended
+in the future to either find such casts dynamically, or at least allow
+``resolve_descriptors`` to return arbitrary ``dtypes``. If ``CastingImpl[Int8,
+Int24].resolve_descriptors((int8, int24))`` returns ``(int16, int24)``, the
+actual casting process could be extended to include the ``int8 -> int16``
+cast.  Unlike the above example, which is limited to at most three steps.
 
 
 **Alternatives:** The choice of using only the DType classes in the first step
@@ -1075,64 +1062,59 @@ of ``__common_dtype__`` has a reasonable definition of "safe casting" between
 DTypes classes (although e.g. the concatenate operation using it may still
 fail when attempting to find the actual common instance or cast).
 
-The split into multiple steps may seem to add complexity
-rather than reduce it, however, it consolidates that we have the two distinct
-signatures of ``np.can_cast(dtype, DTypeClass)`` and ``np.can_cast(dtype, other_dtype)``.
+The split into multiple steps may seem to add complexity rather than reduce
+it, however, it consolidates that we have the two distinct signatures of
+``np.can_cast(dtype, DTypeClass)`` and ``np.can_cast(dtype, other_dtype)``.
 Further, the above API guarantees the separation of concerns for user DTypes.
-The user ``Int24`` dtype does not have to handle all string lengths if it
-does not wish to do so.  Further, if an encoding was added to the ``String``
-DType, this does not affect the overall cast.
-The ``adjust_descriptor`` function can keep returning the default encoding
-and the ``CastingImpl[String, String]`` can take care of any necessary encoding
-changes.
+The user ``Int24`` dtype does not have to handle all string lengths if it does
+not wish to do so.  Further, if an encoding was added to the ``String`` DType,
+this does not affect the overall cast. The ``adjust_descriptor`` function can
+keep returning the default encoding and the ``CastingImpl[String, String]``
+can take care of any necessary encoding changes.
 
 The main alternative to the proposed design is to move most of the information
-which is here pushed into the ``CastingImpl`` directly into methods
-on the DTypes. This, however, will not allow the close similarity between casting
-and universal functions. On the up side, it reduces the necessary indirection
-as noted below.
+which is here pushed into the ``CastingImpl`` directly into methods on the
+DTypes. This, however, will not allow the close similarity between casting and
+universal functions. On the up side, it reduces the necessary indirection as
+noted below.
 
-An initial proposal defined two methods ``__can_cast_to__(self, other)``
-to dynamically return ``CastingImpl``.
-The advantage of this addition is that it removes the requirement to know all
-possible casts at DType creation time (of one of the involved DTypes).
-Such API could be added at a later time. It should be noted, however,
-that it would be mainly useful for inheritance-like logic, which can be
-problematic. As an example two different ``Float64WithUnit`` implementations
-both could infer that they can unsafely cast between one another when in fact
-some combinations should cast safely or preserve the Unit (both of which the
-"base" ``Float64`` would discard).
-In the proposed implementation this is not possible, since the two implementations
+An initial proposal defined two methods ``__can_cast_to__(self, other)`` to
+dynamically return ``CastingImpl``. The advantage of this addition is that it
+removes the requirement to know all possible casts at DType creation time (of
+one of the involved DTypes). Such API could be added at a later time. It
+should be noted, however, that it would be mainly useful for inheritance-like
+logic, which can be problematic. As an example two different
+``Float64WithUnit`` implementations both could infer that they can unsafely
+cast between one another when in fact some combinations should cast safely or
+preserve the Unit (both of which the "base" ``Float64`` would discard). In the
+proposed implementation this is not possible, since the two implementations
 are not aware of each other.
 
 
 **Notes:** The proposed ``CastingImpl`` is designed to be compatible with the
 ``PyArrayMethod`` proposed in NEP 43 as part of restructuring ufuncs to handle
-new DTypes.
-While initially it will be a distinct object or C-struct, the aim is that
-``CastingImpl`` can be a subclass or extension of ``PyArrayMethod``.
+new DTypes. While initially it will be a distinct object or C-struct, the aim
+is that ``CastingImpl`` can be a subclass or extension of ``PyArrayMethod``.
 Once this happens, this may naturally allow the use of a ``CastingImpl`` to
 pass around a specialized casting function directly.
 
-In the future, we may consider adding a way to spell out that specific
-casts are known to be *not* possible.
+In the future, we may consider adding a way to spell out that specific casts
+are known to be *not* possible.
 
-In the above text ``CastingImpl`` is described as a Python object. In practice,
-the current plan is to implement it as a C-side structure stored on the ``from``
-datatype.
-A Python side API to get an equivalent ``CastingImpl`` object will be created,
-but storing it (similar to the current implementation) on the ``from`` datatype
-avoids the creation of cyclic reference counts.
+In the above text ``CastingImpl`` is described as a Python object. In
+practice, the current plan is to implement it as a C-side structure stored on
+the ``from`` datatype. A Python side API to get an equivalent ``CastingImpl``
+object will be created, but storing it (similar to the current implementation)
+on the ``from`` datatype avoids the creation of cyclic reference counts.
 
-The way dispatching works for ``CastingImpl`` is planned to be limited initially
-and fully opaque.
-In the future, it may or may not be moved into a special UFunc, or behave
-more like a universal function.
+The way dispatching works for ``CastingImpl`` is planned to be limited
+initially and fully opaque. In the future, it may or may not be moved into a
+special UFunc, or behave more like a universal function.
 
 
-**Example:** The implementation for casting integers to datetime would currently generally
-say that this cast is unsafe (it is always an unsafe cast).
-Its ``resolve_descriptors`` functions may look like::
+**Example:** The implementation for casting integers to datetime would
+currently generally say that this cast is unsafe (it is always an unsafe
+cast). Its ``resolve_descriptors`` functions may look like::
 
     def resolve_descriptors(input):
         from_dtype, to_dtype = input
@@ -1151,28 +1133,27 @@ Its ``resolve_descriptors`` functions may look like::
 .. note::
 
     While NumPy currently defines some of these casts, with the possible
-    exception of the unit-less ``timedelta64`` it may be better to not
-    define these cast at all.  In general we expect that user defined
-    DTypes will be using other methods such as ``unit.drop_unit(arr)``
-    or ``arr * unit.seconds``.
+    exception of the unit-less ``timedelta64`` it may be better to not define
+    these cast at all.  In general we expect that user defined DTypes will be
+    using other methods such as ``unit.drop_unit(arr)`` or ``arr *
+    unit.seconds``.
 
 
-
+******************************************************************************
 Array Coercion
---------------
+******************************************************************************
 
-The following sections discuss the two aspects related to create an array
-from arbitrary python objects.
-This requires a defined protocol to store data inside the array.
-Further, it requires the ability to find the correct dtype when a user did
-not provide the dtype explicitly.
+The following sections discuss the two aspects related to create an array from
+arbitrary python objects. This requires a defined protocol to store data
+inside the array. Further, it requires the ability to find the correct dtype
+when a user did not provide the dtype explicitly.
 
 Coercion to and from Python objects
-"""""""""""""""""""""""""""""""""""
+==============================================================================
 
-**Motivation:** When storing a single value in an array or taking it out,
-it is necessary to coerce (convert) it to and from the low-level
-representation inside the array.
+**Motivation:** When storing a single value in an array or taking it out, it
+is necessary to coerce (convert) it to and from the low-level representation
+inside the array.
 
 **Description:** Coercing to and from Python scalars requires two to three
 methods:
@@ -1194,17 +1175,16 @@ methods:
 buffers or similar to implement this, which may be useful for prototyping.)
 
 These largely correspond to the current definitions.  When a certain scalar
-has a known (different) dtype, NumPy may in the future use casting instead
-of ``__dtype_setitem__``.
-A user datatype is (initially) expected to implement ``__dtype_setitem__``
-for its own ``DType.type`` and all basic Python scalars it wishes to support
-(e.g. integers, floats, datetime).
-In the future a function "``known_scalartype``" may be added to allow a user
-dtype to signal which Python scalars it can store directly.
+has a known (different) dtype, NumPy may in the future use casting instead of
+``__dtype_setitem__``. A user datatype is (initially) expected to implement
+``__dtype_setitem__`` for its own ``DType.type`` and all basic Python scalars
+it wishes to support (e.g. integers, floats, datetime). In the future a
+function "``known_scalartype``" may be added to allow a user dtype to signal
+which Python scalars it can store directly.
 
 
-**Implementation:** The pseudocode implementation for setting a single item in an array
-from an arbitrary Python object ``value`` is (note that some
+**Implementation:** The pseudocode implementation for setting a single item in
+an array from an arbitrary Python object ``value`` is (note that some
 functions are only defined below)::
 
     def PyArray_Pack(dtype, item_pointer, value):
@@ -1224,10 +1204,12 @@ functions are only defined below)::
 where the call to ``np.array()`` represents the dtype discovery and is
 not actually performed.
 
-**Example:** Current ``datetime64`` returns ``np.datetime64`` scalars and can be assigned from ``np.datetime64``. However, the datetime ``__dtype_setitem__`` also allows assignment from
-date strings ("2016-05-01") or Python integers.
-Additionally the datetime ``__dtype_get_pyitem__`` function actually returns
-Python ``datetime.datetime`` object (most of the time).
+**Example:** Current ``datetime64`` returns ``np.datetime64`` scalars and can
+be assigned from ``np.datetime64``. However, the datetime
+``__dtype_setitem__`` also allows assignment from date strings ("2016-05-01")
+or Python integers. Additionally the datetime ``__dtype_get_pyitem__``
+function actually returns Python ``datetime.datetime`` object (most of the
+time).
 
 
 **Alternatives:** This may be seen as simply a cast to and from the ``object`` dtype.
@@ -1269,7 +1251,7 @@ will fail.
 
 
 DType discovery during array coercion
-"""""""""""""""""""""""""""""""""""""
+==============================================================================
 
 An important step in the use of NumPy arrays is creation of the array
 from collections of generic Python objects.
@@ -1488,14 +1470,15 @@ should be "minutes".
 
 .. _c-api:
 
+******************************************************************************
 Public C-API
-------------
+******************************************************************************
 
 A Python side API shall not be defined here. This is a general side approach.
 
 
 DType creation
-""""""""""""""
+==============================================================================
 
 As already mentioned in NEP 41, the interface to define new DTypes in C
 is modeled after the limited API in Python: the above-mentioned slots
@@ -1581,7 +1564,7 @@ memory management but would allow ABI-compatible extension
 
 
 CastingImpl
-"""""""""""
+==============================================================================
 
 The external API for ``CastingImpl`` will be limited initially to defining:
 
@@ -1679,7 +1662,7 @@ pointer incompatibilities. There is currently no proposed solution.
 ----
 
 Issues
-^^^^^^
+==============================================================================
 
 Any design decision will have issues.
 
@@ -1708,8 +1691,9 @@ most exceptions to be set at a point where more context is available
 and ensure uniform error messages.
 
 
+******************************************************************************
 Implementation
---------------
+******************************************************************************
 
 Steps for implementation are outlined in :ref:`NEP 41 <NEP41>`.
 This includes internal restructuring for the new casting and array-coercion.
@@ -1729,15 +1713,17 @@ can be changed later. Among them:
   implemented.
 
 
+******************************************************************************
 Discussion
-----------
+******************************************************************************
 
 The space of possible implementations is large, so there have been many
 discussions, conceptions, and design documents. These are listed in NEP 40.
 
 
+******************************************************************************
 References
-----------
+******************************************************************************
 
 .. [1] NumPy currently inspects the value to allow the operations::
 
@@ -1748,7 +1734,8 @@ References
    further described in the documentation for :func:`numpy.result_type`.
 
 
+******************************************************************************
 Copyright
----------
+******************************************************************************
 
 This document has been placed in the public domain.
