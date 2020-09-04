@@ -30,7 +30,7 @@ Some key differences
        linear algebra. 
 
      - In NumPy, the basic type is a multidimensional ``array``.  Array
-       assignments in NumPy are usually stored as ND arrays with the
+       assignments in NumPy are usually stored as n-dimensional arrays with the
        minimum type required to hold the objects in sequence, unless you
        specify the number of dimensions and type. NumPy performs
        operations element-by-element, so multiplying 2D arrays with
@@ -72,7 +72,7 @@ Rough equivalents
 The table below gives rough equivalents for some common MATLAB
 expressions. These are similar expressions, not equivalents. For
 details, see the `documentation
-<https://numpy.org/doc/stable/reference/routines.html>`_. 
+<reference.reference>`_. 
 
 In the table below, it is assumed that you have executed the following
 commands in Python:
@@ -123,8 +123,7 @@ General purpose equivalents
          for i in range(1, 4):
             print(i)
 
-     - use a for-loop to print the numbers 1, 2, and 3 using `range
-       <https://docs.python.org/3/library/functions.html#func-range>`_
+     - use a for-loop to print the numbers 1, 2, and 3 using :func:`range`
 
    * - ``a && b``
      - ``a and b``
@@ -151,7 +150,7 @@ General purpose equivalents
         False
 
      - The `boolean objects
-       <https://docs.python.org/3/library/stdtypes.html?highlight=boolean#boolean-values>`_
+       <python:boolean-values>`_
        in Python are ``True`` and ``False``, as opposed to MATLAB
        logical types of ``1`` and ``0``. 
 
@@ -185,9 +184,9 @@ General purpose equivalents
 
    * - ``load data.mat``
      - ``io.loadmat('data.mat')``
-     - Load MATLAB variables saved to the file ``data.mat``. (Note: if saving files from
-       MATLAB/Octave use a recent binary format, Python's ``loadmat`` will
-       create a dictionary with arrays and further information)
+     - Load MATLAB variables saved to the file ``data.mat``. (Note: When saving arrays to
+       ``data.mat`` in MATLAB/Octave, use a recent binary format. Python's ``loadmat``
+       will create a dictionary with the saved arrays and further information.)
 
    * - ``ode45``
      - ``integrate.solve_ivp(f)``
@@ -577,7 +576,7 @@ Notes
 =====
 
 \ **Submatrix**: Assignment to a submatrix can be done with lists of
-indexes using the ``ix_`` command. E.g., for 2d array ``a``, one might
+indices using the ``ix_`` command. E.g., for 2D array ``a``, one might
 do: ``ind=[1, 3]; a[np.ix_(ind, ind)] += 100``.
 
 \ **HELP**: There is no direct equivalent of MATLAB's ``which`` command,
