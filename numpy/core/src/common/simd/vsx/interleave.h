@@ -17,8 +17,8 @@ NPY_FINLINE npyv_f64x2 npyv_load_deinterleave_f64x2(const double *ptr)
 
 NPY_FINLINE void npyv_store_interleave_f64x2(double *ptr, npyv_f64x2 a)
 {
-    npyv_f64x2 zip = npyv_zip_f64(a[0], a[1]);
-    npyv_store_f64(ptr, zip[0]);
-    npyv_store_f64(ptr + npyv_nlanes_f64, zip[1]);
+    npyv_f64x2 zip = npyv_zip_f64(a.val[0], a.val[1]);
+    npyv_store_f64(ptr, zip.val[0]);
+    npyv_store_f64(ptr + npyv_nlanes_f64, zip.val[1]);
 }
 #endif // _NPY_SIMD_VSX_INTERLEAVE_H
