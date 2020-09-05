@@ -83,8 +83,16 @@ def parse_structure(astr):
     return spanlist
 
 template_re = re.compile(r"<\s*(\w[\w\d]*)\s*>")
-named_re = re.compile(r"<\s*(\w[\w\d]*)\s*=\s*(\S*?)\s*>")
-list_re = re.compile(r"<\s*((\S*?))\s*>")
+list_re = re.compile(r""""
+        <\s*         # < whitespace
+        (\S+\s*)?>   # 1+ nonwhitepace 0+ space possibly, then >
+        """, re.VERBOSE)
+named_re = re.compile(r"""
+        <\s*         # < 0 or more whitespace
+        (\w[\w\d]*)  # word, 0 or more word digits
+        \s*=\s*      # equals surrounded by whitespace
+        (\S+\s*)?>   # 1+ nonwhitepace 0+ space possibly, then >
+        """, re.VERBOSE)
 
 def find_repl_patterns(astr):
     reps = named_re.findall(astr)

@@ -152,7 +152,11 @@ def parse_values(astr):
 
 
 stripast = re.compile(r"\n\s*\*?")
-named_re = re.compile(r"#\s*([\S\w]*)\s*=([^#]*)#")
+named_re = re.compile(r"""\#  # number sign 
+        \s*                   # followed by whitespace
+        (\w+\s*)?             # possibly 1+ words, whitespace
+        =([^#]*)\#            # equals anything followed by #
+        """, re.VERBOSE)
 exclude_vars_re = re.compile(r"(\w*)=(\w*)")
 exclude_re = re.compile(":exclude:")
 def parse_loop_header(loophead) :
