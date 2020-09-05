@@ -28,7 +28,6 @@
 
 #include "methods.h"
 #include "alloc.h"
-#include "mapping.h"
 #include "item_selection.h"
 
 /* NpyArg_ParseKeywords
@@ -1244,40 +1243,18 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                     &order, &by)) {
         return NULL;
     }
-    // If keys are None and We have complex types use c.real, c.imag as keys for lexsort
-    if (by == Py_None || by == NULL) {
-        if (PyArray_ISCOMPLEX(self)) {
-            PyArrayObject *real = (PyArrayObject*)PyObject_GetAttrString(
-                (PyObject*)self, "real");
-            if (real == NULL) {
-                return NULL;
-            }
-            PyArrayObject *imag = (PyArrayObject*) PyObject_GetAttrString(
-                    (PyObject*)self, "imag");
-            if (imag == NULL) {
-                Py_DECREF(real);
-                return NULL;
-            }
-            by = PyTuple_Pack(2, imag, real);
-            Py_DECREF(real);
-            Py_DECREF(imag);
-            if (by == NULL) {
-                return NULL;
-            }
-        }
-    }
     if (by != Py_None && by != NULL) {
         if (sortkind == -1) {
             sortkind = NPY_STABLESORT;
         }
         if (sortkind != NPY_STABLESORT) {
-            PyErr_SetString(PyExc_ValueError, "When using by argument " \
-                            "sort-kind can be only \'stable\'.");
+            PyErr_SetString(PyExc_ValueError, "When using by argument " 
+                    "sort-kind can be only \'stable\'.");
             return NULL;
         }
-        if (!PyTuple_CheckExact(by) && !PyList_CheckExact(by)) {
-            PyErr_SetString(PyExc_TypeError, "\'by\' is expected to be"\
-                               "of a sequence type.");
+        if (!PyTuple_CheckExact(by)) {
+            PyErr_SetString(PyExc_TypeError, "\'by\' is expected to be"
+                    "of a sequence type.");
             return NULL;
         }
         return PyArray_KeySort(self, by, axis);

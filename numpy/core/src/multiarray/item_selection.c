@@ -14,7 +14,6 @@
 
 #include "npy_pycompat.h"
 
-#include "mapping.h"
 #include "multiarraymodule.h"
 #include "common.h"
 #include "arrayobject.h"
@@ -1751,19 +1750,24 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 }
 
 /*
-* Helper function for PyArray_KeySort
-* Sorts 1D slice based on argsort indices
-* takes in raw bytes of data, indices array
-* Number of elements, and stride of data
-* element size and temporary storage for an element.
-*/
+ * Helper function for PyArray_KeySort
+ * Sorts 1D slice based on argsort indices
+ * takes in raw bytes of data, indices array
+ * Number of elements, and stride of data
+ * element size and temporary storage for an element.
+ */
 void reorder_by_index(char *data, char *current, npy_intp *index, npy_intp N, npy_intp stride, npy_intp elsize) {
-    // Reorder the indices and relevant values cyclically
+    /*
+     * The following code reorders the data with respect to the index. The inner
+     * while loop places a single element to the right place until it reaches a 
+     * fully cycle (an already ordered element). 
+     * Each element may be visited twice, but will be sorted on the first visit.
+     * The second visit finds it already sorted and immediately continues.
+     */
     for(npy_intp i = 0; i < N; i++){
-        /*Backup current element, end of loop place it in correct location.
-        *Stride here handles both aligned and non-aligned case
-        *When stride is same as elsize we are operating on aligned data.
-        */
+        if(i == index[i]) {
+            continue;
+        }
         memmove(current, data + (i*stride), elsize);
         npy_intp current_idx = i;
         // Break when index and index buffer are the  same.

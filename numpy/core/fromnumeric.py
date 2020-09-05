@@ -869,11 +869,11 @@ def sort(a, axis=-1, kind=None, order=None, *, by=None):
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
 
-    by: sequence of array-likes, optional
+    by: tuple of array-likes, optional
         With a given array `a` sort the elements not by arithmetic
         order, but by any arbitrary order defined by tuple, there can
         be multiple keys in a tuple/list form.
-        Tuple/List contains k (N,)-shaped sequences
+        Tuple contains k (N,)-shaped sequences
         The `k` different "columns" to be sorted.  The last column (or row if
         `keys` is a 2D array) is the primary sort key.
 
@@ -1001,9 +1001,6 @@ def sort(a, axis=-1, kind=None, order=None, *, by=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-
-    if by is not None and not isinstance(by, (tuple, list)):
-        raise TypeError("\'by\' is expected to be of a sequence type.")
 
     a.sort(axis=axis, kind=kind, order=order, by=by)
     return a

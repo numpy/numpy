@@ -1767,10 +1767,14 @@ class TestMethods:
         assert_raises(ValueError, carr.sort, by=(carr.imag[0],))
         # Only stable sort test
         carr = np.array([[1+1j, 1-1j]], dtype=np.complex128)
-        assert_raises(ValueError, carr.sort, kind='quicksort')
+        assert_raises(ValueError, carr.sort,by=(carr.imag, carr.real), kind='quicksort')
         # Passing empty tuple test
         arr = np.array([4,1,7])
         new_arr = np.sort(arr, by=())
+        assert_equal(arr, new_arr)
+        # Zero dimensional scalar
+        arr = np.array(4+4j)
+        new_arr = np.sort(arr, by=(arr,))
         assert_equal(arr, new_arr)
 
     def test_sort(self):
@@ -1787,8 +1791,8 @@ class TestMethods:
         # check complex
         msg = "Test complex sort order with nans"
         a = np.zeros(9, dtype=np.complex128)
-        a.real += [np.nan, np.nan, np.nan, 1, 1, 1, 0, 0, 0]
-        a.imag += [np.nan, 1, 0, np.nan, 1, 0, np.nan, 1, 0]
+        a.real += [np.nan, np.nan, np.nan, 1, 0, 1, 1, 0, 0]
+        a.imag += [np.nan, 1, 0, np.nan, np.nan, 1, 0, 1, 0]
         b = np.sort(a)
         assert_equal(b, a[::-1], msg)
 
