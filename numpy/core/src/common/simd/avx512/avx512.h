@@ -69,3 +69,4 @@ typedef struct { __m512d val[3]; } npyv_f64x3;
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "interleave.h"
