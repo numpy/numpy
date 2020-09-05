@@ -133,7 +133,7 @@ Nomenclature
 Design components
 ==============================================================================
 
-- The class hierarchy, its relation to the Python scalar types, and its
+- The class hierarchy, its relation to the Python scalar types, and the DType's
   important attributes are described in `DType class`_.
 
 - The functionality that will support dtype casting is described in `Casting`_.
@@ -157,8 +157,8 @@ Outline of the DType base class, described in `DType class`_:
     :dedent: 0
 
     class DType(np.dtype):
-        type : type
-        parametric : bool
+        type : type        # Python scalar type
+        parametric : bool  # (may be indicated by superclass)
 
         @property
         def canonical(self) -> bool:
@@ -249,10 +249,11 @@ To get the DType, we propose ::
 
     np.dtype[np.int64]
 
-The notation works equally well with built-in and user-defined DTypes.
+The notation works equally well with built-in and user-defined DTypes
+and is inspired by and potentially useful for type hinting.
 
 This getter eliminates the need to create an explicit name for every
-DType, crowding the np namespace; the getter itself signifies the type.
+DType, crowding the ``np`` namespace; the getter itself signifies the type.
 
 Since getter calls won't be needed often, the notation is unlikely to be
 burdensome. Classes can also offer concise alternatives.
@@ -288,7 +289,7 @@ Among the benefits:
 **Example:** A NumPy ``Categorical`` class would be a match for pandas
 ``Categorical`` objects, which can contain integers or general Python objects.
 NumPy needs a DType that it can assign a Categorical to, but it also needs
-DTypes like ``CategoricalInt64`` and ``Categorical Object`` such that
+DTypes like ``CategoricalInt64`` and ``CategoricalObject`` such that
 ``common_dtype(CategoricalInt64, String)`` raises an error, but
 ``common_dtype(CategoricalObject, String)`` returns an ``object`` DType. In
 our scheme, ``Categorical`` is an abstract type with ``CategoricalInt64`` and
@@ -298,12 +299,12 @@ our scheme, ``Categorical`` is an abstract type with ``CategoricalInt64`` and
 The class structure, illustrated below, would obey these rules:
 
 1. Abstract DTypes cannot be instantiated. Instantiating an abstract DType
-   raises an error, or perhaps returns a concrete subclass. Raising an
-   error will be the default behavior and may be required initially.
+   raises an error, or perhaps returns an instance of a concrete subclass.
+   Raising an error will be the default behavior and may be required initially.
 
 2. While abstract DTypes may be superclasses, they may also act like Python's
-   abstract base classes (ABC). It may be possible to simply use or inherit
-   from Python ABCs.
+   abstract base classes (ABC) allowing registration instead of subclassing.
+   It may be possible to simply use or inherit from Python ABCs.
 
 3. Concrete DTypes cannot be subclassed. In the future this might be relaxed
    to allow specialized implementations such as a GPU float64 subclassing a
@@ -311,9 +312,14 @@ The class structure, illustrated below, would obey these rules:
 
 The
 `Julia language <https://docs.julialang.org/en/v1/manual/types/#man-abstract-types-1>`_
-has a similar prohibition against subclassing concrete types. It helps avoid
-unintended vulnerabilities to implementation changes that result from
-subclassing types that were not written to be subclassed.
+has a similar prohibition against subclassing concrete types.
+For example methods such as the later ``__common_instance__`` or
+``__common_dtype__`` cannot work for a subclass unless they were designed
+very carefully.
+This leads to vulnerabilities when subclassing types that were
+not written to be subclassed.
+We believe that the DType API should rather be extended to simplify wrapping
+of existing functionality.
 
 The DType class requires C-side storage of methods and additional information,
 to be implemented by a ``DTypeMeta`` class. Each ``DType`` class is an
@@ -342,15 +348,15 @@ defines the following:
   * Used for supporting parametric types. As explained in :ref:`NEP 40
     <parametric-datatype-discussion>`, parametric types have a value
     associated with them. Strings are an example -- ``S8`` is different from
-    ``S4`` because they require a different amount of storage.
+    ``S4`` because ``S4`` cannot store ``"length 8"`` while ``S8`` can.
 
   * A DType is parametric if it inherits from ParametricDType.
 
-  * The C-API may use a private flag to indicate that this inheritance
+  * The C-API may use a flag to indicate that this inheritance
     should occur, similar to the type flags Python uses internally for fast
     subclass checking for certain builtin types like float and tuple.
 
-* ``self.canonical`` method
+* ``self.canonical`` property
 
   * Generalizes the notion of byte order to indicate whether data is stored in
     a default/canonical way. In current code, the flag continues to mean
@@ -375,8 +381,8 @@ defines the following:
 Additionally, existing methods (and C-side fields) will be provided.
 However, the fields ``kind`` and ``char`` will be set to ``\0``
 (NULL character) on the C-side.
-While discouraged, except for NumPy builtin types, ``kind`` will return
-the ``__qualname__`` of the object to ensure uniqueness for all DTypes.
+While discouraged, except for NumPy builtin types, both ``char`` and ``kind``
+will return the ``__qualname__`` of the object to ensure uniqueness for all DTypes.
 (the replacement for ``kind`` will be to use ``isinstance`` checks).
 
 Another example of methods that should be moved to the DType class are the
@@ -395,14 +401,16 @@ a long-term solution may be to instead create generalized ufuncs to provide
 the functionality.
 
 **Alternatives:** Some of these flags could be implemented by inheriting for
- example from a ``ParametricDType`` class. However, on the C-side as an
- implementation detail it seems simpler to provide a flag. This does not
- preclude the possibility of creating a ``ParametricDType`` to Python to
- represent the same thing.
+example from a ``ParametricDType`` class. However, on the C-side as an
+implementation detail it seems simpler to provide a flag. This does not
+preclude the possibility of creating a ``ParametricDType`` to represent the
+same thing in Python.
 
 **Example:** The ``datetime64`` DType is considered parametric, due to its
-unit, and unlike a float64 has no canonical representation. The associated
-``type`` is the ``np.datetime64`` scalar.
+unit, and unlike a float64 has no default representation.
+It is considered canonical if stored in native byte-order, but any function
+has to be aware of all possible datetime units.
+The associated ``type`` is the ``np.datetime64`` scalar.
 
 **Issues and Details:** A DType candidate like ``Categorical`` need not have a
 clear type associated with it. Instead, the ``type`` may be ``object`` and the
@@ -438,7 +446,7 @@ To distinguish between the promotion occurring during universal function
 application, we will call it "common type" operation here.
 
 **Motivation:** Common type operations are vital for array coercion when
-different input types are mixed. They also provide the logic currently used to
+different input types are mixed. They also provide the logic used to
 decide the output dtype of ``np.concatenate()`` and on their own are quite
 useful.
 
@@ -1166,9 +1174,7 @@ struct and identified by ``ssize_t`` integers::
 
     typedef struct{
       PyTypeObject *typeobj;    /* type of python scalar */
-      int is_parametric;        /* Is the dtype parametric? */
-      int is_abstract;          /* Is the dtype abstract? */
-      int flags                 /* flags (to be discussed) */
+      int flags                 /* Includes abstract and parametric */
       /* NULL terminated CastingImpl; is copied and references are stolen */
       CastingImpl *castingimpls[];
       PyType_Slot *slots;
