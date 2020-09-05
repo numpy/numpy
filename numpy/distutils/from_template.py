@@ -83,7 +83,7 @@ def parse_structure(astr):
     return spanlist
 
 template_re = re.compile(r"<\s*(\w[\w\d]*)\s*>")
-list_re = re.compile(r""""
+list_re = re.compile(r"""
         <\s*         # < whitespace
         (\S+\s*)?>   # 1+ nonwhitepace 0+ space possibly, then >
         """, re.VERBOSE)
