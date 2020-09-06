@@ -113,4 +113,20 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_div_f32 _mm512_div_ps
 #define npyv_div_f64 _mm512_div_pd
 
+/***************************
+ * FUSED
+ ***************************/
+// multiply and add, a*b + c
+#define npyv_muladd_f32 _mm512_fmadd_ps
+#define npyv_muladd_f64 _mm512_fmadd_pd
+// multiply and subtract, a*b - c
+#define npyv_mulsub_f32 _mm512_fmsub_ps
+#define npyv_mulsub_f64 _mm512_fmsub_pd
+// negate multiply and add, -(a*b) + c
+#define npyv_nmuladd_f32 _mm512_fnmadd_ps
+#define npyv_nmuladd_f64 _mm512_fnmadd_pd
+// negate multiply and subtract, -(a*b) - c
+#define npyv_nmulsub_f32 _mm512_fnmsub_ps
+#define npyv_nmulsub_f64 _mm512_fnmsub_pd
+
 #endif // _NPY_SIMD_AVX512_ARITHMETIC_H

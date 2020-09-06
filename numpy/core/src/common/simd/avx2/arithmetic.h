@@ -72,4 +72,48 @@
 #define npyv_div_f32 _mm256_div_ps
 #define npyv_div_f64 _mm256_div_pd
 
+/***************************
+ * FUSED
+ ***************************/
+#ifdef NPY_HAVE_FMA3
+    // multiply and add, a*b + c
+    #define npyv_muladd_f32 _mm256_fmadd_ps
+    #define npyv_muladd_f64 _mm256_fmadd_pd
+    // multiply and subtract, a*b - c
+    #define npyv_mulsub_f32 _mm256_fmsub_ps
+    #define npyv_mulsub_f64 _mm256_fmsub_pd
+    // negate multiply and add, -(a*b) + c
+    #define npyv_nmuladd_f32 _mm256_fnmadd_ps
+    #define npyv_nmuladd_f64 _mm256_fnmadd_pd
+    // negate multiply and subtract, -(a*b) - c
+    #define npyv_nmulsub_f32 _mm256_fnmsub_ps
+    #define npyv_nmulsub_f64 _mm256_fnmsub_pd
+#else
+    // multiply and add, a*b + c
+    NPY_FINLINE npyv_f32 npyv_muladd_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    { return npyv_add_f32(npyv_mul_f32(a, b), c); }
+    NPY_FINLINE npyv_f64 npyv_muladd_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    { return npyv_add_f64(npyv_mul_f64(a, b), c); }
+    // multiply and subtract, a*b - c
+    NPY_FINLINE npyv_f32 npyv_mulsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    { return npyv_sub_f32(npyv_mul_f32(a, b), c); }
+    NPY_FINLINE npyv_f64 npyv_mulsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    { return npyv_sub_f64(npyv_mul_f64(a, b), c); }
+    // negate multiply and add, -(a*b) + c
+    NPY_FINLINE npyv_f32 npyv_nmuladd_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    { return npyv_sub_f32(c, npyv_mul_f32(a, b)); }
+    NPY_FINLINE npyv_f64 npyv_nmuladd_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    { return npyv_sub_f64(c, npyv_mul_f64(a, b)); }
+    // negate multiply and subtract, -(a*b) - c
+    NPY_FINLINE npyv_f32 npyv_nmulsub_f32(npyv_f32 a, npyv_f32 b, npyv_f32 c)
+    {
+        npyv_f32 neg_a = npyv_xor_f32(a, npyv_setall_f32(-0.0f));
+        return npyv_sub_f32(npyv_mul_f32(neg_a, b), c);
+    }
+    NPY_FINLINE npyv_f64 npyv_nmulsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
+    {
+        npyv_f64 neg_a = npyv_xor_f64(a, npyv_setall_f64(-0.0));
+        return npyv_sub_f64(npyv_mul_f64(neg_a, b), c);
+    }
+#endif // !NPY_HAVE_FMA3
 #endif // _NPY_SIMD_AVX2_ARITHMETIC_H
