@@ -38,8 +38,9 @@ open to user additions. dtypes will derive from a new ``DType`` class serving
 as the extension point for new types. ``np.dtype("float64")`` will return an
 instance of a ``Float64`` class, a subclass of root class ``np.dtype``.
 
-Two NEPs lay out the API and design of this new architecture. This NEP
-addresses dtype implementation; NEP 43 addresses universal functions.
+This NEP is one of two that lay out the design and API of this new
+architecture. This NEP addresses dtype implementation; NEP 43 addresses
+universal functions.
 
 .. note::
 
@@ -110,8 +111,8 @@ release.
     ``np.array([np.array(array_like)])``
   - array operations may or may not preserve dtype metadata
 
-The new code must pass NumPy's regular test suite, giving some assurance of
-backward compatibility.
+The new code must pass NumPy's regular test suite, giving some assurance that
+the changes are compatible with existing code.
 
 ******************************************************************************
 Usage and impact
@@ -142,7 +143,7 @@ Outline of the DType base class, described in `DType class`_:
             raise NotImplementedError
 
 For casting, a large part of the functionality is provided by the "methods" stored
-in `_castingimpl`"
+in ``_castingimpl``
 
 .. code-block:: python
     :dedent: 0
@@ -200,10 +201,46 @@ Other elements of the casting implementation:
 In NEP 43 this ``CastingImpl`` object is used unchanged to support
 universal functions.
 
-.. _DType_class:
+******************************************************************************
+Definitions
+******************************************************************************
+.. glossary::
+
+   dtype
+      The dtype *instance*; this is the object attached to a numpy array.
+
+   DType
+      Any subclass of the base type ``np.dtype``.
+
+   coercion
+      Conversion between NumPy types and Python types
+
+   cast
+      Conversion of an array to a different dtype
+
+   promotion
+      Finding a dtype that can represent a mix of dtypes without loss
+      of information
+
+   safe cast
+      A cast is safe if no information is lost when changing type
+
+
+On the C level we use ``descriptor`` or ``descr`` to mean
+*dtype instance*. In the proposed C-API, these terms will distinguish
+dtype instances from DType classes.
+
+.. note::
+   Perhaps confusingly, NumPy already has a class hierarchy for numeric types, as
+   seen :ref:`in the figure <nep-0040_dtype-hierarchy>` of NEP 40, and the new
+   DType hierarchy will resemble it. But the existing hierarchy is for scalar
+   types, not DTypes, and its existence is largely irrelevant here, as NEP 40 and
+   41 explain.
+
+.. _DType class:
 
 ******************************************************************************
-DType class
+The DType class
 ******************************************************************************
 
 This section reviews the structure underlying the proposed DType class,
@@ -215,7 +252,7 @@ Access to DType
 To create a dtype instance from a scalar type users now call ``np.dtype`` (for
 instance, ``np.dtype(np.int64)``).
 
-To get the DType of a scalar type, we propose this getter syntax:
+To get the DType of a scalar type, we propose this getter syntax::
 
     np.dtype[np.int64]
 
@@ -306,91 +343,51 @@ operators that is common to all DTypes.
 In addition to the methods supporting casting and array coercion that will be
 described below, the DType class defines the following:
 
-* ``cls.parametric``
+* Existing dtype methods and C-side fields are preserved.
 
-  * For supporting parametric types. As explained in :ref:`NEP 40
-    <parametric-datatype-discussion>`, parametric types have a value
-    associated with them. Strings are an example -- ``S8`` is different from
-    ``S4`` because they require a different amount of storage.
+* ``DType.type`` replaces ``dtype.type`` to indicate the associated scalar
+  type. Unless a use case arises, ``dtype.type`` will be deprecated.
 
-  * A DType is parametric if it inherits from ParametricDType.
+  FIXME: What about abstract DTypes?
 
-  * Implementation detail: The C-API may use a private flag to indicate that
-    this inheritance should occur, similar to the type flags Python uses
-    internally for fast subclass checking for certain built-in types like float
-    and tuple.
+* A ``self.canonical`` method will generalize the notion of byte order to
+  indicate whether data has been stored in a default/canonical way. In current
+  code, the flag simply means native byte order, but it can take on new
+  meanings in new DTypes -- for instance, to distinguish a complex-conjugated
+  instance of Complex which stores ``real - imag`` instead of ``real + imag``
+  and is thus not the canonical storage. The ISNBO ("is native byte order")
+  flag might be repurposed as this flag.
 
+* Support is included for parametric DTypes. As explained in
+  :ref:`NEP 40 <parametric-datatype-discussion>`, parametric types have a
+  value associated with them. A DType will be deemed parametric if it
+  inherits from ParametricDType.
 
-* ``self.canonical`` method
+  Strings are one example of a parametric type -- ``S8`` is different from
+  ``S4`` because they require a different amount of storage. Similarly, the
+  ``datetime64`` DType is parametric, since its unit must be specified. The
+  associated ``type`` is the ``np.datetime64`` scalar.
 
-  * Generalizes the notion of byte order to indicate whether data has been
-    stored in a default/canonical way. In current code, the flag simply means
-    native byte order, but it can take on new meanings in new DTypes -- for
-    instance, to distinguish a complex-conjugated instance of Complex which
-    stores ``real - imag`` instead of ``real + imag`` and is thus not the
-    canonical storage. The ISNBO ("is native byte order") flag might be
-    repurposed as this flag.
+* Sorting functions are moved to the DType class. They are implemented by
+  defining a method ``dtype_get_sort_function(self, sortkind="stable") ->
+  sortfunction`` that must return ``NotImplemented`` if the given ``sortkind``
+  is not known.
 
+* Functions that cannot be removed are implemented as special methods. Since
+  the old dtype methods can be deprecated and renamed replacements added, the
+  API is not defined here, and it is acceptable if it changes over time.
 
-* ``ensure_canonical(self) -> dtype``
+* On the C side, ``kind`` and ``char`` are set to ``\0`` (NULL
+  character). Use of ``kind`` for non-built-in types is discouraged in favor of
+  ``isinstance`` checks.  ``kind`` will return the ``__qualname__`` of the
+  object to ensure uniqueness for all DTypes.
 
-  * Returns a new dtype (or ``self``).
+* A method ``ensure_canonical(self) -> dtype`` returns a new dtype (or
+  ``self``) with the ``canonical`` flag set.
 
-  * The returned dtype must have the ``canonical`` flag set.
-
-
-* ``DType.type``
-
-  * Replaces ``dtype.type`` to indicate the associated scalar type.
-
-  * ``dtype.type`` will be deprecated. This may be relaxed if a use-case
-    arises.
-
-* Existing methods and C-side fields
-
-  * All are preserved, and moved into the DType wen p
-
-  *  On the C side, ``kind`` and ``char`` will be set to ``\0`` (NULL
-     character)
-
-  *  Use of ``kind`` for non-built-in types is discouraged in favor of
-     ``isinstance`` checks.  ``kind`` will return the ``__qualname__`` of the
-     object to ensure uniqueness for all DTypes.
-
-* Sorting functions
-
-  * Moved to the DType class.
-
-  * Implemented by defining a method
-    ``dtype_get_sort_function(self, sortkind="stable") -> sortfunction``
-    that must return ``NotImplemented`` if the given ``sortkind`` is not known.
-
-* Functions that cannot be removed
-
-  * To be implemented as special methods.
-
-  * Since these methods can be deprecated and renamed replacements added, the
-    API is not defined here, and it is acceptable if it changes over time.
-
-For some "methods" defined on the dtype, including sorting, a long-term
-solution may be to instead provide the functionality in generalized ufuncs.
-
-**Alternatives:** Some of these flags could be implemented by inheriting for
-example from a ``ParametricDType`` class. However, on the C-side as an
-implementation detail it seems simpler to provide a flag. This does not
-preclude the possibility of creating a ``ParametricDType`` to Python to
-represent the same thing.
-
-**Example:** The ``datetime64`` DType is considered parametric, due to its
-unit, and unlike a float64 has no canonical representation. The associated
-``type`` is the ``np.datetime64`` scalar.
-
-**Issues and Details:** A DType candidate like ``Categorical`` need not have a
-clear type associated with it. Instead, the ``type`` may be ``object`` and the
-categorical's values are arbitrary objects. In contrast to well-defined
-scalars, this ``type`` cannot not be used for the dtype discovery necessary
-for coercion (compare section `DType discovery during array coercion`_).
-
+* Since NumPy's approach is to provide functionality through unfuncs,
+  functions like sorting that will be implemented in DTypes might eventually be
+  reimplemented as generalized ufuncs.
 
 .. _casting:
 
@@ -398,12 +395,12 @@ for coercion (compare section `DType discovery during array coercion`_).
 Casting
 ******************************************************************************
 
-In this section we review the operations related to casting arrays:
+We review here the operations related to casting arrays:
 
-- finding the "common dtype," currently exposed by ``np.promote_types`` or
+- Finding the "common dtype," currently exposed by ``np.promote_types`` or
   ``np.result_type``
 
-- the result of calling ``np.can_cast``
+- The result of calling ``np.can_cast``
 
 We show how casting arrays with ``arr.astype(new_dtype)`` will be implemented.
 
