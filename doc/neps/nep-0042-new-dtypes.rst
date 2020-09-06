@@ -246,7 +246,7 @@ The DType class
 This section reviews the structure underlying the proposed DType class,
 including the type hierarchy and the use of abstract DTypes.
 
-Access to DType
+Class getter
 ==============================================================================
 
 To create a dtype instance from a scalar type users now call ``np.dtype`` (for
@@ -270,7 +270,7 @@ DTypes.
 *This item is still under review.*
 
 
-DType hierarchy and abstract DTypes
+Hierarchy and abstract classes
 ==============================================================================
 
 We will use abstract classes as building blocks of our extensible DType class
@@ -332,31 +332,24 @@ end users ignore it.
     :figclass: align-center
 
 
-DType methods and attributes
+Miscellaneous methods and attributes
 ==============================================================================
 
-DType methods may resemble or even reuse existing Python slots. Thus Python
-special slots are off-limits for user-defined DTypes (for instance, defining
-``Unit("m") > Unit("cm")``), since we may want to develop a meaning for these
-operators that is common to all DTypes.
-
-In addition to the methods supporting casting and array coercion that will be
-described below, the DType class defines the following:
+This section collects definitions in the DType class that are not used in
+casting and array coercion, which are described in detail below.
 
 * Existing dtype methods and C-side fields are preserved.
 
-* ``DType.type`` replaces ``dtype.type`` to indicate the associated scalar
-  type. Unless a use case arises, ``dtype.type`` will be deprecated.
+* ``DType.type`` replaces ``dtype.type``. Unless a use case arises,
+  ``dtype.type`` will be deprecated.
 
-  FIXME: What about abstract DTypes?
-
-* A ``self.canonical`` method will generalize the notion of byte order to
-  indicate whether data has been stored in a default/canonical way. In current
-  code, the flag simply means native byte order, but it can take on new
-  meanings in new DTypes -- for instance, to distinguish a complex-conjugated
-  instance of Complex which stores ``real - imag`` instead of ``real + imag``
-  and is thus not the canonical storage. The ISNBO ("is native byte order")
-  flag might be repurposed as this flag.
+* A new ``self.canonical`` method generalizes the notion of byte order to
+  indicate whether data has been stored in a default/canonical way. For
+  existing code, "canonical" will just signify native byte order, but it can
+  take on new meanings in new DTypes -- for instance, to distinguish a
+  complex-conjugated instance of Complex which stores ``real - imag`` instead
+  of ``real + imag`` and is thus not the canonical storage. The ISNBO ("is
+  native byte order") flag might be repurposed as the canonical flag.
 
 * Support is included for parametric DTypes. As explained in
   :ref:`NEP 40 <parametric-datatype-discussion>`, parametric types have a
@@ -368,6 +361,11 @@ described below, the DType class defines the following:
   ``datetime64`` DType is parametric, since its unit must be specified. The
   associated ``type`` is the ``np.datetime64`` scalar.
 
+* DType methods may resemble or even reuse existing Python slots. Thus Python
+  special slots are off-limits for user-defined DTypes (for instance, defining
+  ``Unit("m") > Unit("cm")``), since we may want to develop a meaning for these
+  operators that is common to all DTypes.
+
 * Sorting functions are moved to the DType class. They are implemented by
   defining a method ``dtype_get_sort_function(self, sortkind="stable") ->
   sortfunction`` that must return ``NotImplemented`` if the given ``sortkind``
@@ -377,10 +375,10 @@ described below, the DType class defines the following:
   the old dtype methods can be deprecated and renamed replacements added, the
   API is not defined here, and it is acceptable if it changes over time.
 
-* On the C side, ``kind`` and ``char`` are set to ``\0`` (NULL
-  character). Use of ``kind`` for non-built-in types is discouraged in favor of
+* Use of ``kind`` for non-built-in types is discouraged in favor of
   ``isinstance`` checks.  ``kind`` will return the ``__qualname__`` of the
-  object to ensure uniqueness for all DTypes.
+  object to ensure uniqueness for all DTypes. On the C side, ``kind`` and
+  ``char`` are set to ``\0`` (NULL character).
 
 * A method ``ensure_canonical(self) -> dtype`` returns a new dtype (or
   ``self``) with the ``canonical`` flag set.
@@ -795,7 +793,7 @@ cast). Its ``resolve_descriptors`` functions may look like::
 
 
 ******************************************************************************
-Array Coercion
+Array coercion
 ******************************************************************************
 
 The following sections discuss the two aspects related to create an array from
