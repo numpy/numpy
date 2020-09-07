@@ -54,14 +54,6 @@ Glossary
        Any sequence that can be interpreted as an ndarray.  This includes
        nested lists, tuples, scalars and existing arrays.
 
-   attribute
-       A property of an object that can be accessed using ``obj.attribute``,
-       e.g., ``shape`` is an attribute of an array::
-
-         >>> x = np.array([1, 2, 3])
-         >>> x.shape
-         (3,)
-
    big-endian
        When storing a multi-byte value in memory as a sequence of bytes, the
        sequence addresses/sends/stores the most significant byte first (lowest
@@ -179,19 +171,6 @@ Glossary
        An object that cannot be modified after execution is called
        immutable.  Two common examples are strings and tuples.
 
-   instance
-       A class definition gives the blueprint for constructing an object::
-
-         >>> class House:
-         ...     wall_colour = 'white'
-
-       Yet, we have to *build* a house before it exists::
-
-         >>> h = House() # build a house
-
-       Now, ``h`` is called a ``House`` instance.  An instance is therefore
-       a specific realisation of a class.
-
    iterable
        A sequence that allows "walking" (iterating) over items, typically
        using a loop such as::
@@ -297,14 +276,6 @@ Glossary
          matrix([[ 7, 10],
                [15, 22]])
 
-   method
-       A function associated with an object.  For example, each ndarray has a
-       method called ``repeat``::
-
-         >>> x = np.array([1, 2, 3])
-         >>> x.repeat(2)
-         array([1, 1, 2, 2, 3, 3])
-
    ndarray
        See *array*.
 
@@ -331,21 +302,6 @@ Glossary
 
        Row-major order is also known as the C order, as the C programming
        language uses it. New NumPy arrays are by default in row-major order.
-
-   self
-       Often seen in method signatures, ``self`` refers to the instance
-       of the associated class.  For example:
-
-         >>> class Paintbrush:
-         ...     color = 'blue'
-         ...
-         ...     def paint(self):
-         ...         print("Painting the city %s!" % self.color)
-         ...
-         >>> p = Paintbrush()
-         >>> p.color = 'red'
-         >>> p.paint() # self refers to 'p'
-         Painting the city red!
 
    slice
        Used to select only certain elements from a sequence:
@@ -374,9 +330,6 @@ Glossary
        >>> x[:, 1]
        array([2, 4])
 
-   structure
-       See :term:`structured data type`
-
    structured data type
        A data type composed of other datatypes
 
@@ -393,41 +346,6 @@ Glossary
        In addition to field names, structured array fields may have an
        associated :ref:`title <titles>` which is an alias to the name and is
        commonly used for plotting.
-
-   tuple
-       A sequence that may contain a variable number of types of any
-       kind.  A tuple is immutable, i.e., once constructed it cannot be
-       changed.  Similar to a list, it can be indexed and sliced::
-
-         >>> x = (1, 'one', [1, 2])
-         >>> x
-         (1, 'one', [1, 2])
-
-         >>> x[0]
-         1
-
-         >>> x[:2]
-         (1, 'one')
-
-       A useful concept is "tuple unpacking", which allows variables to
-       be assigned to the contents of a tuple::
-
-         >>> x, y = (1, 2)
-         >>> x, y = 1, 2
-
-       This is often used when a function returns multiple values:
-
-         >>> def return_many():
-         ...     return 1, 'alpha', None
-
-         >>> a, b, c = return_many()
-         >>> a, b, c
-         (1, 'alpha', None)
-
-         >>> a
-         1
-         >>> b
-         'alpha'
 
    ufunc
        Universal function.  A fast element-wise, :term:`vectorized
