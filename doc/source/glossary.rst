@@ -2,9 +2,98 @@
 Glossary
 ********
 
-.. toctree::
-
 .. glossary::
+
+   (`n`,)
+      A tuple with one element. The trailing comma distinguishes a one-element
+      tuple from a parenthesized ``n``.
+
+
+   -1
+      Used as a dimension entry, ``-1`` instructs NumPy to choose the length
+      that will keep the total number of elements the same.
+
+
+   ``...``
+      **When indexing an array**, shorthand that the missing axes, if they
+      exist, are full slices.
+
+        >>> a = np.arange(24).reshape(2,3,4)
+
+        >>> a[...].shape
+        (2, 3, 4)
+
+        >>> a[...,0].shape
+        (2, 3)
+
+        >>> a[0,...].shape
+        (3, 4)
+
+        >>> a[0,...,0].shape
+        (3,)
+
+      It can be used at most once; ``a[...,0,...]`` raises an ``IndexError``.
+
+      **In printouts**, NumPy substitutes ``...`` for the middle elements of
+      large arrays. To see the entire array, use
+      :doc:`numpy.printoptions. <reference/generated/numpy.printoptions>`
+
+
+   ``:``
+      The Python :term:`python:slice`
+      operator. In ndarrays, slicing can be applied to every
+      axis:
+
+          >>> a = np.arange(24).reshape(2,3,4)
+          >>> a
+          array([[[ 0,  1,  2,  3],
+                  [ 4,  5,  6,  7],
+                  [ 8,  9, 10, 11]],
+          <BLANKLINE>
+                 [[12, 13, 14, 15],
+                  [16, 17, 18, 19],
+                  [20, 21, 22, 23]]])
+          <BLANKLINE>
+          >>> a[1:,-2:,:-1]
+          array([[[16, 17, 18],
+                  [20, 21, 22]]])
+
+      Trailing slices can be omitted: ::
+
+          >>> a[1] == a[1,:,:]
+          array([[ True,  True,  True,  True],
+                 [ True,  True,  True,  True],
+                 [ True,  True,  True,  True]])
+
+      In contrast to Python, where slicing creates a copy, in NumPy slicing
+      creates a :term:`view`.
+
+      For details, see :ref:`Combining advanced and basic indexing <combining-advanced-and-basic-indexing>`.
+
+
+   ``<``
+      In a dtype declaration, indicates that the data is
+      `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
+      (the bracket is big on the right). ::
+
+        >>> dt = np.dtype('<f') # little-endian single-precision float
+
+
+   ``>``
+      In a dtype declaration, indicates that the data is
+      `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
+      (the bracket is big on the left). ::
+
+        >>> dt = np.dtype('>H') # big-endian unsigned short
+
+
+   advanced indexing
+      Rather than using a :doc:`scalar <reference/arrays.scalars>` or slice as
+      an index, an axis can be indexed with an array, providing fine-grained
+      selection. This is known as :ref:`advanced indexing<advanced-indexing>`
+      or ``fancy indexing``.
+
+
 
    along an axis
        Axes are defined for arrays with more than one dimension.  A
@@ -54,6 +143,84 @@ Glossary
        Any sequence that can be interpreted as an ndarray.  This includes
        nested lists, tuples, scalars and existing arrays.
 
+   array scalar
+      For uniformity in handling operands, NumPy treats
+      a :doc:`scalar <reference/arrays.scalars>` as an array of zero
+      dimension.
+
+
+   attribute
+       A property of an object that can be accessed using ``obj.attribute``,
+       e.g., ``shape`` is an attribute of an array::
+
+         >>> x = np.array([1, 2, 3])
+         >>> x.shape
+         (3,)
+
+   axis
+
+      Another term for an array dimension. Axes are numbered left to right;
+      axis 0 is the first element in the shape tuple.
+
+      In a two-dimensional vector, the elements of axis 0 are rows and the
+      elements of axis 1 are columns.
+
+      In higher dimensions the picture changes. NumPy prints
+      higher-dimensional vectors as replications of row-by-column building
+      blocks, as in this three-dimensional vector:
+
+          >>> a = np.arange(12).reshape(2,2,3)
+          >>> a
+          array([[[ 0,  1,  2],
+                  [ 3,  4,  5]],
+          <BLANKLINE>
+                 [[ 6,  7,  8],
+                  [ 9, 10, 11]]])
+
+      ``a`` is depicted as a two-element array whose elements are 2x3 vectors.
+      From this point of view, rows and columns are the final two axes,
+      respectively, in any shape.
+
+      This rule helps you anticipate how a vector will be printed, and
+      conversely how to find the index of any of the printed elements. For
+      instance, in the example, the last two values of 8's index must be 0 and
+      2. Since 8 appears in the second of the two 2x3's, the first index must
+      be 1:
+
+        >>> a[1,0,2]
+        8
+
+      A convenient way to count dimensions in a printed vector is to
+      count ``[`` symbols after the open-parenthesis. This is
+      useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
+
+        >>> a = np.arange(6).reshape(2,3)
+        >>> a.shape
+        (2, 3)
+        >>> a
+        array([[0, 1, 2],
+               [3, 4, 5]])
+
+        >>> a = np.arange(6).reshape(1,2,3)
+        >>> a.shape
+        (1, 2, 3)
+        >>> a
+        array([[[0, 1, 2],
+                [3, 4, 5]]])
+
+
+   .base
+
+      If an array does not own its memory, then its
+      :doc:`base <reference/generated/numpy.ndarray.base>` attribute
+      returns the object whose memory the array is referencing. That object
+      may be borrowing the memory from still another object, so the
+      owning object may be ``a.base.base.base...``. Despite advice to the
+      contrary, testing ``base`` is not a surefire way to determine if two
+      arrays are :term:`view`\ s.
+
+
+
    big-endian
        When storing a multi-byte value in memory as a sequence of bytes, the
        sequence addresses/sends/stores the most significant byte first (lowest
@@ -99,6 +266,10 @@ Glossary
 
        Column-major order is also known as the Fortran order, as the Fortran
        programming language uses it.
+ 
+   copy
+
+      See :term:`view`.
 
    decorator
        An operator that transforms a function.  For example, a ``log``
@@ -148,6 +319,23 @@ Glossary
 
        For more information on dictionaries, read the
        `Python tutorial <https://docs.python.org/tutorial/>`_.
+
+   dimension
+
+      See :term:`axis`.
+
+
+   dtype
+
+      The datatype describing the (identically typed) elements in an ndarray.
+      It can be changed to reinterpret the array contents. For details, see
+      :doc:`Data type objects (dtype). <reference/arrays.dtypes>`
+
+
+   fancy indexing
+
+       Another term for :term:`advanced indexing`.
+
 
    field
        In a :term:`structured data type`, each sub-type is called a `field`.
@@ -279,6 +467,28 @@ Glossary
    ndarray
        See *array*.
 
+   object array
+
+      An array whose dtype is ``object``; that is, it contains references to
+      Python objects. Indexing the array dereferences the Python objects, so
+      unlike other ndarrays, an object array has the ability to hold
+      heterogeneous objects.
+
+
+   ravel
+
+      :doc:`numpy.ravel \
+      <reference/generated/numpy.ravel>`
+      and :doc:`numpy.flatten \
+      <reference/generated/numpy.ndarray.flatten>`
+      both flatten an ndarray. ``ravel`` will return a view if possible;
+      ``flatten`` always returns a copy.
+
+      Flattening collapses a multimdimensional array to a single dimension;
+      details of how this is done (for instance, whether ``a[n+1]`` should be
+      the next row or next column) are parameters.
+
+
    record array
        An :term:`ndarray` with :term:`structured data type` which has been
        subclassed as ``np.recarray`` and whose dtype is of type ``np.record``,
@@ -329,6 +539,32 @@ Glossary
 
        >>> x[:, 1]
        array([2, 4])
+
+   stride
+
+      Physical memory is one-dimensional; ``stride`` maps an index in an
+      N-dimensional ndarray to an address in memory. For an N-dimensional
+      array, stride is an N-element tuple; advancing from index ``i`` to index
+      ``i+1`` on axis ``n`` means adding ``a.strides[n]`` bytes to the
+      address.
+
+      Stride is computed automatically from an array's dtype and
+      shape, but can be directly specified using
+      :doc:`as_strided. <reference/generated/numpy.lib.stride_tricks.as_strided>`
+
+      For details, see
+      :doc:`numpy.ndarray.strides <reference/generated/numpy.ndarray.strides>`.
+
+      To see how striding underlies the power of NumPy views, see
+      `The NumPy array: a structure for efficient numerical computation. \
+      <https://arxiv.org/pdf/1102.1523.pdf>`_
+
+   structure
+       See :term:`structured data type`
+
+   structured array
+
+      Array whose :term:`dtype` is a :term:`structured data type`.
 
    structured data type
        A data type composed of other datatypes

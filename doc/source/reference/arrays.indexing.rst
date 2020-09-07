@@ -198,6 +198,7 @@ concepts to remember include:
    create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
+.. _advanced-indexing:
 
 Advanced Indexing
 -----------------
@@ -303,6 +304,8 @@ understood with an example.
     be selected, as was used in the previous example. This difference is the
     most important thing to remember about indexing with multiple advanced
     indexes.
+
+.. _combining-advanced-and-basic-indexing:
 
 Combining advanced and basic indexing
 """""""""""""""""""""""""""""""""""""
