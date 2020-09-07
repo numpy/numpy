@@ -1240,7 +1240,7 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
         if sys.version_info[:2] >= (3, 7):
             if py37 is not None:
                 n_in_context = py37
-        elif sys.version_info[:2] >= (3, 4):
+        else:
             if py34 is not None:
                 n_in_context = py34
     assert_equal(num_warns, n_in_context)

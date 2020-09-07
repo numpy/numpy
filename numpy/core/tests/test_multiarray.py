@@ -3867,13 +3867,6 @@ class TestPickling:
             with pytest.raises(ImportError):
                 array.__reduce_ex__(5)
 
-        elif sys.version_info[:2] < (3, 6):
-            # when calling __reduce_ex__ explicitly with protocol=5 on python
-            # raise a ValueError saying that protocol 5 is not available for
-            # this python version
-            with pytest.raises(ValueError):
-                array.__reduce_ex__(5)
-
     def test_record_array_with_object_dtype(self):
         my_object = object()
 
