@@ -230,8 +230,9 @@ def main(argv):
         config = os.path.join(
             site_dir,
             "numpy",
-            "tests",
             "typing",
+            "tests",
+            "data",
             "mypy.ini",
         )
 
