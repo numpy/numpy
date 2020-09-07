@@ -15,6 +15,8 @@ Glossary
 
 
    ``...``
+      An :py:data:`Ellipsis`
+
       **When indexing an array**, shorthand that the missing axes, if they
       exist, are full slices.
 
