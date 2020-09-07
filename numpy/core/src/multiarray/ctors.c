@@ -1840,7 +1840,7 @@ PyArray_FromInterface(PyObject *origin)
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
     Py_buffer view;
-    int res, i, n;
+    int i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
@@ -1977,17 +1977,8 @@ PyArray_FromInterface(PyObject *origin)
                     "(data pointer integer, read-only flag)");
             goto fail;
         }
-
         dataptr = PyTuple_GET_ITEM(attr, 0);
-        if (PyBytes_Check(dataptr)) {
-            res = sscanf(PyBytes_AsString(dataptr), "%p", (void **)&data);
-            if (res < 1) {
-                PyErr_SetString(PyExc_TypeError,
-                        "__array_interface__ data string cannot be converted");
-                goto fail;
-            }
-        }
-        else if (PyLong_Check(dataptr)) {
+        if (PyLong_Check(dataptr)) {
             data = PyLong_AsVoidPtr(dataptr);
             if (data == NULL && PyErr_Occurred()) {
                 goto fail;
@@ -1996,7 +1987,7 @@ PyArray_FromInterface(PyObject *origin)
         else {
             PyErr_SetString(PyExc_TypeError,
                     "first element of __array_interface__ data tuple "
-                    "must be integer or string.");
+                    "must be an integer.");
             goto fail;
         }
         if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
