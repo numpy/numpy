@@ -9,7 +9,7 @@ reveal_type(nd.item(0, 1))  # E: Any
 reveal_type(nd.item((0, 1)))  # E: Any
 
 # tolist
-reveal_type(nd.tolist())  # E: builtins.list[Any]
+reveal_type(nd.tolist())  # E: Any
 
 # itemset does not return a value
 # tostring is pretty simple
