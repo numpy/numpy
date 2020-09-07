@@ -508,7 +508,7 @@ else:
     _FloatValue = Union[None, _CharLike, SupportsFloat]
     _ComplexValue = Union[None, _CharLike, SupportsFloat, SupportsComplex]
 
-class integer(number, _real_generic):  # type: ignore
+class integer(number):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
     # sub-classes (`int64`, `uint32`, etc)
     def __index__(self) -> int: ...
