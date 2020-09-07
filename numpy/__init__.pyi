@@ -39,6 +39,25 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, Protocol
 
+# Ensures that the stubs are picked up
+from . import (
+    char,
+    compat,
+    core,
+    ctypeslib,
+    emath,
+    fft,
+    lib,
+    linalg,
+    ma,
+    matrixlib,
+    polynomial,
+    random,
+    rec,
+    testing,
+    version,
+)
+
 # TODO: remove when the full numpy namespace is defined
 def __getattr__(name: str) -> Any: ...
 
