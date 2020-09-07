@@ -28,7 +28,20 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.imgmath',
+    'sphinx_affiliates',
 ]
+
+# Canonical URL (including the '/') so searching from numpy docs finds these
+affiliate_options = {
+    'canonical_url': "https://numpy.org/devdocs",
+}
+
+# Other sites to add to the search of this site
+sphinx_affiliates = [
+    'https://www.numpy.org/neps/affiliate_searchindex.js',
+]
+
+
 
 imgmath_image_format = 'svg'
 
