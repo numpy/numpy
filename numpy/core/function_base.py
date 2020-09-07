@@ -165,7 +165,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
-    
+
     if _nx.issubdtype(dtype, _nx.integer):
         _nx.floor(y, out=y)
 
@@ -207,7 +207,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     endpoint : boolean, optional
         If true, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
-    base : float, optional
+    base : array_like, optional
         The base of the log space. The step size between the elements in
         ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
         Default is 10.0.
