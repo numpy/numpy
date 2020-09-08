@@ -88,6 +88,10 @@ All these are the subjects of this NEP.
 
 The API here and in NEP 43 is entirely on the C side. A Python-side version
 will be proposed in a future NEP.
+A future Python API is expected to be similar, but provide a more convenient
+API to reuse the functionality of existing DTypes.
+It could also provide shorthands to create structured DTypes similar to python's
+`dataclasses <https://docs.python.org/3.8/library/dataclasses.html>_`.
 
 
 ******************************************************************************
@@ -126,7 +130,9 @@ The rest of the NEP fills in details and provides support for the claim.
 Again, though Python is used for illustration, the implementation is a C API only; a
 future NEP will tackle the Python API.
 
-Outline of the DType base class, described in `DType class`_:
+After implementing this NEP, creating a DType will be possible by implementing
+the following outlined DType base class,
+that is further described in `DType class`_:
 
 .. code-block:: python
     :dedent: 0
@@ -180,7 +186,7 @@ For array-coercion, also part of casting:
             raise NotImplementedError
 
 
-Other elements of the casting implementation:
+Other elements of the casting implementation is the ``CastingImpl``:
 
 .. code-block:: python
     :dedent: 0
@@ -198,8 +204,10 @@ Other elements of the casting implementation:
         def _get_loop(...) -> lowlevel_C_loop:
             raise NotImplementedError
 
+which describes the casting from one DType to another.
 In NEP 43 this ``CastingImpl`` object is used unchanged to support
 universal functions.
+
 
 ******************************************************************************
 Definitions
@@ -213,18 +221,18 @@ Definitions
       Any subclass of the base type ``np.dtype``.
 
    coercion
-      Conversion between NumPy types and Python types
+      Conversion of Python types to NumPy arrays and values stored in a NumPy
+      array.
 
    cast
-      Conversion of an array to a different dtype
+      Conversion of an array to a different dtype.
 
    promotion
-      Finding a dtype that can represent a mix of dtypes without loss
-      of information
+      Finding a dtype that can perform an operation on a mix of dtypes without
+      loss of information.
 
    safe cast
-      A cast is safe if no information is lost when changing type
-
+      A cast is safe if no information is lost when changing type.
 
 On the C level we use ``descriptor`` or ``descr`` to mean
 *dtype instance*. In the proposed C-API, these terms will distinguish
@@ -348,6 +356,11 @@ casting and array coercion, which are described in detail below.
 
 * ``DType.type`` replaces ``dtype.type``. Unless a use case arises,
   ``dtype.type`` will be deprecated.
+  This indicates a Python scalar type which represents the same values as
+  the DType. This is the same type as used in the proposed `Class getter`_
+  and for `DType discovery during array coercion`_.
+  (This can may also be set for abstract DTypes, this is necessary
+  for array coercion.)
 
 * A new ``self.canonical`` property generalizes the notion of byte order to
   indicate whether data has been stored in a default/canonical way. For
@@ -373,14 +386,20 @@ casting and array coercion, which are described in detail below.
   ``Unit("m") > Unit("cm")``), since we may want to develop a meaning for these
   operators that is common to all DTypes.
 
-* Sorting functions are moved to the DType class. They are implemented by
+* Sorting functions are moved to the DType class. They may be implemented by
   defining a method ``dtype_get_sort_function(self, sortkind="stable") ->
   sortfunction`` that must return ``NotImplemented`` if the given ``sortkind``
   is not known.
 
-* Functions that cannot be removed are implemented as special methods. Since
-  the old dtype methods can be deprecated and renamed replacements added, the
-  API is not defined here, and it is acceptable if it changes over time.
+* Functions that cannot be removed are implemented as special methods. 
+  Many of these were previously defined part of the :c:type:`PyArray_ArrFuncs`
+  slot of the dtype instance (``PyArray_Descr *``) and include functions
+  such as ``nonzero``, ``fill`` (used for ``np.arange``), and
+  ``fromstr`` (used to parse text files)
+  These old slots methods will be deprecated and renamed replacements
+  following the new design principles added.
+  The API is not defined here. Since these methods can be deprecated and renamed
+  replacements added, it is acceptable if these new methods have to be modified.
 
 * Use of ``kind`` for non-built-in types is discouraged in favor of
   ``isinstance`` checks.  ``kind`` will return the ``__qualname__`` of the
@@ -1137,10 +1156,17 @@ A Python side API shall not be defined here. This is a general side approach.
 DType creation
 ==============================================================================
 
-As already mentioned in NEP 41, the interface to define new DTypes in C is
-modeled after the limited API in Python: the above-mentioned slots and some
-additional necessary information will thus be passed within a slots struct and
-identified by ``ssize_t`` integers::
+To create a new DType the user will need to define all the methods and
+attributes as presented above and outlined also in the `Usage and impact`_
+section.
+Some additional methods similar to those currently defined as part of
+:c:type:`PyArray_ArrFuncs` will be necessary and part of the slots struct
+below.
+
+As already mentioned in NEP 41, the interface to define this DType class in C is
+modeled after the `Python limited API <https://www.python.org/dev/peps/pep-0384/>`_:
+the above-mentioned slots and some additional necessary information will
+thus be passed within a slots struct and identified by ``ssize_t`` integers::
 
     static struct PyArrayMethodDef slots[] = {
         {NPY_dt_method, method_implementation},
@@ -1149,10 +1175,8 @@ identified by ``ssize_t`` integers::
     }
 
     typedef struct{
-      PyTypeObject *typeobj;    /* type of python scalar */
-      int is_parametric;        /* Is the dtype parametric? */
-      int is_abstract;          /* Is the dtype abstract? */
-      int flags                 /* flags (to be discussed) */
+      PyTypeObject *typeobj;    /* type of python scalar or NULL */
+      int flags                 /* flags, including parametric and abstract */
       /* NULL terminated CastingImpl; is copied and references are stolen */
       CastingImpl *castingimpls[];
       PyType_Slot *slots;
