@@ -28,22 +28,6 @@ np.complex64(1, 2)  # E: Too many arguments
 
 np.datetime64(0)  # E: non-matching overload
 
-dt_64 = np.datetime64(0, "D")
-td_64 = np.timedelta64(1, "h")
-
-dt_64 + dt_64  # E: Unsupported operand types
-td_64 - dt_64  # E: Unsupported operand types
-td_64 % 1  # E: Unsupported operand types
-
-# NOTE: The 2 tests below currently don't work due to the broad
-# (i.e. untyped) signature of `generic.__truediv__()` and `.__mod__()`.
-# TODO: Revisit this once annotations are added to the
-# `_ArrayOrScalarCommon` magic methods.
-
-# td_64 / dt_64  # E: No overload
-# td_64 % dt_64  # E: Unsupported operand types
-
-
 class A:
     def __float__(self):
         return 1.0
