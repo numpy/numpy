@@ -1,30 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.19.2 Release Notes
-==========================
-
-NumPy 1.19.2 fixes several bugs, prepares for the upcoming Cython 3.x release.
-and pins setuptools to keep distutils working while upstream modifications are
-ongoing. The aarch64 wheels are built with the latest manylinux2014 release
-that fixes the problem of differing page sizes used by different linux distros.
-
-This release supports Python 3.6-3.8. Cython >= 0.29.21 needs to be used when
-building with Python 3.9 for testing purposes.
-
-There is a known problem with Windows 10 version=2004 and OpenBLAS svd that we
-are trying to debug. If you are running that Windows version you should use a
-NumPy version that links to the MKL library, earlier Windows versions are fine.
-
-Improvements
-============
-
-Add NumPy declarations for Cython 3.0 and later
------------------------------------------------
-The pxd declarations for Cython 3.0 were improved to avoid using deprecated
-NumPy C-API features.  Extension modules built with Cython 3.0+ that use NumPy
-can now set the C macro ``NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION`` to avoid
-C compiler warnings about deprecated API usage.
 
 Contributors
 ============
