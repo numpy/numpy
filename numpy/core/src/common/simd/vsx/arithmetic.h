@@ -94,9 +94,6 @@
 #define npyv_mul_f32 vec_mul
 #define npyv_mul_f64 vec_mul
 
-#define npyv_muladd_f64 vec_madd
-#define npyv_mulsub_f64 vec_msub
-
 /***************************
  * Division
  ***************************/

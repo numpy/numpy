@@ -312,25 +312,6 @@ typedef struct cfftp_plan_i * cfftp_plan;
 /* a *= b */
 #define MULPMSIGNCEQ(a,b) { double xtmp=a.r; a.r=b.r*a.r-sign*b.i*a.i; a.i=b.r*a.i+sign*b.i*xtmp; }
 
-#if NPY_SIMD_F64
-#define VLDCH(reg,a,b,c) reg=npyv_load_deinterleave_f64x2((double*)&CH(a,b,c));
-#define VLDCC(reg,a,b,c) reg=npyv_load_deinterleave_f64x2((double*)&CC(a,b,c));
-#define VLDWA(reg,x,i) reg=npyv_load_deinterleave_f64x2((double*)&WA(x,i));
-#define VSTCH(reg,a,b,c) npyv_store_interleave_f64x2((double*)&CH(a,b,c),reg);
-#define VADD(c,a,b,k,i,j) { c.val[k] = npyv_add_f64(a.val[i],b.val[j]); }
-#define VSUB(c,a,b,k,i,j) { c.val[k] = npyv_sub_f64(a.val[i],b.val[j]); }
-#define VADDC(c,a,b) { VADD(c,a,b,0,0,0) VADD(c,a,b,1,1,1) }
-#define VSUBC(c,a,b) { VSUB(c,a,b,0,0,0) VSUB(c,a,b,1,1,1) }
-#define VPMC(c,d,a,b) { VADDC(c,a,b) VSUBC(d,a,b) }
-#define VPMCR90(c,d,a,b) { VSUB(c,a,b,0,0,1) VADD(c,a,b,1,1,0) VADD(d,a,b,0,0,1) VSUB(d,a,b,1,1,0) }
-#define VPMCRM90(c,d,a,b) { VADD(c,a,b,0,0,1) VSUB(c,a,b,1,1,0) VSUB(d,a,b,0,0,1) VADD(d,a,b,1,1,0) }
-#define VMUL(c,a,b,k,i,j) { c.val[k] = npyv_mul_f64(a.val[i],b.val[j]);}
-#define VMLA(c,a,b,k,i,j) { c.val[k] = npyv_muladd_f64(a.val[i],b.val[j],c.val[k]);}
-#define VMLS(c,a,b,k,i,j) { c.val[k] = npyv_mulsub_f64(a.val[i],b.val[j],c.val[k]);}
-#define VA_EQ_B_MUL_C(c,a,b) { VMUL(c,a,b,0,1,1) VMUL(c,a,b,1,1,0) VMLS(c,a,b,0,0,0) VMLA(c,a,b,1,0,1) }
-#define VA_EQ_CB_MUL_C(c,a,b) { VMUL(c,a,b,0,1,1) VMUL(c,a,b,1,1,0) VMLA(c,a,b,0,0,0) VMLS(c,a,b,1,0,1) } 
-#endif
-
 NOINLINE static void pass2b (size_t ido, size_t l1, const cmplx * restrict cc,
   cmplx * restrict ch, const cmplx * restrict wa)
   {
@@ -348,15 +329,20 @@ NOINLINE static void pass2b (size_t ido, size_t l1, const cmplx * restrict cc,
       size_t step=NPY_SIMD_WIDTH/sizeof(double);
       for (; i<=ido-step; i+=step)
         {
-        npyv_f64x2 c,d,tmp,twd;
-        VLDCC(c,i,0,k)
-        VLDCC(d,i,1,k)
-        VADDC(tmp,c,d)
-        VSTCH(tmp,i,k,0)
-        VSUBC(tmp,c,d)
-        VLDWA(twd,0,i)
-        VA_EQ_B_MUL_C(c,twd,tmp)
-        VSTCH(c,i,k,1)
+        npyv_f64x2 c, d, tmp, twd;
+        c = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
+        d = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((1)+cdim*(k))]);
+        tmp.val[0] = npyv_add_f64(c.val[0], d.val[0]);
+        tmp.val[1] = npyv_add_f64(c.val[1], d.val[1]);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(0))], tmp);
+        tmp.val[0] = npyv_sub_f64(c.val[0], d.val[0]);
+        tmp.val[1] = npyv_sub_f64(c.val[1], d.val[1]);
+        twd = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(0)*(ido-1)]);
+        c.val[0] = npyv_mul_f64(twd.val[0], tmp.val[0]);
+        c.val[1] = npyv_mul_f64(twd.val[0], tmp.val[1]);
+        c.val[0] = npyv_nmuladd_f64(twd.val[1], tmp.val[1], c.val[0]);
+        c.val[1] = npyv_muladd_f64(twd.val[1], tmp.val[0], c.val[1]);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(1))], c);
         }
 #endif
 //    scalr operations
@@ -386,15 +372,20 @@ NOINLINE static void pass2f (size_t ido, size_t l1, const cmplx * restrict cc,
       size_t step=NPY_SIMD_WIDTH/sizeof(double);
       for (; i<=ido-step; i+=step)
         {
-        npyv_f64x2 c,d,tmp,twd;
-        VLDCC(c,i,0,k)
-        VLDCC(d,i,1,k)
-        VADDC(tmp,c,d)
-        VSTCH(tmp,i,k,0)
-        VSUBC(tmp,c,d)
-        VLDWA(twd,0,i)
-        VA_EQ_CB_MUL_C(c,twd,tmp)
-        VSTCH(c,i,k,1)
+        npyv_f64x2 c, d, tmp, twd;
+        c = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
+        d = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((1)+cdim*(k))]);
+        tmp.val[0] = npyv_add_f64(c.val[0], d.val[0]);
+        tmp.val[1] = npyv_add_f64(c.val[1], d.val[1]);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(0))], tmp);
+        tmp.val[0] = npyv_sub_f64(c.val[0], d.val[0]);
+        tmp.val[1] = npyv_sub_f64(c.val[1], d.val[1]);
+        twd = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(0)*(ido-1)]);
+        c.val[0] = npyv_mul_f64(twd.val[0], tmp.val[0]);
+        c.val[1] = npyv_mul_f64(twd.val[0], tmp.val[1]);
+        c.val[0] = npyv_muladd_f64(twd.val[1], tmp.val[1], c.val[0]);
+        c.val[1] = npyv_nmuladd_f64(twd.val[1], tmp.val[0], c.val[1]);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(1))], c);
         }
 #endif
 //    scalr operations
@@ -529,22 +520,45 @@ NOINLINE static void pass4b (size_t ido, size_t l1, const cmplx * restrict cc,
       for (; i<=ido-step; i+=step)
         {
         npyv_f64x2 c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
-        VLDCC(c1,i,0,k) VLDCC(c3,i,2,k)
-        VLDCC(c2,i,1,k) VLDCC(c4,i,3,k)
-        VLDWA(wa0,0,i)
-        VLDWA(wa1,1,i)
-        VLDWA(wa2,2,i)
-        VPMC(t2,t1,c1,c3)
-        VPMC(t3,t4,c2,c4)
-        VPMC(c1,c3,t2,t3)
-        VPMCR90(c2,c4,t1,t4)
-        VA_EQ_B_MUL_C(t1,wa0,c2)
-        VA_EQ_B_MUL_C(t2,wa1,c3)
-        VA_EQ_B_MUL_C(t3,wa2,c4)
-        VSTCH(c1,i,k,0)
-        VSTCH(t1,i,k,1)
-        VSTCH(t2,i,k,2)
-        VSTCH(t3,i,k,3)
+        c1 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
+        c3 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((2)+cdim*(k))]);
+        c2 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((1)+cdim*(k))]);
+        c4 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((3)+cdim*(k))]);
+        wa0 = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(0)*(ido-1)]);
+        wa1 = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(1)*(ido-1)]);
+        wa2 = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(2)*(ido-1)]);
+        t2.val[0] = npyv_add_f64(c1.val[0], c3.val[0]);
+        t2.val[1] = npyv_add_f64(c1.val[1], c3.val[1]);
+        t1.val[0] = npyv_sub_f64(c1.val[0], c3.val[0]);
+        t1.val[1] = npyv_sub_f64(c1.val[1], c3.val[1]);
+        t3.val[0] = npyv_add_f64(c2.val[0], c4.val[0]);
+        t3.val[1] = npyv_add_f64(c2.val[1], c4.val[1]);
+        t4.val[0] = npyv_sub_f64(c2.val[0], c4.val[0]);
+        t4.val[1] = npyv_sub_f64(c2.val[1], c4.val[1]);
+        c1.val[0] = npyv_add_f64(t2.val[0], t3.val[0]);
+        c1.val[1] = npyv_add_f64(t2.val[1], t3.val[1]);
+        c3.val[0] = npyv_sub_f64(t2.val[0], t3.val[0]);
+        c3.val[1] = npyv_sub_f64(t2.val[1], t3.val[1]);
+        c2.val[0] = npyv_sub_f64(t1.val[0], t4.val[1]);
+        c2.val[1] = npyv_add_f64(t1.val[1], t4.val[0]);
+        c4.val[0] = npyv_add_f64(t1.val[0], t4.val[1]);
+        c4.val[1] = npyv_sub_f64(t1.val[1], t4.val[0]);
+        t1.val[0] = npyv_mul_f64(wa0.val[0], c2.val[0]);
+        t1.val[1] = npyv_mul_f64(wa0.val[0], c2.val[1]);
+        t1.val[0] = npyv_nmuladd_f64(wa0.val[1], c2.val[1], t1.val[0]);
+        t1.val[1] = npyv_muladd_f64(wa0.val[1], c2.val[0], t1.val[1]);
+        t2.val[0] = npyv_mul_f64(wa1.val[0], c3.val[0]);
+        t2.val[1] = npyv_mul_f64(wa1.val[0], c3.val[1]);
+        t2.val[0] = npyv_nmuladd_f64(wa1.val[1], c3.val[1], t2.val[0]);
+        t2.val[1] = npyv_muladd_f64(wa1.val[1], c3.val[0], t2.val[1]);
+        t3.val[0] = npyv_mul_f64(wa2.val[0], c4.val[0]);
+        t3.val[1] = npyv_mul_f64(wa2.val[0], c4.val[1]);
+        t3.val[0] = npyv_nmuladd_f64(wa2.val[1], c4.val[1], t3.val[0]);
+        t3.val[1] = npyv_muladd_f64(wa2.val[1], c4.val[0], t3.val[1]);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(0))], c1);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(1))], t1);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(2))], t2);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(3))], t3);
         }
 #endif
       for (; i<ido; ++i)
@@ -595,22 +609,45 @@ NOINLINE static void pass4f (size_t ido, size_t l1, const cmplx * restrict cc,
       for (; i<=ido-step; i+=step)
         {
         npyv_f64x2 c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
-        VLDCC(c1,i,0,k) VLDCC(c3,i,2,k)
-        VLDCC(c2,i,1,k) VLDCC(c4,i,3,k)
-        VLDWA(wa0,0,i)
-        VLDWA(wa1,1,i)
-        VLDWA(wa2,2,i)
-        VPMC(t2,t1,c1,c3)
-        VPMC(t3,t4,c2,c4)
-        VPMC(c1,c3,t2,t3)
-        VPMCRM90(c2,c4,t1,t4)
-        VA_EQ_CB_MUL_C(t1,wa0,c2) 
-        VA_EQ_CB_MUL_C(t2,wa1,c3) 
-        VA_EQ_CB_MUL_C(t3,wa2,c4) 
-        VSTCH(c1,i,k,0)
-        VSTCH(t1,i,k,1)
-        VSTCH(t2,i,k,2)
-        VSTCH(t3,i,k,3)
+        c1 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
+        c3 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((2)+cdim*(k))]);
+        c2 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((1)+cdim*(k))]);
+        c4 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((3)+cdim*(k))]);
+        wa0 = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(0)*(ido-1)]);
+        wa1 = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(1)*(ido-1)]);
+        wa2 = npyv_load_deinterleave_f64x2((double*)&wa[(i)-1+(2)*(ido-1)]);
+        t2.val[0] = npyv_add_f64(c1.val[0], c3.val[0]);
+        t2.val[1] = npyv_add_f64(c1.val[1], c3.val[1]);
+        t1.val[0] = npyv_sub_f64(c1.val[0], c3.val[0]);
+        t1.val[1] = npyv_sub_f64(c1.val[1], c3.val[1]);
+        t3.val[0] = npyv_add_f64(c2.val[0], c4.val[0]);
+        t3.val[1] = npyv_add_f64(c2.val[1], c4.val[1]);
+        t4.val[0] = npyv_sub_f64(c2.val[0], c4.val[0]);
+        t4.val[1] = npyv_sub_f64(c2.val[1], c4.val[1]);
+        c1.val[0] = npyv_add_f64(t2.val[0], t3.val[0]);
+        c1.val[1] = npyv_add_f64(t2.val[1], t3.val[1]);
+        c3.val[0] = npyv_sub_f64(t2.val[0], t3.val[0]);
+        c3.val[1] = npyv_sub_f64(t2.val[1], t3.val[1]);
+        c2.val[0] = npyv_add_f64(t1.val[0], t4.val[1]);
+        c2.val[1] = npyv_sub_f64(t1.val[1], t4.val[0]);
+        c4.val[0] = npyv_sub_f64(t1.val[0], t4.val[1]);
+        c4.val[1] = npyv_add_f64(t1.val[1], t4.val[0]);
+        t1.val[0] = npyv_mul_f64(wa0.val[0], c2.val[0]);
+        t1.val[1] = npyv_mul_f64(wa0.val[0], c2.val[1]);
+        t1.val[0] = npyv_muladd_f64(wa0.val[1], c2.val[1], t1.val[0]);
+        t1.val[1] = npyv_nmuladd_f64(wa0.val[1], c2.val[0], t1.val[1]);
+        t2.val[0] = npyv_mul_f64(wa1.val[0], c3.val[0]);
+        t2.val[1] = npyv_mul_f64(wa1.val[0], c3.val[1]);
+        t2.val[0] = npyv_muladd_f64(wa1.val[1], c3.val[1], t2.val[0]);
+        t2.val[1] = npyv_nmuladd_f64(wa1.val[1], c3.val[0], t2.val[1]);
+        t3.val[0] = npyv_mul_f64(wa2.val[0], c4.val[0]);
+        t3.val[1] = npyv_mul_f64(wa2.val[0], c4.val[1]);
+        t3.val[0] = npyv_muladd_f64(wa2.val[1], c4.val[1], t3.val[0]);
+        t3.val[1] = npyv_nmuladd_f64(wa2.val[1], c4.val[0], t3.val[1]);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(0))], c1);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(1))], t1);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(2))], t2);
+        npyv_store_interleave_f64x2((double*)&ch[(i)+ido*((k)+l1*(3))], t3);
         }
 #endif
       for (; i<ido; ++i)
@@ -1057,25 +1094,6 @@ NOINLINE WARN_UNUSED_RESULT static int pass_all(cfftp_plan plan, cmplx c[], doub
 #undef SCALEC
 #undef ADDC
 #undef PMC
-
-#if NPY_SIMD_F64
-#undef VA_EQ_CB_MUL_C
-#undef VA_EQ_B_MUL_C
-#undef VMLS
-#undef VMLA
-#undef VMUL
-#undef VPMCRM90
-#undef VPMCR90
-#undef VPMC
-#undef VSUBC
-#undef VADDC
-#undef VSUB
-#undef VADD
-#undef VSTCH
-#undef VLDWA
-#undef VLDCC
-#undef VLDCH
-#endif 
 
 //complex fourier transform
 NOINLINE WARN_UNUSED_RESULT

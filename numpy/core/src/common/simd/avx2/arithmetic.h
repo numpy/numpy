@@ -62,14 +62,6 @@
 #define npyv_mul_f32 _mm256_mul_ps
 #define npyv_mul_f64 _mm256_mul_pd
 
-#ifdef NPY_HAVE_FMA3
-    #define npyv_muladd_f64 _mm256_fmadd_pd
-    #define npyv_mulsub_f64 _mm256_fmsub_pd
-#else
-    #define npyv_muladd_f64(a, b, c) npyv_add_f64(npyv_mul_f64(a, b), c)
-    #define npyv_mulsub_f64(a, b, c) npyv_sub_f64(npyv_mul_f64(a, b), c)
-#endif
-
 // saturated
 // TODO: after implment Packs intrins
 

@@ -60,10 +60,6 @@
 #define npyv_mul_f32 vmulq_f32
 #define npyv_mul_f64 vmulq_f64
 
-#define npyv_muladd_f64(A, B, C) vfmaq_f64(C, A, B)
-#define npyv_mulsub_f64(A, B, C) vnegq_f64(vfmsq_f64(C, A, B))
-
-
 /***************************
  * Division
  ***************************/
