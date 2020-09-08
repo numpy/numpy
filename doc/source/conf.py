@@ -38,7 +38,7 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'contents'
+master_doc = '/user/index.rst'
 
 # General substitutions.
 project = 'NumPy'
