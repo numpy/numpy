@@ -541,7 +541,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 
 _CharLike = Union[str, bytes]
 _BoolLike = Union[bool, bool_]
-_NumberLike = Union[int, float, complex, number]
+_NumberLike = Union[int, float, complex, number, bool_]
 _IntLike = Union[int, integer]
 _FloatLike = Union[int, integer, float, floating]
 
@@ -832,7 +832,7 @@ class complex128(complexfloating[float64], complex):
 class flexible(generic): ...  # type: ignore
 
 class void(flexible):
-    def __init__(self, __value: Union[int, integer, bool_, bytes]): ...
+    def __init__(self, __value: Union[_IntLike, _BoolLike, bytes]): ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
