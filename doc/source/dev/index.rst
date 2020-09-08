@@ -300,7 +300,7 @@ The rest of the story
    Git Basics <gitwash/index>
    development_environment
    development_workflow
-   reviewer-guidelines
+   reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
