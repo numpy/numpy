@@ -323,8 +323,8 @@ has a similar prohibition against subclassing concrete types.
 For example methods such as the later ``__common_instance__`` or
 ``__common_dtype__`` cannot work for a subclass unless they were designed
 very carefully.
-It helps avoid unintended vulnerabilities when subclassing types that were
-not written to be subclassed.
+It helps avoid unintended vulnerabilities to implementation changes that
+result from subclassing types that were not written to be subclassed.
 We believe that the DType API should rather be extended to simplify wrapping
 of existing functionality.
 
@@ -349,21 +349,29 @@ casting and array coercion, which are described in detail below.
 * ``DType.type`` replaces ``dtype.type``. Unless a use case arises,
   ``dtype.type`` will be deprecated.
 
-  * Used for supporting parametric types. As explained in :ref:`NEP 40
-    <parametric-datatype-discussion>`, parametric types have a value
-    associated with them. Strings are an example -- ``S8`` is different from
-    ``S4`` because they require a different amount of storage.
+* A new ``self.canonical`` property generalizes the notion of byte order to
+  indicate whether data has been stored in a default/canonical way. For
+  existing code, "canonical" will just signify native byte order, but it can
+  take on new meanings in new DTypes -- for instance, to distinguish a
+  complex-conjugated instance of Complex which stores ``real - imag`` instead
+  of ``real + imag`` and is thus not the canonical storage. The ISNBO ("is
+  native byte order") flag might be repurposed as the canonical flag.
 
 * Support is included for parametric DTypes. As explained in
   :ref:`NEP 40 <parametric-datatype-discussion>`, parametric types have a
   value associated with them. A DType will be deemed parametric if it
   inherits from ParametricDType.
 
-  * The C-API may use a private flag to indicate that this inheritance
-    should occur, similar to the type flags Python uses internally for fast
-    subclass checking for certain builtin types like float and tuple.
+  Strings are one example of a parametric type -- ``S8`` is different from
+  ``S4`` because ``S4`` cannot store a length 8 string such as ``"length 8"``
+  while ``S8`` can.
+  Similarly, the ``datetime64`` DType is parametric, since its unit must be specified.
+  The associated ``type`` is the ``np.datetime64`` scalar.
 
-* ``self.canonical`` method
+* DType methods may resemble or even reuse existing Python slots. Thus Python
+  special slots are off-limits for user-defined DTypes (for instance, defining
+  ``Unit("m") > Unit("cm")``), since we may want to develop a meaning for these
+  operators that is common to all DTypes.
 
 * Sorting functions are moved to the DType class. They are implemented by
   defining a method ``dtype_get_sort_function(self, sortkind="stable") ->
@@ -382,51 +390,9 @@ casting and array coercion, which are described in detail below.
 * A method ``ensure_canonical(self) -> dtype`` returns a new dtype (or
   ``self``) with the ``canonical`` flag set.
 
-  * The returned dtype must have the ``canonical`` flag set.
-
-
-* ``DType.type`` is the associated scalar type.  ``dtype.type`` will be a
-  class attribute and the current ``dtype.type`` field will be considered
-  deprecated. This may be relaxed if a use-case arises.
-
-Additionally, existing methods (and C-side fields) will be provided.
-However, the fields ``kind`` and ``char`` will be set to ``\0``
-(NULL character) on the C-side.
-While discouraged, except for NumPy builtin types, ``kind`` will return
-the ``__qualname__`` of the object to ensure uniqueness for all DTypes.
-(the replacement for ``kind`` will be to use ``isinstance`` checks).
-
-Another example of methods that should be moved to the DType class are the
-sorting functions, to be implemented by defining a method:
-
-* ``dtype_get_sort_function(self, sortkind="stable") -> sortfunction``
-
-that must return ``NotImplemented`` if the given ``sortkind`` is not known.
-Similarly, any function implemented previously that cannot be removed will be
-implemented as a special method. Since these methods can be deprecated and
-renamed replacements added, the API is not defined here, and it is acceptable
-if it changes over time.
-
-For some of the current "methods" defined on the dtype, including sorting,
-a long-term solution may be to instead create generalized ufuncs to provide
-the functionality.
-
-**Alternatives:** Some of these flags could be implemented by inheriting for
- example from a ``ParametricDType`` class. However, on the C-side as an
- implementation detail it seems simpler to provide a flag. This does not
- preclude the possibility of creating a ``ParametricDType`` to Python to
- represent the same thing.
-
-**Example:** The ``datetime64`` DType is considered parametric, due to its
-unit, and unlike a float64 has no canonical representation. The associated
-``type`` is the ``np.datetime64`` scalar.
-
-**Issues and Details:** A DType candidate like ``Categorical`` need not have a
-clear type associated with it. Instead, the ``type`` may be ``object`` and the
-categorical's values are arbitrary objects. In contrast to well-defined
-scalars, this ``type`` cannot not be used for the dtype discovery necessary
-for coercion (compare section `DType discovery during array coercion`_).
-
+* Since NumPy's approach is to provide functionality through unfuncs,
+  functions like sorting that will be implemented in DTypes might eventually be
+  reimplemented as generalized ufuncs.
 
 .. _casting:
 
@@ -460,10 +426,7 @@ and implements value-based promotion [1]_.
 Coercion To distinguish between the promotion occurring during universal function
 application, we will call it "common type" operation here.
 
-**Motivation:** Common type operations are vital for array coercion when
-different input types are mixed. They also provide the logic currently used to
-decide the output dtype of ``np.concatenate()`` and on their own are quite
-useful.
+**Motivation:**
 
 Furthermore, common type operations may be used to find the correct dtype
 to use for functions with different inputs (including universal functions).
