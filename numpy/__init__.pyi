@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 from numpy.core._internal import _ctypes
 from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
-from numpy.typing._callback import (
+from numpy.typing._callable import (
     _BoolArithmetic,
     _BoolSub,
     _BoolTrueDiv,

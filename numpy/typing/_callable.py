@@ -1,8 +1,8 @@
 """
-A module with various callback protocols, `i.e.` ``typing.Protocol``
-subclasses that implement the ``__call__`` magic method.
+A module with various ``typing.Protocol`` subclasses that implement
+the ``__call__`` magic method.
 
-See the `Mypy documentation`_ for more details.
+See the `Mypy documentation`_ on protocols for more details.
 
 .. _`Mypy documentation`: https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
 
