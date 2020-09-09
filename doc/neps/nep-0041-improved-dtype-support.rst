@@ -583,7 +583,7 @@ special methods move from the dtype instances to methods on the new DType class.
 This is the typical design pattern used in Python.
 Organizing these methods and information in a more Pythonic way provides a
 solid foundation for refining and extending the API in the future.
-The current API cannot be extended due to how it is exposed publically.
+The current API cannot be extended due to how it is exposed publicly.
 This means for example that the methods currently stored in ``PyArray_ArrFuncs``
 on each datatype (see :ref:`NEP 40 <NEP40>`)
 will be defined differently in the future and
@@ -619,6 +619,49 @@ making it less straight forward to rely on scalars to implement behaviour.
 While DType and Scalar describe the same concept/type (e.g. an `int64`),
 it seems practical to split out the information and functionality necessary
 for numpy into the DType class.
+
+The dtype instances provide parameters and storage options
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+From a computer science point of view a type defines the *value space*
+(all possible values its instances can take) and their *behaviour*.
+As proposed in this NEP, the DType class defines value space and behaviour.
+The ``dtype`` instance can be seen as part of the value, so that the typical
+Python ``instance`` corresponds to ``dtype + element`` (where *element* is the
+data stored in the array).
+An alternative view would be to define value space and behaviour on the
+``dtype`` instances directly.
+These two options are presented in the following figure and compared to
+similar Python implementation patterns:
+
+.. image:: _static/nep-0041-type-sketch-no-fonts.svg
+
+The difference is in how parameters, such as string length or the datetime
+units (``ms``, ``ns``, ...), and storage options, such as byte-order, are handled.
+When implementing a Python (scalar) ``type`` parameters, for example the datetimes
+unit, will be stored in the instance.
+This is the design NEP 42 tries to mimic, however, the parameters are now part
+of the dtype instance, meaning that part of the data stored in the instance
+is shared by all array elements.
+As mentioned previously, this means that the Python ``instance`` corresponds
+to the ``dtype + element`` stored in a NumPy array.
+
+An more advanced approach in Python is to use a class factory and an abstract
+base class (ABC).
+This allows moving the parameter into the dynamically created ``type`` and
+behaviour implementation may be specific to those parameters.
+An alternative approach might use this model and implemented behaviour
+directly on the ``dtype`` instance.
+
+We believe that the version as proposed here is easier to work with and understand.
+Python class factories are not commonly used and NumPy does not use code
+specialized for dtype parameters or byte-orders.
+Making such specialization easier to implement such specialization does not
+seem to be a priority.
+One result of this choice is that some DTypes may only have a singleton instance
+if they have no parameters or storage variation.
+However, all of the NumPy dtypes require dynamically created instances due
+to allowing metadata to be attached.
 
 
 Scalars should not be instances of the datatypes (2)
