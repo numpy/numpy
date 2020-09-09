@@ -4229,10 +4229,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     See Also
     --------
-    mgrid : Construct a multi-dimensional "meshgrid"
-                     using indexing notation.
-    ogrid : Construct an open multi-dimensional "meshgrid"
-                     using indexing notation.
+    mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
+    ogrid : Construct an open multi-dimensional "meshgrid" using indexing 
+            notation.
 
     Examples
     --------
