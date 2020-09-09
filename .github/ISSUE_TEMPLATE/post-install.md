@@ -1,6 +1,7 @@
 ---
 name: "Post-install/importing issue"
 about: If you have trouble importing or using NumPy after installation
+labels: 32 - Installation
 
 ---
 

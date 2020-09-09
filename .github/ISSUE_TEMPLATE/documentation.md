@@ -1,6 +1,7 @@
 ---
 name: "Documentation"
 about: Report an issue related to the NumPy documentation
+labels: 04 - Documentation
 
 ---
 
