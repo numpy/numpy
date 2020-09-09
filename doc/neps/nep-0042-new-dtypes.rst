@@ -857,7 +857,7 @@ has a known (different) dtype, NumPy may in the future use casting instead of
 ``__dtype_setitem__``. A user datatype is (initially) expected to implement
 ``__dtype_setitem__`` for its own ``DType.type`` and all basic Python scalars
 it wishes to support (e.g. integers, floats, datetime). In the future a
-function "``known_scalartype``" may be added to allow a user dtype to signal
+function "``known_scalartype``" may be made public to allow a user dtype to signal
 which Python scalars it can store directly.
 
 
@@ -886,48 +886,62 @@ not actually performed.
 be assigned from ``np.datetime64``. However, the datetime
 ``__dtype_setitem__`` also allows assignment from date strings ("2016-05-01")
 or Python integers. Additionally the datetime ``__dtype_get_pyitem__``
-function actually returns Python ``datetime.datetime`` object (most of the
+function actually returns a Python ``datetime.datetime`` object (most of the
 time).
 
 
-**Alternatives:** This may be seen as simply a cast to and from the ``object``
-dtype. However, it seems slightly more complicated. This is because in general
-a Python object could itself be a zero-dimensional array or scalar with an
-associated DType. Thus, representing it as a normal cast would either require
-that:
+**Alternatives:** This functionality could also be implemented as a cast to and
+from the ``object`` dtype.
+However, coercion is slightly more complex than typical casts.
+One reason is that in general a Python object could itself be a
+zero-dimensional array or scalar with an associated DType.
+Such an object has a DType, and the correct cast to another DType is already
+defined::
 
-* The implementer handles all Python classes, even those for which
-  ``np.array(scalar).astype(UserDType)`` already works because
-  ``np.array(scalar)`` returns, say, a datetime64 array.
+    np.array(np.float32(4), dtype=object).astype(np.float64)
 
-* The cast is actually added between a typed-object to dtype. And even
-  in this case a generic fallback (for example ``float64`` can use
-  ``float(scalar)`` to do the cast) is also necessary.
+is identical to::
+
+    np.array(4, dtype=np.float32).astype(np.float64)
+
+Implementing the first ``object`` to ``np.float64`` cast explicitly,
+would require the user to take to duplicate or fall back to existing
+casting functionality.
 
 It is certainly possible to describe the coercion to and from Python objects
-using the general casting machinery. However, it seems special enough to
-handle specifically.
+using the general casting machinery,
+but the ``object`` dtype is special and important enough to handle by NumPy
+using the presented methods.
 
-
-**Further Issues and Discussion:** The setitem function currently duplicates
+**Further Issues and Discussion:** The ``__dtype_setitem__`` function currently duplicates
 some code, such as coercion from a string. ``datetime64`` allows assignment
-from string, but the same conversion also occurs for casts from the string
-dtype to ``datetime64``. In the future, we may expose a way to signal whether
-a conversion is known, and otherwise a normal cast is made so that the item is
-effectively set to ``np.array(scalar).astype(requested_dtype)``.
+from string, but the same conversion also occurs for casting from the string
+dtype to ``datetime64``. In the future, we may expose the ``known_scalartype``
+function to allow the user to implement such duplication.
+For example, NumPy would normally use ``np.array(np.string_("2019")).astype(datetime64)``,
+but ``datetime64`` could choose to use its ``__dtype_setitem__`` instead,
+e.g. for performance reasons.
 
-There is a general issue about the handling of subclasses. We anticipate to not
-automatically detect the dtype for ``np.array(float64_subclass)`` to be
-float64.  The user can still provide ``dtype=np.float64``. However, the above
-"assign by casting" using ``np.array(scalar_subclass).astype(requested_dtype)``
+There is an issue about how subclasses of scalars should be handled.
+We anticipate to stop automatically detecting the dtype for
+``np.array(float64_subclass)`` to be float64.
+The user can still provide ``dtype=np.float64``.
+However, the above automatic casting using ``np.array(scalar_subclass).astype(requested_dtype)``
 will fail.
+In many cases, this is not an issue, since the Python ``__float__`` protocol
+can be used instead.  But in some cases, this will mean that subclasses of
+Python scalars will behave differently.
 
-.. note::
+.. example::
 
-    This means that ``np.complex256`` should not use ``__float__`` in its
+    ``np.complex256`` should not use ``__float__`` in its
     ``__dtype_setitem__`` method in the future unless it is a known floating
     point type.  If the scalar is a subclass of a different high precision
-    floating point type (e.g. ``np.float128``) then this will lose precision.
+    floating point type (e.g. ``np.float128``) then this currently loses
+    precision without notifying the user.
+    In that case ``np.array(float128_subclass(3), dtype=np.complex256)``
+    may fail unless the ``float128_subclass`` is first converted to the
+    ``np.float128`` base class.
 
 
 DType discovery during array coercion
