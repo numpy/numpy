@@ -21,6 +21,7 @@ Some key differences
 ====================
 
 .. list-table::
+   :class: docutils
 
    * - In MATLAB, the basic type, even for scalars, is a
        multidimensional array. Array assignments in MATLAB are stored as
