@@ -3596,7 +3596,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
 
     See Also
     --------
-    numpy.lib.scimath.sqrt
+    lib.scimath.sqrt
         A version which returns complex numbers when given negative reals.
 
     Notes
