@@ -6,6 +6,7 @@ NEP 42 — User-extensible dtypes
 
 :title: User-extensible dtypes
 :Author: Sebastian Berg
+:Author: Ben Nathanson
 :Author: Marten van Kerkwijk
 :Status: Draft
 :Type: Standard
