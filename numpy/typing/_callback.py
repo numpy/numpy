@@ -1,4 +1,12 @@
-"""A module with various callback protocols."""
+"""
+A module with various callback protocols, `i.e.` ``typing.Protocol``
+subclasses that implement the ``__call__`` magic method.
+
+See the `Mypy documentation`_ for more details.
+
+.. _`Mypy documentation`: https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
+
+"""
 
 import sys
 from typing import Union, TypeVar, overload, Any
