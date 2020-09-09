@@ -412,27 +412,28 @@ multiple development stages are required:
 
 * Phase II: Incrementally define or rework API
 
-  * Create a new and easily extensible API for defining new datatypes
-    and related functionality. (NEP 42)
+  * Incrementally define all necessary functionality through methods and
+    properties on the DType (NEP 42):
 
-  * Incrementally define all necessary functionality through the new API (NEP 42):
+    * The properties of the class hierarchy and DType class itself,
+      including methods not covered by the following, most central, points.
+    * The functionality that will support dtype casting using ``arr.astype()``
+      and casting related operations such as ``np.common_type``.
+    * The implementation of item access and storage, and the way shape and
+      dtype are determined when creating an array with ``np.array()``
+    * Create a public C-API to define new DTypes.
 
-    * Defining operations such as ``np.common_type``.
-    * Allowing to define casting between datatypes.
-    * Add functionality necessary to create a numpy array from Python scalars
-      (i.e. ``np.array(...)``).
-    * …
+  * Restructure how universal functions work (NEP 43), to allow extending
+    a `~numpy.ufunc` such as ``np.add`` for user-defined datatypes
+    such as Units:
 
-  * Restructure how universal functions work (NEP 43), in order to:
-
-    * make it possible to allow a `~numpy.ufunc` such as ``np.add`` to be
-      extended by user-defined datatypes such as Units.
-
-    * allow efficient lookup for the correct implementation for user-defined
-      datatypes.
-
-    * enable reuse of existing code. Units should be able to use the
-      normal math loops and add additional logic to determine output type.
+    * Refactor how the low-level C functions are organized to make it
+      extensible and flexible enough for complicated DTypes such as Units.
+    * Implement registration and efficient lookup for these low-level C
+      functions as defined by the user.
+    * Define how promotion will be used to implement behaviour when casting
+      is required. For example ``np.float64(3) + np.int32(3)`` promotes the
+      ``int32`` to a ``float64``.
 
 * Phase III: Growth of NumPy and Scientific Python Ecosystem capabilities:
 
