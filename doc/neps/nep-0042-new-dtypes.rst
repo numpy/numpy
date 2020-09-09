@@ -990,23 +990,20 @@ of the output array and finding the correct datatype are closely related.
 **Implementation:** There are two distinct cases above:
 
 1. The user has provided no dtype information.
-2. The user provided a DType class  -- as represented, for example, by the parametric instance ``"S"``
+2. The user provided a DType class  -- as represented, for example, by ``"S"``
    representing a string of any length.
 
 In the first case, it is necessary to establish a mapping from the Python type(s)
 of the constituent elements to the DType class.
+When the DType class is known, the correct dtype instance, e.g. the correct
+string length, still needs to be found.
 
-When the DType class is known, the correct dtype instance still needs to be found.
-This shall be implemented by leveraging two pieces of information:
+These two cases shall be implemented by leveraging two pieces of information:
 
 1. ``DType.type``: The current type attribute to indicate which Python scalar
    type is associated with the DType class (this is a *class* attribute that always
    exists for any datatype and is not limited to array coercion).
-2. The reverse lookup will remain hardcoded for the basic Python types initially.
-   Otherwise the ``type`` attribute will be used, and at least initially may
-   enforce deriving the scalar from a NumPy-provided scalar base class.
-   This method may be expanded later (see alternatives).
-3. ``__discover_descr_from_pyobject__(cls, obj) -> dtype``: A classmethod that
+2. ``__discover_descr_from_pyobject__(cls, obj) -> dtype``: A classmethod that
    returns the correct descriptor given the input object.
    *Note that only parametric DTypes have to implement this*, most datatypes
    can simply use a default (singleton) dtype instance which is found only
@@ -1046,14 +1043,14 @@ subclass.
     they can provide the current value based promotion functionality provided
     by ``np.result_type(python_integer, array)`` [1]_.
 
-To allow for a DType to accept specific inputs as known scalars, we will
-initially use a ``known_scalar_type`` method. This allows discovery of a
-``vector`` as a scalar (element) instead of a sequence (for the command
-``np.array(vector, dtype=VectorDType)``) even when ``vector`` is itself a
+To allow for a DType to accept inputs as scalars that are not basic Python
+types or instances of ``DType.type``, we use ``known_scalar_type`` method.
+This can allow discovery of a ``vector`` as a scalar (element) instead of a sequence
+(for the command ``np.array(vector, dtype=VectorDType)``) even when ``vector`` is itself a
 sequence or even an array subclass. This will *not* be public API initially,
 but may be made public at a later time.
 
-This will work similar to the following pseudocode::
+The implementation to find the correct dtype will work similar to the following pseudocode::
 
     def find_dtype(array_like):
         common_dtype = None
@@ -1067,11 +1064,10 @@ This will work similar to the following pseudocode::
             else:
                 common_dtype = np.promote_types(common_dtype, dtype)
 
-In practice, we have to find out whether an element is actually a sequence.
-This means that instead of using the ``object`` dtype directly, we have to
-check whether or not it is a sequence.
-
-The full algorithm (without user provided dtype) thus looks more like::
+In practice, the input to ``np.array()`` is a mix of sequences and array-like
+objects, so that deciding what is an element requires to check whether it
+is a sequence.
+The full algorithm (without user provided dtypes) thus looks more like::
 
     def find_dtype_recursive(array_like, dtype=None):
         """
@@ -1090,65 +1086,74 @@ The full algorithm (without user provided dtype) thus looks more like::
         elif DType is None:
             DType = np.dtype[object]
 
-        # Same as above
+        # dtype discovery and promotion as in `find_dtype` above
 
 If the user provides ``DType``, then this DType will be tried first, and the
 ``dtype`` may need to be cast before the promotion is performed.
 
-**Limitations:** The above issue 3. is currently (sometimes) supported by
-NumPy so that the values of an included array are inspected. Support in those
-cases may be kept for compatibility, however, it will not be exposed to user
-datatypes. This means that if e.g. an array with a parametric string dtype is
-coerced above (or cast) to an array of a fixed length string dtype (with
-unknown length), this will result in an error. Such a conversion will require
-passing the correct DType (fixed length of the string) or providing a utility
-function to the user.
+**Limitations:** The motivational point 3. of a nested array
+``np.array([np.array(None, dtype=object)], dtype=np.String)`` is currently
+(sometimes) supported by inspecting all elements of the nested array.
+User DTypes will implicitly handle these correctly if the nested array
+is of ``object`` dtype.
+In some other cases NumPy will retain backward compatibility for existing
+functionality only.
+NumPy uses such functionality to allow code such as::
+
+    >>> np.array([np.array(["2020-05-05"], dtype="S")], dtype=np.datetime64)
+    array([['2020-05-05']], dtype='datetime64[D]')
+
+which discovers the datetime unit ``D`` (days).
+This possibility will not be accessible to user DTypes without an
+intermediate cast to ``object`` or a custom function.
 
 The use of a global type map means that an error or warning has to be given if
 two DTypes wish to map to the same Python type. In most cases user DTypes
 should only be implemented for types defined within the same library to avoid
 the potential for conflicts. It will be the DType implementor's responsibility
-to be careful about this and use the flag to disable registration when in
-doubt.
+to be careful about this and use avoid registration when in doubt.
 
-**Alternatives:** The above proposes to add a global mapping, however, initially limiting it
+**Alternatives:** The above proposes a global mapping, however, initially limiting it
 to types deriving from a NumPy subclass (and a fixed set of Python types).
 This could be relaxed in the future.
 Alternatively, we could rely on the scalar belonging to the user dtype to
 implement ``scalar.__associated_array_dtype__`` or similar.
+Initially, the exact implementation shall be *undefined*, if scalars have
+to derive from a NumPy scalar, they will also have the
+``__associated_array_dtype__`` attribute. At this time, a future update may
+use this instead of a global mapping. However, it makes NumPy a hard
+dependency for the scalar class and may behave differently for subclasses.
 
-Initially, the exact implementation shall be *undefined*, if scalars will have
-to derive from a NumPy scalar, they will also have a
-``.__associated_array_dtype__`` attribute. At this time, a future update may
-to use this instead of a global mapping, however, it makes NumPy a hard
-dependency for the scalar class.
+An first, alternative, suggestion was to use a two-pass approach, first
+finding only the correct ``DType`` and only then discovering the parametric
+``dtype`` instance.
+This was rejected due creating unnecessary added complexity.
+The main advantage of this method is that it would have allowed to allow value
+based promotion in universal functions allowing::
 
-An initial alternative suggestion was to use a two-pass approach instead. The
-first pass would only find the correct DType class, and the second pass would
-then find correct dtype instance (the second pass is often not necessary). The
-advantage of this is that the DType class information is vital for universal
-functions to decide which loop to execute. The first pass would provide the
-full information necessary for value-based casting currently implemented for
-scalars, giving even the possibility of expanding it to e.g. list inputs
-``np.add(np.array([8], dtype="uint8"), [4])`` giving a ``uint8`` result. This
-is mainly related to the question to how the common dtype is found above. It
-seems unlikely that this is useful, and similar to a global, could be added
-later if deemed necessary.
+    np.add(np.array([8], dtype="uint8"), [4])
 
-**Further Issues and Discussion:** While it is possible to create e.g. a DType
+to return a ``uint8`` result (instead of ``int16``), which currently happens for::
+
+    np.add(np.array([8], dtype="uint8"), 4)
+
+(note the list ``[4]`` instead of scalar ``4``).
+
+**Further Issues and Discussion:** It is possible to create e.g. a DType
 such as Categorical, array, or vector which can only be used if `dtype=DType`
-is provided, if this is necessary these will not roundtrip correctly when
+is provided. Such DTypes can not not roundtrip correctly when
 converted back and forth::
 
     np.array(np.array(1, dtype=Categorical)[()])
 
-requires to pass the original ``dtype=Categorical`` or returns an array with
-dtype ``object``. While a general limitation, the round-tripping shall always
-be possible if ``dtype=old_dtype`` is provided.
+and require to pass the original ``dtype=Categorical`` or returns an array with
+dtype ``object``.
+This is a general limitation, and round-tripping shall always be possible if
+``dtype=`` is passed.
 
 **Example:** The current datetime DType requires a
 ``__discover_descr_from_pyobject__`` which returns the correct unit for string
-inputs.  This allows it to support the current::
+inputs.  This allows it to support::
 
     np.array(["2020-01-02", "2020-01-02 11:24"], dtype="M8")
 
