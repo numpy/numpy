@@ -540,6 +540,7 @@ def _concatenate_shapes(shapes, axis):
     """Given array shapes, return the resulting shape and slices prefixes.
 
     These help in nested concatenation.
+    
     Returns
     -------
     shape: tuple of int
