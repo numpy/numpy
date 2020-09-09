@@ -429,8 +429,6 @@ We review here the operations related to casting arrays:
 
 We show how casting arrays with ``arr.astype(new_dtype)`` will be implemented.
 
-----
-
 `Common DType` operations
 ==============================================================================
 
@@ -576,7 +574,7 @@ would return ``HighPrecisionDatetime``, and the below casting may need to
 decide how to handle the datetime unit.
 
 
-Casting
+The cast operation
 ==============================================================================
 
 Perhaps the most complex and interesting DType operation is casting. Casting
@@ -1336,8 +1334,6 @@ to pass in e.g. integer flags using a void pointer inside this structure.
 A downside of this is that compilers cannot warn about function pointer
 incompatibilities. There is currently no proposed solution.
 
-----
-
 Issues
 ==============================================================================
 
@@ -1391,7 +1387,7 @@ can be changed later. Among them:
 
 
 ******************************************************************************
-Discussion
+Discussion and alternatives
 ******************************************************************************
 
 The space of possible implementations is large, so there have been many
