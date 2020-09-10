@@ -247,7 +247,7 @@ else:
             except KeyError:
                 pass
             else:
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
                 def _expired(*args, **kwds):
                     raise RuntimeError(msg)
