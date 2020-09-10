@@ -49,7 +49,7 @@ if HAVE_PROTOCOL:
     _NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
     _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
 
-    class _BoolArithmetic(Protocol[_GenericType_co]):
+    class _BoolOp(Protocol[_GenericType_co]):
         @overload
         def __call__(self, __other: _BoolLike) -> _GenericType_co: ...
         @overload  # platform dependent
@@ -92,7 +92,7 @@ if HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _UnsignedIntArithmetic(Protocol):
+    class _UnsignedIntOp(Protocol):
         @overload
         def __call__(self, __other: Union[bool, unsignedinteger]) -> unsignedinteger: ...
         @overload
@@ -102,7 +102,7 @@ if HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _SignedIntArithmetic(Protocol):
+    class _SignedIntOp(Protocol):
         @overload
         def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
         @overload
@@ -110,26 +110,26 @@ if HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _FloatArithmetic(Protocol):
+    class _FloatOp(Protocol):
         @overload
         def __call__(self, __other: _FloatLike) -> floating: ...
         @overload
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _ComplexArithmetic(Protocol):
+    class _ComplexOp(Protocol):
         def __call__(self, __other: _ComplexLike) -> complexfloating[floating]: ...
 
-    class _NumberArithmetic(Protocol):
+    class _NumberOp(Protocol):
         def __call__(self, __other: _NumberLike) -> number: ...
 
 else:
-    _BoolArithmetic = Any
+    _BoolOp = Any
     _BoolSub = Any
     _BoolTrueDiv = Any
     _TD64Div = Any
     _IntTrueDiv = Any
-    _UnsignedIntArithmetic = Any
-    _SignedIntArithmetic = Any
-    _FloatArithmetic = Any
-    _ComplexArithmetic = Any
-    _NumberArithmetic = Any
+    _UnsignedIntOp = Any
+    _SignedIntOp = Any
+    _FloatOp = Any
+    _ComplexOp = Any
+    _NumberOp = Any

@@ -6,16 +6,16 @@ from abc import abstractmethod
 from numpy.core._internal import _ctypes
 from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
 from numpy.typing._callable import (
-    _BoolArithmetic,
+    _BoolOp,
     _BoolSub,
     _BoolTrueDiv,
     _TD64Div,
     _IntTrueDiv,
-    _UnsignedIntArithmetic,
-    _SignedIntArithmetic,
-    _FloatArithmetic,
-    _ComplexArithmetic,
-    _NumberArithmetic,
+    _UnsignedIntOp,
+    _SignedIntOp,
+    _FloatOp,
+    _ComplexOp,
+    _NumberOp,
 )
 
 from typing import (
@@ -570,18 +570,18 @@ class number(generic):  # type: ignore
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
     # Ensure that objects annotated as `number` support arithmetic operations
-    __add__: _NumberArithmetic
-    __radd__: _NumberArithmetic
-    __sub__: _NumberArithmetic
-    __rsub__: _NumberArithmetic
-    __mul__: _NumberArithmetic
-    __rmul__: _NumberArithmetic
-    __floordiv__: _NumberArithmetic
-    __rfloordiv__: _NumberArithmetic
-    __pow__: _NumberArithmetic
-    __rpow__: _NumberArithmetic
-    __truediv__: _NumberArithmetic
-    __rtruediv__: _NumberArithmetic
+    __add__: _NumberOp
+    __radd__: _NumberOp
+    __sub__: _NumberOp
+    __rsub__: _NumberOp
+    __mul__: _NumberOp
+    __rmul__: _NumberOp
+    __floordiv__: _NumberOp
+    __rfloordiv__: _NumberOp
+    __pow__: _NumberOp
+    __rpow__: _NumberOp
+    __truediv__: _NumberOp
+    __rtruediv__: _NumberOp
 
 class bool_(generic):
     def __init__(self, __value: object = ...) -> None: ...
@@ -589,16 +589,16 @@ class bool_(generic):
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
-    __add__: _BoolArithmetic[bool_]
-    __radd__: _BoolArithmetic[bool_]
+    __add__: _BoolOp[bool_]
+    __radd__: _BoolOp[bool_]
     __sub__: _BoolSub
     __rsub__: _BoolSub
-    __mul__: _BoolArithmetic[bool_]
-    __rmul__: _BoolArithmetic[bool_]
-    __floordiv__: _BoolArithmetic[int8]
-    __rfloordiv__: _BoolArithmetic[int8]
-    __pow__: _BoolArithmetic[int8]
-    __rpow__: _BoolArithmetic[int8]
+    __mul__: _BoolOp[bool_]
+    __rmul__: _BoolOp[bool_]
+    __floordiv__: _BoolOp[int8]
+    __rfloordiv__: _BoolOp[int8]
+    __pow__: _BoolOp[int8]
+    __rpow__: _BoolOp[int8]
     __truediv__: _BoolTrueDiv
     __rtruediv__: _BoolTrueDiv
 
@@ -648,16 +648,16 @@ class integer(number):  # type: ignore
     __rtruediv__: _IntTrueDiv
 
 class signedinteger(integer):  # type: ignore
-    __add__: _SignedIntArithmetic
-    __radd__: _SignedIntArithmetic
-    __sub__: _SignedIntArithmetic
-    __rsub__: _SignedIntArithmetic
-    __mul__: _SignedIntArithmetic
-    __rmul__: _SignedIntArithmetic
-    __floordiv__: _SignedIntArithmetic
-    __rfloordiv__: _SignedIntArithmetic
-    __pow__: _SignedIntArithmetic
-    __rpow__: _SignedIntArithmetic
+    __add__: _SignedIntOp
+    __radd__: _SignedIntOp
+    __sub__: _SignedIntOp
+    __rsub__: _SignedIntOp
+    __mul__: _SignedIntOp
+    __rmul__: _SignedIntOp
+    __floordiv__: _SignedIntOp
+    __rfloordiv__: _SignedIntOp
+    __pow__: _SignedIntOp
+    __rpow__: _SignedIntOp
 
 class int8(signedinteger):
     def __init__(self, __value: _IntValue = ...) -> None: ...
@@ -690,16 +690,16 @@ class timedelta64(generic):
     def __mod__(self, other: timedelta64) -> timedelta64: ...
 
 class unsignedinteger(integer):  # type: ignore
-    __add__: _UnsignedIntArithmetic
-    __radd__: _UnsignedIntArithmetic
-    __sub__: _UnsignedIntArithmetic
-    __rsub__: _UnsignedIntArithmetic
-    __mul__: _UnsignedIntArithmetic
-    __rmul__: _UnsignedIntArithmetic
-    __floordiv__: _UnsignedIntArithmetic
-    __rfloordiv__: _UnsignedIntArithmetic
-    __pow__: _UnsignedIntArithmetic
-    __rpow__: _UnsignedIntArithmetic
+    __add__: _UnsignedIntOp
+    __radd__: _UnsignedIntOp
+    __sub__: _UnsignedIntOp
+    __rsub__: _UnsignedIntOp
+    __mul__: _UnsignedIntOp
+    __rmul__: _UnsignedIntOp
+    __floordiv__: _UnsignedIntOp
+    __rfloordiv__: _UnsignedIntOp
+    __pow__: _UnsignedIntOp
+    __rpow__: _UnsignedIntOp
 
 class uint8(unsignedinteger):
     def __init__(self, __value: _IntValue = ...) -> None: ...
@@ -716,18 +716,18 @@ class uint64(unsignedinteger):
 class inexact(number): ...  # type: ignore
 
 class floating(inexact):  # type: ignore
-    __add__: _FloatArithmetic
-    __radd__: _FloatArithmetic
-    __sub__: _FloatArithmetic
-    __rsub__: _FloatArithmetic
-    __mul__: _FloatArithmetic
-    __rmul__: _FloatArithmetic
-    __truediv__: _FloatArithmetic
-    __rtruediv__: _FloatArithmetic
-    __floordiv__: _FloatArithmetic
-    __rfloordiv__: _FloatArithmetic
-    __pow__: _FloatArithmetic
-    __rpow__: _FloatArithmetic
+    __add__: _FloatOp
+    __radd__: _FloatOp
+    __sub__: _FloatOp
+    __rsub__: _FloatOp
+    __mul__: _FloatOp
+    __rmul__: _FloatOp
+    __truediv__: _FloatOp
+    __rtruediv__: _FloatOp
+    __floordiv__: _FloatOp
+    __rfloordiv__: _FloatOp
+    __pow__: _FloatOp
+    __rpow__: _FloatOp
 
 _FloatType = TypeVar('_FloatType', bound=floating)
 
@@ -746,18 +746,18 @@ class complexfloating(inexact, Generic[_FloatType]):  # type: ignore
     @property
     def imag(self) -> _FloatType: ...  # type: ignore[override]
     def __abs__(self) -> _FloatType: ...  # type: ignore[override]
-    __add__: _ComplexArithmetic
-    __radd__: _ComplexArithmetic
-    __sub__: _ComplexArithmetic
-    __rsub__: _ComplexArithmetic
-    __mul__: _ComplexArithmetic
-    __rmul__: _ComplexArithmetic
-    __truediv__: _ComplexArithmetic
-    __rtruediv__: _ComplexArithmetic
-    __floordiv__: _ComplexArithmetic
-    __rfloordiv__: _ComplexArithmetic
-    __pow__: _ComplexArithmetic
-    __rpow__: _ComplexArithmetic
+    __add__: _ComplexOp
+    __radd__: _ComplexOp
+    __sub__: _ComplexOp
+    __rsub__: _ComplexOp
+    __mul__: _ComplexOp
+    __rmul__: _ComplexOp
+    __truediv__: _ComplexOp
+    __rtruediv__: _ComplexOp
+    __floordiv__: _ComplexOp
+    __rfloordiv__: _ComplexOp
+    __pow__: _ComplexOp
+    __rpow__: _ComplexOp
 
 class complex64(complexfloating[float32]):
     def __init__(self, __value: _ComplexValue = ...) -> None: ...
