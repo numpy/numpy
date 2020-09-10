@@ -13,6 +13,7 @@
 #include "alloc.h"
 #include "ctors.h"
 #include "common.h"
+
 /*
  * Returns -1 if the array is monotonic decreasing,
  * +1 if the array is monotonic increasing,
