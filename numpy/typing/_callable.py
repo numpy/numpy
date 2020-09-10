@@ -13,6 +13,7 @@ from typing import Union, TypeVar, overload, Any
 
 from numpy import (
     _BoolLike,
+    _IntLike,
     _FloatLike,
     _ComplexLike,
     _NumberLike,
@@ -73,15 +74,9 @@ if HAVE_PROTOCOL:
 
     class _BoolTrueDiv(Protocol):
         @overload
-        def __call__(self, __other: _BoolLike) -> float64: ...
-        @overload  # platform dependent
-        def __call__(self, __other: int) -> Union[float32, float64]: ...
-        @overload
-        def __call__(self, __other: float) -> float64: ...
+        def __call__(self, __other: Union[float, _IntLike, _BoolLike]) -> float64: ...
         @overload
         def __call__(self, __other: complex) -> complex128: ...
-        @overload
-        def __call__(self, __other: integer) -> floating: ...
         @overload
         def __call__(self, __other: _NumberType) -> _NumberType: ...
 
