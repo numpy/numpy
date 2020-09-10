@@ -82,13 +82,6 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 #define npyv_mul_f32 _mm_mul_ps
 #define npyv_mul_f64 _mm_mul_pd
 
-#ifdef NPY_HAVE_FMA3
-    #define npyv_muladd_f32 _mm_fmadd_ps
-    #define npyv_muladd_f64 _mm_fmadd_pd
-#else
-    #define npyv_muladd_f32(a, b, c) npyv_add_f32(npyv_mul_f32(a, b), c)
-    #define npyv_muladd_f64(a, b, c) npyv_add_f64(npyv_mul_f64(a, b), c)
-#endif
 // saturated
 // TODO: after implment Packs intrins
 
@@ -113,6 +106,7 @@ NPY_FINLINE float npyv_sum_f32(__m128 a)
     return _mm_cvtss_f32(t4); 
 #endif
 }
+
 NPY_FINLINE double npyv_sum_f64(__m128d a)
 {
 #ifdef NPY_HAVE_SSE3

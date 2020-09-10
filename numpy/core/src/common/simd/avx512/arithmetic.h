@@ -103,9 +103,6 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_mul_f32 _mm512_mul_ps
 #define npyv_mul_f64 _mm512_mul_pd
 
-#define npyv_muladd_f32 _mm512_fmadd_ps
-#define npyv_muladd_f64 _mm512_fmadd_pd
-
 // saturated
 // TODO: after implment Packs intrins
 
