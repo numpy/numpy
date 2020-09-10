@@ -3876,7 +3876,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     }
 
     if (PyArray_TYPE(char_array) == NPY_STRING) {
-        method = PyObject_GetAttr((PyObject *)&PyString_Type, method_name);
+        method = PyObject_GetAttr((PyObject *)&PyBytes_Type, method_name);
     }
     else if (PyArray_TYPE(char_array) == NPY_UNICODE) {
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
@@ -4337,7 +4337,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     if (PyType_Ready(&PyComplex_Type) < 0) {
         return -1;
     }
-    if (PyType_Ready(&PyString_Type) < 0) {
+    if (PyType_Ready(&PyBytes_Type) < 0) {
         return -1;
     }
     if (PyType_Ready(&PyUnicode_Type) < 0) {
