@@ -1513,7 +1513,7 @@ pack_inner(const char *inptr,
         #include "compiled_base.dispatch.h"
     #endif
     NPY_CPU_DISPATCH_CALL(simd_compiled_base_pack_inner,
-    (inptr, element_size, n_in, in_stride, outptr, n_out, out_stride, order))
+    (inptr, element_size, n_in, in_stride, outptr, n_out, out_stride, order));
 }
 
 static PyObject *
