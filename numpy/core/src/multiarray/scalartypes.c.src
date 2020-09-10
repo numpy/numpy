@@ -149,7 +149,7 @@ static PyObject *
 gentype_add(PyObject *m1, PyObject* m2)
 {
     /* special case str.__radd__, which should not call array_add */
-    if (PyString_Check(m1) || PyUnicode_Check(m1)) {
+    if (PyBytes_Check(m1) || PyUnicode_Check(m1)) {
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
