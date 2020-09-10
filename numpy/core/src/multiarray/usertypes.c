@@ -268,11 +268,11 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
             return -1;
         }
     }
-    key = PyInt_FromLong(totype);
+    key = PyLong_FromLong(totype);
     if (PyErr_Occurred()) {
         return -1;
     }
-    cobj = NpyCapsule_FromVoidPtr((void *)castfunc, NULL);
+    cobj = PyCapsule_New((void *)castfunc, NULL, NULL);
     if (cobj == NULL) {
         Py_DECREF(key);
         return -1;

@@ -94,34 +94,15 @@ def setup(app):
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
-if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
-                       "via git submodule init && git submodule update")
+html_theme = 'pydata_sphinx_theme'
 
-html_theme = 'scipy'
-html_theme_path = [themedir]
+html_logo = '_static/numpylogo.svg'
 
-if 'scipyorg' in tags:
-    # Build for the scipy.org website
-    html_theme_options = {
-        "edit_link": True,
-        "sidebar": "right",
-        "scipy_org_logo": True,
-        "rootlinks": [("https://scipy.org/", "Scipy.org"),
-                      ("https://docs.scipy.org/", "Docs")]
-    }
-else:
-    # Default build
-    html_theme_options = {
-        "edit_link": False,
-        "sidebar": "left",
-        "scipy_org_logo": False,
-        "rootlinks": [("https://numpy.org/", "NumPy.org"),
-                      ("https://numpy.org/doc", "Docs"),
-                     ]
-    }
-    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
+html_theme_options = {
+  "github_url": "https://github.com/numpy/numpy",
+  "twitter_url": "https://twitter.com/numpy_team",
+}
+
 
 html_additional_pages = {
     'index': 'indexcontent.html',

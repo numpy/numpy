@@ -1759,8 +1759,8 @@ typedef struct {
 } npy_stride_sort_item;
 
 /************************************************************
- * This is the form of the struct that's returned pointed by the
- * PyCObject attribute of an array __array_struct__. See
+ * This is the form of the struct that's stored in the
+ * PyCapsule returned by an array's __array_struct__ attribute. See
  * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
  * documentation.
  ************************************************************/

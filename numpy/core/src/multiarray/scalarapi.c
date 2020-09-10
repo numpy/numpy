@@ -138,7 +138,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
-            return (void *)PyString_AS_STRING(scalar);
+            return (void *)PyBytes_AS_STRING(scalar);
         }
         if (_CHK(Unicode)) {
             /* Treat this the same as the NPY_UNICODE base class */
@@ -380,7 +380,7 @@ PyArray_ScalarFromObject(PyObject *object)
     }
     /*
      * Booleans in Python are implemented as a subclass of integers,
-     * so PyBool_Check must be called before PyInt_Check.
+     * so PyBool_Check must be called before PyLong_Check.
      */
     if (PyBool_Check(object)) {
         if (object == Py_True) {
@@ -395,7 +395,7 @@ PyArray_ScalarFromObject(PyObject *object)
         if (ret == NULL) {
             return NULL;
         }
-        PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
+        PyArrayScalar_VAL(ret, Long) = PyLong_AsLong(object);
     }
     else if (PyFloat_Check(object)) {
         ret = PyArrayScalar_New(Double);
@@ -755,8 +755,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     }
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
-            destptr = PyString_AS_STRING(obj);
-            ((PyStringObject *)obj)->ob_shash = -1;
+            destptr = PyBytes_AS_STRING(obj);
+            ((PyBytesObject *)obj)->ob_shash = -1;
             memcpy(destptr, data, itemsize);
             return obj;
         }

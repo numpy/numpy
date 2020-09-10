@@ -447,7 +447,7 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
     }
     memcpy(&retbuf[j], echars, strlen(echars));
 
-    retval = PyUString_FromStringAndSize(retbuf, slen);
+    retval = PyUnicode_FromStringAndSize(retbuf, slen);
     PyMem_Free(retbuf);
 
     return retval;
@@ -518,21 +518,21 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUString_FromString("numpy.datetime64('");
+        ret = PyUnicode_FromString("numpy.datetime64('");
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(iso));
+                PyUnicode_FromString(iso));
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("')"));
+                PyUnicode_FromString("')"));
     }
     else {
-        ret = PyUString_FromString("numpy.datetime64('");
+        ret = PyUnicode_FromString("numpy.datetime64('");
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(iso));
+                PyUnicode_FromString(iso));
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("','"));
+                PyUnicode_FromString("','"));
         ret = append_metastr_to_string(&scal->obmeta, 1, ret);
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("')"));
+                PyUnicode_FromString("')"));
     }
 
     return ret;
@@ -554,31 +554,31 @@ timedeltatype_repr(PyObject *self)
 
     /* The value */
     if (scal->obval == NPY_DATETIME_NAT) {
-        ret = PyUString_FromString("numpy.timedelta64('NaT'");
+        ret = PyUnicode_FromString("numpy.timedelta64('NaT'");
     }
     else {
         /*
          * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
 #if defined(HAVE_LONG_LONG)
-        ret = PyUString_FromFormat("numpy.timedelta64(%lld",
+        ret = PyUnicode_FromFormat("numpy.timedelta64(%lld",
                                             (long long)scal->obval);
 #else
-        ret = PyUString_FromFormat("numpy.timedelta64(%ld",
+        ret = PyUnicode_FromFormat("numpy.timedelta64(%ld",
                                             (long)scal->obval);
 #endif
     }
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(")"));
+                PyUnicode_FromString(")"));
     }
     else {
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(",'"));
+                PyUnicode_FromString(",'"));
         ret = append_metastr_to_string(&scal->obmeta, 1, ret);
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("')"));
+                PyUnicode_FromString("')"));
     }
 
     return ret;
@@ -611,7 +611,7 @@ datetimetype_str(PyObject *self)
         return NULL;
     }
 
-    return PyUString_FromString(iso);
+    return PyUnicode_FromString(iso);
 }
 
 static char *_datetime_verbose_strings[NPY_DATETIME_NUMUNITS] = {
@@ -657,21 +657,21 @@ timedeltatype_str(PyObject *self)
     }
 
     if (scal->obval == NPY_DATETIME_NAT) {
-        ret = PyUString_FromString("NaT");
+        ret = PyUnicode_FromString("NaT");
     }
     else {
         /*
          * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
 #if defined(HAVE_LONG_LONG)
-        ret = PyUString_FromFormat("%lld ",
+        ret = PyUnicode_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
 #else
-        ret = PyUString_FromFormat("%ld ",
+        ret = PyUnicode_FromFormat("%ld ",
                                 (long)(scal->obval * scal->obmeta.num));
 #endif
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(basestr));
+                PyUnicode_FromString(basestr));
     }
 
     return ret;
@@ -795,7 +795,7 @@ legacy_@name@_format@kind@(@type@ val)
         PyOS_snprintf(buf, sizeof(buf), "(%s%sj)", re, im);
     }
 
-    return PyUString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 #undef _FMT1
@@ -836,7 +836,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
         strcpy(&buf[cnt],".0");
     }
 
-    return PyUString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 #undef _FMT1
@@ -904,7 +904,7 @@ c@name@type_@kind@(PyObject *self)
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&istr, PyUString_FromString("j"));
+        PyUString_ConcatAndDel(&istr, PyUnicode_FromString("j"));
         return istr;
     }
 
@@ -915,13 +915,13 @@ c@name@type_@kind@(PyObject *self)
         }
     }
     else if (npy_isnan(val.real)) {
-        rstr = PyUString_FromString("nan");
+        rstr = PyUnicode_FromString("nan");
     }
     else if (val.real > 0){
-        rstr = PyUString_FromString("inf");
+        rstr = PyUnicode_FromString("inf");
     }
     else {
-        rstr = PyUString_FromString("-inf");
+        rstr = PyUnicode_FromString("-inf");
     }
 
     if (npy_isfinite(val.imag)) {
@@ -931,19 +931,19 @@ c@name@type_@kind@(PyObject *self)
         }
     }
     else if (npy_isnan(val.imag)) {
-        istr = PyUString_FromString("+nan");
+        istr = PyUnicode_FromString("+nan");
     }
     else if (val.imag > 0){
-        istr = PyUString_FromString("+inf");
+        istr = PyUnicode_FromString("+inf");
     }
     else {
-        istr = PyUString_FromString("-inf");
+        istr = PyUnicode_FromString("-inf");
     }
 
-    ret = PyUString_FromString("(");
+    ret = PyUnicode_FromString("(");
     PyUString_ConcatAndDel(&ret, rstr);
     PyUString_ConcatAndDel(&ret, istr);
-    PyUString_ConcatAndDel(&ret, PyUString_FromString("j)"));
+    PyUString_ConcatAndDel(&ret, PyUnicode_FromString("j)"));
     return ret;
 }
 
@@ -1147,12 +1147,16 @@ gentype_sizeof(PyObject *self)
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {
-    PyArrayInterface *arrif;
-    PyObject *context;
-
-    arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
-    context = (PyObject *)PyCapsule_GetContext(ptr);
-    Py_DECREF(context);
+    PyArrayInterface *arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
+    if (arrif == NULL) {
+        PyErr_WriteUnraisable(ptr);
+        return;
+    }
+    PyObject *context = (PyObject *)PyCapsule_GetContext(ptr);
+    if (context == NULL && PyErr_Occurred()) {
+        PyErr_WriteUnraisable(ptr);
+    }
+    Py_XDECREF(context);
     Py_XDECREF(arrif->descr);
     PyArray_free(arrif->shape);
     PyArray_free(arrif);

@@ -21,7 +21,6 @@ import builtins
 from decimal import Decimal
 
 import numpy as np
-from numpy.compat import strchar
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
@@ -2031,7 +2030,7 @@ class TestMethods:
             strtype = '>i2'
         else:
             strtype = '<i2'
-        mydtype = [('name', strchar + '5'), ('col2', strtype)]
+        mydtype = [('name', 'U5'), ('col2', strtype)]
         r = np.array([('a', 1), ('b', 255), ('c', 3), ('d', 258)],
                      dtype=mydtype)
         r.sort(order='col2')
@@ -3866,13 +3865,6 @@ class TestPickling:
             # error about the pickle5 backport when trying to use protocol=5
             # without the pickle5 package
             with pytest.raises(ImportError):
-                array.__reduce_ex__(5)
-
-        elif sys.version_info[:2] < (3, 6):
-            # when calling __reduce_ex__ explicitly with protocol=5 on python
-            # raise a ValueError saying that protocol 5 is not available for
-            # this python version
-            with pytest.raises(ValueError):
                 array.__reduce_ex__(5)
 
     def test_record_array_with_object_dtype(self):
@@ -7435,6 +7427,18 @@ def test_array_interface_offset():
 
     arr1 = np.asarray(DummyArray())
     assert_equal(arr1, arr[1:])
+
+def test_array_interface_unicode_typestr():
+    arr = np.array([1, 2, 3], dtype='int32')
+    interface = dict(arr.__array_interface__)
+    interface['typestr'] = '\N{check mark}'
+
+    class DummyArray:
+        __array_interface__ = interface
+
+    # should not be UnicodeEncodeError
+    with pytest.raises(TypeError):
+        np.asarray(DummyArray())
 
 def test_flat_element_deletion():
     it = np.ones(3).flat

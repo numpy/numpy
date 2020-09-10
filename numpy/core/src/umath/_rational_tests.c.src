@@ -406,8 +406,9 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             Py_INCREF(x[0]);
             return x[0];
         }
-        else if (PyString_Check(x[0])) {
-            const char* s = PyString_AS_STRING(x[0]);
+        // TODO: allow construction from unicode strings
+        else if (PyBytes_Check(x[0])) {
+            const char* s = PyBytes_AS_STRING(x[0]);
             rational x;
             if (scan_rational(&s,&x)) {
                 const char* p;
@@ -526,11 +527,11 @@ static PyObject*
 pyrational_repr(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     if (d(x)!=1) {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "rational(%ld,%ld)",(long)x.n,(long)d(x));
     }
     else {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "rational(%ld)",(long)x.n);
     }
 }
@@ -539,11 +540,11 @@ static PyObject*
 pyrational_str(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     if (d(x)!=1) {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "%ld/%ld",(long)x.n,(long)d(x));
     }
     else {
-        return PyUString_FromFormat(
+        return PyUnicode_FromFormat(
                 "%ld",(long)x.n);
     }
 }
@@ -1126,7 +1127,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     if (PyErr_Occurred()) {
         goto fail;
     }
-    numpy_str = PyUString_FromString("numpy");
+    numpy_str = PyUnicode_FromString("numpy");
     if (!numpy_str) {
         goto fail;
     }

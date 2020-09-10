@@ -1,0 +1,8 @@
+Same kind casting in concatenate with ``axis=None``
+---------------------------------------------------
+When `~numpy.concatenate` is called with `axis=None`,
+the flattened arrays were cast with ``unsafe``. Any other axis
+choice uses "same kind". That different default
+has been deprecated and "same kind" casting will be used
+instead. The new ``casting`` keyword argument
+can be used to retain the old behaviour.

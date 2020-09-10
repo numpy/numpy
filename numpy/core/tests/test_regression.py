@@ -2514,3 +2514,13 @@ class TestRegression:
         b[...] = 1
         assert b.strides[0] > int32_max * b.dtype.itemsize
         assert np.dot(b, b) == 2.0
+
+    def test_frompyfunc_name(self):
+        # name conversion was failing for python 3 strings
+        # resulting in the default '?' name. Also test utf-8
+        # encoding using non-ascii name.
+        def cassé(x):
+            return x
+
+        f = np.frompyfunc(cassé, 1, 1)
+        assert str(f) == "<ufunc 'cassé (vectorized)'>"

@@ -125,7 +125,7 @@ same shape, or a scalar and an array, or even two arrays of with
 different shapes, provided that the smaller array is "expandable" to
 the shape of the larger in such a way that the resulting broadcast is
 unambiguous. For detailed "rules" of broadcasting see
-`numpy.doc.broadcasting`.
+`basics.broadcasting`.
 
 Who Else Uses NumPy?
 --------------------

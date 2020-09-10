@@ -10,6 +10,10 @@ array__get_implementing_args(
     PyObject *NPY_UNUSED(dummy), PyObject *positional_args);
 
 NPY_NO_EXPORT PyObject *
+array_implement_c_array_function_creation(
+    const char *function_name, PyObject *args, PyObject *kwargs);
+
+NPY_NO_EXPORT PyObject *
 array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
                            PyObject *kwargs);
 
