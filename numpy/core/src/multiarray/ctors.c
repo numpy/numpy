@@ -300,12 +300,12 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
     }
     if (tuple) {
         for (i = 0; i < numnew; i++) {
-            mydim[i] = (npy_intp) PyInt_AsLong(
+            mydim[i] = (npy_intp) PyLong_AsLong(
                     PyTuple_GET_ITEM(old->subarray->shape, i));
         }
     }
     else {
-        mydim[0] = (npy_intp) PyInt_AsLong(old->subarray->shape);
+        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
     }
 
     if (newstrides) {
@@ -868,11 +868,14 @@ PyArray_NewFromDescr_int(
 
         func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
         if (func && func != Py_None) {
-            if (NpyCapsule_Check(func)) {
+            if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
-                cfunc = NpyCapsule_AsVoidPtr(func);
+                cfunc = PyCapsule_GetPointer(func, NULL);
                 Py_DECREF(func);
+                if (cfunc == NULL) {
+                    goto fail;
+                }
                 if (cfunc((PyArrayObject *)fa, obj) < 0) {
                     goto fail;
                 }
@@ -1575,6 +1578,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     return obj;
 }
 
+
 /*NUMPY_API
  * steals reference to newtype --- acc. NULL
  */
@@ -1733,10 +1737,8 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromStructInterface(PyObject *input)
 {
     PyArray_Descr *thetype = NULL;
-    char buf[40];
     PyArrayInterface *inter;
     PyObject *attr;
-    PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
     attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
@@ -1747,7 +1749,7 @@ PyArray_FromStructInterface(PyObject *input)
             return Py_NotImplemented;
         }
     }
-    if (!NpyCapsule_Check(attr)) {
+    if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
             /*
              * If the input is a class `attr` should be a property-like object.
@@ -1759,7 +1761,10 @@ PyArray_FromStructInterface(PyObject *input)
         }
         goto fail;
     }
-    inter = NpyCapsule_AsVoidPtr(attr);
+    inter = PyCapsule_GetPointer(attr, NULL);
+    if (inter == NULL) {
+        goto fail;
+    }
     if (inter->two != 2) {
         goto fail;
     }
@@ -1776,20 +1781,26 @@ PyArray_FromStructInterface(PyObject *input)
     }
 
     if (thetype == NULL) {
-        PyOS_snprintf(buf, sizeof(buf),
-                "%c%c%d", endian, inter->typekind, inter->itemsize);
-        if (!(thetype=_array_typedescr_fromstr(buf))) {
+        PyObject *type_str = PyUnicode_FromFormat(
+            "%c%c%d", endian, inter->typekind, inter->itemsize);
+        if (type_str == NULL) {
+            Py_DECREF(attr);
+            return NULL;
+        }
+        int ok = PyArray_DescrConverter(type_str, &thetype);
+        Py_DECREF(type_str);
+        if (ok != NPY_SUCCEED) {
             Py_DECREF(attr);
             return NULL;
         }
     }
 
-    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+    PyObject *ret = PyArray_NewFromDescrAndBase(
             &PyArray_Type, thetype,
             inter->nd, inter->shape, inter->strides, inter->data,
             inter->flags, NULL, input);
     Py_DECREF(attr);
-    return (PyObject *)ret;
+    return ret;
 
  fail:
     PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
@@ -1803,40 +1814,20 @@ PyArray_FromStructInterface(PyObject *input)
  */
 NPY_NO_EXPORT int
 _is_default_descr(PyObject *descr, PyObject *typestr) {
-    PyObject *tuple, *name, *typestr2;
-    PyObject *tmp = NULL;
-    int ret = 0;
-
     if (!PyList_Check(descr) || PyList_GET_SIZE(descr) != 1) {
         return 0;
     }
-    tuple = PyList_GET_ITEM(descr, 0);
+    PyObject *tuple = PyList_GET_ITEM(descr, 0);
     if (!(PyTuple_Check(tuple) && PyTuple_GET_SIZE(tuple) == 2)) {
         return 0;
     }
-    name = PyTuple_GET_ITEM(tuple, 0);
+    PyObject *name = PyTuple_GET_ITEM(tuple, 0);
     if (!(PyUnicode_Check(name) && PyUnicode_GetLength(name) == 0)) {
         return 0;
     }
-    typestr2 = PyTuple_GET_ITEM(tuple, 1);
-    /* Allow unicode type strings */
-    if (PyUnicode_Check(typestr2)) {
-        tmp = PyUnicode_AsASCIIString(typestr2);
-        if (tmp == NULL) {
-            return 0;
-        }
-        typestr2 = tmp;
-    }
-    if (PyBytes_Check(typestr2) &&
-            PyObject_RichCompareBool(typestr, typestr2, Py_EQ)) {
-        ret = 1;
-    }
-    Py_XDECREF(tmp);
-
-    return ret;
+    PyObject *typestr2 = PyTuple_GET_ITEM(tuple, 1);
+    return PyObject_RichCompareBool(typestr, typestr2, Py_EQ);
 }
-
-#define PyIntOrLong_Check(obj) (PyInt_Check(obj) || PyLong_Check(obj))
 
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
@@ -1849,7 +1840,7 @@ PyArray_FromInterface(PyObject *origin)
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
     Py_buffer view;
-    int res, i, n;
+    int i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
@@ -1889,26 +1880,15 @@ PyArray_FromInterface(PyObject *origin)
         return NULL;
     }
 
-    /* Allow unicode type strings */
-    if (PyUnicode_Check(attr)) {
-        PyObject *tmp = PyUnicode_AsASCIIString(attr);
-        if (tmp == NULL) {
-            goto fail;
-        }
-        attr = tmp;
-    }
-    else {
-        Py_INCREF(attr);
-    }
-
-    if (!PyBytes_Check(attr)) {
+    /* allow bytes for backwards compatibility */
+    if (!PyBytes_Check(attr) && !PyUnicode_Check(attr)) {
         PyErr_SetString(PyExc_TypeError,
                     "__array_interface__ typestr must be a string");
         goto fail;
     }
+
     /* Get dtype from type string */
-    dtype = _array_typedescr_fromstr(PyString_AS_STRING(attr));
-    if (dtype == NULL) {
+    if (PyArray_DescrConverter(attr, &dtype) != NPY_SUCCEED) {
         goto fail;
     }
 
@@ -1922,16 +1902,24 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
         PyArray_Descr *new_dtype = NULL;
+        if (descr != NULL) {
+            int is_default = _is_default_descr(descr, attr);
+            if (is_default < 0) {
+                goto fail;
+            }
+            if (!is_default) {
+                if (PyArray_DescrConverter2(descr, &new_dtype) != NPY_SUCCEED) {
+                    goto fail;
+                }
+                if (new_dtype != NULL) {
+                    Py_DECREF(dtype);
+                    dtype = new_dtype;
+                }
+            }
 
-        if (descr != NULL && !_is_default_descr(descr, attr) &&
-                PyArray_DescrConverter2(descr, &new_dtype) == NPY_SUCCEED &&
-                new_dtype != NULL) {
-            Py_DECREF(dtype);
-            dtype = new_dtype;
         }
-    }
 
-    Py_DECREF(attr);  /* Pairs with the unicode handling above */
+    }
 
     /* Get shape tuple from interface specification */
     attr = _PyDict_GetItemStringWithError(iface, "shape");
@@ -1990,22 +1978,16 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
         dataptr = PyTuple_GET_ITEM(attr, 0);
-        if (PyString_Check(dataptr)) {
-            res = sscanf(PyString_AsString(dataptr),
-                         "%p", (void **)&data);
-            if (res < 1) {
-                PyErr_SetString(PyExc_TypeError,
-                        "__array_interface__ data string cannot be converted");
+        if (PyLong_Check(dataptr)) {
+            data = PyLong_AsVoidPtr(dataptr);
+            if (data == NULL && PyErr_Occurred()) {
                 goto fail;
             }
-        }
-        else if (PyIntOrLong_Check(dataptr)) {
-            data = PyLong_AsVoidPtr(dataptr);
         }
         else {
             PyErr_SetString(PyExc_TypeError,
                     "first element of __array_interface__ data tuple "
-                    "must be integer or string.");
+                    "must be an integer.");
             goto fail;
         }
         if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
@@ -2265,7 +2247,10 @@ PyArray_EnsureAnyArray(PyObject *op)
     return PyArray_EnsureArray(op);
 }
 
-/* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
+/*
+ * Private implementation of PyArray_CopyAnyInto with an additional order
+ * parameter.
+ */
 NPY_NO_EXPORT int
 PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 {
@@ -2391,16 +2376,21 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     src_count = *src_countptr;
     dst_data = dst_dataptr[0];
     src_data = src_dataptr[0];
+    int res = 0;
     for(;;) {
         /* Transfer the biggest amount that fits both */
         count = (src_count < dst_count) ? src_count : dst_count;
-        stransfer(dst_data, dst_stride,
-                    src_data, src_stride,
-                    count, src_itemsize, transferdata);
+        if (stransfer(
+                dst_data, dst_stride, src_data, src_stride,
+                count, src_itemsize, transferdata) < 0) {
+            res = -1;
+            break;
+        }
 
         /* If we exhausted the dst block, refresh it */
         if (dst_count == count) {
-            if (!dst_iternext(dst_iter)) {
+            res = dst_iternext(dst_iter);
+            if (!res) {
                 break;
             }
             dst_count = *dst_countptr;
@@ -2413,7 +2403,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
         /* If we exhausted the src block, refresh it */
         if (src_count == count) {
-            if (!src_iternext(src_iter)) {
+            res = src_iternext(src_iter);
+            if (!res) {
                 break;
             }
             src_count = *src_countptr;
@@ -2430,8 +2421,11 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
-
-    return PyErr_Occurred() ? -1 : 0;
+    if (res > 0) {
+        /* The iteration stopped successfully, do not report an error */
+        return 0;
+    }
+    return res;
 }
 
 /*NUMPY_API
@@ -2741,7 +2735,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         return -1;
     }
 
-    zero = PyInt_FromLong(0);
+    zero = PyLong_FromLong(0);
     if (!zero) {
         Py_DECREF(*next);
         *next = NULL;
@@ -2886,14 +2880,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_INCREF(dtype);
     }
     if (!step || step == Py_None) {
-        step = PyInt_FromLong(1);
+        step = PyLong_FromLong(1);
     }
     else {
         Py_XINCREF(step);
     }
     if (!stop || stop == Py_None) {
         stop = start;
-        start = PyInt_FromLong(0);
+        start = PyLong_FromLong(0);
     }
     else {
         Py_INCREF(start);

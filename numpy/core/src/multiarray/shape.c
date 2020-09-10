@@ -133,7 +133,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
         /* Fill new memory with zeros */
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
-            PyObject *zero = PyInt_FromLong(0);
+            PyObject *zero = PyLong_FromLong(0);
             char *optr;
             optr = PyArray_BYTES(self) + oldnbytes;
             npy_intp n_new = newsize - oldsize;
@@ -332,7 +332,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
 
         for (i = 0; i < nsize; i++) {
             Py_INCREF(zero);
-            NPY_COPY_PYOBJECT_PTR(optr, &zero);
+            memcpy(optr, &zero, sizeof(zero));
             optr += sizeof(zero);
         }
     }
@@ -458,7 +458,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
 static void
 raise_reshape_size_mismatch(PyArray_Dims *newshape, PyArrayObject *arr)
 {
-    PyObject *msg = PyUString_FromFormat("cannot reshape array of size %zd "
+    PyObject *msg = PyUnicode_FromFormat("cannot reshape array of size %zd "
                                          "into shape ", PyArray_SIZE(arr));
     PyObject *tmp = convert_shape_to_string(newshape->len, newshape->ptr, "");
 
@@ -997,10 +997,10 @@ build_shape_string(npy_intp n, npy_intp const *vals)
     }
 
     if (i == n) {
-        return PyUString_FromFormat("()");
+        return PyUnicode_FromFormat("()");
     }
     else {
-        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        ret = PyUnicode_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
         if (ret == NULL) {
             return NULL;
         }
@@ -1008,10 +1008,10 @@ build_shape_string(npy_intp n, npy_intp const *vals)
 
     for (; i < n; ++i) {
         if (vals[i] < 0) {
-            tmp = PyUString_FromString(",newaxis");
+            tmp = PyUnicode_FromString(",newaxis");
         }
         else {
-            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+            tmp = PyUnicode_FromFormat(",%" NPY_INTP_FMT, vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
@@ -1024,7 +1024,7 @@ build_shape_string(npy_intp n, npy_intp const *vals)
         }
     }
 
-    tmp = PyUString_FromFormat(")");
+    tmp = PyUnicode_FromFormat(")");
     PyUString_ConcatAndDel(&ret, tmp);
     return ret;
 }

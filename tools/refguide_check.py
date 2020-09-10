@@ -71,7 +71,6 @@ BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
     'core',
-    'doc.structured_arrays',
     'f2py',
     'linalg',
     'lib',
@@ -122,6 +121,15 @@ RST_SKIPLIST = [
     'c-info.python-as-glue.rst',
     'f2py.getting-started.rst',
     'arrays.nditer.cython.rst',
+    # See PR 17222, these should be fixed
+    'basics.broadcasting.rst',
+    'basics.byteswapping.rst',
+    'basics.creation.rst',
+    'basics.dispatch.rst',
+    'basics.indexing.rst',
+    'basics.subclassing.rst',
+    'basics.types.rst',
+    'misc.rst',
 ]
 
 # these names are not required to be present in ALL despite being in
@@ -260,7 +268,7 @@ def get_all_dict(module):
         except ValueError:
             pass
     if not all_dict:
-        # Must be a pure documentation module like doc.structured_arrays
+        # Must be a pure documentation module
         all_dict.append('__doc__')
 
     # Modules are almost always private; real submodules need a separate
@@ -388,8 +396,8 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
     output += "Objects in refguide: %i\n\n" % num_ref
 
     only_all, only_ref, missing = compare(all_dict, others, names, module_name)
-    dep_in_ref = set(only_ref).intersection(deprecated)
-    only_ref = set(only_ref).difference(deprecated)
+    dep_in_ref = only_ref.intersection(deprecated)
+    only_ref = only_ref.difference(deprecated)
 
     if len(dep_in_ref) > 0:
         output += "Deprecated objects in refguide::\n\n"

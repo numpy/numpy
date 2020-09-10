@@ -217,44 +217,49 @@
  *    func_type the_callee(const int *src, int *dst, func_type *cb)
  *    {
  *        // direct call
- *        NPY_CPU_DISPATCH_CALL(dispatch_me, (src, dst))
+ *        NPY_CPU_DISPATCH_CALL(dispatch_me, (src, dst));
  *        // assign the pointer
- *        NPY_CPU_DISPATCH_CALL(*cb = dispatch_me)
+ *        *cb = NPY_CPU_DISPATCH_CALL(dispatch_me);
+ *        // or
+ *        NPY_CPU_DISPATCH_CALL(*cb = dispatch_me);
  *        // return the pointer
- *        NPY_CPU_DISPATCH_CALL(return dispatch_me)
+ *        return NPY_CPU_DISPATCH_CALL(dispatch_me);
  *    }
  */
 #define NPY_CPU_DISPATCH_CALL(...) \
-    if (0) {/*DUMMY*/} \
     NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_CB_, __VA_ARGS__) \
     NPY__CPU_DISPATCH_BASELINE_CALL(NPY_CPU_DISPATCH_CALL_BASE_CB_, __VA_ARGS__)
 // Preprocessor callbacks
 #define NPY_CPU_DISPATCH_CALL_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
-    else if (TESTED_FEATURES) { NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__; }
+    (TESTED_FEATURES) ? (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) :
 #define NPY_CPU_DISPATCH_CALL_BASE_CB_(LEFT, ...) \
-    else { LEFT __VA_ARGS__; }
+    (LEFT __VA_ARGS__)
 /**
  * Macro NPY_CPU_DISPATCH_CALL_XB(LEFT, ...)
  *
- * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declration even
- * if it was provided within the configration statments.
+ * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
+ * if it was provided within the configration statements.
+ * Returns void.
  */
+#define NPY_CPU_DISPATCH_CALL_XB_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
+    (TESTED_FEATURES) ? (void) (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) :
 #define NPY_CPU_DISPATCH_CALL_XB(...) \
-    if (0) {/*DUMMY*/} \
-    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_CB_, __VA_ARGS__)
+    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_XB_CB_, __VA_ARGS__) \
+    ((void) 0 /* discarded expression value */)
 /**
  * Macro NPY_CPU_DISPATCH_CALL_ALL(LEFT, ...)
  *
  * Same as `NPY_CPU_DISPATCH_CALL` but dispatching all the required optimizations for
  * the exported functions and variables instead of highest interested one.
+ * Returns void.
  */
 #define NPY_CPU_DISPATCH_CALL_ALL(...) \
-    NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_ALL_CB_, __VA_ARGS__) \
-    NPY__CPU_DISPATCH_BASELINE_CALL(NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_, __VA_ARGS__)
+    (NPY__CPU_DISPATCH_CALL(NPY_CPU_HAVE, NPY_CPU_DISPATCH_CALL_ALL_CB_, __VA_ARGS__) \
+    NPY__CPU_DISPATCH_BASELINE_CALL(NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_, __VA_ARGS__))
 // Preprocessor callbacks
 #define NPY_CPU_DISPATCH_CALL_ALL_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
-    if (TESTED_FEATURES) { NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__; }
+    ((TESTED_FEATURES) ? (NPY_CAT(NPY_CAT(LEFT, _), TARGET_NAME) __VA_ARGS__) : (void) 0),
 #define NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_(LEFT, ...) \
-    { LEFT __VA_ARGS__; }
+    ( LEFT __VA_ARGS__ )
 
 #endif // NPY_CPU_DISPATCH_H_

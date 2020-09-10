@@ -35,7 +35,6 @@ from .polynomial import *
 from .utils import *
 from .arraysetops import *
 from .npyio import *
-from .financial import *
 from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
@@ -54,7 +53,6 @@ __all__ += polynomial.__all__
 __all__ += utils.__all__
 __all__ += arraysetops.__all__
 __all__ += npyio.__all__
-__all__ += financial.__all__
 __all__ += nanfunctions.__all__
 __all__ += histograms.__all__
 

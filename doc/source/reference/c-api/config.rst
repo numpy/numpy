@@ -19,7 +19,7 @@ avoid namespace pollution.
 Data type sizes
 ---------------
 
-The :c:data:`NPY_SIZEOF_{CTYPE}` constants are defined so that sizeof
+The ``NPY_SIZEOF_{CTYPE}`` constants are defined so that sizeof
 information is available to the pre-processor.
 
 .. c:macro:: NPY_SIZEOF_SHORT

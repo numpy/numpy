@@ -50,17 +50,6 @@ EXCLUDE_LIST = {
         "object",
         "str",
         "unicode",
-        # Should use numpy_financial instead
-        "fv",
-        "ipmt",
-        "irr",
-        "mirr",
-        "nper",
-        "npv",
-        "pmt",
-        "ppmt",
-        "pv",
-        "rate",
         # More standard names should be preferred
         "alltrue",  # all
         "sometrue",  # any

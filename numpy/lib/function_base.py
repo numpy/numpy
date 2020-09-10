@@ -1625,57 +1625,7 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
-    try:
-        return _trim_zeros_new(filt, trim)
-    except Exception as ex:
-        # Numpy 1.20.0, 2020-07-31
-        warning = DeprecationWarning(
-            "in the future trim_zeros will require a 1-D array as input "
-            "that is compatible with ndarray.astype(bool)"
-        )
-        warning.__cause__ = ex
-        warnings.warn(warning, stacklevel=3)
 
-        # Fall back to the old implementation if an exception is encountered
-        # Note that the same exception may or may not be raised here as well
-        return _trim_zeros_old(filt, trim)
-
-
-def _trim_zeros_new(filt, trim='fb'):
-    """Newer optimized implementation of ``trim_zeros()``."""
-    arr = np.asanyarray(filt).astype(bool, copy=False)
-
-    if arr.ndim != 1:
-        raise ValueError('trim_zeros requires an array of exactly one dimension')
-    elif not len(arr):
-        return filt
-
-    trim_upper = trim.upper()
-    first = last = None
-
-    if 'F' in trim_upper:
-        first = arr.argmax()
-        # If `arr[first] is False` then so are all other elements
-        if not arr[first]:
-            return filt[:0]
-
-    if 'B' in trim_upper:
-        last = len(arr) - arr[::-1].argmax()
-        # If `arr[last - 1] is False` then so are all other elements
-        if not arr[last - 1]:
-            return filt[:0]
-
-    return filt[first:last]
-
-
-def _trim_zeros_old(filt, trim='fb'):
-    """
-    Older unoptimized implementation of ``trim_zeros()``.
-
-    Used as fallback in case an exception is encountered
-    in ``_trim_zeros_new()``.
-
-    """
     first = 0
     trim = trim.upper()
     if 'F' in trim:
@@ -1985,8 +1935,8 @@ class vectorize:
         .. versionadded:: 1.7.0
 
     cache : bool, optional
-       If `True`, then cache the first function call that determines the number
-       of outputs if `otypes` is not provided.
+        If `True`, then cache the first function call that determines the number
+        of outputs if `otypes` is not provided.
 
         .. versionadded:: 1.7.0
 
@@ -2783,8 +2733,8 @@ def blackman(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.42 - 0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
 
 @set_module('numpy')
@@ -2892,8 +2842,8 @@ def bartlett(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0 - 2.0*n/(M-1))
+    n = arange(1-M, M, 2)
+    return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
 
 @set_module('numpy')
@@ -2996,8 +2946,8 @@ def hanning(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.5 - 0.5*cos(2.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.5 + 0.5*cos(pi*n/(M-1))
 
 
 @set_module('numpy')
@@ -3096,8 +3046,8 @@ def hamming(M):
         return array([])
     if M == 1:
         return ones(1, float)
-    n = arange(0, M)
-    return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
+    n = arange(1-M, M, 2)
+    return 0.54 + 0.46*cos(pi*n/(M-1))
 
 
 ## Code from cephes for i0
@@ -3193,24 +3143,17 @@ def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
 
-    Usually denoted :math:`I_0`.  This function does broadcast, but will *not*
-    "up-cast" int dtype arguments unless accompanied by at least one float or
-    complex dtype argument (see Raises below).
+    Usually denoted :math:`I_0`.
 
     Parameters
     ----------
-    x : array_like, dtype float or complex
+    x : array_like of float
         Argument of the Bessel function.
 
     Returns
     -------
-    out : ndarray, shape = x.shape, dtype = x.dtype
+    out : ndarray, shape = x.shape, dtype = float
         The modified Bessel function evaluated at each of the elements of `x`.
-
-    Raises
-    ------
-    TypeError: array cannot be safely cast to required type
-        If argument consists exclusively of int dtypes.
 
     See Also
     --------
@@ -3241,12 +3184,16 @@ def i0(x):
     Examples
     --------
     >>> np.i0(0.)
-    array(1.0)  # may vary
-    >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
+    array(1.0)
+    >>> np.i0([0, 1, 2, 3])
+    array([1.        , 1.26606588, 2.2795853 , 4.88079259])
 
     """
     x = np.asanyarray(x)
+    if x.dtype.kind == 'c':
+        raise TypeError("i0 not supported for complex values")
+    if x.dtype.kind != 'f':
+        x = x.astype(float)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 

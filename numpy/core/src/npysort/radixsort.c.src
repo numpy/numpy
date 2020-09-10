@@ -46,7 +46,7 @@ nth_byte_@suff@(@type@ key, npy_intp l) {
     return (key >> (l << 3)) & 0xFF;
 }
 
-@type@*
+static @type@*
 radixsort0_@suff@(@type@ *arr, @type@ *aux, npy_intp num)
 {
     npy_intp cnt[sizeof(@type@)][1 << 8] = { { 0 } };
@@ -95,7 +95,7 @@ radixsort0_@suff@(@type@ *arr, @type@ *aux, npy_intp num)
     return arr;
 }
 
-int
+NPY_NO_EXPORT int
 radixsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
     void *sorted;
@@ -136,7 +136,7 @@ radixsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
     return 0;
 }
 
-npy_intp*
+static npy_intp*
 aradixsort0_@suff@(@type@ *arr, npy_intp *aux, npy_intp *tosort, npy_intp num)
 {
     npy_intp cnt[sizeof(@type@)][1 << 8] = { { 0 } };
@@ -185,7 +185,7 @@ aradixsort0_@suff@(@type@ *arr, npy_intp *aux, npy_intp *tosort, npy_intp num)
     return tosort;
 }
 
-int
+NPY_NO_EXPORT int
 aradixsort_@suff@(void *start, npy_intp* tosort, npy_intp num, void *NPY_UNUSED(varr))
 {
     npy_intp *sorted;

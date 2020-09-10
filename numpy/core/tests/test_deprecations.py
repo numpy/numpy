@@ -708,19 +708,23 @@ class TestRaggedArray(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
 
 
-class TestTrimZeros(_DeprecationTestCase):
-    # Numpy 1.20.0, 2020-07-31
-    @pytest.mark.parametrize("arr", [np.random.rand(10, 10).tolist(),
-                                     np.random.rand(10).astype(str)])
-    def test_deprecated(self, arr):
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', DeprecationWarning)
-            try:
-                np.trim_zeros(arr)
-            except DeprecationWarning as ex:
-                assert_(isinstance(ex.__cause__, ValueError))
-            else:
-                raise AssertionError("No error raised during function call")
+class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
+    # NumPy 1.20, 2020-09-03
+    message = "concatenate with `axis=None` will use same-kind casting"
 
-        out = np.lib.function_base._trim_zeros_old(arr)
-        assert_array_equal(arr, out)
+    def test_deprecated(self):
+        self.assert_deprecated(np.concatenate,
+                args=(([0.], [1.]),),
+                kwargs=dict(axis=None, out=np.empty(2, dtype=np.int64)))
+
+    def test_not_deprecated(self):
+        self.assert_not_deprecated(np.concatenate,
+                args=(([0.], [1.]),),
+                kwargs={'axis': None, 'out': np.empty(2, dtype=np.int64),
+                        'casting': "unsafe"})
+
+        with assert_raises(TypeError):
+            # Tests should notice if the deprecation warning is given first...
+            np.concatenate(([0.], [1.]), out=np.empty(2, dtype=np.int64),
+                           casting="same_kind")
+

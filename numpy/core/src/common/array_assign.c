@@ -14,7 +14,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
-
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
@@ -67,12 +66,12 @@ broadcast_strides(int ndim, npy_intp const *shape,
 broadcast_error: {
         PyObject *errmsg;
 
-        errmsg = PyUString_FromFormat("could not broadcast %s from shape ",
+        errmsg = PyUnicode_FromFormat("could not broadcast %s from shape ",
                                 strides_name);
         PyUString_ConcatAndDel(&errmsg,
                 build_shape_string(strides_ndim, strides_shape));
         PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" into shape "));
+                PyUnicode_FromString(" into shape "));
         PyUString_ConcatAndDel(&errmsg,
                 build_shape_string(ndim, shape));
         PyErr_SetObject(PyExc_ValueError, errmsg);

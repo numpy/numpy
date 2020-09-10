@@ -1536,7 +1536,14 @@ iterator_loop(PyUFuncObject *ufunc,
 
         NPY_END_THREADS;
     }
-    return NpyIter_Deallocate(iter);
+    /*
+     * Currently `innerloop` may leave an error set, in this case
+     * NpyIter_Deallocate will always return an error as well.
+     */
+    if (NpyIter_Deallocate(iter) == NPY_FAIL) {
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -2425,15 +2432,15 @@ _get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
     switch(ufunc->identity) {
     case PyUFunc_One:
         *reorderable = 1;
-        return PyInt_FromLong(1);
+        return PyLong_FromLong(1);
 
     case PyUFunc_Zero:
         *reorderable = 1;
-        return PyInt_FromLong(0);
+        return PyLong_FromLong(0);
 
     case PyUFunc_MinusOne:
         *reorderable = 1;
-        return PyInt_FromLong(-1);
+        return PyLong_FromLong(-1);
 
     case PyUFunc_ReorderableNone:
         *reorderable = 1;
@@ -3233,9 +3240,13 @@ PyUFunc_GenericFunction_int(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Check whether any errors occurred during the loop */
+    /*
+     * Check whether any errors occurred during the loop. The loops should
+     * indicate this in retval, but since the inner-loop currently does not
+     * report errors, this does not happen in all branches (at this time).
+     */
     if (PyErr_Occurred() ||
-        _check_ufunc_fperr(errormask, extobj, ufunc_name) < 0) {
+            _check_ufunc_fperr(errormask, extobj, ufunc_name) < 0) {
         retval = -1;
         goto fail;
     }
@@ -3307,7 +3318,6 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
                         void **out_innerloopdata)
 {
     int i;
-    PyUFunc_Loop1d *funcdata;
 
     NPY_UF_DBG_PRINT1("Getting binary op function for type number %d\n",
                                 *otype);
@@ -3315,7 +3325,7 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
     /* If the type is custom and there are userloops, search for it here */
     if (ufunc->userloops != NULL && PyTypeNum_ISUSERDEF(*otype)) {
         PyObject *key, *obj;
-        key = PyInt_FromLong(*otype);
+        key = PyLong_FromLong(*otype);
         if (key == NULL) {
             return -1;
         }
@@ -3325,7 +3335,10 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
             return -1;
         }
         else if (obj != NULL) {
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
             while (funcdata != NULL) {
                 int *types = funcdata->arg_types;
 
@@ -3997,8 +4010,17 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
 finish:
     Py_XDECREF(op_dtypes[0]);
-    NpyIter_Deallocate(iter);
-    NpyIter_Deallocate(iter_inner);
+    int res = 0;
+    if (!NpyIter_Deallocate(iter)) {
+        res = -1;
+    }
+    if (!NpyIter_Deallocate(iter_inner)) {
+        res = -1;
+    }
+    if (res < 0) {
+        Py_DECREF(out);
+        return NULL;
+    }
 
     return (PyObject *)out;
 
@@ -4379,7 +4401,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
 finish:
     Py_XDECREF(op_dtypes[0]);
-    NpyIter_Deallocate(iter);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_DECREF(out);
+        return NULL;
+    }
 
     return (PyObject *)out;
 
@@ -4388,7 +4413,6 @@ fail:
     Py_XDECREF(op_dtypes[0]);
 
     NpyIter_Deallocate(iter);
-
     return NULL;
 }
 
@@ -4812,8 +4836,8 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (res == NULL) {
         return NULL;
     }
-    PyList_SET_ITEM(res, 0, PyInt_FromLong(NPY_BUFSIZE));
-    PyList_SET_ITEM(res, 1, PyInt_FromLong(UFUNC_ERR_DEFAULT));
+    PyList_SET_ITEM(res, 0, PyLong_FromLong(NPY_BUFSIZE));
+    PyList_SET_ITEM(res, 1, PyLong_FromLong(UFUNC_ERR_DEFAULT));
     PyList_SET_ITEM(res, 2, Py_None); Py_INCREF(Py_None);
     return res;
 }
@@ -5133,7 +5157,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         return -1;
     }
 
-    key = PyInt_FromLong((long) user_dtype->type_num);
+    key = PyLong_FromLong((long) user_dtype->type_num);
     if (key == NULL) {
         return -1;
     }
@@ -5168,9 +5192,12 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
             result = -1;
         }
         else {
-            PyUFunc_Loop1d *current;
             int cmp = 1;
-            current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
+            PyUFunc_Loop1d *current = PyCapsule_GetPointer(cobj, NULL);
+            if (current == NULL) {
+                result = -1;
+                goto done;
+            }
             while (current != NULL) {
                 cmp = cmp_arg_types(current->arg_types,
                     arg_typenums, ufunc->nargs);
@@ -5204,6 +5231,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         }
     }
 
+done:
     PyArray_free(arg_typenums);
 
     Py_DECREF(key);
@@ -5235,7 +5263,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     if (ufunc->userloops == NULL) {
         ufunc->userloops = PyDict_New();
     }
-    key = PyInt_FromLong((long) usertype);
+    key = PyLong_FromLong((long) usertype);
     if (key == NULL) {
         return -1;
     }
@@ -5272,7 +5300,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     }
     /* If it's not there, then make one and return. */
     else if (cobj == NULL) {
-        cobj = NpyCapsule_FromVoidPtr((void *)funcdata, _loop1d_list_free);
+        cobj = PyCapsule_New((void *)funcdata, NULL, _loop1d_list_free);
         if (cobj == NULL) {
             goto fail;
         }
@@ -5290,7 +5318,10 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
          * is exactly like this one, then just replace.
          * Otherwise insert.
          */
-        current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
+        current = PyCapsule_GetPointer(cobj, NULL);
+        if (current == NULL) {
+            goto fail;
+        }
         while (current != NULL) {
             cmp = cmp_arg_types(current->arg_types, newtypes, ufunc->nargs);
             if (cmp >= 0) {
@@ -5361,7 +5392,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_repr(PyUFuncObject *ufunc)
 {
-    return PyUString_FromFormat("<ufunc '%s'>", ufunc->name);
+    return PyUnicode_FromFormat("<ufunc '%s'>", ufunc->name);
 }
 
 static int
@@ -5973,7 +6004,7 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     }
     if (ufunc->doc != NULL) {
         PyUString_ConcatAndDel(&doc,
-            PyUString_FromFormat("\n\n%s", ufunc->doc));
+            PyUnicode_FromFormat("\n\n%s", ufunc->doc));
     }
     return doc;
 }
@@ -5981,25 +6012,25 @@ ufunc_get_doc(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->nin);
+    return PyLong_FromLong(ufunc->nin);
 }
 
 static PyObject *
 ufunc_get_nout(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->nout);
+    return PyLong_FromLong(ufunc->nout);
 }
 
 static PyObject *
 ufunc_get_nargs(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->nargs);
+    return PyLong_FromLong(ufunc->nargs);
 }
 
 static PyObject *
 ufunc_get_ntypes(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(ufunc->ntypes);
+    return PyLong_FromLong(ufunc->ntypes);
 }
 
 static PyObject *
@@ -6029,7 +6060,7 @@ ufunc_get_types(PyUFuncObject *ufunc)
             t[ni + 2 + j] = _typecharfromnum(ufunc->types[n]);
             n++;
         }
-        str = PyUString_FromStringAndSize(t, no + ni + 2);
+        str = PyUnicode_FromStringAndSize(t, no + ni + 2);
         PyList_SET_ITEM(list, k, str);
     }
     PyArray_free(t);
@@ -6039,7 +6070,7 @@ ufunc_get_types(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_name(PyUFuncObject *ufunc)
 {
-    return PyUString_FromString(ufunc->name);
+    return PyUnicode_FromString(ufunc->name);
 }
 
 static PyObject *
@@ -6055,7 +6086,7 @@ ufunc_get_signature(PyUFuncObject *ufunc)
     if (!ufunc->core_enabled) {
         Py_RETURN_NONE;
     }
-    return PyUString_FromString(ufunc->core_signature);
+    return PyUnicode_FromString(ufunc->core_signature);
 }
 
 #undef _typecharfromnum

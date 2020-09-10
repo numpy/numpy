@@ -1508,14 +1508,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else {
         PyObject *itemp, *otemp;
         PyObject *res;
-        NPY_COPY_PYOBJECT_PTR(&itemp, iptr);
-        NPY_COPY_PYOBJECT_PTR(&otemp, optr);
+        memcpy(&itemp, iptr, sizeof(itemp));
+        memcpy(&otemp, optr, sizeof(otemp));
         Py_XINCREF(itemp);
         /* call deepcopy on this argument */
         res = PyObject_CallFunctionObjArgs(deepcopy, itemp, visit, NULL);
         Py_XDECREF(itemp);
         Py_XDECREF(otemp);
-        NPY_COPY_PYOBJECT_PTR(optr, &res);
+        memcpy(optr, &res, sizeof(res));
     }
 
 }
@@ -1616,7 +1616,7 @@ _getlist_pkl(PyArrayObject *self)
     }
     while (iter->index < iter->size) {
         theobject = getitem(iter->dataptr, self);
-        PyList_SET_ITEM(list, (int) iter->index, theobject);
+        PyList_SET_ITEM(list, iter->index, theobject);
         PyArray_ITER_NEXT(iter);
     }
     Py_DECREF(iter);
@@ -1636,7 +1636,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
         return -1;
     }
     while(iter->index < iter->size) {
-        theobject = PyList_GET_ITEM(list, (int) iter->index);
+        theobject = PyList_GET_ITEM(list, iter->index);
         setitem(theobject, iter->dataptr, self);
         PyArray_ITER_NEXT(iter);
     }
@@ -1676,7 +1676,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
                      Py_BuildValue("ONc",
                                    (PyObject *)Py_TYPE(self),
                                    Py_BuildValue("(N)",
-                                                 PyInt_FromLong(0)),
+                                                 PyLong_FromLong(0)),
                                    /* dummy data-type */
                                    'b'));
 
@@ -1701,7 +1701,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+    PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
     PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self,
                                                       "shape"));
     descr = PyArray_DESCR(self);
@@ -1763,7 +1763,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 #if PY_VERSION_HEX >= 0x03080000
     /* we expect protocol 5 to be available in Python 3.8 */
     pickle_module = PyImport_ImportModule("pickle");
-#elif PY_VERSION_HEX >= 0x03060000
+#else
     pickle_module = PyImport_ImportModule("pickle5");
     if (pickle_module == NULL) {
         /* for protocol 5, raise a clear ImportError if pickle5 is not found
@@ -1772,10 +1772,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
                 "requires the pickle5 module for Python >=3.6 and <3.8");
         return NULL;
     }
-#else
-    PyErr_SetString(PyExc_ValueError, "pickle protocol 5 is not available "
-                                      "for Python < 3.6");
-    return NULL;
 #endif
     if (pickle_module == NULL){
         return NULL;
@@ -2585,9 +2581,10 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArrayObject *arr;
     PyArray_Descr *dtype;
     PyObject *c;
+
     if (PyArray_SIZE(self) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
+        PyErr_SetString(PyExc_TypeError,
+                "only length-1 arrays can be converted to Python scalars");
         return NULL;
     }
 
@@ -2598,38 +2595,18 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
     if (!PyArray_CanCastArrayTo(self, dtype, NPY_SAME_KIND_CASTING) &&
             !(PyArray_TYPE(self) == NPY_OBJECT)) {
-        PyObject *err, *msg_part;
+        PyObject *descr = (PyObject*)PyArray_DESCR(self);
+
         Py_DECREF(dtype);
-        err = PyString_FromString("unable to convert ");
-        if (err == NULL) {
-            return NULL;
-        }
-        msg_part = PyObject_Repr((PyObject*)PyArray_DESCR(self));
-        if (msg_part == NULL) {
-            Py_DECREF(err);
-            return NULL;
-        }
-        PyString_ConcatAndDel(&err, msg_part);
-        if (err == NULL) {
-            return NULL;
-        }
-        msg_part = PyString_FromString(", to complex.");
-        if (msg_part == NULL) {
-            Py_DECREF(err);
-            return NULL;
-        }
-        PyString_ConcatAndDel(&err, msg_part);
-        if (err == NULL) {
-            return NULL;
-        }
-        PyErr_SetObject(PyExc_TypeError, err);
-        Py_DECREF(err);
+        PyErr_Format(PyExc_TypeError,
+                "Unable to convert %R to complex", descr);
         return NULL;
     }
 
     if (PyArray_TYPE(self) == NPY_OBJECT) {
         /* let python try calling __complex__ on the object. */
         PyObject *args, *res;
+
         Py_DECREF(dtype);
         args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
         if (args == NULL) {
