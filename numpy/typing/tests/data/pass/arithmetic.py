@@ -49,6 +49,37 @@ td / td
 td // td
 td % td
 
+
+# boolean
+
+b_ / b
+b_ / b_
+b_ / i
+b_ / i8
+b_ / i4
+b_ / u8
+b_ / u4
+b_ / f
+b_ / f8
+b_ / f4
+b_ / c
+b_ / c16
+b_ / c8
+
+b / b_
+b_ / b_
+i / b_
+i8 / b_
+i4 / b_
+u8 / b_
+u4 / b_
+f / b_
+f8 / b_
+f4 / b_
+c / b_
+c16 / b_
+c8 / b_
+
 # Complex
 
 c16 + c16

@@ -49,6 +49,36 @@ reveal_type(td / td)  # E: float64
 reveal_type(td // td)  # E: signedinteger
 reveal_type(td % td)  # E: numpy.timedelta64
 
+# boolean
+
+reveal_type(b_ / b)  # E: float64
+reveal_type(b_ / b_)  # E: float64
+reveal_type(b_ / i)  # E: float64
+reveal_type(b_ / i8)  # E: float64
+reveal_type(b_ / i4)  # E: float64
+reveal_type(b_ / u8)  # E: float64
+reveal_type(b_ / u4)  # E: float64
+reveal_type(b_ / f)  # E: float64
+reveal_type(b_ / f8)  # E: float64
+reveal_type(b_ / f4)  # E: float32
+reveal_type(b_ / c)  # E: complex128
+reveal_type(b_ / c16)  # E: complex128
+reveal_type(b_ / c8)  # E: complex64
+
+reveal_type(b / b_)  # E: float64
+reveal_type(b_ / b_)  # E: float64
+reveal_type(i / b_)  # E: float64
+reveal_type(i8 / b_)  # E: float64
+reveal_type(i4 / b_)  # E: float64
+reveal_type(u8 / b_)  # E: float64
+reveal_type(u4 / b_)  # E: float64
+reveal_type(f / b_)  # E: float64
+reveal_type(f8 / b_)  # E: float64
+reveal_type(f4 / b_)  # E: float32
+reveal_type(c / b_)  # E: complex128
+reveal_type(c16 / b_)  # E: complex128
+reveal_type(c8 / b_)  # E: complex64
+
 # Complex
 
 reveal_type(c16 + c16)  # E: complexfloating
