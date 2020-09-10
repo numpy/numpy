@@ -438,7 +438,7 @@ cppmacros['GETSTRFROMPYTUPLE'] = """\
             goto capi_fail;\\
         if (PyBytes_Check(rv_cb_str)) {\\
             str[len-1]='\\0';\\
-            STRINGCOPYN((str),PyString_AS_STRING((PyStringObject*)rv_cb_str),(len));\\
+            STRINGCOPYN((str),PyString_AS_STRING((PyBytesObject*)rv_cb_str),(len));\\
         } else {\\
             PRINTPYOBJERR(rv_cb_str);\\
             PyErr_SetString(#modulename#_error,\"string object expected\");\\
