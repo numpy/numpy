@@ -101,7 +101,7 @@ General purpose equivalents
      - get help on the function *func*
 
    * - ``which func``
-     - `see note HELP <numpy-for-matlab-users.notes>`_
+     - :ref:`see note HELP <numpy-for-matlab-users.notes>`
      - find out where *func* is defined
 
    * - ``type func``
