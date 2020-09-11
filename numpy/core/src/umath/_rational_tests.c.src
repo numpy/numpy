@@ -430,7 +430,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         PyObject* y;
         int eq;
         x[i] = PyTuple_GET_ITEM(args, i);
-        n[i] = PyInt_AsLong(x[i]);
+        n[i] = PyLong_AsLong(x[i]);
         if (error_converting(n[i])) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Format(PyExc_TypeError,
@@ -478,7 +478,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         else { \
             PyObject* y_; \
             int eq_; \
-            long n_ = PyInt_AsLong(object); \
+            long n_ = PyLong_AsLong(object); \
             if (error_converting(n_)) { \
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) { \
                     PyErr_Clear(); \
@@ -727,7 +727,7 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
         r = ((PyRational*)item)->r;
     }
     else {
-        long n = PyInt_AsLong(item);
+        long n = PyLong_AsLong(item);
         PyObject* y;
         int eq;
         if (error_converting(n)) {

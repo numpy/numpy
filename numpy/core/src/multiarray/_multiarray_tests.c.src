@@ -186,7 +186,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
+        bounds[i] = PyLong_AsSsize_t(bound);
         Py_DECREF(bound);
     }
 
@@ -345,7 +345,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
+        bounds[i] = PyLong_AsSsize_t(bound);
         Py_DECREF(bound);
     }
 
@@ -369,7 +369,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
+        bounds[i] = PyLong_AsSsize_t(bound);
         Py_DECREF(bound);
     }
 
