@@ -127,7 +127,7 @@ General purpose equivalents
 
    * - ``a && b``
      - ``a and b``
-     - short-circuiting logical  AND operator (Python native operator);
+   - short-circuiting logical AND operator (:ref:`Python native operator <python:boolean>`);
        scalar arguments only
 
    * - ``a || b``
