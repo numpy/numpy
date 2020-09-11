@@ -186,7 +186,7 @@ General purpose equivalents
    * - ``load data.mat``
      - ``io.loadmat('data.mat')``
      - Load MATLAB variables saved to the file ``data.mat``. (Note: When saving arrays to
-       ``data.mat`` in MATLAB/Octave, use a recent binary format. Python's ``loadmat``
+       ``data.mat`` in MATLAB/Octave, use a recent binary format. :func:`scipy.io.loadmat`
        will create a dictionary with the saved arrays and further information.)
 
    * - ``ode45``
