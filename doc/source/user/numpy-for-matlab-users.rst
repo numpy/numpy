@@ -502,7 +502,7 @@ Linear algebra equivalents
    * - ``c=chol(a)`` where ``a==c'*c``
      - ``c = linalg.cholesky(a)`` where ``a == c@c.T``
      - Cholesky factorization of a 2D array (``chol(a)`` in MATLAB returns an
-       upper triangular 2D array, but ``linalg.cholesky(a)`` returns a lower
+       upper triangular 2D array, but :func:`~scipy.linalg.cholesky` returns a lower
        triangular 2D array)
 
    * - ``[V,D]=eig(a)``
