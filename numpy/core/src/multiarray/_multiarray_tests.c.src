@@ -1733,8 +1733,8 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
 /**begin repeat
  * #N = 1,2,3#
  */
-    alignment = PyInt_FromLong(_ALIGN(struct TestStruct@N@));
-    size = PyInt_FromLong(sizeof(struct TestStruct@N@));
+    alignment = PyLong_FromLong(_ALIGN(struct TestStruct@N@));
+    size = PyLong_FromLong(sizeof(struct TestStruct@N@));
     val = PyTuple_Pack(2, alignment, size);
     Py_DECREF(alignment);
     Py_DECREF(size);
@@ -1950,7 +1950,7 @@ run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SWAP: return PyUnicode_FromString("NPY_SWAP");
         case NPY_IGNORE: return PyUnicode_FromString("NPY_IGNORE");
     }
-    return PyInt_FromLong(byteorder);
+    return PyLong_FromLong(byteorder);
 }
 
 static PyObject *
@@ -1965,7 +1965,7 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
         case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
     }
-    return PyInt_FromLong(kind);
+    return PyLong_FromLong(kind);
 }
 
 static PyObject *
@@ -1978,7 +1978,7 @@ run_selectkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     switch (kind) {
         case NPY_INTROSELECT: return PyUnicode_FromString("NPY_INTROSELECT");
     }
-    return PyInt_FromLong(kind);
+    return PyLong_FromLong(kind);
 }
 
 static PyObject *
@@ -1992,7 +1992,7 @@ run_searchside_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SEARCHLEFT: return PyUnicode_FromString("NPY_SEARCHLEFT");
         case NPY_SEARCHRIGHT: return PyUnicode_FromString("NPY_SEARCHRIGHT");
     }
-    return PyInt_FromLong(side);
+    return PyLong_FromLong(side);
 }
 
 static PyObject *
@@ -2008,7 +2008,7 @@ run_order_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_FORTRANORDER: return PyUnicode_FromString("NPY_FORTRANORDER");
         case NPY_KEEPORDER: return PyUnicode_FromString("NPY_KEEPORDER");
     }
-    return PyInt_FromLong(order);
+    return PyLong_FromLong(order);
 }
 
 static PyObject *
@@ -2023,7 +2023,7 @@ run_clipmode_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_WRAP: return PyUnicode_FromString("NPY_WRAP");
         case NPY_RAISE: return PyUnicode_FromString("NPY_RAISE");
     }
-    return PyInt_FromLong(mode);
+    return PyLong_FromLong(mode);
 }
 
 static PyObject *
@@ -2040,7 +2040,7 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
     }
-    return PyInt_FromLong(casting);
+    return PyLong_FromLong(casting);
 }
 
 static PyObject *
