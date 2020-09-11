@@ -105,7 +105,7 @@ General purpose equivalents
      - find out where *func* is defined
 
    * - ``type func``
-     - ``source(func)`` or ``func??`` (in IPython)
+     - ``np.source(func)`` or ``func??`` (in IPython)
      - print source for *func* (if not a native function)
 
    * - ``% comment``
