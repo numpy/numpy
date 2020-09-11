@@ -212,11 +212,11 @@ Linear algebra equivalents
 
    * - ``numel(a)``
      - ``np.size(a)`` or ``a.size``
-     - get the number of elements of the array, ``a``
+     - number of elements of array ``a``
 
    * - ``size(a)``
      - ``np.shape(a)`` or ``a.shape``
-     - get the "size" of the array, ``a``
+     - "size" of array ``a``
 
    * - ``size(a,n)``
      - ``a.shape[n-1]``
@@ -243,19 +243,19 @@ Linear algebra equivalents
 
    * - ``a(2,:)``
      - ``a[1]`` or  ``a[1, :]``
-     - entire second row of a 2D array, ``a``
+     - entire second row of 2D array ``a``
 
    * - ``a(1:5,:)``
      - ``a[0:5]`` or ``a[:5]`` or ``a[0:5, :]``
-     - the first five rows of a 2D array, ``a``
+     - first 5 rows of 2D array ``a``
 
    * - ``a(end-4:end,:)``
      - ``a[-5:]``
-     - the last five rows of a 2D array, ``a``
+     - last 5 rows of 2D array ``a``
 
    * - ``a(1:3,5:9)``
      - ``a[0:3, 4:9]``
-     - rows one to three and columns five to nine of a 2D array, ``a``. 
+     - The first through third rows and fifth through ninth columns of a 2D array, ``a``. 
 
    * - ``a([2,4,5],[1,3])``
      - ``a[np.ix_([1, 3, 4], [0, 2])]``
@@ -562,11 +562,11 @@ Linear algebra equivalents
 
    * - ``unique(a)``
      - ``np.unique(a)``
-     - returns a vector of unique values in array ``a``
+     - a vector of unique values in array ``a``
 
    * - ``squeeze(a)``
      - ``a.squeeze()``
-     - remove singleton dimensions of array ``a`` Note that MATLAB will always
+     - remove singleton dimensions of array ``a``. Note that MATLAB will always
        return arrays of 2D or higher while NumPy will return arrays of 0D or
        higher
 
@@ -823,4 +823,4 @@ See
 <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
 for a list of Scientific packages that use Python as a scripting language
 
-MATLAB and SimuLink® are registered trademarks of The MathWorks.
+MATLAB and SimuLink® are registered trademarks of MathWorks.
