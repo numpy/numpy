@@ -54,10 +54,9 @@ Some key differences
        is access to Python libraries including: `SciPy
        <https://www.scipy.org/>`_, `Matplotlib <https://matplotlib.org/>`_,
        `Pandas <https://pandas.pydata.org/>`_, `OpenCV <https://opencv.org/>`_,
-       and more. In addition to Python-specific packages, much `scientific
-       computing software
+       and more. In addition, Python is often `embedded as a scripting language
        <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
-       use Python as a scripting language. 
+       in other software, allowing NumPy to be used there too. 
 
    * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent creating copies until they
