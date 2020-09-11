@@ -357,7 +357,7 @@ Linear algebra equivalents
        <numpy-for-matlab-users.notes>`)
 
    * - ``[1:10]'``
-     - ``np.arange(1.,11.)[:, newaxis]``
+     - ``np.arange(1.,11.)[:, np.newaxis]``
      - create a column vector
 
    * - ``zeros(3,4)``
