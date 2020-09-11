@@ -132,7 +132,7 @@ General purpose equivalents
 
    * - ``a || b``
      - ``a or b``
-     - short-circuiting logical OR operator (Python native operator);
+     - short-circuiting logical OR operator (:ref:`Python native operator <python:boolean>`);
        scalar arguments only
 
    * - ::
