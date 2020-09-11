@@ -132,7 +132,7 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
                     "(Hash) names and fields inconsistent ???");
             return -1;
         }
-        if (!PyUString_Check(key)) {
+        if (!PyUnicode_Check(key)) {
             PyErr_SetString(PyExc_SystemError,
                     "(Hash) key of dtype dict not a string ???");
             return -1;
