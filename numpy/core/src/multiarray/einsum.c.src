@@ -27,6 +27,7 @@
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
 
+
 /*
  * Parses the subscripts for one operand into an output of 'ndim'
  * labels. The resulting 'op_labels' array will have:
