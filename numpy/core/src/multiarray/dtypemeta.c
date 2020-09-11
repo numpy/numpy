@@ -253,7 +253,7 @@ datetime_known_scalar_types(
      * must take charge. Otherwise we would attempt casting which does not
      * truly support this. Only object arrays are special cased in this way.
      */
-    return (PyType_IsSubtype(pytype, &PyString_Type) ||
+    return (PyType_IsSubtype(pytype, &PyBytes_Type) ||
             PyType_IsSubtype(pytype, &PyUnicode_Type));
 }
 

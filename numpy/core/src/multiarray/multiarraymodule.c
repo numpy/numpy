@@ -2226,7 +2226,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_DECREF(file);
         return NULL;
     }
-    if (PyString_Check(file) || PyUnicode_Check(file)) {
+    if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         Py_SETREF(file, npy_PyFile_OpenFile(file, "rb"));
         if (file == NULL) {
             Py_XDECREF(type);
@@ -2793,7 +2793,7 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     arg0 = PyTuple_GET_ITEM(args, 0);
 
     /* einsum('i,j', a, b), einsum('i,j->ij', a, b) */
-    if (PyString_Check(arg0) || PyUnicode_Check(arg0)) {
+    if (PyBytes_Check(arg0) || PyUnicode_Check(arg0)) {
         nop = einsum_sub_op_from_str(args, &str_obj, &subscripts, op);
     }
     /* einsum(a, [0], b, [1]), einsum(a, [0], b, [1], [0,1]) */
@@ -3876,7 +3876,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     }
 
     if (PyArray_TYPE(char_array) == NPY_STRING) {
-        method = PyObject_GetAttr((PyObject *)&PyString_Type, method_name);
+        method = PyObject_GetAttr((PyObject *)&PyBytes_Type, method_name);
     }
     else if (PyArray_TYPE(char_array) == NPY_UNICODE) {
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
@@ -4337,7 +4337,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     if (PyType_Ready(&PyComplex_Type) < 0) {
         return -1;
     }
-    if (PyType_Ready(&PyString_Type) < 0) {
+    if (PyType_Ready(&PyBytes_Type) < 0) {
         return -1;
     }
     if (PyType_Ready(&PyUnicode_Type) < 0) {

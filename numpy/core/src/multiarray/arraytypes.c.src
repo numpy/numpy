@@ -47,7 +47,7 @@ static NPY_INLINE npy_bool
 PySequence_NoString_Check(PyObject *op) {
     return
         PySequence_Check(op) &&
-        !PyString_Check(op) &&
+        !PyBytes_Check(op) &&
         !PyUnicode_Check(op) &&
         !PyArray_IsZeroDim(op);
 }
