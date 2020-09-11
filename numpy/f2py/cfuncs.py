@@ -730,7 +730,7 @@ static int int_from_pyobj(int* v,PyObject *obj,const char *errmess) {
         *v = (int)PyInt_AS_LONG(obj);
         return 1;
     }
-    tmp = PyNumber_Int(obj);
+    tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyInt_AS_LONG(tmp);
         Py_DECREF(tmp);
@@ -762,7 +762,7 @@ static int long_from_pyobj(long* v,PyObject *obj,const char *errmess) {
         *v = PyInt_AS_LONG(obj);
         return 1;
     }
-    tmp = PyNumber_Int(obj);
+    tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyInt_AS_LONG(tmp);
         Py_DECREF(tmp);

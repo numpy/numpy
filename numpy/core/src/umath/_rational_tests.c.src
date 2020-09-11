@@ -727,17 +727,17 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
         r = ((PyRational*)item)->r;
     }
     else {
-        long n = PyLong_AsLong(item);
+        long long n = PyLong_AsLongLong(item);
         PyObject* y;
         int eq;
         if (error_converting(n)) {
             return -1;
         }
-        y = PyLong_FromLong(n);
+        y = PyLong_FromLongLong(n);
         if (!y) {
             return -1;
         }
-        eq = PyObject_RichCompareBool(item,y,Py_EQ);
+        eq = PyObject_RichCompareBool(item, y, Py_EQ);
         Py_DECREF(y);
         if (eq<0) {
             return -1;
@@ -749,7 +749,7 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
         }
         r = make_rational_int(n);
     }
-    memcpy(data,&r,sizeof(rational));
+    memcpy(data, &r, sizeof(rational));
     return 0;
 }
 
