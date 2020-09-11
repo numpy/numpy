@@ -7219,8 +7219,10 @@ class TestNewBufferProtocol:
         pytest-leaks).
         """
         for i in range(10):
-            _multiarray_tests.get_buffer_info(arr, ['F_CONTIGUOUS'])
-            _multiarray_tests.get_buffer_info(arr, ['C_CONTIGUOUS'])
+            _, s = _multiarray_tests.get_buffer_info(arr, ['F_CONTIGUOUS'])
+            assert s == (8, 8)
+            _, s = _multiarray_tests.get_buffer_info(arr, ['C_CONTIGUOUS'])
+            assert s == (80, 8)
 
     def test_out_of_order_fields(self):
         dt = np.dtype(dict(
