@@ -239,7 +239,7 @@ Linear algebra equivalents
 
    * - ``a(2,5)``
      - ``a[1, 4]``
-     - access element in second row, fifth column in a 2D array, ``a``
+     - access element in second row, fifth column in 2D array ``a``
 
    * - ``a(2,:)``
      - ``a[1]`` or  ``a[1, :]``
