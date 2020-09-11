@@ -2186,7 +2186,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
         See Also
         --------
-        parse_targets() :
+        parse_targets :
             Parsing the configuration statements of dispatch-able sources.
         """
         to_compile = {}
