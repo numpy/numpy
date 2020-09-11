@@ -123,7 +123,7 @@ General purpose equivalents
          for i in range(1, 4):
             print(i)
 
-     - use a for-loop to print the numbers 1, 2, and 3 using :func:`range`
+     - use a for-loop to print the numbers 1, 2, and 3 using :py:class:`range <range>`
 
    * - ``a && b``
      - ``a and b``
