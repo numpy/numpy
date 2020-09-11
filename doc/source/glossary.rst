@@ -151,15 +151,6 @@ Glossary
        dimension.
 
 
-   attribute
-       A property of an object that can be accessed using ``obj.attribute``,
-       e.g., ``shape`` is an attribute of an array::
-
-         >>> x = np.array([1, 2, 3])
-         >>> x.shape
-         (3,)
-
-
    axis
 
        Another term for an array dimension. Axes are numbered left to right;
@@ -371,24 +362,6 @@ Glossary
    immutable
        An object that cannot be modified after execution is called
        immutable.  Two common examples are strings and tuples.
-
-
-   iterable
-       A sequence that allows "walking" (iterating) over items, typically
-       using a loop such as::
-
-         >>> x = [1, 2, 3]
-         >>> [item**2 for item in x]
-         [1, 4, 9]
-
-       It is often used in combination with ``enumerate``::
-         >>> keys = ['a','b','c']
-         >>> for n, k in enumerate(keys):
-         ...     print("Key %d: %s" % (n, k))
-         ...
-         Key 0: a
-         Key 1: b
-         Key 2: c
 
 
    itemsize
