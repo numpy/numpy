@@ -208,7 +208,7 @@ Linear algebra equivalents
 
    * - ``ndims(a)``
      - ``np.ndim(a)`` or ``a.ndim``
-     - get the number of dimensions of the array, ``a``
+     - number of dimensions of array ``a``
 
    * - ``numel(a)``
      - ``np.size(a)`` or ``a.size``
