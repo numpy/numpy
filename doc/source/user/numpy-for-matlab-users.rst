@@ -73,7 +73,7 @@ Rough equivalents
 The table below gives rough equivalents for some common MATLAB
 expressions. These are similar expressions, not equivalents. For
 details, see the `documentation
-<reference.reference>`_. 
+:ref:`documentation<reference>`.
 
 In the table below, it is assumed that you have executed the following
 commands in Python:
