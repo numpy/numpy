@@ -150,7 +150,7 @@ General purpose equivalents
         False
 
      - The `boolean objects
-       <python:boolean-values>`_
+       The :ref:`boolean objects <python:bltin-boolean-values>`
        in Python are ``True`` and ``False``, as opposed to MATLAB
        logical types of ``1`` and ``0``. 
 
