@@ -35,11 +35,10 @@ Glossary
            >>> a[0,...,0].shape
            (3,)
 
-       It can be used at most once; ``a[...,0,...]`` raises an ``IndexError``.
+       It can be used at most once; ``a[...,0,...]`` raises an :exc:`IndexError`.
 
        **In printouts**, NumPy substitutes ``...`` for the middle elements of
-       large arrays. To see the entire array, use
-       :doc:`numpy.printoptions. <reference/generated/numpy.printoptions>`
+       large arrays. To see the entire array, use `numpy.printoptions`
 
 
    ``:``
@@ -76,16 +75,14 @@ Glossary
 
    ``<``
        In a dtype declaration, indicates that the data is
-       `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       (the bracket is big on the right). ::
+       :term:`little-endian` (the bracket is big on the right). ::
 
            >>> dt = np.dtype('<f')  # little-endian single-precision float
 
 
    ``>``
        In a dtype declaration, indicates that the data is
-       `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       (the bracket is big on the left). ::
+       :term:`big-endian` (the bracket is big on the left). ::
 
            >>> dt = np.dtype('>H')  # big-endian unsigned short
 
@@ -201,15 +198,15 @@ Glossary
        useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
 
            >>> a = np.arange(6).reshape(2,3)
-           >>> a.shape
-           (2, 3)
+           >>> a.ndim
+           2
            >>> a
            array([[0, 1, 2],
                   [3, 4, 5]])
 
            >>> a = np.arange(6).reshape(1,2,3)
-           >>> a.shape
-           (1, 2, 3)
+           >>> a.ndim
+           3
            >>> a
            array([[[0, 1, 2],
                    [3, 4, 5]]])
@@ -502,14 +499,10 @@ Glossary
 
    ravel
 
-       :doc:`numpy.ravel \
-       <reference/generated/numpy.ravel>`
-       and :doc:`numpy.flatten \
-       <reference/generated/numpy.ndarray.flatten>`
-       both flatten an ndarray. ``ravel`` will return a view if possible;
-       ``flatten`` always returns a copy.
+       `numpy.ravel` and `numpy.ndarray.flatten` both flatten an ndarray. ``ravel``
+       will return a view if possible; ``flatten`` always returns a copy.
 
-       Flattening collapses a multimdimensional array to a single dimension;
+       Flattening collapses a multi-dimensional array to a single dimension;
        details of how this is done (for instance, whether ``a[n+1]`` should be
        the next row or next column) are parameters.
 
@@ -573,7 +566,7 @@ Glossary
 
        Physical memory is one-dimensional;  strides provide a mechanism to map
        a given index to an address in memory. For an N-dimensional array, its
-       ``stride`` attribute is an N-element tuple; advancing from index
+       ``strides`` attribute is an N-element tuple; advancing from index
        ``i`` to index ``i+1`` on axis ``n`` means adding ``a.strides[n]`` bytes
        to the address.
 
