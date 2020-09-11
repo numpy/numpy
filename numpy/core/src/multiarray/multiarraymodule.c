@@ -2057,7 +2057,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 Py_XDECREF(tmpobj);
                 return NULL;
             }
-            if (PyString_GET_SIZE(obj) < typecode->elsize) {
+            if (PyBytes_GET_SIZE(obj) < typecode->elsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "initialization string is too small");
                 Py_XDECREF(tmpobj);

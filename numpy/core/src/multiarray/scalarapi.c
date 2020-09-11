@@ -613,7 +613,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
         if (type_num == NPY_STRING) {
-            descr->elsize = PyString_GET_SIZE(sc);
+            descr->elsize = PyBytes_GET_SIZE(sc);
         }
         else if (type_num == NPY_UNICODE) {
             descr->elsize = PyUnicode_GET_LENGTH(sc) * 4;
