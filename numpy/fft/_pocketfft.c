@@ -327,7 +327,7 @@ NOINLINE static void pass2b (size_t ido, size_t l1, const cmplx * restrict cc,
       size_t i=1;
 #if NPY_SIMD_F64
       size_t step=NPY_SIMD_WIDTH/sizeof(double);
-      for (; i<=ido-step; i+=step)
+      for (; i+step<=ido; i+=step)
         {
         npyv_f64x2 c, d, tmp, twd;
         c = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
@@ -370,7 +370,7 @@ NOINLINE static void pass2f (size_t ido, size_t l1, const cmplx * restrict cc,
       size_t i=1;
 #if NPY_SIMD_F64
       size_t step=NPY_SIMD_WIDTH/sizeof(double);
-      for (; i<=ido-step; i+=step)
+      for (; i+step<=ido; i+=step)
         {
         npyv_f64x2 c, d, tmp, twd;
         c = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
@@ -517,7 +517,7 @@ NOINLINE static void pass4b (size_t ido, size_t l1, const cmplx * restrict cc,
       size_t i=1;
 #if NPY_SIMD_F64
       size_t step=NPY_SIMD_WIDTH/sizeof(double);
-      for (; i<=ido-step; i+=step)
+      for (; i+step<=ido; i+=step)
         {
         npyv_f64x2 c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
         c1 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
@@ -606,7 +606,7 @@ NOINLINE static void pass4f (size_t ido, size_t l1, const cmplx * restrict cc,
       size_t i=1;
 #if NPY_SIMD_F64
       size_t step=NPY_SIMD_WIDTH/sizeof(double);
-      for (; i<=ido-step; i+=step)
+      for (; i+step<=ido; i+=step)
         {
         npyv_f64x2 c1, c2, c3, c4, t1, t2, t3, t4, wa0, wa1, wa2;
         c1 = npyv_load_deinterleave_f64x2((double*)&cc[(i)+ido*((0)+cdim*(k))]);
