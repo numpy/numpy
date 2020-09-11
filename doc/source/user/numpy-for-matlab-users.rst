@@ -306,8 +306,8 @@ Linear algebra equivalents
    * - ``(a > 0.5)``
      - ``(a > 0.5)``
      - matrix whose i,jth element is (a_ij > 0.5).  The MATLAB result is an
-       array of logical types 0 and 1.  The NumPy result is an array of the boolean
-       types ``False`` and ``True``.
+       array of logical values 0 and 1.  The NumPy result is an array of the boolean
+       values ``False`` and ``True``.
 
    * - ``find(a > 0.5)``
      - ``np.nonzero(a > 0.5)``
