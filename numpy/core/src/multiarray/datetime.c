@@ -269,8 +269,7 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
  *
  * Returns 0 on success, -1 on failure.
  */
-NPY_NO_EXPORT int
-convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out)
 {
@@ -437,8 +436,7 @@ PyArray_TimedeltaStructToTimedelta(
 /*
  * Converts a datetime based on the given metadata into a datetimestruct
  */
-NPY_NO_EXPORT int
-convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
