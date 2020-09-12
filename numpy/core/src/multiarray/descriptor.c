@@ -2153,7 +2153,7 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
         PyObject *item;
         int valid = 1;
         item = PySequence_GetItem(val, i);
-        valid = PyUString_Check(item);
+        valid = PyUnicode_Check(item);
         Py_DECREF(item);
         if (!valid) {
             PyErr_Format(PyExc_ValueError,
@@ -2788,7 +2788,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
         for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
             name = PyTuple_GET_ITEM(names, i);
-            if (!PyUString_Check(name)) {
+            if (!PyUnicode_Check(name)) {
                 names_ok = 0;
                 break;
             }
@@ -3020,7 +3020,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyUString_Check(key) || !PyTuple_Check(value) ||
+            if (!PyUnicode_Check(key) || !PyTuple_Check(value) ||
                 ((len=PyTuple_GET_SIZE(value)) < 2)) {
                 continue;
             }
