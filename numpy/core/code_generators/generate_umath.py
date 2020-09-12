@@ -8,12 +8,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
 sys.path.pop(0)
 
-Zero = "PyInt_FromLong(0)"
-One = "PyInt_FromLong(1)"
+Zero = "PyLong_FromLong(0)"
+One = "PyLong_FromLong(1)"
 True_ = "(Py_INCREF(Py_True), Py_True)"
 False_ = "(Py_INCREF(Py_False), Py_False)"
 None_ = object()
-AllOnes = "PyInt_FromLong(-1)"
+AllOnes = "PyLong_FromLong(-1)"
 MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
 ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 

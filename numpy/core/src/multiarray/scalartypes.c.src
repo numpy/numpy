@@ -1058,7 +1058,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 static PyObject *
 gentype_ndim_get(PyObject *NPY_UNUSED(self))
 {
-    return PyInt_FromLong(0);
+    return PyLong_FromLong(0);
 }
 
 static PyObject *
@@ -1099,7 +1099,7 @@ inttype_numerator_get(PyObject *self)
 static PyObject *
 inttype_denominator_get(PyObject *self)
 {
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 
@@ -1119,7 +1119,7 @@ gentype_itemsize_get(PyObject *self)
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-    ret = PyInt_FromLong((long) elsize);
+    ret = PyLong_FromLong((long) elsize);
     Py_DECREF(typecode);
     return ret;
 }
@@ -1127,7 +1127,7 @@ gentype_itemsize_get(PyObject *self)
 static PyObject *
 gentype_size_get(PyObject *NPY_UNUSED(self))
 {
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 static PyObject *
@@ -1311,7 +1311,7 @@ gentype_imag_get(PyObject *self)
         ret = PyObject_GetAttrString(obj, "imag");
         if (ret == NULL) {
             PyErr_Clear();
-            obj = PyInt_FromLong(0);
+            obj = PyLong_FromLong(0);
             newtype = PyArray_DescrFromType(NPY_OBJECT);
             ret = PyArray_Scalar((char *)&obj, newtype, NULL);
             Py_DECREF(newtype);
@@ -2897,7 +2897,7 @@ bool_arrtype_nonzero(PyObject *a)
  *         ulong, ulonglong#
  * #Name = Byte, Short, Int, Long, UByte, UShort, LongLong, UInt,
  *         ULong, ULongLong#
- * #type = PyInt_FromLong*6, PyLong_FromLongLong*1,
+ * #type = PyLong_FromLong*6, PyLong_FromLongLong*1,
  *         PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong#
  */
 static PyNumberMethods @name@_arrtype_as_number;
@@ -2926,7 +2926,7 @@ bool_index(PyObject *a)
         return NULL;
     }
     else {
-        return PyInt_FromLong(PyArrayScalar_VAL(a, Bool));
+        return PyLong_FromLong(PyArrayScalar_VAL(a, Bool));
     }
 }
 

@@ -286,11 +286,11 @@ static int f2py_size(PyArrayObject* var, ...)
 """
 
 cppmacros[
-    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyInt_FromLong(v))'
+    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyLong_FromLong(v))'
 cppmacros[
-    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyInt_FromLong(v))'
+    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_int1'] = ['signed_char']
-cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyInt_FromLong(v))'
+cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyLong_FromLong(v))'
 cppmacros[
     'pyobj_from_long1'] = '#define pyobj_from_long1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_long_long1'] = ['long_long']
@@ -730,7 +730,7 @@ static int int_from_pyobj(int* v,PyObject *obj,const char *errmess) {
         *v = (int)PyInt_AS_LONG(obj);
         return 1;
     }
-    tmp = PyNumber_Int(obj);
+    tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyInt_AS_LONG(tmp);
         Py_DECREF(tmp);
@@ -762,7 +762,7 @@ static int long_from_pyobj(long* v,PyObject *obj,const char *errmess) {
         *v = PyInt_AS_LONG(obj);
         return 1;
     }
-    tmp = PyNumber_Int(obj);
+    tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyInt_AS_LONG(tmp);
         Py_DECREF(tmp);
