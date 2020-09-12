@@ -31,7 +31,7 @@ Some key differences
        linear algebra. 
 
      - In NumPy, the basic type is a multidimensional ``array``.  Array
-       assignments in NumPy are usually stored as n-dimensional arrays with the
+       assignments in NumPy are usually stored as :ref:`n-dimensional arrays<arrays>` with the
        minimum type required to hold the objects in sequence, unless you
        specify the number of dimensions and type. NumPy performs
        operations element-by-element, so multiplying 2D arrays with
@@ -71,8 +71,7 @@ Rough equivalents
 
 The table below gives rough equivalents for some common MATLAB
 expressions. These are similar expressions, not equivalents. For
-details, see the `documentation
-:ref:`documentation<reference>`.
+details, see the :ref:`documentation<reference>`.
 
 In the table below, it is assumed that you have executed the following
 commands in Python:
@@ -92,9 +91,9 @@ General purpose equivalents
 .. list-table::
    :header-rows: 1
 
-   * - **MATLAB**
-     - **NumPy**
-     - **Notes**
+   * - MATLAB
+     - NumPy
+     - Notes
 
    * - ``help func``
      - ``info(func)`` or ``help(func)`` or ``func?`` (in IPython)
@@ -127,7 +126,7 @@ General purpose equivalents
 
    * - ``a && b``
      - ``a and b``
-   - short-circuiting logical AND operator (:ref:`Python native operator <python:boolean>`);
+     - short-circuiting logical AND operator (:ref:`Python native operator <python:boolean>`);
        scalar arguments only
 
    * - ``a || b``
@@ -135,7 +134,7 @@ General purpose equivalents
      - short-circuiting logical OR operator (:ref:`Python native operator <python:boolean>`);
        scalar arguments only
 
-   * - ::
+   * - .. code:: matlab
         
         >> 4 == 4
         ans = 1
@@ -149,12 +148,11 @@ General purpose equivalents
         >>> 4 == 5
         False
 
-     - The `boolean objects
-       The :ref:`boolean objects <python:bltin-boolean-values>`
+     - The :ref:`boolean objects <python:bltin-boolean-values>`
        in Python are ``True`` and ``False``, as opposed to MATLAB
        logical types of ``1`` and ``0``. 
 
-   * - ::
+   * - .. code:: matlab
 
          a=4
          if a==4
@@ -195,6 +193,7 @@ General purpose equivalents
    * - ``ode15s``
      - ``integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
+
 
 Linear algebra equivalents
 --------------------------
@@ -385,7 +384,7 @@ Linear algebra equivalents
      - returns a square diagonal matrix whose nonzero values are the elements of
        vector, ``v``
 
-   * - ::
+   * - .. code:: matlab
          
          rng(42,'twister')
          rand(3,4)
@@ -492,7 +491,7 @@ Linear algebra equivalents
      - solution of a x = b for x
 
    * - ``b/a``
-     - Solve a.T x.T = b.T instead
+     - Solve ``a.T x.T = b.T`` instead
      - solution of x a = b for x
 
    * - ``[U,S,V]=svd(a)``
@@ -812,8 +811,8 @@ To use the deprecated `matrix` and other `matlib` functions:
 Links
 =====
 
-See http://mathesaurus.sf.net/ for another MATLAB/NumPy
-cross-reference.
+Another somewhat outdated MATLAB/NumPy cross-reference can be found at
+http://mathesaurus.sf.net/
 
 An extensive list of tools for scientific work with Python can be
 found in the `topical software page <https://scipy.org/topical-software.html>`__.
@@ -821,6 +820,6 @@ found in the `topical software page <https://scipy.org/topical-software.html>`__
 See
 `List of Python software: scripting
 <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
-for a list of Scientific packages that use Python as a scripting language
+for a list of softwares that use Python as a scripting language
 
-MATLAB and SimuLink® are registered trademarks of MathWorks.
+MATLAB®  and SimuLink® are registered trademarks of MathWorks.
