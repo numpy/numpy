@@ -2316,7 +2316,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
         return -1;
     }
 
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         /*
          * Much like in voidtype_setfield, we cannot simply use ndarray's
          * __setitem__ since assignment to void scalars should not broadcast

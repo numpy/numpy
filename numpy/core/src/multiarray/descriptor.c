@@ -441,7 +441,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         PyObject *name = PyTuple_GET_ITEM(item, 0);
         PyObject *title;
-        if (PyBaseString_Check(name)) {
+        if (PyUnicode_Check(name)) {
             title = NULL;
         }
         else if (PyTuple_Check(name)) {
@@ -454,7 +454,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
-            if (!PyBaseString_Check(name)) {
+            if (!PyUnicode_Check(name)) {
                 PyErr_SetString(PyExc_TypeError, "Field name must be a str");
                 goto fail;
             }
@@ -512,7 +512,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL)
              || (title
-                 && PyBaseString_Check(title)
+                 && PyUnicode_Check(title)
                  && (PyDict_GetItemWithError(fields, title) != NULL))) {
             PyErr_Format(PyExc_ValueError,
                     "field %R occurs more than once", name);
@@ -550,7 +550,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             if (PyDict_SetItem(fields, name, tup) < 0) {
                 goto fail;
             }
-            if (PyBaseString_Check(title)) {
+            if (PyUnicode_Check(title)) {
                 PyObject *existing = PyDict_GetItemWithError(fields, title);
                 if (existing == NULL && PyErr_Occurred()) {
                     goto fail;
@@ -3321,7 +3321,7 @@ _is_list_of_strings(PyObject *obj)
     seqlen = PyList_GET_SIZE(obj);
     for (i = 0; i < seqlen; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
-        if (!PyBaseString_Check(item)) {
+        if (!PyUnicode_Check(item)) {
             return NPY_FALSE;
         }
     }
@@ -3431,7 +3431,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return NULL;
     }
 
-    if (PyBaseString_Check(op)) {
+    if (PyUnicode_Check(op)) {
         return _subscript_by_name(self, op);
     }
     else if (_is_list_of_strings(op)) {
