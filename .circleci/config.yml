@@ -28,10 +28,10 @@ jobs:
           name: build numpy
           command: |
             . venv/bin/activate
-            pip install --upgrade pip 'setuptools<49.2.0'
-            pip install -r test_requirements.txt
+            pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
+            pip install --progress-bar=off -r test_requirements.txt
             pip install .
-            pip install -r doc_requirements.txt
+            pip install --progress-bar=off -r doc_requirements.txt
 
       - run:
           name: create release notes
