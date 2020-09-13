@@ -106,8 +106,8 @@ class AVX_cmplx_arithmetic(Benchmark):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, bfuncname)
-        except AttributeError as e:
-            raise NotImplementedError() from e
+        except AttributeError:
+            raise NotImplementedError(f"No ufunc {bfuncname} found") from None
         N = 10000
         self.arr1 = np.ones(stride*N, dtype)
         self.arr2 = np.ones(stride*N, dtype)
