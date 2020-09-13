@@ -1202,7 +1202,7 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(tup);
             goto fail;
         }
-        if (!PyBaseString_Check(name)) {
+        if (!PyUnicode_Check(name)) {
             PyErr_SetString(PyExc_ValueError,
                     "field names must be strings");
             Py_DECREF(tup);
@@ -1228,7 +1228,7 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
         if (len == 3) {
-            if (PyBaseString_Check(title)) {
+            if (PyUnicode_Check(title)) {
                 if (PyDict_GetItemWithError(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");

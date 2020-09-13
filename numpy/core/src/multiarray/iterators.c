@@ -61,7 +61,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
-        if (NpySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
+        if (PySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
             goto fail;
         }
         if (*n_steps <= 0) {
