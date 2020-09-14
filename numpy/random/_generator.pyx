@@ -11,6 +11,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.overrides import array_function_dispatch
 
 from .c_distributions cimport *
 from libc cimport string
@@ -593,7 +594,12 @@ cdef class Generator:
         return self.integers(0, 4294967296, size=n_uint32,
                              dtype=np.uint32).astype('<u4').tobytes()[:length]
 
+    def _choice_dispatcher(self, object x, size=None, replace=None, p=None, 
+                           axis=None, shuffle=None):
+        return (x, )
+
     @cython.wraparound(True)
+    @array_function_dispatch(_choice_dispatcher, verify=False)
     def choice(self, a, size=None, replace=True, p=None, axis=0, bint shuffle=True):
         """
         choice(a, size=None, replace=True, p=None, axis=0, shuffle=True)
@@ -4346,6 +4352,10 @@ cdef class Generator:
         PyMem_Free(buf)
         return out
 
+    def _shuffle_dispatcher(self, object x, axis=None):
+        return (x, )
+
+    @array_function_dispatch(_shuffle_dispatcher, verify=False)
     def shuffle(self, object x, axis=0):
         """
         shuffle(x, axis=0)
@@ -4439,6 +4449,10 @@ cdef class Generator:
                     j = random_interval(&self._bitgen, i)
                     x[i], x[j] = x[j], x[i]
 
+    def _permutation_dispatcher(self, object x, axis=None):
+        return (x, )
+
+    @array_function_dispatch(_permutation_dispatcher, verify=False)
     def permutation(self, object x, axis=0):
         """
         permutation(x, axis=0)
