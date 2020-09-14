@@ -3088,14 +3088,14 @@ def param_parse(d, params):
             # this dimension expression is also a parameter;
             # parse it recursively
             index = int(param_parse(ddims, params))
-    else:
+            return str(params[dname][index])
+    elif ddims in params:
         # Reached the bottom of the recursion
-        if ddims in params:
-            index = params[ddims]
-        else:
-            # ddims is a scalar. this means we should just parse it.
-            index = int(ddims)
-    return str(params[dname][index])
+        index = params[ddims]
+        return str(params[dname][index])
+    else:
+        # ddims is a scalar. this means we should just parse it.
+        return str(params[dname][int(ddims)])
 
 
 def expr2name(a, block, args=[]):
