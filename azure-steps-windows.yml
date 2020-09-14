@@ -75,6 +75,10 @@ steps:
     ls $target
   displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
   condition: eq(variables['PYTHON_VERSION'], '3.6')
+
+- powershell: |
+    copy dist\*.whl $(Build.ArtifactStagingDirectory)
+
 - script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
   displayName: 'For gh-12667; Windows DLL resolution'
   condition: eq(variables['PYTHON_VERSION'], '3.6')
@@ -88,3 +92,10 @@ steps:
     testResultsFiles: '**/test-*.xml'
     failTaskOnFailedTests: true
     testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
+
+- powershell: gci env:* | sort-object name | Format-Table -AutoSize | Out-File $env:BUILD_ARTIFACTSTAGINGDIRECTORY/environment-variables.txt
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: experiment
