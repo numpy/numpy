@@ -1775,6 +1775,7 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
+
 class TestFilterwindows:
 
     def test_hanning(self):
