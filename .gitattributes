@@ -3,3 +3,8 @@ numpy/lib/tests/data/*.npy binary
 
 # Release notes, reduce number of conflicts.
 doc/release/*.rst merge=union
+
+# Highlight our custom templating language as C, since it's hopefully better
+# than nothing. This also affects repo statistics.
+*.c.src linguist-language=C
+*.h.src linguist-language=C
