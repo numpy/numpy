@@ -1525,6 +1525,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     If the discontinuity in `p` is smaller than ``period/2``, 
     but larger than `discont`, no unwrapping is done because taking 
     the complement would only make the discontinuity larger.
+
     Examples
     --------
     >>> phase = np.linspace(0, np.pi, num=5)
