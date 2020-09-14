@@ -821,7 +821,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'compiled_base.c'),
-            join('src', 'multiarray', 'compiled_base.dispatch.c'),
             join('src', 'multiarray', 'common.c'),
             join('src', 'multiarray', 'convert.c'),
             join('src', 'multiarray', 'convert_datatype.c'),
