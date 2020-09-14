@@ -3072,6 +3072,7 @@ def param_parse(d, params):
       and `pa(1) = 3`, we call `param_parse` recursively, to obtain
 
     >>> d = 'pa(1)'
+    >>> params = dict(pa={1: 3, 2: 5})
     >>> param_parse(d, params)
     3
 
