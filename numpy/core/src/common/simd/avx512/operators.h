@@ -260,8 +260,10 @@
 // AVX512F & AVX512BW
 NPY_FINLINE npy_uint64 npyv_movemask_b8(npyv_b8 mask)
 {
-#ifdef NPY_HAVE_AVX512BW
+#ifdef NPY_HAVE_AVX512BW_MASK
     return (npy_uint64)_cvtmask64_u64(mask);
+#elif NPY_HAVE_AVX512BW
+    return (npy_uint64)mask;
 #else
     int mask_lo = _mm256_movemask_epi8(_mm512_castsi512_si256(mask));
     int mask_hi = _mm256_movemask_epi8(_mm512_extracti64x4_epi64(mask, 1));
