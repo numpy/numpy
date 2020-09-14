@@ -356,10 +356,12 @@ struct NpyAuxData_tag {
 #define PyArray_malloc PyMem_RawMalloc
 #define PyArray_free PyMem_RawFree
 #define PyArray_realloc PyMem_RawRealloc
+#define PyArray_calloc  PyMem_RawCalloc
 #else
 #define PyArray_malloc malloc
 #define PyArray_free free
 #define PyArray_realloc realloc
+#define PyArray_calloc calloc
 #endif
 
 /* Dimensions and strides */

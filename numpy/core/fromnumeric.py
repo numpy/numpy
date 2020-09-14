@@ -837,12 +837,12 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None):
+def _sort_dispatcher(a, axis=None, kind=None, order=None, *, by=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None):
+def sort(a, axis=-1, kind=None, order=None, *, by=None):
     """
     Return a sorted copy of an array.
 
@@ -868,6 +868,14 @@ def sort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+
+    by: tuple of array-likes, optional
+        With a given array `a` sort the elements not by arithmetic
+        order, but by any arbitrary order defined by tuple, there can
+        be multiple keys in a tuple/list form.
+        Tuple contains k (N,)-shaped sequences
+        The `k` different "columns" to be sorted.  The last column (or row if
+        `keys` is a 2D array) is the primary sort key.
 
     Returns
     -------
@@ -993,7 +1001,8 @@ def sort(a, axis=-1, kind=None, order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order)
+
+    a.sort(axis=axis, kind=kind, order=order, by=by)
     return a
 
 
