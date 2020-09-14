@@ -1511,7 +1511,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
         Axis along which unwrap will operate, default is the last axis.
     period: float, optional
         Size of the range over which the input wraps. By default, it is ``2 pi``.
-    
     Returns
     -------
     out : ndarray
