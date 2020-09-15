@@ -256,7 +256,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4, data_out += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -277,7 +277,7 @@ static void
             /**end repeat3**/
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data0 += vstepx2, data1 += vstepx2, data_out += vstepx2) {
             npyv_@sfx@ a0 = npyv_@ld@_@sfx@(data0);
             npyv_@sfx@ a1 = npyv_@ld@_@sfx@(data0 + vstep);
@@ -361,7 +361,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data1 += vstepx4, data_out += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -381,7 +381,7 @@ static void
             /**end repeat3**/
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data1 += vstepx2, data_out += vstepx2) {
             npyv_@sfx@ b0 = npyv_@ld@_@sfx@(data1);
             npyv_@sfx@ b1 = npyv_@ld@_@sfx@(data1 + vstep);
@@ -458,7 +458,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data_out += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -478,7 +478,7 @@ static void
             /**end repeat3**/
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data0 += vstepx2, data_out += vstepx2) {
             npyv_@sfx@ a0 = npyv_@ld@_@sfx@(data0);
             npyv_@sfx@ a1 = npyv_@ld@_@sfx@(data0 + vstep);
@@ -556,7 +556,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4, data1 += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -570,7 +570,7 @@ static void
                     vaccum = npyv_muladd_@sfx@(a0, b0, ab1);
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data0 += vstepx2, data1 += vstepx2) {
             npyv_@sfx@ a0 = npyv_@ld@_@sfx@(data0);
             npyv_@sfx@ a1 = npyv_@ld@_@sfx@(data0 + vstep);
@@ -638,7 +638,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data1 += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -651,7 +651,7 @@ static void
                       vaccum = npyv_add_@sfx@(b0123, vaccum);
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data1 += vstepx2) {
             npyv_@sfx@ b0 = npyv_@ld@_@sfx@(data1);
             npyv_@sfx@ b1 = npyv_@ld@_@sfx@(data1 + vstep);
@@ -711,7 +711,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -724,7 +724,7 @@ static void
                       vaccum = npyv_add_@sfx@(a0123, vaccum);
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data0 += vstepx2) {
             npyv_@sfx@ a0 = npyv_@ld@_@sfx@(data0);
             npyv_@sfx@ a1 = npyv_@ld@_@sfx@(data0 + vstep);
@@ -887,7 +887,7 @@ static void
      */
     @cond@ {
     #if @unroll_by@ == 4
-        const int vstepx4 = vstep * 4;
+        const npy_intp vstepx4 = vstep * 4;
         for (; count >= vstepx4; count -= vstepx4, data0 += vstepx4) {
             /**begin repeat3
              * #i = 0, 1, 2, 3#
@@ -900,7 +900,7 @@ static void
                       vaccum = npyv_add_@sfx@(a0123, vaccum);
         }
     #elif @unroll_by@ == 2
-        const int vstepx2 = vstep * 2;
+        const npy_intp vstepx2 = vstep * 2;
         for (; count >= vstepx2; count -= vstepx2, data0 += vstepx2) {
             npyv_@sfx@ a0 = npyv_@ld@_@sfx@(data0);
             npyv_@sfx@ a1 = npyv_@ld@_@sfx@(data0 + vstep);
