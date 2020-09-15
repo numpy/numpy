@@ -1,6 +1,6 @@
-/**
- * This header works only through '_simd.dispatch.c'
- */
+#ifndef _SIMD_SIMD_INC_H_
+#define _SIMD_SIMD_INC_H_
+
 #include <Python.h>
 #include "simd/simd.h"
 
@@ -147,29 +147,47 @@ typedef struct
 {
     PyObject_HEAD
     // vector type id
-    simd_data_type type;
+    simd_data_type dtype;
     // vector data, aligned for safe casting
     npyv_lanetype_u8 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) data[NPY_SIMD_WIDTH];
-} simd_vector;
+} PySIMDVectorObject;
 /**
- * convert simd_data to PyObject(simd_vector),
- * raise Python exception on failure and returns NULL.
+ * Create a Python obj(PySIMDVectorObject) from a NPYV vector based on the contents
+ * of `data`(simd_data) and according to the vector data type `dtype`
+ * on range(simd_data_[vu8:vf64]).
+ * Return NULL and a Python exception on failure, otherwise new reference.
+ *
+ * Example:
+ ** simd_data data = {.vu8 = npyv_setall_u8(0xff)};
+ ** PySIMDVectorObject *obj = PySIMDVector_FromData(data, simd_data_vu8);
+ ** if (obj != NULL) {
+ **    printf("I have a valid vector obj and first element is \n", obj->data[0]);
+ **    Py_DECREF(obj);
+ ** }
  */
-static simd_vector *
-simd_vector_to_obj(simd_data data, simd_data_type vtype);
+static PySIMDVectorObject *
+PySIMDVector_FromData(simd_data data, simd_data_type dtype);
 /**
- * convert PyObject(simd_vector) to simd_data,
- * raise Python exception on failure.
+ * Return a NPYV vector(simd_data) representation of `obj`(PySIMDVectorObject) and
+ * according to the vector data type `dtype` on range (simd_data_[vu8:vf64]).
+ * Raise a Python exception on failure.
+ *
+ * Example:
+ ** simd_data data = PySIMDVector_AsData(vec_obj, simd_data_vf32);
+ ** if (!PyErr_Occurred()) {
+ **    npyv_f32 add_1 = npyv_add_f32(data.vf32, npyv_setall_f32(1));
+ **    ...
+ ** }
  */
 static simd_data
-simd_vector_from_obj(simd_vector *vec, simd_data_type vtype);
+PySIMDVector_AsData(PySIMDVectorObject *obj, simd_data_type dtype);
 /**
- * initialize and register vector type(PyTypeObject) to PyModule,
- * vector type can be reached through attribute 'vector_type'.
+ * initialize and register PySIMDVectorType to certain PyModule,
+ * PySIMDVectorType can be reached through attribute 'vector_type'.
  * return -1 on error, 0 on success.
  */
 static int
-simd_vector_register(PyObject *module);
+PySIMDVectorType_Init(PyObject *module);
 
 /************************************
  ** Declarations (inc_convert)
@@ -180,13 +198,13 @@ simd_vector_register(PyObject *module);
  * Raise a Python exception on failure.
  *
  * Example:
- ** simd_data data = simd_scalar_from_obj(obj, simd_data_f32);
+ ** simd_data data = simd_scalar_from_number(obj, simd_data_f32);
  ** if (!PyErr_Occurred()) {
  **    printf("I have a valid float %d\n", data.f32);
  ** }
  */
 static simd_data
-simd_scalar_from_obj(PyObject *obj, simd_data_type dtype);
+simd_scalar_from_number(PyObject *obj, simd_data_type dtype);
 /**
  * Create a Python scalar from a C scalar based on the contents
  * of `data`(simd_data) and according to the scalar data type `dtype`
@@ -195,14 +213,14 @@ simd_scalar_from_obj(PyObject *obj, simd_data_type dtype);
  *
  * Example:
  ** simd_data data = {.u32 = 0x7fffffff};
- ** PyObject *obj = simd_scalar_to_obj(data, simd_data_s32);
+ ** PyObject *obj = simd_scalar_to_number(data, simd_data_s32);
  ** if (obj != NULL) {
  **    printf("I have a valid Python integer %d\n", PyLong_AsLong(obj));
  **    Py_DECREF(obj);
  ** }
  */
 static PyObject *
-simd_scalar_to_obj(simd_data data, simd_data_type dtype);
+simd_scalar_to_number(simd_data data, simd_data_type dtype);
 /**
  * Allocate a C array in memory according to number of elements `len`
  * and sequence data type `dtype` on range(simd_data_[qu8:qf64]).
@@ -223,13 +241,13 @@ static void *
 simd_sequence_new(Py_ssize_t len, simd_data_type dtype);
 /**
  * Return the number of elements of the allocated C array `ptr`
- * by `simd_sequence_new()` or `simd_sequence_from_obj()`.
+ * by `simd_sequence_new()` or `simd_sequence_from_iterable()`.
  */
-static size_t
+static Py_ssize_t
 simd_sequence_len(const void *ptr);
 /**
  * Free the allocated C array by `simd_sequence_new()` or
- * `simd_sequence_from_obj()`.
+ * `simd_sequence_from_iterable()`.
  */
 static void
 simd_sequence_free(void *ptr);
@@ -243,7 +261,7 @@ simd_sequence_free(void *ptr);
  * with a Python exception on failure.
  *
  * Example:
- ** npyv_lanetype_u32 *ptr = simd_sequence_from_obj(seq_obj, simd_data_qu32, npyv_nlanes_u32);
+ ** npyv_lanetype_u32 *ptr = simd_sequence_from_iterable(seq_obj, simd_data_qu32, npyv_nlanes_u32);
  ** if (ptr != NULL) {
  **     npyv_u32 a = npyv_load_u32(ptr);
  **     ...
@@ -252,25 +270,25 @@ simd_sequence_free(void *ptr);
  **
  */
 static void *
-simd_sequence_from_obj(PyObject *obj, simd_data_type dtype, unsigned min_size);
+simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_size);
 /**
  * Fill a Python sequence object `obj` with a C array `ptr` allocated by
- * `simd_sequence_new()` or `simd_sequence_from_obj()` according to
+ * `simd_sequence_new()` or `simd_sequence_from_iterable()` according to
  * to the sequence data type `dtype` on range (simd_data_[qu8:qf64]).
  *
  * Return 0 on success or -1 with a Python exception on failure.
  */
 static int
-simd_sequence_fill_obj(PyObject *obj, const void *ptr, simd_data_type dtype);
+simd_sequence_fill_iterable(PyObject *obj, const void *ptr, simd_data_type dtype);
 /**
  * Create a Python list from a C array `ptr` allocated by
- * `simd_sequence_new()` or `simd_sequence_from_obj()` according to
+ * `simd_sequence_new()` or `simd_sequence_from_iterable()` according to
  * to the sequence data type `dtype` on range (simd_data_[qu8:qf64]).
  *
  * Return NULL and a Python exception on failure, otherwise new reference.
  */
 static PyObject *
-simd_sequence_to_obj(const void *ptr, simd_data_type dtype);
+simd_sequence_to_list(const void *ptr, simd_data_type dtype);
 /**
  * Return a SIMD multi-vector(simd_data) representation of Python tuple of
  * (simd_vector*,) `obj` according to the scalar data type `dtype`
@@ -279,7 +297,7 @@ simd_sequence_to_obj(const void *ptr, simd_data_type dtype);
  * Raise a Python exception on failure.
  *
  * Example:
- ** simd_data data = simd_vectorx_from_obj(tuple_obj, simd_data_vf32x2);
+ ** simd_data data = simd_vectorx_from_tuple(tuple_obj, simd_data_vf32x2);
  ** if (!PyErr_Occurred()) {
  **     npyv_f32 sum = npyv_add_f32(data.vf32x2.val[0], data.vf32x2.val[1]);
  **     ...
@@ -287,7 +305,7 @@ simd_sequence_to_obj(const void *ptr, simd_data_type dtype);
  **
  */
 static simd_data
-simd_vectorx_from_obj(PyObject *obj, simd_data_type dtype);
+simd_vectorx_from_tuple(PyObject *obj, simd_data_type dtype);
 /**
  * Create a Python tuple of 'simd_vector' from a SIMD multi-vector
  * based on the contents of `data`(simd_data) and according to
@@ -297,7 +315,7 @@ simd_vectorx_from_obj(PyObject *obj, simd_data_type dtype);
  * Return NULL and a Python exception on failure, otherwise new reference.
  */
 static PyObject *
-simd_vectorx_to_obj(simd_data data, simd_data_type dtype);
+simd_vectorx_to_tuple(simd_data data, simd_data_type dtype);
 
 /************************************
  ** Declarations (inc_arg)
@@ -320,7 +338,7 @@ typedef struct
  * Return -1 and raise Python exception on failure, otherwise return 0.
  *
  * Notes:
- *  - requires `simd_args_sequence_free()` or `simd_sequence_free()`
+ *  - requires `simd_arg_free()` or `simd_sequence_free()`
  *    to free allocated C array, in case of sequence data types.
  *  - the number of minimum acceptable elements for sequence data
  *    types is the number of lanes of the equivalent vector data type.
@@ -333,7 +351,7 @@ typedef struct
  ** }
  ** npyv_u8 v_u8 = npyv_load_u8(arg->data.qu8);
  ** ...
- ** simd_args_sequence_free(&arg, 1);
+ ** simd_arg_free(&arg);
  *
  * Example #2:
  ** simd_arg arg = {.dtype = simd_data_vf32};
@@ -369,36 +387,35 @@ simd_arg_to_obj(const simd_arg *arg);
  * used with PyArg_Parse*().
  *
  * Notes:
- *  - requires `simd_args_sequence_free()` or `simd_sequence_free()`
+ *  - requires `simd_arg_free()` or `simd_sequence_free()`
  *    to free allocated C array, in case of sequence data types.
  *  - the number of minimum acceptable elements for sequence data
  *    types is the number of lanes of the equivalent vector data type.
  *  - use 'arg->obj' to retrieve the parameter obj.
  *
  * Example:
- **  simd_arg req_args[] = {
- **     {.dtype = simd_data_qf32},
- **     {.dtype = simd_data_vf32},
- **  };
+ **  simd_arg seq_f32 = {.dtype = simd_data_qf32};
+ **  simd_arg vec_f32 = {.dtype = simd_data_vf32};
  **  if (!PyArg_ParseTuple(
  **     args, "O&O&:add_sum_f32",
- **     simd_arg_converter, &req_args[0],
- **     simd_arg_converter, &req_args[1]
+ **     simd_arg_converter, &seq_f32,
+ **     simd_arg_converter, &vec_f32
  **  )) {
  **     // fail
  **     return;
  **  }
- **  npyv_f32 load_a = npyv_load_f32(req_args[0].data.qf32);
- **  npyv_f32 sum = npyv_add_f32(load_a, req_args[1].data.vf32);
+ **  npyv_f32 load_a = npyv_load_f32(seq_f32.data.qf32);
+ **  npyv_f32 sum = npyv_add_f32(load_a, vec_f32.data.vf32);
  **  ...
- **  simd_args_sequence_free(req_args, 2);
+ **  simd_arg_free(&seq_f32);
  */
 static int
 simd_arg_converter(PyObject *obj, simd_arg *arg);
 /**
- * Free the allocated C array for sequence data types.
+ * Free the allocated C array, if the arg hold sequence data type.
  */
 static void
-simd_args_sequence_free(simd_arg *args, int args_len);
+simd_arg_free(simd_arg *arg);
 
 #endif // NPY_SIMD
+#endif // _SIMD_SIMD_INC_H_

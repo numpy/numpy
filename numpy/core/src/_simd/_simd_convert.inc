@@ -1,12 +1,14 @@
-#if !NPY_SIMD
-    #error "Not a standalone header, only works through 'simd.dispatch.c.src'"
-#endif
-
+/**
+ * This file is included by `_simd.dispatch.c.src`. Its contents are affected by the simd configuration, and
+ * therefore must be built multiple times. Making it a standalone `.c` file with `NPY_VISIBILITY_HIDDEN`
+ * symbols would require judicious use of `NPY_CPU_DISPATCH_DECLARE` and `NPY_CPU_DISPATCH_CURFX`, which was
+ * deemed too harmful to readability.
+ */
 /************************************
  ** Protected Definitions
  ************************************/
 static simd_data
-simd_scalar_from_obj(PyObject *obj, simd_data_type dtype)
+simd_scalar_from_number(PyObject *obj, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_scalar && info->lane_size > 0);
@@ -23,7 +25,7 @@ simd_scalar_from_obj(PyObject *obj, simd_data_type dtype)
 }
 
 static PyObject *
-simd_scalar_to_obj(simd_data data, simd_data_type dtype)
+simd_scalar_to_number(simd_data data, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_scalar && info->lane_size > 0);
@@ -41,43 +43,44 @@ simd_scalar_to_obj(simd_data data, simd_data_type dtype)
     return PyLong_FromUnsignedLongLong(data.u64 >> leftb);
 }
 
+typedef struct {
+    Py_ssize_t len;
+    void *ptr;
+} simd__alloc_data;
+
 static void *
 simd_sequence_new(Py_ssize_t len, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
-    assert(info->is_sequence && info->lane_size > 0);
-
-    size_t size  = NPY_SIMD_WIDTH + sizeof(size_t) + sizeof(size_t*);
-           size += len * info->lane_size;
-
-    size_t *ptr = malloc(size);
+    assert(len > 0 && info->is_sequence && info->lane_size > 0);
+    size_t size = sizeof(simd__alloc_data) + len * info->lane_size + NPY_SIMD_WIDTH;
+    void *ptr = malloc(size);
     if (ptr == NULL) {
         return PyErr_NoMemory();
     }
-    *(ptr++) = len;
-    size_t **a_ptr = (size_t**)(
-        ((size_t)ptr + NPY_SIMD_WIDTH) & ~(size_t)(NPY_SIMD_WIDTH-1)
+    // align the pointer
+    simd__alloc_data *a_ptr = (simd__alloc_data *)(
+        ((uintptr_t)ptr + sizeof(simd__alloc_data) + NPY_SIMD_WIDTH) & ~(uintptr_t)(NPY_SIMD_WIDTH-1)
     );
-    a_ptr[-1] = ptr;
+    a_ptr[-1].len = len;
+    a_ptr[-1].ptr = ptr;
     return a_ptr;
 }
 
-static size_t
-simd_sequence_len(const void *ptr)
+static Py_ssize_t
+simd_sequence_len(void const *ptr)
 {
-    size_t *ptrz = ((size_t**)ptr)[-1];
-    return *(ptrz-1);
+    return ((simd__alloc_data const*)ptr)[-1].len;
 }
 
 static void
 simd_sequence_free(void *ptr)
 {
-    size_t *ptrz = ((size_t**)ptr)[-1];
-    free(ptrz-1);
+    free(((simd__alloc_data *)ptr)[-1].ptr);
 }
 
 static void *
-simd_sequence_from_obj(PyObject *obj, simd_data_type dtype, unsigned min_size)
+simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_size)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_sequence && info->lane_size > 0);
@@ -86,7 +89,7 @@ simd_sequence_from_obj(PyObject *obj, simd_data_type dtype, unsigned min_size)
         return NULL;
     }
     Py_ssize_t seq_size = PySequence_Fast_GET_SIZE(seq_obj);
-    if (seq_size < (Py_ssize_t)min_size) {
+    if (seq_size < min_size) {
         PyErr_Format(PyExc_ValueError,
             "minimum acceptable size of the required sequence is %d, given(%d)",
             min_size, seq_size
@@ -99,7 +102,7 @@ simd_sequence_from_obj(PyObject *obj, simd_data_type dtype, unsigned min_size)
     }
     PyObject **seq_items = PySequence_Fast_ITEMS(seq_obj);
     for (Py_ssize_t i = 0; i < seq_size; ++i) {
-        simd_data data = simd_scalar_from_obj(seq_items[i], info->to_scalar);
+        simd_data data = simd_scalar_from_number(seq_items[i], info->to_scalar);
         npyv_lanetype_u8 *sdst = dst + i * info->lane_size;
         memcpy(sdst, &data.u64, info->lane_size);
     }
@@ -113,7 +116,7 @@ simd_sequence_from_obj(PyObject *obj, simd_data_type dtype, unsigned min_size)
 }
 
 static int
-simd_sequence_fill_obj(PyObject *obj, const void *ptr, simd_data_type dtype)
+simd_sequence_fill_iterable(PyObject *obj, const void *ptr, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
     if (!PySequence_Check(obj)) {
@@ -123,12 +126,12 @@ simd_sequence_fill_obj(PyObject *obj, const void *ptr, simd_data_type dtype)
         return -1;
     }
     const npyv_lanetype_u8 *src = ptr;
-    Py_ssize_t seq_len = (Py_ssize_t)simd_sequence_len(ptr);
+    Py_ssize_t seq_len = simd_sequence_len(ptr);
     for (Py_ssize_t i = 0; i < seq_len; ++i) {
         const npyv_lanetype_u8 *ssrc = src + i * info->lane_size;
         simd_data data;
         memcpy(&data.u64, ssrc, info->lane_size);
-        PyObject *item = simd_scalar_to_obj(data, info->to_scalar);
+        PyObject *item = simd_scalar_to_number(data, info->to_scalar);
         if (item == NULL) {
             return -1;
         }
@@ -141,13 +144,13 @@ simd_sequence_fill_obj(PyObject *obj, const void *ptr, simd_data_type dtype)
 }
 
 static PyObject *
-simd_sequence_to_obj(const void *ptr, simd_data_type dtype)
+simd_sequence_to_list(const void *ptr, simd_data_type dtype)
 {
-    PyObject *list = PyList_New((Py_ssize_t)simd_sequence_len(ptr));
+    PyObject *list = PyList_New(simd_sequence_len(ptr));
     if (list == NULL) {
         return NULL;
     }
-    if (simd_sequence_fill_obj(list, ptr, dtype) < 0) {
+    if (simd_sequence_fill_iterable(list, ptr, dtype) < 0) {
         Py_DECREF(list);
         return NULL;
     }
@@ -155,7 +158,7 @@ simd_sequence_to_obj(const void *ptr, simd_data_type dtype)
 }
 
 static simd_data
-simd_vectorx_from_obj(PyObject *obj, simd_data_type dtype)
+simd_vectorx_from_tuple(PyObject *obj, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
     // NPYV currently only supports x2 and x3
@@ -172,7 +175,7 @@ simd_vectorx_from_obj(PyObject *obj, simd_data_type dtype)
     for (int i = 0; i < info->is_vectorx; ++i) {
         PyObject *item = PyTuple_GET_ITEM(obj, i);
         // get the max multi-vec and let the compiler do the rest
-        data.vu64x3.val[i] = simd_vector_from_obj((simd_vector*)item, info->to_vector).vu64;
+        data.vu64x3.val[i] = PySIMDVector_AsData((PySIMDVectorObject*)item, info->to_vector).vu64;
         if (PyErr_Occurred()) {
             return data;
         }
@@ -181,7 +184,7 @@ simd_vectorx_from_obj(PyObject *obj, simd_data_type dtype)
 }
 
 static PyObject *
-simd_vectorx_to_obj(simd_data data, simd_data_type dtype)
+simd_vectorx_to_tuple(simd_data data, simd_data_type dtype)
 {
     const simd_data_info *info = simd_data_getinfo(dtype);
     // NPYV currently only supports x2 and x3
@@ -194,7 +197,7 @@ simd_vectorx_to_obj(simd_data data, simd_data_type dtype)
     for (int i = 0; i < info->is_vectorx; ++i) {
         // get the max multi-vector and let the compiler handle the rest
         simd_data vdata = {.vu64 = data.vu64x3.val[i]};
-        PyObject *item = (PyObject*)simd_vector_to_obj(vdata, info->to_vector);
+        PyObject *item = (PyObject*)PySIMDVector_FromData(vdata, info->to_vector);
         if (item == NULL) {
             // TODO: improve log add item number
             Py_DECREF(tuple);

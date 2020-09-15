@@ -3,11 +3,11 @@
 #include "_simd_inc.h"
 
 #if NPY_SIMD
-#include "_simd_inc_data.h"
-#include "_simd_inc_convert.h"
-#include "_simd_inc_vector.h"
-#include "_simd_inc_arg.h"
-#include "_simd_inc_easyintrin.h"
+#include "_simd_data.inc"
+#include "_simd_convert.inc"
+#include "_simd_vector.inc"
+#include "_simd_arg.inc"
+#include "_simd_easyintrin.inc"
 
 /*************************************************************************
  * Defining NPYV intrinsics as module functions
@@ -39,26 +39,24 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, q@sfx@)
 static PyObject *
 simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
 {
-    simd_arg req_args[] = {
-        {.dtype = simd_data_q@sfx@},
-        {.dtype = simd_data_v@sfx@},
-    };
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg vec_arg = {.dtype = simd_data_v@sfx@};
     if (!PyArg_ParseTuple(
         args, "O&O&:@intrin@_@sfx@",
-        simd_arg_converter, &req_args[0],
-        simd_arg_converter, &req_args[1]
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &vec_arg
     )) {
         return NULL;
     }
     npyv_@intrin@_@sfx@(
-        req_args[0].data.q@sfx@, req_args[1].data.v@sfx@
+        seq_arg.data.q@sfx@, vec_arg.data.v@sfx@
     );
     // write-back
-    if (simd_sequence_fill_obj(req_args[0].obj, req_args[0].data.q@sfx@, simd_data_q@sfx@)) {
-        simd_args_sequence_free(req_args, 2);
+    if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
+        simd_arg_free(&seq_arg);
         return NULL;
     }
-    simd_args_sequence_free(req_args, 2);
+    simd_arg_free(&seq_arg);
     Py_RETURN_NONE;
 }
 /**end repeat1**/
@@ -89,7 +87,7 @@ SIMD_IMPL_INTRIN_1(reinterpret_@sfx_to@_@sfx@, v@sfx_to@, v@sfx@)
 static PyObject *
 simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
 {
-    npyv_lanetype_@sfx@ *data = simd_sequence_from_obj(args, simd_data_q@sfx@, npyv_nlanes_@sfx@);
+    npyv_lanetype_@sfx@ *data = simd_sequence_from_iterable(args, simd_data_q@sfx@, npyv_nlanes_@sfx@);
     if (data == NULL) {
         return NULL;
     }
@@ -105,7 +103,7 @@ simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
         data[64] // for setf
     )};
     simd_sequence_free(data);
-    return (PyObject*)simd_vector_to_obj(r, simd_data_v@sfx@);
+    return (PyObject*)PySIMDVector_FromData(r, simd_data_v@sfx@);
 }
 /**end repeat1**/
 
@@ -354,7 +352,7 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
         goto err;
     }
 #if NPY_SIMD
-    if (simd_vector_register(m)) {
+    if (PySIMDVectorType_Init(m)) {
         goto err;
     }
     /**begin repeat

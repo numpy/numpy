@@ -1,63 +1,54 @@
-#if !NPY_SIMD
-    #error "Not a standalone header, only works through 'simd.dispatch.c.src'"
-#endif
-
+/**
+ * This file is included by `_simd.dispatch.c.src`. Its contents are affected by the simd configuration, and
+ * therefore must be built multiple times. Making it a standalone `.c` file with `NPY_VISIBILITY_HIDDEN`
+ * symbols would require judicious use of `NPY_CPU_DISPATCH_DECLARE` and `NPY_CPU_DISPATCH_CURFX`, which was
+ * deemed too harmful to readability.
+ */
 /************************************
  ** Private Definitions
  ************************************/
-// PySequenceMethods
 static Py_ssize_t
-simd__vector_length(simd_vector *self)
+simd__vector_length(PySIMDVectorObject *self)
 {
-    return simd_data_getinfo(self->type)->nlanes;
+    return simd_data_getinfo(self->dtype)->nlanes;
 }
 static PyObject *
-simd__vector_item(simd_vector *self, Py_ssize_t i)
+simd__vector_item(PySIMDVectorObject *self, Py_ssize_t i)
 {
-    const simd_data_info *info = simd_data_getinfo(self->type);
+    const simd_data_info *info = simd_data_getinfo(self->dtype);
     int nlanes = info->nlanes;
     if (i >= nlanes) {
-        PyErr_SetString(PyExc_IndexError, "list index out of range");
+        PyErr_SetString(PyExc_IndexError, "vector index out of range");
         return NULL;
     }
     npyv_lanetype_u8 *src = self->data + i * info->lane_size;
     simd_data data;
     memcpy(&data.u64, src, info->lane_size);
-    return simd_scalar_to_obj(data, info->to_scalar);
+    return simd_scalar_to_number(data, info->to_scalar);
 }
 
 static PySequenceMethods simd__vector_as_sequence = {
-    (lenfunc) simd__vector_length,           /* sq_length */
-    (binaryfunc) NULL,                       /* sq_concat */
-    (ssizeargfunc) NULL,                     /* sq_repeat */
-    (ssizeargfunc) simd__vector_item,        /* sq_item */
-    (ssizessizeargfunc) NULL,                /* sq_slice */
-    (ssizeobjargproc) NULL,                  /* sq_ass_item */
-    (ssizessizeobjargproc) NULL,             /* sq_ass_slice */
-    (objobjproc) NULL,                       /* sq_contains */
-    (binaryfunc) NULL,                       /* sq_inplace_concat */
-    (ssizeargfunc) NULL,                     /* sq_inplace_repeat */
+    .sq_length = (lenfunc) simd__vector_length,
+    .sq_item = (ssizeargfunc) simd__vector_item
 };
 
-// PyGetSetDef
 static PyObject *
-simd__vector_name(simd_vector *self)
+simd__vector_name(PySIMDVectorObject *self)
 {
-    return PyUnicode_FromString(simd_data_getinfo(self->type)->pyname);
+    return PyUnicode_FromString(simd_data_getinfo(self->dtype)->pyname);
 }
 static PyGetSetDef simd__vector_getset[] = {
     { "__name__", (getter)simd__vector_name, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL }
 };
 
-// PyTypeObject(simd__vector_type)
 static PyObject *
-simd__vector_repr(PyObject *self)
+simd__vector_repr(PySIMDVectorObject *self)
 {
-    // PySequence_Fast returns Tuple in PyPy
-    PyObject *obj = PySequence_List(self);
+    PyObject *obj = PySequence_List((PyObject*)self);
     if (obj != NULL) {
-        PyObject *repr = PyObject_Str(obj);
+        const char *type_name = simd_data_getinfo(self->dtype)->pyname;
+        PyObject *repr = PyUnicode_FromFormat("<%s of %R>", type_name, obj);
         Py_DECREF(obj);
         return repr;
     }
@@ -81,10 +72,10 @@ simd__vector_compare(PyObject *self, PyObject *other, int cmp_op)
     }
     return obj;
 }
-static PyTypeObject simd__vector_type = {
+static PyTypeObject PySIMDVectorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = NPY_TOSTRING(NPY_CPU_DISPATCH_CURFX(VECTOR)),
-    .tp_basicsize = sizeof(simd_vector),
+    .tp_basicsize = sizeof(PySIMDVectorObject),
     .tp_repr = (reprfunc)simd__vector_repr,
     .tp_as_sequence = &simd__vector_as_sequence,
     .tp_flags = Py_TPFLAGS_DEFAULT,
@@ -95,21 +86,21 @@ static PyTypeObject simd__vector_type = {
 /************************************
  ** Protected Definitions
  ************************************/
-static simd_vector *
-simd_vector_to_obj(simd_data data, simd_data_type vtype)
+static PySIMDVectorObject *
+PySIMDVector_FromData(simd_data data, simd_data_type dtype)
 {
-    const simd_data_info *info = simd_data_getinfo(vtype);
+    const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_vector && info->nlanes > 0);
 
-    simd_vector *vec = PyObject_New(simd_vector, &simd__vector_type);
+    PySIMDVectorObject *vec = PyObject_New(PySIMDVectorObject, &PySIMDVectorType);
     if (vec == NULL) {
-        return (simd_vector*)PyErr_NoMemory();
+        return (PySIMDVectorObject*)PyErr_NoMemory();
     }
-    vec->type = vtype;
+    vec->dtype = dtype;
     if (info->is_bool) {
         // boolean vectors are internally treated as unsigned
         // vectors to add compatibility among all SIMD extensions
-        switch(vtype) {
+        switch(dtype) {
         case simd_data_vb8:
             data.vu8 = npyv_cvt_u8_b8(data.vb8);
             break;
@@ -128,24 +119,24 @@ simd_vector_to_obj(simd_data data, simd_data_type vtype)
 }
 
 static simd_data
-simd_vector_from_obj(simd_vector *vec, simd_data_type vtype)
+PySIMDVector_AsData(PySIMDVectorObject *vec, simd_data_type dtype)
 {
-    const simd_data_info *info = simd_data_getinfo(vtype);
+    const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_vector && info->nlanes > 0);
 
     simd_data data = {.u64 = 0};
     if (!PyObject_IsInstance(
-        (PyObject *)vec, (PyObject *)&simd__vector_type
+        (PyObject *)vec, (PyObject *)&PySIMDVectorType
     )) {
         PyErr_Format(PyExc_TypeError,
             "a vector type %s is required", info->pyname
         );
         return data;
     }
-    if (vec->type != vtype) {
+    if (vec->dtype != dtype) {
         PyErr_Format(PyExc_TypeError,
             "a vector type %s is required, got(%s)",
-            info->pyname, simd_data_getinfo(vec->type)->pyname
+            info->pyname, simd_data_getinfo(vec->dtype)->pyname
         );
         return data;
     }
@@ -154,7 +145,7 @@ simd_vector_from_obj(simd_vector *vec, simd_data_type vtype)
     if (info->is_bool) {
         // boolean vectors are internally treated as unsigned
         // vectors to add compatibility among all SIMD extensions
-        switch(vtype) {
+        switch(dtype) {
         case simd_data_vb8:
             data.vb8 = npyv_cvt_b8_u8(data.vu8);
             break;
@@ -172,14 +163,14 @@ simd_vector_from_obj(simd_vector *vec, simd_data_type vtype)
 }
 
 static int
-simd_vector_register(PyObject *module)
+PySIMDVectorType_Init(PyObject *module)
 {
-    Py_INCREF(&simd__vector_type);
-    if (PyType_Ready(&simd__vector_type)) {
+    Py_INCREF(&PySIMDVectorType);
+    if (PyType_Ready(&PySIMDVectorType)) {
         return -1;
     }
     if (PyModule_AddObject(
-        module, "vector_type",(PyObject *)&simd__vector_type
+        module, "vector_type",(PyObject *)&PySIMDVectorType
     )) {
         return -1;
     }

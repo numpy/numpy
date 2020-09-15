@@ -1,7 +1,9 @@
-#if !NPY_SIMD
-    #error "Not a standalone header, only works through 'simd.dispatch.c.src'"
-#endif
-
+/**
+ * This file is included by `_simd.dispatch.c.src`. Its contents are affected by the simd configuration, and
+ * therefore must be built multiple times. Making it a standalone `.c` file with `NPY_VISIBILITY_HIDDEN`
+ * symbols would require judicious use of `NPY_CPU_DISPATCH_DECLARE` and `NPY_CPU_DISPATCH_CURFX`, which was
+ * deemed too harmful to readability.
+ */
 /************************************
  ** Private Definitions
  ************************************/

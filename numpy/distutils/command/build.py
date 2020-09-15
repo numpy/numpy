@@ -47,7 +47,7 @@ class build(old_build):
             - not part of dispatch-able features(--cpu-dispatch)
             - not supported by compiler or platform
         """
-        self.simd_test = "BASELINE SSE2 SSE41 SSE42 XOP (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD"
+        self.simd_test = "BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD"
 
     def finalize_options(self):
         build_scripts = self.build_scripts

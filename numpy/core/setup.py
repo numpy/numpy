@@ -983,18 +983,18 @@ def configuration(parent_package='',top_path=None):
         join('src', 'common', 'npy_cpu_features.c.src'),
         join('src', '_simd', '_simd.c'),
         join('src', '_simd', '_simd_inc.h.src'),
-        join('src', '_simd', '_simd_inc_data.h.src'),
+        join('src', '_simd', '_simd_data.inc.src'),
         join('src', '_simd', '_simd.dispatch.c.src'),
     ], depends=[
         join('src', 'common', 'npy_cpu_dispatch.h'),
         join('src', 'common', 'simd', 'simd.h'),
         join('src', '_simd', '_simd.h'),
         join('src', '_simd', '_simd_inc.h.src'),
-        join('src', '_simd', '_simd_inc_data.h.src'),
-        join('src', '_simd', '_simd_inc_arg.h'),
-        join('src', '_simd', '_simd_inc_convert.h'),
-        join('src', '_simd', '_simd_inc_easyintrin.h'),
-        join('src', '_simd', '_simd_inc_vector.h'),
+        join('src', '_simd', '_simd_data.inc.src'),
+        join('src', '_simd', '_simd_arg.inc'),
+        join('src', '_simd', '_simd_convert.inc'),
+        join('src', '_simd', '_simd_easyintrin.inc'),
+        join('src', '_simd', '_simd_vector.inc'),
     ])
 
     config.add_subpackage('tests')

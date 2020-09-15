@@ -1,33 +1,19 @@
-#if !NPY_SIMD
-    #error "Not a standalone header, only works through 'simd.dispatch.c.src'"
-#endif
-
+/**
+ * This file is included by `_simd.dispatch.c.src`. Its contents are affected by the simd configuration, and
+ * therefore must be built multiple times. Making it a standalone `.c` file with `NPY_VISIBILITY_HIDDEN`
+ * symbols would require judicious use of `NPY_CPU_DISPATCH_DECLARE` and `NPY_CPU_DISPATCH_CURFX`, which was
+ * deemed too harmful to readability.
+ */
 #define SIMD_INTRIN_DEF(NAME) \
     { NPY_TOSTRING(NAME), simd__intrin_##NAME, METH_VARARGS, NULL } , // comma
-
-static int simd__no_arguments(PyObject *args, const char* method_name)
-{
-    if (args == NULL) {
-        return 0;
-    }
-    assert(PyTuple_Check(args));
-    Py_ssize_t obj_arg_len = PyTuple_GET_SIZE(args);
-    if (obj_arg_len != 0) {
-        PyErr_Format(PyExc_RuntimeError,
-            "%s(), takes no arguments, given(%d)", method_name, obj_arg_len
-        );
-        return -1;
-    }
-    return 0;
-}
 
 #define SIMD_IMPL_INTRIN_0(NAME, RET)                     \
     static PyObject *simd__intrin_##NAME                  \
     (PyObject* NPY_UNUSED(self), PyObject *args)          \
     {                                                     \
-        if (simd__no_arguments(                           \
-            args, NPY_TOSTRING(NAME)                      \
-        )) return NULL;                                   \
+        if (!PyArg_ParseTuple(                            \
+            args, ":" NPY_TOSTRING(NAME))                 \
+        ) return NULL;                                    \
         simd_arg a = {                                    \
             .dtype = simd_data_##RET,                     \
             .data  = {.RET = npyv_##NAME()},              \
@@ -39,9 +25,9 @@ static int simd__no_arguments(PyObject *args, const char* method_name)
     static PyObject *simd__intrin_##NAME                  \
     (PyObject* NPY_UNUSED(self), PyObject *args)          \
     {                                                     \
-        if (simd__no_arguments(                           \
-            args, NPY_TOSTRING(NAME)                      \
-        )) return NULL;                                   \
+        if (!PyArg_ParseTuple(                            \
+            args, ":" NPY_TOSTRING(NAME))                 \
+        ) return NULL;                                    \
         npyv_##NAME();                                    \
         Py_RETURN_NONE;                                   \
     }
@@ -55,88 +41,87 @@ static int simd__no_arguments(PyObject *args, const char* method_name)
             args, "O&:"NPY_TOSTRING(NAME),                \
             simd_arg_converter, &arg                      \
         )) return NULL;                                   \
-        simd_data r = {.RET = npyv_##NAME(                \
+        simd_data data = {.RET = npyv_##NAME(             \
             arg.data.IN0                                  \
         )};                                               \
-        simd_args_sequence_free(&arg, 1);                 \
-        arg.data = r;                                     \
-        arg.dtype = simd_data_##RET;                      \
-        return simd_arg_to_obj(&arg);                     \
+        simd_arg_free(&arg);                              \
+        simd_arg ret = {                                  \
+            .data = data, .dtype = simd_data_##RET        \
+        };                                                \
+        return simd_arg_to_obj(&ret);                     \
     }
 
 #define SIMD_IMPL_INTRIN_2(NAME, RET, IN0, IN1)           \
     static PyObject *simd__intrin_##NAME                  \
     (PyObject* NPY_UNUSED(self), PyObject *args)          \
     {                                                     \
-        simd_arg req_args[] = {                           \
-            {.dtype = simd_data_##IN0},                   \
-            {.dtype = simd_data_##IN1},                   \
-        };                                                \
+        simd_arg arg1 = {.dtype = simd_data_##IN0};       \
+        simd_arg arg2 = {.dtype = simd_data_##IN1};       \
         if (!PyArg_ParseTuple(                            \
             args, "O&O&:"NPY_TOSTRING(NAME),              \
-            simd_arg_converter, &req_args[0],             \
-            simd_arg_converter, &req_args[1]              \
+            simd_arg_converter, &arg1,                    \
+            simd_arg_converter, &arg2                     \
         )) return NULL;                                   \
-        simd_data r = {.RET = npyv_##NAME(                \
-            req_args[0].data.IN0,                         \
-            req_args[1].data.IN1                          \
+        simd_data data = {.RET = npyv_##NAME(             \
+            arg1.data.IN0, arg2.data.IN1                  \
         )};                                               \
-        simd_args_sequence_free(req_args, 2);             \
-        req_args[0].data = r;                             \
-        req_args[0].dtype = simd_data_##RET;              \
-        return simd_arg_to_obj(req_args);                 \
+        simd_arg_free(&arg1);                             \
+        simd_arg_free(&arg2);                             \
+        simd_arg ret = {                                  \
+            .data = data, .dtype = simd_data_##RET        \
+        };                                                \
+        return simd_arg_to_obj(&ret);                     \
     }
 
 #define SIMD__REPEAT_2IMM(C, NAME, IN0) \
-    C == req_args[1].data.u8 ? NPY_CAT(npyv_, NAME)(req_args[0].data.IN0, C) :
+    C == arg2.data.u8 ? NPY_CAT(npyv_, NAME)(arg1.data.IN0, C) :
 
 #define SIMD_IMPL_INTRIN_2IMM(NAME, RET, IN0, CONST_RNG)  \
     static PyObject *simd__intrin_##NAME                  \
     (PyObject* NPY_UNUSED(self), PyObject *args)          \
     {                                                     \
-        simd_arg req_args[] = {                           \
-            {.dtype = simd_data_##IN0},                   \
-            {.dtype = simd_data_u8},                      \
-        };                                                \
+        simd_arg arg1 = {.dtype = simd_data_##IN0};       \
+        simd_arg arg2 = {.dtype = simd_data_u8};          \
         if (!PyArg_ParseTuple(                            \
             args, "O&O&:"NPY_TOSTRING(NAME),              \
-            simd_arg_converter, &req_args[0],             \
-            simd_arg_converter, &req_args[1]              \
+            simd_arg_converter, &arg1,                    \
+            simd_arg_converter, &arg2                     \
         )) return NULL;                                   \
-        simd_data r;                                      \
-        r.RET = NPY_CAT(SIMD__IMPL_COUNT_, CONST_RNG)(    \
+        simd_data data;                                   \
+        data.RET = NPY_CAT(SIMD__IMPL_COUNT_, CONST_RNG)( \
             SIMD__REPEAT_2IMM, NAME, IN0                  \
-        ) npyv_##NAME(req_args[0].data.IN0, 0);           \
-        simd_args_sequence_free(req_args, 2);             \
-        req_args[0].data = r;                             \
-        req_args[0].dtype = simd_data_##RET;              \
-        return simd_arg_to_obj(req_args);                 \
+        ) npyv_##NAME(arg1.data.IN0, 0);                  \
+        simd_arg_free(&arg1);                             \
+        simd_arg ret = {                                  \
+            .data = data, .dtype = simd_data_##RET        \
+        };                                                \
+        return simd_arg_to_obj(&ret);                     \
     }
 
 #define SIMD_IMPL_INTRIN_3(NAME, RET, IN0, IN1, IN2)      \
     static PyObject *simd__intrin_##NAME                  \
     (PyObject* NPY_UNUSED(self), PyObject *args)          \
     {                                                     \
-        simd_arg req_args[] = {                           \
-            {.dtype = simd_data_##IN0},                   \
-            {.dtype = simd_data_##IN1},                   \
-            {.dtype = simd_data_##IN2},                   \
-        };                                                \
+        simd_arg arg1 = {.dtype = simd_data_##IN0};       \
+        simd_arg arg2 = {.dtype = simd_data_##IN1};       \
+        simd_arg arg3 = {.dtype = simd_data_##IN2};       \
         if (!PyArg_ParseTuple(                            \
             args, "O&O&O&:"NPY_TOSTRING(NAME),            \
-            simd_arg_converter, &req_args[0],             \
-            simd_arg_converter, &req_args[1],             \
-            simd_arg_converter, &req_args[2]              \
+            simd_arg_converter, &arg1,                    \
+            simd_arg_converter, &arg2,                    \
+            simd_arg_converter, &arg3                     \
         )) return NULL;                                   \
-        simd_data r = {.RET = npyv_##NAME(                \
-            req_args[0].data.IN0,                         \
-            req_args[1].data.IN1,                         \
-            req_args[2].data.IN2                          \
+        simd_data data = {.RET = npyv_##NAME(             \
+            arg1.data.IN0, arg2.data.IN1,                 \
+            arg3.data.IN2                                 \
         )};                                               \
-        simd_args_sequence_free(req_args, 3);             \
-        req_args[0].data = r;                             \
-        req_args[0].dtype = simd_data_##RET;              \
-        return simd_arg_to_obj(req_args);                 \
+        simd_arg_free(&arg1);                             \
+        simd_arg_free(&arg2);                             \
+        simd_arg_free(&arg3);                             \
+        simd_arg ret = {                                  \
+            .data = data, .dtype = simd_data_##RET        \
+        };                                                \
+        return simd_arg_to_obj(&ret);                     \
     }
 /**
  * Helper macros for repeating and expand a certain macro.

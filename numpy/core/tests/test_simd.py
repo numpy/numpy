@@ -3,7 +3,7 @@
 import pytest
 from numpy.core._simd import targets
 
-class _Test_Utility(object):
+class _Test_Utility:
     # submodule of the desired SIMD extention, e.g. targets["AVX512F"]
     npyv = None
     # the current data type suffix e.g. 's8'
@@ -14,10 +14,7 @@ class _Test_Utility(object):
         To call NPV intrinsics without the prefix 'npyv_' and
         auto suffixing intrinsics according to class attribute 'sfx'
         """
-        nattr = getattr(self.npyv, attr + "_" + self.sfx)
-        if callable(nattr):
-            return lambda *args: nattr(*args)
-        return nattr
+        return getattr(self.npyv, attr + "_" + self.sfx)
 
     def _data(self, n=None, reverse=False):
         """
@@ -87,7 +84,7 @@ class _SIMD_INT(_Test_Utility):
     """
     def test_operators_shift(self):
         if self.sfx in ("u8", "s8"):
-            pytest.skip("there are no shift intrinsics for npyv_" + self.sfx)
+            return
 
         data_a = self._data(self._int_max() - self.nlanes)
         data_b = self._data(self._int_min(), reverse=True)
@@ -113,7 +110,7 @@ class _SIMD_INT(_Test_Utility):
 
     def test_arithmetic_subadd_saturated(self):
         if self.sfx in ("u32", "s32", "u64", "s64"):
-            pytest.skip("there are no saturated add/sub intrinsics for npyv_" + self.sfx)
+            return
 
         data_a = self._data(self._int_max() - self.nlanes)
         data_b = self._data(self._int_min(), reverse=True)
@@ -362,7 +359,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_mul(self):
         if self.sfx in ("u64", "s64"):
-            pytest.skip("there is no multiplication intrinsic for npyv_" + self.sfx)
+            return
 
         if self._is_fp():
             data_a = self._data()
@@ -377,7 +374,7 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_arithmetic_div(self):
         if not self._is_fp():
-            pytest.skip("there is no division intrinsic for npyv_" + self.sfx)
+            return
 
         data_a, data_b = self._data(), self._data(reverse=True)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
@@ -387,17 +384,18 @@ class _SIMD_ALL(_Test_Utility):
         div = self.div(vdata_a, vdata_b)
         assert div == data_div
 
+
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")
 fp_sfx  = ("f32", "f64")
 all_sfx = int_sfx + fp_sfx
 tests_registery = {
-    int_sfx : "_SIMD_INT",
-    fp_sfx  : "_SIMD_FP",
-    all_sfx : "_SIMD_ALL"
+    int_sfx : _SIMD_INT,
+    fp_sfx  : _SIMD_FP,
+    all_sfx : _SIMD_ALL
 }
-for name, npyv in targets.items():
+for target_name, npyv in targets.items():
     simd_width = npyv.simd if npyv else ''
-    pretty_name = name.split('__') # multi-target separator
+    pretty_name = target_name.split('__') # multi-target separator
     if len(pretty_name) > 1:
         # multi-target
         pretty_name = f"({' '.join(pretty_name)})"
@@ -413,14 +411,12 @@ for name, npyv in targets.items():
     elif not npyv.simd_f64:
         skip_sfx["f64"] = f"target '{pretty_name}' doesn't support double-precision"
 
-    for sfxes, class_name in tests_registery.items():
+    for sfxes, cls in tests_registery.items():
         for sfx in sfxes:
             skip_m = skip_sfx.get(sfx, skip)
+            inhr = (cls,)
+            attr = dict(npyv=targets[target_name], sfx=sfx)
+            tcls = type(f"Test{cls.__name__}_{simd_width}_{target_name}_{sfx}", inhr, attr)
             if skip_m:
-                skip_m = '@pytest.mark.skip(reason="%s")' % skip_m
-            exec(
-                f"{skip_m}\n"
-                f"class Test{class_name}_{simd_width}_{name}_{sfx}({class_name}):\n"
-                f"   npyv = targets['{name}']\n"
-                f"   sfx  = '{sfx}'\n"
-            )
+                pytest.mark.skip(reason=skip_m)(tcls)
+            globals()[tcls.__name__] = tcls
