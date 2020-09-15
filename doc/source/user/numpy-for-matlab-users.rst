@@ -821,4 +821,4 @@ See
 <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
 for a list of softwares that use Python as a scripting language
 
-MATLAB®  and SimuLink® are registered trademarks of MathWorks.
+MATLAB® and SimuLink® are registered trademarks of The MathWorks, Inc.
