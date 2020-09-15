@@ -315,7 +315,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     if (!PyTypeNum_ISUSERDEF(descr->type_num) &&
                                         !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_ValueError,
-                        "At least one of the types provided to"
+                        "At least one of the types provided to "
                         "RegisterCanCast must be user-defined.");
         return -1;
     }

@@ -315,7 +315,11 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     if (Py_TYPE(descr) != &PyArrayDescr_Type) {
         PyErr_Format(PyExc_RuntimeError,
                 "During creation/wrapping of legacy DType, the original class "
-                "was not PyArrayDescr_Type (it is replaced in this step).");
+                "was not of PyArrayDescr_Type (it is replaced in this step). "
+                "The extension creating a custom DType for type %S must be "
+                "modified to ensure `Py_TYPE(descr) == &PyArrayDescr_Type` at "
+                "registration time.",
+                descr->typeobj);
         return -1;
     }
 
