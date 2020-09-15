@@ -60,7 +60,7 @@ Some key differences
 
    * - MATLAB array slicing uses pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent creating copies until they are
-       needed. Slicing copies parts of the array.
+       needed. Slicing operations copy parts of the array.
      - NumPy array slicing uses pass-by-reference, that does not copy
        the arguments. Slicing operations are views into an array.
    
