@@ -47,7 +47,7 @@ static NPY_INLINE npy_bool
 PySequence_NoString_Check(PyObject *op) {
     return
         PySequence_Check(op) &&
-        !PyString_Check(op) &&
+        !PyBytes_Check(op) &&
         !PyUnicode_Check(op) &&
         !PyArray_IsZeroDim(op);
 }
@@ -175,7 +175,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE#
- * #func1 = PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2,
+ * #func1 = PyBool_FromLong, PyLong_FromLong*6, PyLong_FromUnsignedLong*2,
  *          PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
  *          MyPyFloat_FromHalf, PyFloat_FromDouble*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
@@ -4461,7 +4461,7 @@ set_typeinfo(PyObject *dict)
             return -1;
         }
     }
-    key = PyInt_FromLong(NPY_@name2@);
+    key = PyLong_FromLong(NPY_@name2@);
     if (key == NULL) {
         return -1;
     }
