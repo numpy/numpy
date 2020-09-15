@@ -58,13 +58,12 @@ Some key differences
        <https://en.wikipedia.org/wiki/List_of_Python_software#Embedded_as_a_scripting_language>`_
        in other software, allowing NumPy to be used there too. 
 
-   * - In MATLAB, arrays have pass-by-value semantics, with a lazy
-       copy-on-write scheme to prevent creating copies until they
-       are needed.  Slice operations copy parts of the array.
-     - In NumPy, arrays have pass-by-reference semantics.  Slice operations
-       are views into an array.
-
-
+   * - MATLAB array slicing uses pass-by-value semantics, with a lazy
+       copy-on-write scheme to prevent creating copies until they are
+       needed. Slice operation copy parts of the array.
+     - NumPy array slicing uses pass-by-reference, that does not copy
+       the arguments. Slice operations are views into an array.
+   
 
 Rough equivalents
 =======================================
