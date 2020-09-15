@@ -306,7 +306,7 @@ typedef struct
 {
     simd_data_type dtype;
     simd_data data;
-    // set by simd_args_from_tuple()
+    // set by simd_arg_converter()
     PyObject *obj;
 } simd_arg;
 /**
@@ -365,9 +365,8 @@ simd_arg_from_obj(PyObject *obj, simd_arg *arg);
 static PyObject *
 simd_arg_to_obj(const simd_arg *arg);
 /**
- * Similar to simd_arg_from_obj() but convert multiple objects
- * from a Python tuple.
- * This function is used to parse method parameters.
+ * Converter function used similar to simd_arg_from_obj() but
+ * used with PyArg_Parse*().
  *
  * Notes:
  *  - requires `simd_args_sequence_free()` or `simd_sequence_free()`
@@ -376,16 +375,26 @@ simd_arg_to_obj(const simd_arg *arg);
  *    types is the number of lanes of the equivalent vector data type.
  *  - use 'arg->obj' to retrieve the parameter obj.
  *
- * Parameters:
- *  - `tuple_obj`: a valid Python tuple
- *  - `args`: array of 'simd_arg' contain valid data types
- *  - `args_len`: length of `args`.
- *  - `method_name`: method name, required for exception message.
- *
- * Return -1 and raise Python exception on failure, otherwise return 0.
+ * Example:
+ **  simd_arg req_args[] = {
+ **     {.dtype = simd_data_qf32},
+ **     {.dtype = simd_data_vf32},
+ **  };
+ **  if (!PyArg_ParseTuple(
+ **     args, "O&O&:add_sum_f32",
+ **     simd_arg_converter, &req_args[0],
+ **     simd_arg_converter, &req_args[1]
+ **  )) {
+ **     // fail
+ **     return;
+ **  }
+ **  npyv_f32 load_a = npyv_load_f32(req_args[0].data.qf32);
+ **  npyv_f32 sum = npyv_add_f32(load_a, req_args[1].data.vf32);
+ **  ...
+ **  simd_args_sequence_free(req_args, 2);
  */
 static int
-simd_args_from_tuple(PyObject *tuple_obj, simd_arg *args, int args_len, const char *method_name);
+simd_arg_converter(PyObject *obj, simd_arg *arg);
 /**
  * Free the allocated C array for sequence data types.
  */

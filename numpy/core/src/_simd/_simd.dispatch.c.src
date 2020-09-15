@@ -43,7 +43,11 @@ simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
         {.dtype = simd_data_q@sfx@},
         {.dtype = simd_data_v@sfx@},
     };
-    if (simd_args_from_tuple(args, req_args, 2, "@intrin@_@sfx@")) {
+    if (!PyArg_ParseTuple(
+        args, "O&O&:@intrin@_@sfx@",
+        simd_arg_converter, &req_args[0],
+        simd_arg_converter, &req_args[1]
+    )) {
         return NULL;
     }
     npyv_@intrin@_@sfx@(

@@ -73,36 +73,16 @@ simd_args_sequence_free(simd_arg *args, int args_len)
 }
 
 static int
-simd_args_from_tuple(PyObject *tuple_obj, simd_arg *args, int args_len, const char *method_name)
+simd_arg_converter(PyObject *obj, simd_arg *arg)
 {
-    assert(args_len > 0);
-    assert(PyTuple_Check(tuple_obj));
-
-    Py_ssize_t obj_arg_len = PyTuple_GET_SIZE(tuple_obj);
-    if (obj_arg_len != args_len) {
-        if (args_len == 1) {
-            PyErr_Format(PyExc_TypeError,
-                "%s() takes only one argument (%d given)", method_name, obj_arg_len
-            );
-            return -1;
+    if (obj != NULL) {
+        if (simd_arg_from_obj(obj, arg) < 0) {
+            return 0;
         }
-        PyErr_Format(PyExc_TypeError,
-            "%s() takes exactly %d arguments (%d given)", method_name, args_len, obj_arg_len
-        );
-        return -1;
+        arg->obj = obj;
+        return Py_CLEANUP_SUPPORTED;
+    } else {
+        simd_args_sequence_free(arg, 1);
     }
-    for (int arg_pos = 0; arg_pos < args_len; ++arg_pos) {
-        simd_arg *arg = &args[arg_pos];
-        arg->obj = PyTuple_GET_ITEM(tuple_obj, arg_pos);
-        assert(arg->obj != NULL);
-        if (simd_arg_from_obj(arg->obj, arg) != 0) {
-            // free previous args
-            if (arg_pos > 0) {
-                simd_args_sequence_free(args, arg_pos);
-            }
-            // TODO: improve log by add argument number and method name
-            return -1;
-        }
-    }
-    return 0;
+    return 1;
 }
