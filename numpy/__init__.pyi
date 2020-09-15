@@ -490,13 +490,6 @@ class _ArrayOrScalarCommon(
     def argmin(
         self, axis: Optional[_ShapeLike] = ..., out: _NdArraySubClass = ...
     ) -> _NdArraySubClass: ...
-    def argpartition(
-        self,
-        kth: _ArrayLikeIntOrBool,
-        axis: Optional[int] = ...,
-        kind: _PartitionKind = ...,
-        order: Union[None, str, Sequence[str]] = ...,
-    ) -> ndarray: ...
     def argsort(
         self,
         axis: Optional[int] = ...,
@@ -545,8 +538,8 @@ class _ArrayOrScalarCommon(
     ) -> _NdArraySubClass: ...
     @overload
     def compress(
-        self: _ArraySelf, a: ArrayLike, axis: Optional[int] = ..., out: None = ...,
-    ) -> _ArraySelf: ...
+        self, a: ArrayLike, axis: Optional[int] = ..., out: None = ...,
+    ) -> ndarray: ...
     @overload
     def compress(
         self, a: ArrayLike, axis: Optional[int] = ..., out: _NdArraySubClass = ...,
@@ -575,13 +568,6 @@ class _ArrayOrScalarCommon(
         dtype: DtypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
-    def diagonal(
-        self: _ArraySelf, offset: int = ..., axis1: int = ..., axis2: int = ...
-    ) -> _ArraySelf: ...
-    @overload
-    def dot(self, b: ArrayLike, out: None = ...) -> Union[number, ndarray]: ...
-    @overload
-    def dot(self, b: ArrayLike, out: _NdArraySubClass = ...) -> _NdArraySubClass: ...
     @overload
     def max(
         self,
@@ -661,14 +647,6 @@ class _ArrayOrScalarCommon(
         where: _ArrayLikeBool = ...,
     ) -> _NdArraySubClass: ...
     def newbyteorder(self: _ArraySelf, __new_order: _ByteOrder = ...) -> _ArraySelf: ...
-    def nonzero(self) -> Tuple[ndarray, ...]: ...
-    def partition(
-        self,
-        kth: _ArrayLikeIntOrBool,
-        axis: int = ...,
-        kind: _PartitionKind = ...,
-        order: Union[None, str, Sequence[str]] = ...,
-    ) -> None: ...
     @overload
     def prod(
         self,
@@ -714,9 +692,6 @@ class _ArrayOrScalarCommon(
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
-    def put(
-        self, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _Mode = ...
-    ) -> None: ...
     def repeat(
         self, repeats: _ArrayLikeIntOrBool, axis: Optional[int] = ...
     ) -> ndarray: ...
@@ -726,21 +701,6 @@ class _ArrayOrScalarCommon(
     def round(
         self, decimals: int = ..., out: _NdArraySubClass = ...
     ) -> _NdArraySubClass: ...
-    def searchsorted(
-        self,
-        v: ArrayLike,
-        side: _Side = ...,
-        sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
-    ) -> ndarray: ...
-    def setfield(
-        self, val: ArithmeticError, dtype: DtypeLike, offset: int = ...
-    ) -> None: ...
-    def sort(
-        self,
-        axis: Optional[int] = ...,
-        kind: Optional[_SortKind] = ...,
-        order: Union[None, str, Sequence[str]] = ...,
-    ) -> None: ...
     @overload
     def std(
         self,
@@ -823,24 +783,6 @@ class _ArrayOrScalarCommon(
         mode: _Mode = ...,
     ) -> _NdArraySubClass: ...
     @overload
-    def trace(
-        self,  # >= 2D array
-        offset: int = ...,
-        axis1: int = ...,
-        axis2: int = ...,
-        dtype: DtypeLike = ...,
-        out: None = ...,
-    ) -> Union[number, ndarray]: ...
-    @overload
-    def trace(
-        self,  # >= 2D array
-        offset: int = ...,
-        axis1: int = ...,
-        axis2: int = ...,
-        dtype: DtypeLike = ...,
-        out: _NdArraySubClass = ...,
-    ) -> _NdArraySubClass: ...
-    @overload
     def var(
         self,
         axis: None = ...,
@@ -901,6 +843,67 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def strides(self) -> _Shape: ...
     @strides.setter
     def strides(self, value: _ShapeLike): ...
+    def argpartition(
+        self,
+        kth: _ArrayLikeIntOrBool,
+        axis: Optional[int] = ...,
+        kind: _PartitionKind = ...,
+        order: Union[None, str, Sequence[str]] = ...,
+    ) -> ndarray: ...
+    def diagonal(
+        self: _ArraySelf, offset: int = ..., axis1: int = ..., axis2: int = ...
+    ) -> _ArraySelf: ...
+    @overload
+    def dot(self, b: ArrayLike, out: None = ...) -> Union[number, ndarray]: ...
+    @overload
+    def dot(self, b: ArrayLike, out: _NdArraySubClass = ...) -> _NdArraySubClass: ...
+    # `nonzero()` is deprecated for 0d arrays/generics
+    def nonzero(self) -> Tuple[ndarray, ...]: ...
+    def partition(
+        self,
+        kth: _ArrayLikeIntOrBool,
+        axis: int = ...,
+        kind: _PartitionKind = ...,
+        order: Union[None, str, Sequence[str]] = ...,
+    ) -> None: ...
+    # `put` is technically available to `generic`,
+    # but is pointless as `generic`s are immutable
+    def put(
+        self, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _Mode = ...
+    ) -> None: ...
+    def searchsorted(
+        self,  # >= 1D array
+        v: ArrayLike,
+        side: _Side = ...,
+        sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
+    ) -> ndarray: ...
+    def setfield(
+        self, val: ArrayLike, dtype: DtypeLike, offset: int = ...
+    ) -> None: ...
+    def sort(
+        self,
+        axis: int = ...,
+        kind: Optional[_SortKind] = ...,
+        order: Union[None, str, Sequence[str]] = ...,
+    ) -> None: ...
+    @overload
+    def trace(
+        self,  # >= 2D array
+        offset: int = ...,
+        axis1: int = ...,
+        axis2: int = ...,
+        dtype: DtypeLike = ...,
+        out: None = ...,
+    ) -> Union[number, ndarray]: ...
+    @overload
+    def trace(
+        self,  # >= 2D array
+        offset: int = ...,
+        axis1: int = ...,
+        axis2: int = ...,
+        dtype: DtypeLike = ...,
+        out: _NdArraySubClass = ...,
+    ) -> _NdArraySubClass: ...
     # Many of these special methods are irrelevant currently, since protocols
     # aren't supported yet. That said, I'm adding them for completeness.
     # https://docs.python.org/3/reference/datamodel.html
