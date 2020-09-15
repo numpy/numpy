@@ -127,6 +127,9 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->scalarkind = NULL;
     f->cancastscalarkindto = NULL;
     f->cancastto = NULL;
+    f->fastclip = NULL;
+    f->fastputmask = NULL;
+    f->fasttake = NULL;
 }
 
 
