@@ -374,8 +374,8 @@ def issubdtype(arg1, arg2):
 
     See Also
     --------
+    :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
     issubsctype, issubclass_
-    numpy.core.numerictypes : Overview of numpy type hierarchy.
 
     Examples
     --------

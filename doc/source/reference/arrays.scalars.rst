@@ -29,7 +29,7 @@ an array scalar object. Alternatively, what kind of array scalar is
 present can be determined using other members of the data type
 hierarchy. Thus, for example ``isinstance(val, np.complexfloating)``
 will return :py:data:`True` if *val* is a complex valued type, while
-:const:`isinstance(val, np.flexible)` will return true if *val* is one
+``isinstance(val, np.flexible)`` will return true if *val* is one
 of the flexible itemsize array types (:class:`string`,
 :class:`unicode`, :class:`void`).
 
@@ -65,19 +65,22 @@ Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
-====================  ================================
-Array scalar type     Related Python type
-====================  ================================
-:class:`int_`         :class:`IntType` (Python 2 only)
-:class:`float_`       :class:`FloatType`
-:class:`complex_`     :class:`ComplexType`
-:class:`bytes_`       :class:`BytesType`
-:class:`unicode_`     :class:`UnicodeType`
-====================  ================================
+====================  ===========================  =============
+Array scalar type     Related Python type          Inherits?
+====================  ===========================  =============
+:class:`int_`         :class:`int`                 Python 2 only
+:class:`float_`       :class:`float`               yes
+:class:`complex_`     :class:`complex`             yes
+:class:`bytes_`       :class:`bytes`               yes
+:class:`str_`         :class:`str`                 yes
+:class:`bool_`        :class:`bool`                no
+:class:`datetime64`   :class:`datetime.datetime`   no
+:class:`timedelta64`  :class:`datetime.timedelta`  no
+====================  ===========================  =============
 
 The :class:`bool_` data type is very similar to the Python
-:class:`BooleanType` but does not inherit from it because Python's
-:class:`BooleanType` does not allow itself to be inherited from, and
+:class:`bool` but does not inherit from it because Python's
+:class:`bool` does not allow itself to be inherited from, and
 on the C-level the size of the actual bool data is not the same as a
 Python Boolean scalar.
 
@@ -86,7 +89,7 @@ Python Boolean scalar.
    The :class:`bool_` type is not a subclass of the :class:`int_` type
    (the :class:`bool_` is not even a number type). This is different
    than Python's default implementation of :class:`bool` as a
-   sub-class of int.
+   sub-class of :class:`int`.
 
 .. warning::
 
@@ -113,11 +116,11 @@ Type                 Remarks                        Character code
 Integers:
 
 ===================  =============================  ===============
-:class:`byte`        compatible: C char             ``'b'``
-:class:`short`       compatible: C short            ``'h'``
-:class:`intc`        compatible: C int              ``'i'``
-:class:`int_`        compatible: Python int         ``'l'``
-:class:`longlong`    compatible: C long long        ``'q'``
+:class:`byte`        compatible: C ``char``         ``'b'``
+:class:`short`       compatible: C ``short``        ``'h'``
+:class:`intc`        compatible: C ``int``          ``'i'``
+:class:`int_`        compatible: C ``long``         ``'l'``
+:class:`longlong`    compatible: C ``long long``    ``'q'``
 :class:`intp`        large enough to fit a pointer  ``'p'``
 :class:`int8`        8 bits
 :class:`int16`       16 bits
@@ -127,18 +130,18 @@ Integers:
 
 Unsigned integers:
 
-===================  =============================  ===============
-:class:`ubyte`       compatible: C unsigned char    ``'B'``
-:class:`ushort`      compatible: C unsigned short   ``'H'``
-:class:`uintc`       compatible: C unsigned int     ``'I'``
-:class:`uint`        compatible: Python int         ``'L'``
-:class:`ulonglong`   compatible: C long long        ``'Q'``
-:class:`uintp`       large enough to fit a pointer  ``'P'``
+===================  =================================  ===============
+:class:`ubyte`       compatible: C ``unsigned char``    ``'B'``
+:class:`ushort`      compatible: C ``unsigned short``   ``'H'``
+:class:`uintc`       compatible: C ``unsigned int``     ``'I'``
+:class:`uint`        compatible: C ``long``             ``'L'``
+:class:`ulonglong`   compatible: C ``long long``        ``'Q'``
+:class:`uintp`       large enough to fit a pointer      ``'P'``
 :class:`uint8`       8 bits
 :class:`uint16`      16 bits
 :class:`uint32`      32 bits
 :class:`uint64`      64 bits
-===================  =============================  ===============
+===================  =================================  ===============
 
 Floating-point numbers:
 
