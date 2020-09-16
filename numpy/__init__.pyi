@@ -107,6 +107,14 @@ from numpy.core.fromnumeric import (
     var,
 )
 
+from numpy.core._asarray import (
+    asarray,
+    asanyarray,
+    ascontiguousarray,
+    asfortranarray,
+    require,
+)
+
 # Add an object to `__all__` if their stubs are defined in an external file;
 # their stubs will not be recognized otherwise.
 # NOTE: This is redundant for objects defined within this file.
@@ -152,6 +160,11 @@ __all__ = [
     "mean",
     "std",
     "var",
+    "asarray",
+    "asanyarray",
+    "ascontiguousarray",
+    "asfortranarray",
+    "require",
 ]
 
 DataSource: Any
