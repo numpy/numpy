@@ -8,7 +8,7 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns
+    assert_raises_regex, assert_warns, IS_PYPY
     )
 
 
@@ -320,6 +320,19 @@ class TestConcatenate:
         assert_(out is rout)
         assert_equal(res, rout)
 
+    @pytest.mark.skipif(IS_PYPY, reason="PYPY handles sq_concat, nb_add differently than cpython")
+    def test_operator_concat(self):
+        import operator
+        a = array([1, 2])
+        b = array([3, 4])
+        n = [1,2]
+        res = array([1, 2, 3, 4])
+        assert_raises(TypeError, operator.concat, a, b)
+        assert_raises(TypeError, operator.concat, a, n)
+        assert_raises(TypeError, operator.concat, n, a)
+        assert_raises(TypeError, operator.concat, a, 1)
+        assert_raises(TypeError, operator.concat, 1, a)
+
     def test_bad_out_shape(self):
         a = array([1, 2])
         b = array([3, 4])
@@ -329,19 +342,32 @@ class TestConcatenate:
         assert_raises(ValueError, concatenate, (a, b), out=np.empty((1,4)))
         concatenate((a, b), out=np.empty(4))
 
-    def test_out_dtype(self):
-        out = np.empty(4, np.float32)
-        res = concatenate((array([1, 2]), array([3, 4])), out=out)
-        assert_(out is res)
+    @pytest.mark.parametrize("axis", [None, 0])
+    @pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8"])
+    @pytest.mark.parametrize("casting",
+            ['no', 'equiv', 'safe', 'same_kind', 'unsafe'])
+    def test_out_and_dtype(self, axis, out_dtype, casting):
+        # Compare usage of `out=out` with `dtype=out.dtype`
+        out = np.empty(4, dtype=out_dtype)
+        to_concat = (array([1.1, 2.2]), array([3.3, 4.4]))
 
-        out = np.empty(4, np.complex64)
-        res = concatenate((array([0.1, 0.2]), array([0.3, 0.4])), out=out)
-        assert_(out is res)
+        if not np.can_cast(to_concat[0], out_dtype, casting=casting):
+            with assert_raises(TypeError):
+                concatenate(to_concat, out=out, axis=axis, casting=casting)
+            with assert_raises(TypeError):
+                concatenate(to_concat, dtype=out.dtype,
+                            axis=axis, casting=casting)
+        else:
+            res_out = concatenate(to_concat, out=out,
+                                  axis=axis, casting=casting)
+            res_dtype = concatenate(to_concat, dtype=out.dtype,
+                                    axis=axis, casting=casting)
+            assert res_out is out
+            assert_array_equal(out, res_dtype)
+            assert res_dtype.dtype == out_dtype
 
-        # invalid cast
-        out = np.empty(4, np.int32)
-        assert_raises(TypeError, concatenate,
-            (array([0.1, 0.2]), array([0.3, 0.4])), out=out)
+        with assert_raises(TypeError):
+            concatenate(to_concat, out=out, dtype=out_dtype, axis=axis)
 
 
 def test_stack():

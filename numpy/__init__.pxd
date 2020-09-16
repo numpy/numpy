@@ -1,15 +1,7 @@
-# NumPy static imports for Cython
+# NumPy static imports for Cython < 3.0
 #
 # If any of the PyArray_* functions are called, import_array must be
 # called first.
-#
-# This also defines backwards-compatibility buffer acquisition
-# code for use in Python 2.x (or Python <= 2.5 when NumPy starts
-# implementing PEP-3118 directly).
-#
-# Because of laziness, the format string of the buffer is statically
-# allocated. Increase the size if this is not enough, or submit a
-# patch to do this properly.
 #
 # Author: Dag Sverre Seljebotn
 #
@@ -26,6 +18,7 @@ cimport libc.stdio as stdio
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t
+    bint PyObject_TypeCheck(object obj, PyTypeObject* type)
 
 cdef extern from "numpy/arrayobject.h":
     ctypedef Py_intptr_t npy_intp
@@ -220,18 +213,18 @@ cdef extern from "numpy/arrayobject.h":
         cdef int type_num
         cdef int itemsize "elsize"
         cdef int alignment
-        cdef dict fields
+        cdef object fields
         cdef tuple names
         # Use PyDataType_HASSUBARRAY to test whether this field is
         # valid (the pointer can be NULL). Most users should access
         # this field via the inline helper method PyDataType_SHAPE.
         cdef PyArray_ArrayDescr* subarray
 
-    ctypedef extern class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
+    ctypedef class numpy.flatiter [object PyArrayIterObject, check_size ignore]:
         # Use through macros
         pass
 
-    ctypedef extern class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
+    ctypedef class numpy.broadcast [object PyArrayMultiIterObject, check_size ignore]:
         cdef int numiter
         cdef npy_intp size, index
         cdef int nd
@@ -297,8 +290,8 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef long double  npy_float128
 
     ctypedef struct npy_cfloat:
-        double real
-        double imag
+        float real
+        float imag
 
     ctypedef struct npy_cdouble:
         double real
@@ -607,7 +600,7 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_Choose (ndarray, object, ndarray, NPY_CLIPMODE)
     int PyArray_Sort (ndarray, int, NPY_SORTKIND)
     object PyArray_ArgSort (ndarray, int, NPY_SORTKIND)
-    object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE, object)
+    object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE, PyObject *)
     object PyArray_ArgMax (ndarray, int, ndarray)
     object PyArray_ArgMin (ndarray, int, ndarray)
     object PyArray_Reshape (ndarray, object)
@@ -760,72 +753,67 @@ cdef inline tuple PyDataType_SHAPE(dtype d):
     else:
         return ()
 
-cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:
-    # Recursive utility function used in __getbuffer__ to get format
-    # string. The new location in the format string is returned.
 
-    cdef dtype child
-    cdef int endian_detector = 1
-    cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)
-    cdef tuple fields
+cdef extern from "numpy/ndarrayobject.h":
+    PyTypeObject PyTimedeltaArrType_Type
+    PyTypeObject PyDatetimeArrType_Type
+    ctypedef int64_t npy_timedelta
+    ctypedef int64_t npy_datetime
 
-    for childname in descr.names:
-        fields = descr.fields[childname]
-        child, new_offset = fields
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct PyArray_DatetimeMetaData:
+        NPY_DATETIMEUNIT base
+        int64_t num
 
-        if (end - f) - <int>(new_offset - offset[0]) < 15:
-            raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
+cdef extern from "numpy/arrayscalars.h":
 
-        if ((child.byteorder == c'>' and little_endian) or
-            (child.byteorder == c'<' and not little_endian)):
-            raise ValueError(u"Non-native byte order not supported")
-            # One could encode it in the format string and have Cython
-            # complain instead, BUT: < and > in format strings also imply
-            # standardized sizes for datatypes, and we rely on native in
-            # order to avoid reencoding data types based on their size.
-            #
-            # A proper PEP 3118 exporter for other clients than Cython
-            # must deal properly with this!
+    # abstract types
+    ctypedef class numpy.generic [object PyObject]:
+        pass
+    ctypedef class numpy.number [object PyObject]:
+        pass
+    ctypedef class numpy.integer [object PyObject]:
+        pass
+    ctypedef class numpy.signedinteger [object PyObject]:
+        pass
+    ctypedef class numpy.unsignedinteger [object PyObject]:
+        pass
+    ctypedef class numpy.inexact [object PyObject]:
+        pass
+    ctypedef class numpy.floating [object PyObject]:
+        pass
+    ctypedef class numpy.complexfloating [object PyObject]:
+        pass
+    ctypedef class numpy.flexible [object PyObject]:
+        pass
+    ctypedef class numpy.character [object PyObject]:
+        pass
 
-        # Output padding bytes
-        while offset[0] < new_offset:
-            f[0] = 120 # "x"; pad byte
-            f += 1
-            offset[0] += 1
+    ctypedef struct PyDatetimeScalarObject:
+        # PyObject_HEAD
+        npy_datetime obval
+        PyArray_DatetimeMetaData obmeta
 
-        offset[0] += child.itemsize
+    ctypedef struct PyTimedeltaScalarObject:
+        # PyObject_HEAD
+        npy_timedelta obval
+        PyArray_DatetimeMetaData obmeta
 
-        if not PyDataType_HASFIELDS(child):
-            t = child.type_num
-            if end - f < 5:
-                raise RuntimeError(u"Format string allocated too short.")
-
-            # Until ticket #99 is fixed, use integers to avoid warnings
-            if   t == NPY_BYTE:        f[0] =  98 #"b"
-            elif t == NPY_UBYTE:       f[0] =  66 #"B"
-            elif t == NPY_SHORT:       f[0] = 104 #"h"
-            elif t == NPY_USHORT:      f[0] =  72 #"H"
-            elif t == NPY_INT:         f[0] = 105 #"i"
-            elif t == NPY_UINT:        f[0] =  73 #"I"
-            elif t == NPY_LONG:        f[0] = 108 #"l"
-            elif t == NPY_ULONG:       f[0] = 76  #"L"
-            elif t == NPY_LONGLONG:    f[0] = 113 #"q"
-            elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
-            elif t == NPY_FLOAT:       f[0] = 102 #"f"
-            elif t == NPY_DOUBLE:      f[0] = 100 #"d"
-            elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
-            elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
-            elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
-            elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg
-            elif t == NPY_OBJECT:      f[0] = 79 #"O"
-            else:
-                raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
-            f += 1
-        else:
-            # Cython ignores struct boundary information ("T{...}"),
-            # so don't output it
-            f = _util_dtypestring(child, f, end, offset)
-    return f
+    ctypedef enum NPY_DATETIMEUNIT:
+        NPY_FR_Y
+        NPY_FR_M
+        NPY_FR_W
+        NPY_FR_D
+        NPY_FR_B
+        NPY_FR_h
+        NPY_FR_m
+        NPY_FR_s
+        NPY_FR_ms
+        NPY_FR_us
+        NPY_FR_ns
+        NPY_FR_ps
+        NPY_FR_fs
+        NPY_FR_as
 
 
 #
@@ -836,7 +824,7 @@ cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
-    ctypedef extern class numpy.ufunc [object PyUFuncObject, check_size ignore]:
+    ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
         cdef:
             int nin, nout, nargs
             int identity
@@ -976,3 +964,57 @@ cdef extern from *:
     """
     /* NumPy API declarations from "numpy/__init__.pxd" */
     """
+
+
+cdef inline bint is_timedelta64_object(object obj):
+    """
+    Cython equivalent of `isinstance(obj, np.timedelta64)`
+
+    Parameters
+    ----------
+    obj : object
+
+    Returns
+    -------
+    bool
+    """
+    return PyObject_TypeCheck(obj, &PyTimedeltaArrType_Type)
+
+
+cdef inline bint is_datetime64_object(object obj):
+    """
+    Cython equivalent of `isinstance(obj, np.datetime64)`
+
+    Parameters
+    ----------
+    obj : object
+
+    Returns
+    -------
+    bool
+    """
+    return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)
+
+
+cdef inline npy_datetime get_datetime64_value(object obj) nogil:
+    """
+    returns the int64 value underlying scalar numpy datetime64 object
+
+    Note that to interpret this as a datetime, the corresponding unit is
+    also needed.  That can be found using `get_datetime64_unit`.
+    """
+    return (<PyDatetimeScalarObject*>obj).obval
+
+
+cdef inline npy_timedelta get_timedelta64_value(object obj) nogil:
+    """
+    returns the int64 value underlying scalar numpy timedelta64 object
+    """
+    return (<PyTimedeltaScalarObject*>obj).obval
+
+
+cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
+    """
+    returns the unit part of the dtype for a numpy datetime64 object.
+    """
+    return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base

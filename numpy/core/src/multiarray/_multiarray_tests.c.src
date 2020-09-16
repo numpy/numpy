@@ -9,8 +9,6 @@
 #include "common.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
-#include "common.h"
-
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -188,7 +186,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
+        bounds[i] = PyLong_AsSsize_t(bound);
         Py_DECREF(bound);
     }
 
@@ -347,7 +345,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
+        bounds[i] = PyLong_AsSsize_t(bound);
         Py_DECREF(bound);
     }
 
@@ -371,7 +369,7 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             Py_DECREF(bound);
             goto clean_itx;
         }
-        bounds[i] = PyInt_AsLong(bound);
+        bounds[i] = PyLong_AsSsize_t(bound);
         Py_DECREF(bound);
     }
 
@@ -1155,11 +1153,11 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
     }
 
     for (j = 0; j < nterms; ++j) {
-        terms[j].a = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(A, j));
+        terms[j].a = (npy_int64)PyLong_AsSsize_t(PyTuple_GET_ITEM(A, j));
         if (error_converting(terms[j].a)) {
             goto fail;
         }
-        terms[j].ub = (npy_int64)PyInt_AsSsize_t(PyTuple_GET_ITEM(U, j));
+        terms[j].ub = (npy_int64)PyLong_AsSsize_t(PyTuple_GET_ITEM(U, j));
         if (error_converting(terms[j].ub)) {
             goto fail;
         }
@@ -1735,8 +1733,8 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
 /**begin repeat
  * #N = 1,2,3#
  */
-    alignment = PyInt_FromLong(_ALIGN(struct TestStruct@N@));
-    size = PyInt_FromLong(sizeof(struct TestStruct@N@));
+    alignment = PyLong_FromLong(_ALIGN(struct TestStruct@N@));
+    size = PyLong_FromLong(sizeof(struct TestStruct@N@));
     val = PyTuple_Pack(2, alignment, size);
     Py_DECREF(alignment);
     Py_DECREF(size);
@@ -1902,7 +1900,7 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, val);
     }
 
-    return PyUString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 
@@ -1952,7 +1950,7 @@ run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SWAP: return PyUnicode_FromString("NPY_SWAP");
         case NPY_IGNORE: return PyUnicode_FromString("NPY_IGNORE");
     }
-    return PyInt_FromLong(byteorder);
+    return PyLong_FromLong(byteorder);
 }
 
 static PyObject *
@@ -1967,7 +1965,7 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
         case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
     }
-    return PyInt_FromLong(kind);
+    return PyLong_FromLong(kind);
 }
 
 static PyObject *
@@ -1980,7 +1978,7 @@ run_selectkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     switch (kind) {
         case NPY_INTROSELECT: return PyUnicode_FromString("NPY_INTROSELECT");
     }
-    return PyInt_FromLong(kind);
+    return PyLong_FromLong(kind);
 }
 
 static PyObject *
@@ -1994,7 +1992,7 @@ run_searchside_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SEARCHLEFT: return PyUnicode_FromString("NPY_SEARCHLEFT");
         case NPY_SEARCHRIGHT: return PyUnicode_FromString("NPY_SEARCHRIGHT");
     }
-    return PyInt_FromLong(side);
+    return PyLong_FromLong(side);
 }
 
 static PyObject *
@@ -2010,7 +2008,7 @@ run_order_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_FORTRANORDER: return PyUnicode_FromString("NPY_FORTRANORDER");
         case NPY_KEEPORDER: return PyUnicode_FromString("NPY_KEEPORDER");
     }
-    return PyInt_FromLong(order);
+    return PyLong_FromLong(order);
 }
 
 static PyObject *
@@ -2025,7 +2023,7 @@ run_clipmode_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_WRAP: return PyUnicode_FromString("NPY_WRAP");
         case NPY_RAISE: return PyUnicode_FromString("NPY_RAISE");
     }
-    return PyInt_FromLong(mode);
+    return PyLong_FromLong(mode);
 }
 
 static PyObject *
@@ -2042,9 +2040,24 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
     }
-    return PyInt_FromLong(casting);
+    return PyLong_FromLong(casting);
 }
 
+static PyObject *
+run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    PyArray_Dims dims = {NULL, -1};
+    if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter, &dims)) {
+        return NULL;
+    }
+    if (dims.len == -1) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *tup = PyArray_IntTupleFromIntp(dims.len, dims.ptr);
+    PyDimMem_FREE(dims.ptr);
+    return tup;
+}
 
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
@@ -2217,6 +2230,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"run_casting_converter",
         run_casting_converter,
+        METH_VARARGS, NULL},
+    {"run_intp_converter",
+        run_intp_converter,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

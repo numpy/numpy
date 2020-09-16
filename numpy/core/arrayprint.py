@@ -695,7 +695,7 @@ def array2string(a, max_line_width=None, precision=None,
 def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     needs_wrap = len(line) + len(word) > line_width
     if legacy != '1.13':
-        s# don't wrap lines if it won't help
+        # don't wrap lines if it won't help
         if len(line) <= len(next_line_prefix):
             needs_wrap = False
 
@@ -705,6 +705,33 @@ def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     line += word
     return s, line
 
+
+def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
+    """
+    Extends line with nicely formatted (possibly multi-line) string ``word``.
+    """
+    words = word.splitlines()
+    if len(words) == 1 or legacy == '1.13':
+        return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
+
+    max_word_length = max(len(word) for word in words)
+    if (len(line) + max_word_length > line_width and
+            len(line) > len(next_line_prefix)):
+        s += line.rstrip() + '\n'
+        line = next_line_prefix + words[0]
+        indent = next_line_prefix
+    else:
+        indent = len(line)*' '
+        line += words[0]
+
+    for word in words[1::]:
+        s += line.rstrip() + '\n'
+        line = indent + word
+
+    suffix_length = max_word_length - len(words[-1])
+    line += suffix_length*' '
+
+    return s, line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
@@ -758,7 +785,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line = hanging_indent
             for i in range(leading_items):
                 word = recurser(index + (i,), next_hanging_indent, next_width)
-                s, line = _extendLine(
+                s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
@@ -772,7 +799,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
-                s, line = _extendLine(
+                s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
@@ -780,7 +807,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                 # width of the separator is not considered on 1.13
                 elem_width = curr_width
             word = recurser(index + (-1,), next_hanging_indent, next_width)
-            s, line = _extendLine(
+            s, line = _extendLine_pretty(
                 s, line, word, elem_width, hanging_indent, legacy)
 
             s += line
@@ -1601,6 +1628,3 @@ def set_string_function(f, repr=True):
             return multiarray.set_string_function(_default_array_str, 0)
     else:
         return multiarray.set_string_function(f, repr)
-
-set_string_function(_default_array_str, False)
-set_string_function(_default_array_repr, True)

@@ -88,40 +88,21 @@ pygments_style = 'sphinx'
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
-    app.add_lexer('NumPyC', NumPyLexer(stripnl=False))
+    app.add_lexer('NumPyC', NumPyLexer)
 
 # -----------------------------------------------------------------------------
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
-if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
-                       "via git submodule init && git submodule update")
+html_theme = 'pydata_sphinx_theme'
 
-html_theme = 'scipy'
-html_theme_path = [themedir]
+html_logo = '_static/numpylogo.svg'
 
-if 'scipyorg' in tags:
-    # Build for the scipy.org website
-    html_theme_options = {
-        "edit_link": True,
-        "sidebar": "right",
-        "scipy_org_logo": True,
-        "rootlinks": [("https://scipy.org/", "Scipy.org"),
-                      ("https://docs.scipy.org/", "Docs")]
-    }
-else:
-    # Default build
-    html_theme_options = {
-        "edit_link": False,
-        "sidebar": "left",
-        "scipy_org_logo": False,
-        "rootlinks": [("https://numpy.org/", "NumPy.org"),
-                      ("https://numpy.org/doc", "Docs"),
-                     ]
-    }
-    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
+html_theme_options = {
+  "github_url": "https://github.com/numpy/numpy",
+  "twitter_url": "https://twitter.com/numpy_team",
+}
+
 
 html_additional_pages = {
     'index': 'indexcontent.html',
@@ -154,6 +135,9 @@ plot_html_show_source_link = False
 
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'
+
+# XeLaTeX for better support of unicode characters
+latex_engine = 'xelatex'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
@@ -237,11 +221,12 @@ texinfo_documents = [
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
+    'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
-    'skimage': ('https://scikit-image.org/docs/stable', None)
+    'skimage': ('https://scikit-image.org/docs/stable', None),
 }
 
 

@@ -1,5 +1,6 @@
 import warnings
 import itertools
+import sys
 
 import pytest
 
@@ -11,7 +12,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose,
+    assert_allclose, HAS_REFCOUNT,
     )
 from numpy.compat import pickle
 
@@ -610,7 +611,32 @@ class TestUfunc:
             warnings.simplefilter("always")
             u += v
             assert_equal(len(w), 1)
-            assert_(x[0,0]  != u[0, 0])
+            assert_(x[0, 0] != u[0, 0])
+
+        # Output reduction should not be allowed.
+        # See gh-15139
+        a = np.arange(6).reshape(3, 2)
+        b = np.ones(2)
+        out = np.empty(())
+        assert_raises(ValueError, umt.inner1d, a, b, out)
+        out2 = np.empty(3)
+        c = umt.inner1d(a, b, out2)
+        assert_(c is out2)
+
+    def test_out_broadcasts(self):
+        # For ufuncs and gufuncs (not for reductions), we currently allow
+        # the output to cause broadcasting of the input arrays.
+        # both along dimensions with shape 1 and dimensions which do not
+        # exist at all in the inputs.
+        arr = np.arange(3).reshape(1, 3)
+        out = np.empty((5, 4, 3))
+        np.add(arr, arr, out=out)
+        assert (out == np.arange(3) * 2).all()
+
+        # The same holds for gufuncs (gh-16484)
+        umt.inner1d(arr, arr, out=out)
+        # the result would be just a scalar `5`, but is broadcast fully:
+        assert (out == 5).all()
 
     def test_type_cast(self):
         msg = "type cast"
@@ -942,7 +968,10 @@ class TestUfunc:
         assert_array_equal(result, np.vstack((np.zeros(3), a[2], -a[1])))
         assert_raises(ValueError, umt.cross1d, np.eye(4), np.eye(4))
         assert_raises(ValueError, umt.cross1d, a, np.arange(4.))
+        # Wrong output core dimension.
         assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros((3, 4)))
+        # Wrong output broadcast dimension (see gh-15139).
+        assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros(3))
 
     def test_can_ignore_signature(self):
         # Comparing the effects of ? in signature:
@@ -1890,22 +1919,47 @@ class TestUfunc:
         assert_equal(y_base[1,:], y_base_copy[1,:])
         assert_equal(y_base[3,:], y_base_copy[3,:])
 
-    @pytest.mark.parametrize('output_shape',
-                             [(), (1,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('out_shape',
+                             [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
+    @pytest.mark.parametrize('keepdims', [True, False])
     @pytest.mark.parametrize('f_reduce', [np.add.reduce, np.minimum.reduce])
-    def test_reduce_wrong_dimension_output(self, f_reduce, output_shape):
+    def test_reduce_wrong_dimension_output(self, f_reduce, keepdims, out_shape):
         # Test that we're not incorrectly broadcasting dimensions.
         # See gh-15144 (failed for np.add.reduce previously).
         a = np.arange(12.).reshape(4, 3)
-        out = np.empty(output_shape, a.dtype)
-        assert_raises(ValueError, f_reduce, a, axis=0, out=out)
-        if output_shape != (1, 3):
-            assert_raises(ValueError, f_reduce, a, axis=0, out=out,
-                          keepdims=True)
+        out = np.empty(out_shape, a.dtype)
+
+        correct_out = f_reduce(a, axis=0, keepdims=keepdims)
+        if out_shape != correct_out.shape:
+            with assert_raises(ValueError):
+                f_reduce(a, axis=0, out=out, keepdims=keepdims)
         else:
-            check = f_reduce(a, axis=0, out=out, keepdims=True)
+            check = f_reduce(a, axis=0, out=out, keepdims=keepdims)
             assert_(check is out)
-            assert_array_equal(check, f_reduce(a, axis=0, keepdims=True))
+            assert_array_equal(check, correct_out)
+
+    def test_reduce_output_does_not_broadcast_input(self):
+        # Test that the output shape cannot broadcast an input dimension
+        # (it never can add dimensions, but it might expand an existing one)
+        a = np.ones((1, 10))
+        out_correct = (np.empty((1, 1)))
+        out_incorrect = np.empty((3, 1))
+        np.add.reduce(a, axis=-1, out=out_correct, keepdims=True)
+        np.add.reduce(a, axis=-1, out=out_correct[:, 0], keepdims=False)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect, keepdims=True)
+        with assert_raises(ValueError):
+            np.add.reduce(a, axis=-1, out=out_incorrect[:, 0], keepdims=False)
+
+    def test_reduce_output_subclass_ok(self):
+        class MyArr(np.ndarray):
+            pass
+
+        out = np.empty(())
+        np.add.reduce(np.ones(5), out=out)  # no subclass, all fine
+        out = out.view(MyArr)
+        assert np.add.reduce(np.ones(5), out=out) is out
+        assert type(np.add.reduce(out)) is MyArr
 
     def test_no_doc_string(self):
         # gh-9337
@@ -2021,3 +2075,60 @@ def test_ufunc_warn_with_nan(ufunc):
     else:
         raise ValueError('ufunc with more than 2 inputs')
 
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_ufunc_casterrors():
+    # Tests that casting errors are correctly reported and buffers are
+    # cleared.
+    # The following array can be added to itself as an object array, but
+    # the result cannot be cast to an integer output:
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * int(np.BUFSIZE * 1.5) +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.ones(len(arr), dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # Output casting failure:
+        np.add(arr, arr, out=out, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+    with pytest.raises(ValueError):
+        # Input casting failure:
+        np.add(arr, arr, out=out, dtype=np.intp, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize("offset",
+        [0, np.BUFSIZE//2, int(1.5*np.BUFSIZE)])
+def test_reduce_casterrors(offset):
+    # Test reporting of casting errors in reductions, we test various
+    # offsets to where the casting error will occur, since these may occur
+    # at different places during the reduction procedure. For example
+    # the first item may be special.
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.array(-1, dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # This is an unsafe cast, but we currently always allow that:
+        np.add.reduce(arr, dtype=np.intp, out=out)
+    assert count == sys.getrefcount(value)
+    # If an error occurred during casting, the operation is done at most until
+    # the error occurs (the result of which would be `value * offset`) and -1
+    # if the error happened immediately.
+    # This does not define behaviour, the output is invalid and thus undefined
+    assert out[()] < value * offset

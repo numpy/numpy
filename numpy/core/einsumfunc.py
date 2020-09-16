@@ -3,6 +3,7 @@ Implementation of optimized einsum.
 
 """
 import itertools
+import operator
 
 from numpy.core.multiarray import c_einsum
 from numpy.core.numeric import asanyarray, tensordot
@@ -576,11 +577,13 @@ def _parse_einsum_input(operands):
             for s in sub:
                 if s is Ellipsis:
                     subscripts += "..."
-                elif isinstance(s, int):
-                    subscripts += einsum_symbols[s]
                 else:
-                    raise TypeError("For this input type lists must contain "
-                                    "either int or Ellipsis")
+                    try:
+                        s = operator.index(s)
+                    except TypeError as e:
+                        raise TypeError("For this input type lists must contain "
+                                        "either int or Ellipsis") from e
+                    subscripts += einsum_symbols[s]
             if num != last:
                 subscripts += ","
 
@@ -589,11 +592,13 @@ def _parse_einsum_input(operands):
             for s in output_list:
                 if s is Ellipsis:
                     subscripts += "..."
-                elif isinstance(s, int):
-                    subscripts += einsum_symbols[s]
                 else:
-                    raise TypeError("For this input type lists must contain "
-                                    "either int or Ellipsis")
+                    try:
+                        s = operator.index(s)
+                    except TypeError as e:
+                        raise TypeError("For this input type lists must contain "
+                                        "either int or Ellipsis") from e
+                    subscripts += einsum_symbols[s]
     # Check for proper "->"
     if ("-" in subscripts) or (">" in subscripts):
         invalid = (subscripts.count("-") > 1) or (subscripts.count(">") > 1)
@@ -1353,10 +1358,17 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
         raise TypeError("Did not understand the following kwargs: %s"
                         % unknown_kwargs)
 
-
     # Build the contraction list and operand
     operands, contraction_list = einsum_path(*operands, optimize=optimize,
                                              einsum_call=True)
+
+    # Handle order kwarg for output array, c_einsum allows mixed case
+    output_order = kwargs.pop('order', 'K')
+    if output_order.upper() == 'A':
+        if all(arr.flags.f_contiguous for arr in operands):
+            output_order = 'F'
+        else:
+            output_order = 'C'
 
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
@@ -1407,4 +1419,4 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     if specified_out:
         return out
     else:
-        return operands[0]
+        return asanyarray(operands[0], order=output_order)

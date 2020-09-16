@@ -9,10 +9,7 @@ from os.path import join
 
 from numpy.distutils import log
 from distutils.dep_util import newer
-from distutils.sysconfig import get_config_var
-from numpy._build_utils.apple_accelerate import (
-    uses_accelerate_framework, get_sgemv_fix
-    )
+from sysconfig import get_config_var
 from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
@@ -392,7 +389,13 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import (get_info, blas_opt_info,
+                                             lapack_opt_info)
+
+    # Accelerate is buggy, disallow it. See also numpy/linalg/setup.py
+    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
+        if 'accelerate' in opt_order:
+            opt_order.remove('accelerate')
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -520,7 +523,7 @@ def configuration(parent_package='',top_path=None):
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
         # put common include directory in build_dir on search path
-        # allows using code generation in headers headers
+        # allows using code generation in headers
         config.add_include_dirs(join(build_dir, "src", "common"))
         config.add_include_dirs(join(build_dir, "src", "npymath"))
 
@@ -684,26 +687,6 @@ def configuration(parent_package='',top_path=None):
             subst_dict)
 
     #######################################################################
-    #                         npysort library                             #
-    #######################################################################
-
-    # This library is created for the build but it is not installed
-    npysort_sources = [join('src', 'common', 'npy_sort.h.src'),
-                       join('src', 'npysort', 'quicksort.c.src'),
-                       join('src', 'npysort', 'mergesort.c.src'),
-                       join('src', 'npysort', 'timsort.c.src'),
-                       join('src', 'npysort', 'heapsort.c.src'),
-                       join('src', 'npysort', 'radixsort.c.src'),
-                       join('src', 'common', 'npy_partition.h.src'),
-                       join('src', 'npysort', 'selection.c.src'),
-                       join('src', 'common', 'npy_binsearch.h.src'),
-                       join('src', 'npysort', 'binsearch.c.src'),
-                       ]
-    config.add_library('npysort',
-                       sources=npysort_sources,
-                       include_dirs=[])
-
-    #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 
@@ -735,6 +718,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ufunc_override.h'),
             join('src', 'common', 'umathmodule.h'),
             join('src', 'common', 'numpyos.h'),
+            join('src', 'common', 'npy_cpu_dispatch.h'),
+            join('src', 'common', 'simd', 'simd.h'),
             ]
 
     common_src = [
@@ -762,8 +747,6 @@ def configuration(parent_package='',top_path=None):
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
                            join('src', 'common', 'python_xerbla.c'),
                           ])
-        if uses_accelerate_framework(blas_info):
-            common_src.extend(get_sgemv_fix())
     else:
         extra_info = {}
 
@@ -772,9 +755,11 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     multiarray_deps = [
+            join('src', 'multiarray', 'abstractdtypes.h'),
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
+            join('src', 'multiarray', 'array_coercion.h'),
             join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
@@ -783,7 +768,10 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'conversion_utils.h'),
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
+            join('src', 'multiarray', 'dtypemeta.h'),
             join('src', 'multiarray', 'dragon4.h'),
+            join('src', 'multiarray', 'einsum_debug.h'),
+            join('src', 'multiarray', 'einsum_sumprod.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),
@@ -819,12 +807,14 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
             # add library sources as distuils does not consider libraries
             # dependencies
-            ] + npysort_sources + npymath_sources
+            ] + npymath_sources
 
     multiarray_src = [
+            join('src', 'multiarray', 'abstractdtypes.c'),
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'array_coercion.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'arrayfunction_override.c'),
@@ -841,9 +831,11 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'dtypemeta.c'),
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
             join('src', 'multiarray', 'einsum.c.src'),
+            join('src', 'multiarray', 'einsum_sumprod.c.src'),
             join('src', 'multiarray', 'flagsobject.c'),
             join('src', 'multiarray', 'getset.c'),
             join('src', 'multiarray', 'hashdescr.c'),
@@ -868,6 +860,16 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'typeinfo.c'),
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
+            join('src', 'common', 'npy_sort.h.src'),
+            join('src', 'npysort', 'quicksort.c.src'),
+            join('src', 'npysort', 'mergesort.c.src'),
+            join('src', 'npysort', 'timsort.c.src'),
+            join('src', 'npysort', 'heapsort.c.src'),
+            join('src', 'npysort', 'radixsort.c.src'),
+            join('src', 'common', 'npy_partition.h.src'),
+            join('src', 'npysort', 'selection.c.src'),
+            join('src', 'common', 'npy_binsearch.h.src'),
+            join('src', 'npysort', 'binsearch.c.src'),
             ]
 
     #######################################################################
@@ -918,7 +920,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
-                                 npymath_sources + common_src +
+                                 common_src +
                                  [generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
@@ -929,15 +931,18 @@ def configuration(parent_package='',top_path=None):
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         libraries=['npymath', 'npysort'],
+                         libraries=['npymath'],
                          extra_info=extra_info)
 
     #######################################################################
     #                        umath_tests module                           #
     #######################################################################
 
-    config.add_extension('_umath_tests',
-                    sources=[join('src', 'umath', '_umath_tests.c.src')])
+    config.add_extension('_umath_tests', sources=[
+        join('src', 'umath', '_umath_tests.c.src'),
+        join('src', 'umath', '_umath_tests.dispatch.c'),
+        join('src', 'common', 'npy_cpu_features.c.src'),
+    ])
 
     #######################################################################
     #                   custom rational dtype module                      #
@@ -963,6 +968,8 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('tests')
     config.add_data_dir('tests/data')
+    config.add_data_dir('tests/examples')
+    config.add_data_files('*.pyi')
 
     config.make_svn_version_py()
 

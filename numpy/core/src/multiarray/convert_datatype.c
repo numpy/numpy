@@ -12,8 +12,10 @@
 #include "npy_pycompat.h"
 #include "numpy/npy_math.h"
 
+#include "array_coercion.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "scalartypes.h"
 #include "mapping.h"
 
@@ -47,11 +49,11 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
 {
     PyObject *out;
 
-    /* If the requested dtype is flexible, adapt it */
-    dtype = PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), dtype);
+    Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(arr, (PyObject *)dtype));
     if (dtype == NULL) {
         return NULL;
     }
+
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
                                PyArray_NDIM(arr),
                                PyArray_DIMS(arr),
@@ -90,11 +92,14 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             PyObject *key;
             PyObject *cobj;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             cobj = PyDict_GetItem(obj, key);
             Py_DECREF(key);
-            if (cobj && NpyCapsule_Check(cobj)) {
-                castfunc = NpyCapsule_AsVoidPtr(cobj);
+            if (cobj && PyCapsule_CheckExact(cobj)) {
+                castfunc = PyCapsule_GetPointer(cobj, NULL);
+                if (castfunc == NULL) {
+                    return NULL;
+                }
             }
         }
     }
@@ -128,24 +133,22 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 }
 
 /*
+ * Legacy function to find the correct dtype when casting from any built-in
+ * dtype to NPY_STRING, NPY_UNICODE, NPY_VOID, and NPY_DATETIME with generic
+ * units.
+ *
  * This function returns a dtype based on flex_dtype and the values in
- * data_dtype and data_obj. It also calls Py_DECREF on the flex_dtype. If the
+ * data_dtype. It also calls Py_DECREF on the flex_dtype. If the
  * flex_dtype is not flexible, it returns it as-is.
  *
  * Usually, if data_obj is not an array, dtype should be the result
  * given by the PyArray_GetArrayParamsFromObject function.
  *
- * The data_obj may be NULL if just a dtype is known for the source.
- *
  * If *flex_dtype is NULL, returns immediately, without setting an
  * exception, leaving any previous error handling intact.
- *
- * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
- * and NPY_DATETIME with generic units.
  */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
-                            PyArray_Descr *flex_dtype)
+PyArray_AdaptFlexibleDType(PyArray_Descr *data_dtype, PyArray_Descr *flex_dtype)
 {
     PyArray_DatetimeMetaData *meta;
     PyArray_Descr *retval = NULL;
@@ -227,73 +230,6 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     break;
                 case NPY_OBJECT:
                     size = 64;
-                    if ((flex_type_num == NPY_STRING ||
-                            flex_type_num == NPY_UNICODE) &&
-                            data_obj != NULL) {
-                        PyObject *list;
-
-                        if (PyArray_CheckScalar(data_obj)) {
-                            list = PyArray_ToList((PyArrayObject *)data_obj);
-                            if (list != NULL) {
-                                PyObject *s = PyObject_Str(list);
-                                if (s == NULL) {
-                                    Py_DECREF(list);
-                                    Py_DECREF(retval);
-                                    return NULL;
-                                }
-                                else {
-                                    size = PyObject_Length(s);
-                                    Py_DECREF(s);
-                                }
-                                Py_DECREF(list);
-                            }
-                        }
-                        else if (PyArray_Check(data_obj)) {
-                            /*
-                             * Convert data array to list of objects since
-                             * GetArrayParamsFromObject won't iterate over
-                             * array.
-                             */
-                            PyArray_Descr *dtype = NULL;
-                            PyArrayObject *arr = NULL;
-                            int result;
-                            int ndim = 0;
-                            npy_intp dims[NPY_MAXDIMS];
-                            list = PyArray_ToList((PyArrayObject *)data_obj);
-                            result = PyArray_GetArrayParamsFromObject_int(
-                                    list,
-                                    retval,
-                                    0, &dtype,
-                                    &ndim, dims, &arr);
-                            Py_DECREF(list);
-                            Py_XDECREF(arr);
-                            if (result < 0) {
-                                Py_XDECREF(dtype);
-                                Py_DECREF(retval);
-                                return NULL;
-                            }
-                            if (result == 0 && dtype != NULL) {
-                                if (flex_type_num == NPY_UNICODE) {
-                                    size = dtype->elsize / 4;
-                                }
-                                else {
-                                    size = dtype->elsize;
-                                }
-                            }
-                            Py_XDECREF(dtype);
-                        }
-                        else if (PyArray_IsPythonScalar(data_obj)) {
-                            PyObject *s = PyObject_Str(data_obj);
-                            if (s == NULL) {
-                                Py_DECREF(retval);
-                                return NULL;
-                            }
-                            else {
-                                size = PyObject_Length(s);
-                                Py_DECREF(s);
-                            }
-                        }
-                    }
                     break;
                 case NPY_STRING:
                 case NPY_VOID:
@@ -353,12 +289,6 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                 retval = create_datetime_dtype(flex_type_num, meta);
                 Py_DECREF(flex_dtype);
             }
-            else if (data_obj != NULL) {
-                /* Detect the unit from the input's data */
-                retval = find_object_datetime_type(data_obj,
-                                                    flex_type_num);
-                Py_DECREF(flex_dtype);
-            }
         }
     }
     else {
@@ -412,25 +342,6 @@ PyArray_CanCastSafely(int fromtype, int totype)
     /* Identity */
     if (fromtype == totype) {
         return 1;
-    }
-    /* Special-cases for some types */
-    switch (fromtype) {
-        case NPY_DATETIME:
-        case NPY_TIMEDELTA:
-        case NPY_OBJECT:
-        case NPY_VOID:
-            return 0;
-        case NPY_BOOL:
-            return 1;
-    }
-    switch (totype) {
-        case NPY_BOOL:
-        case NPY_DATETIME:
-        case NPY_TIMEDELTA:
-            return 0;
-        case NPY_OBJECT:
-        case NPY_VOID:
-            return 1;
     }
 
     from = PyArray_DescrFromType(fromtype);
@@ -1292,7 +1203,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
                 PyDataType_MAKEUNSIZED(temp);
 
-                temp = PyArray_AdaptFlexibleDType(NULL, type2, temp);
+                temp = PyArray_AdaptFlexibleDType(type2, temp);
                 if (temp == NULL) {
                     return NULL;
                 }
@@ -1333,7 +1244,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
                 PyDataType_MAKEUNSIZED(temp);
-                temp = PyArray_AdaptFlexibleDType(NULL, type2, temp);
+                temp = PyArray_AdaptFlexibleDType(type2, temp);
                 if (temp == NULL) {
                     return NULL;
                 }
@@ -1384,7 +1295,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
                 PyDataType_MAKEUNSIZED(temp);
-                temp = PyArray_AdaptFlexibleDType(NULL, type1, temp);
+                temp = PyArray_AdaptFlexibleDType(type1, temp);
                 if (temp == NULL) {
                     return NULL;
                 }
@@ -1404,7 +1315,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
                 PyDataType_MAKEUNSIZED(temp);
-                temp = PyArray_AdaptFlexibleDType(NULL, type1, temp);
+                temp = PyArray_AdaptFlexibleDType(type1, temp);
                 if (temp == NULL) {
                     return NULL;
                 }
@@ -1419,8 +1330,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             break;
         case NPY_TIMEDELTA:
-            if (PyTypeNum_ISINTEGER(type_num1) ||
-                            PyTypeNum_ISFLOAT(type_num1)) {
+            if (PyTypeNum_ISSIGNED(type_num1)) {
                 return ensure_dtype_nbo(type2);
             }
             break;
@@ -2063,7 +1973,7 @@ PyArray_Zero(PyArrayObject *arr)
     }
 
     if (zero_obj == NULL) {
-        zero_obj = PyInt_FromLong((long) 0);
+        zero_obj = PyLong_FromLong((long) 0);
         if (zero_obj == NULL) {
             return NULL;
         }
@@ -2109,7 +2019,7 @@ PyArray_One(PyArrayObject *arr)
     }
 
     if (one_obj == NULL) {
-        one_obj = PyInt_FromLong((long) 1);
+        one_obj = PyLong_FromLong((long) 1);
         if (one_obj == NULL) {
             return NULL;
         }
@@ -2155,13 +2065,25 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
             return NPY_NOTYPE;
         }
     }
-
     if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &dtype) < 0) {
         return NPY_NOTYPE;
     }
 
     if (dtype == NULL) {
         ret = NPY_DEFAULT_TYPE;
+    }
+    else if (!NPY_DTYPE(dtype)->legacy) {
+        /*
+         * TODO: If we keep all type number style API working, by defining
+         *       type numbers always. We may be able to allow this again.
+         */
+        PyErr_Format(PyExc_TypeError,
+                "This function currently only supports native NumPy dtypes "
+                "and old-style user dtypes, but the dtype was %S.\n"
+                "(The function may need to be updated to support arbitrary"
+                "user dtypes.)",
+                dtype);
+        ret = NPY_NOTYPE;
     }
     else {
         ret = dtype->type_num;

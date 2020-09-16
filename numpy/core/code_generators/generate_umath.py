@@ -8,12 +8,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
 sys.path.pop(0)
 
-Zero = "PyInt_FromLong(0)"
-One = "PyInt_FromLong(1)"
+Zero = "PyLong_FromLong(0)"
+One = "PyLong_FromLong(1)"
 True_ = "(Py_INCREF(Py_True), Py_True)"
 False_ = "(Py_INCREF(Py_False), Py_False)"
 None_ = object()
-AllOnes = "PyInt_FromLong(-1)"
+AllOnes = "PyLong_FromLong(-1)"
 MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
 ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
@@ -48,8 +48,11 @@ class TypeDescription:
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
+    dispatch: list
+        Available SIMD ufunc loops, dispatched at runtime in specified order
+        Currently only supported for simples types (see make_arrays)
     """
-    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None, dispatch=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -62,6 +65,7 @@ class TypeDescription:
             out = out.replace('P', type)
         self.out = out
         self.simd = simd
+        self.dispatch = dispatch
 
     def finish_signature(self, nin, nout):
         if self.in_ is None:
@@ -86,7 +90,7 @@ def build_func_data(types, f):
     func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
-def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
+def TD(types, f=None, astype=None, in_=None, out=None, simd=None, dispatch=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -115,7 +119,14 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
             simdt = [k for k, v in simd if t in v]
         else:
             simdt = []
-        tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype, simd=simdt))
+        # [(dispatch file name without extension '.dispatch.c*', list of types)]
+        if dispatch:
+            dispt = [k for k, v in dispatch if t in v]
+        else:
+            dispt = []
+        tds.append(TypeDescription(
+            t, f=fd, in_=i, out=o, astype=astype, simd=simdt, dispatch=dispt
+        ))
     return tds
 
 class Ufunc:
@@ -531,7 +542,7 @@ defdict = {
           TD(flts, f="logaddexp", astype={'e':'f'})
           ),
 'logaddexp2':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, MinusInfinity,
           docstrings.get('numpy.core.umath.logaddexp2'),
           None,
           TD(flts, f="logaddexp2", astype={'e':'f'})
@@ -726,6 +737,7 @@ defdict = {
           None,
           TD('e', f='log', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
+          TD('d', simd=[('avx512f', 'd')]),
           TD('fdg' + cmplx, f='log'),
           TD(P, f='log'),
           ),
@@ -843,7 +855,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -855,19 +867,19 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, out='?'),
+          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.signbit'),
           None,
-          TD(flts, out='?'),
+          TD(flts, simd=[('avx512_skx', 'fd')], out='?'),
           ),
 'copysign':
     Ufunc(2, 1, None,
@@ -898,10 +910,10 @@ defdict = {
           docstrings.get('numpy.core.umath.ldexp'),
           None,
           [TypeDescription('e', None, 'ei', 'e'),
-          TypeDescription('f', None, 'fi', 'f'),
+          TypeDescription('f', None, 'fi', 'f', simd=['avx512_skx']),
           TypeDescription('e', FuncNameSuffix('long'), 'el', 'e'),
           TypeDescription('f', FuncNameSuffix('long'), 'fl', 'f'),
-          TypeDescription('d', None, 'di', 'd'),
+          TypeDescription('d', None, 'di', 'd', simd=['avx512_skx']),
           TypeDescription('d', FuncNameSuffix('long'), 'dl', 'd'),
           TypeDescription('g', None, 'gi', 'g'),
           TypeDescription('g', FuncNameSuffix('long'), 'gl', 'g'),
@@ -912,8 +924,8 @@ defdict = {
           docstrings.get('numpy.core.umath.frexp'),
           None,
           [TypeDescription('e', None, 'e', 'ei'),
-          TypeDescription('f', None, 'f', 'fi'),
-          TypeDescription('d', None, 'd', 'di'),
+          TypeDescription('f', None, 'f', 'fi', simd=['avx512_skx']),
+          TypeDescription('d', None, 'd', 'di', simd=['avx512_skx']),
           TypeDescription('g', None, 'g', 'gi'),
           ],
           ),
@@ -1024,12 +1036,25 @@ def make_arrays(funcdict):
                             ISA=vt.upper(), isa=vt,
                             fname=name, type=tname, idx=k
                         ))
+                if t.dispatch is not None:
+                    for dname in t.dispatch:
+                        code2list.append(textwrap.dedent("""\
+                        #ifndef NPY_DISABLE_OPTIMIZATION
+                        #include "{dname}.dispatch.h"
+                        #endif
+                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name});
+                        """).format(
+                            dname=dname, name=name, tname=tname, k=k
+                        ))
             else:
                 funclist.append('NULL')
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
-                except KeyError:
-                    raise ValueError("Could not handle {}[{}]".format(name, t.type))
+                except KeyError as e:
+                    raise ValueError(
+                        f"Could not handle {name}[{t.type}] "
+                        f"with nin={uf.nin}, nout={uf.nout}"
+                    ) from None
 
                 astype = ''
                 if not t.astype is None:

@@ -176,10 +176,9 @@ def _to_native_byte_order(*arrays):
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
     for a in arrays:
-        if a.dtype.type is type:
-            cast_arrays = cast_arrays + (_fastCT(a),)
-        else:
-            cast_arrays = cast_arrays + (_fastCT(a.astype(type)),)
+        if a.dtype.type is not type:
+            a = a.astype(type)
+        cast_arrays = cast_arrays + (_fastCT(a),)
     if len(cast_arrays) == 1:
         return cast_arrays[0]
     else:
@@ -2660,7 +2659,7 @@ def multi_dot(arrays, *, out=None):
 
     See Also
     --------
-    dot : dot multiplication with two arguments.
+    numpy.dot : dot multiplication with two arguments.
 
     References
     ----------

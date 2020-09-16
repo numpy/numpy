@@ -10,6 +10,7 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
+from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -20,13 +21,6 @@ TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
 
 def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
-
-
-if is_win64():
-    #_EXTRAFLAGS = ["-fno-leading-underscore"]
-    _EXTRAFLAGS = []
-else:
-    _EXTRAFLAGS = []
 
 
 class GnuFCompiler(FCompiler):
@@ -237,7 +231,7 @@ class GnuFCompiler(FCompiler):
 
     def _c_arch_flags(self):
         """ Return detected arch flags from CFLAGS """
-        from distutils import sysconfig
+        import sysconfig
         try:
             cflags = sysconfig.get_config_vars()['CFLAGS']
         except KeyError:
@@ -252,15 +246,20 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        if sys.platform[:3] == 'aix' or sys.platform == 'win32':
-            # Linux/Solaris/Unix support RPATH, Windows and AIX do not
+        if sys.platform == 'win32':
+            # Linux/Solaris/Unix support RPATH, Windows does not
             raise NotImplementedError
 
         # TODO: could use -Xlinker here, if it's supported
         assert "," not in dir
 
-        sep = ',' if sys.platform == 'darwin' else '='
-        return '-Wl,-rpath%s%s' % (sep, dir)
+        if sys.platform == 'darwin':
+            return f'-Wl,-rpath,{dir}'
+        elif sys.platform[:3] == 'aix':
+            # AIX RPATH is called LIBPATH
+            return f'-Wl,-blibpath:{dir}'
+        else:
+            return f'-Wl,-rpath={dir}'
 
 
 class Gnu95FCompiler(GnuFCompiler):
@@ -273,7 +272,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not v or v[0] != 'gfortran':
             return None
         v = v[1]
-        if v >= '4.':
+        if LooseVersion(v) >= "4":
             # gcc-4 series releases do not support -mno-cygwin option
             pass
         else:
@@ -291,11 +290,11 @@ class Gnu95FCompiler(GnuFCompiler):
     executables = {
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_f90' : [None, "-Wall", "-g",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],

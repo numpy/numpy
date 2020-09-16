@@ -2,16 +2,11 @@
 #include <Python.h>
 #include "structmember.h"
 
-#if PY_VERSION_HEX >= 0x03060000
 #include <pymem.h>
 /* public api in 3.7 */
 #if PY_VERSION_HEX < 0x03070000
 #define PyTraceMalloc_Track _PyTraceMalloc_Track
 #define PyTraceMalloc_Untrack _PyTraceMalloc_Untrack
-#endif
-#else
-#define PyTraceMalloc_Track(...)
-#define PyTraceMalloc_Untrack(...)
 #endif
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION

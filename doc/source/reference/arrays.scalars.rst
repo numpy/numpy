@@ -24,11 +24,11 @@ mixing scalar and array operations.
 
 Array scalars live in a hierarchy (see the Figure below) of data
 types. They can be detected using the hierarchy: For example,
-``isinstance(val, np.generic)`` will return :const:`True` if *val* is
+``isinstance(val, np.generic)`` will return :py:data:`True` if *val* is
 an array scalar object. Alternatively, what kind of array scalar is
 present can be determined using other members of the data type
 hierarchy. Thus, for example ``isinstance(val, np.complexfloating)``
-will return :const:`True` if *val* is a complex valued type, while
+will return :py:data:`True` if *val* is a complex valued type, while
 :const:`isinstance(val, np.flexible)` will return true if *val* is one
 of the flexible itemsize array types (:class:`string`,
 :class:`unicode`, :class:`void`).

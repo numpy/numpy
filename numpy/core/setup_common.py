@@ -40,7 +40,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000c - 1.14.x
 # 0x0000000c - 1.15.x
 # 0x0000000d - 1.16.x
-C_API_VERSION = 0x0000000d
+# 0x0000000e - 1.19.x
+C_API_VERSION = 0x0000000e
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -146,6 +147,10 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX2"),
                        ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
                         "stdio.h", "LINK_AVX512F"),
+                       ("__asm__ volatile", '"vfpclasspd $0x40, %zmm15, %k6\\n"\
+                                             "vmovdqu8 %xmm0, %xmm1\\n"\
+                                             "vpbroadcastmb2q %k0, %xmm0\\n"',
+                        "stdio.h", "LINK_AVX512_SKX"),
                        ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
@@ -164,6 +169,8 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_target_avx2'),
                                 ('__attribute__((target ("avx512f")))',
                                  'attribute_target_avx512f'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                 'attribute_target_avx512_skx'),
                                 ]
 
 # function attributes with intrinsics
@@ -171,6 +178,9 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 # gcc 4.8.4 support attributes but not with intrisics
 # tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
+# The _mm512_castps_si512 instruction is specific check for AVX-512F support
+# in gcc-4.9 which is missing a subset of intrinsics. See
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61878
 OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
                                 'attribute_target_avx2_with_intrinsics',
                                 '__m256 temp = _mm256_set1_ps(1.0); temp = \
@@ -178,7 +188,13 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
                                 'immintrin.h'),
                                 ('__attribute__((target("avx512f")))',
                                 'attribute_target_avx512f_with_intrinsics',
-                                '__m512 temp = _mm512_set1_ps(1.0)',
+                                '__m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0))',
+                                'immintrin.h'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                'attribute_target_avx512_skx_with_intrinsics',
+                                '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
+                                __m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0));\
+                                _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
                                 'immintrin.h'),
                                 ]
 

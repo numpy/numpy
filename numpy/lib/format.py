@@ -41,7 +41,7 @@ Capabilities
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
   able to create a solution in their preferred programming language to
-  read most ``.npy`` files that he has been given without much
+  read most ``.npy`` files that they have been given without much
   documentation.
 
 - Allows memory-mapping of the data. See `open_memmep`.
@@ -156,8 +156,8 @@ names.
 Notes
 -----
 The ``.npy`` format, including motivation for creating it and a comparison of
-alternatives, is described in the `"npy-format" NEP
-<https://www.numpy.org/neps/nep-0001-npy-format.html>`_, however details have
+alternatives, is described in the
+:doc:`"npy-format" NEP <neps:nep-0001-npy-format>`, however details have
 evolved with time and this document is more current.
 
 """
@@ -280,14 +280,26 @@ def dtype_to_descr(dtype):
         return dtype.str
 
 def descr_to_dtype(descr):
-    '''
-    descr may be stored as dtype.descr, which is a list of
-    (name, format, [shape]) tuples where format may be a str or a tuple.
-    Offsets are not explicitly saved, rather empty fields with
-    name, format == '', '|Vn' are added as padding.
+    """
+    Returns a dtype based off the given description.
 
-    This function reverses the process, eliminating the empty padding fields.
-    '''
+    This is essentially the reverse of `dtype_to_descr()`. It will remove
+    the valueless padding fields created by, i.e. simple fields like
+    dtype('float32'), and then convert the description to its corresponding
+    dtype.
+
+    Parameters
+    ----------
+    descr : object
+        The object retreived by dtype.descr. Can be passed to
+        `numpy.dtype()` in order to replicate the input dtype.
+
+    Returns
+    -------
+    dtype : dtype
+        The dtype constructed by the description.
+
+    """
     if isinstance(descr, str):
         # No padding removal needed
         return numpy.dtype(descr)
@@ -820,7 +832,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     See Also
     --------
-    memmap
+    numpy.memmap
 
     """
     if isfileobj(filename):

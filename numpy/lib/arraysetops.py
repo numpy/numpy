@@ -206,6 +206,7 @@ def unique(ar, return_index=False, return_inverse=False,
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+    repeat : Repeat elements of an array.
 
     Notes
     -----
@@ -244,7 +245,7 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a[indices]
     array(['a', 'b', 'c'], dtype='<U1')
 
-    Reconstruct the input array from the unique values:
+    Reconstruct the input array from the unique values and inverse:
 
     >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
     >>> u, indices = np.unique(a, return_inverse=True)
@@ -254,6 +255,17 @@ def unique(ar, return_index=False, return_inverse=False,
     array([0, 1, 4, 3, 1, 2, 1])
     >>> u[indices]
     array([1, 2, 6, 4, 2, 3, 2])
+
+    Reconstruct the input values from the unique values and counts:
+
+    >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
+    >>> values, counts = np.unique(a, return_counts=True)
+    >>> values
+    array([1, 2, 3, 4, 6])
+    >>> counts
+    array([1, 3, 1, 1, 1])
+    >>> np.repeat(values, counts)
+    array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
     """
     ar = np.asanyarray(ar)
@@ -266,7 +278,7 @@ def unique(ar, return_index=False, return_inverse=False,
         ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.AxisError(axis, ar.ndim)
+        raise np.AxisError(axis, ar.ndim) from None
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
@@ -288,10 +300,10 @@ def unique(ar, return_index=False, return_inverse=False,
             # array with shape `(len(ar),)`.  Because `dtype` in this case has
             # itemsize 0, the total size of the result is still 0 bytes.
             consolidated = np.empty(len(ar), dtype=dtype)
-    except TypeError:
+    except TypeError as e:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+        raise TypeError(msg.format(dt=ar.dtype)) from e
 
     def reshape_uniq(uniq):
         n = len(uniq)
@@ -357,7 +369,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         Input arrays. Will be flattened if not already 1D.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
+        can speed up the calculation.  If True but ``ar1`` or ``ar2`` are not
+        unique, incorrect results and out-of-bounds indices could result.
+        Default is False.
     return_indices : bool
         If True, the indices which correspond to the intersection of the two
         arrays are returned. The first instance of a value is used if there are

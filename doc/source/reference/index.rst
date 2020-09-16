@@ -22,11 +22,13 @@ For learning how to use NumPy, see the :ref:`complete documentation <numpy_docs_
    constants
    ufuncs
    routines
+   typing
    global_state
    distutils
    distutils_guide
    c-api/index
    internals
+   simd/simd-optimizations
    swig
 
 

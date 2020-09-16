@@ -605,7 +605,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    method_name = PyUString_FromString(method);
+    method_name = PyUnicode_FromString(method);
     if (method_name == NULL) {
         goto fail;
     }

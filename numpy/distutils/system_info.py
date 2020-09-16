@@ -171,7 +171,7 @@ from configparser import RawConfigParser as ConfigParser
 
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
-import distutils.sysconfig
+import sysconfig
 from numpy.distutils import log
 from distutils.util import get_platform
 
@@ -187,6 +187,7 @@ import distutils.ccompiler
 import tempfile
 import shutil
 
+__all__ = ['system_info']
 
 # Determine number of bits
 import platform
@@ -255,7 +256,7 @@ def libpaths(paths, bits):
 
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
-                        os.path.join(distutils.sysconfig.EXEC_PREFIX,
+                        os.path.join(sysconfig.get_config_var('exec_prefix'),
                                      'libs')]
     default_runtime_dirs = []
     default_include_dirs = []
@@ -362,6 +363,22 @@ default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 so_ext = get_shared_lib_extension()
 
 
+def is_symlink_to_accelerate(filename):
+    accelpath = '/System/Library/Frameworks/Accelerate.framework'
+    return (sys.platform == 'darwin' and os.path.islink(filename) and
+            os.path.realpath(filename).startswith(accelpath))
+
+
+_accel_msg = (
+    'Found {filename}, but that file is a symbolic link to the '
+    'MacOS Accelerate framework, which is not supported by NumPy. '
+    'You must configure the build to use a different optimized library, '
+    'or disable the use of optimized BLAS and LAPACK by setting the '
+    'environment variables NPY_BLAS_ORDER="" and NPY_LAPACK_ORDER="" '
+    'before building NumPy.'
+)
+
+
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
     1) System-wide directory (directory-location of this module)
@@ -427,7 +444,6 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
-          'accelerate': accelerate_info,      # use blas_opt instead
           'openblas64_': openblas64__info,
           'openblas64__lapack': openblas64__lapack_info,
           'openblas_ilp64': openblas_ilp64_info,
@@ -700,8 +716,7 @@ class system_info:
         AliasedOptionError :
             in case more than one of the options are found
         """
-        found = map(lambda opt: self.cp.has_option(self.section, opt), options)
-        found = list(found)
+        found = [self.cp.has_option(self.section, opt) for opt in options]
         if sum(found) == 1:
             return options[found.index(True)]
         elif sum(found) == 0:
@@ -919,6 +934,9 @@ class system_info:
             for prefix in lib_prefixes:
                 p = self.combine_paths(lib_dir, prefix + lib + ext)
                 if p:
+                    # p[0] is the full path to the binary library file.
+                    if is_symlink_to_accelerate(p[0]):
+                        raise RuntimeError(_accel_msg.format(filename=p[0]))
                     break
             if p:
                 assert len(p) == 1
@@ -1650,8 +1668,8 @@ def get_atlas_version(**config):
 
 class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
-    # List of all known BLAS libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'accelerate', 'lapack']
+    # List of all known LAPACK libraries, in the default order
+    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
 
     def _calc_info_mkl(self):
@@ -1823,7 +1841,7 @@ class lapack64__opt_info(lapack_ilp64_opt_info):
 class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
+    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
 
     def _calc_info_mkl(self):
@@ -2481,13 +2499,12 @@ class _numpy_info(system_info):
             except AttributeError:
                 pass
 
-            include_dirs.append(distutils.sysconfig.get_python_inc(
-                                        prefix=os.sep.join(prefix)))
+            include_dirs.append(sysconfig.get_path('include'))
         except ImportError:
             pass
-        py_incl_dir = distutils.sysconfig.get_python_inc()
+        py_incl_dir = sysconfig.get_path('include')
         include_dirs.append(py_incl_dir)
-        py_pincl_dir = distutils.sysconfig.get_python_inc(plat_specific=True)
+        py_pincl_dir = sysconfig.get_path('platinclude')
         if py_pincl_dir not in include_dirs:
             include_dirs.append(py_pincl_dir)
         for d in default_include_dirs:
@@ -2614,8 +2631,8 @@ class boost_python_info(system_info):
                 break
         if not src_dir:
             return
-        py_incl_dirs = [distutils.sysconfig.get_python_inc()]
-        py_pincl_dir = distutils.sysconfig.get_python_inc(plat_specific=True)
+        py_incl_dirs = [sysconfig.get_path('include')]
+        py_pincl_dir = sysconfig.get_path('platinclude')
         if py_pincl_dir not in py_incl_dirs:
             py_incl_dirs.append(py_pincl_dir)
         srcs_dir = os.path.join(src_dir, 'libs', 'python', 'src')

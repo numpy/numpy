@@ -50,9 +50,24 @@ array_contains(PyArrayObject *self, PyObject *el)
     return ret;
 }
 
+static PyObject *
+array_concat(PyObject *self, PyObject *other)
+{
+    /*
+     * Throw a type error, when trying to concat NDArrays
+     * NOTE: This error is not Thrown when running with PyPy
+     */
+    PyErr_SetString(PyExc_TypeError,
+            "Concatenation operation is not implemented for NumPy arrays, "
+            "use np.concatenate() instead. Please do not rely on this error; "
+            "it may not be given on all Python implementations.");
+    return NULL;
+}
+
+
 NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
     (lenfunc)array_length,                  /*sq_length*/
-    (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
+    (binaryfunc)array_concat,               /*sq_concat for operator.concat*/
     (ssizeargfunc)NULL,
     (ssizeargfunc)array_item,
     (ssizessizeargfunc)NULL,

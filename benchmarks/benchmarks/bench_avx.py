@@ -13,7 +13,12 @@ avx_ufuncs = ['sin',
               'rint',
               'floor',
               'ceil' ,
-              'trunc']
+              'trunc',
+              'frexp',
+              'isnan',
+              'isfinite',
+              'isinf',
+              'signbit']
 stride = [1, 2, 4]
 dtype  = ['f', 'd']
 
@@ -33,6 +38,19 @@ class AVX_UFunc(Benchmark):
 
     def time_ufunc(self, ufuncname, stride, dtype):
         self.f(self.arr[::stride])
+
+class AVX_UFunc_log(Benchmark):
+    params = [stride, dtype]
+    param_names = ['stride', 'dtype']
+    timeout = 10
+
+    def setup(self, stride, dtype):
+        np.seterr(all='ignore')
+        N = 10000
+        self.arr = np.array(np.random.random_sample(stride*N), dtype=dtype)
+
+    def time_log(self, stride, dtype):
+        np.log(self.arr[::stride])
 
 avx_bfuncs = ['maximum',
               'minimum']
@@ -54,6 +72,22 @@ class AVX_BFunc(Benchmark):
         self.arr2 = np.array(np.random.rand(stride*N), dtype=dtype)
 
     def time_ufunc(self, ufuncname, dtype, stride):
+        self.f(self.arr1[::stride], self.arr2[::stride])
+
+class AVX_ldexp(Benchmark):
+
+    params = [dtype, stride]
+    param_names = ['dtype', 'stride']
+    timeout = 10
+
+    def setup(self, dtype, stride):
+        np.seterr(all='ignore')
+        self.f = getattr(np, 'ldexp')
+        N = 10000
+        self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
+        self.arr2 = np.array(np.random.rand(stride*N), dtype='i')
+
+    def time_ufunc(self, dtype, stride):
         self.f(self.arr1[::stride], self.arr2[::stride])
 
 cmplx_bfuncs = ['add',

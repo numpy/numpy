@@ -941,6 +941,17 @@ class TestArrayAlmostEqualNulp:
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
+    def test_float64_ignore_nan(self):
+        # Ignore ULP differences between various NAN's
+        # Note that MIPS may reverse quiet and signaling nans
+        # so we use the builtin version as a base.
+        offset = np.uint64(0xffffffff)
+        nan1_i64 = np.array(np.nan, dtype=np.float64).view(np.uint64)
+        nan2_i64 = nan1_i64 ^ offset  # nan payload on MIPS is all ones.
+        nan1_f64 = nan1_i64.view(np.float64)
+        nan2_f64 = nan2_i64.view(np.float64)
+        assert_array_max_ulp(nan1_f64, nan2_f64, 0)
+
     def test_float32_pass(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float32)
@@ -971,6 +982,17 @@ class TestArrayAlmostEqualNulp:
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
+    def test_float32_ignore_nan(self):
+        # Ignore ULP differences between various NAN's
+        # Note that MIPS may reverse quiet and signaling nans
+        # so we use the builtin version as a base.
+        offset = np.uint32(0xffff)
+        nan1_i32 = np.array(np.nan, dtype=np.float32).view(np.uint32)
+        nan2_i32 = nan1_i32 ^ offset  # nan payload on MIPS is all ones.
+        nan1_f32 = nan1_i32.view(np.float32)
+        nan2_f32 = nan2_i32.view(np.float32)
+        assert_array_max_ulp(nan1_f32, nan2_f32, 0)
+
     def test_float16_pass(self):
         nulp = 5
         x = np.linspace(-4, 4, 10, dtype=np.float16)
@@ -1000,6 +1022,17 @@ class TestArrayAlmostEqualNulp:
         y = x - x*epsneg*nulp*2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
+
+    def test_float16_ignore_nan(self):
+        # Ignore ULP differences between various NAN's
+        # Note that MIPS may reverse quiet and signaling nans
+        # so we use the builtin version as a base.
+        offset = np.uint16(0xff)
+        nan1_i16 = np.array(np.nan, dtype=np.float16).view(np.uint16)
+        nan2_i16 = nan1_i16 ^ offset  # nan payload on MIPS is all ones.
+        nan1_f16 = nan1_i16.view(np.float16)
+        nan2_f16 = nan2_i16.view(np.float16)
+        assert_array_max_ulp(nan1_f16, nan2_f16, 0)
 
     def test_complex128_pass(self):
         nulp = 5
@@ -1207,7 +1240,7 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
         if sys.version_info[:2] >= (3, 7):
             if py37 is not None:
                 n_in_context = py37
-        elif sys.version_info[:2] >= (3, 4):
+        else:
             if py34 is not None:
                 n_in_context = py34
     assert_equal(num_warns, n_in_context)

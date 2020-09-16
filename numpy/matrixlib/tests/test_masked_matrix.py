@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_warns
 from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
                                 assert_array_equal)
 from numpy.ma.core import (masked_array, masked_values, masked, allequal,
@@ -198,7 +199,8 @@ class TestSubclassing:
         # Result should work
         assert_equal(add(mx, x), mx+x)
         assert_(isinstance(add(mx, mx)._data, np.matrix))
-        assert_(isinstance(add.outer(mx, mx), MMatrix))
+        with assert_warns(DeprecationWarning):
+            assert_(isinstance(add.outer(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, x), MMatrix))
 

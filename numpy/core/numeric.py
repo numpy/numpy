@@ -21,7 +21,7 @@ from .multiarray import (
 from . import overrides
 from . import umath
 from . import shape_base
-from .overrides import set_module
+from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
@@ -141,8 +141,13 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     return res
 
 
+def _ones_dispatcher(shape, dtype=None, order=None, *, like=None):
+    return(like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def ones(shape, dtype=None, order='C'):
+def ones(shape, dtype=None, order='C', *, like=None):
     """
     Return a new array of given shape and type, filled with ones.
 
@@ -157,6 +162,9 @@ def ones(shape, dtype=None, order='C'):
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -189,9 +197,17 @@ def ones(shape, dtype=None, order='C'):
            [1.,  1.]])
 
     """
+    if like is not None:
+        return _ones_with_like(shape, dtype=dtype, order=order, like=like)
+
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
+
+
+_ones_with_like = array_function_dispatch(
+    _ones_dispatcher
+)(ones)
 
 
 def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -265,8 +281,13 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     return res
 
 
+def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
+    return(like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def full(shape, fill_value, dtype=None, order='C'):
+def full(shape, fill_value, dtype=None, order='C', *, like=None):
     """
     Return a new array of given shape and type, filled with `fill_value`.
 
@@ -282,6 +303,9 @@ def full(shape, fill_value, dtype=None, order='C'):
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -309,11 +333,20 @@ def full(shape, fill_value, dtype=None, order='C'):
            [1, 2]])
 
     """
+    if like is not None:
+        return _full_with_like(shape, fill_value, dtype=dtype, order=order, like=like)
+
     if dtype is None:
-        dtype = array(fill_value).dtype
+        fill_value = asarray(fill_value)
+        dtype = fill_value.dtype
     a = empty(shape, dtype, order)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
+
+
+_full_with_like = array_function_dispatch(
+    _full_dispatcher
+)(full)
 
 
 def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None, shape=None):
@@ -1753,8 +1786,13 @@ def indices(dimensions, dtype=int, sparse=False):
     return res
 
 
+def _fromfunction_dispatcher(function, shape, *, dtype=None, like=None, **kwargs):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def fromfunction(function, shape, *, dtype=float, **kwargs):
+def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
 
@@ -1775,6 +1813,9 @@ def fromfunction(function, shape, *, dtype=float, **kwargs):
     dtype : data-type, optional
         Data-type of the coordinate arrays passed to `function`.
         By default, `dtype` is float.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1805,8 +1846,16 @@ def fromfunction(function, shape, *, dtype=float, **kwargs):
            [2, 3, 4]])
 
     """
+    if like is not None:
+        return _fromfunction_with_like(function, shape, dtype=dtype, like=like, **kwargs)
+
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
+
+
+_fromfunction_with_like = array_function_dispatch(
+    _fromfunction_dispatcher
+)(fromfunction)
 
 
 def _frombuffer(buf, dtype, shape, order):
@@ -2081,8 +2130,13 @@ def _maketup(descr, val):
         return tuple(res)
 
 
+def _identity_dispatcher(n, dtype=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def identity(n, dtype=None):
+def identity(n, dtype=None, *, like=None):
     """
     Return the identity array.
 
@@ -2095,6 +2149,9 @@ def identity(n, dtype=None):
         Number of rows (and columns) in `n` x `n` output.
     dtype : data-type, optional
         Data-type of the output.  Defaults to ``float``.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -2110,8 +2167,16 @@ def identity(n, dtype=None):
            [0.,  0.,  1.]])
 
     """
+    if like is not None:
+        return _identity_with_like(n, dtype=dtype, like=like)
+
     from numpy import eye
-    return eye(n, dtype=dtype)
+    return eye(n, dtype=dtype, like=like)
+
+
+_identity_with_like = array_function_dispatch(
+    _identity_dispatcher
+)(identity)
 
 
 def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
@@ -2172,6 +2237,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     ``allclose(a, b)`` to evaluate to True.  The same is true for
     `equal` but not `array_equal`.
 
+    `allclose` is not defined for non-numeric data types.
+
     Examples
     --------
     >>> np.allclose([1e10,1e-7], [1.00001e10,1e-8])
@@ -2230,6 +2297,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     See Also
     --------
     allclose
+    math.isclose
 
     Notes
     -----
@@ -2249,6 +2317,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     are significantly smaller than one, it can result in false positives.
     `atol` should be carefully selected for the use case at hand. A zero value
     for `atol` will result in `False` if either `a` or `b` is zero.
+
+    `isclose` is not defined for non-numeric data types.
 
     Examples
     --------

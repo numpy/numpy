@@ -5,7 +5,7 @@ __docformat__ = "restructuredtext en"
 
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode, bytes
+from numpy.compat import asbytes, asunicode
 
 
 def _decode_line(line, encoding=None):
@@ -506,13 +506,16 @@ class StringConverter:
     _mapper.extend([(nx.float64, float, nx.nan),
                     (nx.complex128, complex, nx.nan + 0j),
                     (nx.longdouble, nx.longdouble, nx.nan),
-                    (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???'),
                     # If a non-default dtype is passed, fall back to generic
                     # ones (should only be used for the converter)
                     (nx.integer, int, -1),
                     (nx.floating, float, nx.nan),
-                    (nx.complexfloating, complex, nx.nan + 0j),])
+                    (nx.complexfloating, complex, nx.nan + 0j),
+                    # Last, try with the string types (must be last, because
+                    # `_mapper[-1]` is used as default in some cases)
+                    (nx.unicode_, asunicode, '???'),
+                    (nx.string_, asbytes, '???'),
+                    ])
 
     @classmethod
     def _getdtype(cls, val):

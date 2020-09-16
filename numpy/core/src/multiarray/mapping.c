@@ -22,6 +22,7 @@
 #include "item_selection.h"
 #include "mem_overlap.h"
 #include "array_assign.h"
+#include "array_coercion.h"
 
 
 #define HAS_INTEGER 1
@@ -232,7 +233,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || PySlice_Check(index)
             || PyArray_Check(index)
             || !PySequence_Check(index)
-            || PyBaseString_Check(index)) {
+            || PyUnicode_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
@@ -538,22 +539,22 @@ prepare_index(PyArrayObject *self, PyObject *index,
             /*
              * There are two types of boolean indices (which are equivalent,
              * for the most part though). A single boolean index of matching
-             * dimensionality and size is a boolean index.
-             * If this is not the case, it is instead expanded into (multiple)
-             * integer array indices.
+             * shape is a boolean index. If this is not the case, it is
+             * instead expanded into (multiple) integer array indices.
              */
             PyArrayObject *nonzero_result[NPY_MAXDIMS];
 
             if ((index_ndim == 1) && allow_boolean) {
                 /*
-                 * If ndim and size match, this can be optimized as a single
-                 * boolean index. The size check is necessary only to support
-                 * old non-matching sizes by using fancy indexing instead.
-                 * The reason for that is that fancy indexing uses nonzero,
-                 * and only the result of nonzero is checked for legality.
+                 * If shapes match exactly, this can be optimized as a single
+                 * boolean index. When the dimensions are identical but the shapes are not,
+                 * this is always an error. The check ensures that these errors are raised
+                 * and match those of the generic path.
                  */
                 if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
-                        && PyArray_SIZE(arr) == PyArray_SIZE(self)) {
+                        && PyArray_CompareLists(PyArray_DIMS(arr),
+                                                PyArray_DIMS(self),
+                                                PyArray_NDIM(arr))) {
 
                     index_type = HAS_BOOL;
                     indices[curr_idx].type = HAS_BOOL;
@@ -945,9 +946,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
-                if (NpySlice_GetIndicesEx(indices[i].object,
-                                          PyArray_DIMS(self)[orig_dim],
-                                          &start, &stop, &step, &n_steps) < 0) {
+                if (PySlice_GetIndicesEx(indices[i].object,
+                                         PyArray_DIMS(self)[orig_dim],
+                                         &start, &stop, &step, &n_steps) < 0) {
                     return -1;
                 }
                 if (n_steps <= 0) {
@@ -1090,6 +1091,7 @@ array_boolean_subscript(PyArrayObject *self,
 
         self_stride = innerstrides[0];
         bmask_stride = innerstrides[1];
+        int res = 0;
         do {
             innersize = *NpyIter_GetInnerLoopSizePtr(iter);
             self_data = dataptrs[0];
@@ -1104,8 +1106,11 @@ array_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                stransfer(ret_data, itemsize, self_data, self_stride,
-                            subloopsize, itemsize, transferdata);
+                res = stransfer(ret_data, itemsize, self_data, self_stride,
+                                subloopsize, itemsize, transferdata);
+                if (res < 0) {
+                    break;
+                }
                 innersize -= subloopsize;
                 self_data += subloopsize * self_stride;
                 ret_data += subloopsize * itemsize;
@@ -1114,8 +1119,15 @@ array_boolean_subscript(PyArrayObject *self,
 
         NPY_END_THREADS;
 
-        NpyIter_Deallocate(iter);
+        if (!NpyIter_Deallocate(iter)) {
+            res = -1;
+        }
         NPY_AUXDATA_FREE(transferdata);
+        if (res < 0) {
+            /* Should be practically impossible, since there is no cast */
+            Py_DECREF(ret);
+            return NULL;
+        }
     }
 
     if (!PyArray_CheckExact(self)) {
@@ -1208,6 +1220,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
     v_data = PyArray_DATA(v);
 
     /* Create an iterator for the data */
+    int res = 0;
     if (size > 0) {
         NpyIter *iter;
         PyArrayObject *op[2] = {self, bmask};
@@ -1252,7 +1265,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         if (PyArray_GetDTypeTransferFunction(
-                        IsUintAligned(self) && IsAligned(self) &&
+                 IsUintAligned(self) && IsAligned(self) &&
                         IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
@@ -1281,8 +1294,11 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 /* Process unmasked values */
                 bmask_data = npy_memchr(bmask_data, 0, bmask_stride, innersize,
                                         &subloopsize, 0);
-                stransfer(self_data, self_stride, v_data, v_stride,
-                            subloopsize, src_itemsize, transferdata);
+                res = stransfer(self_data, self_stride, v_data, v_stride,
+                        subloopsize, src_itemsize, transferdata);
+                if (res < 0) {
+                    break;
+                }
                 innersize -= subloopsize;
                 self_data += subloopsize * self_stride;
                 v_data += subloopsize * v_stride;
@@ -1294,22 +1310,12 @@ array_assign_boolean_subscript(PyArrayObject *self,
         }
 
         NPY_AUXDATA_FREE(transferdata);
-        NpyIter_Deallocate(iter);
-    }
-
-    if (needs_api) {
-        /*
-         * FIXME?: most assignment operations stop after the first occurrence
-         * of an error. Boolean does not currently, but should at least
-         * report the error. (This is only relevant for things like str->int
-         * casts which call into python)
-         */
-        if (PyErr_Occurred()) {
-            return -1;
+        if (!NpyIter_Deallocate(iter)) {
+            res = -1;
         }
     }
 
-    return 0;
+    return res;
 }
 
 
@@ -1401,7 +1407,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1412,7 +1418,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
         else if (tup == NULL){
-            PyObject *errmsg = PyUString_FromString("no field of name ");
+            PyObject *errmsg = PyUnicode_FromString("no field of name ");
             PyUString_Concat(&errmsg, ind);
             PyErr_SetObject(PyExc_ValueError, errmsg);
             Py_DECREF(errmsg);
@@ -1465,7 +1471,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyErr_Clear();
                 return -1;
             }
-            is_string = PyBaseString_Check(item);
+            is_string = PyUnicode_Check(item);
             Py_DECREF(item);
             if (!is_string) {
                 return -1;
@@ -1655,11 +1661,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
         goto finish;
     }
 
-    if (mit->numiter > 1) {
+    if (mit->numiter > 1 || mit->size == 0) {
         /*
          * If it is one, the inner loop checks indices, otherwise
          * check indices beforehand, because it is much faster if
-         * broadcasting occurs and most likely no big overhead
+         * broadcasting occurs and most likely no big overhead.
+         * The inner loop optimization skips index checks for size == 0 though.
          */
         if (PyArray_MapIterCheckIndices(mit) < 0) {
             goto finish;
@@ -1753,7 +1760,7 @@ array_assign_item(PyArrayObject *self, Py_ssize_t i, PyObject *op)
         if (get_item_pointer(self, &item, indices, 1) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
     }
@@ -1831,7 +1838,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (get_item_pointer(self, &item, indices, index_num) < 0) {
             return -1;
         }
-        if (PyArray_SETITEM(self, item, op) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(self), item, op) < 0) {
             return -1;
         }
         /* integers do not store objects in indices */
@@ -2431,7 +2438,7 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
      * Attempt to set a meaningful exception. Could also find out
      * if a boolean index was converted.
      */
-    errmsg = PyUString_FromString("shape mismatch: indexing arrays could not "
+    errmsg = PyUnicode_FromString("shape mismatch: indexing arrays could not "
                                   "be broadcast together with shapes ");
     if (errmsg == NULL) {
         return -1;
@@ -2479,8 +2486,14 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     int i;
     NPY_BEGIN_THREADS_DEF;
 
-    if (mit->size == 0) {
-        /* All indices got broadcast away, do *not* check as it always was */
+    if (NpyIter_GetIterSize(mit->outer) == 0) {
+        /*
+         * When the outer iteration is empty, the indices broadcast to an
+         * empty shape, and in this case we do not check if there are out
+         * of bounds indices.
+         * The code below does use the indices without broadcasting since
+         * broadcasting only repeats values.
+         */
         return 0;
     }
 
@@ -2515,7 +2528,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 if (check_and_adjust_index(&indval,
                                            outer_dim, outer_axis, _save) < 0) {
                     Py_DECREF(intp_type);
-                    return -1;
+                    goto indexing_error;
                 }
                 data += stride;
             }
@@ -2528,12 +2541,16 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
         op_iter = NpyIter_New(op,
                         NPY_ITER_BUFFERED | NPY_ITER_NBO | NPY_ITER_ALIGNED |
                         NPY_ITER_EXTERNAL_LOOP | NPY_ITER_GROWINNER |
-                        NPY_ITER_READONLY,
+                        NPY_ITER_READONLY | NPY_ITER_ZEROSIZE_OK,
                         NPY_KEEPORDER, NPY_SAME_KIND_CASTING, intp_type);
 
         if (op_iter == NULL) {
             Py_DECREF(intp_type);
             return -1;
+        }
+        if (NpyIter_GetIterSize(op_iter) == 0) {
+            NpyIter_Deallocate(op_iter);
+            continue;
         }
 
         op_iternext = NpyIter_GetIterNext(op_iter, NULL);
@@ -2554,7 +2571,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                                            outer_dim, outer_axis, _save) < 0) {
                     Py_DECREF(intp_type);
                     NpyIter_Deallocate(op_iter);
-                    return -1;
+                    goto indexing_error;
                 }
                 *iterptr += *iterstride;
             }
@@ -2567,6 +2584,32 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     NPY_END_THREADS;
     Py_DECREF(intp_type);
     return 0;
+
+indexing_error:
+
+    if (mit->size == 0) {
+        PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        /* 2020-05-27, NumPy 1.20 */
+        if (DEPRECATE(
+                "Out of bound index found. This was previously ignored "
+                "when the indexing result contained no elements. "
+                "In the future the index error will be raised. This error "
+                "occurs either due to an empty slice, or if an array has zero "
+                "elements even before indexing.\n"
+                "(Use `warnings.simplefilter('error')` to turn this "
+                "DeprecationWarning into an error and get more details on "
+                "the invalid index.)") < 0) {
+            npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+            return -1;
+        }
+        Py_DECREF(err_type);
+        Py_DECREF(err_value);
+        Py_XDECREF(err_traceback);
+        return 0;
+    }
+
+    return -1;
 }
 
 
@@ -2689,7 +2732,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     if (mit->numiter == 0) {
         /*
          * For MapIterArray, it is possible that there is no fancy index.
-         * to support this case, add a a dummy iterator.
+         * to support this case, add a dummy iterator.
          * Since it is 0-d its transpose, etc. does not matter.
          */
 
@@ -3140,7 +3183,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     goto finish;
 
   broadcast_error:
-    errmsg = PyUString_FromString("shape mismatch: value array "
+    errmsg = PyUnicode_FromString("shape mismatch: value array "
                     "of shape ");
     if (errmsg == NULL) {
         goto finish;
@@ -3161,7 +3204,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         goto finish;
     }
 
-    tmp = PyUString_FromString("could not be broadcast to indexing "
+    tmp = PyUnicode_FromString("could not be broadcast to indexing "
                     "result of shape ");
     PyUString_ConcatAndDel(&errmsg, tmp);
     if (errmsg == NULL) {

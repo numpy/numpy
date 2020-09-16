@@ -1900,15 +1900,16 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            for line in file(branch_cache_fn, 'r'):
-                branch1, revision1  = line.split()[:2]
-                if revision1==revision0:
-                    branch0 = branch1
-                try:
-                    revision1 = int(revision1)
-                except ValueError:
-                    continue
-                branch_map[branch1] = revision1
+            with open(branch_cache_fn, 'r') as f:
+                for line in f:
+                    branch1, revision1  = line.split()[:2]
+                    if revision1==revision0:
+                        branch0 = branch1
+                    try:
+                        revision1 = int(revision1)
+                    except ValueError:
+                        continue
+                    branch_map[branch1] = revision1
 
             return branch_map.get(branch0)
 

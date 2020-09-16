@@ -719,6 +719,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         at the same locations.
 
         """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
         x_id = func(x)
         y_id = func(y)
         # We include work-arounds here to handle three types of slightly
@@ -1768,17 +1770,28 @@ def assert_warns(warning_class, *args, **kwargs):
     ----------
     warning_class : class
         The class defining the warning that `func` is expected to throw.
-    func : callable
-        The callable to test.
-    \\*args : Arguments
-        Arguments passed to `func`.
-    \\*\\*kwargs : Kwargs
-        Keyword arguments passed to `func`.
+    func : callable, optional
+        Callable to test
+    *args : Arguments
+        Arguments for `func`.
+    **kwargs : Kwargs
+        Keyword arguments for `func`.
 
     Returns
     -------
     The value returned by `func`.
 
+    Examples
+    --------
+    >>> import warnings
+    >>> def deprecated_func(num):
+    ...     warnings.warn("Please upgrade", DeprecationWarning)
+    ...     return num*num
+    >>> with np.testing.assert_warns(DeprecationWarning):
+    ...     assert deprecated_func(4) == 16
+    >>> # or passing a func
+    >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
+    >>> assert ret == 16
     """
     if not args:
         return _assert_warns_context(warning_class)
@@ -2390,7 +2403,8 @@ def break_cycles():
     if IS_PYPY:
         # interpreter runs now, to call deleted objects' __del__ methods
         gc.collect()
-        # one more, just to make sure
+        # two more, just to make sure
+        gc.collect()
         gc.collect()
 
 

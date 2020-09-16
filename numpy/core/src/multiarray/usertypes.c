@@ -37,6 +37,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "npy_pycompat.h"
 
 #include "usertypes.h"
+#include "dtypemeta.h"
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 
@@ -126,6 +127,9 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->scalarkind = NULL;
     f->cancastscalarkindto = NULL;
     f->cancastto = NULL;
+    f->fastclip = NULL;
+    f->fastputmask = NULL;
+    f->fasttake = NULL;
 }
 
 
@@ -210,6 +214,14 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                         " is missing.");
         return -1;
     }
+    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Legacy user dtypes referencing python objects or generally "
+                "allocated memory are unsupported. "
+                "If you see this error in an existing, working code base, "
+                "please contact the NumPy developers.");
+        return -1;
+    }
     if (descr->typeobj == NULL) {
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
@@ -226,6 +238,11 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         return -1;
     }
     userdescrs[NPY_NUMUSERTYPES++] = descr;
+
+    if (dtypemeta_wrap_legacy_descriptor(descr) < 0) {
+        return -1;
+    }
+
     return typenum;
 }
 
@@ -254,11 +271,11 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
             return -1;
         }
     }
-    key = PyInt_FromLong(totype);
+    key = PyLong_FromLong(totype);
     if (PyErr_Occurred()) {
         return -1;
     }
-    cobj = NpyCapsule_FromVoidPtr((void *)castfunc, NULL);
+    cobj = PyCapsule_New((void *)castfunc, NULL, NULL);
     if (cobj == NULL) {
         Py_DECREF(key);
         return -1;

@@ -54,7 +54,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 19
+MINOR               = 20
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -161,7 +161,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('numpy')
     config.add_data_files(('numpy', 'LICENSE.txt'))
-    config.add_data_files(('numpy', 'numpy/__init__.pxd'))
+    config.add_data_files(('numpy', 'numpy/*.pxd'))
 
     config.get_version('numpy/version.py') # sets config.version
 
@@ -179,7 +179,7 @@ def check_submodules():
             if 'path' in l:
                 p = l.split('=')[-1].strip()
                 if not os.path.exists(p):
-                    raise ValueError(f'Submodule {p} missing')
+                    raise ValueError('Submodule {} missing'.format(p))
 
 
     proc = subprocess.Popen(['git', 'submodule', 'status'],
@@ -188,8 +188,7 @@ def check_submodules():
     status = status.decode("ascii", "replace")
     for line in status.splitlines():
         if line.startswith('-') or line.startswith('+'):
-            raise ValueError(f'Submodule not clean: {line}')
-            
+            raise ValueError('Submodule not clean: {}'.format(line))
 
 
 class concat_license_files():
@@ -234,20 +233,27 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
+    from distutils.version import LooseVersion
 
-    def _is_using_gcc(obj):
-        is_gcc = False
-        if obj.compiler.compiler_type == 'unix':
-            cc = sysconfig.get_config_var("CC")
-            if not cc:
-                cc = ""
-            compiler_name = os.path.basename(cc)
-            is_gcc = "gcc" in compiler_name
-        return is_gcc
+    def _needs_gcc_c99_flag(obj):
+        if obj.compiler.compiler_type != 'unix':
+            return False
+
+        cc = obj.compiler.compiler[0]
+        if "gcc" not in cc:
+            return False
+
+        # will print something like '4.2.1\n'
+        out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, universal_newlines=True)
+        # -std=c99 is default from this version on
+        if LooseVersion(out.stdout) >= LooseVersion('5.0'):
+            return False
+        return True
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
-            if _is_using_gcc(self):
+            if _needs_gcc_c99_flag(self):
                 args = build_info.get('extra_compiler_args') or []
                 args.append('-std=c99')
                 build_info['extra_compiler_args'] = args
@@ -255,7 +261,7 @@ def get_build_overrides():
 
     class new_build_ext(build_ext):
         def build_extension(self, ext):
-            if _is_using_gcc(self):
+            if _needs_gcc_c99_flag(self):
                 if '-std=c99' not in ext.extra_compile_args:
                     ext.extra_compile_args.append('-std=c99')
             build_ext.build_extension(self, ext)
@@ -403,6 +409,16 @@ def parse_setuppy_commands():
     return True
 
 
+def get_docs_url():
+    if not ISRELEASED:
+        return "https://numpy.org/devdocs"
+    else:
+        # For releaeses, this URL ends up on pypi.
+        # By pinning the version, users looking at old PyPI releases can get
+        # to the associated docs easily.
+        return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
+
+
 def setup_package():
     src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
@@ -437,15 +453,15 @@ def setup_package():
         download_url = "https://pypi.python.org/pypi/numpy",
         project_urls={
             "Bug Tracker": "https://github.com/numpy/numpy/issues",
-            "Documentation": "https://docs.scipy.org/doc/numpy/",
+            "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-        test_suite='nose.collector',
+        test_suite='pytest',
         cmdclass=cmdclass,
-        python_requires='>=3.5',
+        python_requires='>=3.6',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds

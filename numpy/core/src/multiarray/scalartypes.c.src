@@ -85,7 +85,6 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 static void
 gentype_dealloc(PyObject *v)
 {
-    _dealloc_cached_buffer_info(v);
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -150,7 +149,7 @@ static PyObject *
 gentype_add(PyObject *m1, PyObject* m2)
 {
     /* special case str.__radd__, which should not call array_add */
-    if (PyString_Check(m1) || PyUnicode_Check(m1)) {
+    if (PyBytes_Check(m1) || PyUnicode_Check(m1)) {
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
@@ -342,47 +341,68 @@ format_@name@(@type@ val, npy_bool scientific,
 /**end repeat**/
 
 /*
- * over-ride repr and str of array-scalar strings and unicode to
- * remove NULL bytes and then call the corresponding functions
- * of string and unicode.
- * 
- * FIXME:
- *   is this really a good idea?
- *   stop using Py_UNICODE here.
+ * Over-ride repr and str of array-scalar byte strings to remove NULL bytes and
+ * then call the corresponding functions of PyBytes_Type to generate the string
  */
 
 /**begin repeat
- * #name = string*2,unicode*2#
- * #form = (repr,str)*2#
- * #Name = String*2,Unicode*2#
- * #NAME = STRING*2,UNICODE*2#
- * #extra = AndSize*2,,#
- * #type = npy_char*2, Py_UNICODE*2#
+ * #form = repr, str#
  */
 static PyObject *
-@name@type_@form@(PyObject *self)
+stringtype_@form@(PyObject *self)
 {
-    const @type@ *dptr, *ip;
-    int len;
+    const npy_char *dptr, *ip;
+    Py_ssize_t len;
     PyObject *new;
     PyObject *ret;
 
-    ip = dptr = Py@Name@_AS_@NAME@(self);
-    len = Py@Name@_GET_SIZE(self);
-    dptr += len-1;
-    while(len > 0 && *dptr-- == 0) {
-        len--;
-    }
-    new = Py@Name@_From@Name@@extra@(ip, len);
+    ip = PyBytes_AS_STRING(self);
+    len = PyBytes_GET_SIZE(self);
+    for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
+    new = PyBytes_FromStringAndSize(ip, len);
     if (new == NULL) {
-        return PyUString_FromString("");
+        return NULL;
     }
-    ret = Py@Name@_Type.tp_@form@(new);
+    ret = PyBytes_Type.tp_@form@(new);
     Py_DECREF(new);
     return ret;
 }
 /**end repeat**/
 
+/*
+ * Over-ride repr and str of array-scalar strings to remove NULL code points and
+ * then call the corresponding functions of PyUnicode_Type to generate the string
+ */
+
+/**begin repeat
+ * #form = repr, str#
+ */
+static PyObject *
+unicodetype_@form@(PyObject *self)
+{
+    Py_UCS4 *dptr, *ip;
+    Py_ssize_t len;
+    PyObject *new;
+    PyObject *ret;
+
+    /* PyUnicode_READY is called by PyUnicode_GetLength */
+    len = PyUnicode_GetLength(self);
+    ip = PyUnicode_AsUCS4Copy(self);
+    if (ip == NULL) {
+        return NULL;
+    }
+    for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
+    new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    if (new == NULL) {
+        PyMem_Free(ip);
+        return NULL;
+    }
+    ret = PyUnicode_Type.tp_@form@(new);
+    Py_DECREF(new);
+    PyMem_Free(ip);
+    return ret;
+}
+/**end repeat**/
 
 /*
  * Convert array of bytes to a string representation much like bytes.__repr__,
@@ -427,7 +447,7 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
     }
     memcpy(&retbuf[j], echars, strlen(echars));
 
-    retval = PyUString_FromStringAndSize(retbuf, slen);
+    retval = PyUnicode_FromStringAndSize(retbuf, slen);
     PyMem_Free(retbuf);
 
     return retval;
@@ -498,21 +518,21 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUString_FromString("numpy.datetime64('");
+        ret = PyUnicode_FromString("numpy.datetime64('");
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(iso));
+                PyUnicode_FromString(iso));
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("')"));
+                PyUnicode_FromString("')"));
     }
     else {
-        ret = PyUString_FromString("numpy.datetime64('");
+        ret = PyUnicode_FromString("numpy.datetime64('");
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(iso));
+                PyUnicode_FromString(iso));
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("','"));
+                PyUnicode_FromString("','"));
         ret = append_metastr_to_string(&scal->obmeta, 1, ret);
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("')"));
+                PyUnicode_FromString("')"));
     }
 
     return ret;
@@ -534,31 +554,31 @@ timedeltatype_repr(PyObject *self)
 
     /* The value */
     if (scal->obval == NPY_DATETIME_NAT) {
-        ret = PyUString_FromString("numpy.timedelta64('NaT'");
+        ret = PyUnicode_FromString("numpy.timedelta64('NaT'");
     }
     else {
         /*
          * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
 #if defined(HAVE_LONG_LONG)
-        ret = PyUString_FromFormat("numpy.timedelta64(%lld",
+        ret = PyUnicode_FromFormat("numpy.timedelta64(%lld",
                                             (long long)scal->obval);
 #else
-        ret = PyUString_FromFormat("numpy.timedelta64(%ld",
+        ret = PyUnicode_FromFormat("numpy.timedelta64(%ld",
                                             (long)scal->obval);
 #endif
     }
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(")"));
+                PyUnicode_FromString(")"));
     }
     else {
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(",'"));
+                PyUnicode_FromString(",'"));
         ret = append_metastr_to_string(&scal->obmeta, 1, ret);
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString("')"));
+                PyUnicode_FromString("')"));
     }
 
     return ret;
@@ -591,7 +611,7 @@ datetimetype_str(PyObject *self)
         return NULL;
     }
 
-    return PyUString_FromString(iso);
+    return PyUnicode_FromString(iso);
 }
 
 static char *_datetime_verbose_strings[NPY_DATETIME_NUMUNITS] = {
@@ -637,21 +657,21 @@ timedeltatype_str(PyObject *self)
     }
 
     if (scal->obval == NPY_DATETIME_NAT) {
-        ret = PyUString_FromString("NaT");
+        ret = PyUnicode_FromString("NaT");
     }
     else {
         /*
          * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
 #if defined(HAVE_LONG_LONG)
-        ret = PyUString_FromFormat("%lld ",
+        ret = PyUnicode_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
 #else
-        ret = PyUString_FromFormat("%ld ",
+        ret = PyUnicode_FromFormat("%ld ",
                                 (long)(scal->obval * scal->obmeta.num));
 #endif
         PyUString_ConcatAndDel(&ret,
-                PyUString_FromString(basestr));
+                PyUnicode_FromString(basestr));
     }
 
     return ret;
@@ -720,12 +740,13 @@ legacy_@name@_format@kind@(@type@ val)
             return NULL;
         }
         if (!npy_isfinite(val.imag)) {
-            strncat(buf, "*", 1);
+            strncat(buf, "*", sizeof(buf) - strlen(buf) - 1);
         }
-        strncat(buf, "j", 1);
+        strncat(buf, "j", sizeof(buf) - strlen(buf) - 1);
     }
     else {
         char re[64], im[64];
+
         if (npy_isfinite(val.real)) {
             PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
             res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
@@ -768,13 +789,13 @@ legacy_@name@_format@kind@(@type@ val)
                 strcpy(im, "-inf");
             }
             if (!npy_isfinite(val.imag)) {
-                strncat(im, "*", 1);
+                strncat(im, "*", sizeof(im) - strlen(im) - 1);
             }
         }
         PyOS_snprintf(buf, sizeof(buf), "(%s%sj)", re, im);
     }
 
-    return PyUString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 #undef _FMT1
@@ -815,7 +836,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
         strcpy(&buf[cnt],".0");
     }
 
-    return PyUString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 #undef _FMT1
@@ -883,7 +904,7 @@ c@name@type_@kind@(PyObject *self)
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&istr, PyUString_FromString("j"));
+        PyUString_ConcatAndDel(&istr, PyUnicode_FromString("j"));
         return istr;
     }
 
@@ -894,13 +915,13 @@ c@name@type_@kind@(PyObject *self)
         }
     }
     else if (npy_isnan(val.real)) {
-        rstr = PyUString_FromString("nan");
+        rstr = PyUnicode_FromString("nan");
     }
     else if (val.real > 0){
-        rstr = PyUString_FromString("inf");
+        rstr = PyUnicode_FromString("inf");
     }
     else {
-        rstr = PyUString_FromString("-inf");
+        rstr = PyUnicode_FromString("-inf");
     }
 
     if (npy_isfinite(val.imag)) {
@@ -910,19 +931,19 @@ c@name@type_@kind@(PyObject *self)
         }
     }
     else if (npy_isnan(val.imag)) {
-        istr = PyUString_FromString("+nan");
+        istr = PyUnicode_FromString("+nan");
     }
     else if (val.imag > 0){
-        istr = PyUString_FromString("+inf");
+        istr = PyUnicode_FromString("+inf");
     }
     else {
-        istr = PyUString_FromString("-inf");
+        istr = PyUnicode_FromString("-inf");
     }
 
-    ret = PyUString_FromString("(");
+    ret = PyUnicode_FromString("(");
     PyUString_ConcatAndDel(&ret, rstr);
     PyUString_ConcatAndDel(&ret, istr);
-    PyUString_ConcatAndDel(&ret, PyUString_FromString("j)"));
+    PyUString_ConcatAndDel(&ret, PyUnicode_FromString("j)"));
     return ret;
 }
 
@@ -1037,7 +1058,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 static PyObject *
 gentype_ndim_get(PyObject *NPY_UNUSED(self))
 {
-    return PyInt_FromLong(0);
+    return PyLong_FromLong(0);
 }
 
 static PyObject *
@@ -1078,7 +1099,7 @@ inttype_numerator_get(PyObject *self)
 static PyObject *
 inttype_denominator_get(PyObject *self)
 {
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 
@@ -1098,7 +1119,7 @@ gentype_itemsize_get(PyObject *self)
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-    ret = PyInt_FromLong((long) elsize);
+    ret = PyLong_FromLong((long) elsize);
     Py_DECREF(typecode);
     return ret;
 }
@@ -1106,7 +1127,7 @@ gentype_itemsize_get(PyObject *self)
 static PyObject *
 gentype_size_get(PyObject *NPY_UNUSED(self))
 {
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 static PyObject *
@@ -1126,12 +1147,16 @@ gentype_sizeof(PyObject *self)
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {
-    PyArrayInterface *arrif;
-    PyObject *context;
-
-    arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
-    context = (PyObject *)PyCapsule_GetContext(ptr);
-    Py_DECREF(context);
+    PyArrayInterface *arrif = (PyArrayInterface*)PyCapsule_GetPointer(ptr, NULL);
+    if (arrif == NULL) {
+        PyErr_WriteUnraisable(ptr);
+        return;
+    }
+    PyObject *context = (PyObject *)PyCapsule_GetContext(ptr);
+    if (context == NULL && PyErr_Occurred()) {
+        PyErr_WriteUnraisable(ptr);
+    }
+    Py_XDECREF(context);
     Py_XDECREF(arrif->descr);
     PyArray_free(arrif->shape);
     PyArray_free(arrif);
@@ -1286,7 +1311,7 @@ gentype_imag_get(PyObject *self)
         ret = PyObject_GetAttrString(obj, "imag");
         if (ret == NULL) {
             PyErr_Clear();
-            obj = PyInt_FromLong(0);
+            obj = PyLong_FromLong(0);
             newtype = PyArray_DescrFromType(NPY_OBJECT);
             ret = PyArray_Scalar((char *)&obj, newtype, NULL);
             Py_DECREF(newtype);
@@ -1333,74 +1358,46 @@ gentype_transpose_get(PyObject *self)
 static PyGetSetDef gentype_getsets[] = {
     {"ndim",
         (getter)gentype_ndim_get,
-        (setter) 0,
-        "number of array dimensions",
-        NULL},
+        (setter) 0, NULL, NULL},
     {"flags",
         (getter)gentype_flags_get,
-        (setter)0,
-        "integer value of flags",
-        NULL},
+        (setter)0, NULL, NULL},
     {"shape",
         (getter)gentype_shape_get,
-        (setter)0,
-        "tuple of array dimensions",
-        NULL},
+        (setter)0, NULL, NULL},
     {"strides",
         (getter)gentype_shape_get,
-        (setter) 0,
-        "tuple of bytes steps in each dimension",
-        NULL},
+        (setter) 0, NULL, NULL},
     {"data",
         (getter)gentype_data_get,
-        (setter) 0,
-        "pointer to start of data",
-        NULL},
+        (setter) 0, NULL, NULL},
     {"itemsize",
         (getter)gentype_itemsize_get,
-        (setter)0,
-        "length of one element in bytes",
-        NULL},
+        (setter)0, NULL, NULL},
     {"size",
         (getter)gentype_size_get,
-        (setter)0,
-        "number of elements in the gentype",
-        NULL},
+        (setter)0, NULL, NULL},
     {"nbytes",
         (getter)gentype_itemsize_get,
-        (setter)0,
-        "length of item in bytes",
-        NULL},
+        (setter)0, NULL, NULL},
     {"base",
         (getter)gentype_base_get,
-        (setter)0,
-        "base object",
-        NULL},
+        (setter)0, NULL, NULL},
     {"dtype",
         (getter)gentype_typedescr_get,
-        NULL,
-        "get array data-descriptor",
-        NULL},
+        NULL, NULL, NULL},
     {"real",
         (getter)gentype_real_get,
-        (setter)0,
-        "real part of scalar",
-        NULL},
+        (setter)0, NULL, NULL},
     {"imag",
         (getter)gentype_imag_get,
-        (setter)0,
-        "imaginary part of scalar",
-        NULL},
+        (setter)0, NULL, NULL},
     {"flat",
         (getter)gentype_flat_get,
-        (setter)0,
-        "a 1-d view of scalar",
-        NULL},
+        (setter)0, NULL, NULL},
     {"T",
         (getter)gentype_transpose_get,
-        (setter)0,
-        "transpose",
-        NULL},
+        (setter)0, NULL, NULL},
     {"__array_interface__",
         (getter)gentype_interface_get,
         NULL,
@@ -1570,7 +1567,7 @@ static PyObject *
         return NULL;
     }
 #endif
-    
+
     PyObject *tup;
     if (ndigits == Py_None) {
         tup = PyTuple_Pack(0);
@@ -1596,7 +1593,7 @@ static PyObject *
         return ret;
     }
 #endif
-    
+
     return obj;
 }
 /**end repeat**/
@@ -1719,7 +1716,6 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(self);
     }
     else {
         Py_DECREF(ret);
@@ -2320,7 +2316,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
         return -1;
     }
 
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         /*
          * Much like in voidtype_setfield, we cannot simply use ndarray's
          * __setitem__ since assignment to void scalars should not broadcast
@@ -2393,9 +2389,167 @@ static PySequenceMethods voidtype_as_sequence = {
 };
 
 
-static PyBufferProcs gentype_as_buffer = {
-    .bf_getbuffer = gentype_getbuffer,
-    /* release buffer not defined (see buffer.c) */
+
+/**begin repeat
+ * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
+ *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
+ *         clongdouble#
+ * #Name = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
+ *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
+ *         CLongDouble#
+ * #NAME = BOOL, BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
+ *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
+ *         CLONGDOUBLE#
+ * #fmt = ?, b, h, i, l, q, B, H, I, L, Q, e, f, d, g, Zf, Zd, Zg#
+ */
+
+static int
+@name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        return -1;
+    }
+    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
+
+    static char fmt[3] = "@fmt@";
+
+    view->ndim = 0;
+    view->len = sizeof(scalar->obval);
+    view->itemsize = sizeof(scalar->obval);
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+    view->buf = &(scalar->obval);
+
+    if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
+
+    view->format = fmt;
+
+    return 0;
+}
+
+static PyBufferProcs @name@_arrtype_as_buffer = {
+    .bf_getbuffer = @name@_getbuffer,
+    /* No need to release the buffer */
+};
+
+/**end repeat**/
+
+static int
+unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        return -1;
+    }
+    PyUnicodeScalarObject *scalar = (PyUnicodeScalarObject *)self;
+    Py_ssize_t length = PyUnicode_GetLength(self);
+
+    view->ndim = 0;
+    view->len = length * 4;
+    view->itemsize = length * 4;
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+
+    if (scalar->obval == NULL) {
+        /*
+         * Unicode may not have the representation available, `scalar_value`
+         * ensures materialization.
+         */
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_UNICODE);
+        scalar_value(self, descr);
+        Py_DECREF(descr);
+        if (scalar->obval == NULL) {
+            /* allocating memory failed */
+            Py_SETREF(view->obj, NULL);
+            return -1;
+        }
+    }
+    view->buf = scalar->obval;
+
+    if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
+
+    if (scalar->buffer_fmt != NULL) {
+        view->format = scalar->buffer_fmt;
+    }
+    else {
+        scalar->buffer_fmt = PyObject_Malloc(22);
+        if (scalar->buffer_fmt == NULL) {
+            Py_SETREF(view->obj, NULL);
+            return -1;
+        }
+        PyOS_snprintf(scalar->buffer_fmt, 22, "%" NPY_INTP_FMT "w", length);
+        view->format = scalar->buffer_fmt;
+    }
+
+    return 0;
+}
+
+static PyBufferProcs unicode_arrtype_as_buffer = {
+    .bf_getbuffer = unicode_getbuffer,
+    /* No need to release the buffer */
+};
+
+
+/**begin repeat
+ * #name = datetime, timedelta#
+ * #Name = Datetime, Timedelta#
+ */
+
+static int
+@name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        return -1;
+    }
+    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
+
+    view->ndim = 1;
+    view->len = 8;
+    view->itemsize = 1;
+    static Py_ssize_t length = 8;
+    view->shape = &length;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+
+    view->buf = &(scalar->obval);
+
+    if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
+
+    /* export datetime scalars as bytes (although arrays are not exported) */
+    view->format = "B";
+
+    return 0;
+}
+
+static PyBufferProcs @name@_arrtype_as_buffer = {
+        .bf_getbuffer = @name@_getbuffer,
+        /* No need to release the buffer */
+};
+
+/**end repeat**/
+
+static PyBufferProcs void_arrtype_as_buffer = {
+        .bf_getbuffer = void_getbuffer,  /* defined in buffer.c */
+        /* No need to release the buffer */
 };
 
 
@@ -2420,6 +2574,31 @@ void_dealloc(PyVoidScalarObject *v)
     Py_XDECREF(v->base);
     Py_TYPE(v)->tp_free(v);
 }
+
+
+static PyObject *
+object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
+{
+    /*
+     * Object scalars should not actually exist, if they exist we should
+     * consider it to be a bug.
+     */
+    static PyObject *visibleDeprecationWarning = NULL;
+    npy_cache_import("numpy", "VisibleDeprecationWarning",
+                     &visibleDeprecationWarning);
+    if (visibleDeprecationWarning == NULL) {
+        return NULL;
+    }
+    if (PyErr_WarnEx(visibleDeprecationWarning,
+            "Creating a NumPy object scalar.  NumPy object scalars should "
+            "never be created.  If you see this message please inform the "
+            "NumPy developers.  Since this message should never be shown "
+            "this will raise a TypeError in the future.", 1) < 0) {
+        return NULL;
+    }
+    return gentype_alloc(type, items);
+}
+
 
 static void
 object_arrtype_dealloc(PyObject *v)
@@ -2718,7 +2897,7 @@ bool_arrtype_nonzero(PyObject *a)
  *         ulong, ulonglong#
  * #Name = Byte, Short, Int, Long, UByte, UShort, LongLong, UInt,
  *         ULong, ULongLong#
- * #type = PyInt_FromLong*6, PyLong_FromLongLong*1,
+ * #type = PyLong_FromLong*6, PyLong_FromLongLong*1,
  *         PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong#
  */
 static PyNumberMethods @name@_arrtype_as_number;
@@ -2747,7 +2926,7 @@ bool_index(PyObject *a)
         return NULL;
     }
     else {
-        return PyInt_FromLong(PyArrayScalar_VAL(a, Bool));
+        return PyLong_FromLong(PyArrayScalar_VAL(a, Bool));
     }
 }
 
@@ -2802,7 +2981,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return PyErr_NoMemory();
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
-        Py_SIZE((PyVoidScalarObject *)ret) = (int) memu;
+        Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
         ((PyVoidScalarObject *)ret)->descr =
             PyArray_DescrNewFromType(NPY_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
@@ -3148,6 +3327,7 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.object_",
     .tp_basicsize = sizeof(PyObjectScalarObject),
+    .tp_alloc = object_arrtype_alloc,
     .tp_dealloc = (destructor)object_arrtype_dealloc,
     .tp_as_sequence = &object_arrtype_as_sequence,
     .tp_as_mapping = &object_arrtype_as_mapping,
@@ -3612,7 +3792,6 @@ initialize_numeric_types(void)
     init_basetypes();
     PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
     PyGenericArrType_Type.tp_as_number = &gentype_as_number;
-    PyGenericArrType_Type.tp_as_buffer = &gentype_as_buffer;
     PyGenericArrType_Type.tp_as_mapping = &gentype_as_mapping;
     PyGenericArrType_Type.tp_flags = BASEFLAGS;
     PyGenericArrType_Type.tp_methods = gentype_methods;
@@ -3696,10 +3875,15 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
     Py@NAME@ArrType_Type.tp_richcompare = gentype_richcompare;
 
+#define _IS_@NAME@  /* inherit string buffer */
+#if !defined(_IS_String)
+    Py@NAME@ArrType_Type.tp_as_buffer = &@name@_arrtype_as_buffer;
+#endif
+#undef _IS_@NAME@
+
     /**end repeat**/
 
     PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
-    PyUnicodeArrType_Type.tp_as_buffer = &gentype_as_buffer;
 
     /**begin repeat
      * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,

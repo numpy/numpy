@@ -168,7 +168,7 @@ invalid_weekmask_string:
                     return 0;
                 }
 
-                val = PyInt_AsLong(f);
+                val = PyLong_AsLong(f);
                 if (error_converting(val)) {
                     Py_DECREF(f);
                     Py_DECREF(obj);

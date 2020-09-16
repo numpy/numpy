@@ -75,6 +75,7 @@ run_test()
 
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
+    export MYPYPATH=$PWD
   fi
 
   # pytest aborts when running --durations with python3.6-dbg, so only enable

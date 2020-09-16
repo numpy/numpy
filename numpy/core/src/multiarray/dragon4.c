@@ -1566,7 +1566,7 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
  *
  *   scientific - boolean controlling whether scientific notation is used
  *   digit_mode - whether to use unique or fixed fractional output
- *   cutoff_mode - whether 'precision' refers to to all digits, or digits past
+ *   cutoff_mode - whether 'precision' refers to all digits, or digits past
  *                 the decimal point.
  *   precision - When negative, prints as many digits as needed for a unique
  *               number. When positive specifies the maximum number of
@@ -3093,7 +3093,7 @@ Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\
@@ -3130,7 +3130,7 @@ Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\

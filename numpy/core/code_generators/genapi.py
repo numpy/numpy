@@ -21,9 +21,11 @@ __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
 API_FILES = [join('multiarray', 'alloc.c'),
+             join('multiarray', 'abstractdtypes.c'),
              join('multiarray', 'arrayfunction_override.c'),
              join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'array_assign_scalar.c'),
+             join('multiarray', 'array_coercion.c'),
              join('multiarray', 'arrayobject.c'),
              join('multiarray', 'arraytypes.c.src'),
              join('multiarray', 'buffer.c'),
@@ -37,6 +39,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'datetime_busdaycal.c'),
              join('multiarray', 'datetime_strings.c'),
              join('multiarray', 'descriptor.c'),
+             join('multiarray', 'dtypemeta.c'),
              join('multiarray', 'einsum.c.src'),
              join('multiarray', 'flagsobject.c'),
              join('multiarray', 'getset.c'),
@@ -309,11 +312,13 @@ def write_file(filename, data):
 
 # Those *Api classes instances know how to output strings for the generated code
 class TypeApi:
-    def __init__(self, name, index, ptr_cast, api_name):
+    def __init__(self, name, index, ptr_cast, api_name, internal_type=None):
         self.index = index
         self.name = name
         self.ptr_cast = ptr_cast
         self.api_name = api_name
+        # The type used internally, if None, same as exported (ptr_cast)
+        self.internal_type = internal_type
 
     def define_from_array_api_string(self):
         return "#define %s (*(%s *)%s[%d])" % (self.name,
@@ -325,9 +330,19 @@ class TypeApi:
         return "        (void *) &%s" % self.name
 
     def internal_define(self):
-        astr = """\
-extern NPY_NO_EXPORT PyTypeObject %(type)s;
-""" % {'type': self.name}
+        if self.internal_type is None:
+            return f"extern NPY_NO_EXPORT {self.ptr_cast} {self.name};\n"
+
+        # If we are here, we need to define a larger struct internally, which
+        # the type can be cast safely. But we want to normally use the original
+        # type, so name mangle:
+        mangled_name = f"{self.name}Full"
+        astr = (
+            # Create the mangled name:
+            f"extern NPY_NO_EXPORT {self.internal_type} {mangled_name};\n"
+            # And define the name as: (*(type *)(&mangled_name))
+            f"#define {self.name} (*({self.ptr_cast} *)(&{mangled_name}))\n"
+        )
         return astr
 
 class GlobalVarApi:

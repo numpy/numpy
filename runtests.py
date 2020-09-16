@@ -108,12 +108,20 @@ def main(argv):
                         help="Start IPython shell with PYTHONPATH set")
     parser.add_argument("--shell", action="store_true",
                         help="Start Unix shell with PYTHONPATH set")
+    parser.add_argument("--mypy", action="store_true",
+                        help="Run mypy on files with NumPy on the MYPYPATH")
     parser.add_argument("--debug", "-g", action="store_true",
                         help="Debug build")
     parser.add_argument("--parallel", "-j", type=int, default=0,
                         help="Number of parallel jobs during build")
     parser.add_argument("--warn-error", action="store_true",
                         help="Set -Werror to convert all compiler warnings to errors")
+    parser.add_argument("--cpu-baseline", default=None,
+                        help="Specify a list of enabled baseline CPU optimizations"),
+    parser.add_argument("--cpu-dispatch", default=None,
+                        help="Specify a list of dispatched CPU optimizations"),
+    parser.add_argument("--disable-optimization", action="store_true",
+                        help="Disable CPU optimized code(dispatch,simd,fast...)"),
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -125,7 +133,7 @@ def main(argv):
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
-                        help="Arguments to pass to Nose, asv, Python or shell")
+                        help="Arguments to pass to pytest, asv, mypy, Python or shell")
     args = parser.parse_args(argv)
 
     if args.durations < 0:
@@ -196,7 +204,7 @@ def main(argv):
         import warnings; warnings.filterwarnings("always")
         import IPython
         import numpy as np
-        IPython.embed(user_ns={"np": np})
+        IPython.embed(colors='neutral', user_ns={"np": np})
         sys.exit(0)
 
     if args.shell:
@@ -204,6 +212,36 @@ def main(argv):
         print("Spawning a shell ({})...".format(shell))
         subprocess.call([shell] + extra_argv)
         sys.exit(0)
+
+    if args.mypy:
+        try:
+            import mypy.api
+        except ImportError:
+            raise RuntimeError(
+                "Mypy not found. Please install it by running "
+                "pip install -r test_requirements.txt from the repo root"
+            )
+
+        os.environ['MYPYPATH'] = site_dir
+        # By default mypy won't color the output since it isn't being
+        # invoked from a tty.
+        os.environ['MYPY_FORCE_COLOR'] = '1'
+
+        config = os.path.join(
+            site_dir,
+            "numpy",
+            "typing",
+            "tests",
+            "data",
+            "mypy.ini",
+        )
+
+        report, errors, status = mypy.api.run(
+            ['--config-file', config] + args.args
+        )
+        print(report, end='')
+        print(errors, end='', file=sys.stderr)
+        sys.exit(status)
 
     if args.coverage:
         dst_dir = os.path.join(ROOT_DIR, 'build', 'coverage')
@@ -335,7 +373,7 @@ def build_project(args):
 
     """
 
-    import distutils.sysconfig
+    import sysconfig
 
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
                for fn in PROJECT_ROOT_FILES]
@@ -351,7 +389,7 @@ def build_project(args):
 
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
-    cvars = distutils.sysconfig.get_config_vars()
+    cvars = sysconfig.get_config_vars()
     compiler = env.get('CC') or cvars.get('CC', '')
     if 'gcc' in compiler:
         # Check that this isn't clang masquerading as gcc.
@@ -388,6 +426,12 @@ def build_project(args):
         cmd += ["build_src", "--verbose-cfg"]
     if args.warn_error:
         cmd += ["--warn-error"]
+    if args.cpu_baseline:
+        cmd += ["--cpu-baseline", args.cpu_baseline]
+    if args.cpu_dispatch:
+        cmd += ["--cpu-dispatch", args.cpu_dispatch]
+    if args.disable_optimization:
+        cmd += ["--disable-optimization"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',
@@ -402,7 +446,7 @@ def build_project(args):
         os.makedirs(site_dir)
     if not os.path.exists(site_dir_noarch):
         os.makedirs(site_dir_noarch)
-    env['PYTHONPATH'] = site_dir + ':' + site_dir_noarch
+    env['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 

@@ -173,7 +173,7 @@ NumPy provides several hooks that classes can customize:
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
-   -  ``types`` is a `collection <collections.abc.Collection>`_
+   -  ``types`` is a collection :py:class:`collections.abc.Collection`
       of unique argument types from the original NumPy function call that
       implement ``__array_function__``.
    -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
@@ -326,9 +326,8 @@ NumPy provides several hooks that classes can customize:
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
-   <ufuncs-output-type>`, results will be written to the object
-   returned by :func:`__array__`. Similar conversion is done on
-   input arrays.
+   <ufuncs-output-type>`, results will *not* be written to the object
+   returned by :func:`__array__`. This practice will return ``TypeError``.
 
 
 Matrix objects

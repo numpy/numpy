@@ -3,6 +3,7 @@ import warnings
 import fnmatch
 import itertools
 import pytest
+import sys
 from fractions import Fraction
 
 import numpy.core.umath as ncu
@@ -22,7 +23,7 @@ def on_powerpc():
 
 
 def bad_arcsinh():
-    """The blacklisted trig functions are not accurate on aarch64 for
+    """The blocklisted trig functions are not accurate on aarch64 for
     complex256. Rather than dig through the actual problem skip the
     test. This should be fixed when we can move past glibc2.17
     which is the version in manylinux2014
@@ -639,6 +640,12 @@ class TestLogAddExp2(_FilterInvalids):
         assert_(np.isnan(np.logaddexp2(0, np.nan)))
         assert_(np.isnan(np.logaddexp2(np.nan, np.nan)))
 
+    def test_reduce(self):
+        assert_equal(np.logaddexp2.identity, -np.inf)
+        assert_equal(np.logaddexp2.reduce([]), -np.inf)
+        assert_equal(np.logaddexp2.reduce([-np.inf]), -np.inf)
+        assert_equal(np.logaddexp2.reduce([-np.inf, 0]), 0)
+
 
 class TestLog:
     def test_log_values(self):
@@ -650,6 +657,19 @@ class TestLog:
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.log(xf), yf)
 
+    def test_log_strides(self):
+        np.random.seed(42)
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        sizes = np.arange(2,100)
+        for ii in sizes:
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=100.0,size=ii))
+            x_special = x_f64.copy()
+            x_special[3:-1:4] = 1.0
+            y_true = np.log(x_f64)
+            y_special = np.log(x_special)
+            for jj in strides:
+                assert_array_almost_equal_nulp(np.log(x_f64[::jj]), y_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.log(x_special[::jj]), y_special[::jj], nulp=2)
 
 class TestExp:
     def test_exp_values(self):
@@ -765,6 +785,51 @@ class TestSpecialFloats:
             for dt in ['f', 'd', 'g']:
                 assert_raises(FloatingPointError, np.reciprocal, np.array(-0.0, dtype=dt))
 
+class TestFPClass:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    def test_fpclass(self, stride):
+        arr_f64 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.2251e-308], dtype='d')
+        arr_f32 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 1.4013e-045, -1.4013e-045], dtype='f')
+        nan     = np.array([True, True, False, False, False, False, False, False, False, False])
+        inf     = np.array([False, False, True, True, False, False, False, False, False, False])
+        sign    = np.array([False, True, False, True, True, False, True, False, False, True])
+        finite  = np.array([False, False, False, False, True, True, True, True, True, True])
+        assert_equal(np.isnan(arr_f32[::stride]), nan[::stride])
+        assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
+        assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
+        assert_equal(np.isinf(arr_f64[::stride]), inf[::stride])
+        assert_equal(np.signbit(arr_f32[::stride]), sign[::stride])
+        assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
+        assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
+        assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
+
+class TestLDExp:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("dtype", ['f', 'd'])
+    def test_ldexp(self, dtype, stride):
+        mant = np.array([0.125, 0.25, 0.5, 1., 1., 2., 4., 8.], dtype=dtype)
+        exp  = np.array([3, 2, 1, 0, 0, -1, -2, -3], dtype='i')
+        out  = np.zeros(8, dtype=dtype)
+        assert_equal(np.ldexp(mant[::stride], exp[::stride], out=out[::stride]), np.ones(8, dtype=dtype)[::stride])
+        assert_equal(out[::stride], np.ones(8, dtype=dtype)[::stride])
+
+class TestFRExp:
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("dtype", ['f', 'd'])
+    @pytest.mark.skipif(not sys.platform.startswith('linux'),
+                        reason="np.frexp gives different answers for NAN/INF on windows and linux")
+    def test_frexp(self, dtype, stride):
+        arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
+        mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
+        exp_true  = np.array([0, 0, 0, 0, 0, 0, 1, 1], dtype='i')
+        out_mant  = np.ones(8, dtype=dtype)
+        out_exp   = 2*np.ones(8, dtype='i')
+        mant, exp = np.frexp(arr[::stride], out=(out_mant[::stride], out_exp[::stride]))
+        assert_equal(mant_true[::stride], mant)
+        assert_equal(exp_true[::stride], exp)
+        assert_equal(out_mant[::stride], mant_true[::stride])
+        assert_equal(out_exp[::stride], exp_true[::stride])
+
 # func : [maxulperror, low, high]
 avx_ufuncs = {'sqrt'        :[1,  0.,   100.],
               'absolute'    :[0, -100., 100.],
@@ -838,15 +903,17 @@ class TestAVXFloat32Transcendental:
         sizes = np.arange(2,100)
         for ii in sizes:
             x_f32 = np.float32(np.random.uniform(low=0.01,high=88.1,size=ii))
+            x_f32_large = x_f32.copy()
+            x_f32_large[3:-1:4] = 120000.0
             exp_true = np.exp(x_f32)
             log_true = np.log(x_f32)
-            sin_true = np.sin(x_f32)
-            cos_true = np.cos(x_f32)
+            sin_true = np.sin(x_f32_large)
+            cos_true = np.cos(x_f32_large)
             for jj in strides:
                 assert_array_almost_equal_nulp(np.exp(x_f32[::jj]), exp_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.log(x_f32[::jj]), log_true[::jj], nulp=2)
-                assert_array_almost_equal_nulp(np.sin(x_f32[::jj]), sin_true[::jj], nulp=2)
-                assert_array_almost_equal_nulp(np.cos(x_f32[::jj]), cos_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.sin(x_f32_large[::jj]), sin_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.cos(x_f32_large[::jj]), cos_true[::jj], nulp=2)
 
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):
@@ -2390,7 +2457,7 @@ class TestSpecialMethods:
         assert_raises(ValueError, inner1d, a, a, out=())
 
     def test_ufunc_override_with_super(self):
-        # NOTE: this class is given as an example in doc/subclassing.py;
+        # NOTE: this class is used in doc/source/user/basics.subclassing.rst
         # if you make any changes here, do update it there too.
         class A(np.ndarray):
             def __array_ufunc__(self, ufunc, method, *inputs, out=None, **kwargs):
@@ -3216,3 +3283,39 @@ def test_outer_subclass_preserve(arr):
     class foo(np.ndarray): pass
     actual = np.multiply.outer(arr.view(foo), arr.view(foo))
     assert actual.__class__.__name__ == 'foo'
+
+def test_outer_bad_subclass():
+    class BadArr1(np.ndarray):
+        def __array_finalize__(self, obj):
+            # The outer call reshapes to 3 dims, try to do a bad reshape.
+            if self.ndim == 3:
+                self.shape = self.shape + (1,)
+
+        def __array_prepare__(self, obj, context=None):
+            return obj
+
+    class BadArr2(np.ndarray):
+        def __array_finalize__(self, obj):
+            if isinstance(obj, BadArr2):
+                # outer inserts 1-sized dims. In that case disturb them.
+                if self.shape[-1] == 1:
+                    self.shape = self.shape[::-1]
+
+        def __array_prepare__(self, obj, context=None):
+            return obj
+
+    for cls in [BadArr1, BadArr2]:
+        arr = np.ones((2, 3)).view(cls)
+        with assert_raises(TypeError) as a:
+            # The first array gets reshaped (not the second one)
+            np.add.outer(arr, [1, 2])
+
+        # This actually works, since we only see the reshaping error:
+        arr = np.ones((2, 3)).view(cls)
+        assert type(np.add.outer([1, 2], arr)) is cls
+
+def test_outer_exceeds_maxdims():
+    deep = np.ones((1,) * 17)
+    with assert_raises(ValueError):
+        np.add.outer(deep, deep)
+

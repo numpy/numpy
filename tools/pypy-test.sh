@@ -33,7 +33,7 @@ wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.1-linux64.tar.bz2 -O pypy
 mkdir -p pypy3
 (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
 pypy3/bin/pypy3 -mensurepip
-pypy3/bin/pypy3 -m pip install --upgrade pip setuptools wheel
+pypy3/bin/pypy3 -m pip install --upgrade pip
 pypy3/bin/pypy3 -m pip install --user -r test_requirements.txt --no-warn-script-location
 
 echo

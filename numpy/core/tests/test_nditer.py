@@ -1520,6 +1520,13 @@ def test_iter_allocate_output_errors():
                         [['readonly'], ['writeonly', 'allocate']],
                         op_dtypes=[None, np.dtype('f4')],
                         op_axes=[None, [0, 2, 1, 0]])
+    # Not all axes may be specified if a reduction. If there is a hole
+    # in op_axes, this is an error.
+    a = arange(24, dtype='i4').reshape(2, 3, 4)
+    assert_raises(ValueError, nditer, [a, None], ["reduce_ok"],
+                        [['readonly'], ['readwrite', 'allocate']],
+                        op_dtypes=[None, np.dtype('f4')],
+                        op_axes=[None, [0, np.newaxis, 2]])
 
 def test_iter_remove_axis():
     a = arange(24).reshape(2, 3, 4)
@@ -2661,6 +2668,14 @@ def test_iter_allocated_array_dtypes():
         b[1] = a + 1
     assert_equal(it.operands[1], [[0, 2], [2, 4], [19, 21]])
 
+    # Check the same (less sensitive) thing when `op_axes` with -1 is given.
+    it = np.nditer(([[1, 3, 20]], None), op_dtypes=[None, ('i4', (2,))],
+                   flags=["reduce_ok"], op_axes=[None, (-1, 0)])
+    for a, b in it:
+        b[0] = a - 1
+        b[1] = a + 1
+    assert_equal(it.operands[1], [[0, 2], [2, 4], [19, 21]])
+
     # Make sure this works for scalars too
     it = np.nditer((10, 2, None), op_dtypes=[None, None, ('i4', (2, 2))])
     for a, b, c in it:
@@ -2865,3 +2880,68 @@ def test_warn_noclose():
                         casting='equiv', op_dtypes=[np.dtype('f4')])
         del it
         assert len(sup.log) == 1
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize(["in_dtype", "buf_dtype"],
+        [("i", "O"), ("O", "i"),  # most simple cases
+         ("i,O", "O,O"),  # structured partially only copying O
+         ("O,i", "i,O"),  # structured casting to and from O
+         ])
+@pytest.mark.parametrize("steps", [1, 2, 3])
+def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    count = sys.getrefcount(value)
+
+    it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
+            flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
+    for step in range(steps):
+        # The iteration finishes in 3 steps, the first two are partial
+        next(it)
+
+    # Note that resetting does not free references
+    del it
+    assert count == sys.getrefcount(value)
+
+    # Repeat the test with `iternext`
+    it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
+                   flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
+    for step in range(steps):
+        it.iternext()
+
+    del it  # should ensure cleanup
+    assert count == sys.getrefcount(value)
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize(["in_dtype", "buf_dtype"],
+         [("O", "i"),  # most simple cases
+          ("O,i", "i,O"),  # structured casting to and from O
+          ])
+def test_partial_iteration_error(in_dtype, buf_dtype):
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
+    if in_dtype == "O":
+        arr[int(np.BUFSIZE * 1.5)] = None
+    else:
+        arr[int(np.BUFSIZE * 1.5)]["f0"] = None
+
+    count = sys.getrefcount(value)
+
+    it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
+            flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
+    with pytest.raises(TypeError):
+        # pytest.raises seems to have issues with the error originating
+        # in the for loop, so manually unravel:
+        next(it)
+        next(it)  # raises TypeError
+
+    # Repeat the test with `iternext` after resetting, the buffers should
+    # already be cleared from any references, so resetting is sufficient.
+    it.reset()
+    with pytest.raises(TypeError):
+        it.iternext()
+        it.iternext()
+
+    assert count == sys.getrefcount(value)

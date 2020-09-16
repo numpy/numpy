@@ -1,7 +1,7 @@
 branches:
     only:
-       - master
-       - maintenance/*
+        - master
+        - maintenance/*
 
 language: python
 
@@ -53,15 +53,7 @@ build:
     # run the test suite
     - python runtests.py -n --debug-info --show-build-log -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
 
-    cache: true
-    cache_dir_list:
-        # the NumPy project uses a single Amazon S3 cache
-        # so upload the parent path of the Python-specific
-        # version paths to avoid i.e., 3.6 overwriting
-        # 3.7 pip cache (seems to be an issue)
-        - /root/.cache/pip/wheels
-
-
+    cache: false
 
 # disable email notification
 # of CI job result

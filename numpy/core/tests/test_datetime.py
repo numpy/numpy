@@ -26,6 +26,7 @@ class TestDateTime:
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
+                     'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
@@ -775,6 +776,12 @@ class TestDateTime:
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[M]'), np.dtype('m8[W]'))
+        # timedelta and float cannot be safely cast with each other
+        assert_raises(TypeError, np.promote_types, "float32", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "float32")
+        assert_raises(TypeError, np.promote_types, "uint64", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "uint64")
+
         # timedelta <op> timedelta may overflow with big unit ranges
         assert_raises(OverflowError, np.promote_types,
                             np.dtype('m8[W]'), np.dtype('m8[fs]'))
@@ -2323,9 +2330,21 @@ class TestDateTime:
         obj_arr = np.array([None])
         obj_arr[0] = a
 
-        # gh-11154: This shouldn't cause a C stack overflow
-        assert_raises(RecursionError, obj_arr.astype, 'M8')
-        assert_raises(RecursionError, obj_arr.astype, 'm8')
+        # At some point this caused a stack overflow (gh-11154). Now raises
+        # ValueError since the nested list cannot be converted to a datetime.
+        assert_raises(ValueError, obj_arr.astype, 'M8')
+        assert_raises(ValueError, obj_arr.astype, 'm8')
+
+    @pytest.mark.parametrize("shape", [(), (1,)])
+    def test_discovery_from_object_array(self, shape):
+        arr = np.array("2020-10-10", dtype=object).reshape(shape)
+        res = np.array("2020-10-10", dtype="M8").reshape(shape)
+        assert res.dtype == np.dtype("M8[D]")
+        assert_equal(arr.astype("M8"), res)
+        arr[...] = np.bytes_("2020-10-10")  # try a numpy string type
+        assert_equal(arr.astype("M8"), res)
+        arr = arr.astype("S")
+        assert_equal(arr.astype("S").astype("M8"), res)
 
     @pytest.mark.parametrize("time_unit", [
         "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as",
@@ -2371,3 +2390,19 @@ class TestDateTimeData:
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
+
+    def test_bytes(self):
+        # byte units are converted to unicode
+        dt = np.datetime64('2000', (b'ms', 5))
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+        dt = np.datetime64('2000', b'5ms')
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+    def test_non_ascii(self):
+        # μs is normalized to μ
+        dt = np.datetime64('2000', ('μs', 5))
+        assert np.datetime_data(dt.dtype) == ('us', 5)
+
+        dt = np.datetime64('2000', '5μs')
+        assert np.datetime_data(dt.dtype) == ('us', 5)

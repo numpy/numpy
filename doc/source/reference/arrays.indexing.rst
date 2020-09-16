@@ -117,7 +117,7 @@ concepts to remember include:
       array([5, 6, 7, 8, 9])
 
 - If the number of objects in the selection tuple is less than
-  *N* , then ``:`` is assumed for any subsequent dimensions.
+  *N*, then ``:`` is assumed for any subsequent dimensions.
 
   .. admonition:: Example
 
@@ -198,6 +198,7 @@ concepts to remember include:
    create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
+.. _advanced-indexing:
 
 Advanced Indexing
 -----------------
@@ -304,6 +305,8 @@ understood with an example.
     most important thing to remember about indexing with multiple advanced
     indexes.
 
+.. _combining-advanced-and-basic-indexing:
+
 Combining advanced and basic indexing
 """""""""""""""""""""""""""""""""""""
 
@@ -377,15 +380,15 @@ type, such as may be returned from comparison operators. A single
 boolean index array is practically identical to ``x[obj.nonzero()]`` where,
 as described above, :meth:`obj.nonzero() <ndarray.nonzero>` returns a
 tuple (of length :attr:`obj.ndim <ndarray.ndim>`) of integer index
-arrays showing the :const:`True` elements of *obj*. However, it is
+arrays showing the :py:data:`True` elements of *obj*. However, it is
 faster when ``obj.shape == x.shape``.
 
 If ``obj.ndim == x.ndim``, ``x[obj]`` returns a 1-dimensional array
-filled with the elements of *x* corresponding to the :const:`True`
+filled with the elements of *x* corresponding to the :py:data:`True`
 values of *obj*.  The search order will be :term:`row-major`,
-C-style. If *obj* has :const:`True` values at entries that are outside
+C-style. If *obj* has :py:data:`True` values at entries that are outside
 of the bounds of *x*, then an index error will be raised. If *obj* is
-smaller than *x* it is identical to filling it with :const:`False`.
+smaller than *x* it is identical to filling it with :py:data:`False`.
 
 .. admonition:: Example
 

@@ -443,14 +443,6 @@ def CCompiler_show_customization(self):
     Printing is only done if the distutils log threshold is < 2.
 
     """
-    if 0:
-        for attrname in ['include_dirs', 'define', 'undef',
-                         'libraries', 'library_dirs',
-                         'rpath', 'link_objects']:
-            attr = getattr(self, attrname, None)
-            if not attr:
-                continue
-            log.info("compiler '%s' is set to %s" % (attrname, attr))
     try:
         self.get_version()
     except Exception:

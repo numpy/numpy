@@ -218,8 +218,6 @@ def hermeline(off, scl):
     """
     Hermite series whose graph is a straight line.
 
-
-
     Parameters
     ----------
     off, scl : scalars
@@ -233,7 +231,11 @@ def hermeline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite.hermline
 
     Examples
     --------
@@ -287,7 +289,11 @@ def hermefromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots, chebfromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.chebyshev.chebfromroots
 
     Examples
     --------
@@ -1315,7 +1321,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
@@ -1329,11 +1335,15 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, polyfit, hermfit, polyfit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.laguerre.lagfit
     hermeval : Evaluates a Hermite series.
     hermevander : pseudo Vandermonde matrix of Hermite series.
     hermeweight : HermiteE weight function.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1452,7 +1462,11 @@ def hermeroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, chebroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.chebyshev.chebroots
 
     Notes
     -----
@@ -1669,7 +1683,6 @@ class HermiteE(ABCPolyBase):
     _fromroots = staticmethod(hermefromroots)
 
     # Virtual properties
-    nickname = 'herme'
     domain = np.array(hermedomain)
     window = np.array(hermedomain)
     basis_name = 'He'

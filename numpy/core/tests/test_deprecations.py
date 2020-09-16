@@ -9,6 +9,7 @@ import warnings
 import pytest
 import tempfile
 import re
+import sys
 
 import numpy as np
 from numpy.testing import (
@@ -313,19 +314,14 @@ class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTest
 
 class TestNumericStyleTypecodes(_DeprecationTestCase):
     """
-    Deprecate the old numeric-style dtypes, which are especially
-    confusing for complex types, e.g. Complex32 -> complex64. When the
-    deprecation cycle is complete, the check for the strings should be
-    removed from PyArray_DescrConverter in descriptor.c, and the
-    deprecated keys should not be added as capitalized aliases in
-    _add_aliases in numerictypes.py.
+    Most numeric style typecodes were previously deprecated (and removed)
+    in 1.20. This also deprecates the remaining ones.
     """
+    # 2020-06-09, NumPy 1.20
     def test_all_dtypes(self):
-        deprecated_types = [
-            'Bool', 'Complex32', 'Complex64', 'Float16', 'Float32', 'Float64',
-            'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
-            'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
-            ]
+        deprecated_types = ['Bytes0', 'Datetime64', 'Str0']
+        # Depending on intp size, either Uint32 or Uint64 is defined:
+        deprecated_types.append(f"U{np.dtype(np.intp).name}")
         for dt in deprecated_types:
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
                                    args=(dt,))
@@ -438,14 +434,6 @@ class TestGeneratorSum(_DeprecationTestCase):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
 
 
-class TestSctypeNA(_VisibleDeprecationTestCase):
-    # 2018-06-24, 1.16
-    def test_sctypeNA(self):
-        self.assert_deprecated(lambda: np.sctypeNA['?'])
-        self.assert_deprecated(lambda: np.typeNA['?'])
-        self.assert_deprecated(lambda: np.typeNA.get('?'))
-
-
 class TestPositiveOnNonNumerical(_DeprecationTestCase):
     # 2018-06-28, 1.16.0
     def test_positive_on_non_number(self):
@@ -549,6 +537,22 @@ def test_deprecate_ragged_arrays():
         np.array(arg)
 
 
+class TestTooDeepDeprecation(_VisibleDeprecationTestCase):
+    # NumPy 1.20, 2020-05-08
+    # This is a bit similar to the above ragged array deprecation case.
+    message = re.escape("Creating an ndarray from nested sequences exceeding")
+
+    def test_deprecation(self):
+        nested = [1]
+        for i in range(np.MAXDIMS - 1):
+            nested = [nested]
+        self.assert_not_deprecated(np.array, args=(nested,))
+        self.assert_not_deprecated(np.array,
+                args=(nested,), kwargs=dict(dtype=object))
+
+        self.assert_deprecated(np.array, args=([nested],))
+
+
 class TestToString(_DeprecationTestCase):
     # 2020-03-06 1.19.0
     message = re.escape("tostring() is deprecated. Use tobytes() instead.")
@@ -611,10 +615,116 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_deprecated(round, args=(scalar,))
             self.assert_deprecated(round, args=(scalar, 0))
             self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-    
+
     def test_not_deprecated(self):
         for scalar_type in self.not_deprecated_types:
             scalar = scalar_type(0)
             self.assert_not_deprecated(round, args=(scalar,))
             self.assert_not_deprecated(round, args=(scalar, 0))
             self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
+
+
+class TestIncorrectAdvancedIndexWithEmptyResult(_DeprecationTestCase):
+    # 2020-05-27, NumPy 1.20.0
+    message = "Out of bound index found. This was previously ignored.*"
+
+    @pytest.mark.parametrize("index", [([3, 0],), ([0, 0], [3, 0])])
+    def test_empty_subspace(self, index):
+        # Test for both a single and two/multiple advanced indices. These
+        # This will raise an IndexError in the future.
+        arr = np.ones((2, 2, 0))
+        self.assert_deprecated(arr.__getitem__, args=(index,))
+        self.assert_deprecated(arr.__setitem__, args=(index, 0.))
+
+        # for this array, the subspace is only empty after applying the slice
+        arr2 = np.ones((2, 2, 1))
+        index2 = (slice(0, 0),) + index
+        self.assert_deprecated(arr2.__getitem__, args=(index2,))
+        self.assert_deprecated(arr2.__setitem__, args=(index2, 0.))
+
+    def test_empty_index_broadcast_not_deprecated(self):
+        arr = np.ones((2, 2, 2))
+
+        index = ([[3], [2]], [])  # broadcast to an empty result.
+        self.assert_not_deprecated(arr.__getitem__, args=(index,))
+        self.assert_not_deprecated(arr.__setitem__,
+                                   args=(index, np.empty((2, 0, 2))))
+
+
+class TestNonExactMatchDeprecation(_DeprecationTestCase):
+    # 2020-04-22
+    def test_non_exact_match(self):
+        arr = np.array([[3, 6, 6], [4, 5, 1]])
+        # misspelt mode check
+        self.assert_deprecated(lambda: np.ravel_multi_index(arr, (7, 6), mode='Cilp'))
+        # using completely different word with first character as R
+        self.assert_deprecated(lambda: np.searchsorted(arr[0], 4, side='Random'))
+
+
+class TestDeprecatedGlobals(_DeprecationTestCase):
+    # 2020-06-06
+    @pytest.mark.skipif(
+        sys.version_info < (3, 7),
+        reason='module-level __getattr__ not supported')
+    def test_type_aliases(self):
+        # from builtins
+        self.assert_deprecated(lambda: np.bool)
+        self.assert_deprecated(lambda: np.int)
+        self.assert_deprecated(lambda: np.float)
+        self.assert_deprecated(lambda: np.complex)
+        self.assert_deprecated(lambda: np.object)
+        self.assert_deprecated(lambda: np.str)
+
+        # from np.compat
+        self.assert_deprecated(lambda: np.long)
+        self.assert_deprecated(lambda: np.unicode)
+
+
+class TestMatrixInOuter(_DeprecationTestCase):
+    # 2020-05-13 NumPy 1.20.0
+    message = (r"add.outer\(\) was passed a numpy matrix as "
+               r"(first|second) argument.")
+
+    def test_deprecated(self):
+        arr = np.array([1, 2, 3])
+        m = np.array([1, 2, 3]).view(np.matrix)
+        self.assert_deprecated(np.add.outer, args=(m, m), num=2)
+        self.assert_deprecated(np.add.outer, args=(arr, m))
+        self.assert_deprecated(np.add.outer, args=(m, arr))
+        self.assert_not_deprecated(np.add.outer, args=(arr, arr))
+
+
+class TestRaggedArray(_DeprecationTestCase):
+    # 2020-07-24, NumPy 1.20.0
+    message = "setting an array element with a sequence"
+
+    def test_deprecated(self):
+        arr = np.ones((1, 1))
+        # Deprecated if the array is a leave node:
+        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64))
+        # And when it is an assignment into a lower dimensional subarray:
+        self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
+
+
+class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
+    # NumPy 1.20, 2020-09-03
+    message = "concatenate with `axis=None` will use same-kind casting"
+
+    def test_deprecated(self):
+        self.assert_deprecated(np.concatenate,
+                args=(([0.], [1.]),),
+                kwargs=dict(axis=None, out=np.empty(2, dtype=np.int64)))
+
+    def test_not_deprecated(self):
+        self.assert_not_deprecated(np.concatenate,
+                args=(([0.], [1.]),),
+                kwargs={'axis': None, 'out': np.empty(2, dtype=np.int64),
+                        'casting': "unsafe"})
+
+        with assert_raises(TypeError):
+            # Tests should notice if the deprecation warning is given first...
+            np.concatenate(([0.], [1.]), out=np.empty(2, dtype=np.int64),
+                           casting="same_kind")
+
