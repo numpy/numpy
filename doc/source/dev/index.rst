@@ -4,6 +4,22 @@
 Contributing to NumPy
 #####################
 
+.. TODO: this is hidden because there's a bug in the pydata theme that won't render TOC items under headers
+
+.. toctree::
+   :hidden:
+
+   conduct/code_of_conduct
+   Git Basics <gitwash/index>
+   development_environment
+   development_workflow
+   ../benchmarking
+   style_guide
+   releasing
+   governance/index
+   howto-docs
+
+
 Not a coder? Not a problem! NumPy is multi-faceted, and we can use a lot of help.
 These are all activities we'd like to get help with (they're all important, so
 we list them in alphabetical order):

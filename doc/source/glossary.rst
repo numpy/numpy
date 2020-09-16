@@ -121,10 +121,12 @@ Glossary
                 [ True,  True,  True,  True]])
 
 
+
    array
 
       Used synonymously in the NumPy docs with
       :doc:`ndarray <reference/arrays>`, NumPy's basic structure.
+
 
 
    array_like
@@ -136,7 +138,7 @@ Glossary
        :doc:`numpy.array <reference/generated/numpy.array>`
        is array_like. ::
 
-           >>> a = np.array([[1,2.0],[0,0],(1+1j,3.)])
+           >>> a = np.array([[1, 2.0],[0, 0],(1+1j, 3.)])
 
            >>> a
            array([[1.+0.j, 2.+0.j],
@@ -240,6 +242,7 @@ Glossary
        no memory or time. For details, see :doc:`Broadcasting. <user/basics.broadcasting>`
 
 
+
    C order
        See `row-major`
 
@@ -287,6 +290,24 @@ Glossary
        Another term for :term:`advanced indexing`.
 
 
+
+   dimension
+
+       See :term:`axis`.
+
+
+   dtype
+
+       The datatype describing the (identically typed) elements in an ndarray.
+       It can be changed to reinterpret the array contents. For details, see
+       :doc:`Data type objects (dtype). <reference/arrays.dtypes>`
+
+
+   fancy indexing
+
+       Another term for :term:`advanced indexing`.
+
+
    field
        In a :term:`structured data type`, each sub-type is called a `field`.
        The `field` has a name (a string), a type (any valid dtype), and
@@ -297,8 +318,10 @@ Glossary
        Same as `column-major`
 
 
+
    flattened
        See :term:`ravel`.
+
 
 
    homogeneous
@@ -335,6 +358,7 @@ Glossary
 
    mask
        The boolean array used to select elements in a :term:`masked array`.
+
 
 
    masked array
@@ -384,16 +408,32 @@ Glossary
        the next row or next column) are parameters.
 
 
+
+   object array
+
+       An array whose dtype is ``object``; that is, it contains references to
+       Python objects. Indexing the array dereferences the Python objects, so
+       unlike other ndarrays, an object array has the ability to hold
+       heterogeneous objects.
+
+
+   ravel
+
+       `numpy.ravel` and `numpy.ndarray.flatten` both flatten an ndarray. ``ravel``
+       will return a view if possible; ``flatten`` always returns a copy.
+
+       Flattening collapses a multi-dimensional array to a single dimension;
+       details of how this is done (for instance, whether ``a[n+1]`` should be
+       the next row or next column) are parameters.
+
+
    record array
        A :term:`structured array` with an additional way to access
        fields -- ``a.field`` in addition to ``a['field']``. For details, see
        :doc:`numpy.recarray. <reference/generated/numpy.recarray>`
 
 
-   `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
-      \
-
-   :doc:`scalar <reference/arrays.scalars>`
+   row-major
        A way to represent items in a N-dimensional array in the 1-dimensional
        computer memory. In row-major order, the rightmost index "varies
        the fastest": for example the array::
@@ -425,11 +465,11 @@ Glossary
 
    stride
 
-       Physical memory is one-dimensional; ``stride`` maps an index in an
-       N-dimensional ndarray to an address in memory. For an N-dimensional
-       array, stride is an N-element tuple; advancing from index ``i`` to index
-       ``i+1`` on axis ``n`` means adding ``a.strides[n]`` bytes to the
-       address.
+       Physical memory is one-dimensional;  strides provide a mechanism to map
+       a given index to an address in memory. For an N-dimensional array, its
+       ``strides`` attribute is an N-element tuple; advancing from index
+       ``i`` to index ``i+1`` on axis ``n`` means adding ``a.strides[n]`` bytes
+       to the address.
 
        Strides are computed automatically from an array's dtype and
        shape, but can be directly specified using
@@ -465,15 +505,16 @@ Glossary
               dtype=[('a', '<i4'), ('b', '<f4', (3,))])
 
 
+
    subarray data type
       An element of a structured datatype that behaves like an ndarray.
 
       ..
 
 
+
    title
        An alias for a field name in a structured datatype.
-
 
 
    ufunc
@@ -484,12 +525,14 @@ Glossary
        :doc:`write their own. <reference/ufuncs>`
 
 
+
    vectorization
        NumPy hands off array processing to C, where looping and computation are
        much faster than in Python. To exploit this, programmers using NumPy
        eliminate Python loops in favor of array-to-array operations.
        :term:`vectorization` can refer both to the C offloading and to
        structuring NumPy code to leverage it.
+
 
 
    view
@@ -513,3 +556,27 @@ Glossary
        will check whether ``b`` is a view of ``a``,
        but an exact answer isn't always feasible, as the documentation page
        explains.
+
+         >>> x = np.arange(5)
+         >>> x
+         array([0, 1, 2, 3, 4])
+
+         >>> y = x[::2]
+         >>> y
+         array([0, 2, 4])
+
+         >>> x[0] = 3 # changing x changes y as well, since y is a view on x
+         >>> y
+         array([3, 2, 4])
+
+
+   wrapper
+       Python is a high-level (highly abstracted, or English-like) language.
+       This abstraction comes at a price in execution speed, and sometimes
+       it becomes necessary to use lower level languages to do fast
+       computations.  A wrapper is code that provides a bridge between
+       high and the low level languages, allowing, e.g., Python to execute
+       code written in C or Fortran.
+
+       Examples include ctypes, SWIG and Cython (which wraps C and C++)
+       and f2py (which wraps Fortran).

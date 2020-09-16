@@ -2499,13 +2499,12 @@ class _numpy_info(system_info):
             except AttributeError:
                 pass
 
-            include_dirs.append(distutils.get_python_inc(
-                                        prefix=os.sep.join(prefix)))
+            include_dirs.append(sysconfig.get_path('include'))
         except ImportError:
             pass
-        py_incl_dir = sysconfig.get_python_inc()
+        py_incl_dir = sysconfig.get_path('include')
         include_dirs.append(py_incl_dir)
-        py_pincl_dir = sysconfig.get_python_inc(plat_specific=True)
+        py_pincl_dir = sysconfig.get_path('platinclude')
         if py_pincl_dir not in include_dirs:
             include_dirs.append(py_pincl_dir)
         for d in default_include_dirs:
@@ -2632,8 +2631,8 @@ class boost_python_info(system_info):
                 break
         if not src_dir:
             return
-        py_incl_dirs = [sysconfig.get_python_inc()]
-        py_pincl_dir = sysconfig.get_python_inc(plat_specific=True)
+        py_incl_dirs = [sysconfig.get_path('include')]
+        py_pincl_dir = sysconfig.get_path('platinclude')
         if py_pincl_dir not in py_incl_dirs:
             py_incl_dirs.append(py_pincl_dir)
         srcs_dir = os.path.join(src_dir, 'libs', 'python', 'src')

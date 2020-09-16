@@ -233,7 +233,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || PySlice_Check(index)
             || PyArray_Check(index)
             || !PySequence_Check(index)
-            || PyBaseString_Check(index)) {
+            || PyUnicode_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
@@ -1407,7 +1407,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1471,7 +1471,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyErr_Clear();
                 return -1;
             }
-            is_string = PyBaseString_Check(item);
+            is_string = PyUnicode_Check(item);
             Py_DECREF(item);
             if (!is_string) {
                 return -1;

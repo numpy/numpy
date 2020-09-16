@@ -12,15 +12,13 @@ except ImportError:
 else:
     NO_MYPY = False
 
-TESTS_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "typing",
-)
-PASS_DIR = os.path.join(TESTS_DIR, "pass")
-FAIL_DIR = os.path.join(TESTS_DIR, "fail")
-REVEAL_DIR = os.path.join(TESTS_DIR, "reveal")
-MYPY_INI = os.path.join(TESTS_DIR, "mypy.ini")
-CACHE_DIR = os.path.join(TESTS_DIR, ".mypy_cache")
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+PASS_DIR = os.path.join(DATA_DIR, "pass")
+FAIL_DIR = os.path.join(DATA_DIR, "fail")
+REVEAL_DIR = os.path.join(DATA_DIR, "reveal")
+MYPY_INI = os.path.join(DATA_DIR, "mypy.ini")
+CACHE_DIR = os.path.join(DATA_DIR, ".mypy_cache")
 
 
 def get_test_cases(directory):
@@ -89,7 +87,7 @@ def test_fail(path):
 
     for i, line in enumerate(lines):
         lineno = i + 1
-        if " E:" not in line and lineno not in errors:
+        if line.startswith('#') or (" E:" not in line and lineno not in errors):
             continue
 
         target_line = lines[lineno - 1]

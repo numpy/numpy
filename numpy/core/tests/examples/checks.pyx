@@ -24,3 +24,7 @@ def get_td64_value(obj):
 
 def get_dt64_unit(obj):
     return cnp.get_datetime64_unit(obj)
+
+
+def is_integer(obj):
+    return isinstance(obj, (cnp.integer, int))

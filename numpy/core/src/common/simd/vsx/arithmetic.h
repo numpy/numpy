@@ -100,4 +100,20 @@
 #define npyv_div_f32 vec_div
 #define npyv_div_f64 vec_div
 
+/***************************
+ * FUSED
+ ***************************/
+// multiply and add, a*b + c
+#define npyv_muladd_f32 vec_madd
+#define npyv_muladd_f64 vec_madd
+// multiply and subtract, a*b - c
+#define npyv_mulsub_f32 vec_msub
+#define npyv_mulsub_f64 vec_msub
+// negate multiply and add, -(a*b) + c
+#define npyv_nmuladd_f32 vec_nmsub // equivalent to -(a*b - c)
+#define npyv_nmuladd_f64 vec_nmsub
+// negate multiply and subtract, -(a*b) - c
+#define npyv_nmulsub_f32 vec_nmadd // equivalent to -(a*b + c)
+#define npyv_nmulsub_f64 vec_nmadd
+
 #endif // _NPY_SIMD_VSX_ARITHMETIC_H
