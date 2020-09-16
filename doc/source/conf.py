@@ -376,6 +376,6 @@ class NumPyLexer(CLexer):
     tokens = {
         'statements': [
             (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
-         inherit,
+            inherit,
         ],
     }
