@@ -4,6 +4,7 @@ Glossary
 
 .. glossary::
 
+
    (`n`,)
        A tuple with one element. The trailing comma distinguishes a one-element
        tuple from a parenthesized ``n``.
@@ -15,6 +16,7 @@ Glossary
 
 
    ``...``
+       An :py:data:`Ellipsis`
 
        **When indexing an array**, shorthand that the missing axes, if they
        exist, are full slices.
@@ -33,15 +35,13 @@ Glossary
            >>> a[0,...,0].shape
            (3,)
 
-       It can be used at most once; ``a[...,0,...]`` raises an ``IndexError``.
+       It can be used at most once; ``a[...,0,...]`` raises an :exc:`IndexError`.
 
        **In printouts**, NumPy substitutes ``...`` for the middle elements of
-       large arrays. To see the entire array, use
-       :doc:`numpy.printoptions. <reference/generated/numpy.printoptions>`
+       large arrays. To see the entire array, use `numpy.printoptions`
 
 
    ``:``
-
        The Python :term:`python:slice`
        operator. In ndarrays, slicing can be applied to every
        axis:
@@ -70,33 +70,28 @@ Glossary
        In contrast to Python, where slicing creates a copy, in NumPy slicing
        creates a :term:`view`.
 
-       For details, see :ref:`Combining advanced and basic indexing <combining-advanced-and-basic-indexing>`.
+       For details, see :ref:`combining-advanced-and-basic-indexing`.
 
 
    ``<``
-
        In a dtype declaration, indicates that the data is
-       `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       (the bracket is big on the right). ::
+       :term:`little-endian` (the bracket is big on the right). ::
 
-           >>> dt = np.dtype('<f') # little-endian single-precision float
+           >>> dt = np.dtype('<f')  # little-endian single-precision float
 
 
    ``>``
-
        In a dtype declaration, indicates that the data is
-       `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       (the bracket is big on the left). ::
+       :term:`big-endian` (the bracket is big on the left). ::
 
-           >>> dt = np.dtype('>H') # big-endian unsigned short
+           >>> dt = np.dtype('>H')  # big-endian unsigned short
 
 
    advanced indexing
-
        Rather than using a :doc:`scalar <reference/arrays.scalars>` or slice as
        an index, an axis can be indexed with an array, providing fine-grained
        selection. This is known as :ref:`advanced indexing<advanced-indexing>`
-       or ``fancy indexing``.
+       or "fancy indexing".
 
 
    along an axis
@@ -162,7 +157,7 @@ Glossary
        In a two-dimensional vector, the elements of axis 0 are rows and the
        elements of axis 1 are columns.
 
-       In higher dimensions the picture changes. NumPy prints
+       In higher dimensions, the picture changes. NumPy prints
        higher-dimensional vectors as replications of row-by-column building
        blocks, as in this three-dimensional vector:
 
@@ -192,15 +187,15 @@ Glossary
        useful in distinguishing, say, a (1,2,3) shape from a (2,3) shape:
 
            >>> a = np.arange(6).reshape(2,3)
-           >>> a.shape
-           (2, 3)
+           >>> a.ndim
+           2
            >>> a
            array([[0, 1, 2],
                   [3, 4, 5]])
 
            >>> a = np.arange(6).reshape(1,2,3)
-           >>> a.shape
-           (1, 2, 3)
+           >>> a.ndim
+           3
            >>> a
            array([[[0, 1, 2],
                    [3, 4, 5]]])
@@ -217,12 +212,15 @@ Glossary
        arrays are :term:`view`\ s.
 
 
-   `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       \
+   big-endian
+       When storing a multi-byte value in memory as a sequence of bytes, the
+       sequence addresses/sends/stores the most significant byte first (lowest
+       address) and the least significant byte last (highest address). Common in
+       micro-processors and used for transmission of data over network protocols.
 
 
-   `BLAS <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
-       \
+   BLAS
+       `Basic Linear Algebra Subprograms <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
 
 
    broadcast
@@ -243,7 +241,16 @@ Glossary
 
 
    C order
-       Same as `row-major. <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+       See `row-major`
+
+
+   column-major
+       A way to represent items in a N-dimensional array in the 1-dimensional
+       computer memory. In column-major order, the leftmost index "varies the
+       fastest": for example the array::
+
+            [[1, 2, 3],
+             [4, 5, 6]]
 
 
    `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
@@ -281,14 +288,13 @@ Glossary
 
 
    field
-       In a :term:`structured data type`, each subtype is called a
-       :doc:`field <reference/generated/numpy.dtype.fields>`.
-       A field has a name (a string), a type (any valid dtype), and
-       an optional :term:`title`. For details, see :ref:`arrays.dtypes`.
+       In a :term:`structured data type`, each sub-type is called a `field`.
+       The `field` has a name (a string), a type (any valid dtype), and
+       an optional `title`. See :ref:`arrays.dtypes`
 
 
    Fortran order
-       Same as `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+       Same as `column-major`
 
 
    flattened
@@ -321,7 +327,10 @@ Glossary
 
 
    `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       \
+       When storing a multi-byte value in memory as a sequence of bytes, the
+       sequence addresses/sends/stores the least significant byte first (lowest
+       address) and the most significant byte last (highest address). Common in
+       x86 processors.
 
 
    mask
@@ -348,7 +357,6 @@ Glossary
 
 
    matrix
-
        NumPy's two-dimensional
        :doc:`matrix class <reference/generated/numpy.matrix>`
        should no longer be used; use regular ndarrays.
@@ -368,12 +376,8 @@ Glossary
 
    ravel
 
-       :doc:`numpy.ravel \
-       <reference/generated/numpy.ravel>`
-       and :doc:`numpy.flatten \
-       <reference/generated/numpy.ndarray.flatten>`
-       both flatten an ndarray. ``ravel`` will return a view if possible;
-       ``flatten`` always returns a copy.
+       `numpy.ravel` and `numpy.ndarray.flatten` both flatten an ndarray. ``ravel``
+       will return a view if possible; ``flatten`` always returns a copy.
 
        Flattening collapses a multidimensional array to a single dimension;
        details of how this is done (for instance, whether ``a[n+1]`` should be
@@ -390,7 +394,20 @@ Glossary
       \
 
    :doc:`scalar <reference/arrays.scalars>`
-      \
+       A way to represent items in a N-dimensional array in the 1-dimensional
+       computer memory. In row-major order, the rightmost index "varies
+       the fastest": for example the array::
+
+            [[1, 2, 3],
+             [4, 5, 6]]
+
+       is represented in the row-major order as::
+
+           [1, 2, 3, 4, 5, 6]
+
+       Row-major order is also known as the C order, as the C programming
+       language uses it. New NumPy arrays are by default in row-major order.
+
 
    shape
 
@@ -414,7 +431,7 @@ Glossary
        ``i+1`` on axis ``n`` means adding ``a.strides[n]`` bytes to the
        address.
 
-       Stride is computed automatically from an array's dtype and
+       Strides are computed automatically from an array's dtype and
        shape, but can be directly specified using
        :doc:`as_strided. <reference/generated/numpy.lib.stride_tricks.as_strided>`
 
@@ -457,10 +474,6 @@ Glossary
    title
        An alias for a field name in a structured datatype.
 
-
-   type
-       In NumPy, a synonym for :term:`dtype`. For the more general Python
-       meaning, :term:`see here. <python:type>`
 
 
    ufunc
