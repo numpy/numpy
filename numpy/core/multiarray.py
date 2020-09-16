@@ -163,12 +163,12 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
-        ..versionadded:: 1.20.0
+        .. versionadded:: 1.20.0
 
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
 
-        ..versionadded:: 1.20.0
+        .. versionadded:: 1.20.0
 
     Returns
     -------
