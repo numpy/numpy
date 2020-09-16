@@ -1,5 +1,5 @@
 import sys
-from typing import TypeVar, Optional, Union, Iterable, Tuple, overload
+from typing import TypeVar, Union, Iterable, overload
 
 from numpy import ndarray, _OrderKACF
 from numpy.typing import ArrayLike, DtypeLike
@@ -41,17 +41,15 @@ def asfortranarray(
     a: object, dtype: DtypeLike = ..., *, like: ArrayLike = ...
 ) -> ndarray: ...
 
-_Requirements = Literal["F", "C", "A", "W", "O"]
-_E = Literal["E"]
+_Requirements = Literal[
+    "C", "C_CONTIGUOUS", "CONTIGUOUS",
+    "F", "F_CONTIGUOUS", "FORTRAN",
+    "A", "ALIGNED",
+    "W", "WRITEABLE",
+    "O", "OWNDATA"
+]
+_E = Literal["E", "ENSUREARRAY"]
 
-@overload
-def require(
-    a: object,
-    dtype: DtypeLike = ...,
-    requirements: Union[_E, Iterable[Union[_E, _Requirements]]] = ...,
-    *,
-    like: ArrayLike = ...
-) -> ndarray: ...
 @overload
 def require(
     a: _ArrayType,
@@ -60,6 +58,14 @@ def require(
     *,
     like: ArrayLike = ...
 ) -> _ArrayType: ...
+@overload
+def require(
+    a: object,
+    dtype: DtypeLike = ...,
+    requirements: Union[_E, Iterable[Union[_E, _Requirements]]] = ...,
+    *,
+    like: ArrayLike = ...
+) -> ndarray: ...
 @overload
 def require(
     a: object,
