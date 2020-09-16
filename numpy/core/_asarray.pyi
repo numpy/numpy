@@ -49,6 +49,7 @@ _Requirements = Literal[
     "O", "OWNDATA"
 ]
 _E = Literal["E", "ENSUREARRAY"]
+_RequirementsWithE = Union[_Requirements, _E]
 
 @overload
 def require(
@@ -62,7 +63,7 @@ def require(
 def require(
     a: object,
     dtype: DtypeLike = ...,
-    requirements: Union[_E, Iterable[Union[_E, _Requirements]]] = ...,
+    requirements: Union[_E, Iterable[_RequirementsWithE]] = ...,
     *,
     like: ArrayLike = ...
 ) -> ndarray: ...
