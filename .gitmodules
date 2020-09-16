@@ -1,3 +1,0 @@
-[submodule "doc/sphinxext"]
-	path = doc/sphinxext
-	url = https://github.com/numpy/numpydoc.git

@@ -40,29 +40,7 @@ after which you may use it::
 
   np.fft.fft2(...)
 
-.. rubric::
-    **For convenience the** `formatting standard`_ **is included below with an
-    example**
-
-.. include:: ../../sphinxext/doc/format.rst
-
-.. _example:
-
-Example Source
-==============
-
-.. literalinclude:: ../../sphinxext/doc/example.py
-
-
-
-Example Rendered
-================
-
-.. ifconfig:: python_version_major < '3'
-
-    The example is rendered only when sphinx is run with python3 and above
-
-.. automodule:: doc.example
-    :members:
+Please use the numpydoc `formatting standard`_ as shown in their example_
 
 .. _`formatting standard`: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _example: https://numpydoc.readthedocs.io/en/latest/example.html

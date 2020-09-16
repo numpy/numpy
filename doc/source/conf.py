@@ -367,15 +367,15 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 from pygments.lexers import CLexer
-import copy
+from pygments.lexer import inherit, bygroups
+from pygments.token import Comment
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = copy.deepcopy(CLexer.tokens)
-    # Extend the regex for valid identifiers with @
-    for k, val in tokens.items():
-        for i, v in enumerate(val):
-            if isinstance(v, tuple):
-                if isinstance(v[0], str):
-                    val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
+    tokens = {
+        'statements': [
+            (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
+            inherit,
+        ],
+    }
