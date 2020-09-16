@@ -906,21 +906,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             max_rows=max_rows, like=like
         )
 
-    fown = False
-    try:
-        if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
-        if _is_string_like(fname):
-            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fencoding = getattr(fh, 'encoding', 'latin1')
-            fh = iter(fh)
-            fown = True
-        else:
-            fh = iter(fname)
-            fencoding = getattr(fname, 'encoding', 'latin1')
-    except TypeError as e:
-        raise ValueError('fname must be a string, file handle, or generator') from e
-
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Nested functions used by loadtxt.
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
