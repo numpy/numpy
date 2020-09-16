@@ -286,32 +286,29 @@ class TestSystemInfoReading:
             os.chdir(previousDir)
         
 
-def test_distutils_parse_env_order():
+def test_distutils_parse_env_order(monkeypatch):
     from numpy.distutils.system_info import _parse_env_order
     env = 'NPY_TESTS_DISTUTILS_PARSE_ENV_ORDER'
 
     base_order = list('abcdef')
 
-    os.environ[env] = 'b,i,e,f'
+    monkeypatch.setenv(env, 'b,i,e,f')
     order, unknown = _parse_env_order(base_order, env)
     assert len(order) == 3
     assert order == list('bef')
     assert len(unknown) == 1
 
     for prefix in '^!':
-        os.environ[env] = f'{prefix}b,i,e'
+        monkeypatch.setenv(env, f'{prefix}b,i,e')
         order, unknown = _parse_env_order(base_order, env)
         assert len(order) == 4
         assert order == list('acdf')
         assert len(unknown) == 1
 
     with pytest.raises(ValueError):
-        os.environ[env] = 'b,^e,i'
+        monkeypatch.setenv(env, 'b,^e,i')
         _parse_env_order(base_order, env)
 
     with pytest.raises(ValueError):
-        os.environ[env] = '!b,^e,i'
+        monkeypatch.setenv(env, '!b,^e,i')
         _parse_env_order(base_order, env)
-
-    # clean-up environment
-    del os.environ[env]
