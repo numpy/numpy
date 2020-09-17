@@ -358,13 +358,15 @@ def issubsctype(arg1, arg2):
 
 @set_module('numpy')
 def issubdtype(arg1, arg2):
-    """
+    r"""
     Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    This is like the builtin :func:`issubclass`, but for `dtype`\ s.
 
     Parameters
     ----------
     arg1, arg2 : dtype_like
-        dtype or string representing a typecode.
+        `dtype` or object coercible to one
 
     Returns
     -------
@@ -372,15 +374,45 @@ def issubdtype(arg1, arg2):
 
     See Also
     --------
+    :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
     issubsctype, issubclass_
-    numpy.core.numerictypes : Overview of numpy type hierarchy.
 
     Examples
     --------
-    >>> np.issubdtype('S1', np.string_)
+    `issubdtype` can be used to check the type of arrays:
+
+    >>> ints = np.array([1, 2, 3], dtype=np.int32)
+    >>> np.issubdtype(ints.dtype, np.integer)
     True
+    >>> np.issubdtype(ints.dtype, np.floating)
+    False
+
+    >>> floats = np.array([1, 2, 3], dtype=np.float32)
+    >>> np.issubdtype(floats.dtype, np.integer)
+    False
+    >>> np.issubdtype(floats.dtype, np.floating)
+    True
+
+    Similar types of different sizes are not subdtypes of each other:
+
     >>> np.issubdtype(np.float64, np.float32)
     False
+    >>> np.issubdtype(np.float32, np.float64)
+    False
+
+    but both are subtypes of `floating`:
+
+    >>> np.issubdtype(np.float64, np.floating)
+    True
+    >>> np.issubdtype(np.float32, np.floating)
+    True
+
+    For convenience, dtype-like objects are allowed too:
+
+    >>> np.issubdtype('S1', np.string_)
+    True
+    >>> np.issubdtype('i4', np.signedinteger)
+    True
 
     """
     if not issubclass_(arg1, generic):
