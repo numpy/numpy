@@ -1641,7 +1641,7 @@ def flatnotmasked_contiguous(a):
     slice_list : list
         A sorted sequence of `slice` objects (start index, end index).
 
-        ..versionchanged:: 1.15.0
+        .. versionchanged:: 1.15.0
             Now returns an empty list instead of None for a fully masked array
 
     See Also
