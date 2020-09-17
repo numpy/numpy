@@ -554,8 +554,8 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 _CharLike = Union[str, bytes]
 _BoolLike = Union[bool, bool_]
 _IntLike = Union[int, integer]
-_FloatLike = Union[int, integer, float, floating]
-_ComplexLike = Union[int, float, complex, integer, floating, complexfloating]
+_FloatLike = Union[_IntLike, float, floating]
+_ComplexLike = Union[_FloatLike, complex, complexfloating]
 _NumberLike = Union[int, float, complex, number, bool_]
 
 class generic(_ArrayOrScalarCommon):
