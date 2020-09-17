@@ -113,8 +113,8 @@ Jan 13, 2021 3.7+   1.17+
 Jul 26, 2021 3.7+   1.18+
 Dec 22, 2021 3.7+   1.19+
 Dec 26, 2021 3.8+   1.19+
-Jun 21, 2022 3.8+   1.18+
-Apr 14, 2023 3.9+   1.18+
+Jun 21, 2022 3.8+   1.20+
+Apr 14, 2023 3.9+   1.20+
 ============ ====== =====
 
 
@@ -280,8 +280,12 @@ Code to generate support and drop schedule tables ::
 
   releases = sorted(releases, key=lambda x: x[0])
 
-  minpy = '3.9+'
-  minnum = '1.18+'
+
+  py_major,py_minor = sorted([int(x) for x in r[2].split('.')] for r in releases if r[1] == 'Python')[-1]
+  minpy = f"{py_major}.{py_minor+1}+"
+
+  num_major,num_minor = sorted([int(x) for x in r[2].split('.')] for r in releases if r[1] == 'Numpy')[-1]
+  minnum = f"{num_major}.{num_minor+1}+"
 
   toprint_drop_dates = ['']
   toprint_support_table = []
@@ -295,14 +299,14 @@ Code to generate support and drop schedule tables ::
           minnum = v+'+'
       else:
           minpy = v+'+'
-
-  for e in toprint_drop_dates[::-1]:
+  print("On next release, drop support for Python 3.5 (initially released on Sep 13, 2015)")
+  for e in toprint_drop_dates[-4::-1]:
       print(e)
 
   print('============ ====== =====')
   print('Date         Python NumPy')
   print('------------ ------ -----')
-  for e in toprint_support_table[::-1]:
+  for e in toprint_support_table[-4::-1]:
       print(e)
   print('============ ====== =====')
 
