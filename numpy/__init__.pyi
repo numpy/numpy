@@ -690,6 +690,7 @@ class timedelta64(generic):
     def __mod__(self, other: timedelta64) -> timedelta64: ...
 
 class unsignedinteger(integer):  # type: ignore
+    # NOTE: `uint64 + signedinteger -> float64`
     __add__: _UnsignedIntOp
     __radd__: _UnsignedIntOp
     __sub__: _UnsignedIntOp
