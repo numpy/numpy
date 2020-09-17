@@ -1532,7 +1532,7 @@ pack_inner(const char *inptr,
         const int vstep = npyv_nlanes_u64;
         vn_out -= (vn_out & (vstep - 1));
         for (index = 0; index < vn_out; index += vstep) {
-            // Maximum paraller abillity: handle eight 64bits at one time
+            // Maximum parallel ability: handle eight 64-bit integers at one time
             npy_uint64 a[8];
             for (int i = 0; i < vstep; i++) {
                 a[i] = *(npy_uint64*)(inptr + 8 * i);
