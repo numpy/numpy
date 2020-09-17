@@ -287,6 +287,21 @@ _OrderKACF = Optional[Literal["K", "A", "C", "F"]]
 _OrderACF = Optional[Literal["A", "C", "F"]]
 _OrderCF = Optional[Literal["C", "F"]]
 
+_ModeKind = Literal["raise", "wrap", "clip"]
+_PartitionKind = Literal["introselect"]
+_SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
+_SortSide = Literal["left", "right"]
+
+_ArrayLikeBool = Union[_BoolLike, Sequence[_BoolLike], ndarray]
+_ArrayLikeIntOrBool = Union[
+    _IntLike,
+    _BoolLike,
+    ndarray,
+    Sequence[_IntLike],
+    Sequence[_BoolLike],
+    Sequence[Sequence[Any]],  # TODO: wait for support for recursive types
+]
+
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
 class _ArrayOrScalarCommon(
@@ -498,11 +513,11 @@ class _ArrayOrScalarCommon(
     ) -> ndarray: ...
     @overload
     def choose(
-        self, choices: ArrayLike, out: None = ..., mode: _Mode = ...,
+        self, choices: ArrayLike, out: None = ..., mode: _ModeKind = ...,
     ) -> ndarray: ...
     @overload
     def choose(
-        self, choices: ArrayLike, out: _NdArraySubClass = ..., mode: _Mode = ...,
+        self, choices: ArrayLike, out: _NdArraySubClass = ..., mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
     @overload
     def clip(
@@ -764,7 +779,7 @@ class _ArrayOrScalarCommon(
         indices: Union[_IntLike, _BoolLike],
         axis: Optional[int] = ...,
         out: None = ...,
-        mode: _Mode = ...,
+        mode: _ModeKind = ...,
     ) -> generic: ...
     @overload
     def take(
@@ -772,7 +787,7 @@ class _ArrayOrScalarCommon(
         indices: _ArrayLikeIntOrBool,
         axis: Optional[int] = ...,
         out: None = ...,
-        mode: _Mode = ...,
+        mode: _ModeKind = ...,
     ) -> ndarray: ...
     @overload
     def take(
@@ -780,7 +795,7 @@ class _ArrayOrScalarCommon(
         indices: _ArrayLikeIntOrBool,
         axis: Optional[int] = ...,
         out: _NdArraySubClass = ...,
-        mode: _Mode = ...,
+        mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
     @overload
     def var(
@@ -869,12 +884,12 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
     def put(
-        self, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _Mode = ...
+        self, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _ModeKind = ...
     ) -> None: ...
     def searchsorted(
         self,  # >= 1D array
         v: ArrayLike,
-        side: _Side = ...,
+        side: _SortSide = ...,
         sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
     ) -> ndarray: ...
     def setfield(

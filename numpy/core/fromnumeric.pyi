@@ -13,6 +13,12 @@ from numpy import (
     _IntLike,
     _BoolLike,
     _NumberLike,
+    _ArrayLikeBool,
+    _ArrayLikeIntOrBool,
+    _ModeKind,
+    _PartitionKind,
+    _SortKind,
+    _SortSide,
 )
 from numpy.typing import DtypeLike, ArrayLike, _ShapeLike, _Shape
 
@@ -20,11 +26,6 @@ if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-_Mode = Literal["raise", "wrap", "clip"]
-_PartitionKind = Literal["introselect"]
-_SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
-_Side = Literal["left", "right"]
 
 # Various annotations for scalars
 
@@ -44,21 +45,6 @@ _ScalarGenericDT = TypeVar(
 
 _Number = TypeVar("_Number", bound=number)
 
-# An array-like object consisting of integers
-_IntOrBool = Union[_IntLike, _BoolLike]
-_ArrayLikeIntNested = ArrayLike  # TODO: wait for support for recursive types
-_ArrayLikeBoolNested = ArrayLike  # TODO: wait for support for recursive types
-
-# Integers and booleans can generally be used interchangeably
-_ArrayLikeIntOrBool = Union[
-    _IntOrBool,
-    ndarray,
-    Sequence[_IntOrBool],
-    Sequence[_ArrayLikeIntNested],
-    Sequence[_ArrayLikeBoolNested],
-]
-_ArrayLikeBool = Union[_BoolLike, Sequence[_BoolLike], ndarray]
-
 # The signature of take() follows a common theme with its overloads:
 # 1. A generic comes in; the same generic comes out
 # 2. A scalar comes in; a generic comes out
@@ -70,7 +56,7 @@ def take(
     indices: int,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
-    mode: _Mode = ...,
+    mode: _ModeKind = ...,
 ) -> _ScalarGenericDT: ...
 @overload
 def take(
@@ -78,7 +64,7 @@ def take(
     indices: int,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
-    mode: _Mode = ...,
+    mode: _ModeKind = ...,
 ) -> _ScalarNumpy: ...
 @overload
 def take(
@@ -86,7 +72,7 @@ def take(
     indices: int,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
-    mode: _Mode = ...,
+    mode: _ModeKind = ...,
 ) -> _ScalarNumpy: ...
 @overload
 def take(
@@ -94,7 +80,7 @@ def take(
     indices: _ArrayLikeIntOrBool,
     axis: Optional[int] = ...,
     out: Optional[ndarray] = ...,
-    mode: _Mode = ...,
+    mode: _ModeKind = ...,
 ) -> Union[_ScalarNumpy, ndarray]: ...
 def reshape(a: ArrayLike, newshape: _ShapeLike, order: _OrderACF = ...) -> ndarray: ...
 @overload
@@ -102,24 +88,24 @@ def choose(
     a: _ScalarIntOrBool,
     choices: ArrayLike,
     out: Optional[ndarray] = ...,
-    mode: _Mode = ...,
+    mode: _ModeKind = ...,
 ) -> _ScalarIntOrBool: ...
 @overload
 def choose(
-    a: _IntOrBool, choices: ArrayLike, out: Optional[ndarray] = ..., mode: _Mode = ...
+    a: Union[_IntLike, _BoolLike], choices: ArrayLike, out: Optional[ndarray] = ..., mode: _ModeKind = ...
 ) -> Union[integer, bool_]: ...
 @overload
 def choose(
     a: _ArrayLikeIntOrBool,
     choices: ArrayLike,
     out: Optional[ndarray] = ...,
-    mode: _Mode = ...,
+    mode: _ModeKind = ...,
 ) -> ndarray: ...
 def repeat(
     a: ArrayLike, repeats: _ArrayLikeIntOrBool, axis: Optional[int] = ...
 ) -> ndarray: ...
 def put(
-    a: ndarray, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _Mode = ...
+    a: ndarray, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _ModeKind = ...
 ) -> None: ...
 def swapaxes(a: ArrayLike, axis1: int, axis2: int) -> ndarray: ...
 def transpose(
@@ -184,14 +170,14 @@ def argmin(
 def searchsorted(
     a: ArrayLike,
     v: _Scalar,
-    side: _Side = ...,
+    side: _SortSide = ...,
     sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
 ) -> integer: ...
 @overload
 def searchsorted(
     a: ArrayLike,
     v: ArrayLike,
-    side: _Side = ...,
+    side: _SortSide = ...,
     sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
 ) -> ndarray: ...
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> ndarray: ...
