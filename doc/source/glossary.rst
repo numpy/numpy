@@ -14,12 +14,16 @@ Glossary
        Used as a dimension entry, ``-1`` instructs NumPy to choose the length
        that will keep the total number of elements the same.
 
+           >>> np.arange(12).reshape(4,-1).shape
+           (4, 3)
+
+
 
    ``...``
-       An :py:data:`Ellipsis`
+       An :py:data:`Ellipsis`.
 
-       **When indexing an array**, shorthand that the missing axes, if they
-       exist, are full slices.
+       - **When indexing an array**, shorthand that the missing axes, if they
+         exist, are full slices.
 
            >>> a = np.arange(24).reshape(2,3,4)
 
@@ -37,8 +41,8 @@ Glossary
 
        It can be used at most once; ``a[...,0,...]`` raises an :exc:`IndexError`.
 
-       **In printouts**, NumPy substitutes ``...`` for the middle elements of
-       large arrays. To see the entire array, use `numpy.printoptions`
+       - **In printouts**, NumPy substitutes ``...`` for the middle elements of
+         large arrays. To see the entire array, use `numpy.printoptions`
 
 
    ``:``
@@ -95,38 +99,45 @@ Glossary
 
 
    along an axis
+       Reversing along axis 0 (the row axis) below reverses the columns, and
+       reversing along axis 1 (the column axis) reverses the rows. This might
+       be the opposite of what a new user would expect.
 
-       The result of an operation along an :term:`axis` X is an array in which X
-       disappears. This can surprise new users expecting the opposite.
+           >>> a = np.arange(12).reshape(3,4)
+           >>> a
+           array([[ 0,  1,  2,  3],
+                  [ 4,  5,  6,  7],
+                  [ 8,  9, 10, 11]])
+           <BLANKLINE>
+           >>> np.flip(a,axis=0)
+           array([[ 8,  9, 10, 11],
+                  [ 4,  5,  6,  7],
+                  [ 0,  1,  2,  3]])
+           <BLANKLINE>
+           >>> np.flip(a,axis=1)
+           array([[ 3,  2,  1,  0],
+                  [ 7,  6,  5,  4],
+                  [11, 10,  9,  8]])
 
-       The operation can be visualized this way:
+       An operation "along axis 0" behaves as if the argument were an array of
+       ``a`` slices taking successive indexes of axis 0:
 
-       Imagine a slice of array ``a`` where axis X has a fixed index
-       and the other dimensions are left full (``:``).
+           >>> np.array((a[0,:], a[1,:], a[2,:]))
+           array([[ 0,  1,  2,  3],
+                  [ 4,  5,  6,  7],
+                  [ 8,  9, 10, 11]])
 
-         >>> a = np.arange(24).reshape(2,3,4)
-         <BLANKLINE>
-         >>> a.shape
-         (2, 3, 4)
-         <BLANKLINE>
-         >>> a[:,0,:].shape
-         (2, 4)
+       Reversing the slices results in ``np.flip(a,axis=0)``:
 
-       The slice has ``a``'s shape with the X dimension deleted. Saying an
-       operation ``op`` is ``performed along X`` means that ``op`` takes as its
-       operands slices having every value of X:
-
-         >>> np.sum(a,axis=1) == a[:,0,:] + a[:,1,:] + a[:,2,:]
-         array([[ True,  True,  True,  True],
-                [ True,  True,  True,  True]])
-
+           >>> np.array((a[2,:],a[1,:],a[0,:]))
+           array([[ 8,  9, 10, 11],
+                  [ 4,  5,  6,  7],
+                  [ 0,  1,  2,  3]])
 
 
    array
-
       Used synonymously in the NumPy docs with
       :doc:`ndarray <reference/arrays>`, NumPy's basic structure.
-
 
 
    array_like
@@ -138,7 +149,7 @@ Glossary
        :doc:`numpy.array <reference/generated/numpy.array>`
        is array_like. ::
 
-           >>> a = np.array([[1, 2.0],[0, 0],(1+1j, 3.)])
+           >>> a = np.array([[1, 2.0], [0, 0], (1+1j, 3.)])
 
            >>> a
            array([[1.+0.j, 2.+0.j],
@@ -214,11 +225,8 @@ Glossary
        arrays are :term:`view`\ s.
 
 
-   big-endian
-       When storing a multi-byte value in memory as a sequence of bytes, the
-       sequence addresses/sends/stores the most significant byte first (lowest
-       address) and the least significant byte last (highest address). Common in
-       micro-processors and used for transmission of data over network protocols.
+   `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
+       \
 
 
    BLAS
@@ -242,69 +250,33 @@ Glossary
        no memory or time. For details, see :doc:`Broadcasting. <user/basics.broadcasting>`
 
 
-
    C order
-       See `row-major`
-
-
-   column-major
-       A way to represent items in a N-dimensional array in the 1-dimensional
-       computer memory. In column-major order, the leftmost index "varies the
-       fastest": for example the array::
-
-            [[1, 2, 3],
-             [4, 5, 6]]
+       See :term:`row-major`.
 
 
    `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
        \
 
 
-   copy
+   contiguous
+       An array is contiguous if it occupies a single unbroken block of memory.
 
+
+   copy
        See :term:`view`.
 
 
-   :term:`decorator <python:decorator>`
-       \
-
-
-   :term:`dictionary <python:dictionary>`
-       \
-
-
    dimension
-
        See :term:`axis`.
 
 
    dtype
-
        The datatype describing the (identically typed) elements in an ndarray.
        It can be changed to reinterpret the array contents. For details, see
        :doc:`Data type objects (dtype). <reference/arrays.dtypes>`
 
 
    fancy indexing
-
-       Another term for :term:`advanced indexing`.
-
-
-
-   dimension
-
-       See :term:`axis`.
-
-
-   dtype
-
-       The datatype describing the (identically typed) elements in an ndarray.
-       It can be changed to reinterpret the array contents. For details, see
-       :doc:`Data type objects (dtype). <reference/arrays.dtypes>`
-
-
-   fancy indexing
-
        Another term for :term:`advanced indexing`.
 
 
@@ -315,13 +287,11 @@ Glossary
 
 
    Fortran order
-       Same as `column-major`
-
+       Same as `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
 
 
    flattened
        See :term:`ravel`.
-
 
 
    homogeneous
@@ -333,32 +303,16 @@ Glossary
       Python objects, fill the role of heterogeneous arrays.
 
 
-   :term:`immutable <python:immutable>`
-       \
-
-
-   :term:`iterable <python:iterable>`
-      \
-
-
    itemsize
         The size of the dtype element in bytes.
 
 
-   :term:`list <python:list>`
-       \
-
-
    `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       When storing a multi-byte value in memory as a sequence of bytes, the
-       sequence addresses/sends/stores the least significant byte first (lowest
-       address) and the most significant byte last (highest address). Common in
-       x86 processors.
+       \
 
 
    mask
        The boolean array used to select elements in a :term:`masked array`.
-
 
 
    masked array
@@ -391,7 +345,6 @@ Glossary
 
 
    object array
-
        An array whose dtype is ``object``; that is, it contains references to
        Python objects. Indexing the array dereferences the Python objects, so
        unlike other ndarrays, an object array has the ability to hold
@@ -399,30 +352,14 @@ Glossary
 
 
    ravel
+       :doc:`numpy.ravel \
+       <reference/generated/numpy.ravel>`
+       and :doc:`numpy.flatten \
+       <reference/generated/numpy.ndarray.flatten>`
+       both flatten an ndarray. ``ravel`` will return a view if possible;
+       ``flatten`` always returns a copy.
 
-       `numpy.ravel` and `numpy.ndarray.flatten` both flatten an ndarray. ``ravel``
-       will return a view if possible; ``flatten`` always returns a copy.
-
-       Flattening collapses a multidimensional array to a single dimension;
-       details of how this is done (for instance, whether ``a[n+1]`` should be
-       the next row or next column) are parameters.
-
-
-
-   object array
-
-       An array whose dtype is ``object``; that is, it contains references to
-       Python objects. Indexing the array dereferences the Python objects, so
-       unlike other ndarrays, an object array has the ability to hold
-       heterogeneous objects.
-
-
-   ravel
-
-       `numpy.ravel` and `numpy.ndarray.flatten` both flatten an ndarray. ``ravel``
-       will return a view if possible; ``flatten`` always returns a copy.
-
-       Flattening collapses a multi-dimensional array to a single dimension;
+       Flattening collapses a multimdimensional array to a single dimension;
        details of how this is done (for instance, whether ``a[n+1]`` should be
        the next row or next column) are parameters.
 
@@ -434,23 +371,16 @@ Glossary
 
 
    row-major
-       A way to represent items in a N-dimensional array in the 1-dimensional
-       computer memory. In row-major order, the rightmost index "varies
-       the fastest": for example the array::
+        `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+        order is also known as C order, as the C programming language uses it.
+        New NumPy arrays are by default in row-major order.
 
-            [[1, 2, 3],
-             [4, 5, 6]]
 
-       is represented in the row-major order as::
-
-           [1, 2, 3, 4, 5, 6]
-
-       Row-major order is also known as the C order, as the C programming
-       language uses it. New NumPy arrays are by default in row-major order.
+   :doc:`scalar <reference/arrays.scalars>`
+       \
 
 
    shape
-
        A tuple showing the length of each dimension of an ndarray. The
        length of the tuple itself is the number of dimensions
        (:doc:`numpy.ndim <reference/generated/numpy.ndarray.ndim>`).
@@ -464,7 +394,6 @@ Glossary
 
 
    stride
-
        Physical memory is one-dimensional;  strides provide a mechanism to map
        a given index to an address in memory. For an N-dimensional array, its
        ``strides`` attribute is an N-element tuple; advancing from index
@@ -485,7 +414,6 @@ Glossary
 
 
    structured array
-
        Array whose :term:`dtype` is a :term:`structured data type`.
 
 
@@ -496,7 +424,6 @@ Glossary
 
 
    subarray
-
       An array nested in a :term:`structured data type`: ::
 
         >>> dt = np.dtype([('a', np.int32), ('b', np.float32, (3,))])
@@ -505,16 +432,17 @@ Glossary
               dtype=[('a', '<i4'), ('b', '<f4', (3,))])
 
 
-
    subarray data type
       An element of a structured datatype that behaves like an ndarray.
-
-      ..
-
 
 
    title
        An alias for a field name in a structured datatype.
+
+
+   type
+       In NumPy, usually a synonym for :term:`dtype`. For the more general
+       Python meaning, :term:`see here. <python:type>`
 
 
    ufunc
@@ -525,7 +453,6 @@ Glossary
        :doc:`write their own. <reference/ufuncs>`
 
 
-
    vectorization
        NumPy hands off array processing to C, where looping and computation are
        much faster than in Python. To exploit this, programmers using NumPy
@@ -533,14 +460,12 @@ Glossary
        :term:`vectorization` can refer both to the C offloading and to
        structuring NumPy code to leverage it.
 
-
-
    view
        Without changing underlying data, NumPy can make one array masquerade as
        any number of other arrays with different types, shapes, and even
        content. This is much faster than creating those arrays.
 
-       An array created this way is a ``view``, and the performance gain often
+       An array created this way is a `view`, and the performance gain often
        makes an array created as a view preferable to one created as a new
        array.
 
@@ -569,14 +494,3 @@ Glossary
          >>> y
          array([3, 2, 4])
 
-
-   wrapper
-       Python is a high-level (highly abstracted, or English-like) language.
-       This abstraction comes at a price in execution speed, and sometimes
-       it becomes necessary to use lower level languages to do fast
-       computations.  A wrapper is code that provides a bridge between
-       high and the low level languages, allowing, e.g., Python to execute
-       code written in C or Fortran.
-
-       Examples include ctypes, SWIG and Cython (which wraps C and C++)
-       and f2py (which wraps Fortran).
