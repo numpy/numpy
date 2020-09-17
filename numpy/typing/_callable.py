@@ -9,14 +9,14 @@ See the `Mypy documentation`_ on protocols for more details.
 """
 
 import sys
-from typing import Union, TypeVar, overload, Any, TYPE_CHECKING
+from typing import Union, TypeVar, overload, Any
 
 from numpy import (
     _BoolLike,
     _IntLike,
     _FloatLike,
+    _ComplexLike,
     _NumberLike,
-    _NBitBase,
     generic,
     bool_,
     timedelta64,
@@ -30,7 +30,6 @@ from numpy import (
     float32,
     float64,
     complexfloating,
-    complex64,
     complex128,
 )
 
@@ -45,13 +44,10 @@ else:
     else:
         HAVE_PROTOCOL = True
 
-if TYPE_CHECKING or HAVE_PROTOCOL:
+if HAVE_PROTOCOL:
     _NumberType = TypeVar("_NumberType", bound=number)
     _NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
     _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
-
-    _NBit1 = TypeVar("_NBit1", bound=_NBitBase)
-    _NBit2 = TypeVar("_NBit2", bound=_NBitBase)
 
     class _BoolOp(Protocol[_GenericType_co]):
         @overload
@@ -90,69 +86,40 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: _FloatLike) -> timedelta64: ...
 
-    class _IntTrueDiv(Protocol[_NBit1]):
+    class _IntTrueDiv(Protocol):
         @overload
-        def __call__(self, __other: Union[_IntLike, float]) -> float64: ...
+        def __call__(self, __other: Union[_IntLike, float]) -> floating: ...
         @overload
-        def __call__(self, __other: complex) -> complex128: ...
+        def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _UnsignedIntOp(Protocol[_NBit1]):
+    class _UnsignedIntOp(Protocol):
         @overload
-        def __call__(self, __other: bool) -> unsignedinteger[_NBit1]: ...
+        def __call__(self, __other: Union[bool, unsignedinteger]) -> unsignedinteger: ...
         @overload
-        def __call__(self, __other: float) -> float64: ...
+        def __call__(self, __other: Union[int, signedinteger]) -> Union[signedinteger, floating]: ...
         @overload
-        def __call__(self, __other: complex) -> complex128: ...
+        def __call__(self, __other: float) -> floating: ...
         @overload
-        def __call__(
-            self, __other: Union[int, signedinteger]
-        ) -> Union[signedinteger[_NBitBase], float64]: ...
-        @overload
-        def __call__(
-            self, __other: unsignedinteger[_NBit2]
-        ) -> unsignedinteger[Union[_NBit1, _NBit2]]: ...
+        def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _SignedIntOp(Protocol[_NBit1]):
+    class _SignedIntOp(Protocol):
         @overload
-        def __call__(self, __other: bool) -> signedinteger[_NBit1]: ...
+        def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
         @overload
-        def __call__(self, __other: int) -> Union[int32, int64]: ...
+        def __call__(self, __other: float) -> floating: ...
         @overload
-        def __call__(self, __other: float) -> float64: ...
-        @overload
-        def __call__(self, __other: complex) -> complex128: ...
-        @overload
-        def __call__(
-            self, __other: signedinteger[_NBit2]
-        ) -> signedinteger[Union[_NBit1, _NBit2]]: ...
+        def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _FloatOp(Protocol[_NBit1]):
+    class _FloatOp(Protocol):
         @overload
-        def __call__(self, __other: bool) -> floating[_NBit1]: ...
+        def __call__(self, __other: _FloatLike) -> floating: ...
         @overload
-        def __call__(self, __other: int) -> Union[float32, float64]: ...
-        @overload
-        def __call__(self, __other: float) -> float64: ...
-        @overload
-        def __call__(self, __other: complex) -> complex128: ...
-        @overload
-        def __call__(
-            self, __other: Union[integer[_NBit2], floating[_NBit2]]
-        ) -> floating[Union[_NBit1, _NBit2]]: ...
+        def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
-    class _ComplexOp(Protocol[_NBit1]):
-        @overload
-        def __call__(self, __other: bool) -> complexfloating[_NBit1]: ...
-        @overload
-        def __call__(self, __other: int) -> Union[complex64, complex128]: ...
-        @overload
-        def __call__(self, __other: Union[float, complex]) -> complex128: ...
-        @overload
-        def __call__(
-            self, __other: number[_NBit2]
-        ) -> complexfloating[Union[_NBit1, _NBit2]]: ...
+    class _ComplexOp(Protocol):
+        def __call__(self, __other: _ComplexLike) -> complexfloating[floating]: ...
 
-    class _NumberOp(Protocol[_NBit1]):
+    class _NumberOp(Protocol):
         def __call__(self, __other: _NumberLike) -> number: ...
 
 else:
