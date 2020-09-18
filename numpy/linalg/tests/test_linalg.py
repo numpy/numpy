@@ -899,31 +899,31 @@ class TestDet(DetCases):
         assert_(res[1].dtype.type is np.float64)
 
 
-class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
+class LstsqCases(LinalgSquareTestCase,
+                 LinalgNonsquareTestCase,
+                 LinalgGeneralizedSquareTestCase,
+                 LinalgGeneralizedNonsquareTestCase):
 
     def do(self, a, b, tags):
         arr = np.asarray(a)
-        m, n = arr.shape
+        m, n = arr.shape[-2:]
         u, s, vt = linalg.svd(a, False)
         x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
         if m == 0:
             assert_((x == 0).all())
         if m <= n:
-            assert_almost_equal(b, dot(a, x))
+            assert_almost_equal(b, a @ x)
             assert_equal(rank, m)
         else:
             assert_equal(rank, n)
         assert_almost_equal(sv, sv.__array_wrap__(s))
-        if rank == n and m > n:
-            expect_resids = (
-                np.asarray(abs(np.dot(a, x) - b)) ** 2).sum(axis=0)
-            expect_resids = np.asarray(expect_resids)
-            if np.asarray(b).ndim == 1:
-                expect_resids.shape = (1,)
-                assert_equal(residuals.shape, expect_resids.shape)
-        else:
-            expect_resids = np.array([]).view(type(x))
+        expect_resids = np.where(
+            rank == n,
+            (abs(a @ x - b) ** 2).sum(axis=0),
+            np.nan  # lapack does not compute this for us, so we do not return it
+        )
         assert_almost_equal(residuals, expect_resids)
+        assert_equal(residuals.shape, expect_resids.shape)
         assert_(np.issubdtype(residuals.dtype, np.floating))
         assert_(consistent_subclass(x, b))
         assert_(consistent_subclass(residuals, b))
@@ -964,7 +964,7 @@ class TestLstsq(LstsqCases):
         if m == 0:
             assert_((x == 0).all())
         assert_equal(x.shape, (n, n_rhs))
-        assert_equal(residuals.shape, ((n_rhs,) if m > n else (0,)))
+        assert_equal(residuals.shape, (n_rhs,))
         if m > n and n_rhs > 0:
             # residuals are exactly the squared norms of b's columns
             r = b - np.dot(a, x)

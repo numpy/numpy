@@ -3198,7 +3198,6 @@ static void
                 *(npy_int*) args[5] = params.RANK;
                 delinearize_@REALTYPE@_matrix(args[6], params.S, &s_out);
 
-                /* Note that linalg.lstsq discards this when excess == 0 */
                 if (excess >= 0 && params.RANK == n) {
                     /* Compute the residuals as the square sum of each column */
                     int i;
@@ -3215,7 +3214,7 @@ static void
                     }
                 }
                 else {
-                    /* Note that this is always discarded by linalg.lstsq */
+                    /* Not computed for free by lapack, so we don't include it. */
                     nan_@REALTYPE@_matrix(args[4], &r_out);
                 }
             } else {
