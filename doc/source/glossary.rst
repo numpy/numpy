@@ -109,7 +109,7 @@ Glossary
        For example, if ``a`` is a 3 x `N` array, an operation along axis 0
        behaves as if its argument were an array containing slices of each row:
 
-           >>> np.array((a[0,:], a[1,:], a[2,:]))
+           >>> np.array((a[0,:], a[1,:], a[2,:])) #doctest: +SKIP
 
        To make it concrete, we can pick the operation to be the array-reversal
        function :func:`numpy.flip`, which accepts an ``axis`` argument. We
@@ -232,8 +232,8 @@ Glossary
        correct way, see :func:`numpy.shares_memory`.
 
 
-   `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       \
+   big-endian
+       See `Endianness <https://en.wikipedia.org/wiki/Endianness>`_.
 
 
    BLAS
@@ -271,11 +271,11 @@ Glossary
 
 
    C order
-       See :term:`row-major`.
+       Same as :term:`row-major`.
 
 
-   `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
-       \
+   column-major
+       See `Row- and column-major order <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_.
 
 
    contiguous
@@ -310,7 +310,7 @@ Glossary
 
 
    Fortran order
-       Same as `column-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+       Same as :term:`column-major`.
 
 
    flattened
@@ -330,8 +330,8 @@ Glossary
        The size of the dtype element in bytes.
 
 
-   `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
-       \
+   little-endian
+       See `Endianness <https://en.wikipedia.org/wiki/Endianness>`_.
 
 
    mask
@@ -406,13 +406,12 @@ Glossary
 
 
    row-major
-       `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
-       order is also known as C order, as the C programming language uses it.
-       New NumPy arrays are by default in row-major order.
+       See `Row- and column-major order <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_.
+       NumPy creates arrays in row-major order by default.
 
 
-   :doc:`scalar <reference/arrays.scalars>`
-       \
+   scalar
+       In NumPy, usually a synonym for :term:`array scalar`.
 
 
    shape
@@ -422,10 +421,6 @@ Glossary
        The product of the tuple elements is the number of elements in the
        array. For details, see
        :doc:`numpy.ndarray.shape <reference/generated/numpy.ndarray.shape>`.
-
-
-   :term:`slice <:>`
-       \
 
 
    stride
@@ -445,7 +440,6 @@ Glossary
        To see how striding underlies the power of NumPy views, see
        `The NumPy array: a structure for efficient numerical computation. \
        <https://arxiv.org/pdf/1102.1523.pdf>`_
-
 
 
    structured array
@@ -509,10 +503,9 @@ Glossary
        Some NumPy routines always return views, some always return copies, some
        may return one or the other, and for some the choice can be specified.
        Responsiblity for managing views and copies falls to the programmer.
-       :doc:`numpy.shares_memory <reference/generated/numpy.shares_memory>`
-       will check whether ``b`` is a view of ``a``,
-       but an exact answer isn't always feasible, as the documentation page
-       explains.
+       :func:`numpy.shares_memory` will check whether ``b`` is a view of
+       ``a``, but an exact answer isn't always feasible, as the documentation
+       page explains.
 
          >>> x = np.arange(5)
          >>> x
