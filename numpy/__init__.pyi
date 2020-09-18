@@ -521,20 +521,20 @@ class _ArrayOrScalarCommon(
     ) -> _NdArraySubClass: ...
     @overload
     def clip(
-        self: _ArraySelf,
+        self,
         min: ArrayLike = ...,
         max: Optional[ArrayLike] = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> Union[_ArraySelf, number]: ...
+    ) -> Union[number, ndarray]: ...
     @overload
     def clip(
-        self: _ArraySelf,
+        self,
         min: None = ...,
         max: ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
-    ) -> Union[_ArraySelf, number]: ...
+    ) -> Union[number, ndarray]: ...
     @overload
     def clip(
         self,
@@ -1088,6 +1088,9 @@ class void(flexible):
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
+    def setfield(
+        self, val: ArrayLike, dtype: DtypeLike, offset: int = ...
+    ) -> None: ...
 
 class character(flexible): ...  # type: ignore
 
