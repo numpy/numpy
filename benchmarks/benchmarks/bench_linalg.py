@@ -126,34 +126,55 @@ class Einsum(Benchmark):
     # outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):
         np.einsum("i,j", self.one_dim, self.one_dim, optimize=True)
-        np.einsum("i,j", self.non_contigous_dim1, self.non_contigous_dim1, optimize=True)
 
     # multiply(a, b):trigger sum_of_products_contig_two
     def time_einsum_multiply(self, dtype):
         np.einsum("..., ...", self.two_dim_small, self.three_dim , optimize=True)
-        np.einsum("..., ...", self.non_contigous_dim2, self.non_contigous_dim3 , optimize=True)
     
     # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
     def time_einsum_sum_mul(self, dtype):
         np.einsum(",i...->", 300, self.three_dim_small, optimize=True)
-        np.einsum(",i...->", 300, self.non_contigous_dim3, optimize=True)
 
     # sum and multiply:trigger sum_of_products_stride0_contig_outstride0_two
     def time_einsum_sum_mul2(self, dtype):
         np.einsum("i...,->", self.three_dim_small, 300, optimize=True)
-        np.einsum("i...,->", self.non_contigous_dim3, 300, optimize=True)
     
     # scalar mul: trigger sum_of_products_stride0_contig_outcontig_two
     def time_einsum_mul(self, dtype):
         np.einsum("i,->i", self.one_dim_big, 300, optimize=True)
-        np.einsum("i,->i", self.non_contigous_dim1, 300, optimize=True)
     
     # trigger contig_contig_outstride0_two
     def time_einsum_contig_contig(self, dtype):
         np.einsum("ji,i->", self.two_dim, self.one_dim_small, optimize=True)
-        np.einsum("ji,i->", self.non_contigous_dim2, self.non_contigous_dim1_small, optimize=True)
 
     # trigger sum_of_products_contig_outstride0_one
     def time_einsum_contig_outstride0(self, dtype):
         np.einsum("i->", self.one_dim_big, optimize=True)
+
+    # outer(a,b): non_contigous arrays
+    def time_einsum_noncon_outer(self, dtype):
+        np.einsum("i,j", self.non_contigous_dim1, self.non_contigous_dim1, optimize=True)
+
+    # multiply(a, b):non_contigous arrays
+    def time_einsum_noncon_multiply(self, dtype):
+        np.einsum("..., ...", self.non_contigous_dim2, self.non_contigous_dim3 , optimize=True)
+    
+    # sum and multiply:non_contigous arrays
+    def time_einsum_noncon_sum_mul(self, dtype):
+        np.einsum(",i...->", 300, self.non_contigous_dim3, optimize=True)
+
+    # sum and multiply:non_contigous arrays
+    def time_einsum_noncon_sum_mul2(self, dtype):
+        np.einsum("i...,->", self.non_contigous_dim3, 300, optimize=True)
+    
+    # scalar mul: non_contigous arrays
+    def time_einsum_noncon_mul(self, dtype):
+        np.einsum("i,->i", self.non_contigous_dim1, 300, optimize=True)
+    
+    # contig_contig_outstride0_two: non_contigous arrays
+    def time_einsum_noncon_contig_contig(self, dtype):
+        np.einsum("ji,i->", self.non_contigous_dim2, self.non_contigous_dim1_small, optimize=True)
+
+    # sum_of_products_contig_outstride0_one：non_contigous arrays
+    def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contigous_dim1, optimize=True)

@@ -17,6 +17,14 @@
 #include "common.h"
 
 #define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
+/**
+ * Unroll by four/eight scalars in case of:
+ *  - The SIMD width is higher than 128bit since we unroll by x2/x4
+ *    and that may lead to performance loss on small arrays.
+ *  - To give the chance to the compiler to
+ *    auto-vectorize in case of NPYV wasn't available.
+ */
+#define EINSUM_UNROLL_4_SCALARS(CHK) (!defined(NPY_DISABLE_OPTIMIZATION) && (!(CHK) || NPY_SIMD > 128))
 
 /**begin repeat
  * #name = byte, short, int, long, longlong,
@@ -240,13 +248,8 @@ static void
                                                             (int)count);
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1) &&
-                           EINSUM_IS_ALIGNED(data_out);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
+                        EINSUM_IS_ALIGNED(data_out);
     const int vstep = npyv_nlanes_@sfx@;
 
     /**begin repeat2
@@ -290,19 +293,15 @@ static void
             npyv_@st@_@sfx@(data_out, abc0);
             npyv_@st@_@sfx@(data_out + vstep, abc1);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     for (; count >= 4; count -= 4, data0 += 4, data1 += 4, data_out += 4) {
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -345,12 +344,7 @@ static void
 
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data1) && EINSUM_IS_ALIGNED(data_out);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
     const int vstep = npyv_nlanes_@sfx@;
     const npyv_@sfx@ va_scalar = npyv_setall_@sfx@(a_scalar);
 
@@ -392,19 +386,15 @@ static void
             npyv_@st@_@sfx@(data_out, abc0);
             npyv_@st@_@sfx@(data_out + vstep, abc1);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     for (; count >= 4; count -= 4, data1 += 4, data_out += 4) {
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -442,12 +432,7 @@ static void
                                                     (int)count);
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data_out);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
     const int vstep = npyv_nlanes_@sfx@;
     const npyv_@sfx@ vb_scalar = npyv_setall_@sfx@(b_scalar);
 
@@ -489,19 +474,15 @@ static void
             npyv_@st@_@sfx@(data_out, abc0);
             npyv_@st@_@sfx@(data_out + vstep, abc1);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     for (; count >= 4; count -= 4, data0 += 4, data_out += 4) {
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -540,12 +521,7 @@ static void
                                                     (int)count);
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
     const int vstep = npyv_nlanes_@sfx@;
     npyv_@sfx@ vaccum = npyv_zero_@sfx@();
 
@@ -579,20 +555,16 @@ static void
             npyv_@sfx@ ab1 = npyv_muladd_@sfx@(a1, b1, vaccum);
                     vaccum = npyv_muladd_@sfx@(a0, b0, ab1);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     accum = npyv_sum_@sfx@(vaccum);
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     for (; count >= 4; count -= 4, data0 += 4, data1 += 4) {
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -622,12 +594,7 @@ static void
                                                     (int)count);
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data1);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
     const int vstep = npyv_nlanes_@sfx@;
     npyv_@sfx@ vaccum = npyv_zero_@sfx@();
 
@@ -658,20 +625,16 @@ static void
             npyv_@sfx@ b01 = npyv_add_@sfx@(b0, b1);
                     vaccum = npyv_add_@sfx@(b01, vaccum);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     accum = npyv_sum_@sfx@(vaccum);
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     for (; count >= 4; count -= 4, data1 += 4) {
         const @type@ b01 = @from@(data1[0]) + @from@(data1[1]);
         const @type@ b23 = @from@(data1[2]) + @from@(data1[3]);
@@ -695,12 +658,7 @@ static void
                                                     (int)count);
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data0);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
     const int vstep = npyv_nlanes_@sfx@;
     npyv_@sfx@ vaccum = npyv_zero_@sfx@();
 
@@ -731,20 +689,16 @@ static void
             npyv_@sfx@ a01 = npyv_add_@sfx@(a0, a1);
                     vaccum = npyv_add_@sfx@(a01, vaccum);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     accum = npyv_sum_@sfx@(vaccum);
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     for (; count >= 4; count -= 4, data0 += 4) {
         const @type@ a01 = @from@(data0[0]) + @from@(data0[1]);
         const @type@ a23 = @from@(data0[2]) + @from@(data0[3]);
@@ -871,12 +825,7 @@ static void
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_outstride0_one (%d)\n", (int)count);
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    #ifndef NPY_HAVE_NEON
     const int is_aligned = EINSUM_IS_ALIGNED(data0);
-    #else
-    // ARM/Neon don't have instructions for aligned memory access
-    const int is_aligned = 0;
-    #endif
     const int vstep = npyv_nlanes_@sfx@;
     npyv_@sfx@ vaccum = npyv_zero_@sfx@();
 
@@ -907,20 +856,16 @@ static void
             npyv_@sfx@ a01 = npyv_add_@sfx@(a0, a1);
                     vaccum = npyv_add_@sfx@(a01, vaccum);
         }
+    #else
+        #error "Invalid unroll_by = @unroll_by@"
     #endif
     }
     /**end repeat2**/
     accum = npyv_sum_@sfx@(vaccum);
     npyv_cleanup();
 #endif // NPYV check for @type@
-/**
- * Unroll by four/eight scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the change to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
-#if !defined(NPY_DISABLE_OPTIMIZATION) && (!@NPYV_CHK@ || NPY_SIMD > 128)
+
+#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
     #if @complex@
         for (; count > 4; count -= 4, data0 += 4*2) {
             const @temptype@ re01 = data0[0] + data0[2];
