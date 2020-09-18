@@ -246,6 +246,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.fcompiler.none",
     "distutils.fcompiler.pathf95",
     "distutils.fcompiler.pg",
+    "distutils.fcompiler.nv",
     "distutils.fcompiler.sun",
     "distutils.fcompiler.vast",
     "distutils.from_template",
