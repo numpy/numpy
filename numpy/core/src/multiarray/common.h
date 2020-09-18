@@ -2,7 +2,6 @@
 #define _NPY_PRIVATE_COMMON_H_
 #include "structmember.h"
 #include <numpy/npy_common.h>
-#include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
 #include "npy_import.h"
@@ -206,7 +205,11 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
      * This test is faster than a direct modulo.
      * Note alignment value of 0 is allowed and returns False.
      */
+#ifdef NPY_HAVE_NEON
+    return 0;
+#else
     return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+#endif
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */

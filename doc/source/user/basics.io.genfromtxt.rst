@@ -28,7 +28,7 @@ Defining the input
 
 The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
 the data. It can be a string, a list of strings, a generator or an open
-file-like object with a :meth:`read` method, for example, a file or 
+file-like object with a ``read`` method, for example, a file or 
 :class:`io.StringIO` object. If a single string is provided, it is assumed
 to be the name of a local or remote file. If a list of strings or a generator
 returning strings is provided, each string is treated as one line in a file.
@@ -36,10 +36,10 @@ When the URL of a remote file is passed, the file is automatically downloaded
 to the current directory and opened.
 
 Recognized file types are text files and archives.  Currently, the function
-recognizes :class:`gzip` and :class:`bz2` (`bzip2`) archives.  The type of
+recognizes ``gzip`` and ``bz2`` (``bzip2``) archives.  The type of
 the archive is determined from the extension of the file: if the filename
-ends with ``'.gz'``, a :class:`gzip` archive is expected; if it ends with
-``'bz2'``, a :class:`bzip2` archive is assumed.
+ends with ``'.gz'``, a ``gzip`` archive is expected; if it ends with
+``'bz2'``, a ``bzip2`` archive is assumed.
 
 
 
@@ -360,9 +360,9 @@ The ``converters`` argument
 Usually, defining a dtype is sufficient to define how the sequence of
 strings must be converted.  However, some additional control may sometimes
 be required.  For example, we may want to make sure that a date in a format
-``YYYY/MM/DD`` is converted to a :class:`datetime` object, or that a string
-like ``xx%`` is properly converted to a float between 0 and 1.  In such
-cases, we should define conversion functions with the ``converters``
+``YYYY/MM/DD`` is converted to a :class:`~datetime.datetime` object, or that
+a string like ``xx%`` is properly converted to a float between 0 and 1.  In
+such cases, we should define conversion functions with the ``converters``
 arguments.
 
 The value of this argument is typically a dictionary with column indices or
@@ -427,7 +427,7 @@ previous example, we used a converter to transform an empty string into a
 float.  However, user-defined converters may rapidly become cumbersome to
 manage.
 
-The :func:`~nummpy.genfromtxt` function provides two other complementary
+The :func:`~numpy.genfromtxt` function provides two other complementary
 mechanisms: the ``missing_values`` argument is used to recognize
 missing data and a second argument, ``filling_values``, is used to
 process these missing data.
@@ -514,15 +514,15 @@ output array will then be a :class:`~numpy.ma.MaskedArray`.
 Shortcut functions
 ==================
 
-In addition to :func:`~numpy.genfromtxt`, the :mod:`numpy.lib.io` module
+In addition to :func:`~numpy.genfromtxt`, the :mod:`numpy.lib.npyio` module
 provides several convenience functions derived from
 :func:`~numpy.genfromtxt`.  These functions work the same way as the
 original, but they have different default values.
 
-:func:`~numpy.recfromtxt`
+:func:`~numpy.npyio.recfromtxt`
    Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   :class:`~numpy.ma.MaskedRecords` array (if ``usemaske=True``).  The
+   :class:`~numpy.ma.mrecords.MaskedRecords` array (if ``usemaske=True``).  The
    default dtype is ``dtype=None``, meaning that the types of each column
    will be automatically determined.
-:func:`~numpy.recfromcsv`
-   Like :func:`~numpy.recfromtxt`, but with a default ``delimiter=","``.
+:func:`~numpy.npyio.recfromcsv`
+   Like :func:`~numpy.npyio.recfromtxt`, but with a default ``delimiter=","``.

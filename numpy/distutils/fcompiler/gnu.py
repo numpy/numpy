@@ -231,7 +231,7 @@ class GnuFCompiler(FCompiler):
 
     def _c_arch_flags(self):
         """ Return detected arch flags from CFLAGS """
-        from distutils import sysconfig
+        import sysconfig
         try:
             cflags = sysconfig.get_config_vars()['CFLAGS']
         except KeyError:

@@ -307,7 +307,7 @@ arrayflags_farray_get(PyArrayFlagsObject *self)
 static PyObject *
 arrayflags_num_get(PyArrayFlagsObject *self)
 {
-    return PyInt_FromLong(self->flags);
+    return PyLong_FromLong(self->flags);
 }
 
 /* relies on setflags order being write, align, uic */
@@ -711,7 +711,7 @@ arrayflags_print(PyArrayFlagsObject *self)
     if (fl & NPY_ARRAY_WARN_ON_WRITE) {
         _warn_on_write = "  (with WARN_ON_WRITE=True)";
     }
-    return PyUString_FromFormat(
+    return PyUnicode_FromFormat(
                         "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s%s\n"
                         "  %s : %s\n  %s : %s\n"

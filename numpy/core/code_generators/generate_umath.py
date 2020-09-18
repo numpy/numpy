@@ -8,12 +8,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
 sys.path.pop(0)
 
-Zero = "PyInt_FromLong(0)"
-One = "PyInt_FromLong(1)"
+Zero = "PyLong_FromLong(0)"
+One = "PyLong_FromLong(1)"
 True_ = "(Py_INCREF(Py_True), Py_True)"
 False_ = "(Py_INCREF(Py_False), Py_False)"
 None_ = object()
-AllOnes = "PyInt_FromLong(-1)"
+AllOnes = "PyLong_FromLong(-1)"
 MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
 ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
@@ -1042,7 +1042,7 @@ def make_arrays(funcdict):
                         #ifndef NPY_DISABLE_OPTIMIZATION
                         #include "{dname}.dispatch.h"
                         #endif
-                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name})
+                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name});
                         """).format(
                             dname=dname, name=name, tname=tname, k=k
                         ))

@@ -1,7 +1,0 @@
-``trim_zeros`` now requires a 1D array compatible with ``ndarray.astype(bool)``
--------------------------------------------------------------------------------
-The ``trim_zeros`` function will, in the future, require an array with the
-following two properties:
-
-* It must be 1D.
-* It must support elementwise comparisons with zero.

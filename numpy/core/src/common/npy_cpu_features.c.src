@@ -19,11 +19,11 @@ npy__cpu_init_features(void);
  * Multiple features can be present, and separated by space, comma, or tab.
  * Raises an error if parsing fails or if the feature was not enabled
 */
-static void
+static int
 npy__cpu_try_disable_env(void);
 
 /* Ensure the build's CPU baseline features are supported at runtime */
-static void
+static int
 npy__cpu_validate_baseline(void);
 
 /******************** Public Definitions *********************/
@@ -40,11 +40,12 @@ NPY_VISIBILITY_HIDDEN int
 npy_cpu_init(void)
 {
     npy__cpu_init_features();
-    npy__cpu_validate_baseline();
-    npy__cpu_try_disable_env();
-
-    if (PyErr_Occurred())
+    if (npy__cpu_validate_baseline() < 0) {
         return -1;
+    }
+    if (npy__cpu_try_disable_env() < 0) {
+        return -1;
+    }
     return 0;
 }
 
@@ -142,7 +143,7 @@ npy__cpu_dispatch_fid(const char *feature)
     return 0;
 }
 
-static void
+static int
 npy__cpu_validate_baseline(void)
 {
 #if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_BASELINE_N > 0
@@ -165,16 +166,18 @@ npy__cpu_validate_baseline(void)
             "(" NPY_WITH_CPU_BASELINE ") but your machine doesn't support:\n(%s).",
             baseline_failure
         );
+        return -1;
     }
 #endif
+    return 0;
 }
 
-static void
+static int
 npy__cpu_try_disable_env(void)
 {
     char *disenv = getenv("NPY_DISABLE_CPU_FEATURES");
     if (disenv == NULL || disenv[0] == 0) {
-        return;
+        return 0;
     }
     #define NPY__CPU_ENV_ERR_HEAD \
         "During parsing environment variable 'NPY_DISABLE_CPU_FEATURES':\n"
@@ -187,7 +190,7 @@ npy__cpu_try_disable_env(void)
             "Length of environment variable 'NPY_DISABLE_CPU_FEATURES' is %d, only %d accepted",
             var_len, NPY__MAX_VAR_LEN - 1
         );
-        return;
+        return -1;
     }
     char disable_features[NPY__MAX_VAR_LEN];
     memcpy(disable_features, disenv, var_len);
@@ -210,7 +213,7 @@ npy__cpu_try_disable_env(void)
                 "(" NPY_WITH_CPU_BASELINE ").",
                 feature
             );
-            break;
+            return -1;
         }
         // check if the feature is part of dispatched features
         int feature_id = npy__cpu_dispatch_fid(feature);
@@ -236,36 +239,43 @@ npy__cpu_try_disable_env(void)
     *nexist_cur = '\0';
     if (nexist[0] != '\0') {
         *(nexist_cur-1) = '\0'; // trim the last space
-        PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
-            NPY__CPU_ENV_ERR_HEAD
-            "You cannot disable CPU features (%s), since "
-            "they are not part of the dispatched optimizations\n"
-            "(" NPY_WITH_CPU_DISPATCH ").",
-            nexist
-        );
+        if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                NPY__CPU_ENV_ERR_HEAD
+                "You cannot disable CPU features (%s), since "
+                "they are not part of the dispatched optimizations\n"
+                "(" NPY_WITH_CPU_DISPATCH ").",
+                nexist
+        ) < 0) {
+            return -1;
+        }
     }
 
     *notsupp_cur = '\0';
     if (notsupp[0] != '\0') {
         *(notsupp_cur-1) = '\0'; // trim the last space
-        PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
-            NPY__CPU_ENV_ERR_HEAD
-            "You cannot disable CPU features (%s), since "
-            "they are not supported by your machine.",
-            notsupp
-        );
+        if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                NPY__CPU_ENV_ERR_HEAD
+                "You cannot disable CPU features (%s), since "
+                "they are not supported by your machine.",
+                notsupp
+        ) < 0) {
+            return -1;
+        }
     }
 #else
-    PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
-        NPY__CPU_ENV_ERR_HEAD
-        "You cannot use environment variable 'NPY_DISABLE_CPU_FEATURES', since "
-    #ifdef NPY_DISABLE_OPTIMIZATION
-        "the NumPy library was compiled with optimization disabled."
-    #else
-        "the NumPy library was compiled without any dispatched optimizations."
-    #endif
-    );
+    if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+            NPY__CPU_ENV_ERR_HEAD
+            "You cannot use environment variable 'NPY_DISABLE_CPU_FEATURES', since "
+        #ifdef NPY_DISABLE_OPTIMIZATION
+            "the NumPy library was compiled with optimization disabled."
+        #else
+            "the NumPy library was compiled without any dispatched optimizations."
+        #endif
+    ) < 0) {
+        return -1;
+    }
 #endif
+    return 0;
 }
 
 /****************************************************************

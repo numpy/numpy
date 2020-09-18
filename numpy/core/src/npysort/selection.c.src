@@ -280,7 +280,7 @@ static int
  * kth 8:   0  1  2  3  4  5  6 [8  7] -> stack []
  *
  */
-int
+NPY_NO_EXPORT int
 @name@introselect_@suff@(@type@ *v,
 #if @arg@
                          npy_intp* tosort,

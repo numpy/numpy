@@ -24,3 +24,20 @@ classes contained in the package, see the :ref:`reference`.
    c-info
    tutorials_index
    howtos_index
+
+
+.. These are stuck here to avoid the "WARNING: document isn't included in any
+   toctree" message
+
+.. toctree::
+   :hidden:
+
+   explanations_index
+   ../f2py/index
+   ../glossary
+   ../dev/underthehood
+   ../docs/index
+   ../bugs
+   ../release
+   ../about
+   ../license

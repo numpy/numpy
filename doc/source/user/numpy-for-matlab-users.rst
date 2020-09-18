@@ -1,7 +1,7 @@
 .. _numpy-for-matlab-users:
 
 ======================
-NumPy for Matlab users
+NumPy for MATLAB users
 ======================
 
 Introduction
@@ -9,9 +9,9 @@ Introduction
 
 MATLAB® and NumPy/SciPy have a lot in common. But there are many
 differences. NumPy and SciPy were created to do numerical and scientific
-computing in the most natural way with Python, not to be MATLAB® clones.
+computing in the most natural way with Python, not to be MATLAB clones.
 This page is intended to be a place to collect wisdom about the
-differences, mostly for the purpose of helping proficient MATLAB® users
+differences, mostly for the purpose of helping proficient MATLAB users
 become proficient NumPy and SciPy users.
 
 .. raw:: html
@@ -25,7 +25,7 @@ Some Key Differences
 
 .. list-table::
 
-   * - In MATLAB®, the basic data type is a multidimensional array of
+   * - In MATLAB, the basic data type is a multidimensional array of
        double precision floating point numbers.  Most expressions take such
        arrays and return such arrays.  Operations on the 2-D instances of
        these arrays are designed to act more or less like matrix operations
@@ -36,24 +36,24 @@ Some Key Differences
        (though for matrix multiplication, one can use the ``@`` operator
        in python 3.5 and above).
 
-   * - MATLAB® uses 1 (one) based indexing. The initial element of a
+   * - MATLAB uses 1 (one) based indexing. The initial element of a
        sequence is found using a(1).
        :ref:`See note INDEXING <numpy-for-matlab-users.notes>`
      - Python uses 0 (zero) based indexing. The initial element of a
        sequence is found using a[0].
 
-   * - MATLAB®'s scripting language was created for doing linear algebra.
+   * - MATLAB's scripting language was created for doing linear algebra.
        The syntax for basic matrix operations is nice and clean, but the API
        for adding GUIs and making full-fledged applications is more or less
        an afterthought.
      - NumPy is  based on Python, which was designed from the outset to be
-       an excellent general-purpose programming language.  While Matlab's
+       an excellent general-purpose programming language.  While MATLAB's
        syntax for some array manipulations is more compact than
        NumPy's, NumPy (by virtue of being an add-on to Python) can do many
-       things that Matlab just cannot, for instance dealing properly with
+       things that MATLAB just cannot, for instance dealing properly with
        stacks of matrices.
 
-   * - In MATLAB®, arrays have pass-by-value semantics, with a lazy
+   * - In MATLAB, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent actually creating copies until they
        are actually needed.  Slice operations copy parts of the array.
      - In NumPy arrays have pass-by-reference semantics.  Slice operations
@@ -158,7 +158,7 @@ There are pros and cons to using both:
 
 -  ``matrix``
 
-   -  ``:\\`` Behavior is more like that of MATLAB® matrices.
+   -  ``:\\`` Behavior is more like that of MATLAB matrices.
    -  ``<:(`` Maximum of two-dimensional. To hold three-dimensional data you
       need ``array`` or perhaps a Python list of ``matrix``.
    -  ``<:(`` Minimum of two-dimensional. You cannot have vectors. They must be
@@ -183,7 +183,7 @@ deprecate ``matrix`` eventually.
 Table of Rough MATLAB-NumPy Equivalents
 =======================================
 
-The table below gives rough equivalents for some common MATLAB®
+The table below gives rough equivalents for some common MATLAB
 expressions. **These are not exact equivalents**, but rather should be
 taken as hints to get you going in the right direction. For more detail
 read the built-in documentation on the NumPy functions.
@@ -272,7 +272,7 @@ Linear Algebra Equivalents
    * - ``size(a,n)``
      - ``a.shape[n-1]``
      - get the number of elements of the n-th dimension of array ``a``. (Note
-       that MATLAB® uses 1 based indexing while Python uses 0 based indexing,
+       that MATLAB uses 1 based indexing while Python uses 0 based indexing,
        See note :ref:`INDEXING <numpy-for-matlab-users.notes>`)
 
    * - ``[ 1 2 3; 4 5 6 ]``
@@ -356,7 +356,7 @@ Linear Algebra Equivalents
 
    * - ``(a>0.5)``
      - ``(a>0.5)``
-     - matrix whose i,jth element is (a_ij > 0.5).  The Matlab result is an
+     - matrix whose i,jth element is (a_ij > 0.5).  The MATLAB result is an
        array of 0s and 1s.  The NumPy result is an array of the boolean
        values ``False`` and ``True``.
 
@@ -395,7 +395,7 @@ Linear Algebra Equivalents
    * - ``y=x(:)``
      - ``y = x.flatten()``
      - turn array into vector (note that this forces a copy). To obtain the
-       same data ordering as in Matlab, use ``x.flatten('F')``.
+       same data ordering as in MATLAB, use ``x.flatten('F')``.
 
    * - ``1:10``
      - ``arange(1.,11.)`` or ``r_[1.:11.]`` or  ``r_[1:10:10j]``
@@ -475,7 +475,7 @@ Linear Algebra Equivalents
 
    * - ``max(max(a))``
      - ``a.max()``
-     - maximum element of ``a`` (with ndims(a)<=2 for matlab)
+     - maximum element of ``a`` (with ndims(a)<=2 for MATLAB)
 
    * - ``max(a)``
      - ``a.max(0)``
@@ -539,7 +539,7 @@ Linear Algebra Equivalents
 
    * - ``chol(a)``
      - ``linalg.cholesky(a).T``
-     - cholesky factorization of a matrix (``chol(a)`` in matlab returns an
+     - cholesky factorization of a matrix (``chol(a)`` in MATLAB returns an
        upper triangular matrix, but ``linalg.cholesky(a)`` returns a lower
        triangular matrix)
 
@@ -561,7 +561,7 @@ Linear Algebra Equivalents
 
    * - ``[L,U,P]=lu(a)``
      - ``L,U = scipy.linalg.lu(a)`` or ``LU,P=scipy.linalg.lu_factor(a)``
-     - LU decomposition (note: P(Matlab) == transpose(P(numpy)) )
+     - LU decomposition (note: P(MATLAB) == transpose(P(numpy)) )
 
    * - ``conjgrad``
      - ``scipy.sparse.linalg.cg``
@@ -613,7 +613,7 @@ but the commands ``help`` and ``source`` will usually list the filename
 where the function is located. Python also has an ``inspect`` module (do
 ``import inspect``) which provides a ``getfile`` that often works.
 
-\ **INDEXING**: MATLAB® uses one based indexing, so the initial element
+\ **INDEXING**: MATLAB uses one based indexing, so the initial element
 of a sequence has index 1. Python uses zero based indexing, so the
 initial element of a sequence has index 0. Confusion and flamewars arise
 because each has advantages and disadvantages. One based indexing is
@@ -623,7 +623,7 @@ indexing <https://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q
 See also `a text by prof.dr. Edsger W.
 Dijkstra <https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
 
-\ **RANGES**: In MATLAB®, ``0:5`` can be used as both a range literal
+\ **RANGES**: In MATLAB, ``0:5`` can be used as both a range literal
 and a 'slice' index (inside parentheses); however, in Python, constructs
 like ``0:5`` can *only* be used as a slice index (inside square
 brackets). Thus the somewhat quirky ``r_`` object was created to allow
@@ -632,46 +632,46 @@ numpy to have a similarly terse range construction mechanism. Note that
 *indexed* using square brackets, which allows the use of Python's slice
 syntax in the arguments.
 
-\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in Matlab &
+\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in MATLAB &
 and \| are logical AND/OR. The difference should be clear to anyone with
 significant programming experience. The two can appear to work the same,
-but there are important differences. If you would have used Matlab's &
+but there are important differences. If you would have used MATLAB's &
 or \| operators, you should use the NumPy ufuncs
-logical\_and/logical\_or. The notable differences between Matlab's and
+logical\_and/logical\_or. The notable differences between MATLAB's and
 NumPy's & and \| operators are:
 
 -  Non-logical {0,1} inputs: NumPy's output is the bitwise AND of the
-   inputs. Matlab treats any non-zero value as 1 and returns the logical
-   AND. For example (3 & 4) in NumPy is 0, while in Matlab both 3 and 4
+   inputs. MATLAB treats any non-zero value as 1 and returns the logical
+   AND. For example (3 & 4) in NumPy is 0, while in MATLAB both 3 and 4
    are considered logical true and (3 & 4) returns 1.
 
 -  Precedence: NumPy's & operator is higher precedence than logical
-   operators like < and >; Matlab's is the reverse.
+   operators like < and >; MATLAB's is the reverse.
 
 If you know you have boolean arguments, you can get away with using
 NumPy's bitwise operators, but be careful with parentheses, like this: z
 = (x > 1) & (x < 2). The absence of NumPy operator forms of logical\_and
 and logical\_or is an unfortunate consequence of Python's design.
 
-**RESHAPE and LINEAR INDEXING**: Matlab always allows multi-dimensional
+**RESHAPE and LINEAR INDEXING**: MATLAB always allows multi-dimensional
 arrays to be accessed using scalar or linear indices, NumPy does not.
-Linear indices are common in Matlab programs, e.g. find() on a matrix
+Linear indices are common in MATLAB programs, e.g. find() on a matrix
 returns them, whereas NumPy's find behaves differently. When converting
-Matlab code it might be necessary to first reshape a matrix to a linear
+MATLAB code it might be necessary to first reshape a matrix to a linear
 sequence, perform some indexing operations and then reshape back. As
 reshape (usually) produces views onto the same storage, it should be
 possible to do this fairly efficiently. Note that the scan order used by
-reshape in NumPy defaults to the 'C' order, whereas Matlab uses the
+reshape in NumPy defaults to the 'C' order, whereas MATLAB uses the
 Fortran order. If you are simply converting to a linear sequence and
-back this doesn't matter. But if you are converting reshapes from Matlab
-code which relies on the scan order, then this Matlab code: z =
+back this doesn't matter. But if you are converting reshapes from MATLAB
+code which relies on the scan order, then this MATLAB code: z =
 reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in
 NumPy.
 
 Customizing Your Environment
 ============================
 
-In MATLAB® the main tool available to you for customizing the
+In MATLAB the main tool available to you for customizing the
 environment is to modify the search path with the locations of your
 favorite functions. You can put such customizations into a startup
 script that MATLAB will run on startup.
@@ -685,7 +685,7 @@ NumPy, or rather Python, has similar facilities.
    interpreter is started, define the ``PYTHONSTARTUP`` environment
    variable to contain the name of your startup script.
 
-Unlike MATLAB®, where anything on your path can be called immediately,
+Unlike MATLAB, where anything on your path can be called immediately,
 with Python you need to first do an 'import' statement to make functions
 in a particular file accessible.
 
@@ -712,7 +712,7 @@ this is just an example, not a statement of "best practices"):
 Links
 =====
 
-See http://mathesaurus.sf.net/ for another MATLAB®/NumPy
+See http://mathesaurus.sf.net/ for another MATLAB/NumPy
 cross-reference.
 
 An extensive list of tools for scientific work with python can be

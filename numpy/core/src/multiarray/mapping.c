@@ -233,7 +233,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || PySlice_Check(index)
             || PyArray_Check(index)
             || !PySequence_Check(index)
-            || PyBaseString_Check(index)) {
+            || PyUnicode_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
@@ -946,9 +946,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
-                if (NpySlice_GetIndicesEx(indices[i].object,
-                                          PyArray_DIMS(self)[orig_dim],
-                                          &start, &stop, &step, &n_steps) < 0) {
+                if (PySlice_GetIndicesEx(indices[i].object,
+                                         PyArray_DIMS(self)[orig_dim],
+                                         &start, &stop, &step, &n_steps) < 0) {
                     return -1;
                 }
                 if (n_steps <= 0) {
@@ -1407,7 +1407,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1418,7 +1418,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
         else if (tup == NULL){
-            PyObject *errmsg = PyUString_FromString("no field of name ");
+            PyObject *errmsg = PyUnicode_FromString("no field of name ");
             PyUString_Concat(&errmsg, ind);
             PyErr_SetObject(PyExc_ValueError, errmsg);
             Py_DECREF(errmsg);
@@ -1471,7 +1471,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyErr_Clear();
                 return -1;
             }
-            is_string = PyBaseString_Check(item);
+            is_string = PyUnicode_Check(item);
             Py_DECREF(item);
             if (!is_string) {
                 return -1;
@@ -2438,7 +2438,7 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
      * Attempt to set a meaningful exception. Could also find out
      * if a boolean index was converted.
      */
-    errmsg = PyUString_FromString("shape mismatch: indexing arrays could not "
+    errmsg = PyUnicode_FromString("shape mismatch: indexing arrays could not "
                                   "be broadcast together with shapes ");
     if (errmsg == NULL) {
         return -1;
@@ -3183,7 +3183,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     goto finish;
 
   broadcast_error:
-    errmsg = PyUString_FromString("shape mismatch: value array "
+    errmsg = PyUnicode_FromString("shape mismatch: value array "
                     "of shape ");
     if (errmsg == NULL) {
         goto finish;
@@ -3204,7 +3204,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         goto finish;
     }
 
-    tmp = PyUString_FromString("could not be broadcast to indexing "
+    tmp = PyUnicode_FromString("could not be broadcast to indexing "
                     "result of shape ");
     PyUString_ConcatAndDel(&errmsg, tmp);
     if (errmsg == NULL) {

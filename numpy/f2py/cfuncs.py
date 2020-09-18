@@ -286,11 +286,11 @@ static int f2py_size(PyArrayObject* var, ...)
 """
 
 cppmacros[
-    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyInt_FromLong(v))'
+    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyLong_FromLong(v))'
 cppmacros[
-    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyInt_FromLong(v))'
+    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_int1'] = ['signed_char']
-cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyInt_FromLong(v))'
+cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyLong_FromLong(v))'
 cppmacros[
     'pyobj_from_long1'] = '#define pyobj_from_long1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_long_long1'] = ['long_long']
@@ -436,9 +436,9 @@ cppmacros['GETSTRFROMPYTUPLE'] = """\
         PyObject *rv_cb_str = PyTuple_GetItem((tuple),(index));\\
         if (rv_cb_str == NULL)\\
             goto capi_fail;\\
-        if (PyString_Check(rv_cb_str)) {\\
+        if (PyBytes_Check(rv_cb_str)) {\\
             str[len-1]='\\0';\\
-            STRINGCOPYN((str),PyString_AS_STRING((PyStringObject*)rv_cb_str),(len));\\
+            STRINGCOPYN((str),PyBytes_AS_STRING((PyBytesObject*)rv_cb_str),(len));\\
         } else {\\
             PRINTPYOBJERR(rv_cb_str);\\
             PyErr_SetString(#modulename#_error,\"string object expected\");\\
@@ -655,7 +655,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         STRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
         return 1;
     }
-    if (PyString_Check(obj)) {
+    if (PyBytes_Check(obj)) {
         tmp = obj;
         Py_INCREF(tmp);
     }
@@ -675,9 +675,9 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
     }
     if (tmp == NULL) goto capi_fail;
     if (*len == -1)
-        *len = PyString_GET_SIZE(tmp);
+        *len = PyBytes_GET_SIZE(tmp);
     STRINGMALLOC(*str,*len);
-    STRINGCOPYN(*str,PyString_AS_STRING(tmp),*len+1);
+    STRINGCOPYN(*str,PyBytes_AS_STRING(tmp),*len+1);
     Py_DECREF(tmp);
     return 1;
 capi_fail:
@@ -730,7 +730,7 @@ static int int_from_pyobj(int* v,PyObject *obj,const char *errmess) {
         *v = (int)PyInt_AS_LONG(obj);
         return 1;
     }
-    tmp = PyNumber_Int(obj);
+    tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyInt_AS_LONG(tmp);
         Py_DECREF(tmp);
@@ -738,7 +738,7 @@ static int int_from_pyobj(int* v,PyObject *obj,const char *errmess) {
     }
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
@@ -762,7 +762,7 @@ static int long_from_pyobj(long* v,PyObject *obj,const char *errmess) {
         *v = PyInt_AS_LONG(obj);
         return 1;
     }
-    tmp = PyNumber_Int(obj);
+    tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyInt_AS_LONG(tmp);
         Py_DECREF(tmp);
@@ -770,7 +770,7 @@ static int long_from_pyobj(long* v,PyObject *obj,const char *errmess) {
     }
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
@@ -807,7 +807,7 @@ static int long_long_from_pyobj(long_long* v,PyObject *obj,const char *errmess) 
     }
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
@@ -868,7 +868,7 @@ static int double_from_pyobj(double* v,PyObject *obj,const char *errmess) {
     }
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
@@ -978,7 +978,7 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
         (*v).r = PyLong_AsDouble(obj);
         return (!PyErr_Occurred());
     }
-    if (PySequence_Check(obj) && !(PyString_Check(obj) || PyUnicode_Check(obj))) {
+    if (PySequence_Check(obj) && !(PyBytes_Check(obj) || PyUnicode_Check(obj))) {
         PyObject *tmp = PySequence_GetItem(obj,0);
         if (tmp) {
             if (complex_double_from_pyobj(v,tmp,errmess)) {

@@ -6,7 +6,6 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "numpy/arrayobject.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -1152,7 +1151,7 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
     }
     for (i = 0; i < len; i++) {
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-        PyObject *o = PyInt_FromLong((long) vals[i]);
+        PyObject *o = PyLong_FromLong((long) vals[i]);
 #else
         PyObject *o = PyLong_FromLongLong((npy_longlong) vals[i]);
 #endif

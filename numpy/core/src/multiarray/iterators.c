@@ -61,7 +61,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
-        if (NpySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
+        if (PySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
             goto fail;
         }
         if (*n_steps <= 0) {
@@ -1411,10 +1411,10 @@ static PyObject *
 arraymultiter_size_get(PyArrayMultiIterObject *self)
 {
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) self->size);
+    return PyLong_FromLong((long) self->size);
 #else
     if (self->size < NPY_MAX_LONG) {
-        return PyInt_FromLong((long) self->size);
+        return PyLong_FromLong((long) self->size);
     }
     else {
         return PyLong_FromLongLong((npy_longlong) self->size);
@@ -1426,10 +1426,10 @@ static PyObject *
 arraymultiter_index_get(PyArrayMultiIterObject *self)
 {
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) self->index);
+    return PyLong_FromLong((long) self->index);
 #else
     if (self->size < NPY_MAX_LONG) {
-        return PyInt_FromLong((long) self->index);
+        return PyLong_FromLong((long) self->index);
     }
     else {
         return PyLong_FromLongLong((npy_longlong) self->index);
