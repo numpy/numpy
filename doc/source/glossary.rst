@@ -304,9 +304,9 @@ Glossary
 
 
    field
-       In a :term:`structured data type`, each sub-type is called a `field`.
+       In a :term:`structured data type`, each subtype is called a `field`.
        The `field` has a name (a string), a type (any valid dtype), and
-       an optional `title`. See :ref:`arrays.dtypes`
+       an optional `title`. See :ref:`arrays.dtypes`.
 
 
    Fortran order
@@ -497,7 +497,7 @@ Glossary
        performance gain of using a view versus making a new array.
 
        A potential drawback is that writing to a view can alter the original
-       as well. If this is a problem, the NumPy instead needs to create a
+       as well. If this is a problem, NumPy instead needs to create a
        physically distinct array -- a `copy`.
 
        Some NumPy routines always return views, some always return copies, some
