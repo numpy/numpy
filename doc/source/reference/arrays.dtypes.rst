@@ -152,14 +152,6 @@ Array-scalar types
        >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
-    .. deprecated NumPy 1.19::
-
-        The use of generic types is deprecated. This is because it can be
-        unexpected in a context such as ``arr.astype(dtype=np.floating)``.
-        ``arr.astype(dtype=np.floating)`` which casts an array of ``float32``
-        to an array of ``float64``, even though ``float32`` is a subdtype of
-        ``np.floating``.
-
     The generic hierarchical type objects convert to corresponding
     type objects according to the associations:
 
@@ -171,6 +163,15 @@ Generic types
     :class:`character`                                     :class:`string`
     :class:`generic`, :class:`flexible`                    :class:`void`
     =====================================================  ===============
+
+    .. deprecated:: 1.19
+
+        This conversion of generic scalar types is deprecated.
+        This is because it can be unexpected in a context such as
+        ``arr.astype(dtype=np.floating)``, which casts an array of ``float32``
+        to an array of ``float64``, even though ``float32`` is a subdtype of
+        ``np.floating``.
+
 
 Built-in Python types
     Several python types are equivalent to a corresponding
