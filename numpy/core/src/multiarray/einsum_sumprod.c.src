@@ -16,11 +16,19 @@
 #include "simd/simd.h"
 #include "common.h"
 
-#define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
+// ARM/Neon don't have instructions for aligned memory access
+#ifdef NPY_HAVE_NEON
+    #define EINSUM_IS_ALIGNED(x) 0
+#else
+    #define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
+#endif
 /**
  * Unroll by four/eight scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
+ *  - The main SIMD loop un-rolled by NPY_SIMD_WIDTH*(2|4), (2|4) represents
+ *    the number of times the loop is unrolled, which may lead to
+ *    un-vectorize the remained scalars in bytes range <=NPY_SIMD_WIDTH*(2|4)
+ *    if The SIMD width is higher than 128bit, The performance loss on remained
+ *    arrays is nonnegligible, so we choose to use the compiler auto-vectorize.
  *  - To give the chance to the compiler to
  *    auto-vectorize in case of NPYV wasn't available.
  */
