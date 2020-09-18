@@ -471,6 +471,9 @@ def _parse_env_order(base_order, env):
         allow_order = base_order.copy()
 
         for order in orders:
+            if not order:
+                continue
+
             if order not in base_order:
                 unknown_order.append(order)
                 continue
@@ -482,6 +485,9 @@ def _parse_env_order(base_order, env):
         allow_order = []
 
         for order in orders:
+            if not order:
+                continue
+
             if order not in base_order:
                 unknown_order.append(order)
                 continue
