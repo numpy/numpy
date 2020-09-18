@@ -6,20 +6,23 @@ Glossary
 
 
    (`n`,)
-       A tuple with one element. The trailing comma distinguishes a one-element
-       tuple from a parenthesized ``n``.
+       A parenthesized number followed by a comma denotes a tuple with one
+       element. The trailing comma distinguishes a one-element tuple from a
+       parenthesized ``n``.
 
 
    -1
-       Used as a dimension entry, ``-1`` instructs NumPy to choose the length
-       that will keep the total number of elements the same.
+       - **In a dimension entry**, instructs NumPy to choose the length
+         that will keep the total number of array elements the same.
 
-           >>> np.arange(12).reshape(4,-1).shape
+           >>> np.arange(12).reshape(4, -1).shape
            (4, 3)
 
+       - **In an index**, any negative value
+         `denotes <https://docs.python.org/dev/faq/programming.html#what-s-a-negative-index>`_
+         indexing from the right.
 
-
-   ``...``
+   . . .
        An :py:data:`Ellipsis`.
 
        - **When indexing an array**, shorthand that the missing axes, if they
@@ -39,13 +42,13 @@ Glossary
            >>> a[0,...,0].shape
            (3,)
 
-       It can be used at most once; ``a[...,0,...]`` raises an :exc:`IndexError`.
+         It can be used at most once; ``a[...,0,...]`` raises an :exc:`IndexError`.
 
        - **In printouts**, NumPy substitutes ``...`` for the middle elements of
          large arrays. To see the entire array, use `numpy.printoptions`
 
 
-   ``:``
+   :
        The Python :term:`python:slice`
        operator. In ndarrays, slicing can be applied to every
        axis:
@@ -77,14 +80,14 @@ Glossary
        For details, see :ref:`combining-advanced-and-basic-indexing`.
 
 
-   ``<``
+   <
        In a dtype declaration, indicates that the data is
        :term:`little-endian` (the bracket is big on the right). ::
 
            >>> dt = np.dtype('<f')  # little-endian single-precision float
 
 
-   ``>``
+   >
        In a dtype declaration, indicates that the data is
        :term:`big-endian` (the bracket is big on the left). ::
 
@@ -99,35 +102,41 @@ Glossary
 
 
    along an axis
-       Reversing along axis 0 (the row axis) below reverses the columns, and
-       reversing along axis 1 (the column axis) reverses the rows. This might
-       be the opposite of what a new user would expect.
+       An operation `along axis n` of array ``a`` behaves as if its argument
+       were an array of slices of ``a`` where each slice has a successive
+       index of axis `n`.
+
+       For example, if ``a`` is a 3 x `N` array, an operation along axis 0
+       behaves as if its argument were an array containing slices of each row:
+
+           >>> np.array((a[0,:], a[1,:], a[2,:]))
+
+       To make it concrete, we can pick the operation to be the array-reversal
+       function :func:`numpy.flip`, which accepts an ``axis`` argument. We
+       construct a 3 x 4 array ``a``:
 
            >>> a = np.arange(12).reshape(3,4)
            >>> a
            array([[ 0,  1,  2,  3],
                   [ 4,  5,  6,  7],
                   [ 8,  9, 10, 11]])
-           <BLANKLINE>
+
+       Reversing along axis 0 (the row axis) yields
+
            >>> np.flip(a,axis=0)
            array([[ 8,  9, 10, 11],
                   [ 4,  5,  6,  7],
                   [ 0,  1,  2,  3]])
-           <BLANKLINE>
-           >>> np.flip(a,axis=1)
-           array([[ 3,  2,  1,  0],
-                  [ 7,  6,  5,  4],
-                  [11, 10,  9,  8]])
 
-       An operation "along axis 0" behaves as if the argument were an array of
-       ``a`` slices taking successive indexes of axis 0:
+       Recalling the definition of `along an axis`,  ``flip`` along axis 0 is
+       treating its argument as if it were
 
            >>> np.array((a[0,:], a[1,:], a[2,:]))
            array([[ 0,  1,  2,  3],
                   [ 4,  5,  6,  7],
                   [ 8,  9, 10, 11]])
 
-       Reversing the slices results in ``np.flip(a,axis=0)``:
+       and the result of ``np.flip(a,axis=0)`` is to reverse the slices:
 
            >>> np.array((a[2,:],a[1,:],a[0,:]))
            array([[ 8,  9, 10, 11],
@@ -136,8 +145,7 @@ Glossary
 
 
    array
-      Used synonymously in the NumPy docs with
-      :doc:`ndarray <reference/arrays>`, NumPy's basic structure.
+       Used synonymously in the NumPy docs with :term:`ndarray`.
 
 
    array_like
@@ -178,7 +186,6 @@ Glossary
            >>> a
            array([[[ 0,  1,  2],
                    [ 3,  4,  5]],
-           <BLANKLINE>
                   [[ 6,  7,  8],
                    [ 9, 10, 11]]])
 
@@ -217,12 +224,12 @@ Glossary
    .base
 
        If an array does not own its memory, then its
-       :doc:`base <reference/generated/numpy.ndarray.base>` attribute
-       returns the object whose memory the array is referencing. That object
-       may be borrowing the memory from still another object, so the
-       owning object may be ``a.base.base.base...``. Despite advice to the
-       contrary, testing ``base`` is not a surefire way to determine if two
-       arrays are :term:`view`\ s.
+       :doc:`base <reference/generated/numpy.ndarray.base>` attribute returns
+       the object whose memory the array is referencing. That object may be
+       referencing the memory from still another object, so the owning object
+       may be ``a.base.base.base...``. Some writers erroneously claim that
+       testing ``base`` determines if arrays are :term:`view`\ s. For the
+       correct way, see :func:`numpy.shares_memory`.
 
 
    `big-endian <https://en.wikipedia.org/wiki/Endianness>`_
@@ -237,17 +244,30 @@ Glossary
        ``broadcasting`` is NumPy's ability to process ndarrays of
        different sizes as if all were the same size.
 
-       When NumPy operates on two arrays, it works element by
-       element -- for instance, ``c = a * b`` is ::
+       It permits an elegant do-what-I-mean behavior where, for instance,
+       adding a scalar to a vector adds the scalar value to every element.
+
+           >>> a = np.arange(3)
+           >>> a
+           array([0, 1, 2])
+
+           >>> a + [3, 3, 3]
+           array([3, 4, 5])
+
+           >>> a + 3
+           array([3, 4, 5])
+
+       Ordinarly, vector operands must all be the same size, because NumPy
+       works element by element -- for instance, ``c = a * b`` is ::
 
            c[0,0,0] = a[0,0,0] * b[0,0,0]
            c[0,0,1] = a[0,0,1] * b[0,0,1]
           ...
 
-       Ordinarily this means the shapes of a and b must be identical. But in
-       some cases, NumPy can fill "missing" axes or "too-short" dimensions
-       with duplicate data so shapes will match. The duplication costs
-       no memory or time. For details, see :doc:`Broadcasting. <user/basics.broadcasting>`
+       But in certain useful cases, NumPy can duplicate data along "missing"
+       axes or "too-short" dimensions so shapes will match. The duplication
+       costs no memory or time. For details, see
+       :doc:`Broadcasting. <user/basics.broadcasting>`
 
 
    C order
@@ -259,7 +279,10 @@ Glossary
 
 
    contiguous
-       An array is contiguous if it occupies a single unbroken block of memory.
+       An array is contiguous if
+           * it occupies an unbroken block of memory, and
+           * array elements with higher indexes occupy higher addresses (that
+             is, the :term:`stride` is not negative).
 
 
    copy
@@ -299,12 +322,12 @@ Glossary
        contrast to Python lists, are homogeneous. The type can be complicated,
        as in a :term:`structured array`, but all elements have that type.
 
-      NumPy `object arrays <#term-object-array>`_, which contain references to
-      Python objects, fill the role of heterogeneous arrays.
+       NumPy `object arrays <#term-object-array>`_, which contain references to
+       Python objects, fill the role of heterogeneous arrays.
 
 
    itemsize
-        The size of the dtype element in bytes.
+       The size of the dtype element in bytes.
 
 
    `little-endian <https://en.wikipedia.org/wiki/Endianness>`_
@@ -312,7 +335,19 @@ Glossary
 
 
    mask
-       The boolean array used to select elements in a :term:`masked array`.
+       A boolean array used to select only certain elements for an operation:
+
+           >>> x = np.arange(5)
+           >>> x
+           array([0, 1, 2, 3, 4])
+
+           >>> mask = (x > 2)
+           >>> mask
+           array([False, False, False, True,  True])
+
+           >>> x[mask] = -1
+           >>> x
+           array([ 0,  1,  2,  -1, -1])
 
 
    masked array
@@ -341,7 +376,7 @@ Glossary
 
 
    ndarray
-       See :term:`array`.
+      :doc:`NumPy's basic structure <reference/arrays>`.
 
 
    object array
@@ -365,15 +400,15 @@ Glossary
 
 
    record array
-       A :term:`structured array` with an additional way to access
-       fields -- ``a.field`` in addition to ``a['field']``. For details, see
+       A :term:`structured array` with allowing access in an attribute style
+       (``a.field``) in addition to ``a['field']``. For details, see
        :doc:`numpy.recarray. <reference/generated/numpy.recarray>`
 
 
    row-major
-        `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
-        order is also known as C order, as the C programming language uses it.
-        New NumPy arrays are by default in row-major order.
+       `row-major <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_
+       order is also known as C order, as the C programming language uses it.
+       New NumPy arrays are by default in row-major order.
 
 
    :doc:`scalar <reference/arrays.scalars>`
@@ -390,7 +425,7 @@ Glossary
 
 
    :term:`slice <:>`
-      \
+       \
 
 
    stride
@@ -424,7 +459,7 @@ Glossary
 
 
    subarray
-      An array nested in a :term:`structured data type`: ::
+      An array nested in a :term:`structured data type`, as ``b`` is here:
 
         >>> dt = np.dtype([('a', np.int32), ('b', np.float32, (3,))])
         >>> np.zeros(3, dtype=dt)
@@ -433,7 +468,7 @@ Glossary
 
 
    subarray data type
-      An element of a structured datatype that behaves like an ndarray.
+       An element of a structured datatype that behaves like an ndarray.
 
 
    title
@@ -446,10 +481,10 @@ Glossary
 
 
    ufunc
-       NumPy's fast element-by-element computation (:term:`vectorization`) is
-       structured so as to leave the choice of function open. A function used
-       in vectorization is called a ``ufunc``, short for ``universal
-       function``. NumPy routines have built-in ufuncs, but users can also
+       NumPy's fast element-by-element computation (:term:`vectorization`)
+       gives a choice which function gets applied. The general term for the
+       function is ``ufunc``, short for ``universal function``. NumPy routines
+       have built-in ufuncs, but users can also
        :doc:`write their own. <reference/ufuncs>`
 
 
@@ -461,18 +496,15 @@ Glossary
        structuring NumPy code to leverage it.
 
    view
-       Without changing underlying data, NumPy can make one array masquerade as
-       any number of other arrays with different types, shapes, and even
-       content. This is much faster than creating those arrays.
+       Without touching underlying data, NumPy can make one array appear
+       to change its datatype and shape.
 
-       An array created this way is a `view`, and the performance gain often
-       makes an array created as a view preferable to one created as a new
-       array.
+       An array created this way is a `view`, and NumPy often exploits the
+       performance gain of using a view versus making a new array.
 
-       But because a view shares data with the original array, a write in one
-       array can affect the other, even though they appear to be different
-       arrays. If this is an problem, a view can't be used; the second array
-       needs to be physically distinct -- a ``copy``.
+       A potential drawback is that writing to a view can alter the original
+       as well. If this is a problem, the NumPy instead needs to create a
+       physically distinct array -- a `copy`.
 
        Some NumPy routines always return views, some always return copies, some
        may return one or the other, and for some the choice can be specified.
