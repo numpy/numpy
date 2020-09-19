@@ -2206,8 +2206,8 @@ def lstsq(a, b, rcond="warn"):
         Least-squares solution. If `b` is two-dimensional,
         the solutions are in the `K` columns of `x`.
     residuals : {(1,), (K,), (0,)} ndarray
-        Sums of residuals; squared Euclidean 2-norm for each column in
-        ``b - a*x``.
+        Sums of squared residuals: Squared Euclidean 2-norm for each column in
+        ``b - a @ x``.
         If the rank of `a` is < N or M <= N, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
         Otherwise the shape is (K,).
@@ -2558,7 +2558,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             s = (x.conj() * x).real
             return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
-        # None of the str-type keywords for ord ('fro', 'nuc') 
+        # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
             raise ValueError(f"Invalid norm order '{ord}' for vectors")
