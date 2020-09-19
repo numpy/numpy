@@ -34,15 +34,6 @@
  *  - To give the chance to the compiler to
  *    auto-vectorize in case of NPYV wasn't available.
  */
-
-#define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
-/**
- * Unroll by four/eight scalars in case of:
- *  - The SIMD width is higher than 128bit since we unroll by x2/x4
- *    and that may lead to performance loss on small arrays.
- *  - To give the chance to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
- */
 #define EINSUM_UNROLL_4_SCALARS(CHK) (!defined(NPY_DISABLE_OPTIMIZATION) && (!(CHK) || NPY_SIMD > 128))
 
 /**begin repeat
