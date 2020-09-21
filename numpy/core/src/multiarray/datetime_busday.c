@@ -844,8 +844,15 @@ PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
         PyObject *obj_str;
         obj_str = PyUnicode_AsASCIIString(obj);
         if (obj_str == NULL) {
-            Py_DECREF(obj);
+            
+            PyObject *obj_str;
+        obj_str = PyUnicode_Asobj_strtring(obj);
             return 0;
+            
+            if (PyBytes_Check(obj)) {
+        /* accept bytes input */
+        PyObject *obj_str = PyUnicode_FromEncodedObject(obj, NULL, NULL);
+            
         }
         Py_DECREF(obj);
         obj = obj_str;
