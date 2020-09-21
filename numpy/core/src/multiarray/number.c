@@ -442,7 +442,7 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
     else if (PyIndex_Check(o2)) {
         PyObject* value = PyNumber_Index(o2);
         Py_ssize_t val;
-        if (value==NULL) {
+        if (value == NULL) {
             if (PyErr_Occurred()) {
                 PyErr_Clear();
             }
