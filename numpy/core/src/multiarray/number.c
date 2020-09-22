@@ -397,14 +397,21 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
     PyObject *temp;
     const int optimize_fpexps = 1;
 
-    if (PyInt_Check(o2)) {
-        *out_exponent = (double)PyLong_AsLong(o2);
+    if (PyLong_Check(o2)) {
+        long tmp = PyLong_AsLong(o2);
+        if (error_converting(tmp)) {
+            PyErr_Clear();
+            return NPY_NOSCALAR;
+        }
+        *out_exponent = (double)tmp;
         return NPY_INTPOS_SCALAR;
     }
+
     if (optimize_fpexps && PyFloat_Check(o2)) {
         *out_exponent = PyFloat_AsDouble(o2);
         return NPY_FLOAT_SCALAR;
     }
+
     if (PyArray_Check(o2)) {
         if ((PyArray_NDIM((PyArrayObject *)o2) == 0) &&
                 ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
