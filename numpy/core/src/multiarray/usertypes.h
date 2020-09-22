@@ -17,4 +17,8 @@ NPY_NO_EXPORT int
 PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
                          PyArray_VectorUnaryFunc *castfunc);
 
+NPY_NO_EXPORT PyArray_DTypeMeta *
+legacy_userdtype_common_dtype_function(
+        PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other);
+
 #endif

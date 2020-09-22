@@ -38,6 +38,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "usertypes.h"
 #include "dtypemeta.h"
+#include "scalartypes.h"
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 
@@ -349,4 +350,124 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
         }
         return _append_new(&descr->f->cancastscalarkindto[scalar], totype);
     }
+}
+
+
+/*
+ * Legacy user DTypes implemented the common DType operation
+ * (as used in type promotion/result_type, and e.g. the type for
+ * concatenation), by using "safe cast" logic.
+ *
+ * New DTypes do have this behaviour generally, but we use can-cast
+ * when legacy user dtypes are involved.
+ */
+NPY_NO_EXPORT PyArray_DTypeMeta *
+legacy_userdtype_common_dtype_function(
+        PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
+{
+    int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
+
+    if (!other->legacy) {
+        /* legacy DTypes can always defer to new style ones */
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
+    }
+    /* Defer so that only one of the types handles the cast */
+    if (cls->type_num < other->type_num) {
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_DTypeMeta *)Py_NotImplemented;
+    }
+
+    /* Check whether casting is possible from one type to the other */
+    if (PyArray_CanCastSafely(cls->type_num, other->type_num)) {
+        Py_INCREF(other);
+        return other;
+    }
+    if (PyArray_CanCastSafely(other->type_num, cls->type_num)) {
+        Py_INCREF(cls);
+        return cls;
+    }
+
+    /*
+     * The following code used to be part of PyArray_PromoteTypes().
+     * We can expect that this code is never used.
+     * In principle, it allows for promotion of two different user dtypes
+     * to a single NumPy dtype of the same "kind". In practice
+     * using the same `kind` as NumPy was never possible due to an
+     * simplification where `PyArray_EquivTypes(descr1, descr2)` will
+     * return True if both kind and element size match (e.g. bfloat16 and
+     * float16 would be equivalent).
+     * The option is also very obscure and not used in the examples.
+     */
+
+    /* Convert the 'kind' char into a scalar kind */
+    switch (cls->kind) {
+        case 'b':
+            skind1 = NPY_BOOL_SCALAR;
+            break;
+        case 'u':
+            skind1 = NPY_INTPOS_SCALAR;
+            break;
+        case 'i':
+            skind1 = NPY_INTNEG_SCALAR;
+            break;
+        case 'f':
+            skind1 = NPY_FLOAT_SCALAR;
+            break;
+        case 'c':
+            skind1 = NPY_COMPLEX_SCALAR;
+            break;
+    }
+    switch (other->kind) {
+        case 'b':
+            skind2 = NPY_BOOL_SCALAR;
+            break;
+        case 'u':
+            skind2 = NPY_INTPOS_SCALAR;
+            break;
+        case 'i':
+            skind2 = NPY_INTNEG_SCALAR;
+            break;
+        case 'f':
+            skind2 = NPY_FLOAT_SCALAR;
+            break;
+        case 'c':
+            skind2 = NPY_COMPLEX_SCALAR;
+            break;
+    }
+
+    /* If both are scalars, there may be a promotion possible */
+    if (skind1 != NPY_NOSCALAR && skind2 != NPY_NOSCALAR) {
+
+        /* Start with the larger scalar kind */
+        skind = (skind1 > skind2) ? skind1 : skind2;
+        int ret_type_num = _npy_smallest_type_of_kind_table[skind];
+
+        for (;;) {
+
+            /* If there is no larger type of this kind, try a larger kind */
+            if (ret_type_num < 0) {
+                ++skind;
+                /* Use -1 to signal no promoted type found */
+                if (skind < NPY_NSCALARKINDS) {
+                    ret_type_num = _npy_smallest_type_of_kind_table[skind];
+                }
+                else {
+                    break;
+                }
+            }
+
+            /* If we found a type to which we can promote both, done! */
+            if (PyArray_CanCastSafely(cls->type_num, ret_type_num) &&
+                PyArray_CanCastSafely(other->type_num, ret_type_num)) {
+                return PyArray_DTypeFromTypeNum(ret_type_num);
+            }
+
+            /* Try the next larger type of this kind */
+            ret_type_num = _npy_next_larger_type_table[ret_type_num];
+        }
+    }
+
+    Py_INCREF(Py_NotImplemented);
+    return (PyArray_DTypeMeta *)Py_NotImplemented;
 }
