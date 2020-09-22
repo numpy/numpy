@@ -14,7 +14,7 @@ classes contained in the package, see the :ref:`reference`.
 .. toctree::
    :maxdepth: 1
 
-   setting-up
+   whatisnumpy
    quickstart
    absolute_beginners
    basics
