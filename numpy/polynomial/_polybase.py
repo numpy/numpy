@@ -111,10 +111,6 @@ class ABCPolyBase(abc.ABC):
         return self._symbol
 
     @property
-    def symbol(self):
-        return self._symbol
-
-    @property
     @abc.abstractmethod
     def domain(self):
         pass
