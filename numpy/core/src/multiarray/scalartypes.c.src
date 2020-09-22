@@ -2952,7 +2952,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
      * For a VOID scalar first see if obj is an integer or long
      * and create new memory of that size (filled with 0) for the scalar
      */
-    if (PyLong_Check(obj) || PyInt_Check(obj) ||
+    if (PyLong_Check(obj) ||
             PyArray_IsScalar(obj, Integer) ||
             (PyArray_Check(obj) &&
                      PyArray_NDIM((PyArrayObject *)obj)==0 &&
