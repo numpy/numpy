@@ -5,6 +5,10 @@ from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['NVHPCFCompiler']
 
+"""
+Since august 2020 the NVIDIA HPC SDK includes the compilers formely known as The Portland Group compilers.
+https://www.pgroup.com/index.htm
+"""
 class NVHPCFCompiler(FCompiler):
 
     compiler_type = 'nv'
