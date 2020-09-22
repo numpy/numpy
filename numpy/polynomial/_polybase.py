@@ -438,18 +438,18 @@ class ABCPolyBase(abc.ABC):
         # get the scaled argument string to the basis functions
         off, scale = self.mapparms()
         if off == 0 and scale == 1:
-            term = 'x'
+            term = self.symbol
             needs_parens = False
         elif scale == 1:
-            term = f"{self._repr_latex_scalar(off)} + x"
+            term = f"{self._repr_latex_scalar(off)} + {self.symbol}"
             needs_parens = True
         elif off == 0:
-            term = f"{self._repr_latex_scalar(scale)}x"
+            term = f"{self._repr_latex_scalar(scale)}{self.symbol}"
             needs_parens = True
         else:
             term = (
                 f"{self._repr_latex_scalar(off)} + "
-                f"{self._repr_latex_scalar(scale)}x"
+                f"{self._repr_latex_scalar(scale)}{self.symbol}"
             )
             needs_parens = True
 
@@ -485,7 +485,7 @@ class ABCPolyBase(abc.ABC):
             # in case somehow there are no coefficients at all
             body = '0'
 
-        return rf"$x \mapsto {body}$"
+        return rf"${self.symbol} \mapsto {body}$"
 
 
 

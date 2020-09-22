@@ -419,3 +419,24 @@ class TestLatexRepr:
         p = poly.HermiteE([1, 2, 3])
         assert_equal(self.as_latex(p),
             r'$x \mapsto 1.0\,{He}_{0}(x) + 2.0\,{He}_{1}(x) + 3.0\,{He}_{2}(x)$')
+
+    def test_symbol_basic(self):
+        # default input
+        p = poly.Polynomial([1, 2, 3], symbol='z')
+        assert_equal(self.as_latex(p),
+            r'$z \mapsto 1.0 + 2.0\,z + 3.0\,z^{2}$')
+
+        # translated input
+        p = poly.Polynomial([1, 2, 3], domain=[-2, 0], symbol='z')
+        assert_equal(self.as_latex(p),
+            r'$z \mapsto 1.0 + 2.0\,\left(1.0 + z\right) + 3.0\,\left(1.0 + z\right)^{2}$')
+
+        # scaled input
+        p = poly.Polynomial([1, 2, 3], domain=[-0.5, 0.5], symbol='z')
+        assert_equal(self.as_latex(p),
+            r'$z \mapsto 1.0 + 2.0\,\left(2.0z\right) + 3.0\,\left(2.0z\right)^{2}$')
+
+        # affine input
+        p = poly.Polynomial([1, 2, 3], domain=[-1, 0], symbol='z')
+        assert_equal(self.as_latex(p),
+            r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0z\right) + 3.0\,\left(1.0 + 2.0z\right)^{2}$')
