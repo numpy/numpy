@@ -14,39 +14,39 @@ How-tos get straight to the point -- they
 A stranger has asked for directions...
 ******************************************************************************
 
-**"I need to fill my tank."**
+**"I need to refuel my car."**
 
 ******************************************************************************
 Give a brief but explicit answer
 ******************************************************************************
 
-  - `"Three miles, take a right at Hayseed Road, it's on your left."`
+  - `"Three kilometers/miles, take a right at Hayseed Road, it's on your left."`
 
 Add helpful details for newcomers ("Hayseed Road", even though it's the only
-turnoff at three miles). But not irrelevant ones:
+turnoff at three km/mi). But not irrelevant ones:
 
   - Don't also give directions from Route 7.
-  - Don't explain why the town has only one gas station.
+  - Don't explain why the town has only one filling station.
 
 If there's related background (tutorial, explanation, reference, alternative
 approach), bring it to the user's attention with a link ("Directions from Route 7,"
-"Why so few gas stations?").
+"Why so few filling stations?").
 
 
 ******************************************************************************
 Delegate
 ******************************************************************************
 
-  - `"Three miles, take a right at Hayseed Road, follow the signs."`
+  - `"Three km/mi, take a right at Hayseed Road, follow the signs."`
 
 If the information is already documented and succinct enough for a how-to,
-just link to it, possibly after an introduction ("Three miles, take a right").
+just link to it, possibly after an introduction ("Three km/mi, take a right").
 
 ******************************************************************************
 If the question is broad, narrow and redirect it
 ******************************************************************************
 
- **"I want to see the sights"**
+ **"I want to see the sights."**
 
 The `See the sights` how-to should link to a set of narrower how-tos:
 
@@ -90,7 +90,10 @@ Aren't how-tos and tutorials the same thing?
 ******************************************************************************
 
 People use the terms "how-to" and "tutorial" interchangeably, but we draw a
-distinction, following `Daniele Procida <https://documentation.divio.com/>`_.
+distinction, following Daniele Procida's `taxonomy of documentation`_.
+
+ .. _`taxonomy of documentation`: https://documentation.divio.com/
+
 Documentation needs to meet users where they are.  `How-tos` offer get-it-done
 information; the user wants steps to copy and doesn't necessarily want to
 understand NumPy. `Tutorials` are warm-fuzzy information; the user wants a
@@ -102,8 +105,9 @@ deep dives intended to give understanding rather than immediate assistance,
 and `References`, which give complete, autoritative data on some concrete
 part of NumPy (like its API) but aren't obligated to paint a broader picture.
 
-For more on tutorials, see
-`the tutorial how-to <https://github.com/numpy/numpy-tutorials/blob/master/tutorial_style.ipynb>`.
+For more on tutorials, see the `tutorial how-to`_.
+
+.. _`tutorial how-to`: https://github.com/numpy/numpy-tutorials/blob/master/tutorial_style.ipynb
 
 
 ******************************************************************************
