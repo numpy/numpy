@@ -15,7 +15,7 @@ NEP 41 — First step towards a new Datatype System
 
 .. note::
 
-    This NEP is third in a series:
+    This NEP is second in a series:
 
     - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
 

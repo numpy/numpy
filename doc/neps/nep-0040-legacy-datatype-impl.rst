@@ -13,15 +13,15 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 
 .. note::
 
-    This NEP is part of a series of NEPs encompassing first information
-    about the previous dtype implementation and issues with it in NEP 40
-    (this document).
-    :ref:`NEP 41 <NEP41>` then provides an overview and generic design choices
-    for the refactor.
-    Further NEPs 42 and 43 go into the technical details of the datatype
-    and universal function related internal and external API changes.
-    In some cases it may be necessary to consult the other NEPs for a full
-    picture of the desired changes and why these changes are necessary.
+    This NEP is first in a series:
+
+    - NEP 40 (this document) explains the shortcomings of NumPy's dtype implementation.
+
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
+
+    - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
+
+    - NEP 43 describes the new design's API for universal functions.
 
 
 
