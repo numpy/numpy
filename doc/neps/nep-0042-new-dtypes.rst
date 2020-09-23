@@ -595,7 +595,7 @@ Casting can be complex, and may not implement all details of each input
 datatype (such as non-native byte order or unaligned access). Thus casting
 naturally is performed in up to three steps:
 
-1. The input datatype is normalized and prepared for the actual cast.
+1. The given datatype is normalized and prepared for the actual cast.
 2. The cast is performed.
 3. The cast result, which is in a normalized form, is cast to the requested
    form (non-native byte order).
@@ -722,7 +722,7 @@ This functionality can be replaced with the combination of "equivalent" casting
 and the "view" flag.
 
 (For more information on the ``resolve_descriptors`` signature see the C-API
-section below.)
+section below and NEP 43.)
 
 
 **Casting between instances of the same DType**
@@ -788,8 +788,8 @@ special UFunc, or behave more like a universal function.
 say that this cast is unsafe (because it is always an unsafe cast).
 Its ``resolve_descriptors`` function may look like::
 
-    def resolve_descriptors(input):
-        from_dtype, to_dtype = input
+    def resolve_descriptors(self, given_dtypes):
+        from_dtype, to_dtype = given_dtypes
 
         from_dtype = from_dtype.ensure_canonical()  # ensure not byte-swapped
         if to_dtype is None:
@@ -1259,18 +1259,19 @@ The external API for ``CastingImpl`` will be limited initially to defining:
   instance if the second string is shorter. If neither type is parametric the
   ``resolve_descriptors`` must use it.
 
-* ``resolve_descriptors(dtypes_in[2], dtypes_out[2], casting_out) -> int {0,
-  -1}`` The out dtypes must be set correctly to dtypes which the strided loop
+* ``resolve_descriptors(self, given_descrs[2], loop_descrs[2]) -> int {casting, -1}``:
+  The ``loop_descrs`` must be set correctly to dtypes which the strided loop
   (transfer function) can handle.  Initially the result must have instances
   of the same DType class as the ``CastingImpl`` is defined for. The
-  ``casting_out`` will be set to ``NPY_EQUIV_CASTING``, ``NPY_SAFE_CASTING``,
+  ``casting`` will be set to ``NPY_EQUIV_CASTING``, ``NPY_SAFE_CASTING``,
   ``NPY_UNSAFE_CASTING``, or ``NPY_SAME_KIND_CASTING``.
-  A new, additional flag,
-  ``NPY_CAST_IS_VIEW``, can be set to indicate that no cast is necessary and a
-  view is sufficient to perform the cast. The cast should return
-  ``-1`` when a custom error is set and ``NPY_NO_CASTING`` to indicate
-  that a generic casting error should be set (this is in most cases
-  preferable).
+  A new, additional flag, ``NPY_CAST_IS_VIEW``, can be set to indicate that
+  no cast is necessary and a view is sufficient to perform the cast.
+  The return value shall be ``-1`` to indicate that the cast is not possible.
+  If no error is set, a generic error message will be given. If an error is
+  already set it will be chained and may provide additional information.
+  Note that ``self`` represents additional call information; details are given
+  in NEP 43.
 
 * ``strided_loop(char **args, npy_intp *dimensions, npy_intp *strides,
   ...) -> int {0, -1}`` (signature will be fully defined in NEP 43)
