@@ -587,10 +587,6 @@ The header of a typical SciPy ``__init__.py`` is::
   test = Tester().test
   bench = Tester().bench
 
-Note that NumPy submodules still use a file named ``info.py`` in which the
-module docstring and ``__all__`` dict are defined.  These files will be removed
-at some point.
-
 Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''
 
