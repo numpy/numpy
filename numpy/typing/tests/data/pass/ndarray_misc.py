@@ -45,8 +45,9 @@ i8.argsort()
 A.argsort()
 
 i8.choose([()])
-C.choose([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
-C.choose([[0, 1, 2], [3, 4, 5], [6, 7, 8]], out=D)
+_choices = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]], dtype=np.int64)
+C.choose(_choices)
+C.choose(_choices, out=D)
 
 i8.clip(1)
 A.clip(1)
