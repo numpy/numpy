@@ -236,13 +236,13 @@ The ``.wav`` file header as a NumPy structured dtype::
         ("block_align", "<u2"),
         ("bits_per_sample", "<u2"),
         ("data_id", "S4"),
-        ("data_size", "u4"),
+        ("data_size", "<u4"),
         #
         # the sound data itself cannot be represented here:
         # it does not have a fixed size
-       ])
+    ])
 
-    data = np.fromfile(f,dtype=wave_header_dtype)
+    data = np.fromfile(f,dtype=wave_header_dtype,count=1)[0]
 
 Credit: Pauli Virtanen, :ref:`advanced_numpy`.
 
