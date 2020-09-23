@@ -20,6 +20,7 @@ from typing import (
 )
 
 from numpy import (
+    ndarray,
     generic,
     bool_,
     timedelta64,
@@ -41,6 +42,7 @@ from ._scalars import (
     _NumberLike,
 )
 from . import NBitBase
+from ._array_like import ArrayLike
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -312,6 +314,12 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
     class _NumberOp(Protocol):
         def __call__(self, __other: _NumberLike) -> number: ...
 
+    class _ComparisonOp(Protocol[_T]):
+        @overload
+        def __call__(self, __other: _T) -> bool_: ...
+        @overload
+        def __call__(self, __other: ArrayLike) -> Union[ndarray, bool_]: ...
+
 else:
     _BoolOp = Any
     _BoolBitOp = Any
@@ -334,3 +342,4 @@ else:
     _FloatDivMod = Any
     _ComplexOp = Any
     _NumberOp = Any
+    _ComparisonOp = Any
