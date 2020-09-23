@@ -12,4 +12,4 @@ the package, see the :ref:`API reference <reference>`.
    :maxdepth: 1
 
    how-to-how-to
-   ionumpy
+   how-to-io
