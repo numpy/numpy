@@ -296,13 +296,12 @@ NumPy arrays are **not** directly
 Save/restore using a pickle file
 ******************************************************************************
 
-Not recommended, due to lack of security and portability.
+Avoid when possible; :doc:`pickles <python:library/pickle>` are not secure
+against erroneous or maliciously constructed data.
 
- * **security**: not secure against erroneous or maliciously constructed data
- * **portability**: may not be loadable on different Python installations
-
-Use :func:`numpy.save` and :func:`numpy.load`.  Set ``allow_pickle=False``, unless
-the array dtype includes Python objects, in which case pickling is required.
+Use :func:`numpy.save` and :func:`numpy.load`.  Set ``allow_pickle=False``,
+unless the array dtype includes Python objects, in which case pickling is
+required.
 
 ******************************************************************************
 Convert from a pandas DataFrame to a NumPy array
