@@ -113,10 +113,9 @@ __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 __all__ += einsumfunc.__all__
 
-# Make it possible so that ufuncs can be pickled
-#  Here are the loading and unloading functions
-# The name numpy.core._ufunc_reconstruct must be
-#   available for unpickling to work.
+# We used to use `np.core._ufunc_reconstruct` to unpickle. This is unnecessary,
+# but old pickles saved before 1.20 will be using it, and there is no reason
+# to break loading them.
 def _ufunc_reconstruct(module, name):
     # The `fromlist` kwarg is required to ensure that `mod` points to the
     # inner-most module rather than the parent package when module name is
@@ -126,14 +125,17 @@ def _ufunc_reconstruct(module, name):
     return getattr(mod, name)
 
 def _ufunc_reduce(func):
-    from pickle import whichmodule
-    name = func.__name__
-    return _ufunc_reconstruct, (whichmodule(func, name), name)
+    # Report the `__name__`. pickle will try to find the module. Note that
+    # pickle supports for this `__name__` to be a `__qualname__`. It may
+    # make sense to add a `__qualname__` to ufuncs, to allow this more
+    # explicitly (Numba has ufuncs as attributes).
+    # See also: https://github.com/dask/distributed/issues/3450
+    return func.__name__
 
 
 import copyreg
 
-copyreg.pickle(ufunc, _ufunc_reduce, _ufunc_reconstruct)
+copyreg.pickle(ufunc, _ufunc_reduce)
 # Unclutter namespace (must keep _ufunc_reconstruct for unpickling)
 del copyreg
 del _ufunc_reduce

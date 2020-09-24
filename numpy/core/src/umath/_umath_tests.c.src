@@ -461,6 +461,15 @@ addUfuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "cross1d", f);
     Py_DECREF(f);
 
+    f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL,
+            NULL, 0, 0, 0, PyUFunc_None, "_pickleable_module_global.ufunc",
+            "A dotted name for pickle testing, does nothing.", 0, NULL);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "_pickleable_module_global_ufunc", f);
+    Py_DECREF(f);
+
     return 0;
 }
 

@@ -178,6 +178,10 @@ class TestUfuncGenericLoops:
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
+def _pickleable_module_global():
+    pass
+
+
 class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -194,6 +198,15 @@ class TestUfunc:
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
+
+    def test_pickle_name_is_qualname(self):
+        # This tests that a simplification of our ufunc pickle code will
+        # lead to allowing qualnames as names.  Future ufuncs should
+        # possible add a specific qualname, or a hook into pickling instead
+        # (dask+numba may benefit).
+        _pickleable_module_global.ufunc = umt._pickleable_module_global_ufunc
+        obj = pickle.loads(pickle.dumps(_pickleable_module_global.ufunc))
+        assert obj is umt._pickleable_module_global_ufunc
 
     def test_reduceat_shifting_sum(self):
         L = 6
