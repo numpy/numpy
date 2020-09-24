@@ -214,6 +214,7 @@ format_def(char *buf, Py_ssize_t size, FortranDataDef def)
         }
         memcpy(p, notalloc, sizeof(notalloc));
         p += sizeof(notalloc);
+        size -= sizeof(notalloc);
     }
 
     return p - buf;
