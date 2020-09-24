@@ -213,6 +213,7 @@ format_def(char *buf, Py_ssize_t size, FortranDataDef def)
             return -1;
         }
         memcpy(p, notalloc, sizeof(notalloc));
+        p += sizeof(notalloc);
     }
 
     return p - buf;
@@ -255,7 +256,7 @@ fortran_doc(FortranDataDef def)
     }
     else {
         PyArray_Descr *d = PyArray_DescrFromType(def.type);
-        n = PyOS_snprintf(p, size, "'%c'-", d->type);
+        n = PyOS_snprintf(p, size, "%s : '%c'-", def.name, d->type);
         Py_DECREF(d);
         if (n < 0 || n >= size) {
             goto fail;
@@ -264,7 +265,7 @@ fortran_doc(FortranDataDef def)
         size -= n;
 
         if (def.data == NULL) {
-            n = format_def(p, size, def) == -1;
+            n = format_def(p, size, def);// == -1;
             if (n < 0) {
                 goto fail;
             }
@@ -288,6 +289,7 @@ fortran_doc(FortranDataDef def)
             p += n;
             size -= n;
         }
+        
     }
     if (size <= 1) {
         goto fail;
