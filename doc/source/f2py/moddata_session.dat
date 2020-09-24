@@ -1,10 +1,14 @@
 >>> import moddata
 >>> print(moddata.mod.__doc__)
-i - 'i'-scalar
-x - 'i'-array(4)
-a - 'f'-array(2,3)
-foo - Function signature:
-  foo()
+i : 'i'-scalar
+x : 'i'-array(4)
+a : 'f'-array(2,3)
+b : 'f'-array(-1,-1), not allocated
+foo()
+
+Wrapper for ``foo``.
+
+
 
 >>> moddata.mod.i = 5  
 >>> moddata.mod.x[:2] = [1,2]

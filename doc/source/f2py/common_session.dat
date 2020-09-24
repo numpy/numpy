@@ -1,8 +1,8 @@
 >>> import common
 >>> print(common.data.__doc__)
-i - 'i'-scalar
-x - 'i'-array(4)
-a - 'f'-array(2,3)
+i : 'i'-scalar
+x : 'i'-array(4)
+a : 'f'-array(2,3)
 
 >>> common.data.i = 5
 >>> common.data.x[1] = 2 

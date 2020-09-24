@@ -1,8 +1,11 @@
 >>> import allocarr
 >>> print(allocarr.mod.__doc__)
-b - 'f'-array(-1,-1), not allocated
-foo - Function signature:
-  foo()
+b : 'f'-array(-1,-1), not allocated
+foo()
+
+Wrapper for ``foo``.
+
+
 
 >>> allocarr.mod.foo()  
  b is not allocated
