@@ -45,7 +45,6 @@ else:
 from . import (
     char,
     compat,
-    core,
     ctypeslib,
     emath,
     fft,
