@@ -26,8 +26,6 @@ def _display_as_base(cls):
     """
     assert issubclass(cls, Exception)
     cls.__name__ = cls.__base__.__name__
-    cls.__qualname__ = cls.__base__.__qualname__
-    set_module(cls.__base__.__module__)(cls)
     return cls
 
 

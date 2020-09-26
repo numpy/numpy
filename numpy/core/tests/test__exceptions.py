@@ -1,9 +1,13 @@
 """
 Tests of the ._exceptions module. Primarily for exercising the __str__ methods.
 """
+
+import pickle
+
 import numpy as np
 
 _ArrayMemoryError = np.core._exceptions._ArrayMemoryError
+_UFuncNoLoopError = np.core._exceptions._UFuncNoLoopError
 
 class TestArrayMemoryError:
     def test_str(self):
@@ -40,3 +44,9 @@ class TestArrayMemoryError:
 
         e = _ArrayMemoryError((2, 4), np.dtype((np.uint64, 16)))
         assert e._total_size == 1024
+
+
+class TestUFuncNoLoopError:
+    def test_pickling(self):
+        """ Test that _UFuncNoLoopError can be pickled """
+        assert isinstance(pickle.dumps(_UFuncNoLoopError), bytes)
