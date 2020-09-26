@@ -241,7 +241,7 @@ Glossary
 
 
    broadcast
-       ``broadcasting`` is NumPy's ability to process ndarrays of
+       *broadcasting* is NumPy's ability to process ndarrays of
        different sizes as if all were the same size.
 
        It permits an elegant do-what-I-mean behavior where, for instance,
