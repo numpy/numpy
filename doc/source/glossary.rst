@@ -282,7 +282,7 @@ Glossary
        An array is contiguous if
            * it occupies an unbroken block of memory, and
            * array elements with higher indexes occupy higher addresses (that
-             is, the :term:`stride` is not negative).
+             is, no :term:`stride` is negative).
 
 
    copy
