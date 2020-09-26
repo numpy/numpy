@@ -36,7 +36,7 @@ With non-whitespace delimiters
 ------------------------------------------------------------------------------
 ::
 
-    $ cat csv.txt  # doctest: +SKIP
+    >>> print(open("csv.txt").read())  # doctest: +SKIP
     1, 2, 3
     4,, 6
     7, 8, 9
