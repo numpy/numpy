@@ -2,6 +2,7 @@ import importlib.util
 import itertools
 import os
 import re
+import shutil
 from collections import defaultdict
 
 import pytest
@@ -34,6 +35,12 @@ def get_test_cases(directory):
                     # Manually specify a name for the test
                     id=relpath,
                 )
+
+
+def test_clear_cache():
+    """Clear the mypy cache before running the first typing test."""
+    if os.path.isdir(CACHE_DIR):
+        shutil.rmtree(CACHE_DIR)
 
 
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
