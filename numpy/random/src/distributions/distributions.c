@@ -853,9 +853,14 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
        */
       s = (1. / kappa + kappa);
     } else {
-      double r = 1 + sqrt(1 + 4 * kappa * kappa);
-      double rho = (r - sqrt(2 * r)) / (2 * kappa);
-      s = (1 + rho * rho) / (2 * rho);
+      /* Fallback to normal distribution for big values of kappa*/
+      if (kappa > 1e6){
+        return mu + sqrt(1/kappa) * random_standard_normal(bitgen_state);
+      }else{
+        double r = 1 + sqrt(1 + 4 * kappa * kappa);
+        double rho = (r - sqrt(2 * r)) / (2 * kappa);
+        s = (1 + rho * rho) / (2 * rho);
+      }
     }
 
     while (1) {
