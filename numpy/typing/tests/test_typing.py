@@ -37,6 +37,7 @@ def get_test_cases(directory):
                 )
 
 
+@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 def test_clear_cache():
     """Clear the mypy cache before running the first typing test."""
     if os.path.isdir(CACHE_DIR):
