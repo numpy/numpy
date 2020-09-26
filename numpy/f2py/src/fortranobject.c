@@ -266,7 +266,7 @@ fortran_doc(FortranDataDef def)
         size -= n;
 
         if (def.data == NULL) {
-            n = format_def(p, size, def);// == -1;
+            n = format_def(p, size, def);
             if (n < 0) {
                 goto fail;
             }
