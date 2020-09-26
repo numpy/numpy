@@ -83,17 +83,19 @@ that have missing values if
 * **Each field has a fixed width**: Use the width as the `delimiter` argument.
   ::
 
-    # File with width=4. The data does not have to be justified (for example, the
-    # 2 in row 1), the last column can be less than width (for example, the 6 in
-    # row 2), and no delimiting character is required (for instance 8888 and 9 in row 3)
+    # File with width=4. The data does not have to be justified (for example,
+    # the 2 in row 1), the last column can be less than width (for example, the 6
+    # in row 2), and no delimiting character is required (for instance 8888 and 9
+    # in row 3)
 
-    $cat fixedwidth.txt  # doctest: +SKIP
+    >>> f = open("fixedwidth.txt").read()  # doctest: +SKIP
+    >>> print(f)  # doctest: +SKIP
     1   2      3
     44      6
     7   88889
 
-    # Showing spaces as '^'
-    $ tr ' ' '^' < fixedwidth.txt  # doctest: +SKIP
+    # Showing spaces as ^
+    >>> print(f.replace(" ","^"))  # doctest: +SKIP
     1^^^2^^^^^^3
     44^^^^^^6
     7^^^88889
@@ -107,12 +109,12 @@ that have missing values if
   `missing_values` argument.
   ::
 
-    $ cat nan.txt  # doctest: +SKIP
+    >>> print(open("nan.txt").read())  # doctest: +SKIP
     1 2 3
     44 x 6
     7  8888 9
 
-    >>> np.genfromtxt("nan.txt", missing_values='x')  # doctest: +SKIP
+    >>> np.genfromtxt("nan.txt", missing_values="x")  # doctest: +SKIP
     array([[1.000e+00, 2.000e+00, 3.000e+00],
            [4.400e+01,       nan, 6.000e+00],
            [7.000e+00, 8.888e+03, 9.000e+00]])
@@ -121,7 +123,7 @@ that have missing values if
   `invalid_raise=False`.
   ::
 
-    $ cat skip.txt  # doctest: +SKIP
+    >>> print(open("skip.txt").read())  # doctest: +SKIP
     1 2   3
     44    6
     7 888 9
@@ -139,21 +141,22 @@ that have missing values if
   or more spaces.
   ::
 
-      $ cat tabs.txt  # doctest: +SKIP
-      1 2 3
-      44    6
-      7 888 9
+    >>> f = open("tabs.txt").read()  # doctest: +SKIP
+    >>> print(f)  # doctest: +SKIP
+    1       2       3
+    44              6
+    7       888     9
 
-      # Showing the tabs (^I) and spaces
-      $ cat -T tabs.txt  # doctest: +SKIP
-      1^I2^I3
-      44^I ^I6
-      7^I888^I9
+    # Tabs vs. spaces
+    >>> print(f.replace("\t","^"))  # doctest: +SKIP
+    1^2^3
+    44^ ^6
+    7^888^9
 
-      >>> np.genfromtxt("tabs.txt", delimiter="\t", missing_values=" +")  # doctest: +SKIP
-      array([[  1.,   2.,   3.],
-             [ 44.,  nan,   6.],
-             [  7., 888.,   9.]])
+    >>> np.genfromtxt("tabs.txt", delimiter="\t", missing_values=" +")  # doctest: +SKIP
+    array([[  1.,   2.,   3.],
+           [ 44.,  nan,   6.],
+           [  7., 888.,   9.]])
 
 ******************************************************************************
 Read a file in .npy or .npz format
@@ -226,7 +229,7 @@ The ``.wav`` file header as a NumPy structured dtype::
     wav_header_dtype = np.dtype([
         ("chunk_id", (bytes, 4)), # flexible-sized scalar type, item size 4
         ("chunk_size", "<u4"),    # little-endian unsigned 32-bit integer
-        ("format", "S4"),         # 4-byte string
+        ("format", "S4"),         # 4-byte string, alternate spelling of (bytes, 4)
         ("fmt_id", "S4"),
         ("fmt_size", "<u4"),
         ("audio_fmt", "<u2"),     #
@@ -242,7 +245,10 @@ The ``.wav`` file header as a NumPy structured dtype::
         # it does not have a fixed size
     ])
 
-    data = np.fromfile(f,dtype=wave_header_dtype,count=1)[0]
+    header = np.fromfile(f, dtype=wave_header_dtype, count=1)[0]
+
+This ``.wav`` example is for illustration; to read a ``.wav`` file in real
+life, use Python's built-in module :mod:`wave`.
 
 Credit: Pauli Virtanen, :ref:`advanced_numpy`.
 
@@ -263,7 +269,7 @@ arrays using memory mapping.
 - Files output by :func:`numpy.save` (that is, using the numpy format) can be read
   using :func:`numpy.load` with the ``mmap_mode`` keyword argument::
 
-      large_array[some_slice] = np.load('path/to/small_array', mmap_mode='r')
+      large_array[some_slice] = np.load("path/to/small_array", mmap_mode="r")
 
 Memory mapping lacks features like data chunking and compression; more
 full-featured formats and libraries usable with NumPy include:
