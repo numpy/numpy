@@ -1,16 +1,10 @@
 {% extends "!layout.html" %}
 
 {%- block extrahead %}
-    <!-- this is added via javascript in versionwarning.js  -->
+{{ super() }}
+<link rel="stylesheet" href="{{ pathto('_static/numpy.css', 1) }}" type="text/css" />
+
+    <!-- PR #17220: This is added via javascript in versionwarning.js  -->
     <!-- link rel="canonical" href="http://numpy.org/doc/stable/{{ pagename }}{{ file_suffix }}" / -->
 
-<style>
-.navbar-brand img {
-   height: 75px;
-}
-.navbar-brand {
-   height: 75px;
-}
-</style>
-{{ super() }}
 {% endblock %}
