@@ -23,7 +23,7 @@ https://scipy.org/install.html for instructions.
 **Learner profile**
 
 This tutorial is intended as a quick overview of
-algebra and arrays in NumPy and want to understand how n-dimensional
+algebra and arrays in NumPy. It demonstrates how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
 using for-loops), or if you want to understand axis and shape properties for
