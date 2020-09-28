@@ -1399,7 +1399,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             strobj = unit_in;
         }
 
-        Py_ssize_t len = 0;
+        Py_ssize_t len;
         char const *str = PyUnicode_AsUTF8AndSize(strobj, &len);
         if (str == NULL) {
             Py_DECREF(strobj);
