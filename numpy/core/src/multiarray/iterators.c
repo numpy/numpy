@@ -597,7 +597,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     /* Check for Integer or Slice */
-    if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
+    if (PyLong_Check(ind) || PySlice_Check(ind)) {
         start = parse_index_entry(ind, &step_size, &n_steps,
                                   self->size, 0, 1);
         if (start == -1) {
