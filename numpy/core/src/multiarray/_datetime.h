@@ -200,6 +200,16 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
                                         PyArray_DatetimeMetaData *out_meta);
 
 /*
+ * Returns datetime metadata as a new reference a Unicode object.
+ * Returns NULL on error.
+ *
+ * If 'skip_brackets' is true, skips the '[]'.
+ *
+ */
+NPY_NO_EXPORT PyObject *
+metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets);
+
+/*
  * 'ret' is a PyUString containing the datetime string, and this
  * function appends the metadata string to it.
  *
