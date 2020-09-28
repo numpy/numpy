@@ -4,9 +4,14 @@
 A Guide to NumPy/SciPy Documentation
 ====================================
 
+.. _userdoc_guide:
+
 User documentation
 *******************
 NumPy text documents should follow the `Google developer documentation style guide <https://developers.google.com/style>`_.
+
+
+.. _docstring_intro:
 
 Docstrings
 **********
