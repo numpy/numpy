@@ -397,24 +397,48 @@ def test_as_strided():
 
 
 def test_sliding_window_view():
-    i, j = np.ogrid[:3,:4]
+    arr = np.arange(5)
+    arr_view = sliding_window_view(arr, 2)
+    expected = np.array([[0, 1],
+                         [1, 2],
+                         [2, 3],
+                         [3, 4]])
+    assert_array_equal(arr_view, expected)
+
+    i, j = np.ogrid[:3, :4]
     arr = 10*i + j
-    shape = (2,2)
+    shape = (2, 2)
     arr_view = sliding_window_view(arr, shape)
-    expected = np.array([[[[ 0,  1], [10, 11]],
-                          [[ 1,  2], [11, 12]],
-                          [[ 2,  3], [12, 13]]],
+    expected = np.array([[[[0, 1], [10, 11]],
+                          [[1, 2], [11, 12]],
+                          [[2, 3], [12, 13]]],
                          [[[10, 11], [20, 21]],
                           [[11, 12], [21, 22]],
                           [[12, 13], [22, 23]]]])
     assert_array_equal(arr_view, expected)
 
-    i, j = np.ogrid[:4,:4]
+    arr_view = sliding_window_view(arr, 3, 0)
+    expected = np.array([[[0, 10, 20],
+                          [1, 11, 21],
+                          [2, 12, 22],
+                          [3, 13, 23]]])
+    assert_array_equal(arr_view, expected)
+
+    arr_view = sliding_window_view(arr, (2, 3), (1, 1))
+    expected = np.array([[[[0, 1, 2],
+                           [1, 2, 3]]],
+                         [[[10, 11, 12],
+                           [11, 12, 13]]],
+                         [[[20, 21, 22],
+                           [21, 22, 23]]]])
+    assert_array_equal(arr_view, expected)
+
+    i, j = np.ogrid[:4, :4]
     arr = 10*i + j
-    shape = (2,3)
+    shape = (2, 3)
     arr_view = sliding_window_view(arr, shape)
-    expected = np.array([[[[ 0,  1,  2], [10, 11, 12]],
-                          [[ 1,  2,  3], [11, 12, 13]]],
+    expected = np.array([[[[0, 1, 2], [10, 11, 12]],
+                          [[1, 2, 3], [11, 12, 13]]],
                          [[[10, 11, 12], [20, 21, 22]],
                           [[11, 12, 13], [21, 22, 23]]],
                          [[[20, 21, 22], [30, 31, 32]],

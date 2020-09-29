@@ -111,52 +111,75 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def sliding_window_view(x, shape, subok=False, writeable=False):
+def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
     """
-    Creates sliding window views of the N dimensional array with the given window
-    shape. Window slides across each dimension of the array and extract subsets of
-    the array at any window position.
+    Create a sliding window view into the array with the given shape.
+
+    Creates a sliding window view of the N dimensional array with the given
+    window shape. Window slides across each dimension of the array and extract
+    a subsets of the array at any window position.
 
     Parameters
     ----------
     x : array_like
-        Array to create sliding window views from.
+        Array to create the sliding window view from.
 
-    shape : sequence of int
-        The shape of the window. Must have same length as the number of input array dimensions.
+    shape : int or tuple of int
+        The shape of the window. If `axis` is not present, must have same
+        length as the number of input array dimensions.
+
+    axis : int or tuple of int, optional
+        If present, `shape[i]` will refer to the axis `axis[i]` of `x`,
+        otherwise `shape[i]` will refer to axis `i` of `x`.
 
     subok : bool, optional
-        If True, then sub-classes will be passed-through, otherwise the returned
+        If True, sub-classes will be passed-through, otherwise the returned
         array will be forced to be a base-class array (default).
 
-    writeable : bool
-        When true, allow writing to the returned view. The default is false, as this should be used
-        with caution: the returned view contains the same memory location multiple times, so
-        writing to one location will cause others to change.
+    writeable : bool, optional
+        When true, allow writing to the returned view. The default is false,
+        as this should be used with caution: the returned view contains the
+        same memory location multiple times, so writing to one location will
+        cause others to change.
 
     Returns
     -------
     view : ndarray
-        Sliding window views of the array. (view.shape[i] = x.shape[i] - shape[i] + 1)
+        Sliding window view of the array.
+        ``(view.shape[i] = x.shape[i] - shape[i] + 1)``
 
-    See also
+    See Also
     --------
     as_strided: Create a view into the array with the given shape and strides.
     broadcast_to: broadcast an array to a given shape.
 
     Notes
     -----
-    For some cases there may be more efficient approaches to calculate transformations
-    across multi-dimensional arrays, for instance `scipy.signal.fftconvolve`, where combining
-    the iterating step with the calculation itself while storing partial results can result
-    in significant speedups.
+    For some cases there may be more efficient approaches to calculate
+    transformations across multi-dimensional arrays, for instance
+    `scipy.signal.fftconvolve`, where combining the iterating step with the
+    calculation itself while storing partial results can result in significant
+    speedups.
 
     Examples
     --------
-    >>> i, j = np.ogrid[:3,:4]
+    >>> x = np.arange(5)
+    >>> sliding_window_view(x, 2)
+    array([[0, 1],
+           [1, 2],
+           [2, 3],
+           [3, 4]])
+
+    This also works in more dimensions, e.g.
+
+    >>> i, j = np.ogrid[:3, :4]
     >>> x = 10*i + j
+    >>> x
+    array([[ 0,  1,  2,  3],
+           [10, 11, 12, 13],
+           [20, 21, 22, 23]])
     >>> shape = (2,2)
-    >>> np.lib.stride_tricks.sliding_window_view(x, shape)
+    >>> sliding_window_view(x, shape)
     array([[[[ 0,  1],
              [10, 11]],
 
@@ -176,34 +199,54 @@ def sliding_window_view(x, shape, subok=False, writeable=False):
             [[12, 13],
              [22, 23]]]])
 
+    The axis can be specified explicitly:
+
+    >>> sliding_window_view(x, 3, 0)
+    array([[[ 0, 10, 20],
+            [ 1, 11, 21],
+            [ 2, 12, 22],
+            [ 3, 13, 23]]])
+
+    The same axis can be used several times:
+
+    >>> sliding_window_view(x, (2, 3), (1, 1))
+    array([[[[ 0,  1,  2],
+             [ 1,  2,  3]]],
+
+
+           [[[10, 11, 12],
+             [11, 12, 13]]],
+
+
+           [[[20, 21, 22],
+             [21, 22, 23]]]])
     """
+    shape = tuple(shape) if np.iterable(shape) else (shape,)
     # first convert input to array, possibly keeping subclass
     x = np.array(x, copy=False, subok=subok)
 
-    try:
-        shape = np.array(shape, np.int)
-    except:
-        raise TypeError('`shape` must be a sequence of integer')
-    else:
-        if shape.ndim != 1:
-            raise ValueError('`shape` must be one-dimensional sequence of integer')
-        if len(x.shape) != len(shape):
-            raise ValueError("`shape` length doesn't match with input array dimensions")
-        if np.any(shape < 0):
-            raise ValueError('`shape` cannot contain negative value')
+    shape_array = np.array(shape)
+    if np.any(shape_array < 0):
+        raise ValueError('`shape` cannot contain negative value')
+    if np.any(x.shape < shape_array):
+        raise ValueError(
+            'window shape cannot be larger than input array shape')
 
-    o = np.array(x.shape) - shape  + 1 # output shape
-    if np.any(o <= 0):
-        raise ValueError('window shape cannot larger than input array shape')
+    if axis is None:
+        axis = np.arange(x.ndim)
+    axis = tuple(axis) if np.iterable(axis) else (axis,)
 
-    strides = x.strides
-    view_strides = strides
+    w_ndim = len(shape)
+    assert w_ndim == len(axis)
 
-    view_shape = tuple(o) + tuple(shape)
-    view_strides = tuple(view_strides) + tuple(strides)
-    view = as_strided(x, view_shape, view_strides, subok=subok, writeable=writeable)
+    out_strides = x.strides + tuple(x.strides[ax] for ax in axis)
 
-    return view
+    # note: same axis can be windowed repeatedly
+    x_shape_trimmed = list(x.shape)
+    for ax, dim in zip(axis, shape):
+        x_shape_trimmed[ax] -= dim - 1
+    out_shape = tuple(x_shape_trimmed) + shape
+    return as_strided(x, strides=out_strides, shape=out_shape)
 
 
 def _broadcast_to(array, shape, subok, readonly):
