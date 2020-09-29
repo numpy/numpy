@@ -1978,7 +1978,7 @@ metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets)
         if (skip_brackets) {
             return PyUnicode_FromString("generic");
         }
-        /* But with brackets, append nothing */
+        /* But with brackets, return nothing */
         else {
             return PyUnicode_FromString("");
         }
@@ -2012,70 +2012,6 @@ metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets)
     }
 }
 
-
-/*
- * 'ret' is a PyUString containing the datetime string, and this
- * function appends the metadata string to it.
- *
- * If 'skip_brackets' is true, skips the '[]'.
- *
- * This function steals the reference 'ret'
- */
-NPY_NO_EXPORT PyObject *
-append_metastr_to_string(PyArray_DatetimeMetaData *meta,
-                                    int skip_brackets,
-                                    PyObject *ret)
-{
-    PyObject *res;
-    int num;
-    char const *basestr;
-
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    if (meta->base == NPY_FR_GENERIC) {
-        /* Without brackets, give a string "generic" */
-        if (skip_brackets) {
-            PyUString_ConcatAndDel(&ret, PyUnicode_FromString("generic"));
-            return ret;
-        }
-        /* But with brackets, append nothing */
-        else {
-            return ret;
-        }
-    }
-
-    num = meta->num;
-    if (meta->base >= 0 && meta->base < NPY_DATETIME_NUMUNITS) {
-        basestr = _datetime_strings[meta->base];
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                "NumPy datetime metadata is corrupted");
-        return NULL;
-    }
-
-    if (num == 1) {
-        if (skip_brackets) {
-            res = PyUnicode_FromFormat("%s", basestr);
-        }
-        else {
-            res = PyUnicode_FromFormat("[%s]", basestr);
-        }
-    }
-    else {
-        if (skip_brackets) {
-            res = PyUnicode_FromFormat("%d%s", num, basestr);
-        }
-        else {
-            res = PyUnicode_FromFormat("[%d%s]", num, basestr);
-        }
-    }
-
-    PyUString_ConcatAndDel(&ret, res);
-    return ret;
-}
 
 /*
  * Adjusts a datetimestruct based on a seconds offset. Assumes
