@@ -146,7 +146,6 @@ def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
     -------
     view : ndarray
         Sliding window view of the array.
-        ``(view.shape[i] = x.shape[i] - shape[i] + 1)``
 
     See Also
     --------
@@ -182,20 +181,14 @@ def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
     >>> sliding_window_view(x, shape)
     array([[[[ 0,  1],
              [10, 11]],
-
             [[ 1,  2],
              [11, 12]],
-
             [[ 2,  3],
              [12, 13]]],
-
-
            [[[10, 11],
              [20, 21]],
-
             [[11, 12],
              [21, 22]],
-
             [[12, 13],
              [22, 23]]]])
 
@@ -212,12 +205,8 @@ def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
     >>> sliding_window_view(x, (2, 3), (1, 1))
     array([[[[ 0,  1,  2],
              [ 1,  2,  3]]],
-
-
            [[[10, 11, 12],
              [11, 12, 13]]],
-
-
            [[[20, 21, 22],
              [21, 22, 23]]]])
     """
