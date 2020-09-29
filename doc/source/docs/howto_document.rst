@@ -1,12 +1,36 @@
 .. _howto-document:
 
 
-A Guide to NumPy/SciPy Documentation
-====================================
+A Guide to NumPy Documentation
+==============================
 
 User documentation
-*******************
-NumPy text documents should follow the `Google developer documentation style guide <https://developers.google.com/style>`_.
+******************
+- In general, we follow the
+  `Google developer documentation style guide <https://developers.google.com/style>`_.
+
+- NumPy style governs cases where:
+
+      - Google has no guidance, or
+      - We prefer not to use the Google style
+
+  Our current rules:
+
+      - We pluralize *index* as *indices* rather than
+        `indexes <https://developers.google.com/style/word-list#letter-i>`_,
+        following the precedent of :func:`numpy.indices`.
+
+      - For consistency we also pluralize *matrix* as *matrices*.
+
+- Grammatical issues inadequately addressed by the NumPy or Google rules are
+  decided by the section on "Grammar and Usage" in the most recent edition of
+  the `Chicago Manual of Style
+  <https://en.wikipedia.org/wiki/The_Chicago_Manual_of_Style>`_.
+
+- We welcome being
+  `alerted <https://github.com/numpy/numpy/issues>`_ to cases
+  we should add to the NumPy style rules.
+
 
 Docstrings
 **********
