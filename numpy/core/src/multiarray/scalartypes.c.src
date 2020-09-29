@@ -518,21 +518,15 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromString("numpy.datetime64('");
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString(iso));
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString("')"));
+        ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
     }
     else {
-        ret = PyUnicode_FromString("numpy.datetime64('");
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString(iso));
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString("','"));
-        ret = append_metastr_to_string(&scal->obmeta, 1, ret);
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString("')"));
+        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        if (meta == NULL) {
+            return NULL;
+        }
+        ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+        Py_DECREF(meta);
     }
 
     return ret;
@@ -542,7 +536,7 @@ static PyObject *
 timedeltatype_repr(PyObject *self)
 {
     PyTimedeltaScalarObject *scal;
-    PyObject *ret;
+    PyObject *val, *ret;
 
     if (!PyArray_IsScalar(self, Timedelta)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -554,32 +548,34 @@ timedeltatype_repr(PyObject *self)
 
     /* The value */
     if (scal->obval == NPY_DATETIME_NAT) {
-        ret = PyUnicode_FromString("numpy.timedelta64('NaT'");
+        val = PyUnicode_FromString("'NaT'");
     }
     else {
-        /*
-         * Can't use "%lld" if HAVE_LONG_LONG is not defined
-         */
+         /* Can't use "%lld" if HAVE_LONG_LONG is not defined */
 #if defined(HAVE_LONG_LONG)
-        ret = PyUnicode_FromFormat("numpy.timedelta64(%lld",
-                                            (long long)scal->obval);
+        val = PyUnicode_FromFormat("%lld", (long long)scal->obval);
 #else
-        ret = PyUnicode_FromFormat("numpy.timedelta64(%ld",
-                                            (long)scal->obval);
+        val = PyUnicode_FromFormat("%ld", (long)scal->obval);
 #endif
     }
+    if (val == NULL) {
+        return NULL;
+    }
+
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString(")"));
+        ret = PyUnicode_FromFormat("numpy.timedelta64(%S)", val);
     }
     else {
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString(",'"));
-        ret = append_metastr_to_string(&scal->obmeta, 1, ret);
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString("')"));
+        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        if (meta == NULL) {
+            Py_DECREF(val);
+            return NULL;
+        }
+        ret = PyUnicode_FromFormat("numpy.timedelta64(%S,'%S')", val, meta);
+        Py_DECREF(meta);
     }
+    Py_DECREF(val);
 
     return ret;
 }

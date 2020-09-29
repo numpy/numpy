@@ -1434,18 +1434,20 @@ raise_if_datetime64_metadata_cast_error(char *object_type,
         return 0;
     }
     else {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromFormat("Cannot cast %s "
-                    "from metadata ", object_type);
-        errmsg = append_metastr_to_string(src_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" to "));
-        errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *src = metastr_to_unicode(src_meta, 0);
+        if (src == NULL) {
+            return -1;
+        }
+        PyObject *dst = metastr_to_unicode(dst_meta, 0);
+        if (dst == NULL) {
+            Py_DECREF(src);
+            return -1;
+        }
+        PyErr_Format(PyExc_TypeError,
+            "Cannot cast %s from metadata %S to %S according to the rule %s",
+            object_type, src, dst, npy_casting_to_string(casting));
+        Py_DECREF(src);
+        Py_DECREF(dst);
         return -1;
     }
 }
@@ -1466,18 +1468,20 @@ raise_if_timedelta64_metadata_cast_error(char *object_type,
         return 0;
     }
     else {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromFormat("Cannot cast %s "
-                    "from metadata ", object_type);
-        errmsg = append_metastr_to_string(src_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" to "));
-        errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *src = metastr_to_unicode(src_meta, 0);
+        if (src == NULL) {
+            return -1;
+        }
+        PyObject *dst = metastr_to_unicode(dst_meta, 0);
+        if (dst == NULL) {
+            Py_DECREF(src);
+            return -1;
+        }
+        PyErr_Format(PyExc_TypeError,
+             "Cannot cast %s from metadata %S to %S according to the rule %s",
+             object_type, src, dst, npy_casting_to_string(casting));
+        Py_DECREF(src);
+        Py_DECREF(dst);
         return -1;
     }
 }
@@ -1600,32 +1604,38 @@ compute_datetime_metadata_greatest_common_divisor(
     return 0;
 
 incompatible_units: {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromString("Cannot get "
-                    "a common metadata divisor for "
-                    "NumPy datetime metadata ");
-        errmsg = append_metastr_to_string(meta1, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" and "));
-        errmsg = append_metastr_to_string(meta2, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" because they have "
-                    "incompatible nonlinear base time units"));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *umeta1 = metastr_to_unicode(meta1, 0);
+        if (umeta1 == NULL) {
+            return -1;
+        }
+        PyObject *umeta2 = metastr_to_unicode(meta2, 0);
+        if (umeta2 == NULL) {
+            Py_DECREF(umeta1);
+            return -1;
+        }
+        PyErr_Format(PyExc_TypeError,
+            "Cannot get a common metadata divisor for Numpy datatime "
+            "metadata %S and %S because they have incompatible nonlinear "
+            "base time units.", umeta1, umeta2);
+        Py_DECREF(umeta1);
+        Py_DECREF(umeta2);
         return -1;
     }
 units_overflow: {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromString("Integer overflow "
-                    "getting a common metadata divisor for "
-                    "NumPy datetime metadata ");
-        errmsg = append_metastr_to_string(meta1, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" and "));
-        errmsg = append_metastr_to_string(meta2, 0, errmsg);
-        PyErr_SetObject(PyExc_OverflowError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *umeta1 = metastr_to_unicode(meta1, 0);
+        if (umeta1 == NULL) {
+            return -1;
+        }
+        PyObject *umeta2 = metastr_to_unicode(meta2, 0);
+        if (umeta2 == NULL) {
+            Py_DECREF(umeta1);
+            return -1;
+        }
+        PyErr_Format(PyExc_OverflowError,
+            "Integer overflow getting a common metadata divisor for "
+            "NumPy datetime metadata %S and %S.", umeta1, umeta2);
+        Py_DECREF(umeta1);
+        Py_DECREF(umeta2);
         return -1;
     }
 }
@@ -1950,35 +1960,27 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
 }
 
 /*
- * 'ret' is a PyUString containing the datetime string, and this
- * function appends the metadata string to it.
+ * Return the datetime metadata as a Unicode object.
+ *
+ * Returns new reference, NULL on error.
  *
  * If 'skip_brackets' is true, skips the '[]'.
  *
- * This function steals the reference 'ret'
  */
 NPY_NO_EXPORT PyObject *
-append_metastr_to_string(PyArray_DatetimeMetaData *meta,
-                                    int skip_brackets,
-                                    PyObject *ret)
+metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets)
 {
-    PyObject *res;
     int num;
     char const *basestr;
-
-    if (ret == NULL) {
-        return NULL;
-    }
 
     if (meta->base == NPY_FR_GENERIC) {
         /* Without brackets, give a string "generic" */
         if (skip_brackets) {
-            PyUString_ConcatAndDel(&ret, PyUnicode_FromString("generic"));
-            return ret;
+            return PyUnicode_FromString("generic");
         }
-        /* But with brackets, append nothing */
+        /* But with brackets, return nothing */
         else {
-            return ret;
+            return PyUnicode_FromString("");
         }
     }
 
@@ -1994,24 +1996,22 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 
     if (num == 1) {
         if (skip_brackets) {
-            res = PyUnicode_FromFormat("%s", basestr);
+            return PyUnicode_FromFormat("%s", basestr);
         }
         else {
-            res = PyUnicode_FromFormat("[%s]", basestr);
+            return PyUnicode_FromFormat("[%s]", basestr);
         }
     }
     else {
         if (skip_brackets) {
-            res = PyUnicode_FromFormat("%d%s", num, basestr);
+            return PyUnicode_FromFormat("%d%s", num, basestr);
         }
         else {
-            res = PyUnicode_FromFormat("[%d%s]", num, basestr);
+            return PyUnicode_FromFormat("[%d%s]", num, basestr);
         }
     }
-
-    PyUString_ConcatAndDel(&ret, res);
-    return ret;
 }
+
 
 /*
  * Adjusts a datetimestruct based on a seconds offset. Assumes
