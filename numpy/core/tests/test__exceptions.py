@@ -48,5 +48,9 @@ class TestArrayMemoryError:
 
 class TestUFuncNoLoopError:
     def test_pickling(self):
-        """ Test that _UFuncNoLoopError can be pickled """
+        """ Test that _UFuncNoLoopError, _ArrayMemoryError can be pickled """
         assert isinstance(pickle.dumps(_UFuncNoLoopError), bytes)
+
+        error = _ArrayMemoryError((1023,), np.dtype(np.uint8))
+        res = pickle.loads(pickle.dumps(error))
+        assert res._total_size == error._total_size
