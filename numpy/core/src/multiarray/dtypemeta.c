@@ -204,8 +204,32 @@ nonparametric_default_descr(PyArray_DTypeMeta *cls)
 }
 
 
+/* Ensure a copy of the singleton (just in case we do adapt it somewhere) */
 static PyArray_Descr *
-flexible_default_descr(PyArray_DTypeMeta *cls)
+datetime_and_timedelta_default_descr(PyArray_DTypeMeta *cls)
+{
+    return PyArray_DescrNew(cls->singleton);
+}
+
+
+static PyArray_Descr *
+void_default_descr(PyArray_DTypeMeta *cls)
+{
+    PyArray_Descr *res = PyArray_DescrNew(cls->singleton);
+    if (res == NULL) {
+        return NULL;
+    }
+    /*
+     * The legacy behaviour for `np.array([], dtype="V")` is to use "V8".
+     * This is because `[]` uses `float64` as dtype, and then that is used
+     * for the size of the requested void.
+     */
+    res->elsize = 8;
+    return res;
+}
+
+static PyArray_Descr *
+string_and_unicode_default_descr(PyArray_DTypeMeta *cls)
 {
     PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
     if (res == NULL) {
@@ -534,7 +558,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     else if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /* Datetimes are flexible, but were not considered previously */
         dtype_class->parametric = NPY_TRUE;
-        dtype_class->default_descr = flexible_default_descr;
+        dtype_class->default_descr = datetime_and_timedelta_default_descr;
         dtype_class->discover_descr_from_pyobject = (
                 discover_datetime_and_timedelta_from_pyobject);
         dtype_class->common_dtype = datetime_common_dtype;
@@ -545,13 +569,14 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     }
     else if (PyTypeNum_ISFLEXIBLE(descr->type_num)) {
         dtype_class->parametric = NPY_TRUE;
-        dtype_class->default_descr = flexible_default_descr;
         if (descr->type_num == NPY_VOID) {
+            dtype_class->default_descr = void_default_descr;
             dtype_class->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
             dtype_class->common_instance = void_common_instance;
         }
         else {
+            dtype_class->default_descr = string_and_unicode_default_descr;
             dtype_class->is_known_scalar_type = string_known_scalar_types;
             dtype_class->discover_descr_from_pyobject = (
                     string_discover_descr_from_pyobject);

@@ -324,6 +324,22 @@ class TestScalarDiscovery:
             ass[()] = scalar
             assert_array_equal(ass, cast)
 
+    @pytest.mark.parametrize("dtype_char", np.typecodes["All"])
+    def test_default_dtype_instance(self, dtype_char):
+        if dtype_char in "SU":
+            dtype = np.dtype(dtype_char + "1")
+        elif dtype_char == "V":
+            # Legacy behaviour was to use V8. The reason was float64 being the
+            # default dtype and that having 8 bytes.
+            dtype = np.dtype("V8")
+        else:
+            dtype = np.dtype(dtype_char)
+
+        discovered_dtype, _ = _discover_array_parameters([], type(dtype))
+
+        assert discovered_dtype == dtype
+        assert discovered_dtype.itemsize == dtype.itemsize
+
 
 class TestTimeScalars:
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
