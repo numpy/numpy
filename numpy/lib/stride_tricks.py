@@ -220,9 +220,6 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     shape_array = np.array(shape)
     if np.any(shape_array < 0):
         raise ValueError('`shape` cannot contain negative values')
-    if np.any(x.shape < shape_array):
-        raise ValueError(
-            'window shape cannot be larger than input array shape')
 
     if axis is None:
         axis = tuple(range(x.ndim))
@@ -242,6 +239,9 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     # note: same axis can be windowed repeatedly
     x_shape_trimmed = list(x.shape)
     for ax, dim in zip(axis, shape):
+        if x_shape_trimmed[ax] < dim:
+            raise ValueError(
+                'window shape cannot be larger than input array shape')
         x_shape_trimmed[ax] -= dim - 1
     out_shape = tuple(x_shape_trimmed) + shape
     return as_strided(x, strides=out_strides, shape=out_shape)
