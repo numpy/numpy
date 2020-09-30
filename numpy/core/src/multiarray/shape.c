@@ -458,14 +458,12 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
 static void
 raise_reshape_size_mismatch(PyArray_Dims *newshape, PyArrayObject *arr)
 {
-    PyObject *msg = PyUnicode_FromFormat("cannot reshape array of size %zd "
-                                         "into shape ", PyArray_SIZE(arr));
     PyObject *tmp = convert_shape_to_string(newshape->len, newshape->ptr, "");
-
-    PyUString_ConcatAndDel(&msg, tmp);
-    if (msg != NULL) {
-        PyErr_SetObject(PyExc_ValueError, msg);
-        Py_DECREF(msg);
+    if (tmp != NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "cannot reshape array of size %zd into shape %S",
+                PyArray_SIZE(arr), tmp);
+        Py_DECREF(tmp);
     }
 }
 
@@ -984,29 +982,25 @@ NPY_NO_EXPORT PyObject *
 build_shape_string(npy_intp n, npy_intp const *vals)
 {
     npy_intp i;
-    PyObject *ret, *tmp;
 
     /*
      * Negative dimension indicates "newaxis", which can
      * be discarded for printing if it's a leading dimension.
      * Find the first non-"newaxis" dimension.
      */
-    i = 0;
-    while (i < n && vals[i] < 0) {
-        ++i;
-    }
+    for (i = 0; i < n && vals[i] < 0; ++i);
 
     if (i == n) {
         return PyUnicode_FromFormat("()");
     }
-    else {
-        ret = PyUnicode_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
-        if (ret == NULL) {
-            return NULL;
-        }
-    }
 
+    PyObject *ret = PyUnicode_FromFormat("%" NPY_INTP_FMT, vals[i++]);
+    if (ret == NULL) {
+        return NULL;
+    }
     for (; i < n; ++i) {
+        PyObject *tmp;
+
         if (vals[i] < 0) {
             tmp = PyUnicode_FromString(",newaxis");
         }
@@ -1018,14 +1012,14 @@ build_shape_string(npy_intp n, npy_intp const *vals)
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&ret, tmp);
+        Py_SETREF(ret, PyUnicode_Concat(ret, tmp));
+        Py_DECREF(tmp);
         if (ret == NULL) {
             return NULL;
         }
     }
 
-    tmp = PyUnicode_FromFormat(")");
-    PyUString_ConcatAndDel(&ret, tmp);
+    Py_SETREF(ret, PyUnicode_FromFormat("(%S)", ret));
     return ret;
 }
 
