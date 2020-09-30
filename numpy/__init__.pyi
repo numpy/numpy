@@ -160,7 +160,6 @@ MachAr: Any
 ScalarType: Any
 True_: Any
 UFUNC_PYVALS_NAME: Any
-abs: Any
 angle: Any
 append: Any
 apply_along_axis: Any
@@ -410,7 +409,6 @@ savetxt: Any
 savez: Any
 savez_compressed: Any
 sctypeDict: Any
-sctypeNA: Any
 sctypes: Any
 select: Any
 set_printoptions: Any
@@ -447,7 +445,6 @@ triu: Any
 triu_indices: Any
 triu_indices_from: Any
 typeDict: Any
-typeNA: Any
 typecodes: Any
 typename: Any
 ubyte: Any
