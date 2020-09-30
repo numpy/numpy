@@ -233,7 +233,6 @@ NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
-    PyObject *ret, *tmp;
 
     /*
      * Negative dimension indicates "newaxis", which can
@@ -245,14 +244,14 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     if (i == n) {
         return PyUnicode_FromFormat("()%s", ending);
     }
-    else {
-        ret = PyUnicode_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
-        if (ret == NULL) {
-            return NULL;
-        }
-    }
 
+    PyObject *ret = PyUnicode_FromFormat("%" NPY_INTP_FMT, vals[i++]);
+    if (ret == NULL) {
+        return NULL;
+    }
     for (; i < n; ++i) {
+        PyObject *tmp;
+
         if (vals[i] < 0) {
             tmp = PyUnicode_FromString(",newaxis");
         }
@@ -264,19 +263,19 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&ret, tmp);
+        Py_SETREF(ret, PyUnicode_Concat(ret, tmp));
+        Py_DECREF(tmp);
         if (ret == NULL) {
             return NULL;
         }
     }
 
     if (i == 1) {
-        tmp = PyUnicode_FromFormat(",)%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S,)%s", ret, ending));
     }
     else {
-        tmp = PyUnicode_FromFormat(")%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S)%s", ret, ending));
     }
-    PyUString_ConcatAndDel(&ret, tmp);
     return ret;
 }
 
