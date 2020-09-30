@@ -9,7 +9,8 @@ import numpy as np
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes',
+           'sliding_window_view']
 
 
 class DummyArray:
