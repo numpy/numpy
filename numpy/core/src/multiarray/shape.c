@@ -977,51 +977,6 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     return (PyObject *)ret;
 }
 
-/* See shape.h for parameters documentation */
-NPY_NO_EXPORT PyObject *
-build_shape_string(npy_intp n, npy_intp const *vals)
-{
-    npy_intp i;
-
-    /*
-     * Negative dimension indicates "newaxis", which can
-     * be discarded for printing if it's a leading dimension.
-     * Find the first non-"newaxis" dimension.
-     */
-    for (i = 0; i < n && vals[i] < 0; ++i);
-
-    if (i == n) {
-        return PyUnicode_FromFormat("()");
-    }
-
-    PyObject *ret = PyUnicode_FromFormat("%" NPY_INTP_FMT, vals[i++]);
-    if (ret == NULL) {
-        return NULL;
-    }
-    for (; i < n; ++i) {
-        PyObject *tmp;
-
-        if (vals[i] < 0) {
-            tmp = PyUnicode_FromString(",newaxis");
-        }
-        else {
-            tmp = PyUnicode_FromFormat(",%" NPY_INTP_FMT, vals[i]);
-        }
-        if (tmp == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-
-        Py_SETREF(ret, PyUnicode_Concat(ret, tmp));
-        Py_DECREF(tmp);
-        if (ret == NULL) {
-            return NULL;
-        }
-    }
-
-    Py_SETREF(ret, PyUnicode_FromFormat("(%S)", ret));
-    return ret;
-}
 
 /*NUMPY_API
  *
