@@ -6,6 +6,7 @@ NumPy reference guide.
 
 """
 import numpy as np
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.overrides import array_function_dispatch, set_module
 
 __all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
@@ -111,7 +112,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
+def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     """
     Create a sliding window view into the array with the given shape.
 
@@ -127,10 +128,12 @@ def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
     shape : int or tuple of int
         The shape of the window. If `axis` is not present, must have same
         length as the number of input array dimensions.
+        Single integers `i` are treated as if they were the tuple `(i,)`.
 
     axis : int or tuple of int, optional
         If present, `shape[i]` will refer to the axis `axis[i]` of `x`,
         otherwise `shape[i]` will refer to axis `i` of `x`.
+        Single integers `i` are treated as if they were the tuple `(i,)`.
 
     subok : bool, optional
         If True, sub-classes will be passed-through, otherwise the returned
@@ -216,17 +219,23 @@ def sliding_window_view(x, shape, axis=None, subok=False, writeable=False):
 
     shape_array = np.array(shape)
     if np.any(shape_array < 0):
-        raise ValueError('`shape` cannot contain negative value')
+        raise ValueError('`shape` cannot contain negative values')
     if np.any(x.shape < shape_array):
         raise ValueError(
             'window shape cannot be larger than input array shape')
 
     if axis is None:
-        axis = np.arange(x.ndim)
-    axis = tuple(axis) if np.iterable(axis) else (axis,)
-
-    w_ndim = len(shape)
-    assert w_ndim == len(axis)
+        axis = tuple(range(x.ndim))
+        if len(shape) != len(axis):
+            raise ValueError(f'Since axis is `None`, must provide shape for '
+                             f'all dimensions of `x`; got {len(shape)} shape '
+                             f'elements and `x.ndim` is {x.ndim}.')
+    else:
+        axis = normalize_axis_tuple(axis, x.ndim, allow_duplicate=True)
+        if len(shape) != len(axis):
+            raise ValueError(f'Must provide matching length shape and axis; '
+                             f'got {len(shape)} shape elements and '
+                             f'{len(axis)} axes elements.')
 
     out_strides = x.strides + tuple(x.strides[ax] for ax in axis)
 
