@@ -113,41 +113,6 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def _sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
-    shape = tuple(shape) if np.iterable(shape) else (shape,)
-    # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=False, subok=subok)
-
-    shape_array = np.array(shape)
-    if np.any(shape_array < 0):
-        raise ValueError('`shape` cannot contain negative values')
-
-    if axis is None:
-        axis = tuple(range(x.ndim))
-        if len(shape) != len(axis):
-            raise ValueError(f'Since axis is `None`, must provide shape for '
-                             f'all dimensions of `x`; got {len(shape)} shape '
-                             f'elements and `x.ndim` is {x.ndim}.')
-    else:
-        axis = normalize_axis_tuple(axis, x.ndim, allow_duplicate=True)
-        if len(shape) != len(axis):
-            raise ValueError(f'Must provide matching length shape and axis; '
-                             f'got {len(shape)} shape elements and '
-                             f'{len(axis)} axes elements.')
-
-    out_strides = x.strides + tuple(x.strides[ax] for ax in axis)
-
-    # note: same axis can be windowed repeatedly
-    x_shape_trimmed = list(x.shape)
-    for ax, dim in zip(axis, shape):
-        if x_shape_trimmed[ax] < dim:
-            raise ValueError(
-                'window shape cannot be larger than input array shape')
-        x_shape_trimmed[ax] -= dim - 1
-    out_shape = tuple(x_shape_trimmed) + shape
-    return as_strided(x, strides=out_strides, shape=out_shape)
-
-
 def _sliding_window_view_dispatcher(x, shape, axis=None, *,
                                     subok=None, writeable=None):
     return (x,)
@@ -255,8 +220,38 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
            [[[20, 21, 22],
              [21, 22, 23]]]])
     """
-    return _sliding_window_view(x, shape, axis,
-                                subok=subok, writeable=writeable)
+    shape = tuple(shape) if np.iterable(shape) else (shape,)
+    # first convert input to array, possibly keeping subclass
+    x = np.array(x, copy=False, subok=subok)
+
+    shape_array = np.array(shape)
+    if np.any(shape_array < 0):
+        raise ValueError('`shape` cannot contain negative values')
+
+    if axis is None:
+        axis = tuple(range(x.ndim))
+        if len(shape) != len(axis):
+            raise ValueError(f'Since axis is `None`, must provide shape for '
+                             f'all dimensions of `x`; got {len(shape)} shape '
+                             f'elements and `x.ndim` is {x.ndim}.')
+    else:
+        axis = normalize_axis_tuple(axis, x.ndim, allow_duplicate=True)
+        if len(shape) != len(axis):
+            raise ValueError(f'Must provide matching length shape and axis; '
+                             f'got {len(shape)} shape elements and '
+                             f'{len(axis)} axes elements.')
+
+    out_strides = x.strides + tuple(x.strides[ax] for ax in axis)
+
+    # note: same axis can be windowed repeatedly
+    x_shape_trimmed = list(x.shape)
+    for ax, dim in zip(axis, shape):
+        if x_shape_trimmed[ax] < dim:
+            raise ValueError(
+                'window shape cannot be larger than input array shape')
+        x_shape_trimmed[ax] -= dim - 1
+    out_shape = tuple(x_shape_trimmed) + shape
+    return as_strided(x, strides=out_strides, shape=out_shape)
 
 
 def _broadcast_to(array, shape, subok, readonly):
