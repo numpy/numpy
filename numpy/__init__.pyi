@@ -107,6 +107,14 @@ from numpy.core.fromnumeric import (
     var,
 )
 
+from numpy.core._asarray import (
+    asarray as asarray,
+    asanyarray as asanyarray,
+    ascontiguousarray as ascontiguousarray,
+    asfortranarray as asfortranarray,
+    require as require,
+)
+
 # Add an object to `__all__` if their stubs are defined in an external file;
 # their stubs will not be recognized otherwise.
 # NOTE: This is redundant for objects defined within this file.
@@ -169,12 +177,8 @@ array2string: Any
 array_repr: Any
 array_split: Any
 array_str: Any
-asanyarray: Any
-asarray: Any
 asarray_chkfinite: Any
-ascontiguousarray: Any
 asfarray: Any
-asfortranarray: Any
 asmatrix: Any
 asscalar: Any
 atleast_1d: Any
@@ -396,7 +400,6 @@ recarray: Any
 recfromcsv: Any
 recfromtxt: Any
 record: Any
-require: Any
 result_type: Any
 roots: Any
 rot90: Any

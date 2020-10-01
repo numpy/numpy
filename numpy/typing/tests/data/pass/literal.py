@@ -31,6 +31,8 @@ order_list: List[Tuple[frozenset, Callable]] = [
     (KACF, partial(np.add, 1, 1)),  # i.e. np.ufunc.__call__
     (ACF, partial(np.reshape, AR, 1)),
     (KACF, partial(np.ravel, AR)),
+    (KACF, partial(np.asarray, 1)),
+    (KACF, partial(np.asanyarray, 1)),
 ]
 
 for order_set, func in order_list:
