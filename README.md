@@ -23,6 +23,7 @@ It provides:
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
+- method for reading/writing array data
 
 Testing:
 
