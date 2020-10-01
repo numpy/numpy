@@ -149,7 +149,7 @@ def _sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
 
 def _sliding_window_view_dispatcher(x, shape, axis=None, *,
-                                    subok=False, writeable=False):
+                                    subok=None, writeable=None):
     return (x,)
 
 
