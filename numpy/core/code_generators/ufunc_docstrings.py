@@ -1123,6 +1123,12 @@ add_newdoc('numpy.core.umath', 'equal',
     >>> np.equal(1, np.ones(1))
     array([ True])
 
+    If the inputs are ndarrays, then np.equal is equivalent to '=='
+    >>> a = np.array(1)
+    >>> b = np.ones(1)
+    >>> a == b
+    array([ True])
+
     """)
 
 add_newdoc('numpy.core.umath', 'exp',
@@ -1493,6 +1499,13 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     --------
     >>> np.greater_equal([4, 2, 1], [2, 2, 2])
     array([ True, True, False])
+
+    If the inputs are ndarrays, then np.greater_equal is equivalent to '>='.
+
+    >>> a = np.array([4, 2, 1])
+    >>> b = np.array([2, 2, 2])
+    >>> a >= b
+    array([ True,  True, False])
 
     """)
 
@@ -1875,6 +1888,13 @@ add_newdoc('numpy.core.umath', 'less',
     >>> np.less([1, 2], [2, 2])
     array([ True, False])
 
+    If the inputs are ndarrays, then np.less is equivalent to '<'.
+
+    >>> a = np.array([1, 2])
+    >>> b = np.array([2, 2])
+    >>> a < b
+    array([ True, False])
+
     """)
 
 add_newdoc('numpy.core.umath', 'less_equal',
@@ -1902,6 +1922,13 @@ add_newdoc('numpy.core.umath', 'less_equal',
     Examples
     --------
     >>> np.less_equal([4, 2, 1], [2, 2, 2])
+    array([False,  True,  True])
+
+    If the inputs are ndarrays, then np.less_equal is equivalent to '<='.
+
+    >>> a = np.array([4, 2, 1])
+    >>> b = np.array([2, 2, 2])
+    >>> a <= b
     array([False,  True,  True])
 
     """)
@@ -2231,6 +2258,14 @@ add_newdoc('numpy.core.umath', 'logical_and',
     >>> np.logical_and(x>1, x<4)
     array([False, False,  True,  True, False])
 
+
+    If the inputs are ndarrays, then np.logical_and is equivalent to '&'.
+
+    >>> a = np.array([True,False])
+    >>> b = np.array([False,False])
+    >>> a&b
+    array([False, False])
+
     """)
 
 add_newdoc('numpy.core.umath', 'logical_not',
@@ -2300,6 +2335,13 @@ add_newdoc('numpy.core.umath', 'logical_or',
     >>> x = np.arange(5)
     >>> np.logical_or(x < 1, x > 3)
     array([ True, False, False, False,  True])
+
+    If the inputs are ndarrays, then np.logical_or is equivalent to '|'.
+
+    >>> a = np.array([True,False])
+    >>> b = np.array([False,False])
+    >>> a|b
+    array([ True, False])
 
     """)
 
@@ -2892,6 +2934,14 @@ add_newdoc('numpy.core.umath', 'not_equal',
     >>> np.not_equal([1, 2], [[1, 3],[1, 4]])
     array([[False,  True],
            [False,  True]])
+
+    If the inputs are ndarrays, then np.not_equal is equivalent to '!='.
+
+    >>> a = fun([1.,2.])
+    >>> b = fun([1.,3.])
+    >>> a != b
+    array([False,  True])
+
 
     """)
 
