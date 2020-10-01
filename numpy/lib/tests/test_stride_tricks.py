@@ -8,6 +8,7 @@ from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
     broadcast_shapes, sliding_window_view,
     )
+import pytest
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -444,6 +445,18 @@ def test_sliding_window_view():
                          [[[20, 21, 22], [30, 31, 32]],
                           [[21, 22, 23], [31, 32, 33]]]])
     assert_array_equal(arr_view, expected)
+
+    with pytest.raises(ValueError, match='cannot contain negative values'):
+        sliding_window_view(arr, (-1, 3))
+    with pytest.raises(ValueError,
+                       match='must provide shape for all dimensions of `x`'):
+        sliding_window_view(arr, (1,))
+    with pytest.raises(ValueError,
+                       match='Must provide matching length shape and axis'):
+        sliding_window_view(arr, (1, 3, 4), axis=(0, 1))
+    with pytest.raises(ValueError,
+                       match='window shape cannot be larger than input array'):
+        sliding_window_view(arr, (5, 5))
 
 
 def as_strided_writeable():
