@@ -177,12 +177,8 @@ array2string: Any
 array_repr: Any
 array_split: Any
 array_str: Any
-asanyarray: Any
-asarray: Any
 asarray_chkfinite: Any
-ascontiguousarray: Any
 asfarray: Any
-asfortranarray: Any
 asmatrix: Any
 asscalar: Any
 atleast_1d: Any
@@ -404,7 +400,6 @@ recarray: Any
 recfromcsv: Any
 recfromtxt: Any
 record: Any
-require: Any
 result_type: Any
 roots: Any
 rot90: Any
