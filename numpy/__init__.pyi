@@ -17,6 +17,11 @@ from numpy.typing import (
     _NumberLike,
     _SupportsDtype,
     _VoidDtypeLike,
+    NBitBase,
+    _64Bit,
+    _32Bit,
+    _16Bit,
+    _8Bit,
 )
 from numpy.typing._callable import (
     _BoolOp,
@@ -1606,13 +1611,15 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 
+_NBit_co = TypeVar("_NBit_co", covariant=True, bound=NBitBase)
+
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     @property
     def base(self) -> None: ...
 
-class number(generic):  # type: ignore
+class number(generic, Generic[_NBit_co]):  # type: ignore
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
@@ -1699,12 +1706,12 @@ else:
     _FloatValue = Union[None, _CharLike, SupportsFloat]
     _ComplexValue = Union[None, _CharLike, SupportsFloat, SupportsComplex]
 
-class integer(number):  # type: ignore
+class integer(number[_NBit_co]):  # type: ignore
     # NOTE: `__index__` is technically defined in the bottom-most
     # sub-classes (`int64`, `uint32`, etc)
     def __index__(self) -> int: ...
-    __truediv__: _IntTrueDiv
-    __rtruediv__: _IntTrueDiv
+    __truediv__: _IntTrueDiv[_NBit_co]
+    __rtruediv__: _IntTrueDiv[_NBit_co]
     def __invert__(self: _IntType) -> _IntType: ...
     # Ensure that objects annotated as `integer` support bit-wise operations
     def __lshift__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
@@ -1718,39 +1725,33 @@ class integer(number):  # type: ignore
     def __xor__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
     def __rxor__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
 
-class signedinteger(integer):  # type: ignore
-    __add__: _SignedIntOp
-    __radd__: _SignedIntOp
-    __sub__: _SignedIntOp
-    __rsub__: _SignedIntOp
-    __mul__: _SignedIntOp
-    __rmul__: _SignedIntOp
-    __floordiv__: _SignedIntOp
-    __rfloordiv__: _SignedIntOp
-    __pow__: _SignedIntOp
-    __rpow__: _SignedIntOp
-    __lshift__: _SignedIntBitOp
-    __rlshift__: _SignedIntBitOp
-    __rshift__: _SignedIntBitOp
-    __rrshift__: _SignedIntBitOp
-    __and__: _SignedIntBitOp
-    __rand__: _SignedIntBitOp
-    __xor__: _SignedIntBitOp
-    __rxor__: _SignedIntBitOp
-    __or__: _SignedIntBitOp
-    __ror__: _SignedIntBitOp
-
-class int8(signedinteger):
+class signedinteger(integer[_NBit_co]):
     def __init__(self, __value: _IntValue = ...) -> None: ...
+    __add__: _SignedIntOp[_NBit_co]
+    __radd__: _SignedIntOp[_NBit_co]
+    __sub__: _SignedIntOp[_NBit_co]
+    __rsub__: _SignedIntOp[_NBit_co]
+    __mul__: _SignedIntOp[_NBit_co]
+    __rmul__: _SignedIntOp[_NBit_co]
+    __floordiv__: _SignedIntOp[_NBit_co]
+    __rfloordiv__: _SignedIntOp[_NBit_co]
+    __pow__: _SignedIntOp[_NBit_co]
+    __rpow__: _SignedIntOp[_NBit_co]
+    __lshift__: _SignedIntBitOp[_NBit_co]
+    __rlshift__: _SignedIntBitOp[_NBit_co]
+    __rshift__: _SignedIntBitOp[_NBit_co]
+    __rrshift__: _SignedIntBitOp[_NBit_co]
+    __and__: _SignedIntBitOp[_NBit_co]
+    __rand__: _SignedIntBitOp[_NBit_co]
+    __xor__: _SignedIntBitOp[_NBit_co]
+    __rxor__: _SignedIntBitOp[_NBit_co]
+    __or__: _SignedIntBitOp[_NBit_co]
+    __ror__: _SignedIntBitOp[_NBit_co]
 
-class int16(signedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
-
-class int32(signedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
-
-class int64(signedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
+int8 = signedinteger[_8Bit]
+int16 = signedinteger[_16Bit]
+int32 = signedinteger[_32Bit]
+int64 = signedinteger[_64Bit]
 
 class timedelta64(generic):
     def __init__(
@@ -1765,98 +1766,85 @@ class timedelta64(generic):
     def __mul__(self, other: Union[_FloatLike, _BoolLike]) -> timedelta64: ...
     def __rmul__(self, other: Union[_FloatLike, _BoolLike]) -> timedelta64: ...
     __truediv__: _TD64Div[float64]
-    __floordiv__: _TD64Div[signedinteger]
+    __floordiv__: _TD64Div[int64]
     def __rtruediv__(self, other: timedelta64) -> float64: ...
-    def __rfloordiv__(self, other: timedelta64) -> signedinteger: ...
+    def __rfloordiv__(self, other: timedelta64) -> int64: ...
     def __mod__(self, other: timedelta64) -> timedelta64: ...
 
-class unsignedinteger(integer):  # type: ignore
+class unsignedinteger(integer[_NBit_co]):  # type: ignore
     # NOTE: `uint64 + signedinteger -> float64`
-    __add__: _UnsignedIntOp
-    __radd__: _UnsignedIntOp
-    __sub__: _UnsignedIntOp
-    __rsub__: _UnsignedIntOp
-    __mul__: _UnsignedIntOp
-    __rmul__: _UnsignedIntOp
-    __floordiv__: _UnsignedIntOp
-    __rfloordiv__: _UnsignedIntOp
-    __pow__: _UnsignedIntOp
-    __rpow__: _UnsignedIntOp
-    __lshift__: _UnsignedIntBitOp
-    __rlshift__: _UnsignedIntBitOp
-    __rshift__: _UnsignedIntBitOp
-    __rrshift__: _UnsignedIntBitOp
-    __and__: _UnsignedIntBitOp
-    __rand__: _UnsignedIntBitOp
-    __xor__: _UnsignedIntBitOp
-    __rxor__: _UnsignedIntBitOp
-    __or__: _UnsignedIntBitOp
-    __ror__: _UnsignedIntBitOp
+    __add__: _UnsignedIntOp[_NBit_co]
+    __radd__: _UnsignedIntOp[_NBit_co]
+    __sub__: _UnsignedIntOp[_NBit_co]
+    __rsub__: _UnsignedIntOp[_NBit_co]
+    __mul__: _UnsignedIntOp[_NBit_co]
+    __rmul__: _UnsignedIntOp[_NBit_co]
+    __floordiv__: _UnsignedIntOp[_NBit_co]
+    __rfloordiv__: _UnsignedIntOp[_NBit_co]
+    __pow__: _UnsignedIntOp[_NBit_co]
+    __rpow__: _UnsignedIntOp[_NBit_co]
+    __lshift__: _UnsignedIntBitOp[_NBit_co]
+    __rlshift__: _UnsignedIntBitOp[_NBit_co]
+    __rshift__: _UnsignedIntBitOp[_NBit_co]
+    __rrshift__: _UnsignedIntBitOp[_NBit_co]
+    __and__: _UnsignedIntBitOp[_NBit_co]
+    __rand__: _UnsignedIntBitOp[_NBit_co]
+    __xor__: _UnsignedIntBitOp[_NBit_co]
+    __rxor__: _UnsignedIntBitOp[_NBit_co]
+    __or__: _UnsignedIntBitOp[_NBit_co]
+    __ror__: _UnsignedIntBitOp[_NBit_co]
 
-class uint8(unsignedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
+uint8 = unsignedinteger[_8Bit]
+uint16 = unsignedinteger[_16Bit]
+uint32 = unsignedinteger[_32Bit]
+uint64 = unsignedinteger[_64Bit]
 
-class uint16(unsignedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
-
-class uint32(unsignedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
-
-class uint64(unsignedinteger):
-    def __init__(self, __value: _IntValue = ...) -> None: ...
-
-class inexact(number): ...  # type: ignore
-
-class floating(inexact):  # type: ignore
-    __add__: _FloatOp
-    __radd__: _FloatOp
-    __sub__: _FloatOp
-    __rsub__: _FloatOp
-    __mul__: _FloatOp
-    __rmul__: _FloatOp
-    __truediv__: _FloatOp
-    __rtruediv__: _FloatOp
-    __floordiv__: _FloatOp
-    __rfloordiv__: _FloatOp
-    __pow__: _FloatOp
-    __rpow__: _FloatOp
+class inexact(number[_NBit_co]): ...  # type: ignore
 
 _IntType = TypeVar("_IntType", bound=integer)
 _FloatType = TypeVar('_FloatType', bound=floating)
 
-class float16(floating):
+class floating(inexact[_NBit_co]):
     def __init__(self, __value: _FloatValue = ...) -> None: ...
+    __add__: _FloatOp[_NBit_co]
+    __radd__: _FloatOp[_NBit_co]
+    __sub__: _FloatOp[_NBit_co]
+    __rsub__: _FloatOp[_NBit_co]
+    __mul__: _FloatOp[_NBit_co]
+    __rmul__: _FloatOp[_NBit_co]
+    __truediv__: _FloatOp[_NBit_co]
+    __rtruediv__: _FloatOp[_NBit_co]
+    __floordiv__: _FloatOp[_NBit_co]
+    __rfloordiv__: _FloatOp[_NBit_co]
+    __pow__: _FloatOp[_NBit_co]
+    __rpow__: _FloatOp[_NBit_co]
 
-class float32(floating):
-    def __init__(self, __value: _FloatValue = ...) -> None: ...
+float16 = floating[_16Bit]
+float32 = floating[_32Bit]
+float64 = floating[_64Bit]
 
-class float64(floating, float):
-    def __init__(self, __value: _FloatValue = ...) -> None: ...
-
-class complexfloating(inexact, Generic[_FloatType]):  # type: ignore
-    @property
-    def real(self) -> _FloatType: ...  # type: ignore[override]
-    @property
-    def imag(self) -> _FloatType: ...  # type: ignore[override]
-    def __abs__(self) -> _FloatType: ...  # type: ignore[override]
-    __add__: _ComplexOp
-    __radd__: _ComplexOp
-    __sub__: _ComplexOp
-    __rsub__: _ComplexOp
-    __mul__: _ComplexOp
-    __rmul__: _ComplexOp
-    __truediv__: _ComplexOp
-    __rtruediv__: _ComplexOp
-    __floordiv__: _ComplexOp
-    __rfloordiv__: _ComplexOp
-    __pow__: _ComplexOp
-    __rpow__: _ComplexOp
-
-class complex64(complexfloating[float32]):
+class complexfloating(inexact[_NBit_co]):
     def __init__(self, __value: _ComplexValue = ...) -> None: ...
+    @property
+    def real(self) -> floating[_NBit_co]: ...  # type: ignore[override]
+    @property
+    def imag(self) -> floating[_NBit_co]: ...  # type: ignore[override]
+    def __abs__(self) -> floating[_NBit_co]: ...  # type: ignore[override]
+    __add__: _ComplexOp[_NBit_co]
+    __radd__: _ComplexOp[_NBit_co]
+    __sub__: _ComplexOp[_NBit_co]
+    __rsub__: _ComplexOp[_NBit_co]
+    __mul__: _ComplexOp[_NBit_co]
+    __rmul__: _ComplexOp[_NBit_co]
+    __truediv__: _ComplexOp[_NBit_co]
+    __rtruediv__: _ComplexOp[_NBit_co]
+    __floordiv__: _ComplexOp[_NBit_co]
+    __rfloordiv__: _ComplexOp[_NBit_co]
+    __pow__: _ComplexOp[_NBit_co]
+    __rpow__: _ComplexOp[_NBit_co]
 
-class complex128(complexfloating[float64], complex):
-    def __init__(self, __value: _ComplexValue = ...) -> None: ...
+complex64 = complexfloating[_32Bit]
+complex128 = complexfloating[_64Bit]
 
 class flexible(generic): ...  # type: ignore
 

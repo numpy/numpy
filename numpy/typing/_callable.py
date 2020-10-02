@@ -9,7 +9,7 @@ See the `Mypy documentation`_ on protocols for more details.
 """
 
 import sys
-from typing import Union, TypeVar, overload, Any
+from typing import Union, TypeVar, overload, Any, TYPE_CHECKING, NoReturn
 
 from numpy import (
     generic,
@@ -25,6 +25,7 @@ from numpy import (
     float32,
     float64,
     complexfloating,
+    complex64,
     complex128,
 )
 from ._scalars import (
@@ -34,6 +35,7 @@ from ._scalars import (
     _ComplexLike,
     _NumberLike,
 )
+from . import NBitBase, _64Bit
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -46,7 +48,8 @@ else:
     else:
         HAVE_PROTOCOL = True
 
-if HAVE_PROTOCOL:
+if TYPE_CHECKING or HAVE_PROTOCOL:
+    _NBit_co = TypeVar("_NBit_co", covariant=True, bound=NBitBase)
     _IntType = TypeVar("_IntType", bound=integer)
     _NumberType = TypeVar("_NumberType", bound=number)
     _NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
@@ -74,6 +77,8 @@ if HAVE_PROTOCOL:
 
     class _BoolSub(Protocol):
         # Note that `__other: bool_` is absent here
+        @overload
+        def __call__(self, __other: bool) -> NoReturn: ...
         @overload  # platform dependent
         def __call__(self, __other: int) -> Union[int32, int64]: ...
         @overload
@@ -97,51 +102,105 @@ if HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: _FloatLike) -> timedelta64: ...
 
-    class _IntTrueDiv(Protocol):
+    class _IntTrueDiv(Protocol[_NBit_co]):  # type: ignore[misc]
         @overload
-        def __call__(self, __other: Union[_IntLike, float]) -> floating: ...
+        def __call__(self, __other: bool) -> floating[_NBit_co]: ...
         @overload
-        def __call__(self, __other: complex) -> complexfloating[floating]: ...
+        def __call__(self, __other: int) -> Union[float32, float64]: ...
+        @overload
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(self, __other: complex) -> complex128: ...
+        @overload
+        def __call__(self, __other: integer[_NBit_co]) -> floating[_NBit_co]: ...
 
-    class _UnsignedIntOp(Protocol):
+    class _UnsignedIntOp(Protocol[_NBit_co]):  # type: ignore[misc]
         # NOTE: `uint64 + signedinteger -> float64`
         @overload
-        def __call__(self, __other: Union[bool, unsignedinteger]) -> unsignedinteger: ...
+        def __call__(self, __other: bool) -> unsignedinteger[_NBit_co]: ...
         @overload
-        def __call__(self, __other: Union[int, signedinteger]) -> Union[signedinteger, float64]: ...
+        def __call__(
+            self, __other: Union[int, signedinteger[Any]]
+        ) -> Union[signedinteger[Any], float64]: ...
         @overload
-        def __call__(self, __other: float) -> floating: ...
+        def __call__(self, __other: float) -> float64: ...
         @overload
-        def __call__(self, __other: complex) -> complexfloating[floating]: ...
+        def __call__(self, __other: complex) -> complex128: ...
+        @overload
+        def __call__(
+            self, __other: unsignedinteger[_NBit_co]
+        ) -> unsignedinteger[_NBit_co]: ...
 
-    class _UnsignedIntBitOp(Protocol):
+    class _UnsignedIntBitOp(Protocol[_NBit_co]):  # type: ignore[misc]
         # TODO: The likes of `uint64 | np.signedinteger` will fail as there
         # is no signed integer type large enough to hold a `uint64`
         # See https://github.com/numpy/numpy/issues/2524
         @overload
-        def __call__(self, __other: Union[bool, unsignedinteger]) -> unsignedinteger: ...
+        def __call__(self, __other: bool) -> unsignedinteger[_NBit_co]: ...
         @overload
-        def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
+        def __call__(
+            self, __other: unsignedinteger[_NBit_co]
+        ) -> unsignedinteger[_NBit_co]: ...
+        @overload
+        def __call__(
+            self: _UnsignedIntBitOp[_64Bit],
+            __other: Union[int, signedinteger[Any]],
+        ) -> NoReturn: ...
+        @overload
+        def __call__(self, __other: int) -> Union[int32, int64]: ...
+        @overload
+        def __call__(self, __other: signedinteger[Any]) -> signedinteger[Any]: ...
 
-    class _SignedIntOp(Protocol):
+    class _SignedIntOp(Protocol[_NBit_co]):  # type: ignore[misc]
         @overload
-        def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
+        def __call__(self, __other: bool) -> signedinteger[_NBit_co]: ...
         @overload
-        def __call__(self, __other: float) -> floating: ...
+        def __call__(self, __other: int) -> Union[int32, int64]: ...
         @overload
-        def __call__(self, __other: complex) -> complexfloating[floating]: ...
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(self, __other: complex) -> complex128: ...
+        @overload
+        def __call__(
+            self, __other: signedinteger[_NBit_co]
+        ) -> signedinteger[_NBit_co]: ...
 
-    class _SignedIntBitOp(Protocol):
-        def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
-
-    class _FloatOp(Protocol):
+    class _SignedIntBitOp(Protocol[_NBit_co]):  # type: ignore[misc]
         @overload
-        def __call__(self, __other: _FloatLike) -> floating: ...
+        def __call__(self, __other: bool) -> signedinteger[_NBit_co]: ...
         @overload
-        def __call__(self, __other: complex) -> complexfloating[floating]: ...
+        def __call__(self, __other: int) -> Union[int32, int64]: ...
+        @overload
+        def __call__(
+            self, __other: signedinteger[_NBit_co]
+        ) -> signedinteger[_NBit_co]: ...
 
-    class _ComplexOp(Protocol):
-        def __call__(self, __other: _ComplexLike) -> complexfloating[floating]: ...
+    class _FloatOp(Protocol[_NBit_co]):  # type: ignore[misc]
+        @overload
+        def __call__(self, __other: bool) -> floating[_NBit_co]: ...
+        @overload
+        def __call__(self, __other: int) -> Union[float32, float64]: ...
+        @overload
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(self, __other: complex) -> complex128: ...
+        @overload
+        def __call__(
+            self, __other: Union[integer[_NBit_co], floating[_NBit_co]]
+        ) -> floating[_NBit_co]: ...
+
+    class _ComplexOp(Protocol[_NBit_co]):  # type: ignore[misc]
+        @overload
+        def __call__(self, __other: bool) -> complexfloating[_NBit_co, _NBit_co]: ...
+        @overload
+        def __call__(self, __other: int) -> Union[complex64, complex128]: ...
+        @overload
+        def __call__(self, __other: Union[float, complex]) -> complex128: ...
+        @overload
+        def __call__(
+            self,
+            __other: Union[integer[_NBit_co], floating[_NBit_co], complexfloating[_NBit_co]]
+        ) -> complexfloating[_NBit_co]: ...
 
     class _NumberOp(Protocol):
         def __call__(self, __other: _NumberLike) -> number: ...
