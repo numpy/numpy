@@ -443,9 +443,9 @@ def _check_fill_value(fill_value, ndtype):
         if isinstance(fill_value, (ndarray, np.void)):
             try:
                 fill_value = np.array(fill_value, copy=False, dtype=ndtype)
-            except ValueError:
+            except ValueError as e:
                 err_msg = "Unable to transform %s to dtype %s"
-                raise ValueError(err_msg % (fill_value, ndtype))
+                raise ValueError(err_msg % (fill_value, ndtype)) from e
         else:
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
@@ -460,12 +460,12 @@ def _check_fill_value(fill_value, ndtype):
             # Also in case of converting string arrays.
             try:
                 fill_value = np.array(fill_value, copy=False, dtype=ndtype)
-            except (OverflowError, ValueError):
+            except (OverflowError, ValueError) as e:
                 # Raise TypeError instead of OverflowError or ValueError.
                 # OverflowError is seldom used, and the real problem here is
                 # that the passed fill_value is not compatible with the ndtype.
                 err_msg = "Cannot convert fill_value %s to dtype %s"
-                raise TypeError(err_msg % (fill_value, ndtype))
+                raise TypeError(err_msg % (fill_value, ndtype)) from e
     return np.array(fill_value)
 
 
