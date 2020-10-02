@@ -5977,6 +5977,7 @@ _typecharfromnum(int num) {
     return ret;
 }
 
+
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc)
 {
@@ -5997,17 +5998,17 @@ ufunc_get_doc(PyUFuncObject *ufunc)
      * introspection on name and nin + nout to automate the first part
      * of it the doc string shouldn't need the calling convention
      */
-    doc = PyObject_CallFunctionObjArgs(
-        _sig_formatter, (PyObject *)ufunc, NULL);
+    doc = PyObject_CallFunctionObjArgs(_sig_formatter,
+                                       (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;
     }
     if (ufunc->doc != NULL) {
-        PyUString_ConcatAndDel(&doc,
-            PyUnicode_FromFormat("\n\n%s", ufunc->doc));
+        Py_SETREF(doc, PyUnicode_FromFormat("%S\n\n%s", doc, ufunc->doc));
     }
     return doc;
 }
+
 
 static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc)

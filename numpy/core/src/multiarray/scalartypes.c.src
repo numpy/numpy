@@ -660,14 +660,12 @@ timedeltatype_str(PyObject *self)
          * Can't use "%lld" if HAVE_LONG_LONG is not defined
          */
 #if defined(HAVE_LONG_LONG)
-        ret = PyUnicode_FromFormat("%lld ",
-                                (long long)(scal->obval * scal->obmeta.num));
+        ret = PyUnicode_FromFormat("%lld %s",
+            (long long)(scal->obval * scal->obmeta.num), basestr);
 #else
-        ret = PyUnicode_FromFormat("%ld ",
-                                (long)(scal->obval * scal->obmeta.num));
+        ret = PyUnicode_FromFormat("%ld %s",
+            (long)(scal->obval * scal->obmeta.num), basestr);
 #endif
-        PyUString_ConcatAndDel(&ret,
-                PyUnicode_FromString(basestr));
     }
 
     return ret;
@@ -886,7 +884,7 @@ static PyObject *
 static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
-    PyObject *rstr, *istr, *ret;
+    PyObject *rstr, *istr;
     npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
     TrimMode trim = TrimMode_DptZeros;
 
@@ -899,16 +897,13 @@ c@name@type_@kind@(PyObject *self)
         if (istr == NULL) {
             return NULL;
         }
-
-        PyUString_ConcatAndDel(&istr, PyUnicode_FromString("j"));
-        return istr;
+        PyObject *ret = PyUnicode_FromFormat("%Sj", istr);
+        Py_DECREF(istr);
+        return ret;
     }
 
     if (npy_isfinite(val.real)) {
         rstr = @name@type_@kind@_either(val.real, trim, trim, 0);
-        if (rstr == NULL) {
-            return NULL;
-        }
     }
     else if (npy_isnan(val.real)) {
         rstr = PyUnicode_FromString("nan");
@@ -919,12 +914,12 @@ c@name@type_@kind@(PyObject *self)
     else {
         rstr = PyUnicode_FromString("-inf");
     }
+    if (rstr == NULL) {
+        return NULL;
+    }
 
     if (npy_isfinite(val.imag)) {
         istr = @name@type_@kind@_either(val.imag, trim, trim, 1);
-        if (istr == NULL) {
-            return NULL;
-        }
     }
     else if (npy_isnan(val.imag)) {
         istr = PyUnicode_FromString("+nan");
@@ -935,11 +930,14 @@ c@name@type_@kind@(PyObject *self)
     else {
         istr = PyUnicode_FromString("-inf");
     }
+    if (istr == NULL) {
+        Py_DECREF(rstr);
+        return NULL;
+    }
 
-    ret = PyUnicode_FromString("(");
-    PyUString_ConcatAndDel(&ret, rstr);
-    PyUString_ConcatAndDel(&ret, istr);
-    PyUString_ConcatAndDel(&ret, PyUnicode_FromString("j)"));
+    PyObject *ret = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    Py_DECREF(rstr);
+    Py_DECREF(istr);
     return ret;
 }
 
