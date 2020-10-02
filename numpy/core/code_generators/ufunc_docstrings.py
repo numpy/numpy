@@ -2914,12 +2914,13 @@ add_newdoc('numpy.core.umath', 'multiply',
            [  0.,   7.,  16.]])
 
     If the inputs are ndarrays, then np.multiply is equivalent to '*'.
+
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
     >>> x1 * x2
-    array([[ 0.,  1.,  4.],
-           [ 0.,  4., 10.],
-           [ 0.,  7., 16.]])
+    array([[  0.,   1.,   4.],
+           [  0.,   4.,  10.],
+           [  0.,   7.,  16.]])
 
     """)
 
