@@ -172,12 +172,12 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     Examples
     --------
-    >>> x = np.arange(5)
-    >>> np.sliding_window_view(x, 2)
-    array([[0, 1],
-           [1, 2],
-           [2, 3],
-           [3, 4]])
+    >>> x = np.arange(6)
+    >>> np.sliding_window_view(x, 3)
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4],
+           [3, 4, 5]])
 
     This also works in more dimensions, e.g.
 
@@ -219,6 +219,21 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
              [11, 12, 13]]],
            [[[20, 21, 22],
              [21, 22, 23]]]])
+
+    Combining with stepped slicing (`::step`), this can be used to take sliding
+    views which skip elements:
+    >>> x = np.arange(7)
+    >>> np.sliding_window_view(x, 5)[:, ::2]
+    array([[0, 2, 4],
+           [1, 3, 5],
+           [2, 4, 6]])
+    or views which move by multiple elements
+
+    >>> x = np.arange(7)
+    >>> np.sliding_window_view(x, 5)[::2, :]
+    array([[0, 1, 2],
+           [2, 3, 4],
+           [4, 5, 6]])
     """
     shape = tuple(shape) if np.iterable(shape) else (shape,)
     # first convert input to array, possibly keeping subclass
