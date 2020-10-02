@@ -141,6 +141,14 @@ add_newdoc('numpy.core.umath', 'add',
            [  3.,   5.,   7.],
            [  6.,   8.,  10.]])
 
+    If the inputs are ndarrays, then np.add is equivalent to '+'.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 + x2
+    array([[ 0.,  2.,  4.],
+           [ 3.,  5.,  7.],
+           [ 6.,  8., 10.]])
     """)
 
 add_newdoc('numpy.core.umath', 'arccos',
@@ -608,6 +616,13 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     >>> np.bitwise_and([True, True], [False, True])
     array([False,  True])
 
+    If the inputs are ndarrays, then np.bitwise_and is equivalent to the operation '&'.
+
+    >>> x1 = np.array([2, 5, 255])
+    >>> x2 = np.array([3,14,16])
+    >>> x1 & x2
+    array([ 2,  4, 16])
+
     """)
 
 add_newdoc('numpy.core.umath', 'bitwise_or',
@@ -667,6 +682,13 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True])
 
+    If the inputs are ndarrays, then np.bitwise_or is equivalent to the operation '|'.
+
+    >>> x1 = np.array([2, 5, 255])
+    >>> x2 = np.array([4, 4, 4])
+    >>> x1|x2
+    array([  6,   5, 255])
+
     """)
 
 add_newdoc('numpy.core.umath', 'bitwise_xor',
@@ -717,6 +739,13 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     >>> np.bitwise_xor([31,3], [5,6])
     array([26,  5])
     >>> np.bitwise_xor([True, True], [False, True])
+    array([ True, False])
+
+    If the inputs are ndarrays, then np.bitwise_xor is equivalent to the bitwise operator '^'.
+
+    >>> x1 = np.array([True, True])
+    >>> x2 = np.array([False, True])
+    >>> x1 ^ x2
     array([ True, False])
 
     """)
@@ -1088,6 +1117,15 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> np.divide(1, 0)
     0
 
+    If the inputs are ndarrays, then np.divide is equivalent to '/'.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1/x2
+    array([[ NaN,  1. ,  1. ],
+           [ Inf,  4. ,  2.5],
+           [ Inf,  7. ,  4. ]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'equal',
@@ -1123,7 +1161,8 @@ add_newdoc('numpy.core.umath', 'equal',
     >>> np.equal(1, np.ones(1))
     array([ True])
 
-    If the inputs are ndarrays, then np.equal is equivalent to '=='
+    If the inputs are ndarrays, then np.equal is equivalent to '=='.
+
     >>> a = np.array(1)
     >>> b = np.ones(1)
     >>> a == b
@@ -1376,6 +1415,11 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     >>> np.floor_divide([1., 2., 3., 4.], 2.5)
     array([ 0.,  0.,  1.,  1.])
 
+    If the inputs are ndarrays, then np.floor_divide is equivalent to '//'.
+    >>> x1 = np.array([1., 2., 3., 4.])
+    >>> x1//2.5
+    array([0., 0., 1., 1.])
+
     """)
 
 add_newdoc('numpy.core.umath', 'fmod',
@@ -1625,6 +1669,12 @@ add_newdoc('numpy.core.umath', 'invert',
     >>> np.invert(np.array([True, False]))
     array([False,  True])
 
+    If the input is an ndarray, np.invert is equivalent to the unary operator '~'.
+
+    >>> x1 = np.array([True,False])
+    >>> ~x1
+    array([False,  True])
+
     """)
 
 add_newdoc('numpy.core.umath', 'isfinite',
@@ -1858,6 +1908,13 @@ add_newdoc('numpy.core.umath', 'left_shift',
     >>> b = np.left_shift(np.uint8(255), np.uint8(1))
     >>> print(b, type(b))
     254 <class 'numpy.uint8'>
+
+    If the inputs are ndarrays, then np.left_shift is equivalent to '<<'.
+
+    >>> x1 = 5
+    >>> x2 = np.array([1,2,3])
+    >>> x1 << x2
+    array([10, 20, 40])
 
     """)
 
@@ -2259,7 +2316,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     array([False, False,  True,  True, False])
 
 
-    If the inputs are ndarrays, then np.logical_and is equivalent to '&'.
+    If the inputs are ndarrays and are boolean arrays, then np.logical_and is equivalent to '&'.
 
     >>> a = np.array([True,False])
     >>> b = np.array([False,False])
@@ -2336,7 +2393,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
     >>> np.logical_or(x < 1, x > 3)
     array([ True, False, False, False,  True])
 
-    If the inputs are ndarrays, then np.logical_or is equivalent to '|'.
+    If the inputs are ndarrays and are boolean arrays, then np.logical_or is equivalent to '|'.
 
     >>> a = np.array([True,False])
     >>> b = np.array([False,False])
@@ -2856,6 +2913,14 @@ add_newdoc('numpy.core.umath', 'multiply',
            [  0.,   4.,  10.],
            [  0.,   7.,  16.]])
 
+    If the inputs are ndarrays, then np.multiply is equivalent to '*'.
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 * x2
+    array([[ 0.,  1.,  4.],
+           [ 0.,  4., 10.],
+           [ 0.,  7., 16.]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'negative',
@@ -2877,6 +2942,12 @@ add_newdoc('numpy.core.umath', 'negative',
     Examples
     --------
     >>> np.negative([1.,-1.])
+    array([-1.,  1.])
+
+    If the input is an ndarray, then np.negative is equivalent to the unary '-' operator.
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> - x1
     array([-1.,  1.])
 
     """)
@@ -2902,6 +2973,19 @@ add_newdoc('numpy.core.umath', 'positive',
     -----
     Equivalent to `x.copy()`, but only defined for types that support
     arithmetic.
+
+    Examples
+    --------
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> np.positive(x1)
+    array([ 1., -1.])
+
+    If the input is an ndarray, then np.positive is equivalent to the unary '+' operator.
+
+    >>> x1 = np.array(([1., -1.]))
+    >>> + x1
+    array([ 1., -1.])
 
     """)
 
@@ -3233,6 +3317,12 @@ add_newdoc('numpy.core.umath', 'remainder',
     >>> np.remainder(np.arange(7), 5)
     array([0, 1, 2, 3, 4, 0, 1])
 
+    If the inputs are ndarrays, then np.remainder is equivalent to '%'.
+
+    >>> x1 = np.arange(7)
+    >>> x1 % 5
+    array([0, 1, 2, 3, 4, 0, 1])
+
     """)
 
 add_newdoc('numpy.core.umath', 'divmod',
@@ -3316,6 +3406,13 @@ add_newdoc('numpy.core.umath', 'right_shift',
     '101'
 
     >>> np.right_shift(10, [1,2,3])
+    array([5, 2, 1])
+
+    If the inputs are ndarrays, then np.right_shift is equivalent to '>>'
+
+    >>> x1 = 10
+    >>> x2 = np.array([1,2,3])
+    >>> x1>>x2
     array([5, 2, 1])
 
     """)
@@ -3759,6 +3856,15 @@ add_newdoc('numpy.core.umath', 'subtract',
            [ 3.,  3.,  3.],
            [ 6.,  6.,  6.]])
 
+    If the inputs are both ndarrays, np.subtract is equivalent to '-'.
+
+    >>> x1 = np.arange(9.0).reshape((3, 3))
+    >>> x2 = np.arange(3.0)
+    >>> x1 - x2
+    array([[0., 0., 0.],
+           [3., 3., 3.],
+           [6., 6., 6.]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'tan',
@@ -3901,6 +4007,13 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     >>> x//4
     array([0, 0, 0, 0, 1])
+
+    If the inputs are ndarrays, then np.true_divide is equivalent to '/'.
+
+    >>> x = np.arange(5)
+    >>> x/4
+    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
+
     """)
 
 add_newdoc('numpy.core.umath', 'frexp',
