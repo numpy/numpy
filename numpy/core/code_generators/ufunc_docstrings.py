@@ -3094,6 +3094,14 @@ add_newdoc('numpy.core.umath', 'power',
     array([[ 0,  1,  8, 27, 16,  5],
            [ 0,  1,  8, 27, 16,  5]])
 
+    If the inputs are ndarrays, then np.power is equivalent to '**'.
+
+    >>> x2 = np.array([[1, 2, 3, 3, 2, 1], [1, 2, 3, 3, 2, 1]])
+    >>> x1 = range(6)
+    >>> x1 ** x2
+    array([[ 0,  1,  8, 27, 16,  5],
+           [ 0,  1,  8, 27, 16,  5]])
+
     """)
 
 add_newdoc('numpy.core.umath', 'float_power',
