@@ -394,7 +394,7 @@ and ``/**end repeat**/`` lines, which may also be nested using
 consecutively numbered delimiting lines such as ``/**begin repeat1``
 and ``/**end repeat1**/``:
 
-1. ``/**begin repeat ``on a line by itself marks the beginning of
+1. ``/**begin repeat`` on a line by itself marks the beginning of
    a segment that should be repeated.
 
 2. Named variable expansions are defined using ``#name=item1, item2, item3,
