@@ -173,7 +173,7 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     Examples
     --------
     >>> x = np.arange(5)
-    >>> sliding_window_view(x, 2)
+    >>> np.sliding_window_view(x, 2)
     array([[0, 1],
            [1, 2],
            [2, 3],
@@ -188,7 +188,7 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
            [10, 11, 12, 13],
            [20, 21, 22, 23]])
     >>> shape = (2,2)
-    >>> sliding_window_view(x, shape)
+    >>> np.sliding_window_view(x, shape)
     array([[[[ 0,  1],
              [10, 11]],
             [[ 1,  2],
@@ -204,7 +204,7 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     The axis can be specified explicitly:
 
-    >>> sliding_window_view(x, 3, 0)
+    >>> np.sliding_window_view(x, 3, 0)
     array([[[ 0, 10, 20],
             [ 1, 11, 21],
             [ 2, 12, 22],
@@ -212,7 +212,7 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     The same axis can be used several times:
 
-    >>> sliding_window_view(x, (2, 3), (1, 1))
+    >>> np.sliding_window_view(x, (2, 3), (1, 1))
     array([[[[ 0,  1,  2],
              [ 1,  2,  3]]],
            [[[10, 11, 12],
