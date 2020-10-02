@@ -222,11 +222,13 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     Combining with stepped slicing (`::step`), this can be used to take sliding
     views which skip elements:
+
     >>> x = np.arange(7)
     >>> np.sliding_window_view(x, 5)[:, ::2]
     array([[0, 2, 4],
            [1, 3, 5],
            [2, 4, 6]])
+
     or views which move by multiple elements
 
     >>> x = np.arange(7)
