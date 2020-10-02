@@ -107,6 +107,12 @@ add_newdoc('numpy.core.umath', 'absolute',
     >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
+    If the input is an ndarray, then np.absolute is equivalent to 'abs()'.
+
+    >>> x = np.array([-1.2, 1.2])
+    >>> abs(x)
+    array([1.2, 1.2])
+
     """)
 
 add_newdoc('numpy.core.umath', 'add',
@@ -2837,6 +2843,13 @@ add_newdoc('numpy.core.umath', 'matmul',
     ...
     ValueError: matmul: Input operand 1 does not have enough dimensions ...
 
+    If the inputs are ndarrays, then '@' can be used as a shorthand for np.matmul.
+
+    >>> x1 = np.array([2j, 3j])
+    >>> x2 = np.array([2j, 3j])
+    >>> x1@x2
+    (-13+0j)
+
     .. versionadded:: 1.10.0
     """)
 
@@ -3372,6 +3385,12 @@ add_newdoc('numpy.core.umath', 'divmod',
     Examples
     --------
     >>> np.divmod(np.arange(5), 3)
+    (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
+
+    If the inputs are ndarrays, then np.divmod is equivalent to 'divmod()'.
+
+    >>> x = np.arange(5)
+    >>> divmod(x,3)
     (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
 
     """)
