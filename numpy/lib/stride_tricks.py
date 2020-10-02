@@ -232,7 +232,7 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     or views which move by multiple elements
 
     >>> x = np.arange(7)
-    >>> np.sliding_window_view(x, 5)[::2, :]
+    >>> np.sliding_window_view(x, 3)[::2, :]
     array([[0, 1, 2],
            [2, 3, 4],
            [4, 5, 6]])
