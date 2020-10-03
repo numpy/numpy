@@ -250,7 +250,8 @@ The ``.wav`` file header as a NumPy structured dtype::
 This ``.wav`` example is for illustration; to read a ``.wav`` file in real
 life, use Python's built-in module :mod:`wave`.
 
-Credit: Pauli Virtanen, :ref:`advanced_numpy`.
+(Adapted from Pauli Virtanen, :ref:`advanced_numpy`, licensed
+under `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_.)
 
 .. _how-to-io-large-arrays:
 
