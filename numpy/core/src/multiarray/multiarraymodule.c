@@ -2296,6 +2296,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     array_function_result = array_implement_c_array_function_creation(
             "fromiter", args, keywds);
     if (array_function_result != Py_NotImplemented) {
+        Py_DECREF(descr);
         return array_function_result;
     }
 
@@ -2942,6 +2943,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     array_function_result = array_implement_c_array_function_creation(
             "arange", args, kws);
     if (array_function_result != Py_NotImplemented) {
+        Py_XDECREF(typecode);
         return array_function_result;
     }
 
