@@ -1,5 +1,5 @@
 ---
-name: "Feature Request"
+name: "Feature request"
 about: Check instructions for submitting your idea on the mailing list first.
 
 ---
