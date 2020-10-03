@@ -462,11 +462,11 @@ class TestSlidingWindowView:
             sliding_window_view(arr, (-1, 3))
         with pytest.raises(
                 ValueError,
-                match='must provide shape for all dimensions of `x`'):
+                match='must provide window_shape for all dimensions of `x`'):
             sliding_window_view(arr, (1,))
         with pytest.raises(
                 ValueError,
-                match='Must provide matching length shape and axis'):
+                match='Must provide matching length window_shape and axis'):
             sliding_window_view(arr, (1, 3, 4), axis=(0, 1))
         with pytest.raises(
                 ValueError,

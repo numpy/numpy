@@ -113,15 +113,15 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def _sliding_window_view_dispatcher(x, shape, axis=None, *,
+def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
                                     subok=None, writeable=None):
     return (x,)
 
 
 @array_function_dispatch(_sliding_window_view_dispatcher, module='numpy')
-def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
+def sliding_window_view(x, window_shape, axis=None, *, subok=False, writeable=False):
     """
-    Create a sliding window view into the array with the given shape.
+    Create a sliding window view into the array with the given window shape.
 
     Creates a sliding window view of the N dimensional array with the given
     window shape. Window slides across each dimension of the array and extract
@@ -132,14 +132,14 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     x : array_like
         Array to create the sliding window view from.
 
-    shape : int or tuple of int
+    window_shape : int or tuple of int
         The shape of the window. If `axis` is not present, must have same
         length as the number of input array dimensions.
         Single integers `i` are treated as if they were the tuple `(i,)`.
 
     axis : int or tuple of int, optional
-        If present, `shape[i]` will refer to the axis `axis[i]` of `x`,
-        otherwise `shape[i]` will refer to axis `i` of `x`.
+        If present, `window_shape[i]` will refer to the axis `axis[i]` of `x`,
+        otherwise `window_shape[i]` will refer to axis `i` of `x`.
         Single integers `i` are treated as if they were the tuple `(i,)`.
 
     subok : bool, optional
@@ -155,11 +155,18 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     Returns
     -------
     view : ndarray
-        Sliding window view of the array.
+        Sliding window view of the array. The sliding window dimensions are
+        inserted at the end, and the original dimensions are trimmed as
+        required by the size of the sliding window. That is,
+        `view.shape = x_shape_trimmed + window_shape`, where `x_shape_trimmed` is
+        `x.shape` with every entry reduced by the size of the window in the
+        respective axis minus one.
+        For a better understanding of this, also refer to the examples below.
 
     See Also
     --------
-    as_strided: Create a view into the array with the given shape and strides.
+    lib.stride_tricks.as_strided: Create a view into the array with the
+        given shape and strides.
     broadcast_to: broadcast an array to a given shape.
 
     Notes
@@ -173,7 +180,12 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
     Examples
     --------
     >>> x = np.arange(6)
-    >>> np.sliding_window_view(x, 3)
+    >>> x.shape
+    (6,)
+    >>> v = np.sliding_window_view(x, 3)
+    >>> v.shape
+    (4, 3)
+    >>> v
     array([[0, 1, 2],
            [1, 2, 3],
            [2, 3, 4],
@@ -183,12 +195,17 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     >>> i, j = np.ogrid[:3, :4]
     >>> x = 10*i + j
+    >>> x.shape
+    (3, 4)
     >>> x
     array([[ 0,  1,  2,  3],
            [10, 11, 12, 13],
            [20, 21, 22, 23]])
     >>> shape = (2,2)
-    >>> np.sliding_window_view(x, shape)
+    >>> v = np.sliding_window_view(x, shape)
+    >>> v.shape
+    (2, 3, 2, 2)
+    >>> v
     array([[[[ 0,  1],
              [10, 11]],
             [[ 1,  2],
@@ -204,7 +221,10 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     The axis can be specified explicitly:
 
-    >>> np.sliding_window_view(x, 3, 0)
+    >>> v = np.sliding_window_view(x, 3, 0)
+    >>> v.shape
+    (1, 4, 3)
+    >>> v
     array([[[ 0, 10, 20],
             [ 1, 11, 21],
             [ 2, 12, 22],
@@ -212,7 +232,10 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
 
     The same axis can be used several times:
 
-    >>> np.sliding_window_view(x, (2, 3), (1, 1))
+    >>> v = np.sliding_window_view(x, (2, 3), (1, 1))
+    >>> v.shape
+    (3, 1, 2, 3)
+    >>> v
     array([[[[ 0,  1,  2],
              [ 1,  2,  3]]],
            [[[10, 11, 12],
@@ -237,37 +260,40 @@ def sliding_window_view(x, shape, axis=None, *, subok=False, writeable=False):
            [2, 3, 4],
            [4, 5, 6]])
     """
-    shape = tuple(shape) if np.iterable(shape) else (shape,)
+    window_shape = (tuple(window_shape)
+                    if np.iterable(window_shape)
+                    else (window_shape,))
     # first convert input to array, possibly keeping subclass
     x = np.array(x, copy=False, subok=subok)
 
-    shape_array = np.array(shape)
-    if np.any(shape_array < 0):
-        raise ValueError('`shape` cannot contain negative values')
+    window_shape_array = np.array(window_shape)
+    if np.any(window_shape_array < 0):
+        raise ValueError('`window_shape` cannot contain negative values')
 
     if axis is None:
         axis = tuple(range(x.ndim))
-        if len(shape) != len(axis):
-            raise ValueError(f'Since axis is `None`, must provide shape for '
-                             f'all dimensions of `x`; got {len(shape)} shape '
-                             f'elements and `x.ndim` is {x.ndim}.')
+        if len(window_shape) != len(axis):
+            raise ValueError(f'Since axis is `None`, must provide '
+                             f'window_shape for all dimensions of `x`; '
+                             f'got {len(window_shape)} window_shape elements '
+                             f'and `x.ndim` is {x.ndim}.')
     else:
         axis = normalize_axis_tuple(axis, x.ndim, allow_duplicate=True)
-        if len(shape) != len(axis):
-            raise ValueError(f'Must provide matching length shape and axis; '
-                             f'got {len(shape)} shape elements and '
-                             f'{len(axis)} axes elements.')
+        if len(window_shape) != len(axis):
+            raise ValueError(f'Must provide matching length window_shape and '
+                             f'axis; got {len(window_shape)} window_shape '
+                             f'elements and {len(axis)} axes elements.')
 
     out_strides = x.strides + tuple(x.strides[ax] for ax in axis)
 
     # note: same axis can be windowed repeatedly
     x_shape_trimmed = list(x.shape)
-    for ax, dim in zip(axis, shape):
+    for ax, dim in zip(axis, window_shape):
         if x_shape_trimmed[ax] < dim:
             raise ValueError(
                 'window shape cannot be larger than input array shape')
         x_shape_trimmed[ax] -= dim - 1
-    out_shape = tuple(x_shape_trimmed) + shape
+    out_shape = tuple(x_shape_trimmed) + window_shape
     return as_strided(x, strides=out_strides, shape=out_shape)
 
 
