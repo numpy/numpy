@@ -198,8 +198,8 @@ class MaskedRecords(MaskedArray):
         fielddict = ndarray.__getattribute__(self, 'dtype').fields
         try:
             res = fielddict[attr][:2]
-        except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+        except (TypeError, KeyError) as e:
+            raise AttributeError("record array has no attribute %s" % attr) from e
         # So far, so good
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
