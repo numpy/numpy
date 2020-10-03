@@ -610,6 +610,7 @@ PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Inconsistent object during array creation? "
                 "Content of sequences changed (cache not consumed).");
+        npy_free_coercion_cache(cache);
         return -1;
     }
     return 0;
@@ -1467,6 +1468,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         PyErr_SetString(PyExc_TypeError,
                         "WRITEBACKIFCOPY used for non-array input.");
         Py_DECREF(dtype);
+        npy_free_coercion_cache(cache);
         return NULL;
     }
 
@@ -1475,6 +1477,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             &PyArray_Type, dtype, ndim, dims, NULL, NULL,
             flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
     if (ret == NULL) {
+        npy_free_coercion_cache(cache);
         return NULL;
     }
     if (cache == NULL) {
