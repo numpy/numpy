@@ -1279,13 +1279,6 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 
-_CharLike = Union[str, bytes]
-_BoolLike = Union[bool, bool_]
-_IntLike = Union[int, integer]
-_FloatLike = Union[_IntLike, float, floating]
-_ComplexLike = Union[_FloatLike, complex, complexfloating]
-_NumberLike = Union[int, float, complex, number, bool_]
-
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
