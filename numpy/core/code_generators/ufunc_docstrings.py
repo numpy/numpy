@@ -3035,8 +3035,8 @@ add_newdoc('numpy.core.umath', 'not_equal',
 
     If the inputs are ndarrays, then np.not_equal is equivalent to '!='.
 
-    >>> a = fun([1.,2.])
-    >>> b = fun([1.,3.])
+    >>> a = np.array([1.,2.])
+    >>> b = np.array([1.,3.])
     >>> a != b
     array([False,  True])
 
