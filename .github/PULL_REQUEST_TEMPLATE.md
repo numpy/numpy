@@ -9,7 +9,7 @@
       http://www.numpy.org/devdocs/dev/development_workflow.html#writing-the-commit-message
 
 
-*  IF IT'S A NEW FEATURE OR API CHANGE, TEST THE WATERS
+*  IF IT'S A NEW FEATURE OR API CHANGE, TEST THE WATERS:
      http://www.numpy.org/devdocs/dev/development_workflow.html#get-the-mailing-list-s-opinion
 
 
