@@ -4,7 +4,18 @@ import datetime as dt
 from abc import abstractmethod
 
 from numpy.core._internal import _ctypes
-from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
+from numpy.typing import (
+    ArrayLike,
+    DtypeLike,
+    _Shape,
+    _ShapeLike,
+    _CharLike,
+    _BoolLike,
+    _IntLike,
+    _FloatLike,
+    _ComplexLike,
+    _NumberLike,
+)
 from numpy.typing._callable import (
     _BoolOp,
     _BoolSub,

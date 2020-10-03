@@ -10,6 +10,12 @@ from numpy import (
     generic,
     _OrderKACF,
     _OrderACF,
+)
+from numpy.typing import (
+    DtypeLike,
+    ArrayLike,
+    _ShapeLike,
+    _Shape,
     _IntLike,
     _BoolLike,
     _NumberLike,
@@ -20,7 +26,6 @@ from numpy import (
     _SortKind,
     _SortSide,
 )
-from numpy.typing import DtypeLike, ArrayLike, _ShapeLike, _Shape
 
 if sys.version_info >= (3, 8):
     from typing import Literal
