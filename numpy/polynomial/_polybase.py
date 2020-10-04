@@ -548,7 +548,7 @@ class ABCPolyBase(abc.ABC):
         try:
             quo, rem = self._div(self.coef, othercoef)
         except ZeroDivisionError as e:
-            raise ValueError("Failed to divide by element of value 0 in Divisor array") from e
+            raise ZeroDivisionError("Failed to divide by element of value 0 in Divisor array") from e
         except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
@@ -606,7 +606,7 @@ class ABCPolyBase(abc.ABC):
         try:
             quo, rem = self._div(other, self.coef)
         except ZeroDivisionError as e:
-            raise ValueError("Failed to divide by element of value 0 in Divisor array") from e
+            raise ZeroDivisionError("Failed to divide by element of value 0 in Divisor array") from e
         except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
