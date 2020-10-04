@@ -464,3 +464,10 @@ class TestLinspace:
         actual = diff(linspace(t1, t2, 33, dtype="M8[ms]"))
         expected = diff(linspace(0, 1000, 33, dtype="int64"))
         assert_array_equal(actual, expected)
+
+    def test_datetime_output_dtype(self):
+        t1 = datetime64("2020-01-01T00:00:00")
+        t2 = datetime64("2020-01-01T00:00:01")
+        actual = linspace(t1, t2, 10, dtype="M8[m]")
+        expected = array([datetime64("2020-01-01T00:00")]*10)
+        assert_array_equal(actual, expected)

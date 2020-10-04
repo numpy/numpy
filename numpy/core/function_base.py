@@ -128,10 +128,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if start.dtype.kind in "mM":
         if dtype is None:
             dtype = result_type(start, stop)
+            dt = dtype
         else:
-            dtype = result_type(start, stop, dtype)
-        start = start.astype(dtype)
-        stop = stop.astype(dtype)
+            dt = result_type(start, stop, dtype)
+        start = start.astype(dt)
+        stop = stop.astype(dt)
         delta = stop - start
         delta_dt = delta.dtype
         delta = delta.astype(_nx.int64)
