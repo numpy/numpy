@@ -59,7 +59,7 @@ MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
-# keep this consistent with the `Programming Language :: Python :: ...` classifiers above
+# The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
     warnings.warn(
         f"NumPy {VERSION} may not yet support Python "
