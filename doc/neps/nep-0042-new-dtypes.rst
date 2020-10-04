@@ -268,15 +268,13 @@ following getter syntax::
 
     np.dtype[np.int64]
 
-to get the DType class corresponding to a scalar type. (Note that with
-the acceptance of PEP 585 [2]_ there is precedent for
-``np.dtype[np.int64]`` referring to a *subclass* of ``np.dtype``.) The
-notation works equally well with built-in and user-defined DTypes.
+to get the DType class corresponding to a scalar type. The notation
+works equally well with built-in and user-defined DTypes.
 
 This getter eliminates the need to create an explicit name for every
 DType, crowding the ``np`` namespace; the getter itself signifies the
-type. It also opens up the possibility of making ``np.ndarray``
-generic over DType class via annotations like::
+type. It also opens the possibility of making ``np.ndarray`` generic
+over DType class using annotations like::
 
     np.ndarray[np.dtype[np.float64]]
 
@@ -286,14 +284,23 @@ aliases like::
     Float64 = np.dtype[np.float64]
 
 in ``numpy.typing``, thus keeping annotations concise but still
-avoiding crowding the ``np`` namespace as discussed above. For a user
-defined DType::
+avoiding crowding the ``np`` namespace as discussed above. For a
+user-defined DType::
 
     class UserDtype(dtype): ...
 
-one can simply do ``np.ndarray[UserDtype]``, keeping annotations
-concise in that case without introducing any extra boilerplate in
-NumPy itself.
+one can do ``np.ndarray[UserDtype]``, keeping annotations concise in
+that case without introducing boilerplate in NumPy itself. For a user
+user-defined scalar type::
+
+    class UserScalar(generic): ...
+
+we would need to add a typing overload to ``dtype``::
+
+    @overload
+    __new__(cls, dtype: Type[UserScalar], ...) -> UserDtype
+
+to allow ``np.dtype[UserScalar]``.
 
 The initial implementation probably will return only concrete (not abstract)
 DTypes.
@@ -1387,8 +1394,6 @@ References
 
    to return a ``uint8`` or ``float32`` array respectively.  This is
    further described in the documentation for :func:`numpy.result_type`.
-
-.. [2] https://www.python.org/dev/peps/pep-0585/
 
 
 ******************************************************************************
