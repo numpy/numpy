@@ -95,6 +95,7 @@ def git_version():
 
     return GIT_REVISION
 
+
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
 # properly updated when the contents of directories change (true for distutils,
 # not sure about setuptools).
@@ -157,7 +158,7 @@ if not release:
         a.close()
 
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration(None, parent_package, top_path)
@@ -170,7 +171,7 @@ def configuration(parent_package='',top_path=None):
     config.add_data_files(('numpy', 'LICENSE.txt'))
     config.add_data_files(('numpy', 'numpy/*.pxd'))
 
-    config.get_version('numpy/version.py') # sets config.version
+    config.get_version('numpy/version.py')  # sets config.version
 
     return config
 
@@ -182,12 +183,11 @@ def check_submodules():
     if not os.path.exists('.git'):
         return
     with open('.gitmodules') as f:
-        for l in f:
-            if 'path' in l:
-                p = l.split('=')[-1].strip()
+        for line in f:
+            if 'path' in line:
+                p = line.split('=')[-1].strip()
                 if not os.path.exists(p):
                     raise ValueError('Submodule {} missing'.format(p))
-
 
     proc = subprocess.Popen(['git', 'submodule', 'status'],
                             stdout=subprocess.PIPE)
@@ -280,9 +280,9 @@ def generate_cython():
     print("Cythonizing sources")
     for d in ('random',):
         p = subprocess.call([sys.executable,
-                              os.path.join(cwd, 'tools', 'cythonize.py'),
-                              'numpy/{0}'.format(d)],
-                             cwd=cwd)
+                             os.path.join(cwd, 'tools', 'cythonize.py'),
+                             'numpy/{0}'.format(d)],
+                            cwd=cwd)
         if p != 0:
             raise RuntimeError("Running cythonize failed!")
 
@@ -353,7 +353,6 @@ def parse_setuppy_commands():
             """))
         return False
 
-
     # The following commands aren't supported.  They can only be executed when
     # the user explicitly adds a --force command-line argument.
     bad_commands = dict(
@@ -391,8 +390,8 @@ def parse_setuppy_commands():
         )
     bad_commands['nosetests'] = bad_commands['test']
     for command in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
-                     'register', 'check', 'install_data', 'install_headers',
-                     'install_lib', 'install_scripts', ):
+                    'register', 'check', 'install_data', 'install_headers',
+                    'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
 
     for command in bad_commands.keys():
@@ -412,7 +411,8 @@ def parse_setuppy_commands():
     # If we got here, we didn't detect what setup.py command was given
     import warnings
     warnings.warn("Unrecognized setuptools command, proceeding with "
-                  "generating Cython sources and expanding templates", stacklevel=2)
+                  "generating Cython sources and expanding templates",
+                  stacklevel=2)
     return True
 
 
@@ -447,25 +447,24 @@ def setup_package():
             'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
             ]
 
-    cmdclass={"sdist": sdist_checked,
-             }
+    cmdclass = {"sdist": sdist_checked, }
     metadata = dict(
-        name = 'numpy',
-        maintainer = "NumPy Developers",
-        maintainer_email = "numpy-discussion@python.org",
-        description = DOCLINES[0],
-        long_description = "\n".join(DOCLINES[2:]),
-        url = "https://www.numpy.org",
-        author = "Travis E. Oliphant et al.",
-        download_url = "https://pypi.python.org/pypi/numpy",
+        name='numpy',
+        maintainer="NumPy Developers",
+        maintainer_email="numpy-discussion@python.org",
+        description=DOCLINES[0],
+        long_description="\n".join(DOCLINES[2:]),
+        url="https://www.numpy.org",
+        author="Travis E. Oliphant et al.",
+        download_url="https://pypi.python.org/pypi/numpy",
         project_urls={
             "Bug Tracker": "https://github.com/numpy/numpy/issues",
             "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
-        license = 'BSD',
+        license='BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
-        platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+        platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
         cmdclass=cmdclass,
         python_requires='>=3.6',
@@ -486,8 +485,7 @@ def setup_package():
         # patches distutils, even though we don't use it
         import setuptools  # noqa: F401
         from numpy.distutils.core import setup
-        cwd = os.path.abspath(os.path.dirname(__file__))
-        if not 'sdist' in sys.argv:
+        if 'sdist' not in sys.argv:
             # Generate Cython sources, unless we're generating an sdist
             generate_cython()
 
