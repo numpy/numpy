@@ -23,7 +23,7 @@ import os
 import sys
 import subprocess
 import textwrap
-import sysconfig
+import warnings
 
 
 if sys.version_info[:2] < (3, 6):
@@ -58,6 +58,13 @@ MINOR               = 20
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+
+if sys.version_info >= (3, 9):
+    warnings.warn(
+        f"NumPy {VERSION} does not support Python "
+        f"{sys.version_info.major}.{sys.version_info.minor}.",
+        RuntimeWarning,
+    )
 
 
 # Return the git revision as a string
