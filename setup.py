@@ -62,7 +62,7 @@ VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 # keep this consistent with the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 9):
     warnings.warn(
-        f"NumPy {VERSION} does not support Python "
+        f"NumPy {VERSION} may not yet support Python "
         f"{sys.version_info.major}.{sys.version_info.minor}.",
         RuntimeWarning,
     )
