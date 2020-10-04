@@ -23,7 +23,7 @@ import os
 import sys
 import subprocess
 import textwrap
-import sysconfig
+import warnings
 
 
 if sys.version_info[:2] < (3, 6):
@@ -43,6 +43,7 @@ Programming Language :: Python :: 3
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
+Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
@@ -58,6 +59,14 @@ MINOR               = 19
 MICRO               = 3
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+
+# The first version not in the `Programming Language :: Python :: ...` classifiers above
+if sys.version_info >= (3, 10):
+    warnings.warn(
+        f"NumPy {VERSION} may not yet support Python "
+        f"{sys.version_info.major}.{sys.version_info.minor}.",
+        RuntimeWarning,
+    )
 
 
 # Return the git revision as a string
