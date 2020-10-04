@@ -102,6 +102,12 @@ Platform information
     One of :c:data:`NPY_CPU_BIG`, :c:data:`NPY_CPU_LITTLE`,
     or :c:data:`NPY_CPU_UNKNOWN_ENDIAN`.
 
+    .. c:macro:: NPY_CPU_BIG
+
+    .. c:macro:: NPY_CPU_LITTLE
+
+    .. c:macro:: NPY_CPU_UNKNOWN_ENDIAN
+
 
 Compiler directives
 -------------------

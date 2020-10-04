@@ -3259,6 +3259,8 @@ Memory management
     :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
     the Python memory allocator is used.
 
+    .. c:macro:: NPY_USE_PYMEM
+
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
@@ -3289,8 +3291,12 @@ be accomplished using two groups of macros. Typically, if one macro in
 a group is used in a code block, all of them must be used in the same
 code block. Currently, :c:data:`NPY_ALLOW_THREADS` is defined to the
 python-defined :c:data:`WITH_THREADS` constant unless the environment
-variable :c:data:`NPY_NOSMP` is set in which case
+variable ``NPY_NOSMP`` is set in which case
 :c:data:`NPY_ALLOW_THREADS` is defined to be 0.
+
+.. c:macro:: NPY_ALLOW_THREADS 
+
+.. c:macro:: WITH_THREADS
 
 Group 1
 """""""
