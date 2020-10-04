@@ -119,7 +119,8 @@ def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
 
 
 @array_function_dispatch(_sliding_window_view_dispatcher, module='numpy')
-def sliding_window_view(x, window_shape, axis=None, *, subok=False, writeable=False):
+def sliding_window_view(x, window_shape, axis=None, *,
+                        subok=False, writeable=False):
     """
     Create a sliding window view into the array with the given window shape.
 
@@ -133,13 +134,17 @@ def sliding_window_view(x, window_shape, axis=None, *, subok=False, writeable=Fa
         Array to create the sliding window view from.
 
     window_shape : int or tuple of int
-        The shape of the window. If `axis` is not present, must have same
-        length as the number of input array dimensions.
-        Single integers `i` are treated as if they were the tuple `(i,)`.
+        Size of window over each axis that takes part in the sliding window.
+        If `axis` is not present, must have same length as the number of input
+        array dimensions. Single integers `i` are treated as if they were the
+        tuple `(i,)`.
 
     axis : int or tuple of int, optional
-        If present, `window_shape[i]` will refer to the axis `axis[i]` of `x`,
-        otherwise `window_shape[i]` will refer to axis `i` of `x`.
+        Axis or axes along which the sliding window is applied.
+        By default, the sliding window is applied to all axes and
+        `window_shape[i]` will refer to axis `i` of `x`.
+        If `axis` is given as a `tuple of int`, `window_shape[i]` will refer to
+        the axis `axis[i]` of `x`.
         Single integers `i` are treated as if they were the tuple `(i,)`.
 
     subok : bool, optional
@@ -157,10 +162,21 @@ def sliding_window_view(x, window_shape, axis=None, *, subok=False, writeable=Fa
     view : ndarray
         Sliding window view of the array. The sliding window dimensions are
         inserted at the end, and the original dimensions are trimmed as
-        required by the size of the sliding window. That is,
-        `view.shape = x_shape_trimmed + window_shape`, where `x_shape_trimmed` is
-        `x.shape` with every entry reduced by the size of the window in the
-        respective axis minus one.
+        required by the size of the sliding window.
+
+        That is, `view.shape = x_shape_trimmed + window_shape`, where
+        `x_shape_trimmed` is `x.shape` with every entry reduced as follows.
+
+        Let `input_size` be the size of the input array in an axis
+        participating in the sliding window, and let `window_size` be the
+        window size in the corresponding window axis, then the respective entry
+        of `x_shape_trimmed` will be `input_size - (window_size - 1)`.
+
+        If the same axis is used several times, there will be several
+        associated window sizes. In this case the reduction proceeds in exactly
+        the same way as
+        `input_size - (window_size_1 - 1) - (window_size_2 - 1) - ...`.
+
         For a better understanding of this, also refer to the examples below.
 
     See Also
