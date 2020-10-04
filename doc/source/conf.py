@@ -6,6 +6,62 @@ import sys
 # Minimum version, enforced by sphinx
 needs_sphinx = '2.2.0'
 
+
+# This is a nasty hack to use platform-agnostic names for types in the
+# documentation.
+
+# must be kept alive to hold the patched names
+_name_cache = {}
+
+def replace_scalar_type_names():
+    """ Rename numpy types to use the canonical names to make sphinx behave """
+    import ctypes
+
+    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+
+    class PyObject(ctypes.Structure):
+        pass
+
+    class PyTypeObject(ctypes.Structure):
+        pass
+
+    PyObject._fields_ = [
+        ('ob_refcnt', Py_ssize_t),
+        ('ob_type', ctypes.POINTER(PyTypeObject)),
+    ]
+
+
+    PyTypeObject._fields_ = [
+        # varhead
+        ('ob_base', PyObject),
+        ('ob_size', Py_ssize_t),
+        # declaration
+        ('tp_name', ctypes.c_char_p),
+    ]
+
+    # prevent numpy attaching docstrings to the scalar types
+    assert 'numpy.core._add_newdocs_scalars' not in sys.modules
+    sys.modules['numpy.core._add_newdocs_scalars'] = object()
+
+    import numpy
+
+    # change the __name__ of the scalar types
+    for name in [
+        'byte', 'short', 'intc', 'int_', 'longlong',
+        'ubyte', 'ushort', 'uintc', 'uint', 'ulonglong',
+        'half', 'single', 'double', 'longdouble',
+        'half', 'csingle', 'cdouble', 'clongdouble',
+    ]:
+        typ = getattr(numpy, name)
+        c_typ = PyTypeObject.from_address(id(typ))
+        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+
+    # now generate the docstrings as usual
+    del sys.modules['numpy.core._add_newdocs_scalars']
+    import numpy.core._add_newdocs_scalars
+
+replace_scalar_type_names()
+
 # -----------------------------------------------------------------------------
 # General configuration
 # -----------------------------------------------------------------------------
