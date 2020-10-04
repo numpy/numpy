@@ -6,7 +6,8 @@ import numpy as np
 # import the c-extension module directly since _arg is not exported via umath
 import numpy.core._multiarray_umath as ncu
 from numpy.testing import (
-    assert_raises, assert_equal, assert_array_equal, assert_almost_equal, assert_array_max_ulp
+    assert_raises, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_max_ulp, suppress_warnings
     )
 
 # TODO: branch cuts (use Pauli code)
@@ -28,6 +29,19 @@ platform_skip = pytest.mark.skipif(xfail_complex_tests,
                                    reason="Inadequate C99 complex support")
 
 
+class TestCreciprocal:
+    def test_simple(self):
+        check = check_complex_value
+        f = np.reciprocal
+        div_by_0_msg = "divide by zero encountered in reciprocal"
+
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, div_by_0_msg)
+            check(f, 0, 0, np.inf, np.nan, True)
+
+        with np.errstate(divide='raise', over='raise'):
+            with pytest.raises(FloatingPointError, match=div_by_0_msg):
+                np.reciprocal(0 + 0j)
 
 class TestCexp:
     def test_simple(self):
