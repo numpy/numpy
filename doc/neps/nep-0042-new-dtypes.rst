@@ -30,9 +30,9 @@ NEP 42 — User-extensible dtypes
 Abstract
 ******************************************************************************
 
-NumPy's dtype architecture is monolithic, built around a single class that
-handles each dtype as an instance. There's no principled way to expand it to
-new dtypes, and the code is difficult to read and maintain.
+NumPy's dtype architecture is monolithic -- each dtype is an instance of  a
+single class. There's no principled way to expand it for new dtypes, and the
+code is difficult to read and maintain.
 
 As NEP 41 explains, we are proposing a new architecture that is modular and
 open to user additions. dtypes will derive from a new ``DType`` class serving
@@ -544,8 +544,8 @@ However ``np.promote_types(int32, String)`` will *not* be defined.
    would return ``HighPrecisionDatetime``, and the casting implementation,
    as described below, may need to decide how to handle the datetime unit.
 
-2. The three-step handling of unlike dtypes could, of course, be coalesced. It
-   would lose the value of splitting in return for a possibly faster
+2. The three-step handling of differing dtypes could, of course, be coalesced.
+   It would lose the value of splitting in return for a possibly faster
    execution. But few cases would benefit. Most cases, such as array coercion,
    involve a single Python type (and thus dtype).
 
