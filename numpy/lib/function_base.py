@@ -2274,7 +2274,7 @@ def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
 
 @array_function_dispatch(_cov_dispatcher)
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
-        aweights=None, dtype=None):
+        aweights=None, *, dtype=None):
     """
     Estimate a covariance matrix, given data and weights.
 
