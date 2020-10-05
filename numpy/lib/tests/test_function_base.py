@@ -2024,7 +2024,7 @@ class TestCorrCoef:
         assert_(np.all(np.abs(c) <= 1.0))
 
     @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
-    def test_cov_dtype(self, test_type):
+    def test_corrcoef_dtype(self, test_type):
         cast_A = self.A.astype(test_type)
         res = corrcoef(cast_A, dtype=test_type)
         assert test_type == res.dtype
