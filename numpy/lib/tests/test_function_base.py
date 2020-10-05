@@ -2129,11 +2129,8 @@ class TestCov:
                             aweights=self.unit_weights),
                         self.res1)
 
-    @pytest.mark.parametrize("test_type", [getattr(np, dtype, None) for dtype \
-        in ['float32', 'float64', 'float96', 'float128']])
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
     def test_cov_dtype(self, test_type):
-        if test_type is None:
-            pytest.skip("Data type not available")
         cast_x1 = self.x1.astype(test_type)
         res = cov(cast_x1, dtype=test_type)
         assert test_type == res.dtype
