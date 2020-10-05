@@ -132,13 +132,13 @@ class TestSetOps:
         (np.array([1, 2, 3], dtype=np.int64),
          None,
          np.nan,
-         'to_begin'),
+         'to_end'),
         # should fail because attempting
         # to downcast to int type:
         (np.array([1, 2, 3], dtype=np.int64),
          np.array([5, 7, 2], dtype=np.float32),
          None,
-         'to_end'),
+         'to_begin'),
         # should fail because attempting to cast
         # two special floating point values
         # to integers (on both sides of ary),
