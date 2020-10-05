@@ -465,9 +465,8 @@ We propose the following implementation:
    ``self``, preserving metadata. For nonparametric user types, this provides
    a default implementation.
 
-3. For instances of different DTypes, for example `">float64"` and `"S8"`:
-
-   The operation is done in three steps:
+3. For instances of different DTypes, for example ``>float64`` and ``S8``,
+   the operation is done in three steps:
 
    1. ``Float64.__common_dtype__(type(>float64), type(S8))``
       returns ``String`` (or defers to ``String.__common_dtype__``).
@@ -525,7 +524,7 @@ However ``np.promote_types(int32, String)`` will *not* be defined.
 
 **Alternatives:**
 
-1. Consider an scheme where common DTypes are defined in terms of
+1. Consider a scheme where common DTypes are defined in terms of
    safe casting. We would somehow impose a total order on DTypes and return
    the the first type that both can cast to safely. Even if we could devise
    the ordering, the approach is fatally flawed: A newly added DType can
