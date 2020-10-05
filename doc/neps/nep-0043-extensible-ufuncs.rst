@@ -1,6 +1,8 @@
-==============================================
+.. _NEP43:
+
+==============================================================================
 NEP 43 — Enhancing the Extensibility of UFuncs
-==============================================
+==============================================================================
 
 :title: Enhancing the Extensibility of UFuncs
 :Author: Sebastian Berg
@@ -11,43 +13,93 @@ NEP 43 — Enhancing the Extensibility of UFuncs
 
 .. note::
 
-    This NEP is part of a series of NEPs encompassing first information
-    about the previous dtype implementation and issues with it in
-    :ref:`NEP 40 <NEP40>`.
-    :ref:`NEP 41 <NEP41>` then provides an overview and generic design
-    choices for the refactor. NEPs 42 and 43 (this document) go into the
-    technical details of the internal and external
-    API changes related to datatypes and universal functions, respectively.
-    In some cases it may be necessary to consult the other NEPs for a full
-    picture of the desired changes and why these changes are necessary.
+    This NEP is third in a series:
+
+    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
+
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
+
+    - NEP 42 (this document) describes the new design's datatype-related APIs.
+
+    - NEP 43 describes the new design's API for universal functions.
 
 
+******************************************************************************
 Abstract
---------
+******************************************************************************
 
-Allowing the creation of new user-defined DTypes in NumPy also requires
-a better extensibility of the ufunc interface, which is the backbone for
-a large part of the NumPy API.
-Especially, parametric DTypes are currently severly limited, making it
-impossible for a user-defined DType to register universal function loops.
+The previous NEP 42 document proposes the creation of new DTypes which can
+be defined by users outside of NumPy itself.
+While implementing NEP 42 will users to create arrays with a custom dtype
+and stored values, this NEP outlines how NumPy will operate on these arrays
+in the future.
+The main aspect is that functions operating on NumPy arrays are called
+"universal functions" (ufunc) which include all math functions, such as
+``np.add``, ``np.multiply``, and even ``np.matmul``.
+Universal functions may operate on multiple arrays with potentially
+different datatypes.
+Their nature means that they also must efficiently operate on many elements.
 
-This NEP proposes a new ``UFuncImpl`` struct, with an extensible C-API
-to register more feature rich loops, thus allowing these use-cases.
-It also proposes to address certain deficiencies, for example with respect
-to error reporting, by extending the signature of the core inner-loop
-functions.
-Finally, one of the most important steps in the ufunc call is finding the
-correct inner loop for a specific set of input dtypes.  We propose to use
-multiple-dispatching in the future.
+This NEP proposes to expand the design of universal functions.
+It defines a clear distinction between the ufunc which can operate
+on many different dtypes such as floats or integers,
+and the new ``ArrayMethod`` defining the functionality for a fixed dtypes.
 
 .. note::
 
-    At this time this NEP is in a preliminary state. Both internal and
-    external API may be adapted based on user input or implementation needs.
-    The general design principles and choices, while provisional, should not
-    be expected to change dramatically.
-    For example, the *exact* additional information passed into ``UFuncImpl``
-    is likely to evolve.
+    Details of the private and external APIs may change to reflect user
+    comments and implementation constraints. The underlying principles and
+    choices should not change significantly.
+
+
+******************************************************************************
+Motivation and scope
+******************************************************************************
+
+As a continuation of NEP 42, the goal of this NEP is to extend universal
+functions to DTypes defined outside of NumPy.
+
+Functions on arrays must handle a number of distinct steps which are
+described in more detail in section `Steps involved in a UFunc call`_.
+The most important ones are:
+
+- Organizing all functionality which a new DType requires to define a
+  ufunc call, currently sometimes called "inner-loop".
+- Deal with input for which no exact matching function is found.
+  For example when ``int32`` and ``float64`` are added, the ``int32``
+  is cast to ``float64``.  This requires a distinct "promotion" step.
+
+After organizing and defining these, we need to:
+
+- Define the user API necessary to customize both of the above point
+- All convenient reuse of existing functionality.
+  For example a DType representing physical units, such as meters,
+  should be able to conveniently use NumPy's existing math functionality.
+
+
+
+This requires two distinct things:
+
+1. Splitting out all DType specific functionality that is currently part
+   of the ufunc definition.  We wish to achieve this by defining a new
+   ``ArrayMethod`` object.
+2. 
+
+Additionally, we need to consider how 
+
+
+******************************************************************************
+Backward compatibility
+******************************************************************************
+
+
+
+
+******************************************************************************
+Usage and impact
+******************************************************************************
+
+
 
 
 Detailed Description
@@ -121,7 +173,7 @@ There are two distinct API design decisions as part of this NEP:
    section and step 2 of the
    :ref:`The Steps involved in a UFunc call <steps_of_a_ufunc_call>` section.
 
-2. The definition of the ``UFuncImpl`` specification, to allow users
+2. The definition of the ``ArrayMethod`` specification, to allow users
    to add new "implementations" to a UFunc. This defines how the user
    can implement a new ``positive_impl`` for their custom DType and
    includes all necessary information to adapt steps 3-7 of the
@@ -135,14 +187,14 @@ There are two distinct API design decisions as part of this NEP:
 
    can succeed.
    
-   This is described in the :ref:`"UFuncImpl Specifications" <ufuncimpl_specs>`
+   This is described in the :ref:`"ArrayMethod Specifications" <ArrayMethod_specs>`
    and following sections.
 
 
 .. _steps_of_a_ufunc_call:
 
-The Steps involved in a UFunc Call
-""""""""""""""""""""""""""""""""""
+Steps involved in a UFunc call
+""""""""""""""""""""""""""""""
 
 A UFunc call consists of into multiple steps:
 
@@ -197,7 +249,7 @@ A UFunc call consists of into multiple steps:
    such as checking for floating point errors.
 
 This NEP proposes a new registration approach for step 2 by creating a private
-``UfuncImpl`` structure which will be filled using an extensible API,
+``ArrayMethod`` structure which will be filled using an extensible API,
 and which may be exposed as a Python object later.
 This shall allow users to define custom behaviour for steps 3, 5, and 7,
 while extending the inner-loop function (step 6) accordingly.
@@ -207,15 +259,15 @@ two main topics of *promotion and dispatching* and the further C-API
 provided to the user for the ufunc execution.
 
 
-UFuncImpl Registration
+ArrayMethod Registration
 """"""""""""""""""""""
 
 *TODO:* we need to briefly mention registration, even if the details of
 how to register it are in the specs or even later!
 
-.. _ufuncimpl_specs::
+.. _ArrayMethod_specs::
 
-UFuncImpl Specifications
+ArrayMethod Specifications
 """"""""""""""""""""""""
 
 These specifications provide a minimal initial API, which shall be expanded
@@ -370,7 +422,7 @@ in which case the interpreter state or threadstate shall be passed in
 
 Floating point error is special, since it requires checking the hardware
 state, which may be costly to do on every call (and inconvenient), NumPy
-will handle these, if flagged by the ``UFuncImpl``.
+will handle these, if flagged by the ``ArrayMethod``.
 
 In an initial *alternative* draft, error setting was allowed to be done
 at teardown time similar to how floating point errors require checking.
@@ -408,10 +460,10 @@ In Python, this can be achieved by simply calling into the original ufunc
 more time from ``resolve_descriptors``).
 
 For better performance in C, and for large arrays, it is desirable to reuse
-an existing ``UFuncImpl`` as much as possible, so that its inner-loop function
+an existing ``ArrayMethod`` as much as possible, so that its inner-loop function
 can be used directly without any overhead.
-We will thus allow to create ``UFuncImpl`` by passing in an existing
-``UFuncImpl``.
+We will thus allow to create ``ArrayMethod`` by passing in an existing
+``ArrayMethod``.
 
 This wrapped loop will have two additional methods:
 
@@ -453,20 +505,20 @@ wrapping the existing math functions and using the two additional methods
 above.
 Using the *promotion* step, this will allow to create a register a single
 promoter for the abstract ``Unit`` DType with the ``ufunc``.
-The promoter can then add the wrapped concrete ``UFuncImpl`` dynamically
+The promoter can then add the wrapped concrete ``ArrayMethod`` dynamically
 at promotion time, and NumPy can cache (or store it) after the first call.
 
 **Alternative use-case:**
 
 A different use-case is that of a ``Unit(float64, "m")`` DType, where
 the numerical type is part of the DType parameter.
-This approach is possible, but will require a custom ``UFuncImpl``
+This approach is possible, but will require a custom ``ArrayMethod``
 which wraps existing loops.
 It must also always require require two steps of dispatching
 (one to the ``Unit`` DType and a second one for the numerical type).
 
 Further, the efficient implementation will require the ability to
-fetch and reuse the inner-loop function from another ``UFuncImpl``.
+fetch and reuse the inner-loop function from another ``ArrayMethod``.
 (Which is probably necessary for users like Numba, but it is uncertain
 whether it should be a common pattern and it cannot be accessible from
 Python itself.)
@@ -507,18 +559,18 @@ In the Introduction we describe use the following pattern::
 
     positive_impl = np.positive.resolve_impl(type(arr.dtype))
 
-where ``positive_impl`` is defined by the ``UFuncImpl`` specifications above.
+where ``positive_impl`` is defined by the ``ArrayMethod`` specifications above.
 
-The ``UFuncImpl`` as defined above does not encompass all information included
+The ``ArrayMethod`` as defined above does not encompass all information included
 in the UFunc and is explicitly passed the ``DTypes`` it is registered for.
-This is to ensure that ``UFuncImpl`` is both lightweight and could be deleted
+This is to ensure that ``ArrayMethod`` is both lightweight and could be deleted
 more easily in the event that a ``DType`` itself is deleted (making the
-``UFuncImpl`` inaccessible.
+``ArrayMethod`` inaccessible.
 
 For the reader wishing more details/thoughts, the pattern is rather more
 similar to::
 
-    class BoundUFuncImpl:
+    class BoundArrayMethod:
         def __init__(self, ufunc, DTypes):
             self.ufunc = ufunc
             self.DTypes = DTypes
@@ -534,7 +586,7 @@ similar to::
 Note the use of ``staticmethod`` in the example.  This bears some
 similarity to methods: A method is passed the ``self`` argument, but
 a method is otherwise a function, without any state of its own.
-In this regard, ``UFuncImpl`` defines the "unbound method"::
+In this regard, ``ArrayMethod`` defines the "unbound method"::
 
     integer = 8
     unbound_conjugate = type(integer).conjugate
@@ -570,9 +622,9 @@ For example, given the input::
     arr2 = np.array([1, 2, 3], dtype=np.float64)
     np.add(arr1, arr2)
 
-has to find the correct ``UfuncImpl`` to perform the operation.
+has to find the correct ``ArrayMethod`` to perform the operation.
 Ideally, there is an exact match defined, e.g. if the above was written
-as ``np.add(arr1, arr1)``, the ``UFuncImpl[Int64, Int64, out=Int64]`` matches
+as ``np.add(arr1, arr1)``, the ``ArrayMethod[Int64, Int64, out=Int64]`` matches
 exactly and can be used.
 However, in the above example there is no direct match, requiring a
 promotion step.
@@ -584,24 +636,24 @@ promotion step.
    functions, but can be disabled or customized if necessary.
 
 2. Users can *register* new Promoters just as they can register a
-   new ``UFuncImpl``.  These will use abstract DTypes to allow matching
+   new ``ArrayMethod``.  These will use abstract DTypes to allow matching
    a large variation of signatures.
-   The return value of a promotion function shall be a new ``UFuncImpl``
+   The return value of a promotion function shall be a new ``ArrayMethod``
    or ``NotImplemented``.  It must be consistent over multiple calls with
    the same input to allow allows caching of the result.
 
 The signature of a promotion function consists is defined by::
 
-    promoter(np.ufunc: ufunc, Tuple[DTypeMeta]: DTypes): -> Union[UFuncImpl, NotImplemented]
+    promoter(np.ufunc: ufunc, Tuple[DTypeMeta]: DTypes): -> Union[ArrayMethod, NotImplemented]
 
 Note that DTypes may contain the outputs DType, however, normally the
-output DType should *not* affect which ``UFuncImpl`` is chosen.
+output DType should *not* affect which ``ArrayMethod`` is chosen.
 
 In most cases, it should not be necessary to add a custom promotion function,
 however, an example which requires this is multiplication with a
 unit.
 In NumPy ``timedelta64`` can be multiplied with most integers.
-However, NumPy only defines a loop (``UFuncImpl``) for ``timedelta64 * int64``
+However, NumPy only defines a loop (``ArrayMethod``) for ``timedelta64 * int64``
 so that multiplying with ``int32`` would fail.
 
 To allow this, the following promoter can be registered for
@@ -618,10 +670,10 @@ To allow this, the following promoter can be registered for
         return ufunc.resolve_impl(tuple(res))
 
 In this case, just as a ``Timedelta64 * int64`` and ``int64 * timedelta64``
-``UFuncImpl`` is necessary, a second promoter will have to be registered to
+``ArrayMethod`` is necessary, a second promoter will have to be registered to
 handle the case where the integer is passed first.
 
-Promoter and ``UFuncImpl`` are discovered by finding the best matching one.
+Promoter and ``ArrayMethod`` are discovered by finding the best matching one.
 Initially, it will be an error if ``NotImplemented`` is returned or if two
 promoters match the input equally well *unless* the mismatch occurs due to
 unspecified output arguments:
@@ -745,7 +797,7 @@ are the best solution:
 1. Promotion allows for dynamically adding new loops. E.g. it is possible
    to define an abstract Unit DType, which dynamically creates classes to
    wrap existing other DTypes.  Using a single promoter, this DType can
-   dynamically wrap existing ``UFuncImpl`` enabling it to find the correct
+   dynamically wrap existing ``ArrayMethod`` enabling it to find the correct
    Loop in a single lookup instead of otherwise two.
 2. The promotion logic will usually err on the safe side: A newly added
    loop cannot be misused unless a promoter is added as well.
@@ -769,7 +821,7 @@ In general we believe we can rely on downstream projects to use this
 power and complexity carefully and responsibly.
 
 
-Further Notes and User Guidelines for Promoters and UFuncImpl
+Further Notes and User Guidelines for Promoters and ArrayMethod
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 In general adding a promoter to a UFunc must be done very carefully.
@@ -817,7 +869,7 @@ The implementation unfortunately will require large maintenance of the
 UFunc machinery, since both the actual UFunc loop calls, as well as the
 the initial dispatching steps have to be modified.
 
-In general, the correct ``UFuncImpl``, also those returned by a promoter,
+In general, the correct ``ArrayMethod``, also those returned by a promoter,
 will be cached (or stored) inside a hashtable for efficient lookup.
 
 
