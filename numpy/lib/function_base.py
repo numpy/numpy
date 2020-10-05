@@ -2326,7 +2326,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
         .. versionadded:: 1.10
     dtype : data-type, optional
-        Data-type of the result. By default, the return data-type is np.float64.
+        Data-type of the result. By default, the return data-type is `numpy.float64`.
 
         .. versionadded:: 1.20.0
 
