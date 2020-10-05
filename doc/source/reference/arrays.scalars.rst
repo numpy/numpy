@@ -315,7 +315,7 @@ are also provided.
                numpy.float128
 
    Alias for `numpy.longdouble`, named after its size in bits.
-   The existance of these aliases depends on the platform.
+   The existence of these aliases depends on the platform.
 
 .. autoclass:: numpy.complex64
 
