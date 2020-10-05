@@ -2023,11 +2023,8 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
-    @pytest.mark.parametrize("test_type", [getattr(np, dtype, None) for dtype \
-    in ['float32', 'float64', 'float96', 'float128']])
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
     def test_cov_dtype(self, test_type):
-        if test_type is None:
-            pytest.skip("Data type not available")
         cast_A = self.A.astype(test_type)
         res = corrcoef(cast_A, dtype=test_type)
         assert test_type == res.dtype
