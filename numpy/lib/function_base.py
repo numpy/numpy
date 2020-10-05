@@ -2620,7 +2620,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue,
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=3)
-    c = cov(x, y, rowvar)
+    c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
     except ValueError:
