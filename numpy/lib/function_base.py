@@ -2268,7 +2268,7 @@ class vectorize:
 
 
 def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
-                    fweights=None, aweights=None, dtype=None):
+                    fweights=None, aweights=None, *, dtype=None):
     return (m, y, fweights, aweights)
 
 
@@ -2489,7 +2489,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None,
+def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
                          dtype=None):
     return (x, y)
 
