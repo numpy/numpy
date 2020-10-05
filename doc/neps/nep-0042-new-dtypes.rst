@@ -236,7 +236,7 @@ Definitions
        A dtype whose representation can change based on a parameter value,
        like a string dtype with a length parameter. All members of the current
        ``flexible`` dtype class are parametric. See
-       :ref:`NEP 40 <parametric-datatype-discussion>`,
+       :ref:`NEP 40 <parametric-datatype-discussion>`.
 
    promotion
       Finding a dtype that can perform an operation on a mix of dtypes without
@@ -510,8 +510,8 @@ Some of these steps may be optimized for nonparametric DTypes.
 
 Since the type returned by ``__common_dtype__`` must be one of the two
 arguments, it's not equivalent to NumPy's "safe" casting. Safe casting works
-well for ``np.promote_types(int16, int64)``, which returns ``int64``, but
-fails for::
+for ``np.promote_types(int16, int64)``, which returns ``int64``, but fails
+for::
 
     np.promote_types("int64", "float32") -> np.dtype("float64")
 
@@ -524,13 +524,13 @@ However ``np.promote_types(int32, String)`` will *not* be defined.
 
 **Alternatives:**
 
-1. Consider a scheme where common DTypes are defined in terms of
-   safe casting. We would somehow impose a total order on DTypes and return
-   the the first type that both can cast to safely. Even if we could devise
-   the ordering, the approach is fatally flawed: A newly added DType can
-   change the behavior of existing programs. For example, a new ``int24``
-   would be the first valid common type for ``int16`` and ``uint16``, demoting
-   what had been the defined behavior of ``int32``.
+1. We've said common DTypes are not the equivalent of safe casts; suppose
+   instead that they were. We would somehow impose a total order on DTypes and
+   return the the first type that both arguments can cast to safely. Even if
+   we could devise the ordering, the approach is fatally flawed: A newly added
+   DType can change the behavior of existing programs. For example, a new
+   ``int24`` would be the first valid common type for ``int16`` and
+   ``uint16``, demoting what had been the defined behavior of ``int32``.
 
    A more flexible common DType could be implemented in the future where
    ``__common_dtype__`` relies on information from the casting logic.
