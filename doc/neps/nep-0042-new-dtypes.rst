@@ -364,7 +364,7 @@ Miscellaneous methods and attributes
 This section collects definitions in the DType class that are not used in
 casting and array coercion, which are described in detail below.
 
-* Existing dtype methods (:func:`numpy.dtype`) and C-side fields are preserved.
+* Existing dtype methods (:class:`numpy.dtype`) and C-side fields are preserved.
 
 * ``DType.type`` replaces ``dtype.type``. Unless a use case arises,
   ``dtype.type`` will be deprecated.
