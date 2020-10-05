@@ -148,8 +148,7 @@ class TestSetOps:
          np.nan,
          'to_begin'),
          ])
-    def test_ediff1d_forbidden_type_casts_to_begin(self, ary, prepend, append,
-                                                   expected):
+    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append, expected):
         # verify resolution of gh-11490
 
         # specifically, raise an appropriate
