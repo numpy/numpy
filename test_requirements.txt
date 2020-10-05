@@ -2,7 +2,7 @@ cython==0.29.21
 wheel
 setuptools<49.2.0
 hypothesis==5.36.1
-pytest==6.0.2
+pytest==6.1.1
 pytz==2020.1
 pytest-cov==2.10.1
 pickle5; python_version == '3.7'
