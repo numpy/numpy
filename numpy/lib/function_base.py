@@ -2495,7 +2495,7 @@ def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None,
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue,
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
              dtype=None):
     """
     Return Pearson product-moment correlation coefficients.
