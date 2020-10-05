@@ -4,6 +4,8 @@
 A Guide to NumPy Documentation
 ==============================
 
+.. _userdoc_guide:
+
 User documentation
 ******************
 - In general, we follow the
@@ -31,6 +33,9 @@ User documentation
   `alerted <https://github.com/numpy/numpy/issues>`_ to cases
   we should add to the NumPy style rules.
 
+
+
+.. _docstring_intro:
 
 Docstrings
 **********
