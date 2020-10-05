@@ -1,0 +1,5 @@
+``dtype`` option for `cov` and `corrcoef`
+----------------------------------------------------
+The ``dtype`` option is now available for `cov` and `corrcoef`. It specifies
+which data-type the returned result should have. By default the functions still 
+return a np.float64 result.
