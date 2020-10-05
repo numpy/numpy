@@ -10,6 +10,12 @@ from numpy import (
     generic,
     _OrderKACF,
     _OrderACF,
+    _ArrayLikeBool,
+    _ArrayLikeIntOrBool,
+    _ModeKind,
+    _PartitionKind,
+    _SortKind,
+    _SortSide,
 )
 from numpy.typing import (
     DtypeLike,
@@ -19,12 +25,6 @@ from numpy.typing import (
     _IntLike,
     _BoolLike,
     _NumberLike,
-    _ArrayLikeBool,
-    _ArrayLikeIntOrBool,
-    _ModeKind,
-    _PartitionKind,
-    _SortKind,
-    _SortSide,
 )
 
 if sys.version_info >= (3, 8):
