@@ -315,7 +315,7 @@ PyArrayDescr_Type and PyArray_Descr
 
         Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
         \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
-        :c:data:`NPY_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
+        :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
         :c:data:`NPY_NEEDS_PYAPI`).
 
     .. c:function:: PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
@@ -1395,7 +1395,7 @@ PyArrayInterface
        as the *descr* key in :obj:`__array_interface__`). This can be
        ``NULL`` if *typekind* and *itemsize* provide enough
        information. This field is also ignored unless
-       :c:data:`ARR_HAS_DESCR` flag is on in *flags*.
+       :c:data:`NPY_ARR_HAS_DESCR` flag is on in *flags*.
 
 
 Internally used structures

@@ -414,6 +414,12 @@ Printf Formatting
 For help in printing, the following strings are defined as the correct
 format specifier in printf and related commands.
 
-    :c:data:`NPY_LONGLONG_FMT`, :c:data:`NPY_ULONGLONG_FMT`,
-    :c:data:`NPY_INTP_FMT`, :c:data:`NPY_UINTP_FMT`,
-    :c:data:`NPY_LONGDOUBLE_FMT`
+.. c:macro:: NPY_LONGLONG_FMT
+
+.. c:macro:: NPY_ULONGLONG_FMT
+
+.. c:macro:: NPY_INTP_FMT
+
+.. c:macro:: NPY_UINTP_FMT
+
+.. c:macro:: NPY_LONGDOUBLE_FMT

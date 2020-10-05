@@ -1264,7 +1264,7 @@ functions provide that information.
     NPY_MAX_INTP is placed in the stride.
 
     Once the iterator is prepared for iteration (after a reset if
-    :c:data:`NPY_DELAY_BUFALLOC` was used), call this to get the strides
+    :c:data:`NPY_ITER_DELAY_BUFALLOC` was used), call this to get the strides
     which may be used to select a fast inner loop function.  For example,
     if the stride is 0, that means the inner loop can always load its
     value into a variable once, then use the variable throughout the loop,

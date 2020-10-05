@@ -52,12 +52,15 @@ information is available to the pre-processor.
 
 .. c:macro:: NPY_SIZEOF_LONG_DOUBLE
 
-    sizeof(longdouble) (A macro defines **NPY_SIZEOF_LONGDOUBLE** as well.)
+.. c:macro:: NPY_SIZEOF_LONGDOUBLE
+
+    sizeof(longdouble)
 
 .. c:macro:: NPY_SIZEOF_PY_INTPTR_T
 
-    Size of a pointer on this platform (sizeof(void \*)) (A macro defines
-    NPY_SIZEOF_INTP as well.)
+.. c:macro:: NPY_SIZEOF_INTP
+
+    Size of a pointer on this platform (sizeof(void \*))
 
 
 Platform information
