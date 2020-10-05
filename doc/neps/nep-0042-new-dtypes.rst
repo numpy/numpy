@@ -510,8 +510,8 @@ This means the implementation will work like this::
 Some of these steps may be optimized for nonparametric DTypes.
 
 Since the type returned by ``__common_dtype__`` must be one of the two
-arguments, it's equivalent to NumPy's "safe" casting. Safe casting works well
-for ``np.promote_types(int16, int64)``, which returns ``int64``, but
+arguments, it's not equivalent to NumPy's "safe" casting. Safe casting works
+well for ``np.promote_types(int16, int64)``, which returns ``int64``, but
 fails for::
 
     np.promote_types("int64", "float32") -> np.dtype("float64")
