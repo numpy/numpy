@@ -2400,15 +2400,16 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if m.ndim > 2:
         raise ValueError("m has more than 2 dimensions")
 
+    if y is not None:
+        y = np.asarray(y)
+        if y.ndim > 2:
+            raise ValueError("y has more than 2 dimensions")
+
     if dtype is None:
-        dtype = np.float64
         if y is None:
-            dtype = np.result_type(m, dtype)
+            dtype = np.result_type(m, np.float64)
         else:
-            y = np.asarray(y)
-            if y.ndim > 2:
-                raise ValueError("y has more than 2 dimensions")
-            dtype = np.result_type(m, y, dtype)
+            dtype = np.result_type(m, y, np.float64)
 
     X = array(m, ndmin=2, dtype=dtype)
     if not rowvar and X.shape[0] != 1:
