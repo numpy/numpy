@@ -2268,13 +2268,13 @@ class vectorize:
 
 
 def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
-                    fweights=None, aweights=None):
+                    fweights=None, aweights=None, dtype=None):
     return (m, y, fweights, aweights)
 
 
 @array_function_dispatch(_cov_dispatcher)
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
-        aweights=None):
+        aweights=None, dtype=None):
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -2400,13 +2400,15 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if m.ndim > 2:
         raise ValueError("m has more than 2 dimensions")
 
-    if y is None:
-        dtype = np.result_type(m, np.float64)
-    else:
-        y = np.asarray(y)
-        if y.ndim > 2:
-            raise ValueError("y has more than 2 dimensions")
-        dtype = np.result_type(m, y, np.float64)
+    if dtype is None:
+        dtype = np.float64
+        if y is None:
+            dtype = np.result_type(m, dtype)
+        else:
+            y = np.asarray(y)
+            if y.ndim > 2:
+                raise ValueError("y has more than 2 dimensions")
+            dtype = np.result_type(m, y, dtype)
 
     X = array(m, ndmin=2, dtype=dtype)
     if not rowvar and X.shape[0] != 1:
