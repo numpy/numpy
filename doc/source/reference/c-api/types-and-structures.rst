@@ -1436,10 +1436,8 @@ for completeness and assistance in understanding the code.
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables
    needed for advanced array indexing. The associated C-structure,
-   :c:type:`PyArrayMapIterObject`, is useful if you are trying to
+   ``PyArrayMapIterObject``, is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
-
-   .. c:type:: PyArrayMapIterObject
