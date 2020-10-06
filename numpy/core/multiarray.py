@@ -1100,7 +1100,7 @@ def putmask(a, mask, values):
 
     Parameters
     ----------
-    a : array_like
+    a : ndarray
         Target array.
     mask : array_like
         Boolean mask array. It has to be the same shape as `a`.

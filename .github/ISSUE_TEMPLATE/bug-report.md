@@ -1,6 +1,6 @@
 ---
-name: "Bug Report"
-about: Submit a bug report to help us improve NumPy
+name: "Bug report"
+about: Report a bug. Not for security vulnerabilities -- see below.
 
 ---
 

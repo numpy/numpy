@@ -388,15 +388,18 @@ array_implement_c_array_function_creation(
 
     PyObject *numpy_module = PyImport_Import(npy_ma_str_numpy);
     if (numpy_module == NULL) {
+        Py_DECREF(relevant_args);
         return NULL;
     }
 
     PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
     Py_DECREF(numpy_module);
     if (public_api == NULL) {
+        Py_DECREF(relevant_args);
         return NULL;
     }
     if (!PyCallable_Check(public_api)) {
+        Py_DECREF(relevant_args);
         Py_DECREF(public_api);
         return PyErr_Format(PyExc_RuntimeError,
                             "numpy.%s is not callable.",
@@ -406,6 +409,7 @@ array_implement_c_array_function_creation(
     PyObject* result = array_implement_array_function_internal(
             public_api, relevant_args, args, kwargs);
 
+    Py_DECREF(relevant_args);
     Py_DECREF(public_api);
     return result;
 }

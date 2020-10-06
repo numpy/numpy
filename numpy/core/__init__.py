@@ -96,6 +96,7 @@ from .numeric import absolute as abs
 # do this after everything else, to minimize the chance of this misleadingly
 # appearing in an import-time traceback
 from . import _add_newdocs
+from . import _add_newdocs_scalars
 # add these for module-freeze analysis (like PyInstaller)
 from . import _dtype_ctypes
 from . import _internal

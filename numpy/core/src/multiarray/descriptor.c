@@ -2898,14 +2898,13 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *old_metadata, *errmsg;
+        PyObject *old_metadata;
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
-            errmsg = PyUnicode_FromString("Invalid datetime dtype (metadata, c_metadata): ");
-            PyUString_ConcatAndDel(&errmsg, PyObject_Repr(metadata));
-            PyErr_SetObject(PyExc_ValueError, errmsg);
-            Py_DECREF(errmsg);
+            PyErr_Format(PyExc_ValueError,
+                    "Invalid datetime dtype (metadata, c_metadata): %R",
+                    metadata);
             return NULL;
         }
 

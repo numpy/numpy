@@ -538,7 +538,7 @@ npy_new_coercion_cache(
         cache = _coercion_cache_cache[_coercion_cache_num];
     }
     else {
-        cache = PyObject_MALLOC(sizeof(coercion_cache_obj));
+        cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
     if (cache == NULL) {
         PyErr_NoMemory();
@@ -570,7 +570,7 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
         _coercion_cache_num++;
     }
     else {
-        PyObject_FREE(current);
+        PyMem_Free(current);
     }
     return next;
 }

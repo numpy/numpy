@@ -635,3 +635,18 @@ class TestArrayLikes:
         assert arr[()] is ArrayLike
         arr = np.array([ArrayLike])
         assert arr[0] is ArrayLike
+
+    @pytest.mark.skipif(
+            np.dtype(np.intp).itemsize < 8, reason="Needs 64bit platform")
+    def test_too_large_array_error_paths(self):
+        """Test the error paths, including for memory leaks"""
+        arr = np.array(0, dtype="uint8")
+        # Guarantees that a contiguous copy won't work:
+        arr = np.broadcast_to(arr, 2**62)
+
+        for i in range(5):
+            # repeat, to ensure caching cannot have an effect:
+            with pytest.raises(MemoryError):
+                np.array(arr)
+            with pytest.raises(MemoryError):
+                np.array([arr])

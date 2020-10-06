@@ -93,7 +93,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     else:
         to_begin = np.asanyarray(to_begin)
         if not np.can_cast(to_begin, dtype_req, casting="same_kind"):
-            raise TypeError("dtype of `to_end` must be compatible "
+            raise TypeError("dtype of `to_begin` must be compatible "
                             "with input `ary` under the `same_kind` rule.")
 
         to_begin = to_begin.ravel()

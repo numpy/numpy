@@ -315,7 +315,7 @@ PyArrayDescr_Type and PyArray_Descr
 
         Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
         \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
-        :c:data:`NPY_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
+        :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
         :c:data:`NPY_NEEDS_PYAPI`).
 
     .. c:function:: PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
@@ -357,27 +357,25 @@ PyArrayDescr_Type and PyArray_Descr
     useful as the data-type descriptor for a field in another
     data-type descriptor. The fields member should be ``NULL`` if this
     is non- ``NULL`` (the fields member of the base descriptor can be
-    non- ``NULL`` however). The :c:type:`PyArray_ArrayDescr` structure is
-    defined using
+    non- ``NULL`` however).
 
-    .. code-block:: c
+    .. c:type:: PyArray_ArrayDescr
 
-       typedef struct {
-           PyArray_Descr *base;
-           PyObject *shape;
-       } PyArray_ArrayDescr;
+        .. code-block:: c
 
-    The elements of this structure are:
+           typedef struct {
+               PyArray_Descr *base;
+               PyObject *shape;
+           } PyArray_ArrayDescr;
 
-    .. c:member:: PyArray_Descr *PyArray_ArrayDescr.base
+        .. c:member:: PyArray_Descr *PyArray_ArrayDescr.base
 
-        The data-type-descriptor object of the base-type.
+            The data-type-descriptor object of the base-type.
 
-    .. c:member:: PyObject *PyArray_ArrayDescr.shape
+        .. c:member:: PyObject *PyArray_ArrayDescr.shape
 
-        The shape (always C-style contiguous) of the sub-array as a Python
-        tuple.
-
+            The shape (always C-style contiguous) of the sub-array as a Python
+            tuple.
 
 .. c:member:: PyObject *PyArray_Descr.fields
 
@@ -961,9 +959,14 @@ PyUFunc_Type and PyUFuncObject
 
        For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
 
-       - :c:data:`UFUNC_CORE_DIM_CAN_IGNORE` if the dim name ends in ``?``
-       - :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` if the dim size will be
-         determined from the operands and not from a :ref:`frozen <frozen>` signature
+       .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
+
+           if the dim name ends in ``?``
+
+       .. c:macro:: UFUNC_CORE_DIM_SIZE_INFERRED
+
+           if the dim size will be determined from the operands
+           and not from a :ref:`frozen <frozen>` signature
 
 PyArrayIter_Type and PyArrayIterObject
 --------------------------------------
@@ -1395,7 +1398,7 @@ PyArrayInterface
        as the *descr* key in :obj:`__array_interface__`). This can be
        ``NULL`` if *typekind* and *itemsize* provide enough
        information. This field is also ignored unless
-       :c:data:`ARR_HAS_DESCR` flag is on in *flags*.
+       :c:data:`NPY_ARR_HAS_DESCR` flag is on in *flags*.
 
 
 Internally used structures
@@ -1433,7 +1436,7 @@ for completeness and assistance in understanding the code.
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables
    needed for advanced array indexing. The associated C-structure,
-   :c:type:`PyArrayMapIterObject`, is useful if you are trying to
+   ``PyArrayMapIterObject``, is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes

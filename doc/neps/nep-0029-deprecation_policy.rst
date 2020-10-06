@@ -77,7 +77,7 @@ release in November 2020 should support Python 3.7 and newer.
 The current Python release cadence is 18 months so a 42 month window
 ensures that there will always be at least two minor versions of Python
 in the window.  The window is extended 6 months beyond the anticipated two-release
-interval for Python to provides resilience against small fluctuations /
+interval for Python to provide resilience against small fluctuations /
 delays in its release schedule.
 
 Because Python minor version support is based only on historical

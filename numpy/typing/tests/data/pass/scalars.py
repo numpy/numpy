@@ -108,19 +108,6 @@ np.timedelta64(dt.timedelta(2))
 np.timedelta64(None)
 np.timedelta64(None, "D")
 
-dt_64 = np.datetime64(0, "D")
-td_64 = np.timedelta64(1, "h")
-
-dt_64 + td_64
-dt_64 - dt_64
-dt_64 - td_64
-
-td_64 + td_64
-td_64 - td_64
-td_64 / 1.0
-td_64 / td_64
-td_64 % td_64
-
 np.void(1)
 np.void(np.int64(1))
 np.void(True)
