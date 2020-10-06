@@ -165,19 +165,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
         required by the size of the sliding window.
 
         That is, `view.shape = x_shape_trimmed + window_shape`, where
-        `x_shape_trimmed` is `x.shape` with every entry reduced as follows.
-
-        Let `input_size` be the size of the input array in an axis
-        participating in the sliding window, and let `window_size` be the
-        window size in the corresponding window axis, then the respective entry
-        of `x_shape_trimmed` will be `input_size - (window_size - 1)`.
-
-        If the same axis is used several times, there will be several
-        associated window sizes. In this case the reduction proceeds in exactly
-        the same way as
-        `input_size - (window_size_1 - 1) - (window_size_2 - 1) - ...`.
-
-        For a better understanding of this, also refer to the examples below.
+        `x_shape_trimmed` is `x.shape` with every entry reduced by one less
+        than the corresponding window size.
 
     See Also
     --------
@@ -246,7 +235,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
             [ 2, 12, 22],
             [ 3, 13, 23]]])
 
-    The same axis can be used several times:
+    The same axis can be used several times. In that case, every use reduces
+    the corresponding original dimension:
 
     >>> v = np.sliding_window_view(x, (2, 3), (1, 1))
     >>> v.shape
