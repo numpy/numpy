@@ -107,7 +107,7 @@ add_newdoc('numpy.core.umath', 'absolute',
     >>> plt.imshow(np.abs(xx), extent=[-10, 10, -10, 10], cmap='gray')
     >>> plt.show()
 
-    If the input is an ndarray, then np.absolute is equivalent to 'abs()'.
+    The `abs` function can be used as a shorthand for ``np.absolute`` on ndarrays.
 
     >>> x = np.array([-1.2, 1.2])
     >>> abs(x)
@@ -147,7 +147,7 @@ add_newdoc('numpy.core.umath', 'add',
            [  3.,   5.,   7.],
            [  6.,   8.,  10.]])
 
-    If the inputs are ndarrays, then np.add is equivalent to '+'.
+    The ``+`` operator can be used as a shorthand for ``np.add`` on ndarrays.
 
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
@@ -622,7 +622,7 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     >>> np.bitwise_and([True, True], [False, True])
     array([False,  True])
 
-    If the inputs are ndarrays, then np.bitwise_and is equivalent to the operation '&'.
+    The ``&`` operator can be used as a shorthand for ``np.bitwise_and`` on ndarrays.
 
     >>> x1 = np.array([2, 5, 255])
     >>> x2 = np.array([3,14,16])
@@ -688,7 +688,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True])
 
-    If the inputs are ndarrays, then np.bitwise_or is equivalent to the operation '|'.
+    The ``|`` operator can be used as a shorthand for ``np.bitwise_or`` on ndarrays.
 
     >>> x1 = np.array([2, 5, 255])
     >>> x2 = np.array([4, 4, 4])
@@ -747,7 +747,7 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     >>> np.bitwise_xor([True, True], [False, True])
     array([ True, False])
 
-    If the inputs are ndarrays, then np.bitwise_xor is equivalent to the bitwise operator '^'.
+    The ``^`` operator can be used as a shorthand for ``np.bitwise_xor`` on ndarrays.
 
     >>> x1 = np.array([True, True])
     >>> x2 = np.array([False, True])
@@ -1123,7 +1123,7 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> np.divide(1, 0)
     0
 
-    If the inputs are ndarrays, then np.divide is equivalent to '/'.
+    The ``/`` operator can be used as a shorthand for ``np.divide`` on ndarrays.
 
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
@@ -1167,7 +1167,7 @@ add_newdoc('numpy.core.umath', 'equal',
     >>> np.equal(1, np.ones(1))
     array([ True])
 
-    If the inputs are ndarrays, then np.equal is equivalent to '=='.
+    The ``==`` operator can be used as a shorthand for ``np.equal`` on ndarrays.
 
     >>> a = np.array(1)
     >>> b = np.ones(1)
@@ -1421,7 +1421,8 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     >>> np.floor_divide([1., 2., 3., 4.], 2.5)
     array([ 0.,  0.,  1.,  1.])
 
-    If the inputs are ndarrays, then np.floor_divide is equivalent to '//'.
+    The ``//`` operator can be used as a shorthand for ``np.floor_divide`` on ndarrays.
+
     >>> x1 = np.array([1., 2., 3., 4.])
     >>> x1//2.5
     array([0., 0., 1., 1.])
@@ -1514,7 +1515,7 @@ add_newdoc('numpy.core.umath', 'greater',
     >>> np.greater([4,2],[2,2])
     array([ True, False])
 
-    If the inputs are ndarrays, then np.greater is equivalent to '>'.
+    The ``>`` operator can be used as a shorthand for ``np.greater`` on ndarrays.
 
     >>> a = np.array([4,2])
     >>> b = np.array([2,2])
@@ -1550,7 +1551,7 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     >>> np.greater_equal([4, 2, 1], [2, 2, 2])
     array([ True, True, False])
 
-    If the inputs are ndarrays, then np.greater_equal is equivalent to '>='.
+    The ``>=`` operator can be used as a shorthand for ``np.greater_equal`` on ndarrays.
 
     >>> a = np.array([4, 2, 1])
     >>> b = np.array([2, 2, 2])
@@ -1675,7 +1676,7 @@ add_newdoc('numpy.core.umath', 'invert',
     >>> np.invert(np.array([True, False]))
     array([False,  True])
 
-    If the input is an ndarray, np.invert is equivalent to the unary operator '~'.
+    The ``~`` operator can be used as a shorthand for ``np.invert`` on ndarrays.
 
     >>> x1 = np.array([True,False])
     >>> ~x1
@@ -1915,7 +1916,7 @@ add_newdoc('numpy.core.umath', 'left_shift',
     >>> print(b, type(b))
     254 <class 'numpy.uint8'>
 
-    If the inputs are ndarrays, then np.left_shift is equivalent to '<<'.
+    The ``<<`` operator can be used as a shorthand for ``np.left_shift`` on ndarrays.
 
     >>> x1 = 5
     >>> x2 = np.array([1,2,3])
@@ -1951,7 +1952,7 @@ add_newdoc('numpy.core.umath', 'less',
     >>> np.less([1, 2], [2, 2])
     array([ True, False])
 
-    If the inputs are ndarrays, then np.less is equivalent to '<'.
+    The ``<`` operator can be used as a shorthand for ``np.less`` on ndarrays.
 
     >>> a = np.array([1, 2])
     >>> b = np.array([2, 2])
@@ -1962,7 +1963,7 @@ add_newdoc('numpy.core.umath', 'less',
 
 add_newdoc('numpy.core.umath', 'less_equal',
     """
-    Return the truth value of (x1 =< x2) element-wise.
+    Return the truth value of (x1 <= x2) element-wise.
 
     Parameters
     ----------
@@ -1987,7 +1988,7 @@ add_newdoc('numpy.core.umath', 'less_equal',
     >>> np.less_equal([4, 2, 1], [2, 2, 2])
     array([False,  True,  True])
 
-    If the inputs are ndarrays, then np.less_equal is equivalent to '<='.
+    The ``<=`` operator can be used as a shorthand for ``np.less_equal`` on ndarrays.
 
     >>> a = np.array([4, 2, 1])
     >>> b = np.array([2, 2, 2])
@@ -2322,7 +2323,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     array([False, False,  True,  True, False])
 
 
-    If the inputs are ndarrays and are boolean arrays, then np.logical_and is equivalent to '&'.
+    The ``&`` operator can be used as a shorthand for ``np.logical_and`` on boolean ndarrays.
 
     >>> a = np.array([True,False])
     >>> b = np.array([False,False])
@@ -2399,7 +2400,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
     >>> np.logical_or(x < 1, x > 3)
     array([ True, False, False, False,  True])
 
-    If the inputs are ndarrays and are boolean arrays, then np.logical_or is equivalent to '|'.
+    The ``|`` operator can be used as a shorthand for ``np.logical_or`` on boolean ndarrays.
 
     >>> a = np.array([True,False])
     >>> b = np.array([False,False])
@@ -2843,7 +2844,7 @@ add_newdoc('numpy.core.umath', 'matmul',
     ...
     ValueError: matmul: Input operand 1 does not have enough dimensions ...
 
-    If the inputs are ndarrays, then '@' can be used as a shorthand for np.matmul.
+    The ``@`` operator can be used as a shorthand for ``np.matmul`` on ndarrays.
 
     >>> x1 = np.array([2j, 3j])
     >>> x2 = np.array([2j, 3j])
@@ -2926,7 +2927,7 @@ add_newdoc('numpy.core.umath', 'multiply',
            [  0.,   4.,  10.],
            [  0.,   7.,  16.]])
 
-    If the inputs are ndarrays, then np.multiply is equivalent to '*'.
+    The ``*`` operator can be used as a shorthand for ``np.multiply`` on ndarrays.
 
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
@@ -2958,7 +2959,7 @@ add_newdoc('numpy.core.umath', 'negative',
     >>> np.negative([1.,-1.])
     array([-1.,  1.])
 
-    If the input is an ndarray, then np.negative is equivalent to the unary '-' operator.
+    The unary ``-`` operator can be used as a shorthand for ``np.negative`` on ndarrays.
 
     >>> x1 = np.array(([1., -1.]))
     >>> - x1
@@ -2995,7 +2996,7 @@ add_newdoc('numpy.core.umath', 'positive',
     >>> np.positive(x1)
     array([ 1., -1.])
 
-    If the input is an ndarray, then np.positive is equivalent to the unary '+' operator.
+    The unary ``+`` operator can be used as a shorthand for ``np.positive`` on ndarrays.
 
     >>> x1 = np.array(([1., -1.]))
     >>> + x1
@@ -3033,7 +3034,7 @@ add_newdoc('numpy.core.umath', 'not_equal',
     array([[False,  True],
            [False,  True]])
 
-    If the inputs are ndarrays, then np.not_equal is equivalent to '!='.
+    The ``!=`` operator can be used as a shorthand for ``np.not_equal`` on ndarrays.
 
     >>> a = np.array([1.,2.])
     >>> b = np.array([1.,3.])
@@ -3108,7 +3109,7 @@ add_newdoc('numpy.core.umath', 'power',
     array([[ 0,  1,  8, 27, 16,  5],
            [ 0,  1,  8, 27, 16,  5]])
 
-    If the inputs are ndarrays, then np.power is equivalent to '**'.
+    The ``**`` operator can be used as a shorthand for ``np.power`` on ndarrays.
 
     >>> x2 = np.array([[1, 2, 3, 3, 2, 1], [1, 2, 3, 3, 2, 1]])
     >>> x1 = range(6)
@@ -3339,7 +3340,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     >>> np.remainder(np.arange(7), 5)
     array([0, 1, 2, 3, 4, 0, 1])
 
-    If the inputs are ndarrays, then np.remainder is equivalent to '%'.
+    The ``%`` operator can be used as a shorthand for ``np.remainder`` on ndarrays.
 
     >>> x1 = np.arange(7)
     >>> x1 % 5
@@ -3387,7 +3388,7 @@ add_newdoc('numpy.core.umath', 'divmod',
     >>> np.divmod(np.arange(5), 3)
     (array([0, 0, 0, 1, 1]), array([0, 1, 2, 0, 1]))
 
-    If the inputs are ndarrays, then np.divmod is equivalent to 'divmod()'.
+    The `divmod` function can be used as a shorthand for ``np.divmod`` on ndarrays.
 
     >>> x = np.arange(5)
     >>> divmod(x,3)
@@ -3436,7 +3437,7 @@ add_newdoc('numpy.core.umath', 'right_shift',
     >>> np.right_shift(10, [1,2,3])
     array([5, 2, 1])
 
-    If the inputs are ndarrays, then np.right_shift is equivalent to '>>'
+    The ``>>`` operator can be used as a shorthand for ``np.right_shift`` on ndarrays.
 
     >>> x1 = 10
     >>> x2 = np.array([1,2,3])
@@ -3884,7 +3885,7 @@ add_newdoc('numpy.core.umath', 'subtract',
            [ 3.,  3.,  3.],
            [ 6.,  6.,  6.]])
 
-    If the inputs are both ndarrays, np.subtract is equivalent to '-'.
+    The ``-`` operator can be used as a shorthand for ``np.subtract`` on ndarrays.
 
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
@@ -4036,7 +4037,7 @@ add_newdoc('numpy.core.umath', 'true_divide',
     >>> x//4
     array([0, 0, 0, 0, 1])
 
-    If the inputs are ndarrays, then np.true_divide is equivalent to '/'.
+    The ``/`` operator can be used as a shorthand for ``np.true_divide`` on ndarrays.
 
     >>> x = np.arange(5)
     >>> x/4
