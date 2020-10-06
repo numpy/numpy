@@ -959,11 +959,11 @@ PyUFunc_Type and PyUFuncObject
 
        For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
 
-       .. c:macro:: UFUNC_CORE_DIM_IGNORE
+       .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 
            if the dim name ends in ``?``
 
-       .. c:macro:: UFUNC_CORE_DIM_INFERRED
+       .. c:macro:: UFUNC_CORE_DIM_SIZE_INFERRED
 
            if the dim size will be determined from the operands
            and not from a :ref:`frozen <frozen>` signature
