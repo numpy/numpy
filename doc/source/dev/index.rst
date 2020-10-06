@@ -9,7 +9,6 @@ Contributing to NumPy
 .. toctree::
    :hidden:
 
-   conduct/code_of_conduct
    Git Basics <gitwash/index>
    development_environment
    development_workflow
@@ -293,7 +292,6 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   conduct/code_of_conduct
    Git Basics <gitwash/index>
    development_environment
    development_workflow
