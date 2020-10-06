@@ -330,15 +330,33 @@ are also provided.
 Other aliases
 ~~~~~~~~~~~~~
 
-.. autoclass:: float_
+The first two of these are conveniences which resemble the names of the
+builtin types, in the same style as `bool_`, `int_`, `str_`, `bytes_`, and
+`object_`:
 
-.. autoclass:: complex_
+.. autoclass:: numpy.float_
 
-.. autoclass:: longfloat
+.. autoclass:: numpy.complex_
 
-.. autoclass:: clongfloat
+Some more use alternate naming conventions for extended-precision floats and
+complex numbers:
 
-.. autoclass:: longcomplex
+.. autoclass:: numpy.longfloat
+
+.. autoclass:: numpy.singlecomplex
+
+.. autoclass:: numpy.cfloat
+
+.. autoclass:: numpy.longcomplex
+
+.. autoclass:: numpy.clongfloat
+
+The following aliases originate from Python 2, and it is recommended that they
+not be used in new code.
+
+.. autoclass:: numpy.string_
+
+.. autoclass:: numpy.unicode_
 
 Attributes
 ==========
