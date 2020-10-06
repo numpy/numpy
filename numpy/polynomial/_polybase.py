@@ -548,7 +548,6 @@ class ABCPolyBase(abc.ABC):
         try:
             quo, rem = self._div(self.coef, othercoef)
         except ZeroDivisionError:
-            print("Failed to divide by element of value 0 in Divisor array")
             raise
         except Exception:
             return NotImplemented
@@ -607,7 +606,6 @@ class ABCPolyBase(abc.ABC):
         try:
             quo, rem = self._div(other, self.coef)
         except ZeroDivisionError:
-            print("Failed to divide by element of value 0 in Divisor array")
             raise
         except Exception:
             return NotImplemented
