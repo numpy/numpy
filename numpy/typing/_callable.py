@@ -9,7 +9,7 @@ See the `Mypy documentation`_ on protocols for more details.
 """
 
 import sys
-from typing import Union, TypeVar, overload, Any, NoReturn
+from typing import Union, TypeVar, overload, Any
 
 from numpy import (
     _BoolLike,
@@ -26,7 +26,6 @@ from numpy import (
     signedinteger,
     int32,
     int64,
-    uint64,
     floating,
     float32,
     float64,
@@ -114,13 +113,11 @@ if HAVE_PROTOCOL:
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
     class _UnsignedIntBitOp(Protocol):
-        # The likes of `uint64 | np.signedinteger` will fail as there
+        # TODO: The likes of `uint64 | np.signedinteger` will fail as there
         # is no signed integer type large enough to hold a `uint64`
         # See https://github.com/numpy/numpy/issues/2524
         @overload
         def __call__(self, __other: Union[bool, unsignedinteger]) -> unsignedinteger: ...
-        @overload
-        def __call__(self: uint64, __other: Union[int, signedinteger]) -> NoReturn: ...
         @overload
         def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
 
