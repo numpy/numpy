@@ -259,21 +259,48 @@ including the type hierarchy and the use of abstract DTypes.
 Class getter
 ==============================================================================
 
-To create a dtype instance from a scalar type users now call ``np.dtype`` (for
-instance, ``np.dtype(np.int64)``).
-
-To get the DType of a scalar type, we propose this getter syntax::
+To create a DType instance from a scalar type users now call
+``np.dtype`` (for instance, ``np.dtype(np.int64)``). Sometimes it is
+also necessary to access the underlying DType class; this comes up in
+particular with type hinting because the "type" of a DType instance is
+the DType class. Taking inspiration from type hinting, we propose the
+following getter syntax::
 
     np.dtype[np.int64]
 
-The notation works equally well with built-in and user-defined DTypes
-and is inspired by and potentially useful for type hinting.
+to get the DType class corresponding to a scalar type. The notation
+works equally well with built-in and user-defined DTypes.
 
 This getter eliminates the need to create an explicit name for every
-DType, crowding the ``np`` namespace; the getter itself signifies the type.
+DType, crowding the ``np`` namespace; the getter itself signifies the
+type. It also opens the possibility of making ``np.ndarray`` generic
+over DType class using annotations like::
 
-Since getter calls won't be needed often, this is unlikely to be burdensome.
-Classes can also offer concise alternatives.
+    np.ndarray[np.dtype[np.float64]]
+
+The above is fairly verbose, so it is possible that we will include
+aliases like::
+
+    Float64 = np.dtype[np.float64]
+
+in ``numpy.typing``, thus keeping annotations concise but still
+avoiding crowding the ``np`` namespace as discussed above. For a
+user-defined DType::
+
+    class UserDtype(dtype): ...
+
+one can do ``np.ndarray[UserDtype]``, keeping annotations concise in
+that case without introducing boilerplate in NumPy itself. For a user
+user-defined scalar type::
+
+    class UserScalar(generic): ...
+
+we would need to add a typing overload to ``dtype``::
+
+    @overload
+    __new__(cls, dtype: Type[UserScalar], ...) -> UserDtype
+
+to allow ``np.dtype[UserScalar]``.
 
 The initial implementation probably will return only concrete (not abstract)
 DTypes.
@@ -393,7 +420,7 @@ casting and array coercion, which are described in detail below.
   sortfunction`` that must return ``NotImplemented`` if the given ``sortkind``
   is not known.
 
-* Functions that cannot be removed are implemented as special methods. 
+* Functions that cannot be removed are implemented as special methods.
   Many of these were previously defined part of the :c:type:`PyArray_ArrFuncs`
   slot of the dtype instance (``PyArray_Descr *``) and include functions
   such as ``nonzero``, ``fill`` (used for ``np.arange``), and
@@ -408,7 +435,7 @@ casting and array coercion, which are described in detail below.
   object to ensure uniqueness for all DTypes. On the C side, ``kind`` and
   ``char`` are set to ``\0`` (NULL character).
   While ``kind`` will be discouraged, the current ``np.issubdtype``
-  may remain the preferred method for this type of check. 
+  may remain the preferred method for this type of check.
 
 * A method ``ensure_canonical(self) -> dtype`` returns a new dtype (or
   ``self``) with the ``canonical`` flag set.
@@ -1229,7 +1256,7 @@ Non-parametric dtypes do not have to implement:
 
 * ``discover_descr_from_pyobject`` (uses ``default_descr`` instead)
 * ``common_instance`` (uses ``default_descr`` instead)
-* ``ensure_canonical`` (uses ``default_descr`` instead). 
+* ``ensure_canonical`` (uses ``default_descr`` instead).
 
 Sorting is expected to be implemented using:
 
