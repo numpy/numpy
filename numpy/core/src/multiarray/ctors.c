@@ -1461,6 +1461,31 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 ((PyVoidScalarObject *)op)->flags,
                 NULL, op);
     }
+    else if (cache == 0 && newtype != NULL &&
+            PyDataType_ISSIGNED(newtype) && PyArray_IsScalar(op, Generic)) {
+        assert(ndim == 0);
+        /*
+         * This is an (possible) inconsistency where:
+         *
+         *     np.array(np.float64(np.nan), dtype=np.int64)
+         *
+         * behaves differently from:
+         *
+         *     np.array([np.float64(np.nan)], dtype=np.int64)
+         *     arr1d_int64[0] = np.float64(np.nan)
+         *     np.array(np.array(np.nan), dtype=np.int64)
+         *
+         * by not raising an error instead of using typical casting.
+         * The error is desirable, but to always error seems like a
+         * larger change to be considered at some other time and it is
+         * undesirable that 0-D arrays behave differently from scalars.
+         * This retains the behaviour, largely due to issues in pandas
+         * which relied on a try/except (although hopefully that will
+         * have a better solution at some point):
+         * https://github.com/pandas-dev/pandas/issues/35481
+         */
+        return PyArray_FromScalar(op, dtype);
+    }
 
     /* There was no array (or array-like) passed in directly. */
     if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
@@ -1483,7 +1508,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     if (cache == NULL) {
         /* This is a single item. Set it directly. */
         assert(ndim == 0);
-        if (PyArray_Pack(PyArray_DESCR(ret), PyArray_DATA(ret), op) < 0) {
+
+        if (PyArray_Pack(PyArray_DESCR(ret), PyArray_BYTES(ret), op) < 0) {
             Py_DECREF(ret);
             return NULL;
         }

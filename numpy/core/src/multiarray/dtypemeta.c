@@ -305,6 +305,18 @@ python_builtins_are_known_scalar_types(
 
 
 static int
+signed_integers_is_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+{
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
+    return PyType_IsSubtype(pytype, &PyGenericArrType_Type);
+}
+
+
+static int
 datetime_known_scalar_types(
         PyArray_DTypeMeta *cls, PyTypeObject *pytype)
 {
@@ -566,6 +578,11 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dtype_class->common_dtype = default_builtin_common_dtype;
     dtype_class->common_instance = NULL;
+
+    if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
+        /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
+        dtype_class->is_known_scalar_type = signed_integers_is_known_scalar_types;
+    }
 
     if (PyTypeNum_ISUSERDEF(descr->type_num)) {
         dtype_class->common_dtype = legacy_userdtype_common_dtype_function;
