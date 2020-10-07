@@ -56,9 +56,9 @@ __all__ = [
     'diff', 'divide', 'empty', 'empty_like', 'equal', 'exp',
     'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
-    'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
-    'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
-    'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
+    'frombuffer', 'fromflex', 'fromfunction', 'full', 'full_like', 'getdata',
+    'getmask', 'getmaskarray', 'greater', 'greater_equal', 'harden_mask',
+    'hypot', 'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
     'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'left_shift',
     'less', 'less_equal', 'log', 'log10', 'log2',
     'logical_and', 'logical_not', 'logical_or', 'logical_xor', 'make_mask',
@@ -70,13 +70,13 @@ __all__ = [
     'masked_singleton', 'masked_values', 'masked_where', 'max', 'maximum',
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
     'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
-    'not_equal', 'ones', 'outer', 'outerproduct', 'power', 'prod',
+    'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
     'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
-    'var', 'where', 'zeros',
+    'var', 'where', 'zeros', 'zeros_like',
     ]
 
 MaskType = np.bool_
@@ -8123,14 +8123,16 @@ empty = _convert2ma('empty', params=dict(fill_value=None, hardmask=False))
 empty_like = _convert2ma('empty_like')
 frombuffer = _convert2ma('frombuffer')
 fromfunction = _convert2ma('fromfunction')
+full = _convert2ma('full', params=dict(fill_value=None, hardmask=False))
+full_like = _convert2ma('full_like')
 identity = _convert2ma(
     'identity', params=dict(fill_value=None, hardmask=False))
 indices = np.indices
 ones = _convert2ma('ones', params=dict(fill_value=None, hardmask=False))
-ones_like = np.ones_like
+ones_like = _convert2ma('ones_like')
 squeeze = np.squeeze
 zeros = _convert2ma('zeros', params=dict(fill_value=None, hardmask=False))
-zeros_like = np.zeros_like
+zeros_like = _convert2ma('zeros_like')
 
 
 def append(a, b, axis=None):

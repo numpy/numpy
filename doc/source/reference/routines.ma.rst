@@ -41,10 +41,14 @@ Ones and zeros
 
    ma.empty
    ma.empty_like
+   ma.full
+   ma.full_like
    ma.masked_all
    ma.masked_all_like
    ma.ones
+   ma.ones_like
    ma.zeros
+   ma.zeros_like
 
 
 _____
@@ -129,6 +133,7 @@ Changing the number of dimensions
 
    ma.MaskedArray.squeeze
 
+   ma.dsplit
    ma.stack
    ma.column_stack
    ma.concatenate
@@ -137,7 +142,9 @@ Changing the number of dimensions
    ma.hsplit
    ma.mr_
    ma.row_stack
+   ma.split
    ma.vstack
+   ma.vsplit
 
 
 Joining arrays
