@@ -27,6 +27,9 @@ EXCLUDE_LIST = {
         "division",
         "print_function",
         "warnings",
+        "sys",
+        "os",
+        "math",
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
         "alen",
