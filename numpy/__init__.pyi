@@ -468,7 +468,6 @@ uint0: Any
 uintc: Any
 uintp: Any
 ulonglong: Any
-unicode_: Any
 union1d: Any
 unique: Any
 unpackbits: Any
@@ -1526,6 +1525,8 @@ class str_(character, str):
     def __init__(
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
+
+unicode_ = str_
 
 # TODO(alan): Platform dependent types
 # longcomplex, longdouble, longfloat
