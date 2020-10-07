@@ -170,23 +170,18 @@ The functions `load`, and ``lib.format.read_array`` take an
 ``allow_pickle`` keyword which now defaults to ``False`` in response to
 `CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
 
-
-.. currentmodule:: numpy.random.mtrand
-
 Potential changes to the random stream in old random module
 -----------------------------------------------------------
 Due to bugs in the application of ``log`` to random floating point numbers,
-the stream may change when sampling from `~random.RandomState.beta`,
-`~random.RandomState.binomial`, `~random.RandomState.laplace`,
-`~random.RandomState.logistic`, `~random.RandomState.logseries` or
-`~random.RandomState.multinomial` if a ``0`` is generated in the underlying `MT19937
-<~numpy.random.mt11937.MT19937>` random stream.  There is a ``1`` in
+the stream may change when sampling from `~numpy.random.RandomState.beta`,
+`~numpy.random.RandomState.binomial`, `~numpy.random.RandomState.laplace`,
+`~numpy.random.RandomState.logistic`, `~numpy.random.RandomState.logseries` or
+`~numpy.random.RandomState.multinomial` if a ``0`` is generated in the underlying
+`~numpy.random.MT19937` random stream.  There is a ``1`` in
 :math:`10^{53}` chance of this occurring, so the probability that the stream
 changes for any given seed is extremely small. If a ``0`` is encountered in the
 underlying generator, then the incorrect value produced (either `numpy.inf` or
 `numpy.nan`) is now dropped.
-
-.. currentmodule:: numpy
 
 `i0` now always returns a result with the same shape as the input
 -----------------------------------------------------------------
