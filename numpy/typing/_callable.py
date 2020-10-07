@@ -12,11 +12,6 @@ import sys
 from typing import Union, TypeVar, overload, Any
 
 from numpy import (
-    _BoolLike,
-    _IntLike,
-    _FloatLike,
-    _ComplexLike,
-    _NumberLike,
     generic,
     bool_,
     timedelta64,
@@ -31,6 +26,13 @@ from numpy import (
     float64,
     complexfloating,
     complex128,
+)
+from ._scalars import (
+    _BoolLike,
+    _IntLike,
+    _FloatLike,
+    _ComplexLike,
+    _NumberLike,
 )
 
 if sys.version_info >= (3, 8):
