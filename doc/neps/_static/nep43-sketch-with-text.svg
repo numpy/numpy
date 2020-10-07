@@ -8,8 +8,8 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   inkscape:version="1.0rc1 (09960d6f05, 2020-04-09)"
-   sodipodi:docname="nep43-sketch.svg"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   sodipodi:docname="nep43-sketch-with-text.svg"
    id="svg8"
    version="1.1"
    viewBox="0 0 289.35355 238.13675"
@@ -351,7 +351,7 @@
      inkscape:window-width="2560"
      showgrid="false"
      inkscape:document-rotation="0"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g4988"
      inkscape:document-units="mm"
      inkscape:cy="408.92855"
      inkscape:cx="490.09169"
@@ -375,7 +375,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -815,11 +815,11 @@
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:end;text-anchor:end;fill:#000081;fill-opacity:1;stroke-width:0.398751">DType classes</tspan><tspan
          id="tspan5908"
          sodipodi:role="line"
-         x="22.815493"
+         x="22.815491"
          y="172.67996"
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:end;text-anchor:end;fill:#000081;fill-opacity:1;stroke-width:0.398751">of the <tspan
-   id="tspan5923"
-   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Bold'">UFuncImpl</tspan></tspan><tspan
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Bold'"
+   id="tspan1154">ArrayMethod</tspan></tspan><tspan
          id="tspan5906"
          sodipodi:role="line"
          x="22.815491"
@@ -1177,15 +1177,15 @@
       <text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.45542px;line-height:1.25;font-family:fira;-inkscape-font-specification:fira;letter-spacing:0px;word-spacing:0px;fill:#000080;fill-opacity:1;stroke-width:0.398751"
-         x="120.04028"
+         x="113.16111"
          y="25.668264"
          id="text4678"
          transform="rotate(90)"><tspan
            sodipodi:role="line"
-           x="120.04028"
+           x="113.16111"
            y="25.668264"
            style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Semi-Bold';fill:#000080;fill-opacity:1;stroke-width:0.398751"
-           id="tspan4676">UFuncImpl</tspan></text>
+           id="tspan4676">ArrayMethod</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:3.52777px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
@@ -1216,7 +1216,7 @@
            sodipodi:role="line"
            id="tspan4918">done by UFunc Machinery (within <tspan
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Bold'"
-   id="tspan1182">UFuncImpl</tspan>)</tspan><tspan
+   id="tspan1182">ArrayMethod)</tspan></tspan><tspan
            id="tspan4854"
            style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#800000;fill-opacity:1;stroke-width:0.398751"
            y="-269.36993"
@@ -1279,7 +1279,7 @@
        y="134.54594"
        x="101.20623"
        height="19.673599"
-       width="39.585098"
+       width="46.424511"
        id="rect5208"
        style="opacity:0.25;fill:#830000;fill-opacity:0.64;stroke:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:1.2, 2.4;stroke-dashoffset:0;stroke-opacity:0.497957" />
     <text
@@ -1293,8 +1293,8 @@
          y="142.74757"
          style="fill:#800000;fill-opacity:1;stroke-width:0.398751"
          id="tspan5216">+ <tspan
-   id="tspan1184"
-   style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium'">UFuncImpl</tspan></tspan><tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Fira Code';-inkscape-font-specification:'Fira Code'"
+   id="tspan1156">ArrayMethod</tspan></tspan><tspan
          id="tspan5904"
          sodipodi:role="line"
          x="103.66331"

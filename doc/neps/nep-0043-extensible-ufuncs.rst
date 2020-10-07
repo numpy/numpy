@@ -19,9 +19,9 @@ NEP 43 — Enhancing the Extensibility of UFuncs
 
     - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
 
-    - NEP 42 (this document) describes the new design's datatype-related APIs.
+    - :ref:`NEP 42 <NEP42>`  describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - NEP 43 (this document) describes the new design's API for universal functions.
 
 
 ******************************************************************************
@@ -383,6 +383,12 @@ affected by this NEP.
 
 The following sections first give an overview of the Array method and then
 the new dispatching and promotion design.
+
+The following picture gives an overview of these steps and how they will be
+structured:
+
+.. figure:: _static/nep43-sketch.svg
+    :figclass: align-center
 
 
 *****************************************************************************
