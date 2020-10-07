@@ -451,11 +451,12 @@ We propose the following implementation:
 
        __common_dtype__(cls, other : DTypeMeta) -> DTypeMeta
 
-   It may return ``NotImplemented`` to defer to ``other``.
-
-   The common type is the one nearest the leaves of the hierarchy. Abstract
-   subclasses win over superclasses; concrete classes win over abstract
-   classes. In a tie, the left argument wins over the right.
+   Returns a new DType, often one of the inputs, which can represent values
+   of both input DTypes.  This should usually be minimal:
+   the common DType of ``Int16`` and ``Uint16`` is ``Int32`` and not ``Int64``.
+   ``__common_dtype__``  may return NotImplemented to defer to other and,
+   like Python operators, subclasses take precedence (their
+   ``__common_dtype__`` method is tried first).
 
 -  For two instances of the same DType::
 
@@ -474,7 +475,7 @@ We propose the following implementation:
    2. The casting machinery (explained in detail below) provides the
       information that ``">float64"`` casts to ``"S32"``
 
-   3. ``String.__common_instance__("S8", "S32")`` returns the final `"S32"`.
+   3. ``String.__common_instance__("S8", "S32")`` returns the final ``"S32"``.
 
 The benefit of this handoff is to reduce duplicated code and keep concerns
 separate. DType implementations don't need to know how to cast, and the
@@ -508,19 +509,31 @@ This means the implementation will work like this::
 
 Some of these steps may be optimized for nonparametric DTypes.
 
-Since the type returned by ``__common_dtype__`` must be one of the two
-arguments, it's not equivalent to NumPy's "safe" casting. Safe casting works
-for ``np.promote_types(int16, int64)``, which returns ``int64``, but fails
-for::
+Since the type returned by ``__common_dtype__`` is not necessarily one of the
+two arguments, it's not equivalent to NumPy's "safe" casting.
+Safe casting works for ``np.promote_types(int16, int64)``, which returns
+``int64``, but fails for::
 
     np.promote_types("int64", "float32") -> np.dtype("float64")
 
-It is the responsibility of the DType author to ensure that the result of
-safe casting does not conflict with the result of ``__common_dtype__``.
+It is the responsibility of the DType author to ensure that the inputs
+can be safely cast to the ``__common_dtype__``.
 
 Exceptions may apply. For example, casting ``int32`` to
 a (long enough) string is  at least at this time  considered "safe".
 However ``np.promote_types(int32, String)`` will *not* be defined.
+
+**Example:**
+
+``object`` always chooses ``object`` as the common DType.  For
+``datetime64`` type promotion is defined with no other datatype, but if
+someone were to implement a new higher precision datetime, then::
+
+   HighPrecisionDatetime.__common_dtype__(np.dtype[np.datetime64])
+
+would return ``HighPrecisionDatetime``, and the casting implementation,
+as described below, may need to decide how to handle the datetime unit.
+
 
 **Alternatives:**
 
@@ -539,15 +552,8 @@ However ``np.promote_types(int32, String)`` will *not* be defined.
 
 -  A more flexible common DType could be implemented in the future where
    ``__common_dtype__`` relies on information from the casting logic.
-
-   **Example:** ``object`` always chooses ``object`` as the common DType.  For
-   ``datetime64`` type promotion is defined with no other datatype, but if
-   someone were to implement a new higher precision datetime, then::
-
-       HighPrecisionDatetime.__common_dtype__(np.dtype[np.datetime64])
-
-   would return ``HighPrecisionDatetime``, and the casting implementation,
-   as described below, may need to decide how to handle the datetime unit.
+   Since ``__commond_dtype__`` is a method a such a default implementation
+   could be added at a later time.
 
 -  The three-step handling of differing dtypes could, of course, be coalesced.
    It would lose the value of splitting in return for a possibly faster
@@ -601,7 +607,7 @@ We also have two signatures of ``np.can_cast``:
 
 On the Python level ``dtype`` is overloaded to mean class or instance.
 
-A third ``can_cast`` signature, ``np.can_cast(DType, OtherDType, "safe")``, may be used
+A third ``can_cast`` signature, ``np.can_cast(DType, OtherDType, "safe")``,may be used
 internally but need not be exposed to Python.
 
 During DType creation, DTypes will be able to pass a list of ``CastingImpl``
@@ -626,7 +632,7 @@ and implements the following methods and attributes:
 
 * To get a casting function,
 
-  ``get_transferfunction(...) -> function_to_handle_cast (signature to be decided)``
+  ``get_loop(...) -> function_to_handle_cast (signature to be decided)``
 
   returns a low-level implementation of a strided casting function
   ("transfer function") capable of performing the
@@ -665,13 +671,13 @@ The full process is:
 
 2. Since ``"S8"`` does not match ``"S20"``, use
 
-   ``CastingImpl[String, String].get_transferfunction()``
+   ``CastingImpl[String, String].get_loop()``
 
    to find the transfer (casting) function to convert an ``"S8"`` into an ``"S20"``
 
 3. Fetch the transfer function to convert an ``int24`` to an ``"S8"`` using
 
-   ``CastingImpl[Int24, String].get_transferfunction()``
+   ``CastingImpl[Int24, String].get_loop()``
 
 4. Perform the actual cast using the two transfer functions:
 
@@ -687,7 +693,7 @@ The full process is:
 
    In this case the result of ``(int24, "S8")`` defines the correct cast:
 
-   ``np.array(42, dtype=int24),astype(String) == np.array("42", dtype="S8")``.
+   ``np.array(42, dtype=int24).astype(String) == np.array("42", dtype="S8")``.
 
 **Casting safety**
 
@@ -735,6 +741,34 @@ If ``CastingImpl[Int8, Int24].resolve_descriptors((int8, int24))`` returns
 the ``int8 -> int16`` cast. This adds a step.
 
 
+**Example:**
+
+The implementation for casting integers to datetime would generally
+say that this cast is unsafe (because it is always an unsafe cast).
+Its ``resolve_descriptors`` function may look like::
+
+     def resolve_descriptors(self, given_dtypes):
+        from_dtype, to_dtype = given_dtypes
+        from_dtype = from_dtype.ensure_canonical()  # ensure not byte-swapped
+        if to_dtype is None:
+            raise TypeError("Cannot convert to a NumPy datetime without a unit")
+        to_dtype = to_dtype.ensure_canonical()  # ensure not byte-swapped
+
+        # This is always an "unsafe" cast, but for int64, we can represent
+        # it by a simple view (if the dtypes are both canonical).
+        # (represented as C-side flags here).
+        safety_and_view = NPY_UNSAFE_CASTING | NPY_CAST_IS_VIEW
+        return safety_and_view, (from_dtype, to_dtype)
+
+.. note::
+
+    While NumPy currently defines integer-to-datetime casts, with the possible
+    exception of the unit-less ``timedelta64`` it may be better to not define
+    these casts at all.  In general we expect that user defined DTypes will be
+    using custom methods such as ``unit.drop_unit(arr)`` or ``arr *
+    unit.seconds``.
+
+
 **Alternatives:**
 
 - Our design objectives are:
@@ -742,10 +776,10 @@ the ``int8 -> int16`` cast. This adds a step.
   -  Mirror the implementation of universal functions.
 
 - The decision to use only the DType classes in the first step of finding the
-  correct ``CastingImpl`` means that the default implementation of
-  ``__common_dtype__`` has a reasonable definition of "safe casting" between
-  DTypes classes (although, for example, the concatenate operation using it
-  may still fail when attempting to find the actual common instance or cast).
+  correct ``CastingImpl`` in addition to defining ``CastingImpl.casting``,
+  allows to retain the current default implementation of
+  ``__common_dtype__`` for existing user defined dtypes, which could be
+  expanded in the future.
 
 - The split into multiple steps may seem to add complexity rather than reduce
   it, but it consolidates the signatures of ``np.can_cast(dtype, DTypeClass)``
@@ -771,7 +805,10 @@ the ``int8 -> int16`` cast. This adds a step.
   Such an API could be added later. It resembles Python's ``__getattr__`` in
   providing additional control over attribute lookup.
 
-**Notes:** The proposed ``CastingImpl`` is designed to be identical to the
+
+**Notes:**
+
+The proposed ``CastingImpl`` is designed to be identical to the
 ``PyArrayMethod`` proposed in NEP43 as part of restructuring ufuncs to handle
 new DTypes.
 
@@ -779,31 +816,6 @@ The way dispatching works for ``CastingImpl`` is planned to be limited
 initially and fully opaque. In the future, it may or may not be moved into a
 special UFunc, or behave more like a universal function.
 
-
-**Example:** The implementation for casting integers to datetime would generally
-say that this cast is unsafe (because it is always an unsafe cast).
-Its ``resolve_descriptors`` function may look like::
-
-     def resolve_descriptors(self, given_dtypes):
-        from_dtype, to_dtype = given_dtypes
-        from_dtype = from_dtype.ensure_canonical()  # ensure not byte-swapped
-        if to_dtype is None:
-            raise TypeError("Cannot convert to a NumPy datetime without a unit")
-        to_dtype = to_dtype.ensure_canonical()  # ensure not byte-swapped
-
-        # This is always an "unsafe" cast, but for int64, we can represent
-        # it by a simple view (if the dtypes are both canonical).
-        # (represented as C-side flags here).
-        safety_and_view = NPY_UNSAFE_CASTING | NPY_CAST_IS_VIEW
-        return safety_and_view, (from_dtype, to_dtype)
-
-.. note::
-
-    While NumPy currently defines integer-to-datetime casts, with the possible
-    exception of the unit-less ``timedelta64`` it may be better to not define
-    these casts at all.  In general we expect that user defined DTypes will be
-    using custom methods such as ``unit.drop_unit(arr)`` or ``arr *
-    unit.seconds``.
 
 .. _nep42_array_coercion:
 
@@ -917,8 +929,8 @@ important enough to be handled by NumPy using the presented methods.
 
   ``np.array(np.string_("2019")).astype(datetime64)``
 
-  but ``datetime64`` could choose to use its ``__dtype_setitem__`` instead,
-  say for performance reasons.
+  but ``datetime64`` could choose to use its ``__dtype_setitem__`` instead
+  for performance reasons.
 
 - There is an issue about how subclasses of scalars should be handled. We
   anticipate to stop automatically detecting the dtype for
@@ -1314,8 +1326,7 @@ The example does not yet include setup and error handling. Since these are
 similar to the UFunc machinery, they  will be defined in NEP 43 and then
 incorporated identically into casting.
 
-The slots/methods used will be prefixed ``NPY_uf_`` for similarity to the
-ufunc machinery.
+The slots/methods used will be prefixed with ``NPY_meth_``.
 
 
 **Alternatives:**
