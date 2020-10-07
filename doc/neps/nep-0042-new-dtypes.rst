@@ -78,7 +78,7 @@ And to provide this,
 All these are the subjects of this NEP.
 
 - The class hierarchy, its relation to the Python scalar types, and its
-  important attributes are described in `DType class`_.
+  important attributes are described in `nep42_DType class`_.
 
 - The functionality that will support dtype casting is described in `Casting`_.
 
@@ -138,7 +138,7 @@ future NEP will tackle the Python API.
 
 After implementing this NEP, creating a DType will be possible by implementing
 the following outlined DType base class,
-that is further described in `DType class`_:
+that is further described in `nep42_DType class`_:
 
 .. code-block:: python
     :dedent: 0
@@ -258,7 +258,7 @@ dtype instances from DType classes.
    current NumPy; they're not dtype classes. They neither harm
    nor help this work.
 
-.. _DType class:
+.. _nep42_DType class:
 
 ******************************************************************************
 The DType class
@@ -420,7 +420,7 @@ casting and array coercion, which are described in detail below.
   functions like sorting that will be implemented in DTypes might eventually be
   reimplemented as generalized ufuncs.
 
-.. _casting:
+.. _nep_42_casting:
 
 ******************************************************************************
 Casting
@@ -562,7 +562,7 @@ The cast operation
 
 Casting is perhaps the most complex and interesting DType operation. It
 is much like a typical universal function on arrays, converting one input to a
-new output, but with two distinctions:
+new output, with two distinctions:
 
 - Casting always requires an explicit output datatype.
 - The NumPy iterator API requires access to functions that are lower-level
@@ -589,11 +589,13 @@ and in some cases a cast may be just a view.
 
 **Motivation:** We have two signatures of ``arr.astype``:
 
-- For DTypes: ``arr.astype(np.String)`` (current spelling ``arr.astype("S")``)
+- For DTypes: ``arr.astype(np.String)``
+
+  - current spelling ``arr.astype("S")``
+  - ``np.String`` can be an abstract DType
 
 - For dtypes: ``arr.astype(np.dtype("S8"))``
 
-``np.String`` can be an abstract DType.
 
 We also have two signatures of ``np.can_cast``:
 
@@ -602,8 +604,9 @@ We also have two signatures of ``np.can_cast``:
 
 On the Python level ``dtype`` is overloaded to mean class or instance.
 
-A third version, ``np.can_cast(DType, OtherDType, "safe")``, may be used
+A third ``can_cast`` signature, ``np.can_cast(DType, OtherDType, "safe")``, may be used
 internally but need not be exposed to Python.
+
 
 **Implementation:** The goals are:
 
@@ -647,7 +650,7 @@ and implements the following methods and attributes:
 
 **Performing a cast**
 
-.. _cast_figure:
+.. _nep42_cast_figure:
 
 .. figure:: _static/casting_flow.svg
     :figclass: align-center
@@ -662,32 +665,45 @@ hold all 24-bit integers). This means multiple conversions are needed.
 
 The full process is:
 
-1. Call ``CastingImpl[Int24, String].resolve_descriptors((int24, "S20"))``.
+1. Call
+
+   ``CastingImpl[Int24, String].resolve_descriptors((int24, "S20"))``.
 
    This provides the information that ``CastingImpl[Int24, String]`` only
    implements the cast of ``int24`` to ``"S8"``.
 
 2. Since ``"S8"`` does not match ``"S20"``, use
+
    ``CastingImpl[String, String].get_transferfunction()``
+
    to find the transfer (casting) function to convert an ``"S8"`` into an ``"S20"``
 
 3. Fetch the transfer function to convert an ``int24`` to an ``"S8"`` using
+
    ``CastingImpl[Int24, String].get_transferfunction()``
 
 4. Perform the actual cast using the two transfer functions:
+
    ``int24(42) -> S8("42") -> S20("42")``.
 
-``resolve_descriptors`` allows the implementation for
-``np.array(42, dtype=int24).astype(String)`` to call
-``CastingImpl[Int24, String].resolve_descriptors((int24, None))``.
-In this case the result of ``(int24, "S8")`` defines the correct cast:
-``np.array(42, dtype=int24),astype(String) == np.array("42", dtype="S8")``.
+   ``resolve_descriptors`` allows the implementation for
+
+   ``np.array(42, dtype=int24).astype(String)``
+
+   to call
+
+   ``CastingImpl[Int24, String].resolve_descriptors((int24, None))``.
+
+   In this case the result of ``(int24, "S8")`` defines the correct cast:
+
+   ``np.array(42, dtype=int24),astype(String) == np.array("42", dtype="S8")``.
 
 **Casting safety**
 
 To answer the question of casting safety ``np.can_cast(int24, "S20",
 casting="safe")``, only the ``resolve_descriptors`` function is required and
 is called in the same way as in `the figure describing a cast <cast_figure>`_.
+
 In this case, the calls to ``resolve_descriptors``, will also provide the
 information that ``int24 -> "S8"`` as well as ``"S8" -> "S20"`` are safe
 casts, and thus also the ``int24 -> "S20"`` is a safe cast.
@@ -703,8 +719,8 @@ plus ``equivalent+view``, ``safe+view``, ``unsafe+view``, and
 only if byte order matches. This functionality can be replaced with the
 combination of "equivalent" casting and the "view" flag.
 
-(For more information on the ``resolve_descriptors`` signature see the C-API
-section below.)
+(For more information on the ``resolve_descriptors`` signature see the
+:ref:`nep42_C-API` section below.)
 
 
 **Casting between instances of the same DType**
@@ -789,7 +805,7 @@ Its ``resolve_descriptors`` function may look like::
 
 .. note::
 
-    While NumPy currently defines integer to datetime casts, with the possible
+    While NumPy currently defines integer-to-datetime casts, with the possible
     exception of the unit-less ``timedelta64`` it may be better to not define
     these casts at all.  In general we expect that user defined DTypes will be
     using custom methods such as ``unit.drop_unit(arr)`` or ``arr *
@@ -887,7 +903,7 @@ using the general casting machinery,
 but the ``object`` dtype is special and important enough to be handled by NumPy
 using the presented methods.
 
-**Further Issues and Discussion:** The ``__dtype_setitem__`` function currently duplicates
+**Further issues and discussion:** The ``__dtype_setitem__`` function currently duplicates
 some code, such as coercion from a string. ``datetime64`` allows assignment
 from string, but the same conversion also occurs for casting from the string
 dtype to ``datetime64``. In the future, we may expose the ``known_scalartype``
@@ -1126,7 +1142,7 @@ to be careful about this and use avoid registration when in doubt.
   (note the list ``[4]`` instead of scalar ``4``).
   This is not a feature NumPy currently has or desires to support.
 
-**Further Issues and Discussion:** It is possible to create a DType
+**Further issues and discussion:** It is possible to create a DType
 such as Categorical, array, or vector which can only be used if ``dtype=DType``
 is provided. Such DTypes cannot roundtrip correctly. For example::
 
@@ -1138,7 +1154,7 @@ This is a general limitation, but round-tripping is always possible if
 ``dtype=original_arr.dtype`` is passed.
 
 
-.. _c-api:
+.. _nep42_c-api:
 
 ******************************************************************************
 Public C-API
