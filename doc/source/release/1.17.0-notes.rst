@@ -174,14 +174,14 @@ Potential changes to the random stream in old random module
 -----------------------------------------------------------
 Due to bugs in the application of ``log`` to random floating point numbers,
 the stream may change when sampling from `~numpy.random.RandomState.beta`,
-`~numpy.random.RandomState.binomial`, `~numpy.random.RandomState.laplace`,
-`~numpy.random.RandomState.logistic`, `~numpy.random.RandomState.logseries` or
-`~numpy.random.RandomState.multinomial` if a ``0`` is generated in the underlying
-`~numpy.random.MT19937` random stream.  There is a ``1`` in
+`~random.RandomState.binomial`, `~random.RandomState.laplace`,
+`~random.RandomState.logistic`, `~random.RandomState.logseries` or
+`~random.RandomState.multinomial` if a ``0`` is generated in the underlying
+`~random.MT19937` random stream.  There is a ``1`` in
 :math:`10^{53}` chance of this occurring, so the probability that the stream
 changes for any given seed is extremely small. If a ``0`` is encountered in the
-underlying generator, then the incorrect value produced (either `numpy.inf` or
-`numpy.nan`) is now dropped.
+underlying generator, then the incorrect value produced (either `inf` or
+`nan`) is now dropped.
 
 `i0` now always returns a result with the same shape as the input
 -----------------------------------------------------------------
