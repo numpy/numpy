@@ -53,13 +53,9 @@ jobs:
       - run:
           name: build devdocs w/ref warnings
           command: |
-            set +e
-            # allow this to fail for now: issue 13114
             . venv/bin/activate
             cd doc
-            SPHINXOPTS="-q -n" make -e html
-            # clear the error
-            echo ok
+            SPHINXOPTS="-q -n" make -e html || echo "ignoring errors for now, see gh-13114"
 
       - run:
           name: build devdocs
