@@ -164,8 +164,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
         inserted at the end, and the original dimensions are trimmed as
         required by the size of the sliding window.
 
-        That is, `view.shape = x_shape_trimmed + window_shape`, where
-        `x_shape_trimmed` is `x.shape` with every entry reduced by one less
+        That is, ``view.shape = x_shape_trimmed + window_shape``, where
+        ``x_shape_trimmed`` is ``x.shape`` with every entry reduced by one less
         than the corresponding window size.
 
     See Also
