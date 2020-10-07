@@ -13,7 +13,9 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      - checkout
+      - checkout:
+          post:
+            git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge"
 
       - run:
           name: create virtual environment, install dependencies
@@ -49,10 +51,22 @@ jobs:
             python tools/refguide_check.py --rst
 
       - run:
+          name: build devdocs w/ref warnings
+          command: |
+            set +e
+            # allow this to fail for now: issue 13114
+            . venv/bin/activate
+            cd doc
+            SPHINXOPTS="-q -n" make -e html
+            # clear the error
+            echo ok
+
+      - run:
           name: build devdocs
           command: |
             . venv/bin/activate
             cd doc
+            make clean
             SPHINXOPTS=-q make -e html
 
       - run:
