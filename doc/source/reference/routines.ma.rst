@@ -134,6 +134,7 @@ Changing the number of dimensions
 
    ma.MaskedArray.squeeze
 
+   ma.dsplit
    ma.stack
    ma.column_stack
    ma.concatenate
@@ -142,7 +143,9 @@ Changing the number of dimensions
    ma.hsplit
    ma.mr_
    ma.row_stack
+   ma.split
    ma.vstack
+   ma.vsplit
 
 
 Joining arrays

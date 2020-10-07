@@ -1,5 +1,6 @@
 from numpy._pytesttester import PytestTester
 
+
 from numpy.ma import extras as extras
 
 from numpy.ma.core import (
@@ -140,6 +141,7 @@ from numpy.ma.core import (
     nonzero as nonzero,
     not_equal as not_equal,
     ones as ones,
+    ones_like as ones_like,
     outer as outer,
     outerproduct as outerproduct,
     power as power,
@@ -179,6 +181,7 @@ from numpy.ma.core import (
     var as var,
     where as where,
     zeros as zeros,
+    zeros_like as zeros_like,
 )
 
 from numpy.ma.extras import (
@@ -200,6 +203,7 @@ from numpy.ma.extras import (
     cov as cov,
     diagflat as diagflat,
     dot as dot,
+    dsplit as dsplit,
     dstack as dstack,
     ediff1d as ediff1d,
     flatnotmasked_contiguous as flatnotmasked_contiguous,
@@ -221,12 +225,14 @@ from numpy.ma.extras import (
     notmasked_edges as notmasked_edges,
     polyfit as polyfit,
     row_stack as row_stack,
+    split as split,
     setdiff1d as setdiff1d,
     setxor1d as setxor1d,
     stack as stack,
     unique as unique,
     union1d as union1d,
     vander as vander,
+    vsplit as vsplit,
     vstack as vstack,
 )
 

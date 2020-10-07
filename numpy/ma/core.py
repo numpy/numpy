@@ -81,8 +81,10 @@ __all__ = [
 MaskType = np.bool_
 nomask = MaskType(0)
 
+
 class MaskedArrayFutureWarning(FutureWarning):
     pass
+
 
 def _deprecate_argsort_axis(arr):
     """
