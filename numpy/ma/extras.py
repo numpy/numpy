@@ -901,11 +901,11 @@ def compress_rows(a):
     Suppress whole rows of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -918,11 +918,11 @@ def compress_cols(a):
     Suppress whole columns of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
