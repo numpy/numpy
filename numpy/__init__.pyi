@@ -1616,7 +1616,7 @@ _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _2Tuple = Tuple[_T, _T]
-_Casting = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
 _DTypeLike = Union[
     dtype[_ScalarType],
@@ -1866,7 +1866,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         dtype: _DTypeLike[_ScalarType],
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> NDArray[_ScalarType]: ...
@@ -1875,7 +1875,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         dtype: DTypeLike,
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> NDArray[Any]: ...
@@ -2886,7 +2886,7 @@ class generic(_ArrayOrScalarCommon):
         self,
         dtype: _DTypeLike[_ScalarType],
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> _ScalarType: ...
@@ -2895,7 +2895,7 @@ class generic(_ArrayOrScalarCommon):
         self,
         dtype: DTypeLike,
         order: _OrderKACF = ...,
-        casting: _Casting = ...,
+        casting: _CastingKind = ...,
         subok: bool = ...,
         copy: bool = ...,
     ) -> Any: ...
