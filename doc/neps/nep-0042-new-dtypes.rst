@@ -531,7 +531,7 @@ However ``np.promote_types(int32, String)`` will *not* be defined.
    arguments could cast to safely.
 
    It would be difficult to devise a reasonable total order, and it would have
-   to accept new entries. Beyond that, the approach is flawed is because it
+   to accept new entries. Beyond that, the approach is flawed because it
    means that importing a type can change the behavior of a program.
    For example, a program requiring the common DType of ``int16`` and
    ``uint16`` would ordinarly get the built-in type ``int32`` as the first
