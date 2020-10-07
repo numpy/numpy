@@ -67,23 +67,6 @@ def ones_like(
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
 
-@overload
-def empty_like(
-    a: _ArrayType,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: Literal[True] = ...,
-    shape: None = ...,
-) -> _ArrayType: ...
-@overload
-def empty_like(
-    a: ArrayLike,
-    dtype: DTypeLike = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
-) -> ndarray: ...
-
 def full(
     shape: _ShapeLike,
     fill_value: Any,

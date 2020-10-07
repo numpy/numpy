@@ -294,11 +294,14 @@ from numpy.core.einsumfunc import (
     einsum_path as einsum_path,
 )
 
+from numpy.core.multiarray import (
+    empty_like as empty_like,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
-    empty_like as empty_like,
     full as full,
     full_like as full_like,
     count_nonzero as count_nonzero,
