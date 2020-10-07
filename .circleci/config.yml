@@ -14,8 +14,7 @@ jobs:
 
     steps:
       - checkout:
-          post:
-            git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge"
+      - run: git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge"
 
       - run:
           name: create virtual environment, install dependencies
@@ -53,9 +52,13 @@ jobs:
       - run:
           name: build devdocs w/ref warnings
           command: |
+            set +e
+            # allow this to fail for now: issue 13114
             . venv/bin/activate
             cd doc
-            SPHINXOPTS="-q -n" make -e html || echo "ignoring errors for now, see gh-13114"
+            SPHINXOPTS="-q -n" make -e html
+            # clear the error
+            echo ok
 
       - run:
           name: build devdocs
