@@ -36,7 +36,6 @@ from typing import (
     Container,
     Callable,
     Dict,
-    Final,
     Generic,
     IO,
     Iterable,
@@ -59,9 +58,9 @@ from typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, SupportsIndex
+    from typing import Literal, Protocol, SupportsIndex,Final
 else:
-    from typing_extensions import Literal, Protocol
+    from typing_extensions import Literal, Protocol, Final
     class SupportsIndex(Protocol):
         def __index__(self) -> int: ...
 
