@@ -172,7 +172,7 @@ class _8Bit(_16Bit): ...  # type: ignore[misc]
 # Clean up the namespace
 del TYPE_CHECKING, final
 
-from ._number_aliases import (
+from ._dynamic_types import (
     _Int8Codes,
     _Int16Codes,
     _Int32Codes,

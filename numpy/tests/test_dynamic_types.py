@@ -26,7 +26,7 @@ number_aliases = [
 ]
 
 iterator = (
-    (getattr(npt._number_aliases, k), getattr(np, k)) for k in number_aliases
+    (getattr(npt._dynamic_types, k), getattr(np, k)) for k in number_aliases
 )
 for typ, ref_typ in iterator:  # type: Type[np.number], Type[np.number]
     assert typ in {ref_typ, Any}

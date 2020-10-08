@@ -161,9 +161,9 @@ if not release:
         a.close()
 
 
-def write_type_hints(filename='numpy/typing/_number_aliases.pyi'):
-    """Generate a stub file for system-specific `numpy.number` aliases."""
-    from tools.generate_aliases import generate_alias
+def write_type_hints(filename='numpy/typing/_dynamic_types.pyi'):
+    """Generate a stub file for system-specific types and/or aliases."""
+    from tools.generate_type_hints import generate_alias
 
     abspath = os.path.abspath(filename)
     generate_alias(abspath)

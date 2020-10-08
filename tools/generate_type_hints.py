@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""A script for generating stub files with system-specific `numpy.number` aliases."""
+"""A script for generating stub files with platform-specific types."""
 
 import os
 import sys
@@ -173,7 +173,7 @@ def _file_to_context(
 
 
 def generate_alias(file: Union[IO[str], _AnyPath] = sys.stdout) -> None:
-    """Generate a stub file with all system-specific :class:`generic` aliases.
+    """Generate a stub file with platform-specific types.
 
     Parameters
     ----------

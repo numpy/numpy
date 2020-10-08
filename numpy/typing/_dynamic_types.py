@@ -1,5 +1,5 @@
 """
-A module with system-specific `numpy.number` aliases and charachter codes.
+A module with system-specific type aliases.
 
 Notes
 -----
