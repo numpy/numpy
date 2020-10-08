@@ -67,7 +67,6 @@ else:
 # Ensures that the stubs are picked up
 from numpy import (
     char,
-    compat,
     ctypeslib,
     emath,
     fft,
@@ -259,14 +258,12 @@ can_cast: Any
 cast: Any
 cdouble: Any
 cfloat: Any
-char: Any
 chararray: Any
 clongdouble: Any
 clongfloat: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any
-compat: Any
 complex256: Any
 complex_: Any
 concatenate: Any
@@ -276,7 +273,6 @@ copyto: Any
 corrcoef: Any
 cov: Any
 csingle: Any
-ctypeslib: Any
 cumproduct: Any
 datetime_as_string: Any
 datetime_data: Any
@@ -298,12 +294,10 @@ dstack: Any
 ediff1d: Any
 einsum: Any
 einsum_path: Any
-emath: Any
 errstate: Any
 expand_dims: Any
 extract: Any
 eye: Any
-fft: Any
 fill_diagonal: Any
 finfo: Any
 fix: Any
@@ -322,7 +316,6 @@ frompyfunc: Any
 fromregex: Any
 fromstring: Any
 genfromtxt: Any
-geomspace: Any
 get_include: Any
 get_printoptions: Any
 getbufsize: Any
@@ -366,25 +359,18 @@ ix_: Any
 kaiser: Any
 kron: Any
 lexsort: Any
-lib: Any
-linalg: Any
-linspace: Any
 load: Any
 loads: Any
 loadtxt: Any
-logspace: Any
 longcomplex: Any
 longdouble: Any
 longfloat: Any
 longlong: Any
 lookfor: Any
-ma: Any
 mafromtxt: Any
 mask_indices: Any
 mat: Any
-math: Any
 matrix: Any
-matrixlib: Any
 max: Any
 may_share_memory: Any
 median: Any
@@ -434,7 +420,6 @@ polydiv: Any
 polyfit: Any
 polyint: Any
 polymul: Any
-polynomial: Any
 polysub: Any
 polyval: Any
 printoptions: Any
@@ -444,11 +429,9 @@ put_along_axis: Any
 putmask: Any
 quantile: Any
 r_: Any
-random: Any
 ravel_multi_index: Any
 real: Any
 real_if_close: Any
-rec: Any
 recarray: Any
 recfromcsv: Any
 recfromtxt: Any
@@ -488,7 +471,6 @@ stack: Any
 str0: Any
 string_: Any
 take_along_axis: Any
-testing: Any
 tile: Any
 trapz: Any
 tri: Any
@@ -518,7 +500,6 @@ ushort: Any
 vander: Any
 vdot: Any
 vectorize: Any
-version: Any
 void0: Any
 vsplit: Any
 vstack: Any
