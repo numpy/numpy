@@ -1612,7 +1612,7 @@ inf: Final[float]
 infty: Final[float]
 nan: Final[float]
 pi: Final[float]
-
+    
 ALLOW_THREADS: Final[int]
 BUFSIZE: Final[int]
 CLIP: Final[int]
