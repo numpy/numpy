@@ -787,7 +787,7 @@ class dtype(Generic[_DTypeScalar]):
         ],
         align: bool = ...,
         copy: bool = ...,
-    ) -> dtype[complex128]: ...
+    ) -> dtype[complex64]: ...
     @overload
     def __new__(
         cls,
@@ -820,6 +820,7 @@ class dtype(Generic[_DTypeScalar]):
                 ">S",
                 "bytes",
                 "bytes_",
+                "bytes0",
             ],
         ],
         align: bool = ...,
@@ -838,6 +839,7 @@ class dtype(Generic[_DTypeScalar]):
                 # to is platform-dependent.
                 "str",
                 "str_",
+                "str0",
             ],
         ],
         align: bool = ...,
