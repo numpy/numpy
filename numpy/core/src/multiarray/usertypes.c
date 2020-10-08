@@ -251,12 +251,16 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         PyErr_SetString(PyExc_MemoryError, "RegisterDataType");
         return -1;
     }
+
     userdescrs[NPY_NUMUSERTYPES++] = descr;
 
+    descr->type_num = typenum;
     if (dtypemeta_wrap_legacy_descriptor(descr) < 0) {
+        descr->type_num = -1;
+        NPY_NUMUSERTYPES--;
         return -1;
     }
-    descr->type_num = typenum;
+
     return typenum;
 }
 
