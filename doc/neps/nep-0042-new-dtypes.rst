@@ -1,10 +1,10 @@
 .. _NEP42:
 
 ==============================================================================
-NEP 42 — User-extensible dtypes
+NEP 42 — New and extensible DTypes
 ==============================================================================
 
-:title: User-extensible dtypes
+:title: New and extensible DTypes
 :Author: Sebastian Berg
 :Author: Ben Nathanson
 :Author: Marten van Kerkwijk
