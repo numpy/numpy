@@ -61,15 +61,15 @@ np.import_array()
 
 DECIMAL_RE = re.compile(r'[0-9]+')
 
-cdef uint32_t DEFAULT_POOL_SIZE = 4  # Appears also in docstring for pool_size
-cdef uint32_t INIT_A = 0x43b0d7e5
-cdef uint32_t MULT_A = 0x931e8875
-cdef uint32_t INIT_B = 0x8b51f9dd
-cdef uint32_t MULT_B = 0x58f38ded
-cdef uint32_t MIX_MULT_L = 0xca01f9dd
-cdef uint32_t MIX_MULT_R = 0x4973f715
-cdef uint32_t XSHIFT = np.dtype(np.uint32).itemsize * 8 // 2
-cdef uint32_t MASK32 = 0xFFFFFFFF
+DEF DEFAULT_POOL_SIZE = 4  # Appears also in docstring for pool_size
+DEF INIT_A = 0x43b0d7e5u
+DEF MULT_A = 0x931e8875u
+DEF INIT_B = 0x8b51f9ddu
+DEF MULT_B = 0x58f38dedu
+DEF MIX_MULT_L = 0xca01f9ddu
+DEF MIX_MULT_R = 0x4973f715u
+DEF XSHIFT = 16
+DEF MASK32 = 0xFFFFFFFFu
 
 def _int_to_uint32_array(n):
     arr = []
