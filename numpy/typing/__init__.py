@@ -172,6 +172,30 @@ class _8Bit(_16Bit): ...  # type: ignore[misc]
 # Clean up the namespace
 del TYPE_CHECKING, final
 
+from ._number_aliases import (
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _Float16Codes,
+    _Float32Codes,
+    _Float64Codes,
+    _Complex64Codes,
+    _Complex128Codes,
+)
+from ._char_codes import (
+    _BoolCodes,
+    _Datetime64Codes,
+    _Timedelta64Codes,
+    _StrCodes,
+    _BytesCodes,
+    _VoidCodes,
+    _ObjectCodes,
+)
 from ._scalars import (
     _CharLike,
     _BoolLike,
