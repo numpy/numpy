@@ -58,7 +58,7 @@ Here's the short summary, complete TOC links are below:
 
    * Clone the project to your local computer::
 
-      git clone https://github.com/your-username/numpy.git
+      git clone --no-tags https://github.com/your-username/numpy.git
 
    * Change the directory::
 
@@ -66,7 +66,7 @@ Here's the short summary, complete TOC links are below:
 
    * Add the upstream repository::
 
-      git remote add upstream https://github.com/numpy/numpy.git
+      git remote add -f -t master upstream https://github.com/numpy/numpy.git
 
    * Now, `git remote -v` will show two remote repositories named:
 
@@ -77,7 +77,6 @@ Here's the short summary, complete TOC links are below:
 
    * Pull the latest changes from upstream::
 
-      git checkout master
       git pull upstream master
 
    * Create a branch for the feature you want to work on. Since the
