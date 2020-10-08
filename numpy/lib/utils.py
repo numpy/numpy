@@ -587,7 +587,8 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
             print(inspect.getdoc(object), file=output)
 
         methods = pydoc.allmethods(object)
-        if methods:
+
+        if any(meth[0] != '_' for meth in methods):
             print("\n\nMethods:\n", file=output)
             for meth in methods:
                 if meth[0] == '_':
