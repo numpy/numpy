@@ -41,6 +41,8 @@ Ones and zeros
 
    ma.empty
    ma.empty_like
+   ma.full
+   ma.full_like
    ma.masked_all
    ma.masked_all_like
    ma.ones

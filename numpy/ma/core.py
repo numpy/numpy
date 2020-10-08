@@ -56,9 +56,9 @@ __all__ = [
     'diff', 'divide', 'empty', 'empty_like', 'equal', 'exp',
     'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
-    'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
-    'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
-    'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
+    'frombuffer', 'fromflex', 'fromfunction', 'full', 'full_like', 'getdata',
+    'getmask', 'getmaskarray', 'greater', 'greater_equal', 'harden_mask',
+    'hypot', 'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
     'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'left_shift',
     'less', 'less_equal', 'log', 'log10', 'log2',
     'logical_and', 'logical_not', 'logical_or', 'logical_xor', 'make_mask',
@@ -8123,6 +8123,8 @@ empty = _convert2ma('empty', params=dict(fill_value=None, hardmask=False))
 empty_like = _convert2ma('empty_like')
 frombuffer = _convert2ma('frombuffer')
 fromfunction = _convert2ma('fromfunction')
+full = _convert2ma('full', params=dict(fill_value=None, hardmask=False))
+full_like = _convert2ma('full_like')
 identity = _convert2ma(
     'identity', params=dict(fill_value=None, hardmask=False))
 indices = np.indices
