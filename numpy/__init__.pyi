@@ -487,7 +487,6 @@ split: Any
 stack: Any
 str0: Any
 string_: Any
-sys: Any
 take_along_axis: Any
 testing: Any
 tile: Any
