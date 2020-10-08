@@ -186,6 +186,7 @@ numpy/core/src/umath/_umath_tests.dispatch.h
 numpy/core/src/umath/_umath_tests.dispatch.sse41.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
+numpy/typing/_number_aliases.pyi
 doc/source/**/generated/
 benchmarks/results
 benchmarks/html
