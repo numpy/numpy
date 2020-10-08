@@ -703,15 +703,12 @@ absolutely necessary to allow future extension and flexibility.
 Furthermore, it allows unifying casting and ufuncs.
 
 Since the structure of ``ArrayMethod`` and ``BoundArrayMethod`` will be
-opaque, there are no larger design implications aside from the choice of
+opaque, there are no large design implications aside from the choice of
 making them Python objects.
-
-This NEP does not lay out any alternatives. A new structure to house the
-loop function and separate 
 
 
 ``resolve_descriptors``
-------------------------
+-----------------------
 
 The ``resolve_descriptors`` method is possibly the main innovation of this
 NEP and it is central also in the implementation of casting in NEP 42.
@@ -719,18 +716,19 @@ NEP and it is central also in the implementation of casting in NEP 42.
 By ensuring that every ``ArrayMethod`` provides ``resolve_descriptors`` we
 define a unified, clear API for step 3 in `Steps involved in a UFunc call`_.
 This step is required to allocate output arrays and has to happen before
-things like casting can be handled.
+casting can be prepared.
 
 While the returned casting-safety (``NPY_CASTING``) will almost always be
 "safe" for universal functions, including it has two big advantages:
 
-1. Returning the casting safety is very important in NEP 42 for casting and
-   allows the use of ``ArrayMethod`` also there.
-2. There may be future desire to implement fast but unsafe implementations,
-   for example for ``int64 + int64 -> int32`` which is unsafe from a casting
-   perspective. Currently, this would use ``int64 + int64 -> int64`` and then
-   cast to ``int32``, an implementation that includes the cast directly would
-   have to signal that it effectively includes a "same-kind" cast.
+* Returning the casting safety is central to NEP 42 for casting and
+  allows the unmodified use of ``ArrayMethod`` there.
+* There may be future desire to implement fast but unsafe implementations.
+  For example for ``int64 + int64 -> int32`` which is unsafe from a casting
+  perspective. Currently, this would use ``int64 + int64 -> int64`` and then
+  cast to ``int32``, an implementation that skips the cast would
+  have to signal that it effectively includes a "same-kind" cast and is not
+  considered "safe".
 
 
 ``get_loop`` method
