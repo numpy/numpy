@@ -444,7 +444,6 @@ sort_complex: Any
 source: Any
 split: Any
 stack: Any
-str0: Any
 string_: Any
 sys: Any
 take_along_axis: Any
@@ -1526,7 +1525,7 @@ class str_(character, str):
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
-unicode_ = str_
+unicode_ = str0 = str_
 
 # TODO(alan): Platform dependent types
 # longcomplex, longdouble, longfloat
