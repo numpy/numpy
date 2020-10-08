@@ -173,7 +173,7 @@ The functions `load`, and ``lib.format.read_array`` take an
 Potential changes to the random stream in old random module
 -----------------------------------------------------------
 Due to bugs in the application of ``log`` to random floating point numbers,
-the stream may change when sampling from `~numpy.random.RandomState.beta`,
+the stream may change when sampling from `~random.RandomState.beta`,
 `~random.RandomState.binomial`, `~random.RandomState.laplace`,
 `~random.RandomState.logistic`, `~random.RandomState.logseries` or
 `~random.RandomState.multinomial` if a ``0`` is generated in the underlying
@@ -555,4 +555,3 @@ Structured arrays indexed with non-existent fields raise ``KeyError`` not ``Valu
 ----------------------------------------------------------------------------------------
 ``arr['bad_field']`` on a structured type raises ``KeyError``, for consistency
 with ``dict['bad_field']``.
-
