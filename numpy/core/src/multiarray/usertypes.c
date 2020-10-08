@@ -196,7 +196,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         }
     }
     typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
-    descr->type_num = -1;
+    descr->type_num = typenum;
     if (PyDataType_ISUNSIZED(descr)) {
         PyErr_SetString(PyExc_ValueError, "cannot register a" \
                         "flexible data-type");
@@ -215,30 +215,17 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                         " is missing.");
         return -1;
     }
+    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Legacy user dtypes referencing python objects or generally "
+                "allocated memory are unsupported. "
+                "If you see this error in an existing, working code base, "
+                "please contact the NumPy developers.");
+        return -1;
+    }
     if (descr->typeobj == NULL) {
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
-    }
-    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
-        /*
-         * User dtype can't actually do reference counting, however, there
-         * are existing hacks (e.g. xpress), which use a structured one:
-         *     dtype((xpress.var, [('variable', 'O')]))
-         * so we have to support this. But such a structure must be constant
-         * (i.e. fixed at registration time, this is the case for `xpress`).
-         */
-        if (descr->names == NULL || descr->fields == NULL ||
-            !PyDict_CheckExact(descr->fields)) {
-            PyErr_Format(PyExc_ValueError,
-                    "Failed to register dtype for %S: Legacy user dtypes "
-                    "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are"
-                    "unsupported.  It is possible to create such a dtype only "
-                    "if it is a structured dtype with names and fields "
-                    "hardcoded at registration time.\n"
-                    "Please contact the NumPy developers if this used to work "
-                    "but now fails.", descr->typeobj);
-            return -1;
-        }
     }
 
     if (test_deprecated_arrfuncs_members(f) < 0) {
@@ -256,7 +243,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     if (dtypemeta_wrap_legacy_descriptor(descr) < 0) {
         return -1;
     }
-    descr->type_num = typenum;
+
     return typenum;
 }
 
@@ -316,7 +303,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     if (!PyTypeNum_ISUSERDEF(descr->type_num) &&
                                         !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_ValueError,
-                        "At least one of the types provided to "
+                        "At least one of the types provided to"
                         "RegisterCanCast must be user-defined.");
         return -1;
     }

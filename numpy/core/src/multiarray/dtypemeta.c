@@ -467,28 +467,10 @@ object_common_dtype(
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 {
-    int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
-
-    if (!has_type_set) {
-        /* Accept if the type was filled in from an existing builtin dtype */
-        for (int i = 0; i < NPY_NTYPES; i++) {
-            PyArray_Descr *builtin = PyArray_DescrFromType(i);
-            has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
-            Py_DECREF(builtin);
-            if (has_type_set) {
-                break;
-            }
-        }
-    }
-    if (!has_type_set) {
+    if (Py_TYPE(descr) != &PyArrayDescr_Type) {
         PyErr_Format(PyExc_RuntimeError,
                 "During creation/wrapping of legacy DType, the original class "
-                "was not of PyArrayDescr_Type (it is replaced in this step). "
-                "The extension creating a custom DType for type %S must be "
-                "modified to ensure `Py_TYPE(descr) == &PyArrayDescr_Type` or "
-                "that of an existing dtype (with the assumption it is just "
-                "copied over and can be replaced).",
-                descr->typeobj, Py_TYPE(descr));
+                "was not PyArrayDescr_Type (it is replaced in this step).");
         return -1;
     }
 
