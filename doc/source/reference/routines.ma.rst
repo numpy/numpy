@@ -23,8 +23,12 @@ From existing data
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/class.rst
 
    ma.masked_array
+
+   :template: autosummary/ma/method.rst
+
    ma.array
    ma.copy
    ma.frombuffer
@@ -38,6 +42,7 @@ Ones and zeros
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.empty
    ma.empty_like
@@ -54,6 +59,7 @@ Inspecting the array
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.all
    ma.any
@@ -93,6 +99,7 @@ Changing the shape
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.ravel
    ma.reshape
@@ -108,6 +115,7 @@ Modifying axes
 ~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.swapaxes
    ma.transpose
@@ -120,6 +128,7 @@ Changing the number of dimensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.atleast_1d
    ma.atleast_2d
@@ -144,6 +153,7 @@ Joining arrays
 ~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.concatenate
    ma.stack
@@ -163,6 +173,7 @@ Creating a mask
 ~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.make_mask
    ma.make_mask_none
@@ -174,6 +185,7 @@ Accessing a mask
 ~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.getmask
    ma.getmaskarray
@@ -184,6 +196,7 @@ Finding masked data
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.flatnotmasked_contiguous
    ma.flatnotmasked_edges
@@ -197,6 +210,7 @@ Modifying a mask
 ~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.mask_cols
    ma.mask_or
@@ -220,6 +234,7 @@ Conversion operations
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.asarray
    ma.asanyarray
@@ -242,6 +257,7 @@ Conversion operations
 ~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.compress_cols
    ma.compress_rowcols
@@ -257,6 +273,7 @@ Conversion operations
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.MaskedArray.tofile
    ma.MaskedArray.tolist
@@ -268,6 +285,7 @@ Filling a masked array
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.common_fill_value
    ma.default_fill_value
@@ -291,6 +309,7 @@ Arithmetics
 ~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.anom
    ma.anomalies
@@ -322,6 +341,7 @@ Minimum/maximum
 ~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.argmax
    ma.argmin
@@ -340,6 +360,7 @@ Sorting
 ~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.argsort
    ma.sort
@@ -351,6 +372,7 @@ Algebra
 ~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.diag
    ma.dot
@@ -370,6 +392,7 @@ Polynomial fit
 ~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.vander
    ma.polyfit
@@ -379,6 +402,7 @@ Clipping and rounding
 ~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.around
    ma.clip
@@ -392,6 +416,7 @@ Miscellanea
 ~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    ma.allequal
    ma.allclose

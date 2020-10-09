@@ -90,6 +90,7 @@ As :class:`MaskedArray` is a subclass of :class:`~numpy.ndarray`, a masked array
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/attribute.rst
 
    MaskedArray.base
    MaskedArray.ctypes
@@ -122,6 +123,7 @@ Conversion
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__float__
    MaskedArray.__int__
@@ -148,6 +150,7 @@ replaced with ``n`` integers which will be interpreted as an n-tuple.
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.flatten
    MaskedArray.ravel
@@ -169,6 +172,7 @@ the operation should proceed.
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.argmax
    MaskedArray.argmin
@@ -191,6 +195,7 @@ Pickling and copy
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.copy
    MaskedArray.dump
@@ -202,6 +207,7 @@ Calculations
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.all
    MaskedArray.anom
@@ -234,6 +240,7 @@ Comparison operators:
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__lt__
    MaskedArray.__le__
@@ -247,6 +254,7 @@ Truth value of an array (:func:`bool()`):
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__bool__
 
@@ -256,6 +264,7 @@ Arithmetic:
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__abs__
    MaskedArray.__add__
@@ -292,6 +301,7 @@ Arithmetic, in-place:
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__iadd__
    MaskedArray.__isub__
@@ -313,6 +323,7 @@ Representation
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__repr__
    MaskedArray.__str__
@@ -328,6 +339,7 @@ For standard library functions:
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__copy__
    MaskedArray.__deepcopy__
@@ -339,6 +351,7 @@ Basic customization:
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__new__
    MaskedArray.__array__
@@ -348,6 +361,7 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__len__
    MaskedArray.__getitem__
@@ -368,6 +382,7 @@ manipulate the mask.
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.__setmask__
 
@@ -382,6 +397,7 @@ Handling the `fill_value`
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.get_fill_value
    MaskedArray.set_fill_value
@@ -393,5 +409,6 @@ Counting the missing elements
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/ma/method.rst
 
    MaskedArray.count
