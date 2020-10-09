@@ -231,12 +231,14 @@ as::
 
 The flags member may consist of 5 bits showing how the data should be
 interpreted and one bit showing how the Interface should be
-interpreted.  The data-bits are :const:`CONTIGUOUS` (0x1),
-:const:`FORTRAN` (0x2), :const:`ALIGNED` (0x100), :const:`NOTSWAPPED`
-(0x200), and :const:`WRITEABLE` (0x400).  A final flag
-:const:`ARR_HAS_DESCR` (0x800) indicates whether or not this structure
+interpreted.  The data-bits are :c:macro:`NPY_ARRAY_C_CONTIGUOUS` (0x1),
+:c:macro:`NPY_ARRAY_F_CONTIGUOUS` (0x2), :c:macro:`NPY_ARRAY_ALIGNED` (0x100),
+:c:macro:`NPY_ARRAY_NOTSWAPPED` (0x200), and :c:macro:`NPY_ARRAY_WRITEABLE` (0x400).  A final flag
+:c:macro:`NPY_ARR_HAS_DESCR` (0x800) indicates whether or not this structure
 has the arrdescr field.  The field should not be accessed unless this
 flag is present.
+
+   .. c:macro:: NPY_ARR_HAS_DESCR
 
 .. admonition:: New since June 16, 2006:
 

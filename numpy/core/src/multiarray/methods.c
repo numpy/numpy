@@ -844,6 +844,20 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (ret == NULL) {
             return NULL;
         }
+        /* NumPy 1.20, 2020-10-01 */
+        if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) && DEPRECATE(
+                "using a dtype with a subarray field is deprecated.  "
+                "This can lead to inconsistent behaviour due to the resulting "
+                "dtype being different from the input dtype.  "
+                "You may try to use `dtype=dtype.base`, which should give the "
+                "same result for most inputs, but does not guarantee the "
+                "output dimensions to match the subarray ones.  "
+                "For `arr.astype()` the old, surprising, behaviour can be "
+                "retained using `res = np.empty(arr.shape, dtype)` followed"
+                "by `res[...] = arr`.  (Deprecated NumPy 1.20)")) {
+            Py_DECREF(ret);
+            return NULL;
+        }
 
         if (PyArray_CopyInto(ret, self) < 0) {
             Py_DECREF(ret);

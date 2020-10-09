@@ -36,6 +36,7 @@ def get_test_cases(directory):
                 )
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_success(path):
@@ -50,6 +51,7 @@ def test_success(path):
     assert re.match(r"Success: no issues found in \d+ source files?", stdout.strip())
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(FAIL_DIR))
 def test_fail(path):
@@ -99,6 +101,7 @@ def test_fail(path):
             pytest.fail(f"Error {repr(errors[lineno])} not found")
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(REVEAL_DIR))
 def test_reveal(path):
@@ -130,6 +133,7 @@ def test_reveal(path):
         assert marker in error_line
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_code_runs(path):

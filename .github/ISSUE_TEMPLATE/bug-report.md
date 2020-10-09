@@ -1,3 +1,8 @@
+---
+name: "Bug report"
+about: Report a bug. Not for security vulnerabilities -- see below.
+
+---
 
 <!-- Please describe the issue in detail here, and fill in the fields below -->
 
@@ -11,8 +16,6 @@ import numpy as np
 << your code here >>
 ```
 
-<!-- Remove these sections for a feature request -->
-
 ### Error message:
 
 <!-- If you are reporting a segfault please include a GDB traceback, which you
@@ -21,7 +24,7 @@ https://github.com/numpy/numpy/blob/master/doc/source/dev/development_environmen
 
 <!-- Full error message, if any (starting from line Traceback: ...) -->
 
-### Numpy/Python version information:
+### NumPy/Python version information:
 
 <!-- Output from 'import sys, numpy; print(numpy.__version__, sys.version)' -->
 

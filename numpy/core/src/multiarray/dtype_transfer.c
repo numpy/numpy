@@ -1322,95 +1322,21 @@ get_unicode_to_datetime_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
+
 static int
-get_nbo_cast_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api,
-                            int *out_needs_wrap)
+get_legacy_dtype_cast_function(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
+        int *out_needs_api, int *out_needs_wrap)
 {
     _strided_cast_data *data;
     PyArray_VectorUnaryFunc *castfunc;
     PyArray_Descr *tmp_dtype;
-    npy_intp shape = 1, src_itemsize = src_dtype->elsize,
-            dst_itemsize = dst_dtype->elsize;
-
-    if (PyTypeNum_ISNUMBER(src_dtype->type_num) &&
-                    PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
-        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                          !PyArray_ISNBO(dst_dtype->byteorder);
-        return get_nbo_cast_numeric_transfer_function(aligned,
-                                    src_stride, dst_stride,
-                                    src_dtype->type_num, dst_dtype->type_num,
-                                    out_stransfer, out_transferdata);
-    }
-
-    if (src_dtype->type_num == NPY_DATETIME ||
-            src_dtype->type_num == NPY_TIMEDELTA ||
-            dst_dtype->type_num == NPY_DATETIME ||
-            dst_dtype->type_num == NPY_TIMEDELTA) {
-        /* A parameterized type, datetime->datetime sometimes needs casting */
-        if ((src_dtype->type_num == NPY_DATETIME &&
-                    dst_dtype->type_num == NPY_DATETIME) ||
-                (src_dtype->type_num == NPY_TIMEDELTA &&
-                    dst_dtype->type_num == NPY_TIMEDELTA)) {
-            *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                              !PyArray_ISNBO(dst_dtype->byteorder);
-            return get_nbo_cast_datetime_transfer_function(aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-        }
-
-        /*
-         * Datetime <-> string conversions can be handled specially.
-         * The functions may raise an error if the strings have no
-         * space, or can't be parsed properly.
-         */
-        if (src_dtype->type_num == NPY_DATETIME) {
-            switch (dst_dtype->type_num) {
-                case NPY_STRING:
-                    *out_needs_api = 1;
-                    *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
-                    return get_nbo_datetime_to_string_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-
-                case NPY_UNICODE:
-                    return get_datetime_to_unicode_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata,
-                                        out_needs_api);
-            }
-        }
-        else if (dst_dtype->type_num == NPY_DATETIME) {
-            switch (src_dtype->type_num) {
-                case NPY_STRING:
-                    *out_needs_api = 1;
-                    *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
-                    return get_nbo_string_to_datetime_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-
-                case NPY_UNICODE:
-                    return get_unicode_to_datetime_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata,
-                                        out_needs_api);
-            }
-        }
-    }
+    npy_intp shape = 1;
+    npy_intp src_itemsize = src_dtype->elsize;
+    npy_intp dst_itemsize = dst_dtype->elsize;
 
     *out_needs_wrap = !aligned ||
                       !PyArray_ISNBO(src_dtype->byteorder) ||
@@ -1543,6 +1469,167 @@ get_nbo_cast_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
+
+static int
+get_nbo_cast_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            int move_references,
+                            PyArray_StridedUnaryOp **out_stransfer,
+                            NpyAuxData **out_transferdata,
+                            int *out_needs_api,
+                            int *out_needs_wrap)
+{
+    if (PyTypeNum_ISNUMBER(src_dtype->type_num) &&
+                    PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
+        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                          !PyArray_ISNBO(dst_dtype->byteorder);
+        return get_nbo_cast_numeric_transfer_function(aligned,
+                                    src_stride, dst_stride,
+                                    src_dtype->type_num, dst_dtype->type_num,
+                                    out_stransfer, out_transferdata);
+    }
+
+    if (src_dtype->type_num == NPY_DATETIME ||
+            src_dtype->type_num == NPY_TIMEDELTA ||
+            dst_dtype->type_num == NPY_DATETIME ||
+            dst_dtype->type_num == NPY_TIMEDELTA) {
+        /* A parameterized type, datetime->datetime sometimes needs casting */
+        if ((src_dtype->type_num == NPY_DATETIME &&
+                    dst_dtype->type_num == NPY_DATETIME) ||
+                (src_dtype->type_num == NPY_TIMEDELTA &&
+                    dst_dtype->type_num == NPY_TIMEDELTA)) {
+            *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                              !PyArray_ISNBO(dst_dtype->byteorder);
+            return get_nbo_cast_datetime_transfer_function(aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+        }
+
+        /*
+         * Datetime <-> string conversions can be handled specially.
+         * The functions may raise an error if the strings have no
+         * space, or can't be parsed properly.
+         */
+        if (src_dtype->type_num == NPY_DATETIME) {
+            switch (dst_dtype->type_num) {
+                case NPY_STRING:
+                    *out_needs_api = 1;
+                    *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
+                    return get_nbo_datetime_to_string_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+
+                case NPY_UNICODE:
+                    return get_datetime_to_unicode_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata,
+                                        out_needs_api);
+            }
+        }
+        else if (dst_dtype->type_num == NPY_DATETIME) {
+            switch (src_dtype->type_num) {
+                case NPY_STRING:
+                    *out_needs_api = 1;
+                    *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
+                    return get_nbo_string_to_datetime_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+
+                case NPY_UNICODE:
+                    return get_unicode_to_datetime_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata,
+                                        out_needs_api);
+            }
+        }
+    }
+
+    return get_legacy_dtype_cast_function(
+            aligned, src_stride, dst_stride, src_dtype, dst_dtype,
+            move_references, out_stransfer, out_transferdata,
+            out_needs_api, out_needs_wrap);
+}
+
+
+static int
+wrap_aligned_contig_transfer_function_with_copyswapn(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
+        int *out_needs_api,
+        PyArray_StridedUnaryOp *caststransfer, NpyAuxData *castdata)
+{
+    NpyAuxData *todata = NULL, *fromdata = NULL;
+    PyArray_StridedUnaryOp *tobuffer, *frombuffer;
+    npy_intp src_itemsize = src_dtype->elsize;
+    npy_intp dst_itemsize = dst_dtype->elsize;
+
+    /* Get the copy/swap operation from src */
+    PyArray_GetDTypeCopySwapFn(
+            aligned, src_stride, src_itemsize, src_dtype, &tobuffer, &todata);
+
+    if (!PyDataType_REFCHK(dst_dtype)) {
+        /* Copying from buffer is a simple copy/swap operation */
+        PyArray_GetDTypeCopySwapFn(
+                aligned, dst_itemsize, dst_stride, dst_dtype,
+                &frombuffer, &fromdata);
+    }
+    else {
+        /*
+         * Since the buffer is initialized to NULL, need to move the
+         * references in order to DECREF the existing data.
+         */
+         /* Object types cannot be byte swapped */
+        assert(PyDataType_ISNOTSWAPPED(dst_dtype));
+        /* The loop already needs the python api if this is reached */
+        assert(*out_needs_api);
+
+        if (PyArray_GetDTypeTransferFunction(
+                aligned, dst_itemsize, dst_stride,
+                dst_dtype, dst_dtype, 1,
+                &frombuffer, &fromdata, out_needs_api) != NPY_SUCCEED) {
+            return NPY_FAIL;
+        }
+    }
+
+    if (frombuffer == NULL || tobuffer == NULL) {
+        NPY_AUXDATA_FREE(castdata);
+        NPY_AUXDATA_FREE(todata);
+        NPY_AUXDATA_FREE(fromdata);
+        return NPY_FAIL;
+    }
+
+    *out_stransfer = caststransfer;
+
+    /* Wrap it all up in a new transfer function + data */
+    if (wrap_aligned_contig_transfer_function(
+                        src_itemsize, dst_itemsize,
+                        tobuffer, todata,
+                        frombuffer, fromdata,
+                        caststransfer, castdata,
+                        PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
+                        *out_needs_api,
+                        out_stransfer, out_transferdata) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE(castdata);
+        NPY_AUXDATA_FREE(todata);
+        NPY_AUXDATA_FREE(fromdata);
+        return NPY_FAIL;
+    }
+
+    return NPY_SUCCEED;
+}
+
+
 static int
 get_cast_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
@@ -1553,10 +1640,8 @@ get_cast_transfer_function(int aligned,
                             int *out_needs_api)
 {
     PyArray_StridedUnaryOp *caststransfer;
-    NpyAuxData *castdata, *todata = NULL, *fromdata = NULL;
+    NpyAuxData *castdata;
     int needs_wrap = 0;
-    npy_intp src_itemsize = src_dtype->elsize,
-            dst_itemsize = dst_dtype->elsize;
 
     if (get_nbo_cast_transfer_function(aligned,
                             src_stride, dst_stride,
@@ -1581,64 +1666,10 @@ get_cast_transfer_function(int aligned,
     }
     /* Otherwise, we have to copy and/or swap to aligned temporaries */
     else {
-        PyArray_StridedUnaryOp *tobuffer, *frombuffer;
-
-        /* Get the copy/swap operation from src */
-        PyArray_GetDTypeCopySwapFn(aligned,
-                                src_stride, src_itemsize,
-                                src_dtype,
-                                &tobuffer, &todata);
-
-        if (!PyDataType_REFCHK(dst_dtype)) {
-            /* Copying from buffer is a simple copy/swap operation */
-            PyArray_GetDTypeCopySwapFn(aligned,
-                                    dst_itemsize, dst_stride,
-                                    dst_dtype,
-                                    &frombuffer, &fromdata);
-        }
-        else {
-            /*
-             * Since the buffer is initialized to NULL, need to move the
-             * references in order to DECREF the existing data.
-             */
-             /* Object types cannot be byte swapped */
-            assert(PyDataType_ISNOTSWAPPED(dst_dtype));
-            /* The loop already needs the python api if this is reached */
-            assert(*out_needs_api);
-
-            if (PyArray_GetDTypeTransferFunction(
-                    aligned, dst_itemsize, dst_stride,
-                    dst_dtype, dst_dtype, 1,
-                    &frombuffer, &fromdata, out_needs_api) != NPY_SUCCEED) {
-                return NPY_FAIL;
-            }
-        }
-
-        if (frombuffer == NULL || tobuffer == NULL) {
-            NPY_AUXDATA_FREE(castdata);
-            NPY_AUXDATA_FREE(todata);
-            NPY_AUXDATA_FREE(fromdata);
-            return NPY_FAIL;
-        }
-
-        *out_stransfer = caststransfer;
-
-        /* Wrap it all up in a new transfer function + data */
-        if (wrap_aligned_contig_transfer_function(
-                            src_itemsize, dst_itemsize,
-                            tobuffer, todata,
-                            frombuffer, fromdata,
-                            caststransfer, castdata,
-                            PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
-                            *out_needs_api,
-                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(castdata);
-            NPY_AUXDATA_FREE(todata);
-            NPY_AUXDATA_FREE(fromdata);
-            return NPY_FAIL;
-        }
-
-        return NPY_SUCCEED;
+        return wrap_aligned_contig_transfer_function_with_copyswapn(
+                aligned, src_stride, dst_stride, src_dtype, dst_dtype,
+                out_stransfer, out_transferdata, out_needs_api,
+                caststransfer, castdata);
     }
 }
 

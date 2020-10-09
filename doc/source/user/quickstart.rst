@@ -1,5 +1,5 @@
 ===================
-Quickstart tutorial
+NumPy quickstart
 ===================
 
 .. currentmodule:: numpy
@@ -12,26 +12,24 @@ Quickstart tutorial
 Prerequisites
 =============
 
-Before reading this tutorial you should know a bit of Python. If you
-would like to refresh your memory, take a look at the `Python
+You'll need to know a bit of Python. For a refresher, see the `Python
 tutorial <https://docs.python.org/tutorial/>`__.
 
-If you wish to work the examples in this tutorial, you must also have
-some software installed on your computer. Please see
-https://scipy.org/install.html for instructions.
+To work the examples, you'll need `matplotlib` installed
+in addition to NumPy.
 
 **Learner profile**
 
-This tutorial is intended as a quick overview of
-algebra and arrays in NumPy and want to understand how n-dimensional
+This is a quick overview of
+algebra and arrays in NumPy. It demonstrates how n-dimensional
 (:math:`n>=2`) arrays are represented and can be manipulated. In particular, if
 you don't know how to apply common functions to n-dimensional arrays (without
 using for-loops), or if you want to understand axis and shape properties for
-n-dimensional arrays, this tutorial might be of help.
+n-dimensional arrays, this article might be of help.
 
 **Learning Objectives**
 
-After this tutorial, you should be able to:
+After reading, you should be able to:
 
 - Understand the difference between one-, two- and n-dimensional arrays in
   NumPy;

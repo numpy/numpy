@@ -86,7 +86,7 @@ class BagObj:
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
-            raise AttributeError(key)
+            raise AttributeError(key) from None
 
     def __dir__(self):
         """
@@ -446,9 +446,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                                  "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except Exception:
+            except Exception as e:
                 raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file))
+                    "Failed to interpret file %s as a pickle" % repr(file)) from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -1435,10 +1435,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 try:
                     v = format % tuple(row) + newline
-                except TypeError:
+                except TypeError as e:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
-                                    % (str(X.dtype), format))
+                                    % (str(X.dtype), format)) from e
                 fh.write(v)
 
         if len(footer) > 0:

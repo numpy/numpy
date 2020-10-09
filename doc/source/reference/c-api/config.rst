@@ -52,12 +52,15 @@ information is available to the pre-processor.
 
 .. c:macro:: NPY_SIZEOF_LONG_DOUBLE
 
-    sizeof(longdouble) (A macro defines **NPY_SIZEOF_LONGDOUBLE** as well.)
+.. c:macro:: NPY_SIZEOF_LONGDOUBLE
+
+    sizeof(longdouble)
 
 .. c:macro:: NPY_SIZEOF_PY_INTPTR_T
 
-    Size of a pointer on this platform (sizeof(void \*)) (A macro defines
-    NPY_SIZEOF_INTP as well.)
+.. c:macro:: NPY_SIZEOF_INTP
+
+    Size of a pointer on this platform (sizeof(void \*))
 
 
 Platform information
@@ -101,6 +104,12 @@ Platform information
     Returns the endianness of the current platform.
     One of :c:data:`NPY_CPU_BIG`, :c:data:`NPY_CPU_LITTLE`,
     or :c:data:`NPY_CPU_UNKNOWN_ENDIAN`.
+
+    .. c:macro:: NPY_CPU_BIG
+
+    .. c:macro:: NPY_CPU_LITTLE
+
+    .. c:macro:: NPY_CPU_UNKNOWN_ENDIAN
 
 
 Compiler directives

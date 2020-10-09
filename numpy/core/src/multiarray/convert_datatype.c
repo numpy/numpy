@@ -1019,7 +1019,7 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
  * Returns a new reference to type if it is already NBO, otherwise
  * returns a copy converted to NBO.
  */
-static PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 ensure_dtype_nbo(PyArray_Descr *type)
 {
     if (PyArray_ISNBO(type->byteorder)) {
@@ -1031,6 +1031,99 @@ ensure_dtype_nbo(PyArray_Descr *type)
     }
 }
 
+
+/**
+ * This function should possibly become public API eventually.  At this
+ * time it is implemented by falling back to `PyArray_AdaptFlexibleDType`.
+ * We will use `CastingImpl[from, to].adjust_descriptors(...)` to implement
+ * this logic.
+ * Before that, the API needs to be reviewed though.
+ *
+ * WARNING: This function currently does not guarantee that `descr` can
+ *          actually be cast to the given DType.
+ *
+ * @param descr The dtype instance to adapt "cast"
+ * @param given_DType The DType class for which we wish to find an instance able
+ *        to represent `descr`.
+ * @returns Instance of `given_DType`. If `given_DType` is parametric the
+ *          descr may be adapted to hold it.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
+{
+    if (NPY_DTYPE(descr) == given_DType) {
+        Py_INCREF(descr);
+        return descr;
+    }
+    if (!given_DType->parametric) {
+        /*
+         * Don't actually do anything, the default is always the result
+         * of any cast.
+         */
+        return given_DType->default_descr(given_DType);
+    }
+    if (PyObject_TypeCheck((PyObject *)descr, (PyTypeObject *)given_DType)) {
+        Py_INCREF(descr);
+        return descr;
+    }
+
+    if (!given_DType->legacy) {
+        PyErr_SetString(PyExc_NotImplementedError,
+                "Must use casting to find the correct DType for a parametric "
+                "user DType. This is not yet implemented (this error should be "
+                "unreachable).");
+        return NULL;
+    }
+
+    PyArray_Descr *flex_dtype = PyArray_DescrNew(given_DType->singleton);
+    return PyArray_AdaptFlexibleDType(descr, flex_dtype);
+}
+
+
+/**
+ * This function defines the common DType operator.
+ *
+ * Note that the common DType will not be "object" (unless one of the dtypes
+ * is object), even though object can technically represent all values
+ * correctly.
+ *
+ * TODO: Before exposure, we should review the return value (e.g. no error
+ *       when no common DType is found).
+ *
+ * @param dtype1 DType class to find the common type for.
+ * @param dtype2 Second DType class.
+ * @return The common DType or NULL with an error set
+ */
+NPY_NO_EXPORT PyArray_DTypeMeta *
+PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+{
+    if (dtype1 == dtype2) {
+        Py_INCREF(dtype1);
+        return dtype1;
+    }
+
+    PyArray_DTypeMeta *common_dtype;
+
+    common_dtype = dtype1->common_dtype(dtype1, dtype2);
+    if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
+        Py_DECREF(common_dtype);
+        common_dtype = dtype2->common_dtype(dtype2, dtype1);
+    }
+    if (common_dtype == NULL) {
+        return NULL;
+    }
+    if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
+        Py_DECREF(Py_NotImplemented);
+        PyErr_Format(PyExc_TypeError,
+                "The DTypes %S and %S do not have a common DType. "
+                "For example they cannot be stored in a single array unless "
+                "the dtype is `object`.", dtype1, dtype2);
+        return NULL;
+    }
+    return common_dtype;
+}
+
+
 /*NUMPY_API
  * Produces the smallest size and lowest kind type to which both
  * input types can be cast.
@@ -1038,320 +1131,48 @@ ensure_dtype_nbo(PyArray_Descr *type)
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-    int type_num1, type_num2, ret_type_num;
+    PyArray_DTypeMeta *common_dtype;
+    PyArray_Descr *res;
 
-    /*
-     * Fast path for identical dtypes.
-     *
-     * Non-native-byte-order types are converted to native ones below, so we
-     * can't quit early.
-     */
+    /* Fast path for identical inputs (NOTE: This path preserves metadata!) */
     if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
         Py_INCREF(type1);
         return type1;
     }
 
-    type_num1 = type1->type_num;
-    type_num2 = type2->type_num;
-
-    /* If they're built-in types, use the promotion table */
-    if (type_num1 < NPY_NTYPES && type_num2 < NPY_NTYPES) {
-        ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
-        /*
-         * The table doesn't handle string/unicode/void/datetime/timedelta,
-         * so check the result
-         */
-        if (ret_type_num >= 0) {
-            return PyArray_DescrFromType(ret_type_num);
-        }
-    }
-    /* If one or both are user defined, calculate it */
-    else {
-        int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
-
-        if (PyArray_CanCastTo(type2, type1)) {
-            /* Promoted types are always native byte order */
-            return ensure_dtype_nbo(type1);
-        }
-        else if (PyArray_CanCastTo(type1, type2)) {
-            /* Promoted types are always native byte order */
-            return ensure_dtype_nbo(type2);
-        }
-
-        /* Convert the 'kind' char into a scalar kind */
-        switch (type1->kind) {
-            case 'b':
-                skind1 = NPY_BOOL_SCALAR;
-                break;
-            case 'u':
-                skind1 = NPY_INTPOS_SCALAR;
-                break;
-            case 'i':
-                skind1 = NPY_INTNEG_SCALAR;
-                break;
-            case 'f':
-                skind1 = NPY_FLOAT_SCALAR;
-                break;
-            case 'c':
-                skind1 = NPY_COMPLEX_SCALAR;
-                break;
-        }
-        switch (type2->kind) {
-            case 'b':
-                skind2 = NPY_BOOL_SCALAR;
-                break;
-            case 'u':
-                skind2 = NPY_INTPOS_SCALAR;
-                break;
-            case 'i':
-                skind2 = NPY_INTNEG_SCALAR;
-                break;
-            case 'f':
-                skind2 = NPY_FLOAT_SCALAR;
-                break;
-            case 'c':
-                skind2 = NPY_COMPLEX_SCALAR;
-                break;
-        }
-
-        /* If both are scalars, there may be a promotion possible */
-        if (skind1 != NPY_NOSCALAR && skind2 != NPY_NOSCALAR) {
-
-            /* Start with the larger scalar kind */
-            skind = (skind1 > skind2) ? skind1 : skind2;
-            ret_type_num = _npy_smallest_type_of_kind_table[skind];
-
-            for (;;) {
-
-                /* If there is no larger type of this kind, try a larger kind */
-                if (ret_type_num < 0) {
-                    ++skind;
-                    /* Use -1 to signal no promoted type found */
-                    if (skind < NPY_NSCALARKINDS) {
-                        ret_type_num = _npy_smallest_type_of_kind_table[skind];
-                    }
-                    else {
-                        break;
-                    }
-                }
-
-                /* If we found a type to which we can promote both, done! */
-                if (PyArray_CanCastSafely(type_num1, ret_type_num) &&
-                            PyArray_CanCastSafely(type_num2, ret_type_num)) {
-                    return PyArray_DescrFromType(ret_type_num);
-                }
-
-                /* Try the next larger type of this kind */
-                ret_type_num = _npy_next_larger_type_table[ret_type_num];
-            }
-
-        }
-
-        PyErr_SetString(PyExc_TypeError,
-                "invalid type promotion with custom data type");
+    common_dtype = PyArray_CommonDType(NPY_DTYPE(type1), NPY_DTYPE(type2));
+    if (common_dtype == NULL) {
         return NULL;
     }
 
-    switch (type_num1) {
-        /* BOOL can convert to anything except datetime/void */
-        case NPY_BOOL:
-            if (type_num2 == NPY_STRING || type_num2 == NPY_UNICODE) {
-                int char_size = 1;
-                if (type_num2 == NPY_UNICODE) {
-                    char_size = 4;
-                }
-                if (type2->elsize < 5 * char_size) {
-                    PyArray_Descr *ret = NULL;
-                    PyArray_Descr *temp = PyArray_DescrNew(type2);
-                    ret = ensure_dtype_nbo(temp);
-                    ret->elsize = 5 * char_size;
-                    Py_DECREF(temp);
-                    return ret;
-                }
-                return ensure_dtype_nbo(type2);
-            }
-            else if (type_num2 != NPY_DATETIME && type_num2 != NPY_VOID) {
-                return ensure_dtype_nbo(type2);
-            }
-            break;
-        /* For strings and unicodes, take the larger size */
-        case NPY_STRING:
-            if (type_num2 == NPY_STRING) {
-                if (type1->elsize > type2->elsize) {
-                    return ensure_dtype_nbo(type1);
-                }
-                else {
-                    return ensure_dtype_nbo(type2);
-                }
-            }
-            else if (type_num2 == NPY_UNICODE) {
-                if (type2->elsize >= type1->elsize * 4) {
-                    return ensure_dtype_nbo(type2);
-                }
-                else {
-                    PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
-                    if (d == NULL) {
-                        return NULL;
-                    }
-                    d->elsize = type1->elsize * 4;
-                    return d;
-                }
-            }
-            /* Allow NUMBER -> STRING */
-            else if (PyTypeNum_ISNUMBER(type_num2)) {
-                PyArray_Descr *ret = NULL;
-                PyArray_Descr *temp = PyArray_DescrNew(type1);
-                PyDataType_MAKEUNSIZED(temp);
-
-                temp = PyArray_AdaptFlexibleDType(type2, temp);
-                if (temp == NULL) {
-                    return NULL;
-                }
-                if (temp->elsize > type1->elsize) {
-                    ret = ensure_dtype_nbo(temp);
-                }
-                else {
-                    ret = ensure_dtype_nbo(type1);
-                }
-                Py_DECREF(temp);
-                return ret;
-            }
-            break;
-        case NPY_UNICODE:
-            if (type_num2 == NPY_UNICODE) {
-                if (type1->elsize > type2->elsize) {
-                    return ensure_dtype_nbo(type1);
-                }
-                else {
-                    return ensure_dtype_nbo(type2);
-                }
-            }
-            else if (type_num2 == NPY_STRING) {
-                if (type1->elsize >= type2->elsize * 4) {
-                    return ensure_dtype_nbo(type1);
-                }
-                else {
-                    PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
-                    if (d == NULL) {
-                        return NULL;
-                    }
-                    d->elsize = type2->elsize * 4;
-                    return d;
-                }
-            }
-            /* Allow NUMBER -> UNICODE */
-            else if (PyTypeNum_ISNUMBER(type_num2)) {
-                PyArray_Descr *ret = NULL;
-                PyArray_Descr *temp = PyArray_DescrNew(type1);
-                PyDataType_MAKEUNSIZED(temp);
-                temp = PyArray_AdaptFlexibleDType(type2, temp);
-                if (temp == NULL) {
-                    return NULL;
-                }
-                if (temp->elsize > type1->elsize) {
-                    ret = ensure_dtype_nbo(temp);
-                }
-                else {
-                    ret = ensure_dtype_nbo(type1);
-                }
-                Py_DECREF(temp);
-                return ret;
-            }
-            break;
-        case NPY_DATETIME:
-        case NPY_TIMEDELTA:
-            if (type_num2 == NPY_DATETIME || type_num2 == NPY_TIMEDELTA) {
-                return datetime_type_promotion(type1, type2);
-            }
-            break;
+    if (!common_dtype->parametric) {
+        res = common_dtype->default_descr(common_dtype);
+        Py_DECREF(common_dtype);
+        return res;
     }
 
-    switch (type_num2) {
-        /* BOOL can convert to almost anything */
-        case NPY_BOOL:
-            if (type_num2 == NPY_STRING || type_num2 == NPY_UNICODE) {
-                int char_size = 1;
-                if (type_num2 == NPY_UNICODE) {
-                    char_size = 4;
-                }
-                if (type2->elsize < 5 * char_size) {
-                    PyArray_Descr *ret = NULL;
-                    PyArray_Descr *temp = PyArray_DescrNew(type2);
-                    ret = ensure_dtype_nbo(temp);
-                    ret->elsize = 5 * char_size;
-                    Py_DECREF(temp);
-                    return ret;
-                }
-                return ensure_dtype_nbo(type2);
-            }
-            else if (type_num1 != NPY_DATETIME && type_num1 != NPY_TIMEDELTA &&
-                                    type_num1 != NPY_VOID) {
-                return ensure_dtype_nbo(type1);
-            }
-            break;
-        case NPY_STRING:
-            /* Allow NUMBER -> STRING */
-            if (PyTypeNum_ISNUMBER(type_num1)) {
-                PyArray_Descr *ret = NULL;
-                PyArray_Descr *temp = PyArray_DescrNew(type2);
-                PyDataType_MAKEUNSIZED(temp);
-                temp = PyArray_AdaptFlexibleDType(type1, temp);
-                if (temp == NULL) {
-                    return NULL;
-                }
-                if (temp->elsize > type2->elsize) {
-                    ret = ensure_dtype_nbo(temp);
-                }
-                else {
-                    ret = ensure_dtype_nbo(type2);
-                }
-                Py_DECREF(temp);
-                return ret;
-            }
-            break;
-        case NPY_UNICODE:
-            /* Allow NUMBER -> UNICODE */
-            if (PyTypeNum_ISNUMBER(type_num1)) {
-                PyArray_Descr *ret = NULL;
-                PyArray_Descr *temp = PyArray_DescrNew(type2);
-                PyDataType_MAKEUNSIZED(temp);
-                temp = PyArray_AdaptFlexibleDType(type1, temp);
-                if (temp == NULL) {
-                    return NULL;
-                }
-                if (temp->elsize > type2->elsize) {
-                    ret = ensure_dtype_nbo(temp);
-                }
-                else {
-                    ret = ensure_dtype_nbo(type2);
-                }
-                Py_DECREF(temp);
-                return ret;
-            }
-            break;
-        case NPY_TIMEDELTA:
-            if (PyTypeNum_ISSIGNED(type_num1)) {
-                return ensure_dtype_nbo(type2);
-            }
-            break;
+    /* Cast the input types to the common DType if necessary */
+    type1 = PyArray_CastDescrToDType(type1, common_dtype);
+    if (type1 == NULL) {
+        Py_DECREF(common_dtype);
+        return NULL;
     }
-
-    /* For types equivalent up to endianness, can return either */
-    if (PyArray_CanCastTypeTo(type1, type2, NPY_EQUIV_CASTING)) {
-        return ensure_dtype_nbo(type1);
+    type2 = PyArray_CastDescrToDType(type2, common_dtype);
+    if (type2 == NULL) {
+        Py_DECREF(type1);
+        Py_DECREF(common_dtype);
+        return NULL;
     }
-
-    /* TODO: Also combine fields, subarrays, strings, etc */
 
     /*
-    printf("invalid type promotion: ");
-    PyObject_Print(type1, stdout, 0);
-    printf(" ");
-    PyObject_Print(type2, stdout, 0);
-    printf("\n");
-    */
-    PyErr_SetString(PyExc_TypeError, "invalid type promotion");
-    return NULL;
+     * And find the common instance of the two inputs
+     * NOTE: Common instance preserves metadata (normally and of one input)
+     */
+    res = common_dtype->common_instance(type1, type2);
+    Py_DECREF(type1);
+    Py_DECREF(type2);
+    Py_DECREF(common_dtype);
+    return res;
 }
 
 /*

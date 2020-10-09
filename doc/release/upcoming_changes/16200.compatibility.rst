@@ -8,14 +8,26 @@ error::
 
     np.array([np.float64(np.nan)], dtype=np.int64)
 
-will succeed at this time (this may change) and return an undefined result
-(usually the smallest possible integer).  This also affects assignments::
+will succeed and return an undefined result (usually the smallest possible
+integer).  This also affects assignments::
 
     arr[0] = np.float64(np.nan)
 
-Note, this already happened for ``np.array(np.float64(np.nan), dtype=np.int64)``
-and that the behaviour is unchanged for ``np.nan`` itself which is a Python
-float.
+At this time, NumPy retains the behaviour for::
+
+    np.array(np.float64(np.nan), dtype=np.int64)
+
+The above changes do not affect Python scalars:
+
+    np.array([float("NaN")], dtype=np.int64)
+
+remains unaffected (``np.nan`` is a Python ``float``, not a NumPy one).
+Unlike signed integers, unsigned integers do not retain this special case,
+since they always behaved more like casting.
+The following code stops raising an error::
+
+    np.array([np.float64(np.nan)], dtype=np.uint64)
+
 To avoid backward compatibility issues, at this time assignment from
 ``datetime64`` scalar to strings of too short length remains supported.
 This means that ``np.asarray(np.datetime64("2020-10-10"), dtype="S5")``

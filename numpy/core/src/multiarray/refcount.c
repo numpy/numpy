@@ -292,20 +292,22 @@ static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 {
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
-        if ((obj == Py_None) || (PyInt_Check(obj) && PyLong_AsLong(obj)==0)) {
+        PyObject *arr;
+
+        if ((obj == Py_None) ||
+                (PyLong_Check(obj) && PyLong_AsLong(obj) == 0)) {
             return;
         }
-        else {
-            PyObject *arr;
-            Py_INCREF(dtype);
-            arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                       0, NULL, NULL, NULL,
-                                       0, NULL);
-            if (arr!=NULL) {
-                dtype->f->setitem(obj, optr, arr);
-            }
-            Py_XDECREF(arr);
+        /* Clear possible long conversion error */
+        PyErr_Clear();
+        Py_INCREF(dtype);
+        arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
+                                   0, NULL, NULL, NULL,
+                                   0, NULL);
+        if (arr!=NULL) {
+            dtype->f->setitem(obj, optr, arr);
         }
+        Py_XDECREF(arr);
     }
     if (dtype->type_num == NPY_OBJECT) {
         Py_XINCREF(obj);

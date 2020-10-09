@@ -1,8 +1,8 @@
 import sys
 from typing import overload, Tuple, Union, Sequence, Any
 
-from numpy import ndarray, inexact, _NumberLike
-from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
+from numpy import ndarray, inexact
+from numpy.typing import ArrayLike, DtypeLike, _SupportsArray, _NumberLike
 
 if sys.version_info >= (3, 8):
     from typing import SupportsIndex, Literal

@@ -415,6 +415,89 @@ def get_standard_file(fname):
     return filenames
 
 
+def _parse_env_order(base_order, env):
+    """ Parse an environment variable `env` by splitting with "," and only returning elements from `base_order`
+
+    This method will sequence the environment variable and check for their invidual elements in `base_order`.
+
+    The items in the environment variable may be negated via '^item' or '!itema,itemb'.
+    It must start with ^/! to negate all options.
+
+    Raises
+    ------
+    ValueError: for mixed negated and non-negated orders or multiple negated orders
+
+    Parameters
+    ----------
+    base_order : list of str
+       the base list of orders
+    env : str
+       the environment variable to be parsed, if none is found, `base_order` is returned
+
+    Returns
+    -------
+    allow_order : list of str
+        allowed orders in lower-case
+    unknown_order : list of str
+        for values not overlapping with `base_order`
+    """
+    order_str = os.environ.get(env, None)
+
+    # ensure all base-orders are lower-case (for easier comparison)
+    base_order = [order.lower() for order in base_order]
+    if order_str is None:
+        return base_order, []
+
+    neg = order_str.startswith('^') or order_str.startswith('!')
+    # Check format
+    order_str_l = list(order_str)
+    sum_neg = order_str_l.count('^') + order_str_l.count('!')
+    if neg:
+        if sum_neg > 1:
+            raise ValueError(f"Environment variable '{env}' may only contain a single (prefixed) negation: {order_str}")
+        # remove prefix
+        order_str = order_str[1:]
+    elif sum_neg > 0:
+        raise ValueError(f"Environment variable '{env}' may not mix negated an non-negated items: {order_str}")
+
+    # Split and lower case
+    orders = order_str.lower().split(',')
+
+    # to inform callee about non-overlapping elements
+    unknown_order = []
+
+    # if negated, we have to remove from the order
+    if neg:
+        allow_order = base_order.copy()
+
+        for order in orders:
+            if not order:
+                continue
+
+            if order not in base_order:
+                unknown_order.append(order)
+                continue
+
+            if order in allow_order:
+                allow_order.remove(order)
+
+    else:
+        allow_order = []
+
+        for order in orders:
+            if not order:
+                continue
+
+            if order not in base_order:
+                unknown_order.append(order)
+                continue
+
+            if order not in allow_order:
+                allow_order.append(order)
+
+    return allow_order, unknown_order
+
+
 def get_info(name, notfound_action=0):
     """
     notfound_action:
@@ -1766,24 +1849,11 @@ class lapack_opt_info(system_info):
         return getattr(self, '_calc_info_{}'.format(name))()
 
     def calc_info(self):
-        user_order = os.environ.get(self.order_env_var_name, None)
-        if user_order is None:
-            lapack_order = self.lapack_order
-        else:
-            # the user has requested the order of the
-            # check they are all in the available list, a COMMA SEPARATED list
-            user_order = user_order.lower().split(',')
-            non_existing = []
-            lapack_order = []
-            for order in user_order:
-                if order in self.lapack_order:
-                    lapack_order.append(order)
-                elif len(order) > 0:
-                    non_existing.append(order)
-            if len(non_existing) > 0:
-                raise ValueError("lapack_opt_info user defined "
-                                 "LAPACK order has unacceptable "
-                                 "values: {}".format(non_existing))
+        lapack_order, unknown_order = _parse_env_order(self.lapack_order, self.order_env_var_name)
+        if len(unknown_order) > 0:
+            raise ValueError("lapack_opt_info user defined "
+                             "LAPACK order has unacceptable "
+                             "values: {}".format(unknown_order))
 
         for lapack in lapack_order:
             if self._calc_info(lapack):
@@ -1911,22 +1981,9 @@ class blas_opt_info(system_info):
         return getattr(self, '_calc_info_{}'.format(name))()
 
     def calc_info(self):
-        user_order = os.environ.get(self.order_env_var_name, None)
-        if user_order is None:
-            blas_order = self.blas_order
-        else:
-            # the user has requested the order of the
-            # check they are all in the available list
-            user_order = user_order.lower().split(',')
-            non_existing = []
-            blas_order = []
-            for order in user_order:
-                if order in self.blas_order:
-                    blas_order.append(order)
-                elif len(order) > 0:
-                    non_existing.append(order)
-            if len(non_existing) > 0:
-                raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
+        blas_order, unknown_order = _parse_env_order(self.blas_order, self.order_env_var_name)
+        if len(unknown_order) > 0:
+            raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(unknown_order))
 
         for blas in blas_order:
             if self._calc_info(blas):

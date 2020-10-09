@@ -1839,6 +1839,10 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
             PyArray_DTypeMeta *cls, PyTypeObject *obj);
 
     typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
+    typedef PyArray_DTypeMeta *(common_dtype_function)(
+            PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtyep2);
+    typedef PyArray_Descr *(common_instance_function)(
+            PyArray_Descr *dtype1, PyArray_Descr *dtyep2);
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
@@ -1894,6 +1898,8 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
         discover_descr_from_pyobject_function *discover_descr_from_pyobject;
         is_known_scalar_type_function *is_known_scalar_type;
         default_descr_function *default_descr;
+        common_dtype_function *common_dtype;
+        common_instance_function *common_instance;
     };
 
 #endif  /* NPY_INTERNAL_BUILD */

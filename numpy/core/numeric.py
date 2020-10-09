@@ -409,7 +409,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
 
     >>> y = np.arange(6, dtype=np.double)
     >>> np.full_like(y, 0.1)
-    array([0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
+    array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)

@@ -217,11 +217,11 @@ stages:
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
             OPENBLAS_SUFFIX: '64_'
-          PyPy36-32bit:
-            PYTHON_VERSION: 'PyPy3.6'
-            PYTHON_ARCH: 'x32'
-            TEST_MODE: fast
-            BITS: 32
+          #PyPy36-32bit:
+            #PYTHON_VERSION: 'PyPy3.6'
+            #PYTHON_ARCH: 'x32'
+            #TEST_MODE: fast
+            #BITS: 32
     steps:
     - template: azure-steps-windows.yml
   - job: Linux_PyPy3

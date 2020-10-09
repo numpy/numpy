@@ -2,6 +2,7 @@ import sys
 from typing import Any, overload, Sequence, TYPE_CHECKING, Union
 
 from numpy import ndarray
+from ._scalars import _ScalarLike
 from ._dtype_like import DtypeLike
 
 if sys.version_info >= (3, 8):
@@ -31,4 +32,9 @@ else:
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
+ArrayLike = Union[
+    _ScalarLike,
+    Sequence[_ScalarLike],
+    Sequence[Sequence[Any]],  # TODO: Wait for support for recursive types
+    _SupportsArray,
+]

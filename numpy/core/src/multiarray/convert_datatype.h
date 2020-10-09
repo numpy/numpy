@@ -10,6 +10,9 @@ PyArray_ObjectType(PyObject *op, int minimum_type);
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn);
 
+NPY_NO_EXPORT PyArray_DTypeMeta *
+PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
+
 NPY_NO_EXPORT int
 PyArray_ValidType(int type);
 
@@ -17,6 +20,9 @@ PyArray_ValidType(int type);
 NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
                     PyArray_Descr *to, NPY_CASTING casting);
+
+NPY_NO_EXPORT PyArray_Descr *
+ensure_dtype_nbo(PyArray_Descr *type);
 
 NPY_NO_EXPORT int
 should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
@@ -48,5 +54,8 @@ npy_set_invalid_cast_error(
  */
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptFlexibleDType(PyArray_Descr *data_dtype, PyArray_Descr *flex_dtype);
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
 
 #endif

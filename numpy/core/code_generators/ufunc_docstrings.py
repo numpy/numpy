@@ -2646,8 +2646,8 @@ add_newdoc('numpy.core.umath', 'matmul',
     Raises
     ------
     ValueError
-        If the last dimension of `a` is not the same size as
-        the second-to-last dimension of `b`.
+        If the last dimension of `x1` is not the same size as
+        the second-to-last dimension of `x2`.
 
         If a scalar value is passed in.
 
