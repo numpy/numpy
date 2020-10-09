@@ -232,7 +232,8 @@ SHA256
     sh(f"pandoc -s -o {md_readme} {rst_readme}")
 
     # Sign files
-    if hasattr(options, 'gpg_key'):
+    # Release Notes always key gpg signed
+    if hasattr(options, 'gpg_key') or notes != '':
         cmd = f'gpg --clearsign --armor --default_key {options.gpg_key}'
     else:
         cmd = 'gpg --clearsign --armor'
