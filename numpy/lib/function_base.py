@@ -2326,8 +2326,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
         .. versionadded:: 1.10
     dtype : data-type, optional
-        Data-type of the result. By default, the return data-type is
-        `numpy.float64`.
+        Data-type of the result. By default, the return data-type will have
+        at least `numpy.float64` precision.
 
         .. versionadded:: 1.20
 
@@ -2536,8 +2536,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
 
         .. deprecated:: 1.10.0
     dtype : data-type, optional
-        Data-type of the result. By default, the return data-type is
-        `numpy.float64`.
+        Data-type of the result. By default, the return data-type will have
+        at least `numpy.float64` precision.
 
         .. versionadded:: 1.20
 
