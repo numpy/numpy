@@ -168,6 +168,7 @@ def main(argv):
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
+        write_type_hints(site_dir)
     else:
         _temp = __import__(PROJECT_MODULE)
         site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
@@ -595,6 +596,14 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
                 line = line.replace(key, val)
             wfd.write(line)
     return False
+
+def write_type_hints(site_dir, filename='numpy/typing/_dynamic_types.pyi'):
+    """Generate a stub file for system-specific types and/or aliases."""
+    from tools.generate_type_hints import generate_alias
+
+    abspath = os.path.join(site_dir, filename)
+    generate_alias(abspath)
+
 
 #
 # GCOV support
