@@ -605,7 +605,9 @@ def write_type_hints(site_dir, filename='numpy/typing/_platform_aliases.pyi'):
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
     with open(log_filename, 'a') as log:
-        log.write(f"creating platform-specific aliases: {abspath!r}")
+        msg = f"creating platform-specific aliases: {abspath!r}"
+        print(msg)
+        log.write(msg)
 
     with open(abspath, 'w', encoding='utf8') as f:
         generate_alias(f)
