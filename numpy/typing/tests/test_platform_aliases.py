@@ -6,5 +6,5 @@ import numpy as np
 
 def test_isfile() -> None:
     base_path = Path(np.__file__).parents[0]
-    path = base_path / 'typing' / '_dynamic_types.pyi'
+    path = base_path / 'typing' / '_platform_aliases.pyi'
     assert os.path.isfile(path)

@@ -161,7 +161,7 @@ if not release:
         a.close()
 
 
-def write_type_hints(filename='numpy/typing/_dynamic_types.pyi'):
+def write_type_hints(filename='numpy/typing/_platform_aliases.pyi'):
     """Generate a stub file for system-specific types and/or aliases."""
     from tools.generate_type_hints import generate_alias
 

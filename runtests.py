@@ -597,7 +597,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
             wfd.write(line)
     return False
 
-def write_type_hints(site_dir, filename='numpy/typing/_dynamic_types.pyi'):
+def write_type_hints(site_dir, filename='numpy/typing/_platform_aliases.pyi'):
     """Generate a stub file for system-specific types and/or aliases."""
     from tools.generate_type_hints import generate_alias
 
