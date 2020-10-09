@@ -1,3 +1,5 @@
+:orphan:
+
 ***************************
 Troubleshooting ImportError
 ***************************
@@ -69,7 +71,7 @@ or conda.
 Using Eclipse/PyDev with Anaconda/conda Python (or environments)
 ----------------------------------------------------------------
 
-Please see the 
+Please see the
 `Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
 on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.

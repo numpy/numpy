@@ -3,18 +3,17 @@
 .. _user:
 
 ################
-NumPy User Guide
+NumPy user guide
 ################
 
-This guide is intended as an introductory overview of NumPy and
-explains how to install and make use of the most important features of
-NumPy. For detailed reference documentation of the functions and
-classes contained in the package, see the :ref:`reference`.
+This guide is an overview and explains the important features;
+details are found in :ref:`reference`.
 
 .. toctree::
    :maxdepth: 1
 
-   setting-up
+   whatisnumpy
+   Installation <https://numpy.org/install/>
    quickstart
    absolute_beginners
    basics
