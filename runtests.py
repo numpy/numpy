@@ -602,7 +602,8 @@ def write_type_hints(site_dir, filename='numpy/typing/_dynamic_types.pyi'):
     from tools.generate_type_hints import generate_alias
 
     abspath = os.path.join(site_dir, filename)
-    generate_alias(abspath)
+    with open(abspath, 'w', encoding='utf8') as f:
+        generate_alias(f)
 
 
 #

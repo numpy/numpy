@@ -5,7 +5,7 @@ import os
 import sys
 import argparse
 from collections import defaultdict
-from typing import Union, IO, Dict, ContextManager, Any
+from typing import Union, Dict, IO
 
 # Import directly from `numerictypes` in order to get this script
 # to work with the main `setup.py`
@@ -160,23 +160,13 @@ clongfloat = longcomplex = clongdouble = {clongfloat}
 """
 
 
-def _file_to_context(
-    file: Union[IO[str], _AnyPath], *args: Any, **kwargs: Any
-) -> ContextManager[IO[str]]:
-    """Create a context manager from a path- or file-like object."""
-    try:
-        return open(file, *args, **kwargs)
-    except TypeError:
-        return nullcontext(file)
-
-
-def generate_alias(file: Union[IO[str], _AnyPath] = sys.stdout) -> None:
+def generate_alias(file: IO[str]) -> None:
     """Generate a stub file with platform-specific types.
 
     Parameters
     ----------
-    file : file- or path-like
-        A file- or path-like object used for writing the results.
+    file : file-like
+        A writeable file-like object opened in text mode.
 
     """
     # Generate type aliases and update the character codes for all known types
@@ -195,10 +185,8 @@ def generate_alias(file: Union[IO[str], _AnyPath] = sys.stdout) -> None:
     # Generate the docstring
     docstring = f'"""THIS FILE WAS AUTOMATICALLY GENERATED."""'
 
-    # Create the new stub file
-    with _file_to_context(file, "w", encoding="utf8") as f:
-        string = TEMPLATE.format(docstring=docstring, **type_alias, **char_codes)
-        f.write(string)
+    string = TEMPLATE.format(docstring=docstring, **type_alias, **char_codes)
+    file.write(string)
 
 
 def main():
@@ -207,12 +195,19 @@ def main():
         "-f",
         "--file",
         nargs="?",
-        default=sys.stdout,
+        default=None,
         help="The file used for writing the output",
     )
 
     args = parser.parse_args()
-    generate_alias(args.file)
+    file = args.file
+
+    if file is None:
+        context = nullcontext(sys.stdout)
+    else:
+        context = open(file, "w", encoding="utf8")
+    with context as f:
+        generate_alias(f)
 
 
 if __name__ == "__main__":
