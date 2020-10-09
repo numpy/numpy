@@ -2,9 +2,7 @@
 
 {{ fullname | escape | underline}}
 
-.. currentmodule:: {{ module }}
-
 attribute
 
-.. auto{{ objtype }}:: {{ objname }}
+.. auto{{ objtype }}:: {% block prefix %}{{ module }}{% endblock %}.{{ objname }}
 

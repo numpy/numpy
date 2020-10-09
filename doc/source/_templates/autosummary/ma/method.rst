@@ -1,10 +1,2 @@
-:orphan:
-
-{{ fullname | escape | underline}}
-
-.. currentmodule:: numpy
-
-method
-
-.. auto{{ objtype }}:: numpy::ma.{{ objname }}
-
+{% extends "autosummary/method.rst" %}
+{% block prefix %}numpy::ma{% endblock %}

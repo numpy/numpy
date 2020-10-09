@@ -4,11 +4,9 @@
 
 {{ fullname | escape | underline}}
 
-.. currentmodule:: {{ module }}
-
 {% if objtype == 'property' %}
 property
 {% endif %}
 
-.. auto{{ objtype }}:: {{ objname }}
+.. auto{{ objtype }}:: {% block prefix %}{{ module }}{% endblock %}.{{ objname }}
 

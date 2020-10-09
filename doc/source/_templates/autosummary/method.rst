@@ -2,9 +2,7 @@
 
 {{ fullname | escape | underline}}
 
-.. currentmodule:: {{ module }}
-
 method
 
-.. auto{{ objtype }}:: {{ objname }}
+.. auto{{ objtype }}:: {% block prefix %}{{ module }}{% endblock %}.{{ objname }}
 

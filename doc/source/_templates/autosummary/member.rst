@@ -2,10 +2,7 @@
 
 {{ fullname | escape | underline}}
 
-.. currentmodule:: {{ module }}
-
 member
 
-.. auto{{ objtype }}:: {{ objname }}
-
+.. auto{{ objtype }}:: {% block prefix %}{{ module }}{% endblock %}.{{ objname }}
 

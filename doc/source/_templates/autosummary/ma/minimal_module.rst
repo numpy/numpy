@@ -1,8 +1,1 @@
-{{ fullname | escape | underline}}
-
-.. automodule:: {{ fullname }}
-
-   {% block docstring %}
-   {% endblock %}
-
-
+{% extends "autosummary/minimal_module.rst" %}
