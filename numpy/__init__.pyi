@@ -61,9 +61,9 @@ from typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, SupportsIndex
+    from typing import Literal, Protocol, SupportsIndex, Final
 else:
-    from typing_extensions import Literal, Protocol
+    from typing_extensions import Literal, Protocol, Final
     class SupportsIndex(Protocol):
         def __index__(self) -> int: ...
 
@@ -1625,48 +1625,47 @@ def empty(
 # Constants
 #
 
-Inf: float
-Infinity: float
-NAN: float
-NINF: float
-NZERO: float
-NaN: float
-PINF: float
-PZERO: float
-e: float
-euler_gamma: float
-inf: float
-infty: float
-nan: float
-pi: float
-
-ALLOW_THREADS: int
-BUFSIZE: int
-CLIP: int
-ERR_CALL: int
-ERR_DEFAULT: int
-ERR_IGNORE: int
-ERR_LOG: int
-ERR_PRINT: int
-ERR_RAISE: int
-ERR_WARN: int
-FLOATING_POINT_SUPPORT: int
-FPE_DIVIDEBYZERO: int
-FPE_INVALID: int
-FPE_OVERFLOW: int
-FPE_UNDERFLOW: int
-MAXDIMS: int
-MAY_SHARE_BOUNDS: int
-MAY_SHARE_EXACT: int
-RAISE: int
-SHIFT_DIVIDEBYZERO: int
-SHIFT_INVALID: int
-SHIFT_OVERFLOW: int
-SHIFT_UNDERFLOW: int
-UFUNC_BUFSIZE_DEFAULT: int
-WRAP: int
-little_endian: int
-tracemalloc_domain: int
+Inf: Final[float]
+Infinity: Final[float]
+NAN: Final[float]
+NINF: Final[float]
+NZERO: Final[float]
+NaN: Final[float]
+PINF: Final[float]
+PZERO: Final[float]
+e: Final[float]
+euler_gamma: Final[float]
+inf: Final[float]
+infty: Final[float]
+nan: Final[float]
+pi: Final[float]
+ALLOW_THREADS: Final[int]
+BUFSIZE: Final[int]
+CLIP: Final[int]
+ERR_CALL: Final[int]
+ERR_DEFAULT: Final[int]
+ERR_IGNORE: Final[int]
+ERR_LOG: Final[int]
+ERR_PRINT: Final[int]
+ERR_RAISE: Final[int]
+ERR_WARN: Final[int]
+FLOATING_POINT_SUPPORT: Final[int]
+FPE_DIVIDEBYZERO: Final[int]
+FPE_INVALID: Final[int]
+FPE_OVERFLOW: Final[int]
+FPE_UNDERFLOW: Final[int]
+MAXDIMS: Final[int]
+MAY_SHARE_BOUNDS: Final[int]
+MAY_SHARE_EXACT: Final[int]
+RAISE: Final[int]
+SHIFT_DIVIDEBYZERO: Final[int]
+SHIFT_INVALID: Final[int]
+SHIFT_OVERFLOW: Final[int]
+SHIFT_UNDERFLOW: Final[int]
+UFUNC_BUFSIZE_DEFAULT: Final[int]
+WRAP: Final[int]
+little_endian: Final[int]
+tracemalloc_domain: Final[int]
 
 class ufunc:
     @property
