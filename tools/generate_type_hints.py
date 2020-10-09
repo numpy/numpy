@@ -4,7 +4,6 @@
 import os
 import sys
 import argparse
-import datetime as dt
 from collections import defaultdict
 from typing import Union, IO, Dict, ContextManager, Any
 
@@ -194,8 +193,7 @@ def generate_alias(file: Union[IO[str], _AnyPath] = sys.stdout) -> None:
             type_alias[name] = "Any"
 
     # Generate the docstring
-    now = dt.datetime.now()
-    docstring = f'"""THIS FILE WAS AUTOMATICALLY GENERATED ON {now}."""'
+    docstring = f'"""THIS FILE WAS AUTOMATICALLY GENERATED."""'
 
     # Create the new stub file
     with _file_to_context(file, "w", encoding="utf8") as f:
