@@ -157,8 +157,7 @@ longfloat = longdouble = {longfloat}
 
 csingle = singlecomplex = {csingle}
 complex_ = cdouble = cfloat = {complex_}
-clongfloat = longcomplex = {clongfloat}
-
+clongfloat = longcomplex = clongdouble = {clongfloat}
 """
 
 

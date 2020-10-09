@@ -48,4 +48,4 @@ longdouble = longfloat = Any
 
 csingle = singlecomplex = Any
 cdouble = complex_ = cfloat = Any
-clongfloat = longcomplex = Any
+clongfloat = longcomplex = clongdouble = Any

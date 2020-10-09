@@ -76,6 +76,7 @@ from numpy.typing._dynamic_types import (
     complex_ as complex_,
     cfloat as cfloat,
     clongfloat as clongfloat,
+    clongdouble as clongdouble,
     longcomplex as longcomplex,
 )
 
@@ -336,7 +337,6 @@ c_: Any
 can_cast: Any
 cast: Any
 chararray: Any
-clongdouble: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any

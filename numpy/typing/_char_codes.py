@@ -53,7 +53,7 @@ if TYPE_CHECKING or HAVE_LITERAL:
 
     _CSingleCodes = Literal["csingle", "singlecomplex", "F", "=F", "<F", ">F"]
     _CDoubleCodes = Literal["cdouble" "complex", "complex_", "cfloat", "D", "=D", "<D", ">D"]
-    _CLongFloatCodes = Literal["clongfloat", "longcomplex", "G", "=G", "<G", ">G"]
+    _CLongFloatCodes = Literal["clongfloat", "longcomplex", "clongdouble", "G", "=G", "<G", ">G"]
 
     _Datetime64Codes = Literal["datetime64", "M", "=M", "<M", ">M"]
     _Timedelta64Codes = Literal["timedelta64", "m", "=m", "<m", ">m"]
