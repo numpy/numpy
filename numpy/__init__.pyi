@@ -471,7 +471,6 @@ sort_complex: Any
 source: Any
 split: Any
 stack: Any
-str0: Any
 string_: Any
 take_along_axis: Any
 tile: Any
@@ -493,7 +492,6 @@ uint0: Any
 uintc: Any
 uintp: Any
 ulonglong: Any
-unicode_: Any
 union1d: Any
 unique: Any
 unpackbits: Any
@@ -1587,6 +1585,8 @@ class str_(character, str):
     def __init__(
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
+
+unicode_ = str0 = str_
 
 # TODO(alan): Platform dependent types
 # longcomplex, longdouble, longfloat

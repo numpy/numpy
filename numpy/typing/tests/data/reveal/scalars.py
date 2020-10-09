@@ -14,3 +14,6 @@ reveal_type(x.strides)  # E: tuple[builtins.int]
 
 reveal_type(np.complex64().real)  # E: numpy.float32
 reveal_type(np.complex128().imag)  # E: numpy.float64
+
+reveal_type(np.unicode_('foo'))  # E: numpy.str_
+reveal_type(np.str0('foo'))  # E: numpy.str_
