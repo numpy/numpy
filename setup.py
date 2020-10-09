@@ -511,7 +511,10 @@ def setup_package():
 
     try:
         setup(**metadata)
-        write_type_hints()
+        try:
+            write_type_hints()
+        except ImportError:
+            pass
     finally:
         del sys.path[0]
         os.chdir(old_path)
