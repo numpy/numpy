@@ -141,22 +141,21 @@ def test_assert_raises_regex_context_manager():
     with assert_raises_regex(ValueError, 'no deprecation warning'):
         raise ValueError('no deprecation warning')
 
-def test_class_info_with_empty_method_obj():
+
+def test_info_method_heading():
     # info(class) should only print "Methods:" heading if methods exist
 
-    class example_without_methods():
+    class NoPublicMethods:
         pass
 
-    class example_with_method:
-
+    class WithPublicMethods:
         def first_method():
             pass
+            
+    def _has_method_heading(cls):
+        out = StringIO()
+        utils.info(cls, output=out)
+        return 'Methods:' in out.getvalue()
 
-    out_no_method = StringIO()
-    out_method = StringIO()
-
-    utils.info(example_without_methods, output=out_no_method)
-    utils.info(example_with_method, output=out_method)
-    
-    assert_('Methods:' not in out_no_method.getvalue())
-    assert_('Methods:' in out_method.getvalue())
+    assert _has_method_heading(WithPublicMethods)
+    assert not _has_method_heading(NoPublicMethods)
