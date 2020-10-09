@@ -18,6 +18,9 @@ class TestRegression:
         for mu in np.linspace(-7., 7., 5):
             r = random.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
+        for mu in [-np.pi, np.pi]:
+            r = random.vonmises(mu, 10**6 + 1, 50)
+            assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_hypergeometric_range(self):
         # Test for ticket #921
