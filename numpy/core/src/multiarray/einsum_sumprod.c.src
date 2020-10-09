@@ -22,15 +22,19 @@
 #else
     #define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 #endif
+
 /**
- * Unroll by four/eight scalars in case of:
- *  - The main SIMD loop un-rolled by NPY_SIMD_WIDTH*(2|4), (2|4) represents
- *    the number of times the loop is unrolled, which may lead to
- *    un-vectorize the remained scalars in bytes range <=NPY_SIMD_WIDTH*(2|4)
- *    if The SIMD width is higher than 128bit, The performance loss on remained
- *    arrays is nonnegligible, so we choose to use the compiler auto-vectorize.
- *  - To give the chance to the compiler to
- *    auto-vectorize in case of NPYV wasn't available.
+ * This macro is used to enable a scalar loop which advances 4 elements at a
+ * time, which appears after a main SIMD loop gated by `CHK` that unrolls by
+ * `NPY_SIMD_WIDTH * unroll_by` elements, and before a non-unrolled scalar loop
+ * that finishes up all the remaining scalars. The purpose of the unrolled loop
+ * is to enable auto-vectorization in cases when all of the following are true:
+ *
+ *  - optimization is allowed
+ *  - either:
+ *    - we did not run the SIMD loop at all, due to NPV being disabled.
+ *    - the SIMD loop was larger than 128bit, so there are likely to be many
+ *      elements left to process.
  */
 #define EINSUM_UNROLL_4_SCALARS(CHK) (!defined(NPY_DISABLE_OPTIMIZATION) && (!(CHK) || NPY_SIMD > 128))
 
