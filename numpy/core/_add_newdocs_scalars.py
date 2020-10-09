@@ -176,6 +176,46 @@ add_newdoc_for_scalar_type('object_', [],
     Any Python object.
     """)
 
+add_newdoc_for_scalar_type('str_', ['str0', 'unicode_'],
+    r"""
+    A unicode string.
+
+    Unlike the builtin `str`, this supports the buffer protocol, exposing its
+    contents as UCS4:
+
+    >>> memoryview(np.str_("abcd"))
+    b'a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00d\x00\x00\x00'
+
+    When used in array, this type cannot contain trailing nulls.
+    """)
+
+add_newdoc_for_scalar_type('bytes_', ['bytes0'],
+    r"""
+    A byte string.
+
+    When used in array, this type cannot contain trailing nulls.
+    """)
+
+add_newdoc_for_scalar_type('void', ['void0'],
+    """
+    Either an opaque sequence of bytes, or a structure.
+    """)
+
+add_newdoc_for_scalar_type('datetime64', [],
+    """
+    A datetime stored as a 64-bit integer, counting from ``1970-01-01T00:00:00``.
+
+    >>> np.datetime64(10, 'Y')
+    numpy.datetime64('1980')
+    >>> np.datetime64(10, 'D')
+    numpy.datetime64('1970-01-11')
+    """)
+
+add_newdoc_for_scalar_type('timedelta64', [],
+    """
+    A timedelta stored as a 64-bit integer.
+    """)
+
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
     add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
