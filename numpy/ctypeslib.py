@@ -89,6 +89,7 @@ else:
     def load_library(libname, loader_path):
         """
         It is possible to load a library using
+
         >>> lib = ctypes.cdll[<full_path_name>] # doctest: +SKIP
 
         But there are cross-platform considerations, such as library file extensions,
