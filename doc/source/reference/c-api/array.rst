@@ -999,7 +999,7 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     Evaluates true if the data area of the ndarray *m* is **not** in
     machine byte-order according to the array's data-type descriptor.
 
-.. c:function:: Bool PyArray_EquivTypes( \
+.. c:function:: npy_bool PyArray_EquivTypes( \
         PyArray_Descr* type1, PyArray_Descr* type2)
 
     Return :c:data:`NPY_TRUE` if *type1* and *type2* actually represent
@@ -1008,13 +1008,13 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     :c:data:`NPY_LONG` and :c:data:`NPY_INT` are equivalent. Otherwise
     return :c:data:`NPY_FALSE`.
 
-.. c:function:: Bool PyArray_EquivArrTypes( \
+.. c:function:: npy_bool PyArray_EquivArrTypes( \
         PyArrayObject* a1, PyArrayObject * a2)
 
     Return :c:data:`NPY_TRUE` if *a1* and *a2* are arrays with equivalent
     types for this platform.
 
-.. c:function:: Bool PyArray_EquivTypenums(int typenum1, int typenum2)
+.. c:function:: npy_bool PyArray_EquivTypenums(int typenum1, int typenum2)
 
     Special case of :c:func:`PyArray_EquivTypes` (...) that does not accept
     flexible data types but may be easier to call.
@@ -1650,7 +1650,7 @@ Conversion
     destination must be an integer multiple of the number of elements
     in *val*.
 
-.. c:function:: PyObject* PyArray_Byteswap(PyArrayObject* self, Bool inplace)
+.. c:function:: PyObject* PyArray_Byteswap(PyArrayObject* self, npy_bool inplace)
 
     Equivalent to :meth:`ndarray.byteswap<numpy.ndarray.byteswap>` (*self*, *inplace*). Return an array
     whose data area is byteswapped. If *inplace* is non-zero, then do
@@ -2309,7 +2309,7 @@ Array Functions
 Other functions
 ^^^^^^^^^^^^^^^
 
-.. c:function:: Bool PyArray_CheckStrides( \
+.. c:function:: npy_bool PyArray_CheckStrides( \
         int elsize, int nd, npy_intp numbytes, npy_intp const* dims, \
         npy_intp const* newstrides)
 
@@ -2959,7 +2959,7 @@ to.
     :c:data:`NPY_MAXDIMS` which is interpreted correctly by the C-API
     functions that take axis arguments.
 
-.. c:function:: int PyArray_BoolConverter(PyObject* obj, Bool* value)
+.. c:function:: int PyArray_BoolConverter(PyObject* obj, npy_bool* value)
 
     Convert any Python object, *obj*, to :c:data:`NPY_TRUE` or
     :c:data:`NPY_FALSE`, and place the result in *value*.
