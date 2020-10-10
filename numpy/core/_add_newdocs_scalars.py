@@ -180,25 +180,34 @@ add_newdoc_for_scalar_type('str_', ['str0', 'unicode_'],
     r"""
     A unicode string.
 
+    When used in array, this type strips trailing nulls.
+
     Unlike the builtin `str`, this supports the buffer protocol, exposing its
     contents as UCS4:
 
     >>> memoryview(np.str_("abcd"))
     b'a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00d\x00\x00\x00'
-
-    When used in array, this type cannot contain trailing nulls.
     """)
 
 add_newdoc_for_scalar_type('bytes_', ['bytes0'],
     r"""
     A byte string.
 
-    When used in array, this type cannot contain trailing nulls.
+    When used in array, this type strips trailing nulls.
     """)
 
 add_newdoc_for_scalar_type('void', ['void0'],
     """
     Either an opaque sequence of bytes, or a structure.
+    
+    >>> np.void(b'abcd')
+    void(b'\x61\x62\x63\x64')
+    
+    Structured `void` scalars can only be constructed via extraction from `structured_arrays`:
+    
+    >>> arr = np.array((1, 2), dtype=[('x', np.int8), ('y', np.int8)])
+    >>> arr[()]
+    (1, 2)  # looks like a tuple, but is `np.void`
     """)
 
 add_newdoc_for_scalar_type('datetime64', [],
@@ -209,11 +218,15 @@ add_newdoc_for_scalar_type('datetime64', [],
     numpy.datetime64('1980')
     >>> np.datetime64(10, 'D')
     numpy.datetime64('1970-01-11')
+    
+    See `arrays.datetime` for more information.
     """)
 
 add_newdoc_for_scalar_type('timedelta64', [],
     """
     A timedelta stored as a 64-bit integer.
+    
+    See `arrays.datetime` for more information.
     """)
 
 # TODO: work out how to put this on the base class, np.floating
