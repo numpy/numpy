@@ -2947,6 +2947,18 @@ class TestCorrelate:
         with pytest.raises(ValueError):
             np.correlate(np.ones(1000), np.array([]), mode='full')
 
+    def test_mode(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        default_mode = np.correlate(d, k, mode='valid')
+        with assert_warns(DeprecationWarning):
+            valid_mode = np.correlate(d, k, mode='v')
+        assert_array_equal(valid_mode, default_mode)
+        # integer mode
+        with assert_raises(ValueError):
+            np.correlate(d, k, mode=-1)
+        assert_array_equal(np.correlate(d, k, mode=0), valid_mode)
+
 class TestConvolve:
     def test_object(self):
         d = [1.] * 100
@@ -2960,6 +2972,17 @@ class TestConvolve:
         assert_array_equal(d, np.ones(100))
         assert_array_equal(k, np.ones(3))
 
+    def test_mode(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        default_mode = np.convolve(d, k, mode='full')
+        with assert_warns(DeprecationWarning):
+            full_mode = np.convolve(d, k, mode='f')
+        assert_array_equal(full_mode, default_mode)
+        # integer mode
+        with assert_raises(ValueError):
+            np.convolve(d, k, mode=-1)
+        assert_array_equal(np.convolve(d, k, mode=2), full_mode)
 
 class TestArgwhere:
 
