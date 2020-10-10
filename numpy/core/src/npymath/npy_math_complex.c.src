@@ -35,12 +35,19 @@
 #include "npy_math_private.h"
 #include <numpy/utils.h>
 
+/*
+ * Hack inherited from BSD, the intent is to set the FPU inexact
+ * flag in an efficient way. The flag is IEEE specific. See
+ * https://github.com/freebsd/freebsd/blob/4c6378299/lib/msun/src/catrig.c#L42
+ */
+#if !defined(HAVE_CACOSF) || !defined(HAVE_CACOSL) || !defined(HAVE_CASINHF) || !defined(HAVE_CASINHL)
+#define raise_inexact() do {                        \
+    volatile npy_float NPY_UNUSED(junk) = 1 + tiny; \
+} while (0)
 
-#define raise_inexact() do { volatile npy_float junk = 1 + tiny; } while(0)
 
-
-static __COMP_NPY_UNUSED npy_float tiny = 3.9443045e-31f;
-
+static const volatile npy_float tiny = 3.9443045e-31f;
+#endif
 
 /**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
@@ -58,9 +65,6 @@ static __COMP_NPY_UNUSED npy_float tiny = 3.9443045e-31f;
  * Constants
  *=========================================================*/
 static const @ctype@ c_1@c@ = {1.0@C@, 0.0};
-static const @ctype@ c_half@c@ = {0.5@C@, 0.0};
-static const @ctype@ c_i@c@ = {0.0, 1.0@C@};
-static const @ctype@ c_ihalf@c@ = {0.0, 0.5@C@};
 
 /*==========================================================
  * Helper functions
@@ -68,22 +72,6 @@ static const @ctype@ c_ihalf@c@ = {0.0, 0.5@C@};
  * These are necessary because we do not count on using a
  * C99 compiler.
  *=========================================================*/
-static NPY_INLINE
-@ctype@
-cadd@c@(@ctype@ a, @ctype@ b)
-{
-    return npy_cpack@c@(npy_creal@c@(a) + npy_creal@c@(b),
-                        npy_cimag@c@(a) + npy_cimag@c@(b));
-}
-
-static NPY_INLINE
-@ctype@
-csub@c@(@ctype@ a, @ctype@ b)
-{
-    return npy_cpack@c@(npy_creal@c@(a) - npy_creal@c@(b),
-                        npy_cimag@c@(a) - npy_cimag@c@(b));
-}
-
 static NPY_INLINE
 @ctype@
 cmul@c@(@ctype@ a, @ctype@ b)
@@ -124,20 +112,6 @@ cdiv@c@(@ctype@ a, @ctype@ b)
         @type@ scl = 1.0@C@/(bi + br*rat);
         return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
     }
-}
-
-static NPY_INLINE
-@ctype@
-cneg@c@(@ctype@ a)
-{
-    return npy_cpack@c@(-npy_creal@c@(a), -npy_cimag@c@(a));
-}
-
-static NPY_INLINE
-@ctype@
-cmuli@c@(@ctype@ a)
-{
-    return npy_cpack@c@(-npy_cimag@c@(a), npy_creal@c@(a));
 }
 
 /*==========================================================
@@ -1240,7 +1214,7 @@ _clog_for_large_values@c@(@type@ x, @type@ y,
      * Divide x and y by E, and then add 1 to the logarithm.  This depends
      * on E being larger than sqrt(2).
      * Dividing by E causes an insignificant loss of accuracy; however
-     * this method is still poor since it is uneccessarily slow.
+     * this method is still poor since it is unnecessarily slow.
      */
     if (ax > @TMAX@ / 2) {
         *rr = npy_log@c@(npy_hypot@c@(x / NPY_E@c@, y / NPY_E@c@)) + 1;
@@ -1424,19 +1398,14 @@ npy_casinh@c@(@ctype@ z)
 #if @precision@ == 1
     /* this is sqrt(6*EPS) */
     const npy_float SQRT_6_EPSILON = 8.4572793338e-4f;
-    /* chosen such that pio2_hi + pio2_lo == pio2_hi but causes FE_INEXACT. */
-    const volatile npy_float pio2_lo = 7.5497899549e-9f;
 #endif
 #if @precision@ == 2
     const npy_double SQRT_6_EPSILON = 3.65002414998885671e-08;
-    const volatile npy_double pio2_lo = 6.1232339957367659e-17;
 #endif
 #if @precision@ == 3
     const npy_longdouble SQRT_6_EPSILON = 8.0654900873493277169e-10l;
-    const volatile npy_longdouble pio2_lo = 2.710505431213761085e-20l;
 #endif
     const @type@ RECIP_EPSILON = 1.0@c@ / @TEPS@;
-    const @type@ pio2_hi = NPY_PI_2@c@;
     @type@ x, y, ax, ay, wx, wy, rx, ry, B, sqrt_A2my2, new_y;
     npy_int B_is_usable;
 
@@ -1520,8 +1489,12 @@ const npy_float SQRT_MIN = 1.0842022e-19f;
 const npy_double SQRT_MIN = 1.4916681462400413e-154; /* sqrt(DBL_MIN) */
 #endif
 #if @precision@ == 3
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+const npy_longdouble SQRT_MIN = 1.4916681462400413e-154; /* sqrt(DBL_MIN) */
+#else
 /* this is correct for 80 bit long doubles */
 const npy_longdouble SQRT_MIN = 1.8336038675548471656e-2466l;
+#endif
 #endif
     /* Avoid underflow when y is small. */
     if (y < SQRT_MIN) {

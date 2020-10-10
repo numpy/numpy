@@ -1,0 +1,60 @@
+==========================
+NumPy 1.13.1 Release Notes
+==========================
+
+This is a bugfix release for problems found in 1.13.0. The major changes are
+fixes for the new memory overlap detection and temporary elision as well as
+reversion of the removal of the boolean binary ``-`` operator. Users of 1.13.0
+should upgrade.
+
+Thr Python versions supported are 2.7 and 3.4 - 3.6. Note that the Python 3.6
+wheels available from PIP are built against 3.6.1, hence will not work when
+used with 3.6.0 due to Python bug 29943_. NumPy 1.13.2 will be released shortly
+after Python 3.6.2 is out to fix that problem. If you are using 3.6.0 the
+workaround is to upgrade to 3.6.1 or use an earlier Python version.
+
+.. _29943: https://bugs.python.org/issue29943
+
+
+Pull requests merged
+====================
+A total of 19 pull requests were merged for this release.
+
+* #9240 DOC: BLD: fix lots of Sphinx warnings/errors.
+* #9255 Revert "DEP: Raise TypeError for subtract(bool, bool)."
+* #9261 BUG: don't elide into readonly and updateifcopy temporaries for...
+* #9262 BUG: fix missing keyword rename for common block in numpy.f2py
+* #9263 BUG: handle resize of 0d array
+* #9267 DOC: update f2py front page and some doc build metadata.
+* #9299 BUG: Fix Intel compilation on Unix.
+* #9317 BUG: fix wrong ndim used in empty where check
+* #9319 BUG: Make extensions compilable with MinGW on Py2.7
+* #9339 BUG: Prevent crash if ufunc doc string is null
+* #9340 BUG: umath: un-break ufunc where= when no out= is given
+* #9371 DOC: Add isnat/positive ufunc to documentation
+* #9372 BUG: Fix error in fromstring function from numpy.core.records...
+* #9373 BUG: ')' is printed at the end pointer of the buffer in numpy.f2py.
+* #9374 DOC: Create NumPy 1.13.1 release notes.
+* #9376 BUG: Prevent hang traversing ufunc userloop linked list
+* #9377 DOC: Use x1 and x2 in the heaviside docstring.
+* #9378 DOC: Add $PARAMS to the isnat docstring
+* #9379 DOC: Update the 1.13.1 release notes
+
+
+Contributors
+============
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andras Deak +
+* Bob Eldering +
+* Charles Harris
+* Daniel Hrisca +
+* Eric Wieser
+* Joshua Leahy +
+* Julian Taylor
+* Michael Seifert
+* Pauli Virtanen
+* Ralf Gommers
+* Roland Kaufmann
+* Warren Weckesser

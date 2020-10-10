@@ -50,7 +50,7 @@ New possibilities for the "data-type"
 
 
 **Dictionary (keys "names", "titles", and "formats")**
-  This will be converted to a ``PyArray_VOID`` type with corresponding
+  This will be converted to a ``NPY_VOID`` type with corresponding
   fields parameter (the formats list will be converted to actual
   ``PyArray_Descr *`` objects).
 
@@ -58,10 +58,10 @@ New possibilities for the "data-type"
 **Objects (anything with an .itemsize and .fields attribute)**
   If its an instance of (a sub-class of) void type, then a new
   ``PyArray_Descr*`` structure is created corresponding to its
-  typeobject (and ``PyArray_VOID``) typenumber.  If the type is
+  typeobject (and ``NPY_VOID``) typenumber.  If the type is
   registered, then the registered type-number is used.
 
-  Otherwise a new ``PyArray_VOID PyArray_Descr*`` structure is created
+  Otherwise a new ``NPY_VOID PyArray_Descr*`` structure is created
   and filled ->elsize and ->fields filled in appropriately.
 
   The itemsize attribute must return a number > 0. The fields

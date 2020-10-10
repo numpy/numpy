@@ -1,27 +1,28 @@
-from __future__ import division, absolute_import, print_function
-
 import copy
-import pickle
 import sys
-import platform
 import gc
-import warnings
 import tempfile
+import pytest
 from os import path
 from io import BytesIO
 from itertools import chain
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_equal, IS_PYPY,
-        assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, dec, suppress_warnings,
+        assert_, assert_equal, IS_PYPY, assert_almost_equal,
+        assert_array_equal, assert_array_almost_equal, assert_raises,
+        assert_raises_regex, assert_warns, suppress_warnings,
         _assert_valid_refcount, HAS_REFCOUNT,
         )
-from numpy.compat import asbytes, asunicode, long
+from numpy.testing._private.utils import _no_tracing, requires_memory
+from numpy.compat import asbytes, asunicode, pickle
 
+try:
+    RecursionError
+except NameError:
+    RecursionError = RuntimeError  # python < 3.5
 
-class TestRegression(object):
+class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
         v = 4.7599999999999998
@@ -34,17 +35,12 @@ class TestRegression(object):
     def test_pickle_transposed(self):
         # Ticket #16
         a = np.transpose(np.array([[2, 9], [7, 0], [3, 8]]))
-        f = BytesIO()
-        pickle.dump(a, f)
-        f.seek(0)
-        b = pickle.load(f)
-        f.close()
-        assert_array_equal(a, b)
-
-    def test_typeNA(self):
-        # Ticket #31
-        assert_equal(np.typeNA[np.int64], 'Int64')
-        assert_equal(np.typeNA[np.uint64], 'UInt64')
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            with BytesIO() as f:
+                pickle.dump(a, f, protocol=proto)
+                f.seek(0)
+                b = pickle.load(f)
+            assert_array_equal(a, b)
 
     def test_dtype_names(self):
         # Ticket #35
@@ -88,12 +84,12 @@ class TestRegression(object):
 
     def test_char_dump(self):
         # Ticket #50
-        f = BytesIO()
         ca = np.char.array(np.arange(1000, 1010), itemsize=4)
-        ca.dump(f)
-        f.seek(0)
-        ca = np.load(f)
-        f.close()
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            with BytesIO() as f:
+                pickle.dump(ca, f, protocol=proto)
+                f.seek(0)
+                ca = np.load(f, allow_pickle=True)
 
     def test_noncontiguous_fill(self):
         # Ticket #58.
@@ -159,20 +155,6 @@ class TestRegression(object):
         assert_raises(TypeError, np.dtype,
                               {'names':['a'], 'formats':['foo']}, align=1)
 
-    @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and
-                         platform.architecture()[0] == "64bit"),
-                        "numpy.intp('0xff', 16) not supported on Py3, "
-                        "as it does not inherit from Python int")
-    def test_intp(self):
-        # Ticket #99
-        i_width = np.int_(0).nbytes*2 - 1
-        np.intp('0x' + 'f'*i_width, 16)
-        assert_raises(OverflowError, np.intp, '0x' + 'f'*(i_width+1), 16)
-        assert_raises(ValueError, np.intp, '0x1', 32)
-        assert_equal(255, np.intp('0xFF', 16))
-        assert_equal(1024, np.intp(1024))
-
     def test_endian_bool_indexing(self):
         # Ticket #105
         a = np.arange(10., dtype='>f8')
@@ -232,6 +214,42 @@ class TestRegression(object):
         x = np.arange(10, dtype='<f8')
         assert_array_equal(ref, x)
         x = np.arange(10, dtype='>f8')
+        assert_array_equal(ref, x)
+
+    def test_arange_inf_step(self):
+        ref = np.arange(0, 1, 10)
+        x = np.arange(0, 1, np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, 1, -10)
+        x = np.arange(0, 1, -np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -1, -10)
+        x = np.arange(0, -1, -np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -1, 10)
+        x = np.arange(0, -1, np.inf)
+        assert_array_equal(ref, x)
+
+    def test_arange_underflow_stop_and_step(self):
+        finfo = np.finfo(np.float64)
+
+        ref = np.arange(0, finfo.eps, 2 * finfo.eps)
+        x = np.arange(0, finfo.eps, finfo.max)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, finfo.eps, -2 * finfo.eps)
+        x = np.arange(0, finfo.eps, -finfo.max)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -finfo.eps, -2 * finfo.eps)
+        x = np.arange(0, -finfo.eps, -finfo.max)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -finfo.eps, 2 * finfo.eps)
+        x = np.arange(0, -finfo.eps, finfo.max)
         assert_array_equal(ref, x)
 
     def test_argmax(self):
@@ -330,12 +348,12 @@ class TestRegression(object):
     def test_unpickle_dtype_with_object(self):
         # Implemented in r2840
         dt = np.dtype([('x', int), ('y', np.object_), ('z', 'O')])
-        f = BytesIO()
-        pickle.dump(dt, f)
-        f.seek(0)
-        dt_ = pickle.load(f)
-        f.close()
-        assert_equal(dt, dt_)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            with BytesIO() as f:
+                pickle.dump(dt, f, protocol=proto)
+                f.seek(0)
+                dt_ = pickle.load(f)
+            assert_equal(dt, dt_)
 
     def test_mem_array_creation_invalid_specification(self):
         # Ticket #196
@@ -398,7 +416,7 @@ class TestRegression(object):
 
     def test_lexsort_invalid_sequence(self):
         # Issue gh-4123
-        class BuggySequence(object):
+        class BuggySequence:
             def __len__(self):
                 return 4
 
@@ -406,6 +424,37 @@ class TestRegression(object):
                 raise KeyError
 
         assert_raises(KeyError, np.lexsort, BuggySequence())
+
+    def test_lexsort_zerolen_custom_strides(self):
+        # Ticket #14228
+        xs = np.array([], dtype='i8')
+        assert xs.strides == (8,)
+        assert np.lexsort((xs,)).shape[0] == 0 # Works
+
+        xs.strides = (16,)
+        assert np.lexsort((xs,)).shape[0] == 0 # Was: MemoryError
+
+    def test_lexsort_zerolen_custom_strides_2d(self):
+        xs = np.array([], dtype='i8')
+
+        xs.shape = (0, 2)
+        xs.strides = (16, 16)
+        assert np.lexsort((xs,), axis=0).shape[0] == 0
+
+        xs.shape = (2, 0)
+        xs.strides = (16, 16)
+        assert np.lexsort((xs,), axis=0).shape[0] == 2
+
+    def test_lexsort_invalid_axis(self):
+        assert_raises(np.AxisError, np.lexsort, (np.arange(1),), axis=2)
+        assert_raises(np.AxisError, np.lexsort, (np.array([]),), axis=1)
+        assert_raises(np.AxisError, np.lexsort, (np.array(1),), axis=10)
+
+    def test_lexsort_zerolen_element(self):
+        dt = np.dtype([])  # a void dtype with no fields
+        xs = np.empty(4, dt)
+
+        assert np.lexsort((xs,)).shape[0] == xs.shape[0]
 
     def test_pickle_py2_bytes_encoding(self):
         # Check that arrays and scalars pickled on Py2 are
@@ -433,19 +482,18 @@ class TestRegression(object):
              b"bI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."),
         ]
 
-        if sys.version_info[:2] >= (3, 4):
-            # encoding='bytes' was added in Py3.4
-            for original, data in test_data:
-                result = pickle.loads(data, encoding='bytes')
-                assert_equal(result, original)
+        for original, data in test_data:
+            result = pickle.loads(data, encoding='bytes')
+            assert_equal(result, original)
 
-                if isinstance(result, np.ndarray) and result.dtype.names:
-                    for name in result.dtype.names:
-                        assert_(isinstance(name, str))
+            if isinstance(result, np.ndarray) and result.dtype.names is not None:
+                for name in result.dtype.names:
+                    assert_(isinstance(name, str))
 
     def test_pickle_dtype(self):
         # Ticket #251
-        pickle.dumps(float)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            pickle.dumps(float, protocol=proto)
 
     def test_swap_real(self):
         # Ticket #265
@@ -610,7 +658,8 @@ class TestRegression(object):
 
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
-    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
+    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+                        reason="Using relaxed stride checking")
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2]  # not contiguous
@@ -788,8 +837,9 @@ class TestRegression(object):
         # Ticket #600
         x = np.array(["DROND", "DROND1"], dtype="U6")
         el = x[1]
-        new = pickle.loads(pickle.dumps(el))
-        assert_equal(new, el)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            new = pickle.loads(pickle.dumps(el, protocol=proto))
+            assert_equal(new, el)
 
     def test_arange_non_native_dtype(self):
         # Ticket #616
@@ -853,9 +903,6 @@ class TestRegression(object):
         assert_array_equal(x.astype('>i4'), x.astype('<i4').flat[:])
         assert_array_equal(x.astype('>i4').flat[:], x.astype('<i4'))
 
-    def test_uint64_from_negative(self):
-        assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
-
     def test_sign_bit(self):
         x = np.array([0, -0.0, 0])
         assert_equal(str(np.abs(x)), '[0. 0. 0.]')
@@ -872,7 +919,8 @@ class TestRegression(object):
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous,
     # 0-sized reshape itself is tested elsewhere.
-    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
+    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+                        reason="Using relaxed stride checking")
     def test_copy_detection_corner_case2(self):
         # Ticket #771: strides are not set correctly when reshaping 0-sized
         # arrays
@@ -984,7 +1032,7 @@ class TestRegression(object):
 
     def test_mem_custom_float_to_array(self):
         # Ticket 702
-        class MyFloat(object):
+        class MyFloat:
             def __float__(self):
                 return 1.0
 
@@ -993,7 +1041,7 @@ class TestRegression(object):
 
     def test_object_array_refcount_self_assign(self):
         # Ticket #711
-        class VictimObject(object):
+        class VictimObject:
             deleted = False
 
             def __del__(self):
@@ -1024,15 +1072,6 @@ class TestRegression(object):
         # Ticket #714
         np.zeros(10)[np.array(0)]
 
-    def test_floats_from_string(self):
-        # Ticket #640, floats from string
-        fsingle = np.single('1.234')
-        fdouble = np.double('1.234')
-        flongdouble = np.longdouble('1.234')
-        assert_almost_equal(fsingle, 1.234)
-        assert_almost_equal(fdouble, 1.234)
-        assert_almost_equal(flongdouble, 1.234)
-
     def test_nonnative_endian_fill(self):
         # Non-native endian arrays were incorrectly filled with scalars
         # before r5034.
@@ -1047,11 +1086,12 @@ class TestRegression(object):
     def test_dot_alignment_sse2(self):
         # Test for ticket #551, changeset r5140
         x = np.zeros((30, 40))
-        y = pickle.loads(pickle.dumps(x))
-        # y is now typically not aligned on a 8-byte boundary
-        z = np.ones((1, y.shape[0]))
-        # This shouldn't cause a segmentation fault:
-        np.dot(z, y)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            y = pickle.loads(pickle.dumps(x, protocol=proto))
+            # y is now typically not aligned on a 8-byte boundary
+            z = np.ones((1, y.shape[0]))
+            # This shouldn't cause a segmentation fault:
+            np.dot(z, y)
 
     def test_astype_copy(self):
         # Ticket #788, changeset r5155
@@ -1059,14 +1099,8 @@ class TestRegression(object):
         # The dtype is float64, but the isbuiltin attribute is 0.
         data_dir = path.join(path.dirname(__file__), 'data')
         filename = path.join(data_dir, "astype_copy.pkl")
-        if sys.version_info[0] >= 3:
-            f = open(filename, 'rb')
+        with open(filename, 'rb') as f:
             xp = pickle.load(f, encoding='latin1')
-            f.close()
-        else:
-            f = open(filename)
-            xp = pickle.load(f)
-            f.close()
         xpd = xp.astype(np.float64)
         assert_((xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0]))
@@ -1183,10 +1217,7 @@ class TestRegression(object):
             msg = 'unicode offset: %d chars' % i
             t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
             x = np.array([(b'a', u'b')], dtype=t)
-            if sys.version_info[0] >= 3:
-                assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
-            else:
-                assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
+            assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
 
     def test_sign_for_complex_nan(self):
         # Ticket 794.
@@ -1261,10 +1292,14 @@ class TestRegression(object):
 
         assert_(test_record_void_scalar == test_record)
 
-        #Test pickle and unpickle of void and record scalars
-        assert_(pickle.loads(pickle.dumps(test_string)) == test_string)
-        assert_(pickle.loads(pickle.dumps(test_record)) == test_record)
+        # Test pickle and unpickle of void and record scalars
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_(pickle.loads(
+                pickle.dumps(test_string, protocol=proto)) == test_string)
+            assert_(pickle.loads(
+                pickle.dumps(test_record, protocol=proto)) == test_record)
 
+    @_no_tracing
     def test_blasdot_uninitialized_memory(self):
         # Ticket #950
         for m in [0, 1, 2]:
@@ -1291,28 +1326,18 @@ class TestRegression(object):
         # Regression test for #1061.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        good = 'Maximum allowed dimension exceeded'
-        try:
+        with assert_raises_regex(ValueError,
+                                 'Maximum allowed dimension exceeded'):
             np.empty(sz)
-        except ValueError as e:
-            if not str(e) == good:
-                self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception as e:
-            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_huge_arange(self):
         # Regression test for #1062.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        good = 'Maximum allowed size exceeded'
-        try:
+        with assert_raises_regex(ValueError,
+                                 'Maximum allowed size exceeded'):
             np.arange(sz)
             assert_(np.size == sz)
-        except ValueError as e:
-            if not str(e) == good:
-                self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception as e:
-            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_fromiter_bytes(self):
         # Ticket #1058
@@ -1324,13 +1349,13 @@ class TestRegression(object):
     def test_array_from_sequence_scalar_array(self):
         # Ticket #1078: segfaults when creating an array with a sequence of
         # 0d arrays.
-        a = np.array((np.ones(2), np.array(2)))
+        a = np.array((np.ones(2), np.array(2)), dtype=object)
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
         assert_equal(a[0], np.ones(2))
         assert_equal(a[1], np.array(2))
 
-        a = np.array(((1,), np.array(1)))
+        a = np.array(((1,), np.array(1)), dtype=object)
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
         assert_equal(a[0], (1,))
@@ -1338,7 +1363,7 @@ class TestRegression(object):
 
     def test_array_from_sequence_scalar_array2(self):
         # Ticket #1081: weird array with strange input...
-        t = np.array([np.array([]), np.array(0, object)])
+        t = np.array([np.array([]), np.array(0, object)], dtype=object)
         assert_equal(t.shape, (2,))
         assert_equal(t.dtype, np.dtype(object))
 
@@ -1352,7 +1377,7 @@ class TestRegression(object):
         dt = np.dtype([('f1', np.uint)])
         assert_raises(KeyError, dt.__getitem__, "f2")
         assert_raises(IndexError, dt.__getitem__, 1)
-        assert_raises(ValueError, dt.__getitem__, 0.0)
+        assert_raises(TypeError, dt.__getitem__, 0.0)
 
     def test_lexsort_buffer_length(self):
         # Ticket #1217, don't segfault.
@@ -1380,6 +1405,13 @@ class TestRegression(object):
                       [u'asdf', u'erw']],
                      dtype='U')
         assert_raises(UnicodeEncodeError, np.array, a, 'S4')
+
+    def test_unicode_to_string_cast_error(self):
+        # gh-15790
+        a = np.array([u'\x80'] * 129, dtype='U3')
+        assert_raises(UnicodeEncodeError, np.array, a, 'S')
+        b = a.reshape(3, 43)[:-1, :-1]
+        assert_raises(UnicodeEncodeError, np.array, b, 'S')
 
     def test_mixed_string_unicode_array_creation(self):
         a = np.array(['1234', u'123'])
@@ -1446,7 +1478,7 @@ class TestRegression(object):
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
         stra = 'aaaa'
@@ -1470,14 +1502,11 @@ class TestRegression(object):
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, int, np.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int):
                 test_type(t)
 
     def test_buffer_hashlib(self):
-        try:
-            from hashlib import md5
-        except ImportError:
-            from md5 import new as md5
+        from hashlib import md5
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
         assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
@@ -1498,7 +1527,8 @@ class TestRegression(object):
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
-        np.fromstring(b'aa, aa, 1.0', sep=',')
+        with assert_warns(DeprecationWarning):
+            np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()
@@ -1559,7 +1589,7 @@ class TestRegression(object):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_take_refcount(self):
         # ticket #939
         a = np.arange(16, dtype=float)
@@ -1697,6 +1727,67 @@ class TestRegression(object):
         assert_(a.flags.f_contiguous)
         assert_(b.flags.f_contiguous)
 
+    def test_squeeze_axis_handling(self):
+        # Issue #10779
+        # Ensure proper handling of objects
+        # that don't support axis specification
+        # when squeezing
+
+        class OldSqueeze(np.ndarray):
+
+            def __new__(cls,
+                        input_array):
+                obj = np.asarray(input_array).view(cls)
+                return obj
+
+            # it is perfectly reasonable that prior
+            # to numpy version 1.7.0 a subclass of ndarray
+            # might have been created that did not expect
+            # squeeze to have an axis argument
+            # NOTE: this example is somewhat artificial;
+            # it is designed to simulate an old API
+            # expectation to guard against regression
+            def squeeze(self):
+                return super(OldSqueeze, self).squeeze()
+
+        oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
+
+        # if no axis argument is specified the old API
+        # expectation should give the correct result
+        assert_equal(np.squeeze(oldsqueeze),
+                     np.array([1,2,3]))
+
+        # likewise, axis=None should work perfectly well
+        # with the old API expectation
+        assert_equal(np.squeeze(oldsqueeze, axis=None),
+                     np.array([1,2,3]))
+
+        # however, specification of any particular axis
+        # should raise a TypeError in the context of the
+        # old API specification, even when using a valid
+        # axis specification like 1 for this array
+        with assert_raises(TypeError):
+            # this would silently succeed for array
+            # subclasses / objects that did not support
+            # squeeze axis argument handling before fixing
+            # Issue #10779
+            np.squeeze(oldsqueeze, axis=1)
+
+        # check for the same behavior when using an invalid
+        # axis specification -- in this case axis=0 does not
+        # have size 1, but the priority should be to raise
+        # a TypeError for the axis argument and NOT a
+        # ValueError for squeezing a non-empty dimension
+        with assert_raises(TypeError):
+            np.squeeze(oldsqueeze, axis=0)
+
+        # the new API knows how to handle the axis
+        # argument and will return a ValueError if
+        # attempting to squeeze an axis that is not
+        # of length 1
+        with assert_raises(ValueError):
+            np.squeeze(np.array([[1],[2],[3]]), axis=0)
+
     def test_reduce_contiguous(self):
         # GitHub issue #387
         a = np.add.reduce(np.zeros((2, 1, 2)), (0, 1))
@@ -1709,24 +1800,33 @@ class TestRegression(object):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
         a[()] = a
-        assert_raises(TypeError, int, a)
-        assert_raises(TypeError, long, a)
-        assert_raises(TypeError, float, a)
-        assert_raises(TypeError, oct, a)
-        assert_raises(TypeError, hex, a)
+        assert_raises(RecursionError, int, a)
+        assert_raises(RecursionError, float, a)
+        a[()] = None
 
+    def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
-        b = np.array(a, dtype=object)
+        a = np.array(0, dtype=object)
+        b = np.array(0, dtype=object)
         a[()] = b
-        assert_raises(TypeError, int, a)
+        b[()] = a
+        assert_raises(RecursionError, int, a)
         # NumPy has no tp_traverse currently, so circular references
         # cannot be detected. So resolve it:
-        a[()] = 0
+        a[()] = None
 
         # This was causing a to become like the above
         a = np.array(0, dtype=object)
         a[...] += 1
         assert_equal(a, 1)
+
+    def test_object_array_nested(self):
+        # but is fine with a reference to a different array
+        a = np.array(0, dtype=object)
+        b = np.array(0, dtype=object)
+        a[()] = b
+        assert_equal(int(a), int(0))
+        assert_equal(float(a), float(0))
 
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
@@ -1830,9 +1930,9 @@ class TestRegression(object):
         assert_equal(s[0], "\x01")
 
     def test_pickle_bytes_overwrite(self):
-        if sys.version_info[0] >= 3:
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             data = np.array([1], dtype='b')
-            data = pickle.loads(pickle.dumps(data))
+            data = pickle.loads(pickle.dumps(data, protocol=proto))
             data[0] = 0xdd
             bytestring = "\x01  ".encode('ascii')
             assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
@@ -1846,12 +1946,11 @@ class TestRegression(object):
                 b"tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
                 b"I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
                 b"p13\ntp14\nb.")
-        if sys.version_info[0] >= 3:
-            # This should work:
-            result = pickle.loads(data, encoding='latin1')
-            assert_array_equal(result, np.array([129], dtype='b'))
-            # Should not segfault:
-            assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
+        # This should work:
+        result = pickle.loads(data, encoding='latin1')
+        assert_array_equal(result, np.array([129], dtype='b'))
+        # Should not segfault:
+        assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
 
     def test_pickle_py2_scalar_latin1_hack(self):
         # Check that scalar unpickling hack in Py3 that supports
@@ -1878,25 +1977,24 @@ class TestRegression(object):
               b"tp8\nRp9\n."),
              'different'),
         ]
-        if sys.version_info[0] >= 3:
-            for original, data, koi8r_validity in datas:
-                result = pickle.loads(data, encoding='latin1')
-                assert_equal(result, original)
+        for original, data, koi8r_validity in datas:
+            result = pickle.loads(data, encoding='latin1')
+            assert_equal(result, original)
 
-                # Decoding under non-latin1 encoding (e.g.) KOI8-R can
-                # produce bad results, but should not segfault.
-                if koi8r_validity == 'different':
-                    # Unicode code points happen to lie within latin1,
-                    # but are different in koi8-r, resulting to silent
-                    # bogus results
-                    result = pickle.loads(data, encoding='koi8-r')
-                    assert_(result != original)
-                elif koi8r_validity == 'invalid':
-                    # Unicode code points outside latin1, so results
-                    # to an encoding exception
-                    assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
-                else:
-                    raise ValueError(koi8r_validity)
+            # Decoding under non-latin1 encoding (e.g.) KOI8-R can
+            # produce bad results, but should not segfault.
+            if koi8r_validity == 'different':
+                # Unicode code points happen to lie within latin1,
+                # but are different in koi8-r, resulting to silent
+                # bogus results
+                result = pickle.loads(data, encoding='koi8-r')
+                assert_(result != original)
+            elif koi8r_validity == 'invalid':
+                # Unicode code points outside latin1, so results
+                # to an encoding exception
+                assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
+            else:
+                raise ValueError(koi8r_validity)
 
     def test_structured_type_to_object(self):
         a_rec = np.array([(0, 1), (3, 2)], dtype='i4,i8')
@@ -1930,6 +2028,7 @@ class TestRegression(object):
         a[...] = [[1, 2]]
         assert_equal(a, [[1, 2], [1, 2]])
 
+    @pytest.mark.slow_pypy
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
         for i in range(1000):
@@ -1937,7 +2036,7 @@ class TestRegression(object):
             a = np.empty((100000000,), dtype='i1')
             del a
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
@@ -1969,10 +2068,7 @@ class TestRegression(object):
         # Ticket #2081. Python compiled with two byte unicode
         # can lead to truncation if itemsize is not properly
         # adjusted for NumPy's four byte unicode.
-        if sys.version_info[0] >= 3:
-            a = np.array(['abcd'])
-        else:
-            a = np.array([u'abcd'])
+        a = np.array(['abcd'])
         assert_equal(a.dtype.itemsize, 16)
 
     def test_unique_stable(self):
@@ -1987,7 +2083,7 @@ class TestRegression(object):
         # Ticket #1578, the mismatch only showed up when running
         # python-debug for python versions >= 2.7, and then as
         # a core dump and error message.
-        a = np.array(['abc'], dtype=np.unicode)[0]
+        a = np.array(['abc'], dtype=np.unicode_)[0]
         del a
 
     def test_refcount_error_in_clip(self):
@@ -2106,7 +2202,7 @@ class TestRegression(object):
         import operator as op
 
         # dummy class where __array__ throws exception
-        class Foo(object):
+        class Foo:
             __array_priority__ = 1002
 
             def __array__(self, *args, **kwargs):
@@ -2115,12 +2211,7 @@ class TestRegression(object):
         rhs = Foo()
         lhs = np.array(1)
         for f in [op.lt, op.le, op.gt, op.ge]:
-            if sys.version_info[0] >= 3:
-                assert_raises(TypeError, f, lhs, rhs)
-            elif not sys.py3kwarning:
-                # With -3 switch in python 2, DeprecationWarning is raised
-                # which we are not interested in
-                f(lhs, rhs)
+            assert_raises(TypeError, f, lhs, rhs)
         assert_(not op.eq(lhs, rhs))
         assert_(op.ne(lhs, rhs))
 
@@ -2137,10 +2228,10 @@ class TestRegression(object):
 
     def test_pickle_empty_string(self):
         # gh-3926
-
-        import pickle
-        test_string = np.string_('')
-        assert_equal(pickle.loads(pickle.dumps(test_string)), test_string)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            test_string = np.string_('')
+            assert_equal(pickle.loads(
+                pickle.dumps(test_string, protocol=proto)), test_string)
 
     def test_frompyfunc_many_args(self):
         # gh-5672
@@ -2163,11 +2254,12 @@ class TestRegression(object):
             x[0], x[-1] = x[-1], x[0]
 
         uf = np.frompyfunc(f, 1, 0)
-        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]])
+        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]], dtype=object)
         assert_equal(uf(a), ())
-        assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
+        expected = np.array([[3, 2, 1], [5, 4], [9, 7, 8, 6]], dtype=object)
+        assert_array_equal(a, expected)
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_leak_in_structured_dtype_comparison(self):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),
@@ -2233,6 +2325,10 @@ class TestRegression(object):
         # allowed as a special case due to existing use, see gh-2798
         a = np.ones(1, dtype=('O', [('name', 'O')]))
         assert_equal(a[0], 1)
+        # In particular, the above union dtype (and union dtypes in general)
+        # should mainly behave like the main (object) dtype:
+        assert a[0] is a.item()
+        assert type(a[0]) is int
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
@@ -2260,6 +2356,171 @@ class TestRegression(object):
             item2 = copy.copy(item)
             assert_equal(item, item2)
 
+    def test_void_item_memview(self):
+        va = np.zeros(10, 'V4')
+        x = va[:1].item()
+        va[0] = b'\xff\xff\xff\xff'
+        del va
+        assert_equal(x, b'\x00\x00\x00\x00')
 
-if __name__ == "__main__":
-    run_module_suite()
+    def test_void_getitem(self):
+        # Test fix for gh-11668.
+        assert_(np.array([b'a'], 'V1').astype('O') == b'a')
+        assert_(np.array([b'ab'], 'V2').astype('O') == b'ab')
+        assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
+        assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
+
+    def test_structarray_title(self):
+        # The following used to segfault on pypy, due to NPY_TITLE_KEY
+        # not working properly and resulting to double-decref of the
+        # structured array field items:
+        # See: https://bitbucket.org/pypy/pypy/issues/2789
+        for j in range(5):
+            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
+            structure[0]['x'] = np.array([2])
+            gc.collect()
+
+    def test_dtype_scalar_squeeze(self):
+        # gh-11384
+        values = {
+            'S': b"a",
+            'M': "2018-06-20",
+        }
+        for ch in np.typecodes['All']:
+            if ch in 'O':
+                continue
+            sctype = np.dtype(ch).type
+            scvalue = sctype(values.get(ch, 3))
+            for axis in [None, ()]:
+                squeezed = scvalue.squeeze(axis=axis)
+                assert_equal(squeezed, scvalue)
+                assert_equal(type(squeezed), type(scvalue))
+
+    def test_field_access_by_title(self):
+        # gh-11507
+        s = 'Some long field name'
+        if HAS_REFCOUNT:
+            base = sys.getrefcount(s)
+        t = np.dtype([((s, 'f1'), np.float64)])
+        data = np.zeros(10, t)
+        for i in range(10):
+            str(data[['f1']])
+            if HAS_REFCOUNT:
+                assert_(base <= sys.getrefcount(s))
+
+    @pytest.mark.parametrize('val', [
+        # arrays and scalars
+        np.ones((10, 10), dtype='int32'),
+        np.uint64(10),
+        ])
+    @pytest.mark.parametrize('protocol',
+        range(2, pickle.HIGHEST_PROTOCOL + 1)
+        )
+    def test_pickle_module(self, protocol, val):
+        # gh-12837
+        s = pickle.dumps(val, protocol)
+        assert b'_multiarray_umath' not in s
+        if protocol == 5 and len(val.shape) > 0:
+            # unpickling ndarray goes through _frombuffer for protocol 5
+            assert b'numpy.core.numeric' in s
+        else:
+            assert b'numpy.core.multiarray' in s
+
+    def test_object_casting_errors(self):
+        # gh-11993 update to ValueError (see gh-16909), since strings can in
+        # principle be converted to complex, but this string cannot.
+        arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
+        assert_raises(ValueError, arr.astype, 'c8')
+
+    def test_eff1d_casting(self):
+        # gh-12711
+        x = np.array([1, 2, 4, 7, 0], dtype=np.int16)
+        res = np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
+        assert_equal(res, [-99,   1,   2,   3,  -7,  88,  99])
+
+        # The use of safe casting means, that 1<<20 is cast unsafely, an
+        # error may be better, but currently there is no mechanism for it.
+        res = np.ediff1d(x, to_begin=(1<<20), to_end=(1<<20))
+        assert_equal(res, [0,   1,   2,   3,  -7,  0])
+
+    def test_pickle_datetime64_array(self):
+        # gh-12745 (would fail with pickle5 installed)
+        d = np.datetime64('2015-07-04 12:59:59.50', 'ns')
+        arr = np.array([d])
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            dumped = pickle.dumps(arr, protocol=proto)
+            assert_equal(pickle.loads(dumped), arr)
+
+    def test_bad_array_interface(self):
+        class T:
+            __array_interface__ = {}
+
+        with assert_raises(ValueError):
+            np.array([T()])
+
+    def test_2d__array__shape(self):
+        class T(object):
+            def __array__(self):
+                return np.ndarray(shape=(0,0))
+
+            # Make sure __array__ is used instead of Sequence methods.
+            def __iter__(self):
+                return iter([])
+
+            def __getitem__(self, idx):
+                raise AssertionError("__getitem__ was called")
+
+            def __len__(self):
+                return 0
+
+
+        t = T()
+        # gh-13659, would raise in broadcasting [x=t for x in result]
+        arr = np.array([t])
+        assert arr.shape == (1, 0, 0)
+
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
+                        reason='overflows on windows, fixed in bpo-16865')
+    def test_to_ctypes(self):
+        #gh-14214
+        arr = np.zeros((2 ** 31 + 1,), 'b')
+        assert arr.size * arr.itemsize > 2 ** 31
+        c_arr = np.ctypeslib.as_ctypes(arr)
+        assert_equal(c_arr._length_, arr.size)
+
+    def test_complex_conversion_error(self):
+        # gh-17068
+        with pytest.raises(TypeError, match=r"Unable to convert dtype.*"):
+            complex(np.array("now", np.datetime64))
+
+    def test__array_interface__descr(self):
+        # gh-17068
+        dt = np.dtype(dict(names=['a', 'b'],
+                           offsets=[0, 0],
+                           formats=[np.int64, np.int64]))
+        descr = np.array((1, 1), dtype=dt).__array_interface__['descr']
+        assert descr == [('', '|V8')]  # instead of [(b'', '|V8')]
+
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @requires_memory(free_bytes=9e9)
+    def test_dot_big_stride(self):
+        # gh-17111
+        # blas stride = stride//itemsize > int32 max
+        int32_max = np.iinfo(np.int32).max
+        n = int32_max + 3
+        a = np.empty([n], dtype=np.float32)
+        b = a[::n-1]
+        b[...] = 1
+        assert b.strides[0] > int32_max * b.dtype.itemsize
+        assert np.dot(b, b) == 2.0
+
+    def test_frompyfunc_name(self):
+        # name conversion was failing for python 3 strings
+        # resulting in the default '?' name. Also test utf-8
+        # encoding using non-ascii name.
+        def cassé(x):
+            return x
+
+        f = np.frompyfunc(cassé, 1, 1)
+        assert str(f) == "<ufunc 'cassé (vectorized)'>"

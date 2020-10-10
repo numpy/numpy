@@ -7,6 +7,7 @@
 #include "numpy/arrayobject.h"
 
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 /*
  * Functions used to try to avoid/elide temporaries in python expressions
@@ -61,12 +62,8 @@
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
 
-#if PY_VERSION_HEX >= 0x03060000
 /* TODO can pep523 be used to somehow? */
 #define PYFRAMEEVAL_FUNC "_PyEval_EvalFrameDefault"
-#else
-#define PYFRAMEEVAL_FUNC "PyEval_EvalFrameEx"
-#endif
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
  * becomes less than speed gained by in-place operations. Depends on stack depth
@@ -165,7 +162,7 @@ check_callers(int * cannot)
             return 0;
         }
         /* get multiarray base address */
-        if (dladdr(&PyArray_SetNumericOps, &info)) {
+        if (dladdr(&PyArray_INCREF, &info)) {
             pos_ma_start = info.dli_fbase;
             pos_ma_end = info.dli_fbase;
         }
@@ -181,6 +178,7 @@ check_callers(int * cannot)
         Dl_info info;
         int in_python = 0;
         int in_multiarray = 0;
+
 #if NPY_ELIDE_DEBUG >= 2
         dladdr(buffer[i], &info);
         printf("%s(%p) %s(%p)\n", info.dli_fname, info.dli_fbase,
@@ -242,14 +240,14 @@ check_callers(int * cannot)
             }
             if (info.dli_sname &&
                     strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0) {
-                if (n_pyeval < sizeof(pyeval_addr) / sizeof(pyeval_addr[0])) {
+                if (n_pyeval < (npy_intp)ARRAY_SIZE(pyeval_addr)) {
                     /* store address to not have to dladdr it again */
                     pyeval_addr[n_pyeval++] = buffer[i];
                 }
                 ok = 1;
                 break;
             }
-            else if (n_py_addr < sizeof(py_addr) / sizeof(py_addr[0])) {
+            else if (n_py_addr < (npy_intp)ARRAY_SIZE(py_addr)) {
                 /* store other py function to not have to dladdr it again */
                 py_addr[n_py_addr++] = buffer[i];
             }
@@ -287,6 +285,7 @@ can_elide_temp(PyArrayObject * alhs, PyObject * orhs, int * cannot)
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
+            PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }

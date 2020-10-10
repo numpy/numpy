@@ -1,11 +1,12 @@
-#!/usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
-import sys, os
-from io import BytesIO
+#!/usr/bin/env python3
+import os
 import re
+import sys
+from io import StringIO
+
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
+
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
@@ -21,8 +22,8 @@ def sep_seq(sequence, sep):
     return pat
 
 def runScanner(data, scanner_class, lexicon=None):
-    info = BytesIO(data)
-    outfo = BytesIO()
+    info = StringIO(data)
+    outfo = StringIO()
     if lexicon is not None:
         scanner = scanner_class(lexicon, info)
     else:
@@ -100,7 +101,7 @@ def cleanSource(source):
     source = re.sub(r'\n\n\n\n+', r'\n\n\n', source)
     return source
 
-class LineQueue(object):
+class LineQueue:
     def __init__(self):
         object.__init__(self)
         self._queue = []
@@ -189,7 +190,7 @@ def cleanComments(source):
             return SourceLines
 
     state = SourceLines
-    for line in BytesIO(source):
+    for line in StringIO(source):
         state = state(line)
     comments.flushTo(lines)
     return lines.getValue()
@@ -217,7 +218,38 @@ def removeHeader(source):
         return OutOfHeader
 
     state = LookingForHeader
-    for line in BytesIO(source):
+    for line in StringIO(source):
+        state = state(line)
+    return lines.getValue()
+
+def removeSubroutinePrototypes(source):
+    expression = re.compile(
+        r'/[*] Subroutine [*]/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
+    )
+    lines = LineQueue()
+    for line in StringIO(source):
+        if not expression.match(line):
+            lines.add(line)
+
+    return lines.getValue()
+
+def removeBuiltinFunctions(source):
+    lines = LineQueue()
+    def LookingForBuiltinFunctions(line):
+        if line.strip() == '/* Builtin functions */':
+            return InBuiltInFunctions
+        else:
+            lines.add(line)
+            return LookingForBuiltinFunctions
+
+    def InBuiltInFunctions(line):
+        if line.strip() == '':
+            return LookingForBuiltinFunctions
+        else:
+            return InBuiltInFunctions
+
+    state = LookingForBuiltinFunctions
+    for line in StringIO(source):
         state = state(line)
     return lines.getValue()
 
@@ -240,6 +272,8 @@ def scrubSource(source, nsteps=None, verbose=False):
              ('clean source', cleanSource),
              ('clean comments', cleanComments),
              ('replace dlamch_() calls', replaceDlamch),
+             ('remove prototypes', removeSubroutinePrototypes),
+             ('remove builtin function prototypes', removeBuiltinFunctions),
             ]
 
     if nsteps is not None:
@@ -255,9 +289,8 @@ def scrubSource(source, nsteps=None, verbose=False):
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))
-    fo = open(filename, 'r')
-    source = fo.read()
-    fo.close()
+    with open(filename, 'r') as fo:
+        source = fo.read()
 
     if len(sys.argv) > 3:
         nsteps = int(sys.argv[3])

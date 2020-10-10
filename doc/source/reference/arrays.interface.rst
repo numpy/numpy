@@ -22,7 +22,7 @@ The Array Interface
    described here.
 
 __ http://cython.org/
-__ http://wiki.cython.org/tutorials/numpy
+__ https://github.com/cython/cython/wiki/tutorials-numpy
 
 :version: 3
 
@@ -71,7 +71,7 @@ This approach to the interface consists of the object having an
 
    **typestr** (required)
 
-       A string providing the basic type of the homogenous array The
+       A string providing the basic type of the homogeneous array The
        basic string format consists of 3 parts: a character describing
        the byteorder of the data (``<``: little-endian, ``>``:
        big-endian, ``|``: not-relevant), a character code giving the
@@ -138,18 +138,18 @@ This approach to the interface consists of the object having an
        This attribute can also be an object exposing the
        :c:func:`buffer interface <PyObject_AsCharBuffer>` which
        will be used to share the data. If this key is not present (or
-       returns :class:`None`), then memory sharing will be done
+       returns None), then memory sharing will be done
        through the buffer interface of the object itself.  In this
        case, the offset key can be used to indicate the start of the
        buffer.  A reference to the object exposing the array interface
        must be stored by the new object if the memory area is to be
        secured.
 
-       **Default**: :const:`None`
+       **Default**: None
 
    **strides** (optional)
 
-       Either :const:`None` to indicate a C-style contiguous array or
+       Either None to indicate a C-style contiguous array or
        a Tuple of strides which provides the number of bytes needed
        to jump to the next array element in the corresponding
        dimension. Each entry must be an integer (a Python
@@ -157,29 +157,29 @@ This approach to the interface consists of the object having an
        be larger than can be represented by a C "int" or "long"; the
        calling code should handle this appropriately, either by
        raising an error, or by using :c:type:`Py_LONG_LONG` in C. The
-       default is :const:`None` which implies a C-style contiguous
+       default is None which implies a C-style contiguous
        memory buffer.  In this model, the last dimension of the array
        varies the fastest.  For example, the default strides tuple
        for an object whose array entries are 8 bytes long and whose
        shape is (10,20,30) would be (4800, 240, 8)
 
-       **Default**: :const:`None` (C-style contiguous)
+       **Default**: None (C-style contiguous)
 
    **mask** (optional)
 
-       :const:`None` or an object exposing the array interface.  All
+       None or an object exposing the array interface.  All
        elements of the mask array should be interpreted only as true
        or not true indicating which elements of this array are valid.
        The shape of this object should be `"broadcastable"
        <arrays.broadcasting.broadcastable>` to the shape of the
        original array.
 
-       **Default**: :const:`None` (All array values are valid)
+       **Default**: None (All array values are valid)
 
    **offset** (optional)
 
        An integer offset into the array data region. This can only be
-       used when data is :const:`None` or returns a :class:`buffer`
+       used when data is None or returns a :class:`buffer`
        object.
 
        **Default**: 0.
@@ -199,9 +199,9 @@ array using only one attribute lookup and a well-defined C-structure.
 
 .. c:var:: __array_struct__
 
-   A :c:type: `PyCObject` whose :c:data:`voidptr` member contains a
+   A :c:type:`PyCapsule` whose ``pointer`` member contains a
    pointer to a filled :c:type:`PyArrayInterface` structure.  Memory
-   for the structure is dynamically created and the :c:type:`PyCObject`
+   for the structure is dynamically created and the :c:type:`PyCapsule`
    is also created with an appropriate destructor so the retriever of
    this attribute simply has to apply :c:func:`Py_DECREF()` to the
    object returned by this attribute when it is finished.  Also,
@@ -211,7 +211,7 @@ array using only one attribute lookup and a well-defined C-structure.
    must also not reallocate their memory if other objects are
    referencing them.
 
-The PyArrayInterface structure is defined in ``numpy/ndarrayobject.h``
+The :c:type:`PyArrayInterface` structure is defined in ``numpy/ndarrayobject.h``
 as::
 
   typedef struct {
@@ -231,22 +231,25 @@ as::
 
 The flags member may consist of 5 bits showing how the data should be
 interpreted and one bit showing how the Interface should be
-interpreted.  The data-bits are :const:`CONTIGUOUS` (0x1),
-:const:`FORTRAN` (0x2), :const:`ALIGNED` (0x100), :const:`NOTSWAPPED`
-(0x200), and :const:`WRITEABLE` (0x400).  A final flag
-:const:`ARR_HAS_DESCR` (0x800) indicates whether or not this structure
+interpreted.  The data-bits are :c:macro:`NPY_ARRAY_C_CONTIGUOUS` (0x1),
+:c:macro:`NPY_ARRAY_F_CONTIGUOUS` (0x2), :c:macro:`NPY_ARRAY_ALIGNED` (0x100),
+:c:macro:`NPY_ARRAY_NOTSWAPPED` (0x200), and :c:macro:`NPY_ARRAY_WRITEABLE` (0x400).  A final flag
+:c:macro:`NPY_ARR_HAS_DESCR` (0x800) indicates whether or not this structure
 has the arrdescr field.  The field should not be accessed unless this
 flag is present.
 
+   .. c:macro:: NPY_ARR_HAS_DESCR
+
 .. admonition:: New since June 16, 2006:
 
-   In the past most implementations used the "desc" member of the
-   :c:type:`PyCObject` itself (do not confuse this with the "descr" member of
+   In the past most implementations used the ``desc`` member of the ``PyCObject``
+   (now :c:type:`PyCapsule`) itself (do not confuse this with the "descr" member of
    the :c:type:`PyArrayInterface` structure above --- they are two separate
    things) to hold the pointer to the object exposing the interface.
-   This is now an explicit part of the interface.  Be sure to own a
-   reference to the object when the :c:type:`PyCObject` is created using
-   :c:type:`PyCObject_FromVoidPtrAndDesc`.
+   This is now an explicit part of the interface.  Be sure to take a
+   reference to the object and call :c:func:`PyCapsule_SetContext` before
+   returning the :c:type:`PyCapsule`, and configure a destructor to decref this
+   reference.
 
 
 Type description examples
@@ -315,25 +318,39 @@ largely aesthetic.  In particular:
 1. The PyArrayInterface structure had no descr member at the end
    (and therefore no flag ARR_HAS_DESCR)
 
-2. The desc member of the PyCObject returned from __array_struct__ was
+2. The ``context`` member of the :c:type:`PyCapsule` (formally the ``desc``
+   member of the ``PyCObject``) returned from ``__array_struct__`` was
    not specified.  Usually, it was the object exposing the array (so
    that a reference to it could be kept and destroyed when the
-   C-object was destroyed).  Now it must be a tuple whose first
-   element is a string with "PyArrayInterface Version #" and whose
-   second element is the object exposing the array.
+   C-object was destroyed). It is now an explicit requirement that this field
+   be used in some way to hold a reference to the owning object.
 
-3. The tuple returned from __array_interface__['data'] used to be a
+   .. note::
+
+       Until August 2020, this said:
+
+           Now it must be a tuple whose first element is a string with
+           "PyArrayInterface Version #" and whose second element is the object
+           exposing the array.
+
+       This design was retracted almost immediately after it was proposed, in
+       <https://mail.python.org/pipermail/numpy-discussion/2006-June/020995.html>.
+       Despite 14 years of documentation to the contrary, at no point was it
+       valid to assume that ``__array_interface__`` capsules held this tuple
+       content.
+
+3. The tuple returned from ``__array_interface__['data']`` used to be a
    hex-string (now it is an integer or a long integer).
 
-4. There was no __array_interface__ attribute instead all of the keys
-   (except for version) in the __array_interface__ dictionary were
+4. There was no ``__array_interface__`` attribute instead all of the keys
+   (except for version) in the ``__array_interface__`` dictionary were
    their own attribute: Thus to obtain the Python-side information you
    had to access separately the attributes:
 
-   * __array_data__
-   * __array_shape__
-   * __array_strides__
-   * __array_typestr__
-   * __array_descr__
-   * __array_offset__
-   * __array_mask__
+   * ``__array_data__``
+   * ``__array_shape__``
+   * ``__array_strides__``
+   * ``__array_typestr__``
+   * ``__array_descr__``
+   * ``__array_offset__``
+   * ``__array_mask__``

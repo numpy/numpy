@@ -12,7 +12,13 @@ Steering council
 
 * Ralf Gommers
 
+* Allan Haldane
+
 * Charles Harris
+
+* Stephan Hoyer
+
+* Matti Picus
 
 * Nathaniel Smith
 
@@ -20,21 +26,20 @@ Steering council
 
 * Pauli Virtanen
 
+* Stéfan van der Walt
+
 * Eric Wieser
 
-* Marten van Kerkwijk
-
-* Stephan Hoyer
-
-* Allan Haldane
 
 
 Emeritus members
 ----------------
 
-* Travis Oliphant - Project Founder / Emeritus Leader (served: 2005-2012)
+* Travis Oliphant -- project founder / emeritus leader (2005-2012)
 
-* Alex Griffing (served: 2015-2017)
+* Alex Griffing (2015-2017)
+
+* Marten van Kerkwijk (2017-2019)
 
 
 NumFOCUS Subcommittee
@@ -46,7 +51,7 @@ NumFOCUS Subcommittee
 
 * Jaime Fernández del Río
 
-* Nathaniel Smith
+* Sebastian Berg
 
 * External member: Thomas Caswell
 
@@ -54,10 +59,7 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-*  UC Berkeley (Nathaniel Smith)
+* UC Berkeley (Stéfan van der Walt, Sebastian Berg, Warren Weckesser, Ross Barnowski)
 
+* Quansight (Ralf Gommers, Hameer Abbasi, Melissa Weber Mendonça, Mars Lee, Matti Picus)
 
-Document history
-----------------
-
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst

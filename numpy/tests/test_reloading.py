@@ -1,13 +1,11 @@
-from __future__ import division, absolute_import, print_function
+from numpy.testing import assert_raises, assert_, assert_equal
+from numpy.compat import pickle
 
 import sys
+import subprocess
+import textwrap
+from importlib import reload
 
-from numpy.testing import assert_raises, assert_, run_module_suite
-
-if sys.version_info[:2] >= (3, 4):
-    from importlib import reload
-else:
-    from imp import reload
 
 def test_numpy_reloading():
     # gh-7844. Also check that relevant globals retain their identity.
@@ -29,6 +27,31 @@ def test_numpy_reloading():
     assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
     assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
 
+def test_novalue():
+    import numpy as np
+    for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+        assert_equal(repr(np._NoValue), '<no value>')
+        assert_(pickle.loads(pickle.dumps(np._NoValue,
+                                          protocol=proto)) is np._NoValue)
 
-if __name__ == "__main__":
-    run_module_suite()
+
+def test_full_reimport():
+    """At the time of writing this, it is *not* truly supported, but
+    apparently enough users rely on it, for it to be an annoying change
+    when it started failing previously.
+    """
+    # Test within a new process, to ensure that we do not mess with the
+    # global state during the test run (could lead to cryptic test failures).
+    # This is generally unsafe, especially, since we also reload the C-modules.
+    code = textwrap.dedent(r"""
+        import sys
+        import numpy as np
+
+        for k in list(sys.modules.keys()):
+            if "numpy" in k:
+                del sys.modules[k]
+
+        import numpy as np
+        """)
+    p = subprocess.run([sys.executable, '-c', code])
+    assert p.returncode == 0

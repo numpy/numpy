@@ -2,17 +2,36 @@
 #define _NPY_ARRAY_CTORS_H_
 
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                     npy_intp *dims, npy_intp *strides, void *data,
-                     int flags, PyObject *obj);
+PyArray_NewFromDescr(
+        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+        npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj);
 
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                         npy_intp *dims, npy_intp *strides, void *data,
-                         int flags, PyObject *obj, int zeroed);
+PyArray_NewFromDescrAndBase(
+        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+        npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj, PyObject *base);
 
-NPY_NO_EXPORT PyObject *PyArray_New(PyTypeObject *, int nd, npy_intp *,
-                             int, npy_intp *, void *, int, int, PyObject *);
+NPY_NO_EXPORT PyObject *
+PyArray_NewFromDescr_int(
+        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+        npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj, PyObject *base, int zeroed);
+
+NPY_NO_EXPORT PyObject *
+PyArray_NewLikeArrayWithShape(
+        PyArrayObject *prototype, NPY_ORDER order,
+        PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok);
+
+NPY_NO_EXPORT PyObject *
+PyArray_New(
+        PyTypeObject *, int nd, npy_intp const *,
+        int, npy_intp const*, void *, int, int, PyObject *);
+
+NPY_NO_EXPORT PyObject *
+_array_from_array_like(PyObject *op,
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -57,7 +76,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
 
 /* FIXME: remove those from here */
 NPY_NO_EXPORT void
-_array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
+_array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t itemsize,
                     int inflag, int *objflags);
 
 NPY_NO_EXPORT void
@@ -73,9 +92,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, npy_intp n, int size);
-
-NPY_NO_EXPORT int
-PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
 
 /*
  * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'

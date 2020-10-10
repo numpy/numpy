@@ -5,8 +5,6 @@
 # Notes:
 # - when using -g77 then use -DUNDERSCORE_G77 to compile f2py
 #   generated extension modules (works for f2py v2.45.241_1936 and up)
-from __future__ import division, absolute_import, print_function
-
 import os
 
 from numpy.distutils.cpuinfo import cpu
@@ -66,7 +64,7 @@ class AbsoftFCompiler(FCompiler):
 
     def library_dir_option(self, dir):
         if os.name=='nt':
-            return ['-link', '/PATH:"%s"' % (dir)]
+            return ['-link', '/PATH:%s' % (dir)]
         return "-L" + dir
 
     def library_option(self, lib):
@@ -154,7 +152,5 @@ class AbsoftFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='absoft')
-    compiler.customize()
-    print(compiler.get_version())
+    from numpy.distutils import customized_fcompiler
+    print(customized_fcompiler(compiler='absoft').get_version())

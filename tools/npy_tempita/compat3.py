@@ -1,11 +1,9 @@
-from __future__ import absolute_import, division, print_function
-
 import sys
 
 __all__ = ['PY3', 'b', 'basestring_', 'bytes', 'next', 'is_unicode',
            'iteritems']
 
-PY3 = True if sys.version_info[0] == 3 else False
+PY3 = True if sys.version_info[0] >= 3 else False
 
 if sys.version_info[0] < 3:
 

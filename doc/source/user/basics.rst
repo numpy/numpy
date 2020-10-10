@@ -12,4 +12,5 @@ NumPy basics
    basics.broadcasting
    basics.byteswapping
    basics.rec
+   basics.dispatch
    basics.subclassing

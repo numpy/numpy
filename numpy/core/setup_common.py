@@ -1,10 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 # Code common to build tools
 import sys
 import warnings
 import copy
-import binascii
+import textwrap
 
 from numpy.distutils.misc_util import mingw32
 
@@ -14,7 +12,7 @@ from numpy.distutils.misc_util import mingw32
 #-------------------
 # How to change C_API_VERSION ?
 #   - increase C_API_VERSION value
-#   - record the hash for the new C API with the script cversions.py
+#   - record the hash for the new C API with the cversions.py script
 #   and add the hash to cversions.txt
 # The hash values are used to remind developers when the C API number was not
 # updated - generates a MismatchCAPIWarning warning which is turned into an
@@ -39,8 +37,11 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000a - 1.11.x
 # 0x0000000a - 1.12.x
 # 0x0000000b - 1.13.x
-# 0x0000000b - 1.14.x
-C_API_VERSION = 0x0000000b
+# 0x0000000c - 1.14.x
+# 0x0000000c - 1.15.x
+# 0x0000000d - 1.16.x
+# 0x0000000e - 1.19.x
+C_API_VERSION = 0x0000000e
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -79,21 +80,20 @@ def get_api_versions(apiversion, codegen_dir):
     return curapi_hash, apis_hash[apiversion]
 
 def check_api_version(apiversion, codegen_dir):
-    """Emits a MismacthCAPIWarning if the C API version needs updating."""
+    """Emits a MismatchCAPIWarning if the C API version needs updating."""
     curapi_hash, api_hash = get_api_versions(apiversion, codegen_dir)
 
     # If different hash, it means that the api .txt files in
     # codegen_dir have been updated without the API version being
     # updated. Any modification in those .txt files should be reflected
     # in the api and eventually abi versions.
-    # To compute the checksum of the current API, use
-    # code_generators/cversions.py script
+    # To compute the checksum of the current API, use numpy/core/cversions.py
     if not curapi_hash == api_hash:
         msg = ("API mismatch detected, the C API version "
                "numbers have to be updated. Current C api version is %d, "
-               "with checksum %s, but recorded checksum for C API version %d in "
-               "codegen_dir/cversions.txt is %s. If functions were added in the "
-               "C API, you have to update C_API_VERSION  in %s."
+               "with checksum %s, but recorded checksum for C API version %d "
+               "in core/codegen_dir/cversions.txt is %s. If functions were "
+               "added in the C API, you have to update C_API_VERSION in %s."
                )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
@@ -109,16 +109,18 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
         "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
-        "backtrace"]
+        "backtrace", "madvise"]
 
 
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
+                "immintrin.h",  # AVX
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
                 "dlfcn.h", # dladdr
+                "sys/mman.h", #madvise
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
@@ -131,9 +133,6 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       # broken on OSX 10.11, make sure its not optimized away
-                       ("volatile int r = __builtin_cpu_supports", '"sse"',
-                        "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
@@ -146,6 +145,13 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX"),
                        ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
                         "stdio.h", "LINK_AVX2"),
+                       ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
+                        "stdio.h", "LINK_AVX512F"),
+                       ("__asm__ volatile", '"vfpclasspd $0x40, %zmm15, %k6\\n"\
+                                             "vmovdqu8 %xmm0, %xmm1\\n"\
+                                             "vpbroadcastmb2q %k0, %xmm0\\n"',
+                        "stdio.h", "LINK_AVX512_SKX"),
+                       ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
 # function attributes
@@ -161,12 +167,41 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_target_avx'),
                                 ('__attribute__((target ("avx2")))',
                                  'attribute_target_avx2'),
+                                ('__attribute__((target ("avx512f")))',
+                                 'attribute_target_avx512f'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                 'attribute_target_avx512_skx'),
+                                ]
+
+# function attributes with intrinsics
+# To ensure your compiler can compile avx intrinsics with just the attributes
+# gcc 4.8.4 support attributes but not with intrisics
+# tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
+# function name will be converted to HAVE_<upper-case-name> preprocessor macro
+# The _mm512_castps_si512 instruction is specific check for AVX-512F support
+# in gcc-4.9 which is missing a subset of intrinsics. See
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61878
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
+                                'attribute_target_avx2_with_intrinsics',
+                                '__m256 temp = _mm256_set1_ps(1.0); temp = \
+                                _mm256_fmadd_ps(temp, temp, temp)',
+                                'immintrin.h'),
+                                ('__attribute__((target("avx512f")))',
+                                'attribute_target_avx512f_with_intrinsics',
+                                '__m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0))',
+                                'immintrin.h'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                'attribute_target_avx512_skx_with_intrinsics',
+                                '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
+                                __m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0));\
+                                _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
+                                'immintrin.h'),
                                 ]
 
 # variable attributes tested via "int %s a" % attribute
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
-# Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
+# Subset of OPTIONAL_STDFUNCS which may already have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = [
     "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
     "ftello", "fseeko"
@@ -216,6 +251,21 @@ def check_long_double_representation(cmd):
         except (AttributeError, ValueError):
             pass
 
+    # Disable multi-file interprocedural optimization in the Intel compiler on Linux
+    # which generates intermediary object files and prevents checking the
+    # float representation.
+    elif (sys.platform != "win32"
+            and cmd.compiler.compiler_type.startswith('intel')
+            and '-ipo' in cmd.compiler.cc_exe):
+        newcompiler = cmd.compiler.cc_exe.replace(' -ipo', '')
+        cmd.compiler.set_executables(
+            compiler=newcompiler,
+            compiler_so=newcompiler,
+            compiler_cxx=newcompiler,
+            linker_exe=newcompiler,
+            linker_so=newcompiler + ' -shared'
+        )
+
     # We need to use _compile because we need the object filename
     src, obj = cmd._compile(body, None, None, 'c')
     try:
@@ -224,8 +274,9 @@ def check_long_double_representation(cmd):
     except ValueError:
         # try linking to support CC="gcc -flto" or icc -ipo
         # struct needs to be volatile so it isn't optimized away
+        # additionally "clang -flto" requires the foo struct to be used
         body = body.replace('struct', 'volatile struct')
-        body += "int main(void) { return 0; }\n"
+        body += "int main(void) { return foo.before[0]; }\n"
         src, obj = cmd._compile(body, None, None, 'c')
         cmd.temp_files.append("_configtest")
         cmd.compiler.link_executable([obj], "_configtest")
@@ -270,38 +321,15 @@ def pyod(filename):
     We only implement enough to get the necessary information for long double
     representation, this is not intended as a compatible replacement for od.
     """
-    def _pyod2():
-        out = []
+    out = []
+    with open(filename, 'rb') as fid:
+        yo2 = [oct(o)[2:] for o in fid.read()]
+    for i in range(0, len(yo2), 16):
+        line = ['%07d' % int(oct(i)[2:])]
+        line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
+        out.append(" ".join(line))
+    return out
 
-        fid = open(filename, 'rb')
-        try:
-            yo = [int(oct(int(binascii.b2a_hex(o), 16))) for o in fid.read()]
-            for i in range(0, len(yo), 16):
-                line = ['%07d' % int(oct(i))]
-                line.extend(['%03d' % c for c in yo[i:i+16]])
-                out.append(" ".join(line))
-            return out
-        finally:
-            fid.close()
-
-    def _pyod3():
-        out = []
-
-        fid = open(filename, 'rb')
-        try:
-            yo2 = [oct(o)[2:] for o in fid.read()]
-            for i in range(0, len(yo2), 16):
-                line = ['%07d' % int(oct(i)[2:])]
-                line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
-                out.append(" ".join(line))
-            return out
-        finally:
-            fid.close()
-
-    if sys.version_info[0] < 3:
-        return _pyod2()
-    else:
-        return _pyod3()
 
 _BEFORE_SEQ = ['000', '000', '000', '000', '000', '000', '000', '000',
               '001', '043', '105', '147', '211', '253', '315', '357']
@@ -318,9 +346,9 @@ _MOTOROLA_EXTENDED_12B = ['300', '031', '000', '000', '353', '171',
 _IEEE_QUAD_PREC_BE = ['300', '031', '326', '363', '105', '100', '000', '000',
                       '000', '000', '000', '000', '000', '000', '000', '000']
 _IEEE_QUAD_PREC_LE = _IEEE_QUAD_PREC_BE[::-1]
-_DOUBLE_DOUBLE_BE = (['301', '235', '157', '064', '124', '000', '000', '000'] +
+_IBM_DOUBLE_DOUBLE_BE = (['301', '235', '157', '064', '124', '000', '000', '000'] +
                      ['000'] * 8)
-_DOUBLE_DOUBLE_LE = (['000', '000', '000', '124', '064', '157', '235', '301'] +
+_IBM_DOUBLE_DOUBLE_LE = (['000', '000', '000', '124', '064', '157', '235', '301'] +
                      ['000'] * 8)
 
 def long_double_representation(lines):
@@ -347,11 +375,16 @@ def long_double_representation(lines):
             # the long double
             if read[-8:] == _AFTER_SEQ:
                 saw = copy.copy(read)
+                # if the content was 12 bytes, we only have 32 - 8 - 12 = 12
+                # "before" bytes. In other words the first 4 "before" bytes went
+                # past the sliding window.
                 if read[:12] == _BEFORE_SEQ[4:]:
                     if read[12:-8] == _INTEL_EXTENDED_12B:
                         return 'INTEL_EXTENDED_12_BYTES_LE'
                     if read[12:-8] == _MOTOROLA_EXTENDED_12B:
                         return 'MOTOROLA_EXTENDED_12_BYTES_BE'
+                # if the content was 16 bytes, we are left with 32-8-16 = 16
+                # "before" bytes, so 8 went past the sliding window.
                 elif read[:8] == _BEFORE_SEQ[8:]:
                     if read[8:-8] == _INTEL_EXTENDED_16B:
                         return 'INTEL_EXTENDED_16_BYTES_LE'
@@ -359,10 +392,11 @@ def long_double_representation(lines):
                         return 'IEEE_QUAD_BE'
                     elif read[8:-8] == _IEEE_QUAD_PREC_LE:
                         return 'IEEE_QUAD_LE'
-                    elif read[8:-8] == _DOUBLE_DOUBLE_BE:
-                        return 'DOUBLE_DOUBLE_BE'
-                    elif read[8:-8] == _DOUBLE_DOUBLE_LE:
-                        return 'DOUBLE_DOUBLE_LE'
+                    elif read[8:-8] == _IBM_DOUBLE_DOUBLE_LE:
+                        return 'IBM_DOUBLE_DOUBLE_LE'
+                    elif read[8:-8] == _IBM_DOUBLE_DOUBLE_BE:
+                        return 'IBM_DOUBLE_DOUBLE_BE'
+                # if the content was 8 bytes, left with 32-8-8 = 16 bytes
                 elif read[:16] == _BEFORE_SEQ:
                     if read[16:-8] == _IEEE_DOUBLE_LE:
                         return 'IEEE_DOUBLE_LE'
@@ -374,3 +408,41 @@ def long_double_representation(lines):
     else:
         # We never detected the after_sequence
         raise ValueError("Could not lock sequences (%s)" % saw)
+
+
+def check_for_right_shift_internal_compiler_error(cmd):
+    """
+    On our arm CI, this fails with an internal compilation error
+
+    The failure looks like the following, and can be reproduced on ARM64 GCC 5.4:
+
+        <source>: In function 'right_shift':
+        <source>:4:20: internal compiler error: in expand_shift_1, at expmed.c:2349
+               ip1[i] = ip1[i] >> in2;
+                      ^
+        Please submit a full bug report,
+        with preprocessed source if appropriate.
+        See <http://gcc.gnu.org/bugs.html> for instructions.
+        Compiler returned: 1
+
+    This function returns True if this compiler bug is present, and we need to
+    turn off optimization for the function
+    """
+    cmd._check_compiler()
+    has_optimize = cmd.try_compile(textwrap.dedent("""\
+        __attribute__((optimize("O3"))) void right_shift() {}
+        """), None, None)
+    if not has_optimize:
+        return False
+
+    no_err = cmd.try_compile(textwrap.dedent("""\
+        typedef long the_type;  /* fails also for unsigned and long long */
+        __attribute__((optimize("O3"))) void right_shift(the_type in2, the_type *ip1, int n) {
+            for (int i = 0; i < n; i++) {
+                if (in2 < (the_type)sizeof(the_type) * 8) {
+                    ip1[i] = ip1[i] >> in2;
+                }
+            }
+        }
+        """), None, None)
+    return not no_err

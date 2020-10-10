@@ -26,7 +26,7 @@ sources, call F2PY to construct extension modules, etc.
 
 :mod:`numpy.distutils` extends ``distutils`` with the following features:
 
-* ``Extension`` class argument ``sources`` may contain Fortran source
+* :class:`Extension` class argument ``sources`` may contain Fortran source
   files. In addition, the list ``sources`` may contain at most one
   F2PY signature file, and then the name of an Extension module must
   match with the ``<modulename>`` used in signature file.  It is
@@ -37,7 +37,7 @@ sources, call F2PY to construct extension modules, etc.
   to scan Fortran source files for routine signatures to construct the
   wrappers to Fortran codes.
 
-  Additional options to F2PY process can be given using ``Extension``
+  Additional options to F2PY process can be given using :class:`Extension`
   class argument ``f2py_options``.
 
 * The following new ``distutils`` commands are defined:

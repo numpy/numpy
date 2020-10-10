@@ -5,7 +5,7 @@
  * $Revision: 1.2 $
  * $Date: 2000/09/17 16:10:27 $
  */
-#ifdef __CPLUSPLUS__
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -115,23 +115,27 @@ static PyMethodDef foo_module_methods[] = {
 
 void initfoo() {
     int i;
-    PyObject *m, *d, *s;
-    PyTypeObject *t;
-    PyObject *f;
+    PyObject *m, *d, *s, *tmp;
     import_array();
 
     m = Py_InitModule("foo", foo_module_methods);
 
     d = PyModule_GetDict(m);
-    s = PyString_FromString("This module 'foo' demonstrates the usage of fortranobject.");
+    s = PyUnicode_FromString("This module 'foo' demonstrates the usage of fortranobject.");
     PyDict_SetItemString(d, "__doc__", s);
 
     /* Fortran objects: */
-    PyDict_SetItemString(d, "mod", PyFortranObject_New(f2py_mod_def,f2py_init_mod));
-    PyDict_SetItemString(d, "foodata", PyFortranObject_New(f2py_foodata_def,f2py_init_foodata));
-    for(i=0;f2py_routines_def[i].name!=NULL;i++)
-        PyDict_SetItemString(d, f2py_routines_def[i].name,
-                             PyFortranObject_NewAsAttr(&f2py_routines_def[i]));
+    tmp = PyFortranObject_New(f2py_mod_def,f2py_init_mod);
+    PyDict_SetItemString(d, "mod", tmp);
+    Py_DECREF(tmp);
+    tmp = PyFortranObject_New(f2py_foodata_def,f2py_init_foodata);
+    PyDict_SetItemString(d, "foodata", tmp);
+    Py_DECREF(tmp);
+    for(i=0;f2py_routines_def[i].name!=NULL;i++) {
+        tmp = PyFortranObject_NewAsAttr(&f2py_routines_def[i]);
+        PyDict_SetItemString(d, f2py_routines_def[i].name, tmp);
+        Py_DECREF(tmp);
+    }
 
     Py_DECREF(s);
 
@@ -139,6 +143,6 @@ void initfoo() {
         Py_FatalError("can't initialize module foo");
 }
 
-#ifdef __CPLUSCPLUS__
+#ifdef __cplusplus
 }
 #endif

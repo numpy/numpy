@@ -1,6 +1,4 @@
 # http://developer.intel.com/software/products/compilers/flin/
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from numpy.distutils.ccompiler import simple_version_match
@@ -23,7 +21,10 @@ class BaseIntelFCompiler(FCompiler):
                                            f + '.f', '-o', f + '.o']
 
     def runtime_library_dir_option(self, dir):
-        return '-Wl,-rpath="%s"' % dir
+        # TODO: could use -Xlinker here, if it's supported
+        assert "," not in dir
+
+        return '-Wl,-rpath=%s' % dir
 
 
 class IntelFCompiler(BaseIntelFCompiler):
@@ -58,7 +59,7 @@ class IntelFCompiler(BaseIntelFCompiler):
     def get_flags_opt(self):  # Scipy test failures with -O2
         v = self.get_version()
         mpopt = 'openmp' if v and v < '15' else 'qopenmp'
-        return ['-fp-model strict -O1 -{}'.format(mpopt)]
+        return ['-fp-model', 'strict', '-O1', '-{}'.format(mpopt)]
 
     def get_flags_arch(self):
         return []
@@ -124,10 +125,10 @@ class IntelEM64TFCompiler(IntelFCompiler):
     def get_flags_opt(self):  # Scipy test failures with -O2
         v = self.get_version()
         mpopt = 'openmp' if v and v < '15' else 'qopenmp'
-        return ['-fp-model strict -O1 -{}'.format(mpopt)]
+        return ['-fp-model', 'strict', '-O1', '-{}'.format(mpopt)]
 
     def get_flags_arch(self):
-        return ['']
+        return []
 
 # Is there no difference in the version string between the above compilers
 # and the Visual compilers?
@@ -209,13 +210,11 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
     version_match = simple_version_match(start=r'Intel\(R\).*?64,')
 
     def get_flags_arch(self):
-        return ['']
+        return []
 
 
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='intel')
-    compiler.customize()
-    print(compiler.get_version())
+    from numpy.distutils import customized_fcompiler
+    print(customized_fcompiler(compiler='intel').get_version())

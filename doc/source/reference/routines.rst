@@ -28,7 +28,6 @@ indentation.
    routines.emath
    routines.err
    routines.fft
-   routines.financial
    routines.functional
    routines.help
    routines.indexing
@@ -41,7 +40,7 @@ indentation.
    routines.other
    routines.padding
    routines.polynomials
-   routines.random
+   random/index
    routines.set
    routines.sort
    routines.statistics

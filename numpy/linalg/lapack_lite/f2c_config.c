@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -42,9 +42,6 @@ doublereal dlamch_(char *cmach)
     /* System generated locals */
     integer i__1;
     doublereal ret_val;
-
-    /* Builtin functions */
-    double pow_di(doublereal *, integer *);
 
     /* Local variables */
     static doublereal t;
@@ -397,10 +394,6 @@ L30:
     integer i__1;
     doublereal d__1, d__2, d__3, d__4, d__5;
 
-    /* Builtin functions */
-    double pow_di(doublereal *, integer *);
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-
     /* Local variables */
     static doublereal a, b, c__;
     static integer i__, lt;
@@ -696,7 +689,7 @@ L10:
 doublereal dlamc3_(doublereal *a, doublereal *b)
 {
     /* System generated locals */
-    volatile doublereal ret_val;
+    doublereal ret_val;
 
 
 /*
@@ -1121,9 +1114,6 @@ doublereal slamch_(char *cmach)
     integer i__1;
     real ret_val;
 
-    /* Builtin functions */
-    double pow_ri(real *, integer *);
-
     /* Local variables */
     static real t;
     static integer it;
@@ -1474,10 +1464,6 @@ L30:
     integer i__1;
     real r__1, r__2, r__3, r__4, r__5;
 
-    /* Builtin functions */
-    double pow_ri(real *, integer *);
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-
     /* Local variables */
     static real a, b, c__;
     static integer i__, lt;
@@ -1773,7 +1759,7 @@ L10:
 doublereal slamc3_(real *a, real *b)
 {
     /* System generated locals */
-    volatile real ret_val;
+    real ret_val;
 
 
 /*

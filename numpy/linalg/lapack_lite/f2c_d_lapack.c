@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -62,9 +62,6 @@ static doublereal c_b3192 = 2.;
     /* System generated locals */
     integer u_dim1, u_offset, vt_dim1, vt_offset, i__1, i__2;
     doublereal d__1;
-
-    /* Builtin functions */
-    double d_sign(doublereal *, doublereal *), log(doublereal);
 
     /* Local variables */
     static integer i__, j, k;
@@ -554,10 +551,6 @@ L40:
     integer c_dim1, c_offset, u_dim1, u_offset, vt_dim1, vt_offset, i__1,
 	    i__2;
     doublereal d__1, d__2, d__3, d__4;
-
-    /* Builtin functions */
-    double pow_dd(doublereal *, doublereal *), sqrt(doublereal), d_sign(
-	    doublereal *, doublereal *);
 
     /* Local variables */
     static doublereal f, g, h__;
@@ -2660,9 +2653,6 @@ L210:
 	    i__2, i__3;
     doublereal d__1, d__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, k;
     static doublereal r__, cs, sn;
@@ -4067,9 +4057,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
 
-    /* Builtin functions */
-    double log(doublereal);
-
     /* Local variables */
     static integer ie, il, mm;
     static doublereal eps, anrm, bnrm;
@@ -5131,9 +5118,6 @@ L10:
     /* System generated locals */
     integer a_dim1, a_offset, u_dim1, u_offset, vt_dim1, vt_offset, i__1,
 	    i__2, i__3;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, ie, il, ir, iu, blk;
@@ -7496,9 +7480,6 @@ L10:
     doublereal d__1;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static doublereal hl[2401]	/* was [49][49] */;
@@ -7986,9 +7967,6 @@ logical disnan_(doublereal *din)
 
 /* Subroutine */ int dlabad_(doublereal *small, doublereal *large)
 {
-    /* Builtin functions */
-    double d_lg10(doublereal *), sqrt(doublereal);
-
 
 /*
     -- LAPACK auxiliary routine (version 3.2) --
@@ -8612,9 +8590,6 @@ logical disnan_(doublereal *din)
     /* System generated locals */
     doublereal d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static doublereal ab, df, tb, sm, rt, adf, acmn, acmx;
 
@@ -8740,10 +8715,6 @@ logical disnan_(doublereal *din)
     /* System generated locals */
     integer q_dim1, q_offset, qstore_dim1, qstore_offset, i__1, i__2;
     doublereal d__1;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
 
     /* Local variables */
     static integer i__, j, k, iq, lgn, msd2, smm1, spm1, spm2;
@@ -9388,9 +9359,6 @@ L20:
     integer q_dim1, q_offset, i__1, i__2;
     doublereal d__1, d__2, d__3, d__4;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static doublereal c__;
     static integer i__, j;
@@ -9902,9 +9870,6 @@ L190:
     integer q_dim1, q_offset, i__1, i__2;
     doublereal d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static integer i__, j, n2, n12, ii, n23, iq2;
     static doublereal temp;
@@ -10208,9 +10173,6 @@ L120:
     /* System generated locals */
     integer i__1;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal a, b, c__;
@@ -11155,9 +11117,6 @@ L250:
     /* System generated locals */
     doublereal d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static doublereal b, c__, w, del, tau, temp;
 
@@ -11282,9 +11241,6 @@ L250:
     /* System generated locals */
     integer i__1;
     doublereal d__1, d__2, d__3, d__4;
-
-    /* Builtin functions */
-    double sqrt(doublereal), log(doublereal), pow_di(doublereal *, integer *);
 
     /* Local variables */
     static doublereal a, b, c__, f;
@@ -11639,9 +11595,6 @@ L60:
     /* System generated locals */
     integer q_dim1, q_offset, i__1, i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, k, n1, n2, is, iw, iz, iq2, ptr, ldq2, indx, curr;
     extern /* Subroutine */ int dgemm_(char *, char *, integer *, integer *,
@@ -11967,9 +11920,6 @@ L30:
     /* System generated locals */
     integer q_dim1, q_offset, q2_dim1, q2_offset, i__1;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal c__;
@@ -12427,9 +12377,6 @@ L110:
     integer q_dim1, q_offset, s_dim1, s_offset, i__1, i__2;
     doublereal d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static integer i__, j;
     static doublereal temp;
@@ -12673,10 +12620,6 @@ L120:
 {
     /* System generated locals */
     integer i__1, i__2, i__3;
-
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, k, mid, ptr;
@@ -12935,9 +12878,6 @@ L120:
 {
     /* System generated locals */
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal ab, df, cs, ct, tb, sm, tn, rt, adf, acs;
@@ -13548,9 +13488,6 @@ L50:
     /* System generated locals */
     integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3;
     doublereal d__1, d__2, d__3, d__4;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j, k, l, m;
@@ -15525,9 +15462,6 @@ logical dlaisnan_(doublereal *din1, doublereal *din2)
 	     u_dim1, u_offset, vt_dim1, vt_offset, z_dim1, z_offset, i__1,
 	    i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, j, i1, ic, lf, nd, ll, nl, nr, im1, nlf, nrf, lvl,
 	    ndb1, nlp1, lvl2, nrp1, nlvl, sqre;
@@ -15964,9 +15898,6 @@ L90:
     /* System generated locals */
     integer b_dim1, b_offset, i__1, i__2;
     doublereal d__1;
-
-    /* Builtin functions */
-    double log(doublereal), d_sign(doublereal *, doublereal *);
 
     /* Local variables */
     static integer c__, i__, j, k;
@@ -16583,9 +16514,6 @@ doublereal dlange_(char *norm, integer *m, integer *n, doublereal *a, integer
     integer a_dim1, a_offset, i__1, i__2;
     doublereal ret_val, d__1, d__2, d__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j;
     static doublereal sum, scale;
@@ -16751,9 +16679,6 @@ doublereal dlanst_(char *norm, integer *n, doublereal *d__, doublereal *e)
     integer i__1;
     doublereal ret_val, d__1, d__2, d__3, d__4, d__5;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__;
     static doublereal sum, scale;
@@ -16887,9 +16812,6 @@ doublereal dlansy_(char *norm, char *uplo, integer *n, doublereal *a, integer
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
     doublereal ret_val, d__1, d__2, d__3;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j;
@@ -17096,9 +17018,6 @@ doublereal dlansy_(char *norm, char *uplo, integer *n, doublereal *a, integer
 {
     /* System generated locals */
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double d_sign(doublereal *, doublereal *), sqrt(doublereal);
 
     /* Local variables */
     static doublereal p, z__, aa, bb, cc, dd, cs1, sn1, sab, sac, eps, tau,
@@ -17312,9 +17231,6 @@ doublereal dlapy2_(doublereal *x, doublereal *y)
     /* System generated locals */
     doublereal ret_val, d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static doublereal w, z__, xabs, yabs;
 
@@ -17364,9 +17280,6 @@ doublereal dlapy3_(doublereal *x, doublereal *y, doublereal *z__)
 {
     /* System generated locals */
     doublereal ret_val, d__1, d__2, d__3;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal w, xabs, yabs, zabs;
@@ -18309,9 +18222,6 @@ L90:
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j, k;
     static doublereal s, aa, bb, cc, dd, cs, sn;
@@ -18987,9 +18897,6 @@ L60:
     integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
 	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
     doublereal d__1, d__2, d__3, d__4, d__5, d__6;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j, k;
@@ -22434,9 +22341,6 @@ L90:
     integer i__1;
     doublereal d__1;
 
-    /* Builtin functions */
-    double d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static integer j, knt;
     static doublereal beta;
@@ -23585,9 +23489,6 @@ L410:
     integer i__1;
     doublereal d__1, d__2;
 
-    /* Builtin functions */
-    double log(doublereal), pow_di(doublereal *, integer *), sqrt(doublereal);
-
     /* Local variables */
     static integer i__;
     static doublereal f1, g1, eps, scale;
@@ -23749,9 +23650,6 @@ L30:
 {
     /* System generated locals */
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal c__, fa, ga, ha, as, at, au, fhmn, fhmx;
@@ -24209,9 +24107,6 @@ L10:
 {
     /* System generated locals */
     integer u_dim1, u_offset, vt_dim1, vt_offset, i__1, i__2;
-
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
 
     /* Local variables */
     static integer i__, j, m, i1, ic, lf, nd, ll, nl, nr, im1, ncc, nlf, nrf,
@@ -25341,9 +25236,6 @@ L120:
 	    vt_offset, vt2_dim1, vt2_offset, i__1, i__2;
     doublereal d__1, d__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static integer i__, j, m, n, jc;
     static doublereal rho;
@@ -25760,9 +25652,6 @@ L100:
     /* System generated locals */
     integer i__1;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal a, b, c__;
@@ -26770,9 +26659,6 @@ L240:
 {
     /* System generated locals */
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal b, c__, w, del, tau, delsq;
@@ -27789,9 +27675,6 @@ L100:
     integer difr_dim1, difr_offset, i__1, i__2;
     doublereal d__1, d__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static integer i__, j;
     static doublereal dj, rho;
@@ -28090,9 +27973,6 @@ L100:
 	    difl_offset, difr_dim1, difr_offset, givnum_dim1, givnum_offset,
 	    poles_dim1, poles_offset, u_dim1, u_offset, vt_dim1, vt_offset,
 	    z_dim1, z_offset, i__1, i__2;
-
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
 
     /* Local variables */
     static integer i__, j, m, i1, ic, lf, nd, ll, nl, vf, nr, vl, im1, ncc,
@@ -28908,9 +28788,6 @@ L100:
     /* System generated locals */
     integer i__1, i__2;
 
-    /* Builtin functions */
-    double log(doublereal);
-
     /* Local variables */
     static integer i__, il, ir, maxn;
     static doublereal temp;
@@ -29159,9 +29036,6 @@ L100:
     integer i__1, i__2;
     doublereal d__1, d__2, d__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__;
     static doublereal eps;
@@ -29345,9 +29219,6 @@ L100:
     /* System generated locals */
     integer i__1, i__2, i__3;
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal d__, e, g;
@@ -29926,9 +29797,6 @@ L170:
     integer i__1;
     doublereal d__1, d__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static doublereal s, t;
     static integer j4, nn;
@@ -30259,9 +30127,6 @@ L90:
     /* System generated locals */
     integer i__1;
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal s, a2, b1, b2;
@@ -31826,9 +31691,6 @@ L110:
 {
     /* System generated locals */
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
 
     /* Local variables */
     static doublereal a, d__, l, m, r__, s, t, fa, ga, ha, ft, gt, ht, mm, tt,
@@ -35022,9 +34884,6 @@ L50:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3[2];
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;
     static logical left;
@@ -35355,9 +35214,6 @@ L50:
     address a__1[2];
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer i1, i2, nb, mi, nh, ni, nq, nw;
@@ -35790,9 +35646,6 @@ L50:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static doublereal t[4160]	/* was [65][64] */;
@@ -36097,9 +35950,6 @@ L50:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static doublereal t[4160]	/* was [65][64] */;
@@ -36397,9 +36247,6 @@ L50:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static doublereal t[4160]	/* was [65][64] */;
@@ -36696,9 +36543,6 @@ L50:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2, i__3;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;
     static logical left;
@@ -36962,9 +36806,6 @@ L50:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer j;
@@ -37616,11 +37457,6 @@ L40:
     integer z_dim1, z_offset, i__1, i__2;
     doublereal d__1, d__2;
 
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j, k, m;
     static doublereal p;
@@ -38081,9 +37917,6 @@ L50:
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2;
     doublereal d__1, d__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
 
     /* Local variables */
     static doublereal b, c__, f, g;
@@ -38682,9 +38515,6 @@ L190:
     integer i__1;
     doublereal d__1, d__2, d__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal), d_sign(doublereal *, doublereal *);
-
     /* Local variables */
     static doublereal c__;
     static integer i__, l, m;
@@ -39123,9 +38953,6 @@ L180:
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static doublereal eps;
@@ -40077,9 +39904,6 @@ L180:
     integer t_dim1, t_offset, vl_dim1, vl_offset, vr_dim1, vr_offset, i__1,
 	    i__2, i__3;
     doublereal d__1, d__2, d__3, d__4;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j, k;
@@ -41837,9 +41661,6 @@ L20:
     address a__1[2];
     integer a_dim1, a_offset, i__1, i__2[2], i__3, i__4, i__5;
     char ch__1[2];
-
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
 
     /* Local variables */
     static integer j, jb, nb, nn;

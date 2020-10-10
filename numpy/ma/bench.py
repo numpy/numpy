@@ -1,5 +1,5 @@
-#! /usr/bin/env python
-from __future__ import division, print_function
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import timeit
 import numpy

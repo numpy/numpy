@@ -168,7 +168,7 @@ invalid_weekmask_string:
                     return 0;
                 }
 
-                val = PyInt_AsLong(f);
+                val = PyLong_AsLong(f);
                 if (error_converting(val)) {
                     Py_DECREF(f);
                     Py_DECREF(obj);
@@ -293,7 +293,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
 
         /* This steals the datetime_dtype reference */
         dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
-                                                0, 0, 0, dates_in);
+                                                0, 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }
@@ -493,61 +493,12 @@ static PyGetSetDef busdaycalendar_getsets[] = {
 };
 
 NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.busdaycalendar",                     /* tp_name */
-    sizeof(NpyBusDayCalendar),                  /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)busdaycalendar_dealloc,         /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    busdaycalendar_getsets,                     /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)busdaycalendar_init,              /* tp_init */
-    0,                                          /* tp_alloc */
-    busdaycalendar_new,                         /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.busdaycalendar",
+    .tp_basicsize = sizeof(NpyBusDayCalendar),
+    .tp_dealloc = (destructor)busdaycalendar_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_getset = busdaycalendar_getsets,
+    .tp_init = (initproc)busdaycalendar_init,
+    .tp_new = busdaycalendar_new,
 };

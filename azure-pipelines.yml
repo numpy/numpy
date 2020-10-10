@@ -1,0 +1,261 @@
+trigger:
+  # start a new build for every push
+  batch: False
+  branches:
+    include:
+      - master
+      - maintenance/*
+
+pr:
+  branches:
+    include:
+    - '*'  # must quote since "*" is a YAML reserved character; we want a string
+
+stages:
+- stage: InitialTests
+  jobs:
+  - job: WindowsFast
+    pool:
+      vmImage: 'VS2017-Win2016'
+    strategy:
+      matrix:
+          Python36-64bit-fast:
+            PYTHON_VERSION: '3.6'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
+            BITS: 64
+    steps:
+    - template: azure-steps-windows.yml
+
+- stage: ComprehensiveTests
+  jobs:
+  - job: Linux_Python_38_32bit_full_with_asserts
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - script: |
+            docker pull quay.io/pypa/manylinux2010_i686
+            docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
+            -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
+            /bin/bash -xc "cd numpy && \
+            /opt/python/cp38-cp38/bin/python -mvenv venv &&\
+            source venv/bin/activate && \
+            target=\$(python3 tools/openblas_support.py) && \
+            cp -r \$target/lib/* /usr/lib && \
+            cp \$target/include/* /usr/include && \
+            python3 -m pip install -r test_requirements.txt && \
+            echo CFLAGS \$CFLAGS && \
+            python3 -m pip install -v . && \
+            python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            python3 tools/openblas_support.py --check_version"
+      displayName: 'Run 32-bit manylinux2010 Docker Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for Python 3.8-32 bit full Linux'
+  - job: macOS
+    pool:
+      # NOTE: at time of writing, there is a danger
+      # that using an invalid vmIMage string for macOS
+      # image silently redirects to a Windows build on Azure;
+      # for now, use the only image name officially present in
+      # the docs even though i.e., numba uses another in their
+      # azure config for mac os -- Microsoft has indicated
+      # they will patch this issue
+      vmImage: macOS-10.14
+    strategy:
+      maxParallel: 3
+      matrix:
+          Python36:
+            PYTHON_VERSION: '3.6'
+            USE_OPENBLAS: '1'
+          Python36-ILP64:
+            PYTHON_VERSION: '3.6'
+            NPY_USE_BLAS_ILP64: '1'
+            USE_OPENBLAS: '1'
+          # Disable this job: the azure images do not create the problematic
+          # symlink from Accelerate to OpenBLAS. We still have the test
+          # at import to detect a buggy Accelerate, just cannot easily trigger
+          # it with azure.
+          # Accelerate:
+          #   PYTHON_VERSION: '3.6'
+          #   USE_OPENBLAS: '0'
+
+    steps:
+    # the @0 refers to the (major) version of the *task* on Microsoft's
+    # end, not the order in the build matrix nor anything to do
+    # with version of Python selected
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(PYTHON_VERSION)
+        addToPath: true
+        architecture: 'x64'
+    - script: |
+        set -xe
+        [ -n "$USE_XCODE_10" ] && /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+        clang --version
+      displayName: 'report clang version'
+    # NOTE: might be better if we could avoid installing
+    # two C compilers, but with homebrew looks like we're
+    # now stuck getting the full gcc toolchain instead of
+    # just pulling in gfortran
+    - script: |
+        set -xe
+        # same version of gfortran as the open-libs and numpy-wheel builds
+        curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
+        GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
+        KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
+        if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
+            echo sha256 mismatch
+            exit 1
+        fi
+        hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
+        sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
+        otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
+        # Manually symlink gfortran-4.9 to plain gfortran for f2py.
+        # No longer needed after Feb 13 2020 as gfortran is already present
+        # and the attempted link errors. Keep this for future reference.
+        # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
+      displayName: 'make libgfortran available on mac os for openblas'
+    # use the pre-built openblas binary that most closely
+    # matches our MacOS wheel builds -- currently based
+    # primarily on file size / name details
+    - script: |
+        set -xe
+        target=$(python tools/openblas_support.py)
+        ls -lR $target
+        # manually link to appropriate system paths
+        cp $target/lib/lib* /usr/local/lib/
+        cp $target/include/* /usr/local/include/
+        otool -L /usr/local/lib/libopenblas*
+      displayName: 'install pre-built openblas'
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    - script: python -m pip install --upgrade pip 'setuptools<49.2.0' wheel
+      displayName: 'Install tools'
+    - script: |
+        python -m pip install -r test_requirements.txt
+        python -m pip install vulture docutils sphinx==2.2.0 numpydoc
+      displayName: 'Install dependencies; some are optional to avoid test skips'
+    - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
+      displayName: 'Check for unreachable code paths in Python modules'
+    # prefer usage of clang over gcc proper
+    # to match likely scenario on many user mac machines
+    - script: python setup.py build -j 4 build_src --verbose-cfg install
+      displayName: 'Build NumPy'
+      env:
+        BLAS: None
+        LAPACK: None
+        ATLAS: None
+        CC: /usr/bin/clang
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    - script: python setup.py build -j 4 build_ext --inplace install
+      displayName: 'Build NumPy without OpenBLAS'
+      env:
+        BLAS: None
+        LAPACK: None
+        ATLAS: None
+        CC: /usr/bin/clang
+      condition: eq(variables['USE_OPENBLAS'], '0')
+    # wait until after dev build of NumPy to pip
+    # install matplotlib to avoid pip install of older numpy
+    - script: python -m pip install matplotlib
+      displayName: 'Install matplotlib before refguide run'
+    - script: python runtests.py -g --refguide-check
+      displayName: 'Run Refuide Check'
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run Full NumPy Test Suite'
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    - bash: python tools/openblas_support.py --check_version
+      displayName: 'Verify OpenBLAS version'
+      condition: eq(variables['USE_OPENBLAS'], '1')
+    # import doesn't work when in numpy src directory , so do a pip dev install of build lib to test
+    - script: |
+        #!/bin/bash -v
+        set +e
+        python -c "import numpy as np" > test_output.log 2>&1
+        check_output_code=$?
+        cat test_output.log
+        grep "buggy Accelerate backend"  test_output.log
+        check_message=$?
+        if [ $check_output_code == 1 ] && [ $check_message == 0 ]; then exit 0; else exit 1;fi
+      displayName: "Check if numpy import fails with accelerate"
+      condition: eq(variables['USE_OPENBLAS'], '0')
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
+  - job: Windows
+    pool:
+      vmImage: 'VS2017-Win2016'
+    strategy:
+      maxParallel: 6
+      matrix:
+          Python38-32bit-fast:
+            PYTHON_VERSION: '3.8'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
+          Python36-64bit-full:
+            PYTHON_VERSION: '3.6'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+          Python37-64bit-full:
+            PYTHON_VERSION: '3.7'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+          Python38-64bit-full:
+            PYTHON_VERSION: '3.8'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+            OPENBLAS_SUFFIX: '64_'
+          #PyPy36-32bit:
+            #PYTHON_VERSION: 'PyPy3.6'
+            #PYTHON_ARCH: 'x32'
+            #TEST_MODE: fast
+            #BITS: 32
+    steps:
+    - template: azure-steps-windows.yml
+  - job: Linux_PyPy3
+    pool:
+      vmIMage: 'ubuntu-18.04'
+    steps:
+    - script: source tools/pypy-test.sh
+      displayName: 'Run PyPy3 Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        testRunTitle: 'Publish test results for PyPy3'
+        failTaskOnFailedTests: true
+  - job: Linux_gcc48
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - script: |
+            if ! `gcc-4.8 2>/dev/null`; then
+                sudo apt install gcc-4.8
+            fi
+      displayName: 'add gcc 4.8'
+    - script: |
+            # python3 has no setuptools, so install one to get us going
+            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
+            python3 -m pip install --user -r test_requirements.txt
+            CPPFLAGS='' CC=gcc-4.8 F77=gfortran-5 F90=gfortran-5 \
+            python3 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run gcc4.8 Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for gcc 4.8'
+

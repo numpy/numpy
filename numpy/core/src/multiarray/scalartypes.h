@@ -20,15 +20,7 @@ NPY_NO_EXPORT void
 initialize_numeric_types(void);
 
 NPY_NO_EXPORT void
-format_longdouble(char *buf, size_t buflen, npy_longdouble val, unsigned int prec);
-
-#if PY_VERSION_HEX >= 0x03000000
-NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr);
-#else
-NPY_NO_EXPORT void
-gentype_struct_free(void *ptr, void *arg);
-#endif
 
 NPY_NO_EXPORT int
 is_anyscalar_exact(PyObject *obj);

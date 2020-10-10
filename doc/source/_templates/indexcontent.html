@@ -1,31 +1,52 @@
-{% extends "defindex.html" %}
-{% block tables %}
-  <p><strong>Parts of the documentation:</strong></p>
-  <table class="contentstable" align="center"><tr>
+{#
+  Loosely inspired by the deprecated sphinx/themes/basic/defindex.html
+#}
+{%- extends "layout.html" %}
+{% set title = _('Overview') %}
+{% block body %}
+<h1>{{ docstitle|e }}</h1>
+<p>
+  Welcome! This is the documentation for NumPy {{ release|e }}
+  {% if last_updated %}, last updated {{ last_updated|e }}{% endif %}.
+</p>
+<p><strong>For users:</strong></p>
+<table class="contentstable" align="center"><tr>
     <td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("user/index") }}">NumPy User Guide</a><br/>
-         <span class="linkdescr">start here</span></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("reference/index") }}">NumPy Reference</a><br/>
-         <span class="linkdescr">reference documentation</span></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("f2py/index") }}">F2Py Guide</a><br/>
-         <span class="linkdescr">f2py documentation</span></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("dev/index") }}">NumPy Developer Guide</a><br/>
-         <span class="linkdescr">contributing to NumPy</span></p>
-    </td></tr>
-  </table>
-
-  <p><strong>Indices and tables:</strong></p>
-  <table class="contentstable" align="center"><tr>
-    <td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("genindex") }}">General Index</a><br/>
-         <span class="linkdescr">all functions, classes, terms</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/setting-up") }}">Setting up</a><br/>
+	<span class="linkdescr">Learn about what NumPy is and how to install it</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/quickstart") }}">Quickstart</a><br/>
+	<span class="linkdescr">Aimed at domain experts or people migrating to NumPy</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/absolute_beginners") }}">Absolute beginner's guide</a><br/>
+	<span class="linkdescr">Start here for an overview of NumPy features and syntax</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/tutorials_index") }}">Tutorials</a><br/>
+	<span class="linkdescr">Learn about concepts and submodules</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/howtos_index") }}">How-tos</a><br/>
+	<span class="linkdescr">How to do common tasks with NumPy</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("reference/index") }}">NumPy API reference</a><br/>
+        <span class="linkdescr">Automatically generated reference documentation</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/explanations_index") }}">Explanations</a><br/>
+	<span class="linkdescr">In depth explanation of concepts, best practices and techniques</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("f2py/index") }}">F2Py guide</a><br/>
+        <span class="linkdescr">Documentation for the f2py module (Fortran extensions for Python)</span></p>
       <p class="biglink"><a class="biglink" href="{{ pathto("glossary") }}">Glossary</a><br/>
-         <span class="linkdescr">the most important terms explained</span></p>
-    </td><td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("search") }}">Search page</a><br/>
-         <span class="linkdescr">search this documentation</span></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("contents") }}">Complete Table of Contents</a><br/>
-         <span class="linkdescr">lists all sections and subsections</span></p>
+        <span class="linkdescr">List of the most important terms</span></p>
+  </td></tr>
+</table>
+
+<p><strong>For developers/contributors:</strong></p>
+<table class="contentstable" align="center"><tr>
+    <td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("dev/index") }}">NumPy contributor guide</a><br/>
+        <span class="linkdescr">Contributing to NumPy</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("dev/underthehood") }}">Under-the-hood docs</a><br/>
+	<span class="linkdescr">Specialized, in-depth documentation</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("docs/index") }}">Building and extending the documentation</a><br/>
+        <span class="linkdescr">How to contribute to this documentation (user and API)</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("docs/howto_document") }}">The numpydoc docstring guide</a><br/>
+	<span class="linkdescr">How to write docstrings in the numpydoc format</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("benchmarking") }}">Benchmarking</a><br/>
+        <span class="linkdescr">benchmarking NumPy</span></p>
+      <p class="biglink"><a class="biglink" href="https://www.numpy.org/neps/index.html">NumPy Enhancement Proposals</a><br/>
     </td></tr>
   </table>
 
@@ -33,10 +54,9 @@
   <table class="contentstable" align="center"><tr>
     <td width="50%">
       <p class="biglink"><a class="biglink" href="{{ pathto("bugs") }}">Reporting bugs</a></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("about") }}">About NumPy</a></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("neps/index") }}">NumPy Enhancement Proposals</a><br/>
+      <p class="biglink"><a class="biglink" href="{{ pathto("release") }}">Release notes</a></p>
     </td><td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("release") }}">Release Notes</a></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("doc_conventions") }}">Document conventions</a></p>
       <p class="biglink"><a class="biglink" href="{{ pathto("license") }}">License of NumPy</a></p>
     </td></tr>
   </table>
@@ -44,18 +64,14 @@
   <h2>Acknowledgements</h2>
   <p>
     Large parts of this manual originate from Travis E. Oliphant's book
-    <a href="http://www.tramy.us/">"Guide to NumPy"</a> (which generously entered
-    Public Domain in August 2008). The reference documentation for many of
-    the functions are written by numerous contributors and developers of
-    NumPy, both prior to and during the
-    <a href="http://docs.scipy.org/numpy/">NumPy Documentation Marathon</a>.
+    <a href="https://archive.org/details/NumPyBook">"Guide to NumPy"</a>
+    (which generously entered public domain in August 2008). The reference
+    documentation for many of the functions are written by numerous
+    contributors and developers of NumPy.
   </p>
   <p>
     The preferred way to update the documentation is by submitting a pull
-    request on Github (see the 
-    <a href="http://docs.scipy.org/doc/numpy-dev/dev/">Developer Guide</a>.
-    The <a href="http://docs.scipy.org/numpy/">NumPy Documentation Wiki</a>
-    can also still be used to submit documentation fixes.
+    request on GitHub (see the <a href="{{ pathto("docs/index") }}">Documentation index</a>).
     Please help us to further improve the NumPy documentation!
   </p>
 {% endblock %}

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
 
 import numpy as np
@@ -106,4 +104,30 @@ class Lstsq(Benchmark):
         self.b = get_indexes_rand()[:100].astype(np.float64)
 
     def time_numpy_linalg_lstsq_a__b_float64(self):
-        np.linalg.lstsq(self.a, self.b)
+        np.linalg.lstsq(self.a, self.b, rcond=-1)
+
+class Einsum(Benchmark):
+    param_names = ['dtype']
+    params = [[np.float64]]
+    def setup(self, dtype):
+        self.a = np.arange(2900, dtype=dtype)
+        self.b = np.arange(3000, dtype=dtype)
+        self.c = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
+        self.c1 = np.arange(1200, dtype=dtype).reshape(30, 40)
+        self.d = np.arange(10000, dtype=dtype).reshape(10,100,10)
+
+    #outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
+    def time_einsum_outer(self, dtype):
+        np.einsum("i,j", self.a, self.b, optimize=True)
+
+    # multiply(a, b):trigger sum_of_products_contig_two
+    def time_einsum_multiply(self, dtype):
+        np.einsum("..., ...", self.c1, self.c , optimize=True)
+    
+    # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
+    def time_einsum_sum_mul(self, dtype):
+        np.einsum(",i...->", 300, self.d, optimize=True)
+
+    # sum and multiply:trigger sum_of_products_stride0_contig_outstride0_two
+    def time_einsum_sum_mul2(self, dtype):
+        np.einsum("i...,->", self.d, 300, optimize=True)

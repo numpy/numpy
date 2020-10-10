@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark, get_squares_
 
 import numpy as np
@@ -10,15 +8,17 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
           'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
           'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
-          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'greater',
-          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite', 'isinf',
-          'isnan', 'isnat', 'ldexp', 'left_shift', 'less', 'less_equal', 'log',
-          'log10', 'log1p', 'log2', 'logaddexp', 'logaddexp2', 'logical_and',
-          'logical_not', 'logical_or', 'logical_xor', 'maximum', 'minimum',
-          'mod', 'modf', 'multiply', 'negative', 'nextafter', 'not_equal',
-          'positive', 'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
-          'right_shift', 'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing',
-          'sqrt', 'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'gcd', 'greater',
+          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite',
+          'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
+          'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
+          'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
+          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
+          'negative', 'nextafter', 'not_equal', 'positive', 'power',
+          'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
+          'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
+          'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
@@ -148,3 +148,62 @@ class Scalar(Benchmark):
 
     def time_add_scalar_conv_complex(self):
         (self.y + self.z)
+
+
+class ArgPack:
+    __slots__ = ['args', 'kwargs']
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+    def __repr__(self):
+        return '({})'.format(', '.join(
+            [repr(a) for a in self.args] +
+            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
+        ))
+
+
+class ArgParsing(Benchmark):
+    # In order to benchmark the speed of argument parsing, all but the
+    # out arguments are chosen such that they have no effect on the
+    # calculation.  In particular, subok=True and where=True are
+    # defaults, and the dtype is the correct one (the latter will
+    # still have some effect on the search for the correct inner loop).
+    x = np.array(1.)
+    y = np.array(2.)
+    out = np.array(3.)
+    param_names = ['arg_kwarg']
+    params = [[
+        ArgPack(x, y),
+        ArgPack(x, y, out),
+        ArgPack(x, y, out=out),
+        ArgPack(x, y, out=(out,)),
+        ArgPack(x, y, out=out, subok=True, where=True),
+        ArgPack(x, y, subok=True),
+        ArgPack(x, y, subok=True, where=True),
+        ArgPack(x, y, out, subok=True, where=True)
+    ]]
+
+    def time_add_arg_parsing(self, arg_pack):
+        np.add(*arg_pack.args, **arg_pack.kwargs)
+
+
+class ArgParsingReduce(Benchmark):
+    # In order to benchmark the speed of argument parsing, all but the
+    # out arguments are chosen such that they have minimal effect on the
+    # calculation.
+    a = np.arange(2.)
+    out = np.array(0.)
+    param_names = ['arg_kwarg']
+    params = [[
+        ArgPack(a,),
+        ArgPack(a, 0),
+        ArgPack(a, axis=0),
+        ArgPack(a, 0, None),
+        ArgPack(a, axis=0, dtype=None),
+        ArgPack(a, 0, None, out),
+        ArgPack(a, axis=0, dtype=None, out=out),
+        ArgPack(a, out=out)
+    ]]
+
+    def time_add_reduce_arg_parsing(self, arg_pack):
+        np.add.reduce(*arg_pack.args, **arg_pack.kwargs)

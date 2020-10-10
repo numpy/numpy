@@ -7,23 +7,23 @@
 */
 
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 #include "npy_config.h"
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-#define NO_IMPORT_ARRAY
-
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "npy_import.h"
 #include "npy_pycompat.h"
 
 #include "numpy/halffloat.h"
 #include "templ_common.h"
 
 #include "binop_override.h"
+#include "npy_longdouble.h"
 
 /* Basic operations:
  *
@@ -247,24 +247,25 @@ static void
 /**end repeat**/
 
 
-
-/* QUESTION:  Should we check for overflow / underflow in (l,r)shift? */
-
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #suffix = hh,uhh,h,uh,,u,l,ul,ll,ull#
  */
 
 /**begin repeat1
- * #oper = and, xor, or, lshift, rshift#
- * #op = &, ^, |, <<, >>#
+ * #oper = and, xor, or#
+ * #op = &, ^, |#
  */
 
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 
 /**end repeat1**/
+
+#define @name@_ctype_lshift(arg1, arg2, out) *(out) = npy_lshift@suffix@(arg1, arg2)
+#define @name@_ctype_rshift(arg1, arg2, out) *(out) = npy_rshift@suffix@(arg1, arg2)
 
 /**end repeat**/
 
@@ -273,9 +274,6 @@ static void
  * #type = npy_float, npy_double, npy_longdouble#
  * #c = f, , l#
  */
-static @type@ (*_basic_@name@_sqrt)(@type@);
-static @type@ (*_basic_@name@_fmod)(@type@, @type@);
-
 #define @name@_ctype_add(a, b, outp) *(outp) = (a) + (b)
 #define @name@_ctype_subtract(a, b, outp) *(outp) = (a) - (b)
 #define @name@_ctype_multiply(a, b, outp) *(outp) = (a) * (b)
@@ -304,9 +302,6 @@ static void
 
 
 /**end repeat**/
-
-static npy_half (*_basic_half_sqrt)(npy_half);
-static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 
 #define half_ctype_add(a, b, outp) *(outp) = \
         npy_float_to_half(npy_half_to_float(a) + npy_half_to_float(b))
@@ -412,21 +407,22 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
 /**begin repeat
  * #name = float, double, longdouble#
  * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f,,l#
  */
-static npy_@name@ (*_basic_@name@_pow)(@type@ a, @type@ b);
 
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
-    *out = _basic_@name@_pow(a, b);
+    *out = npy_pow@c@(a, b);
 }
+
 /**end repeat**/
 static void
 half_ctype_power(npy_half a, npy_half b, npy_half *out)
 {
     const npy_float af = npy_half_to_float(a);
     const npy_float bf = npy_half_to_float(b);
-    const npy_float outf = _basic_float_pow(af,bf);
+    const npy_float outf = npy_powf(af,bf);
     *out = npy_float_to_half(outf);
 }
 
@@ -483,14 +479,10 @@ static void
 }
 /**end repeat**/
 
-/*
- * Get the nc_powf, nc_pow, and nc_powl functions from
- * the data area of the power ufunc in umathmodule.
- */
-
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #c = f,,l#
  */
 static void
 @name@_ctype_positive(@type@ a, @type@ *out)
@@ -499,12 +491,10 @@ static void
     out->imag = a.imag;
 }
 
-static void (*_basic_@name@_pow)(@type@ *, @type@ *, @type@ *);
-
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
-    _basic_@name@_pow(&a, &b, out);
+    *out = npy_cpow@c@(a, b);
 }
 /**end repeat**/
 
@@ -577,7 +567,7 @@ static void
  * 1) Convert the types to the common type if both are scalars (0 return)
  * 2) If both are not scalars use ufunc machinery (-2 return)
  * 3) If both are scalars but cannot be cast to the right type
- * return NotImplmented (-1 return)
+ * return NotImplemented (-1 return)
  *
  * 4) Perform the function on the C-type.
  * 5) If an error condition occurred, check to see
@@ -755,70 +745,57 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
 /**end repeat**/
 
 
-#if defined(NPY_PY3K)
-#define CODEGEN_SKIP_divide_FLAG
-#endif
-
 /**begin repeat
  *
  * #name = (byte, ubyte, short, ushort, int, uint,
- *             long, ulong, longlong, ulonglong)*13,
+ *             long, ulong, longlong, ulonglong)*12,
  *         (half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*6,
+ *             cfloat, cdouble, clongdouble)*5,
  *         (half, float, double, longdouble)*2#
  * #Name = (Byte, UByte, Short, UShort, Int, UInt,
- *             Long, ULong,LongLong,ULongLong)*13,
+ *             Long, ULong,LongLong,ULongLong)*12,
  *         (Half, Float, Double, LongDouble,
- *             CFloat, CDouble, CLongDouble)*6,
+ *             CFloat, CDouble, CLongDouble)*5,
  *         (Half, Float, Double, LongDouble)*2#
  * #type = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*13,
+ *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*12,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*6,
+ *             npy_cfloat, npy_cdouble, npy_clongdouble)*5,
  *         (npy_half, npy_float, npy_double, npy_longdouble)*2#
  *
- * #oper = add*10, subtract*10, multiply*10, divide*10, remainder*10,
+ * #oper = add*10, subtract*10, multiply*10, remainder*10,
  *         divmod*10, floor_divide*10, lshift*10, rshift*10, and*10,
  *         or*10, xor*10, true_divide*10,
- *         add*7, subtract*7, multiply*7, divide*7, floor_divide*7, true_divide*7,
+ *         add*7, subtract*7, multiply*7, floor_divide*7, true_divide*7,
  *         divmod*4, remainder*4#
  *
- * #fperr = 1*70,0*50,1*10,
- *          1*42,
+ * #fperr = 1*60,0*50,1*10,
+ *          1*35,
  *          1*8#
- * #twoout = 0*50,1*10,0*70,
- *           0*42,
+ * #twoout = 0*40,1*10,0*70,
+ *           0*35,
  *           1*4,0*4#
  * #otype = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*12,
+ *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*11,
  *         npy_float*4, npy_double*6,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*6,
+ *             npy_cfloat, npy_cdouble, npy_clongdouble)*5,
  *         (npy_half, npy_float, npy_double, npy_longdouble)*2#
  * #OName = (Byte, UByte, Short, UShort, Int, UInt,
- *              Long, ULong, LongLong, ULongLong)*12,
+ *              Long, ULong, LongLong, ULongLong)*11,
  *          Float*4, Double*6,
  *          (Half, Float, Double, LongDouble,
- *              CFloat, CDouble, CLongDouble)*6,
+ *              CFloat, CDouble, CLongDouble)*5,
  *          (Half, Float, Double, LongDouble)*2#
  */
-
-#if !defined(CODEGEN_SKIP_@oper@_FLAG)
 
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
 {
     PyObject *ret;
     @type@ arg1, arg2;
-    /*
-     * NOTE: In gcc >= 4.1, the compiler will reorder floating point
-     *       operations and floating point error state checks. In
-     *       particular, the arithmetic operations were being reordered
-     *       so that the errors weren't caught.  Declaring this output
-     *       variable volatile was the minimal fix for the issue.
-     *       (Ticket #1671)
-     */
-    volatile @otype@ out;
+    @otype@ out;
+
 #if @twoout@
     @otype@ out2;
     PyObject *obj;
@@ -853,7 +830,7 @@ static PyObject *
     }
 
 #if @fperr@
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&out);
 #endif
 
     /*
@@ -868,7 +845,7 @@ static PyObject *
 
 #if @fperr@
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
+    retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -915,11 +892,8 @@ static PyObject *
 #endif
     return ret;
 }
-#endif
 
 /**end repeat**/
-
-#undef CODEGEN_SKIP_divide_FLAG
 
 #define _IS_ZERO(x) (x == 0)
 
@@ -951,95 +925,13 @@ static PyObject *
  *          Double, LongDouble,
  *          CFloat, CDouble, CLongDouble#
  *
- * #isint = (1,0)*5,0*7#
+ * #isint = 1*10,0*7#
+ * #isuint = (0,1)*5,0*7#
  * #cmplx = 0*14,1*3#
  * #iszero = _IS_ZERO*10, npy_half_iszero, _IS_ZERO*6#
  * #zero = 0*10, NPY_HALF_ZERO, 0*6#
  * #one = 1*10, NPY_HALF_ONE, 1*6#
  */
-
-#if @cmplx@
-static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
-{
-    PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-    @type@ out = {@zero@, @zero@};
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
-
-    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
-        case -3:
-        default:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
-    if (modulo != Py_None) {
-        /* modular exponentiation is not implemented (gh-8804) */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-
-    PyUFunc_clearfperr();
-
-    /*
-     * here we do the actual calculation with arg1 and arg2
-     * as a function call.
-     */
-    if (@iszero@(arg2.real) && @iszero@(arg2.imag)) {
-        out.real = @one@;
-        out.imag = @zero@;
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
-    /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
-    if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
-            return NULL;
-        }
-        first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
-    }
-
-    ret = PyArrayScalar_New(@Name@);
-    if (ret == NULL) {
-        return NULL;
-    }
-    PyArrayScalar_ASSIGN(ret, @Name@, out);
-
-    return ret;
-}
-
-#elif @isint@
 
 static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *modulo)
@@ -1077,85 +969,25 @@ static PyObject *
         return Py_NotImplemented;
     }
 
-    PyUFunc_clearfperr();
-
+#if !@isint@
+    npy_clear_floatstatus_barrier((char*)&out);
+#endif
     /*
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
      */
+#if @isint@ && !@isuint@
     if (arg2 < 0) {
         PyErr_SetString(PyExc_ValueError,
                 "Integers to negative integer powers are not allowed.");
         return NULL;
     }
+#endif
     @name@_ctype_power(arg1, arg2, &out);
 
-    ret = PyArrayScalar_New(@Name@);
-    if (ret == NULL) {
-        return NULL;
-    }
-    PyArrayScalar_ASSIGN(ret, @Name@, out);
-
-    return ret;
-}
-
-#else
-
-static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
-{
-    PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-
-    @type@ out = @zero@;
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
-
-    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
-        case -3:
-        default:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
-    if (modulo != Py_None) {
-        /* modular exponentiation is not implemented (gh-8804) */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
-
-    PyUFunc_clearfperr();
-
-    /*
-     * here we do the actual calculation with arg1 and arg2
-     * as a function call.
-     */
-    if (@iszero@(arg2)) {
-        out = @one@;
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
+#if !@isint@
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
+    int retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -1164,13 +996,14 @@ static PyObject *
                                 &errobj) < 0) {
             return NULL;
         }
-        first = 1;
+        int first = 1;
         if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
             Py_XDECREF(errobj);
             return NULL;
         }
         Py_XDECREF(errobj);
     }
+#endif
 
     ret = PyArrayScalar_New(@Name@);
     if (ret == NULL) {
@@ -1181,7 +1014,6 @@ static PyObject *
     return ret;
 }
 
-#endif
 
 /**end repeat**/
 #undef _IS_ZERO
@@ -1311,12 +1143,6 @@ static PyObject *
 
 /**end repeat**/
 
-#if defined(NPY_PY3K)
-#define NONZERO_NAME(prefix) prefix##bool
-#else
-#define NONZERO_NAME(prefix) prefix##nonzero
-#endif
-
 #define _IS_NONZERO(x) (x != 0)
 /**begin repeat
  *
@@ -1332,7 +1158,7 @@ static PyObject *
  * #nonzero = _IS_NONZERO*10, !npy_half_iszero, _IS_NONZERO*6#
  */
 static int
-NONZERO_NAME(@name@_)(PyObject *a)
+@name@_bool(PyObject *a)
 {
     int ret;
     @type@ arg1;
@@ -1341,7 +1167,7 @@ NONZERO_NAME(@name@_)(PyObject *a)
         if (PyErr_Occurred()) {
             return -1;
         }
-        return PyGenericArrType_Type.tp_as_number->NONZERO_NAME(nb_)(a);
+        return PyGenericArrType_Type.tp_as_number->nb_bool(a);
     }
 
     /*
@@ -1365,13 +1191,9 @@ static int
 emit_complexwarning(void)
 {
     static PyObject *cls = NULL;
+    npy_cache_import("numpy.core", "ComplexWarning", &cls);
     if (cls == NULL) {
-        PyObject *mod;
-        mod = PyImport_ImportModule("numpy.core");
-        assert(mod != NULL);
-        cls = PyObject_GetAttrString(mod, "ComplexWarning");
-        assert(cls != NULL);
-        Py_DECREF(mod);
+        return -1;
     }
     return PyErr_WarnEx(cls,
             "Casting complex values to real discards the imaginary part", 1);
@@ -1391,105 +1213,67 @@ emit_complexwarning(void)
  *
  * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
  * #sign = (signed, unsigned)*5, , , , , , , #
- * #unsigntyp = 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0*7#
- * #ctype = long*8, PY_LONG_LONG*2, double*7#
+ * #ctype = long*8, PY_LONG_LONG*2,
+ *          double*3, npy_longdouble, double*2, npy_longdouble#
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
- * #realtyp = 0*10, 1*7#
  * #func = (PyLong_FromLong, PyLong_FromUnsignedLong)*4,
  *         PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
- *         PyLong_FromDouble*7#
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong#
  */
 static PyObject *
 @name@_int(PyObject *obj)
 {
+    PyObject *long_result;
+
 #if @cmplx@
-    @sign@ @ctype@ x= @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
-    int ret;
+    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
 #else
-    @sign@ @ctype@ x= @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
-#endif
-
-#if @realtyp@
-    double ix;
-    modf(x, &ix);
-    x = ix;
+    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
 #endif
 
 #if @cmplx@
-    ret = emit_complexwarning();
-    if (ret < 0) {
+    if (emit_complexwarning() < 0) {
         return NULL;
     }
 #endif
 
-#if @unsigntyp@
-    if(x < LONG_MAX)
-        return PyInt_FromLong(x);
-#else
-    if(LONG_MIN < x && x < LONG_MAX)
-        return PyInt_FromLong(x);
-#endif
-    return @func@(x);
+    long_result = @func@(x);
+    if (long_result == NULL){
+        return NULL;
+    }
+
+    return long_result;
 }
 /**end repeat**/
 
 /**begin repeat
  *
- * #name = (byte, ubyte, short, ushort, int, uint,
+ * #name = byte, ubyte, short, ushort, int, uint,
  *             long, ulong, longlong, ulonglong,
  *             half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*2#
- * #Name = (Byte, UByte, Short, UShort, Int, UInt,
+ *             cfloat, cdouble, clongdouble#
+ * #Name = Byte, UByte, Short, UShort, Int, UInt,
  *             Long, ULong, LongLong, ULongLong,
  *             Half, Float, Double, LongDouble,
- *             CFloat, CDouble, CLongDouble)*2#
- * #cmplx = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1)*2#
- * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )*2#
- * #which = long*17, float*17#
- * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
- *         PyLong_FromDouble*7, PyFloat_FromDouble*17#
+ *             CFloat, CDouble, CLongDouble#
+ * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
+ * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
+ * #func = PyFloat_FromDouble*17#
  */
 static NPY_INLINE PyObject *
-@name@_@which@(PyObject *obj)
+@name@_float(PyObject *obj)
 {
 #if @cmplx@
-    int ret;
-    ret = emit_complexwarning();
-    if (ret < 0) {
+    if (emit_complexwarning() < 0) {
         return NULL;
     }
-    return @func@(@to_ctype@((PyArrayScalar_VAL(obj, @Name@)).real));
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@).real));
 #else
     return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
 #endif
 }
 /**end repeat**/
-
-#if !defined(NPY_PY3K)
-
-/**begin repeat
- *
- * #name = (byte, ubyte, short, ushort, int, uint,
- *             long, ulong, longlong, ulonglong,
- *             half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*2#
- * #oper = oct*17,  hex*17#
- * #kind = (int*5,  long*5,  int*2,  long*2,  int,  long*2)*2#
- * #cap = (Int*5,  Long*5,  Int*2,  Long*2,  Int,  Long*2)*2#
- */
-static PyObject *
-@name@_@oper@(PyObject *obj)
-{
-    PyObject *pyint;
-    pyint = @name@_@kind@(obj);
-    if (pyint == NULL) {
-        return NULL;
-    }
-    return Py@cap@_Type.tp_as_number->nb_@oper@(pyint);
-}
-/**end repeat**/
-
-#endif
 
 /**begin repeat
  * #oper = le, ge, lt, gt, eq, ne#
@@ -1570,7 +1354,6 @@ static PyObject*
 }
 /**end repeat**/
 
-
 /**begin repeat
  *  #name = byte, ubyte, short, ushort, int, uint,
  *          long, ulong, longlong, ulonglong,
@@ -1578,65 +1361,28 @@ static PyObject*
  *          cfloat, cdouble, clongdouble#
 **/
 static PyNumberMethods @name@_as_number = {
-    (binaryfunc)@name@_add,                     /*nb_add*/
-    (binaryfunc)@name@_subtract,                /*nb_subtract*/
-    (binaryfunc)@name@_multiply,                /*nb_multiply*/
-#if defined(NPY_PY3K)
-#else
-    (binaryfunc)@name@_divide,                  /*nb_divide*/
-#endif
-    (binaryfunc)@name@_remainder,               /*nb_remainder*/
-    (binaryfunc)@name@_divmod,                  /*nb_divmod*/
-    (ternaryfunc)@name@_power,                  /*nb_power*/
-    (unaryfunc)@name@_negative,
-    (unaryfunc)@name@_positive,                 /*nb_pos*/
-    (unaryfunc)@name@_absolute,                 /*nb_abs*/
-#if defined(NPY_PY3K)
-    (inquiry)@name@_bool,                       /*nb_bool*/
-#else
-    (inquiry)@name@_nonzero,                    /*nb_nonzero*/
-#endif
-    (unaryfunc)@name@_invert,                   /*nb_invert*/
-    (binaryfunc)@name@_lshift,                  /*nb_lshift*/
-    (binaryfunc)@name@_rshift,                  /*nb_rshift*/
-    (binaryfunc)@name@_and,                     /*nb_and*/
-    (binaryfunc)@name@_xor,                     /*nb_xor*/
-    (binaryfunc)@name@_or,                      /*nb_or*/
-#if defined(NPY_PY3K)
-#else
-    0,                                          /*nb_coerce*/
-#endif
-    (unaryfunc)@name@_int,                      /*nb_int*/
-#if defined(NPY_PY3K)
-    (unaryfunc)0,                               /*nb_reserved*/
-#else
-    (unaryfunc)@name@_long,                     /*nb_long*/
-#endif
-    (unaryfunc)@name@_float,                    /*nb_float*/
-#if defined(NPY_PY3K)
-#else
-    (unaryfunc)@name@_oct,                      /*nb_oct*/
-    (unaryfunc)@name@_hex,                      /*nb_hex*/
-#endif
-    0,                                          /*inplace_add*/
-    0,                                          /*inplace_subtract*/
-    0,                                          /*inplace_multiply*/
-#if defined(NPY_PY3K)
-#else
-    0,                                          /*inplace_divide*/
-#endif
-    0,                                          /*inplace_remainder*/
-    0,                                          /*inplace_power*/
-    0,                                          /*inplace_lshift*/
-    0,                                          /*inplace_rshift*/
-    0,                                          /*inplace_and*/
-    0,                                          /*inplace_xor*/
-    0,                                          /*inplace_or*/
-    (binaryfunc)@name@_floor_divide,            /*nb_floor_divide*/
-    (binaryfunc)@name@_true_divide,             /*nb_true_divide*/
-    0,                                          /*nb_inplace_floor_divide*/
-    0,                                          /*nb_inplace_true_divide*/
-    (unaryfunc)NULL,                            /*nb_index*/
+    .nb_add = (binaryfunc)@name@_add,
+    .nb_subtract = (binaryfunc)@name@_subtract,
+    .nb_multiply = (binaryfunc)@name@_multiply,
+    .nb_remainder = (binaryfunc)@name@_remainder,
+    .nb_divmod = (binaryfunc)@name@_divmod,
+    .nb_power = (ternaryfunc)@name@_power,
+    .nb_negative = (unaryfunc)@name@_negative,
+    .nb_positive = (unaryfunc)@name@_positive,
+    .nb_absolute = (unaryfunc)@name@_absolute,
+    .nb_bool = (inquiry)@name@_bool,
+    .nb_invert = (unaryfunc)@name@_invert,
+    .nb_lshift = (binaryfunc)@name@_lshift,
+    .nb_rshift = (binaryfunc)@name@_rshift,
+    .nb_and = (binaryfunc)@name@_and,
+    .nb_xor = (binaryfunc)@name@_xor,
+    .nb_or = (binaryfunc)@name@_or,
+    .nb_int = (unaryfunc)@name@_int,
+    .nb_float = (unaryfunc)@name@_float,
+    .nb_floor_divide = (binaryfunc)@name@_floor_divide,
+    .nb_true_divide = (binaryfunc)@name@_true_divide,
+    /* TODO: This struct/initialization should not be split between files */
+    .nb_index = (unaryfunc)NULL,  /* set in add_scalarmath below */
 };
 /**end repeat**/
 
@@ -1659,95 +1405,9 @@ add_scalarmath(void)
     /**end repeat**/
 }
 
-static int
-get_functions(PyObject * mm)
-{
-    PyObject *obj;
-    void **funcdata;
-    char *signatures;
-    int i, j;
-    int ret = -1;
-
-    /* Get the nc_pow functions */
-    /* Get the pow functions */
-    obj = PyObject_GetAttrString(mm, "power");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-
-    i = 0;
-    j = 0;
-    while (signatures[i] != NPY_FLOAT) {
-        i += 3;
-        j++;
-    }
-    _basic_float_pow = funcdata[j];
-    _basic_double_pow = funcdata[j + 1];
-    _basic_longdouble_pow = funcdata[j + 2];
-    _basic_cfloat_pow = funcdata[j + 3];
-    _basic_cdouble_pow = funcdata[j + 4];
-    _basic_clongdouble_pow = funcdata[j + 5];
-    Py_DECREF(obj);
-
-    /* Get the sqrt functions */
-    obj = PyObject_GetAttrString(mm, "sqrt");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    /*
-     * sqrt ufunc is specialized for double and float loops in
-     * generate_umath.py, the first to go into FLOAT/DOUBLE_sqrt
-     * they have the same signature as the scalar variants so we need to skip
-     * over them
-     * also skip float16 copy placed before
-     */
-    i = 6;
-    j = 3;
-    while (signatures[i] != NPY_FLOAT) {
-        i += 2; j++;
-    }
-    _basic_half_sqrt = funcdata[j - 1];
-    _basic_float_sqrt = funcdata[j];
-    _basic_double_sqrt = funcdata[j + 1];
-    _basic_longdouble_sqrt = funcdata[j + 2];
-    Py_DECREF(obj);
-
-    /* Get the fmod functions */
-    obj = PyObject_GetAttrString(mm, "fmod");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    i = 0;
-    j = 0;
-    while (signatures[i] != NPY_FLOAT) {
-        i += 3;
-        j++;
-    }
-    _basic_half_fmod = funcdata[j - 1];
-    _basic_float_fmod = funcdata[j];
-    _basic_double_fmod = funcdata[j + 1];
-    _basic_longdouble_fmod = funcdata[j + 2];
-    Py_DECREF(obj);
-    return ret = 0;
-
- fail:
-    Py_DECREF(mm);
-    return ret;
-}
-
 
 NPY_NO_EXPORT int initscalarmath(PyObject * m)
 {
-    if (get_functions(m) < 0) {
-        return -1;
-    }
-
     add_scalarmath();
 
     return 0;

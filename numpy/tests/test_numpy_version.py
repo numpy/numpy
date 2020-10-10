@@ -1,9 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
 import re
 
 import numpy as np
-from numpy.testing import assert_, run_module_suite
+from numpy.testing import assert_
 
 
 def test_valid_numpy_version():
@@ -17,7 +15,3 @@ def test_valid_numpy_version():
         res = re.match(version_pattern + dev_suffix, np.__version__)
 
     assert_(res is not None, np.__version__)
-
-
-if __name__ == "__main__":
-    run_module_suite()

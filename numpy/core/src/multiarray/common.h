@@ -1,9 +1,10 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
+#include "structmember.h"
 #include <numpy/npy_common.h>
-#include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
+#include "npy_import.h"
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -17,6 +18,11 @@
 #else
 #define NPY_BEGIN_THREADS_NDITER(iter)
 #endif
+
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_DTypeFromObjectStringDiscovery(
+        PyObject *obj, PyArray_Descr *last_dtype, int string_type);
 
 /*
  * Recursively examines the object to determine an appropriate dtype
@@ -48,7 +54,7 @@ NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
 
 NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *str);
+_array_typedescr_fromstr(char const *str);
 
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i);
@@ -56,14 +62,11 @@ index2ptr(PyArrayObject *mp, npy_intp i);
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
 
-NPY_NO_EXPORT int
-_IsAligned(PyArrayObject *ap);
-
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
 NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
+convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 
 /*
  * Sets ValueError with "matrices not aligned" message for np.dot and friends
@@ -150,13 +153,9 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         static PyObject *AxisError_cls = NULL;
         PyObject *exc;
 
+        npy_cache_import("numpy.core._exceptions", "AxisError", &AxisError_cls);
         if (AxisError_cls == NULL) {
-            PyObject *mod = PyImport_ImportModule("numpy.core._internal");
-
-            if (mod != NULL) {
-                AxisError_cls = PyObject_GetAttrString(mod, "AxisError");
-                Py_DECREF(mod);
-            }
+            return -1;
         }
 
         /* Invoke the AxisError constructor */
@@ -182,6 +181,16 @@ check_and_adjust_axis(int *axis, int ndim)
     return check_and_adjust_axis_msg(axis, ndim, Py_None);
 }
 
+/* used for some alignment checks */
+#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
+/*
+ * Disable harmless compiler warning "4116: unnamed type definition in
+ * parentheses" which is caused by the _ALIGN macro.
+ */
+#if defined(_MSC_VER)
+#pragma warning(disable:4116)
+#endif
 
 /*
  * return true if pointer is aligned to 'alignment'
@@ -190,15 +199,45 @@ static NPY_INLINE int
 npy_is_aligned(const void * p, const npy_uintp alignment)
 {
     /*
-     * alignment is usually a power of two
-     * the test is faster than a direct modulo
+     * Assumes alignment is a power of two, as required by the C standard.
+     * Assumes cast from pointer to uintp gives a sensible representation we
+     * can use bitwise & on (not required by C standard, but used by glibc).
+     * This test is faster than a direct modulo.
+     * Note alignment value of 0 is allowed and returns False.
      */
-    if (NPY_LIKELY((alignment & (alignment - 1)) == 0)) {
-        return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+}
+
+/* Get equivalent "uint" alignment given an itemsize, for use in copy code */
+static NPY_INLINE int
+npy_uint_alignment(int itemsize)
+{
+    npy_uintp alignment = 0; /* return value of 0 means unaligned */
+
+    switch(itemsize){
+        case 1:
+            return 1;
+        case 2:
+            alignment = _ALIGN(npy_uint16);
+            break;
+        case 4:
+            alignment = _ALIGN(npy_uint32);
+            break;
+        case 8:
+            alignment = _ALIGN(npy_uint64);
+            break;
+        case 16:
+            /*
+             * 16 byte types are copied using 2 uint64 assignments.
+             * See the strided copy function in lowlevel_strided_loops.c.
+             */
+            alignment = _ALIGN(npy_uint64);
+            break;
+        default:
+            break;
     }
-    else {
-        return ((npy_uintp)(p) % alignment) == 0;
-    }
+
+    return alignment;
 }
 
 /*
@@ -252,35 +291,29 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
-/*
- * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
- * (BLAS won't handle negative or zero strides the way we want).
- */
-static NPY_INLINE int
-blas_stride(npy_intp stride, unsigned itemsize)
-{
-    /*
-     * Should probably check pointer alignment also, but this may cause
-     * problems if we require complex to be 16 byte aligned.
-     */
-    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
-        stride /= itemsize;
-        if (stride <= INT_MAX) {
-            return stride;
-        }
-    }
-    return 0;
-}
-
-/*
- * Define a chunksize for CBLAS. CBLAS counts in integers.
- */
-#if NPY_MAX_INTP > INT_MAX
-# define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
-#else
-# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
-#endif
-
 #include "ucsnarrow.h"
 
+/*
+ * Make a new empty array, of the passed size, of a type that takes the
+ * priority of ap1 and ap2 into account.
+ *
+ * If `out` is non-NULL, memory overlap is checked with ap1 and ap2, and an
+ * updateifcopy temporary array may be returned. If `result` is non-NULL, the
+ * output array to be returned (`out` if non-NULL and the newly allocated array
+ * otherwise) is incref'd and put to *result.
+ */
+NPY_NO_EXPORT PyArrayObject *
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
+                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+
+
+/*
+ * Used to indicate a broadcast axis, see also `npyiter_get_op_axis` in
+ * `nditer_constr.c`.  This may be the preferred API for reduction axes
+ * probably. So we should consider making this public either as a macro or
+ * function (so that the way we flag the axis can be changed).
+ */
+#define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
+
 #endif
+

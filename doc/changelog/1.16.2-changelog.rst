@@ -1,0 +1,25 @@
+
+Contributors
+============
+
+A total of 5 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Matti Picus
+* Tyler Reddy
+* Tony LaTorre +
+
+Pull requests merged
+====================
+
+A total of 7 pull requests were merged for this release.
+
+* `#12909 <https://github.com/numpy/numpy/pull/12909>`__: TST: fix vmImage dispatch in Azure
+* `#12923 <https://github.com/numpy/numpy/pull/12923>`__: MAINT: remove complicated test of multiarray import failure mode
+* `#13020 <https://github.com/numpy/numpy/pull/13020>`__: BUG: fix signed zero behavior in npy_divmod
+* `#13026 <https://github.com/numpy/numpy/pull/13026>`__: MAINT: Add functions to parse shell-strings in the platform-native...
+* `#13028 <https://github.com/numpy/numpy/pull/13028>`__: BUG: Fix regression in parsing of F90 and F77 environment variables
+* `#13038 <https://github.com/numpy/numpy/pull/13038>`__: BUG: parse shell escaping in extra_compile_args and extra_link_args
+* `#13041 <https://github.com/numpy/numpy/pull/13041>`__: BLD: Windows absolute path DLL loading

@@ -1,15 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 from numpy.testing import (
-    run_module_suite, assert_, assert_array_equal, assert_raises,
+    assert_, assert_array_equal, assert_raises,
     )
 from numpy import random
-from numpy.compat import long
 import numpy as np
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -29,7 +26,8 @@ class TestRegression(object):
         ]
         is_64bits = sys.maxsize > 2**32
         if is_64bits and sys.platform != 'win32':
-            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2)) # Check for 64-bit systems
+            # Check for 64-bit systems
+            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
         for arg in args:
             assert_(np.random.hypergeometric(*arg) > 0)
 
@@ -49,13 +47,6 @@ class TestRegression(object):
         msg = "Frequency was %f, should be < 0.23" % freq
         assert_(freq < 0.23, msg)
 
-    def test_permutation_longs(self):
-        np.random.seed(1234)
-        a = np.random.permutation(12)
-        np.random.seed(1234)
-        b = np.random.permutation(long(12))
-        assert_array_equal(a, b)
-
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
         for t in [[1, 2, 3, None],
@@ -65,7 +56,8 @@ class TestRegression(object):
             np.random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
-            assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
+            expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
+            assert_array_equal(np.array(shuffled, dtype=object), expected)
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
@@ -125,7 +117,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         np.random.seed(1234)
-        a = np.array([np.arange(1), np.arange(4)])
+        a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
             np.random.shuffle(a)
@@ -134,5 +126,24 @@ class TestRegression(object):
         import gc
         gc.collect()
 
-if __name__ == "__main__":
-    run_module_suite()
+    def test_permutation_subclass(self):
+        class N(np.ndarray):
+            pass
+
+        np.random.seed(1)
+        orig = np.arange(3).view(N)
+        perm = np.random.permutation(orig)
+        assert_array_equal(perm, np.array([0, 2, 1]))
+        assert_array_equal(orig, np.arange(3).view(N))
+
+        class M:
+            a = np.arange(5)
+
+            def __array__(self):
+                return self.a
+
+        np.random.seed(1)
+        m = M()
+        perm = np.random.permutation(m)
+        assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
+        assert_array_equal(m.__array__(), np.arange(5))

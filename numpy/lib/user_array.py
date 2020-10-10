@@ -5,18 +5,15 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.core import (
     array, asarray, absolute, add, subtract, multiply, divide,
     remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
     bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
     greater_equal, shape, reshape, arange, sin, sqrt, transpose
 )
-from numpy.compat import long
 
 
-class container(object):
+class container:
     """
     container(data, dtype=None, copy=True)
 
@@ -198,9 +195,6 @@ class container(object):
     def __int__(self):
         return self._scalarfunc(int)
 
-    def __long__(self):
-        return self._scalarfunc(long)
-
     def __hex__(self):
         return self._scalarfunc(hex)
 
@@ -232,6 +226,10 @@ class container(object):
     def tostring(self):
         ""
         return self.array.tostring()
+
+    def tobytes(self):
+        ""
+        return self.array.tobytes()
 
     def byteswap(self):
         ""

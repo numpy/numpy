@@ -8,9 +8,6 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
-#include "npy_config.h"
-
 #include "npy_pycompat.h"
 
 #include "common.h"
@@ -248,13 +245,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
                 PyTuple_SET_ITEM(tupobj,0,obj);
-                obj = PyUString_FromString((const char *)format);
+                obj = PyUnicode_FromString((const char *)format);
                 if (obj == NULL) {
                     Py_DECREF(tupobj);
                     Py_DECREF(it);
                     return -1;
                 }
-                strobj = PyUString_Format(obj, tupobj);
+                strobj = PyUnicode_Format(obj, tupobj);
                 Py_DECREF(obj);
                 Py_DECREF(tupobj);
                 if (strobj == NULL) {
@@ -262,18 +259,12 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
             }
-#if defined(NPY_PY3K)
             byteobj = PyUnicode_AsASCIIString(strobj);
-#else
-            byteobj = strobj;
-#endif
             NPY_BEGIN_ALLOW_THREADS;
             n2 = PyBytes_GET_SIZE(byteobj);
             n = fwrite(PyBytes_AS_STRING(byteobj), 1, n2, fp);
             NPY_END_ALLOW_THREADS;
-#if defined(NPY_PY3K)
             Py_DECREF(byteobj);
-#endif
             if (n < n2) {
                 PyErr_Format(PyExc_IOError,
                         "problem writing element %" NPY_INTP_FMT
@@ -409,7 +400,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         }
     }
     /* Python integer */
-    else if (PyLong_Check(obj) || PyInt_Check(obj)) {
+    else if (PyLong_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
         if (error_converting(ll_v)) {
@@ -543,35 +534,6 @@ PyArray_AssignZero(PyArrayObject *dst,
     return retcode;
 }
 
-/*
- * Fills an array with ones.
- *
- * dst: The destination array.
- * wheremask: If non-NULL, a boolean mask specifying where to set the values.
- *
- * Returns 0 on success, -1 on failure.
- */
-NPY_NO_EXPORT int
-PyArray_AssignOne(PyArrayObject *dst,
-                  PyArrayObject *wheremask)
-{
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value True */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
-    }
-    value = 1;
-
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
-
-    Py_DECREF(bool_dtype);
-    return retcode;
-}
 
 /*NUMPY_API
  * Copy an array.
@@ -613,40 +575,17 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = Py_TYPE(self);
     }
 
-    if (type != NULL && (PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) {
-        const char *msg =
-            "Numpy has detected that you may be viewing or writing to an array "
-            "returned by selecting multiple fields in a structured array. \n\n"
-            "This code may break in numpy 1.13 because this will return a view "
-            "instead of a copy -- see release notes for details.";
-        /* 2016-09-19, 1.12 */
-        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
-            return NULL;
-        }
-        /* Only warn once per array */
-        PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
-    }
-
+    dtype = PyArray_DESCR(self);
     flags = PyArray_FLAGS(self);
 
-    dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(subtype,
-                               dtype,
-                               PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self),
-                               PyArray_DATA(self),
-                               flags,
-                               (PyObject *)self, 0);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+            subtype, dtype,
+            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
+            PyArray_DATA(self),
+            flags, (PyObject *)self, (PyObject *)self,
+            0);
     if (ret == NULL) {
-        Py_XDECREF(type);
-        return NULL;
-    }
-
-    /* Set the base object */
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
         Py_XDECREF(type);
         return NULL;
     }

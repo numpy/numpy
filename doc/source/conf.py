@@ -1,14 +1,66 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
+import os
+import re
+import sys
 
-import sys, os, re
+# Minimum version, enforced by sphinx
+needs_sphinx = '2.2.0'
 
-# Check Sphinx version
-import sphinx
-if sphinx.__version__ < "1.2.1":
-    raise RuntimeError("Sphinx 1.2.1 or newer required")
 
-needs_sphinx = '1.0'
+# This is a nasty hack to use platform-agnostic names for types in the
+# documentation.
+
+# must be kept alive to hold the patched names
+_name_cache = {}
+
+def replace_scalar_type_names():
+    """ Rename numpy types to use the canonical names to make sphinx behave """
+    import ctypes
+
+    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+
+    class PyObject(ctypes.Structure):
+        pass
+
+    class PyTypeObject(ctypes.Structure):
+        pass
+
+    PyObject._fields_ = [
+        ('ob_refcnt', Py_ssize_t),
+        ('ob_type', ctypes.POINTER(PyTypeObject)),
+    ]
+
+
+    PyTypeObject._fields_ = [
+        # varhead
+        ('ob_base', PyObject),
+        ('ob_size', Py_ssize_t),
+        # declaration
+        ('tp_name', ctypes.c_char_p),
+    ]
+
+    # prevent numpy attaching docstrings to the scalar types
+    assert 'numpy.core._add_newdocs_scalars' not in sys.modules
+    sys.modules['numpy.core._add_newdocs_scalars'] = object()
+
+    import numpy
+
+    # change the __name__ of the scalar types
+    for name in [
+        'byte', 'short', 'intc', 'int_', 'longlong',
+        'ubyte', 'ushort', 'uintc', 'uint', 'ulonglong',
+        'half', 'single', 'double', 'longdouble',
+        'half', 'csingle', 'cdouble', 'clongdouble',
+    ]:
+        typ = getattr(numpy, name)
+        c_typ = PyTypeObject.from_address(id(typ))
+        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+
+    # now generate the docstrings as usual
+    del sys.modules['numpy.core._add_newdocs_scalars']
+    import numpy.core._add_newdocs_scalars
+
+replace_scalar_type_names()
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -19,11 +71,22 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
-              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'sphinx.ext.graphviz',
-              'matplotlib.sphinxext.plot_directive']
+extensions = [
+    'sphinx.ext.autodoc',
+    'numpydoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.coverage',
+    'sphinx.ext.doctest',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.ifconfig',
+    'matplotlib.sphinxext.plot_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
+    'sphinx.ext.imgmath',
+]
+
+imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -31,9 +94,11 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
+master_doc = 'contents'
+
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2017, The SciPy community'
+copyright = '2008-2020, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -76,37 +141,24 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+def setup(app):
+    # add a config value for `ifconfig` directives
+    app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
+    app.add_lexer('NumPyC', NumPyLexer)
 
 # -----------------------------------------------------------------------------
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
-if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
-                       "via git submodule init && git submodule update")
+html_theme = 'pydata_sphinx_theme'
 
-html_theme = 'scipy'
-html_theme_path = [themedir]
+html_logo = '_static/numpylogo.svg'
 
-if 'scipyorg' in tags:
-    # Build for the scipy.org website
-    html_theme_options = {
-        "edit_link": True,
-        "sidebar": "right",
-        "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
-    }
-else:
-    # Default build
-    html_theme_options = {
-        "edit_link": False,
-        "sidebar": "left",
-        "scipy_org_logo": False,
-        "rootlinks": []
-    }
-    html_sidebars = {'index': 'indexsidebar.html'}
+html_theme_options = {
+  "github_url": "https://github.com/numpy/numpy",
+  "twitter_url": "https://twitter.com/numpy_team",
+}
+
 
 html_additional_pages = {
     'index': 'indexcontent.html',
@@ -123,8 +175,9 @@ html_file_suffix = '.html'
 
 htmlhelp_basename = 'numpy'
 
-pngmath_use_preview = True
-pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+if 'sphinx.ext.pngmath' in extensions:
+    pngmath_use_preview = True
+    pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
@@ -138,6 +191,9 @@ plot_html_show_source_link = False
 
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'
+
+# XeLaTeX for better support of unicode characters
+latex_engine = 'xelatex'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
@@ -157,16 +213,34 @@ latex_documents = [
 # not chapters.
 #latex_use_parts = False
 
-# Additional stuff for the LaTeX preamble.
-latex_preamble = r'''
-\usepackage{amsmath}
-\DeclareUnicodeCharacter{00A0}{\nobreakspace}
+latex_elements = {
+    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
+}
 
+# Additional stuff for the LaTeX preamble.
+latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
 % header
+\usepackage{xcolor}
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
+% but expdlist old LaTeX package requires fixes:
+% 1) remove extra space
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
+\makeatother
+% 2) fix bug in expdlist's way of breaking the line after long item label
+\makeatletter
+\def\breaklabel{%
+    \def\@breaklabel{%
+        \leavevmode\par
+        % now a hack because Sphinx inserts \leavevmode after term node
+        \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
+    }%
+}
+\makeatother
 
 % Make Examples/etc section headers smaller and more compact
 \makeatletter
@@ -203,9 +277,14 @@ texinfo_documents = [
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
+    'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('http://matplotlib.org', None)
+    'matplotlib': ('https://matplotlib.org', None),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
+    'skimage': ('https://scikit-image.org/docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'scipy-lecture-notes': ('https://scipy-lectures.org', None),
 }
 
 
@@ -223,8 +302,7 @@ numpydoc_use_plots = True
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
-autosummary_generate = glob.glob("reference/*.rst")
+autosummary_generate = True
 
 # -----------------------------------------------------------------------------
 # Coverage checker
@@ -290,6 +368,17 @@ for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
 else:
     print("NOTE: linkcode extension not found -- no links to source generated")
 
+
+def _get_c_source_file(obj):
+    if issubclass(obj, numpy.generic):
+        return r"core/src/multiarray/scalartypes.c.src"
+    elif obj is numpy.ndarray:
+        return r"core/src/multiarray/arrayobject.c"
+    else:
+        # todo: come up with a better way to generate these
+        return None
+
+
 def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
@@ -311,28 +400,59 @@ def linkcode_resolve(domain, info):
         except Exception:
             return None
 
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
     try:
-        fn = inspect.getsourcefile(obj)
-    except Exception:
-        fn = None
-    if not fn:
-        return None
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
 
-    try:
-        source, lineno = inspect.getsourcelines(obj)
-    except Exception:
-        lineno = None
+    fn = None
+    lineno = None
+
+    # Make a poor effort at linking C extension types
+    if isinstance(obj, type) and obj.__module__ == 'numpy':
+        fn = _get_c_source_file(obj)
+
+    if fn is None:
+        try:
+            fn = inspect.getsourcefile(obj)
+        except Exception:
+            fn = None
+        if not fn:
+            return None
+
+        try:
+            source, lineno = inspect.getsourcelines(obj)
+        except Exception:
+            lineno = None
+
+        fn = relpath(fn, start=dirname(numpy.__file__))
 
     if lineno:
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
 
-    fn = relpath(fn, start=dirname(numpy.__file__))
-
     if 'dev' in numpy.__version__:
-        return "http://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
            fn, linespec)
     else:
-        return "http://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
+
+from pygments.lexers import CLexer
+from pygments.lexer import inherit, bygroups
+from pygments.token import Comment
+
+class NumPyLexer(CLexer):
+    name = 'NUMPYLEXER'
+
+    tokens = {
+        'statements': [
+            (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
+            inherit,
+        ],
+    }

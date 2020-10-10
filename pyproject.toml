@@ -1,0 +1,71 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = [
+    "setuptools<49.2.0",
+    "wheel<=0.35.1",
+    "Cython>=0.29.21,<3.0",  # Note: keep in sync with tools/cythonize.py
+]
+
+
+[tool.towncrier]
+    # Do no set this since it is hard to import numpy inside the source directory
+    # the name is hardcoded. Use "--version 1.18.0" to set the version
+    single_file = true
+    filename = "doc/source/release/{version}-notes.rst"
+    directory = "doc/release/upcoming_changes/"
+    issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
+    template = "doc/release/upcoming_changes/template.rst"
+    underlines = "~="
+    all_bullets = false
+
+
+    [[tool.towncrier.type]]
+        directory = "highlight"
+        name = "Highlights"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "new_function"
+        name = "New functions"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "deprecation"
+        name = "Deprecations"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "future"
+        name = "Future Changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "expired"
+        name = "Expired deprecations"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "compatibility"
+        name = "Compatibility notes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "c_api"
+        name = "C API changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "new_feature"
+        name = "New Features"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "improvement"
+        name = "Improvements"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "change"
+        name = "Changes"
+        showcontent = true
+

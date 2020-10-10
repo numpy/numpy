@@ -15,6 +15,8 @@
 
 #include "npy_config.h"
 
+#include "npy_cblas.h"
+
 #include <stddef.h>
 #include <stdio.h>
 #include <assert.h>
@@ -62,287 +64,304 @@ dbg_stack_trace()
  *****************************************************************************
  */
 
-#ifdef NO_APPEND_FORTRAN
-# define FNAME(x) x
-#else
-# define FNAME(x) x##_
-#endif
+#define FNAME(x) BLAS_FUNC(x)
+
+typedef CBLAS_INT         fortran_int;
 
 typedef struct { float r, i; } f2c_complex;
 typedef struct { double r, i; } f2c_doublecomplex;
 /* typedef long int (*L_fp)(); */
 
-extern int
-FNAME(sgeev)(char *jobvl, char *jobvr, int *n,
-             float a[], int *lda, float wr[], float wi[],
-             float vl[], int *ldvl, float vr[], int *ldvr,
-             float work[], int lwork[],
-             int *info);
-extern int
-FNAME(dgeev)(char *jobvl, char *jobvr, int *n,
-             double a[], int *lda, double wr[], double wi[],
-             double vl[], int *ldvl, double vr[], int *ldvr,
-             double work[], int lwork[],
-             int *info);
-extern int
-FNAME(cgeev)(char *jobvl, char *jobvr, int *n,
-             f2c_doublecomplex a[], int *lda,
-             f2c_doublecomplex w[],
-             f2c_doublecomplex vl[], int *ldvl,
-             f2c_doublecomplex vr[], int *ldvr,
-             f2c_doublecomplex work[], int *lwork,
-             double rwork[],
-             int *info);
-extern int
-FNAME(zgeev)(char *jobvl, char *jobvr, int *n,
-             f2c_doublecomplex a[], int *lda,
-             f2c_doublecomplex w[],
-             f2c_doublecomplex vl[], int *ldvl,
-             f2c_doublecomplex vr[], int *ldvr,
-             f2c_doublecomplex work[], int *lwork,
-             double rwork[],
-             int *info);
+typedef float             fortran_real;
+typedef double            fortran_doublereal;
+typedef f2c_complex       fortran_complex;
+typedef f2c_doublecomplex fortran_doublecomplex;
 
-extern int
-FNAME(ssyevd)(char *jobz, char *uplo, int *n,
-              float a[], int *lda, float w[], float work[],
-              int *lwork, int iwork[], int *liwork,
-              int *info);
-extern int
-FNAME(dsyevd)(char *jobz, char *uplo, int *n,
-              double a[], int *lda, double w[], double work[],
-              int *lwork, int iwork[], int *liwork,
-              int *info);
-extern int
-FNAME(cheevd)(char *jobz, char *uplo, int *n,
-              f2c_complex a[], int *lda,
+extern fortran_int
+FNAME(sgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             float a[], fortran_int *lda, float wr[], float wi[],
+             float vl[], fortran_int *ldvl, float vr[], fortran_int *ldvr,
+             float work[], fortran_int lwork[],
+             fortran_int *info);
+extern fortran_int
+FNAME(dgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             double a[], fortran_int *lda, double wr[], double wi[],
+             double vl[], fortran_int *ldvl, double vr[], fortran_int *ldvr,
+             double work[], fortran_int lwork[],
+             fortran_int *info);
+extern fortran_int
+FNAME(cgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             f2c_doublecomplex a[], fortran_int *lda,
+             f2c_doublecomplex w[],
+             f2c_doublecomplex vl[], fortran_int *ldvl,
+             f2c_doublecomplex vr[], fortran_int *ldvr,
+             f2c_doublecomplex work[], fortran_int *lwork,
+             double rwork[],
+             fortran_int *info);
+extern fortran_int
+FNAME(zgeev)(char *jobvl, char *jobvr, fortran_int *n,
+             f2c_doublecomplex a[], fortran_int *lda,
+             f2c_doublecomplex w[],
+             f2c_doublecomplex vl[], fortran_int *ldvl,
+             f2c_doublecomplex vr[], fortran_int *ldvr,
+             f2c_doublecomplex work[], fortran_int *lwork,
+             double rwork[],
+             fortran_int *info);
+
+extern fortran_int
+FNAME(ssyevd)(char *jobz, char *uplo, fortran_int *n,
+              float a[], fortran_int *lda, float w[], float work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *liwork,
+              fortran_int *info);
+extern fortran_int
+FNAME(dsyevd)(char *jobz, char *uplo, fortran_int *n,
+              double a[], fortran_int *lda, double w[], double work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *liwork,
+              fortran_int *info);
+extern fortran_int
+FNAME(cheevd)(char *jobz, char *uplo, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
               float w[], f2c_complex work[],
-              int *lwork, float rwork[], int *lrwork, int iwork[],
-              int *liwork,
-              int *info);
-extern int
-FNAME(zheevd)(char *jobz, char *uplo, int *n,
-              f2c_doublecomplex a[], int *lda,
+              fortran_int *lwork, float rwork[], fortran_int *lrwork, fortran_int iwork[],
+              fortran_int *liwork,
+              fortran_int *info);
+extern fortran_int
+FNAME(zheevd)(char *jobz, char *uplo, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
               double w[], f2c_doublecomplex work[],
-              int *lwork, double rwork[], int *lrwork, int iwork[],
-              int *liwork,
-              int *info);
+              fortran_int *lwork, double rwork[], fortran_int *lrwork, fortran_int iwork[],
+              fortran_int *liwork,
+              fortran_int *info);
 
-extern int
-FNAME(dgelsd)(int *m, int *n, int *nrhs,
-              double a[], int *lda, double b[], int *ldb,
-              double s[], double *rcond, int *rank,
-              double work[], int *lwork, int iwork[],
-              int *info);
-extern int
-FNAME(zgelsd)(int *m, int *n, int *nrhs,
-              f2c_doublecomplex a[], int *lda,
-              f2c_doublecomplex b[], int *ldb,
-              double s[], double *rcond, int *rank,
-              f2c_doublecomplex work[], int *lwork,
-              double rwork[], int iwork[],
-              int *info);
+extern fortran_int
+FNAME(sgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              float a[], fortran_int *lda, float b[], fortran_int *ldb,
+              float s[], float *rcond, fortran_int *rank,
+              float work[], fortran_int *lwork, fortran_int iwork[],
+              fortran_int *info);
+extern fortran_int
+FNAME(dgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              double a[], fortran_int *lda, double b[], fortran_int *ldb,
+              double s[], double *rcond, fortran_int *rank,
+              double work[], fortran_int *lwork, fortran_int iwork[],
+              fortran_int *info);
+extern fortran_int
+FNAME(cgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              f2c_complex a[], fortran_int *lda,
+              f2c_complex b[], fortran_int *ldb,
+              float s[], float *rcond, fortran_int *rank,
+              f2c_complex work[], fortran_int *lwork,
+              float rwork[], fortran_int iwork[],
+              fortran_int *info);
+extern fortran_int
+FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
+              f2c_doublecomplex a[], fortran_int *lda,
+              f2c_doublecomplex b[], fortran_int *ldb,
+              double s[], double *rcond, fortran_int *rank,
+              f2c_doublecomplex work[], fortran_int *lwork,
+              double rwork[], fortran_int iwork[],
+              fortran_int *info);
 
-extern int
-FNAME(sgesv)(int *n, int *nrhs,
-             float a[], int *lda,
-             int ipiv[],
-             float b[], int *ldb,
-             int *info);
-extern int
-FNAME(dgesv)(int *n, int *nrhs,
-             double a[], int *lda,
-             int ipiv[],
-             double b[], int *ldb,
-             int *info);
-extern int
-FNAME(cgesv)(int *n, int *nrhs,
-             f2c_complex a[], int *lda,
-             int ipiv[],
-             f2c_complex b[], int *ldb,
-             int *info);
-extern int
-FNAME(zgesv)(int *n, int *nrhs,
-             f2c_doublecomplex a[], int *lda,
-             int ipiv[],
-             f2c_doublecomplex b[], int *ldb,
-             int *info);
+extern fortran_int
+FNAME(sgesv)(fortran_int *n, fortran_int *nrhs,
+             float a[], fortran_int *lda,
+             fortran_int ipiv[],
+             float b[], fortran_int *ldb,
+             fortran_int *info);
+extern fortran_int
+FNAME(dgesv)(fortran_int *n, fortran_int *nrhs,
+             double a[], fortran_int *lda,
+             fortran_int ipiv[],
+             double b[], fortran_int *ldb,
+             fortran_int *info);
+extern fortran_int
+FNAME(cgesv)(fortran_int *n, fortran_int *nrhs,
+             f2c_complex a[], fortran_int *lda,
+             fortran_int ipiv[],
+             f2c_complex b[], fortran_int *ldb,
+             fortran_int *info);
+extern fortran_int
+FNAME(zgesv)(fortran_int *n, fortran_int *nrhs,
+             f2c_doublecomplex a[], fortran_int *lda,
+             fortran_int ipiv[],
+             f2c_doublecomplex b[], fortran_int *ldb,
+             fortran_int *info);
 
-extern int
-FNAME(sgetrf)(int *m, int *n,
-              float a[], int *lda,
-              int ipiv[],
-              int *info);
-extern int
-FNAME(dgetrf)(int *m, int *n,
-              double a[], int *lda,
-              int ipiv[],
-              int *info);
-extern int
-FNAME(cgetrf)(int *m, int *n,
-              f2c_complex a[], int *lda,
-              int ipiv[],
-              int *info);
-extern int
-FNAME(zgetrf)(int *m, int *n,
-              f2c_doublecomplex a[], int *lda,
-              int ipiv[],
-              int *info);
+extern fortran_int
+FNAME(sgetrf)(fortran_int *m, fortran_int *n,
+              float a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+extern fortran_int
+FNAME(dgetrf)(fortran_int *m, fortran_int *n,
+              double a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+extern fortran_int
+FNAME(cgetrf)(fortran_int *m, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
+extern fortran_int
+FNAME(zgetrf)(fortran_int *m, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              fortran_int ipiv[],
+              fortran_int *info);
 
-extern int
-FNAME(spotrf)(char *uplo, int *n,
-              float a[], int *lda,
-              int *info);
-extern int
-FNAME(dpotrf)(char *uplo, int *n,
-              double a[], int *lda,
-              int *info);
-extern int
-FNAME(cpotrf)(char *uplo, int *n,
-              f2c_complex a[], int *lda,
-              int *info);
-extern int
-FNAME(zpotrf)(char *uplo, int *n,
-              f2c_doublecomplex a[], int *lda,
-              int *info);
+extern fortran_int
+FNAME(spotrf)(char *uplo, fortran_int *n,
+              float a[], fortran_int *lda,
+              fortran_int *info);
+extern fortran_int
+FNAME(dpotrf)(char *uplo, fortran_int *n,
+              double a[], fortran_int *lda,
+              fortran_int *info);
+extern fortran_int
+FNAME(cpotrf)(char *uplo, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              fortran_int *info);
+extern fortran_int
+FNAME(zpotrf)(char *uplo, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              fortran_int *info);
 
-extern int
-FNAME(sgesdd)(char *jobz, int *m, int *n,
-              float a[], int *lda, float s[], float u[],
-              int *ldu, float vt[], int *ldvt, float work[],
-              int *lwork, int iwork[], int *info);
-extern int
-FNAME(dgesdd)(char *jobz, int *m, int *n,
-              double a[], int *lda, double s[], double u[],
-              int *ldu, double vt[], int *ldvt, double work[],
-              int *lwork, int iwork[], int *info);
-extern int
-FNAME(cgesdd)(char *jobz, int *m, int *n,
-              f2c_complex a[], int *lda,
-              float s[], f2c_complex u[], int *ldu,
-              f2c_complex vt[], int *ldvt,
-              f2c_complex work[], int *lwork,
-              float rwork[], int iwork[], int *info);
-extern int
-FNAME(zgesdd)(char *jobz, int *m, int *n,
-              f2c_doublecomplex a[], int *lda,
-              double s[], f2c_doublecomplex u[], int *ldu,
-              f2c_doublecomplex vt[], int *ldvt,
-              f2c_doublecomplex work[], int *lwork,
-              double rwork[], int iwork[], int *info);
+extern fortran_int
+FNAME(sgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              float a[], fortran_int *lda, float s[], float u[],
+              fortran_int *ldu, float vt[], fortran_int *ldvt, float work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *info);
+extern fortran_int
+FNAME(dgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              double a[], fortran_int *lda, double s[], double u[],
+              fortran_int *ldu, double vt[], fortran_int *ldvt, double work[],
+              fortran_int *lwork, fortran_int iwork[], fortran_int *info);
+extern fortran_int
+FNAME(cgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              float s[], f2c_complex u[], fortran_int *ldu,
+              f2c_complex vt[], fortran_int *ldvt,
+              f2c_complex work[], fortran_int *lwork,
+              float rwork[], fortran_int iwork[], fortran_int *info);
+extern fortran_int
+FNAME(zgesdd)(char *jobz, fortran_int *m, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              double s[], f2c_doublecomplex u[], fortran_int *ldu,
+              f2c_doublecomplex vt[], fortran_int *ldvt,
+              f2c_doublecomplex work[], fortran_int *lwork,
+              double rwork[], fortran_int iwork[], fortran_int *info);
 
-extern int
-FNAME(spotrs)(char *uplo, int *n, int *nrhs,
-              float a[], int *lda,
-              float b[], int *ldb,
-              int *info);
-extern int
-FNAME(dpotrs)(char *uplo, int *n, int *nrhs,
-              double a[], int *lda,
-              double b[], int *ldb,
-              int *info);
-extern int
-FNAME(cpotrs)(char *uplo, int *n, int *nrhs,
-              f2c_complex a[], int *lda,
-              f2c_complex b[], int *ldb,
-              int *info);
-extern int
-FNAME(zpotrs)(char *uplo, int *n, int *nrhs,
-              f2c_doublecomplex a[], int *lda,
-              f2c_doublecomplex b[], int *ldb,
-              int *info);
+extern fortran_int
+FNAME(spotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              float a[], fortran_int *lda,
+              float b[], fortran_int *ldb,
+              fortran_int *info);
+extern fortran_int
+FNAME(dpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              double a[], fortran_int *lda,
+              double b[], fortran_int *ldb,
+              fortran_int *info);
+extern fortran_int
+FNAME(cpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              f2c_complex a[], fortran_int *lda,
+              f2c_complex b[], fortran_int *ldb,
+              fortran_int *info);
+extern fortran_int
+FNAME(zpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
+              f2c_doublecomplex a[], fortran_int *lda,
+              f2c_doublecomplex b[], fortran_int *ldb,
+              fortran_int *info);
 
-extern int
-FNAME(spotri)(char *uplo, int *n,
-              float a[], int *lda,
-              int *info);
-extern int
-FNAME(dpotri)(char *uplo, int *n,
-              double a[], int *lda,
-              int *info);
-extern int
-FNAME(cpotri)(char *uplo, int *n,
-              f2c_complex a[], int *lda,
-              int *info);
-extern int
-FNAME(zpotri)(char *uplo, int *n,
-              f2c_doublecomplex a[], int *lda,
-              int *info);
+extern fortran_int
+FNAME(spotri)(char *uplo, fortran_int *n,
+              float a[], fortran_int *lda,
+              fortran_int *info);
+extern fortran_int
+FNAME(dpotri)(char *uplo, fortran_int *n,
+              double a[], fortran_int *lda,
+              fortran_int *info);
+extern fortran_int
+FNAME(cpotri)(char *uplo, fortran_int *n,
+              f2c_complex a[], fortran_int *lda,
+              fortran_int *info);
+extern fortran_int
+FNAME(zpotri)(char *uplo, fortran_int *n,
+              f2c_doublecomplex a[], fortran_int *lda,
+              fortran_int *info);
 
-extern int
-FNAME(scopy)(int *n,
-             float *sx, int *incx,
-             float *sy, int *incy);
-extern int
-FNAME(dcopy)(int *n,
-             double *sx, int *incx,
-             double *sy, int *incy);
-extern int
-FNAME(ccopy)(int *n,
-             f2c_complex *sx, int *incx,
-             f2c_complex *sy, int *incy);
-extern int
-FNAME(zcopy)(int *n,
-             f2c_doublecomplex *sx, int *incx,
-             f2c_doublecomplex *sy, int *incy);
+extern fortran_int
+FNAME(scopy)(fortran_int *n,
+             float *sx, fortran_int *incx,
+             float *sy, fortran_int *incy);
+extern fortran_int
+FNAME(dcopy)(fortran_int *n,
+             double *sx, fortran_int *incx,
+             double *sy, fortran_int *incy);
+extern fortran_int
+FNAME(ccopy)(fortran_int *n,
+             f2c_complex *sx, fortran_int *incx,
+             f2c_complex *sy, fortran_int *incy);
+extern fortran_int
+FNAME(zcopy)(fortran_int *n,
+             f2c_doublecomplex *sx, fortran_int *incx,
+             f2c_doublecomplex *sy, fortran_int *incy);
 
 extern float
-FNAME(sdot)(int *n,
-            float *sx, int *incx,
-            float *sy, int *incy);
+FNAME(sdot)(fortran_int *n,
+            float *sx, fortran_int *incx,
+            float *sy, fortran_int *incy);
 extern double
-FNAME(ddot)(int *n,
-            double *sx, int *incx,
-            double *sy, int *incy);
-extern f2c_complex
-FNAME(cdotu)(int *n,
-             f2c_complex *sx, int *incx,
-             f2c_complex *sy, int *incy);
-extern f2c_doublecomplex
-FNAME(zdotu)(int *n,
-             f2c_doublecomplex *sx, int *incx,
-             f2c_doublecomplex *sy, int *incy);
-extern f2c_complex
-FNAME(cdotc)(int *n,
-             f2c_complex *sx, int *incx,
-             f2c_complex *sy, int *incy);
-extern f2c_doublecomplex
-FNAME(zdotc)(int *n,
-             f2c_doublecomplex *sx, int *incx,
-             f2c_doublecomplex *sy, int *incy);
+FNAME(ddot)(fortran_int *n,
+            double *sx, fortran_int *incx,
+            double *sy, fortran_int *incy);
+extern void
+FNAME(cdotu)(f2c_complex *ret, fortran_int *n,
+             f2c_complex *sx, fortran_int *incx,
+             f2c_complex *sy, fortran_int *incy);
+extern void
+FNAME(zdotu)(f2c_doublecomplex *ret, fortran_int *n,
+             f2c_doublecomplex *sx, fortran_int *incx,
+             f2c_doublecomplex *sy, fortran_int *incy);
+extern void
+FNAME(cdotc)(f2c_complex *ret, fortran_int *n,
+             f2c_complex *sx, fortran_int *incx,
+             f2c_complex *sy, fortran_int *incy);
+extern void
+FNAME(zdotc)(f2c_doublecomplex *ret, fortran_int *n,
+             f2c_doublecomplex *sx, fortran_int *incx,
+             f2c_doublecomplex *sy, fortran_int *incy);
 
-extern int
+extern fortran_int
 FNAME(sgemm)(char *transa, char *transb,
-             int *m, int *n, int *k,
+             fortran_int *m, fortran_int *n, fortran_int *k,
              float *alpha,
-             float *a, int *lda,
-             float *b, int *ldb,
+             float *a, fortran_int *lda,
+             float *b, fortran_int *ldb,
              float *beta,
-             float *c, int *ldc);
-extern int
+             float *c, fortran_int *ldc);
+extern fortran_int
 FNAME(dgemm)(char *transa, char *transb,
-             int *m, int *n, int *k,
+             fortran_int *m, fortran_int *n, fortran_int *k,
              double *alpha,
-             double *a, int *lda,
-             double *b, int *ldb,
+             double *a, fortran_int *lda,
+             double *b, fortran_int *ldb,
              double *beta,
-             double *c, int *ldc);
-extern int
+             double *c, fortran_int *ldc);
+extern fortran_int
 FNAME(cgemm)(char *transa, char *transb,
-             int *m, int *n, int *k,
+             fortran_int *m, fortran_int *n, fortran_int *k,
              f2c_complex *alpha,
-             f2c_complex *a, int *lda,
-             f2c_complex *b, int *ldb,
+             f2c_complex *a, fortran_int *lda,
+             f2c_complex *b, fortran_int *ldb,
              f2c_complex *beta,
-             f2c_complex *c, int *ldc);
-extern int
+             f2c_complex *c, fortran_int *ldc);
+extern fortran_int
 FNAME(zgemm)(char *transa, char *transb,
-             int *m, int *n, int *k,
+             fortran_int *m, fortran_int *n, fortran_int *k,
              f2c_doublecomplex *alpha,
-             f2c_doublecomplex *a, int *lda,
-             f2c_doublecomplex *b, int *ldb,
+             f2c_doublecomplex *a, fortran_int *lda,
+             f2c_doublecomplex *b, fortran_int *ldb,
              f2c_doublecomplex *beta,
-             f2c_doublecomplex *c, int *ldc);
+             f2c_doublecomplex *c, fortran_int *ldc);
 
 
 #define LAPACK_T(FUNC)                                          \
@@ -355,12 +374,6 @@ FNAME(zgemm)(char *transa, char *transb,
 #define LAPACK(FUNC)                            \
     FNAME(FUNC)
 
-typedef int               fortran_int;
-typedef float             fortran_real;
-typedef double            fortran_doublereal;
-typedef f2c_complex       fortran_complex;
-typedef f2c_doublecomplex fortran_doublecomplex;
-
 
 /*
  *****************************************************************************
@@ -368,17 +381,11 @@ typedef f2c_doublecomplex fortran_doublecomplex;
  *****************************************************************************
  */
 
-static NPY_INLINE void *
-offset_ptr(void* ptr, ptrdiff_t offset)
-{
-    return (void*)((npy_uint8*)ptr + offset);
-}
-
 static NPY_INLINE int
 get_fp_invalid_and_clear(void)
 {
     int status;
-    status = npy_clear_floatstatus();
+    status = npy_clear_floatstatus_barrier((char*)&status);
     return !!(status & NPY_FPE_INVALID);
 }
 
@@ -389,7 +396,7 @@ set_fp_invalid_or_clear(int error_occurred)
         npy_set_floatstatus_invalid();
     }
     else {
-        npy_clear_floatstatus();
+        npy_clear_floatstatus_barrier((char*)&error_occurred);
     }
 }
 
@@ -483,40 +490,50 @@ static void init_constants(void)
  */
 
 
-/* this struct contains information about how to linearize in a local buffer
-   a matrix so that it can be used by blas functions.
-   All strides are specified in number of elements (similar to what blas
-   expects)
-
-   dst_row_strides: number of elements between different row. Matrix is
-                    considered row-major
-   dst_column_strides: number of elements between different columns in the
-                    destination buffer
-   rows: number of rows of the matrix
-   columns: number of columns of the matrix
-   src_row_strides: strides needed to access the next row in the source matrix
-   src_column_strides: strides needed to access the next column in the source
-                       matrix
+/*
+ * this struct contains information about how to linearize a matrix in a local
+ * buffer so that it can be used by blas functions.  All strides are specified
+ * in bytes and are converted to elements later in type specific functions.
+ *
+ * rows: number of rows in the matrix
+ * columns: number of columns in the matrix
+ * row_strides: the number bytes between consecutive rows.
+ * column_strides: the number of bytes between consecutive columns.
+ * output_lead_dim: BLAS/LAPACK-side leading dimension, in elements
  */
 typedef struct linearize_data_struct
 {
-  size_t     rows;
-  size_t     columns;
-  ptrdiff_t  row_strides;
-  ptrdiff_t  column_strides;
+  npy_intp rows;
+  npy_intp columns;
+  npy_intp row_strides;
+  npy_intp column_strides;
+  npy_intp output_lead_dim;
 } LINEARIZE_DATA_t;
 
 static NPY_INLINE void
-init_linearize_data(LINEARIZE_DATA_t *lin_data,
-                    int rows,
-                    int columns,
-                    ptrdiff_t row_strides,
-                    ptrdiff_t column_strides)
+init_linearize_data_ex(LINEARIZE_DATA_t *lin_data,
+                       npy_intp rows,
+                       npy_intp columns,
+                       npy_intp row_strides,
+                       npy_intp column_strides,
+                       npy_intp output_lead_dim)
 {
     lin_data->rows = rows;
     lin_data->columns = columns;
     lin_data->row_strides = row_strides;
     lin_data->column_strides = column_strides;
+    lin_data->output_lead_dim = output_lead_dim;
+}
+
+static NPY_INLINE void
+init_linearize_data(LINEARIZE_DATA_t *lin_data,
+                    npy_intp rows,
+                    npy_intp columns,
+                    npy_intp row_strides,
+                    npy_intp column_strides)
+{
+    init_linearize_data_ex(
+        lin_data, rows, columns, row_strides, column_strides, columns);
 }
 
 static NPY_INLINE void
@@ -551,104 +568,6 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
               "\n\t\trow_strides: %td column_strides: %td"\
               "\n", name, params->rows, params->columns,
               params->row_strides, params->column_strides);
-}
-
-
-static NPY_INLINE float
-FLOAT_add(float op1, float op2)
-{
-    return op1 + op2;
-}
-
-static NPY_INLINE double
-DOUBLE_add(double op1, double op2)
-{
-    return op1 + op2;
-}
-
-static NPY_INLINE COMPLEX_t
-CFLOAT_add(COMPLEX_t op1, COMPLEX_t op2)
-{
-    COMPLEX_t result;
-    result.array[0] = op1.array[0] + op2.array[0];
-    result.array[1] = op1.array[1] + op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE DOUBLECOMPLEX_t
-CDOUBLE_add(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
-{
-    DOUBLECOMPLEX_t result;
-    result.array[0] = op1.array[0] + op2.array[0];
-    result.array[1] = op1.array[1] + op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE float
-FLOAT_mul(float op1, float op2)
-{
-    return op1*op2;
-}
-
-static NPY_INLINE double
-DOUBLE_mul(double op1, double op2)
-{
-    return op1*op2;
-}
-
-
-static NPY_INLINE COMPLEX_t
-CFLOAT_mul(COMPLEX_t op1, COMPLEX_t op2)
-{
-    COMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] - op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[1]*op2.array[0] + op1.array[0]*op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE DOUBLECOMPLEX_t
-CDOUBLE_mul(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
-{
-    DOUBLECOMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] - op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[1]*op2.array[0] + op1.array[0]*op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE float
-FLOAT_mulc(float op1, float op2)
-{
-    return op1*op2;
-}
-
-static NPY_INLINE double
-DOUBLE_mulc(float op1, float op2)
-{
-    return op1*op2;
-}
-
-static NPY_INLINE COMPLEX_t
-CFLOAT_mulc(COMPLEX_t op1, COMPLEX_t op2)
-{
-    COMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] + op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[0]*op2.array[1] - op1.array[1]*op2.array[0];
-
-    return result;
-}
-
-static NPY_INLINE DOUBLECOMPLEX_t
-CDOUBLE_mulc(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
-{
-    DOUBLECOMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] + op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[0]*op2.array[1] - op1.array[1]*op2.array[0];
-
-    return result;
 }
 
 static NPY_INLINE void
@@ -741,6 +660,10 @@ fortran_int_max(fortran_int x, fortran_int y) {
     INIT_OUTER_LOOP_5\
     npy_intp s5 = *steps++;
 
+#define INIT_OUTER_LOOP_7  \
+    INIT_OUTER_LOOP_6\
+    npy_intp s6 = *steps++;
+
 #define BEGIN_OUTER_LOOP_2 \
     for (N_ = 0;\
          N_ < dN;\
@@ -781,6 +704,17 @@ fortran_int_max(fortran_int x, fortran_int y) {
              args[4] += s4,\
              args[5] += s5) {
 
+#define BEGIN_OUTER_LOOP_7 \
+    for (N_ = 0;\
+         N_ < dN;\
+         N_++, args[0] += s0,\
+             args[1] += s1,\
+             args[2] += s2,\
+             args[3] += s3,\
+             args[4] += s4,\
+             args[5] += s5,\
+             args[6] += s6) {
+
 #define END_OUTER_LOOP  }
 
 static NPY_INLINE void
@@ -812,6 +746,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
     #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
     #copy = scopy, dcopy, ccopy, zcopy#
     #nan = s_nan, d_nan, c_nan, z_nan#
+    #zero = s_zero, d_zero, c_zero, z_zero#
  */
 static NPY_INLINE void *
 linearize_@TYPE@_matrix(void *dst_in,
@@ -851,7 +786,7 @@ linearize_@TYPE@_matrix(void *dst_in,
                 }
             }
             src += data->row_strides/sizeof(@typ@);
-            dst += data->columns;
+            dst += data->output_lead_dim;
         }
         return rv;
     } else {
@@ -898,7 +833,7 @@ delinearize_@TYPE@_matrix(void *dst_in,
                            sizeof(@typ@));
                 }
             }
-            src += data->columns;
+            src += data->output_lead_dim;
             dst += data->row_strides/sizeof(@typ@);
         }
 
@@ -919,6 +854,23 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
         ptrdiff_t cs = data->column_strides/sizeof(@typ@);
         for (j = 0; j < data->columns; ++j) {
             *cp = @nan@;
+            cp += cs;
+        }
+        dst += data->row_strides/sizeof(@typ@);
+    }
+}
+
+static NPY_INLINE void
+zero_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
+{
+    @typ@ *dst = (@typ@ *) dst_in;
+
+    int i, j;
+    for (i = 0; i < data->rows; i++) {
+        @typ@ *cp = dst;
+        ptrdiff_t cs = data->column_strides/sizeof(@typ@);
+        for (j = 0; j < data->columns; ++j) {
+            *cp = @zero@;
             cp += cs;
         }
         dst += data->row_strides/sizeof(@typ@);
@@ -1132,8 +1084,8 @@ static NPY_INLINE void
 
 static void
 @TYPE@_slogdet(char **args,
-               npy_intp *dimensions,
-               npy_intp *steps,
+               npy_intp const *dimensions,
+               npy_intp const *steps,
                void *NPY_UNUSED(func))
 {
     fortran_int m;
@@ -1159,9 +1111,7 @@ static void
     if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
         /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m,
-                            (ptrdiff_t)steps[1],
-                            (ptrdiff_t)steps[0]);
+        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
         BEGIN_OUTER_LOOP_3
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
@@ -1177,8 +1127,8 @@ static void
 
 static void
 @TYPE@_det(char **args,
-           npy_intp *dimensions,
-           npy_intp *steps,
+           npy_intp const *dimensions,
+           npy_intp const *steps,
            void *NPY_UNUSED(func))
 {
     fortran_int m;
@@ -1206,15 +1156,13 @@ static void
         @typ@ sign;
         @basetyp@ logdet;
         /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m,
-                            (ptrdiff_t)steps[1],
-                            (ptrdiff_t)steps[0]);
+        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
 
         BEGIN_OUTER_LOOP_2
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
                                           (void*)tmp_buff,
-                                          (fortran_int*)(tmp_buff+matrix_size),
+                                          (fortran_int*)(tmp_buff + matrix_size),
                                           &sign,
                                           &logdet);
             *(@typ@ *)args[1] = @TYPE@_det_from_slogdet(sign, logdet);
@@ -1382,7 +1330,7 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
     fortran_int lda = fortran_int_max(N, 1);
 
     mem_buff = malloc(safe_N * safe_N * sizeof(@typ@) +
-    	              safe_N * sizeof(@basetyp@));
+                      safe_N * sizeof(@basetyp@));
     if (!mem_buff) {
         goto error;
     }
@@ -1478,8 +1426,8 @@ static NPY_INLINE void
 @TYPE@_eigh_wrapper(char JOBZ,
                     char UPLO,
                     char**args,
-                    npy_intp* dimensions,
-                    npy_intp* steps)
+                    npy_intp const *dimensions,
+                    npy_intp const *steps)
 {
     ptrdiff_t outer_steps[3];
     size_t iter;
@@ -1553,8 +1501,8 @@ static NPY_INLINE void
  */
 static void
 @TYPE@_eighlo(char **args,
-              npy_intp *dimensions,
-              npy_intp *steps,
+              npy_intp const *dimensions,
+              npy_intp const *steps,
               void *NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('V', 'L', args, dimensions, steps);
@@ -1562,8 +1510,8 @@ static void
 
 static void
 @TYPE@_eighup(char **args,
-              npy_intp *dimensions,
-              npy_intp *steps,
+              npy_intp const *dimensions,
+              npy_intp const *steps,
               void* NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('V', 'U', args, dimensions, steps);
@@ -1571,8 +1519,8 @@ static void
 
 static void
 @TYPE@_eigvalshlo(char **args,
-                  npy_intp *dimensions,
-                  npy_intp *steps,
+                  npy_intp const *dimensions,
+                  npy_intp const *steps,
                   void* NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('N', 'L', args, dimensions, steps);
@@ -1580,8 +1528,8 @@ static void
 
 static void
 @TYPE@_eigvalshup(char **args,
-                  npy_intp *dimensions,
-                  npy_intp *steps,
+                  npy_intp const *dimensions,
+                  npy_intp const *steps,
                   void* NPY_UNUSED(func))
 {
     @TYPE@_eigh_wrapper('N', 'U', args, dimensions, steps);
@@ -1670,7 +1618,7 @@ release_@lapack_func@(GESV_PARAMS_t *params)
 }
 
 static void
-@TYPE@_solve(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_solve(char **args, npy_intp const *dimensions, npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
@@ -1707,7 +1655,7 @@ static void
 }
 
 static void
-@TYPE@_solve1(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_solve1(char **args, npy_intp const *dimensions, npy_intp const *steps,
               void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
@@ -1742,7 +1690,7 @@ static void
 }
 
 static void
-@TYPE@_inv(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_inv(char **args, npy_intp const *dimensions, npy_intp const *steps,
            void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
@@ -1844,7 +1792,7 @@ release_@lapack_func@(POTR_PARAMS_t *params)
 }
 
 static void
-@TYPE@_cholesky(char uplo, char **args, npy_intp *dimensions, npy_intp *steps)
+@TYPE@_cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     POTR_PARAMS_t params;
     int error_occurred = get_fp_invalid_and_clear();
@@ -1877,7 +1825,7 @@ static void
 }
 
 static void
-@TYPE@_cholesky_lo(char **args, npy_intp *dimensions, npy_intp *steps,
+@TYPE@_cholesky_lo(char **args, npy_intp const *dimensions, npy_intp const *steps,
                 void *NPY_UNUSED(func))
 {
     @TYPE@_cholesky('L', args, dimensions, steps);
@@ -1893,7 +1841,7 @@ typedef struct geev_params_struct {
     void *WR; /* RWORK in complex versions, REAL W buffer for (sd)geev*/
     void *WI;
     void *VLR; /* REAL VL buffers for _geev where _ is s, d */
-    void *VRR; /* REAL VR buffers for _geev hwere _ is s, d */
+    void *VRR; /* REAL VR buffers for _geev where _ is s, d */
     void *WORK;
     void *W;  /* final w */
     void *VL; /* final vl */
@@ -2287,8 +2235,8 @@ static NPY_INLINE void
 @TYPE@_eig_wrapper(char JOBVL,
                    char JOBVR,
                    char**args,
-                   npy_intp* dimensions,
-                   npy_intp* steps)
+                   npy_intp const *dimensions,
+                   npy_intp const *steps)
 {
     ptrdiff_t outer_steps[4];
     size_t iter;
@@ -2381,8 +2329,8 @@ static NPY_INLINE void
 
 static void
 @TYPE@_eig(char **args,
-           npy_intp *dimensions,
-           npy_intp *steps,
+           npy_intp const *dimensions,
+           npy_intp const *steps,
            void *NPY_UNUSED(func))
 {
     @TYPE@_eig_wrapper('N', 'V', args, dimensions, steps);
@@ -2390,8 +2338,8 @@ static void
 
 static void
 @TYPE@_eigvals(char **args,
-               npy_intp *dimensions,
-               npy_intp *steps,
+               npy_intp const *dimensions,
+               npy_intp const *steps,
                void *NPY_UNUSED(func))
 {
     @TYPE@_eig_wrapper('N', 'N', args, dimensions, steps);
@@ -2573,8 +2521,6 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     params->VT = vt;
     params->RWORK = NULL;
     params->IWORK = iwork;
-    params->M = m;
-    params->N = n;
     params->LDA = ld;
     params->LDU = ld;
     params->LDVT = vt_column_count;
@@ -2766,8 +2712,8 @@ release_@lapack_func@(GESDD_PARAMS_t* params)
 static NPY_INLINE void
 @TYPE@_svd_wrapper(char JOBZ,
                    char **args,
-                   npy_intp* dimensions,
-                   npy_intp* steps)
+                   npy_intp const *dimensions,
+                   npy_intp const *steps)
 {
     ptrdiff_t outer_steps[4];
     int error_occurred = get_fp_invalid_and_clear();
@@ -2786,19 +2732,18 @@ static NPY_INLINE void
                            (fortran_int)dimensions[0],
                            (fortran_int)dimensions[1])) {
         LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
+        fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
         if ('N' == params.JOBZ) {
             /* only the singular values are wanted */
-            fortran_int min_m_n = params.M < params.N? params.M : params.N;
             init_linearize_data(&s_out, 1, min_m_n, 0, steps[2]);
         } else {
             fortran_int u_columns, v_rows;
-            fortran_int min_m_n = params.M < params.N? params.M : params.N;
             if ('S' == params.JOBZ) {
                 u_columns = min_m_n;
                 v_rows = min_m_n;
-            } else {
+            } else { /* JOBZ == 'A' */
                 u_columns = params.M;
                 v_rows = params.N;
             }
@@ -2822,6 +2767,15 @@ static NPY_INLINE void
                 if ('N' == params.JOBZ) {
                     delinearize_@REALTYPE@_matrix(args[1], params.S, &s_out);
                 } else {
+                    if ('A' == params.JOBZ && min_m_n == 0) {
+                        /* Lapack has betrayed us and left these uninitialized,
+                         * so produce an identity matrix for whichever of u
+                         * and v is not empty.
+                         */
+                        identity_@TYPE@_matrix(params.U, params.M);
+                        identity_@TYPE@_matrix(params.VT, params.N);
+                    }
+
                     delinearize_@TYPE@_matrix(args[1], params.U, &u_out);
                     delinearize_@REALTYPE@_matrix(args[2], params.S, &s_out);
                     delinearize_@TYPE@_matrix(args[3], params.VT, &v_out);
@@ -2853,8 +2807,8 @@ static NPY_INLINE void
  */
 static void
 @TYPE@_svd_N(char **args,
-             npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp const *dimensions,
+             npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('N', args, dimensions, steps);
@@ -2862,8 +2816,8 @@ static void
 
 static void
 @TYPE@_svd_S(char **args,
-             npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp const *dimensions,
+             npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('S', args, dimensions, steps);
@@ -2871,11 +2825,412 @@ static void
 
 static void
 @TYPE@_svd_A(char **args,
-             npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp const *dimensions,
+             npy_intp const *steps,
              void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('A', args, dimensions, steps);
+}
+
+/**end repeat**/
+
+
+/* -------------------------------------------------------------------------- */
+                 /* least squares */
+
+typedef struct gelsd_params_struct
+{
+    fortran_int M;
+    fortran_int N;
+    fortran_int NRHS;
+    void *A;
+    fortran_int LDA;
+    void *B;
+    fortran_int LDB;
+    void *S;
+    void *RCOND;
+    fortran_int RANK;
+    void *WORK;
+    fortran_int LWORK;
+    void *RWORK;
+    void *IWORK;
+} GELSD_PARAMS_t;
+
+
+static inline void
+dump_gelsd_params(const char *name,
+                  GELSD_PARAMS_t *params)
+{
+    TRACE_TXT("\n%s:\n"\
+
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+
+              "%14s: %18p\n",
+
+              name,
+
+              "A", params->A,
+              "B", params->B,
+              "S", params->S,
+              "WORK", params->WORK,
+              "RWORK", params->RWORK,
+              "IWORK", params->IWORK,
+
+              "M", (int)params->M,
+              "N", (int)params->N,
+              "NRHS", (int)params->NRHS,
+              "LDA", (int)params->LDA,
+              "LDB", (int)params->LDB,
+              "LWORK", (int)params->LWORK,
+              "RANK", (int)params->RANK,
+
+              "RCOND", params->RCOND);
+}
+
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE#
+   #lapack_func=sgelsd,dgelsd#
+   #ftyp=fortran_real,fortran_doublereal#
+ */
+
+static inline fortran_int
+call_@lapack_func@(GELSD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
+                          params->A, &params->LDA,
+                          params->B, &params->LDB,
+                          params->S,
+                          params->RCOND, &params->RANK,
+                          params->WORK, &params->LWORK,
+                          params->IWORK,
+                          &rv);
+    return rv;
+}
+
+static inline int
+init_@lapack_func@(GELSD_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n,
+                   fortran_int nrhs)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *b, *s, *work, *iwork;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    fortran_int max_m_n = fortran_int_max(m, n);
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_max_m_n = max_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+    size_t safe_nrhs = nrhs;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
+    size_t s_size = safe_min_m_n * sizeof(@ftyp@);
+
+    fortran_int work_count;
+    size_t work_size;
+    size_t iwork_size;
+    fortran_int lda = fortran_int_max(1, m);
+    fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
+
+    mem_buff = malloc(a_size + b_size + s_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    b = a + a_size;
+    s = b + b_size;
+
+
+    params->M = m;
+    params->N = n;
+    params->NRHS = nrhs;
+    params->A = a;
+    params->B = b;
+    params->S = s;
+    params->LDA = lda;
+    params->LDB = ldb;
+
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+        fortran_int iwork_size_query;
+
+        params->WORK = &work_size_query;
+        params->IWORK = &iwork_size_query;
+        params->RWORK = NULL;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int)work_size_query;
+
+        work_size  = (size_t) work_size_query * sizeof(@ftyp@);
+        iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
+    }
+
+    mem_buff2 = malloc(work_size + iwork_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+    iwork = work + work_size;
+
+    params->WORK = work;
+    params->RWORK = NULL;
+    params->IWORK = iwork;
+    params->LWORK = work_count;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=CFLOAT,CDOUBLE#
+   #ftyp=fortran_complex,fortran_doublecomplex#
+   #frealtyp=fortran_real,fortran_doublereal#
+   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=cgelsd,zgelsd#
+ */
+
+static inline fortran_int
+call_@lapack_func@(GELSD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
+                          params->A, &params->LDA,
+                          params->B, &params->LDB,
+                          params->S,
+                          params->RCOND, &params->RANK,
+                          params->WORK, &params->LWORK,
+                          params->RWORK, params->IWORK,
+                          &rv);
+    return rv;
+}
+
+static inline int
+init_@lapack_func@(GELSD_PARAMS_t *params,
+                   fortran_int m,
+                   fortran_int n,
+                   fortran_int nrhs)
+{
+    npy_uint8 *mem_buff = NULL;
+    npy_uint8 *mem_buff2 = NULL;
+    npy_uint8 *a, *b, *s, *work, *iwork, *rwork;
+    fortran_int min_m_n = fortran_int_min(m, n);
+    fortran_int max_m_n = fortran_int_max(m, n);
+    size_t safe_min_m_n = min_m_n;
+    size_t safe_max_m_n = max_m_n;
+    size_t safe_m = m;
+    size_t safe_n = n;
+    size_t safe_nrhs = nrhs;
+
+    size_t a_size = safe_m * safe_n * sizeof(@ftyp@);
+    size_t b_size = safe_max_m_n * safe_nrhs * sizeof(@ftyp@);
+    size_t s_size = safe_min_m_n * sizeof(@frealtyp@);
+
+    fortran_int work_count;
+    size_t work_size, rwork_size, iwork_size;
+    fortran_int lda = fortran_int_max(1, m);
+    fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
+
+    mem_buff = malloc(a_size + b_size + s_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    b = a + a_size;
+    s = b + b_size;
+
+
+    params->M = m;
+    params->N = n;
+    params->NRHS = nrhs;
+    params->A = a;
+    params->B = b;
+    params->S = s;
+    params->LDA = lda;
+    params->LDB = ldb;
+
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+        @frealtyp@ rwork_size_query;
+        fortran_int iwork_size_query;
+
+        params->WORK = &work_size_query;
+        params->IWORK = &iwork_size_query;
+        params->RWORK = &rwork_size_query;
+        params->LWORK = -1;
+
+        if (call_@lapack_func@(params) != 0)
+            goto error;
+
+        work_count = (fortran_int)work_size_query.r;
+
+        work_size  = (size_t )work_size_query.r * sizeof(@ftyp@);
+        rwork_size = (size_t)rwork_size_query * sizeof(@frealtyp@);
+        iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
+    }
+
+    mem_buff2 = malloc(work_size + rwork_size + iwork_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+    rwork = work + work_size;
+    iwork = rwork + rwork_size;
+
+    params->WORK = work;
+    params->RWORK = rwork;
+    params->IWORK = iwork;
+    params->LWORK = work_count;
+
+    return 1;
+ error:
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
+    free(mem_buff);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+/**end repeat**/
+
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
+   #lapack_func=sgelsd,dgelsd,cgelsd,zgelsd#
+   #dot_func=sdot,ddot,cdotc,zdotc#
+   #typ     = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #basetyp = npy_float, npy_double, npy_float,  npy_double#
+   #ftyp = fortran_real, fortran_doublereal,
+           fortran_complex, fortran_doublecomplex#
+   #cmplx = 0, 0, 1, 1#
+ */
+static inline void
+release_@lapack_func@(GELSD_PARAMS_t* params)
+{
+    /* A and WORK contain allocated blocks */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+/** Compute the squared l2 norm of a contiguous vector */
+static @basetyp@
+@TYPE@_abs2(@typ@ *p, npy_intp n) {
+    npy_intp i;
+    @basetyp@ res = 0;
+    for (i = 0; i < n; i++) {
+        @typ@ el = p[i];
+#if @cmplx@
+        res += el.real*el.real + el.imag*el.imag;
+#else
+        res += el*el;
+#endif
+    }
+    return res;
+}
+
+static void
+@TYPE@_lstsq(char **args, npy_intp const *dimensions, npy_intp const *steps,
+             void *NPY_UNUSED(func))
+{
+    GELSD_PARAMS_t params;
+    int error_occurred = get_fp_invalid_and_clear();
+    fortran_int n, m, nrhs;
+    fortran_int excess;
+
+    INIT_OUTER_LOOP_7
+
+    m = (fortran_int)dimensions[0];
+    n = (fortran_int)dimensions[1];
+    nrhs = (fortran_int)dimensions[2];
+    excess = m - n;
+
+    if (init_@lapack_func@(&params, m, n, nrhs)) {
+        LINEARIZE_DATA_t a_in, b_in, x_out, s_out, r_out;
+
+        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
+        init_linearize_data_ex(&b_in, nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
+        init_linearize_data_ex(&x_out, nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
+        init_linearize_data(&r_out, 1, nrhs, 1, steps[6]);
+        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[7]);
+
+        BEGIN_OUTER_LOOP_7
+            int not_ok;
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
+            params.RCOND = args[2];
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[3], params.B, &x_out);
+                *(npy_int*) args[5] = params.RANK;
+                delinearize_@REALTYPE@_matrix(args[6], params.S, &s_out);
+
+                /* Note that linalg.lstsq discards this when excess == 0 */
+                if (excess >= 0 && params.RANK == n) {
+                    /* Compute the residuals as the square sum of each column */
+                    int i;
+                    char *resid = args[4];
+                    @ftyp@ *components = (@ftyp@ *)params.B + n;
+                    for (i = 0; i < nrhs; i++) {
+                        @ftyp@ *vector = components + i*m;
+                        /* Numpy and fortran floating types are the same size,
+                         * so this cast is safe */
+                        @basetyp@ abs2 = @TYPE@_abs2((@typ@ *)vector, excess);
+                        memcpy(
+                            resid + i*r_out.column_strides,
+                            &abs2, sizeof(abs2));
+                    }
+                }
+                else {
+                    /* Note that this is always discarded by linalg.lstsq */
+                    nan_@REALTYPE@_matrix(args[4], &r_out);
+                }
+            } else {
+                error_occurred = 1;
+                nan_@TYPE@_matrix(args[3], &x_out);
+                nan_@REALTYPE@_matrix(args[4], &r_out);
+                *(npy_int*) args[5] = -1;
+                nan_@REALTYPE@_matrix(args[6], &s_out);
+            }
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+
+    set_fp_invalid_or_clear(error_occurred);
 }
 
 /**end repeat**/
@@ -2950,6 +3305,7 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(lstsq);
 GUFUNC_FUNC_ARRAY_EIG(eig);
 GUFUNC_FUNC_ARRAY_EIG(eigvals);
 
@@ -3013,6 +3369,14 @@ static char svd_1_3_types[] = {
     NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE
+};
+
+/*  A,           b,           rcond,      x,           resid,      rank,    s,        */
+static char lstsq_types[] = {
+    NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,   NPY_FLOAT,  NPY_INT, NPY_FLOAT,
+    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,  NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
+    NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_INT, NPY_FLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
 };
 
 typedef struct gufunc_descriptor_struct {
@@ -3201,15 +3565,32 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "eigvals",
         "(m,m)->(m)",
         "eigvals on the last two dimension and broadcast to the rest. \n"\
-        "Results in a vector of eigenvalues. \n"\
-        "    \"(m,m)->(m),(m,m)\" \n",
+        "Results in a vector of eigenvalues. \n",
         3, 1, 1,
         FUNC_ARRAY_NAME(eigvals),
         eigvals_types
     },
+    {
+        "lstsq_m",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(m)",
+        "least squares on the last two dimensions and broadcast to the rest. \n"\
+        "For m <= n. \n",
+        4, 3, 4,
+        FUNC_ARRAY_NAME(lstsq),
+        lstsq_types
+    },
+    {
+        "lstsq_n",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(n)",
+        "least squares on the last two dimensions and broadcast to the rest. \n"\
+        "For m >= n, meaning that residuals are produced. \n",
+        4, 3, 4,
+        FUNC_ARRAY_NAME(lstsq),
+        lstsq_types
+    }
 };
 
-static void
+static int
 addUfuncs(PyObject *dictionary) {
     PyObject *f;
     int i;
@@ -3228,12 +3609,19 @@ addUfuncs(PyObject *dictionary) {
                                                 d->doc,
                                                 0,
                                                 d->signature);
-        PyDict_SetItemString(dictionary, d->name, f);
+        if (f == NULL) {
+            return -1;
+        }
 #if 0
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
+        int ret = PyDict_SetItemString(dictionary, d->name, f);
         Py_DECREF(f);
+        if (ret < 0) {
+            return -1;
+        }
     }
+    return 0;
 }
 
 
@@ -3245,7 +3633,6 @@ static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         UMATH_LINALG_MODULE_NAME,
@@ -3257,47 +3644,41 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL m
 PyObject *PyInit__umath_linalg(void)
-#else
-#define RETVAL
-PyMODINIT_FUNC
-init_umath_linalg(void)
-#endif
 {
     PyObject *m;
     PyObject *d;
     PyObject *version;
 
     init_constants();
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule(UMATH_LINALG_MODULE_NAME, UMath_LinAlgMethods);
-#endif
     if (m == NULL) {
-        return RETVAL;
+        return NULL;
     }
 
     import_array();
     import_ufunc();
 
     d = PyModule_GetDict(m);
-
-    version = PyString_FromString(umath_linalg_version_string);
-    PyDict_SetItemString(d, "__version__", version);
-    Py_DECREF(version);
-
-    /* Load the ufunc operators into the module's namespace */
-    addUfuncs(d);
-
-    if (PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load _umath_linalg module.");
+    if (d == NULL) {
+        return NULL;
     }
 
-    return RETVAL;
+    version = PyUnicode_FromString(umath_linalg_version_string);
+    if (version == NULL) {
+        return NULL;
+    }
+    int ret = PyDict_SetItemString(d, "__version__", version);
+    Py_DECREF(version);
+    if (ret < 0) {
+        return NULL;
+    }
+
+    /* Load the ufunc operators into the module's namespace */
+    if (addUfuncs(d) < 0) {
+        return NULL;
+    }
+
+    return m;
 }

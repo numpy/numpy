@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 f2py2e - Fortran to Python C/API generator. 2nd Edition.
@@ -14,8 +14,6 @@ $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import pprint
@@ -28,6 +26,7 @@ from . import auxfuncs
 from . import cfuncs
 from . import f90mod_rules
 from . import __version__
+from . import capi_maps
 
 f2py_version = __version__.version
 errmess = sys.stderr.write
@@ -118,6 +117,9 @@ Options:
                    --link-<resource> switch below. [..] is optional list
                    of resources names. E.g. try 'f2py --help-link lapack_opt'.
 
+  --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
+                   file. Default: .f2py_f2cmap in current directory.
+
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
   -v               Print f2py version ID and exit.
@@ -167,7 +169,7 @@ Extra options (only effective with -c):
 
 Version:     %s
 numpy Version: %s
-Requires:    Python 2.3 or higher.
+Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
 http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
@@ -175,7 +177,7 @@ http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
 
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
-    f, f2, f3, f5, f6, f7, f8, f9 = 1, 0, 0, 0, 0, 0, 0, 0
+    f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
     dolc = -1
     dolatexdoc = 0
@@ -226,6 +228,8 @@ def scaninputline(inputline):
             f8 = 1
         elif l == '--f2py-wrapper-output':
             f9 = 1
+        elif l == '--f2cmap':
+            f10 = 1
         elif l == '--overwrite-signature':
             options['h-overwrite'] = 1
         elif l == '-h':
@@ -267,9 +271,13 @@ def scaninputline(inputline):
         elif f9:
             f9 = 0
             options["f2py_wrapper_output"] = l
+        elif f10:
+            f10 = 0
+            options["f2cmap_file"] = l
         elif f == 1:
             try:
-                open(l).close()
+                with open(l):
+                    pass
                 files.append(l)
             except IOError as detail:
                 errmess('IOError: %s. Skipping file "%s".\n' %
@@ -311,6 +319,7 @@ def scaninputline(inputline):
     options['wrapfuncs'] = wrapfuncs
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
+    options.setdefault('f2cmap_file', None)
     return files, options
 
 
@@ -333,9 +342,8 @@ def callcrackfortran(files, options):
         if options['signsfile'][-6:] == 'stdout':
             sys.stdout.write(pyf)
         else:
-            f = open(options['signsfile'], 'w')
-            f.write(pyf)
-            f.close()
+            with open(options['signsfile'], 'w') as f:
+                f.write(pyf)
     if options["coutput"] is None:
         for mod in postlist:
             mod["coutput"] = "%smodule.c" % mod["name"]
@@ -396,8 +404,25 @@ def dict_append(d_out, d_in):
 
 
 def run_main(comline_list):
-    """Run f2py as if string.join(comline_list,' ') is used as a command line.
-    In case of using -h flag, return None.
+    """
+    Equivalent to running::
+
+        f2py <args>
+
+    where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
+    ``-h`` is used, this function returns a dictionary containing
+    information on generated modules and their dependencies on source
+    files.  For example, the command ``f2py -m scalar scalar.f`` can be
+    executed from Python as follows
+
+    You cannot build extension modules with this function, that is,
+    using ``-c`` is not allowed. Use ``compile`` command instead
+
+    Examples
+    --------
+    .. include:: run_main_session.dat
+        :literal:
+
     """
     crackfortran.reset_global_f2py_vars()
     f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
@@ -405,6 +430,7 @@ def run_main(comline_list):
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
+    capi_maps.load_f2cmap_file(options['f2cmap_file'])
     postlist = callcrackfortran(files, options)
     isusedby = {}
     for i in range(len(postlist)):
@@ -557,7 +583,7 @@ def run_compile():
     modulename = 'untitled'
     sources = sys.argv[1:]
 
-    for optname in ['--include_paths', '--include-paths']:
+    for optname in ['--include_paths', '--include-paths', '--f2cmap']:
         if optname in sys.argv:
             i = sys.argv.index(optname)
             f2py_flags.extend(sys.argv[i:i + 2])
@@ -644,13 +670,25 @@ def main():
         from numpy.distutils.system_info import show_all
         show_all()
         return
+
+    # Probably outdated options that were not working before 1.16
+    if '--g3-numpy' in sys.argv[1:]:
+        sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
+        sys.exit(1)
+    elif '--2e-numeric' in sys.argv[1:]:
+        sys.argv.remove('--2e-numeric')
+    elif '--2e-numarray' in sys.argv[1:]:
+        # Note that this errors becaust the -DNUMARRAY argument is
+        # not recognized. Just here for back compatibility and the
+        # error message.
+        sys.argv.append("-DNUMARRAY")
+        sys.argv.remove('--2e-numarray')
+    elif '--2e-numpy' in sys.argv[1:]:
+        sys.argv.remove('--2e-numpy')
+    else:
+        pass
+
     if '-c' in sys.argv[1:]:
         run_compile()
     else:
         run_main(sys.argv[1:])
-
-# if __name__ == "__main__":
-#    main()
-
-
-# EOF

@@ -1,14 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-from numpy.core.test_rational import rational
+from numpy.core._rational_tests import rational
 from numpy.testing import (
-    run_module_suite, assert_equal, assert_array_equal,
-    assert_raises, assert_
+    assert_equal, assert_array_equal, assert_raises, assert_,
+    assert_raises_regex, assert_warns,
     )
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to
-)
+    )
 
 def assert_shapes_correct(input_shapes, expected_shape):
     # Broadcast a list of arrays with the given input shapes and check the
@@ -57,6 +55,16 @@ def test_same():
     bx, by = broadcast_arrays(x, y)
     assert_array_equal(x, bx)
     assert_array_equal(y, by)
+
+def test_broadcast_kwargs():
+    # ensure that a TypeError is appropriately raised when
+    # np.broadcast_arrays() is called with any keyword
+    # argument other than 'subok'
+    x = np.arange(10)
+    y = np.arange(10)
+
+    with assert_raises_regex(TypeError, 'got an unexpected keyword'):
+        broadcast_arrays(x, y, dtype='float64')
 
 
 def test_one_off():
@@ -345,14 +353,12 @@ def as_strided_writeable():
 
 class VerySimpleSubClass(np.ndarray):
     def __new__(cls, *args, **kwargs):
-        kwargs['subok'] = True
-        return np.array(*args, **kwargs).view(cls)
+        return np.array(*args, subok=True, **kwargs).view(cls)
 
 
 class SimpleSubClass(VerySimpleSubClass):
     def __new__(cls, *args, **kwargs):
-        kwargs['subok'] = True
-        self = np.array(*args, **kwargs).view(cls)
+        self = np.array(*args, subok=True, **kwargs).view(cls)
         self.info = 'simple'
         return self
 
@@ -404,12 +410,32 @@ def test_writeable():
     assert_equal(result.flags.writeable, False)
     assert_raises(ValueError, result.__setitem__, slice(None), 0)
 
-    # but the result of broadcast_arrays needs to be writeable (for now), to
+    # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
+    for is_broadcast, results in [(False, broadcast_arrays(original,)),
+                                  (True, broadcast_arrays(0, original))]:
+        for result in results:
+            # This will change to False in a future version
+            if is_broadcast:
+                with assert_warns(FutureWarning):
+                    assert_equal(result.flags.writeable, True)
+                with assert_warns(DeprecationWarning):
+                    result[:] = 0
+                # Warning not emitted, writing to the array resets it
+                assert_equal(result.flags.writeable, True)
+            else:
+                # No warning:
+                assert_equal(result.flags.writeable, True)
+
     for results in [broadcast_arrays(original),
                     broadcast_arrays(0, original)]:
         for result in results:
+            # resets the warn_on_write DeprecationWarning
+            result.flags.writeable = True
+            # check: no warning emitted
             assert_equal(result.flags.writeable, True)
+            result[:] = 0
+            
     # keep readonly input readonly
     original.flags.writeable = False
     _, result = broadcast_arrays(0, original)
@@ -424,6 +450,25 @@ def test_writeable():
     assert_(first.shape == second.shape)
 
 
+def test_writeable_memoryview():
+    # The result of broadcast_arrays exports as a non-writeable memoryview
+    # because otherwise there is no good way to opt in to the new behaviour
+    # (i.e. you would need to set writeable to False explicitly).
+    # See gh-13929.
+    original = np.array([1, 2, 3])
+
+    for is_broadcast, results in [(False, broadcast_arrays(original,)),
+                                  (True, broadcast_arrays(0, original))]:
+        for result in results:
+            # This will change to False in a future version
+            if is_broadcast:
+                # memoryview(result, writable=True) will give warning but cannot
+                # be tested using the python API.
+                assert memoryview(result).readonly
+            else:
+                assert not memoryview(result).readonly
+
+
 def test_reference_types():
     input_array = np.array('a', dtype=object)
     expected = np.array(['a'] * 3, dtype=object)
@@ -432,7 +477,3 @@ def test_reference_types():
 
     actual, _ = broadcast_arrays(input_array, np.ones(3))
     assert_array_equal(expected, actual)
-
-
-if __name__ == "__main__":
-    run_module_suite()

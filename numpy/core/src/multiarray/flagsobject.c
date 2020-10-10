@@ -7,11 +7,13 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
+#include "arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
+#include "array_assign.h"
 
 #include "common.h"
 
@@ -64,7 +66,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
         _UpdateContiguousFlags(ret);
     }
     if (flagmask & NPY_ARRAY_ALIGNED) {
-        if (_IsAligned(ret)) {
+        if (IsAligned(ret)) {
             PyArray_ENABLEFLAGS(ret, NPY_ARRAY_ALIGNED);
         }
         else {
@@ -88,7 +90,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 
 /*
  * Check whether the given array is stored contiguously
- * in memory. And update the passed in ap flags apropriately.
+ * in memory. And update the passed in ap flags appropriately.
  *
  * The traditional rule is that for an array to be flagged as C contiguous,
  * the following must hold:
@@ -146,7 +148,7 @@ _UpdateContiguousFlags(PyArrayObject *ap)
         if (PyArray_STRIDES(ap)[i] != sd) {
             is_c_contig = 0;
             break;
-         }
+        }
         /* contiguous, if it got this far */
         if (dim == 0) {
             break;
@@ -200,24 +202,57 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
     static PyObject * \
     arrayflags_ ## lower ## _get(PyArrayFlagsObject *self) \
     { \
-        PyObject *item; \
-        item = ((self->flags & (UPPER)) == (UPPER)) ? Py_True : Py_False; \
-        Py_INCREF(item); \
-        return item; \
+        return PyBool_FromLong((self->flags & (UPPER)) == (UPPER)); \
     }
+
+static char *msg = "future versions will not create a writeable "
+    "array from broadcast_array. Set the writable flag explicitly to "
+    "avoid this warning.";
+
+#define _define_get_warn(UPPER, lower) \
+    static PyObject * \
+    arrayflags_ ## lower ## _get(PyArrayFlagsObject *self) \
+    { \
+        if (self->flags & NPY_ARRAY_WARN_ON_WRITE) { \
+            if (PyErr_Warn(PyExc_FutureWarning, msg) < 0) {\
+                return NULL; \
+            } \
+        }\
+        return PyBool_FromLong((self->flags & (UPPER)) == (UPPER)); \
+    }
+
 
 _define_get(NPY_ARRAY_C_CONTIGUOUS, contiguous)
 _define_get(NPY_ARRAY_F_CONTIGUOUS, fortran)
-_define_get(NPY_ARRAY_UPDATEIFCOPY, updateifcopy)
+_define_get(NPY_ARRAY_WRITEBACKIFCOPY, writebackifcopy)
 _define_get(NPY_ARRAY_OWNDATA, owndata)
 _define_get(NPY_ARRAY_ALIGNED, aligned)
-_define_get(NPY_ARRAY_WRITEABLE, writeable)
-
-_define_get(NPY_ARRAY_ALIGNED|
+_define_get(NPY_ARRAY_WRITEABLE, writeable_no_warn)
+_define_get_warn(NPY_ARRAY_WRITEABLE, writeable)
+_define_get_warn(NPY_ARRAY_ALIGNED|
             NPY_ARRAY_WRITEABLE, behaved)
-_define_get(NPY_ARRAY_ALIGNED|
+_define_get_warn(NPY_ARRAY_ALIGNED|
             NPY_ARRAY_WRITEABLE|
             NPY_ARRAY_C_CONTIGUOUS, carray)
+
+static PyObject *
+arrayflags_updateifcopy_get(PyArrayFlagsObject *self)
+{
+    PyObject *item;
+    /* 2017-Nov-10 1.14 */
+    if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
+        return NULL;
+    }
+    if ((self->flags & (NPY_ARRAY_UPDATEIFCOPY)) == (NPY_ARRAY_UPDATEIFCOPY)) {
+        item = Py_True;
+    }
+    else {
+        item = Py_False;
+    }
+    Py_INCREF(item);
+    return item;
+}
+
 
 static PyObject *
 arrayflags_forc_get(PyArrayFlagsObject *self)
@@ -272,7 +307,7 @@ arrayflags_farray_get(PyArrayFlagsObject *self)
 static PyObject *
 arrayflags_num_get(PyArrayFlagsObject *self)
 {
-    return PyInt_FromLong(self->flags);
+    return PyLong_FromLong(self->flags);
 }
 
 /* relies on setflags order being write, align, uic */
@@ -284,6 +319,35 @@ arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
     if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
                 "Cannot delete flags updateifcopy attribute");
+        return -1;
+    }
+    if (self->arr == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot set flags on array scalars.");
+        return -1;
+    }
+    /* 2017-Nov-10 1.14 */
+    if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
+        return -1;
+    }
+    res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
+                              (PyObject_IsTrue(obj) ? Py_True : Py_False));
+    if (res == NULL) {
+        return -1;
+    }
+    Py_DECREF(res);
+    return 0;
+}
+
+/* relies on setflags order being write, align, uic */
+static int
+arrayflags_writebackifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
+{
+    PyObject *res;
+
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete flags writebackifcopy attribute");
         return -1;
     }
     if (self->arr == NULL) {
@@ -350,6 +414,40 @@ arrayflags_writeable_set(PyArrayFlagsObject *self, PyObject *obj)
     return 0;
 }
 
+static int
+arrayflags_warn_on_write_set(PyArrayFlagsObject *self, PyObject *obj)
+{
+    /*
+     * This code should go away in a future release, so do not mangle the
+     * array_setflags function with an extra kwarg
+     */
+    int ret;
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete flags _warn_on_write attribute");
+        return -1;
+    }
+    ret = PyObject_IsTrue(obj);
+    if (ret > 0) {
+        if (!(PyArray_FLAGS((PyArrayObject*)self->arr) & NPY_ARRAY_WRITEABLE)) {
+            PyErr_SetString(PyExc_ValueError,
+                        "cannot set '_warn_on_write' flag when 'writable' is "
+                        "False");
+            return -1;
+        }
+        PyArray_ENABLEFLAGS((PyArrayObject*)self->arr, NPY_ARRAY_WARN_ON_WRITE);
+    }
+    else if (ret < 0) {
+        return -1;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot clear '_warn_on_write', set "
+                        "writeable True to clear this private flag");
+        return -1;
+    }
+    return 0;
+}
 
 static PyGetSetDef arrayflags_getsets[] = {
     {"contiguous",
@@ -372,6 +470,10 @@ static PyGetSetDef arrayflags_getsets[] = {
         (getter)arrayflags_updateifcopy_get,
         (setter)arrayflags_updateifcopy_set,
         NULL, NULL},
+    {"writebackifcopy",
+        (getter)arrayflags_writebackifcopy_get,
+        (setter)arrayflags_writebackifcopy_set,
+        NULL, NULL},
     {"owndata",
         (getter)arrayflags_owndata_get,
         NULL,
@@ -383,6 +485,14 @@ static PyGetSetDef arrayflags_getsets[] = {
     {"writeable",
         (getter)arrayflags_writeable_get,
         (setter)arrayflags_writeable_set,
+        NULL, NULL},
+    {"_writeable_no_warn",
+        (getter)arrayflags_writeable_no_warn_get,
+        (setter)NULL,
+        NULL, NULL},
+    {"_warn_on_write",
+        (getter)NULL,
+        (setter)arrayflags_warn_on_write_set,
         NULL, NULL},
     {"fnc",
         (getter)arrayflags_fnc_get,
@@ -455,6 +565,8 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_owndata_get(self);
         case 'A':
             return arrayflags_aligned_get(self);
+        case 'X':
+            return arrayflags_writebackifcopy_get(self);
         case 'U':
             return arrayflags_updateifcopy_get(self);
         default:
@@ -522,6 +634,11 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_fortran_get(self);
         }
         break;
+    case 15:
+        if (strncmp(key, "WRITEBACKIFCOPY", n) == 0) {
+            return arrayflags_writebackifcopy_get(self);
+        }
+        break;
     }
 
  fail:
@@ -564,6 +681,10 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
              ((n==1) && (strncmp(key, "U", n) == 0))) {
         return arrayflags_updateifcopy_set(self, item);
     }
+    else if (((n==15) && (strncmp(key, "WRITEBACKIFCOPY", n) == 0)) ||
+             ((n==1) && (strncmp(key, "X", n) == 0))) {
+        return arrayflags_writebackifcopy_set(self, item);
+    }
 
  fail:
     PyErr_SetString(PyExc_KeyError, "Unknown flag");
@@ -585,61 +706,46 @@ static PyObject *
 arrayflags_print(PyArrayFlagsObject *self)
 {
     int fl = self->flags;
+    const char *_warn_on_write = "";
 
-    return PyUString_FromFormat(
+    if (fl & NPY_ARRAY_WARN_ON_WRITE) {
+        _warn_on_write = "  (with WARN_ON_WRITE=True)";
+    }
+    return PyUnicode_FromFormat(
                         "  %s : %s\n  %s : %s\n"
+                        "  %s : %s\n  %s : %s%s\n"
                         "  %s : %s\n  %s : %s\n"
-                        "  %s : %s\n  %s : %s",
-                        "C_CONTIGUOUS", _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
-                        "F_CONTIGUOUS", _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
-                        "OWNDATA",      _torf_(fl, NPY_ARRAY_OWNDATA),
-                        "WRITEABLE",    _torf_(fl, NPY_ARRAY_WRITEABLE),
-                        "ALIGNED",      _torf_(fl, NPY_ARRAY_ALIGNED),
-                        "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY));
+                        "  %s : %s\n",
+                        "C_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
+                        "F_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
+                        "OWNDATA",         _torf_(fl, NPY_ARRAY_OWNDATA),
+                        "WRITEABLE",       _torf_(fl, NPY_ARRAY_WRITEABLE),
+                        _warn_on_write,
+                        "ALIGNED",         _torf_(fl, NPY_ARRAY_ALIGNED),
+                        "WRITEBACKIFCOPY", _torf_(fl, NPY_ARRAY_WRITEBACKIFCOPY),
+                        "UPDATEIFCOPY",    _torf_(fl, NPY_ARRAY_UPDATEIFCOPY)
+    );
 }
-
-
-static int
-arrayflags_compare(PyArrayFlagsObject *self, PyArrayFlagsObject *other)
-{
-    if (self->flags == other->flags) {
-        return 0;
-    }
-    else if (self->flags < other->flags) {
-        return -1;
-    }
-    else {
-        return 1;
-    }
-}
-
 
 static PyObject*
 arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
-    PyObject *result = Py_NotImplemented;
-    int cmp;
-
-    if (cmp_op != Py_EQ && cmp_op != Py_NE) {
-        PyErr_SetString(PyExc_TypeError,
-                        "undefined comparison for flag object");
-        return NULL;
+    if (!PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
+        Py_RETURN_NOTIMPLEMENTED;
     }
 
-    if (PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
-        cmp = arrayflags_compare((PyArrayFlagsObject *)self,
-                                 (PyArrayFlagsObject *)other);
+    npy_bool eq = ((PyArrayFlagsObject*) self)->flags ==
+                   ((PyArrayFlagsObject*) other)->flags;
 
-        if (cmp_op == Py_EQ) {
-            result = (cmp == 0) ? Py_True : Py_False;
-        }
-        else if (cmp_op == Py_NE) {
-            result = (cmp != 0) ? Py_True : Py_False;
-        }
+    if (cmp_op == Py_EQ) {
+        return PyBool_FromLong(eq);
     }
-
-    Py_INCREF(result);
-    return result;
+    else if (cmp_op == Py_NE) {
+        return PyBool_FromLong(!eq);
+    }
+    else {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
 }
 
 static PyMappingMethods arrayflags_as_mapping = {
@@ -665,61 +771,15 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
-    "numpy.flagsobj",
-    sizeof(PyArrayFlagsObject),
-    0,                                          /* tp_itemsize */
-    /* methods */
-    (destructor)arrayflags_dealloc,             /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
-    0,                                          /* tp_reserved */
-#else
-    (cmpfunc)arrayflags_compare,                /* tp_compare */
-#endif
-    (reprfunc)arrayflags_print,                 /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    &arrayflags_as_mapping,                     /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    (reprfunc)arrayflags_print,                 /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-    0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
-    0,                                          /* tp_clear */
-    arrayflags_richcompare,                     /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    0,                                          /* tp_members */
-    arrayflags_getsets,                         /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    0,                                          /* tp_init */
-    0,                                          /* tp_alloc */
-    arrayflags_new,                             /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,                                          /* tp_del */
-    0,                                          /* tp_version_tag */
+    .tp_name = "numpy.flagsobj",
+    .tp_basicsize = sizeof(PyArrayFlagsObject),
+    .tp_dealloc = (destructor)arrayflags_dealloc,
+    .tp_repr = (reprfunc)arrayflags_print,
+    .tp_as_mapping = &arrayflags_as_mapping,
+    .tp_str = (reprfunc)arrayflags_print,
+    .tp_flags =Py_TPFLAGS_DEFAULT,
+    .tp_richcompare = arrayflags_richcompare,
+    .tp_getset = arrayflags_getsets,
+    .tp_new = arrayflags_new,
 };

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 r"""
 Look for escape sequences deprecated in Python 3.6.
 
@@ -7,8 +7,6 @@ were accepted before. For instance, '\(' was previously accepted but must now
 be written as '\\(' or r'\('.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 def main(root):

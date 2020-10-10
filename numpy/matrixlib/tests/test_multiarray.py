@@ -1,11 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal
-)
+from numpy.testing import assert_, assert_equal, assert_array_equal
 
-class TestView(object):
+class TestView:
     def test_type(self):
         x = np.array([1, 2, 3])
         assert_(isinstance(x.view(np.matrix), np.matrix))
@@ -18,6 +14,3 @@ class TestView(object):
 
         assert_(isinstance(y, np.matrix))
         assert_equal(y.dtype, np.dtype('<i2'))
-
-if __name__ == "__main__":
-    run_module_suite()
