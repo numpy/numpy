@@ -95,6 +95,10 @@ else:
         plus the fact Windows will just load the first library it finds with that name.
         NumPy supplies the load_library function as a convenience.
 
+        .. versionchanged:: 1.20.0
+            Allow libname and loader_path to take any
+            :term:`python:path-like object`.
+
         Parameters
         ----------
         libname : path-like
