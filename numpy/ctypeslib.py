@@ -97,10 +97,10 @@ else:
 
         Parameters
         ----------
-        libname : str
+        libname : path-like
             Name of the library, which can have 'lib' as a prefix,
             but without an extension.
-        loader_path : str
+        loader_path : path-like
             Where the library can be found.
 
         Returns
@@ -118,6 +118,10 @@ else:
             import warnings
             warnings.warn("All features of ctypes interface may not work "
                           "with ctypes < 1.0.1", stacklevel=2)
+
+        # Convert path-like objects into strings
+        libname = os.fsdecode(libname)
+        loader_path = os.fsdecode(loader_path)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
