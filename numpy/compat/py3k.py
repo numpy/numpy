@@ -18,7 +18,7 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
 
 import sys
 import os
-from pathlib import Path, PurePath
+from pathlib import Path
 import io
 
 import abc
@@ -78,11 +78,11 @@ def asunicode_nested(x):
 
 def is_pathlib_path(obj):
     """
-    Check whether obj is a pathlib.Path object.
+    Check whether obj is a `pathlib.Path` object.
 
-    Prefer using `isinstance(obj, os_PathLike)` instead of this function.
+    Prefer using ``isinstance(obj, os.PathLike)`` instead of this function.
     """
-    return Path is not None and isinstance(obj, Path)
+    return isinstance(obj, Path)
 
 # from Python 3.7
 class contextlib_nullcontext:
@@ -132,6 +132,5 @@ def npy_load_module(name, fn, info=None):
     return SourceFileLoader(name, fn).load_module()
 
 
-# Backport os.fs_path, os.PathLike, and PurePath.__fspath__
 os_fspath = os.fspath
 os_PathLike = os.PathLike
