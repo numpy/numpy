@@ -182,11 +182,14 @@ add_newdoc_for_scalar_type('str_', ['unicode_'],
 
     When used in arrays, this type strips trailing null codepoints.
 
-    Unlike the builtin `str`, this supports the buffer protocol, exposing its
+    Unlike the builtin `str`, this supports the :ref:`python:bufferobjects`, exposing its
     contents as UCS4:
 
-    >>> memoryview(np.str_("abcd"))
-    b'a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00d\x00\x00\x00'
+    >>> m = memoryview(np.str_("abc"))
+    >>> m.format
+    '3w'
+    >>> m.tobytes()
+    b'a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00'
     """)
 
 add_newdoc_for_scalar_type('bytes_', ['string_'],
