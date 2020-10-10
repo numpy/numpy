@@ -2839,7 +2839,7 @@ array_correlate(PyObject *NPY_UNUSED(dummy),
     if (npy_parse_arguments("correlate", args, len_args, kwnames,
             "a", NULL, &a0,
             "v", NULL, &shape,
-            "|mode", &PyArray_PythonPyIntFromInt, &mode,
+            "|mode", &PyArray_CorrelatemodeConverter, &mode,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -2857,7 +2857,7 @@ array_correlate2(PyObject *NPY_UNUSED(dummy),
     if (npy_parse_arguments("correlate2", args, len_args, kwnames,
             "a", NULL, &a0,
             "v", NULL, &shape,
-            "|mode", &PyArray_PythonPyIntFromInt, &mode,
+            "|mode", &PyArray_CorrelatemodeConverter, &mode,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }

@@ -236,6 +236,12 @@ typedef enum {
         NPY_RAISE=2
 } NPY_CLIPMODE;
 
+typedef enum {
+        NPY_VALID=0,
+        NPY_SAME=1,
+        NPY_FULL=2
+} NPY_CORRELATEMODE;
+
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
 
