@@ -1,5 +1,11 @@
 :orphan:
 
+.. Reason for orphan: This page is referenced by the installation
+   instructions, which have moved from Sphinx to https://numpy.org/install.
+   All install links in Sphinx now point there, leaving no Sphinx references
+   to this page.
+
+
 ***************************
 Troubleshooting ImportError
 ***************************
