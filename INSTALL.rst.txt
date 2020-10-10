@@ -39,12 +39,12 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 
    If you want to build NumPy in order to work on NumPy itself, use
    ``runtests.py``.  For more details, see
-   https://numpy.org/doc/stable/dev/development_environment.html
+   https://numpy.org/devdocs/dev/development_environment.html
 
 .. note::
 
    More extensive information on building NumPy is maintained at
-   https://numpy.org/doc/stable/user/building.html#building-from-source
+   https://numpy.org/devdocs/user/building.html#building-from-source
 
 
 Basic Installation
