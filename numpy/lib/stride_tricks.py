@@ -6,7 +6,7 @@ NumPy reference guide.
 
 """
 import numpy as np
-from numpy.core.overrides import array_function_dispatch
+from numpy.core.overrides import array_function_dispatch, set_module
 
 __all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shape']
 
@@ -197,6 +197,7 @@ def _broadcast_shape(*args):
     return b.shape
 
 
+@set_module('numpy')
 def broadcast_shape(*args):
     """
     Get Broadcast shape from a list of shape tuples.
