@@ -3107,15 +3107,17 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if (_unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }
-        /* descr is the only field checked by compare or copyswap */
+        /* Set the fields needed by compare or copyswap */
         dummy_struct.descr = new;
+        dummy_struct.mem_handler = PyArray_HANDLER(ap);
+
         swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
         if (swap || new->alignment > 1) {
             if (swap || !npy_is_aligned(nip1, new->alignment)) {
                 /* create buffer and copy */
-                nip1 = npy_alloc_cache(new->elsize);
+                nip1 = PyDataMem_UserNEW(new->elsize, PyArray_HANDLER(ap)->alloc);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -3125,10 +3127,11 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
                 /* create buffer and copy */
-                nip2 = npy_alloc_cache(new->elsize);
+                nip2 = PyDataMem_UserNEW(new->elsize, PyArray_HANDLER(ap)->alloc);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
-                        npy_free_cache(nip1, new->elsize);
+                        PyDataMem_UserFREE(nip1, new->elsize,
+                                           PyArray_HANDLER(ap)->free);
                     }
                     goto finish;
                 }
@@ -3140,10 +3143,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, dummy);
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
-                npy_free_cache(nip1, new->elsize);
+                PyDataMem_UserFREE(nip1, new->elsize, PyArray_HANDLER(ap)->free);
             }
             if (nip2 != ip2 + offset) {
-                npy_free_cache(nip2, new->elsize);
+                PyDataMem_UserFREE(nip2, new->elsize, PyArray_HANDLER(ap)->free);
             }
         }
         if (res != 0) {

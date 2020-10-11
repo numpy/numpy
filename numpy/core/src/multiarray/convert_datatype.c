@@ -2097,7 +2097,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
  * This function is only used in one place within NumPy and should
  * generally be avoided. It is provided mainly for backward compatibility.
  *
- * The user of the function has to free the returned array.
+ * The user of the function has to free the returned array with PyDataMem_FREE.
  */
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
