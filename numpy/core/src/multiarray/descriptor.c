@@ -241,10 +241,6 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
-    if (Py_EnterRecursiveCall(
-            " while trying to create self-referential dtypes" ) != 0) {
-        return NULL;
-    }
     if (PyTuple_GET_SIZE(obj) != 2) {
         PyErr_Format(PyExc_TypeError, 
 	        "Tuple must have size 2, but has size %zd",
@@ -421,10 +417,6 @@ _convert_from_tuple(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
-    if (Py_EnterRecursiveCall(
-            " while trying to create self-referential dtypes" ) != 0) {
-        return NULL;
-    }
     int n = PyList_GET_SIZE(obj);
     PyObject *nameslist = PyTuple_New(n);
     if (!nameslist) {
@@ -621,10 +613,6 @@ _convert_from_array_descr(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_list(PyObject *obj, int align)
 {
-    if (Py_EnterRecursiveCall(
-            " while trying to create self-referential dtypes" ) != 0) {
-        return NULL;
-    }
     int n = PyList_GET_SIZE(obj);
     /*
      * Ignore any empty string at end which _internal._commastring
@@ -735,10 +723,6 @@ _convert_from_list(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)
 {
-    if (Py_EnterRecursiveCall(
-            " while trying to create self-referential dtypes" ) != 0) {
-        return NULL;
-    }
     PyObject *listobj;
     PyArray_Descr *res;
     PyObject *_numpy_internal;
@@ -1480,6 +1464,7 @@ _convert_from_str(PyObject *obj, int align);
 static PyArray_Descr *
 _convert_from_any(PyObject *obj, int align)
 {
+    PyArray_Descr *convert_ret = NULL;
     /* default */
     if (obj == Py_None) {
         return PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -1509,43 +1494,71 @@ _convert_from_any(PyObject *obj, int align)
         return ret;
     }
     else if (PyUnicode_Check(obj)) {
-        return _convert_from_str(obj, align);
+        if (Py_EnterRecursiveCall(
+            " while trying to create self-referential str dtypes" ) != 0) {
+            goto convert_done;
+        }
+        convert_ret = _convert_from_str(obj, align);
+        goto convert_done;
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
-        return _convert_from_tuple(obj, align);
+        if (Py_EnterRecursiveCall(
+            " while trying to create self-referential tuple dtypes" ) != 0) {
+            goto convert_done;
+        }
+        convert_ret = _convert_from_tuple(obj, align);
+        goto convert_done;
     }
     else if (PyList_Check(obj)) {
         /* or a list */
-        return _convert_from_array_descr(obj, align);
+        if (Py_EnterRecursiveCall(
+            " while trying to create self-referential list dtypes" ) != 0) {
+            goto convert_done;
+        }
+        convert_ret = _convert_from_array_descr(obj, align);
+        goto convert_done;
     }
     else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         /* or a dictionary */
-        return _convert_from_dict(obj, align);
+        if (Py_EnterRecursiveCall(
+            " while trying to create self-referential dict dtypes" ) != 0) {
+            goto convert_done;
+        }
+        convert_ret = _convert_from_dict(obj, align);
+        goto convert_done;
     }
     else if (PyArray_Check(obj)) {
         PyErr_SetString(PyExc_TypeError, "Cannot construct a dtype from an array");
         return NULL;
     }
     else {
-        PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
-        if ((PyObject *)ret != Py_NotImplemented) {
-            return ret;
+        if (Py_EnterRecursiveCall(
+            " while trying to create self-referential dtypes" ) != 0) {
+            goto convert_done;
         }
-        Py_DECREF(ret);
+        convert_ret = _try_convert_from_dtype_attr(obj);
+        if ((PyObject *)convert_ret != Py_NotImplemented) {
+            return convert_ret;
+        }
+        Py_DECREF(convert_ret);
         /*
          * Note: this comes after _try_convert_from_dtype_attr because the ctypes
          * type might override the dtype if numpy does not otherwise
          * support it.
          */
-        ret = _try_convert_from_ctypes_type(Py_TYPE(obj));
-        if ((PyObject *)ret != Py_NotImplemented) {
-            return ret;
+        convert_ret = _try_convert_from_ctypes_type(Py_TYPE(obj));
+        if ((PyObject *)convert_ret != Py_NotImplemented) {
+            return convert_ret;
         }
-        Py_DECREF(ret);
+        Py_DECREF(convert_ret);
         PyErr_Format(PyExc_TypeError, "Cannot interpret '%R' as a data type", obj);
         return NULL;
     }
+ convert_done:
+    Py_LeaveRecursiveCall();
+    /* return value of NULL indicates we have hit a recursion limit*/
+    return convert_ret;
 }
 
 
