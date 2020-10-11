@@ -1,4 +1,4 @@
 ``linspace`` supports ``datetime64`` and ``timedelta64``
-------------------------------------------------------
+--------------------------------------------------------
 It is now possible to generate evenly spaced dates and times over
 a specified interval using `numpy.linspace`.
