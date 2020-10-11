@@ -96,7 +96,7 @@ The primitive types supported are tied closely to those in C:
 
 
 Since many of these have platform-dependent definitions, a set of fixed-size
-aliases are provided to this site: :doc:`Sized aliases <../reference/arrays.scalars.rst>`
+aliases are provided to this site: :doc:`Sized aliases <../reference/arrays.scalars>`
 under the "Sized aliases" section.
 
 In the site above, are listed some types of the table above such as `byte`, 
