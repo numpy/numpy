@@ -493,7 +493,8 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
-        npy_free_cache(fa->data, PyArray_NBYTES(self));
+        PyDataMem_UserFREE(fa->data, PyArray_NBYTES(self),
+                           fa->mem_handler->free);
     }
 
     /* must match allocation in PyArray_NewFromDescr */

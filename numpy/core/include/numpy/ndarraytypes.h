@@ -355,12 +355,10 @@ struct NpyAuxData_tag {
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
-  /*
-   * Macros to define how array, and dimension/strides data is
-   * allocated.
-   */
-
-  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
+/*
+* Macros to define how array, and dimension/strides data is
+* allocated. These should be made private
+*/
 
 #define NPY_USE_PYMEM 1
 
@@ -667,6 +665,27 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 /*
+ * Memory handler structure for array data.
+ */
+typedef void *(PyDataMem_AllocFunc)(size_t size);
+typedef void *(PyDataMem_ZeroedAllocFunc)(size_t nelems, size_t elsize);
+typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
+typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
+typedef void *(PyDataMem_CopyFunc)(void *dst, const void *src, size_t size);
+
+typedef struct {
+    char name[128];  /* multiple of 64 to keep the struct unaligned */
+    PyDataMem_AllocFunc *alloc;
+    PyDataMem_ZeroedAllocFunc *zeroed_alloc;
+    PyDataMem_FreeFunc *free;
+    PyDataMem_ReallocFunc *realloc;
+    PyDataMem_CopyFunc *host2obj;  /* copy from the host python */
+    PyDataMem_CopyFunc *obj2host;  /* copy to the host python */
+    PyDataMem_CopyFunc *obj2obj;  /* copy between two objects */
+} PyDataMem_Handler;
+
+
+/*
  * The main array object structure.
  *
  * It has been recommended to use the inline functions defined below
@@ -716,6 +735,10 @@ typedef struct tagPyArrayObject_fields {
     /* For weak references */
     PyObject *weakreflist;
     void *_buffer_info;  /* private buffer info, tagged to allow warning */
+    /*
+     * For alloc/malloc/realloc/free/memcpy per object
+     */
+    PyDataMem_Handler *mem_handler;
 } PyArrayObject_fields;
 
 /*

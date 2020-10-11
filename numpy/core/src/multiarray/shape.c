@@ -120,8 +120,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         /* Reallocate space if needed - allocating 0 is forbidden */
-        new_data = PyDataMem_RENEW(
-            PyArray_DATA(self), newnbytes == 0 ? elsize : newnbytes);
+        new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
+                                       newnbytes == 0 ? elsize : newnbytes,
+                                       PyArray_HANDLER(self)->realloc);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
