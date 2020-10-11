@@ -319,6 +319,7 @@ def test_broadcast_shape_succeeds():
         [[(), (1, 0)], (1, 0)],
         [[(), (0, 1)], (0, 1)],
         [[(1,), (3,)], (3,)],
+        [[2, (3, 2)], (3, 2)],
     ]
     for input_shapes, target_shape in data:
         assert_equal(broadcast_shape(*input_shapes), target_shape)
@@ -338,6 +339,7 @@ def test_broadcast_shape_raises():
         [(3,), (3,), (4,)],
         [(1, 3, 4), (2, 3, 3)],
         [(1, 2), (3,1), (3,2), (10, 5)],
+        [2, (2, 3)],
     ]
     for input_shapes in data:
         assert_raises(ValueError, lambda: broadcast_shape(*input_shapes))

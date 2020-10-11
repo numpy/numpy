@@ -208,7 +208,7 @@ def broadcast_shape(*args):
 
     Parameters
     ----------
-    `*args` : tuples
+    `*args` : tuples of ints, or ints
         The shapes to be broadcast against each other.
 
     Returns
