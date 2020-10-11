@@ -224,7 +224,7 @@ def broadcast_shape(*args):
     >>> np.broadcast_shape((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)
     """
-    arrays = list(map(lambda x: np.empty(x), args))
+    arrays = [np.empty(x, dtype=[]) for x in args]
     return _broadcast_shape(*arrays)
 
 
