@@ -200,7 +200,7 @@ add_newdoc_for_scalar_type('bytes_', ['string_'],
     """)
 
 add_newdoc_for_scalar_type('void', [],
-    """
+    r"""
     Either an opaque sequence of bytes, or a structure.
     
     >>> np.void(b'abcd')
