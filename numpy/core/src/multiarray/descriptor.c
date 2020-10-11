@@ -241,6 +241,10 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
+    if (Py_EnterRecursiveCall(
+            " while trying to create self-referential dtypes" ) != 0) {
+        return NULL;
+    }
     if (PyTuple_GET_SIZE(obj) != 2) {
         PyErr_Format(PyExc_TypeError, 
 	        "Tuple must have size 2, but has size %zd",
@@ -417,6 +421,10 @@ _convert_from_tuple(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
+    if (Py_EnterRecursiveCall(
+            " while trying to create self-referential dtypes" ) != 0) {
+        return NULL;
+    }
     int n = PyList_GET_SIZE(obj);
     PyObject *nameslist = PyTuple_New(n);
     if (!nameslist) {
@@ -613,6 +621,10 @@ _convert_from_array_descr(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_list(PyObject *obj, int align)
 {
+    if (Py_EnterRecursiveCall(
+            " while trying to create self-referential dtypes" ) != 0) {
+        return NULL;
+    }
     int n = PyList_GET_SIZE(obj);
     /*
      * Ignore any empty string at end which _internal._commastring
@@ -723,6 +735,10 @@ _convert_from_list(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)
 {
+    if (Py_EnterRecursiveCall(
+            " while trying to create self-referential dtypes" ) != 0) {
+        return NULL;
+    }
     PyObject *listobj;
     PyArray_Descr *res;
     PyObject *_numpy_internal;
