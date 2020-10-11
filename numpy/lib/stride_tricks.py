@@ -8,7 +8,7 @@ NumPy reference guide.
 import numpy as np
 from numpy.core.overrides import array_function_dispatch
 
-__all__ = ['broadcast_to', 'broadcast_arrays']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shape']
 
 
 class DummyArray:
@@ -195,6 +195,37 @@ def _broadcast_shape(*args):
         b = broadcast_to(0, b.shape)
         b = np.broadcast(b, *args[pos:(pos + 31)])
     return b.shape
+
+
+def _broadcast_shape_dispatcher(*args):
+    return args
+
+
+@array_function_dispatch(_broadcast_shape_dispatcher, module='numpy')
+def broadcast_shape(*args):
+    """
+    Get Broadcast shape from a list of shape tuples.
+
+    Parameters
+    ----------
+    `*args` : tuples
+        The shapes to be broadcast against each other.
+
+    Returns
+    -------
+    tuple
+        Broadcasted shape.
+
+    Examples
+    --------
+    >>> np.broadcast_shape((1, 2), (3, 1), (3,2))
+    (3, 2)
+
+    >>> np.broadcast_shape((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+    (5, 6, 7)
+    """
+    arrays = list(map(lambda x: np.empty(x), args))
+    return _broadcast_shape(*arrays)
 
 
 def _broadcast_arrays_dispatcher(*args, subok=None):

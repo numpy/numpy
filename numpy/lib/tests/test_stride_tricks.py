@@ -5,7 +5,8 @@ from numpy.testing import (
     assert_raises_regex, assert_warns,
     )
 from numpy.lib.stride_tricks import (
-    as_strided, broadcast_arrays, _broadcast_shape, broadcast_to
+    as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
+    broadcast_shape
     )
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -274,7 +275,9 @@ def test_broadcast_to_raises():
 
 
 def test_broadcast_shape():
-    # broadcast_shape is already exercized indirectly by broadcast_arrays
+    # tests internal _broadcast_shape
+    # _broadcast_shape is already exercized indirectly by broadcast_arrays
+    # _broadcast_shape is also exercized by the public broadcast_shape function
     assert_equal(_broadcast_shape(), ())
     assert_equal(_broadcast_shape([1, 2]), (2,))
     assert_equal(_broadcast_shape(np.ones((1, 1))), (1, 1))
@@ -286,6 +289,61 @@ def test_broadcast_shape():
     assert_equal(_broadcast_shape(*([np.ones(2)] * 32 + [1])), (2,))
     bad_args = [np.ones(2)] * 32 + [np.ones(3)] * 32
     assert_raises(ValueError, lambda: _broadcast_shape(*bad_args))
+
+
+def test_broadcast_shape_succeeds():
+    # tests public broadcast_shape
+    data = [
+        [[()], ()],
+        [[(7,)], (7,)],
+        [[(1, 2), (2,)], (1, 2)],
+        [[(1, 1)], (1, 1)],
+        [[(1, 1), (3, 4)], (3, 4)],
+        [[(6, 7), (5, 6, 1), (7,), (5, 1, 7)], (5, 6, 7)],
+        [[(5, 6, 1)], (5, 6, 1)],
+        [[(1, 3), (3, 1)], (3, 3)],
+        [[(1, 0), (0, 0)], (0, 0)],
+        [[(0, 1), (0, 0)], (0, 0)],
+        [[(1, 0), (0, 1)], (0, 0)],
+        [[(1, 1), (0, 0)], (0, 0)],
+        [[(1, 1), (1, 0)], (1, 0)],
+        [[(1, 1), (0, 1)], (0, 1)],
+        [[(), (0,)], (0,)],
+        [[(0,), (0, 0)], (0, 0)],
+        [[(0,), (0, 1)], (0, 0)],
+        [[(1,), (0, 0)], (0, 0)],
+        [[(), (0, 0)], (0, 0)],
+        [[(1, 1), (0,)], (1, 0)],
+        [[(1,), (0, 1)], (0, 1)],
+        [[(1,), (1, 0)], (1, 0)],
+        [[(), (1, 0)], (1, 0)],
+        [[(), (0, 1)], (0, 1)],
+        [[(1,), (3,)], (3,)],
+    ]
+    for input_shapes, target_shape in data:
+        assert_equal(broadcast_shape(*input_shapes), target_shape)
+
+    assert_equal(broadcast_shape(*([(1, 2)] * 32)), (1, 2))
+    assert_equal(broadcast_shape(*([(1, 2)] * 100)), (1, 2))
+
+    # regression tests for gh-5862
+    assert_equal(broadcast_shape(*([(2,)] * 32)), (2,))
+
+
+def test_broadcast_shape_raises():
+    # tests public broadcast_shape
+    data = [
+        [(3,), (4,)],
+        [(2, 3), (2,)],
+        [(3,), (3,), (4,)],
+        [(1, 3, 4), (2, 3, 3)],
+        [(1, 2), (3,1), (3,2), (10, 5)],
+    ]
+    for input_shapes in data:
+        assert_raises(ValueError, lambda: broadcast_shape(*input_shapes))
+
+    bad_args = [(2,)] * 32 + [(3,)] * 32
+    assert_raises(ValueError, lambda: broadcast_shape(*bad_args))
 
 
 def test_as_strided():
