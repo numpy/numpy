@@ -197,11 +197,6 @@ def _broadcast_shape(*args):
     return b.shape
 
 
-def _broadcast_shape_dispatcher(*args):
-    return args
-
-
-@array_function_dispatch(_broadcast_shape_dispatcher, module='numpy')
 def broadcast_shape(*args):
     """
     Get Broadcast shape from a list of shape tuples.
