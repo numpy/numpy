@@ -261,10 +261,10 @@ are also provided.
 
 .. autoclass:: numpy.bool8
 
-.. attribute:: numpy.int8
-               numpy.int16
-               numpy.int32
-               numpy.int64
+.. attribute:: int8
+               int16
+               int32
+               int64
 
    Aliases for the signed integer types (one of `numpy.byte`, `numpy.short`,
    `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
@@ -273,10 +273,10 @@ are also provided.
    Compatible with the C99 ``int8_t``, ``int16_t``, ``int32_t``, and
    ``int64_t``, respectively.
 
-.. attribute:: numpy.uint8
-               numpy.uint16
-               numpy.uint32
-               numpy.uint64
+.. attribute:: uint8
+               uint16
+               uint32
+               uint64
 
    Alias for the unsigned integer types (one of `numpy.byte`, `numpy.short`,
    `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
@@ -285,7 +285,7 @@ are also provided.
    Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
    ``uint64_t``, respectively.
 
-.. attribute:: numpy.intp
+.. attribute:: intp
 
    Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
    `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
@@ -295,7 +295,7 @@ are also provided.
 
    :Character code: ``'p'``
 
-.. attribute:: numpy.uintp
+.. attribute:: uintp
 
    Alias for the unsigned integer type (one of `numpy.byte`, `numpy.short`,
    `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
@@ -311,8 +311,8 @@ are also provided.
 
 .. autoclass:: numpy.float64
 
-.. attribute:: numpy.float96
-               numpy.float128
+.. attribute:: float96
+               float128
 
    Alias for `numpy.longdouble`, named after its size in bits.
    The existence of these aliases depends on the platform.
@@ -321,8 +321,8 @@ are also provided.
 
 .. autoclass:: numpy.complex128
 
-.. attribute:: numpy.complex192
-               numpy.complex256
+.. attribute:: complex192
+               complex256
 
    Alias for `numpy.clongdouble`, named after its size in bits.
    The existance of these aliases depends on the platform.
@@ -330,15 +330,33 @@ are also provided.
 Other aliases
 ~~~~~~~~~~~~~
 
-.. autoclass:: float_
+The first two of these are conveniences which resemble the names of the
+builtin types, in the same style as `bool_`, `int_`, `str_`, `bytes_`, and
+`object_`:
 
-.. autoclass:: complex_
+.. autoclass:: numpy.float_
 
-.. autoclass:: longfloat
+.. autoclass:: numpy.complex_
 
-.. autoclass:: clongfloat
+Some more use alternate naming conventions for extended-precision floats and
+complex numbers:
 
-.. autoclass:: longcomplex
+.. autoclass:: numpy.longfloat
+
+.. autoclass:: numpy.singlecomplex
+
+.. autoclass:: numpy.cfloat
+
+.. autoclass:: numpy.longcomplex
+
+.. autoclass:: numpy.clongfloat
+
+The following aliases originate from Python 2, and it is recommended that they
+not be used in new code.
+
+.. autoclass:: numpy.string_
+
+.. autoclass:: numpy.unicode_
 
 Attributes
 ==========

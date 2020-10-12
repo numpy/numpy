@@ -5389,7 +5389,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        numpy.ndarray.around : corresponding function for ndarrays
+        numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))

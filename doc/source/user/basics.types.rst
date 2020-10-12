@@ -19,78 +19,78 @@ The primitive types supported are tied closely to those in C:
       - C type
       - Description
 
-    * - `np.bool_`
+    * - `numpy.bool_`
       - ``bool``
       - Boolean (True or False) stored as a byte
 
-    * - `np.byte`
+    * - `numpy.byte`
       - ``signed char``
       - Platform-defined
 
-    * - `np.ubyte`
+    * - `numpy.ubyte`
       - ``unsigned char``
       - Platform-defined
 
-    * - `np.short`
+    * - `numpy.short`
       - ``short``
       - Platform-defined
 
-    * - `np.ushort`
+    * - `numpy.ushort`
       - ``unsigned short``
       - Platform-defined
 
-    * - `np.intc`
+    * - `numpy.intc`
       - ``int``
       - Platform-defined
 
-    * - `np.uintc`
+    * - `numpy.uintc`
       - ``unsigned int``
       - Platform-defined
 
-    * - `np.int_`
+    * - `numpy.int_`
       - ``long``
       - Platform-defined
 
-    * - `np.uint`
+    * - `numpy.uint`
       - ``unsigned long``
       - Platform-defined
 
-    * - `np.longlong`
+    * - `numpy.longlong`
       - ``long long``
       - Platform-defined
 
-    * - `np.ulonglong`
+    * - `numpy.ulonglong`
       - ``unsigned long long``
       - Platform-defined
 
-    * - `np.half` / `np.float16`
+    * - `numpy.half` / `numpy.float16`
       -
       - Half precision float:
         sign bit, 5 bits exponent, 10 bits mantissa
 
-    * - `np.single`
+    * - `numpy.single`
       - ``float``
       - Platform-defined single precision float:
         typically sign bit, 8 bits exponent, 23 bits mantissa
 
-    * - `np.double`
+    * - `numpy.double`
       - ``double``
       - Platform-defined double precision float:
         typically sign bit, 11 bits exponent, 52 bits mantissa.
 
-    * - `np.longdouble`
+    * - `numpy.longdouble`
       - ``long double``
       - Platform-defined extended-precision float
 
-    * - `np.csingle`
+    * - `numpy.csingle`
       - ``float complex``
       - Complex number, represented by two single-precision floats (real and imaginary components)
 
-    * - `np.cdouble`
+    * - `numpy.cdouble`
       - ``double complex``
       - Complex number, represented by two double-precision floats (real and imaginary components).
 
-    * - `np.clongdouble`
+    * - `numpy.clongdouble`
       - ``long double complex``
       - Complex number, represented by two extended-precision floats (real and imaginary components).
 
@@ -105,59 +105,59 @@ aliases are provided:
       - C type
       - Description
 
-    * - `np.int8`
+    * - `numpy.int8`
       - ``int8_t``
       - Byte (-128 to 127)
 
-    * - `np.int16`
+    * - `numpy.int16`
       - ``int16_t``
       - Integer (-32768 to 32767)
 
-    * - `np.int32`
+    * - `numpy.int32`
       - ``int32_t``
       - Integer (-2147483648 to 2147483647)
 
-    * - `np.int64`
+    * - `numpy.int64`
       - ``int64_t``
       - Integer (-9223372036854775808 to 9223372036854775807)
 
-    * - `np.uint8`
+    * - `numpy.uint8`
       - ``uint8_t``
       - Unsigned integer (0 to 255)
 
-    * - `np.uint16`
+    * - `numpy.uint16`
       - ``uint16_t``
       - Unsigned integer (0 to 65535)
 
-    * - `np.uint32`
+    * - `numpy.uint32`
       - ``uint32_t``
       - Unsigned integer (0 to 4294967295)
 
-    * - `np.uint64`
+    * - `numpy.uint64`
       - ``uint64_t``
       - Unsigned integer (0 to 18446744073709551615)
 
-    * - `np.intp`
+    * - `numpy.intp`
       - ``intptr_t``
       - Integer used for indexing, typically the same as ``ssize_t``
 
-    * - `np.uintp`
+    * - `numpy.uintp`
       - ``uintptr_t``
       - Integer large enough to hold a pointer
 
-    * - `np.float32`
+    * - `numpy.float32`
       - ``float``
       -
 
-    * - `np.float64` / `np.float_`
+    * - `numpy.float64` / `numpy.float_`
       - ``double``
       - Note that this matches the precision of the builtin python `float`.
 
-    * - `np.complex64`
+    * - `numpy.complex64`
       - ``float complex``
       - Complex number, represented by two 32-bit floats (real and imaginary components)
 
-    * - `np.complex128` / `np.complex_`
+    * - `numpy.complex128` / `numpy.complex_`
       - ``double complex``
       - Note that this matches the precision of the builtin python `complex`.
 

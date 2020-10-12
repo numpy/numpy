@@ -277,7 +277,7 @@ Filling a masked array
    ma.common_fill_value
    ma.default_fill_value
    ma.maximum_fill_value
-   ma.maximum_fill_value
+   ma.minimum_fill_value
    ma.set_fill_value
 
    ma.MaskedArray.get_fill_value

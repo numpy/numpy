@@ -128,7 +128,9 @@ _prime_global_pytype_to_type_dict(void)
 
 
 /**
- * Add a new mapping from a python type to the DType class.
+ * Add a new mapping from a python type to the DType class. For a user
+ * defined legacy dtype, this function does nothing unless the pytype
+ * subclass from `np.generic`.
  *
  * This assumes that the DType class is guaranteed to hold on the
  * python type (this assumption is guaranteed).
@@ -145,21 +147,29 @@ _PyArray_MapPyTypeToDType(
 {
     PyObject *Dtype_obj = (PyObject *)DType;
 
-    if (userdef) {
+    if (userdef && !PyObject_IsSubclass(
+                    (PyObject *)pytype, (PyObject *)&PyGenericArrType_Type)) {
         /*
-         * It seems we did not strictly enforce this in the legacy dtype
-         * API, but assume that it is always true. Further, this could be
-         * relaxed in the future. In particular we should have a new
-         * superclass of ``np.generic`` in order to note enforce the array
-         * scalar behaviour.
+         * We expect that user dtypes (for now) will subclass some numpy
+         * scalar class to allow automatic discovery.
          */
-        if (!PyObject_IsSubclass((PyObject *)pytype, (PyObject *)&PyGenericArrType_Type)) {
-            PyErr_Format(PyExc_RuntimeError,
-                    "currently it is only possible to register a DType "
-                    "for scalars deriving from `np.generic`, got '%S'.",
-                    (PyObject *)pytype);
-            return -1;
+        if (DType->legacy) {
+            /*
+             * For legacy user dtypes, discovery relied on subclassing, but
+             * arbitrary type objects are supported, so do nothing.
+             */
+            return 0;
         }
+        /*
+         * We currently enforce that user DTypes subclass from `np.generic`
+         * (this should become a `np.generic` base class and may be lifted
+         * entirely).
+         */
+        PyErr_Format(PyExc_RuntimeError,
+                "currently it is only possible to register a DType "
+                "for scalars deriving from `np.generic`, got '%S'.",
+                (PyObject *)pytype);
+        return -1;
     }
 
     /* Create the global dictionary if it does not exist */

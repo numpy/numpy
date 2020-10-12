@@ -12,11 +12,6 @@ import sys
 from typing import Union, TypeVar, overload, Any
 
 from numpy import (
-    _BoolLike,
-    _IntLike,
-    _FloatLike,
-    _ComplexLike,
-    _NumberLike,
     generic,
     bool_,
     timedelta64,
@@ -32,6 +27,13 @@ from numpy import (
     complexfloating,
     complex128,
 )
+from ._scalars import (
+    _BoolLike,
+    _IntLike,
+    _FloatLike,
+    _ComplexLike,
+    _NumberLike,
+)
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -45,6 +47,7 @@ else:
         HAVE_PROTOCOL = True
 
 if HAVE_PROTOCOL:
+    _IntType = TypeVar("_IntType", bound=integer)
     _NumberType = TypeVar("_NumberType", bound=number)
     _NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
     _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
@@ -60,6 +63,14 @@ if HAVE_PROTOCOL:
         def __call__(self, __other: complex) -> complex128: ...
         @overload
         def __call__(self, __other: _NumberType) -> _NumberType: ...
+
+    class _BoolBitOp(Protocol[_GenericType_co]):
+        @overload
+        def __call__(self, __other: _BoolLike) -> _GenericType_co: ...
+        @overload  # platform dependent
+        def __call__(self, __other: int) -> Union[int32, int64]: ...
+        @overload
+        def __call__(self, __other: _IntType) -> _IntType: ...
 
     class _BoolSub(Protocol):
         # Note that `__other: bool_` is absent here
@@ -103,6 +114,15 @@ if HAVE_PROTOCOL:
         @overload
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
 
+    class _UnsignedIntBitOp(Protocol):
+        # TODO: The likes of `uint64 | np.signedinteger` will fail as there
+        # is no signed integer type large enough to hold a `uint64`
+        # See https://github.com/numpy/numpy/issues/2524
+        @overload
+        def __call__(self, __other: Union[bool, unsignedinteger]) -> unsignedinteger: ...
+        @overload
+        def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
+
     class _SignedIntOp(Protocol):
         @overload
         def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
@@ -110,6 +130,9 @@ if HAVE_PROTOCOL:
         def __call__(self, __other: float) -> floating: ...
         @overload
         def __call__(self, __other: complex) -> complexfloating[floating]: ...
+
+    class _SignedIntBitOp(Protocol):
+        def __call__(self, __other: Union[int, signedinteger]) -> signedinteger: ...
 
     class _FloatOp(Protocol):
         @overload
@@ -125,12 +148,15 @@ if HAVE_PROTOCOL:
 
 else:
     _BoolOp = Any
+    _BoolBitOp = Any
     _BoolSub = Any
     _BoolTrueDiv = Any
     _TD64Div = Any
     _IntTrueDiv = Any
     _UnsignedIntOp = Any
+    _UnsignedIntBitOp = Any
     _SignedIntOp = Any
+    _SignedIntBitOp = Any
     _FloatOp = Any
     _ComplexOp = Any
     _NumberOp = Any

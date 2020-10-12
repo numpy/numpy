@@ -4,15 +4,29 @@ import datetime as dt
 from abc import abstractmethod
 
 from numpy.core._internal import _ctypes
-from numpy.typing import ArrayLike, DtypeLike, _Shape, _ShapeLike
+from numpy.typing import (
+    ArrayLike,
+    DtypeLike,
+    _Shape,
+    _ShapeLike,
+    _CharLike,
+    _BoolLike,
+    _IntLike,
+    _FloatLike,
+    _ComplexLike,
+    _NumberLike,
+)
 from numpy.typing._callable import (
     _BoolOp,
+    _BoolBitOp,
     _BoolSub,
     _BoolTrueDiv,
     _TD64Div,
     _IntTrueDiv,
     _UnsignedIntOp,
+    _UnsignedIntBitOp,
     _SignedIntOp,
+    _SignedIntBitOp,
     _FloatOp,
     _ComplexOp,
     _NumberOp,
@@ -47,17 +61,15 @@ from typing import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol, SupportsIndex
+    from typing import Literal, Protocol, SupportsIndex, Final
 else:
-    from typing_extensions import Literal, Protocol
+    from typing_extensions import Literal, Protocol, Final
     class SupportsIndex(Protocol):
         def __index__(self) -> int: ...
 
 # Ensures that the stubs are picked up
-from . import (
+from numpy import (
     char,
-    compat,
-    core,
     ctypeslib,
     emath,
     fft,
@@ -125,6 +137,37 @@ from numpy.core._asarray import (
     ascontiguousarray as ascontiguousarray,
     asfortranarray as asfortranarray,
     require as require,
+)
+
+from numpy.core.numeric import(
+    zeros_like as zeros_like,
+    ones as ones,
+    ones_like as ones_like,
+    empty_like as empty_like,
+    full as full,
+    full_like as full_like,
+    count_nonzero as count_nonzero,
+    isfortran as isfortran,
+    argwhere as argwhere,
+    flatnonzero as flatnonzero,
+    correlate as correlate,
+    convolve as convolve,
+    outer as outer,
+    tensordot as tensordot,
+    roll as roll,
+    rollaxis as rollaxis,
+    moveaxis as moveaxis,
+    cross as cross,
+    indices as indices,
+    fromfunction as fromfunction,
+    isscalar as isscalar,
+    binary_repr as binary_repr,
+    base_repr as base_repr,
+    identity as identity,
+    allclose as allclose,
+    isclose as isclose,
+    array_equal as array_equal,
+    array_equiv as array_equiv,
 )
 
 # Add an object to `__all__` if their stubs are defined in an external file;
@@ -218,14 +261,12 @@ can_cast: Any
 cast: Any
 cdouble: Any
 cfloat: Any
-char: Any
 chararray: Any
 clongdouble: Any
 clongfloat: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any
-compat: Any
 complex256: Any
 complex_: Any
 concatenate: Any
@@ -235,7 +276,6 @@ copyto: Any
 corrcoef: Any
 cov: Any
 csingle: Any
-ctypeslib: Any
 cumproduct: Any
 datetime_as_string: Any
 datetime_data: Any
@@ -257,12 +297,10 @@ dstack: Any
 ediff1d: Any
 einsum: Any
 einsum_path: Any
-emath: Any
 errstate: Any
 expand_dims: Any
 extract: Any
 eye: Any
-fft: Any
 fill_diagonal: Any
 finfo: Any
 fix: Any
@@ -281,7 +319,6 @@ frompyfunc: Any
 fromregex: Any
 fromstring: Any
 genfromtxt: Any
-geomspace: Any
 get_include: Any
 get_printoptions: Any
 getbufsize: Any
@@ -325,25 +362,18 @@ ix_: Any
 kaiser: Any
 kron: Any
 lexsort: Any
-lib: Any
-linalg: Any
-linspace: Any
 load: Any
 loads: Any
 loadtxt: Any
-logspace: Any
 longcomplex: Any
 longdouble: Any
 longfloat: Any
 longlong: Any
 lookfor: Any
-ma: Any
 mafromtxt: Any
 mask_indices: Any
 mat: Any
-math: Any
 matrix: Any
-matrixlib: Any
 max: Any
 may_share_memory: Any
 median: Any
@@ -393,7 +423,6 @@ polydiv: Any
 polyfit: Any
 polyint: Any
 polymul: Any
-polynomial: Any
 polysub: Any
 polyval: Any
 printoptions: Any
@@ -403,11 +432,9 @@ put_along_axis: Any
 putmask: Any
 quantile: Any
 r_: Any
-random: Any
 ravel_multi_index: Any
 real: Any
 real_if_close: Any
-rec: Any
 recarray: Any
 recfromcsv: Any
 recfromtxt: Any
@@ -444,11 +471,8 @@ sort_complex: Any
 source: Any
 split: Any
 stack: Any
-str0: Any
 string_: Any
-sys: Any
 take_along_axis: Any
-testing: Any
 tile: Any
 trapz: Any
 tri: Any
@@ -468,7 +492,6 @@ uint0: Any
 uintc: Any
 uintp: Any
 ulonglong: Any
-unicode_: Any
 union1d: Any
 unique: Any
 unpackbits: Any
@@ -478,7 +501,6 @@ ushort: Any
 vander: Any
 vdot: Any
 vectorize: Any
-version: Any
 void0: Any
 vsplit: Any
 vstack: Any
@@ -677,20 +699,9 @@ class _ArrayOrScalarCommon(
     def __rmod__(self, other): ...
     def __divmod__(self, other): ...
     def __rdivmod__(self, other): ...
-    def __lshift__(self, other): ...
-    def __rlshift__(self, other): ...
-    def __rshift__(self, other): ...
-    def __rrshift__(self, other): ...
-    def __and__(self, other): ...
-    def __rand__(self, other): ...
-    def __xor__(self, other): ...
-    def __rxor__(self, other): ...
-    def __or__(self, other): ...
-    def __ror__(self, other): ...
     def __neg__(self: _ArraySelf) -> _ArraySelf: ...
     def __pos__(self: _ArraySelf) -> _ArraySelf: ...
     def __abs__(self: _ArraySelf) -> _ArraySelf: ...
-    def __invert__(self: _ArraySelf) -> _ArraySelf: ...
     def astype(
         self: _ArraySelf,
         dtype: DtypeLike,
@@ -1257,6 +1268,17 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def __rpow__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
     def __truediv__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
     def __rtruediv__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
+    def __invert__(self: _ArraySelf) -> Union[_ArraySelf, integer, bool_]: ...
+    def __lshift__(self, other: ArrayLike) -> Union[ndarray, integer]: ...
+    def __rlshift__(self, other: ArrayLike) -> Union[ndarray, integer]: ...
+    def __rshift__(self, other: ArrayLike) -> Union[ndarray, integer]: ...
+    def __rrshift__(self, other: ArrayLike) -> Union[ndarray, integer]: ...
+    def __and__(self, other: ArrayLike) -> Union[ndarray, integer, bool_]: ...
+    def __rand__(self, other: ArrayLike) -> Union[ndarray, integer, bool_]: ...
+    def __xor__(self, other: ArrayLike) -> Union[ndarray, integer, bool_]: ...
+    def __rxor__(self, other: ArrayLike) -> Union[ndarray, integer, bool_]: ...
+    def __or__(self, other: ArrayLike) -> Union[ndarray, integer, bool_]: ...
+    def __ror__(self, other: ArrayLike) -> Union[ndarray, integer, bool_]: ...
     # `np.generic` does not support inplace operations
     def __iadd__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     def __isub__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
@@ -1265,11 +1287,11 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def __ifloordiv__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     def __ipow__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     def __imod__(self, other): ...
-    def __ilshift__(self, other): ...
-    def __irshift__(self, other): ...
-    def __iand__(self, other): ...
-    def __ixor__(self, other): ...
-    def __ior__(self, other): ...
+    def __ilshift__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
+    def __irshift__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
+    def __iand__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
+    def __ixor__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
+    def __ior__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
 
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
@@ -1278,13 +1300,6 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 # the missing `ABCMeta` metaclass.
 
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
-
-_CharLike = Union[str, bytes]
-_BoolLike = Union[bool, bool_]
-_IntLike = Union[int, integer]
-_FloatLike = Union[_IntLike, float, floating]
-_ComplexLike = Union[_FloatLike, complex, complexfloating]
-_NumberLike = Union[int, float, complex, number, bool_]
 
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
@@ -1329,6 +1344,17 @@ class bool_(generic):
     __rpow__: _BoolOp[int8]
     __truediv__: _BoolTrueDiv
     __rtruediv__: _BoolTrueDiv
+    def __invert__(self) -> bool_: ...
+    __lshift__: _BoolBitOp[int8]
+    __rlshift__: _BoolBitOp[int8]
+    __rshift__: _BoolBitOp[int8]
+    __rrshift__: _BoolBitOp[int8]
+    __and__: _BoolBitOp[bool_]
+    __rand__: _BoolBitOp[bool_]
+    __xor__: _BoolBitOp[bool_]
+    __rxor__: _BoolBitOp[bool_]
+    __or__: _BoolBitOp[bool_]
+    __ror__: _BoolBitOp[bool_]
 
 class object_(generic):
     def __init__(self, __value: object = ...) -> None: ...
@@ -1374,6 +1400,18 @@ class integer(number):  # type: ignore
     def __index__(self) -> int: ...
     __truediv__: _IntTrueDiv
     __rtruediv__: _IntTrueDiv
+    def __invert__(self: _IntType) -> _IntType: ...
+    # Ensure that objects annotated as `integer` support bit-wise operations
+    def __lshift__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __rlshift__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __rshift__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __rrshift__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __and__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __rand__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __or__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __ror__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __xor__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
+    def __rxor__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
 
 class signedinteger(integer):  # type: ignore
     __add__: _SignedIntOp
@@ -1386,6 +1424,16 @@ class signedinteger(integer):  # type: ignore
     __rfloordiv__: _SignedIntOp
     __pow__: _SignedIntOp
     __rpow__: _SignedIntOp
+    __lshift__: _SignedIntBitOp
+    __rlshift__: _SignedIntBitOp
+    __rshift__: _SignedIntBitOp
+    __rrshift__: _SignedIntBitOp
+    __and__: _SignedIntBitOp
+    __rand__: _SignedIntBitOp
+    __xor__: _SignedIntBitOp
+    __rxor__: _SignedIntBitOp
+    __or__: _SignedIntBitOp
+    __ror__: _SignedIntBitOp
 
 class int8(signedinteger):
     def __init__(self, __value: _IntValue = ...) -> None: ...
@@ -1429,6 +1477,16 @@ class unsignedinteger(integer):  # type: ignore
     __rfloordiv__: _UnsignedIntOp
     __pow__: _UnsignedIntOp
     __rpow__: _UnsignedIntOp
+    __lshift__: _UnsignedIntBitOp
+    __rlshift__: _UnsignedIntBitOp
+    __rshift__: _UnsignedIntBitOp
+    __rrshift__: _UnsignedIntBitOp
+    __and__: _UnsignedIntBitOp
+    __rand__: _UnsignedIntBitOp
+    __xor__: _UnsignedIntBitOp
+    __rxor__: _UnsignedIntBitOp
+    __or__: _UnsignedIntBitOp
+    __ror__: _UnsignedIntBitOp
 
 class uint8(unsignedinteger):
     def __init__(self, __value: _IntValue = ...) -> None: ...
@@ -1458,6 +1516,7 @@ class floating(inexact):  # type: ignore
     __pow__: _FloatOp
     __rpow__: _FloatOp
 
+_IntType = TypeVar("_IntType", bound=integer)
 _FloatType = TypeVar('_FloatType', bound=floating)
 
 class float16(floating):
@@ -1527,6 +1586,8 @@ class str_(character, str):
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
+unicode_ = str0 = str_
+
 # TODO(alan): Platform dependent types
 # longcomplex, longdouble, longfloat
 # bytes, short, intc, intp, longlong
@@ -1552,13 +1613,6 @@ def zeros(
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
-def ones(
-    shape: _ShapeLike,
-    dtype: DtypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
 def empty(
     shape: _ShapeLike,
     dtype: DtypeLike = ...,
@@ -1566,158 +1620,52 @@ def empty(
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
-def zeros_like(
-    a: ArrayLike,
-    dtype: DtypeLike = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: Optional[Union[int, Sequence[int]]] = ...,
-) -> ndarray: ...
-def ones_like(
-    a: ArrayLike,
-    dtype: DtypeLike = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
-) -> ndarray: ...
-def empty_like(
-    a: ArrayLike,
-    dtype: DtypeLike = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
-) -> ndarray: ...
-def full(
-    shape: _ShapeLike,
-    fill_value: Any,
-    dtype: DtypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    like: ArrayLike = ...,
-) -> ndarray: ...
-def full_like(
-    a: ArrayLike,
-    fill_value: Any,
-    dtype: DtypeLike = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
-) -> ndarray: ...
-def count_nonzero(
-    a: ArrayLike, axis: Optional[Union[int, Tuple[int], Tuple[int, int]]] = ...
-) -> Union[int, ndarray]: ...
-def isfortran(a: ndarray) -> bool: ...
-def argwhere(a: ArrayLike) -> ndarray: ...
-def flatnonzero(a: ArrayLike) -> ndarray: ...
-
-_CorrelateMode = Literal["valid", "same", "full"]
-
-def correlate(a: ArrayLike, v: ArrayLike, mode: _CorrelateMode = ...) -> ndarray: ...
-def convolve(a: ArrayLike, v: ArrayLike, mode: _CorrelateMode = ...) -> ndarray: ...
-def outer(a: ArrayLike, b: ArrayLike, out: ndarray = ...) -> ndarray: ...
-def tensordot(
-    a: ArrayLike,
-    b: ArrayLike,
-    axes: Union[
-        int, Tuple[int, int], Tuple[Tuple[int, int], ...], Tuple[List[int, int], ...]
-    ] = ...,
-) -> ndarray: ...
-def roll(
-    a: ArrayLike,
-    shift: Union[int, Tuple[int, ...]],
-    axis: Optional[Union[int, Tuple[int, ...]]] = ...,
-) -> ndarray: ...
-def rollaxis(a: ArrayLike, axis: int, start: int = ...) -> ndarray: ...
-def moveaxis(
-    a: ndarray,
-    source: Union[int, Sequence[int]],
-    destination: Union[int, Sequence[int]],
-) -> ndarray: ...
-def cross(
-    a: ArrayLike,
-    b: ArrayLike,
-    axisa: int = ...,
-    axisb: int = ...,
-    axisc: int = ...,
-    axis: Optional[int] = ...,
-) -> ndarray: ...
-def indices(
-    dimensions: Sequence[int], dtype: dtype = ..., sparse: bool = ...
-) -> Union[ndarray, Tuple[ndarray, ...]]: ...
-def fromfunction(
-    function: Callable,
-    shape: Tuple[int, int],
-    *,
-    like: ArrayLike = ...,
-    **kwargs,
-) -> Any: ...
-def isscalar(element: Any) -> bool: ...
-def binary_repr(num: int, width: Optional[int] = ...) -> str: ...
-def base_repr(number: int, base: int = ..., padding: int = ...) -> str: ...
-def identity(n: int, dtype: DtypeLike = ..., *, like: ArrayLike = ...) -> ndarray: ...
-def allclose(
-    a: ArrayLike,
-    b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
-    equal_nan: bool = ...,
-) -> bool: ...
-def isclose(
-    a: ArrayLike,
-    b: ArrayLike,
-    rtol: float = ...,
-    atol: float = ...,
-    equal_nan: bool = ...,
-) -> Union[bool_, ndarray]: ...
-def array_equal(a1: ArrayLike, a2: ArrayLike) -> bool: ...
-def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 
 #
 # Constants
 #
 
-Inf: float
-Infinity: float
-NAN: float
-NINF: float
-NZERO: float
-NaN: float
-PINF: float
-PZERO: float
-e: float
-euler_gamma: float
-inf: float
-infty: float
-nan: float
-pi: float
-
-ALLOW_THREADS: int
-BUFSIZE: int
-CLIP: int
-ERR_CALL: int
-ERR_DEFAULT: int
-ERR_IGNORE: int
-ERR_LOG: int
-ERR_PRINT: int
-ERR_RAISE: int
-ERR_WARN: int
-FLOATING_POINT_SUPPORT: int
-FPE_DIVIDEBYZERO: int
-FPE_INVALID: int
-FPE_OVERFLOW: int
-FPE_UNDERFLOW: int
-MAXDIMS: int
-MAY_SHARE_BOUNDS: int
-MAY_SHARE_EXACT: int
-RAISE: int
-SHIFT_DIVIDEBYZERO: int
-SHIFT_INVALID: int
-SHIFT_OVERFLOW: int
-SHIFT_UNDERFLOW: int
-UFUNC_BUFSIZE_DEFAULT: int
-WRAP: int
-little_endian: int
-tracemalloc_domain: int
+Inf: Final[float]
+Infinity: Final[float]
+NAN: Final[float]
+NINF: Final[float]
+NZERO: Final[float]
+NaN: Final[float]
+PINF: Final[float]
+PZERO: Final[float]
+e: Final[float]
+euler_gamma: Final[float]
+inf: Final[float]
+infty: Final[float]
+nan: Final[float]
+pi: Final[float]
+ALLOW_THREADS: Final[int]
+BUFSIZE: Final[int]
+CLIP: Final[int]
+ERR_CALL: Final[int]
+ERR_DEFAULT: Final[int]
+ERR_IGNORE: Final[int]
+ERR_LOG: Final[int]
+ERR_PRINT: Final[int]
+ERR_RAISE: Final[int]
+ERR_WARN: Final[int]
+FLOATING_POINT_SUPPORT: Final[int]
+FPE_DIVIDEBYZERO: Final[int]
+FPE_INVALID: Final[int]
+FPE_OVERFLOW: Final[int]
+FPE_UNDERFLOW: Final[int]
+MAXDIMS: Final[int]
+MAY_SHARE_BOUNDS: Final[int]
+MAY_SHARE_EXACT: Final[int]
+RAISE: Final[int]
+SHIFT_DIVIDEBYZERO: Final[int]
+SHIFT_INVALID: Final[int]
+SHIFT_OVERFLOW: Final[int]
+SHIFT_UNDERFLOW: Final[int]
+UFUNC_BUFSIZE_DEFAULT: Final[int]
+WRAP: Final[int]
+little_endian: Final[int]
+tracemalloc_domain: Final[int]
 
 class ufunc:
     @property

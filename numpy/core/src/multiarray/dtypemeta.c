@@ -305,6 +305,18 @@ python_builtins_are_known_scalar_types(
 
 
 static int
+signed_integers_is_known_scalar_types(
+        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+{
+    if (python_builtins_are_known_scalar_types(cls, pytype)) {
+        return 1;
+    }
+    /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
+    return PyType_IsSubtype(pytype, &PyGenericArrType_Type);
+}
+
+
+static int
 datetime_known_scalar_types(
         PyArray_DTypeMeta *cls, PyTypeObject *pytype)
 {
@@ -455,10 +467,28 @@ object_common_dtype(
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 {
-    if (Py_TYPE(descr) != &PyArrayDescr_Type) {
+    int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
+
+    if (!has_type_set) {
+        /* Accept if the type was filled in from an existing builtin dtype */
+        for (int i = 0; i < NPY_NTYPES; i++) {
+            PyArray_Descr *builtin = PyArray_DescrFromType(i);
+            has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
+            Py_DECREF(builtin);
+            if (has_type_set) {
+                break;
+            }
+        }
+    }
+    if (!has_type_set) {
         PyErr_Format(PyExc_RuntimeError,
                 "During creation/wrapping of legacy DType, the original class "
-                "was not PyArrayDescr_Type (it is replaced in this step).");
+                "was not of PyArrayDescr_Type (it is replaced in this step). "
+                "The extension creating a custom DType for type %S must be "
+                "modified to ensure `Py_TYPE(descr) == &PyArrayDescr_Type` or "
+                "that of an existing dtype (with the assumption it is just "
+                "copied over and can be replaced).",
+                descr->typeobj, Py_TYPE(descr));
         return -1;
     }
 
@@ -548,6 +578,11 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dtype_class->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dtype_class->common_dtype = default_builtin_common_dtype;
     dtype_class->common_instance = NULL;
+
+    if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
+        /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
+        dtype_class->is_known_scalar_type = signed_integers_is_known_scalar_types;
+    }
 
     if (PyTypeNum_ISUSERDEF(descr->type_num)) {
         dtype_class->common_dtype = legacy_userdtype_common_dtype_function;

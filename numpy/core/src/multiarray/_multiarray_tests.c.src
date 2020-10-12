@@ -619,6 +619,71 @@ fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
 }
 
 
+/*
+ * Create a custom field dtype from an existing void one (and test some errors).
+ * The dtypes created by this function may be not be usable (or even crash
+ * while using).
+ */
+static PyObject *
+create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
+{
+    PyArray_Descr *dtype;
+    PyTypeObject *scalar_type;
+    PyTypeObject *original_type = NULL;
+    int error_path;
+
+    if (!PyArg_ParseTuple(args, "O!O!i",
+            &PyArrayDescr_Type, &dtype,
+            &PyType_Type, &scalar_type,
+            &error_path)) {
+        return NULL;
+    }
+    /* check that the result should be more or less valid */
+    if (dtype->type_num != NPY_VOID || dtype->fields == NULL ||
+            !PyDict_CheckExact(dtype->fields) ||
+            PyTuple_Size(dtype->names) != 1 ||
+            !PyDataType_REFCHK(dtype) ||
+            dtype->elsize != sizeof(PyObject *)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Bad dtype passed to test function, must be an object "
+                "containing void with a single field.");
+        return NULL;
+    }
+
+    /* Copy and then appropriate this dtype */
+    original_type = Py_TYPE(dtype);
+    dtype = PyArray_DescrNew(dtype);
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    Py_INCREF(scalar_type);
+    Py_SETREF(dtype->typeobj, scalar_type);
+    if (error_path == 1) {
+        /* Test that we reject this, if fields was not already set */
+        Py_SETREF(dtype->fields, NULL);
+    }
+    else if (error_path == 2) {
+        /*
+         * Test that we reject this if the type is not set to something that
+         * we are pretty sure can be safely replaced.
+         */
+        Py_SET_TYPE(dtype, scalar_type);
+    }
+    else if (error_path != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "invalid error argument to test function.");
+    }
+    if (PyArray_RegisterDataType(dtype) < 0) {
+        /* Fix original type in the error_path == 2 case. */
+        Py_SET_TYPE(dtype, original_type);
+        return NULL;
+    }
+    Py_INCREF(dtype);
+    return (PyObject *)dtype;
+}
+
+
 /* check no elison for avoided increfs */
 static PyObject *
 incref_elide(PyObject *dummy, PyObject *args)
@@ -2090,6 +2155,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"fromstring_null_term_c_api",
         fromstring_null_term_c_api,
         METH_O, NULL},
+    {"create_custom_field_dtype",
+        create_custom_field_dtype,
+        METH_VARARGS, NULL},
     {"incref_elide",
         incref_elide,
         METH_VARARGS, NULL},
