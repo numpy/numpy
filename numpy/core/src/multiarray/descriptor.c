@@ -1495,37 +1495,33 @@ _convert_from_any(PyObject *obj, int align)
     }
     else if (PyUnicode_Check(obj)) {
         if (Py_EnterRecursiveCall(
-            " while trying to create self-referential str dtypes" ) != 0) {
-            goto convert_done;
+            " while trying to create self-referential str dtypes" ) == 0) {
+            convert_ret = _convert_from_str(obj, align);
         }
-        convert_ret = _convert_from_str(obj, align);
         goto convert_done;
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
         if (Py_EnterRecursiveCall(
-            " while trying to create self-referential tuple dtypes" ) != 0) {
-            goto convert_done;
+            " while trying to create self-referential tuple dtypes" ) == 0) {
+            convert_ret = _convert_from_tuple(obj, align);
         }
-        convert_ret = _convert_from_tuple(obj, align);
         goto convert_done;
     }
     else if (PyList_Check(obj)) {
         /* or a list */
         if (Py_EnterRecursiveCall(
-            " while trying to create self-referential list dtypes" ) != 0) {
-            goto convert_done;
+            " while trying to create self-referential list dtypes" ) == 0) {
+            convert_ret = _convert_from_array_descr(obj, align);
         }
-        convert_ret = _convert_from_array_descr(obj, align);
         goto convert_done;
     }
     else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         /* or a dictionary */
         if (Py_EnterRecursiveCall(
-            " while trying to create self-referential dict dtypes" ) != 0) {
-            goto convert_done;
+            " while trying to create self-referential dict dtypes" ) == 0) {
+            convert_ret = _convert_from_dict(obj, align);
         }
-        convert_ret = _convert_from_dict(obj, align);
         goto convert_done;
     }
     else if (PyArray_Check(obj)) {
@@ -1533,10 +1529,6 @@ _convert_from_any(PyObject *obj, int align)
         return NULL;
     }
     else {
-        if (Py_EnterRecursiveCall(
-            " while trying to create self-referential dtypes" ) != 0) {
-            goto convert_done;
-        }
         convert_ret = _try_convert_from_dtype_attr(obj);
         if ((PyObject *)convert_ret != Py_NotImplemented) {
             return convert_ret;

@@ -767,6 +767,13 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
+    def test_array_recursion(self):
+        l = list()
+        l.append(('f', l))
+        with pytest.raises(RecursionError):
+            np.dtype(l)
+
+
 class TestMetadata:
     def test_no_metadata(self):
         d = np.dtype(int)
