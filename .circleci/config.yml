@@ -14,7 +14,10 @@ jobs:
 
     steps:
       - checkout:
-      - run: git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge"
+      - run:
+          name: pull changes from merge
+          command: |
+            [[ ! -z $CI_PULL_REQUEST ]] && git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge"
 
       - run:
           name: create virtual environment, install dependencies

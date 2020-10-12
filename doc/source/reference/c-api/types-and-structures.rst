@@ -566,7 +566,7 @@ PyArrayDescr_Type and PyArray_Descr
         This function should be called without holding the Python GIL, and
         has to grab it for error reporting.
 
-    .. c:member:: Bool nonzero(void* data, void* arr)
+    .. c:member:: npy_bool nonzero(void* data, void* arr)
 
         A pointer to a function that returns TRUE if the item of
         ``arr`` pointed to by ``data`` is nonzero. This function can
@@ -1012,7 +1012,7 @@ PyArrayIter_Type and PyArrayIterObject
           npy_intp  factors[NPY_MAXDIMS];
           PyArrayObject *ao;
           char  *dataptr;
-          Bool  contiguous;
+          npy_bool  contiguous;
       } PyArrayIterObject;
 
    .. c:member:: int nd_m1
@@ -1062,7 +1062,7 @@ PyArrayIter_Type and PyArrayIterObject
        This member points to an element in the ndarray indicated by the
        index.
 
-   .. c:member:: Bool contiguous
+   .. c:member:: npy_bool contiguous
 
        This flag is true if the underlying array is
        :c:data:`NPY_ARRAY_C_CONTIGUOUS`. It is used to simplify

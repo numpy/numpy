@@ -587,11 +587,11 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
             print(inspect.getdoc(object), file=output)
 
         methods = pydoc.allmethods(object)
-        if methods != []:
+
+        public_methods = [meth for meth in methods if meth[0] != '_']
+        if public_methods:
             print("\n\nMethods:\n", file=output)
-            for meth in methods:
-                if meth[0] == '_':
-                    continue
+            for meth in public_methods:
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(
