@@ -176,6 +176,62 @@ add_newdoc_for_scalar_type('object_', [],
     Any Python object.
     """)
 
+add_newdoc_for_scalar_type('str_', ['unicode_'],
+    r"""
+    A unicode string.
+
+    When used in arrays, this type strips trailing null codepoints.
+
+    Unlike the builtin `str`, this supports the :ref:`python:bufferobjects`, exposing its
+    contents as UCS4:
+
+    >>> m = memoryview(np.str_("abc"))
+    >>> m.format
+    '3w'
+    >>> m.tobytes()
+    b'a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00'
+    """)
+
+add_newdoc_for_scalar_type('bytes_', ['string_'],
+    r"""
+    A byte string.
+
+    When used in arrays, this type strips trailing null bytes.
+    """)
+
+add_newdoc_for_scalar_type('void', [],
+    r"""
+    Either an opaque sequence of bytes, or a structure.
+    
+    >>> np.void(b'abcd')
+    void(b'\x61\x62\x63\x64')
+    
+    Structured `void` scalars can only be constructed via extraction from :ref:`structured_arrays`:
+    
+    >>> arr = np.array((1, 2), dtype=[('x', np.int8), ('y', np.int8)])
+    >>> arr[()]
+    (1, 2)  # looks like a tuple, but is `np.void`
+    """)
+
+add_newdoc_for_scalar_type('datetime64', [],
+    """
+    A datetime stored as a 64-bit integer, counting from ``1970-01-01T00:00:00``.
+
+    >>> np.datetime64(10, 'Y')
+    numpy.datetime64('1980')
+    >>> np.datetime64(10, 'D')
+    numpy.datetime64('1970-01-11')
+    
+    See :ref:`arrays.datetime` for more information.
+    """)
+
+add_newdoc_for_scalar_type('timedelta64', [],
+    """
+    A timedelta stored as a 64-bit integer.
+    
+    See :ref:`arrays.datetime` for more information.
+    """)
+
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
     add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
@@ -184,7 +240,7 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
 
         Return a pair of integers, whose ratio is exactly equal to the original
         floating point number, and with a positive denominator.
-        Raise OverflowError on infinities and a ValueError on NaNs.
+        Raise `OverflowError` on infinities and a `ValueError` on NaNs.
 
         >>> np.{ftype}(10.0).as_integer_ratio()
         (10, 1)
