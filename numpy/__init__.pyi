@@ -1612,6 +1612,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 
 _NBit_co = TypeVar("_NBit_co", covariant=True, bound=NBitBase)
+_NBit_co2 = TypeVar("_NBit_co2", covariant=True, bound=NBitBase)
 
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
@@ -1823,12 +1824,16 @@ float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 float64 = floating[_64Bit]
 
-class complexfloating(inexact[_NBit_co]):
+# The main reason for `complexfloating` having two typevars is cosmetic.
+# It is used to clarify why `complex128`s precision is `_64Bit`, the latter
+# describing the two 64 bit floats representing its real and imaginary component
+
+class complexfloating(inexact[_NBit_co], Generic[_NBit_co, _NBit_co2]):
     def __init__(self, __value: _ComplexValue = ...) -> None: ...
     @property
     def real(self) -> floating[_NBit_co]: ...  # type: ignore[override]
     @property
-    def imag(self) -> floating[_NBit_co]: ...  # type: ignore[override]
+    def imag(self) -> floating[_NBit_co2]: ...  # type: ignore[override]
     def __abs__(self) -> floating[_NBit_co]: ...  # type: ignore[override]
     __add__: _ComplexOp[_NBit_co]
     __radd__: _ComplexOp[_NBit_co]
@@ -1843,8 +1848,8 @@ class complexfloating(inexact[_NBit_co]):
     __pow__: _ComplexOp[_NBit_co]
     __rpow__: _ComplexOp[_NBit_co]
 
-complex64 = complexfloating[_32Bit]
-complex128 = complexfloating[_64Bit]
+complex64 = complexfloating[_32Bit, _32Bit]
+complex128 = complexfloating[_64Bit, _64Bit]
 
 class flexible(generic): ...  # type: ignore
 

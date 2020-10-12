@@ -199,8 +199,12 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         @overload
         def __call__(
             self,
-            __other: Union[integer[_NBit_co], floating[_NBit_co], complexfloating[_NBit_co]]
-        ) -> complexfloating[_NBit_co]: ...
+            __other: Union[
+                integer[_NBit_co],
+                floating[_NBit_co],
+                complexfloating[_NBit_co, _NBit_co],
+            ]
+        ) -> complexfloating[_NBit_co, _NBit_co]: ...
 
     class _NumberOp(Protocol):
         def __call__(self, __other: _NumberLike) -> number: ...
