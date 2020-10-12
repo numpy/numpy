@@ -4,7 +4,6 @@ import operator
 import warnings
 
 import numpy as np
-from numpy.core.overrides import array_function_dispatch
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -802,11 +801,7 @@ cdef class RandomState:
         return self.randint(0, 4294967296, size=n_uint32,
                             dtype=np.uint32).astype('<u4').tobytes()[:length]
 
-    def _choice_dispatcher(self, a, size=None, replace=None, p=None):
-        return (a, )
-
     @cython.wraparound(True)
-    @array_function_dispatch(_choice_dispatcher, verify=False)
     def choice(self, a, size=None, replace=True, p=None):
         """
         choice(a, size=None, replace=True, p=None)
@@ -4390,11 +4385,7 @@ cdef class RandomState:
 
         return diric
 
-    def _unary_op_dispatcher(self, object x):
-        return (x, )
-
     # Shuffling and permutations:
-    @array_function_dispatch(_unary_op_dispatcher, verify=False)
     def shuffle(self, object x):
         """
         shuffle(x)
@@ -4491,7 +4482,6 @@ cdef class RandomState:
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
 
-    @array_function_dispatch(_unary_op_dispatcher, verify=False)
     def permutation(self, object x):
         """
         permutation(x)

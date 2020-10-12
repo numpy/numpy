@@ -4199,6 +4199,10 @@ cdef class Generator:
 
         return diric
 
+    def _permuted_dispatcher(self, object x, *, axis=None, out=None):
+        return (x, )
+
+    @array_function_dispatch(_permuted_dispatcher, verify=False)
     def permuted(self, object x, *, axis=None, out=None):
         """
         permuted(x, axis=None, out=None)
