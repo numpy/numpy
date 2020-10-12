@@ -13,7 +13,7 @@ Contributing to NumPy
    development_environment
    development_workflow
    ../benchmarking
-   style_guide
+   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
    governance/index
    howto-docs
@@ -296,7 +296,7 @@ The rest of the story
    development_environment
    development_workflow
    ../benchmarking
-   style_guide
+   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
    governance/index
    howto-docs

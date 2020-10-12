@@ -2023,6 +2023,12 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_corrcoef_dtype(self, test_type):
+        cast_A = self.A.astype(test_type)
+        res = corrcoef(cast_A, dtype=test_type)
+        assert test_type == res.dtype
+
 
 class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
@@ -2122,6 +2128,12 @@ class TestCov:
         assert_allclose(cov(self.x1, fweights=self.unit_frequencies,
                             aweights=self.unit_weights),
                         self.res1)
+
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_cov_dtype(self, test_type):
+        cast_x1 = self.x1.astype(test_type)
+        res = cov(cast_x1, dtype=test_type)
+        assert test_type == res.dtype
 
 
 class Test_I0:

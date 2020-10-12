@@ -578,7 +578,7 @@ indices using the ``ix_`` command. E.g., for 2D array ``a``, one might
 do: ``ind=[1, 3]; a[np.ix_(ind, ind)] += 100``.
 
 \ **HELP**: There is no direct equivalent of MATLAB's ``which`` command,
-but the commands :func:`help`` and :func:`numpy.source` will usually list the filename
+but the commands :func:`help` and :func:`numpy.source` will usually list the filename
 where the function is located. Python also has an ``inspect`` module (do
 ``import inspect``) which provides a ``getfile`` that often works.
 

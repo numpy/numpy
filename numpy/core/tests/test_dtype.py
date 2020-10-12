@@ -1355,10 +1355,6 @@ class TestUserDType:
         # unnecessary restriction, but one that has been around forever:
         assert np.dtype(mytype) == np.dtype("O")
 
-        with pytest.raises(RuntimeError):
-            # Registering a second time should fail
-            create_custom_field_dtype(blueprint, mytype, 0)
-
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
