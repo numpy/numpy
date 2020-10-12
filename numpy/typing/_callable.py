@@ -132,9 +132,6 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         ) -> unsignedinteger[_NBit_co]: ...
 
     class _UnsignedIntBitOp(Protocol[_NBit_co]):  # type: ignore[misc]
-        # TODO: The likes of `uint64 | np.signedinteger` will fail as there
-        # is no signed integer type large enough to hold a `uint64`
-        # See https://github.com/numpy/numpy/issues/2524
         @overload
         def __call__(self, __other: bool) -> unsignedinteger[_NBit_co]: ...
         @overload
