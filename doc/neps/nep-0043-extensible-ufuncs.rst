@@ -575,7 +575,7 @@ ArrayMethod Specifications
 These specifications provide a minimal initial C-API, which shall be expanded
 in the future, for example to allow specialized inner-loops.
 
-Briefly, NumPy currently relies fully on strided inner-loops and, this
+Briefly, NumPy currently relies on strided inner-loops and this
 will be the only allowed method of defining a ufunc initially.
 We expect the addition of a ``setup`` function or exposure of ``get_loop``
 in the future.
@@ -606,8 +606,8 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
 
 * Similar to casting, ufuncs may need to find the correct loop dtype
   or indicate that a loop is only capable of handling certain instances of
-  the involved DTypes (e.g. only native byte order).  This is handled by
-  an ``resolve_descriptors`` function (identical to the ``resolve_descriptors``
+  the involved DTypes (e.g. only native byteorder).  This is handled by
+  a ``resolve_descriptors`` function (identical to the ``resolve_descriptors``
   of ``CastingImpl``)::
 
       NPY_CASTING
@@ -616,11 +616,11 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
               PyArray_Descr *given_dtypes[nin+nout],
               PyArray_Descr *loop_dtypes[nin+nout]);
 
-  The function writes ``loop_dtypes`` based on the given ``given_dtypes``.
-  This typically means filling in the descriptor of the output(s).
-  Although often also the input descriptor(s) have to be found, e.g.
-  to ensure native byte order when needed by the inner-loop.
-  
+  The function fills ``loop_dtypes`` based on the given ``given_dtypes``.
+  This requires filling in the descriptor of the output(s).
+  Often also the input descriptor(s) have to be found, e.g. to ensure native
+  byteorder when needed by the inner-loop.
+
   In most cases an ``ArrayMethod`` will have non-parametric output DTypes
   so that a default implementation can be provided.
 
@@ -643,9 +643,10 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
   for example for implementing warnings (see Error and Warning Handling below).
   To simplify this NumPy will pass a single zero initialized ``npy_intp *``
   when ``user_data`` is not set. 
+  *NOTE that it would be possible to pass this as part of ``Context``.*
 
 * The optional ``get_loop`` function will not be public initially, to avoid
-  small design choices due to differences in the ufunc and casting APIs::
+  finalizing the API which requires design choices also with casting::
 
         innerloop *
         get_loop(
@@ -697,14 +698,14 @@ Discussion and Alternatives
 ===========================
 
 The above split into an ``ArrayMethod`` and ``Context`` and the additional
-requirement of a ``BoundArrayMethod`` seems a necessary split mirroring the
+requirement of a ``BoundArrayMethod`` is a necessary split mirroring the
 implementation of methods and bound methods in Python.
 
 One reason for this requirement is that it allows storing the ``ArrayMethod``
 object in many cases without holding references to the ``DTypes`` which may
 be important if DTypes are created (and deleted) dynamically.
-(This is a complex topic, which may not have a complete solution, but the
-approach solves the issue for casting.)
+(This is a complex topic, which does not have a complete solution in current
+Python, but the approach solves the issue with respect to casting.)
 
 There seem no alternatives to this structure.  Separating the DType
 specific steps from the general ufunc dispatching and promotion is
@@ -712,8 +713,8 @@ absolutely necessary to allow future extension and flexibility.
 Furthermore, it allows unifying casting and ufuncs.
 
 Since the structure of ``ArrayMethod`` and ``BoundArrayMethod`` will be
-opaque, there are no large design implications aside from the choice of
-making them Python objects.
+opaque and can be extended, there few long term design implications aside
+from the choice of making them Python objects.
 
 
 ``resolve_descriptors``
@@ -732,29 +733,31 @@ While the returned casting-safety (``NPY_CASTING``) will almost always be
 
 * Returning the casting safety is central to NEP 42 for casting and
   allows the unmodified use of ``ArrayMethod`` there.
-* There may be future desire to implement fast but unsafe implementations.
+* There may be a future desire to implement fast but unsafe implementations.
   For example for ``int64 + int64 -> int32`` which is unsafe from a casting
   perspective. Currently, this would use ``int64 + int64 -> int64`` and then
-  cast to ``int32``, an implementation that skips the cast would
-  have to signal that it effectively includes a "same-kind" cast and is not
-  considered "safe".
+  cast to ``int32``. An implementation that skips the cast would
+  have to signal that it effectively includes the "same-kind" cast and is
+  thus not considered "safe".
 
 
 ``get_loop`` method
 -------------------
 
 Currently, NumPy ufuncs typically only provide a single strided loop, so that
-the ``get_loop`` method may seem unnecessary, at least initially.
+the ``get_loop`` method may seem unnecessary.
 For this reason we plan for ``get_loop`` to be a private function initially.
 
 However, ``get_loop`` is required for casting where specialized loops are
-used even beyond strided and contiguous loops.  The ``get_loop`` function
-must thus be a full replacement for the internal ``PyArray_GetDTypeTransferFunction``.
+used even beyond strided and contiguous loops.
+Thus, the ``get_loop`` function must thus be a full replacement for
+the internal ``PyArray_GetDTypeTransferFunction``.
 
 In the future, ``get_loop`` may be made public or a new ``setup`` function
-be exposed to allow more control over setting up.
+be exposed to allow more control, for example to allow allocating
+working memory.
 Further, we could expand ``get_loop`` and allow the ``ArrayMethod`` implementer
-to take full control, including the outer iteration.
+to also control the outer iteration and not only the 1-D inner-loop.
 
 
 Extending the inner-loop signature
@@ -763,40 +766,40 @@ Extending the inner-loop signature
 Extending the inner-loop signature is another central and necessary part of
 the NEP.
 
-**Passing in the "Context":**
+**Passing in the ``Context``:**
 
-Passing in the ``Context`` allows for potentially easier extending of
-the signature in the future and access to the dtype instances which
+Passing in the ``Context`` potentially allows for the future extension of
+the signature by adding new fields to the context struct.
+Further it provides direct access to the dtype instances which
 the inner-loop operates on.
-This is useful information for parametric dtypes. For example comparing
-two strings must know the length of both strings. And this information is
-stored on the dtype instances.
+This is necessary information for parametric dtypes since for example comparing
+two strings requires knowing the length of both strings.
+The ``Context`` can also hold potentially useful information such as the
+the original ``ufunc``, which can be helpful when reporting errors.
 
-In principle passing in Context is not necessary, as it could be set up
-as part of ``userdata`` in the ``get_loop`` function.
-In this NEP we propose passing this struct to simplify creation of loops for
-parametric DTypes.  Further, it may proof useful for passing information
-such as the ``PyInterpreterState`` (for threading) or the ``caller`` to
-allow printing a better error message including the name of the original
-ufunc called.
+In principle passing in Context is not necessary, as all information could be
+included in ``userdata`` and set up in the ``get_loop`` function.
+In this NEP we propose passing the struct to simplify creation of loops for
+parametric DTypes.
 
 **Passing in user data:**
 
 The current casting implementation uses the existing ``NpyAuxData *`` to pass
 in additional data as defined by ``get_loop``.
-There may be good alternatives to the use of this structure, although it
-seems like a simple solution, which is already used in NumPy and public API.
+There are certainly alternatives to the use of this structure, but it
+provides a simple solution, which is already used in NumPy and public API.
 
-``NpyAyxData *`` is a light weight, allocated structure, since it already
-exists in NumPy and has a ``free`` slot, it seems a natural choice.
+``NpyAyxData *`` is a light weight, allocated structure and since it already
+exists in NumPy for this purpose, it seems a natural choice.
 To simplify some use-cases (see "Error Handling" below), we will pass a
 ``npy_intp *userdata = 0`` instead when ``userdata`` is not provided.
 
-*Note: Since ``get_loop`` is expected to be private initially, this may not
-be available publically, and thus may change with experience gained with
-this new structure.*
+*Note: Since ``get_loop`` is expected to be private initially we can gain
+experience with ``userdata`` before exposing it as public API.*
 
-The return value to indicate an error is an important, but currently missing,
+**Return value:**
+
+The return value to indicate an error is an important, but currently missing
 feature in NumPy. The error handling is further complicated by the way
 CPUs signal floating point errors.
 Both are discussed in the next section.
@@ -804,9 +807,10 @@ Both are discussed in the next section.
 Error Handling
 """"""""""""""
 
-In general inner-loops should set errors right away. However, they may also run
-without the GIL. This requires locking the GIL, setting a Python error
-and returning ``-1`` to indicate an error occurred::
+We expect that future inner-loops will generally set Python errors as soon
+as an error is found. This is complicated when the inner-loop is run without
+locking the GIL.  In this case the function will have to lock the GIL,
+set the Python error and return ``-1`` to indicate an error occurred::
 
     int
     inner_loop(PyArrayMethod_Context *context, ..., void *userdata)
@@ -828,31 +832,28 @@ and returning ``-1`` to indicate an error occurred::
     }
 
 Floating point errors are special, since they requires checking the hardware
-state.
-This is costly and inconvenient if done on every single call.
+state which is too expensive if done within the inner-loop function itself.
 Thus, NumPy will handle these if flagged by the ``ArrayMethod``.
 An ``ArrayMethod`` should never cause floating point error flags to be set
 if it flags that these should not be checked. This could interfere when
-chaining multiple methods, in particular when casting is necessary.
+calling multiple functions; in particular when casting is necessary.
 
-An alternative solution would be to allow setting the error only at a later
-teardown stage at the same time when NumPy will also check the floating
-point error flags.
+An alternative solution would be to allow setting the error only at the later
+finalization step when NumPy will also check the floating point error flags.
 
-We decided against this pattern at this time, it seems more complex and
+We decided against this pattern at this time. It seems more complex and
 generally unnecessary.
 While safely grabbing the GIL in the loop may require passing in an additional
 ``PyThreadState`` or ``PyInterpreterState`` in the future (for subinterpreter
-support), this is acceptable and planned.
-While it may be useful in some cases, setting the error at a later point would
-also add some complexity.
-For instance, if operation is paused (which can happen for casting in particular),
-this error check would have to be run explicitly.
+support), this is acceptable and can be anticipated.
+Setting the error at a later point would add complexity: for instance
+if an operation is paused (which can currently happen for casting in particular),
+the error check needs to run explicitly ever time this happens.
 
 We expect that setting errors immediately is the easiest and most convenient
-solution and more complex solution will require more experience to design.
+solution and more complex solution may be possible future extensions.
 
-However, handling warnings is slightly more complex: A warning should be
+Handling *warnings* is slightly more complex: A warning should be
 given exactly once for each function call (i.e. for the whole array) even
 if naively it would be given many times.
 To simplify such a use case, we will pass in ``npy_intp *userdata = 0``
@@ -883,7 +884,7 @@ when an overflow occurred::
     }
 
 *TODO:* The idea of passing an ``npy_intp`` scratch space when ``userdata``
-is not set seems very convenient, but I am uncertain about it, since I am not
+is not set seems convenient, but I am uncertain about it, since I am not
 aware of any similar prior art.  This "scratch space" could also be part of
 the ``context`` in principle.
 
