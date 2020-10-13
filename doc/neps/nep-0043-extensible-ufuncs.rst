@@ -316,78 +316,83 @@ Where ``Integer`` is an abstract DType (compare NEP 42).
 Steps involved in a UFunc call
 ****************************************************************************
 
-Before going into more detailed API choices, it is necessary to review the
-typical steps involved in a call to a universal function in NumPy.
+Before going into more detailed API choices, it is helpful to review the
+steps involved in a call to a universal function in NumPy.
 
-A UFunc call consists of into multiple steps:
+A UFunc call is split into the following steps:
 
-1. Resolution of ``__array_ufunc__`` for container types, such as a Dask
+1. Handling of ``__array_ufunc__`` for container types, such as a Dask
    array handling the full process, rather than NumPy.
-   This step is performed first, and unaffected by this NEP.
+   This step is performed first, and unaffected by this NEP
+   (compare :ref:`NEP18`).
 
 2. *Promotion and dispatching*
 
-   * Given the DTypes of all inputs we need to find the correct implementation
-     for the ufuncs functionality. E.g. an implementation for ``float64``
-     or ``int64``, but also a user-defined DType.
+   * Given the DTypes of all inputs find the correct implementation
+     for the ufuncs functionality.
+     E.g. an implementation for ``float64``, ``int64`` or a user-defined DType.
 
    * When no exact implementation exists, *promotion* has to be performed.
-     For example, adding ``float32`` and ``float64`` is implemented by
+     For example, adding a ``float32`` and a ``float64`` is implemented by
      first casting the ``float32`` to ``float64``.
 
-3. *DType Adaptation:*
+3. *``dtype`` resolution:*
 
-   * The step has to perform no special work for non-parametric dtypes.
    * For example, if a loop adds two strings, it is necessary to define the
      correct output (and possibly input) dtypes.  ``S5 + S4 -> S9``, while
      an ``upper`` function has the signature ``S5 -> S5``.
+   * In general, whenever an output DType is parametric the parameters have
+     to be found (resolved).  When they are not parametric, this step can
+     be implemented using a minimal default version.
 
-4. Preparing the actual iteration. This step is largely handled by ``NpyIter`` (the iterator).
+4. *Preparing the iteration:*
 
-   * Allocate all outputs and temporary buffers which are necessary perform
-     casts.
-   * Finds the best iteration order, which includes information such as
-     a broadcasted stride always being 0.
+   * This step is largely handled by ``NpyIter`` internally (the iterator).
+   * Allocate all outputs and temporary buffers necessary perform casts.
+   * Find the best iteration order, which includes information to efficiently
+     implement broadcasting. For example, adding a single value to an array
+     repeats the same value.
 
-5. Setup may include finding an optimal function to do the operation and
-   include:
+5. *Setup and fetch the C-level function:*
 
-   * Clearing of floating point exception flags (if necessary),
-   * Possibly allocating temporary working space,
-   * Setting (and potentially finding) the inner-loop function.  Finding
-     the inner-loop function could allow specialized implementations in the
-     future.
-     For example casting currently use one function for contiguous casts
-     and another function for generic strided casts to optimize speed.
-     Reductions do similar optimizations, however these currently handled
+   * If necessary, allocate temporary working space.
+   * Find the C implemented, light weight, inner-loop function.
+     Finding the inner-loop function can allow specialized implementations
+     in the future.
+     For example casting currently optimizes contiguous casts and
+     reductions have optimization that are currently handled
      inside the inner-loop function itself.
-   * Signal whether the inner-loop requires the Python API, or whether
-     the GIL may be released.
+   * Signal whether the inner-loop requires the Python API or whether
+     the GIL may be released (to allow threading).
+   * Clear floating point exception flags.
 
-6. Run the DType specific *inner-loop*
+6. *Perform the actual calculation:*
 
-   * The loop may require access to additional data, such as dtypes or
+   * Run the DType specific inner-loop function.
+   * The inner-loop may require access to additional data, such as dtypes or
      additional data set in the previous step.
+   * The inner-loop function may be called an undefined number of times.
 
-7. Teardown may be necessary to undo any setup done in step 5
-   such as checking for floating point errors.
+7. *Finalize:*
 
-The ``ArrayMethod`` provides a concept to group steps 3 to 7.
-However, from a user perspective, it is necessary provide all information
-for step 3, 5, and 7. At this time, steps 4 and 6 are functionality provided
-by NumPy and cannot be customized.
+   * Free any temporary working space allocated in 5.
+   * Check for floating point exception flags.
+   * Return the result.
 
-The second step is promotion and dispatching which will also be restructured
-with new API to influence the process.
+The ``ArrayMethod`` provides a concept to group steps 3 to 6 and partially 7.
+However, implementers of a new ufunc or ``ArrayMethod`` do not need to
+customize the behaviour in step 4 or 6, aside from the inner-loop function.
+For the ``ArrayMethod`` implementer the central steps to have control over
+is step 3 and step 5 to provide the custom inner-loop function.
+Further customization is a potential future extension.
 
-Step 1 is listed for completeness and together with 4 and 6 are not directly
-affected by this NEP.
+Step 2. is promotion and dispatching which will also be restructured
+with new API which allows influencing the process where necessary.
 
-The following sections first give an overview of the Array method and then
-the new dispatching and promotion design.
+Step 1 is listed for completeness and is unaffected by this NEP.
 
-The following picture gives an overview of these steps and how they will be
-structured:
+The following sketch provides an overview of step 2 to 6 with an emphasize
+of how dtypes are handled:
 
 .. figure:: _static/nep43-sketch.svg
     :figclass: align-center
