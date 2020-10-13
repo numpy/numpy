@@ -71,7 +71,8 @@ contributing to the project, or using one of the many mechanisms we
 have for allowing our APIs to operate on externally defined objects.
 
 We encourage and exhort developers to first discuss their problem with
-the NumPy developers on the `mailing list <>`__ before resorting to
+the NumPy developers on the `mailing list
+<http://numpy-discussion.10968.n7.nabble.com/>`__ before resorting to
 patching and releasing their own version of the library.
 
 Fair Play Rules
