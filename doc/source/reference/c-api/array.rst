@@ -24,7 +24,7 @@ These macros access the :c:type:`PyArrayObject` structure members and are
 defined in ``ndarraytypes.h``. The input argument, *arr*, can be any
 :c:type:`PyObject *<PyObject>` that is directly interpretable as a
 :c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type`
-and itssub-types).
+and its sub-types).
 
 .. c:function:: int PyArray_NDIM(PyArrayObject *arr)
 
@@ -942,7 +942,7 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     Type represents one of the flexible array types ( :c:data:`NPY_STRING`,
     :c:data:`NPY_UNICODE`, or :c:data:`NPY_VOID` ).
 
-.. c:function:: int PyDataType_ISUNSIZED(PyArray_Descr* descr):
+.. c:function:: int PyDataType_ISUNSIZED(PyArray_Descr* descr)
 
     Type has no size information attached, and can be resized. Should only be
     called on flexible dtypes. Types that are attached to an array will always
