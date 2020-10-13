@@ -200,7 +200,7 @@ def _broadcast_shape(*args):
 @set_module('numpy')
 def broadcast_shape(*args):
     """
-    Get Broadcast shape from a list of shape tuples.
+    Get Broadcast shape from the given shape tuples.
 
     Parameters
     ----------
@@ -211,6 +211,16 @@ def broadcast_shape(*args):
     -------
     tuple
         Broadcasted shape.
+
+    Raises
+    ------
+    ValueError
+        If the shapes are not compatible and cannot be broadcast according
+        to NumPy's broadcasting rules.
+
+    Notes
+    -----
+    .. versionadded:: 1.20.0
 
     Examples
     --------
