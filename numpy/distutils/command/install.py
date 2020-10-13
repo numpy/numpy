@@ -1,8 +1,8 @@
 import sys
-if 'setuptools' in sys.modules:
+try:
     import setuptools.command.install as old_install_mod
     have_setuptools = True
-else:
+except ImportError:
     import distutils.command.install as old_install_mod
     have_setuptools = False
 from distutils.file_util import write_file
