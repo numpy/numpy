@@ -30,7 +30,7 @@ Abstract
 
 The previous NEP 42 document proposes the creation of new DTypes which can
 be defined by users outside of NumPy itself.
-While implementing NEP 42 will users to create arrays with a custom dtype
+While implementing NEP 42 will enable users to create arrays with a custom dtype
 and stored values, this NEP outlines how NumPy will operate on these arrays
 in the future.
 The main aspect is that functions operating on NumPy arrays are called
