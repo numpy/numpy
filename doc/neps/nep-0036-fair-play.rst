@@ -39,7 +39,7 @@ had never provided.
 
 In the months that followed, several conversations were had with the
 entity involved, and a better understanding emerged of needs on either
-side.  The entity agreed to publish the patches made against Python,
+side.  The entity agreed to publish the patches made against NumPy,
 and a special label was added on the NumPy issue tracker to identify
 issues pertaining to this specific distribution.
 
