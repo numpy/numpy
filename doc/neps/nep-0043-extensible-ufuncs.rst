@@ -889,28 +889,24 @@ aware of any similar prior art.  This "scratch space" could also be part of
 the ``context`` in principle.
 
 
-
 Reusing existing Loops/Implementations
 ======================================
 
-For many DTypes adding additional C-level (or python level) loops will be
-sufficient and require no more than a single strided loop implementation.
-Everything else can be provided by NumPy.  If the loop works with
-parametric DTypes, the ``resolve_descriptors`` function *must* additionally
-be provided.
+For many DTypes the above definition for adding additional C-level loops will be
+sufficient and require no more than a single strided loop implementation
+and if the loop works with parametric DTypes, the
+``resolve_descriptors`` function *must* additionally be provided.
 
-However, in some use-cases it is desired to call back to an existing loop.
-In Python, this can be achieved by simply calling into the original ufunc
-(when parametric types are involved potentially twice, due to calling one
-more time from ``resolve_descriptors``).
+However, in some use-cases it is desirable to call back to an existing implementation.
+In Python, this could be achieved by simply calling into the original ufunc..
 
 For better performance in C, and for large arrays, it is desirable to reuse
-an existing ``ArrayMethod`` as much as possible, so that its inner-loop function
-can be used directly without any overhead.
-We will thus allow to create ``ArrayMethod`` by passing in an existing
+an existing ``ArrayMethod`` as directly as possible, so that its inner-loop function
+can be used directly without additional overhead.
+We will thus allow to create new, wrapping, ``ArrayMethod`` from an existing
 ``ArrayMethod``.
 
-This wrapped loop will have two additional methods:
+This wrapped ``ArrayMethod`` will have two additional methods:
 
 * ``view_inputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
   user input descriptors with descriptors matching the wrapped loop.
@@ -977,52 +973,69 @@ Promotion and dispatching
 
 NumPy ufuncs are multi-methods in the sense that they operate on (or with)
 multiple DTypes at once.
-While the input (and outpyt) dtypes are attached to NumPy arrays,
+While the input (and output) dtypes are attached to NumPy arrays,
 the ``ndarray`` type itself does not carry the information of which
 function to apply to the data.
 
 For example, given the input::
 
-    arr1 = np.array([1, 2, 3], dtype=np.int64)
-    arr2 = np.array([1, 2, 3], dtype=np.float64)
-    np.add(arr1, arr2)
+    int_arr = np.array([1, 2, 3], dtype=np.int64)
+    float_arr = np.array([1, 2, 3], dtype=np.float64)
+    np.add(int_arr, float_arr)
 
 has to find the correct ``ArrayMethod`` to perform the operation.
-Ideally, there is an exact match defined, e.g. if the above was written
-as ``np.add(arr1, arr1)``, the ``ArrayMethod[Int64, Int64, out=Int64]`` matches
-exactly and can be used.
-However, in the above example there is no direct match, requiring a
-promotion step.
+Ideally, there is an exact match defined, e.g. for ``np.add(int_arr, int_arr)``
+the ``ArrayMethod[Int64, Int64, out=Int64]`` matches exactly and can be used.
+However, for ``np.add(int_arr, float_arr)`` there is no direct match,
+requiring a promotion step.
 
-**Description of the Promotion and dispatching Process:**
+Promotion and dispatching process
+=================================
 
-1. By default any UFunc has a promotion which uses the common DType of all
-   inputs and tries again.  This is well defined for most mathematical
-   functions, but can be disabled or customized if necessary.
+In general the ``ArrayMethod`` is found by searching for an exact match of
+all input DTypes.
+The output dtypes should *not* affect calculation, but if multiple registered
+``ArrayMethod``\ s match exactly, the output DType will be used to find the
+better match.
+This will allow the current distinction for ``np.equal`` loops which define
+both ``Object, Object -> Bool`` (default) and ``Object, Object -> Object``.
 
-2. Users can *register* new Promoters just as they can register a
-   new ``ArrayMethod``.  These will use abstract DTypes to allow matching
-   a large variation of signatures.
-   The return value of a promotion function shall be a new ``ArrayMethod``
-   or ``NotImplemented``.  It must be consistent over multiple calls with
-   the same input to allow allows caching of the result.
+Initially, an ``ArrayMethod`` will be defined for *concrete* DTypes only
+and since these cannot be subclassed an exact match is guaranteed.
+In the future we expect that ``ArrayMethod``\ s can also be defined for
+*abstract* DTypes. In which case the best match is found as detailed below.
+
+**Promotion:**
+
+While dispatching requires looking up the ``ArrayMethod`` registered for
+the matching DTypes, requires additional definitions:
+
+* By default any UFunc has a promotion which uses the common DType of all
+  inputs and dispatching a second time.  This is well defined for most
+  mathematical functions, but can be disabled or customized if necessary.
+
+* Users can *register* new Promoters just as they can register a
+  new ``ArrayMethod``.  These will use abstract DTypes to allow matching
+  a large variation of signatures.
+  The return value of a promotion function shall be a new ``ArrayMethod``
+  or ``NotImplemented``.  It must be consistent over multiple calls with
+  the same input to allow allows caching of the result.
 
 The signature of a promotion function consists is defined by::
 
     promoter(np.ufunc: ufunc, Tuple[DTypeMeta]: DTypes): -> Union[ArrayMethod, NotImplemented]
 
-Note that DTypes may contain the outputs DType, however, normally the
-output DType should *not* affect which ``ArrayMethod`` is chosen.
+Note that DTypes may include the output's DType, however, normally the
+output DType will *not* affect which ``ArrayMethod`` is chosen.
 
-In most cases, it should not be necessary to add a custom promotion function,
-however, an example which requires this is multiplication with a
-unit.
-In NumPy ``timedelta64`` can be multiplied with most integers.
-However, NumPy only defines a loop (``ArrayMethod``) for ``timedelta64 * int64``
+In most cases, it should not be necessary to add a custom promotion function.
+An example which requires this is multiplication with a unit:
+in NumPy ``timedelta64`` can be multiplied with most integers,
+but NumPy only defines a loop (``ArrayMethod``) for ``timedelta64 * int64``
 so that multiplying with ``int32`` would fail.
 
 To allow this, the following promoter can be registered for
-``[Timedelta64, Integral, None]``::
+``(Timedelta64, Integral, None)``::
 
     def promote(ufunc, DTypes):
         res = list(DTypes)
@@ -1038,22 +1051,32 @@ In this case, just as a ``Timedelta64 * int64`` and ``int64 * timedelta64``
 ``ArrayMethod`` is necessary, a second promoter will have to be registered to
 handle the case where the integer is passed first.
 
-Promoter and ``ArrayMethod`` are discovered by finding the best matching one.
-Initially, it will be an error if ``NotImplemented`` is returned or if two
-promoters match the input equally well *unless* the mismatch occurs due to
-unspecified output arguments:
-When two signatures are identical for all inputs, but differ in the output
-the first one registered is used.
-In all other cases, the use of a more precise ``AbstractDType`` will allow to
-resolve any disambiguities.
+**Dispatching rules for ``ArrayMethod`` and Promoters:**
 
-This above rules enable loop specialization if an output is supplied
-or the full loop is specified.  It should not typically be necessary,
+Promoter and ``ArrayMethod`` are discovered by finding the best match as
+defined by the DType class hierarchy.
+The best match is defined if:
+
+* The signature matches for all input DTypes, so that
+  ``issubclass(input_DType, registered_DType)``  returns true.
+* No other promoter or ``ArrayMethod`` is more precise in any input:
+  ``issubclass(other_DType, this_DType)`` is true (this may include if both
+  are identical).
+* This promoter or ``ArrayMethod`` is more precise in at least one input or
+  output DType.
+
+It will be an error if ``NotImplemented`` is returned or if two
+promoters match the input equally well.
+When an existing promoter is not precise enough for new functionality a
+new promoter has to be added.
+To ensure that this promoter takes precedence it may be necessary to define
+new abstract DTypes as more precise subclasses of existing ones.
+
+The above rules enable specialization if an output is supplied
+or the full loop is specified.  This should not typically be necessary,
 but allows resolving ``np.logic_or``, etc. which have both
-``Object, Object->Bool`` and ``Object, Object->Object`` loops (using the
-first by default).  In principle it can be used to add loops by-passing
-casting, such as ``float32 + float32 -> float64`` *without* casting both
-inputs to ``float64``.
+``Object, Object -> Bool`` and ``Object, Object -> Object`` loops (using the
+first by default).
 
 
 Discussion and alternatives
@@ -1061,17 +1084,17 @@ Discussion and alternatives
 
 Instead of resolving and returning a new implementation, we could also
 return a new set of DTypes to use for dispatching.  This works, however,
-it has the disadvantage that it cannot be possible to dispatch to a loop
-defined on a different ufunc.
+it has the disadvantage that it is impossible to dispatch to a loop
+defined on a different ufunc or to dynamically create a new ``ArrayMethod``.
 
 
 **Rejected Alternatives:**
 
 In the above the promoters use a multiple dispatching style type resolution
-while the current UFunc machinery rather uses the first
+while the current UFunc machinery uses the first
 "safe" loop (see also :ref:`NEP 40 <NEP40>`) in an ordered hierarchy.
 
-While the "safe" casting rule seems not restrictive enough, we could imagine
+While the "safe" casting rule is not restrictive enough, we could imagine
 using a new "promote" casting rule, or the common-DType logic to find the
 best matching loop by upcasting the inputs as necessary.
 
@@ -1085,10 +1108,10 @@ only a float64 loop will also work for float16 and float32 by *upcasting*::
     array([1.], dtype=float32)
 
 with a float32 result.  It is impossible to change the ``erf`` function to
-return a float16 result without possibly changing the result of following code.
+return a float16 result without changing the result of following code.
 In general, we argue that automatic upcasting should not occur in cases
-where a less precise loop can be reasonably defined, *unless* the ufunc
-author defines this behaviour intentionally.
+where a less precise loop can be defined, *unless* the ufunc
+author does this intentionally using a promotion.
 
 This considerations means that upcasting has to be limited by some additional
 method.
@@ -1185,6 +1208,7 @@ A third-party library *could* add incorrect promotions to NumPy, however,
 this is already possible by adding new incorrect loops.
 In general we believe we can rely on downstream projects to use this
 power and complexity carefully and responsibly.
+
 
 *******************************************************
 Notes and User Guidelines for Promoters and ArrayMethod
