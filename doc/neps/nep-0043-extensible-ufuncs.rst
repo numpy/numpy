@@ -56,8 +56,8 @@ specific dtypes.
 Motivation and scope
 ******************************************************************************
 
-As a continuation of NEP 42, the goal of this NEP is to extend universal
-functions to DTypes defined outside of NumPy.
+The goal of this NEP is to extend universal
+functions support the new DType system detailed in NEPs 41 and 42.
 While the main motivation is enabling new user-defined DTypes, this will
 also significantly simplify defining universal functions for NumPy strings or
 structured DTypes.
@@ -486,11 +486,10 @@ And ``flags`` stored properties, for whether:
 The call ``Context``
 ====================
 
-The call "context" may seem surprising.  This object represents a similar
-concept as Python's ``self``, that is to all methods.
-The following details the reasons for the above ``Context``.
-
-To understand its existence, and structure, it is helpful to remember
+The "context" object is analogous to Python's ``self`` that is
+passed to all methods.
+To understand why the "context" object is necessary and its
+internal structure, it is helpful to remember
 that a Python method can be written in the following way
 (see also the `documentation of __get__
 <https://docs.python.org/3.8/reference/datamodel.html#object.__get__>`_):
