@@ -825,11 +825,7 @@ General check of Python Type
     Evaluates true if *op* is an instance of (a subclass of)
     :c:data:`PyArray_Type` and has 0 dimensions.
 
-.. c:var:: op
-
-.. c:var:: cls
-
-.. c:macro:: PyArray_IsScalar(op, cls)
+.. c:function:: PyArray_IsScalar(op, cls)
 
     Evaluates true if *op* is an instance of ``Py{cls}ArrType_Type``.
 
@@ -1534,7 +1530,7 @@ Flag checking
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
 
-.. c:function:: int PyArray_CHKFLAGS(PyObject *arr, flags)
+.. c:function:: int PyArray_CHKFLAGS(PyObject *arr, int flags)
 
     The first parameter, arr, must be an ndarray or subclass. The
     parameter, *flags*, should be an integer consisting of bitwise
