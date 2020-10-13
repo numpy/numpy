@@ -694,7 +694,7 @@ to contain the following (this may extend in the future)::
     } PyArrayMethod_Spec;
 
 
-Discussion and Alternatives
+Discussion and alternatives
 ===========================
 
 The above split into an ``ArrayMethod`` and ``Context`` and the additional
@@ -1210,9 +1210,9 @@ In general we believe we can rely on downstream projects to use this
 power and complexity carefully and responsibly.
 
 
-*******************************************************
-Notes and User Guidelines for Promoters and ArrayMethod
-*******************************************************
+***************
+User Guidelines
+***************
 
 In general adding a promoter to a UFunc must be done very carefully.
 A promoter should never affect loops which can be reasonably defined
