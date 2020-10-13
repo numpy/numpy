@@ -261,6 +261,25 @@ def sliding_window_view(x, window_shape, axis=None, *,
     array([[0, 1, 2],
            [2, 3, 4],
            [4, 5, 6]])
+
+    A common application of `sliding_window_view` is the calculation of running
+    statistics. The simplest example is the
+    `moving average <https://en.wikipedia.org/wiki/Moving_average>`_:
+
+    >>> x = np.arange(6)
+    >>> x.shape
+    (6,)
+    >>> v = np.sliding_window_view(x, 3)
+    >>> v.shape
+    (4, 3)
+    >>> v
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4],
+           [3, 4, 5]])
+    >>> moving_average = v.mean(axis=-1)
+    >>> moving_average
+    array([1., 2., 3., 4.])
     """
     window_shape = (tuple(window_shape)
                     if np.iterable(window_shape)
