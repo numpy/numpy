@@ -402,8 +402,8 @@ of how dtypes are handled:
 ArrayMethod
 *****************************************************************************
 
-The central proposal is the creation of the ``ArrayMethod``, as an object
-describing each function.
+A central proposal of this NEP is the creation of the ``ArrayMethod`` as an object
+describing each implementation specific to a given set of DTypes.
 We use the ``class`` syntax to describe the information required to create
 a new ``ArrayMethod`` object:
 
@@ -481,18 +481,17 @@ And ``flags`` stored properties, for whether:
 * the inner-loop function requires the Python API (GIL)
 * NumPy has to check the floating point error CPU flags.
 
-More details will be added, since this NEP is concerned primarily with the big
-picture design choice.
+*Note: More information is expected to be added as necessary.*
 
 
 The call ``Context``
 ====================
 
 The call "context" may seem surprising.  This object represents a similar
-concept as Python passing ``self`` to all methods.
-The following details the reasons for the above ``Context`` as it is.
+concept as Python's ``self``, that is to all methods.
+The following details the reasons for the above ``Context``.
 
-To understand its existence, and the structure, it is helpful to remember
+To understand its existence, and structure, it is helpful to remember
 that a Python method can be written in the following way
 (see also the `documentation of ``__get__``
 <https://docs.python.org/3.8/reference/datamodel.html#object.__get__>`_):
@@ -517,7 +516,7 @@ that a Python method can be written in the following way
             return BoundMethod(instance, self)            
 
 
-With which the following two methods behave identical:
+With which the following ``method1`` and ``method2`` below, behave identical:
 
 .. code-block:: python
 
@@ -540,28 +539,31 @@ And both will print the same result:
     >>> myinstance.method2()
     <__main__.MyClass object at 0x7eff65436d00>
 
-Here the ``self.instance`` would be all that the above ``Context`` consists of.
-There are two reasons for the more general ``Context``:
+Here ``self.instance`` would be all information passed on by ``Context``.
+The ``Context`` is a generalization and has to pass additional information:
 
-1. Unlike a method which operates on a single class instance, the ``ArrayMethod``
-   operates on many input arrays and thus many dtypes.
-2. The ``__call__`` of the ``BoundMethod`` above contains only a single call
-   to the function. A ufunc will require multiple function calls.
-   For example the inner-loop function is often called more than once.
+* Unlike a method which operates on a single class instance, the ``ArrayMethod``
+  operates on many input arrays and thus multiple dtypes.
+* The ``__call__`` of the ``BoundMethod`` above contains only a single call
+  to a function. But an ``ArrayMethod`` has to call ``resolve_descriptors``
+  and later pass on that information to the inner-loop function.
+* A python function has no state except the state defined by its outer scope.
+  Within C, ``Context`` is able to provide additional state if necessary.
 
 Just as Python requires the distinction of a method and a bound method,
-NumPy will have a ``BoundArrayMethod``, which stores all of the constant
-information that is part of the ``Context``, such as:
+NumPy will have a ``BoundArrayMethod``.
+This stores all of the constant information that is part of the ``Context``,
+such as:
 
-* The ``DTypes``
-* The number of input and ouput arguments
-* The ufunc signature
+* the ``DTypes``
+* the number of input and ouput arguments
+* the ufunc signature (specific to generalized ufuncs, compare :ref:`NEP20`).
 
 Fortunately, most users and even ufunc implementers will not have to worry
-much about these internal details; just like few Python users need to know
+about these internal details; just like few Python users need to know
 about the ``__get__`` dunder method.
-A ``context`` object or C-structure provides all necessary data to the
-fast C-functions and a convenient API creates the new ``ArrayMethod`` or
+The ``Context`` object or C-structure provides all necessary data to the
+fast C-functions and NumPy API creates the new ``ArrayMethod`` or
 ``BoundArrayMethod`` as required.
 
 
