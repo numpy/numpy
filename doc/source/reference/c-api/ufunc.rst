@@ -86,7 +86,7 @@ Types
     (element-by-element) function :math:`N` times with the following
     signature:
 
-    .. c:function:: void loopfunc(
+    .. c:function:: void loopfunc(\
             char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
 
         *args*

@@ -97,7 +97,7 @@ Platform information
 
     Defined in ``numpy/npy_endian.h``.
 
-.. c:function:: PyArray_GetEndianness()
+.. c:function:: int PyArray_GetEndianness()
 
     .. versionadded:: 1.3.0
 
