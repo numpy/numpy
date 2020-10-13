@@ -250,7 +250,7 @@ initially using a C-API:
             return (given_descrs[0], given_descrs[1], context.DTypes[2]()), "safe"
 
         def strided_loop(context, n, data, strides):
-            # n: Number of 
+            # n: Number of elements in the one dimensional loop
             # data: Pointers to the array data.
             # strides: strides to iterate all elements
             num_chars1 = context.descriptors[0].itemsize
