@@ -321,10 +321,10 @@ steps involved in a call to a universal function in NumPy.
 
 A UFunc call is split into the following steps:
 
-1. Handling of ``__array_ufunc__`` for container types, such as a Dask
-   array handling the full process, rather than NumPy.
-   This step is performed first, and unaffected by this NEP
-   (compare :ref:`NEP18`).
+1. *Handle ``__array_ufunc__`` protocol:*
+
+   * For array-likes such as a Dask arrays, NumPy can defer the operation.
+     This step is performed first, and unaffected by this NEP (compare :ref:`NEP18`).
 
 2. *Promotion and dispatching*
 
@@ -335,14 +335,16 @@ A UFunc call is split into the following steps:
      For example, adding a ``float32`` and a ``float64`` is implemented by
      first casting the ``float32`` to ``float64``.
 
-3. *``dtype`` resolution:*
+3. *Parametric ``dtype`` resolution:*
 
+   * In general, whenever an output DType is parametric the parameters have
+     to be found (resolved).
    * For example, if a loop adds two strings, it is necessary to define the
      correct output (and possibly input) dtypes.  ``S5 + S4 -> S9``, while
      an ``upper`` function has the signature ``S5 -> S5``.
-   * In general, whenever an output DType is parametric the parameters have
-     to be found (resolved).  When they are not parametric, this step can
-     be implemented using a minimal default version.
+   * When they are not parametric, a default implementation is provided
+     which fills in the default dtype instances (ensuring for example native
+     byte order).
 
 4. *Preparing the iteration:*
 
@@ -410,14 +412,14 @@ a new ``ArrayMethod`` object:
     :dedent: 0
 
     class ArrayMethod:
-        str : name  # Name, mainly useful for debugging
+        name: str  # Name, mainly useful for debugging
 
         # Casting safety information (almost always "safe", necessary to
         # unify casting and universal functions)
-        Casting : casting = "safe"
+        casting: Casting = "safe"
 
         # More general flags:
-        int : flags 
+        flags: int
 
         @staticmethod
         def resolve_descriptors(
@@ -1008,12 +1010,15 @@ In the future we expect that ``ArrayMethod``\ s can also be defined for
 
 **Promotion:**
 
-While dispatching requires looking up the ``ArrayMethod`` registered for
-the matching DTypes, requires additional definitions:
+If a matching ``ArrayMethod`` exists, dispatching is straight forward.
+However, when it does not, require additional definitions to implement
+promotion:
 
 * By default any UFunc has a promotion which uses the common DType of all
-  inputs and dispatching a second time.  This is well-defined for most
+  inputs and dispatches a second time.  This is well-defined for most
   mathematical functions, but can be disabled or customized if necessary.
+  For instances ``int32 + float64`` tries again using ``float64 + float64``
+  which is the common DType.
 
 * Users can *register* new Promoters just as they can register a
   new ``ArrayMethod``.  These will use abstract DTypes to allow matching
@@ -1229,9 +1234,9 @@ In general a promoter should fulfill the following requirements:
   It is *not* reasonable to add a loop for ``int16 + uint16 -> int24`` if
   you write an ``int24`` dtype. The result of this operation was already
   defined previously as ``int32`` and will be used with this assumption.
-* A promoter (or loop) should never affect other existing loop results.
-  Additionally, to changes in the resulting dtype, do not add for example
-  faster but less precise loops/promoter.
+* A promoter (or loop) should never affect existing loop results.
+  This includes adding faster but less precise loops/promoters to replace
+  existing ones.
 * Try to stay within a clear, linear hierarchy for all promotion (and casting)
   related logic. NumPy itself breaks this logic for integers and floats
   (they are not strictly linear, since int64 cannot promote to float32).
