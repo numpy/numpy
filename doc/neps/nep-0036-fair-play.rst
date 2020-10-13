@@ -177,4 +177,4 @@ References and Footnotes
 Copyright
 ---------
 
-This document has been placed in the public domain. [1]_
+This document has been placed in the public domain.
