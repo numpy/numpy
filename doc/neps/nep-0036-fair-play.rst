@@ -55,7 +55,9 @@ from which the error came, how the release was modified from the
 version we provide, and whether we are able to address related issues
 (if not, where to relay the report to).
 
-During a community call on XX/XX/XX the community decided to draft a
+During a community call on `October 16th, 2019 
+<https://github.com/numpy/archive/blob/master/status_meetings/status-2019-10-16.md>`__
+the community decided to draft a
 set of guidelines for companies and external developers to use when
 they modify and redistribute NumPy.
 
