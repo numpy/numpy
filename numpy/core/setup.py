@@ -674,6 +674,12 @@ def configuration(parent_package='',top_path=None):
     # Intel and Clang also don't seem happy with /GL
     is_msvc = (platform.platform().startswith('Windows') and
                platform.python_compiler().startswith('MS'))
+
+    # issue 16744: remove this code  and the call to call_emms in nypmath
+    # when there is a fix from microsoft
+    if platform.platform().startswith('Windows') and sys.maxsize > 2**32:
+        npymath_sources.append(join('src', 'npymath', 'call_emms.obj'))
+
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',

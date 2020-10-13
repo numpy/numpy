@@ -371,6 +371,10 @@ NPY_INPLACE double npy_log2(double x)
  * instead test for the macro, but I am lazy to do that for now.
  */
 
+#ifdef _WIN64
+int call_emms(void);
+#endif
+
 /**begin repeat
  * #type = npy_longdouble, npy_float#
  * #TYPE = NPY_LONGDOUBLE, FLOAT#
@@ -398,8 +402,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,pow,copysign#
+ * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
@@ -411,6 +415,21 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 }
 #endif
 /**end repeat1**/
+
+#ifdef fmod@c@
+#undef fmod@c@
+#endif
+#ifndef HAVE_FMOD@C@
+
+NPY_INPLACE @type@ npy_fmod@c@(@type@ x, @type@ y)
+{
+    @type@ ret = (@type@)npy_fmod((double)x, (double) y);
+#ifdef _WIN64
+    call_emms();
+#endif
+    return ret;
+}
+#endif
 
 #ifdef modf@c@
 #undef modf@c@
@@ -473,8 +492,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,pow,copysign#
+ * #KIND = ATAN2,HYPOT,POW,COPYSIGN#
  */
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
@@ -483,6 +502,21 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 }
 #endif
 /**end repeat1**/
+
+#ifdef HAVE_FMOD@C@
+
+NPY_INPLACE @type@ npy_fmod@c@(@type@ x, @type@ y)
+{
+    @type@ ret = fmod@c@(x, y);
+#ifdef _WIN64
+    call_emms();
+#endif
+    return ret;
+}
+#endif
+
+
+
 
 #ifdef HAVE_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
@@ -757,3 +791,4 @@ npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
 }
 /**end repeat1**/
 /**end repeat**/
+

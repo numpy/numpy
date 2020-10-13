@@ -289,16 +289,22 @@ class build_clib(old_build_clib):
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
             cxx_sources = []
+            obj_ext = '.obj'
+        else:
+            obj_ext = '.o'
 
-        objects = []
+        # c_sources collects all the default sources, including pre-compiled
+        # object files
+        objects = [c_sources.pop(c_sources.index(c)) for c in c_sources[:]
+                   if c.endswith(obj_ext)]
         if c_sources:
             log.info("compiling C sources")
-            objects = compiler.compile(c_sources,
+            objects.extend(compiler.compile(c_sources,
                                        output_dir=self.build_temp,
                                        macros=macros,
                                        include_dirs=include_dirs,
                                        debug=self.debug,
-                                       extra_postargs=extra_args_baseopt)
+                                       extra_postargs=extra_args_baseopt))
         objects.extend(dispatch_objects)
 
         if cxx_sources:
@@ -392,3 +398,4 @@ class build_clib(old_build_clib):
                 clib_libraries.extend(binfo.get('libraries', []))
         if clib_libraries:
             build_info['libraries'] = clib_libraries
+
