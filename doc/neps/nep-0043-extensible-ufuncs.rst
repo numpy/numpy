@@ -28,28 +28,29 @@ NEP 43 — Enhancing the Extensibility of UFuncs
 Abstract
 ******************************************************************************
 
-The previous NEP 42 document proposes the creation of new DTypes which can
+The previous NEP 42 proposes the creation of new DTypes which can
 be defined by users outside of NumPy itself.
-While implementing NEP 42 will enable users to create arrays with a custom dtype
-and stored values, this NEP outlines how NumPy will operate on these arrays
-in the future.
-The main aspect is that functions operating on NumPy arrays are called
+The implementation of NEP 42 will enable users to create arrays with a custom dtype
+and stored values.
+This NEP outlines how NumPy will operate on arrays with custom dtypes in the future.
+The most important functions operating on NumPy arrays are the so called
 "universal functions" (ufunc) which include all math functions, such as
 ``np.add``, ``np.multiply``, and even ``np.matmul``.
-Universal functions may operate on multiple arrays with potentially
+These ufuncs must be capable to operate efficiently on multiple arrays with
 different datatypes.
-Their nature means that they also must efficiently operate on many elements.
 
-This NEP proposes to expand the design of universal functions.
-It defines a clear distinction between the ufunc which can operate
+This NEP proposes to expand the design of ufuncs.
+It makes a new distinction between the ufunc which can operate
 on many different dtypes such as floats or integers,
-and the new ``ArrayMethod`` defining the functionality for a fixed dtypes.
+and a new ``ArrayMethod`` which defines the efficient operation for
+specific dtypes.
 
 .. note::
 
     Details of the private and external APIs may change to reflect user
     comments and implementation constraints. The underlying principles and
     choices should not change significantly.
+
 
 ******************************************************************************
 Motivation and scope
@@ -58,50 +59,51 @@ Motivation and scope
 As a continuation of NEP 42, the goal of this NEP is to extend universal
 functions to DTypes defined outside of NumPy.
 While the main motivation is enabling new user defined DTypes, this will
-significantly simplify defining universal functions for NumPy string or
-structured dtypes.
-Until now, these dtypes are not supported by any of NumPy's functions
+also significantly simplify defining universal functions for NumPy strings or
+structured DTypes.
+Until now, these DTypes are not supported by any of NumPy's functions
 (such as ``np.add`` or ``np.equal``), due to difficulties arising from
-their parametric nature (compare NEP 41 and 42).
+their parametric nature (compare NEP 41 and 42), e.g. the string length.
 
 Functions on arrays must handle a number of distinct steps which are
-described in more detail in section `Steps involved in a UFunc call`_.
+described in more detail in section "`Steps involved in a UFunc call`_".
 The most important ones are:
 
-- Organizing all functionality which a new DType requires to define a
-  ufunc call, currently sometimes called "inner-loop".
-- Deal with input for which no exact matching function is found.
+- Organizing all functionality required to define a ufunc call for specific
+  DTypes.  This is often called the "inner-loop".
+- Deal with input for which no exact matching implementation is found.
   For example when ``int32`` and ``float64`` are added, the ``int32``
   is cast to ``float64``.  This requires a distinct "promotion" step.
 
 After organizing and defining these, we need to:
 
-- Define the user API necessary to customize both of the above point
+- Define the user API necessary to customize both of the above points.
 - Allow convenient reuse of existing functionality.
   For example a DType representing physical units, such as meters,
   should be able to fall back to NumPy's existing math implementations.
 
-This NEP details how these requirements will be achieved in NumPy.
+This NEP details how these requirements will be achieved in NumPy:
 
-- All DType specific functionality that is currently part of the ufunc
-  definition will be defined by a new `ArrayMethod`_ object.
-  This ``ArrayMethod`` object will be the new way to describe any function
-  operating on arrays.
+- All DType specific functionality currently part of the ufunc
+  definition will be defined as part of a new `ArrayMethod`_ object.
+  This ``ArrayMethod`` object will be the new, preferred, way to describe any
+  function operating on arrays.
 
-- Ufuncs must dispatch to the ``ArrayMethod`` and potentially use promotion
+- Ufuncs will dispatch to the ``ArrayMethod`` and potentially use promotion
   to find the correct ``ArrayMethod`` to use.
   This will be described in the `Promotion and dispatching`_ section.
 
 A new C-API will be outlined in each section. A future Python API is
 expected to be very similar and the C-API is presented in terms of Python
-code.
+code for readability.
 
 The NEP proposes a large, but necessary, refactor of the NumPy ufunc internals.
-This modernization will not affect users directly and is not only a necessary
-step for new DTypes, but also future improvements to the ufunc machinery.
+This modernization will not affect end users directly and is not only a necessary
+step for new DTypes, but in itself a maintenance effort which is expected to
+help with future improvements to the ufunc machinery.
 
 While the most important restructure proposed is the new ``ArrayMethod``
-object, the largest long term consideration is the design choice for
+object, the largest long term consideration is the API choice for
 promotion and dispatching.
 
 
@@ -114,28 +116,26 @@ previously in NEP 41.
 
 The vast majority of users should not see any changes beyond those typical
 for NumPy released.
-There are two main users (or use-cases) impacted by the proposed changes:
+There are three main users or use-cases impacted by the proposed changes:
 
 1. The Numba package uses direct access to the NumPy C-loops and modifies
    the NumPy ufunc struct directly for its own purposes.
-2. E.g. Astropy uses its own type resolver, meaning that a default switch over
-   from the existing type resolution to a new default Promoter may not
-   be fully smooth.
+2. Astropy uses its own "type resolver", meaning that a default switch over
+   from the existing type resolution to a new default Promoter requires care.
 3. It is currently possible to register loops for dtype *instances*.
-   This is theoretically useful for structured dtypes and would be a resolution
+   This is theoretically useful for structured dtypes and is a resolution
    step happening *after* the DType resolution step proposed here.
 
-
 This NEP will try hard to maintain backward compatibility as much as
-possible, even though both of these projects have signaled willingness to
-breaking changes.
+possible. However, both of these projects have signaled willingness to adapt
+to breaking changes.
 
 The main reason why NumPy will be able to provide backward compatibility
 is that:
 
-* Legacy inner-loops can be wrapped adding an indirection to the call but
+* Existing inner-loops can be wrapped adding an indirection to the call but
   maintaining full backwards compatibility.
-  The ``get_loop`` function can in this case search the existing
+  The ``get_loop`` function can, in this case, search the existing
   inner-loop functions (which are stored on the ufunc directly) in order
   to maintain full compatibility even with potential direct structure access.
 * Legacy type resolvers can be called as a fallback (potentially caching
@@ -144,11 +144,11 @@ is that:
 * The fallback to the legacy type resolver should in most cases handle loops
   defined for such structured dtype instances.  This is because if there is no
   other ``np.Void`` implementation, the legacy fallback will retain the old
-  behaviour.
+  behaviour at least initially.
 
 The masked type resolvers specifically will *not* remain supported, but
-have no known users (this even includes NumPy, which only uses the default
-itself).
+has no known users (this even includes NumPy, which only uses the default
+version).
 
 While the above changes potentially break some workflows,
 we believe that the long term improvements vastly outweigh this.
@@ -161,18 +161,18 @@ Usage and impact
 ******************************************************************************
 
 This NEP restructures how operations on NumPy arrays are defined both
-within NumPy and for external users.
+within NumPy and for external implementers.
 The NEP mainly concerns those who either extend ufuncs for custom DTypes
-or create custom ufuncs themselves.  It does not aim to finalize all
-potential use-cases, but rather restructure NumPy in an extensible way
-where solving these issues will be possible incrementally.
+or create custom ufuncs.  It does not aim to finalize all
+potential use-cases, but rather restructure NumPy to be extensible and allow
+addressing new issues or feature requests as they arise.
 
 
 Overview and end user API 
 =========================
 
-to give an overview of how this NEP proposes the structure of ufuncs,
-the following describe the possible exposure of the proposed restructure
+To give an overview of how this NEP proposes to structure ufuncs,
+the following describes the potential exposure of the proposed restructure
 to the end user.
 
 Universal functions are much like a Python method defined on the DType of
@@ -189,17 +189,18 @@ However, unlike methods, ``positive_impl`` is not stored on the dtype itself.
 It is rather the implementation of ``np.positive`` for a specific DType.
 Current NumPy partially exposes this "choice of implementation" using
 the ``dtype`` (or more exact ``signature``) attribute in universal functions,
-although these are rarely used:
+although these are rarely used::
 
     np.positive(arr, dtype=np.float64)
 
 forces NumPy to use the ``positive_impl`` written specifically for the Float64
 DType.
 
-This NEP makes this distinction more explicit, by creating a new object to
+This NEP makes the distinction more explicit, by creating a new object to
 represent ``positive_impl``::
 
-    positive_impl = np.positive.resolve_impl(type(arr.dtype))
+    positive_impl = np.positive.resolve_impl((type(arr.dtype), None))
+    # The `None` represents the output DType which is automatically chosen.
 
 While the creation of a ``positive_impl`` object and the ``resolve_impl``
 method is part of this NEP, the following code::
@@ -212,22 +213,22 @@ In general NumPy universal functions can take many inputs.
 This requires looking up the implementation by considering all of them
 and makes ufuncs "multi-methods" with respect to the input DTypes::
 
-    add_impl = np.add.resolve_impl(type(arr1.dtype), type(arr2.dtype))
+    add_impl = np.add.resolve_impl((type(arr1.dtype), type(arr2.dtype), None))
 
 This NEP defines how ``positive_impl`` and ``add_impl`` will be represented
-as a new ``ArrayMethod`` and can be defined outside of NumPy.
-Further, it defines how ``resolve_impl`` will be implemented, covering the
-dispatching and promotion.
+as a new ``ArrayMethod`` which can be implemented outside of NumPy.
+Further, it defines how ``resolve_impl`` will implement and solve dispatching
+and promotion.
 
-The reasons for this split may be made more clear in the section
-`Steps involved in a UFunc call`_.
+The reasons for this split may be more clear after reviewing the
+`Steps involved in a UFunc call`_ section.
 
 
 Defining a new ufunc implementation
 ===================================
 
-An example of how to add a new loop, will look the following way;
-initially using a C-API:
+The following is a mock-up of how a new implementation, in this case
+to define string equality, will be added to a ufunc.
 
 .. code-block:: python
 
@@ -250,6 +251,7 @@ initially using a C-API:
             return (given_descrs[0], given_descrs[1], context.DTypes[2]()), "safe"
 
         def strided_loop(context, n, data, strides):
+            """The 1-D strided loop, similar to those used in current ufuncs"""
             # n: Number of elements in the one dimensional loop
             # data: Pointers to the array data.
             # strides: strides to iterate all elements
@@ -265,15 +267,15 @@ initially using a C-API:
     del StringEquality  # may be deleted.
 
 
-This definition will be sufficient to create a new loop, although the
-structure will allow for expansion in the future; something that is already
+This definition will be sufficient to create a new loop, and the
+structure allows for expansion in the future; something that is already
 required to implement casting within NumPy itself.
-We use ``BoundArrayMethod`` and a ``context`` object here.  These
+We use ``BoundArrayMethod`` and a ``context`` structure here.  These
 are described and motivated in details later. Briefly:
 
 * ``context`` is a generalization of the ``self`` that Python passes to its
   methods.
-* ``BoundArrayMethod`` is roughly equivalent to the Python distinction that
+* ``BoundArrayMethod`` is equivalent to the Python distinction that
   ``class.method`` is a method, while ``class().method`` returns a "bound" method.
 
 
@@ -289,8 +291,8 @@ implementation matches the requested DTypes exactly:
 
     np.multiple.resolve_impl((Timedelta64, Int8, None))
 
-will not find a loop, because NumPy only defines a loop for multiplying
-``Timedelta64`` with ``Int64``.
+will not have an exact match, because NumPy only has an implementation for
+multiplying ``Timedelta64`` with ``Int64``.
 In simple cases, NumPy will use a default promotion step to attempt to find
 the correct implementation, but to implement the above step, we will allow
 the following:
@@ -303,9 +305,9 @@ the following:
         return ufunc.resolve_impl(new_dtypes)
 
     np.multiple.register_promoter(
-        (Timdelta64, SignedInteger, None), promote_timedelta_integer)
+        (Timedelta64, Integer, None), promote_timedelta_integer)
 
-Where ``SignedInteger`` is an abstract DType (compare NEP 42).
+Where ``Integer`` is an abstract DType (compare NEP 42).
 
 
 .. _steps_of_a_ufunc_call:
