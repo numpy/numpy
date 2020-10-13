@@ -318,12 +318,12 @@ PyArrayDescr_Type and PyArray_Descr
            :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
            :c:data:`NPY_NEEDS_PYAPI`).
 
-       .. c:function:: PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
+       .. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
 
            Return true if all the given flags are set for the data-type
            object.
 
-       .. c:function:: PyDataType_REFCHK(PyArray_Descr *dtype)
+       .. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
 
            Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
            :c:data:`NPY_ITEM_REFCOUNT`).
