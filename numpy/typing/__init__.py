@@ -111,39 +111,41 @@ else:
 @final  # Dissallow the creation of arbitrary `NBitBase` subclasses
 class NBitBase:
     """
-    An object representing `number` precision during static type checking.
+    An object representing `numpy.number` precision during static type checking.
 
     Used exclusively for the purpose static type checking, `NBitBase`
     represents the base of a hierachieral set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
-    of precision, _e.g._ `64Bit > 32Bit > 16Bit`.
+    of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
     Examples
     --------
     Below is a typical usage example: `NBitBase` is herein used for annotating a
     function that takes a float and integer of arbitrary precision as arguments
     and returns a new float of whichever precision is largest
-    (_e.g._ `np.float16 + np.int64 -> np.float64`).
+    (*e.g.* ``np.float16 + np.int64 -> np.float64``).
 
-    >>> from typing import TypeVar, TYPE_CHECKING
-    >>> import numpy as np
-    >>> import numpy.typing as npt
+    .. code-block:: python
 
-    >>> T = TypeVar("T", bound=npt.NBitBase)
+        >>> from typing import TypeVar, TYPE_CHECKING
+        >>> import numpy as np
+        >>> import numpy.typing as npt
 
-    >>> def add(a: "np.floating[T]", b: "np.integer[T]") -> "np.floating[T]":
-    ...     return a + b
+        >>> T = TypeVar("T", bound=npt.NBitBase)
 
-    >>> a = np.float16()
-    >>> b = np.int64()
-    >>> out = add(a, b)
+        >>> def add(a: "np.floating[T]", b: "np.integer[T]") -> "np.floating[T]":
+        ...     return a + b
 
-    >>> if TYPE_CHECKING:
-    ...     reveal_locals()
-    ...     # note: Revealed local types are:
-    ...     # note:     a: numpy.floating[numpy.typing._16Bit*]
-    ...     # note:     b: numpy.signedinteger[numpy.typing._64Bit*]
-    ...     # note:     out: numpy.floating[numpy.typing._64Bit*]
+        >>> a = np.float16()
+        >>> b = np.int64()
+        >>> out = add(a, b)
+
+        >>> if TYPE_CHECKING:
+        ...     reveal_locals()
+        ...     # note: Revealed local types are:
+        ...     # note:     a: numpy.floating[numpy.typing._16Bit*]
+        ...     # note:     b: numpy.signedinteger[numpy.typing._64Bit*]
+        ...     # note:     out: numpy.floating[numpy.typing._64Bit*]
 
     """
 
