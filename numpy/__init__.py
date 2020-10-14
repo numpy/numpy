@@ -375,7 +375,7 @@ else:
     if sys.platform == "win32" and sys.maxsize > 2**32:
         _win_os_check()
 
-    del _mac_os_check
+    del _win_os_check
 
     # We usually use madvise hugepages support, but on some old kernels it
     # is slow and thus better avoided.
