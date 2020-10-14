@@ -461,9 +461,11 @@ class TestLinspace:
     def test_datetime_nicely_spaced_step(self):
         t1 = datetime64("2020-01-01T00:00:00")
         t2 = datetime64("2020-01-01T00:00:01")
-        actual = diff(linspace(t1, t2, 33, dtype="M8[ms]"))
+        arr, step = linspace(t1, t2, 33, dtype="M8[ms]", retstep=True)
+        actual = diff(arr)
         expected = diff(linspace(0, 1000, 33, dtype="int64"))
         assert_array_equal(actual, expected)
+        assert step == timedelta64(31, "ms")
 
     def test_datetime_output_dtype(self):
         t1 = datetime64("2020-01-01T00:00:00")

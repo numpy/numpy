@@ -131,8 +131,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             dt = dtype
         else:
             dt = result_type(start, stop, dtype)
-        start = start.astype(dt)
-        stop = stop.astype(dt)
+        start = start.astype(dt, copy=False)
+        stop = stop.astype(dt, copy=False)
         delta = stop - start
         delta_dt = delta.dtype
         delta = delta.astype(_nx.int64)
@@ -154,6 +154,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             y[-1] = stop
         if axis != 0:
             y = _nx.moveaxis(y, 0, axis)
+        # cast `step` to ensure compatibility with output
+        step = asanyarray(step, dtype=_nx.int64).astype(delta_dt)
+        try:
+            step = step.item()
+        except ValueError:
+            pass
     else:
         # Convert float/complex array scalars to float, gh-3504
         start = start * 1.0
