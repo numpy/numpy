@@ -395,6 +395,7 @@ writeable). The syntax is
         One of the enumerated types or :c:data:`NPY_NOTYPE` if the data-type
         should be determined from the object itself. The C-based names
         can be used:
+
             :c:data:`NPY_BOOL`, :c:data:`NPY_BYTE`, :c:data:`NPY_UBYTE`,
             :c:data:`NPY_SHORT`, :c:data:`NPY_USHORT`, :c:data:`NPY_INT`,
             :c:data:`NPY_UINT`, :c:data:`NPY_LONG`, :c:data:`NPY_ULONG`,
@@ -404,6 +405,7 @@ writeable). The syntax is
 
         Alternatively, the bit-width names can be used as supported on the
         platform. For example:
+
             :c:data:`NPY_INT8`, :c:data:`NPY_INT16`, :c:data:`NPY_INT32`,
             :c:data:`NPY_INT64`, :c:data:`NPY_UINT8`,
             :c:data:`NPY_UINT16`, :c:data:`NPY_UINT32`,
