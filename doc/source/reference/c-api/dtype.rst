@@ -221,24 +221,17 @@ Defines
 Max and min values for integers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. c:var:: NPY_MAX_INT{bits}
-
-.. c:var:: NPY_MAX_UINT{bits}
-
-.. c:var:: NPY_MIN_INT{bits}
-
+``NPY_MAX_INT{bits}``, ``NPY_MAX_UINT{bits}``, ``NPY_MIN_INT{bits}``
     These are defined for ``{bits}`` = 8, 16, 32, 64, 128, and 256 and provide
     the maximum (minimum) value of the corresponding (unsigned) integer
     type. Note: the actual integer type may not be available on all
     platforms (i.e. 128-bit and 256-bit integers are rare).
 
-.. c:var:: NPY_MIN_{type}
-
+``NPY_MIN_{type}``
     This is defined for ``{type}`` = **BYTE**, **SHORT**, **INT**,
     **LONG**, **LONGLONG**, **INTP**
 
-.. c:var:: NPY_MAX_{type}
-
+``NPY_MAX_{type}``
     This is defined for all defined for ``{type}`` = **BYTE**, **UBYTE**,
     **SHORT**, **USHORT**, **INT**, **UINT**, **LONG**, **ULONG**,
     **LONGLONG**, **ULONGLONG**, **INTP**, **UINTP**
