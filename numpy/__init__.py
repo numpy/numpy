@@ -365,7 +365,7 @@ else:
             a = np.arange(13 * 13, dtype=np.float64).reshape(13, 13)
             a = a % 17  # calls fmod
             np.linalg.eig(a)
-        except:
+        except Exception:
             msg = ("The current Numpy installation ({!r}) fails to "
                    "pass a sanity check due to a bug in the windows runtime. "
                    "See this issue for more information "
