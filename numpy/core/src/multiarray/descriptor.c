@@ -1488,14 +1488,20 @@ _convert_from_any(PyObject *obj, int align)
             }
             return NULL;
         }
+        if (Py_EnterRecursiveCall(
+                " while trying to convert the given data type from"
+                " a str object" ) != 0) {
+            return NULL;
+        }
         PyArray_Descr *ret = _convert_from_str(obj2, align);
         Py_DECREF(obj2);
+        Py_LeaveRecursiveCall();
         return ret;
     }
     else if (PyUnicode_Check(obj)) {
         if (Py_EnterRecursiveCall(
-             " while trying to convert the given data type from "
-             "str object" ) != 0) {
+                " while trying to convert the given data type from"
+                " a str object" ) != 0) {
             return NULL;
         }
         PyArray_Descr *ret = _convert_from_str(obj, align);
@@ -1505,8 +1511,8 @@ _convert_from_any(PyObject *obj, int align)
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
         if (Py_EnterRecursiveCall(
-             " while trying to convert the given data type from "
-             "tuple object" ) != 0) {
+                " while trying to convert the given data type from"
+                " a tuple object" ) != 0) {
             return NULL;
         }
         PyArray_Descr *ret = _convert_from_tuple(obj, align);
@@ -1516,8 +1522,8 @@ _convert_from_any(PyObject *obj, int align)
     else if (PyList_Check(obj)) {
         /* or a list */
         if (Py_EnterRecursiveCall(
-             " while trying to convert the given data type from "
-             "list object" ) != 0) {
+                " while trying to convert the given data type from"
+                " a list object" ) != 0) {
             return NULL;
         }
         PyArray_Descr *ret = _convert_from_array_descr(obj, align);
@@ -1527,8 +1533,8 @@ _convert_from_any(PyObject *obj, int align)
     else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         /* or a dictionary */
         if (Py_EnterRecursiveCall(
-             " while trying to convert the given data type from "
-             "dict object" ) != 0) {
+                " while trying to convert the given data type from"
+                " a dict object" ) != 0) {
             return NULL;
         }
         PyArray_Descr *ret = _convert_from_dict(obj, align);
