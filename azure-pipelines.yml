@@ -20,7 +20,7 @@ stages:
     strategy:
       matrix:
           Python36-64bit-fast:
-            PYTHON_VERSION: '3.6'
+            PYTHON_VERSION: '3.7'
             PYTHON_ARCH: 'x64'
             TEST_MODE: fast
             BITS: 64
@@ -29,7 +29,9 @@ stages:
 
 - stage: ComprehensiveTests
   jobs:
-  - job: Linux_Python_38_32bit_full_with_asserts
+
+
+  - job: Linux_Python_39_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-18.04'
     steps:
@@ -38,7 +40,7 @@ stages:
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2010_i686 \
             /bin/bash -xc "cd numpy && \
-            /opt/python/cp38-cp38/bin/python -mvenv venv &&\
+            /opt/python/cp39-cp39/bin/python -mvenv venv &&\
             source venv/bin/activate && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
@@ -54,7 +56,9 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.8-32 bit full Linux'
+        testRunTitle: 'Publish test results for Python 3.9-32 bit full Linux'
+
+
   - job: macOS
     pool:
       # NOTE: at time of writing, there is a danger
@@ -68,11 +72,18 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python36:
-            PYTHON_VERSION: '3.6'
+          Python37:
+            PYTHON_VERSION: '3.7'
             USE_OPENBLAS: '1'
-          Python36-ILP64:
-            PYTHON_VERSION: '3.6'
+          Python37-ILP64:
+            PYTHON_VERSION: '3.7'
+            NPY_USE_BLAS_ILP64: '1'
+            USE_OPENBLAS: '1'
+          Python39:
+            PYTHON_VERSION: '3.9'
+            USE_OPENBLAS: '1'
+          Python39-ILP64:
+            PYTHON_VERSION: '3.9'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
           # Disable this job: the azure images do not create the problematic
@@ -188,7 +199,9 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
+        testRunTitle: 'Publish test results for Python 3.7 64-bit full Mac OS'
+
+
   - job: Windows
     pool:
       vmImage: 'VS2017-Win2016'
@@ -243,6 +256,8 @@ stages:
         testResultsFiles: '**/test-*.xml'
         testRunTitle: 'Publish test results for PyPy3'
         failTaskOnFailedTests: true
+
+
   - job: Linux_gcc48
     pool:
       vmImage: 'ubuntu-18.04'
