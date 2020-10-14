@@ -17,13 +17,13 @@ NEP 42 — New and extensible DTypes
 
     This NEP is third in a series:
 
-    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
+    - :ref:`NEP40` explains the shortcomings of NumPy's dtype implementation.
 
-    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
+    - :ref:`NEP41` gives an overview of our proposed replacement.
 
     - NEP 42 (this document) describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - :ref:`NEP43` describes the new design's API for universal functions.
 
 
 ******************************************************************************
@@ -41,7 +41,7 @@ will return an instance of a ``Float64`` class, a subclass of root class
 ``np.dtype``.
 
 This NEP is one of two that lay out the design and API of this new
-architecture. This NEP addresses dtype implementation; NEP 43 addresses
+architecture. This NEP addresses dtype implementation; :ref:`NEP 43 <NEP43>` addresses
 universal functions.
 
 .. note::
@@ -88,7 +88,7 @@ All these are the subjects of this NEP.
 - The functionality for users to define their own DTypes is described in
   `Public C-API`_.
 
-The API here and in NEP 43 is entirely on the C side. A Python-side version
+The API here and in :ref:`NEP 43 <NEP43>` is entirely on the C side. A Python-side version
 will be proposed in a future NEP. A future Python API is expected to be
 similar, but provide a more convenient API to reuse the functionality of
 existing DTypes. It could also provide shorthands to create structured DTypes
@@ -211,7 +211,7 @@ Other elements of the casting implementation is the ``CastingImpl``:
             raise NotImplementedError
 
 which describes the casting from one DType to another. In
-NEP 43 this ``CastingImpl`` object is used unchanged to
+:ref:`NEP 43 <NEP43>` this ``CastingImpl`` object is used unchanged to
 support universal functions.
 
 
@@ -337,7 +337,7 @@ hierarchy.
    ``Float64Unit``. Calling ``Unit(np.float64, "m")`` (``m`` for meters) would
    be equivalent to ``Float64Unit("m")``.
 
-4. The implementation of universal functions in NEP 43 may require
+4. The implementation of universal functions in :ref:`NEP 43 <NEP43>` may require
    a class hierarchy.
 
 **Example:** A NumPy ``Categorical`` class would be a match for pandas
@@ -744,7 +744,7 @@ only if byte order matches. This functionality can be replaced with the
 combination of "equivalent" casting and the "view" flag.
 
 (For more information on the ``resolve_descriptors`` signature see the
-:ref:`nep42_C-API` section below and NEP 43.)
+:ref:`nep42_C-API` section below and :ref:`NEP 43 <NEP43>`.)
 
 
 **Casting between instances of the same DType**
@@ -1312,7 +1312,7 @@ The external API for ``CastingImpl`` will be limited initially to defining:
   preferable).
 
 * ``strided_loop(char **args, npy_intp *dimensions, npy_intp *strides,
-  ...) -> int {0, -1}`` (signature will be fully defined in NEP 43)
+  ...) -> int {0, -1}`` (signature will be fully defined in :ref:`NEP 43 <NEP43>`)
 
 This is identical to the proposed API for ufuncs. The additional ``...``
 part of the signature will include information such as the two ``dtype``\s.
@@ -1350,7 +1350,7 @@ incrementally in one of two ways:
   information, such as the fixed strides (similar to our internal API).
 
 The example does not yet include setup and error handling. Since these are
-similar to the UFunc machinery, they  will be defined in NEP 43 and then
+similar to the UFunc machinery, they  will be defined in :ref:`NEP 43 <NEP43>` and then
 incorporated identically into casting.
 
 The slots/methods used will be prefixed with ``NPY_meth_``.
