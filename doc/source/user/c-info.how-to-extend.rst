@@ -363,7 +363,6 @@ particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
 :c:func:`PyArray_FROM_OTF`
-
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
     array is determined by the object. The desired data-type of the
@@ -375,7 +374,6 @@ writeable). The syntax is
     exception is set.
 
     *obj*
-
         The object can be any Python object convertible to an ndarray.
         If the object is already (a subclass of) the ndarray that
         satisfies the requirements then a new reference is returned.
@@ -394,11 +392,9 @@ writeable). The syntax is
         to the requirements flag.
 
     *typenum*
-
         One of the enumerated types or :c:data:`NPY_NOTYPE` if the data-type
         should be determined from the object itself. The C-based names
         can be used:
-
             :c:data:`NPY_BOOL`, :c:data:`NPY_BYTE`, :c:data:`NPY_UBYTE`,
             :c:data:`NPY_SHORT`, :c:data:`NPY_USHORT`, :c:data:`NPY_INT`,
             :c:data:`NPY_UINT`, :c:data:`NPY_LONG`, :c:data:`NPY_ULONG`,
@@ -408,7 +404,6 @@ writeable). The syntax is
 
         Alternatively, the bit-width names can be used as supported on the
         platform. For example:
-
             :c:data:`NPY_INT8`, :c:data:`NPY_INT16`, :c:data:`NPY_INT32`,
             :c:data:`NPY_INT64`, :c:data:`NPY_UINT8`,
             :c:data:`NPY_UINT16`, :c:data:`NPY_UINT32`,
@@ -422,7 +417,6 @@ writeable). The syntax is
         requirements flag to override this behavior.
 
     *requirements*
-
         The memory model for an ndarray admits arbitrary strides in
         each dimension to advance to the next element of the array.
         Often, however, you need to interface with code that expects a
@@ -446,13 +440,11 @@ writeable). The syntax is
         :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
         :c:data:`NPY_ARRAY_IN_ARRAY`
-
             This flag is useful for arrays that must be in C-contiguous
             order and aligned. These kinds of arrays are usually input 
             arrays for some algorithm.
 
         :c:data:`NPY_ARRAY_OUT_ARRAY`
-
             This flag is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
@@ -460,7 +452,6 @@ writeable). The syntax is
             scratch).
 
         :c:data:`NPY_ARRAY_INOUT_ARRAY`
-
             This flag is useful to specify an array that will be used for both
             input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
             must be called before :c:func:`Py_DECREF` at
@@ -479,16 +470,13 @@ writeable). The syntax is
         Other useful flags that can be OR'd as additional requirements are:
 
         :c:data:`NPY_ARRAY_FORCECAST`
-
             Cast to the desired type, even if it can't be done without losing
             information.
 
         :c:data:`NPY_ARRAY_ENSURECOPY`
-
             Make sure the resulting array is a copy of the original.
 
         :c:data:`NPY_ARRAY_ENSUREARRAY`
-
             Make sure the resulting object is an actual ndarray and not a sub-
             class.
 
