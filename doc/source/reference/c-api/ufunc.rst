@@ -10,8 +10,7 @@ UFunc API
 Constants
 ---------
 
-.. c:var:: UFUNC_ERR_{HANDLER}
-
+``UFUNC_ERR_{HANDLER}``
     .. c:macro:: UFUNC_ERR_IGNORE
 
     .. c:macro:: UFUNC_ERR_WARN
@@ -20,8 +19,7 @@ Constants
 
     .. c:macro:: UFUNC_ERR_CALL
 
-.. c:var:: UFUNC_{THING}_{ERR}
-
+``UFUNC_{THING}_{ERR}``
     .. c:macro:: UFUNC_MASK_DIVIDEBYZERO
 
     .. c:macro:: UFUNC_MASK_OVERFLOW
@@ -46,8 +44,7 @@ Constants
 
     .. c:macro:: UFUNC_FPE_INVALID
 
-.. c:var:: PyUFunc_{VALUE}
-
+``PyUFunc_{VALUE}``
     .. c:macro:: PyUFunc_One
 
     .. c:macro:: PyUFunc_Zero
