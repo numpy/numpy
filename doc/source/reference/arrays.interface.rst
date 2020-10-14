@@ -60,7 +60,6 @@ This approach to the interface consists of the object having an
    The keys are:
 
    **shape** (required)
-
        Tuple whose elements are the array size in each dimension. Each
        entry is an integer (a Python int or long).  Note that these
        integers could be larger than the platform "int" or "long"
@@ -70,7 +69,6 @@ This approach to the interface consists of the object having an
        :c:data:`Py_LONG_LONG` as the C type for the shapes.
 
    **typestr** (required)
-
        A string providing the basic type of the homogeneous array The
        basic string format consists of 3 parts: a character describing
        the byteorder of the data (``<``: little-endian, ``>``:
@@ -97,7 +95,6 @@ This approach to the interface consists of the object having an
        =====  ================================================================
 
    **descr** (optional)
-
        A list of tuples providing a more detailed description of the
        memory layout for each item in the homogeneous array.  Each
        tuple in the list has two or three elements.  Normally, this
@@ -127,7 +124,6 @@ This approach to the interface consists of the object having an
        **Default**: ``[('', typestr)]``
 
    **data** (optional)
-
        A 2-tuple whose first argument is an integer (a long integer
        if necessary) that points to the data-area storing the array
        contents.  This pointer must point to the first element of
@@ -148,7 +144,6 @@ This approach to the interface consists of the object having an
        **Default**: None
 
    **strides** (optional)
-
        Either None to indicate a C-style contiguous array or
        a Tuple of strides which provides the number of bytes needed
        to jump to the next array element in the corresponding
@@ -166,7 +161,6 @@ This approach to the interface consists of the object having an
        **Default**: None (C-style contiguous)
 
    **mask** (optional)
-
        None or an object exposing the array interface.  All
        elements of the mask array should be interpreted only as true
        or not true indicating which elements of this array are valid.
@@ -177,7 +171,6 @@ This approach to the interface consists of the object having an
        **Default**: None (All array values are valid)
 
    **offset** (optional)
-
        An integer offset into the array data region. This can only be
        used when data is None or returns a :class:`buffer`
        object.
@@ -185,7 +178,6 @@ This approach to the interface consists of the object having an
        **Default**: 0.
 
    **version** (required)
-
        An integer showing the version of the interface (i.e. 3 for
        this version).  Be careful not to use this to invalidate
        objects exposing future versions of the interface.
