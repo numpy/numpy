@@ -69,6 +69,8 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     --------
     broadcast_to: broadcast an array to a given shape.
     reshape : reshape an array.
+    sliding_window_view: userfriendly and safe function for the creation of
+        sliding window views.
 
     Notes
     -----
@@ -166,8 +168,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     See Also
     --------
-    lib.stride_tricks.as_strided: Create a view into the array with the
-        given shape and strides.
+    lib.stride_tricks.as_strided: A lower-level and less safe routine for
+        creating arbitrary views from custom shape and strides.
     broadcast_to: broadcast an array to a given shape.
 
     Notes
