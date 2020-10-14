@@ -140,7 +140,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             (-1,) + (1,) * ndim(delta))
         if div > 0:
             step = delta / div
-            if _nx.any(step == _nx.array(0, asanyarray(step).dtype)):
+            if _nx.any(step == 0):
                 y = y / div
                 y = y * delta
             else:
