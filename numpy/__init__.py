@@ -357,6 +357,26 @@ else:
                 raise RuntimeError(msg)
     del _mac_os_check
 
+    def _win_os_check():
+        """
+        Quick Sanity check for Windows OS: look for fmod bug issue 16744.
+        """
+        try:
+            a = np.arange(13 * 13, dtype=np.float64).reshape(13, 13)
+            a = a % 17  # calls fmod
+            np.linalg.eig(a)
+        except:
+            msg = ("The current Numpy installation ({!r}) fails to "
+                   "pass a sanity check due to a bug in the windows runtime. "
+                   "See this issue for more information "
+                   "https://developercommunity.visualstudio.com/content/problem/1208774/fpu-exception-in-fmod0-x-in-windows-10-version-200.html")
+            raise RuntimeError(msg.format(__file__)) from None
+
+    if sys.platform == "win32" and sys.maxsize > 2**32:
+        _win_os_check()
+
+    del _mac_os_check
+
     # We usually use madvise hugepages support, but on some old kernels it
     # is slow and thus better avoided.
     # Specifically kernel version 4.6 had a bug fix which probably fixed this:
