@@ -17,13 +17,13 @@ NEP 42 — New and extensible DTypes
 
     This NEP is third in a series:
 
-    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
+    - :ref:`NEP40` explains the shortcomings of NumPy's dtype implementation.
 
-    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
+    - :ref:`NEP41` gives an overview of our proposed replacement.
 
     - NEP 42 (this document) describes the new design's datatype-related APIs.
 
-    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
+    - :ref:`NEP43` describes the new design's API for universal functions.
 
 
 ******************************************************************************
