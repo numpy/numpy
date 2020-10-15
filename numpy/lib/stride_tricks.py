@@ -202,6 +202,10 @@ def broadcast_shapes(*args):
     """
     Broadcast the input shapes into a single shape.
 
+    :ref:`Learn more about broadcasting here <basics.broadcasting>`.
+
+    .. versionadded:: 1.20.0
+
     Parameters
     ----------
     `*args` : tuples of ints, or ints
@@ -217,10 +221,6 @@ def broadcast_shapes(*args):
     ValueError
         If the shapes are not compatible and cannot be broadcast according
         to NumPy's broadcasting rules.
-
-    Notes
-    -----
-    .. versionadded:: 1.20.0
 
     Examples
     --------
