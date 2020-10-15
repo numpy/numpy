@@ -1,15 +1,15 @@
-`numpy.broadcast_shape` is a new user-facing function
------------------------------------------------------
-`broadcast_shape` gets the resulting shape from 
+`numpy.broadcast_shapes` is a new user-facing function
+------------------------------------------------------
+`broadcast_shapes` gets the resulting shape from
 broadcasting the given shape tuples against each other.
 
 .. code:: python
 
-    >>> np.broadcast_shape((1, 2), (3, 1))
+    >>> np.broadcast_shapes((1, 2), (3, 1))
     (3, 2)
 
-    >>> np.broadcast_shape(2, (3, 1))
+    >>> np.broadcast_shapes(2, (3, 1))
     (3, 2)
 
-    >>> np.broadcast_shape((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+    >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)

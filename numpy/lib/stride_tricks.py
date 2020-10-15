@@ -8,7 +8,7 @@ NumPy reference guide.
 import numpy as np
 from numpy.core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shape']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
 
 
 class DummyArray:
@@ -198,7 +198,7 @@ def _broadcast_shape(*args):
 
 
 @set_module('numpy')
-def broadcast_shape(*args):
+def broadcast_shapes(*args):
     """
     Get Broadcast shape from the given shape tuples.
 
@@ -224,10 +224,10 @@ def broadcast_shape(*args):
 
     Examples
     --------
-    >>> np.broadcast_shape((1, 2), (3, 1), (3,2))
+    >>> np.broadcast_shapes((1, 2), (3, 1), (3,2))
     (3, 2)
 
-    >>> np.broadcast_shape((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+    >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)
     """
     arrays = [np.empty(x, dtype=[]) for x in args]

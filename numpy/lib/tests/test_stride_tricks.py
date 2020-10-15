@@ -6,7 +6,7 @@ from numpy.testing import (
     )
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
-    broadcast_shape,
+    broadcast_shapes,
     )
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -277,7 +277,7 @@ def test_broadcast_to_raises():
 def test_broadcast_shape():
     # tests internal _broadcast_shape
     # _broadcast_shape is already exercized indirectly by broadcast_arrays
-    # _broadcast_shape is also exercized by the public broadcast_shape function
+    # _broadcast_shape is also exercized by the public broadcast_shapes function
     assert_equal(_broadcast_shape(), ())
     assert_equal(_broadcast_shape([1, 2]), (2,))
     assert_equal(_broadcast_shape(np.ones((1, 1))), (1, 1))
@@ -291,9 +291,10 @@ def test_broadcast_shape():
     assert_raises(ValueError, lambda: _broadcast_shape(*bad_args))
 
 
-def test_broadcast_shape_succeeds():
-    # tests public broadcast_shape
+def test_broadcast_shapes_succeeds():
+    # tests public broadcast_shapes
     data = [
+        [[], ()],
         [[()], ()],
         [[(7,)], (7,)],
         [[(1, 2), (2,)], (1, 2)],
@@ -322,17 +323,17 @@ def test_broadcast_shape_succeeds():
         [[2, (3, 2)], (3, 2)],
     ]
     for input_shapes, target_shape in data:
-        assert_equal(broadcast_shape(*input_shapes), target_shape)
+        assert_equal(broadcast_shapes(*input_shapes), target_shape)
 
-    assert_equal(broadcast_shape(*([(1, 2)] * 32)), (1, 2))
-    assert_equal(broadcast_shape(*([(1, 2)] * 100)), (1, 2))
+    assert_equal(broadcast_shapes(*([(1, 2)] * 32)), (1, 2))
+    assert_equal(broadcast_shapes(*([(1, 2)] * 100)), (1, 2))
 
     # regression tests for gh-5862
-    assert_equal(broadcast_shape(*([(2,)] * 32)), (2,))
+    assert_equal(broadcast_shapes(*([(2,)] * 32)), (2,))
 
 
-def test_broadcast_shape_raises():
-    # tests public broadcast_shape
+def test_broadcast_shapes_raises():
+    # tests public broadcast_shapes
     data = [
         [(3,), (4,)],
         [(2, 3), (2,)],
@@ -342,10 +343,10 @@ def test_broadcast_shape_raises():
         [2, (2, 3)],
     ]
     for input_shapes in data:
-        assert_raises(ValueError, lambda: broadcast_shape(*input_shapes))
+        assert_raises(ValueError, lambda: broadcast_shapes(*input_shapes))
 
     bad_args = [(2,)] * 32 + [(3,)] * 32
-    assert_raises(ValueError, lambda: broadcast_shape(*bad_args))
+    assert_raises(ValueError, lambda: broadcast_shapes(*bad_args))
 
 
 def test_as_strided():

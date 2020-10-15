@@ -1590,6 +1590,8 @@ def empty(
     like: ArrayLike = ...,
 ) -> ndarray: ...
 
+def broadcast_shapes(*args: _ShapeLike) -> _Shape: ...
+
 #
 # Constants
 #
