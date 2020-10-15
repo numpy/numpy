@@ -3443,6 +3443,11 @@ Other constants
     variable is defined to guarantee the numpy/arrayobject.h header is
     being used).
 
+.. c:macro:: NPY_FEATURE_VERSION
+
+    The current version of the API. :c:data:`NPY_FEATURE_VERSION` changes
+    whenever the API changes (e.g. a function is added).
+
 .. c:macro:: NPY_FALSE
 
     Defined as 0 for use with Bool.
