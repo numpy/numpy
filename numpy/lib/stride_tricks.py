@@ -200,7 +200,7 @@ def _broadcast_shape(*args):
 @set_module('numpy')
 def broadcast_shapes(*args):
     """
-    Get Broadcast shape from the given shape tuples.
+    Broadcast the input shapes into a single shape.
 
     Parameters
     ----------
