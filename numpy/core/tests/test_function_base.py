@@ -5,6 +5,7 @@ from numpy import (
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
     )
+import pytest
 
 
 class PhysicalQuantity(float):
@@ -423,12 +424,10 @@ class TestLinspace:
     def test_nat(self):
         t1 = datetime64("NaT")
         t2 = datetime64("2020-01-01")
-        actual = linspace(t1, t2, 5)
-        expected = array([t1]*4+[t2])
-        assert_array_equal(actual, expected)
-        actual = linspace(t1, t2, 5, False)
-        expected = array([t1]*5)
-        assert_array_equal(actual, expected)
+        with pytest.raises(ValueError):
+            linspace(t1, t2, 5)
+        with pytest.raises(ValueError):
+            linspace(t2, t1, 5)
 
     def test_datetime_mixedunits(self):
         t1 = datetime64("2020-01-01").astype("M8[D]")
@@ -443,7 +442,7 @@ class TestLinspace:
         t2 = datetime64("2020-01-02")
         actual, step = linspace(t1, t2, 1, True, True, "M8[D]")
         expected = array(t1)
-        assert_array_equal(step, array(datetime64("NaT")))
+        assert_array_equal(step, array(timedelta64("NaT")))
         assert_array_equal(actual, expected)
 
     def test_datetime_multidimensional(self):
