@@ -224,7 +224,7 @@ def broadcast_shapes(*args):
 
     Examples
     --------
-    >>> np.broadcast_shapes((1, 2), (3, 1), (3,2))
+    >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
     (3, 2)
 
     >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
