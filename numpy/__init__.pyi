@@ -1661,9 +1661,9 @@ SHIFT_OVERFLOW: Final[int]
 SHIFT_UNDERFLOW: Final[int]
 UFUNC_BUFSIZE_DEFAULT: Final[int]
 WRAP: Final[int]
-little_endian: Final[int]
 tracemalloc_domain: Final[int]
 
+little_endian: Final[bool]
 True_: Final[bool_]
 False_: Final[bool_]
 
