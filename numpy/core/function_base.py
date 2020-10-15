@@ -159,10 +159,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             y = _nx.moveaxis(y, 0, axis)
         # cast `step` to ensure compatibility with output
         step = asanyarray(step, dtype=_nx.int64).astype(delta_dt)
-        try:
-            step = step.item()
-        except ValueError:
-            pass
+        step = step[()]
     else:
         # Convert float/complex array scalars to float, gh-3504
         start = start * 1.0
