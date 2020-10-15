@@ -105,7 +105,7 @@ def win32_checks(deflist):
     if a == "Intel" or a == "AMD64":
         deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
-def check_math_capabilities(config, moredefs, mathlibs):
+def check_math_capabilities(config, ext, moredefs, mathlibs):
     def check_func(func_name):
         return config.check_func(func_name, libraries=mathlibs,
                                  decl=True, call=True)
@@ -170,6 +170,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_gcc_function_attribute(dec, fn):
             moredefs.append((fname2def(fn), 1))
+            if fn == 'attribute_target_avx512f':
+                # GH-14787: Work around GCC<8.4 bug when compiling with AVX512
+                # support on Windows-based platforms
+                if (sys.platform in ('win32', 'cygwin') and
+                        config.check_compiler_gcc() and
+                        not config.check_gcc_version_at_least(8, 4)):
+                    ext.extra_compile_args.extend(
+                            ['-ffixed-xmm%s' % n for n in range(16, 32)])
 
     for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS:
         if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
@@ -431,7 +439,7 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB', ','.join(mathlibs)))
 
-            check_math_capabilities(config_cmd, moredefs, mathlibs)
+            check_math_capabilities(config_cmd, ext, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[0])
 
