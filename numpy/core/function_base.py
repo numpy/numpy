@@ -126,9 +126,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     stop = asanyarray(stop)
     # handle datetime64/timedelta64 as a special case
     if start.dtype.kind in "mM":
-        if _nx.any(_nx.isnat(start)) or _nx.any(_nx.isnat(stop)):
-            raise ValueError(
-                "linspace: cannot use NaT (not-a-time) datetime values")
+        from numpy.ma import MaskedArray, filled
         if dtype is None:
             dtype = result_type(start, stop)
             dt = dtype
@@ -137,6 +135,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         start = start.astype(dt, copy=False)
         stop = stop.astype(dt, copy=False)
         delta = stop - start
+        delta = MaskedArray(delta, mask=_nx.isnat(delta))
         delta_dt = delta.dtype
         delta = delta.astype(_nx.int64)
         y = _nx.arange(0, num, dtype=_nx.int64).reshape(
@@ -152,7 +151,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             step = _nx.timedelta64("NaT")
             y = y * delta
         y = y.astype(delta_dt)
-        y = y + start
+        y = filled(y + start)
         if endpoint and num > 1:
             y[-1] = stop
         if axis != 0:

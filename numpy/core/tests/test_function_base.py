@@ -422,12 +422,23 @@ class TestLinspace:
         assert_array_equal(linspace(t1, t2, 5), t1 + quarters)
 
     def test_nat(self):
+        t1 = timedelta64("NaT")
+        t2 = timedelta64(1, "s")
+        actual = linspace(t1, t2, 5)
+        expected = array([t1]*4+[1], dtype="timedelta64[s]")
+        assert_array_equal(actual, expected)
+        actual = linspace(t2, t1, 5)
+        expected = array([t1]*5)
+        assert_array_equal(actual, expected)
         t1 = datetime64("NaT")
         t2 = datetime64("2020-01-01")
-        with pytest.raises(ValueError):
-            linspace(t1, t2, 5)
-        with pytest.raises(ValueError):
-            linspace(t2, t1, 5)
+        actual = linspace(t1, t2, 5)
+        expected = array([t1]*4+[t2])
+        assert_array_equal(actual, expected)
+        actual = linspace(t2, t1, 5)
+        expected = array([t1]*5)
+        assert_array_equal(actual, expected)
+
 
     def test_datetime_mixedunits(self):
         t1 = datetime64("2020-01-01").astype("M8[D]")
