@@ -276,8 +276,8 @@ def test_broadcast_to_raises():
 
 def test_broadcast_shape():
     # tests internal _broadcast_shape
-    # _broadcast_shape is already exercized indirectly by broadcast_arrays
-    # _broadcast_shape is also exercized by the public broadcast_shapes function
+    # _broadcast_shape is already exercised indirectly by broadcast_arrays
+    # _broadcast_shape is also exercised by the public broadcast_shapes function
     assert_equal(_broadcast_shape(), ())
     assert_equal(_broadcast_shape([1, 2]), (2,))
     assert_equal(_broadcast_shape(np.ones((1, 1))), (1, 1))
