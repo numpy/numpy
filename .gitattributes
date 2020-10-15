@@ -7,6 +7,7 @@ doc/release/*.rst merge=union
 # Highlight our custom templating language as C, since it's hopefully better
 # than nothing. This also affects repo statistics.
 *.c.src linguist-language=C
+*.inc.src linguist-language=C
 *.h.src linguist-language=C
 
 # Mark some files as vendored
