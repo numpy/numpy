@@ -12,7 +12,9 @@ NEP 36 — Fair play
 Abstract
 --------
 
-This document sets out Rules of Play for companies and outside developers that engage with the NumPy project. It covers:
+This document sets out Rules of Play for companies and outside
+developers that engage with the NumPy project. It covers:
+
 - Restrictions on use of the NumPy name
 - How and whether to publish a modified distribution
 - How to make us aware of patched versions
@@ -27,33 +29,42 @@ Motivation
 We sometimes learn of NumPy versions modified and circulated by outsiders.
 These patched versions can cause problems for the NumPy community.
 
-- In December 2018, a `bug report <https://github.com/numpy/numpy/issues/12515>`__ was filed against `np.erf` -- a function that didn't exist in the NumPy distribution.  It came to light that a company had published a NumPy version with an extended footprint. After several months of discussion, the company agreed to make its patches public, and we added a label to the NumPy issue tracker to identify issues pertaining to that distribution.
+- In December 2018, a `bug report
+  <https://github.com/numpy/numpy/issues/12515>`__ was filed against
+  `np.erf` -- a function that didn't exist in the NumPy distribution.
+  It came to light that a company had published a NumPy version with
+  an extended API footprint. After several months of discussion, the
+  company agreed to make its patches public, and we added a label to
+  the NumPy issue tracker to identify issues pertaining to that
+  distribution.
 
-- In another case, after a security issue (CVE-2019-6446) was filed against
-NumPy, distributions put in their own fixes, most often 
- by changing a default keyword value. As a result the NumPy API was
-inconsistent across distributions.
+- In another case, after a security issue (CVE-2019-6446) was filed
+  against NumPy, distributions put in their own fixes, most often by
+  changing a default keyword value. As a result the NumPy API was
+  inconsistent across distributions.
 
-These are only two of many examples of such modified distributions,
-which cause wasted time for our developers: identifying the release
-from which the error came, how the release was modified from the
-version we provide, and whether we are able to address related issues
-(if not, where to relay the report to).
+When issues arise in cases like these, our developers waste time
+identifying the problematic release, locating alterations,
+and determining an appropriate course of action.
 
-During a community call on `October 16th, 2019 
+During a community call on `October 16th, 2019
 <https://github.com/numpy/archive/blob/master/status_meetings/status-2019-10-16.md>`__
-the community resolved to draft guidelines on distribution of modified NumPy versions.
+the community resolved to draft guidelines on the distribution of
+modified NumPy versions.
 
 Scope
 -----
 
 This document aims to define a minimal set of rules that, when
-followed, will placate the NumPy developers.  Our hope, however, is
-that developers who think that they need to modify NumPy will consider
-contributing to the project, or using one of the many mechanisms we
-have for allowing our APIs to operate on externally defined objects.
+followed, will be considered good faith efforts in line with the
+expectations of the NumPy developers.
 
-In all cases, please talk to us first. Discuss the problem on the `mailing list
+Our hope is that developers who feel they need to modify NumPy will
+first consider contributing to the project, or use one of several existing
+mechanisms for extending our APIs and for operating on
+externally defined array objects.
+
+When in doubt, please `talk to us first
 <http://numpy-discussion.10968.n7.nabble.com/>`__. We may suggest an
 alternative; at minimum, we'll be prepared.
 
