@@ -13,7 +13,7 @@ c = 1.0
 d = np.array(1.0, dtype=np.float32)  # writeable
 
 reveal_type(np.take(a, 0))  # E: numpy.bool_
-reveal_type(np.take(b, 0))  # E: numpy.float32
+reveal_type(np.take(b, 0))  # E: numpy.floating[numpy.typing._32Bit]
 reveal_type(
     np.take(c, 0)  # E: Union[numpy.generic, datetime.datetime, datetime.timedelta]
 )
@@ -66,8 +66,8 @@ reveal_type(np.partition(c, 0, axis=None))  # E: numpy.ndarray
 reveal_type(np.partition(A, 0))  # E: numpy.ndarray
 reveal_type(np.partition(B, 0))  # E: numpy.ndarray
 
-reveal_type(np.argpartition(a, 0))  # E: numpy.integer
-reveal_type(np.argpartition(b, 0))  # E: numpy.integer
+reveal_type(np.argpartition(a, 0))  # E: numpy.integer[Any]
+reveal_type(np.argpartition(b, 0))  # E: numpy.integer[Any]
 reveal_type(np.argpartition(c, 0))  # E: numpy.ndarray
 reveal_type(np.argpartition(A, 0))  # E: numpy.ndarray
 reveal_type(np.argpartition(B, 0))  # E: numpy.ndarray
@@ -78,18 +78,18 @@ reveal_type(np.sort(B, 0))  # E: numpy.ndarray
 reveal_type(np.argsort(A, 0))  # E: numpy.ndarray
 reveal_type(np.argsort(B, 0))  # E: numpy.ndarray
 
-reveal_type(np.argmax(A))  # E: numpy.integer
-reveal_type(np.argmax(B))  # E: numpy.integer
-reveal_type(np.argmax(A, axis=0))  # E: Union[numpy.integer, numpy.ndarray]
-reveal_type(np.argmax(B, axis=0))  # E: Union[numpy.integer, numpy.ndarray]
+reveal_type(np.argmax(A))  # E: numpy.integer[Any]
+reveal_type(np.argmax(B))  # E: numpy.integer[Any]
+reveal_type(np.argmax(A, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
+reveal_type(np.argmax(B, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
 
-reveal_type(np.argmin(A))  # E: numpy.integer
-reveal_type(np.argmin(B))  # E: numpy.integer
-reveal_type(np.argmin(A, axis=0))  # E: Union[numpy.integer, numpy.ndarray]
-reveal_type(np.argmin(B, axis=0))  # E: Union[numpy.integer, numpy.ndarray]
+reveal_type(np.argmin(A))  # E: numpy.integer[Any]
+reveal_type(np.argmin(B))  # E: numpy.integer[Any]
+reveal_type(np.argmin(A, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
+reveal_type(np.argmin(B, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
 
-reveal_type(np.searchsorted(A[0], 0))  # E: numpy.integer
-reveal_type(np.searchsorted(B[0], 0))  # E: numpy.integer
+reveal_type(np.searchsorted(A[0], 0))  # E: numpy.integer[Any]
+reveal_type(np.searchsorted(B[0], 0))  # E: numpy.integer[Any]
 reveal_type(np.searchsorted(A[0], [0]))  # E: numpy.ndarray
 reveal_type(np.searchsorted(B[0], [0]))  # E: numpy.ndarray
 
@@ -100,7 +100,7 @@ reveal_type(np.resize(A, (5, 5)))  # E: numpy.ndarray
 reveal_type(np.resize(B, (5, 5)))  # E: numpy.ndarray
 
 reveal_type(np.squeeze(a))  # E: numpy.bool_
-reveal_type(np.squeeze(b))  # E: numpy.float32
+reveal_type(np.squeeze(b))  # E: numpy.floating[numpy.typing._32Bit]
 reveal_type(np.squeeze(c))  # E: numpy.ndarray
 reveal_type(np.squeeze(A))  # E: numpy.ndarray
 reveal_type(np.squeeze(B))  # E: numpy.ndarray
@@ -108,8 +108,8 @@ reveal_type(np.squeeze(B))  # E: numpy.ndarray
 reveal_type(np.diagonal(A))  # E: numpy.ndarray
 reveal_type(np.diagonal(B))  # E: numpy.ndarray
 
-reveal_type(np.trace(A))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.trace(B))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.trace(A))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.trace(B))  # E: Union[numpy.number[Any], numpy.ndarray]
 
 reveal_type(np.ravel(a))  # E: numpy.ndarray
 reveal_type(np.ravel(b))  # E: numpy.ndarray
@@ -135,19 +135,19 @@ reveal_type(np.compress([True], c))  # E: numpy.ndarray
 reveal_type(np.compress([True], A))  # E: numpy.ndarray
 reveal_type(np.compress([True], B))  # E: numpy.ndarray
 
-reveal_type(np.clip(a, 0, 1.0))  # E: numpy.number
-reveal_type(np.clip(b, -1, 1))  # E: numpy.float32
-reveal_type(np.clip(c, 0, 1))  # E: numpy.number
-reveal_type(np.clip(A, 0, 1))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.clip(B, 0, 1))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.clip(a, 0, 1.0))  # E: numpy.number[Any]
+reveal_type(np.clip(b, -1, 1))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.clip(c, 0, 1))  # E: numpy.number[Any]
+reveal_type(np.clip(A, 0, 1))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.clip(B, 0, 1))  # E: Union[numpy.number[Any], numpy.ndarray]
 
-reveal_type(np.sum(a))  # E: numpy.number
-reveal_type(np.sum(b))  # E: numpy.float32
-reveal_type(np.sum(c))  # E: numpy.number
-reveal_type(np.sum(A))  # E: numpy.number
-reveal_type(np.sum(B))  # E: numpy.number
-reveal_type(np.sum(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.sum(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.sum(a))  # E: numpy.number[Any]
+reveal_type(np.sum(b))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.sum(c))  # E: numpy.number[Any]
+reveal_type(np.sum(A))  # E: numpy.number[Any]
+reveal_type(np.sum(B))  # E: numpy.number[Any]
+reveal_type(np.sum(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.sum(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
 
 reveal_type(np.all(a))  # E: numpy.bool_
 reveal_type(np.all(b))  # E: numpy.bool_
@@ -175,45 +175,45 @@ reveal_type(np.cumsum(c))  # E: numpy.ndarray
 reveal_type(np.cumsum(A))  # E: numpy.ndarray
 reveal_type(np.cumsum(B))  # E: numpy.ndarray
 
-reveal_type(np.ptp(a))  # E: numpy.number
-reveal_type(np.ptp(b))  # E: numpy.float32
-reveal_type(np.ptp(c))  # E: numpy.number
-reveal_type(np.ptp(A))  # E: numpy.number
-reveal_type(np.ptp(B))  # E: numpy.number
-reveal_type(np.ptp(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.ptp(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.ptp(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.ptp(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.ptp(a))  # E: numpy.number[Any]
+reveal_type(np.ptp(b))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.ptp(c))  # E: numpy.number[Any]
+reveal_type(np.ptp(A))  # E: numpy.number[Any]
+reveal_type(np.ptp(B))  # E: numpy.number[Any]
+reveal_type(np.ptp(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.ptp(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.ptp(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.ptp(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 
-reveal_type(np.amax(a))  # E: numpy.number
-reveal_type(np.amax(b))  # E: numpy.float32
-reveal_type(np.amax(c))  # E: numpy.number
-reveal_type(np.amax(A))  # E: numpy.number
-reveal_type(np.amax(B))  # E: numpy.number
-reveal_type(np.amax(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.amax(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.amax(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.amax(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.amax(a))  # E: numpy.number[Any]
+reveal_type(np.amax(b))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.amax(c))  # E: numpy.number[Any]
+reveal_type(np.amax(A))  # E: numpy.number[Any]
+reveal_type(np.amax(B))  # E: numpy.number[Any]
+reveal_type(np.amax(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.amax(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.amax(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.amax(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 
-reveal_type(np.amin(a))  # E: numpy.number
-reveal_type(np.amin(b))  # E: numpy.float32
-reveal_type(np.amin(c))  # E: numpy.number
-reveal_type(np.amin(A))  # E: numpy.number
-reveal_type(np.amin(B))  # E: numpy.number
-reveal_type(np.amin(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.amin(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.amin(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.amin(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.amin(a))  # E: numpy.number[Any]
+reveal_type(np.amin(b))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.amin(c))  # E: numpy.number[Any]
+reveal_type(np.amin(A))  # E: numpy.number[Any]
+reveal_type(np.amin(B))  # E: numpy.number[Any]
+reveal_type(np.amin(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.amin(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.amin(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.amin(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 
-reveal_type(np.prod(a))  # E: numpy.number
-reveal_type(np.prod(b))  # E: numpy.float32
-reveal_type(np.prod(c))  # E: numpy.number
-reveal_type(np.prod(A))  # E: numpy.number
-reveal_type(np.prod(B))  # E: numpy.number
-reveal_type(np.prod(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.prod(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.prod(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.prod(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.prod(a))  # E: numpy.number[Any]
+reveal_type(np.prod(b))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.prod(c))  # E: numpy.number[Any]
+reveal_type(np.prod(A))  # E: numpy.number[Any]
+reveal_type(np.prod(B))  # E: numpy.number[Any]
+reveal_type(np.prod(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.prod(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.prod(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.prod(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 reveal_type(np.prod(b, out=d))  # E: numpy.ndarray
 reveal_type(np.prod(B, out=d))  # E: numpy.ndarray
 
@@ -235,44 +235,44 @@ reveal_type(np.size(c))  # E: int
 reveal_type(np.size(A))  # E: int
 reveal_type(np.size(B))  # E: int
 
-reveal_type(np.around(a))  # E: numpy.number
-reveal_type(np.around(b))  # E: numpy.float32
-reveal_type(np.around(c))  # E: numpy.number
+reveal_type(np.around(a))  # E: numpy.number[Any]
+reveal_type(np.around(b))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(np.around(c))  # E: numpy.number[Any]
 reveal_type(np.around(A))  # E: numpy.ndarray
 reveal_type(np.around(B))  # E: numpy.ndarray
 
-reveal_type(np.mean(a))  # E: numpy.number
-reveal_type(np.mean(b))  # E: numpy.number
-reveal_type(np.mean(c))  # E: numpy.number
-reveal_type(np.mean(A))  # E: numpy.number
-reveal_type(np.mean(B))  # E: numpy.number
-reveal_type(np.mean(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.mean(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.mean(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.mean(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.mean(a))  # E: numpy.number[Any]
+reveal_type(np.mean(b))  # E: numpy.number[Any]
+reveal_type(np.mean(c))  # E: numpy.number[Any]
+reveal_type(np.mean(A))  # E: numpy.number[Any]
+reveal_type(np.mean(B))  # E: numpy.number[Any]
+reveal_type(np.mean(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.mean(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.mean(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.mean(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 reveal_type(np.mean(b, out=d))  # E: numpy.ndarray
 reveal_type(np.mean(B, out=d))  # E: numpy.ndarray
 
-reveal_type(np.std(a))  # E: numpy.number
-reveal_type(np.std(b))  # E: numpy.number
-reveal_type(np.std(c))  # E: numpy.number
-reveal_type(np.std(A))  # E: numpy.number
-reveal_type(np.std(B))  # E: numpy.number
-reveal_type(np.std(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.std(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.std(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.std(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.std(a))  # E: numpy.number[Any]
+reveal_type(np.std(b))  # E: numpy.number[Any]
+reveal_type(np.std(c))  # E: numpy.number[Any]
+reveal_type(np.std(A))  # E: numpy.number[Any]
+reveal_type(np.std(B))  # E: numpy.number[Any]
+reveal_type(np.std(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.std(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.std(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.std(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 reveal_type(np.std(b, out=d))  # E: numpy.ndarray
 reveal_type(np.std(B, out=d))  # E: numpy.ndarray
 
-reveal_type(np.var(a))  # E: numpy.number
-reveal_type(np.var(b))  # E: numpy.number
-reveal_type(np.var(c))  # E: numpy.number
-reveal_type(np.var(A))  # E: numpy.number
-reveal_type(np.var(B))  # E: numpy.number
-reveal_type(np.var(A, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.var(B, axis=0))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.var(A, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
-reveal_type(np.var(B, keepdims=True))  # E: Union[numpy.number, numpy.ndarray]
+reveal_type(np.var(a))  # E: numpy.number[Any]
+reveal_type(np.var(b))  # E: numpy.number[Any]
+reveal_type(np.var(c))  # E: numpy.number[Any]
+reveal_type(np.var(A))  # E: numpy.number[Any]
+reveal_type(np.var(B))  # E: numpy.number[Any]
+reveal_type(np.var(A, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.var(B, axis=0))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.var(A, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
+reveal_type(np.var(B, keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray]
 reveal_type(np.var(b, out=d))  # E: numpy.ndarray
 reveal_type(np.var(B, out=d))  # E: numpy.ndarray
