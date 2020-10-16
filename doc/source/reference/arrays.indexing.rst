@@ -453,7 +453,7 @@ also supports boolean arrays and will work without any surprises.
     array([[ 3,  5],
            [ 9, 11]])
 
-    Without the ``np.ix_`` call or only the diagonal elements would be
+    Without the ``np.ix_`` call, only the diagonal elements would be
     selected.
 
     Or without ``np.ix_`` (compare the integer array examples):
