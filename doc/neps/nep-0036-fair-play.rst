@@ -1,5 +1,5 @@
 ==================
-NEP 36 — Fair Play
+NEP 36 — Fair play
 ==================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
@@ -12,10 +12,10 @@ NEP 36 — Fair Play
 Abstract
 --------
 
-This document describes Rules of Play for engaging with the NumPy
-project as an external entity.  It discusses usage of the name NumPy,
-modified distributions of NumPy, and how to best communicate
-with the project when patched versions are deployed.
+This document sets out Rules of Play for companies and outside developers that engage with the NumPy project. It covers:
+- Restrictions on use of the NumPy name
+- How and whether to publish a modified distribution
+- How to make us aware of patched versions
 
 Companies and developers will know after reading this NEP what kinds
 of behavior the community would like to see, and which we consider
@@ -24,30 +24,15 @@ troublesome, bothersome, and unacceptable.
 Motivation
 ----------
 
-It has come to our attention that modified versions of NumPy are
-distributed by external entities.  Sometimes, the patches are
-innocuous, such as when they allow NumPy to function on the target
-system.  In other cases, they add new functionality which causes
-problems for the community.
+We sometimes learn of NumPy versions modified and circulated by outsiders.
+These patched versions can cause problems for the NumPy community.
 
-For example, in December 2018, through the filing of `Issue #12515
-<https://github.com/numpy/numpy/issues/12515>`__, it became known to
-the NumPy project that an external company had published a version of
-NumPy with an extended footprint.  In this specific instance, a bug
-was filed against the `np.erf` function---a function that NumPy itself
-had never provided.
+- In December 2018, a `bug report <https://github.com/numpy/numpy/issues/12515>`__ was filed against `np.erf` -- a function that didn't exist in the NumPy distribution.  It came to light that a company had published a NumPy version with an extended footprint. After several months of discussion, the company agreed to make its patches public, and we added a label to the NumPy issue tracker to identify issues pertaining to that distribution.
 
-In the months that followed, several conversations were had with the
-entity involved, and a better understanding emerged of needs on either
-side.  The entity agreed to publish the patches made against NumPy,
-and a special label was added on the NumPy issue tracker to identify
-issues pertaining to this specific distribution.
-
-In another example, a security issue (CVE-2019-6446) was filed against
-NumPy.  This forced many distributions to take action, most often by
-changing a default keyword value, unfortunately again leading to
-multiple versions of the NumPy API being deployed, varying across
-distribution.
+- In another case, after a security issue (CVE-2019-6446) was filed against
+NumPy, distributions put in their own fixes, most often 
+ by changing a default keyword value. As a result the NumPy API was
+inconsistent across distributions.
 
 These are only two of many examples of such modified distributions,
 which cause wasted time for our developers: identifying the release
@@ -57,9 +42,7 @@ version we provide, and whether we are able to address related issues
 
 During a community call on `October 16th, 2019 
 <https://github.com/numpy/archive/blob/master/status_meetings/status-2019-10-16.md>`__
-the community decided to draft a
-set of guidelines for companies and external developers to use when
-they modify and redistribute NumPy.
+the community resolved to draft guidelines on distribution of modified NumPy versions.
 
 Scope
 -----
@@ -70,12 +53,11 @@ that developers who think that they need to modify NumPy will consider
 contributing to the project, or using one of the many mechanisms we
 have for allowing our APIs to operate on externally defined objects.
 
-We encourage and exhort developers to first discuss their problem with
-the NumPy developers on the `mailing list
-<http://numpy-discussion.10968.n7.nabble.com/>`__ before resorting to
-patching and releasing their own version of the library.
+In all cases, please talk to us first. Discuss the problem on the `mailing list
+<http://numpy-discussion.10968.n7.nabble.com/>`__. We may suggest an
+alternative; at minimum, we'll be prepared.
 
-Fair Play Rules
+Fair play rules
 ---------------
 
 1. Do not reuse the NumPy name for projects not developed by the NumPy
@@ -131,7 +113,7 @@ Fair Play Rules
    If these mechanisms are deemed insufficient, please start a
    discussion on the mailing list before monkeypatching NumPy.
 
-Questions & Answers
+Questions and answers
 -------------------
 
 **Q:** We would like to distribute an optimized version of NumPy that
@@ -171,7 +153,7 @@ version of BLAS.
 Discussion
 ----------
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 Copyright
