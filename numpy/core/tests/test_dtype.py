@@ -773,6 +773,12 @@ class TestMonsterType:
         with pytest.raises(RecursionError):
             np.dtype(l)
 
+    def test_dict_recursion(self):
+        d = dict(names=['self'], formats=[None], offsets=[0])
+        d['formats'][0] = d
+        with pytest.raises(RecursionError):
+            np.dtype(d)
+
 
 class TestMetadata:
     def test_no_metadata(self):

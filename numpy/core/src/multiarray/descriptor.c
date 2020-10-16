@@ -1488,25 +1488,12 @@ _convert_from_any(PyObject *obj, int align)
             }
             return NULL;
         }
-        if (Py_EnterRecursiveCall(
-                " while trying to convert the given data type from"
-                " a str object" ) != 0) {
-            return NULL;
-        }
         PyArray_Descr *ret = _convert_from_str(obj2, align);
         Py_DECREF(obj2);
-        Py_LeaveRecursiveCall();
         return ret;
     }
     else if (PyUnicode_Check(obj)) {
-        if (Py_EnterRecursiveCall(
-                " while trying to convert the given data type from"
-                " a str object" ) != 0) {
-            return NULL;
-        }
-        PyArray_Descr *ret = _convert_from_str(obj, align);
-        Py_LeaveRecursiveCall();
-        return ret;
+        return _convert_from_str(obj, align);
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
