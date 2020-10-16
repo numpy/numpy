@@ -88,8 +88,8 @@ Fair play rules
    developers to address bug reports, since we typically do not know
    which parts of NumPy have been modified.
 
-   If you absolutely have to break this rule (and we implore you not
-   to!), then make it absolutely clear in the `__version__` tag that
+   If you have to break this rule (and we implore you not
+   to!), then make it clear in the `__version__` tag that
    you have modified NumPy, e.g.::
 
      >>> print(np.__version__)
