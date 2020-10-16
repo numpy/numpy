@@ -220,11 +220,8 @@ __all__ = [
 ]
 
 DataSource: Any
-False_: Any
 MachAr: Any
 ScalarType: Any
-True_: Any
-UFUNC_PYVALS_NAME: Any
 angle: Any
 append: Any
 apply_along_axis: Any
@@ -1972,8 +1969,13 @@ SHIFT_OVERFLOW: Final[int]
 SHIFT_UNDERFLOW: Final[int]
 UFUNC_BUFSIZE_DEFAULT: Final[int]
 WRAP: Final[int]
-little_endian: Final[int]
 tracemalloc_domain: Final[int]
+
+little_endian: Final[bool]
+True_: Final[bool_]
+False_: Final[bool_]
+
+UFUNC_PYVALS_NAME: Final[str]
 
 class ufunc:
     @property
