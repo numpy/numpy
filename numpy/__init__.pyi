@@ -1772,8 +1772,9 @@ class timedelta64(generic):
     def __rfloordiv__(self, other: timedelta64) -> int64: ...
     def __mod__(self, other: timedelta64) -> timedelta64: ...
 
-class unsignedinteger(integer[_NBit_co]):  # type: ignore
+class unsignedinteger(integer[_NBit_co]):
     # NOTE: `uint64 + signedinteger -> float64`
+    def __init__(self, __value: _IntValue = ...) -> None: ...
     __add__: _UnsignedIntOp[_NBit_co]
     __radd__: _UnsignedIntOp[_NBit_co]
     __sub__: _UnsignedIntOp[_NBit_co]
