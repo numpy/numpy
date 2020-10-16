@@ -102,7 +102,7 @@ from ._scalars import (
 )
 from ._array_like import _SupportsArray, ArrayLike
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import DtypeLike
+from ._dtype_like import _SupportsDtype, _VoidDtypeLike, DtypeLike
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
