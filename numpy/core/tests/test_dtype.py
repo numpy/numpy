@@ -767,11 +767,18 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    def test_array_recursion(self):
+    def test_list_recursion(self):
         l = list()
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
+
+    def test_tuple_recursion(self):
+        d = np.int32
+        for i in range(100000):
+            d = (d, (1,))
+        with pytest.raises(RecursionError):
+            np.dtype(d)
 
     def test_dict_recursion(self):
         d = dict(names=['self'], formats=[None], offsets=[0])
