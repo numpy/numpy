@@ -165,6 +165,12 @@ def broadcast_to(array, shape, subok=False):
         If the array is not compatible with the new shape according to NumPy's
         broadcasting rules.
 
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_shapes
+
     Notes
     -----
     .. versionadded:: 1.10.0
@@ -222,6 +228,12 @@ def broadcast_shapes(*args):
         If the shapes are not compatible and cannot be broadcast according
         to NumPy's broadcasting rules.
 
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_to
+
     Examples
     --------
     >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
@@ -266,6 +278,12 @@ def broadcast_arrays(*args, subok=False):
             The output is currently marked so that if written to, a deprecation
             warning will be emitted. A future version will set the
             ``writable`` flag False so writing to it will raise an error.
+
+    See Also
+    --------
+    broadcast
+    broadcast_to
+    broadcast_shapes
 
     Examples
     --------

@@ -605,6 +605,7 @@ add_newdoc('numpy.core', 'broadcast',
     --------
     broadcast_arrays
     broadcast_to
+    broadcast_shapes
 
     Examples
     --------
