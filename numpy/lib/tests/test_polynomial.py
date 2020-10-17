@@ -227,6 +227,20 @@ class TestPolynomial:
         v = np.arange(1, 21)
         assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
 
+    def test_zero_poly_dtype(self):
+        """
+        Regression test for gh-16354.
+        """
+        z = np.array([0, 0, 0])
+        p = np.poly1d(z.astype(np.int64))
+        assert_equal(p.coeffs.dtype, np.int64)
+
+        p = np.poly1d(z.astype(np.float32))
+        assert_equal(p.coeffs.dtype, np.float32)
+
+        p = np.poly1d(z.astype(np.complex64))
+        assert_equal(p.coeffs.dtype, np.complex64)
+
     def test_poly_eq(self):
         p = np.poly1d([1, 2, 3])
         p2 = np.poly1d([1, 2, 4])
