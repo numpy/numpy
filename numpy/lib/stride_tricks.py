@@ -6,9 +6,9 @@ NumPy reference guide.
 
 """
 import numpy as np
-from numpy.core.overrides import array_function_dispatch
+from numpy.core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
 
 
 class DummyArray:
@@ -165,6 +165,12 @@ def broadcast_to(array, shape, subok=False):
         If the array is not compatible with the new shape according to NumPy's
         broadcasting rules.
 
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_shapes
+
     Notes
     -----
     .. versionadded:: 1.10.0
@@ -195,6 +201,49 @@ def _broadcast_shape(*args):
         b = broadcast_to(0, b.shape)
         b = np.broadcast(b, *args[pos:(pos + 31)])
     return b.shape
+
+
+@set_module('numpy')
+def broadcast_shapes(*args):
+    """
+    Broadcast the input shapes into a single shape.
+
+    :ref:`Learn more about broadcasting here <basics.broadcasting>`.
+
+    .. versionadded:: 1.20.0
+
+    Parameters
+    ----------
+    `*args` : tuples of ints, or ints
+        The shapes to be broadcast against each other.
+
+    Returns
+    -------
+    tuple
+        Broadcasted shape.
+
+    Raises
+    ------
+    ValueError
+        If the shapes are not compatible and cannot be broadcast according
+        to NumPy's broadcasting rules.
+
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_to
+
+    Examples
+    --------
+    >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
+    (3, 2)
+
+    >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+    (5, 6, 7)
+    """
+    arrays = [np.empty(x, dtype=[]) for x in args]
+    return _broadcast_shape(*arrays)
 
 
 def _broadcast_arrays_dispatcher(*args, subok=None):
@@ -229,6 +278,12 @@ def broadcast_arrays(*args, subok=False):
             The output is currently marked so that if written to, a deprecation
             warning will be emitted. A future version will set the
             ``writable`` flag False so writing to it will raise an error.
+
+    See Also
+    --------
+    broadcast
+    broadcast_to
+    broadcast_shapes
 
     Examples
     --------
