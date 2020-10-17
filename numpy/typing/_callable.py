@@ -35,7 +35,7 @@ from ._scalars import (
     _ComplexLike,
     _NumberLike,
 )
-from . import NBitBase, _64Bit
+from . import NBitBase
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
