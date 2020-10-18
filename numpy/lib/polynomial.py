@@ -1236,7 +1236,7 @@ class poly1d:
             raise ValueError("Polynomial must be 1d only.")
         c_or_r = trim_zeros(c_or_r, trim='f')
         if len(c_or_r) == 0:
-            c_or_r = NX.array([0.], dtype=c_or_r.dtype)
+            c_or_r = NX.array([0], dtype=c_or_r.dtype)
         self._coeffs = c_or_r
         if variable is None:
             variable = 'x'
