@@ -225,8 +225,19 @@ DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
 NPY_NO_EXPORT void
 DOUBLE_log_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_trigonometric.dispatch.h"
+#endif
 /**begin repeat
- *  #func = sin, cos, exp, log#
+ *  #func = sin, cos#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void FLOAT_@func@, (
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
+))
+/**end repeat**/
+
+/**begin repeat
+ *  #func = exp, log#
  */
 NPY_NO_EXPORT void
 FLOAT_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));

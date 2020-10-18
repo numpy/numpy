@@ -1658,8 +1658,8 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 /**end repeat**/
 
 /**begin repeat
- *  #func = sin, cos, exp, log#
- *  #scalarf = npy_sinf, npy_cosf, npy_expf, npy_logf#
+ *  #func = exp, log#
+ *  #scalarf = npy_expf, npy_logf#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -1749,28 +1749,6 @@ FLOAT_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *step
 
 /**end repeat1**/
 
-/**begin repeat1
- *  #func = cos, sin#
- *  #enum = npy_compute_cos, npy_compute_sin#
- *  #scalarf = npy_cosf, npy_sinf#
- */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-FLOAT_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_sincos_FLOAT(args, dimensions, steps, @enum@)) {
-        UNARY_LOOP {
-#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-            @ISA@_sincos_FLOAT((npy_float *)op1, (npy_float *)ip1, 1, steps[0], @enum@);
-#else
-	        const npy_float in1 = *(npy_float *)ip1;
-	        *(npy_float *)op1 = @scalarf@(in1);
-#endif
-        }
-    }
-}
-
-/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void

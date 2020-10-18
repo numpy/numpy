@@ -3,6 +3,17 @@
 
 #include "numpy/npy_common.h" // NPY_FINLINE
 #include "numpy/halffloat.h" // npy_half_to_float
+
+/**
+ * Old versions of MSVC causes ambiguous link errors when we deal with large SIMD kernels
+ * which lead to break the build, probably releated to the following bug:
+ * https://developercommunity.visualstudio.com/content/problem/415095/internal-compiler-error-with-perfectly-forwarded-r.html
+ */
+#if defined(_MSC_VER) && _MSC_VER < 1916
+    #define SIMD_MSVC_NOINLINE __declspec(noinline)
+#else
+    #define SIMD_MSVC_NOINLINE
+#endif
 /*
  * nomemoverlap - returns false if two strided arrays have an overlapping
  * region in memory. ip_size/op_size = size of the arrays which can be negative

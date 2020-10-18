@@ -271,25 +271,6 @@ run_unary_@isa@_@func@_FLOAT(char **args, npy_intp const *dimensions, npy_intp c
 
 /**end repeat1**/
 
-#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-static NPY_INLINE void
-@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, const npy_intp steps, NPY_TRIG_OP);
-#endif
-
-static NPY_INLINE int
-run_unary_@isa@_sincos_FLOAT(char **args, npy_intp const *dimensions, npy_intp const *steps, NPY_TRIG_OP my_trig_op)
-{
-#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
-    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), sizeof(npy_float), @REGISTER_SIZE@)) {
-        @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0], my_trig_op);
-        return 1;
-    }
-    else
-        return 0;
-#endif
-    return 0;
-}
-
 /**end repeat**/
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined  NPY_HAVE_SSE2_INTRINSICS
@@ -976,19 +957,6 @@ fma_invert_mask_pd(__m256i ymask)
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
-fma_should_calculate_sine(__m256i k, __m256i andop, __m256i cmp)
-{
-   return _mm256_cvtepi32_ps(
-                _mm256_cmpeq_epi32(_mm256_and_si256(k, andop), cmp));
-}
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
-fma_should_negate(__m256i k, __m256i andop, __m256i cmp)
-{
-    return fma_should_calculate_sine(k, andop, cmp);
-}
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
 fma_get_exponent(__m256 x)
 {
     /*
@@ -1213,18 +1181,6 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask8
 avx512_invert_mask_pd(__mmask8 ymask)
 {
     return _mm512_knot(ymask);
-}
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
-avx512_should_calculate_sine(__m512i k, __m512i andop, __m512i cmp)
-{
-    return _mm512_cmpeq_epi32_mask(_mm512_and_epi32(k, andop), cmp);
-}
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
-avx512_should_negate(__m512i k, __m512i andop, __m512i cmp)
-{
-    return avx512_should_calculate_sine(k, andop, cmp);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
@@ -1456,40 +1412,6 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @mask@
     @mask@ m2 = _mm@vsize@_cmp_ps@vsub@(
                                 x, _mm@vsize@_set1_ps(fmin), _CMP_LT_OQ);
     return _mm@vsize@_@or@(m1,m2);
-}
-
-/*
- * Approximate cosine algorithm for x \in [-PI/4, PI/4]
- * Maximum ULP across all 32-bit floats = 0.875
- */
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
-@isa@_cosine(@vtype@ x2, @vtype@ invf8, @vtype@ invf6, @vtype@ invf4,
-                                                @vtype@ invf2, @vtype@ invf0)
-{
-    @vtype@ cos = @fmadd@(invf8, x2, invf6);
-    cos = @fmadd@(cos, x2, invf4);
-    cos = @fmadd@(cos, x2, invf2);
-    cos = @fmadd@(cos, x2, invf0);
-    return cos;
-}
-
-/*
- * Approximate sine algorithm for x \in [-PI/4, PI/4]
- * Maximum ULP across all 32-bit floats = 0.647
- */
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
-@isa@_sine(@vtype@ x, @vtype@ x2, @vtype@ invf9, @vtype@ invf7,
-                                          @vtype@ invf5, @vtype@ invf3,
-                                          @vtype@ zero)
-{
-    @vtype@ sin = @fmadd@(invf9, x2, invf7);
-    sin = @fmadd@(sin, x2, invf5);
-    sin = @fmadd@(sin, x2, invf3);
-    sin = @fmadd@(sin, x2, zero);
-    sin = @fmadd@(sin, x, x);
-    return sin;
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
@@ -2004,167 +1926,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  * #cvtps_epi32 = _mm256_cvtps_epi32, #
  * #CHK = HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS#
  */
-
-/*
- * Vectorized approximate sine/cosine algorithms: The following code is a
- * vectorized version of the algorithm presented here:
- * https://stackoverflow.com/questions/30463616/payne-hanek-algorithm-implementation-in-c/30465751#30465751
- * (1) Load data in ZMM/YMM registers and generate mask for elements that are
- * within range [-71476.0625f, 71476.0625f] for cosine and [-117435.992f,
- * 117435.992f] for sine.
- * (2) For elements within range, perform range reduction using Cody-Waite's
- * method: x* = x - y*PI/2, where y = rint(x*2/PI). x* \in [-PI/4, PI/4].
- * (3) Map cos(x) to (+/-)sine or (+/-)cosine of x* based on the quadrant k =
- * int(y).
- * (4) For elements outside that range, Cody-Waite reduction performs poorly
- * leading to catastrophic cancellation. We compute cosine by calling glibc in
- * a scalar fashion.
- * (5) Vectorized implementation has a max ULP of 1.49 and performs at least
- * 5-7x faster than scalar implementations when magnitude of all elements in
- * the array < 71476.0625f (117435.992f for sine). Worst case performance is
- * when all the elements are large leading to about 1-2% reduction in
- * performance.
- */
-
 #if defined @CHK@
-static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
-@ISA@_sincos_FLOAT(npy_float * op,
-                   npy_float * ip,
-                   const npy_intp array_size,
-                   const npy_intp steps,
-                   NPY_TRIG_OP my_trig_op)
-{
-    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
-    const npy_int num_lanes = @NUM_LANES@;
-    npy_float large_number = 71476.0625f;
-    if (my_trig_op == npy_compute_sin) {
-        large_number = 117435.992f;
-    }
-
-    /* Load up frequently used constants */
-    @vtype@i zeros = _mm@vsize@_set1_epi32(0);
-    @vtype@i ones = _mm@vsize@_set1_epi32(1);
-    @vtype@i twos = _mm@vsize@_set1_epi32(2);
-    @vtype@ two_over_pi = _mm@vsize@_set1_ps(NPY_TWO_O_PIf);
-    @vtype@ codyw_c1 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_PI_O_2_HIGHf);
-    @vtype@ codyw_c2 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_PI_O_2_MEDf);
-    @vtype@ codyw_c3 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_PI_O_2_LOWf);
-    @vtype@ cos_invf0 = _mm@vsize@_set1_ps(NPY_COEFF_INVF0_COSINEf);
-    @vtype@ cos_invf2 = _mm@vsize@_set1_ps(NPY_COEFF_INVF2_COSINEf);
-    @vtype@ cos_invf4 = _mm@vsize@_set1_ps(NPY_COEFF_INVF4_COSINEf);
-    @vtype@ cos_invf6 = _mm@vsize@_set1_ps(NPY_COEFF_INVF6_COSINEf);
-    @vtype@ cos_invf8 = _mm@vsize@_set1_ps(NPY_COEFF_INVF8_COSINEf);
-    @vtype@ sin_invf3 = _mm@vsize@_set1_ps(NPY_COEFF_INVF3_SINEf);
-    @vtype@ sin_invf5 = _mm@vsize@_set1_ps(NPY_COEFF_INVF5_SINEf);
-    @vtype@ sin_invf7 = _mm@vsize@_set1_ps(NPY_COEFF_INVF7_SINEf);
-    @vtype@ sin_invf9 = _mm@vsize@_set1_ps(NPY_COEFF_INVF9_SINEf);
-    @vtype@ cvt_magic = _mm@vsize@_set1_ps(NPY_RINT_CVT_MAGICf);
-    @vtype@ zero_f = _mm@vsize@_set1_ps(0.0f);
-    @vtype@ quadrant, reduced_x, reduced_x2, cos, sin;
-    @vtype@i iquadrant;
-    @mask@ nan_mask, glibc_mask, sine_mask, negate_mask;
-    @mask@ load_mask = @isa@_get_full_load_mask_ps();
-    npy_intp num_remaining_elements = array_size;
-
-    /*
-     * Note: while generally indices are npy_intp, we ensure that our maximum index
-     * will fit in an int32 as a precondition for this function via
-     * IS_OUTPUT_BLOCKABLE_UNARY
-     */
-    npy_int32 indexarr[16];
-    for (npy_int32 ii = 0; ii < 16; ii++) {
-        indexarr[ii] = ii*stride;
-    }
-    @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
-
-    while (num_remaining_elements > 0) {
-
-        if (num_remaining_elements < num_lanes) {
-            load_mask = @isa@_get_partial_load_mask_ps(num_remaining_elements,
-                                                         num_lanes);
-        }
-
-        @vtype@ x_in;
-        if (stride == 1) {
-            x_in = @isa@_masked_load_ps(load_mask, ip);
-        }
-        else {
-            x_in = @isa@_masked_gather_ps(zero_f, ip, vindex, load_mask);
-        }
-
-        /*
-         * For elements outside of this range, Cody-Waite's range reduction
-         * becomes inaccurate and we will call glibc to compute cosine for
-         * these numbers
-         */
-
-        glibc_mask = @isa@_in_range_mask(x_in, large_number,-large_number);
-        glibc_mask = @and_masks@(load_mask, glibc_mask);
-        nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, x_in, _CMP_NEQ_UQ);
-        @vtype@ x = @isa@_set_masked_lanes_ps(x_in, zero_f, @or_masks@(nan_mask, glibc_mask));
-        npy_int iglibc_mask = @mask_to_int@(glibc_mask);
-
-        if (iglibc_mask != @full_mask@) {
-            quadrant = _mm@vsize@_mul_ps(x, two_over_pi);
-
-            /* round to nearest */
-            quadrant = _mm@vsize@_add_ps(quadrant, cvt_magic);
-            quadrant = _mm@vsize@_sub_ps(quadrant, cvt_magic);
-
-            /* Cody-Waite's range reduction algorithm */
-            reduced_x = @isa@_range_reduction(x, quadrant,
-                                                   codyw_c1, codyw_c2, codyw_c3);
-            reduced_x2 = _mm@vsize@_mul_ps(reduced_x, reduced_x);
-
-            /* compute cosine and sine */
-            cos = @isa@_cosine(reduced_x2, cos_invf8, cos_invf6, cos_invf4,
-                                                           cos_invf2, cos_invf0);
-            sin = @isa@_sine(reduced_x, reduced_x2, sin_invf9, sin_invf7,
-                                             sin_invf5, sin_invf3, zero_f);
-
-            iquadrant = _mm@vsize@_cvtps_epi32(quadrant);
-            if (my_trig_op == npy_compute_cos) {
-                iquadrant = _mm@vsize@_add_epi32(iquadrant, ones);
-            }
-
-            /* blend sin and cos based on the quadrant */
-            sine_mask = @isa@_should_calculate_sine(iquadrant, ones, zeros);
-            cos = @isa@_blend(cos, sin, sine_mask);
-
-            /* multiply by -1 for appropriate elements */
-            negate_mask = @isa@_should_negate(iquadrant, twos, twos);
-            cos = @isa@_blend(cos, _mm@vsize@_sub_ps(zero_f, cos), negate_mask);
-            cos = @isa@_set_masked_lanes_ps(cos, _mm@vsize@_set1_ps(NPY_NANF), nan_mask);
-
-            @masked_store@(op, @cvtps_epi32@(load_mask), cos);
-        }
-
-        /* process elements using glibc for large elements */
-        if (iglibc_mask != 0) {
-            float NPY_DECL_ALIGNED(@BYTES@) ip_fback[@NUM_LANES@];
-            _mm@vsize@_store_ps(ip_fback, x_in);
-
-            if (my_trig_op == npy_compute_cos) {
-                for (int ii = 0; ii < num_lanes; ++ii, iglibc_mask >>= 1) {
-                    if (iglibc_mask & 0x01) {
-                        op[ii] = npy_cosf(ip_fback[ii]);
-                    }
-                }
-            }
-            else {
-                for (int ii = 0; ii < num_lanes; ++ii, iglibc_mask >>= 1) {
-                    if (iglibc_mask & 0x01) {
-                        op[ii] = npy_sinf(ip_fback[ii]);
-                    }
-                }
-            }
-        }
-        ip += num_lanes*stride;
-        op += num_lanes;
-        num_remaining_elements -= num_lanes;
-    }
-}
-
 /*
  * Vectorized implementation of exp using AVX2 and AVX512:
  * 1) if x >= xmax; return INF (overflow)
