@@ -27,11 +27,16 @@
  *****************************************************************************
  */
 
+#if defined(HAVE_CBLAS)
 /*
  * -1 to be conservative, in case blas internally uses a for loop with an
  * inclusive upper bound
  */
+#ifndef HAVE_BLAS_ILP64
 #define BLAS_MAXSIZE (NPY_MAX_INT - 1)
+#else
+#define BLAS_MAXSIZE (NPY_MAX_INT64 - 1)
+#endif
 
 /*
  * Determine if a 2d matrix can be used by BLAS
@@ -57,7 +62,6 @@ is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
     return NPY_FALSE;
 }
 
-#if defined(HAVE_CBLAS)
 static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
 static const npy_cfloat  oneF = {1.0, 0.0}, zeroF = {0.0, 0.0};
 
@@ -84,25 +88,25 @@ NPY_NO_EXPORT void
      * op:  data in c order, m shape
      */
     enum CBLAS_ORDER order;
-    int M, N, lda;
+    CBLAS_INT M, N, lda;
 
     assert(m <= BLAS_MAXSIZE && n <= BLAS_MAXSIZE);
     assert (is_blasable2d(is2_n, sizeof(@typ@), n, 1, sizeof(@typ@)));
-    M = (int)m;
-    N = (int)n;
+    M = (CBLAS_INT)m;
+    N = (CBLAS_INT)n;
 
     if (is_blasable2d(is1_m, is1_n, m, n, sizeof(@typ@))) {
         order = CblasColMajor;
-        lda = (int)(is1_m / sizeof(@typ@));
+        lda = (CBLAS_INT)(is1_m / sizeof(@typ@));
     }
     else {
         /* If not ColMajor, caller should have ensured we are RowMajor */
         /* will not assert in release mode */
         order = CblasRowMajor;
         assert(is_blasable2d(is1_n, is1_m, n, m, sizeof(@typ@)));
-        lda = (int)(is1_n / sizeof(@typ@));
+        lda = (CBLAS_INT)(is1_n / sizeof(@typ@));
     }
-    cblas_@prefix@gemv(order, CblasTrans, N, M, @step1@, ip1, lda, ip2,
+    CBLAS_FUNC(cblas_@prefix@gemv)(order, CblasTrans, N, M, @step1@, ip1, lda, ip2,
                                      is2_n / sizeof(@typ@), @step0@, op, op_m / sizeof(@typ@));
 }
 
@@ -117,37 +121,37 @@ NPY_NO_EXPORT void
      */
     enum CBLAS_ORDER order = CblasRowMajor;
     enum CBLAS_TRANSPOSE trans1, trans2;
-    int M, N, P, lda, ldb, ldc;
+    CBLAS_INT M, N, P, lda, ldb, ldc;
     assert(m <= BLAS_MAXSIZE && n <= BLAS_MAXSIZE && p <= BLAS_MAXSIZE);
-    M = (int)m;
-    N = (int)n;
-    P = (int)p;
+    M = (CBLAS_INT)m;
+    N = (CBLAS_INT)n;
+    P = (CBLAS_INT)p;
 
     assert(is_blasable2d(os_m, os_p, m, p, sizeof(@typ@)));
-    ldc = (int)(os_m / sizeof(@typ@));
+    ldc = (CBLAS_INT)(os_m / sizeof(@typ@));
 
     if (is_blasable2d(is1_m, is1_n, m, n, sizeof(@typ@))) {
         trans1 = CblasNoTrans;
-        lda = (int)(is1_m / sizeof(@typ@));
+        lda = (CBLAS_INT)(is1_m / sizeof(@typ@));
     }
     else {
         /* If not ColMajor, caller should have ensured we are RowMajor */
         /* will not assert in release mode */
         assert(is_blasable2d(is1_n, is1_m, n, m, sizeof(@typ@)));
         trans1 = CblasTrans;
-        lda = (int)(is1_n / sizeof(@typ@));
+        lda = (CBLAS_INT)(is1_n / sizeof(@typ@));
     }
 
     if (is_blasable2d(is2_n, is2_p, n, p, sizeof(@typ@))) {
         trans2 = CblasNoTrans;
-        ldb = (int)(is2_n / sizeof(@typ@));
+        ldb = (CBLAS_INT)(is2_n / sizeof(@typ@));
     }
     else {
         /* If not ColMajor, caller should have ensured we are RowMajor */
         /* will not assert in release mode */
         assert(is_blasable2d(is2_p, is2_n, p, n, sizeof(@typ@)));
         trans2 = CblasTrans;
-        ldb = (int)(is2_p / sizeof(@typ@));
+        ldb = (CBLAS_INT)(is2_p / sizeof(@typ@));
     }
     /*
      * Use syrk if we have a case of a matrix times its transpose.
@@ -162,12 +166,14 @@ NPY_NO_EXPORT void
     ) {
         npy_intp i,j;
         if (trans1 == CblasNoTrans) {
-            cblas_@prefix@syrk(order, CblasUpper, trans1, P, N, @step1@,
-                               ip1, lda, @step0@, op, ldc);
+            CBLAS_FUNC(cblas_@prefix@syrk)(
+                order, CblasUpper, trans1, P, N, @step1@,
+                ip1, lda, @step0@, op, ldc);
         }
         else {
-            cblas_@prefix@syrk(order, CblasUpper, trans1, P, N, @step1@,
-                               ip1, ldb, @step0@, op, ldc);
+            CBLAS_FUNC(cblas_@prefix@syrk)(
+                order, CblasUpper, trans1, P, N, @step1@,
+                ip1, ldb, @step0@, op, ldc);
         }
         /* Copy the triangle */
         for (i = 0; i < P; i++) {
@@ -178,8 +184,9 @@ NPY_NO_EXPORT void
 
     }
     else {
-        cblas_@prefix@gemm(order, trans1, trans2, M, P, N, @step1@, ip1, lda,
-                           ip2, ldb, @step0@, op, ldc);
+        CBLAS_FUNC(cblas_@prefix@gemm)(
+            order, trans1, trans2, M, P, N, @step1@, ip1, lda,
+            ip2, ldb, @step0@, op, ldc);
     }
 }
 
@@ -388,7 +395,7 @@ OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
 
 
 NPY_NO_EXPORT void
-@TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_matmul(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     npy_intp dOuter = *dimensions++;
     npy_intp iOuter;

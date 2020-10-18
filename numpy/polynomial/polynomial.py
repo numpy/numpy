@@ -1,5 +1,7 @@
 """
-Objects for dealing with polynomials.
+=================================================
+Power Series (:mod:`numpy.polynomial.polynomial`)
+=================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with polynomials, including a `Polynomial` class that
@@ -7,56 +9,69 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with polynomial objects is in
 the docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+.. autosummary::
+   :toctree: generated/
+
+   Polynomial
+
 Constants
 ---------
-- `polydomain` -- Polynomial default domain, [-1,1].
-- `polyzero` -- (Coefficients of the) "zero polynomial."
-- `polyone` -- (Coefficients of the) constant polynomial 1.
-- `polyx` -- (Coefficients of the) identity map polynomial, ``f(x) = x``.
+.. autosummary::
+   :toctree: generated/
+
+   polydomain
+   polyzero
+   polyone
+   polyx
 
 Arithmetic
 ----------
-- `polyadd` -- add two polynomials.
-- `polysub` -- subtract one polynomial from another.
-- `polymulx` -- multiply a polynomial in ``P_i(x)`` by ``x``.
-- `polymul` -- multiply two polynomials.
-- `polydiv` -- divide one polynomial by another.
-- `polypow` -- raise a polynomial to a positive integer power.
-- `polyval` -- evaluate a polynomial at given points.
-- `polyval2d` -- evaluate a 2D polynomial at given points.
-- `polyval3d` -- evaluate a 3D polynomial at given points.
-- `polygrid2d` -- evaluate a 2D polynomial on a Cartesian product.
-- `polygrid3d` -- evaluate a 3D polynomial on a Cartesian product.
+.. autosummary::
+   :toctree: generated/
+
+   polyadd
+   polysub
+   polymulx
+   polymul
+   polydiv
+   polypow
+   polyval
+   polyval2d
+   polyval3d
+   polygrid2d
+   polygrid3d
 
 Calculus
 --------
-- `polyder` -- differentiate a polynomial.
-- `polyint` -- integrate a polynomial.
+.. autosummary::
+   :toctree: generated/
+
+   polyder
+   polyint
 
 Misc Functions
 --------------
-- `polyfromroots` -- create a polynomial with specified roots.
-- `polyroots` -- find the roots of a polynomial.
-- `polyvalfromroots` -- evaluate a polynomial at given points from roots.
-- `polyvander` -- Vandermonde-like matrix for powers.
-- `polyvander2d` -- Vandermonde-like matrix for 2D power series.
-- `polyvander3d` -- Vandermonde-like matrix for 3D power series.
-- `polycompanion` -- companion matrix in power series form.
-- `polyfit` -- least-squares fit returning a polynomial.
-- `polytrim` -- trim leading coefficients from a polynomial.
-- `polyline` -- polynomial representing given straight line.
+.. autosummary::
+   :toctree: generated/
 
-Classes
--------
-- `Polynomial` -- polynomial class.
+   polyfromroots
+   polyroots
+   polyvalfromroots
+   polyvander
+   polyvander2d
+   polyvander3d
+   polycompanion
+   polyfit
+   polytrim
+   polyline
 
 See Also
 --------
 `numpy.polynomial`
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
@@ -64,7 +79,6 @@ __all__ = [
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
     'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
-import warnings
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
@@ -113,7 +127,11 @@ def polyline(off, scl):
 
     See Also
     --------
-    chebline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite.hermline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -165,8 +183,11 @@ def polyfromroots(roots):
 
     See Also
     --------
-    chebfromroots, legfromroots, lagfromroots, hermfromroots
-    hermefromroots
+    numpy.polynomial.chebyshev.chebfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Notes
     -----
@@ -1253,7 +1274,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Raises
     ------
@@ -1267,10 +1288,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, lagfit, hermfit, hermefit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.laguerre.lagfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.hermite_e.hermefit
     polyval : Evaluates a polynomial.
     polyvander : Vandermonde matrix for powers.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1397,7 +1422,11 @@ def polyroots(c):
 
     See Also
     --------
-    chebroots
+    numpy.polynomial.chebyshev.chebroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -1476,18 +1505,25 @@ class Polynomial(ABCPolyBase):
     _fromroots = staticmethod(polyfromroots)
 
     # Virtual properties
-    nickname = 'poly'
     domain = np.array(polydomain)
     window = np.array(polydomain)
     basis_name = None
 
+    @classmethod
+    def _str_term_unicode(cls, i, arg_str):
+        return f"·{arg_str}{i.translate(cls._superscript_mapping)}"
+
+    @staticmethod
+    def _str_term_ascii(i, arg_str):
+        return f" {arg_str}**{i}"
+
     @staticmethod
     def _repr_latex_term(i, arg_str, needs_parens):
         if needs_parens:
-            arg_str = r'\left({}\right)'.format(arg_str)
+            arg_str = rf"\left({arg_str}\right)"
         if i == 0:
             return '1'
         elif i == 1:
             return arg_str
         else:
-            return '{}^{{{}}}'.format(arg_str, i)
+            return f"{arg_str}^{{{i}}}"

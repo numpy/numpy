@@ -14,45 +14,43 @@ Prerequisites
 
 Building NumPy requires the following installed software:
 
-1) For Python 3, Python__ 3.5.x or newer.
+1) Python__ 3.6.x or newer.
 
-   On Debian and derivative (Ubuntu): python python-dev
+   Please note that the Python development headers also need to be installed,
+   e.g., on Debian/Ubuntu one needs to install both `python3` and
+   `python3-dev`. On Windows and macOS this is normally not an issue.
 
-   On Windows: the official python installer on Python__ is enough
-
-   Make sure that the Python package distutils is installed before
-   continuing. For example, in Debian GNU/Linux, distutils is included
-   in the python-dev package.
-
-   Python must also be compiled with the zlib module enabled.
-
-2) Cython >= 0.29.2 (for development versions of numpy, not for released
-                     versions)
+2) Cython >= 0.29.21
 
 3) pytest__ (optional) 1.15 or later
 
-   This is required for testing numpy, but not for using it.
+   This is required for testing NumPy, but not for using it.
 
-Python__ http://www.python.org
-pytest__ http://pytest.readthedocs.io
+4) Hypothesis__ (optional) 5.3.0 or later
+
+   This is required for testing NumPy, but not for using it.
+
+Python__ https://www.python.org/
+pytest__ https://docs.pytest.org/en/stable/
+Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 
 
 .. note::
 
    If you want to build NumPy in order to work on NumPy itself, use
    ``runtests.py``.  For more details, see
-   https://docs.scipy.org/doc/numpy/dev/development_environment.html
+   https://numpy.org/devdocs/dev/development_environment.html
 
 .. note::
 
-   More extensive information on building NumPy (and Scipy) is maintained at
-   https://scipy.github.io/devdocs/building/
+   More extensive information on building NumPy is maintained at
+   https://numpy.org/devdocs/user/building.html#building-from-source
 
 
 Basic Installation
 ==================
 
-To install numpy run::
+To install NumPy, run::
 
     python setup.py build -j 4 install --prefix $HOME/.local
 
@@ -71,7 +69,7 @@ NPY_NUM_BUILD_JOBS.
 Choosing compilers
 ==================
 
-NumPy needs a C compiler, and for development versions also Cython.  A Fortran
+NumPy needs a C compiler, and for development versions also needs Cython.  A Fortran
 compiler isn't needed to build NumPy itself; the ``numpy.f2py`` tests will be
 skipped when running the test suite if no Fortran compiler is available.  For
 building Scipy a Fortran compiler is needed though, so we include some details
@@ -88,18 +86,18 @@ installed then ``g77`` will be detected and used first.  To explicitly select
 Windows
 -------
 
-On Windows, building from source can be difficult.  Currently, the most robust
-option is to use the Intel compilers, or alternatively MSVC (the same version
-as used to build Python itself) with Intel ifort.  Intel itself maintains a
-good `application note <https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl>`_
+On Windows, building from source can be difficult (in particular if you need to
+build SciPy as well, because that requires a Fortran compiler). Currently, the
+most robust option is to use MSVC (for NumPy only). If you also need SciPy,
+you can either use MSVC + Intel Fortran or the Intel compiler suite.
+Intel itself maintains a good `application note
+<https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl>`_
 on this.
 
-If you want to use a free compiler toolchain, the recommended compiler is MingwPy__.
-The older MinGW32 compiler set used to produce older .exe installers for NumPy
-itself is still available at https://github.com/numpy/numpy-vendor, but not
-recommended for use anymore.
-
-MingwPy__ https://mingwpy.github.io
+If you want to use a free compiler toolchain, our current recommendation is to
+use Docker or Windows subsystem for Linux (WSL).  See
+https://scipy.github.io/devdocs/dev/contributor/contributor_toc.html#development-environment
+for more details.
 
 
 Building with optimized BLAS support
@@ -114,16 +112,16 @@ Windows
 -------
 
 The Intel compilers work with Intel MKL, see the application note linked above.
-MingwPy__ works with OpenBLAS.
+
 For an overview of the state of BLAS/LAPACK libraries on Windows, see
 `here <https://mingwpy.github.io/blas_lapack.html>`_.
 
-OS X
-----
+macOS
+-----
 
-OS X ships the Accelerate framework, which NumPy can build against without any
-manual configuration.  Other BLAS/LAPACK implementations (OpenBLAS, Intel MKL,
-ATLAS) will also work.
+You will need to install a BLAS/LAPACK library. We recommend using OpenBLAS or
+Intel MKL. Apple's Accelerate also still works, however it has bugs and we are
+likely to drop support for it in the near future.
 
 Ubuntu/Debian
 -------------
@@ -153,7 +151,7 @@ Or by preloading a specific BLAS library with::
 Build issues
 ============
 
-If you run into build issues and need help, the NumPy
+If you run into build issues and need help, the NumPy and SciPy
 `mailing list <https://scipy.org/scipylib/mailing-lists.html>`_ is the best
-place to ask.  If the issue is clearly a bug in NumPy, please file an issue (or
+place to ask. If the issue is clearly a bug in NumPy, please file an issue (or
 even better, a pull request) at https://github.com/numpy/numpy.

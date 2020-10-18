@@ -243,7 +243,7 @@ It is similar to Matlab's square bracket notation for creating block matrices.
 
 ``isin`` function, improving on ``in1d``
 ----------------------------------------
-The new function ``isin`` tests whether each element of an N-dimensonal
+The new function ``isin`` tests whether each element of an N-dimensional
 array is present anywhere within a second array. It is an enhancement
 of ``in1d`` that preserves the shape of the first array.
 
@@ -275,7 +275,7 @@ In particular ``np.gradient`` can now take:
 
 This means that, e.g., it is now possible to do the following::
 
-    >>> f = np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float)
+    >>> f = np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float_)
     >>> dx = 2.
     >>> y = [1., 1.5, 3.5]
     >>> np.gradient(f, dx, y)

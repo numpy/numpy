@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 takes templated file .xxx.src and produces .xxx file  where .xxx is
 .i or .c or .h, using the following template rules
@@ -78,16 +78,12 @@ Example:
         3, 3, jim
 
 """
-from __future__ import division, absolute_import, print_function
-
 
 __all__ = ['process_str', 'process_file']
 
 import os
 import sys
 import re
-
-from numpy.distutils.compat import get_exception
 
 # names for replacement that are already global.
 global_names = {}
@@ -240,8 +236,7 @@ def parse_string(astr, env, level, line) :
             code.append(replace_re.sub(replace, pref))
             try :
                 envlist = parse_loop_header(head)
-            except ValueError:
-                e = get_exception()
+            except ValueError as e:
                 msg = "line %d: %s" % (newline, e)
                 raise ValueError(msg)
             for newenv in envlist :
@@ -289,8 +284,7 @@ def process_file(source):
     sourcefile = os.path.normcase(source).replace("\\", "\\\\")
     try:
         code = process_str(''.join(lines))
-    except ValueError:
-        e = get_exception()
+    except ValueError as e:
         raise ValueError('In "%s" loop at %s' % (sourcefile, e))
     return '#line 1 "%s"\n%s' % (sourcefile, code)
 
@@ -327,8 +321,7 @@ def main():
     allstr = fid.read()
     try:
         writestr = process_str(allstr)
-    except ValueError:
-        e = get_exception()
+    except ValueError as e:
         raise ValueError("In %s loop at %s" % (file, e))
 
     outfile.write(writestr)

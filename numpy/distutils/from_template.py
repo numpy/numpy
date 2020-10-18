@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 process_file(filename)
@@ -45,8 +45,6 @@ process_file(filename)
   <ctypereal=float,double,\\0,\\1>
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['process_str', 'process_file']
 
 import os

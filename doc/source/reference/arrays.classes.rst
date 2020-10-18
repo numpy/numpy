@@ -6,6 +6,10 @@ Standard array subclasses
 
 .. currentmodule:: numpy
 
+.. for doctests
+   >>> import numpy as np
+   >>> np.random.seed(1)
+
 .. note::
 
     Subclassing a ``numpy.ndarray`` is possible but if your goal is to create
@@ -169,7 +173,7 @@ NumPy provides several hooks that classes can customize:
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
-   -  ``types`` is a `collection <collections.abc.Collection>`_
+   -  ``types`` is a collection :py:class:`collections.abc.Collection`
       of unique argument types from the original NumPy function call that
       implement ``__array_function__``.
    -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
@@ -322,9 +326,8 @@ NumPy provides several hooks that classes can customize:
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
-   <ufuncs-output-type>`, results will be written to the object
-   returned by :func:`__array__`. Similar conversion is done on
-   input arrays.
+   <ufuncs-output-type>`, results will *not* be written to the object
+   returned by :func:`__array__`. This practice will return ``TypeError``.
 
 
 Matrix objects
@@ -404,23 +407,25 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
->>> a=mat('1 2 3; 4 5 3')
->>> print (a*a.T).I
-[[ 0.2924 -0.1345]
- [-0.1345  0.0819]]
+>>> a = np.mat('1 2 3; 4 5 3')
+>>> print((a*a.T).I)
+    [[ 0.29239766 -0.13450292]
+     [-0.13450292  0.08187135]]
+
 
 Example 2: Matrix creation from nested sequence
 
->>> mat([[1,5,10],[1.0,3,4j]])
+>>> np.mat([[1,5,10],[1.0,3,4j]])
 matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
         [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
 
->>> mat(random.rand(3,3)).T
-matrix([[ 0.7699,  0.7922,  0.3294],
-        [ 0.2792,  0.0101,  0.9219],
-        [ 0.3398,  0.7571,  0.8197]])
+>>> np.mat(np.random.rand(3,3)).T
+matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
+        [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
+        [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
+
 
 Memory-mapped file arrays
 =========================
@@ -451,15 +456,15 @@ array actually get written to disk.
 
 Example:
 
->>> a = memmap('newfile.dat', dtype=float, mode='w+', shape=1000)
+>>> a = np.memmap('newfile.dat', dtype=float, mode='w+', shape=1000)
 >>> a[10] = 10.0
 >>> a[30] = 30.0
 >>> del a
->>> b = fromfile('newfile.dat', dtype=float)
->>> print b[10], b[30]
+>>> b = np.fromfile('newfile.dat', dtype=float)
+>>> print(b[10], b[30])
 10.0 30.0
->>> a = memmap('newfile.dat', dtype=float)
->>> print a[10], a[30]
+>>> a = np.memmap('newfile.dat', dtype=float)
+>>> print(a[10], a[30])
 10.0 30.0
 
 
@@ -590,9 +595,9 @@ This default iterator selects a sub-array of dimension :math:`N-1`
 from the array. This can be a useful construct for defining recursive
 algorithms. To loop over the entire array requires :math:`N` for-loops.
 
->>> a = arange(24).reshape(3,2,4)+10
+>>> a = np.arange(24).reshape(3,2,4)+10
 >>> for val in a:
-...     print 'item:', val
+...     print('item:', val)
 item: [[10 11 12 13]
  [14 15 16 17]]
 item: [[18 19 20 21]
@@ -614,7 +619,7 @@ an iterator that will cycle over the entire array in C-style
 contiguous order.
 
 >>> for i, val in enumerate(a.flat):
-...     if i%5 == 0: print i, val
+...     if i%5 == 0: print(i, val)
 0 10
 5 15
 10 20
@@ -636,8 +641,8 @@ N-dimensional enumeration
 Sometimes it may be useful to get the N-dimensional index while
 iterating. The ndenumerate iterator can achieve this.
 
->>> for i, val in ndenumerate(a):
-...     if sum(i)%5 == 0: print i, val
+>>> for i, val in np.ndenumerate(a):
+...     if sum(i)%5 == 0: print(i, val)
 (0, 0, 0) 10
 (1, 1, 3) 25
 (2, 0, 3) 29
@@ -658,8 +663,8 @@ objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
 
->>> for val in broadcast([[1,0],[2,3]],[0,1]):
-...     print val
+>>> for val in np.broadcast([[1,0],[2,3]],[0,1]):
+...     print(val)
 (1, 0)
 (0, 1)
 (2, 0)

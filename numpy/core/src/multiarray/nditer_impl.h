@@ -301,16 +301,52 @@ struct NpyIter_AD {
         NIT_AXISDATA_SIZEOF(itflags, ndim, nop)*(ndim ? ndim : 1))
 
 /* Internal helper functions shared between implementation files */
+
+/**
+ * Undo the axis permutation of the iterator. When the operand has fewer
+ * dimensions then the iterator, this can return negative values for
+ * inserted (broadcast) dimensions.
+ *
+ * @param axis Axis for which to undo the iterator axis permutation.
+ * @param ndim If `op_axes` is being used, this is the iterator dimension,
+ *             otherwise this is the operand dimension.
+ * @param perm The iterator axis permutation NIT_PERM(iter)
+ * @param axis_flipped Will be set to true if this is a flipped axis
+ *        (i.e. is iterated in reversed order) and otherwise false.
+ *        Can be NULL if the information is not needed.
+ * @return The unpermuted axis. Without `op_axes` this is correct, with
+ *         `op_axes` this indexes into `op_axes` (unpermuted iterator axis)
+ */
+static NPY_INLINE int
+npyiter_undo_iter_axis_perm(
+        int axis, int ndim, const npy_int8 *perm, npy_bool *axis_flipped)
+{
+    npy_int8 p = perm[axis];
+    /* The iterator treats axis reversed, thus adjust by ndim */
+    npy_bool flipped = p < 0;
+    if (axis_flipped != NULL) {
+        *axis_flipped = flipped;
+    }
+    if (flipped) {
+        axis = ndim + p;
+    }
+    else {
+        axis = ndim - p - 1;
+    }
+    return axis;
+}
+
 NPY_NO_EXPORT void
 npyiter_coalesce_axes(NpyIter *iter);
 NPY_NO_EXPORT int
 npyiter_allocate_buffers(NpyIter *iter, char **errmsg);
 NPY_NO_EXPORT void
 npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex);
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 npyiter_copy_from_buffers(NpyIter *iter);
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
-
+NPY_NO_EXPORT void
+npyiter_clear_buffers(NpyIter *iter);
 
 #endif

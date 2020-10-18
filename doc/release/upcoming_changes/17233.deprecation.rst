@@ -1,0 +1,4 @@
+The ``ndincr`` method of ``ndindex`` is deprecated
+--------------------------------------------------
+The documentation has warned against using this function since NumPy 1.8.
+Use ``next(it)`` instead of ``it.ndincr()``.

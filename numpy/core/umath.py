@@ -7,10 +7,11 @@ by importing from the extension module.
 """
 
 from . import _multiarray_umath
-from numpy.core._multiarray_umath import *
-from numpy.core._multiarray_umath import (
-    _UFUNC_API, _add_newdoc_ufunc, _ones_like
-    )
+from ._multiarray_umath import *  # noqa: F403
+# These imports are needed for backward compatibility,
+# do not change them. issue gh-11862
+# _ones_like is semi-public, on purpose not added to __all__
+from ._multiarray_umath import _UFUNC_API, _add_newdoc_ufunc, _ones_like
 
 __all__ = [
     '_UFUNC_API', 'ERR_CALL', 'ERR_DEFAULT', 'ERR_IGNORE', 'ERR_LOG',

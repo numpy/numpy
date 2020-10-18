@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
-
 import sys
 import gc
+from hypothesis import given
+from hypothesis.extra import numpy as hynp
 import pytest
 
 import numpy as np
@@ -12,7 +12,7 @@ from numpy.testing import (
     )
 import textwrap
 
-class TestArrayRepr(object):
+class TestArrayRepr:
     def test_nan_inf(self):
         x = np.array([np.nan, np.inf])
         assert_equal(repr(x), 'array([nan, inf])')
@@ -160,7 +160,7 @@ class TestArrayRepr(object):
         assert_equal(repr(arr_no_fields), 'array([(), (), (), ()], dtype=[])')
 
 
-class TestComplexArray(object):
+class TestComplexArray:
     def test_str(self):
         rvals = [0, 1, -1, np.inf, -np.inf, np.nan]
         cvals = [complex(rp, ip) for rp in rvals for ip in rvals]
@@ -207,7 +207,7 @@ class TestComplexArray(object):
         for res, val in zip(actual, wanted):
             assert_equal(res, val)
 
-class TestArray2String(object):
+class TestArray2String:
     def test_basic(self):
         """Basic test of array2string."""
         a = np.arange(3)
@@ -235,12 +235,8 @@ class TestArray2String(object):
                 return 'O'
 
         x = np.arange(3)
-        if sys.version_info[0] >= 3:
-            x_hex = "[0x0 0x1 0x2]"
-            x_oct = "[0o0 0o1 0o2]"
-        else:
-            x_hex = "[0x0L 0x1L 0x2L]"
-            x_oct = "[0L 01L 02L]"
+        x_hex = "[0x0 0x1 0x2]"
+        x_oct = "[0o0 0o1 0o2]"
         assert_(np.array2string(x, formatter={'all':_format_function}) ==
                 "[. o O]")
         assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==
@@ -399,6 +395,93 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
+    def test_multiline_repr(self):
+        class MultiLine:
+            def __repr__(self):
+                return "Line 1\nLine 2"
+
+        a = np.array([[None, MultiLine()], [MultiLine(), None]])
+
+        assert_equal(
+            np.array2string(a),
+            '[[None Line 1\n'
+            '       Line 2]\n'
+            ' [Line 1\n'
+            '  Line 2 None]]'
+        )
+        assert_equal(
+            np.array2string(a, max_line_width=5),
+            '[[None\n'
+            '  Line 1\n'
+            '  Line 2]\n'
+            ' [Line 1\n'
+            '  Line 2\n'
+            '  None]]'
+        )
+        assert_equal(
+            repr(a),
+            'array([[None, Line 1\n'
+            '              Line 2],\n'
+            '       [Line 1\n'
+            '        Line 2, None]], dtype=object)'
+        )
+
+        class MultiLineLong:
+            def __repr__(self):
+                return "Line 1\nLooooooooooongestLine2\nLongerLine 3"
+
+        a = np.array([[None, MultiLineLong()], [MultiLineLong(), None]])
+        assert_equal(
+            repr(a),
+            'array([[None, Line 1\n'
+            '              LooooooooooongestLine2\n'
+            '              LongerLine 3          ],\n'
+            '       [Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          , None]], dtype=object)'
+        )
+        assert_equal(
+            np.array_repr(a, 20),
+            'array([[None,\n'
+            '        Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          ],\n'
+            '       [Line 1\n'
+            '        LooooooooooongestLine2\n'
+            '        LongerLine 3          ,\n'
+            '        None]],\n'
+            '      dtype=object)'
+        )
+
+    def test_nested_array_repr(self):
+        a = np.empty((2, 2), dtype=object)
+        a[0, 0] = np.eye(2)
+        a[0, 1] = np.eye(3)
+        a[1, 0] = None
+        a[1, 1] = np.ones((3, 1))
+        assert_equal(
+            repr(a),
+            'array([[array([[1., 0.],\n'
+            '               [0., 1.]]), array([[1., 0., 0.],\n'
+            '                                  [0., 1., 0.],\n'
+            '                                  [0., 0., 1.]])],\n'
+            '       [None, array([[1.],\n'
+            '                     [1.],\n'
+            '                     [1.]])]], dtype=object)'
+        )
+
+    @given(hynp.from_dtype(np.dtype("U")))
+    def test_any_text(self, text):
+        # This test checks that, given any value that can be represented in an
+        # array of dtype("U") (i.e. unicode string), ...
+        a = np.array([text, text, text])
+        # casting a list of them to an array does not e.g. truncate the value
+        assert_equal(a[0], text)
+        # and that np.array2string puts a newline in the expected location
+        expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
+        result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
+        assert_equal(result, expected_repr)
+
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
@@ -413,7 +496,7 @@ class TestArray2String(object):
         gc.enable()
         assert_(r1 == r2)
 
-class TestPrintOptions(object):
+class TestPrintOptions:
     """Test getting and setting global print options."""
 
     def setup(self):
@@ -467,16 +550,10 @@ class TestPrintOptions(object):
         assert_equal(repr(x), "array([0., 1., 2.])")
 
     def test_0d_arrays(self):
-        unicode = type(u'')
+        assert_equal(str(np.array(u'café', '<U4')), u'café')
 
-        assert_equal(unicode(np.array(u'café', '<U4')), u'café')
-
-        if sys.version_info[0] >= 3:
-            assert_equal(repr(np.array('café', '<U4')),
-                         "array('café', dtype='<U4')")
-        else:
-            assert_equal(repr(np.array(u'café', '<U4')),
-                         "array(u'caf\\xe9', dtype='<U4')")
+        assert_equal(repr(np.array('café', '<U4')),
+                     "array('café', dtype='<U4')")
         assert_equal(str(np.array('test', np.str_)), 'test')
 
         a = np.zeros(1, dtype=[('a', '<i4', (3,))])
@@ -709,7 +786,7 @@ class TestPrintOptions(object):
             array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22.],
                   dtype=float32)"""))
 
-        styp = '<U4' if sys.version_info[0] >= 3 else '|S4'
+        styp = '<U4'
         assert_equal(repr(np.ones(3, dtype=styp)),
             "array(['1', '1', '1'], dtype='{}')".format(styp))
         assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
@@ -847,18 +924,14 @@ class TestPrintOptions(object):
         assert_raises(TypeError, np.set_printoptions, threshold=b'1')
 
 def test_unicode_object_array():
-    import sys
-    if sys.version_info[0] >= 3:
-        expected = "array(['é'], dtype=object)"
-    else:
-        expected = "array([u'\\xe9'], dtype=object)"
+    expected = "array(['é'], dtype=object)"
     x = np.array([u'\xe9'], dtype=object)
     assert_equal(repr(x), expected)
 
 
-class TestContextManager(object):
+class TestContextManager:
     def test_ctx_mgr(self):
-        # test that context manager actuall works
+        # test that context manager actually works
         with np.printoptions(precision=2):
             s = str(np.array([2.0]) / 3)
         assert_equal(s, '[0.67]')

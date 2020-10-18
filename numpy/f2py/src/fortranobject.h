@@ -11,30 +11,7 @@ extern "C" {
 #endif
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_f2py_ARRAY_API
 #include "numpy/arrayobject.h"
-
-/*
- * Python 3 support macros
- */
-#if PY_VERSION_HEX >= 0x03000000
-#define PyString_Check PyBytes_Check
-#define PyString_GET_SIZE PyBytes_GET_SIZE
-#define PyString_AS_STRING PyBytes_AS_STRING
-#define PyString_FromString PyBytes_FromString
-#define PyUString_FromStringAndSize PyUnicode_FromStringAndSize
-#define PyString_ConcatAndDel PyBytes_ConcatAndDel
-#define PyString_AsString PyBytes_AsString
-
-#define PyInt_Check PyLong_Check
-#define PyInt_FromLong PyLong_FromLong
-#define PyInt_AS_LONG PyLong_AsLong
-#define PyInt_AsLong PyLong_AsLong
-
-#define PyNumber_Int PyNumber_Long
-
-#else
-
-#define PyUString_FromStringAndSize PyString_FromStringAndSize
-#endif
+#include "numpy/npy_3kcompat.h"
 
 
 #ifdef F2PY_REPORT_ATEXIT
@@ -105,19 +82,12 @@ typedef struct {
   extern PyObject * PyFortranObject_New(FortranDataDef* defs, f2py_void_func init);
   extern PyObject * PyFortranObject_NewAsAttr(FortranDataDef* defs);
 
-#if PY_VERSION_HEX >= 0x03000000
-
 PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *));
 void * F2PyCapsule_AsVoidPtr(PyObject *obj);
 int F2PyCapsule_Check(PyObject *ptr);
 
-#else
-
-PyObject * F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *));
-void * F2PyCapsule_AsVoidPtr(PyObject *ptr);
-int F2PyCapsule_Check(PyObject *ptr);
-
-#endif
+extern void *F2PySwapThreadLocalCallbackPtr(char *key, void *ptr);
+extern void *F2PyGetThreadLocalCallbackPtr(char *key);
 
 #define ISCONTIGUOUS(m) (PyArray_FLAGS(m) & NPY_ARRAY_C_CONTIGUOUS)
 #define F2PY_INTENT_IN 1

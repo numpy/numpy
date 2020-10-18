@@ -1,10 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
 # Code common to build tools
 import sys
 import warnings
 import copy
-import binascii
 import textwrap
 
 from numpy.distutils.misc_util import mingw32
@@ -43,7 +40,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000c - 1.14.x
 # 0x0000000c - 1.15.x
 # 0x0000000d - 1.16.x
-C_API_VERSION = 0x0000000d
+# 0x0000000e - 1.19.x
+C_API_VERSION = 0x0000000e
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -135,11 +133,6 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
-                       # broken on OSX 10.11, make sure its not optimized away
-                       ("volatile int r = __builtin_cpu_supports", '"sse"',
-                        "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
-                       ("volatile int r = __builtin_cpu_supports", '"avx512f"',
-                        "stdio.h", "__BUILTIN_CPU_SUPPORTS_AVX512F"),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
@@ -154,6 +147,10 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX2"),
                        ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
                         "stdio.h", "LINK_AVX512F"),
+                       ("__asm__ volatile", '"vfpclasspd $0x40, %zmm15, %k6\\n"\
+                                             "vmovdqu8 %xmm0, %xmm1\\n"\
+                                             "vpbroadcastmb2q %k0, %xmm0\\n"',
+                        "stdio.h", "LINK_AVX512_SKX"),
                        ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
@@ -172,6 +169,8 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_target_avx2'),
                                 ('__attribute__((target ("avx512f")))',
                                  'attribute_target_avx512f'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                 'attribute_target_avx512_skx'),
                                 ]
 
 # function attributes with intrinsics
@@ -179,6 +178,9 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 # gcc 4.8.4 support attributes but not with intrisics
 # tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
+# The _mm512_castps_si512 instruction is specific check for AVX-512F support
+# in gcc-4.9 which is missing a subset of intrinsics. See
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61878
 OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
                                 'attribute_target_avx2_with_intrinsics',
                                 '__m256 temp = _mm256_set1_ps(1.0); temp = \
@@ -186,7 +188,13 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
                                 'immintrin.h'),
                                 ('__attribute__((target("avx512f")))',
                                 'attribute_target_avx512f_with_intrinsics',
-                                '__m512 temp = _mm512_set1_ps(1.0)',
+                                '__m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0))',
+                                'immintrin.h'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                'attribute_target_avx512_skx_with_intrinsics',
+                                '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
+                                __m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0));\
+                                _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
                                 'immintrin.h'),
                                 ]
 
@@ -246,9 +254,9 @@ def check_long_double_representation(cmd):
     # Disable multi-file interprocedural optimization in the Intel compiler on Linux
     # which generates intermediary object files and prevents checking the
     # float representation.
-    elif (sys.platform != "win32" 
-            and cmd.compiler.compiler_type.startswith('intel') 
-            and '-ipo' in cmd.compiler.cc_exe):        
+    elif (sys.platform != "win32"
+            and cmd.compiler.compiler_type.startswith('intel')
+            and '-ipo' in cmd.compiler.cc_exe):
         newcompiler = cmd.compiler.cc_exe.replace(' -ipo', '')
         cmd.compiler.set_executables(
             compiler=newcompiler,
@@ -313,32 +321,15 @@ def pyod(filename):
     We only implement enough to get the necessary information for long double
     representation, this is not intended as a compatible replacement for od.
     """
-    def _pyod2():
-        out = []
+    out = []
+    with open(filename, 'rb') as fid:
+        yo2 = [oct(o)[2:] for o in fid.read()]
+    for i in range(0, len(yo2), 16):
+        line = ['%07d' % int(oct(i)[2:])]
+        line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
+        out.append(" ".join(line))
+    return out
 
-        with open(filename, 'rb') as fid:
-            yo = [int(oct(int(binascii.b2a_hex(o), 16))) for o in fid.read()]
-        for i in range(0, len(yo), 16):
-            line = ['%07d' % int(oct(i))]
-            line.extend(['%03d' % c for c in yo[i:i+16]])
-            out.append(" ".join(line))
-        return out
-
-    def _pyod3():
-        out = []
-
-        with open(filename, 'rb') as fid:
-            yo2 = [oct(o)[2:] for o in fid.read()]
-        for i in range(0, len(yo2), 16):
-            line = ['%07d' % int(oct(i)[2:])]
-            line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
-            out.append(" ".join(line))
-        return out
-
-    if sys.version_info[0] < 3:
-        return _pyod2()
-    else:
-        return _pyod3()
 
 _BEFORE_SEQ = ['000', '000', '000', '000', '000', '000', '000', '000',
               '001', '043', '105', '147', '211', '253', '315', '357']

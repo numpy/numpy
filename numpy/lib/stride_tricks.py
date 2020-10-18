@@ -5,15 +5,13 @@ An explanation of strides can be found in the "ndarray.rst" file in the
 NumPy reference guide.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-from numpy.core.overrides import array_function_dispatch
+from numpy.core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
 
 
-class DummyArray(object):
+class DummyArray:
     """Dummy object that just exists to hang __array_interface__ dictionaries
     and possibly keep alive a reference to a base array.
     """
@@ -167,6 +165,12 @@ def broadcast_to(array, shape, subok=False):
         If the array is not compatible with the new shape according to NumPy's
         broadcasting rules.
 
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_shapes
+
     Notes
     -----
     .. versionadded:: 1.10.0
@@ -199,12 +203,55 @@ def _broadcast_shape(*args):
     return b.shape
 
 
-def _broadcast_arrays_dispatcher(*args, **kwargs):
+@set_module('numpy')
+def broadcast_shapes(*args):
+    """
+    Broadcast the input shapes into a single shape.
+
+    :ref:`Learn more about broadcasting here <basics.broadcasting>`.
+
+    .. versionadded:: 1.20.0
+
+    Parameters
+    ----------
+    `*args` : tuples of ints, or ints
+        The shapes to be broadcast against each other.
+
+    Returns
+    -------
+    tuple
+        Broadcasted shape.
+
+    Raises
+    ------
+    ValueError
+        If the shapes are not compatible and cannot be broadcast according
+        to NumPy's broadcasting rules.
+
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_to
+
+    Examples
+    --------
+    >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
+    (3, 2)
+
+    >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+    (5, 6, 7)
+    """
+    arrays = [np.empty(x, dtype=[]) for x in args]
+    return _broadcast_shape(*arrays)
+
+
+def _broadcast_arrays_dispatcher(*args, subok=None):
     return args
 
 
 @array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
-def broadcast_arrays(*args, **kwargs):
+def broadcast_arrays(*args, subok=False):
     """
     Broadcast any number of arrays against each other.
 
@@ -232,6 +279,12 @@ def broadcast_arrays(*args, **kwargs):
             warning will be emitted. A future version will set the
             ``writable`` flag False so writing to it will raise an error.
 
+    See Also
+    --------
+    broadcast
+    broadcast_to
+    broadcast_shapes
+
     Examples
     --------
     >>> x = np.array([[1,2,3]])
@@ -255,10 +308,6 @@ def broadcast_arrays(*args, **kwargs):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    subok = kwargs.pop('subok', False)
-    if kwargs:
-        raise TypeError('broadcast_arrays() got an unexpected keyword '
-                        'argument {!r}'.format(list(kwargs.keys())[0]))
     args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)

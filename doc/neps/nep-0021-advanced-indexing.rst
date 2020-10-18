@@ -1,3 +1,5 @@
+.. _NEP21:
+
 ==================================================
 NEP 21 — Simplified and explicit advanced indexing
 ==================================================
@@ -48,7 +50,7 @@ NumPy arrays currently support a flexible range of indexing operations:
 
 For clarity, we will refer to these existing rules as "legacy indexing".
 This is only a high-level summary; for more details, see NumPy's documentation
-and and `Examples` below.
+and `Examples` below.
 
 Outer indexing
 ~~~~~~~~~~~~~~
@@ -108,7 +110,7 @@ array ``arr`` with shape ``(X, Y, Z)``:
 3. ``arr[0, :, [0, 1]]`` has shape ``(2, Y)``, not ``(Y, 2)``!
 
 These first two cases are intuitive and consistent with outer indexing, but
-this last case is quite surprising, even to many higly experienced NumPy users.
+this last case is quite surprising, even to many highly experienced NumPy users.
 
 Mixed cases involving multiple array indices are also surprising, and only
 less problematic because the current behavior is so useless that it is rarely
@@ -240,7 +242,7 @@ be deduced:
 7. To ensure that existing subclasses of `ndarray` that override indexing
    do not inadvertently revert to default behavior for indexing attributes,
    these attribute should have explicit checks that disable them if
-   ``__getitem__`` or ``__setitem__`` has been overriden.
+   ``__getitem__`` or ``__setitem__`` has been overridden.
 
 Unlike plain indexing, the new indexing attributes are explicitly aimed
 at higher dimensional indexing, several additional changes should be implemented:
@@ -319,7 +321,7 @@ of ``__getitem__`` on these attributes should test
 subclass has special handling for indexing and ``NotImplementedError``
 should be raised, requiring that the indexing attributes is also explicitly
 overwritten. Likewise, implementations of ``__setitem__`` should check to see
-if ``__setitem__`` is overriden.
+if ``__setitem__`` is overridden.
 
 A further question is how to facilitate implementing the special attributes.
 Also there is the weird functionality where ``__setitem__`` calls

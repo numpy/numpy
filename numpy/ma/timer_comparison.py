@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import timeit
 from functools import reduce
 
@@ -15,7 +13,7 @@ np.seterr(all='ignore')
 pi = np.pi
 
 
-class ModuleTester(object):
+class ModuleTester:
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal
@@ -102,9 +100,9 @@ class ModuleTester(object):
                                     header=header,
                                     names=('x', 'y'))
                 assert cond, msg
-        except ValueError:
+        except ValueError as e:
             msg = build_err_msg([x, y], err_msg, header=header, names=('x', 'y'))
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
     def assert_array_equal(self, x, y, err_msg=''):
         """

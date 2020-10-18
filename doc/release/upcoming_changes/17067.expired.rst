@@ -1,0 +1,8 @@
+Financial functions removed
+---------------------------
+In accordance with NEP 32, the financial functions are removed
+from NumPy 1.20. The functions that have been removed are ``fv``,
+``ipmt``, ``irr``, ``mirr``, ``nper``, ``npv``, ``pmt``, ``ppmt``,
+``pv``, and ``rate``.  These functions are available in the
+`numpy_financial <https://pypi.org/project/numpy-financial>`_
+library.

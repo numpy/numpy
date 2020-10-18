@@ -3,8 +3,6 @@
 This tests the convert and cast methods of all the polynomial classes.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import operator as op
 from numbers import Number
 
@@ -15,7 +13,6 @@ from numpy.polynomial import (
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
-from numpy.compat import long
 from numpy.polynomial.polyutils import RankWarning
 
 #
@@ -44,7 +41,7 @@ def assert_poly_almost_equal(p1, p2, msg=""):
         assert_(np.all(p1.window == p2.window))
         assert_almost_equal(p1.coef, p2.coef)
     except AssertionError:
-        msg = "Result: %s\nTarget: %s", (p1, p2)
+        msg = f"Result: {p1}\nTarget: {p2}"
         raise AssertionError(msg)
 
 
@@ -317,7 +314,7 @@ def test_truediv(Poly):
         s = stype(5)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
-    for stype in (int, long, float):
+    for stype in (int, float):
         s = stype(5)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
@@ -573,62 +570,12 @@ def test_ufunc_override(Poly):
     assert_raises(TypeError, np.add, x, p)
 
 
-
-class TestLatexRepr(object):
-    """Test the latex repr used by ipython """
-
-    def as_latex(self, obj):
-        # right now we ignore the formatting of scalars in our tests, since
-        # it makes them too verbose. Ideally, the formatting of scalars will
-        # be fixed such that tests below continue to pass
-        obj._repr_latex_scalar = lambda x: str(x)
-        try:
-            return obj._repr_latex_()
-        finally:
-            del obj._repr_latex_scalar
-
-    def test_simple_polynomial(self):
-        # default input
-        p = Polynomial([1, 2, 3])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,x + 3.0\,x^{2}$')
-
-        # translated input
-        p = Polynomial([1, 2, 3], domain=[-2, 0])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(1.0 + x\right) + 3.0\,\left(1.0 + x\right)^{2}$')
-
-        # scaled input
-        p = Polynomial([1, 2, 3], domain=[-0.5, 0.5])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(2.0x\right) + 3.0\,\left(2.0x\right)^{2}$')
-
-        # affine input
-        p = Polynomial([1, 2, 3], domain=[-1, 0])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0 + 2.0\,\left(1.0 + 2.0x\right) + 3.0\,\left(1.0 + 2.0x\right)^{2}$')
-
-    def test_basis_func(self):
-        p = Chebyshev([1, 2, 3])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{T}_{0}(x) + 2.0\,{T}_{1}(x) + 3.0\,{T}_{2}(x)$')
-        # affine input - check no surplus parens are added
-        p = Chebyshev([1, 2, 3], domain=[-1, 0])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{T}_{0}(1.0 + 2.0x) + 2.0\,{T}_{1}(1.0 + 2.0x) + 3.0\,{T}_{2}(1.0 + 2.0x)$')
-
-    def test_multichar_basis_func(self):
-        p = HermiteE([1, 2, 3])
-        assert_equal(self.as_latex(p),
-            r'$x \mapsto 1.0\,{He}_{0}(x) + 2.0\,{He}_{1}(x) + 3.0\,{He}_{2}(x)$')
-
-
 #
 # Test class method that only exists for some classes
 #
 
 
-class TestInterpolate(object):
+class TestInterpolate:
 
     def f(self, x):
         return x * (x - 1) * (x - 2)

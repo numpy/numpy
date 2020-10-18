@@ -1,8 +1,6 @@
 """Test functions for 1D array set operations.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 from numpy.testing import (assert_array_equal, assert_equal,
@@ -13,8 +11,7 @@ from numpy.lib.arraysetops import (
 import pytest
 
 
-
-class TestSetOps(object):
+class TestSetOps:
 
     def test_intersect1d(self):
         # unique inputs
@@ -36,7 +33,7 @@ class TestSetOps(object):
 
     def test_intersect1d_array_like(self):
         # See gh-11772
-        class Test(object):
+        class Test:
             def __array__(self):
                 return np.arange(3)
 
@@ -120,61 +117,70 @@ class TestSetOps(object):
         assert_array_equal([-1, 0], ediff1d(zero_elem, to_begin=-1, to_end=0))
         assert_array_equal([], ediff1d(one_elem))
         assert_array_equal([1], ediff1d(two_elem))
-        assert_array_equal([7,1,9], ediff1d(two_elem, to_begin=7, to_end=9))
-        assert_array_equal([5,6,1,7,8], ediff1d(two_elem, to_begin=[5,6], to_end=[7,8]))
-        assert_array_equal([1,9], ediff1d(two_elem, to_end=9))
-        assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
-        assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
-        assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
+        assert_array_equal([7, 1, 9], ediff1d(two_elem, to_begin=7, to_end=9))
+        assert_array_equal([5, 6, 1, 7, 8],
+                           ediff1d(two_elem, to_begin=[5, 6], to_end=[7, 8]))
+        assert_array_equal([1, 9], ediff1d(two_elem, to_end=9))
+        assert_array_equal([1, 7, 8], ediff1d(two_elem, to_end=[7, 8]))
+        assert_array_equal([7, 1], ediff1d(two_elem, to_begin=7))
+        assert_array_equal([5, 6, 1], ediff1d(two_elem, to_begin=[5, 6]))
 
-    @pytest.mark.parametrize("ary, prepend, append", [
+    @pytest.mark.parametrize("ary, prepend, append, expected", [
         # should fail because trying to cast
         # np.nan standard floating point value
         # into an integer array:
         (np.array([1, 2, 3], dtype=np.int64),
          None,
-         np.nan),
+         np.nan,
+         'to_end'),
         # should fail because attempting
-        # to downcast to smaller int type:
-        (np.array([1, 2, 3], dtype=np.int16),
-         np.array([5, 1<<20, 2], dtype=np.int32),
-         None),
+        # to downcast to int type:
+        (np.array([1, 2, 3], dtype=np.int64),
+         np.array([5, 7, 2], dtype=np.float32),
+         None,
+         'to_begin'),
         # should fail because attempting to cast
         # two special floating point values
-        # to integers (on both sides of ary):
+        # to integers (on both sides of ary),
+        # `to_begin` is in the error message as the impl checks this first:
         (np.array([1., 3., 9.], dtype=np.int8),
          np.nan,
-         np.nan),
+         np.nan,
+         'to_begin'),
          ])
-    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append):
+    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append, expected):
         # verify resolution of gh-11490
 
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'cannot convert'
-        with assert_raises_regex(ValueError, msg):
+        msg = 'dtype of `{}` must be compatible'.format(expected)
+        with assert_raises_regex(TypeError, msg):
             ediff1d(ary=ary,
                     to_end=append,
                     to_begin=prepend)
 
-    @pytest.mark.parametrize("ary,"
-                             "prepend,"
-                             "append,"
-                             "expected", [
-        (np.array([1, 2, 3], dtype=np.int16),
-         0,
-         None,
-         np.array([0, 1, 1], dtype=np.int16)),
-        (np.array([1, 2, 3], dtype=np.int32),
-         0,
-         0,
-         np.array([0, 1, 1, 0], dtype=np.int32)),
-        (np.array([1, 2, 3], dtype=np.int64),
-         3,
-         -9,
-         np.array([3, 1, 1, -9], dtype=np.int64)),
-         ])
+    @pytest.mark.parametrize(
+        "ary,prepend,append,expected",
+        [
+         (np.array([1, 2, 3], dtype=np.int16),
+          2**16,  # will be cast to int16 under same kind rule.
+          2**16 + 4,
+          np.array([0, 1, 1, 4], dtype=np.int16)),
+         (np.array([1, 2, 3], dtype=np.float32),
+          np.array([5], dtype=np.float64),
+          None,
+          np.array([5, 1, 1], dtype=np.float32)),
+         (np.array([1, 2, 3], dtype=np.int32),
+          0,
+          0,
+          np.array([0, 1, 1, 0], dtype=np.int32)),
+         (np.array([1, 2, 3], dtype=np.int64),
+          3,
+          -9,
+          np.array([3, 1, 1, -9], dtype=np.int64)),
+        ]
+    )
     def test_ediff1d_scalar_handling(self,
                                      ary,
                                      prepend,
@@ -187,7 +193,7 @@ class TestSetOps(object):
                             to_end=append,
                             to_begin=prepend)
         assert_equal(actual, expected)
-
+        assert actual.dtype == expected.dtype
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior
@@ -197,33 +203,34 @@ class TestSetOps(object):
             b = np.asarray(b).flatten().tolist()
             return a in b
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
+
         def assert_isin_equal(a, b):
             x = isin(a, b)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
 
-        #multidimensional arrays in both arguments
+        # multidimensional arrays in both arguments
         a = np.arange(24).reshape([2, 3, 4])
         b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
         assert_isin_equal(a, b)
 
-        #array-likes as both arguments
+        # array-likes as both arguments
         c = [(9, 8), (7, 6)]
         d = (9, 7)
         assert_isin_equal(c, d)
 
-        #zero-d array:
+        # zero-d array:
         f = np.array(3)
         assert_isin_equal(f, b)
         assert_isin_equal(a, f)
         assert_isin_equal(f, f)
 
-        #scalar:
+        # scalar:
         assert_isin_equal(5, b)
         assert_isin_equal(a, 6)
         assert_isin_equal(5, 6)
 
-        #empty array-like:
+        # empty array-like:
         x = []
         assert_isin_equal(x, b)
         assert_isin_equal(a, x)
@@ -410,7 +417,7 @@ class TestSetOps(object):
         assert_array_equal(c1, c2)
 
 
-class TestUnique(object):
+class TestUnique:
 
     def test_unique_1d(self):
 
@@ -517,7 +524,8 @@ class TestUnique(object):
         a = []
         a1_idx = np.unique(a, return_index=True)[1]
         a2_inv = np.unique(a, return_inverse=True)[1]
-        a3_idx, a3_inv = np.unique(a, return_index=True, return_inverse=True)[1:]
+        a3_idx, a3_inv = np.unique(a, return_index=True,
+                                   return_inverse=True)[1:]
         assert_equal(a1_idx.dtype, np.intp)
         assert_equal(a2_inv.dtype, np.intp)
         assert_equal(a3_idx.dtype, np.intp)
@@ -560,9 +568,52 @@ class TestUnique(object):
         result = np.array([[-0.0, 0.0]])
         assert_array_equal(unique(data, axis=0), result, msg)
 
+    @pytest.mark.parametrize("axis", [0, -1])
+    def test_unique_1d_with_axis(self, axis):
+        x = np.array([4, 3, 2, 3, 2, 1, 2, 2])
+        uniq = unique(x, axis=axis)
+        assert_array_equal(uniq, [1, 2, 3, 4])
+
+    def test_unique_axis_zeros(self):
+        # issue 15559
+        single_zero = np.empty(shape=(2, 0), dtype=np.int8)
+        uniq, idx, inv, cnt = unique(single_zero, axis=0, return_index=True,
+                                     return_inverse=True, return_counts=True)
+
+        # there's 1 element of shape (0,) along axis 0
+        assert_equal(uniq.dtype, single_zero.dtype)
+        assert_array_equal(uniq, np.empty(shape=(1, 0)))
+        assert_array_equal(idx, np.array([0]))
+        assert_array_equal(inv, np.array([0, 0]))
+        assert_array_equal(cnt, np.array([2]))
+
+        # there's 0 elements of shape (2,) along axis 1
+        uniq, idx, inv, cnt = unique(single_zero, axis=1, return_index=True,
+                                     return_inverse=True, return_counts=True)
+
+        assert_equal(uniq.dtype, single_zero.dtype)
+        assert_array_equal(uniq, np.empty(shape=(2, 0)))
+        assert_array_equal(idx, np.array([]))
+        assert_array_equal(inv, np.array([]))
+        assert_array_equal(cnt, np.array([]))
+
+        # test a "complicated" shape
+        shape = (0, 2, 0, 3, 0, 4, 0)
+        multiple_zeros = np.empty(shape=shape)
+        for axis in range(len(shape)):
+            expected_shape = list(shape)
+            if shape[axis] == 0:
+                expected_shape[axis] = 0
+            else:
+                expected_shape[axis] = 1
+
+            assert_array_equal(unique(multiple_zeros, axis=axis),
+                               np.empty(shape=expected_shape))
+
     def test_unique_masked(self):
         # issue 8664
-        x = np.array([64, 0, 1, 2, 3, 63, 63, 0, 0, 0, 1, 2, 0, 63, 0], dtype='uint8')
+        x = np.array([64, 0, 1, 2, 3, 63, 63, 0, 0, 0, 1, 2, 0, 63, 0],
+                     dtype='uint8')
         y = np.ma.masked_equal(x, 0)
 
         v = np.unique(y)
@@ -577,7 +628,7 @@ class TestUnique(object):
         # as unsigned byte strings.  See gh-10495.
         fmt = "sort order incorrect for integer type '%s'"
         for dt in 'bhilq':
-            a = np.array([[-1],[0]], dt)
+            a = np.array([[-1], [0]], dt)
             b = np.unique(a, axis=0)
             assert_array_equal(a, b, fmt % dt)
 

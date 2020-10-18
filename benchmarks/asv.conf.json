@@ -15,7 +15,7 @@
 
     // List of branches to benchmark. If not provided, defaults to "master"
     // (for git) or "tip" (for mercurial).
-    "branches": ["master"],
+    "branches": ["HEAD"],
 
     // The DVCS being used.  If not set, it will be automatically
     // determined from "repo" by looking at the protocol in the URL
@@ -35,14 +35,14 @@
 
     // The Pythons you'd like to test against.  If not provided, defaults
     // to the current version of Python used to run `asv`.
-    "pythons": ["3.6"],
+    "pythons": ["3.7"],
 
     // The matrix of dependencies to test.  Each key is the name of a
     // package (in PyPI) and the values are version numbers.  An empty
     // list indicates to just test against the default (latest)
     // version.
     "matrix": {
-    	"six": [],
+        "Cython": [],
     },
 
     // The directory (relative to the current directory) that benchmarks are
@@ -68,7 +68,7 @@
     // `asv` will cache wheels of the recent builds in each
     // environment, making them faster to install next time.  This is
     // number of builds to keep, per environment.
-    "wheel_cache_size": 2,
+    "build_cache_size": 8,
 
     // The commits after which the regression search in `asv publish`
     // should start looking for regressions. Dictionary whose keys are

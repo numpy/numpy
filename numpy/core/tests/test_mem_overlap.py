@@ -1,6 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
-import sys
 import itertools
 import pytest
 
@@ -8,13 +5,9 @@ import numpy as np
 from numpy.core._multiarray_tests import solve_diophantine, internal_overlap
 from numpy.core import _umath_tests
 from numpy.lib.stride_tricks import as_strided
-from numpy.compat import long
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_array_equal
     )
-
-if sys.version_info[0] >= 3:
-    xrange = range
 
 
 ndims = 2
@@ -47,9 +40,7 @@ def _indices_for_axis():
     res = []
     for nelems in (0, 2, 3):
         ind = _indices_for_nelems(nelems)
-
-        # no itertools.product available in Py2.4
-        res.extend([(a, b) for a in ind for b in ind])  # all assignments of size "nelems"
+        res.extend(itertools.product(ind, ind))  # all assignments of size "nelems"
 
     return res
 
@@ -58,18 +49,7 @@ def _indices(ndims):
     """Returns ((axis0_src, axis0_dst), (axis1_src, axis1_dst), ... ) index pairs."""
 
     ind = _indices_for_axis()
-
-    # no itertools.product available in Py2.4
-
-    res = [[]]
-    for i in range(ndims):
-        newres = []
-        for elem in ind:
-            for others in res:
-                newres.append([elem] + others)
-        res = newres
-
-    return res
+    return itertools.product(ind, repeat=ndims)
 
 
 def _check_assignment(srcidx, dstidx):
@@ -140,11 +120,7 @@ def test_diophantine_fuzz():
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
                 # take too long)
-                try:
-                    ranges = tuple(xrange(0, a*ub+1, a) for a, ub in zip(A, U))
-                except OverflowError:
-                    # xrange on 32-bit Python 2 may overflow
-                    continue
+                ranges = tuple(range(0, a*ub+1, a) for a, ub in zip(A, U))
 
                 size = 1
                 for r in ranges:
@@ -410,7 +386,6 @@ def test_shares_memory_api():
     assert_equal(np.shares_memory(a, b), True)
     assert_equal(np.shares_memory(a, b, max_work=None), True)
     assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=1)
-    assert_raises(np.TooHardError, np.shares_memory, a, b, max_work=long(1))
 
 
 def test_may_share_memory_bad_max_work():
@@ -477,7 +452,7 @@ def check_internal_overlap(a, manual_expected=None):
 
     # Brute-force check
     m = set()
-    ranges = tuple(xrange(n) for n in a.shape)
+    ranges = tuple(range(n) for n in a.shape)
     for v in itertools.product(*ranges):
         offset = sum(s*w for s, w in zip(a.strides, v))
         if offset in m:
@@ -564,7 +539,7 @@ def test_internal_overlap_fuzz():
 def test_non_ndarray_inputs():
     # Regression check for gh-5604
 
-    class MyArray(object):
+    class MyArray:
         def __init__(self, data):
             self.data = data
 
@@ -572,7 +547,7 @@ def test_non_ndarray_inputs():
         def __array_interface__(self):
             return self.data.__array_interface__
 
-    class MyArray2(object):
+    class MyArray2:
         def __init__(self, data):
             self.data = data
 
@@ -619,7 +594,7 @@ def assert_copy_equivalent(operation, args, out, **kwargs):
         assert_equal(got, expected)
 
 
-class TestUFunc(object):
+class TestUFunc:
     """
     Test ufunc call memory overlap handling
     """
@@ -748,6 +723,7 @@ class TestUFunc(object):
         a = np.arange(10000, dtype=np.int16)
         check(np.add, a, a[::-1], a)
 
+    @pytest.mark.slow
     def test_unary_gufunc_fuzz(self):
         shapes = [7, 13, 8, 21, 29, 32]
         gufunc = _umath_tests.euclidean_pdist

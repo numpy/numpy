@@ -1,12 +1,10 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_allclose, suppress_warnings
     )
 
 
-class TestRegression(object):
+class TestRegression:
     def test_masked_array_create(self):
         # Ticket #17
         x = np.ma.masked_array([0, 1, 2, 3, 0, 4, 5, 6],
@@ -88,6 +86,6 @@ class TestRegression(object):
         ma = np.ma.MaskedArray([(1, 1.), (2, 2.), (3, 3.)], dtype='i4,f4')
         assert_array_equal(ma[[]], ma[:0])
 
-    def test_masked_array_tostring_fortran(self):
+    def test_masked_array_tobytes_fortran(self):
         ma = np.ma.arange(4).reshape((2,2))
-        assert_array_equal(ma.tostring(order='F'), ma.T.tostring())
+        assert_array_equal(ma.tobytes(order='F'), ma.T.tobytes())

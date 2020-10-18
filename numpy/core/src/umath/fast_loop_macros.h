@@ -4,13 +4,17 @@
  * These expect to have access to the arguments of a typical ufunc loop,
  *
  *     char **args
- *     npy_intp *dimensions
- *     npy_intp *steps
+ *     npy_intp const *dimensions
+ *     npy_intp const *steps
  */
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
-#include "simd.inc"
+static NPY_INLINE npy_uintp
+abs_ptrdiff(char *a, char *b)
+{
+    return (a > b) ? (a - b) : (b - a);
+}
 
 /**
  * Simple unoptimized loop macros that iterate over the ufunc arguments in

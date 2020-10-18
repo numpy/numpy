@@ -1,24 +1,20 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 from numpy import array
-from numpy.compat import long
 from numpy.testing import assert_, assert_raises
 from . import util
 
 
 class TestReturnComplex(util.F2PyTest):
 
-    def check_function(self, t):
-        tname = t.__doc__.split()[0]
+    def check_function(self, t, tname):
         if tname in ['t0', 't8', 's0', 's8']:
             err = 1e-5
         else:
             err = 0.0
         assert_(abs(t(234j) - 234.0j) <= err)
         assert_(abs(t(234.6) - 234.6) <= err)
-        assert_(abs(t(long(234)) - 234.0) <= err)
+        assert_(abs(t(234) - 234.0) <= err)
         assert_(abs(t(234.6 + 3j) - (234.6 + 3j)) <= err)
         #assert_( abs(t('234')-234.)<=err)
         #assert_( abs(t('234.6')-234.6)<=err)
@@ -104,10 +100,9 @@ cf2py    intent(out) td
        end
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name', 't0,t8,t16,td,s0,s8,s16,sd'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module, name))
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF90ReturnComplex(TestReturnComplex):
@@ -163,7 +158,6 @@ module f90_return_complex
 end module f90_return_complex
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name', 't0,t8,t16,td,s0,s8,s16,sd'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module.f90_return_complex, name))
+        self.check_function(getattr(self.module.f90_return_complex, name), name)

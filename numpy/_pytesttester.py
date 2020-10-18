@@ -15,7 +15,7 @@ Warnings filtering and other runtime settings should be dealt with in the
 whether or not that file is found as follows:
 
 * ``pytest.ini`` is present (develop mode)
-    All warnings except those explicily filtered out are raised as error.
+    All warnings except those explicitly filtered out are raised as error.
 * ``pytest.ini`` is absent (release mode)
     DeprecationWarnings and PendingDeprecationWarnings are ignored, other
     warnings are passed through.
@@ -27,8 +27,6 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 
@@ -37,14 +35,29 @@ __all__ = ['PytestTester']
 
 
 def _show_numpy_info():
+    from numpy.core._multiarray_umath import (
+        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+    )
     import numpy as np
 
     print("NumPy version %s" % np.__version__)
     relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
     print("NumPy relaxed strides checking option:", relaxed_strides)
 
+    if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
+        enabled_features = "nothing enabled"
+    else:
+        enabled_features = ' '.join(__cpu_baseline__)
+        for feature in __cpu_dispatch__:
+            if __cpu_features__[feature]:
+                enabled_features += " %s*" % feature
+            else:
+                enabled_features += " %s?" % feature
+    print("NumPy CPU features:", enabled_features)
 
-class PytestTester(object):
+
+
+class PytestTester:
     """
     Pytest test runner.
 
@@ -127,12 +140,8 @@ class PytestTester(object):
         import pytest
         import warnings
 
-        #FIXME This is no longer needed? Assume it was for use in tests.
-        # cap verbosity at 3, which is equivalent to the pytest '-vv' option
-        #from . import utils
-        #verbose = min(int(verbose), 3)
-        #utils.verbose = verbose
-        #
+        # Imported after pytest to enable assertion rewriting
+        import hypothesis
 
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
@@ -162,20 +171,8 @@ class PytestTester(object):
         # When testing matrices, ignore their PendingDeprecationWarnings
         pytest_args += [
             "-W ignore:the matrix subclass is not",
+            "-W ignore:Importing from numpy.matlib is",
             ]
-
-        # Ignore python2.7 -3 warnings
-        pytest_args += [
-            r"-W ignore:sys\.exc_clear\(\) not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
-            r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
-            r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
-            r"-W ignore:the commands module has been removed in Python 3\.0:DeprecationWarning",
-            r"-W ignore:The 'new' module has been removed in Python 3\.0:DeprecationWarning",
-            ]
-
 
         if doctests:
             raise ValueError("Doctests not supported")
@@ -190,7 +187,13 @@ class PytestTester(object):
             pytest_args += ["--cov=" + module_path]
 
         if label == "fast":
-            pytest_args += ["-m", "not slow"]
+            # not importing at the top level to avoid circular import of module
+            from numpy.testing import IS_PYPY
+            if IS_PYPY:
+                pytest_args += ["-m", "not slow and not slow_pypy"]
+            else:
+                pytest_args += ["-m", "not slow"]
+
         elif label != "full":
             pytest_args += ["-m", label]
 
@@ -202,6 +205,14 @@ class PytestTester(object):
 
         pytest_args += ["--pyargs"] + list(tests)
 
+        # This configuration is picked up by numpy.conftest, and ensures that
+        # running `np.test()` is deterministic and does not write any files.
+        # See https://hypothesis.readthedocs.io/en/latest/settings.html
+        hypothesis.settings.register_profile(
+            name="np.test() profile",
+            deadline=None, print_blob=True, database=None, derandomize=True,
+            suppress_health_check=hypothesis.HealthCheck.all(),
+        )
 
         # run tests.
         _show_numpy_info()

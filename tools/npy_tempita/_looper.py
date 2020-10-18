@@ -17,15 +17,13 @@ looper you can get a better sense of the context.  Use like::
     3 c
 
 """
-from __future__ import absolute_import, division, print_function
-
 import sys
 from .compat3 import basestring_
 
 __all__ = ['looper']
 
 
-class looper(object):
+class looper:
     """
     Helper for looping (particularly in templates)
 
@@ -47,7 +45,7 @@ class looper(object):
             self.__class__.__name__, self.seq)
 
 
-class looper_iter(object):
+class looper_iter:
 
     def __init__(self, seq):
         self.seq = list(seq)
@@ -63,11 +61,8 @@ class looper_iter(object):
         self.pos += 1
         return result
 
-    if sys.version < "3":
-        next = __next__
 
-
-class loop_pos(object):
+class loop_pos:
 
     def __init__(self, seq, pos):
         self.seq = seq
@@ -95,9 +90,6 @@ class loop_pos(object):
             return self.seq[self.pos + 1]
         except IndexError:
             return None
-
-    if sys.version < "3":
-        next = __next__
 
     @property
     def previous(self):

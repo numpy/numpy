@@ -1,7 +1,6 @@
 #include "Python.h"
-
-#undef c_abs
-#include "f2c.h"
+#include "numpy/npy_common.h"
+#include "npy_cblas.h"
 
 /*
   From the original manpage:
@@ -20,7 +19,7 @@
   info: Number of the invalid parameter.
 */
 
-int xerbla_(char *srname, integer *info)
+CBLAS_INT BLAS_FUNC(xerbla)(char *srname, CBLAS_INT *info)
 {
         static const char format[] = "On entry to %.*s" \
                 " parameter number %d had an illegal value";
@@ -38,7 +37,7 @@ int xerbla_(char *srname, integer *info)
 #ifdef WITH_THREAD
         save = PyGILState_Ensure();
 #endif
-        PyOS_snprintf(buf, sizeof(buf), format, len, srname, *info);
+        PyOS_snprintf(buf, sizeof(buf), format, len, srname, (int)*info);
         PyErr_SetString(PyExc_ValueError, buf);
 #ifdef WITH_THREAD
         PyGILState_Release(save);

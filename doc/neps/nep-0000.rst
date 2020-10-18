@@ -1,3 +1,5 @@
+.. _NEP00:
+
 ===========================
 NEP 0 — Purpose and Process
 ===========================
@@ -76,7 +78,7 @@ where ``<n>`` is an appropriately assigned four-digit number (e.g.,
 ``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
 
 Once the PR for the NEP is in place, a post should be made to the
-mailing list containing the sections upto "Backward compatibility",
+mailing list containing the sections up to "Backward compatibility",
 with the purpose of limiting discussion there to usage and impact.
 Discussion on the pull request will have a broader scope, also including
 details of implementation.

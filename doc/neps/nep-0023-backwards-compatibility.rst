@@ -1,3 +1,5 @@
+.. _NEP23:
+
 =======================================================
 NEP 23 — Backwards compatibility and deprecation policy
 =======================================================
@@ -198,7 +200,7 @@ Policy
    can be made, *provided the benefit is worth the cost* and suitable deprecation
    warnings have been raised first.
 3. Deprecation warnings are in all cases warnings that functionality will be removed.
-   If there is no intent to remove functionlity, then deprecation in documentation
+   If there is no intent to remove functionality, then deprecation in documentation
    only or other types of warnings shall be used.
 4. Deprecations for stylistic reasons (e.g. consistency between functions) are
    strongly discouraged.

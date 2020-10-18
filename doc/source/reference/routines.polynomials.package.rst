@@ -1,20 +1,14 @@
-.. module:: numpy.polynomial
+:orphan:
 
-Polynomial Package
-==================
+.. automodule:: numpy.polynomial
+   :no-members:
+   :no-inherited-members:
+   :no-special-members:
 
-.. versionadded:: 1.4.0
+Configuration
+-------------
 
-.. currentmodule:: numpy.polynomial
+.. autosummary:: 
+   :toctree: generated/
 
-.. toctree::
-   :maxdepth: 2
-
-   routines.polynomials.classes
-   routines.polynomials.polynomial
-   routines.polynomials.chebyshev
-   routines.polynomials.legendre
-   routines.polynomials.laguerre
-   routines.polynomials.hermite
-   routines.polynomials.hermite_e
-   routines.polynomials.polyutils
+   numpy.polynomial.set_default_printstyle

@@ -1,5 +1,6 @@
 import os
 from os.path import join
+import sys
 
 import numpy as np
 from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
@@ -25,6 +26,12 @@ try:
     MISSING_CTYPES = False
 except ImportError:
     MISSING_CTYPES = False
+
+if sys.flags.optimize > 1:
+    # no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1
+    # cffi cannot succeed
+    MISSING_CFFI = True
+
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
@@ -120,7 +127,7 @@ def gauss_from_uint(x, n, bits):
     return gauss[:n]
 
 def test_seedsequence():
-    from numpy.random._bit_generator import (ISeedSequence,
+    from numpy.random.bit_generator import (ISeedSequence,
                                             ISpawnableSeedSequence,
                                             SeedlessSeedSequence)
 
@@ -138,7 +145,7 @@ def test_seedsequence():
     assert len(dummy.spawn(10)) == 10
 
 
-class Base(object):
+class Base:
     dtype = np.uint64
     data2 = data1 = {}
 
@@ -403,7 +410,7 @@ class TestSFC64(Base):
         cls.invalid_init_values = [(-1,)]
 
 
-class TestDefaultRNG(object):
+class TestDefaultRNG:
     def test_seed(self):
         for args in [(), (None,), (1234,), ([1234, 5678],)]:
             rg = default_rng(*args)

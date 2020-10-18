@@ -179,7 +179,6 @@ class _ArrayMemoryError(MemoryError):
     @staticmethod
     def _size_to_string(num_bytes):
         """ Convert a number of bytes into a binary size string """
-        import math
 
         # https://en.wikipedia.org/wiki/Binary_prefix
         LOG2_STEP = 10

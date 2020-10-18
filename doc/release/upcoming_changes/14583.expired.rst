@@ -1,2 +1,0 @@
-* Remove deprecated support for boolean and empty condition lists in
-  `numpy.select`

@@ -1,4 +1,0 @@
-``numpy.argmin/argmax/min/max`` returns ``NaT`` if it exists in array
----------------------------------------------------------------------
-``numpy.argmin``, ``numpy.argmax``, ``numpy.min``, and ``numpy.max`` will return
-``NaT`` if it exists in the array.

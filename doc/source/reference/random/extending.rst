@@ -1,5 +1,7 @@
 .. currentmodule:: numpy.random
 
+.. _extending:
+
 Extending
 ---------
 The BitGenerators have been designed to be extendable using standard tools for
@@ -12,132 +14,74 @@ Numba
 Numba can be used with either CTypes or CFFI.  The current iteration of the
 BitGenerators all export a small set of functions through both interfaces.
 
-This example shows how numba can be used to produce Box-Muller normals using
+This example shows how numba can be used to produce gaussian samples using
 a pure Python implementation which is then compiled.  The random numbers are
 provided by ``ctypes.next_double``.
 
-.. code-block:: python
-
-    from numpy.random import PCG64
-    import numpy as np
-    import numba as nb
-
-    x = PCG64()
-    f = x.ctypes.next_double
-    s = x.ctypes.state
-    state_addr = x.ctypes.state_address
-
-    def normals(n, state):
-        out = np.empty(n)
-        for i in range((n+1)//2):
-            x1 = 2.0*f(state) - 1.0
-            x2 = 2.0*f(state) - 1.0
-            r2 = x1*x1 + x2*x2
-            while r2 >= 1.0 or r2 == 0.0:
-                x1 = 2.0*f(state) - 1.0
-                x2 = 2.0*f(state) - 1.0
-                r2 = x1*x1 + x2*x2
-            g = np.sqrt(-2.0*np.log(r2)/r2)
-            out[2*i] = g*x1
-            if 2*i+1 < n:
-                out[2*i+1] = g*x2
-        return out
-
-    # Compile using Numba
-    print(normals(10, s).var())
-    # Warm up
-    normalsj = nb.jit(normals, nopython=True)
-    # Must use state address not state with numba
-    normalsj(1, state_addr)
-    %timeit normalsj(1000000, state_addr)
-    print('1,000,000 Box-Muller (numba/PCG64) randoms')
-    %timeit np.random.standard_normal(1000000)
-    print('1,000,000 Box-Muller (NumPy) randoms')
-
+.. literalinclude:: ../../../../numpy/random/_examples/numba/extending.py
+    :language: python
+    :end-before: example 2
 
 Both CTypes and CFFI allow the more complicated distributions to be used
-directly in Numba after compiling the file distributions.c into a DLL or so.
-An example showing the use of a more complicated distribution is in the
-examples folder.
+directly in Numba after compiling the file distributions.c into a ``DLL`` or
+``so``.  An example showing the use of a more complicated distribution is in
+the `examples` section below.
 
-.. _randomgen_cython:
+.. _random_cython:
 
 Cython
 ======
 
 Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
-This example uses `~pcg64.PCG64` and
-``random_gauss_zig``, the Ziggurat-based generator for normals, to fill an
-array.  The usual caveats for writing high-performance code using Cython --
-removing bounds checks and wrap around, providing array alignment information
--- still apply.
+This example uses `PCG64` and the example from above.  The usual caveats
+for writing high-performance code using Cython -- removing bounds checks and
+wrap around, providing array alignment information -- still apply.
 
-.. code-block:: cython
+.. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
+    :language: cython
+    :end-before: example 2
 
-    import numpy as np
-    cimport numpy as np
-    cimport cython
-    from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-    from numpy.random.common cimport *
-    from numpy.random.distributions cimport random_gauss_zig
-    from numpy.random import PCG64
+The BitGenerator can also be directly accessed using the members of the ``bitgen_t``
+struct.
+
+.. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
+    :language: cython
+    :start-after: example 2
+    :end-before: example 3
+
+Cython can be used to directly access the functions in
+``numpy/random/c_distributions.pxd``. This requires linking with the
+``npyrandom`` library located in ``numpy/random/lib``.
+
+.. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
+    :language: cython
+    :start-after: example 3
+
+See :ref:`extending_cython_example` for the complete listings of these examples
+and a minimal ``setup.py`` to build the c-extension modules.
+
+CFFI
+====
+
+CFFI can be used to directly access the functions in
+``include/numpy/random/distributions.h``. Some "massaging" of the header
+file is required:
+
+.. literalinclude:: ../../../../numpy/random/_examples/cffi/extending.py
+    :language: python
+    :end-before: dlopen
+
+Once the header is parsed by ``ffi.cdef``, the functions can be accessed
+directly from the ``_generator`` shared object, using the `BitGenerator.cffi` interface.
+
+.. literalinclude:: ../../../../numpy/random/_examples/cffi/extending.py
+    :language: python
+    :start-after: dlopen
 
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    def normals_zig(Py_ssize_t n):
-        cdef Py_ssize_t i
-        cdef bitgen_t *rng
-        cdef const char *capsule_name = "BitGenerator"
-        cdef double[::1] random_values
-
-        x = PCG64()
-        capsule = x.capsule
-        if not PyCapsule_IsValid(capsule, capsule_name):
-            raise ValueError("Invalid pointer to anon_func_state")
-        rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
-        random_values = np.empty(n)
-        # Best practice is to release GIL and acquire the lock
-        with x.lock, nogil:
-            for i in range(n):
-                random_values[i] = random_gauss_zig(rng)
-        randoms = np.asarray(random_values)
-        return randoms
-
-The BitGenerator can also be directly accessed using the members of the basic
-RNG structure.
-
-.. code-block:: cython
-
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    def uniforms(Py_ssize_t n):
-        cdef Py_ssize_t i
-        cdef bitgen_t *rng
-        cdef const char *capsule_name = "BitGenerator"
-        cdef double[::1] random_values
-
-        x = PCG64()
-        capsule = x.capsule
-        # Optional check that the capsule if from a BitGenerator
-        if not PyCapsule_IsValid(capsule, capsule_name):
-            raise ValueError("Invalid pointer to anon_func_state")
-        # Cast the pointer
-        rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
-        random_values = np.empty(n)
-        with x.lock, nogil:
-            for i in range(n):
-                # Call the function
-                random_values[i] = rng.next_double(rng.state)
-        randoms = np.asarray(random_values)
-        return randoms
-
-These functions along with a minimal setup file are included in the
-examples folder.
-
-New Basic RNGs
-==============
-`~Generator` can be used with other user-provided BitGenerators. The simplest
+New Bit Generators
+==================
+`~Generator` can be used with user-provided `~BitGenerator`\ s. The simplest
 way to write a new BitGenerator is to examine the pyx file of one of the
 existing BitGenerators. The key structure that must be provided is the
 ``capsule`` which contains a ``PyCapsule`` to a struct pointer of type
@@ -163,3 +107,12 @@ the next 64-bit unsigned integer function if not needed. Functions inside
 .. code-block:: c
 
   bitgen_state->next_uint64(bitgen_state->state)
+
+Examples
+========
+
+.. toctree::
+    Numba <examples/numba>
+    CFFI + Numba <examples/numba_cffi> 
+    Cython <examples/cython/index>
+    CFFI <examples/cffi>

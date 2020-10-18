@@ -1,19 +1,15 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 from numpy import array
-from numpy.compat import long
 from numpy.testing import assert_, assert_raises
 from . import util
 
 
 class TestReturnInteger(util.F2PyTest):
 
-    def check_function(self, t):
+    def check_function(self, t, tname):
         assert_(t(123) == 123, repr(t(123)))
         assert_(t(123.6) == 123)
-        assert_(t(long(123)) == 123)
         assert_(t('123') == 123)
         assert_(t(-123) == -123)
         assert_(t([123]) == 123)
@@ -38,7 +34,7 @@ class TestReturnInteger(util.F2PyTest):
         assert_raises(Exception, t, t)
         assert_raises(Exception, t, {})
 
-        if t.__doc__.split()[0] in ['t8', 's8']:
+        if tname in ['t8', 's8']:
             assert_raises(OverflowError, t, 100000000000000000000000)
             assert_raises(OverflowError, t, 10000000011111111111111.23)
 
@@ -103,11 +99,10 @@ cf2py    intent(out) t8
        end
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name',
                              't0,t1,t2,t4,t8,s0,s1,s2,s4,s8'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module, name))
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF90ReturnInteger(TestReturnInteger):
@@ -174,8 +169,7 @@ module f90_return_integer
 end module f90_return_integer
     """
 
-    @pytest.mark.slow
     @pytest.mark.parametrize('name',
                              't0,t1,t2,t4,t8,s0,s1,s2,s4,s8'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module.f90_return_integer, name))
+        self.check_function(getattr(self.module.f90_return_integer, name), name)

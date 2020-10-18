@@ -249,7 +249,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     NPY_END_THREADS
     Py_DECREF(arr_x);
 
-    return PyInt_FromLong(monotonic);
+    return PyLong_FromLong(monotonic);
 }
 
 /*
@@ -1159,12 +1159,12 @@ fail:
 }
 
 
-/* 
+/*
  * Inner loop for unravel_index
  * order must be NPY_CORDER or NPY_FORTRANORDER
  */
 static int
-unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
+unravel_index_loop(int unravel_ndim, npy_intp const *unravel_dims,
                    npy_intp unravel_size, npy_intp count,
                    char *indices, npy_intp indices_stride,
                    npy_intp *coords, NPY_ORDER order)
@@ -1186,7 +1186,7 @@ unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
         }
         idx = idx_start;
         for (i = 0; i < unravel_ndim; ++i) {
-            /* 
+            /*
              * Using a local seems to enable single-divide optimization
              * but only if the / precedes the %
              */
@@ -1242,15 +1242,25 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
      */
     if (kwds) {
         PyObject *dims_item, *shape_item;
-        dims_item = PyDict_GetItemString(kwds, "dims");
-        shape_item = PyDict_GetItemString(kwds, "shape");
+        dims_item = _PyDict_GetItemStringWithError(kwds, "dims");
+        if (dims_item == NULL && PyErr_Occurred()){
+            return NULL;
+        }
+        shape_item = _PyDict_GetItemStringWithError(kwds, "shape");
+        if (shape_item == NULL && PyErr_Occurred()){
+            return NULL;
+        }
         if (dims_item != NULL && shape_item == NULL) {
             if (DEPRECATE("'shape' argument should be"
                           " used instead of 'dims'") < 0) {
                 return NULL;
             }
-            PyDict_SetItemString(kwds, "shape", dims_item);
-            PyDict_DelItemString(kwds, "dims");
+            if (PyDict_SetItemString(kwds, "shape", dims_item) < 0) {
+                return NULL;
+            }
+            if (PyDict_DelItemString(kwds, "dims") < 0) {
+                return NULL;
+            }
         }
     }
 
@@ -1415,39 +1425,13 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     #else
     char *docstr;
     #endif
-    static char *msg = "already has a docstring";
-    PyObject *tp_dict = PyArrayDescr_Type.tp_dict;
-    PyObject *myobj;
-    static PyTypeObject *PyMemberDescr_TypePtr = NULL;
-    static PyTypeObject *PyGetSetDescr_TypePtr = NULL;
-    static PyTypeObject *PyMethodDescr_TypePtr = NULL;
+    static char *msg = "already has a different docstring";
 
     /* Don't add docstrings */
     if (Py_OptimizeFlag > 1) {
         Py_RETURN_NONE;
     }
 
-    if (PyGetSetDescr_TypePtr == NULL) {
-        /* Get "subdescr" */
-        myobj = PyDict_GetItemString(tp_dict, "fields");
-        if (myobj != NULL) {
-            PyGetSetDescr_TypePtr = Py_TYPE(myobj);
-        }
-    }
-    if (PyMemberDescr_TypePtr == NULL) {
-        myobj = PyDict_GetItemString(tp_dict, "alignment");
-        if (myobj != NULL) {
-            PyMemberDescr_TypePtr = Py_TYPE(myobj);
-        }
-    }
-    if (PyMethodDescr_TypePtr == NULL) {
-        myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
-        if (myobj != NULL) {
-            PyMethodDescr_TypePtr = Py_TYPE(myobj);
-        }
-    }
-
-#if defined(NPY_PY3K)
     if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
         return NULL;
     }
@@ -1456,47 +1440,48 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (docstr == NULL) {
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyString_Type, &str)) {
-        return NULL;
-    }
 
-    docstr = PyString_AS_STRING(str);
-#endif
-
-#define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
-#define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)
-#define _ADDDOC(typebase, doc, name) do {                               \
-        Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
+#define _ADDDOC(doc, name)                                              \
         if (!(doc)) {                                                   \
             doc = docstr;                                               \
+            Py_INCREF(str);  /* hold on to string (leaks reference) */  \
         }                                                               \
-        else {                                                          \
+        else if (strcmp(doc, docstr) != 0) {                            \
             PyErr_Format(PyExc_RuntimeError, "%s method %s", name, msg); \
             return NULL;                                                \
-        }                                                               \
-    } while (0)
+        }
 
-    if (_TESTDOC1(CFunction)) {
-        _ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name);
+    if (Py_TYPE(obj) == &PyCFunction_Type) {
+        PyCFunctionObject *new = (PyCFunctionObject *)obj;
+        _ADDDOC(new->m_ml->ml_doc, new->m_ml->ml_name);
     }
-    else if (_TESTDOC1(Type)) {
-        _ADDDOC(Type, new->tp_doc, new->tp_name);
+    else if (Py_TYPE(obj) == &PyType_Type) {
+        PyTypeObject *new = (PyTypeObject *)obj;
+        _ADDDOC(new->tp_doc, new->tp_name);
     }
-    else if (_TESTDOC2(MemberDescr)) {
-        _ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name);
+    else if (Py_TYPE(obj) == &PyMemberDescr_Type) {
+        PyMemberDescrObject *new = (PyMemberDescrObject *)obj;
+        _ADDDOC(new->d_member->doc, new->d_member->name);
     }
-    else if (_TESTDOC2(GetSetDescr)) {
-        _ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name);
+    else if (Py_TYPE(obj) == &PyGetSetDescr_Type) {
+        PyGetSetDescrObject *new = (PyGetSetDescrObject *)obj;
+        _ADDDOC(new->d_getset->doc, new->d_getset->name);
     }
-    else if (_TESTDOC2(MethodDescr)) {
-        _ADDDOC(MethodDescr, new->d_method->ml_doc, new->d_method->ml_name);
+    else if (Py_TYPE(obj) == &PyMethodDescr_Type) {
+        PyMethodDescrObject *new = (PyMethodDescrObject *)obj;
+        _ADDDOC(new->d_method->ml_doc, new->d_method->ml_name);
     }
     else {
         PyObject *doc_attr;
 
         doc_attr = PyObject_GetAttrString(obj, "__doc__");
-        if (doc_attr != NULL && doc_attr != Py_None) {
+        if (doc_attr != NULL && doc_attr != Py_None &&
+                (PyUnicode_Compare(doc_attr, str) != 0)) {
+            Py_DECREF(doc_attr);
+            if (PyErr_Occurred()) {
+                /* error during PyUnicode_Compare */
+                return NULL;
+            }
             PyErr_Format(PyExc_RuntimeError, "object %s", msg);
             return NULL;
         }
@@ -1510,11 +1495,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_RETURN_NONE;
     }
 
-#undef _TESTDOC1
-#undef _TESTDOC2
 #undef _ADDDOC
 
-    Py_INCREF(str);
     Py_RETURN_NONE;
 }
 
@@ -1522,6 +1504,17 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #include <emmintrin.h>
 #endif
 
+#ifdef NPY_HAVE_NEON
+    typedef npy_uint64 uint64_unaligned __attribute__((aligned(16)));
+    static NPY_INLINE int32_t
+    sign_mask(uint8x16_t input)
+    {
+        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
+        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
+        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
+    }
+#endif
 /*
  * This function packs boolean values in the input array into the bits of a
  * byte array. Truth values are determined as usual: 0 is false, everything
@@ -1561,6 +1554,7 @@ pack_inner(const char *inptr,
                 a = npy_bswap8(a);
                 b = npy_bswap8(b);
             }
+            
             /* note x86 can load unaligned */
             __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
@@ -1568,6 +1562,34 @@ pack_inner(const char *inptr,
             v = _mm_cmpeq_epi8(v, zero);
             /* extract msb of 16 bytes and pack it into 16 bit */
             r = _mm_movemask_epi8(v);
+            /* store result */
+            memcpy(outptr, &r, 1);
+            outptr += out_stride;
+            memcpy(outptr, (char*)&r + 1, 1);
+            outptr += out_stride;
+            inptr += 16;
+        }
+    }
+#elif defined NPY_HAVE_NEON
+    if (in_stride == 1 && element_size == 1 && n_out > 2) {
+        /* don't handle non-full 8-byte remainder */
+        npy_intp vn_out = n_out - (remain ? 1 : 0);
+        vn_out -= (vn_out & 1);
+        for (index = 0; index < vn_out; index += 2) {
+            unsigned int r;
+            npy_uint64 a = *((uint64_unaligned*)inptr);
+            npy_uint64 b = *((uint64_unaligned*)(inptr + 8));
+            if (order == 'b') {
+                a = npy_bswap8(a);
+                b = npy_bswap8(b);
+            }
+            uint64x2_t v = vcombine_u64(vcreate_u64(a), vcreate_u64(b));
+            uint64x2_t zero = vdupq_n_u64(0);
+            /* false -> 0x00 and true -> 0xFF */
+            v = vreinterpretq_u64_u8(vmvnq_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero))));
+            /* extract msb of 16 bytes and pack it into 16 bit */
+            uint8x16_t input = vreinterpretq_u8_u64(v);
+            r = sign_mask(input);
             /* store result */
             memcpy(outptr, &r, 1);
             outptr += out_stride;

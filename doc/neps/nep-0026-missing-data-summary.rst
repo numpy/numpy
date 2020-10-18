@@ -1,3 +1,5 @@
+.. _NEP26:
+
 ====================================================
 NEP 26 — Summary of Missing Data NEPs and discussion
 ====================================================
@@ -8,7 +10,7 @@ NEP 26 — Summary of Missing Data NEPs and discussion
 :Created: 2012-04-22
 
 *Context*: this NEP was written as summary of the large number of discussions
-and proposals (`NEP 12`_, `NEP 24`_, `NEP 25`_), regarding missing data
+and proposals (:ref:`NEP12`, :ref:`NEP24`, :ref:`NEP25`), regarding missing data
 functionality.
 
 The debate about how NumPy should handle missing data, a subject with
@@ -349,7 +351,7 @@ dtypes can arrange for certain bitpatterns to be given NA semantics.
 One option is to copy numpy.ma closely, but with a more optimized
 implementation. (Or to simply optimize the existing implementation.)
 
-One option is that described in `NEP 12`_, for which an implementation
+One option is that described in `NEP12`, for which an implementation
 of mask-based missing data exists. This system is roughly:
 
 * There is both bitpattern and mask-based missing data, and both
@@ -364,7 +366,7 @@ of mask-based missing data exists. This system is roughly:
   a bitpattern NA to an array which supports both requires accessing
   the data by "peeking under the mask".
 
-Another option is that described in `NEP 24`_, which is to implement
+Another option is that described in `NEP24`, which is to implement
 bitpattern dtypes with NA semantics for the "statistical missing data"
 use case, and to also implement a totally independent API for masked
 arrays with ignore semantics and all mask manipulation done explicitly
@@ -704,14 +706,14 @@ risk of reducing developer contribution.
 References and Footnotes
 ------------------------
 
-`NEP 12`_ describes Mark's NA-semantics/mask implementation/view based mask
+:ref:`NEP12` describes Mark's NA-semantics/mask implementation/view based mask
 handling API.
 
-`NEP 24`_ ("the alterNEP") was Nathaniel's initial attempt at separating MISSING
+:ref:`NEP24` ("the alterNEP") was Nathaniel's initial attempt at separating MISSING
 and IGNORED handling into bit-patterns versus masks, though there's a bunch
 he would change about the proposal at this point.
 
-`NEP 25`_ ("miniNEP 2") was a later attempt by Nathaniel to sketch out an
+:ref:`NEP25` ("miniNEP 2") was a later attempt by Nathaniel to sketch out an
 implementation strategy for NA dtypes.
 
 A further discussion overview page can be found at:
@@ -722,9 +724,3 @@ Copyright
 ---------
 
 This document has been placed in the public domain.
-
-.. _NEP 12: http://www.numpy.org/neps/nep-0012-missing-data.html
-
-.. _NEP 24: http://www.numpy.org/neps/nep-0024-missing-data-2.html
-
-.. _NEP 25: http://www.numpy.org/neps/nep-0025-missing-data-3.html

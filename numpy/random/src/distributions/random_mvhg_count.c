@@ -1,11 +1,11 @@
+#include "numpy/random/distributions.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "include/distributions.h"
 
 /*
- *  random_mvhg_count
+ *  random_multivariate_hypergeometric_count
  *
  *  Draw variates from the multivariate hypergeometric distribution--
  *  the "count" algorithm.
@@ -57,7 +57,7 @@
  *    *  the product num_variates * num_colors does not overflow
  */
 
-int random_mvhg_count(bitgen_t *bitgen_state,
+int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
                       int64_t total,
                       size_t num_colors, int64_t *colors,
                       int64_t nsample,

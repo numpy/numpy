@@ -1,14 +1,11 @@
 """Module containing non-deprecated functions borrowed from Numeric.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import types
 import warnings
 
 import numpy as np
-from .. import VisibleDeprecationWarning
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
@@ -255,7 +252,8 @@ def reshape(a, newshape, order='C'):
      >>> c.shape = (20)
      Traceback (most recent call last):
         ...
-     AttributeError: incompatible shape for a non-contiguous array
+     AttributeError: Incompatible shape for in-place modification. Use
+     `.reshape()` to make a copy with the desired shape.
 
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
@@ -303,8 +301,7 @@ def reshape(a, newshape, order='C'):
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
     yield a
-    for c in choices:
-        yield c
+    yield from choices
     yield out
 
 
@@ -462,6 +459,7 @@ def repeat(a, repeats, axis=None):
     See Also
     --------
     tile : Tile an array.
+    unique : Find the unique elements of an array.
 
     Examples
     --------
@@ -539,9 +537,9 @@ def put(a, ind, v, mode='raise'):
     """
     try:
         put = a.put
-    except AttributeError:
+    except AttributeError as e:
         raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(a).__name__))
+                        "not {name}".format(name=type(a).__name__)) from e
 
     return put(ind, v, mode=mode)
 
@@ -604,15 +602,20 @@ def _transpose_dispatcher(a, axes=None):
 @array_function_dispatch(_transpose_dispatcher)
 def transpose(a, axes=None):
     """
-    Permute the dimensions of an array.
+    Reverse or permute the axes of an array; returns the modified array.
+
+    For an array a with two axes, transpose(a) gives the matrix transpose.
 
     Parameters
     ----------
     a : array_like
         Input array.
-    axes : list of ints, optional
-        By default, reverse the dimensions, otherwise permute the axes
-        according to the values given.
+    axes : tuple or list of ints, optional
+        If specified, it must be a tuple or list which contains a permutation of
+        [0,1,..,N-1] where N is the number of axes of a.  The i'th axis of the
+        returned array will correspond to the axis numbered ``axes[i]`` of the
+        input.  If not specified, defaults to ``range(a.ndim)[::-1]``, which
+        reverses the order of the axes.
 
     Returns
     -------
@@ -646,6 +649,10 @@ def transpose(a, axes=None):
     >>> x = np.ones((1, 2, 3))
     >>> np.transpose(x, (1, 0, 2)).shape
     (2, 1, 3)
+
+    >>> x = np.ones((2, 3, 4, 5))
+    >>> np.transpose(x).shape
+    (5, 4, 3, 2)
 
     """
     return _wrapfunc(a, 'transpose', axes)
@@ -797,7 +804,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     partition : Describes partition algorithms used.
     ndarray.partition : Inplace partition.
     argsort : Full indirect sort.
-    take_along_axis : Apply ``index_array`` from argpartition 
+    take_along_axis : Apply ``index_array`` from argpartition
                       to an array as if by calling partition.
 
     Notes
@@ -944,6 +951,10 @@ def sort(a, axis=-1, kind=None, order=None):
     'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
     O(n) sort instead of O(n log n).
 
+    .. versionchanged:: 1.18.0
+
+    NaT now sorts to the end of arrays for consistency with NaN.
+
     Examples
     --------
     >>> a = np.array([[1,4],[3,1]])
@@ -1035,7 +1046,7 @@ def argsort(a, axis=-1, kind=None, order=None):
     lexsort : Indirect stable sort with multiple keys.
     ndarray.sort : Inplace sort.
     argpartition : Indirect partial sort.
-    take_along_axis : Apply ``index_array`` from argsort 
+    take_along_axis : Apply ``index_array`` from argsort
                       to an array as if by calling sort.
 
     Notes
@@ -1132,7 +1143,7 @@ def argmax(a, axis=None, out=None):
     ndarray.argmax, argmin
     amax : The maximum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
-    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` 
+    take_along_axis : Apply ``np.expand_dims(index_array, axis)``
                       from argmax to an array as if by calling max.
 
     Notes
@@ -1213,7 +1224,7 @@ def argmin(a, axis=None, out=None):
     ndarray.argmin, argmax
     amin : The minimum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
-    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` 
+    take_along_axis : Apply ``np.expand_dims(index_array, axis)``
                       from argmin to an array as if by calling min.
 
     Notes
@@ -1368,10 +1379,17 @@ def resize(a, new_shape):
 
     See Also
     --------
+    np.reshape : Reshape an array without changing the total size.
+    np.pad : Enlarge and pad an array.
+    np.repeat: Repeat elements of an array.
     ndarray.resize : resize an array in-place.
 
     Notes
     -----
+    When the total size of the array does not change `~numpy.reshape` should
+    be used.  In most other cases either indexing (to reduce the size)
+    or padding (to increase the size) may be a more appropriate solution.
+
     Warning: This functionality does **not** consider axes separately,
     i.e. it does not apply interpolation/extrapolation.
     It fills the return array with the required number of elements, taken
@@ -1395,22 +1413,21 @@ def resize(a, new_shape):
     """
     if isinstance(new_shape, (int, nt.integer)):
         new_shape = (new_shape,)
+
     a = ravel(a)
-    Na = len(a)
-    total_size = um.multiply.reduce(new_shape)
-    if Na == 0 or total_size == 0:
-        return mu.zeros(new_shape, a.dtype)
 
-    n_copies = int(total_size / Na)
-    extra = total_size % Na
+    new_size = 1
+    for dim_length in new_shape:
+        new_size *= dim_length
+        if dim_length < 0:
+            raise ValueError('all elements of `new_shape` must be non-negative')
 
-    if extra != 0:
-        n_copies = n_copies + 1
-        extra = Na - extra
+    if a.size == 0 or new_size == 0:
+        # First case must zero fill. The second would have repeats == 0.
+        return np.zeros_like(a, shape=new_shape)
 
-    a = concatenate((a,) * n_copies)
-    if extra > 0:
-        a = a[:-extra]
+    repeats = -(-new_size // a.size)  # ceil division
+    a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)
 
@@ -1422,7 +1439,7 @@ def _squeeze_dispatcher(a, axis=None):
 @array_function_dispatch(_squeeze_dispatcher)
 def squeeze(a, axis=None):
     """
-    Remove single-dimensional entries from the shape of an array.
+    Remove axes of length one from `a`.
 
     Parameters
     ----------
@@ -1431,7 +1448,7 @@ def squeeze(a, axis=None):
     axis : None or int or tuple of ints, optional
         .. versionadded:: 1.7.0
 
-        Selects a subset of the single-dimensional entries in the
+        Selects a subset of the entries of length one in the
         shape. If an axis is selected with shape entry greater than
         one, an error is raised.
 
@@ -1440,7 +1457,8 @@ def squeeze(a, axis=None):
     squeezed : ndarray
         The input array, but with all or a subset of the
         dimensions of length 1 removed. This is always `a` itself
-        or a view into `a`.
+        or a view into `a`. Note that if all axes are squeezed,
+        the result is a 0d array and not a scalar.
 
     Raises
     ------
@@ -1449,7 +1467,7 @@ def squeeze(a, axis=None):
 
     See Also
     --------
-    expand_dims : The inverse operation, adding singleton dimensions
+    expand_dims : The inverse operation, adding entries of length one
     reshape : Insert, remove, and combine dimensions, and resize existing ones
 
     Examples
@@ -1467,6 +1485,15 @@ def squeeze(a, axis=None):
     ValueError: cannot select an axis to squeeze out which has size not equal to one
     >>> np.squeeze(x, axis=2).shape
     (1, 3)
+    >>> x = np.array([[1234]])
+    >>> x.shape
+    (1, 1)
+    >>> np.squeeze(x)
+    array(1234)  # 0d array
+    >>> np.squeeze(x).shape
+    ()
+    >>> np.squeeze(x)[()]
+    1234
 
     """
     try:
@@ -1980,8 +2007,8 @@ def compress(condition, a, axis=None, out=None):
     --------
     take, choose, diag, diagonal, select
     ndarray.compress : Equivalent method in ndarray
-    np.extract: Equivalent method when working on 1-D arrays
-    ufuncs-output-type
+    extract: Equivalent method when working on 1-D arrays
+    :ref:`ufuncs-output-type`
 
     Examples
     --------
@@ -2024,22 +2051,18 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
 
-    Equivalent to but faster than ``np.maximum(a_min, np.minimum(a, a_max))``.
+    Equivalent to but faster than ``np.minimum(a_max, np.maximum(a, a_min))``.
+
     No check is performed to ensure ``a_min < a_max``.
 
     Parameters
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like or None
-        Minimum value. If None, clipping is not performed on lower
-        interval edge. Not more than one of `a_min` and `a_max` may be
-        None.
-    a_max : scalar or array_like or None
-        Maximum value. If None, clipping is not performed on upper
-        interval edge. Not more than one of `a_min` and `a_max` may be
-        None. If `a_min` or `a_max` are array_like, then the three
-        arrays will be broadcasted to match their shapes.
+    a_min, a_max : array_like or None
+        Minimum and maximum value. If ``None``, clipping is not performed on
+        the corresponding edge. Only one of `a_min` and `a_max` may be
+        ``None``. Both are broadcast against `a`.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
@@ -2059,7 +2082,7 @@ def clip(a, a_min, a_max, out=None, **kwargs):
 
     See Also
     --------
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Examples
     --------
@@ -2255,7 +2278,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         the same shape as the expected output and its type is preserved
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2340,7 +2363,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
         type is preserved (e.g., if ``dtype(out)`` is float, the result
-        will consist of 0.0's and 1.0's). See `ufuncs-output-type` for more
+        will consist of 0.0's and 1.0's). See :ref:`ufuncs-output-type` for more
         details.
 
     keepdims : bool, optional
@@ -2419,7 +2442,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
-        but the type will be cast if necessary. See `ufuncs-output-type` for
+        but the type will be cast if necessary. See :ref:`ufuncs-output-type` for
         more details.
 
     Returns
@@ -2477,6 +2500,14 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     The name of the function comes from the acronym for 'peak to peak'.
 
+    .. warning::
+        `ptp` preserves the data type of the array. This means the
+        return value for an input of signed integers with n bits
+        (e.g. `np.int8`, `np.int16`, etc) is also a signed integer
+        with n bits.  In that case, peak-to-peak values greater than
+        ``2**(n-1)-1`` will be returned as negative values. An example
+        with a work-around is shown below.
+
     Parameters
     ----------
     a : array_like
@@ -2514,16 +2545,33 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
-    >>> x
-    array([[0, 1],
-           [2, 3]])
-
-    >>> np.ptp(x, axis=0)
-    array([2, 2])
+    >>> x = np.array([[4, 9, 2, 10],
+    ...               [6, 9, 7, 12]])
 
     >>> np.ptp(x, axis=1)
-    array([1, 1])
+    array([8, 6])
+
+    >>> np.ptp(x, axis=0)
+    array([2, 0, 5, 2])
+
+    >>> np.ptp(x)
+    10
+
+    This example shows that a negative value can be returned when
+    the input is an array of signed integers.
+
+    >>> y = np.array([[1, 127],
+    ...               [0, 127],
+    ...               [-1, 127],
+    ...               [-2, 127]], dtype=np.int8)
+    >>> np.ptp(y, axis=1)
+    array([ 126,  127, -128, -127], dtype=int8)
+
+    A work-around is to use the `view()` method to view the result as
+    unsigned integers with the same bit width:
+
+    >>> np.ptp(y, axis=1).view(np.uint8)
+    array([126, 127, 128, 129], dtype=uint8)
 
     """
     kwargs = {}
@@ -2565,7 +2613,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2690,7 +2738,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2798,6 +2846,9 @@ def alen(a):
     """
     Return the length of the first dimension of the input array.
 
+    .. deprecated:: 1.18
+       `numpy.alen` is deprecated, use `len` instead.
+
     Parameters
     ----------
     a : array_like
@@ -2897,7 +2948,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     See Also
     --------
     ndarray.prod : equivalent method
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
@@ -2993,7 +3044,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     See Also
     --------
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
@@ -3139,7 +3190,7 @@ def around(a, decimals=0, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the output
-        values will be cast if necessary. See `ufuncs-output-type` for more
+        values will be cast if necessary. See :ref:`ufuncs-output-type` for more
         details.
 
     Returns
@@ -3254,7 +3305,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
-        See `ufuncs-output-type` for more details.
+        See :ref:`ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -3389,22 +3440,23 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     See Also
     --------
     var, mean, nanmean, nanstd, nanvar
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
+    deviations from the mean, i.e., ``std = sqrt(mean(x))``, where
+    ``x = abs(a - a.mean())**2``.
 
-    The average squared deviation is normally calculated as
-    ``x.sum() / N``, where ``N = len(x)``.  If, however, `ddof` is specified,
-    the divisor ``N - ddof`` is used instead. In standard statistical
-    practice, ``ddof=1`` provides an unbiased estimator of the variance
-    of the infinite population. ``ddof=0`` provides a maximum likelihood
-    estimate of the variance for normally distributed variables. The
-    standard deviation computed in this function is the square root of
-    the estimated variance, so even with ``ddof=1``, it will not be an
-    unbiased estimate of the standard deviation per se.
+    The average squared deviation is typically calculated as ``x.sum() / N``,
+    where ``N = len(x)``. If, however, `ddof` is specified, the divisor
+    ``N - ddof`` is used instead. In standard statistical practice, ``ddof=1``
+    provides an unbiased estimator of the variance of the infinite population.
+    ``ddof=0`` provides a maximum likelihood estimate of the variance for
+    normally distributed variables. The standard deviation computed in this
+    function is the square root of the estimated variance, so even with
+    ``ddof=1``, it will not be an unbiased estimate of the standard deviation
+    per se.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
@@ -3514,14 +3566,14 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     See Also
     --------
     std, mean, nanmean, nanstd, nanvar
-    ufuncs-output-type
+    :ref:`ufuncs-output-type`
 
     Notes
     -----
     The variance is the average of the squared deviations from the mean,
-    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
+    i.e.,  ``var = mean(x)``, where ``x = abs(a - a.mean())**2``.
 
-    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
+    The mean is typically calculated as ``x.sum() / N``, where ``N = len(x)``.
     If, however, `ddof` is specified, the divisor ``N - ddof`` is used
     instead.  In standard statistical practice, ``ddof=1`` provides an
     unbiased estimator of the variance of a hypothetical infinite population.

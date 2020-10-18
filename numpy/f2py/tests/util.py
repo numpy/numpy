@@ -5,8 +5,6 @@ Utility functions for
 - detecting if compilers are present
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import subprocess
@@ -21,10 +19,7 @@ from numpy.compat import asbytes, asstr
 from numpy.testing import temppath
 from importlib import import_module
 
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import new as md5  # noqa: F401
+from hashlib import md5
 
 #
 # Maintaining a temporary module directory
@@ -107,6 +102,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
     # Copy files
     dst_sources = []
+    f2py_sources = []
     for fn in source_files:
         if not os.path.isfile(fn):
             raise RuntimeError("%s is not a file" % fn)
@@ -114,16 +110,14 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         shutil.copyfile(fn, dst)
         dst_sources.append(dst)
 
-        fn = os.path.join(os.path.dirname(fn), '.f2py_f2cmap')
-        if os.path.isfile(fn):
-            dst = os.path.join(d, os.path.basename(fn))
-            if not os.path.isfile(dst):
-                shutil.copyfile(fn, dst)
+        base, ext = os.path.splitext(dst)
+        if ext in ('.f90', '.f', '.c', '.pyf'):
+            f2py_sources.append(dst)
 
     # Prepare options
     if module_name is None:
         module_name = get_temp_module_name()
-    f2py_opts = ['-c', '-m', module_name] + options + dst_sources
+    f2py_opts = ['-c', '-m', module_name] + options + f2py_sources
     if skip:
         f2py_opts += ['skip:'] + skip
     if only:
@@ -205,14 +199,20 @@ def _get_compiler_status():
         """)
     code = code % dict(syspath=repr(sys.path))
 
-    with temppath(suffix='.py') as script:
+    tmpdir = tempfile.mkdtemp()
+    try:
+        script = os.path.join(tmpdir, 'setup.py')
+
         with open(script, 'w') as f:
             f.write(code)
 
-        cmd = [sys.executable, script, 'config']
+        cmd = [sys.executable, 'setup.py', 'config']
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+                             stderr=subprocess.STDOUT,
+                             cwd=tmpdir)
         out, err = p.communicate()
+    finally:
+        shutil.rmtree(tmpdir)
 
     m = re.search(br'COMPILERS:(\d+),(\d+),(\d+)', out)
     if m:
@@ -279,9 +279,8 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
 
     script = os.path.join(d, get_temp_module_name() + '.py')
     dst_sources.append(script)
-    f = open(script, 'wb')
-    f.write(asbytes(code))
-    f.close()
+    with open(script, 'wb') as f:
+        f.write(asbytes(code))
 
     # Build
     cwd = os.getcwd()
@@ -310,7 +309,7 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
 #
 
 
-class F2PyTest(object):
+class F2PyTest:
     code = None
     sources = None
     options = []

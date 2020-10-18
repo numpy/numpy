@@ -1,6 +1,5 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
+import gc
 import gzip
 import os
 import threading
@@ -9,21 +8,26 @@ import warnings
 import io
 import re
 import pytest
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
+from multiprocessing import Process, Value
+from ctypes import c_bool
 
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, Path
+from numpy.compat import asbytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
+    break_cycles
     )
+from numpy.testing._private.utils import requires_memory
 
 
 class TextIO(BytesIO):
@@ -45,7 +49,6 @@ class TextIO(BytesIO):
         BytesIO.writelines(self, [asbytes(s) for s in lines])
 
 
-MAJVER, MINVER = sys.version_info[:2]
 IS_64BIT = sys.maxsize > 2**32
 try:
     import bz2
@@ -70,7 +73,7 @@ def strptime(s, fmt=None):
     return datetime(*time.strptime(s, fmt)[:3])
 
 
-class RoundtripTest(object):
+class RoundtripTest:
     def roundtrip(self, save_func, *args, **kwargs):
         """
         save_func : callable
@@ -277,8 +280,7 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    #FIXME: Is this still true?
-    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
+    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -291,17 +293,18 @@ class TestSavezLoad(RoundtripTest):
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
-            # collector, so we catch the warnings.  Because ResourceWarning
-            # is unknown in Python < 3.x, we take the easy way out and
-            # catch all warnings.
+            # collector, so we catch the warnings.
             with suppress_warnings() as sup:
-                sup.filter(Warning)  # TODO: specify exact message
+                sup.filter(ResourceWarning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
                         msg = "Failed to load data from a file: %s" % e
                         raise AssertionError(msg)
+                    finally:
+                        if IS_PYPY:
+                            gc.collect()
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -317,7 +320,7 @@ class TestSavezLoad(RoundtripTest):
             assert_(fp.closed)
 
 
-class TestSaveTxt(object):
+class TestSaveTxt:
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
@@ -364,7 +367,6 @@ class TestSaveTxt(object):
         c.seek(0)
         assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
         v = a[['x', 'z']]
@@ -518,7 +520,7 @@ class TestSaveTxt(object):
 
     def test_unicode(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         with tempdir() as tmpdir:
             # set encoding as on windows it may not be unicode even on py3
             np.savetxt(os.path.join(tmpdir, 'test.csv'), a, fmt=['%s'],
@@ -526,26 +528,24 @@ class TestSaveTxt(object):
 
     def test_unicode_roundtrip(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         # our gz wrapper support encoding
         suffixes = ['', '.gz']
-        # stdlib 2 versions do not support encoding
-        if MAJVER > 2:
-            if HAS_BZ2:
-                suffixes.append('.bz2')
-            if HAS_LZMA:
-                suffixes.extend(['.xz', '.lzma'])
+        if HAS_BZ2:
+            suffixes.append('.bz2')
+        if HAS_LZMA:
+            suffixes.extend(['.xz', '.lzma'])
         with tempdir() as tmpdir:
             for suffix in suffixes:
                 np.savetxt(os.path.join(tmpdir, 'test.csv' + suffix), a,
                            fmt=['%s'], encoding='UTF-16-LE')
                 b = np.loadtxt(os.path.join(tmpdir, 'test.csv' + suffix),
-                               encoding='UTF-16-LE', dtype=np.unicode)
+                               encoding='UTF-16-LE', dtype=np.unicode_)
                 assert_array_equal(a, b)
 
     def test_unicode_bytestream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         s = BytesIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
@@ -553,7 +553,7 @@ class TestSaveTxt(object):
 
     def test_unicode_stringstream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         s = StringIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
@@ -572,22 +572,36 @@ class TestSaveTxt(object):
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason="large files cause problems")
+    @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
+    @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        # The test takes at least 6GB of memory, writes a file larger than 4GB
-        try:
-            a = 'a' * 6 * 1024 * 1024 * 1024
-            del a
-        except (MemoryError, OverflowError):
-            pytest.skip("Cannot allocate enough memory for test")
-        test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)])
-        with tempdir() as tmpdir:
-            np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip(memoryerror_raised):
+            memoryerror_raised.value = False
+            try:
+                # The test takes at least 6GB of memory, writes a file larger
+                # than 4GB
+                test_data = np.asarray([np.random.rand(
+                                        np.random.randint(50,100),4)
+                                        for i in range(800000)], dtype=object)
+                with tempdir() as tmpdir:
+                    np.savez(os.path.join(tmpdir, 'test.npz'),
+                             test_data=test_data)
+            except MemoryError:
+                memoryerror_raised.value = True
+                raise
+        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        # Use an object in shared memory to re-raise the MemoryError exception
+        # in our process if needed, see gh-16889
+        memoryerror_raised = Value(c_bool)
+        p = Process(target=check_large_zip, args=(memoryerror_raised,))
+        p.start()
+        p.join()
+        if memoryerror_raised.value:
+            raise MemoryError("Child process raised a MemoryError exception")
+        assert p.exitcode == 0
 
-class LoadTxtBase(object):
+class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
         # Test that we can load data from a compressed file
         wanted = np.arange(6).reshape((2, 3))
@@ -604,18 +618,14 @@ class LoadTxtBase(object):
                         res = self.loadfunc(f)
                     assert_array_equal(res, wanted)
 
-    # Python2 .open does not support encoding
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(gzip.open, ('.gz',))
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
@@ -632,12 +642,12 @@ class LoadTxtBase(object):
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write(nonascii.encode("UTF-16"))
-            x = self.loadfunc(path, encoding="UTF-16", dtype=np.unicode)
+            x = self.loadfunc(path, encoding="UTF-16", dtype=np.unicode_)
             assert_array_equal(x, nonascii)
 
     def test_binary_decode(self):
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
-        v = self.loadfunc(BytesIO(utf16), dtype=np.unicode, encoding='UTF-16')
+        v = self.loadfunc(BytesIO(utf16), dtype=np.unicode_, encoding='UTF-16')
         assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
 
     def test_converters_decode(self):
@@ -645,7 +655,7 @@ class LoadTxtBase(object):
         c = TextIO()
         c.write(b'\xcf\x96')
         c.seek(0)
-        x = self.loadfunc(c, dtype=np.unicode,
+        x = self.loadfunc(c, dtype=np.unicode_,
                           converters={0: lambda x: x.decode('UTF-8')})
         a = np.array([b'\xcf\x96'.decode('UTF-8')])
         assert_array_equal(x, a)
@@ -656,7 +666,7 @@ class LoadTxtBase(object):
         with temppath() as path:
             with io.open(path, 'wt', encoding='UTF-8') as f:
                 f.write(utf8)
-            x = self.loadfunc(path, dtype=np.unicode,
+            x = self.loadfunc(path, dtype=np.unicode_,
                               converters={0: lambda x: x + 't'},
                               encoding='UTF-8')
             a = np.array([utf8 + 't'])
@@ -829,7 +839,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a[:, 1])
 
         # Testing with some crazy custom integer type
-        class CrazyInt(object):
+        class CrazyInt:
             def __index__(self):
                 return 1
 
@@ -1016,7 +1026,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([b'start ', b'  ', b''])
         assert_array_equal(x['comment'], a)
 
-    def test_structure_unpack(self):
+    def test_unpack_structured(self):
         txt = TextIO("M 21 72\nF 35 58")
         dt = {'names': ('a', 'b', 'c'), 'formats': ('|S1', '<i4', '<f4')}
         a, b, c = np.loadtxt(txt, dtype=dt, unpack=True)
@@ -1104,7 +1114,7 @@ class TestLoadTxt(LoadTxtBase):
             with open(path, "wb") as f:
                 f.write(butf8)
             with open(path, "rb") as f:
-                x = np.loadtxt(f, encoding="UTF-8", dtype=np.unicode)
+                x = np.loadtxt(f, encoding="UTF-8", dtype=np.unicode_)
             assert_array_equal(x, sutf8)
             # test broken latin1 conversion people now rely on
             with open(path, "rb") as f:
@@ -1161,7 +1171,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
-class Testfromregex(object):
+class Testfromregex:
     def test_record(self):
         c = TextIO()
         c.write('1.312 foo\n1.534 bar\n4.444 qux')
@@ -1572,6 +1582,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+    def test_dtype_with_object_no_converter(self):
+        # Object without a converter uses bytes:
+        parsed = np.genfromtxt(TextIO("1"), dtype=object)
+        assert parsed[()] == b"1"
+        parsed = np.genfromtxt(TextIO("string"), dtype=object)
+        assert parsed[()] == b"string"
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
@@ -1587,7 +1604,7 @@ M   33  21.99
             with open(path, 'wb') as f:
                 f.write(b'skip,skip,2001-01-01' + utf8 + b',1.0,skip')
             test = np.genfromtxt(path, delimiter=",", names=None, dtype=float,
-                                 usecols=(2, 3), converters={2: np.unicode},
+                                 usecols=(2, 3), converters={2: np.compat.unicode},
                                  encoding='UTF-8')
         control = np.array([('2001-01-01' + utf8.decode('UTF-8'), 1.)],
                            dtype=[('', '|U11'), ('', float)])
@@ -1822,16 +1839,11 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
-        #
-        kwargs = dict(delimiter=",", dtype=None, names=True)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
 
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, invalid_raise=False, **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        kwargs = dict(delimiter=",", dtype=None, names=True)
+        def f():
+            return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -1846,16 +1858,12 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
+
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
-
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        def f():
+            return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
@@ -2126,7 +2134,7 @@ M   33  21.99
             ctl = np.array([
                      ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"],
                      ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"]],
-                     dtype=np.unicode)
+                     dtype=np.unicode_)
             assert_array_equal(test, ctl)
 
             # test a mixed dtype
@@ -2169,7 +2177,7 @@ M   33  21.99
                      ["norm1", "norm2", "norm3"],
                      ["norm1", latin1, "norm3"],
                      ["test1", "testNonethe" + utf8, "test3"]],
-                     dtype=np.unicode)
+                     dtype=np.unicode_)
             assert_array_equal(test, ctl)
 
     def test_recfromtxt(self):
@@ -2344,15 +2352,59 @@ M   33  21.99
 
         assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
-        assert_(test.dtype['f2'] == np.integer)
+        assert_(test.dtype['f2'] == np.int_)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
 
+    def test_unpack_structured(self):
+        # Regression test for gh-4341
+        # Unpacking should work on structured arrays
+        txt = TextIO("M 21 72\nF 35 58")
+        dt = {'names': ('a', 'b', 'c'), 'formats': ('S1', 'i4', 'f4')}
+        a, b, c = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_equal(a.dtype, np.dtype('S1'))
+        assert_equal(b.dtype, np.dtype('i4'))
+        assert_equal(c.dtype, np.dtype('f4'))
+        assert_array_equal(a, np.array([b'M', b'F']))
+        assert_array_equal(b, np.array([21, 35]))
+        assert_array_equal(c, np.array([72.,  58.]))
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+    def test_unpack_auto_dtype(self):
+        # Regression test for gh-4341
+        # Unpacking should work when dtype=None
+        txt = TextIO("M 21 72.\nF 35 58.")
+        expected = (np.array(["M", "F"]), np.array([21, 35]), np.array([72., 58.]))
+        test = np.genfromtxt(txt, dtype=None, unpack=True, encoding="utf-8")
+        for arr, result in zip(expected, test):
+            assert_array_equal(arr, result)
+            assert_equal(arr.dtype, result.dtype)
+
+    def test_unpack_single_name(self):
+        # Regression test for gh-4341
+        # Unpacking should work when structured dtype has only one field
+        txt = TextIO("21\n35")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array([21, 35], dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal(expected.dtype, test.dtype)
+
+    def test_squeeze_scalar(self):
+        # Regression test for gh-4341
+        # Unpacking a scalar should give zero-dim output,
+        # even if dtype is structured
+        txt = TextIO("1")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array((1,), dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal((), test.shape)
+        assert_equal(expected.dtype, test.dtype)
+
+
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_loadtxt(self):
         with temppath(suffix='.txt') as path:
@@ -2381,6 +2433,9 @@ class TestPathUsage(object):
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
 
     def test_save_load_memmap_readwrite(self):
         # Test that pathlib.Path instances can be written mem-mapped.
@@ -2392,6 +2447,9 @@ class TestPathUsage(object):
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 
@@ -2485,7 +2543,7 @@ def test_gzip_load():
 
 # These next two classes encode the minimal API needed to save()/load() arrays.
 # The `test_ducktyping` ensures they work correctly
-class JustWriter(object):
+class JustWriter:
     def __init__(self, base):
         self.base = base
 
@@ -2495,7 +2553,7 @@ class JustWriter(object):
     def flush(self):
         return self.base.flush()
 
-class JustReader(object):
+class JustReader:
     def __init__(self, base):
         self.base = base
 

@@ -1,22 +1,23 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import re
 import sys
-import types
 import shlex
 import time
 import subprocess
 from copy import copy
 from distutils import ccompiler
-from distutils.ccompiler import *
-from distutils.errors import DistutilsExecError, DistutilsModuleError, \
-                             DistutilsPlatformError, CompileError
+from distutils.ccompiler import (
+    compiler_class, gen_lib_options, get_default_compiler, new_compiler,
+    CCompiler
+)
+from distutils.errors import (
+    DistutilsExecError, DistutilsModuleError, DistutilsPlatformError,
+    CompileError, UnknownFileError
+)
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
-from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import (
     filepath_from_subprocess_output, forward_bytes_to_stdout
 )
@@ -85,11 +86,8 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
 
 
 def replace_method(klass, method_name, func):
-    if sys.version_info[0] < 3:
-        m = types.MethodType(func, None, klass)
-    else:
-        # Py3k does not have unbound method anymore, MethodType does not work
-        m = lambda self, *args, **kw: func(self, *args, **kw)
+    # Py3k does not have unbound method anymore, MethodType does not work
+    m = lambda self, *args, **kw: func(self, *args, **kw)
     setattr(klass, method_name, m)
 
 
@@ -277,12 +275,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    # FIXME:RELATIVE_IMPORT
-    if sys.version_info[0] < 3:
-        from .fcompiler import FCompiler, is_f_file, has_f90_header
-    else:
-        from numpy.distutils.fcompiler import (FCompiler, is_f_file,
-                                               has_f90_header)
+    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+                                           has_f90_header)
     if isinstance(self, FCompiler):
         display = []
         for fc in ['f77', 'f90', 'fix']:
@@ -449,14 +443,6 @@ def CCompiler_show_customization(self):
     Printing is only done if the distutils log threshold is < 2.
 
     """
-    if 0:
-        for attrname in ['include_dirs', 'define', 'undef',
-                         'libraries', 'library_dirs',
-                         'rpath', 'link_objects']:
-            attr = getattr(self, attrname, None)
-            if not attr:
-                continue
-            log.info("compiler '%s' is set to %s" % (attrname, attr))
     try:
         self.get_version()
     except Exception:
@@ -532,11 +518,6 @@ def CCompiler_customize(self, dist, need_cxx=0):
                                       'g++' in self.compiler[0] or
                                       'clang' in self.compiler[0]):
         self._auto_depends = True
-        if 'gcc' in self.compiler[0]:
-            # add std=c99 flag for gcc
-            # TODO: does this need to be more specific?
-            self.compiler.append('-std=c99')
-            self.compiler_so.append('-std=c99')
     elif os.name == 'posix':
         import tempfile
         import shutil
@@ -756,15 +737,15 @@ def new_compiler (plat=None,
     module_name = "numpy.distutils." + module_name
     try:
         __import__ (module_name)
-    except ImportError:
-        msg = str(get_exception())
+    except ImportError as e:
+        msg = str(e)
         log.info('%s in numpy.distutils; trying from distutils',
                  str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)
-        except ImportError:
-            msg = str(get_exception())
+        except ImportError as e:
+            msg = str(e)
             raise DistutilsModuleError("can't compile C/C++ code: unable to load module '%s'" % \
                   module_name)
     try:

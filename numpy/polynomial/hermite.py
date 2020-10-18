@@ -1,5 +1,7 @@
 """
-Objects for dealing with Hermite series.
+==============================================================
+Hermite Series, "Physicists" (:mod:`numpy.polynomial.hermite`)
+==============================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Hermite series, including a `Hermite` class that
@@ -7,60 +9,72 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+.. autosummary::
+   :toctree: generated/
+
+   Hermite
+
 Constants
 ---------
-- `hermdomain` -- Hermite series default domain, [-1,1].
-- `hermzero` -- Hermite series that evaluates identically to 0.
-- `hermone` -- Hermite series that evaluates identically to 1.
-- `hermx` -- Hermite series for the identity map, ``f(x) = x``.
+.. autosummary::
+   :toctree: generated/
+
+   hermdomain
+   hermzero
+   hermone
+   hermx
 
 Arithmetic
 ----------
-- `hermadd` -- add two Hermite series.
-- `hermsub` -- subtract one Hermite series from another.
-- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
-- `hermmul` -- multiply two Hermite series.
-- `hermdiv` -- divide one Hermite series by another.
-- `hermpow` -- raise a Hermite series to a positive integer power.
-- `hermval` -- evaluate a Hermite series at given points.
-- `hermval2d` -- evaluate a 2D Hermite series at given points.
-- `hermval3d` -- evaluate a 3D Hermite series at given points.
-- `hermgrid2d` -- evaluate a 2D Hermite series on a Cartesian product.
-- `hermgrid3d` -- evaluate a 3D Hermite series on a Cartesian product.
+.. autosummary::
+   :toctree: generated/
+
+   hermadd
+   hermsub
+   hermmulx
+   hermmul
+   hermdiv
+   hermpow
+   hermval
+   hermval2d
+   hermval3d
+   hermgrid2d
+   hermgrid3d
 
 Calculus
 --------
-- `hermder` -- differentiate a Hermite series.
-- `hermint` -- integrate a Hermite series.
+.. autosummary::
+   :toctree: generated/
+
+   hermder
+   hermint
 
 Misc Functions
 --------------
-- `hermfromroots` -- create a Hermite series with specified roots.
-- `hermroots` -- find the roots of a Hermite series.
-- `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
-- `hermvander2d` -- Vandermonde-like matrix for 2D power series.
-- `hermvander3d` -- Vandermonde-like matrix for 3D power series.
-- `hermgauss` -- Gauss-Hermite quadrature, points and weights.
-- `hermweight` -- Hermite weight function.
-- `hermcompanion` -- symmetrized companion matrix in Hermite form.
-- `hermfit` -- least-squares fit returning a Hermite series.
-- `hermtrim` -- trim leading coefficients from a Hermite series.
-- `hermline` -- Hermite series of given straight line.
-- `herm2poly` -- convert a Hermite series to a polynomial.
-- `poly2herm` -- convert a polynomial to a Hermite series.
+.. autosummary::
+   :toctree: generated/
 
-Classes
--------
-- `Hermite` -- A Hermite series class.
+   hermfromroots
+   hermroots
+   hermvander
+   hermvander2d
+   hermvander3d
+   hermgauss
+   hermweight
+   hermcompanion
+   hermfit
+   hermtrim
+   hermline
+   herm2poly
+   poly2herm
 
 See also
 --------
 `numpy.polynomial`
 
 """
-from __future__ import division, absolute_import, print_function
-
-import warnings
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
@@ -219,7 +233,11 @@ def hermline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -272,7 +290,11 @@ def hermfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, chebfromroots, hermefromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.chebyshev.chebfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Examples
     --------
@@ -1180,7 +1202,7 @@ def hermvander2d(x, y, deg):
     -------
     vander2d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        :math:`order = (deg[0]+1)*(deg[1]+1)`.  The dtype will be the same
         as the converted `x` and `y`.
 
     See Also
@@ -1234,7 +1256,7 @@ def hermvander3d(x, y, z, deg):
     -------
     vander3d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        :math:`order = (deg[0]+1)*(deg[1]+1)*(deg[2]+1)`.  The dtype will
         be the same as the converted `x`, `y`, and `z`.
 
     See Also
@@ -1308,7 +1330,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
@@ -1322,11 +1344,15 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, lagfit, polyfit, hermefit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.laguerre.lagfit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.hermite_e.hermefit
     hermval : Evaluates a Hermite series.
     hermvander : Vandermonde matrix of Hermite series.
     hermweight : Hermite weight function
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1355,8 +1381,8 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     Fits using Hermite series are probably most useful when the data can be
     approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Hermite
-    weight. In that case the weight ``sqrt(w(x[i])`` should be used
-    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    weight. In that case the weight ``sqrt(w(x[i]))`` should be used
+    together with data values ``y[i]/sqrt(w(x[i]))``. The weight function is
     available as `hermweight`.
 
     References
@@ -1443,7 +1469,11 @@ def hermroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, chebroots, hermeroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.chebyshev.chebroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -1661,7 +1691,6 @@ class Hermite(ABCPolyBase):
     _fromroots = staticmethod(hermfromroots)
 
     # Virtual properties
-    nickname = 'herm'
     domain = np.array(hermdomain)
     window = np.array(hermdomain)
     basis_name = 'H'

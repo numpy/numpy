@@ -1,32 +1,19 @@
 """
 Set operations for arrays based on sorting.
 
-:Contains:
-  unique,
-  isin,
-  ediff1d,
-  intersect1d,
-  setxor1d,
-  in1d,
-  union1d,
-  setdiff1d
-
-:Notes:
+Notes
+-----
 
 For floating point arrays, inaccurate results may appear due to usual round-off
 and floating point comparison issues.
 
 Speed could be gained in some operations by an implementation of
-sort(), that can provide directly the permutation vectors, avoiding
-thus calls to argsort().
+`numpy.sort`, that can provide directly the permutation vectors, thus avoiding
+calls to `numpy.argsort`.
 
-To do: Optionally return indices analogously to unique for all functions.
-
-:Author: Robert Cimrman
+Original author: Robert Cimrman
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 
 import numpy as np
@@ -94,8 +81,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # force a 1d array
     ary = np.asanyarray(ary).ravel()
 
-    # enforce propagation of the dtype of input
-    # ary to returned result
+    # enforce that the dtype of `ary` is used for the output
     dtype_req = ary.dtype
 
     # fast track default case
@@ -105,22 +91,23 @@ def ediff1d(ary, to_end=None, to_begin=None):
     if to_begin is None:
         l_begin = 0
     else:
-        _to_begin = np.asanyarray(to_begin, dtype=dtype_req)
-        if not np.all(_to_begin == to_begin):
-            raise ValueError("cannot convert 'to_begin' to array with dtype "
-                            "'%r' as required for input ary" % dtype_req)
-        to_begin = _to_begin.ravel()
+        to_begin = np.asanyarray(to_begin)
+        if not np.can_cast(to_begin, dtype_req, casting="same_kind"):
+            raise TypeError("dtype of `to_begin` must be compatible "
+                            "with input `ary` under the `same_kind` rule.")
+
+        to_begin = to_begin.ravel()
         l_begin = len(to_begin)
 
     if to_end is None:
         l_end = 0
     else:
-        _to_end = np.asanyarray(to_end, dtype=dtype_req)
-        # check that casting has not overflowed
-        if not np.all(_to_end == to_end):
-            raise ValueError("cannot convert 'to_end' to array with dtype "
-                             "'%r' as required for input ary" % dtype_req)
-        to_end = _to_end.ravel()
+        to_end = np.asanyarray(to_end)
+        if not np.can_cast(to_end, dtype_req, casting="same_kind"):
+            raise TypeError("dtype of `to_end` must be compatible "
+                            "with input `ary` under the `same_kind` rule.")
+
+        to_end = to_end.ravel()
         l_end = len(to_end)
 
     # do the calculation in place and copy to_begin and to_end
@@ -208,6 +195,7 @@ def unique(ar, return_index=False, return_inverse=False,
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+    repeat : Repeat elements of an array.
 
     Notes
     -----
@@ -246,16 +234,27 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a[indices]
     array(['a', 'b', 'c'], dtype='<U1')
 
-    Reconstruct the input array from the unique values:
+    Reconstruct the input array from the unique values and inverse:
 
     >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
     >>> u, indices = np.unique(a, return_inverse=True)
     >>> u
     array([1, 2, 3, 4, 6])
     >>> indices
-    array([0, 1, 4, ..., 1, 2, 1])
+    array([0, 1, 4, 3, 1, 2, 1])
     >>> u[indices]
-    array([1, 2, 6, ..., 2, 3, 2])
+    array([1, 2, 6, 4, 2, 3, 2])
+
+    Reconstruct the input values from the unique values and counts:
+
+    >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
+    >>> values, counts = np.unique(a, return_counts=True)
+    >>> values
+    array([1, 2, 3, 4, 6])
+    >>> counts
+    array([1, 3, 1, 1, 1])
+    >>> np.repeat(values, counts)
+    array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
     """
     ar = np.asanyarray(ar)
@@ -268,24 +267,37 @@ def unique(ar, return_index=False, return_inverse=False,
         ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.AxisError(axis, ar.ndim)
+        raise np.AxisError(axis, ar.ndim) from None
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
-    ar = ar.reshape(orig_shape[0], -1)
+    ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
     dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
+    # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
+    # data type with `m` fields where each field has the data type of `ar`.
+    # In the following, we create the array `consolidated`, which has
+    # shape `(n,)` with data type `dtype`.
     try:
-        consolidated = ar.view(dtype)
-    except TypeError:
+        if ar.shape[1] > 0:
+            consolidated = ar.view(dtype)
+        else:
+            # If ar.shape[1] == 0, then dtype will be `np.dtype([])`, which is
+            # a data type with itemsize 0, and the call `ar.view(dtype)` will
+            # fail.  Instead, we'll use `np.empty` to explicitly create the
+            # array with shape `(len(ar),)`.  Because `dtype` in this case has
+            # itemsize 0, the total size of the result is still 0 bytes.
+            consolidated = np.empty(len(ar), dtype=dtype)
+    except TypeError as e:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+        raise TypeError(msg.format(dt=ar.dtype)) from e
 
     def reshape_uniq(uniq):
+        n = len(uniq)
         uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(-1, *orig_shape[1:])
+        uniq = uniq.reshape(n, *orig_shape[1:])
         uniq = np.moveaxis(uniq, 0, axis)
         return uniq
 
@@ -346,7 +358,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         Input arrays. Will be flattened if not already 1D.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
+        can speed up the calculation.  If True but ``ar1`` or ``ar2`` are not
+        unique, incorrect results and out-of-bounds indices could result.
+        Default is False.
     return_indices : bool
         If True, the indices which correspond to the intersection of the two
         arrays are returned. The first instance of a value is used if there are
@@ -562,15 +576,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
-                # convert object arrays to bool
-                # cannot use np.not_equal until 'S' and 'U' have loops
-                mask &= (ar1 != a).astype(bool)
+                mask &= (ar1 != a)
         else:
             mask = np.zeros(len(ar1), dtype=bool)
             for a in ar2:
-                # convert object arrays to bool
-                # cannot use np.equal until 'S' and 'U' have loops
-                mask |= (ar1 == a).astype(bool)
+                mask |= (ar1 == a)
         return mask
 
     # Otherwise use sorting
@@ -789,4 +799,3 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
-

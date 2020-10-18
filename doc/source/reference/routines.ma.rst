@@ -145,13 +145,13 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   ma.stack
-   ma.column_stack
    ma.concatenate
-   ma.append
-   ma.dstack
-   ma.hstack
+   ma.stack
    ma.vstack
+   ma.hstack
+   ma.dstack
+   ma.column_stack
+   ma.append
 
 
 _____
@@ -272,7 +272,7 @@ Filling a masked array
    ma.common_fill_value
    ma.default_fill_value
    ma.maximum_fill_value
-   ma.maximum_fill_value
+   ma.minimum_fill_value
    ma.set_fill_value
 
    ma.MaskedArray.get_fill_value
@@ -396,6 +396,7 @@ Miscellanea
    ma.allequal
    ma.allclose
    ma.apply_along_axis
+   ma.apply_over_axes
    ma.arange
    ma.choose
    ma.ediff1d

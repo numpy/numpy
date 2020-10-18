@@ -112,9 +112,16 @@ fail:
 static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
-    PyObject* obj = PyDict_GetItemString(normal_kwds, "sig");
+    PyObject *obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
+    if (obj == NULL && PyErr_Occurred()){
+        return -1;
+    }
     if (obj != NULL) {
-        if (PyDict_GetItemString(normal_kwds, "signature")) {
+        PyObject *sig = _PyDict_GetItemStringWithError(normal_kwds, "signature");
+        if (sig == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        if (sig) {
             PyErr_SetString(PyExc_TypeError,
                             "cannot specify both 'sig' and 'signature'");
             return -1;
@@ -165,11 +172,17 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 
     /* If we have more args than nin, they must be the output variables.*/
     if (nargs > nin) {
-        if(nkwds > 0 && PyDict_GetItemString(*normal_kwds, "out")) {
-            PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('out') and position "
-                         "(%"NPY_INTP_FMT")", nin);
-            return -1;
+        if (nkwds > 0) {
+            PyObject *out_kwd = _PyDict_GetItemStringWithError(*normal_kwds, "out");
+            if (out_kwd == NULL && PyErr_Occurred()) {
+                return -1;
+            }
+            else if (out_kwd) {
+                PyErr_Format(PyExc_TypeError,
+                             "argument given by name ('out') and position "
+                             "(%"NPY_INTP_FMT")", nin);
+                return -1;
+            }
         }
         for (i = nin; i < nargs; i++) {
             not_all_none = (PyTuple_GET_ITEM(args, i) != Py_None);
@@ -204,11 +217,20 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     /* gufuncs accept either 'axes' or 'axis', but not both */
-    if (nkwds >= 2 && (PyDict_GetItemString(*normal_kwds, "axis") &&
-                       PyDict_GetItemString(*normal_kwds, "axes"))) {
-        PyErr_SetString(PyExc_TypeError,
-                        "cannot specify both 'axis' and 'axes'");
-        return -1;
+    if (nkwds >= 2) {
+        PyObject *axis_kwd = _PyDict_GetItemStringWithError(*normal_kwds, "axis");
+        if (axis_kwd == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        PyObject *axes_kwd = _PyDict_GetItemStringWithError(*normal_kwds, "axes");
+        if (axes_kwd == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        if (axis_kwd && axes_kwd) {
+            PyErr_SetString(PyExc_TypeError,
+                            "cannot specify both 'axis' and 'axes'");
+            return -1;
+        }
     }
     /* finally, ufuncs accept 'sig' or 'signature' normalize to 'signature' */
     return nkwds == 0 ? 0 : normalize_signature_keyword(*normal_kwds);
@@ -243,7 +265,11 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     }
 
     for (i = 1; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
+        PyObject *kwd = _PyDict_GetItemStringWithError(*normal_kwds, kwlist[i]);
+        if (kwd == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        else if (kwd) {
             PyErr_Format(PyExc_TypeError,
                          "argument given by name ('%s') and position "
                          "(%"NPY_INTP_FMT")", kwlist[i], i);
@@ -293,7 +319,11 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     }
 
     for (i = 1; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
+        PyObject *kwd = _PyDict_GetItemStringWithError(*normal_kwds, kwlist[i]);
+        if (kwd == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        else if (kwd) {
             PyErr_Format(PyExc_TypeError,
                          "argument given by name ('%s') and position "
                          "(%"NPY_INTP_FMT")", kwlist[i], i);
@@ -341,7 +371,11 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
     }
 
     for (i = 2; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
+        PyObject *kwd = _PyDict_GetItemStringWithError(*normal_kwds, kwlist[i]);
+        if (kwd == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        else if (kwd) {
             PyErr_Format(PyExc_TypeError,
                          "argument given by name ('%s') and position "
                          "(%"NPY_INTP_FMT")", kwlist[i], i);
@@ -469,8 +503,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
         /* ensure out is always a tuple */
         normal_kwds = PyDict_Copy(kwds);
-        out = PyDict_GetItemString(normal_kwds, "out");
-        if (out != NULL) {
+        out = _PyDict_GetItemStringWithError(normal_kwds, "out");
+        if (out == NULL && PyErr_Occurred()) {
+            goto fail;
+        }
+        else if (out) {
             int nout = ufunc->nout;
 
             if (PyTuple_CheckExact(out)) {
@@ -568,7 +605,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    method_name = PyUString_FromString(method);
+    method_name = PyUnicode_FromString(method);
     if (method_name == NULL) {
         goto fail;
     }

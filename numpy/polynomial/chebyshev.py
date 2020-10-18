@@ -1,5 +1,7 @@
 """
-Objects for dealing with Chebyshev series.
+====================================================
+Chebyshev Series (:mod:`numpy.polynomial.chebyshev`)
+====================================================
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Chebyshev series, including a `Chebyshev` class that
@@ -7,57 +9,75 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
+Classes
+-------
+
+.. autosummary::
+   :toctree: generated/
+
+   Chebyshev
+
+
 Constants
 ---------
-- `chebdomain` -- Chebyshev series default domain, [-1,1].
-- `chebzero` -- (Coefficients of the) Chebyshev series that evaluates
-  identically to 0.
-- `chebone` -- (Coefficients of the) Chebyshev series that evaluates
-  identically to 1.
-- `chebx` -- (Coefficients of the) Chebyshev series for the identity map,
-  ``f(x) = x``.
+
+.. autosummary::
+   :toctree: generated/
+
+   chebdomain
+   chebzero
+   chebone
+   chebx
 
 Arithmetic
 ----------
-- `chebadd` -- add two Chebyshev series.
-- `chebsub` -- subtract one Chebyshev series from another.
-- `chebmulx` -- multiply a Chebyshev series in ``P_i(x)`` by ``x``.
-- `chebmul` -- multiply two Chebyshev series.
-- `chebdiv` -- divide one Chebyshev series by another.
-- `chebpow` -- raise a Chebyshev series to a positive integer power.
-- `chebval` -- evaluate a Chebyshev series at given points.
-- `chebval2d` -- evaluate a 2D Chebyshev series at given points.
-- `chebval3d` -- evaluate a 3D Chebyshev series at given points.
-- `chebgrid2d` -- evaluate a 2D Chebyshev series on a Cartesian product.
-- `chebgrid3d` -- evaluate a 3D Chebyshev series on a Cartesian product.
+
+.. autosummary::
+   :toctree: generated/
+
+   chebadd
+   chebsub
+   chebmulx
+   chebmul
+   chebdiv
+   chebpow
+   chebval
+   chebval2d
+   chebval3d
+   chebgrid2d
+   chebgrid3d
 
 Calculus
 --------
-- `chebder` -- differentiate a Chebyshev series.
-- `chebint` -- integrate a Chebyshev series.
+
+.. autosummary::
+   :toctree: generated/
+
+   chebder
+   chebint
 
 Misc Functions
 --------------
-- `chebfromroots` -- create a Chebyshev series with specified roots.
-- `chebroots` -- find the roots of a Chebyshev series.
-- `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
-- `chebvander2d` -- Vandermonde-like matrix for 2D power series.
-- `chebvander3d` -- Vandermonde-like matrix for 3D power series.
-- `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
-- `chebweight` -- Chebyshev weight function.
-- `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
-- `chebfit` -- least-squares fit returning a Chebyshev series.
-- `chebpts1` -- Chebyshev points of the first kind.
-- `chebpts2` -- Chebyshev points of the second kind.
-- `chebtrim` -- trim leading coefficients from a Chebyshev series.
-- `chebline` -- Chebyshev series representing given straight line.
-- `cheb2poly` -- convert a Chebyshev series to a polynomial.
-- `poly2cheb` -- convert a polynomial to a Chebyshev series.
-- `chebinterpolate` -- interpolate a function at the Chebyshev points.
 
-Classes
--------
-- `Chebyshev` -- A Chebyshev series class.
+.. autosummary::
+   :toctree: generated/
+
+   chebfromroots
+   chebroots
+   chebvander
+   chebvander2d
+   chebvander3d
+   chebgauss
+   chebweight
+   chebcompanion
+   chebfit
+   chebpts1
+   chebpts2
+   chebtrim
+   chebline
+   cheb2poly
+   poly2cheb
+   chebinterpolate
 
 See also
 --------
@@ -84,12 +104,9 @@ References
 ----------
 .. [1] A. T. Benjamin, et al., "Combinatorial Trigonometry with Chebyshev
   Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
-  (preprint: https://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
+  (https://web.archive.org/web/20080221202153/https://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
-from __future__ import division, absolute_import, print_function
-
-import warnings
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
@@ -460,8 +477,6 @@ def chebline(off, scl):
     """
     Chebyshev series whose graph is a straight line.
 
-
-
     Parameters
     ----------
     off, scl : scalars
@@ -475,7 +490,11 @@ def chebline(off, scl):
 
     See Also
     --------
-    polyline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite.hermline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -528,7 +547,11 @@ def chebfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots, hermefromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Examples
     --------
@@ -747,7 +770,7 @@ def chebdiv(c1, c2):
 
     See Also
     --------
-    chebadd, chebsub, chemulx, chebmul, chebpow
+    chebadd, chebsub, chebmulx, chebmul, chebpow
 
     Notes
     -----
@@ -1060,7 +1083,6 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             if n > 1:
                 tmp[2] = c[1]/4
             for j in range(2, n):
-                t = c[j]/(2*j + 1)  # FIXME: t never used
                 tmp[j + 1] = c[j]/(2*(j + 1))
                 tmp[j - 1] -= c[j]/(2*(j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)
@@ -1455,7 +1477,7 @@ def chebvander2d(x, y, deg):
     -------
     vander2d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        :math:`order = (deg[0]+1)*(deg[1]+1)`.  The dtype will be the same
         as the converted `x` and `y`.
 
     See Also
@@ -1509,7 +1531,7 @@ def chebvander3d(x, y, z, deg):
     -------
     vander3d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        :math:`order = (deg[0]+1)*(deg[1]+1)*(deg[2]+1)`.  The dtype will
         be the same as the converted `x`, `y`, and `z`.
 
     See Also
@@ -1585,7 +1607,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         sv -- singular values of the scaled Vandermonde matrix
         rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
@@ -1599,11 +1621,15 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    polyfit, legfit, lagfit, hermfit, hermefit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.laguerre.lagfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.hermite_e.hermefit
     chebval : Evaluates a Chebyshev series.
     chebvander : Vandermonde matrix of Chebyshev series.
     chebweight : Chebyshev weight function.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1713,7 +1739,11 @@ def chebroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, hermeroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -2042,7 +2072,6 @@ class Chebyshev(ABCPolyBase):
         return cls(coef, domain=domain)
 
     # Virtual properties
-    nickname = 'cheb'
     domain = np.array(chebdomain)
     window = np.array(chebdomain)
     basis_name = 'T'

@@ -1,7 +1,6 @@
 """Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
 """
-from __future__ import division, absolute_import, print_function
 import functools
 import warnings
 
@@ -68,16 +67,14 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     'G'
 
     """
-    typecodes = [(isinstance(t, str) and t) or asarray(t).dtype.char
-                 for t in typechars]
-    intersection = [t for t in typecodes if t in typeset]
+    typecodes = ((isinstance(t, str) and t) or asarray(t).dtype.char
+                 for t in typechars)
+    intersection = set(t for t in typecodes if t in typeset)
     if not intersection:
         return default
     if 'F' in intersection and 'd' in intersection:
         return 'D'
-    l = [(_typecodes_by_elsize.index(t), t) for t in intersection]
-    l.sort()
-    return l[0][1]
+    return min(intersection, key=_typecodes_by_elsize.index)
 
 
 def _asfarray_dispatcher(a, dtype=None):
@@ -495,7 +492,8 @@ def _real_if_close_dispatcher(a, tol=None):
 @array_function_dispatch(_real_if_close_dispatcher)
 def real_if_close(a, tol=100):
     """
-    If complex input returns a real array if complex parts are close to zero.
+    If input is complex with all imaginary parts close to zero, return 
+    real parts.
 
     "Close to zero" is defined as `tol` * (machine epsilon of the type for
     `a`).
@@ -530,10 +528,10 @@ def real_if_close(a, tol=100):
     >>> np.finfo(float).eps
     2.2204460492503131e-16 # may vary
 
-    >>> np.real_if_close([2.1 + 4e-14j], tol=1000)
-    array([2.1])
-    >>> np.real_if_close([2.1 + 4e-13j], tol=1000)
-    array([2.1+4.e-13j])
+    >>> np.real_if_close([2.1 + 4e-14j, 5.2 + 3e-15j], tol=1000)
+    array([2.1, 5.2])
+    >>> np.real_if_close([2.1 + 4e-13j, 5.2 + 3e-15j], tol=1000)
+    array([2.1+4.e-13j, 5.2 + 3e-15j])
 
     """
     a = asanyarray(a)

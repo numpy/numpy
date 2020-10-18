@@ -7,17 +7,17 @@ by importing from the extension module.
 """
 
 import functools
-import sys
 import warnings
-import sys
 
 from . import overrides
 from . import _multiarray_umath
-import numpy as np
-from numpy.core._multiarray_umath import *
-from numpy.core._multiarray_umath import (
+from ._multiarray_umath import *  # noqa: F403
+# These imports are needed for backward compatibility,
+# do not change them. issue gh-15518
+# _get_ndarray_c_version is semi-public, on purpose not added to __all__
+from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _get_ndarray_c_version
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version, _set_madvise_hugepage,
     )
 
 __all__ = [
@@ -33,16 +33,14 @@ __all__ = [
     'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
-    'int_asbuffer', 'interp', 'interp_complex', 'is_busday', 'lexsort',
+    'interp', 'interp_complex', 'is_busday', 'lexsort',
     'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
     'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
     'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
-    'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
+    'set_string_function', 'set_typeDict', 'shares_memory',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
-if sys.version_info.major < 3:
-    __all__ += ['newbuffer', 'getbuffer']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -143,9 +141,9 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
-def concatenate(arrays, axis=None, out=None):
+def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
-    concatenate((a1, a2, ...), axis=0, out=None)
+    concatenate((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
 
     Join a sequence of arrays along an existing axis.
 
@@ -161,6 +159,16 @@ def concatenate(arrays, axis=None, out=None):
         If provided, the destination to place the result. The shape must be
         correct, matching that of what concatenate would have returned if no
         out argument were specified.
+    dtype : str or dtype
+        If provided, the destination array will have this dtype. Cannot be
+        provided together with `out`.
+
+        .. versionadded:: 1.20.0
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -173,14 +181,15 @@ def concatenate(arrays, axis=None, out=None):
     array_split : Split an array into multiple sub-arrays of equal or
                   near-equal size.
     split : Split array into a list of multiple sub-arrays of equal size.
-    hsplit : Split array into multiple sub-arrays horizontally (column wise)
-    vsplit : Split array into multiple sub-arrays vertically (row wise)
+    hsplit : Split array into multiple sub-arrays horizontally (column wise).
+    vsplit : Split array into multiple sub-arrays vertically (row wise).
     dsplit : Split array into multiple sub-arrays along the 3rd axis (depth).
     stack : Stack a sequence of arrays along a new axis.
-    hstack : Stack arrays in sequence horizontally (column wise)
-    vstack : Stack arrays in sequence vertically (row wise)
-    dstack : Stack arrays in sequence depth wise (along third dimension)
     block : Assemble arrays from blocks.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    vstack : Stack arrays in sequence vertically (row wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
 
     Notes
     -----
@@ -762,6 +771,7 @@ def dot(a, b, out=None):
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     matmul : '@' operator as method with out parameter.
+    linalg.multi_dot : Chained dot product.
 
     Examples
     --------
@@ -911,8 +921,9 @@ def bincount(x, weights=None, minlength=None):
 
     >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: array cannot be safely cast to required type
+      ...
+    TypeError: Cannot cast array data from dtype('float64') to dtype('int64')
+    according to the rule 'safe'
 
     A possible use of ``bincount`` is to perform sums over
     variable-size chunks of an array, using the ``weights`` keyword.
@@ -1089,7 +1100,7 @@ def putmask(a, mask, values):
 
     Parameters
     ----------
-    a : array_like
+    a : ndarray
         Target array.
     mask : array_like
         Boolean mask array. It has to be the same shape as `a`.
@@ -1139,7 +1150,7 @@ def packbits(a, axis=None, bitorder='big'):
         ``None`` implies packing the flattened array.
     bitorder : {'big', 'little'}, optional
         The order of the input bits. 'big' will mimic bin(val),
-        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011``, 'little' will
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
@@ -1267,7 +1278,13 @@ def shares_memory(a, b, max_work=None):
     """
     shares_memory(a, b, max_work=None)
 
-    Determine if two arrays share memory
+    Determine if two arrays share memory.
+
+    .. warning::
+
+       This function can be exponentially slow for some inputs, unless
+       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
     ----------
@@ -1280,7 +1297,8 @@ def shares_memory(a, b, max_work=None):
 
         max_work=MAY_SHARE_EXACT  (default)
             The problem is solved exactly. In this case, the function returns
-            True only if there is an element shared between the arrays.
+            True only if there is an element shared between the arrays. Finding
+            the exact solution may take extremely long in some cases.
         max_work=MAY_SHARE_BOUNDS
             Only the memory bounds of a and b are checked.
 
@@ -1299,8 +1317,32 @@ def shares_memory(a, b, max_work=None):
 
     Examples
     --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    >>> x = np.array([1, 2, 3, 4])
+    >>> np.shares_memory(x, np.array([5, 6, 7]))
     False
+    >>> np.shares_memory(x[::2], x)
+    True
+    >>> np.shares_memory(x[::2], x[1::2])
+    False
+
+    Checking whether two arrays share memory is NP-complete, and
+    runtime may increase exponentially in the number of
+    dimensions. Hence, `max_work` should generally be set to a finite
+    number, as it is possible to construct examples that take
+    extremely long to run:
+
+    >>> from numpy.lib.stride_tricks import as_strided
+    >>> x = np.zeros([192163377], dtype=np.int8)
+    >>> x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
+    >>> x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
+    >>> np.shares_memory(x1, x2, max_work=1000)
+    Traceback (most recent call last):
+    ...
+    numpy.TooHardError: Exceeded max_work
+
+    Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
+    around 1 minute for this case. It is possible to find problems
+    that take still significantly longer.
 
     """
     return (a, b)

@@ -20,12 +20,16 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "lowlevel_strided_loops.h"
 #include "usertypes.h"
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
+#if defined(__ARM_NEON__) || defined (__ARM_NEON)
+#include <arm_neon.h>
+#endif
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
@@ -43,7 +47,7 @@ static NPY_INLINE npy_bool
 PySequence_NoString_Check(PyObject *op) {
     return
         PySequence_Check(op) &&
-        !PyString_Check(op) &&
+        !PyBytes_Check(op) &&
         !PyUnicode_Check(op) &&
         !PyArray_IsZeroDim(op);
 }
@@ -171,7 +175,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE#
- * #func1 = PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2,
+ * #func1 = PyBool_FromLong, PyLong_FromLong*6, PyLong_FromUnsignedLong*2,
  *          PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
  *          MyPyFloat_FromHalf, PyFloat_FromDouble*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
@@ -210,7 +214,7 @@ static int
     @type@ temp;  /* ensures alignment */
 
     if (PyArray_IsScalar(op, @kind@)) {
-        temp = ((Py@kind@ScalarObject *)op)->obval;
+        temp = PyArrayScalar_VAL(op, @kind@);
     }
     else {
         temp = (@type@)@func2@(op);
@@ -291,16 +295,49 @@ static int
     }
 
     if (PyArray_IsScalar(op, @kind@)){
-        temp = ((Py@kind@ScalarObject *)op)->obval;
+        temp = PyArrayScalar_VAL(op, @kind@);
     }
     else {
         if (op == Py_None) {
             oop.real = NPY_NAN;
             oop.imag = NPY_NAN;
         }
+        else if (PyBytes_Check(op) || PyUnicode_Check(op)) {
+            /*
+             * Unlike most numeric conversion functions PyComplex_AsCComplex
+             * does not handle strings, so we have to use its constructor.
+             */
+            PyObject *pycomplex, *args;
+            if (PyBytes_Check(op)) {
+                /* The complex constructor expects unicode */
+                PyObject *unicode;
+                unicode = PyUnicode_FromEncodedObject(op, NULL, NULL);
+                if (unicode == NULL) {
+                    return -1;
+                }
+                args = PyTuple_Pack(1, unicode);
+                Py_DECREF(unicode);
+            }
+            else {
+                args = PyTuple_Pack(1, op);
+            }
+            if (args == NULL) {
+                return -1;
+            }
+            pycomplex = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+            Py_DECREF(args);
+            if (pycomplex == NULL) {
+                return -1;
+            }
+            oop = PyComplex_AsCComplex(pycomplex);
+            Py_DECREF(pycomplex);
+            if (error_converting(oop.real)) {
+                return -1;
+            }
+        }
         else {
-            oop = PyComplex_AsCComplex (op);
-            if (PyErr_Occurred()) {
+            oop = PyComplex_AsCComplex(op);
+            if (error_converting(oop.real)) {
                 return -1;
             }
         }
@@ -330,11 +367,7 @@ string_to_long_double(PyObject*op)
     /* Convert python long objects to a longdouble, without precision or range
      * loss via a double.
      */
-    if ((PyLong_Check(op) && !PyBool_Check(op))
-#if !defined(NPY_PY3K)
-        || (PyInt_Check(op) && !PyBool_Check(op))
-#endif
-    ) {
+    if ((PyLong_Check(op) && !PyBool_Check(op))) {
         return npy_longdouble_from_PyLong(op);
     }
 
@@ -410,7 +443,7 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     }
 
     if (PyArray_IsScalar(op, LongDouble)) {
-        temp = ((PyLongDoubleScalarObject *)op)->obval;
+        temp = PyArrayScalar_VAL(op, LongDouble);
     }
     else {
         /* In case something funny happened in PyArray_IsScalar */
@@ -454,12 +487,6 @@ static int
 UNICODE_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
-    PyObject *temp;
-    Py_UNICODE *ptr;
-    int datalen;
-#ifndef Py_UNICODE_WIDE
-    char *buffer;
-#endif
 
     if (PyArray_IsZeroDim(op)) {
         return convert_to_scalar_and_retry(op, ov, vap, UNICODE_setitem);
@@ -470,7 +497,8 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
                 "setting an array element with a sequence");
         return -1;
     }
-#if defined(NPY_PY3K)
+
+    PyObject *temp;
     if (PyBytes_Check(op)) {
         /* Try to decode from ASCII */
         temp = PyUnicode_FromEncodedObject(op, "ASCII", "strict");
@@ -479,23 +507,29 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
         }
     }
     else if ((temp=PyObject_Str(op)) == NULL) {
-#else
-    if ((temp=PyObject_Unicode(op)) == NULL) {
-#endif
         return -1;
     }
-    ptr = PyUnicode_AS_UNICODE(temp);
-    if ((ptr == NULL) || (PyErr_Occurred())) {
+
+    /* truncate if needed */
+    Py_ssize_t max_len = PyArray_DESCR(ap)->elsize >> 2;
+    Py_ssize_t actual_len = PyUnicode_GetLength(temp);
+    if (actual_len < 0) {
         Py_DECREF(temp);
         return -1;
     }
-    datalen = PyUnicode_GET_DATA_SIZE(temp);
+    if (actual_len > max_len) {
+        Py_SETREF(temp, PyUnicode_Substring(temp, 0, max_len));
+        if (temp == NULL) {
+            return -1;
+        }
+        actual_len = max_len;
+    }
 
-#ifdef Py_UNICODE_WIDE
-    memcpy(ov, ptr, PyArray_MIN(PyArray_DESCR(ap)->elsize, datalen));
-#else
+    Py_ssize_t num_bytes = actual_len * 4;
+
+    char *buffer;
     if (!PyArray_ISALIGNED(ap)) {
-        buffer = PyArray_malloc(PyArray_DESCR(ap)->elsize);
+        buffer = PyArray_malloc(num_bytes);
         if (buffer == NULL) {
             Py_DECREF(temp);
             PyErr_NoMemory();
@@ -505,20 +539,23 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     else {
         buffer = ov;
     }
-    datalen = PyUCS2Buffer_AsUCS4(ptr, (npy_ucs4 *)buffer,
-            datalen >> 1, PyArray_DESCR(ap)->elsize >> 2);
-    datalen <<= 2;
+    if (PyUnicode_AsUCS4(temp, (Py_UCS4 *)buffer, actual_len, 0) == NULL) {
+        PyArray_free(buffer);
+        Py_DECREF(temp);
+        return -1;
+    }
+
     if (!PyArray_ISALIGNED(ap)) {
-        memcpy(ov, buffer, datalen);
+        memcpy(ov, buffer, num_bytes);
         PyArray_free(buffer);
     }
-#endif
+
     /* Fill in the rest of the space with 0 */
-    if (PyArray_DESCR(ap)->elsize > datalen) {
-        memset((char*)ov + datalen, 0, (PyArray_DESCR(ap)->elsize - datalen));
+    if (PyArray_DESCR(ap)->elsize > num_bytes) {
+        memset((char*)ov + num_bytes, 0, (PyArray_DESCR(ap)->elsize - num_bytes));
     }
     if (PyArray_ISBYTESWAPPED(ap)) {
-        byte_swap_vector(ov, PyArray_DESCR(ap)->elsize >> 2, 4);
+        byte_swap_vector(ov, actual_len, 4);
     }
     Py_DECREF(temp);
     return 0;
@@ -561,7 +598,6 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
                 "setting an array element with a sequence");
         return -1;
     }
-#if defined(NPY_PY3K)
     if (PyUnicode_Check(op)) {
         /* Assume ASCII codec -- function similarly as Python 2 */
         temp = PyUnicode_AsASCIIString(op);
@@ -588,11 +624,6 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
             return -1;
         }
     }
-#else
-    if ((temp = PyObject_Str(op)) == NULL) {
-        return -1;
-    }
-#endif
     if (PyBytes_AsStringAndSize(temp, &ptr, &len) < 0) {
         Py_DECREF(temp);
         return -1;
@@ -617,7 +648,7 @@ static PyObject *
 OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
 {
     PyObject *obj;
-    NPY_COPY_PYOBJECT_PTR(&obj, ip);
+    memcpy(&obj, ip, sizeof(obj));
     if (obj == NULL) {
         Py_RETURN_NONE;
     }
@@ -633,12 +664,12 @@ OBJECT_setitem(PyObject *op, void *ov, void *NPY_UNUSED(ap))
 {
     PyObject *obj;
 
-    NPY_COPY_PYOBJECT_PTR(&obj, ov);
+    memcpy(&obj, ov, sizeof(obj));
 
     Py_INCREF(op);
     Py_XDECREF(obj);
 
-    NPY_COPY_PYOBJECT_PTR(ov, &op);
+    memcpy(ov, &op, sizeof(op));
 
     return PyErr_Occurred() ? -1 : 0;
 }
@@ -748,7 +779,7 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) && 
+    if ((new->alignment > 1) &&
                 ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
@@ -834,9 +865,9 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             npy_intp names_size = PyTuple_GET_SIZE(descr->names);
 
             if (names_size != PyTuple_Size(op)) {
-                errmsg = PyUString_FromFormat(
+                errmsg = PyUnicode_FromFormat(
                         "could not assign tuple of length %zd to structure "
-                        "with %" NPY_INTP_FMT " fields.", 
+                        "with %" NPY_INTP_FMT " fields.",
                         PyTuple_Size(op), names_size);
                 PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
@@ -919,7 +950,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
      * undiscerning case: It interprets any object as a buffer
      * and reads as many bytes as possible, padding with 0.
      */
-#if defined(NPY_PY3K)
     {
         Py_buffer view;
 
@@ -931,22 +961,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + view.len, 0, itemsize - view.len);
         }
         PyBuffer_Release(&view);
-        _dealloc_cached_buffer_info(op);
     }
-#else
-    {
-        const void *buffer;
-        Py_ssize_t buflen;
-
-        if (PyObject_AsReadBuffer(op, &buffer, &buflen) < 0) {
-            return -1;
-        }
-        memcpy(ip, buffer, PyArray_MIN(buflen, itemsize));
-        if (itemsize > buflen) {
-            memset(ip + buflen, 0, itemsize - buflen);
-        }
-    }
-#endif
     return 0;
 }
 
@@ -1510,6 +1525,7 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
  *
  * #from = STRING*23, UNICODE*23, VOID*23#
  * #fromtyp = npy_char*69#
+ * #is_string_to_bool = 1, 0*22, 1, 0*22, 0*23#
  * #to = (BOOL,
  *           BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *           LONG, ULONG, LONGLONG, ULONGLONG,
@@ -1527,76 +1543,8 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
  * #oskip = 1*18,(PyArray_DESCR(aop)->elsize)*3,1*2,
  *          1*18,(PyArray_DESCR(aop)->elsize)*3,1*2,
  *          1*18,(PyArray_DESCR(aop)->elsize)*3,1*2#
- * #convert = 1*18, 0*3, 1*2,
- *            1*18, 0*3, 1*2,
- *            0*23#
- * #convstr = (Int*9, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
  */
 
-#if @convert@
-
-#define IS_@from@
-
-static void
-@from@_to_@to@(void *input, void *output, npy_intp n,
-        void *vaip, void *aop)
-{
-    @fromtyp@ *ip = input;
-    @totyp@ *op = output;
-    PyArrayObject *aip = vaip;
-
-    npy_intp i;
-    int skip = PyArray_DESCR(aip)->elsize;
-    int oskip = @oskip@;
-
-    for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        PyObject *new;
-        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
-        if (temp == NULL) {
-            return;
-        }
-
-#if defined(NPY_PY3K) && defined(IS_STRING)
-        /* Work around some Python 3K */
-        new = PyUnicode_FromEncodedObject(temp, "ascii", "strict");
-        Py_DECREF(temp);
-        temp = new;
-        if (temp == NULL) {
-            return;
-        }
-#endif
-        /* convert from Python object to needed one */
-        {
-            PyObject *args;
-
-            /* call out to the Python builtin given by convstr */
-            args = Py_BuildValue("(N)", temp);
-#if defined(NPY_PY3K)
-#define PyInt_Type PyLong_Type
-#endif
-            new = Py@convstr@_Type.tp_new(&Py@convstr@_Type, args, NULL);
-#if defined(NPY_PY3K)
-#undef PyInt_Type
-#endif
-            Py_DECREF(args);
-            temp = new;
-            if (temp == NULL) {
-                return;
-            }
-        }
-
-        if (@to@_setitem(temp, op, aop)) {
-            Py_DECREF(temp);
-            return;
-        }
-        Py_DECREF(temp);
-    }
-}
-
-#undef IS_@from@
-
-#else
-
 static void
 @from@_to_@to@(void *input, void *output, npy_intp n,
         void *vaip, void *aop)
@@ -1614,6 +1562,13 @@ static void
         if (temp == NULL) {
             return;
         }
+#if @is_string_to_bool@
+        /* Legacy behaviour converts strings to integers before going to bool */
+        Py_SETREF(temp, PyNumber_Long(temp));
+        if (temp == NULL) {
+            return;
+        }
+#endif
         if (@to@_setitem(temp, op, aop)) {
             Py_DECREF(temp);
             return;
@@ -1622,7 +1577,6 @@ static void
     }
 }
 
-#endif
 
 /**end repeat**/
 
@@ -2283,11 +2237,11 @@ OBJECT_copyswapn(PyObject **dst, npy_intp dstride, PyObject **src,
             dstp = (unsigned char*)dst;
             srcp = (unsigned char*)src;
             for (i = 0; i < n; i++) {
-                NPY_COPY_PYOBJECT_PTR(&tmp, srcp);
+                memcpy(&tmp, srcp, sizeof(tmp));
                 Py_XINCREF(tmp);
-                NPY_COPY_PYOBJECT_PTR(&tmp, dstp);
+                memcpy(&tmp, dstp, sizeof(tmp));
                 Py_XDECREF(tmp);
-                NPY_COPY_PYOBJECT_PTR(dstp, srcp);
+                memcpy(dstp, srcp, sizeof(tmp));
                 dstp += dstride;
                 srcp += sstride;
             }
@@ -2311,11 +2265,11 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap),
         }
         else {
             PyObject *tmp;
-            NPY_COPY_PYOBJECT_PTR(&tmp, src);
+            memcpy(&tmp, src, sizeof(tmp));
             Py_XINCREF(tmp);
-            NPY_COPY_PYOBJECT_PTR(&tmp, dst);
+            memcpy(&tmp, dst, sizeof(tmp));
             Py_XDECREF(tmp);
-            NPY_COPY_PYOBJECT_PTR(dst, src);
+            memcpy(dst, src, sizeof(tmp));
         }
     }
 }
@@ -2325,6 +2279,7 @@ static void
 STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                   npy_intp n, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2339,6 +2294,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 {
     PyArray_Descr *descr;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2429,6 +2385,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
     PyArray_Descr *descr;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2510,6 +2467,7 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 {
     int itemsize;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2537,6 +2495,7 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 static void
 STRING_copyswap(char *dst, char *src, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2549,6 +2508,7 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
     int itemsize;
 
+    assert(arr != NULL);
     if (arr == NULL) {
         return;
     }
@@ -2679,12 +2639,6 @@ STRING_nonzero (char *ip, PyArrayObject *ap)
     return nonz;
 }
 
-#ifdef Py_UNICODE_WIDE
-#define PyArray_UCS4_ISSPACE Py_UNICODE_ISSPACE
-#else
-#define PyArray_UCS4_ISSPACE(ch) Py_STRING_ISSPACE((char)ch)
-#endif
-
 static npy_bool
 UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
 {
@@ -2710,7 +2664,7 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
         if (*ip == '\0') {
             seen_null = NPY_TRUE;
         }
-        else if (seen_null || !PyArray_UCS4_ISSPACE(*ip)) {
+        else if (seen_null || !Py_UNICODE_ISSPACE(*ip)) {
             nonz = NPY_TRUE;
             break;
         }
@@ -2732,7 +2686,7 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
     }
     else {
         PyObject *obj;
-        NPY_COPY_PYOBJECT_PTR(&obj, ip);
+        memcpy(&obj, ip, sizeof(obj));
         if (obj == NULL) {
             return NPY_FALSE;
         }
@@ -3000,7 +2954,7 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
 
     ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
     if (ret < 0) {
-        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */
         return 0;
     }
     if (ret == 1) {
@@ -3151,7 +3105,15 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-
+#if defined(__ARM_NEON__) || defined (__ARM_NEON)
+    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
+    {
+        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
+        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
+        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
+        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
+    }
+#endif
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
 
 static int
@@ -3172,6 +3134,19 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
             break;
         }
     }
+#else
+    #if defined(__ARM_NEON__) || defined (__ARM_NEON)
+        uint8x16_t zero = vdupq_n_u8(0);
+        for(; i < n - (n % 32); i+=32) {
+            uint8x16_t d1 = vld1q_u8((uint8_t *)&ip[i]);
+            uint8x16_t d2 = vld1q_u8((uint8_t *)&ip[i + 16]);
+            d1 = vceqq_u8(d1, zero);
+            d2 = vceqq_u8(d2, zero);
+            if(_mm_movemask_epi8_neon(vminq_u8(d1, d2)) != 0xFFFF) {
+                break;
+            }
+        }
+    #endif
 #endif
     for (; i < n; i++) {
         if (ip[i]) {
@@ -3535,17 +3510,17 @@ NPY_NO_EXPORT void
            npy_intp n, void *NPY_UNUSED(ignore))
 {
 #if defined(HAVE_CBLAS)
-    int is1b = blas_stride(is1, sizeof(@type@));
-    int is2b = blas_stride(is2, sizeof(@type@));
+    CBLAS_INT is1b = blas_stride(is1, sizeof(@type@));
+    CBLAS_INT is2b = blas_stride(is2, sizeof(@type@));
 
     if (is1b && is2b)
     {
         double sum = 0.;  /* double for stability */
 
         while (n > 0) {
-            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+            CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
 
-            sum += cblas_@prefix@dot(chunk,
+            sum += CBLAS_FUNC(cblas_@prefix@dot)(chunk,
                                      (@type@ *) ip1, is1b,
                                      (@type@ *) ip2, is2b);
             /* use char strides here */
@@ -3584,17 +3559,17 @@ NPY_NO_EXPORT void
            char *op, npy_intp n, void *NPY_UNUSED(ignore))
 {
 #if defined(HAVE_CBLAS)
-    int is1b = blas_stride(is1, sizeof(@ctype@));
-    int is2b = blas_stride(is2, sizeof(@ctype@));
+    CBLAS_INT is1b = blas_stride(is1, sizeof(@ctype@));
+    CBLAS_INT is2b = blas_stride(is2, sizeof(@ctype@));
 
     if (is1b && is2b) {
         double sum[2] = {0., 0.};  /* double for stability */
 
         while (n > 0) {
-            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+            CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
             @type@ tmp[2];
 
-            cblas_@prefix@dotu_sub((int)n, ip1, is1b, ip2, is2b, tmp);
+            CBLAS_FUNC(cblas_@prefix@dotu_sub)((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
             sum[0] += (double)tmp[0];
             sum[1] += (double)tmp[1];
             /* use char strides here */
@@ -3923,178 +3898,12 @@ static void
 
 /*
  *****************************************************************************
- **                              FASTPUTMASK                                **
- *****************************************************************************
- */
-
-
-/**begin repeat
- *
- * #name = BOOL,
- *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE,
- *         DATETIME, TIMEDELTA#
- * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_cfloat, npy_cdouble, npy_clongdouble,
- *         npy_datetime, npy_timedelta#
-*/
-static void
-@name@_fastputmask(@type@ *in, npy_bool *mask, npy_intp ni, @type@ *vals,
-        npy_intp nv)
-{
-    npy_intp i, j;
-
-    if (nv == 1) {
-        @type@ s_val = *vals;
-        for (i = 0; i < ni; i++) {
-            if (mask[i]) {
-                in[i] = s_val;
-            }
-        }
-    }
-    else {
-        for (i = 0, j = 0; i < ni; i++, j++) {
-            if (j >= nv) {
-                j = 0;
-            }
-            if (mask[i]) {
-                in[i] = vals[j];
-            }
-        }
-    }
-    return;
-}
-/**end repeat**/
-
-#define OBJECT_fastputmask NULL
-
-
-/*
- *****************************************************************************
- **                                FASTTAKE                                 **
- *****************************************************************************
- */
-
-
-/**begin repeat
- *
- * #name = BOOL,
- *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE,
- *         DATETIME, TIMEDELTA#
- * #type = npy_bool,
- *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_cfloat, npy_cdouble, npy_clongdouble,
- *         npy_datetime, npy_timedelta#
-*/
-static int
-@name@_fasttake(@type@ *dest, @type@ *src, npy_intp *indarray,
-                    npy_intp nindarray, npy_intp n_outer,
-                    npy_intp m_middle, npy_intp nelem,
-                    NPY_CLIPMODE clipmode)
-{
-    npy_intp i, j, k, tmp;
-    NPY_BEGIN_THREADS_DEF;
-
-    NPY_BEGIN_THREADS;
-
-    switch(clipmode) {
-    case NPY_RAISE:
-        for (i = 0; i < n_outer; i++) {
-            for (j = 0; j < m_middle; j++) {
-                tmp = indarray[j];
-                /*
-                 * We don't know what axis we're operating on,
-                 * so don't report it in case of an error.
-                 */
-                if (check_and_adjust_index(&tmp, nindarray, -1, _save) < 0) {
-                    return 1;
-                }
-                if (NPY_LIKELY(nelem == 1)) {
-                    *dest++ = *(src + tmp);
-                }
-                else {
-                    for (k = 0; k < nelem; k++) {
-                        *dest++ = *(src + tmp*nelem + k);
-                    }
-                }
-            }
-            src += nelem*nindarray;
-        }
-        break;
-    case NPY_WRAP:
-        for (i = 0; i < n_outer; i++) {
-            for (j = 0; j < m_middle; j++) {
-                tmp = indarray[j];
-                if (tmp < 0) {
-                    while (tmp < 0) {
-                        tmp += nindarray;
-                    }
-                }
-                else if (tmp >= nindarray) {
-                    while (tmp >= nindarray) {
-                        tmp -= nindarray;
-                    }
-                }
-                if (NPY_LIKELY(nelem == 1)) {
-                    *dest++ = *(src+tmp);
-                }
-                else {
-                    for (k = 0; k < nelem; k++) {
-                        *dest++ = *(src+tmp*nelem+k);
-                    }
-                }
-            }
-            src += nelem*nindarray;
-        }
-        break;
-    case NPY_CLIP:
-        for (i = 0; i < n_outer; i++) {
-            for (j = 0; j < m_middle; j++) {
-                tmp = indarray[j];
-                if (tmp < 0) {
-                    tmp = 0;
-                }
-                else if (tmp >= nindarray) {
-                    tmp = nindarray - 1;
-                }
-                if (NPY_LIKELY(nelem == 1)) {
-                    *dest++ = *(src + tmp);
-                }
-                else {
-                    for (k = 0; k < nelem; k++) {
-                        *dest++ = *(src + tmp*nelem + k);
-                    }
-                }
-            }
-            src += nelem*nindarray;
-        }
-        break;
-    }
-
-    NPY_END_THREADS;
-    return 0;
-}
-/**end repeat**/
-
-#define OBJECT_fasttake NULL
-
-/*
- *****************************************************************************
  **                       small correlate                                   **
  *****************************************************************************
  */
 
 /*
- * Compute correlation of data with with small kernels
+ * Compute correlation of data with small kernels
  * Calling a BLAS dot product for the inner loop of the correlation is overkill
  * for small kernels. It is faster to compute it directly.
  * Intended to be used by _pyarray_correlate so no input verifications is done
@@ -4193,7 +4002,7 @@ _datetime_dtype_metadata_clone(NpyAuxData *data)
 }
 
 /*
- * Allcoate and initialize a PyArray_DatetimeDTypeMetaData object
+ * Allocate and initialize a PyArray_DatetimeDTypeMetaData object
  */
 static NpyAuxData*
 _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
@@ -4429,7 +4238,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         #if @rsort@
             aradixsort_@suff@
         #else
-            atimsort_@suff@            
+            atimsort_@suff@
         #endif
     },
 #else
@@ -4445,8 +4254,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     NULL,
     (PyArray_FastClipFunc*)NULL,
-    (PyArray_FastPutmaskFunc*)@from@_fastputmask,
-    (PyArray_FastTakeFunc*)@from@_fasttake,
+    (PyArray_FastPutmaskFunc*)NULL,
+    (PyArray_FastTakeFunc*)NULL,
     (PyArray_ArgFunc*)@from@_argmin
 };
 
@@ -4615,6 +4424,17 @@ set_typeinfo(PyObject *dict)
     PyObject *cobj, *key;
 
     /*
+     * Override the base class for all types, eventually all of this logic
+     * should be defined on the class and inherited to the scalar.
+     * (NPY_HALF is the largest builtin one.)
+     */
+    for (i = 0; i <= NPY_HALF; i++) {
+        if (dtypemeta_wrap_legacy_descriptor(_builtin_descrs[i]) < 0) {
+            return -1;
+        }
+    }
+
+    /*
      * Add cast functions for the new types
      */
 
@@ -4641,7 +4461,7 @@ set_typeinfo(PyObject *dict)
             return -1;
         }
     }
-    key = PyInt_FromLong(NPY_@name2@);
+    key = PyLong_FromLong(NPY_@name2@);
     if (key == NULL) {
         return -1;
     }
@@ -4722,7 +4542,7 @@ set_typeinfo(PyObject *dict)
     infodict = PyDict_New();
     if (infodict == NULL) return -1;
 
-
+    int ret;
     /**begin repeat
      *
      * #name = BOOL,
@@ -4765,10 +4585,15 @@ set_typeinfo(PyObject *dict)
         &Py@Name@ArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "@name@", s);
+    ret = PyDict_SetItemString(infodict, "@name@", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
 
 
     /**end repeat**/
@@ -4788,10 +4613,15 @@ set_typeinfo(PyObject *dict)
         _ALIGN(@type@), &Py@Name@ArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "@name@", s);
+    ret = PyDict_SetItemString(infodict, "@name@", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
 
     /**end repeat**/
 
@@ -4801,37 +4631,57 @@ set_typeinfo(PyObject *dict)
         &PyObjectArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "OBJECT", s);
+    ret = PyDict_SetItemString(infodict, "OBJECT", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinfo(
         NPY_STRINGLTR, NPY_STRING, 0, _ALIGN(char),
         &PyStringArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "STRING", s);
+    ret = PyDict_SetItemString(infodict, "STRING", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinfo(
         NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN(npy_ucs4),
         &PyUnicodeArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "UNICODE", s);
+    ret = PyDict_SetItemString(infodict, "UNICODE", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinfo(
         NPY_VOIDLTR, NPY_VOID, 0, _ALIGN(char),
         &PyVoidArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "VOID", s);
+    ret = PyDict_SetItemString(infodict, "VOID", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinforanged(
         NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
         _ALIGN(npy_datetime),
@@ -4840,10 +4690,15 @@ set_typeinfo(PyObject *dict)
         &PyDatetimeArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "DATETIME", s);
+    ret = PyDict_SetItemString(infodict, "DATETIME", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
     s = PyArray_typeinforanged(
         NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
         _ALIGN(npy_timedelta),
@@ -4852,15 +4707,23 @@ set_typeinfo(PyObject *dict)
         &PyTimedeltaArrType_Type
     );
     if (s == NULL) {
+        Py_DECREF(infodict);
         return -1;
     }
-    PyDict_SetItemString(infodict, "TIMEDELTA", s);
+    ret = PyDict_SetItemString(infodict, "TIMEDELTA", s);
     Py_DECREF(s);
+    if (ret < 0) {
+        Py_DECREF(infodict);
+        return -1;
+    }
 
-#define SETTYPE(name)                           \
-    Py_INCREF(&Py##name##ArrType_Type);         \
-    PyDict_SetItemString(infodict, #name,       \
-            (PyObject *)&Py##name##ArrType_Type)
+#define SETTYPE(name)                                   \
+    Py_INCREF(&Py##name##ArrType_Type);                 \
+    if (PyDict_SetItemString(infodict, #name,           \
+            (PyObject *)&Py##name##ArrType_Type) < 0) { \
+        Py_DECREF(infodict);                            \
+        return -1;                                      \
+    }
 
     SETTYPE(Generic);
     SETTYPE(Number);
@@ -4875,8 +4738,11 @@ set_typeinfo(PyObject *dict)
 
 #undef SETTYPE
 
-    PyDict_SetItemString(dict, "typeinfo", infodict);
+    ret = PyDict_SetItemString(dict, "typeinfo", infodict);
     Py_DECREF(infodict);
+    if (ret < 0) {
+        return -1;
+    }
     return 0;
 }
 

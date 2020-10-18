@@ -48,7 +48,7 @@ setup_base()
   if [ -z "$USE_DEBUG" ]; then
     $PIP install -v . 2>&1 | tee log
   else
-    # Python3.5-dbg on travis seems to need this
+    # The job run with USE_DEBUG=1 on travis needs this.
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
     $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
@@ -65,9 +65,24 @@ setup_base()
 
 run_test()
 {
-  $PIP install -r test_requirements.txt
+  # Install the test dependencies.
+  # Clear PYTHONOPTIMIZE when running `pip install -r test_requirements.txt`
+  # because version 2.19 of pycparser (a dependency of one of the packages
+  # in test_requirements.txt) does not provide a wheel, and the source tar
+  # file does not install correctly when Python's optimization level is set
+  # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
+  PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt
+
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
+    export MYPYPATH=$PWD
+  fi
+
+  # pytest aborts when running --durations with python3.6-dbg, so only enable
+  # it for non-debug tests. That is a cPython bug fixed in later versions of
+  # python3.7 but python3.7-dbg is not currently available on travisCI.
+  if [ -z "$USE_DEBUG" ]; then
+    DURATIONS_FLAG="--durations 10"
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -82,17 +97,15 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
 
-  if [ -n "$PPC64_LE" ]; then
-    $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
+  if [ -n "$CHECK_BLAS" ]; then
+    $PYTHON ../tools/openblas_support.py --check_version
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON -b ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
+    $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    # disable --durations temporarily, pytest currently aborts
-    # when that is used with python3.6-dbg
-    $PYTHON ../runtests.py -n -v  # --durations 10
+    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -129,16 +142,11 @@ run_test()
   fi
 }
 
+
 export PYTHON
 export PIP
-$PIP install setuptools
 
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
-  # Build wheel
-  $PIP install wheel
-  # ensure that the pip / setuptools versions deployed inside
-  # the venv are recent enough
-  $PIP install -U virtualenv
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   # adjust gcc flags if C coverage requested
@@ -149,7 +157,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
      export F90='gfortran --coverage'
      export LDFLAGS='--coverage'
   fi
-  $PYTHON setup.py build build_src --verbose-cfg bdist_wheel
+  $PYTHON setup.py build --warn-error build_src --verbose-cfg bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
@@ -161,8 +169,6 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   run_test
 
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
-  # use an up-to-date pip / setuptools inside the venv
-  $PIP install -U virtualenv
   # temporary workaround for sdist failures.
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued

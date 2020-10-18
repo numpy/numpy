@@ -30,10 +30,9 @@
  * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
  *
  */
-typedef void (PyArray_StridedUnaryOp)(char *dst, npy_intp dst_stride,
-                                    char *src, npy_intp src_stride,
-                                    npy_intp N, npy_intp src_itemsize,
-                                    NpyAuxData *transferdata);
+typedef int (PyArray_StridedUnaryOp)(
+        char *dst, npy_intp dst_stride, char *src, npy_intp src_stride,
+        npy_intp N, npy_intp src_itemsize, NpyAuxData *transferdata);
 
 /*
  * This is for pointers to functions which behave exactly as
@@ -43,31 +42,10 @@ typedef void (PyArray_StridedUnaryOp)(char *dst, npy_intp dst_stride,
  * In particular, the 'i'-th element is operated on if and only if
  * mask[i*mask_stride] is true.
  */
-typedef void (PyArray_MaskedStridedUnaryOp)(char *dst, npy_intp dst_stride,
-                                    char *src, npy_intp src_stride,
-                                    npy_bool *mask, npy_intp mask_stride,
-                                    npy_intp N, npy_intp src_itemsize,
-                                    NpyAuxData *transferdata);
-
-/*
- * This function pointer is for binary operations that input two
- * arbitrarily strided one-dimensional array segments and output
- * an arbitrarily strided array segment of the same size.
- * It may be a fully general function, or a specialized function
- * when the strides or item size have particular known values.
- *
- * Examples of binary operations are the basic arithmetic operations,
- * logical operators AND, OR, and many others.
- *
- * The 'transferdata' parameter is slightly special, following a
- * generic auxiliary data pattern defined in ndarraytypes.h
- * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
- *
- */
-typedef void (PyArray_StridedBinaryOp)(char *dst, npy_intp dst_stride,
-                                    char *src0, npy_intp src0_stride,
-                                    char *src1, npy_intp src1_stride,
-                                    npy_intp N, NpyAuxData *transferdata);
+typedef int (PyArray_MaskedStridedUnaryOp)(
+        char *dst, npy_intp dst_stride, char *src, npy_intp src_stride,
+        npy_bool *mask, npy_intp mask_stride,
+        npy_intp N, npy_intp src_itemsize, NpyAuxData *transferdata);
 
 /*
  * Gives back a function pointer to a specialized function for copying
@@ -271,6 +249,7 @@ PyArray_CastRawArrays(npy_intp count,
  * The return value is the number of elements it couldn't copy.  A return value
  * of 0 means all elements were copied, a larger value means the end of
  * the n-dimensional array was reached before 'count' elements were copied.
+ * A negative return value indicates an error occurred.
  *
  * ndim:
  *      The number of dimensions of the n-dimensional array.
@@ -306,30 +285,30 @@ PyArray_CastRawArrays(npy_intp count,
 NPY_NO_EXPORT npy_intp
 PyArray_TransferNDimToStrided(npy_intp ndim,
                 char *dst, npy_intp dst_stride,
-                char *src, npy_intp *src_strides, npy_intp src_strides_inc,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                char *src, npy_intp const *src_strides, npy_intp src_strides_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedUnaryOp *stransfer,
                 NpyAuxData *transferdata);
 
 NPY_NO_EXPORT npy_intp
 PyArray_TransferStridedToNDim(npy_intp ndim,
-                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *dst, npy_intp const *dst_strides, npy_intp dst_strides_inc,
                 char *src, npy_intp src_stride,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedUnaryOp *stransfer,
                 NpyAuxData *transferdata);
 
 NPY_NO_EXPORT npy_intp
 PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
-                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *dst, npy_intp const *dst_strides, npy_intp dst_strides_inc,
                 char *src, npy_intp src_stride,
                 npy_bool *mask, npy_intp mask_stride,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_MaskedStridedUnaryOp *stransfer,
                 NpyAuxData *data);
@@ -365,8 +344,8 @@ mapiter_set(PyArrayMapIterObject *mit);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
-                            char *data, npy_intp *strides,
+PyArray_PrepareOneRawArrayIter(int ndim, npy_intp const *shape,
+                            char *data, npy_intp const *strides,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_data, npy_intp *out_strides);
 
@@ -387,9 +366,9 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
+PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp const *shape,
+                            char *dataA, npy_intp const *stridesA,
+                            char *dataB, npy_intp const *stridesB,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB);
@@ -411,10 +390,10 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
-                            char *dataC, npy_intp *stridesC,
+PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp const *shape,
+                            char *dataA, npy_intp const *stridesA,
+                            char *dataB, npy_intp const *stridesB,
+                            char *dataC, npy_intp const *stridesC,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB,
@@ -638,7 +617,7 @@ npy_bswap8_unaligned(char * x)
  *
  * Here is example code for a single array:
  *
- *      if (PyArray_TRIVIALLY_ITERABLE(self) {
+ *      if (PyArray_TRIVIALLY_ITERABLE(self)) {
  *          char *data;
  *          npy_intp count, stride;
  *
@@ -656,7 +635,7 @@ npy_bswap8_unaligned(char * x)
  *
  * Here is example code for a pair of arrays:
  *
- *      if (PyArray_TRIVIALLY_ITERABLE_PAIR(a1, a2) {
+ *      if (PyArray_TRIVIALLY_ITERABLE_PAIR(a1, a2)) {
  *          char *data1, *data2;
  *          npy_intp count, stride1, stride2;
  *

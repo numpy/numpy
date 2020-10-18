@@ -26,7 +26,6 @@ static PyObject *
 get_array_function(PyObject *obj)
 {
     static PyObject *ndarray_array_function = NULL;
-    PyObject *array_function;
 
     if (ndarray_array_function == NULL) {
         ndarray_array_function = get_ndarray_array_function();
@@ -38,7 +37,7 @@ get_array_function(PyObject *obj)
         return ndarray_array_function;
     }
 
-    array_function = PyArray_LookupSpecial(obj, "__array_function__");
+    PyObject *array_function = PyArray_LookupSpecial(obj, "__array_function__");
     if (array_function == NULL && PyErr_Occurred()) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
@@ -53,9 +52,7 @@ get_array_function(PyObject *obj)
 static void
 pyobject_array_insert(PyObject **array, int length, int index, PyObject *item)
 {
-    int j;
-
-    for (j = length; j > index; j--) {
+    for (int j = length; j > index; j--) {
         array[j] = array[j - 1];
     }
     array[index] = item;
@@ -74,18 +71,16 @@ get_implementing_args_and_methods(PyObject *relevant_args,
                                   PyObject **methods)
 {
     int num_implementing_args = 0;
-    Py_ssize_t i;
-    int j;
 
     PyObject **items = PySequence_Fast_ITEMS(relevant_args);
     Py_ssize_t length = PySequence_Fast_GET_SIZE(relevant_args);
 
-    for (i = 0; i < length; i++) {
+    for (Py_ssize_t i = 0; i < length; i++) {
         int new_class = 1;
         PyObject *argument = items[i];
 
         /* Have we seen this type before? */
-        for (j = 0; j < num_implementing_args; j++) {
+        for (int j = 0; j < num_implementing_args; j++) {
             if (Py_TYPE(argument) == Py_TYPE(implementing_args[j])) {
                 new_class = 0;
                 break;
@@ -109,7 +104,7 @@ get_implementing_args_and_methods(PyObject *relevant_args,
 
                 /* "subclasses before superclasses, otherwise left to right" */
                 arg_index = num_implementing_args;
-                for (j = 0; j < num_implementing_args; j++) {
+                for (int j = 0; j < num_implementing_args; j++) {
                     PyObject *other_type;
                     other_type = (PyObject *)Py_TYPE(implementing_args[j]);
                     if (PyObject_IsInstance(argument, other_type)) {
@@ -129,7 +124,7 @@ get_implementing_args_and_methods(PyObject *relevant_args,
     return num_implementing_args;
 
 fail:
-    for (j = 0; j < num_implementing_args; j++) {
+    for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
         Py_DECREF(methods[j]);
     }
@@ -161,13 +156,10 @@ NPY_NO_EXPORT PyObject *
 array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
                            PyObject *kwargs)
 {
-    Py_ssize_t j;
-    PyObject *implementation, *result;
-
     PyObject **items = PySequence_Fast_ITEMS(types);
     Py_ssize_t length = PySequence_Fast_GET_SIZE(types);
 
-    for (j = 0; j < length; j++) {
+    for (Py_ssize_t j = 0; j < length; j++) {
         int is_subclass = PyObject_IsSubclass(
             items[j], (PyObject *)&PyArray_Type);
         if (is_subclass == -1) {
@@ -179,11 +171,11 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
         }
     }
 
-    implementation = PyObject_GetAttr(func, npy_ma_str_implementation);
+    PyObject *implementation = PyObject_GetAttr(func, npy_ma_str_implementation);
     if (implementation == NULL) {
         return NULL;
     }
-    result = PyObject_Call(implementation, args, kwargs);
+    PyObject *result = PyObject_Call(implementation, args, kwargs);
     Py_DECREF(implementation);
     return result;
 }
@@ -208,31 +200,31 @@ call_array_function(PyObject* argument, PyObject* method,
 }
 
 
-/*
- * Implements the __array_function__ protocol for a function, as described in
- * in NEP-18. See numpy.core.overrides for a full docstring.
+/**
+ * Internal handler for the array-function dispatching. The helper returns
+ * either the result, or NotImplemented (as a borrowed reference).
+ *
+ * @param public_api The public API symbol used for dispatching
+ * @param relevant_args Arguments which may implement __array_function__
+ * @param args Original arguments
+ * @param kwargs Original keyword arguments
+ *
+ * @returns The result of the dispatched version, or a borrowed reference
+ *          to NotImplemented to indicate the default implementation should
+ *          be used.
  */
 NPY_NO_EXPORT PyObject *
-array_implement_array_function(
-    PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
+array_implement_array_function_internal(
+    PyObject *public_api, PyObject *relevant_args,
+    PyObject *args, PyObject *kwargs)
 {
-    PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
-
-    PyObject *types = NULL;
     PyObject *implementing_args[NPY_MAXARGS];
     PyObject *array_function_methods[NPY_MAXARGS];
+    PyObject *types = NULL;
 
-    int j, any_overrides;
-    int num_implementing_args = 0;
     PyObject *result = NULL;
 
     static PyObject *errmsg_formatter = NULL;
-
-    if (!PyArg_UnpackTuple(
-            positional_args, "implement_array_function", 5, 5,
-            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
-        return NULL;
-    }
 
     relevant_args = PySequence_Fast(
         relevant_args,
@@ -242,7 +234,7 @@ array_implement_array_function(
     }
 
     /* Collect __array_function__ implementations */
-    num_implementing_args = get_implementing_args_and_methods(
+    int num_implementing_args = get_implementing_args_and_methods(
         relevant_args, implementing_args, array_function_methods);
     if (num_implementing_args == -1) {
         goto cleanup;
@@ -254,15 +246,19 @@ array_implement_array_function(
      * arguments implement __array_function__ at all (e.g., if they are all
      * built-in types).
      */
-    any_overrides = 0;
-    for (j = 0; j < num_implementing_args; j++) {
+    int any_overrides = 0;
+    for (int j = 0; j < num_implementing_args; j++) {
         if (!is_default_array_function(array_function_methods[j])) {
             any_overrides = 1;
             break;
         }
     }
     if (!any_overrides) {
-        result = PyObject_Call(implementation, args, kwargs);
+        /*
+         * When the default implementation should be called, return
+         * `Py_NotImplemented` to indicate this.
+         */
+        result = Py_NotImplemented;
         goto cleanup;
     }
 
@@ -275,14 +271,14 @@ array_implement_array_function(
     if (types == NULL) {
         goto cleanup;
     }
-    for (j = 0; j < num_implementing_args; j++) {
+    for (int j = 0; j < num_implementing_args; j++) {
         PyObject *arg_type = (PyObject *)Py_TYPE(implementing_args[j]);
         Py_INCREF(arg_type);
         PyTuple_SET_ITEM(types, j, arg_type);
     }
 
     /* Call __array_function__ methods */
-    for (j = 0; j < num_implementing_args; j++) {
+    for (int j = 0; j < num_implementing_args; j++) {
         PyObject *argument = implementing_args[j];
         PyObject *method = array_function_methods[j];
 
@@ -319,12 +315,102 @@ array_implement_array_function(
     }
 
 cleanup:
-    for (j = 0; j < num_implementing_args; j++) {
+    for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
         Py_DECREF(array_function_methods[j]);
     }
     Py_XDECREF(types);
     Py_DECREF(relevant_args);
+    return result;
+}
+
+
+/*
+ * Implements the __array_function__ protocol for a Python function, as described in
+ * in NEP-18. See numpy.core.overrides for a full docstring.
+ */
+NPY_NO_EXPORT PyObject *
+array_implement_array_function(
+    PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
+{
+    PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
+
+    if (!PyArg_UnpackTuple(
+            positional_args, "implement_array_function", 5, 5,
+            &implementation, &public_api, &relevant_args, &args, &kwargs)) {
+        return NULL;
+    }
+
+    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
+     * in downstream libraries.
+     */
+    if (kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
+        PyDict_DelItem(kwargs, npy_ma_str_like);
+    }
+
+    PyObject *res = array_implement_array_function_internal(
+        public_api, relevant_args, args, kwargs);
+
+    if (res == Py_NotImplemented) {
+        return PyObject_Call(implementation, args, kwargs);
+    }
+    return res;
+}
+
+
+/*
+ * Implements the __array_function__ protocol for C array creation functions
+ * only. Added as an extension to NEP-18 in an effort to bring NEP-35 to
+ * life with minimal dispatch overhead.
+ */
+NPY_NO_EXPORT PyObject *
+array_implement_c_array_function_creation(
+    const char *function_name, PyObject *args, PyObject *kwargs)
+{
+    if (kwargs == NULL) {
+        return Py_NotImplemented;
+    }
+
+    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
+     * in downstream libraries. If that key isn't present, return NULL and
+     * let originating call to continue.
+     */
+    if (!PyDict_Contains(kwargs, npy_ma_str_like)) {
+        return Py_NotImplemented;
+    }
+
+    PyObject *relevant_args = PyTuple_Pack(1,
+            PyDict_GetItem(kwargs, npy_ma_str_like));
+    if (relevant_args == NULL) {
+        return NULL;
+    }
+    PyDict_DelItem(kwargs, npy_ma_str_like);
+
+    PyObject *numpy_module = PyImport_Import(npy_ma_str_numpy);
+    if (numpy_module == NULL) {
+        Py_DECREF(relevant_args);
+        return NULL;
+    }
+
+    PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
+    Py_DECREF(numpy_module);
+    if (public_api == NULL) {
+        Py_DECREF(relevant_args);
+        return NULL;
+    }
+    if (!PyCallable_Check(public_api)) {
+        Py_DECREF(relevant_args);
+        Py_DECREF(public_api);
+        return PyErr_Format(PyExc_RuntimeError,
+                            "numpy.%s is not callable.",
+                            function_name);
+    }
+
+    PyObject* result = array_implement_array_function_internal(
+            public_api, relevant_args, args, kwargs);
+
+    Py_DECREF(relevant_args);
+    Py_DECREF(public_api);
     return result;
 }
 
@@ -337,8 +423,6 @@ array__get_implementing_args(
     PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
 {
     PyObject *relevant_args;
-    int j;
-    int num_implementing_args = 0;
     PyObject *implementing_args[NPY_MAXARGS];
     PyObject *array_function_methods[NPY_MAXARGS];
     PyObject *result = NULL;
@@ -355,7 +439,7 @@ array__get_implementing_args(
         return NULL;
     }
 
-    num_implementing_args = get_implementing_args_and_methods(
+    int num_implementing_args = get_implementing_args_and_methods(
         relevant_args, implementing_args, array_function_methods);
     if (num_implementing_args == -1) {
         goto cleanup;
@@ -366,14 +450,14 @@ array__get_implementing_args(
     if (result == NULL) {
         goto cleanup;
     }
-    for (j = 0; j < num_implementing_args; j++) {
+    for (int j = 0; j < num_implementing_args; j++) {
         PyObject *argument = implementing_args[j];
         Py_INCREF(argument);
         PyList_SET_ITEM(result, j, argument);
     }
 
 cleanup:
-    for (j = 0; j < num_implementing_args; j++) {
+    for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
         Py_DECREF(array_function_methods[j]);
     }

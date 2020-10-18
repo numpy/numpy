@@ -109,7 +109,7 @@ The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
 Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
-`overridden <ufuncs.overrides>`_.
+:ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the :obj:`~class.__array_prepare__` and
@@ -253,9 +253,9 @@ can generate this table for your system with the code given in the Figure.
     B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
     H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
     I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - Y
+    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
     e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
     f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
     d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
@@ -298,6 +298,11 @@ them by defining certain special methods.  For details, see
 :class:`ufunc`
 ==============
 
+.. autosummary::
+   :toctree: generated/
+
+   numpy.ufunc
+
 .. _ufuncs.kwargs:
 
 Optional keyword arguments
@@ -334,6 +339,19 @@ advanced usage and will not typically be used.
     default), then this corresponds to the entire output being filled.
     Note that outputs not explicitly filled are left with their
     uninitialized values.
+
+    .. versionadded:: 1.13
+
+    Operations where ufunc input and output operands have memory overlap are
+    defined to be the same as for equivalent operations where there
+    is no memory overlap.  Operations affected make temporary copies
+    as needed to eliminate data dependency.  As detecting these cases
+    is computationally expensive, a heuristic is used, which may in rare
+    cases result in needless temporary copies.  For operations where the
+    data dependency is simple enough for the heuristic to analyze,
+    temporary copies will not be made even if the arrays overlap, if it
+    can be deduced copies are not necessary.  As an example,
+    ``np.add(a, b, out=a)`` will not involve copies.
 
 *where*
 
@@ -380,7 +398,7 @@ advanced usage and will not typically be used.
     result as a dimension with size one, so that the result will broadcast
     correctly against the inputs. This option can only be used for generalized
     ufuncs that operate on inputs that all have the same number of core
-    dimensions and with outputs that have no core dimensions , i.e., with
+    dimensions and with outputs that have no core dimensions, i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
     the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
@@ -441,13 +459,13 @@ advanced usage and will not typically be used.
 
 *extobj*
 
-    a list of length 1, 2, or 3 specifying the ufunc buffer-size, the
-    error mode integer, and the error call-back function. Normally, these
+    a list of length 3 specifying the ufunc buffer-size, the error
+    mode integer, and the error call-back function. Normally, these
     values are looked up in a thread-specific dictionary. Passing them
     here circumvents that look up and uses the low-level specification
-    provided for the error mode. This may be useful, for example, as an
-    optimization for calculations requiring many ufunc calls on small arrays
-    in a loop.
+    provided for the error mode. This may be useful, for example, as
+    an optimization for calculations requiring many ufunc calls on
+    small arrays in a loop.
 
 
 
@@ -569,6 +587,7 @@ Math operations
     add
     subtract
     multiply
+    matmul
     divide
     logaddexp
     logaddexp2
@@ -577,6 +596,7 @@ Math operations
     negative
     positive
     power
+    float_power
     remainder
     mod
     fmod
@@ -635,6 +655,8 @@ The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
     arcsinh
     arccosh
     arctanh
+    degrees
+    radians
     deg2rad
     rad2deg
 

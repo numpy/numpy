@@ -1,8 +1,6 @@
 """Tests for hermite_e module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from functools import reduce
 
 import numpy as np
@@ -30,7 +28,7 @@ def trim(x):
     return herme.hermetrim(x, tol=1e-6)
 
 
-class TestConstants(object):
+class TestConstants:
 
     def test_hermedomain(self):
         assert_equal(herme.hermedomain, [-1, 1])
@@ -45,13 +43,13 @@ class TestConstants(object):
         assert_equal(herme.hermex, [0, 1])
 
 
-class TestArithmetic(object):
+class TestArithmetic:
     x = np.linspace(-3, 3, 100)
 
     def test_hermeadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -61,7 +59,7 @@ class TestArithmetic(object):
     def test_hermesub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -82,7 +80,7 @@ class TestArithmetic(object):
             pol1 = [0]*i + [1]
             val1 = herme.hermeval(self.x, pol1)
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 pol2 = [0]*j + [1]
                 val2 = herme.hermeval(self.x, pol2)
                 pol3 = herme.hermemul(pol1, pol2)
@@ -93,7 +91,7 @@ class TestArithmetic(object):
     def test_hermediv(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = herme.hermeadd(ci, cj)
@@ -104,14 +102,14 @@ class TestArithmetic(object):
     def test_hermepow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(herme.hermemul, [c]*j, np.array([1]))
                 res = herme.hermepow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestEvaluation(object):
+class TestEvaluation:
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([4., 2., 3.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -129,7 +127,7 @@ class TestEvaluation(object):
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Helist]
         for i in range(10):
-            msg = "At i=%d" % i
+            msg = f"At i={i}"
             tgt = y[i]
             res = herme.hermeval(x, [0]*i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)
@@ -205,7 +203,7 @@ class TestEvaluation(object):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(object):
+class TestIntegral:
 
     def test_hermeint(self):
         # check exceptions
@@ -307,7 +305,7 @@ class TestIntegral(object):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(object):
+class TestDerivative:
 
     def test_hermeder(self):
         # check exceptions
@@ -348,7 +346,7 @@ class TestDerivative(object):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(object):
+class TestVander:
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -396,7 +394,7 @@ class TestVander(object):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestFitting(object):
+class TestFitting:
 
     def test_hermefit(self):
         def f(x):
@@ -473,7 +471,7 @@ class TestFitting(object):
         assert_almost_equal(coef1, coef2)
 
 
-class TestCompanion(object):
+class TestCompanion:
 
     def test_raises(self):
         assert_raises(ValueError, herme.hermecompanion, [])
@@ -488,7 +486,7 @@ class TestCompanion(object):
         assert_(herme.hermecompanion([1, 2])[0, 0] == -.5)
 
 
-class TestGauss(object):
+class TestGauss:
 
     def test_100(self):
         x, w = herme.hermegauss(100)
@@ -507,7 +505,7 @@ class TestGauss(object):
         assert_almost_equal(w.sum(), tgt)
 
 
-class TestMisc(object):
+class TestMisc:
 
     def test_hermefromroots(self):
         res = herme.hermefromroots([])

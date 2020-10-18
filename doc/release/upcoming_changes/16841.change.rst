@@ -1,0 +1,19 @@
+`np.linspace` on integers now use floor
+---------------------------------------
+When using a `int` dtype in `numpy.linspace`, previously float values would
+be rounded towards zero. Now `numpy.floor` is used instead, which rounds toward
+``-inf``. This changes the results for negative values. For example, the 
+following would previously give::
+
+    >>> np.linspace(-3, 1, 8, dtype=int)
+    array([-3, -2, -1, -1,  0,  0,  0,  1])
+
+and now results in::
+
+    >>> np.linspace(-3, 1, 8, dtype=int)
+    array([-3, -3, -2, -2, -1, -1,  0,  1])
+
+The former result can still be obtained with::
+
+    >>> np.linspace(-3, 1, 8).astype(int)
+    array([-3, -2, -1, -1,  0,  0,  0,  1])

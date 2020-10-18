@@ -1,8 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
 import functools
 import sys
 import math
+import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
@@ -107,7 +106,7 @@ def ix_(*args):
         out.append(new)
     return tuple(out)
 
-class nd_grid(object):
+class nd_grid:
     """
     Construct a multi-dimensional "meshgrid".
 
@@ -156,15 +155,15 @@ class nd_grid(object):
                     start = 0
                 if step is None:
                     step = 1
-                if isinstance(step, complex):
+                if isinstance(step, (_nx.complexfloating, complex)):
                     size.append(int(abs(step)))
                     typ = float
                 else:
                     size.append(
                         int(math.ceil((key[k].stop - start)/(step*1.0))))
-                if (isinstance(step, float) or
-                        isinstance(start, float) or
-                        isinstance(key[k].stop, float)):
+                if (isinstance(step, (_nx.floating, float)) or
+                        isinstance(start, (_nx.floating, float)) or
+                        isinstance(key[k].stop, (_nx.floating, float))):
                     typ = float
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
@@ -178,7 +177,7 @@ class nd_grid(object):
                     start = 0
                 if step is None:
                     step = 1
-                if isinstance(step, complex):
+                if isinstance(step, (_nx.complexfloating, complex)):
                     step = int(abs(step))
                     if step != 1:
                         step = (key[k].stop - start)/float(step-1)
@@ -196,7 +195,7 @@ class nd_grid(object):
             start = key.start
             if start is None:
                 start = 0
-            if isinstance(step, complex):
+            if isinstance(step, (_nx.complexfloating, complex)):
                 step = abs(step)
                 length = int(step)
                 if step != 1:
@@ -223,7 +222,7 @@ class MGridClass(nd_grid):
     the stop value **is inclusive**.
 
     Returns
-    ----------
+    -------
     mesh-grid `ndarrays` all of the same dimensions
 
     See Also
@@ -299,7 +298,7 @@ class OGridClass(nd_grid):
 ogrid = OGridClass()
 
 
-class AxisConcatenator(object):
+class AxisConcatenator:
     """
     Translates slice objects to concatenation along an axis.
 
@@ -346,7 +345,7 @@ class AxisConcatenator(object):
                     start = 0
                 if step is None:
                     step = 1
-                if isinstance(step, complex):
+                if isinstance(step, (_nx.complexfloating, complex)):
                     size = int(abs(step))
                     newobj = linspace(start, stop, num=size)
                 else:
@@ -370,8 +369,10 @@ class AxisConcatenator(object):
                         if len(vec) == 3:
                             trans1d = int(vec[2])
                         continue
-                    except Exception:
-                        raise ValueError("unknown special directive")
+                    except Exception as e:
+                        raise ValueError(
+                            "unknown special directive {!r}".format(item)
+                        ) from e
                 try:
                     axis = int(item)
                     continue
@@ -552,7 +553,7 @@ c_ = CClass()
 
 
 @set_module('numpy')
-class ndenumerate(object):
+class ndenumerate:
     """
     Multidimensional index iterator.
 
@@ -599,11 +600,9 @@ class ndenumerate(object):
     def __iter__(self):
         return self
 
-    next = __next__
-
 
 @set_module('numpy')
-class ndindex(object):
+class ndindex:
     """
     An N-dimensional iterator object to index arrays.
 
@@ -613,8 +612,9 @@ class ndindex(object):
 
     Parameters
     ----------
-    `*args` : ints
-      The size of each dimension of the array.
+    shape : ints, or a single tuple of ints
+        The size of each dimension of the array can be passed as 
+        individual parameters or as the elements of a tuple.
 
     See Also
     --------
@@ -622,7 +622,18 @@ class ndindex(object):
 
     Examples
     --------
+    # dimensions as individual arguments
     >>> for index in np.ndindex(3, 2, 1):
+    ...     print(index)
+    (0, 0, 0)
+    (0, 1, 0)
+    (1, 0, 0)
+    (1, 1, 0)
+    (2, 0, 0)
+    (2, 1, 0)
+
+    # same dimensions - but in a tuple (3, 2, 1)
+    >>> for index in np.ndindex((3, 2, 1)):
     ...     print(index)
     (0, 0, 0)
     (0, 1, 0)
@@ -649,7 +660,15 @@ class ndindex(object):
         Increment the multi-dimensional index by one.
 
         This method is for backward compatibility only: do not use.
+
+        .. deprecated:: 1.20.0
+            This method has been advised against since numpy 1.8.0, but only
+            started emitting DeprecationWarning as of this version.
         """
+        # NumPy 1.20.0, 2020-09-08
+        warnings.warn(
+            "`ndindex.ndincr()` is deprecated, use `next(ndindex)` instead",
+            DeprecationWarning, stacklevel=2)
         next(self)
 
     def __next__(self):
@@ -667,8 +686,6 @@ class ndindex(object):
         next(self._it)
         return self._it.multi_index
 
-    next = __next__
-
 
 # You can do all this with slice() plus a few special objects,
 # but there's a lot to remember. This version is simpler because
@@ -681,7 +698,7 @@ class ndindex(object):
 #
 #
 
-class IndexExpression(object):
+class IndexExpression:
     """
     A nicer way to build up index tuples for arrays.
 
@@ -761,9 +778,11 @@ def fill_diagonal(a, val, wrap=False):
     a : array, at least 2-D.
       Array whose diagonal is to be filled, it gets modified in-place.
 
-    val : scalar
-      Value to be written on the diagonal, its type must be compatible with
-      that of the array a.
+    val : scalar or array_like
+      Value(s) to write on the diagonal. If `val` is scalar, the value is
+      written along the diagonal. If array-like, the flattened `val` is
+      written along the diagonal, repeating if necessary to fill all
+      diagonal entries.
 
     wrap : bool
       For tall matrices in NumPy version up to 1.6.2, the
@@ -900,7 +919,7 @@ def diag_indices(n, ndim=2):
     ndim : int, optional
       The number of dimensions.
 
-    See also
+    See Also
     --------
     diag_indices_from
 

@@ -8,8 +8,6 @@ A collection of utilities for `numpy.ma`.
 :version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = [
     'apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
     'atleast_3d', 'average', 'clump_masked', 'clump_unmasked',
@@ -214,7 +212,7 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction(object):
+class _fromnxfunction:
     """
     Defines a wrapper to adapt NumPy functions to masked arrays.
 
@@ -246,11 +244,6 @@ class _fromnxfunction(object):
         the new masked array version of the function. A note on application
         of the function to the mask is appended.
 
-        .. warning::
-          If the function docstring already contained a Notes section, the
-          new docstring will have two Notes sections instead of appending a note
-          to the existing section.
-
         Parameters
         ----------
         None
@@ -260,9 +253,9 @@ class _fromnxfunction(object):
         doc = getattr(npfunc, '__doc__', None)
         if doc:
             sig = self.__name__ + ma.get_object_signature(npfunc)
-            locdoc = "Notes\n-----\nThe function is applied to both the _data"\
-                     " and the _mask, if any."
-            return '\n'.join((sig, doc, locdoc))
+            doc = ma.doc_note(doc, "The function is applied to both the _data "
+                                   "and the _mask, if any.")
+            return '\n\n'.join((sig, doc))
         return
 
     def __call__(self, *args, **params):
@@ -813,7 +806,7 @@ def compress_nd(x, axis=None):
     ----------
     x : array_like, MaskedArray
         The array to operate on. If not a MaskedArray instance (or if no array
-        elements are masked, `x` is interpreted as a MaskedArray with `mask`
+        elements are masked), `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
         Which dimensions to suppress slices from can be configured with this
@@ -908,11 +901,11 @@ def compress_rows(a):
     Suppress whole rows of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -925,11 +918,11 @@ def compress_cols(a):
     Suppress whole columns of a 2-D array that contain masked values.
 
     This is equivalent to ``np.ma.compress_rowcols(a, 1)``, see
-    `extras.compress_rowcols` for details.
+    `compress_rowcols` for details.
 
     See Also
     --------
-    extras.compress_rowcols
+    compress_rowcols
 
     """
     a = asarray(a)
@@ -937,7 +930,7 @@ def compress_cols(a):
         raise NotImplementedError("compress_cols works for 2D arrays only.")
     return compress_rowcols(a, 1)
 
-def mask_rows(a, axis=None):
+def mask_rows(a, axis=np._NoValue):
     """
     Mask rows of a 2D array that contain masked values.
 
@@ -979,9 +972,15 @@ def mask_rows(a, axis=None):
       fill_value=1)
 
     """
+    if axis is not np._NoValue:
+        # remove the axis argument when this deprecation expires
+        # NumPy 1.18.0, 2019-11-28
+        warnings.warn(
+            "The axis argument has always been ignored, in future passing it "
+            "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 0)
 
-def mask_cols(a, axis=None):
+def mask_cols(a, axis=np._NoValue):
     """
     Mask columns of a 2D array that contain masked values.
 
@@ -1022,6 +1021,12 @@ def mask_cols(a, axis=None):
       fill_value=1)
 
     """
+    if axis is not np._NoValue:
+        # remove the axis argument when this deprecation expires
+        # NumPy 1.18.0, 2019-11-28
+        warnings.warn(
+            "The axis argument has always been ignored, in future passing it "
+            "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 1)
 
 
@@ -1636,7 +1641,7 @@ def flatnotmasked_contiguous(a):
     slice_list : list
         A sorted sequence of `slice` objects (start index, end index).
 
-        ..versionchanged:: 1.15.0
+        .. versionchanged:: 1.15.0
             Now returns an empty list instead of None for a fully masked array
 
     See Also

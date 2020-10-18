@@ -329,6 +329,14 @@ UNICODE_LT(const npy_ucs4 *s1, const npy_ucs4 *s2, size_t len)
 NPY_INLINE static int
 DATETIME_LT(npy_datetime a, npy_datetime b)
 {
+    if (a == NPY_DATETIME_NAT) {
+        return 0;
+    }
+
+    if (b == NPY_DATETIME_NAT) {
+        return 1;
+    }
+
     return a < b;
 }
 
@@ -336,6 +344,14 @@ DATETIME_LT(npy_datetime a, npy_datetime b)
 NPY_INLINE static int
 TIMEDELTA_LT(npy_timedelta a, npy_timedelta b)
 {
+    if (a == NPY_DATETIME_NAT) {
+        return 0;
+    }
+
+    if (b == NPY_DATETIME_NAT) {
+        return 1;
+    }
+
     return a < b;
 }
 

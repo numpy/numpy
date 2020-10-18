@@ -1,3 +1,5 @@
+.. _NEP10:
+
 ==============================================
 NEP 10 — Optimizing Iterator/UFunc Performance
 ==============================================
@@ -1291,7 +1293,7 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
-``int NpyIter_HasInnerLoop(NpyIter *iter``
+``int NpyIter_HasInnerLoop(NpyIter *iter)``
 
     Returns 1 if the iterator handles the inner loop,
     or 0 if the caller needs to handle it.  This is controlled

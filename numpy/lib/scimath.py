@@ -14,9 +14,23 @@ module provide the mathematically valid answers in the complex plane::
 Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
 
-"""
-from __future__ import division, absolute_import, print_function
+Functions
+---------
 
+.. autosummary::
+   :toctree: generated/
+
+   sqrt
+   log
+   log2
+   logn
+   log10
+   power
+   arccos
+   arcsin
+   arctanh
+
+"""
 import numpy.core.numeric as nx
 import numpy.core.numerictypes as nt
 from numpy.core.numeric import asarray, any

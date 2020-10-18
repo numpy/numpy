@@ -110,12 +110,12 @@ to a small(er) fraction of the total time. Even if the interior of the
 loop is performed without a function call it can be advantageous to
 perform the inner loop over the dimension with the highest number of
 elements to take advantage of speed enhancements available on micro-
-processors that use pipelining to enhance fundmental operations.
+processors that use pipelining to enhance fundamental operations.
 
 The :c:func:`PyArray_IterAllButAxis` ( ``array``, ``&dim`` ) constructs an
 iterator object that is modified so that it will not iterate over the
 dimension indicated by dim. The only restriction on this iterator
-object, is that the :c:func:`PyArray_Iter_GOTO1D` ( ``it``, ``ind`` ) macro
+object, is that the :c:func:`PyArray_ITER_GOTO1D` ( ``it``, ``ind`` ) macro
 cannot be used (thus flat indexing won't work either if you pass this
 object back to Python --- so you shouldn't do this). Note that the
 returned object from this routine is still usually cast to

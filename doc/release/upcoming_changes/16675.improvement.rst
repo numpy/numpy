@@ -1,0 +1,4 @@
+`numpy.core.records.fromfile` now supports file-like objects
+------------------------------------------------------------
+`numpy.rec.fromfile` can now use file-like objects, for instance 
+:py:class:`io.BytesIO`

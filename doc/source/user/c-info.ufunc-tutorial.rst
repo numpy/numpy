@@ -137,7 +137,6 @@ the module.
 
 
         /* This initiates the module using the above definitions. */
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "spam",
@@ -159,17 +158,6 @@ the module.
             }
             return m;
         }
-        #else
-        PyMODINIT_FUNC initspam(void)
-        {
-            PyObject *m;
-
-            m = Py_InitModule("spam", SpamMethods);
-            if (m == NULL) {
-                return;
-            }
-        }
-        #endif
 
 To use the setup.py file, place setup.py and spammodule.c in the same
 folder. Then python setup.py build will build the module to import,
@@ -322,7 +310,6 @@ the primary thing that must be changed to create your own ufunc.
 
         static void *data[1] = {NULL};
 
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -357,30 +344,6 @@ the primary thing that must be changed to create your own ufunc.
 
             return m;
         }
-        #else
-        PyMODINIT_FUNC initnpufunc(void)
-        {
-            PyObject *m, *logit, *d;
-
-
-            m = Py_InitModule("npufunc", LogitMethods);
-            if (m == NULL) {
-                return;
-            }
-
-            import_array();
-            import_umath();
-
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
-                                            PyUFunc_None, "logit",
-                                            "logit_docstring", 0);
-
-            d = PyModule_GetDict(m);
-
-            PyDict_SetItemString(d, "logit", logit);
-            Py_DECREF(logit);
-        }
-        #endif
 
 This is a setup.py file for the above code. As before, the module
 can be build via calling python setup.py build at the command prompt,
@@ -601,7 +564,6 @@ the primary thing that must be changed to create your own ufunc.
                         NPY_LONGDOUBLE, NPY_LONGDOUBLE};
         static void *data[4] = {NULL, NULL, NULL, NULL};
 
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -636,30 +598,6 @@ the primary thing that must be changed to create your own ufunc.
 
             return m;
         }
-        #else
-        PyMODINIT_FUNC initnpufunc(void)
-        {
-            PyObject *m, *logit, *d;
-
-
-            m = Py_InitModule("npufunc", LogitMethods);
-            if (m == NULL) {
-                return;
-            }
-
-            import_array();
-            import_umath();
-
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 4, 1, 1,
-                                            PyUFunc_None, "logit",
-                                            "logit_docstring", 0);
-
-            d = PyModule_GetDict(m);
-
-            PyDict_SetItemString(d, "logit", logit);
-            Py_DECREF(logit);
-        }
-        #endif
 
 This is a setup.py file for the above code. As before, the module
 can be build via calling python setup.py build at the command prompt,
@@ -824,7 +762,6 @@ as well as all other properties of a ufunc.
 
         static void *data[1] = {NULL};
 
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -859,30 +796,6 @@ as well as all other properties of a ufunc.
 
             return m;
         }
-        #else
-        PyMODINIT_FUNC initnpufunc(void)
-        {
-            PyObject *m, *logit, *d;
-
-
-            m = Py_InitModule("npufunc", LogitMethods);
-            if (m == NULL) {
-                return;
-            }
-
-            import_array();
-            import_umath();
-
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 2,
-                                            PyUFunc_None, "logit",
-                                            "logit_docstring", 0);
-
-            d = PyModule_GetDict(m);
-
-            PyDict_SetItemString(d, "logit", logit);
-            Py_DECREF(logit);
-        }
-        #endif
 
 
 .. _`sec:NumPy-struct-dtype`:
@@ -976,7 +889,6 @@ The C file is given below.
 
         static void *data[1] = {NULL};
 
-        #if defined(NPY_PY3K)
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "struct_ufunc_test",
@@ -988,31 +900,18 @@ The C file is given below.
             NULL,
             NULL
         };
-        #endif
 
-        #if defined(NPY_PY3K)
         PyMODINIT_FUNC PyInit_struct_ufunc_test(void)
-        #else
-        PyMODINIT_FUNC initstruct_ufunc_test(void)
-        #endif
         {
             PyObject *m, *add_triplet, *d;
             PyObject *dtype_dict;
             PyArray_Descr *dtype;
             PyArray_Descr *dtypes[3];
 
-        #if defined(NPY_PY3K)
             m = PyModule_Create(&moduledef);
-        #else
-            m = Py_InitModule("struct_ufunc_test", StructUfuncTestMethods);
-        #endif
 
             if (m == NULL) {
-        #if defined(NPY_PY3K)
                 return NULL;
-        #else
-                return;
-        #endif
             }
 
             import_array();
@@ -1043,9 +942,7 @@ The C file is given below.
 
             PyDict_SetItemString(d, "add_triplet", add_triplet);
             Py_DECREF(add_triplet);
-        #if defined(NPY_PY3K)
             return m;
-        #endif
         }
 
 .. index::

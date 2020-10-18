@@ -1,4 +1,0 @@
-Deprecate `PyArray_As1D`, `PyArray_As2D`
-----------------------------------------
-`PyArray_As1D`, `PyArray_As2D` are deprecated, use
-`PyArray_AsCArray` instead

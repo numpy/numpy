@@ -1,9 +1,0 @@
-`np.fromfile` and `np.fromstring` will error on bad data
---------------------------------------------------------
-
-In future numpy releases, the functions `np.fromfile` and `np.fromstring`
-will throw an error when parsing bad data.
-This will now give a ``DeprecationWarning`` where previously partial or
-even invalid data was silently returned. This deprecation also affects
-the C defined functions c:func:`PyArray_FromString`` and
-c:func:`PyArray_FromFile`

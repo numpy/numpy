@@ -1,9 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
            'stack', 'vstack']
 
 import functools
+import itertools
 import operator
 import warnings
 
@@ -248,12 +247,13 @@ def vstack(tup):
 
     See Also
     --------
-    stack : Join a sequence of arrays along a new axis.
-    hstack : Stack arrays in sequence horizontally (column wise).
-    dstack : Stack arrays in sequence depth wise (along third dimension).
     concatenate : Join a sequence of arrays along an existing axis.
-    vsplit : Split array into a list of multiple sub-arrays vertically.
-    block : Assemble arrays from blocks.
+    stack : Join a sequence of arrays along a new axis.
+    block : Assemble an nd-array from nested lists of blocks.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    dstack : Stack arrays in sequence depth wise (along third axis).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    vsplit : Split an array into multiple sub-arrays vertically (row-wise).
 
     Examples
     --------
@@ -310,12 +310,13 @@ def hstack(tup):
 
     See Also
     --------
+    concatenate : Join a sequence of arrays along an existing axis.
     stack : Join a sequence of arrays along a new axis.
+    block : Assemble an nd-array from nested lists of blocks.
     vstack : Stack arrays in sequence vertically (row wise).
     dstack : Stack arrays in sequence depth wise (along third axis).
-    concatenate : Join a sequence of arrays along an existing axis.
-    hsplit : Split array along second axis.
-    block : Assemble arrays from blocks.
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    hsplit : Split an array into multiple sub-arrays horizontally (column-wise).
 
     Examples
     --------
@@ -386,8 +387,8 @@ def stack(arrays, axis=0, out=None):
     See Also
     --------
     concatenate : Join a sequence of arrays along an existing axis.
+    block : Assemble an nd-array from nested lists of blocks.
     split : Split array into a list of multiple sub-arrays of equal size.
-    block : Assemble arrays from blocks.
 
     Examples
     --------
@@ -532,20 +533,14 @@ def _atleast_nd(a, ndim):
 
 
 def _accumulate(values):
-    # Helper function because Python 2.7 doesn't have
-    # itertools.accumulate
-    value = 0
-    accumulated = []
-    for v in values:
-        value += v
-        accumulated.append(value)
-    return accumulated
+    return list(itertools.accumulate(values))
 
 
 def _concatenate_shapes(shapes, axis):
     """Given array shapes, return the resulting shape and slices prefixes.
 
-    These help in nested concatation.
+    These help in nested concatenation.
+    
     Returns
     -------
     shape: tuple of int
@@ -575,7 +570,7 @@ def _concatenate_shapes(shapes, axis):
         that was computed deeper in the recursion.
 
         These are returned as tuples to ensure that they can quickly be added
-        to existing slice tuple without creating a new tuple everytime.
+        to existing slice tuple without creating a new tuple every time.
 
     """
     # Cache a result that will be reused.
@@ -678,8 +673,7 @@ def _block_dispatcher(arrays):
     # tuple. Also, we know that list.__array_function__ will never exist.
     if type(arrays) is list:
         for subarrays in arrays:
-            for subarray in _block_dispatcher(subarrays):
-                yield subarray
+            yield from _block_dispatcher(subarrays)
     else:
         yield arrays
 
@@ -732,12 +726,13 @@ def block(arrays):
 
     See Also
     --------
-    concatenate : Join a sequence of arrays together.
-    stack : Stack arrays in sequence along a new dimension.
-    hstack : Stack arrays in sequence horizontally (column wise).
+    concatenate : Join a sequence of arrays along an existing axis.
+    stack : Join a sequence of arrays along a new axis.
     vstack : Stack arrays in sequence vertically (row wise).
-    dstack : Stack arrays in sequence depth wise (along third dimension).
-    vsplit : Split array into a list of multiple sub-arrays vertically.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    dstack : Stack arrays in sequence depth wise (along third axis).
+    column_stack : Stack 1-D arrays as columns into a 2-D array.
+    vsplit : Split an array into multiple sub-arrays vertically (row-wise).
 
     Notes
     -----

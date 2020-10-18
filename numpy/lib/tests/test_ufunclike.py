@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
@@ -8,7 +6,7 @@ from numpy.testing import (
 )
 
 
-class TestUfunclike(object):
+class TestUfunclike:
 
     def test_isposinf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
@@ -21,7 +19,7 @@ class TestUfunclike(object):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
-        a = a.astype(np.complex)
+        a = a.astype(np.complex_)
         with assert_raises(TypeError):
             ufl.isposinf(a)
 
@@ -36,7 +34,7 @@ class TestUfunclike(object):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
-        a = a.astype(np.complex)
+        a = a.astype(np.complex_)
         with assert_raises(TypeError):
             ufl.isneginf(a)
 

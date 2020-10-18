@@ -1,17 +1,13 @@
-from __future__ import division, absolute_import, print_function
-
 import os
-import sys
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, _assert_valid_refcount,
     )
-from numpy.compat import unicode
 
 
-class TestRegression(object):
+class TestRegression:
     def test_poly1d(self):
         # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
@@ -183,7 +179,7 @@ class TestRegression(object):
         # related to ticket #1405.
         include_dirs = [np.get_include()]
         for path in include_dirs:
-            assert_(isinstance(path, (str, unicode)))
+            assert_(isinstance(path, str))
             assert_(path != '')
 
     def test_polyder_return_type(self):
@@ -208,10 +204,7 @@ class TestRegression(object):
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
-        if sys.version_info[0] >= 3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
+        from io import StringIO
 
         dt = [("a", 'u1', 2), ("b", 'u1', 2)]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)

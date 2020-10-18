@@ -79,14 +79,10 @@ Exported symbols include:
      \\-> object_ (not used much)               (kind=O)
 
 """
-from __future__ import division, absolute_import, print_function
-
 import types as _types
-import sys
 import numbers
 import warnings
 
-from numpy.compat import bytes, long
 from numpy.core.multiarray import (
         typeinfo, ndarray, array, empty, dtype, datetime_data,
         datetime_as_string, busday_offset, busday_count, is_busday,
@@ -95,7 +91,7 @@ from numpy.core.multiarray import (
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
+__all__ = ['sctypeDict', 'typeDict', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
@@ -110,7 +106,6 @@ from ._string_helpers import (
 
 from ._type_aliases import (
     sctypeDict,
-    sctypeNA,
     allTypes,
     bitname,
     sctypes,
@@ -122,11 +117,8 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object, str
-    unicode = str
-else:
-    from __builtin__ import bool, int, float, complex, object, unicode, str
+from builtins import bool, int, float, complex, object, str, bytes
+from numpy.compat import long, unicode
 
 
 # We use this later
@@ -319,9 +311,11 @@ def issubclass_(arg1, arg2):
     Examples
     --------
     >>> np.issubclass_(np.int32, int)
-    False # True on Python 2.7
+    False
     >>> np.issubclass_(np.int32, float)
     False
+    >>> np.issubclass_(np.float64, float)
+    True
 
     """
     try:
@@ -364,13 +358,15 @@ def issubsctype(arg1, arg2):
 
 @set_module('numpy')
 def issubdtype(arg1, arg2):
-    """
+    r"""
     Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    This is like the builtin :func:`issubclass`, but for `dtype`\ s.
 
     Parameters
     ----------
     arg1, arg2 : dtype_like
-        dtype or string representing a typecode.
+        `dtype` or object coercible to one
 
     Returns
     -------
@@ -378,49 +374,51 @@ def issubdtype(arg1, arg2):
 
     See Also
     --------
+    :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
     issubsctype, issubclass_
-    numpy.core.numerictypes : Overview of numpy type hierarchy.
 
     Examples
     --------
-    >>> np.issubdtype('S1', np.string_)
+    `issubdtype` can be used to check the type of arrays:
+
+    >>> ints = np.array([1, 2, 3], dtype=np.int32)
+    >>> np.issubdtype(ints.dtype, np.integer)
     True
+    >>> np.issubdtype(ints.dtype, np.floating)
+    False
+
+    >>> floats = np.array([1, 2, 3], dtype=np.float32)
+    >>> np.issubdtype(floats.dtype, np.integer)
+    False
+    >>> np.issubdtype(floats.dtype, np.floating)
+    True
+
+    Similar types of different sizes are not subdtypes of each other:
+
     >>> np.issubdtype(np.float64, np.float32)
     False
+    >>> np.issubdtype(np.float32, np.float64)
+    False
+
+    but both are subtypes of `floating`:
+
+    >>> np.issubdtype(np.float64, np.floating)
+    True
+    >>> np.issubdtype(np.float32, np.floating)
+    True
+
+    For convenience, dtype-like objects are allowed too:
+
+    >>> np.issubdtype('S1', np.string_)
+    True
+    >>> np.issubdtype('i4', np.signedinteger)
+    True
 
     """
     if not issubclass_(arg1, generic):
         arg1 = dtype(arg1).type
     if not issubclass_(arg2, generic):
-        arg2_orig = arg2
         arg2 = dtype(arg2).type
-        if not isinstance(arg2_orig, dtype):
-            # weird deprecated behaviour, that tried to infer np.floating from
-            # float, and similar less obvious things, such as np.generic from
-            # basestring
-            mro = arg2.mro()
-            arg2 = mro[1] if len(mro) > 1 else mro[0]
-
-            def type_repr(x):
-                """ Helper to produce clear error messages """
-                if not isinstance(x, type):
-                    return repr(x)
-                elif issubclass(x, generic):
-                    return "np.{}".format(x.__name__)
-                else:
-                    return x.__name__
-
-            # 1.14, 2017-08-01
-            warnings.warn(
-                "Conversion of the second argument of issubdtype from `{raw}` "
-                "to `{abstract}` is deprecated. In future, it will be treated "
-                "as `{concrete} == np.dtype({raw}).type`.".format(
-                    raw=type_repr(arg2_orig),
-                    abstract=type_repr(arg2),
-                    concrete=type_repr(dtype(arg2_orig).type)
-                ),
-                FutureWarning, stacklevel=2
-            )
 
     return issubclass(arg1, arg2)
 
@@ -485,7 +483,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.double, np.complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, np.double, np.complex_, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
     l # may vary
     d
@@ -545,7 +543,6 @@ typecodes = {'Character':'c',
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
-typeNA = sctypeNA
 
 # b -> boolean
 # u -> unsigned integer

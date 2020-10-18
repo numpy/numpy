@@ -29,7 +29,7 @@ ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
 		dist dist-build gitwash-update version-check html-build latex-build \
-		merge-doc
+		merge-doc show
 
 #------------------------------------------------------------------------------
 
@@ -46,6 +46,7 @@ help:
 	@echo "  gitwash-update GITWASH=path/to/gitwash  update gitwash developer docs"
 	@echo "  upload USERNAME=... RELEASE=... to upload built docs to docs.scipy.org"
 	@echo "  merge-doc TAG=... to clone numpy/doc and archive documentation into it"
+	@echo "  show      to show the html output in a browser"
 
 clean:
 	-rm -rf build/* 
@@ -103,11 +104,11 @@ dist: build/dist.tar.gz
 build/dist.tar.gz:
 	make $(DIST_VARS) real-dist
 
-real-dist: dist-build html-build html-scipyorg
+real-dist: dist-build html-build
 	test -d build/latex || make latex-build
 	make -C build/latex all-pdf
 	-rm -rf build/dist
-	cp -r build/html-scipyorg build/dist
+	cp -r build/html build/dist
 	cd build/html && zip -9r ../dist/numpy-html.zip .
 	cp build/latex/numpy-ref.pdf build/dist
 	cp build/latex/numpy-user.pdf build/dist
@@ -158,7 +159,7 @@ endif
 	@# the instructions in doc/HOWTO_RELEASE.rst.txt
 	@echo " "
 	@echo New documentation archive added to ./build/merge.
-	@echo Now add/modify the appropiate section after
+	@echo Now add/modify the appropriate section after
 	@echo "    <!-- insert here -->"
 	@echo in build/merge/index.html,
 	@echo then \"git commit\", \"git push\"
@@ -185,7 +186,7 @@ html-scipyorg:
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -t scipyorg -b html $(ALLSPHINXOPTS) build/html-scipyorg $(FILES)
 	@echo
-	@echo "Build finished. The HTML pages are in build/html."
+	@echo "Build finished. The HTML pages are in build/html-scipyorg."
 
 pickle: generate version-check
 	mkdir -p build/pickle build/doctrees
@@ -217,7 +218,7 @@ latex-build: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex
-	perl -pi -e 's/\t(latex.*|pdflatex) (.*)/\t-$$1 -interaction batchmode $$2/' build/latex/Makefile
+	perl -pi -e 's/LATEXOPTS =/LATEXOPTS ?= --halt-on-error/' build/latex/Makefile
 	@echo
 	@echo "Build finished; the LaTeX files are in build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
@@ -253,3 +254,7 @@ info:
 	@echo "Running Texinfo files through makeinfo..."
 	make -C build/texinfo info
 	@echo "makeinfo finished; the Info files are in build/texinfo."
+
+show:
+	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/build/html/index.html')"
+

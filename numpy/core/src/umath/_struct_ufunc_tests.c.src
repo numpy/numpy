@@ -17,8 +17,10 @@
  * docs.python.org .
  */
 
-static void add_uint64_triplet(char **args, npy_intp *dimensions,
-                            npy_intp* steps, void* data)
+static void add_uint64_triplet(char **args,
+                               npy_intp const *dimensions,
+                               npy_intp const* steps,
+                               void* data)
 {
     npy_intp i;
     npy_intp is1=steps[0];
@@ -100,7 +102,6 @@ static PyMethodDef StructUfuncTestMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "_struct_ufunc_tests",
@@ -112,31 +113,18 @@ static struct PyModuleDef moduledef = {
     NULL,
     NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
 PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
-#else
-PyMODINIT_FUNC init_struct_ufunc_tests(void)
-#endif
 {
     PyObject *m, *add_triplet, *d;
     PyObject *dtype_dict;
     PyArray_Descr *dtype;
     PyArray_Descr *dtypes[3];
 
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_struct_ufunc_tests", StructUfuncTestMethods);
-#endif
 
     if (m == NULL) {
-#if defined(NPY_PY3K)
         return NULL;
-#else
-        return;
-#endif
     }
 
     import_array();
@@ -166,7 +154,5 @@ PyMODINIT_FUNC init_struct_ufunc_tests(void)
 
     PyDict_SetItemString(d, "add_triplet", add_triplet);
     Py_DECREF(add_triplet);
-#if defined(NPY_PY3K)
     return m;
-#endif
 }

@@ -30,8 +30,6 @@ Note: this script does not check any of the dependent C libraries; it only
 operates on the Cython .pyx files.
 """
 
-from __future__ import division, print_function, absolute_import
-
 import os
 import re
 import sys
@@ -68,15 +66,14 @@ def process_pyx(fromfile, tofile):
         # check the version, and invoke through python
         from distutils.version import LooseVersion
 
-        # Cython 0.29.13 is required for Python 3.8 and there are
+        # Cython 0.29.21 is required for Python 3.9 and there are
         # other fixes in the 0.29 series that are needed even for earlier
         # Python versions.
         # Note: keep in sync with that in pyproject.toml
-        required_version = LooseVersion('0.29.13')
+        required_version = LooseVersion('0.29.21')
 
         if LooseVersion(cython_version) < required_version:
-            raise RuntimeError('Building {} requires Cython >= {}'.format(
-                VENDOR, required_version))
+            raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}')
         subprocess.check_call(
             [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
@@ -181,13 +178,13 @@ def process(path, fromfile, tofile, processor_function, hash_db):
     fulltopath = os.path.join(path, tofile)
     current_hash = get_hash(fullfrompath, fulltopath)
     if current_hash == hash_db.get(normpath(fullfrompath), None):
-        print('%s has not changed' % fullfrompath)
+        print(f'{fullfrompath} has not changed')
         return
 
     orig_cwd = os.getcwd()
     try:
         os.chdir(path)
-        print('Processing %s' % fullfrompath)
+        print(f'Processing {fullfrompath}')
         processor_function(fromfile, tofile)
     finally:
         os.chdir(orig_cwd)

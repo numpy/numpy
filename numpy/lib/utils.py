@@ -1,7 +1,6 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
+import textwrap
 import types
 import re
 import warnings
@@ -10,9 +9,6 @@ from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
-
-# getargspec and formatargspec were removed in Python 3.6
-from numpy.compat import getargspec, formatargspec
 
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
@@ -55,7 +51,7 @@ def _set_function_name(func, name):
     return func
 
 
-class _Deprecate(object):
+class _Deprecate:
     """
     Decorator class to deprecate old functions.
 
@@ -119,6 +115,7 @@ class _Deprecate(object):
                         break
                     skip += len(line) + 1
                 doc = doc[skip:]
+            depdoc = textwrap.indent(depdoc, ' ' * indent)
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
         try:
@@ -554,9 +551,12 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                   file=output
                   )
 
-    elif inspect.isfunction(object):
+    elif inspect.isfunction(object) or inspect.ismethod(object):
         name = object.__name__
-        arguments = formatargspec(*getargspec(object))
+        try:
+            arguments = str(inspect.signature(object))
+        except Exception:
+            arguments = "()"
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -568,18 +568,10 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 
     elif inspect.isclass(object):
         name = object.__name__
-        arguments = "()"
         try:
-            if hasattr(object, '__init__'):
-                arguments = formatargspec(
-                        *getargspec(object.__init__.__func__)
-                        )
-                arglist = arguments.split(', ')
-                if len(arglist) > 1:
-                    arglist[1] = "("+arglist[1]
-                    arguments = ", ".join(arglist[1:])
+            arguments = str(inspect.signature(object))
         except Exception:
-            pass
+            arguments = "()"
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
@@ -595,72 +587,17 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
             print(inspect.getdoc(object), file=output)
 
         methods = pydoc.allmethods(object)
-        if methods != []:
+
+        public_methods = [meth for meth in methods if meth[0] != '_']
+        if public_methods:
             print("\n\nMethods:\n", file=output)
-            for meth in methods:
-                if meth[0] == '_':
-                    continue
+            for meth in public_methods:
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(
                             inspect.getdoc(thisobj) or "None"
                             )
                 print("  %s  --  %s" % (meth, methstr), file=output)
-
-    elif (sys.version_info[0] < 3
-            and isinstance(object, types.InstanceType)):
-        # check for __call__ method
-        # types.InstanceType is the type of the instances of oldstyle classes
-        print("Instance of class: ", object.__class__.__name__, file=output)
-        print(file=output)
-        if hasattr(object, '__call__'):
-            arguments = formatargspec(
-                    *getargspec(object.__call__.__func__)
-                    )
-            arglist = arguments.split(', ')
-            if len(arglist) > 1:
-                arglist[1] = "("+arglist[1]
-                arguments = ", ".join(arglist[1:])
-            else:
-                arguments = "()"
-
-            if hasattr(object, 'name'):
-                name = "%s" % object.name
-            else:
-                name = "<name>"
-            if len(name+arguments) > maxwidth:
-                argstr = _split_line(name, arguments, maxwidth)
-            else:
-                argstr = name + arguments
-
-            print(" " + argstr + "\n", file=output)
-            doc = inspect.getdoc(object.__call__)
-            if doc is not None:
-                print(inspect.getdoc(object.__call__), file=output)
-            print(inspect.getdoc(object), file=output)
-
-        else:
-            print(inspect.getdoc(object), file=output)
-
-    elif inspect.ismethod(object):
-        name = object.__name__
-        arguments = formatargspec(
-                *getargspec(object.__func__)
-                )
-        arglist = arguments.split(', ')
-        if len(arglist) > 1:
-            arglist[1] = "("+arglist[1]
-            arguments = ", ".join(arglist[1:])
-        else:
-            arguments = "()"
-
-        if len(name+arguments) > maxwidth:
-            argstr = _split_line(name, arguments, maxwidth)
-        else:
-            argstr = name + arguments
-
-        print(" " + argstr + "\n", file=output)
-        print(inspect.getdoc(object), file=output)
 
     elif hasattr(object, '__doc__'):
         print(inspect.getdoc(object), file=output)
@@ -869,15 +806,10 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
         or newly generated.
 
     """
-    global _lookfor_caches
     # Local import to speed up numpy's import time.
     import inspect
 
-    if sys.version_info[0] >= 3:
-        # In Python3 stderr, stdout are text files.
-        from io import StringIO
-    else:
-        from StringIO import StringIO
+    from io import StringIO
 
     if module is None:
         module = "numpy"

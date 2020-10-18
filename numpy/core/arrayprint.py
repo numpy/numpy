@@ -3,8 +3,6 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ["array2string", "array_str", "array_repr", "set_string_function",
            "set_printoptions", "get_printoptions", "printoptions",
            "format_float_positional", "format_float_scientific"]
@@ -24,28 +22,21 @@ __docformat__ = 'restructuredtext'
 # scalars are printed inside an ndarray. Only the latter strs are currently
 # user-customizable.
 
-import sys
 import functools
 import numbers
-if sys.version_info[0] >= 3:
-    try:
-        from _thread import get_ident
-    except ImportError:
-        from _dummy_thread import get_ident
-else:
-    try:
-        from thread import get_ident
-    except ImportError:
-        from dummy_thread import get_ident
+try:
+    from _thread import get_ident
+except ImportError:
+    from _dummy_thread import get_ident
 
 import numpy as np
 from . import numerictypes as _nt
-from .umath import absolute, not_equal, isnan, isinf, isfinite, isnat
+from .umath import absolute, isinf, isfinite, isnat
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          datetime_as_string, datetime_data, ndarray,
                          set_legacy_print_mode)
-from .fromnumeric import ravel, any
+from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
@@ -100,7 +91,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 @set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
-                     formatter=None, sign=None, floatmode=None, **kwarg):
+                     formatter=None, sign=None, floatmode=None, *, legacy=None):
     """
     Set printing options.
 
@@ -249,11 +240,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
 
     """
-    legacy = kwarg.pop('legacy', None)
-    if kwarg:
-        msg = "set_printoptions() got unexpected keyword argument '{}'"
-        raise TypeError(msg.format(kwarg.popitem()[0]))
-
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter,
                              floatmode, legacy)
@@ -369,23 +355,22 @@ def repr_format(x):
 def str_format(x):
     return str(x)
 
-def _get_formatdict(data, **opt):
-    prec, fmode = opt['precision'], opt['floatmode']
-    supp, sign = opt['suppress'], opt['sign']
-    legacy = opt['legacy']
+def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
+                    formatter, **kwargs):
+    # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
     formatdict = {
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
-        'float': lambda:
-            FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'longfloat': lambda:
-            FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'complexfloat': lambda:
-            ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'longcomplexfloat': lambda:
-            ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
+        'float': lambda: FloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
+        'longfloat': lambda: FloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
+        'complexfloat': lambda: ComplexFloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
+        'longcomplexfloat': lambda: ComplexFloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -398,7 +383,6 @@ def _get_formatdict(data, **opt):
     def indirect(x):
         return lambda: x
 
-    formatter = opt['formatter']
     if formatter is not None:
         fkeys = [k for k in formatter.keys() if formatter[k] is not None]
         if 'all' in fkeys:
@@ -525,7 +509,7 @@ def _array2string_dispatcher(
         suppress_small=None, separator=None, prefix=None,
         style=None, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
-        **kwarg):
+        *, legacy=None):
     return (a,)
 
 
@@ -534,7 +518,7 @@ def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
-                 **kwarg):
+                 *, legacy=None):
     """
     Return a string representation of an array.
 
@@ -679,10 +663,6 @@ def array2string(a, max_line_width=None, precision=None,
     '[0x0 0x1 0x2]'
 
     """
-    legacy = kwarg.pop('legacy', None)
-    if kwarg:
-        msg = "array2string() got unexpected keyword argument '{}'"
-        raise TypeError(msg.format(kwarg.popitem()[0]))
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
@@ -715,7 +695,7 @@ def array2string(a, max_line_width=None, precision=None,
 def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     needs_wrap = len(line) + len(word) > line_width
     if legacy != '1.13':
-        s# don't wrap lines if it won't help
+        # don't wrap lines if it won't help
         if len(line) <= len(next_line_prefix):
             needs_wrap = False
 
@@ -725,6 +705,33 @@ def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     line += word
     return s, line
 
+
+def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
+    """
+    Extends line with nicely formatted (possibly multi-line) string ``word``.
+    """
+    words = word.splitlines()
+    if len(words) == 1 or legacy == '1.13':
+        return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
+
+    max_word_length = max(len(word) for word in words)
+    if (len(line) + max_word_length > line_width and
+            len(line) > len(next_line_prefix)):
+        s += line.rstrip() + '\n'
+        line = next_line_prefix + words[0]
+        indent = next_line_prefix
+    else:
+        indent = len(line)*' '
+        line += words[0]
+
+    for word in words[1::]:
+        s += line.rstrip() + '\n'
+        line = indent + word
+
+    suffix_length = max_word_length - len(words[-1])
+    line += suffix_length*' '
+
+    return s, line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
@@ -778,7 +785,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line = hanging_indent
             for i in range(leading_items):
                 word = recurser(index + (i,), next_hanging_indent, next_width)
-                s, line = _extendLine(
+                s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
@@ -792,7 +799,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
-                s, line = _extendLine(
+                s, line = _extendLine_pretty(
                     s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
@@ -800,7 +807,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                 # width of the separator is not considered on 1.13
                 elem_width = curr_width
             word = recurser(index + (-1,), next_hanging_indent, next_width)
-            s, line = _extendLine(
+            s, line = _extendLine_pretty(
                 s, line, word, elem_width, hanging_indent, legacy)
 
             s += line
@@ -851,15 +858,15 @@ def _none_or_positive_arg(x, name):
         raise ValueError("{} must be >= 0".format(name))
     return x
 
-class FloatingFormat(object):
+class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 **kwarg):
+                 *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        self._legacy = kwarg.get('legacy', False)
+        self._legacy = legacy
         if self._legacy == '1.13':
             # when not 0d, legacy does not support '-'
             if data.shape != () and sign == '-':
@@ -1140,7 +1147,7 @@ def format_float_positional(x, precision=None, unique=True,
                               pad_right=pad_right)
 
 
-class IntegerFormat(object):
+class IntegerFormat:
     def __init__(self, data):
         if data.size > 0:
             max_str_len = max(len(str(np.max(data))),
@@ -1153,7 +1160,7 @@ class IntegerFormat(object):
         return self.format % x
 
 
-class BoolFormat(object):
+class BoolFormat:
     def __init__(self, data, **kwargs):
         # add an extra space so " True" and "False" have the same length and
         # array elements align nicely when printed, except in 0d arrays
@@ -1163,23 +1170,27 @@ class BoolFormat(object):
         return self.truestr if x else "False"
 
 
-class ComplexFloatingFormat(object):
+class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, **kwarg):
+                 sign=False, *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
         floatmode_real = floatmode_imag = floatmode
-        if kwarg.get('legacy', False) == '1.13':
+        if legacy == '1.13':
             floatmode_real = 'maxprec_equal'
             floatmode_imag = 'maxprec'
 
-        self.real_format = FloatingFormat(x.real, precision, floatmode_real,
-                                          suppress_small, sign=sign, **kwarg)
-        self.imag_format = FloatingFormat(x.imag, precision, floatmode_imag,
-                                          suppress_small, sign='+', **kwarg)
+        self.real_format = FloatingFormat(
+            x.real, precision, floatmode_real, suppress_small,
+            sign=sign, legacy=legacy
+        )
+        self.imag_format = FloatingFormat(
+            x.imag, precision, floatmode_imag, suppress_small,
+            sign='+', legacy=legacy
+        )
 
     def __call__(self, x):
         r = self.real_format(x.real)
@@ -1192,7 +1203,7 @@ class ComplexFloatingFormat(object):
         return r + i
 
 
-class _TimelikeFormat(object):
+class _TimelikeFormat:
     def __init__(self, data):
         non_nat = data[~isnat(data)]
         if len(non_nat) > 0:
@@ -1255,7 +1266,7 @@ class TimedeltaFormat(_TimelikeFormat):
         return str(x.astype('i8'))
 
 
-class SubArrayFormat(object):
+class SubArrayFormat:
     def __init__(self, format_function):
         self.format_function = format_function
 
@@ -1265,7 +1276,7 @@ class SubArrayFormat(object):
         return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
 
 
-class StructuredVoidFormat(object):
+class StructuredVoidFormat:
     """
     Formatter for structured np.void objects.
 
@@ -1617,6 +1628,3 @@ def set_string_function(f, repr=True):
             return multiarray.set_string_function(_default_array_str, 0)
     else:
         return multiarray.set_string_function(f, repr)
-
-set_string_function(_default_array_str, False)
-set_string_function(_default_array_repr, True)

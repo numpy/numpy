@@ -1,15 +1,12 @@
 """
 Histogram-related functions
 """
-from __future__ import division, absolute_import, print_function
-
 import contextlib
 import functools
 import operator
 import warnings
 
 import numpy as np
-from numpy.compat.py3k import basestring
 from numpy.core import overrides
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
@@ -210,7 +207,7 @@ def _hist_bin_fd(x, range):
     than the standard deviation, so it is less accurate, especially for
     long tailed distributions.
 
-    If the IQR is 0, this function returns 1 for the number of bins.
+    If the IQR is 0, this function returns 0 for the bin width.
     Binwidth is inversely proportional to the cube root of data size
     (asymptotically optimal).
 
@@ -232,21 +229,21 @@ def _hist_bin_fd(x, range):
 def _hist_bin_auto(x, range):
     """
     Histogram bin estimator that uses the minimum width of the
-    Freedman-Diaconis and Sturges estimators if the FD bandwidth is non zero
-    and the Sturges estimator if the FD bandwidth is 0.
+    Freedman-Diaconis and Sturges estimators if the FD bin width is non-zero.
+    If the bin width from the FD estimator is 0, the Sturges estimator is used.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
     variance. The Sturges estimator is quite good for small (<1000) datasets
-    and is the default in the R language. This method gives good off the shelf
+    and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
     .. versionchanged:: 1.15.0
     If there is limited variance the IQR can be 0, which results in the
     FD bin width being 0 too. This is not a valid bin width, so
     ``np.histogram_bin_edges`` chooses 1 bin instead, which may not be optimal.
-    If the IQR is 0, it's unlikely any variance based estimators will be of
-    use, so we revert to the sturges estimator, which only uses the size of the
+    If the IQR is 0, it's unlikely any variance-based estimators will be of
+    use, so we revert to the Sturges estimator, which only uses the size of the
     dataset in its calculation.
 
     Parameters
@@ -385,7 +382,7 @@ def _get_bin_edges(a, bins, range, weights):
     n_equal_bins = None
     bin_edges = None
 
-    if isinstance(bins, basestring):
+    if isinstance(bins, str):
         bin_name = bins
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
@@ -420,9 +417,9 @@ def _get_bin_edges(a, bins, range, weights):
     elif np.ndim(bins) == 0:
         try:
             n_equal_bins = operator.index(bins)
-        except TypeError:
+        except TypeError as e:
             raise TypeError(
-                '`bins` must be an integer, a string, or an array')
+                '`bins` must be an integer, a string, or an array') from e
         if n_equal_bins < 1:
             raise ValueError('`bins` must be positive, when an integer')
 
@@ -956,9 +953,9 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         Note the unusual interpretation of sample when an array_like:
 
         * When an array, each row is a coordinate in a D-dimensional space -
-          such as ``histogramgramdd(np.array([p1, p2, p3]))``.
+          such as ``histogramdd(np.array([p1, p2, p3]))``.
         * When an array_like, each element is the list of values for single
-          coordinate - such as ``histogramgramdd((X, Y, Z))``.
+          coordinate - such as ``histogramdd((X, Y, Z))``.
 
         The first form should be preferred.
 
@@ -1050,7 +1047,15 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
             smin, smax = _get_outer_edges(sample[:,i], range[i])
-            edges[i] = np.linspace(smin, smax, bins[i] + 1)
+            try:
+                n = operator.index(bins[i])
+            
+            except TypeError as e:
+                raise TypeError(
+                	"`bins[{}]` must be an integer, when a scalar".format(i)
+                ) from e
+                
+            edges[i] = np.linspace(smin, smax, n + 1)    
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):

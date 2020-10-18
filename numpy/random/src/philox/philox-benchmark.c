@@ -1,5 +1,5 @@
 /*
- * Simple benchamrk command
+ * Simple benchmark command
  *
  *  cl philox-benchmark.c /Ox
  *

@@ -1,16 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Fortran to Python Interface Generator.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['run_main', 'compile', 'f2py_testing']
 
 import sys
 import subprocess
 import os
-
-import numpy as np
 
 from . import f2py2e
 from . import f2py_testing
@@ -89,7 +85,7 @@ def compile(source,
 
         args = ['-c', '-m', modulename, f.name]
 
-        if isinstance(extra_args, np.compat.basestring):
+        if isinstance(extra_args, str):
             is_posix = (os.name == 'posix')
             extra_args = shlex.split(extra_args, posix=is_posix)
 

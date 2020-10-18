@@ -43,8 +43,6 @@ Functions
    mapparms     parameters of the linear map between domains.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import operator
 import functools
 import warnings
@@ -80,7 +78,7 @@ class PolyDomainError(PolyError):
 # Base class for all polynomial types
 #
 
-class PolyBase(object):
+class PolyBase:
     """
     Base class for all polynomial types.
 
@@ -178,12 +176,12 @@ def as_series(alist, trim=True):
     arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
     if min([a.size for a in arrays]) == 0:
         raise ValueError("Coefficient array is empty")
-    if any([a.ndim != 1 for a in arrays]):
+    if any(a.ndim != 1 for a in arrays):
         raise ValueError("Coefficient array is not 1-d")
     if trim:
         arrays = [trimseq(a) for a in arrays]
 
-    if any([a.dtype == np.dtype(object) for a in arrays]):
+    if any(a.dtype == np.dtype(object) for a in arrays):
         ret = []
         for a in arrays:
             if a.dtype != np.dtype(object):
@@ -195,8 +193,8 @@ def as_series(alist, trim=True):
     else:
         try:
             dtype = np.common_type(*arrays)
-        except Exception:
-            raise ValueError("Coefficient arrays have no common type")
+        except Exception as e:
+            raise ValueError("Coefficient arrays have no common type") from e
         ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
     return ret
 
@@ -470,10 +468,10 @@ def _vander_nd(vander_fs, points, degrees):
     n_dims = len(vander_fs)
     if n_dims != len(points):
         raise ValueError(
-            "Expected {} dimensions of sample points, got {}".format(n_dims, len(points)))
+            f"Expected {n_dims} dimensions of sample points, got {len(points)}")
     if n_dims != len(degrees):
         raise ValueError(
-            "Expected {} dimensions of degrees, got {}".format(n_dims, len(degrees)))
+            f"Expected {n_dims} dimensions of degrees, got {len(degrees)}")
     if n_dims == 0:
         raise ValueError("Unable to guess a dtype or shape when no points are given")
 
@@ -542,17 +540,15 @@ def _valnd(val_f, c, *args):
     c, args :
         See the ``<type>val<n>d`` functions for more detail
     """
-    try:
-        args = tuple(np.array(args, copy=False))
-    except Exception:
-        # preserve the old error message
-        if len(args) == 2:
+    args = [np.asanyarray(a) for a in args]
+    shape0 = args[0].shape
+    if not all((a.shape == shape0 for a in args[1:])):
+        if len(args) == 3:
             raise ValueError('x, y, z are incompatible')
-        elif len(args) == 3:
+        elif len(args) == 2:
             raise ValueError('x, y are incompatible')
         else:
             raise ValueError('ordinates are incompatible')
-
     it = iter(args)
     x0 = next(it)
 
@@ -781,7 +777,7 @@ def _deprecate_as_int(x, desc):
     """
     try:
         return operator.index(x)
-    except TypeError:
+    except TypeError as e:
         # Numpy 1.17.0, 2019-03-11
         try:
             ix = int(x)
@@ -790,12 +786,11 @@ def _deprecate_as_int(x, desc):
         else:
             if ix == x:
                 warnings.warn(
-                    "In future, this will raise TypeError, as {} will need to "
-                    "be an integer not just an integral float."
-                    .format(desc),
+                    f"In future, this will raise TypeError, as {desc} will "
+                    "need to be an integer not just an integral float.",
                     DeprecationWarning,
                     stacklevel=3
                 )
                 return ix
 
-        raise TypeError("{} must be an integer".format(desc))
+        raise TypeError(f"{desc} must be an integer") from e

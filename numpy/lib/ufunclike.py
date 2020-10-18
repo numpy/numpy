@@ -3,8 +3,6 @@ Module of functions that are like ufuncs in acting on arrays and optionally
 storing results in an output array.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
@@ -85,13 +83,20 @@ def fix(x, out=None):
     ----------
     x : array_like
         An array of floats to be rounded
-    y : ndarray, optional
-        Output array
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that the input broadcasts to. If not provided or None, a
+        freshly-allocated array is returned.
 
     Returns
     -------
     out : ndarray of floats
-        The array of rounded numbers
+        A float array with the same dimensions as the input.
+        If second argument is not supplied then a float array is returned
+        with the rounded values.
+
+        If a second argument is supplied the result is stored there.
+        The return value `out` is then a reference to that array.
 
     See Also
     --------
@@ -129,8 +134,10 @@ def isposinf(x, out=None):
     ----------
     x : array_like
         The input array.
-    y : array_like, optional
-        A boolean array with the same shape as `x` to store the result.
+    out : array_like, optional
+        A location into which the result is stored. If provided, it must have a
+        shape that the input broadcasts to. If not provided or None, a
+        freshly-allocated boolean array is returned.
 
     Returns
     -------
@@ -181,9 +188,9 @@ def isposinf(x, out=None):
     is_inf = nx.isinf(x)
     try:
         signbit = ~nx.signbit(x)
-    except TypeError:
+    except TypeError as e:
         raise TypeError('This operation is not supported for complex values '
-                        'because it would be ambiguous.')
+                        'because it would be ambiguous.') from e
     else:
         return nx.logical_and(is_inf, signbit, out)
 
@@ -199,8 +206,9 @@ def isneginf(x, out=None):
     x : array_like
         The input array.
     out : array_like, optional
-        A boolean array with the same shape and type as `x` to store the
-        result.
+        A location into which the result is stored. If provided, it must have a
+        shape that the input broadcasts to. If not provided or None, a
+        freshly-allocated boolean array is returned.
 
     Returns
     -------
@@ -251,8 +259,8 @@ def isneginf(x, out=None):
     is_inf = nx.isinf(x)
     try:
         signbit = nx.signbit(x)
-    except TypeError:
+    except TypeError as e:
         raise TypeError('This operation is not supported for complex values '
-                        'because it would be ambiguous.')
+                        'because it would be ambiguous.') from e
     else:
         return nx.logical_and(is_inf, signbit, out)

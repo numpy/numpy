@@ -1,12 +1,9 @@
 
 #http://www.compaq.com/fortran/docs/
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.compat import get_exception
 from distutils.errors import DistutilsPlatformError
 
 compilers = ['CompaqFCompiler']
@@ -82,19 +79,16 @@ class CompaqVisualFCompiler(FCompiler):
             ar_exe = m.lib
         except DistutilsPlatformError:
             pass
-        except AttributeError:
-            msg = get_exception()
+        except AttributeError as e:
             if '_MSVCCompiler__root' in str(msg):
                 print('Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg))
             else:
                 raise
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             if not "vcvarsall.bat" in str(e):
                 print("Unexpected IOError in", __file__)
                 raise e
-        except ValueError:
-            e = get_exception()
+        except ValueError as e:
             if not "'path'" in str(e):
                 print("Unexpected ValueError in", __file__)
                 raise e

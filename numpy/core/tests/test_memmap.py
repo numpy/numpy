@@ -1,22 +1,21 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import shutil
 import mmap
 import pytest
+from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
-from numpy.compat import Path
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, suppress_warnings
+    assert_, assert_equal, assert_array_equal, suppress_warnings, IS_PYPY,
+    break_cycles
     )
 
-class TestMemmap(object):
+class TestMemmap:
     def setup(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.tempdir = mkdtemp()
@@ -27,6 +26,10 @@ class TestMemmap(object):
 
     def teardown(self):
         self.tmpfp.close()
+        self.data = None
+        if IS_PYPY:
+            break_cycles()
+            break_cycles()
         shutil.rmtree(self.tempdir)
 
     def test_roundtrip(self):
@@ -76,7 +79,6 @@ class TestMemmap(object):
         del b
         del fp
 
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_path(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',

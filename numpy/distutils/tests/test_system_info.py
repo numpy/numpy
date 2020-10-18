@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import os
 import shutil
 import pytest
@@ -9,7 +7,7 @@ from distutils.errors import DistutilsError
 
 from numpy.testing import assert_, assert_equal, assert_raises
 from numpy.distutils import ccompiler, customized_ccompiler
-from numpy.distutils.system_info import system_info, ConfigParser
+from numpy.distutils.system_info import system_info, ConfigParser, mkl_info
 from numpy.distutils.system_info import AliasedOptionError
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 from numpy.distutils import _shell_utils
@@ -130,7 +128,7 @@ class DuplicateOptionInfo(_system_info):
     section = 'duplicate_options'
 
 
-class TestSystemInfoReading(object):
+class TestSystemInfoReading:
 
     def setup(self):
         """ Create the libraries """
@@ -255,3 +253,68 @@ class TestSystemInfoReading(object):
             assert_(os.path.isfile(self._src2.replace('.c', '.o')))
         finally:
             os.chdir(previousDir)
+
+    def test_overrides(self):
+        previousDir = os.getcwd()
+        cfg = os.path.join(self._dir1, 'site.cfg')
+        shutil.copy(self._sitecfg, cfg)
+        try:
+            os.chdir(self._dir1)
+            # Check that the '[ALL]' section does not override
+            # missing values from other sections
+            info = mkl_info()
+            lib_dirs = info.cp['ALL']['library_dirs'].split(os.pathsep)
+            assert info.get_lib_dirs() != lib_dirs
+
+            # But if we copy the values to a '[mkl]' section the value
+            # is correct
+            with open(cfg, 'r') as fid:
+                mkl = fid.read().replace('ALL', 'mkl')
+            with open(cfg, 'w') as fid:
+                fid.write(mkl)
+            info = mkl_info()
+            assert info.get_lib_dirs() == lib_dirs
+
+            # Also, the values will be taken from a section named '[DEFAULT]'
+            with open(cfg, 'r') as fid:
+                dflt = fid.read().replace('mkl', 'DEFAULT')
+            with open(cfg, 'w') as fid:
+                fid.write(dflt)
+            info = mkl_info()
+            assert info.get_lib_dirs() == lib_dirs
+        finally:
+            os.chdir(previousDir)
+
+
+def test_distutils_parse_env_order(monkeypatch):
+    from numpy.distutils.system_info import _parse_env_order
+    env = 'NPY_TESTS_DISTUTILS_PARSE_ENV_ORDER'
+
+    base_order = list('abcdef')
+
+    monkeypatch.setenv(env, 'b,i,e,f')
+    order, unknown = _parse_env_order(base_order, env)
+    assert len(order) == 3
+    assert order == list('bef')
+    assert len(unknown) == 1
+
+    # For when LAPACK/BLAS optimization is disabled
+    monkeypatch.setenv(env, '')
+    order, unknown = _parse_env_order(base_order, env)
+    assert len(order) == 0
+    assert len(unknown) == 0
+
+    for prefix in '^!':
+        monkeypatch.setenv(env, f'{prefix}b,i,e')
+        order, unknown = _parse_env_order(base_order, env)
+        assert len(order) == 4
+        assert order == list('acdf')
+        assert len(unknown) == 1
+
+    with pytest.raises(ValueError):
+        monkeypatch.setenv(env, 'b,^e,i')
+        _parse_env_order(base_order, env)
+
+    with pytest.raises(ValueError):
+        monkeypatch.setenv(env, '!b,^e,i')
+        _parse_env_order(base_order, env)

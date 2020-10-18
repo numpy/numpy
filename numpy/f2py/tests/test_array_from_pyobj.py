@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import copy
@@ -57,7 +55,7 @@ def flags2names(flags):
     return info
 
 
-class Intent(object):
+class Intent:
 
     def __init__(self, intent_list=[]):
         self.intent_list = intent_list[:]
@@ -131,7 +129,7 @@ if ((intp().dtype.itemsize != 4 or clongdouble().dtype.alignment <= 8) and
     _cast_dict['CDOUBLE'] = _cast_dict['DOUBLE'] + ['CFLOAT', 'CDOUBLE']
 
 
-class Type(object):
+class Type:
     _type_cache = {}
 
     def __new__(cls, name):
@@ -192,7 +190,7 @@ class Type(object):
         return types
 
 
-class Array(object):
+class Array:
 
     def __init__(self, typ, dims, intent, obj):
         self.type = typ
@@ -293,7 +291,7 @@ class Array(object):
         return obj_attr[0] == self.arr_attr[0]
 
 
-class TestIntent(object):
+class TestIntent:
 
     def test_in_out(self):
         assert_equal(str(intent.in_.out), 'intent(in,out)')
@@ -304,7 +302,7 @@ class TestIntent(object):
         assert_(not intent.in_.is_intent('c'))
 
 
-class TestSharedMemory(object):
+class TestSharedMemory:
     num2seq = [1, 2]
     num23seq = [[1, 2, 3], [4, 5, 6]]
 

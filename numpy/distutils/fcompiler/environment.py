@@ -1,12 +1,9 @@
-from __future__ import division, absolute_import, print_function
-
 import os
-import warnings
 from distutils.dist import Distribution
 
 __metaclass__ = type
 
-class EnvironmentConfig(object):
+class EnvironmentConfig:
     def __init__(self, distutils_section='ALL', **kw):
         self._distutils_section = distutils_section
         self._conf_keys = kw
@@ -36,7 +33,10 @@ class EnvironmentConfig(object):
         try:
             conf_desc = self._conf_keys[name]
         except KeyError:
-            raise AttributeError(name)
+            raise AttributeError(
+                f"'EnvironmentConfig' object has no attribute '{name}'"
+            ) from None
+
         return self._get_var(name, conf_desc)
 
     def get(self, name, default=None):

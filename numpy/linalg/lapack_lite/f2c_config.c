@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 crackfortran --- read fortran (77,90) code and extract declaration information.
 
@@ -138,8 +138,6 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import string
 import fileinput
@@ -150,7 +148,7 @@ import platform
 
 from . import __version__
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -558,7 +556,8 @@ groupbegins90 = groupbegins77 + \
     r'|module(?!\s*procedure)|python\s*module|interface|type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
-groupends = r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
+groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
+             r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
 # endifs='end\s*(if|do|where|select|while|forall)'
@@ -580,8 +579,8 @@ publicpattern = re.compile(
     beforethisafter % ('', 'public', 'public', '.*'), re.I), 'public'
 privatepattern = re.compile(
     beforethisafter % ('', 'private', 'private', '.*'), re.I), 'private'
-intrisicpattern = re.compile(
-    beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
+intrinsicpattern = re.compile(
+    beforethisafter % ('', 'intrinsic', 'intrinsic', '.*'), re.I), 'intrinsic'
 intentpattern = re.compile(beforethisafter % (
     '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
@@ -706,7 +705,7 @@ def crackline(line, reset=0):
     for pat in [dimensionpattern, externalpattern, intentpattern, optionalpattern,
                 requiredpattern,
                 parameterpattern, datapattern, publicpattern, privatepattern,
-                intrisicpattern,
+                intrinsicpattern,
                 endifpattern, endpattern,
                 formatpattern,
                 beginpattern, functionpattern, subroutinepattern,
@@ -1098,7 +1097,7 @@ def analyzeline(m, case, line):
         last_name = updatevars(typespec, selector, attr, edecl)
         if last_name is not None:
             previous_context = ('variable', last_name, groupcounter)
-    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrisic']:
+    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrinsic']:
         edecl = groupcache[groupcounter]['vars']
         ll = m.group('after').strip()
         i = ll.find('::')
@@ -1158,7 +1157,7 @@ def analyzeline(m, case, line):
                     else:
                         errmess('analyzeline: intent(callback) %s is already'
                                 ' in argument list' % (k))
-            if case in ['optional', 'required', 'public', 'external', 'private', 'intrisic']:
+            if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
                 edecl[k]['attrspec'].append(ap)
@@ -1750,10 +1749,12 @@ def setattrspec(decl, attr, force=0):
         decl['attrspec'].append(attr)
     elif attr == 'automatic' and 'static' not in decl['attrspec']:
         decl['attrspec'].append(attr)
-    elif attr == 'public' and 'private' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
-    elif attr == 'private' and 'public' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
+    elif attr == 'public':
+        if 'private' not in decl['attrspec']:
+            decl['attrspec'].append(attr)
+    elif attr == 'private':
+        if 'public' not in decl['attrspec']:
+            decl['attrspec'].append(attr)
     else:
         decl['attrspec'].append(attr)
     return decl
@@ -3114,11 +3115,12 @@ def true_intent_list(var):
     ret = []
     for intent in lst:
         try:
-            c = eval('isintent_%s(var)' % intent)
-        except NameError:
-            c = 0
-        if c:
-            ret.append(intent)
+            f = globals()['isintent_%s' % intent]
+        except KeyError:
+            pass
+        else:
+            if f(var):
+                ret.append(intent)
     return ret
 
 

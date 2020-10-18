@@ -28,7 +28,7 @@ Defining the input
 
 The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
 the data. It can be a string, a list of strings, a generator or an open
-file-like object with a :meth:`read` method, for example, a file or 
+file-like object with a ``read`` method, for example, a file or 
 :class:`io.StringIO` object. If a single string is provided, it is assumed
 to be the name of a local or remote file. If a list of strings or a generator
 returning strings is provided, each string is treated as one line in a file.
@@ -36,10 +36,10 @@ When the URL of a remote file is passed, the file is automatically downloaded
 to the current directory and opened.
 
 Recognized file types are text files and archives.  Currently, the function
-recognizes :class:`gzip` and :class:`bz2` (`bzip2`) archives.  The type of
+recognizes ``gzip`` and ``bz2`` (``bzip2``) archives.  The type of
 the archive is determined from the extension of the file: if the filename
-ends with ``'.gz'``, a :class:`gzip` archive is expected; if it ends with
-``'bz2'``, a :class:`bzip2` archive is assumed.
+ends with ``'.gz'``, a ``gzip`` archive is expected; if it ends with
+``'bz2'``, a ``bzip2`` archive is assumed.
 
 
 
@@ -98,13 +98,11 @@ This behavior can be overwritten by setting the optional argument
    >>> # Without autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5")
    array([['1', ' abc ', ' 2'],
-          ['3', ' xxx', ' 4']],
-         dtype='|U5')
+          ['3', ' xxx', ' 4']], dtype='<U5')
    >>> # With autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5", autostrip=True)
    array([['1', 'abc', '2'],
-          ['3', 'xxx', '4']],
-         dtype='|U5')
+          ['3', 'xxx', '4']], dtype='<U5')
 
 
 The ``comments`` argument
@@ -127,11 +125,11 @@ marker(s) is simply ignored::
    ... 9, 0
    ... """
    >>> np.genfromtxt(StringIO(data), comments="#", delimiter=",")
-   [[ 1.  2.]
-    [ 3.  4.]
-    [ 5.  6.]
-    [ 7.  8.]
-    [ 9.  0.]]
+   array([[1., 2.],
+          [3., 4.],
+          [5., 6.],
+          [7., 8.],
+          [9., 0.]])
 
 .. versionadded:: 1.7.0
 
@@ -362,9 +360,9 @@ The ``converters`` argument
 Usually, defining a dtype is sufficient to define how the sequence of
 strings must be converted.  However, some additional control may sometimes
 be required.  For example, we may want to make sure that a date in a format
-``YYYY/MM/DD`` is converted to a :class:`datetime` object, or that a string
-like ``xx%`` is properly converted to a float between 0 and 1.  In such
-cases, we should define conversion functions with the ``converters``
+``YYYY/MM/DD`` is converted to a :class:`~datetime.datetime` object, or that
+a string like ``xx%`` is properly converted to a float between 0 and 1.  In
+such cases, we should define conversion functions with the ``converters``
 arguments.
 
 The value of this argument is typically a dictionary with column indices or
@@ -376,12 +374,12 @@ single element of the wanted type.
 In the following example, the second column is converted from as string
 representing a percentage to a float between 0 and 1::
 
-   >>> convertfunc = lambda x: float(x.strip("%"))/100.
+   >>> convertfunc = lambda x: float(x.strip(b"%"))/100.
    >>> data = u"1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names)
-   array([(1.0, nan, 45.0), (6.0, nan, 0.0)],
+   array([(1., nan, 45.), (6., nan, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
 We need to keep in mind that by default, ``dtype=float``.  A float is
@@ -429,7 +427,7 @@ previous example, we used a converter to transform an empty string into a
 float.  However, user-defined converters may rapidly become cumbersome to
 manage.
 
-The :func:`~nummpy.genfromtxt` function provides two other complementary
+The :func:`~numpy.genfromtxt` function provides two other complementary
 mechanisms: the ``missing_values`` argument is used to recognize
 missing data and a second argument, ``filling_values``, is used to
 process these missing data.
@@ -516,15 +514,15 @@ output array will then be a :class:`~numpy.ma.MaskedArray`.
 Shortcut functions
 ==================
 
-In addition to :func:`~numpy.genfromtxt`, the :mod:`numpy.lib.io` module
+In addition to :func:`~numpy.genfromtxt`, the :mod:`numpy.lib.npyio` module
 provides several convenience functions derived from
 :func:`~numpy.genfromtxt`.  These functions work the same way as the
 original, but they have different default values.
 
-:func:`~numpy.recfromtxt`
+:func:`~numpy.npyio.recfromtxt`
    Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   :class:`~numpy.ma.MaskedRecords` array (if ``usemaske=True``).  The
+   :class:`~numpy.ma.mrecords.MaskedRecords` array (if ``usemaske=True``).  The
    default dtype is ``dtype=None``, meaning that the types of each column
    will be automatically determined.
-:func:`~numpy.recfromcsv`
-   Like :func:`~numpy.recfromtxt`, but with a default ``delimiter=","``.
+:func:`~numpy.npyio.recfromcsv`
+   Like :func:`~numpy.npyio.recfromtxt`, but with a default ``delimiter=","``.

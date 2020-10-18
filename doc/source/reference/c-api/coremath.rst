@@ -24,23 +24,23 @@ in doubt.
 Floating point classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. c:var:: NPY_NAN
+.. c:macro:: NPY_NAN
 
     This macro is defined to a NaN (Not a Number), and is guaranteed to have
     the signbit unset ('positive' NaN). The corresponding single and extension
     precision macro are available with the suffix F and L.
 
-.. c:var:: NPY_INFINITY
+.. c:macro:: NPY_INFINITY
 
     This macro is defined to a positive inf. The corresponding single and
     extension precision macro are available with the suffix F and L.
 
-.. c:var:: NPY_PZERO
+.. c:macro:: NPY_PZERO
 
     This macro is defined to positive zero. The corresponding single and
     extension precision macro are available with the suffix F and L.
 
-.. c:var:: NPY_NZERO
+.. c:macro:: NPY_NZERO
 
     This macro is defined to negative zero (that is with the sign bit set). The
     corresponding single and extension precision macro are available with the
@@ -84,47 +84,47 @@ The following math constants are available in ``npy_math.h``. Single
 and extended precision are also available by adding the ``f`` and
 ``l`` suffixes respectively.
 
-.. c:var:: NPY_E
+.. c:macro:: NPY_E
 
     Base of natural logarithm (:math:`e`)
 
-.. c:var:: NPY_LOG2E
+.. c:macro:: NPY_LOG2E
 
     Logarithm to base 2 of the Euler constant (:math:`\frac{\ln(e)}{\ln(2)}`)
 
-.. c:var:: NPY_LOG10E
+.. c:macro:: NPY_LOG10E
 
     Logarithm to base 10 of the Euler constant (:math:`\frac{\ln(e)}{\ln(10)}`)
 
-.. c:var:: NPY_LOGE2
+.. c:macro:: NPY_LOGE2
 
     Natural logarithm of 2 (:math:`\ln(2)`)
 
-.. c:var:: NPY_LOGE10
+.. c:macro:: NPY_LOGE10
 
     Natural logarithm of 10 (:math:`\ln(10)`)
 
-.. c:var:: NPY_PI
+.. c:macro:: NPY_PI
 
     Pi (:math:`\pi`)
 
-.. c:var:: NPY_PI_2
+.. c:macro:: NPY_PI_2
 
     Pi divided by 2 (:math:`\frac{\pi}{2}`)
 
-.. c:var:: NPY_PI_4
+.. c:macro:: NPY_PI_4
 
     Pi divided by 4 (:math:`\frac{\pi}{4}`)
 
-.. c:var:: NPY_1_PI
+.. c:macro:: NPY_1_PI
 
     Reciprocal of pi (:math:`\frac{1}{\pi}`)
 
-.. c:var:: NPY_2_PI
+.. c:macro:: NPY_2_PI
 
     Two times the reciprocal of pi (:math:`\frac{2}{\pi}`)
 
-.. c:var:: NPY_EULER
+.. c:macro:: NPY_EULER
 
     The Euler constant
         :math:`\lim_{n\rightarrow\infty}({\sum_{k=1}^n{\frac{1}{k}}-\ln n})`
@@ -193,7 +193,7 @@ Those can be useful for precise floating point comparison.
 .. c:function:: int npy_get_floatstatus_barrier(char*)
 
     Get floating point status. A pointer to a local variable is passed in to
-    prevent aggressive compiler optimizations from reodering this function call
+    prevent aggressive compiler optimizations from reordering this function call
     relative to the code setting the status, which could lead to incorrect
     results.
 
@@ -219,7 +219,7 @@ Those can be useful for precise floating point comparison.
 .. c:function:: int npy_clear_floatstatus_barrier(char*)
 
     Clears the floating point status. A pointer to a local variable is passed in to
-    prevent aggressive compiler optimizations from reodering this function call.
+    prevent aggressive compiler optimizations from reordering this function call.
     Returns the previous status mask.
 
     .. versionadded:: 1.15.0
@@ -249,9 +249,14 @@ Linking against the core math library in an extension
 To use the core math library in your own extension, you need to add the npymath
 compile and link options to your extension in your setup.py:
 
+        .. hidden in a comment so as to be included in refguide but not rendered documentation
+                >>> import numpy.distutils.misc_util
+                >>> config = np.distutils.misc_util.Configuration(None, '', '.')
+                >>> with open('foo.c', 'w') as f: pass
+
         >>> from numpy.distutils.misc_util import get_info
         >>> info = get_info('npymath')
-        >>> config.add_extension('foo', sources=['foo.c'], extra_info=info)
+        >>> _ = config.add_extension('foo', sources=['foo.c'], extra_info=info)
 
 In other words, the usage of info is exactly the same as when using blas_info
 and co.
@@ -303,35 +308,35 @@ __ https://en.wikipedia.org/wiki/Half-precision_floating-point_format
 __ https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_half_float_pixel.txt
 __ https://www.openexr.com/about.html
 
-.. c:var:: NPY_HALF_ZERO
+.. c:macro:: NPY_HALF_ZERO
 
     This macro is defined to positive zero.
 
-.. c:var:: NPY_HALF_PZERO
+.. c:macro:: NPY_HALF_PZERO
 
     This macro is defined to positive zero.
 
-.. c:var:: NPY_HALF_NZERO
+.. c:macro:: NPY_HALF_NZERO
 
     This macro is defined to negative zero.
 
-.. c:var:: NPY_HALF_ONE
+.. c:macro:: NPY_HALF_ONE
 
     This macro is defined to 1.0.
 
-.. c:var:: NPY_HALF_NEGONE
+.. c:macro:: NPY_HALF_NEGONE
 
     This macro is defined to -1.0.
 
-.. c:var:: NPY_HALF_PINF
+.. c:macro:: NPY_HALF_PINF
 
     This macro is defined to +inf.
 
-.. c:var:: NPY_HALF_NINF
+.. c:macro:: NPY_HALF_NINF
 
     This macro is defined to -inf.
 
-.. c:var:: NPY_HALF_NAN
+.. c:macro:: NPY_HALF_NAN
 
     This macro is defined to a NaN value, guaranteed to have its sign bit unset.
 

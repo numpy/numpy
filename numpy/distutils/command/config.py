@@ -2,13 +2,12 @@
 # try_compile call. try_run works but is untested for most of Fortran
 # compilers (they must define linker_exe first).
 # Pearu Peterson
-from __future__ import division, absolute_import, print_function
-
-import os, signal
-import warnings
-import sys
+import os
+import signal
 import subprocess
+import sys
 import textwrap
+import warnings
 
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
@@ -21,10 +20,10 @@ from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_gcc_function_attribute_with_intrinsics,
                                               check_gcc_variable_attribute,
+                                              check_gcc_version_at_least,
                                               check_inline,
                                               check_restrict,
-                                              check_compiler_gcc4)
-from numpy.distutils.compat import get_exception
+                                              check_compiler_gcc)
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -52,8 +51,7 @@ class config(old_config):
             if not self.compiler.initialized:
                 try:
                     self.compiler.initialize()
-                except IOError:
-                    e = get_exception()
+                except IOError as e:
                     msg = textwrap.dedent("""\
                         Could not initialize compiler instance: do you have Visual Studio
                         installed?  If you are trying to build with MinGW, please use "python setup.py
@@ -96,8 +94,8 @@ class config(old_config):
             self.compiler = self.fcompiler
         try:
             ret = mth(*((self,)+args))
-        except (DistutilsExecError, CompileError):
-            str(get_exception())
+        except (DistutilsExecError, CompileError) as e:
+            str(e)
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler
@@ -419,9 +417,9 @@ class config(old_config):
         otherwise."""
         return check_restrict(self)
 
-    def check_compiler_gcc4(self):
-        """Return True if the C compiler is gcc >= 4."""
-        return check_compiler_gcc4(self)
+    def check_compiler_gcc(self):
+        """Return True if the C compiler is gcc"""
+        return check_compiler_gcc(self)
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
@@ -433,6 +431,11 @@ class config(old_config):
 
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
+
+    def check_gcc_version_at_least(self, major, minor=0, patchlevel=0):
+        """Return True if the GCC version is greater than or equal to the
+        specified version."""
+        return check_gcc_version_at_least(self, major, minor, patchlevel)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
@@ -495,7 +498,7 @@ class config(old_config):
         self._clean()
         return exitcode, output
 
-class GrabStdout(object):
+class GrabStdout:
 
     def __init__(self):
         self.sys_stdout = sys.stdout

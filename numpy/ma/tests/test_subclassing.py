@@ -6,8 +6,6 @@
 :version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import assert_, assert_raises
 from numpy.ma.testutils import assert_equal
@@ -80,7 +78,7 @@ msubarray = MSubArray
 # and overrides __array_wrap__, updating the info dict, to check that this
 # doesn't get destroyed by MaskedArray._update_from.  But this one also needs
 # its own iterator...
-class CSAIterator(object):
+class CSAIterator:
     """
     Flat iterator object that uses its own setter/getter
     (works around ndarray.flat not propagating subclass setters/getters
@@ -106,8 +104,6 @@ class CSAIterator(object):
 
     def __next__(self):
         return next(self._dataiter).__array__().view(type(self._original))
-
-    next = __next__
 
 
 class ComplicatedSubArray(SubArray):
@@ -154,7 +150,7 @@ class ComplicatedSubArray(SubArray):
         return obj
 
 
-class TestSubclassing(object):
+class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
     def setup(self):

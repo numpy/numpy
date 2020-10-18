@@ -11,37 +11,33 @@ these requirements.
 
 This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
 using multiple threads.  Threads are long-lived so that repeated calls do not
-require any additional overheads from thread creation. The underlying
-BitGenerator is `PCG64` which is fast, has a long period and supports
-using `PCG64.jumped` to return a new generator while advancing the
-state. The random numbers generated are reproducible in the sense that the same
-seed will produce the same outputs.
+require any additional overheads from thread creation.
+
+The random numbers generated are reproducible in the sense that the same
+seed will produce the same outputs, given that the number of threads does not
+change.
 
 .. code-block:: ipython
 
-    from numpy.random import Generator, PCG64
+    from numpy.random import default_rng, SeedSequence
     import multiprocessing
     import concurrent.futures
     import numpy as np
 
-    class MultithreadedRNG(object):
+    class MultithreadedRNG:
         def __init__(self, n, seed=None, threads=None):
-            rg = PCG64(seed)
             if threads is None:
                 threads = multiprocessing.cpu_count()
             self.threads = threads
 
-            self._random_generators = [rg]
-            last_rg = rg
-            for _ in range(0, threads-1):
-                new_rg = last_rg.jumped()
-                self._random_generators.append(new_rg)
-                last_rg = new_rg
+            seq = SeedSequence(seed)
+            self._random_generators = [default_rng(s)
+                                       for s in seq.spawn(threads)]
 
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
             self.values = np.empty(n)
-            self.step = np.ceil(n / threads).astype(np.int)
+            self.step = np.ceil(n / threads).astype(np.int_)
 
         def fill(self):
             def _fill(random_state, out, first, last):
@@ -61,19 +57,20 @@ seed will produce the same outputs.
             self.executor.shutdown(False)
 
 
+
 The multithreaded random number generator can be used to fill an array.
 The ``values`` attributes shows the zero-value before the fill and the
 random value after.
 
 .. code-block:: ipython
 
-    In [2]: mrng = MultithreadedRNG(10000000, seed=0)
-    ...: print(mrng.values[-1])
-    0.0
+    In [2]: mrng = MultithreadedRNG(10000000, seed=12345)
+       ...: print(mrng.values[-1])
+    Out[2]: 0.0
 
     In [3]: mrng.fill()
-        ...: print(mrng.values[-1])
-    3.296046120254392
+       ...: print(mrng.values[-1])
+    Out[3]: 2.4545724517479104
 
 The time required to produce using multiple threads can be compared to
 the time required to generate using a single thread.
@@ -81,28 +78,38 @@ the time required to generate using a single thread.
 .. code-block:: ipython
 
     In [4]: print(mrng.threads)
-        ...: %timeit mrng.fill()
+       ...: %timeit mrng.fill()
 
-    4
-    32.8 ms ± 2.71 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    Out[4]: 4
+       ...: 32.8 ms ± 2.71 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 The single threaded call directly uses the BitGenerator.
 
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-        ...: rg = Generator(PCG64())
-        ...: %timeit rg.standard_normal(out=values)
+       ...: rg = default_rng()
+       ...: %timeit rg.standard_normal(out=values)
 
-    99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    Out[5]: 99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
-The gains are substantial and the scaling is reasonable even for large that
-are only moderately large.  The gains are even larger when compared to a call
+The gains are substantial and the scaling is reasonable even for arrays that
+are only moderately large. The gains are even larger when compared to a call
 that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = Generator(PCG64())
-        ...: %timeit rg.standard_normal(10000000)
+    In [6]: rg = default_rng()
+       ...: %timeit rg.standard_normal(10000000)
 
-    125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+Note that if `threads` is not set by the user, it will be determined by
+`multiprocessing.cpu_count()`.
+
+.. code-block:: ipython
+
+    In [7]: # simulate the behavior for `threads=None`, if the machine had only one thread
+       ...: mrng = MultithreadedRNG(10000000, seed=12345, threads=1)
+       ...: print(mrng.values[-1])
+    Out[7]: 1.1800150052158556

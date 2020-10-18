@@ -61,7 +61,7 @@ def assert_mt19937_state_equal(a, b):
     assert_equal(a['gauss'], b['gauss'])
 
 
-class TestSeed(object):
+class TestSeed:
     def test_scalar(self):
         s = random.RandomState(0)
         assert_equal(s.randint(1000), 684)
@@ -108,7 +108,7 @@ class TestSeed(object):
         assert_raises(ValueError, random.RandomState, MT19937)
 
 
-class TestBinomial(object):
+class TestBinomial:
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -123,7 +123,7 @@ class TestBinomial(object):
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
 
-class TestMultinomial(object):
+class TestMultinomial:
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -168,7 +168,7 @@ class TestMultinomial(object):
         assert_array_equal(non_contig, contig)
 
 
-class TestSetState(object):
+class TestSetState:
     def setup(self):
         self.seed = 1234567890
         self.random_state = random.RandomState(self.seed)
@@ -229,7 +229,7 @@ class TestSetState(object):
         new_state = ('Unknown', ) + state[1:]
         assert_raises(ValueError, self.random_state.set_state, new_state)
         assert_raises(TypeError, self.random_state.set_state,
-                      np.array(new_state, dtype=np.object))
+                      np.array(new_state, dtype=object))
         state = self.random_state.get_state(legacy=False)
         del state['bit_generator']
         assert_raises(ValueError, self.random_state.set_state, state)
@@ -255,7 +255,7 @@ class TestSetState(object):
         assert repr(self.random_state).startswith('RandomState(MT19937)')
 
 
-class TestRandint(object):
+class TestRandint:
 
     rfunc = random.randint
 
@@ -350,6 +350,30 @@ class TestRandint(object):
         res = hashlib.md5(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
+    @pytest.mark.skipif(np.iinfo('l').max < 2**32,
+                        reason='Cannot test with 32-bit C long')
+    def test_repeatability_32bit_boundary_broadcasting(self):
+        desired = np.array([[[3992670689, 2438360420, 2557845020],
+                             [4107320065, 4142558326, 3216529513],
+                             [1605979228, 2807061240,  665605495]],
+                            [[3211410639, 4128781000,  457175120],
+                             [1712592594, 1282922662, 3081439808],
+                             [3997822960, 2008322436, 1563495165]],
+                            [[1398375547, 4269260146,  115316740],
+                             [3414372578, 3437564012, 2112038651],
+                             [3572980305, 2260248732, 3908238631]],
+                            [[2561372503,  223155946, 3127879445],
+                             [ 441282060, 3514786552, 2148440361],
+                             [1629275283, 3479737011, 3003195987]],
+                            [[ 412181688,  940383289, 3047321305],
+                             [2978368172,  764731833, 2282559898],
+                             [ 105711276,  720447391, 3596512484]]])
+        for size in [None, (5, 3, 3)]:
+            random.seed(12345)
+            x = self.rfunc([[-1], [0], [1]], [2**32 - 1, 2**32, 2**32 + 1],
+                           size=size)
+            assert_array_equal(x, desired if size is not None else desired[0])
+
     def test_int64_uint64_corner_case(self):
         # When stored in Numpy arrays, `lbnd` is casted
         # as np.int64, and `ubnd` is casted as np.uint64.
@@ -382,7 +406,7 @@ class TestRandint(object):
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (bool, int, np.long):
+        for dt in (bool, int, np.compat.long):
             lbnd = 0 if dt is bool else np.iinfo(dt).min
             ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
@@ -392,7 +416,7 @@ class TestRandint(object):
             assert_equal(type(sample), dt)
 
 
-class TestRandomDist(object):
+class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
@@ -455,7 +479,7 @@ class TestRandomDist(object):
         random.seed(self.seed)
         rs = random.RandomState(self.seed)
         actual = rs.tomaxint(size=(3, 2))
-        if np.iinfo(np.int).max == 2147483647:
+        if np.iinfo(int).max == 2147483647:
             desired = np.array([[1328851649,  731237375],
                                 [1270502067,  320041495],
                                 [1908433478,  499156889]], dtype=np.int64)
@@ -1245,7 +1269,7 @@ class TestRandomDist(object):
         assert_array_equal(actual, desired)
 
 
-class TestBroadcast(object):
+class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
     def setup(self):
@@ -1832,7 +1856,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
 
-class TestThread(object):
+class TestThread:
     # make sure each state produces the same sequence even in threads
     def setup(self):
         self.seeds = range(4)
@@ -1879,7 +1903,7 @@ class TestThread(object):
 
 
 # See Issue #4263
-class TestSingleEltArrayInput(object):
+class TestSingleEltArrayInput:
     def setup(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])
@@ -1965,3 +1989,13 @@ def test_integer_repeat(int_func):
         val = val.byteswap()
     res = hashlib.md5(val.view(np.int8)).hexdigest()
     assert_(res == md5)
+
+
+def test_broadcast_size_error():
+    # GH-16833
+    with pytest.raises(ValueError):
+        random.binomial(1, [0.3, 0.7], size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], 0.3, size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], [0.3, 0.7], size=(2, 1))

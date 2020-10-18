@@ -38,14 +38,14 @@ basic steps for doing this in Python are well-documented and you can
 find more information in the documentation for Python itself available
 online at `www.python.org <https://www.python.org>`_ .
 
-In addition to the Python C-API, there is a full and rich C-API for
-NumPy allowing sophisticated manipulations on a C-level. However, for
-most applications, only a few API calls will typically be used. If all
-you need to do is extract a pointer to memory along with some shape
-information to pass to another calculation routine, then you will use
-very different calls, then if you are trying to create a new array-
-like type or add a new data type for ndarrays. This chapter documents
-the API calls and macros that are most commonly used.
+In addition to the Python C-API, there is a full and rich C-API for NumPy
+allowing sophisticated manipulations on a C-level. However, for most
+applications, only a few API calls will typically be used. For example, if you
+need to just extract a pointer to memory along with some shape information to
+pass to another calculation routine, then you will use very different calls
+than if you are trying to create a new array-like type or add a new data type
+for ndarrays. This chapter documents the API calls and macros that are most
+commonly used.
 
 
 Required subroutine
@@ -163,7 +163,7 @@ ignored. The *args* argument contains all of the arguments passed in
 to the function as a tuple. You can do anything you want at this
 point, but usually the easiest way to manage the input arguments is to
 call :c:func:`PyArg_ParseTuple` (args, format_string,
-addresses_to_C_variables...) or :c:func:`PyArg_UnpackTuple` (tuple, "name" ,
+addresses_to_C_variables...) or :c:func:`PyArg_UnpackTuple` (tuple, "name",
 min, max, ...). A good description of how to use the first function is
 contained in the Python C-API reference manual under section 5.5
 (Parsing arguments and building values). You should pay particular
@@ -363,7 +363,6 @@ particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
 :c:func:`PyArray_FROM_OTF`
-
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
     array is determined by the object. The desired data-type of the
@@ -375,7 +374,6 @@ writeable). The syntax is
     exception is set.
 
     *obj*
-
         The object can be any Python object convertible to an ndarray.
         If the object is already (a subclass of) the ndarray that
         satisfies the requirements then a new reference is returned.
@@ -394,7 +392,6 @@ writeable). The syntax is
         to the requirements flag.
 
     *typenum*
-
         One of the enumerated types or :c:data:`NPY_NOTYPE` if the data-type
         should be determined from the object itself. The C-based names
         can be used:
@@ -422,7 +419,6 @@ writeable). The syntax is
         requirements flag to override this behavior.
 
     *requirements*
-
         The memory model for an ndarray admits arbitrary strides in
         each dimension to advance to the next element of the array.
         Often, however, you need to interface with code that expects a
@@ -446,13 +442,11 @@ writeable). The syntax is
         :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
         :c:data:`NPY_ARRAY_IN_ARRAY`
-
             This flag is useful for arrays that must be in C-contiguous
             order and aligned. These kinds of arrays are usually input 
             arrays for some algorithm.
 
         :c:data:`NPY_ARRAY_OUT_ARRAY`
-
             This flag is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
@@ -460,7 +454,6 @@ writeable). The syntax is
             scratch).
 
         :c:data:`NPY_ARRAY_INOUT_ARRAY`
-
             This flag is useful to specify an array that will be used for both
             input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
             must be called before :c:func:`Py_DECREF` at
@@ -479,16 +472,13 @@ writeable). The syntax is
         Other useful flags that can be OR'd as additional requirements are:
 
         :c:data:`NPY_ARRAY_FORCECAST`
-
             Cast to the desired type, even if it can't be done without losing
             information.
 
         :c:data:`NPY_ARRAY_ENSURECOPY`
-
             Make sure the resulting array is a copy of the original.
 
         :c:data:`NPY_ARRAY_ENSUREARRAY`
-
             Make sure the resulting object is an actual ndarray and not a sub-
             class.
 

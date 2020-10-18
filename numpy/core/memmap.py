@@ -1,9 +1,7 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import (
-    long, basestring, os_fspath, contextlib_nullcontext, is_pathlib_path
+    os_fspath, contextlib_nullcontext, is_pathlib_path
 )
 from numpy.core.overrides import set_module
 
@@ -211,10 +209,12 @@ class memmap(ndarray):
         import os.path
         try:
             mode = mode_equivalents[mode]
-        except KeyError:
+        except KeyError as e:
             if mode not in valid_filemodes:
-                raise ValueError("mode must be one of %s" %
-                                 (valid_filemodes + list(mode_equivalents.keys())))
+                raise ValueError(
+                    "mode must be one of {!r} (got {!r})"
+                    .format(valid_filemodes + list(mode_equivalents.keys()), mode)
+                ) from None
 
         if mode == 'w+' and shape is None:
             raise ValueError("shape must be given")
@@ -244,7 +244,7 @@ class memmap(ndarray):
                 for k in shape:
                     size *= k
 
-            bytes = long(offset + size*_dbytes)
+            bytes = int(offset + size*_dbytes)
 
             if mode in ('w+', 'r+') and flen < bytes:
                 fid.seek(bytes - 1, 0)
@@ -273,7 +273,7 @@ class memmap(ndarray):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
                 self.filename = filename.resolve()
-            elif hasattr(fid, "name") and isinstance(fid.name, basestring):
+            elif hasattr(fid, "name") and isinstance(fid.name, str):
                 # py3 returns int for TemporaryFile().name
                 self.filename = os.path.abspath(fid.name)
             # same as memmap copies (e.g. memmap + 1)

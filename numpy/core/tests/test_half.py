@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import platform
 import pytest
 
@@ -18,7 +16,7 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         assert_(False,
                 "Did not raise floating point %s error" % strmatch)
 
-class TestHalf(object):
+class TestHalf:
     def setup(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
@@ -331,6 +329,7 @@ class TestHalf(object):
         # All non-negative finite #'s
         a = np.arange(0x7c00, dtype=uint16)
         hinf = np.array((np.inf,), dtype=float16)
+        hnan = np.array((np.nan,), dtype=float16)
         a_f16 = a.view(dtype=float16)
 
         assert_equal(np.spacing(a_f16[:-1]), a_f16[1:]-a_f16[:-1])
@@ -338,6 +337,21 @@ class TestHalf(object):
         assert_equal(np.nextafter(a_f16[:-1], hinf), a_f16[1:])
         assert_equal(np.nextafter(a_f16[0], -hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], -hinf), a_f16[:-1])
+
+        assert_equal(np.nextafter(hinf, a_f16), a_f16[-1])
+        assert_equal(np.nextafter(-hinf, a_f16), -a_f16[-1])
+
+        assert_equal(np.nextafter(hinf, hinf), hinf)
+        assert_equal(np.nextafter(hinf, -hinf), a_f16[-1])
+        assert_equal(np.nextafter(-hinf, hinf), -a_f16[-1])
+        assert_equal(np.nextafter(-hinf, -hinf), -hinf)
+
+        assert_equal(np.nextafter(a_f16, hnan), hnan[0])
+        assert_equal(np.nextafter(hnan, a_f16), hnan[0])
+
+        assert_equal(np.nextafter(hnan, hnan), hnan)
+        assert_equal(np.nextafter(hinf, hnan), hnan)
+        assert_equal(np.nextafter(hnan, hinf), hnan)
 
         # switch to negatives
         a |= 0x8000
@@ -348,6 +362,12 @@ class TestHalf(object):
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
         assert_equal(np.nextafter(a_f16[:-1], -hinf), a_f16[1:])
+
+        assert_equal(np.nextafter(hinf, a_f16), -a_f16[-1])
+        assert_equal(np.nextafter(-hinf, a_f16), a_f16[-1])
+
+        assert_equal(np.nextafter(a_f16, hnan), hnan[0])
+        assert_equal(np.nextafter(hnan, a_f16), hnan[0])
 
     def test_half_ufuncs(self):
         """Test the various ufuncs"""
@@ -489,9 +509,6 @@ class TestHalf(object):
             assert_raises_fpe('invalid', np.divide, float16(np.inf), float16(np.inf))
             assert_raises_fpe('invalid', np.spacing, float16(np.inf))
             assert_raises_fpe('invalid', np.spacing, float16(np.nan))
-            assert_raises_fpe('invalid', np.nextafter, float16(np.inf), float16(0))
-            assert_raises_fpe('invalid', np.nextafter, float16(-np.inf), float16(0))
-            assert_raises_fpe('invalid', np.nextafter, float16(0), float16(np.nan))
 
             # These should not raise
             float16(65472)+float16(32)
@@ -500,6 +517,10 @@ class TestHalf(object):
             np.spacing(float16(-65504))
             np.nextafter(float16(65504), float16(-np.inf))
             np.nextafter(float16(-65504), float16(np.inf))
+            np.nextafter(float16(np.inf), float16(0))
+            np.nextafter(float16(-np.inf), float16(0))
+            np.nextafter(float16(0), float16(np.nan))
+            np.nextafter(float16(np.nan), float16(0))
             float16(2**-14)/float16(2**10)
             float16(-2**-14)/float16(2**10)
             float16(2**-14+2**-23)/float16(2)

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 from distutils.command.build import build as old_build
@@ -18,6 +16,12 @@ class build(old_build):
          "specify the Fortran compiler type"),
         ('warn-error', None,
          "turn all warnings into errors (-Werror)"),
+        ('cpu-baseline=', None,
+         "specify a list of enabled baseline CPU optimizations"),
+        ('cpu-dispatch=', None,
+         "specify a list of dispatched CPU optimizations"),
+        ('disable-optimization', None,
+         "disable CPU optimized code(dispatch,simd,fast...)"),
         ]
 
     help_options = old_build.help_options + [
@@ -29,6 +33,9 @@ class build(old_build):
         old_build.initialize_options(self)
         self.fcompiler = None
         self.warn_error = False
+        self.cpu_baseline = "min"
+        self.cpu_dispatch = "max -xop -fma4" # drop AMD legacy features by default
+        self.disable_optimization = False
 
     def finalize_options(self):
         build_scripts = self.build_scripts

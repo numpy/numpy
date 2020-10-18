@@ -100,8 +100,8 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
  */
 typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
                                             char **dataptr,
-                                            npy_intp *strideptr,
-                                            npy_intp *countptr,
+                                            npy_intp const *strideptr,
+                                            npy_intp const *countptr,
                                             NpyIter_IterNextFunc *iternext,
                                             int needs_api,
                                             npy_intp skip_first_count,
@@ -128,9 +128,7 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
  *               of cache behavior or multithreading requirements.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
- * subok       : If true, the result uses the subclass of operand, otherwise
- *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_InitializeReduceResult is used, otherwise
+ * identity    : If Py_None, PyArray_CopyInitialReduceValues is used, otherwise
  *               this value is used to initialize the result to
  *               the reduction's unit.
  * loop        : The loop which does the reduction.
@@ -147,7 +145,6 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       NPY_CASTING casting,
                       npy_bool *axis_flags, int reorderable,
                       int keepdims,
-                      int subok,
                       PyObject *identity,
                       PyArray_ReduceLoopFunc *loop,
                       void *data, npy_intp buffersize, const char *funcname,

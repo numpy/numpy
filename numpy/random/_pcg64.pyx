@@ -3,7 +3,7 @@ cimport numpy as np
 
 from libc.stdint cimport uint32_t, uint64_t
 from ._common cimport uint64_to_double, wrap_int
-from ._bit_generator cimport BitGenerator
+from numpy.random cimport BitGenerator
 
 __all__ = ['PCG64']
 
@@ -38,7 +38,7 @@ cdef double pcg64_double(void* st) nogil:
 
 cdef class PCG64(BitGenerator):
     """
-    PCG64(seed_seq=None)
+    PCG64(seed=None)
 
     BitGenerator for the PCG-64 pseudo-random number generator.
 

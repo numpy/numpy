@@ -1,3 +1,5 @@
+.. _NEP31:
+
 ============================================================
 NEP 31 — Context-local and global overrides of the NumPy API
 ============================================================
@@ -17,12 +19,12 @@ This NEP proposes to make all of NumPy's public API overridable via an
 extensible backend mechanism.
 
 Acceptance of this NEP means NumPy would provide global and context-local
-overrides, as well as a dispatch mechanism similar to NEP-18 [2]_. First
-experiences with ``__array_function__`` show that it is necessary to be able
-to override NumPy functions that *do not take an array-like argument*, and
-hence aren't overridable via ``__array_function__``. The most pressing need is
-array creation and coercion functions, such as ``numpy.zeros`` or
-``numpy.asarray``; see e.g. NEP-30 [9]_.
+overrides in a separate namespace, as well as a dispatch mechanism similar
+to NEP-18 [2]_. First experiences with ``__array_function__`` show that it
+is necessary to be able to override NumPy functions that *do not take an
+array-like argument*, and hence aren't overridable via
+``__array_function__``. The most pressing need is array creation and coercion
+functions, such as ``numpy.zeros`` or ``numpy.asarray``; see e.g. NEP-30 [9]_.
 
 This NEP proposes to allow, in an opt-in fashion, overriding any part of the
 NumPy API. It is intended as a comprehensive resolution to NEP-22 [3]_, and
@@ -31,19 +33,6 @@ type of function or object that needs to become overridable.
 
 Motivation and Scope
 --------------------
-
-The motivation behind ``uarray`` is manyfold: First, there have been several
-attempts to allow dispatch of parts of the NumPy API, including (most
-prominently), the ``__array_ufunc__`` protocol in NEP-13 [4]_, and the
-``__array_function__`` protocol in NEP-18 [2]_, but this has shown the need
-for further protocols to be developed, including a protocol for coercion (see
-[5]_, [9]_). The reasons these overrides are needed have been extensively
-discussed in the references, and this NEP will not attempt to go into the
-details of why these are needed; but in short: It is necessary for library
-authors to be able to coerce arbitrary objects into arrays of their own types,
-such as CuPy needing to coerce to a CuPy array, for example, instead of
-a NumPy array. In simpler words, one needs things like ``np.asarray(...)`` or
-an alternative to "just work" and return duck-arrays.
 
 The primary end-goal of this NEP is to make the following possible:
 
@@ -94,14 +83,60 @@ vendored into a new namespace within NumPy to give users and downstream
 dependencies access to these overrides.  This vendoring mechanism is similar
 to what SciPy decided to do for making ``scipy.fft`` overridable (see [10]_).
 
+The motivation behind ``uarray`` is manyfold: First, there have been several
+attempts to allow dispatch of parts of the NumPy API, including (most
+prominently), the ``__array_ufunc__`` protocol in NEP-13 [4]_, and the
+``__array_function__`` protocol in NEP-18 [2]_, but this has shown the need
+for further protocols to be developed, including a protocol for coercion (see
+[5]_, [9]_). The reasons these overrides are needed have been extensively
+discussed in the references, and this NEP will not attempt to go into the
+details of why these are needed; but in short: It is necessary for library
+authors to be able to coerce arbitrary objects into arrays of their own types,
+such as CuPy needing to coerce to a CuPy array, for example, instead of
+a NumPy array. In simpler words, one needs things like ``np.asarray(...)`` or
+an alternative to "just work" and return duck-arrays.
 
-Detailed description
---------------------
+Usage and Impact
+----------------
 
-Using overrides
-~~~~~~~~~~~~~~~
+This NEP allows for global and context-local overrides, as well as
+automatic overrides a-la ``__array_function__``.
 
-Here are a few examples of how an end-user would use overrides.
+Here are some use-cases this NEP would enable, besides the 
+first one stated in the motivation section:
+
+The first is allowing alternate dtypes to return their
+respective arrays.
+
+.. code:: python
+
+    # Returns an XND array
+    x = unp.ones((5, 5), dtype=xnd_dtype) # Or torch dtype
+
+The second is allowing overrides for parts of the API.
+This is to allow alternate and/or optimised implementations
+for ``np.linalg``, BLAS, and ``np.random``.
+
+.. code:: python
+
+    import numpy as np
+    import pyfftw # Or mkl_fft
+
+    # Makes pyfftw the default for FFT
+    np.set_global_backend(pyfftw)
+
+    # Uses pyfftw without monkeypatching
+    np.fft.fft(numpy_array)    
+
+    with np.set_backend(pyfftw) # Or mkl_fft, or numpy
+        # Uses the backend you specified
+        np.fft.fft(numpy_array)
+
+This will allow an official way for overrides to work with NumPy without
+monkeypatching or distributing a modified version of NumPy.
+
+Here are a few other use-cases, implied but not already
+stated:
 
 .. code:: python
 
@@ -110,11 +145,8 @@ Here are a few examples of how an end-user would use overrides.
     result = library_function(data)
     result.to_zarr('output.zarr')
 
-This would keep on working, assuming the Dask backend was either set or
-registered. Registration can also be done at import-time.
-
-Now consider another function, and what would need to happen in order to
-make this work:
+This second one would work if ``magic_library`` was built
+on top of ``unumpy``.
 
 .. code:: python
 
@@ -126,19 +158,6 @@ make this work:
     result = pytorch_predict(data)
     result.to_zarr('output.zarr')
 
-This would work in two scenarios: The first is that ``pytorch_predict`` was a
-multimethod, and implemented by the Dask backend. Dask could provide utility
-functions to allow external libraries to register implementations.
-
-The second, and perhaps more useful way, is that ``pytorch_predict`` was defined
-in an idiomatic style true to NumPy in terms of other multimethods, and that Dask
-implemented the required multimethods itself, e.g. ``np.convolve``. If this
-happened, then the above example would work without either ``magic_library``
-or Dask having to do anything specific to the other.
-
-Composing backends
-~~~~~~~~~~~~~~~~~~
-
 There are some backends which may depend on other backends, for example xarray
 depending on `numpy.fft`, and transforming a time axis into a frequency axis,
 or Dask/xarray holding an array other than a NumPy array inside it. This would
@@ -146,6 +165,14 @@ be handled in the following manner inside code::
 
     with ua.set_backend(cupy), ua.set_backend(dask.array):
         # Code that has distributed GPU arrays here
+
+Backward compatibility
+----------------------
+
+There are no backward incompatible changes proposed in this NEP.
+
+Detailed description
+--------------------
 
 Proposals
 ~~~~~~~~~
@@ -463,7 +490,7 @@ of three simple values: ``type``, ``value``, and ``coercible``.
 ``NotImplemented`` in the case of failure.
 
 ``__ua_function__`` has the signature ``(func, args, kwargs)`` and defines
-the actual implementation of the function. It recieves the function and its
+the actual implementation of the function. It receives the function and its
 arguments. Returning ``NotImplemented`` will cause a move to the default
 implementation of the function if one exists, and failing that, the next
 backend.
@@ -561,11 +588,6 @@ manner (as an example)::
     @implements(unp.full)
     def full(shape, fill_value, dtype=None, order='C'):
         # Code here
-
-Backward compatibility
-----------------------
-
-There are no backward incompatible changes proposed in this NEP.
 
 Alternatives
 ------------

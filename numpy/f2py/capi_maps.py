@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Copyright 1999,2000 Pearu Peterson all rights reserved,
@@ -11,8 +11,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.60 $"[10:-1]
 
 from . import __version__
@@ -21,11 +19,10 @@ f2py_version = __version__.version
 import copy
 import re
 import os
-import sys
 from .crackfortran import markoutercomma
 from . import cb_rules
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -79,7 +76,7 @@ c2capi_map = {'double': 'NPY_DOUBLE',
               'complex_long_double': 'NPY_CDOUBLE',   # forced casting
               'string': 'NPY_STRING'}
 
-# These new maps aren't used anyhere yet, but should be by default
+# These new maps aren't used anywhere yet, but should be by default
 #  unless building numeric or numarray extensions.
 if using_newcore:
     c2capi_map = {'double': 'NPY_DOUBLE',
@@ -149,11 +146,7 @@ c2buildvalue_map = {'double': 'd',
                     'complex_float': 'N',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
-                    'string': 'z'}
-
-if sys.version_info[0] >= 3:
-    # Bytes, not Unicode strings
-    c2buildvalue_map['string'] = 'y'
+                    'string': 'y'}
 
 if using_newcore:
     # c2buildvalue_map=???
@@ -179,17 +172,29 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'character': {'': 'string'}
               }
 
-if os.path.isfile('.f2py_f2cmap'):
+f2cmap_default = copy.deepcopy(f2cmap_all)
+
+
+def load_f2cmap_file(f2cmap_file):
+    global f2cmap_all
+
+    f2cmap_all = copy.deepcopy(f2cmap_default)
+
+    if f2cmap_file is None:
+        # Default value
+        f2cmap_file = '.f2py_f2cmap'
+        if not os.path.isfile(f2cmap_file):
+            return
+
     # User defined additions to f2cmap_all.
-    # .f2py_f2cmap must contain a dictionary of dictionaries, only.  For
+    # f2cmap_file must contain a dictionary of dictionaries, only.  For
     # example, {'real':{'low':'float'}} means that Fortran 'real(low)' is
     # interpreted as C 'float'.  This feature is useful for F90/95 users if
     # they use PARAMETERSs in type specifications.
     try:
-        outmess('Reading .f2py_f2cmap ...\n')
-        f = open('.f2py_f2cmap', 'r')
-        d = eval(f.read(), {}, {})
-        f.close()
+        outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
+        with open(f2cmap_file, 'r') as f:
+            d = eval(f.read(), {}, {})
         for k, d1 in list(d.items()):
             for k1 in list(d1.keys()):
                 d1[k1.lower()] = d1[k1]
@@ -208,10 +213,10 @@ if os.path.isfile('.f2py_f2cmap'):
                 else:
                     errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n" % (
                         k, k1, d[k][k1], d[k][k1], list(c2py_map.keys())))
-        outmess('Successfully applied user defined changes from .f2py_f2cmap\n')
+        outmess('Successfully applied user defined f2cmap changes\n')
     except Exception as msg:
         errmess(
-            'Failed to apply user defined changes from .f2py_f2cmap: %s. Skipping.\n' % (msg))
+            'Failed to apply user defined f2cmap changes: %s. Skipping.\n' % (msg))
 
 cformat_map = {'double': '%g',
                'float': '%g',
@@ -313,7 +318,6 @@ def getstrlength(var):
 
 
 def getarrdims(a, var, verbose=0):
-    global depargs
     ret = {}
     if isstring(var) and not isarray(var):
         ret['dims'] = getstrlength(var)
@@ -509,7 +513,6 @@ def sign2map(a, var):
     varrfromat
     intent
     """
-    global lcb_map, cb_map
     out_a = a
     if isintent_out(var):
         for k in var['intent']:

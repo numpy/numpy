@@ -1565,8 +1565,8 @@ Dragon4(BigInt *bigints, const npy_int32 exponent,
 /* Options struct for easy passing of Dragon4 options.
  *
  *   scientific - boolean controlling whether scientific notation is used
- *   digit_mode - whether to use unique or fixed fracional output
- *   cutoff_mode - whether 'precision' refers to toal digits, or digits past
+ *   digit_mode - whether to use unique or fixed fractional output
+ *   cutoff_mode - whether 'precision' refers to all digits, or digits past
  *                 the decimal point.
  *   precision - When negative, prints as many digits as needed for a unique
  *               number. When positive specifies the maximum number of
@@ -3093,7 +3093,7 @@ Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\
@@ -3130,7 +3130,7 @@ Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
-    ret = PyUString_FromString(scratch->repr);\
+    ret = PyUnicode_FromString(scratch->repr);\
     free_dragon4_bigint_scratch(scratch);\
     return ret;\
 }\
@@ -3183,19 +3183,19 @@ Dragon4_Positional(PyObject *obj, DigitMode digit_mode, CutoffMode cutoff_mode,
     opt.exp_digits = -1;
 
     if (PyArray_IsScalar(obj, Half)) {
-        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        npy_half x = PyArrayScalar_VAL(obj, Half);
         return Dragon4_Positional_Half_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Float)) {
-        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        npy_float x = PyArrayScalar_VAL(obj, Float);
         return Dragon4_Positional_Float_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Double)) {
-        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        npy_double x = PyArrayScalar_VAL(obj, Double);
         return Dragon4_Positional_Double_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
-        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
         return Dragon4_Positional_LongDouble_opt(&x, &opt);
     }
 
@@ -3224,19 +3224,19 @@ Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
     opt.exp_digits = exp_digits;
 
     if (PyArray_IsScalar(obj, Half)) {
-        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        npy_half x = PyArrayScalar_VAL(obj, Half);
         return Dragon4_Scientific_Half_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Float)) {
-        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        npy_float x = PyArrayScalar_VAL(obj, Float);
         return Dragon4_Scientific_Float_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, Double)) {
-        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        npy_double x = PyArrayScalar_VAL(obj, Double);
         return Dragon4_Scientific_Double_opt(&x, &opt);
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
-        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
         return Dragon4_Scientific_LongDouble_opt(&x, &opt);
     }
 

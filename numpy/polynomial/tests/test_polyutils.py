@@ -1,8 +1,6 @@
 """Tests for polyutils module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 import numpy.polynomial.polyutils as pu
 from numpy.testing import (
@@ -10,7 +8,7 @@ from numpy.testing import (
     )
 
 
-class TestMisc(object):
+class TestMisc:
 
     def test_trimseq(self):
         for i in range(5):
@@ -43,7 +41,7 @@ class TestMisc(object):
         assert_equal(pu.trimcoef(coef, 2), [0])
 
 
-class TestDomain(object):
+class TestDomain:
 
     def test_getdomain(self):
         # test for real values

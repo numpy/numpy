@@ -31,11 +31,10 @@ either expressed or implied, of David Wolever.
 
 """
 import re
-import sys
 import inspect
 import warnings
 from functools import wraps
-from types import MethodType as MethodType
+from types import MethodType
 from collections import namedtuple
 
 try:
@@ -44,30 +43,6 @@ except ImportError:
     MaybeOrderedDict = dict
 
 from unittest import TestCase
-
-PY2 = sys.version_info[0] == 2
-
-
-if PY2:
-    from types import InstanceType
-    lzip = zip
-    text_type = unicode
-    bytes_type = str
-    string_types = basestring,
-    def make_method(func, instance, type):
-        return MethodType(func, instance, type)
-else:
-    # Python 3 doesn't have an InstanceType, so just use a dummy type.
-    class InstanceType():
-        pass
-    lzip = lambda *a: list(zip(*a))
-    text_type = str
-    string_types = str,
-    bytes_type = bytes
-    def make_method(func, instance, type):
-        if instance is None:
-            return func
-        return MethodType(func, instance)
 
 _param = namedtuple("param", "args kwargs")
 
@@ -122,7 +97,7 @@ class param(_param):
             """
         if isinstance(args, param):
             return args
-        elif isinstance(args, string_types):
+        elif isinstance(args, (str,)):
             args = (args, )
         try:
             return cls(*args)
@@ -179,7 +154,7 @@ def parameterized_argument_value_pairs(func, p):
 
     named_args = argspec.args[arg_offset:]
 
-    result = lzip(named_args, p.args)
+    result = list(zip(named_args, p.args))
     named_args = argspec.args[len(result) + arg_offset:]
     varargs = p.args[len(result):]
 
@@ -214,11 +189,11 @@ def short_repr(x, n=64):
     """
 
     x_repr = repr(x)
-    if isinstance(x_repr, bytes_type):
+    if isinstance(x_repr, bytes):
         try:
-            x_repr = text_type(x_repr, "utf-8")
+            x_repr = str(x_repr, "utf-8")
         except UnicodeDecodeError:
-            x_repr = text_type(x_repr, "latin1")
+            x_repr = str(x_repr, "latin1")
     if len(x_repr) > n:
         x_repr = x_repr[:n//2] + "..." + x_repr[len(x_repr) - n//2:]
     return x_repr
@@ -246,7 +221,7 @@ def default_doc_func(func, num, p):
 def default_name_func(func, num, p):
     base_name = func.__name__
     name_suffix = "_%s" %(num, )
-    if len(p.args) > 0 and isinstance(p.args[0], string_types):
+    if len(p.args) > 0 and isinstance(p.args[0], (str,)):
         name_suffix += "_" + parameterized.to_safe_name(p.args[0])
     return base_name + name_suffix
 
@@ -271,7 +246,7 @@ def set_test_runner(name):
 def detect_runner():
     """ Guess which test runner we're using by traversing the stack and looking
         for the first matching module. This *should* be reasonably safe, as
-        it's done during test disocvery where the test runner should be the
+        it's done during test discovery where the test runner should be the
         stack frame immediately outside. """
     if _test_runner_override is not None:
         return _test_runner_override
@@ -286,17 +261,14 @@ def detect_runner():
             if module in _test_runners:
                 _test_runner_guess = module
                 break
-            if record[1].endswith("python2.6/unittest.py"):
-                _test_runner_guess = "unittest"
-                break
         else:
             _test_runner_guess = None
     return _test_runner_guess
 
-class parameterized(object):
+class parameterized:
     """ Parameterize a test case::
 
-            class TestInt(object):
+            class TestInt:
                 @parameterized([
                     ("A", 10),
                     ("F", 15),
@@ -324,15 +296,6 @@ class parameterized(object):
         @wraps(test_func)
         def wrapper(test_self=None):
             test_cls = test_self and type(test_self)
-            if test_self is not None:
-                if issubclass(test_cls, InstanceType):
-                    raise TypeError((
-                        "@parameterized can't be used with old-style classes, but "
-                        "%r has an old-style class. Consider using a new-style "
-                        "class, or '@parameterized.expand' "
-                        "(see http://stackoverflow.com/q/54867/71522 for more "
-                        "information on old-style classes)."
-                    ) %(test_self, ))
 
             original_doc = wrapper.__doc__
             for num, args in enumerate(wrapper.parameterized_input):
@@ -365,15 +328,7 @@ class parameterized(object):
         # Python 3 doesn't let us pull the function out of a bound method.
         unbound_func = nose_func
         if test_self is not None:
-            # Under nose on Py2 we need to return an unbound method to make
-            # sure that the `self` in the method is properly shared with the
-            # `self` used in `setUp` and `tearDown`. But only there. Everyone
-            # else needs a bound method.
-            func_self = (
-                None if PY2 and detect_runner() == "nose" else
-                test_self
-            )
-            nose_func = make_method(nose_func, func_self, type(test_self))
+            nose_func = MethodType(nose_func, test_self)
         return unbound_func, (nose_func, ) + p.args + (p.kwargs or {}, )
 
     def assert_not_in_testcase_subclass(self):

@@ -1,4 +1,4 @@
-# <img alt="NumPy" src="https://cdn.rawgit.com/numpy/numpy/master/branding/icons/numpylogo.svg" height="60">
+# <img alt="NumPy" src="https://ghcdn.rawgit.org/numpy/numpy/master/branding/icons/primary/numpylogo.svg" height="60">
 
 [![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](
     https://travis-ci.org/numpy/numpy)
@@ -10,7 +10,7 @@
 NumPy is the fundamental package needed for scientific computing with Python.
 
 - **Website:** https://www.numpy.org
-- **Documentation:** https://docs.scipy.org/
+- **Documentation:** https://numpy.org/doc
 - **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
 - **Source code:** https://github.com/numpy/numpy
 - **Contributing:** https://www.numpy.org/devdocs/dev/index.html

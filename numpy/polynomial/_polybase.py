@@ -6,8 +6,7 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-from __future__ import division, absolute_import, print_function
-
+import os
 import abc
 import numbers
 
@@ -69,6 +68,37 @@ class ABCPolyBase(abc.ABC):
     # Limit runaway size. T_n^m has degree n*m
     maxpower = 100
 
+    # Unicode character mappings for improved __str__
+    _superscript_mapping = str.maketrans({
+        "0": "⁰",
+        "1": "¹",
+        "2": "²",
+        "3": "³",
+        "4": "⁴",
+        "5": "⁵",
+        "6": "⁶",
+        "7": "⁷",
+        "8": "⁸",
+        "9": "⁹"
+    })
+    _subscript_mapping = str.maketrans({
+        "0": "₀",
+        "1": "₁",
+        "2": "₂",
+        "3": "₃",
+        "4": "₄",
+        "5": "₅",
+        "6": "₆",
+        "7": "₇",
+        "8": "₈",
+        "9": "₉"
+    })
+    # Some fonts don't support full unicode character ranges necessary for
+    # the full set of superscripts and subscripts, including common/default
+    # fonts in Windows shells/terminals. Therefore, default to ascii-only
+    # printing on windows.
+    _use_unicode = not os.name == 'nt'
+
     @property
     @abc.abstractmethod
     def domain(self):
@@ -77,11 +107,6 @@ class ABCPolyBase(abc.ABC):
     @property
     @abc.abstractmethod
     def window(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def nickname(self):
         pass
 
     @property
@@ -279,18 +304,94 @@ class ABCPolyBase(abc.ABC):
             self.window = window
 
     def __repr__(self):
-        format = "%s(%s, domain=%s, window=%s)"
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
         window = repr(self.window)[6:-1]
         name = self.__class__.__name__
-        return format % (name, coef, domain, window)
+        return f"{name}({coef}, domain={domain}, window={window})"
+
+    def __format__(self, fmt_str):
+        if fmt_str == '':
+            return self.__str__()
+        if fmt_str not in ('ascii', 'unicode'):
+            raise ValueError(
+                f"Unsupported format string '{fmt_str}' passed to "
+                f"{self.__class__}.__format__. Valid options are "
+                f"'ascii' and 'unicode'"
+            )
+        if fmt_str == 'ascii':
+            return self._generate_string(self._str_term_ascii)
+        return self._generate_string(self._str_term_unicode)
 
     def __str__(self):
-        format = "%s(%s)"
-        coef = str(self.coef)
-        name = self.nickname
-        return format % (name, coef)
+        if self._use_unicode:
+            return self._generate_string(self._str_term_unicode)
+        return self._generate_string(self._str_term_ascii)
+
+    def _generate_string(self, term_method):
+        """
+        Generate the full string representation of the polynomial, using
+        ``term_method`` to generate each polynomial term.
+        """
+        # Get configuration for line breaks
+        linewidth = np.get_printoptions().get('linewidth', 75)
+        if linewidth < 1:
+            linewidth = 1
+        out = f"{self.coef[0]}"
+        for i, coef in enumerate(self.coef[1:]):
+            out += " "
+            power = str(i + 1)
+            # Polynomial coefficient
+            # The coefficient array can be an object array with elements that
+            # will raise a TypeError with >= 0 (e.g. strings or Python
+            # complex). In this case, represent the coeficient as-is.
+            try:
+                if coef >= 0:
+                    next_term = f"+ {coef}"
+                else:
+                    next_term = f"- {-coef}"
+            except TypeError:
+                next_term = f"+ {coef}"
+            # Polynomial term
+            next_term += term_method(power, "x")
+            # Length of the current line with next term added
+            line_len = len(out.split('\n')[-1]) + len(next_term)
+            # If not the last term in the polynomial, it will be two
+            # characters longer due to the +/- with the next term
+            if i < len(self.coef[1:]) - 1:
+                line_len += 2
+            # Handle linebreaking
+            if line_len >= linewidth:
+                next_term = next_term.replace(" ", "\n", 1)
+            out += next_term
+        return out
+
+    @classmethod
+    def _str_term_unicode(cls, i, arg_str):
+        """
+        String representation of single polynomial term using unicode
+        characters for superscripts and subscripts.
+        """
+        if cls.basis_name is None:
+            raise NotImplementedError(
+                "Subclasses must define either a basis_name, or override "
+                "_str_term_unicode(cls, i, arg_str)"
+            )
+        return (f"·{cls.basis_name}{i.translate(cls._subscript_mapping)}"
+                f"({arg_str})")
+
+    @classmethod
+    def _str_term_ascii(cls, i, arg_str):
+        """
+        String representation of a single polynomial term using ** and _ to
+        represent superscripts and subscripts, respectively.
+        """
+        if cls.basis_name is None:
+            raise NotImplementedError(
+                "Subclasses must define either a basis_name, or override "
+                "_str_term_ascii(cls, i, arg_str)"
+            )
+        return f" {cls.basis_name}_{i}({arg_str})"
 
     @classmethod
     def _repr_latex_term(cls, i, arg_str, needs_parens):
@@ -299,9 +400,7 @@ class ABCPolyBase(abc.ABC):
                 "Subclasses must define either a basis name, or override "
                 "_repr_latex_term(i, arg_str, needs_parens)")
         # since we always add parens, we don't care if the expression needs them
-        return "{{{basis}}}_{{{i}}}({arg_str})".format(
-            basis=cls.basis_name, i=i, arg_str=arg_str
-        )
+        return f"{{{cls.basis_name}}}_{{{i}}}({arg_str})"
 
     @staticmethod
     def _repr_latex_scalar(x):
@@ -316,19 +415,15 @@ class ABCPolyBase(abc.ABC):
             term = 'x'
             needs_parens = False
         elif scale == 1:
-            term = '{} + x'.format(
-                self._repr_latex_scalar(off)
-            )
+            term = f"{self._repr_latex_scalar(off)} + x"
             needs_parens = True
         elif off == 0:
-            term = '{}x'.format(
-                self._repr_latex_scalar(scale)
-            )
+            term = f"{self._repr_latex_scalar(scale)}x"
             needs_parens = True
         else:
-            term = '{} + {}x'.format(
-                self._repr_latex_scalar(off),
-                self._repr_latex_scalar(scale)
+            term = (
+                f"{self._repr_latex_scalar(off)} + "
+                f"{self._repr_latex_scalar(scale)}x"
             )
             needs_parens = True
 
@@ -338,20 +433,20 @@ class ABCPolyBase(abc.ABC):
         for i, c in enumerate(self.coef):
             # prevent duplication of + and - signs
             if i == 0:
-                coef_str = '{}'.format(self._repr_latex_scalar(c))
+                coef_str = f"{self._repr_latex_scalar(c)}"
             elif not isinstance(c, numbers.Real):
-                coef_str = ' + ({})'.format(self._repr_latex_scalar(c))
+                coef_str = f" + ({self._repr_latex_scalar(c)})"
             elif not np.signbit(c):
-                coef_str = ' + {}'.format(self._repr_latex_scalar(c))
+                coef_str = f" + {self._repr_latex_scalar(c)}"
             else:
-                coef_str = ' - {}'.format(self._repr_latex_scalar(-c))
+                coef_str = f" - {self._repr_latex_scalar(-c)}"
 
             # produce the string for the term
             term_str = self._repr_latex_term(i, term, needs_parens)
             if term_str == '1':
                 part = coef_str
             else:
-                part = r'{}\,{}'.format(coef_str, term_str)
+                part = rf"{coef_str}\,{term_str}"
 
             if c == 0:
                 part = mute(part)
@@ -364,7 +459,7 @@ class ABCPolyBase(abc.ABC):
             # in case somehow there are no coefficients at all
             body = '0'
 
-        return r'$x \mapsto {}$'.format(body)
+        return rf"$x \mapsto {body}$"
 
 
 
@@ -425,17 +520,15 @@ class ABCPolyBase(abc.ABC):
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
-    def __div__(self, other):
-        # this can be removed when python 2 support is dropped.
-        return self.__floordiv__(other)
-
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
         # could return the first n elements of an infinite series.
         # It is hard to see where n would come from, though.
         if not isinstance(other, numbers.Number) or isinstance(other, bool):
-            form = "unsupported types for true division: '%s', '%s'"
-            raise TypeError(form % (type(self), type(other)))
+            raise TypeError(
+                f"unsupported types for true division: "
+                f"'{type(self)}', '{type(other)}'"
+            )
         return self.__floordiv__(other)
 
     def __floordiv__(self, other):
@@ -454,8 +547,8 @@ class ABCPolyBase(abc.ABC):
         othercoef = self._get_coefficients(other)
         try:
             quo, rem = self._div(self.coef, othercoef)
-        except ZeroDivisionError as e:
-            raise e
+        except ZeroDivisionError:
+            raise
         except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
@@ -512,8 +605,8 @@ class ABCPolyBase(abc.ABC):
     def __rdivmod__(self, other):
         try:
             quo, rem = self._div(other, self.coef)
-        except ZeroDivisionError as e:
-            raise e
+        except ZeroDivisionError:
+            raise
         except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
@@ -821,10 +914,8 @@ class ABCPolyBase(abc.ABC):
         ----------
         x : array_like, shape (M,)
             x-coordinates of the M sample points ``(x[i], y[i])``.
-        y : array_like, shape (M,) or (M, K)
-            y-coordinates of the sample points. Several data sets of sample
-            points sharing the same x-coordinates can be fitted at once by
-            passing in a 2D-array that contains one dataset per column.
+        y : array_like, shape (M,)
+            y-coordinates of the M sample points ``(x[i], y[i])``.
         deg : int or 1-D array_like
             Degree(s) of the fitting polynomials. If `deg` is a single integer
             all terms up to and including the `deg`'th term are included in the

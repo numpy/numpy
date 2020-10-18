@@ -1,2 +1,0 @@
-* UFuncs with multiple outputs must use a tuple for the `out` kwarg. This
-  finishes a deprecation started in NumPy 1.10.

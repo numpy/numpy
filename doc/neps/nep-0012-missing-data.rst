@@ -1,3 +1,5 @@
+.. _NEP12:
+
 ============================================
 NEP 12 — Missing Data Functionality in NumPy
 ============================================
@@ -313,7 +315,7 @@ The following works in the current draft implementation::
 For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs in an array with default
 missing value support, an unmasked Inf or NaN will be produced. To
-mask those values, a further 'a[np.logical_not(a.isfinite(a)] = np.NA'
+mask those values, a further 'a[np.logical_not(a.isfinite(a))] = np.NA'
 can achieve that. For the bitpattern approach, the parameterized
 dtype('NA[f8,InfNan]') described in a later section can be used to get
 these semantics without the extra manipulation.
@@ -926,7 +928,7 @@ to access the array elements. This python indexing still goes through the
 Python API, so the NA handling and error checking in numpy still can work
 like normal and fail if the inputs have NAs which cannot fit in the output
 array. In this case it fails when trying to convert the NA into an integer
-to set in in the output.
+to set in the output.
 
 The next version of the code introduces more efficient indexing. This
 operates based on Python's buffer protocol. This causes Cython to call

@@ -44,7 +44,7 @@ arguments may be forwarded to the target embedded by ``runtests.py`` by passing
 the extra arguments after a bare ``--``. For example, to run a test method with
 the ``--pdb`` flag forwarded to the target, run the following::
 
-    $ python runtests.py -t numpy/tests/test_scripts.py:test_f2py -- --pdb
+    $ python runtests.py -t numpy/tests/test_scripts.py::test_f2py -- --pdb
 
 When using pytest as a target (the default), you can
 `match test names using python operators`_ by passing the ``-k`` argument to pytest::
@@ -53,11 +53,21 @@ When using pytest as a target (the default), you can
 
 .. note::
 
-    Remember that all tests of NumPy should pass before commiting your changes.
+    Remember that all tests of NumPy should pass before committing your changes.
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
 build or installing to a virtualenv. See the FAQ below for details.
+
+.. note::
+
+   Some of the tests in the test suite require a large amount of
+   memory, and are skipped if your system does not have enough.
+
+   To override the automatic detection of available memory, set the
+   environment variable ``NPY_AVAILABLE_MEM``, for example
+   ``NPY_AVAILABLE_MEM=32GB``, or using pytest ``--available-memory=32GB``
+   target option.
 
 
 Building in-place
@@ -145,7 +155,7 @@ Running tests
 Besides using ``runtests.py``, there are various ways to run the tests.  Inside
 the interpreter, tests can be run like this::
 
-    >>> np.test()
+    >>> np.test()  # doctest: +SKIPBLOCK
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 
@@ -201,10 +211,20 @@ Debugging
 ---------
 
 Another frequently asked question is "How do I debug C code inside NumPy?".
-The easiest way to do this is to first write a Python script that invokes the C
-code whose execution you want to debug. For instance ``mytest.py``::
+First, ensure that you have gdb installed on your system with the Python
+extensions (often the default on Linux). You can see which version of
+Python is running inside gdb to verify your setup::
 
-    from numpy import linspace
+    (gdb) python
+    >import sys
+    >print(sys.version_info)
+    >end
+    sys.version_info(major=3, minor=7, micro=0, releaselevel='final', serial=0)
+
+Next you need to write a Python script that invokes the C code whose execution
+you want to debug. For instance ``mytest.py``::
+
+    import numpy as np
     x = np.arange(5)
     np.empty_like(x)
 
@@ -218,10 +238,14 @@ And then in the debugger::
     (gdb) run
 
 The execution will now stop at the corresponding C function and you can step
-through it as usual.  With the Python extensions for gdb installed (often the
-default on Linux), a number of useful Python-specific commands are available.
+through it as usual. A number of useful Python-specific commands are available.
 For example to see where in the Python code you are, use ``py-list``.  For more
-details, see `DebuggingWithGdb`_.
+details, see `DebuggingWithGdb`_. Here are some commonly used commands:
+
+   - ``list``: List specified function or line.
+   - ``next``: Step program, proceeding through subroutine calls.
+   - ``step``: Continue program being debugged, after signal or breakpoint.
+   - ``print``: Print value of expression EXP.
 
 Instead of plain ``gdb`` you can of course use your favourite
 alternative debugger; run it on the python binary with arguments

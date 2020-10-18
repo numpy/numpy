@@ -37,7 +37,7 @@ objects implementing the :class:`buffer` or :ref:`array
 
    >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
    >>> type(x)
-   <type 'numpy.ndarray'>
+   <class 'numpy.ndarray'>
    >>> x.shape
    (2, 3)
    >>> x.dtype
@@ -47,6 +47,7 @@ objects implementing the :class:`buffer` or :ref:`array
 
    >>> # The element of x in the *second* row, *third* column, namely, 6.
    >>> x[1, 2]
+   6
 
    For example :ref:`slicing <arrays.indexing>` can produce views of
    the array:
@@ -132,6 +133,11 @@ Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 single-segment, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
 
+.. note::
+
+    `Contiguous arrays` and `single-segment arrays` are synonymous
+    and are used interchangeably throughout the documentation.
+
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
@@ -157,10 +163,12 @@ base offset itself is a multiple of `self.itemsize`. Understanding
 
 .. note::
 
-    Points (1) and (2) are not yet applied by default. Beginning with
-    NumPy 1.8.0, they are applied consistently only if the environment
-    variable ``NPY_RELAXED_STRIDES_CHECKING=1`` was defined when NumPy
-    was built. Eventually this will become the default.
+    Points (1) and (2) can currently be disabled by the compile time
+    environmental variable ``NPY_RELAXED_STRIDES_CHECKING=0``,
+    which was the default before NumPy 1.10.
+    No users should have to do this. ``NPY_RELAXED_STRIDES_DEBUG=1``
+    can be used to help find errors when incorrectly relying on the strides
+    in C-extension code (see below warning).
 
     You can check whether this option was enabled when your NumPy was
     built by looking at the value of ``np.ones((10,1),
@@ -371,6 +379,7 @@ Many of these methods take an argument named *axis*. In such cases,
    A 3-dimensional array of size 3 x 3 x 3, summed over each of its
    three axes
 
+   >>> x = np.arange(27).reshape((3,3,3))
    >>> x
    array([[[ 0,  1,  2],
            [ 3,  4,  5],
@@ -511,10 +520,6 @@ Arithmetic:
 
    - Any third argument to :func:`pow()` is silently ignored,
      as the underlying :func:`ufunc <power>` takes only two arguments.
-
-   - The three division operators are all defined; :obj:`div` is active
-     by default, :obj:`truediv` is active when
-     :obj:`__future__` division is in effect.
 
    - Because :class:`ndarray` is a built-in type (written in C), the
      ``__r{op}__`` special methods are not directly defined.

@@ -15,17 +15,16 @@ available in your version of Python.
 The preferred alias for `defchararray` is `numpy.char`.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import sys
-from .numerictypes import string_, unicode_, integer, object_, bool_, character
+from .numerictypes import (
+    string_, unicode_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.core.overrides import set_module
 from numpy.core import overrides
-from numpy.compat import asbytes, long
+from numpy.compat import asbytes
 import numpy
 
 __all__ = [
@@ -42,13 +41,6 @@ __all__ = [
 
 
 _globalvar = 0
-if sys.version_info[0] >= 3:
-    _unicode = str
-    _bytes = bytes
-else:
-    _unicode = unicode
-    _bytes = str
-_len = len
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.char')
@@ -63,7 +55,7 @@ def _use_unicode(*args):
     result should be unicode.
     """
     for x in args:
-        if (isinstance(x, _unicode) or
+        if (isinstance(x, str) or
                 issubclass(numpy.asarray(x).dtype.type, unicode_)):
             return unicode_
     return string_
@@ -122,8 +114,8 @@ def equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -148,8 +140,8 @@ def not_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -175,8 +167,8 @@ def greater_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -201,8 +193,8 @@ def less_equal(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -227,8 +219,8 @@ def greater(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -253,8 +245,8 @@ def less(x1, x2):
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray
+        Output array of bools.
 
     See Also
     --------
@@ -283,9 +275,12 @@ def str_len(a):
 
     See also
     --------
-    __builtin__.len
+    builtins.len
     """
-    return _vec_string(a, integer, '__len__')
+    # Note: __len__, etc. currently return ints, which are not C-integers.
+    # Generally intp would be expected for lengths, although int is sufficient
+    # due to the dtype itemsize limitation.
+    return _vec_string(a, int_, '__len__')
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -345,7 +340,7 @@ def multiply(a, i):
     i_arr = numpy.asarray(i)
     if not issubclass(i_arr.dtype.type, integer):
         raise ValueError("Can only multiply by integers")
-    out_size = _get_num_chars(a_arr) * max(long(i_arr.max()), 0)
+    out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
 
@@ -358,7 +353,7 @@ def _mod_dispatcher(a, values):
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
-    (iterpolation), element-wise for a pair of array_likes of str
+    (interpolation), element-wise for a pair of array_likes of str
     or unicode.
 
     Parameters
@@ -455,7 +450,7 @@ def center(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -509,7 +504,7 @@ def count(a, sub, start=0, end=None):
     array([1, 0, 0])
 
     """
-    return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
+    return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
@@ -719,7 +714,7 @@ def find(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'find', [sub, start] + _clean_args(end))
+        a, int_, 'find', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -748,7 +743,7 @@ def index(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'index', [sub, start] + _clean_args(end))
+        a, int_, 'index', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1000,7 +995,7 @@ def ljust(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -1208,7 +1203,7 @@ def rfind(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'rfind', [sub, start] + _clean_args(end))
+        a, int_, 'rfind', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1238,7 +1233,7 @@ def rindex(a, sub, start=0, end=None):
 
     """
     return _vec_string(
-        a, integer, 'rindex', [sub, start] + _clean_args(end))
+        a, int_, 'rindex', [sub, start] + _clean_args(end))
 
 
 @array_function_dispatch(_just_dispatcher)
@@ -1270,7 +1265,7 @@ def rjust(a, width, fillchar=' '):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
@@ -1738,7 +1733,7 @@ def zfill(a, width):
     """
     a_arr = numpy.asarray(a)
     width_arr = numpy.asarray(width)
-    size = long(numpy.max(width_arr.flat))
+    size = int(numpy.max(width_arr.flat))
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
 
@@ -1784,7 +1779,7 @@ def isdecimal(a):
     Calls `unicode.isdecimal` element-wise.
 
     Decimal characters include digit characters, and all characters
-    that that can be used to form decimal-radix numbers,
+    that can be used to form decimal-radix numbers,
     e.g. ``U+0660, ARABIC-INDIC DIGIT ZERO``.
 
     Parameters
@@ -1917,7 +1912,7 @@ class chararray(ndarray):
     unicode : bool, optional
         Are the array elements of type unicode (True) or string (False).
         Default is False.
-    buffer : int, optional
+    buffer : object exposing the buffer interface or str, optional
         Memory address of the start of the array data.  Default is None,
         in which case a new array is created.
     offset : int, optional
@@ -1957,13 +1952,13 @@ class chararray(ndarray):
         else:
             dtype = string_
 
-        # force itemsize to be a Python long, since using NumPy integer
+        # force itemsize to be a Python int, since using NumPy integer
         # types results in itemsize.itemsize being used as the size of
         # strings in the new array.
-        itemsize = long(itemsize)
+        itemsize = int(itemsize)
 
-        if sys.version_info[0] >= 3 and isinstance(buffer, _unicode):
-            # On Py3, unicode objects do not have the buffer interface
+        if isinstance(buffer, str):
+            # unicode objects do not have the buffer interface
             filler = buffer
             buffer = None
         else:
@@ -1993,7 +1988,7 @@ class chararray(ndarray):
 
         if isinstance(val, character):
             temp = val.rstrip()
-            if _len(temp) == 0:
+            if len(temp) == 0:
                 val = ''
             else:
                 val = temp
@@ -2112,7 +2107,7 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (iterpolation), element-wise for a pair of array_likes of `string_`
+        (interpolation), element-wise for a pair of array_likes of `string_`
         or `unicode_`.
 
         See also
@@ -2677,35 +2672,16 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
     """
-    if isinstance(obj, (_bytes, _unicode)):
+    if isinstance(obj, (bytes, str)):
         if unicode is None:
-            if isinstance(obj, _unicode):
+            if isinstance(obj, str):
                 unicode = True
             else:
                 unicode = False
 
         if itemsize is None:
-            itemsize = _len(obj)
-        shape = _len(obj) // itemsize
-
-        if unicode:
-            if sys.maxunicode == 0xffff:
-                # On a narrow Python build, the buffer for Unicode
-                # strings is UCS2, which doesn't match the buffer for
-                # NumPy Unicode types, which is ALWAYS UCS4.
-                # Therefore, we need to convert the buffer.  On Python
-                # 2.6 and later, we can use the utf_32 codec.  Earlier
-                # versions don't have that codec, so we convert to a
-                # numerical array that matches the input buffer, and
-                # then use NumPy to convert it to UCS4.  All of this
-                # should happen in native endianness.
-                obj = obj.encode('utf_32')
-            else:
-                obj = _unicode(obj)
-        else:
-            # Let the default Unicode -> string encoding (if any) take
-            # precedence.
-            obj = _bytes(obj)
+            itemsize = len(obj)
+        shape = len(obj) // itemsize
 
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)
@@ -2744,7 +2720,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 (itemsize != obj.itemsize) or
                 (not unicode and isinstance(obj, unicode_)) or
                 (unicode and isinstance(obj, string_))):
-            obj = obj.astype((dtype, long(itemsize)))
+            obj = obj.astype((dtype, int(itemsize)))
         return obj
 
     if isinstance(obj, ndarray) and issubclass(obj.dtype.type, object):

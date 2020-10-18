@@ -4,6 +4,9 @@ Discrete Fourier Transform (:mod:`numpy.fft`)
 
 .. currentmodule:: numpy.fft
 
+The SciPy module `scipy.fft` is a more comprehensive superset
+of ``numpy.fft``, which includes only a basic set of routines.
+
 Standard FFTs
 -------------
 
@@ -118,13 +121,27 @@ The inverse DFT is defined as
 It differs from the forward transform by the sign of the exponential
 argument and the default normalization by :math:`1/n`.
 
+Type Promotion
+--------------
+
+`numpy.fft` promotes ``float32`` and ``complex64`` arrays to ``float64`` and
+``complex128`` arrays respectively. For an FFT implementation that does not
+promote input arrays, see `scipy.fftpack`.
+
 Normalization
 -------------
-The default normalization has the direct transforms unscaled and the inverse
-transforms are scaled by :math:`1/n`. It is possible to obtain unitary
-transforms by setting the keyword argument ``norm`` to ``"ortho"`` (default is
-`None`) so that both direct and inverse transforms will be scaled by
-:math:`1/\\sqrt{n}`.
+
+The argument ``norm`` indicates which direction of the pair of direct/inverse
+transforms is scaled and with what normalization factor.
+The default normalization (``"backward"``) has the direct (forward) transforms
+unscaled and the inverse (backward) transforms scaled by :math:`1/n`. It is
+possible to obtain unitary transforms by setting the keyword argument ``norm``
+to ``"ortho"`` so that both direct and inverse transforms are scaled by
+:math:`1/\\sqrt{n}`. Finally, setting the keyword argument ``norm`` to
+``"forward"`` has the direct transforms scaled by :math:`1/n` and the inverse
+transforms unscaled (i.e. exactly opposite to the default ``"backward"``).
+`None` is an alias of the default option ``"backward"`` for backward
+compatibility.
 
 Real and Hermitian transforms
 -----------------------------
@@ -182,8 +199,6 @@ Examples
 For examples, see the various functions.
 
 """
-
-from __future__ import division, absolute_import, print_function
 
 from ._pocketfft import *
 from .helper import *

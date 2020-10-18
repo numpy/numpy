@@ -94,8 +94,11 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         return -1;
     }
     /* borrowed reference */
-    *out_kwd_obj = PyDict_GetItemString(kwds, "out");
+    *out_kwd_obj = _PyDict_GetItemStringWithError(kwds, "out");
     if (*out_kwd_obj == NULL) {
+        if (PyErr_Occurred()) {
+            return -1;
+        }
         Py_INCREF(Py_None);
         *out_kwd_obj = Py_None;
         return 0;

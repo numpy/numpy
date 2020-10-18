@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 
 import numpy
 import numpy as np
@@ -24,10 +22,11 @@ except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
 
-class TestDateTime(object):
+class TestDateTime:
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
+                     'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
@@ -75,6 +74,15 @@ class TestDateTime(object):
         # Can cast safely/same_kind from integer to timedelta
         assert_(np.can_cast('i8', 'm8', casting='same_kind'))
         assert_(np.can_cast('i8', 'm8', casting='safe'))
+        assert_(np.can_cast('i4', 'm8', casting='same_kind'))
+        assert_(np.can_cast('i4', 'm8', casting='safe'))
+        assert_(np.can_cast('u4', 'm8', casting='same_kind'))
+        assert_(np.can_cast('u4', 'm8', casting='safe'))
+
+        # Cannot cast safely from unsigned integer of the same size, which
+        # could overflow
+        assert_(np.can_cast('u8', 'm8', casting='same_kind'))
+        assert_(not np.can_cast('u8', 'm8', casting='safe'))
 
         # Cannot cast safely/same_kind from float to timedelta
         assert_(not np.can_cast('f4', 'm8', casting='same_kind'))
@@ -135,6 +143,50 @@ class TestDateTime(object):
                 np.datetime64('2000') + np.timedelta64('NaT'))
         assert_(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
         assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
+
+    @pytest.mark.parametrize("size", [
+        3, 21, 217, 1000])
+    def test_datetime_nat_argsort_stability(self, size):
+        # NaT < NaT should be False internally for
+        # sort stability
+        expected = np.arange(size)
+        arr = np.tile(np.datetime64('NaT'), size)
+        assert_equal(np.argsort(arr, kind='mergesort'), expected)
+    
+    @pytest.mark.parametrize("size", [
+        3, 21, 217, 1000])
+    def test_timedelta_nat_argsort_stability(self, size):
+        # NaT < NaT should be False internally for
+        # sort stability
+        expected = np.arange(size)
+        arr = np.tile(np.timedelta64('NaT'), size)
+        assert_equal(np.argsort(arr, kind='mergesort'), expected)
+
+    @pytest.mark.parametrize("arr, expected", [
+        # the example provided in gh-12629
+        (['NaT', 1, 2, 3],
+         [1, 2, 3, 'NaT']),
+        # multiple NaTs
+        (['NaT', 9, 'NaT', -707],
+         [-707, 9, 'NaT', 'NaT']),
+        # this sort explores another code path for NaT
+        ([1, -2, 3, 'NaT'],
+         [-2, 1, 3, 'NaT']),
+        # 2-D array
+        ([[51, -220, 'NaT'],
+          [-17, 'NaT', -90]],
+         [[-220, 51, 'NaT'],
+          [-90, -17, 'NaT']]),
+        ])
+    @pytest.mark.parametrize("dtype", [
+        'M8[ns]', 'M8[us]',
+        'm8[ns]', 'm8[us]'])
+    def test_datetime_timedelta_sort_nat(self, arr, expected, dtype):
+        # fix for gh-12629 and gh-15063; NaT sorting to end of array
+        arr = np.array(arr, dtype=dtype)
+        expected = np.array(expected, dtype=dtype)
+        arr.sort()
+        assert_equal(arr, expected)
 
     def test_datetime_scalar_construction(self):
         # Construct with different units
@@ -724,6 +776,12 @@ class TestDateTime(object):
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[M]'), np.dtype('m8[W]'))
+        # timedelta and float cannot be safely cast with each other
+        assert_raises(TypeError, np.promote_types, "float32", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "float32")
+        assert_raises(TypeError, np.promote_types, "uint64", "m8")
+        assert_raises(TypeError, np.promote_types, "m8", "uint64")
+
         # timedelta <op> timedelta may overflow with big unit ranges
         assert_raises(OverflowError, np.promote_types,
                             np.dtype('m8[W]'), np.dtype('m8[fs]'))
@@ -1361,6 +1419,10 @@ class TestDateTime(object):
         assert_equal(np.minimum(dtnat, a), dtnat)
         assert_equal(np.maximum(a, dtnat), dtnat)
         assert_equal(np.maximum(dtnat, a), dtnat)
+        assert_equal(np.fmin(dtnat, a), a)
+        assert_equal(np.fmin(a, dtnat), a)
+        assert_equal(np.fmax(dtnat, a), a)
+        assert_equal(np.fmax(a, dtnat), a)
 
         # Also do timedelta
         a = np.array(3, dtype='m8[h]')
@@ -1592,8 +1654,9 @@ class TestDateTime(object):
                      '1959-10-13T12:34:56')
         assert_equal(np.datetime_as_string(np.datetime64(datetime, 'ms')),
                      '1959-10-13T12:34:56.789')
-        assert_equal(np.datetime_as_string(np.datetime64(datetime, 'us')),
-                     '1959-10-13T12:34:56.789012')
+        for us in ['us', 'μs', b'us']:  # check non-ascii and bytes too
+            assert_equal(np.datetime_as_string(np.datetime64(datetime, us)),
+                         '1959-10-13T12:34:56.789012')
 
         datetime = '1969-12-31T23:34:56.789012345678901234'
 
@@ -2232,7 +2295,7 @@ class TestDateTime(object):
                 continue
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
 
-    def test_isfinite(self):
+    def test_isfinite_scalar(self):
         assert_(not np.isfinite(np.datetime64('NaT', 'ms')))
         assert_(not np.isfinite(np.datetime64('NaT', 'ns')))
         assert_(np.isfinite(np.datetime64('2038-01-19T03:14:07')))
@@ -2240,18 +2303,25 @@ class TestDateTime(object):
         assert_(not np.isfinite(np.timedelta64('NaT', "ms")))
         assert_(np.isfinite(np.timedelta64(34, "ms")))
 
-        res = np.array([True, True,  False])
-        for unit in ['Y', 'M', 'W', 'D',
-                     'h', 'm', 's', 'ms', 'us',
-                     'ns', 'ps', 'fs', 'as']:
-            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
+    @pytest.mark.parametrize('unit', ['Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms',
+                                      'us', 'ns', 'ps', 'fs', 'as'])
+    @pytest.mark.parametrize('dstr', ['<datetime64[%s]', '>datetime64[%s]',
+                                      '<timedelta64[%s]', '>timedelta64[%s]'])
+    def test_isfinite_isinf_isnan_units(self, unit, dstr):
+        '''check isfinite, isinf, isnan for all units of <M, >M, <m, >m dtypes
+        '''
+        arr_val = [123, -321, "NaT"]
+        arr = np.array(arr_val,  dtype= dstr % unit)
+        pos = np.array([True, True,  False])
+        neg = np.array([False, False,  True])
+        false = np.array([False, False,  False])
+        assert_equal(np.isfinite(arr), pos)
+        assert_equal(np.isinf(arr), false)
+        assert_equal(np.isnan(arr), neg)
+
+    def test_assert_equal(self):
+        assert_raises(AssertionError, assert_equal,
+                np.datetime64('nat'), np.timedelta64('nat'))
 
     def test_corecursive_input(self):
         # construct a co-recursive list
@@ -2261,9 +2331,21 @@ class TestDateTime(object):
         obj_arr = np.array([None])
         obj_arr[0] = a
 
-        # gh-11154: This shouldn't cause a C stack overflow
-        assert_raises(RecursionError, obj_arr.astype, 'M8')
-        assert_raises(RecursionError, obj_arr.astype, 'm8')
+        # At some point this caused a stack overflow (gh-11154). Now raises
+        # ValueError since the nested list cannot be converted to a datetime.
+        assert_raises(ValueError, obj_arr.astype, 'M8')
+        assert_raises(ValueError, obj_arr.astype, 'm8')
+
+    @pytest.mark.parametrize("shape", [(), (1,)])
+    def test_discovery_from_object_array(self, shape):
+        arr = np.array("2020-10-10", dtype=object).reshape(shape)
+        res = np.array("2020-10-10", dtype="M8").reshape(shape)
+        assert res.dtype == np.dtype("M8[D]")
+        assert_equal(arr.astype("M8"), res)
+        arr[...] = np.bytes_("2020-10-10")  # try a numpy string type
+        assert_equal(arr.astype("M8"), res)
+        arr = arr.astype("S")
+        assert_equal(arr.astype("S").astype("M8"), res)
 
     @pytest.mark.parametrize("time_unit", [
         "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as",
@@ -2304,8 +2386,24 @@ class TestDateTime(object):
         assert limit_via_str == limit
 
 
-class TestDateTimeData(object):
+class TestDateTimeData:
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
+
+    def test_bytes(self):
+        # byte units are converted to unicode
+        dt = np.datetime64('2000', (b'ms', 5))
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+        dt = np.datetime64('2000', b'5ms')
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+    def test_non_ascii(self):
+        # μs is normalized to μ
+        dt = np.datetime64('2000', ('μs', 5))
+        assert np.datetime_data(dt.dtype) == ('us', 5)
+
+        dt = np.datetime64('2000', '5μs')
+        assert np.datetime_data(dt.dtype) == ('us', 5)

@@ -69,11 +69,11 @@ Joining arrays
 
    concatenate
    stack
-   column_stack
-   dstack
-   hstack
-   vstack
    block
+   vstack
+   hstack
+   dstack
+   column_stack
 
 Splitting arrays
 ================

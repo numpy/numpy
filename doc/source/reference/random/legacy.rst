@@ -121,3 +121,71 @@ Distributions
    ~RandomState.wald
    ~RandomState.weibull
    ~RandomState.zipf
+
+Functions in `numpy.random`
+===========================
+Many of the RandomState methods above are exported as functions in
+`numpy.random` This usage is discouraged, as it is implemented via a global
+`RandomState` instance which is not advised on two counts:
+
+- It uses global state, which means results will change as the code changes
+
+- It uses a `RandomState` rather than the more modern `Generator`.
+
+For backward compatible legacy reasons, we cannot change this. See
+:ref:`random-quick-start`.
+
+.. autosummary::
+   :toctree: generated/
+
+    beta
+    binomial
+    bytes
+    chisquare
+    choice
+    dirichlet
+    exponential
+    f
+    gamma
+    geometric
+    get_state
+    gumbel
+    hypergeometric
+    laplace
+    logistic
+    lognormal
+    logseries
+    multinomial
+    multivariate_normal
+    negative_binomial
+    noncentral_chisquare
+    noncentral_f
+    normal
+    pareto
+    permutation
+    poisson
+    power
+    rand
+    randint
+    randn
+    random
+    random_integers
+    random_sample
+    ranf
+    rayleigh
+    sample
+    seed
+    set_state
+    shuffle
+    standard_cauchy
+    standard_exponential
+    standard_gamma
+    standard_normal
+    standard_t
+    triangular
+    uniform
+    vonmises
+    wald
+    weibull
+    zipf
+

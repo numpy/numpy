@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import re
 import itertools
 
@@ -14,7 +12,7 @@ def isContinuation(line):
 
 COMMENT, STATEMENT, CONTINUATION = 0, 1, 2
 def lineType(line):
-    """Return the type of a line of Fortan code."""
+    """Return the type of a line of Fortran code."""
     if isBlank(line):
         return COMMENT
     elif isLabel(line):
@@ -26,7 +24,7 @@ def lineType(line):
     else:
         return STATEMENT
 
-class LineIterator(object):
+class LineIterator:
     """LineIterator(iterable)
 
     Return rstrip()'d lines from iterable, while keeping a count of the
@@ -46,10 +44,8 @@ class LineIterator(object):
         line = line.rstrip()
         return line
 
-    next = __next__
 
-
-class PushbackIterator(object):
+class PushbackIterator:
     """PushbackIterator(iterable)
 
     Return an iterator for which items can be pushed back into.
@@ -72,8 +68,6 @@ class PushbackIterator(object):
 
     def pushback(self, item):
         self.buffer.append(item)
-
-    next = __next__
 
 
 def fortranSourceLines(fo):

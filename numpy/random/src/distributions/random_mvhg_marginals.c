@@ -1,14 +1,14 @@
+#include "numpy/random/distributions.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <math.h>
 
-#include "include/distributions.h"
 #include "logfactorial.h"
 
 
 /*
- *  random_mvhg_marginals
+ *  random_multivariate_hypergeometric_marginals
  *
  *  Draw samples from the multivariate hypergeometric distribution--
  *  the "marginals" algorithm.
@@ -95,7 +95,7 @@
  *    *  the product num_variates * num_colors does not overflow
  */
 
-void random_mvhg_marginals(bitgen_t *bitgen_state,
+void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
                            int64_t total,
                            size_t num_colors, int64_t *colors,
                            int64_t nsample,

@@ -54,7 +54,7 @@ letters, for a "Not A Time" value.
 
     NAT (not a time):
 
-    >>> numpy.datetime64('nat')
+    >>> np.datetime64('nat')
     numpy.datetime64('NaT')
 
 When creating an array of datetimes from a string, it is still possible
@@ -67,7 +67,8 @@ datetime type with generic units.
     array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64[D]')
 
     >>> np.array(['2001-01-01T12:00', '2002-02-03T13:56:03.172'], dtype='datetime64')
-    array(['2001-01-01T12:00:00.000-0600', '2002-02-03T13:56:03.172-0600'], dtype='datetime64[ms]')
+    array(['2001-01-01T12:00:00.000', '2002-02-03T13:56:03.172'],
+          dtype='datetime64[ms]')
 
 
 The datetime type works with many common NumPy functions, for
@@ -85,7 +86,7 @@ example :func:`arange` can be used to generate ranges of dates.
            '2005-02-17', '2005-02-18', '2005-02-19', '2005-02-20',
            '2005-02-21', '2005-02-22', '2005-02-23', '2005-02-24',
            '2005-02-25', '2005-02-26', '2005-02-27', '2005-02-28'],
-           dtype='datetime64[D]')
+          dtype='datetime64[D]')
 
 The datetime object represents a single moment in time. If two
 datetimes have different units, they may still be representing
@@ -98,8 +99,16 @@ because the moment of time is still being represented exactly.
     >>> np.datetime64('2005') == np.datetime64('2005-01-01')
     True
 
-    >>> np.datetime64('2010-03-14T15Z') == np.datetime64('2010-03-14T15:00:00.00Z')
+    >>> np.datetime64('2010-03-14T15') == np.datetime64('2010-03-14T15:00:00.00')
     True
+
+.. deprecated:: 1.11.0
+
+  NumPy does not store timezone information. For backwards compatibility, datetime64
+  still parses timezone offsets, which it handles by converting to
+  UTC. This behaviour is deprecated and will raise an error in the
+  future.
+
 
 Datetime and Timedelta Arithmetic
 =================================
@@ -114,13 +123,13 @@ data type also accepts the string "NAT" in place of the number for a "Not A Time
 
 .. admonition:: Example
 
-    >>> numpy.timedelta64(1, 'D')
+    >>> np.timedelta64(1, 'D')
     numpy.timedelta64(1,'D')
 
-    >>> numpy.timedelta64(4, 'h')
+    >>> np.timedelta64(4, 'h')
     numpy.timedelta64(4,'h')
 
-    >>> numpy.timedelta64('nAt')
+    >>> np.timedelta64('nAt')
     numpy.timedelta64('NaT')
 
 Datetimes and Timedeltas work together to provide ways for
@@ -135,7 +144,7 @@ simple datetime calculations.
     numpy.datetime64('2009-01-21')
 
     >>> np.datetime64('2011-06-15T00:00') + np.timedelta64(12, 'h')
-    numpy.datetime64('2011-06-15T12:00-0500')
+    numpy.datetime64('2011-06-15T12:00')
 
     >>> np.timedelta64(1,'W') / np.timedelta64(1,'D')
     7.0
@@ -143,10 +152,10 @@ simple datetime calculations.
     >>> np.timedelta64(1,'W') % np.timedelta64(10,'D')
     numpy.timedelta64(7,'D')
 
-    >>> numpy.datetime64('nat') - numpy.datetime64('2009-01-01')
+    >>> np.datetime64('nat') - np.datetime64('2009-01-01')
     numpy.timedelta64('NaT','D')
 
-    >>> numpy.datetime64('2009-01-01') + numpy.timedelta64('nat')
+    >>> np.datetime64('2009-01-01') + np.timedelta64('nat')
     numpy.datetime64('NaT')
 
 There are two Timedelta units ('Y', years and 'M', months) which are treated
@@ -209,7 +218,7 @@ And here are the time units:
    m       minute           +/- 1.7e13 years        [1.7e13 BC, 1.7e13 AD]
    s       second           +/- 2.9e11 years        [2.9e11 BC, 2.9e11 AD]
    ms      millisecond      +/- 2.9e8 years         [ 2.9e8 BC,  2.9e8 AD]
-   us      microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
+us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    ns      nanosecond       +/- 292 years           [  1678 AD,   2262 AD]
    ps      picosecond       +/- 106 days            [  1969 AD,   1970 AD]
    fs      femtosecond      +/- 2.6 hours           [  1969 AD,   1970 AD]
@@ -275,16 +284,16 @@ is necessary to get a desired answer.
     The first business day on or after a date:
 
     >>> np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21','D')
+    numpy.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22','D')
+    numpy.datetime64('2011-03-22')
 
     The first business day strictly after a date:
 
     >>> np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21','D')
+    numpy.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23','D')
+    numpy.datetime64('2011-03-23')
 
 The function is also useful for computing some kinds of days
 like holidays. In Canada and the U.S., Mother's day is on
@@ -294,7 +303,7 @@ weekmask.
 .. admonition:: Example
 
     >>> np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13','D')
+    numpy.datetime64('2012-05-13')
 
 When performance is important for manipulating many business dates
 with one particular choice of weekmask and holidays, there is
@@ -315,7 +324,7 @@ To test a datetime64 value to see if it is a valid day, use :func:`is_busday`.
     True
     >>> a = np.arange(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
     >>> np.is_busday(a)
-    array([ True,  True,  True,  True,  True, False, False], dtype='bool')
+    array([ True,  True,  True,  True,  True, False, False])
 
 np.busday_count():
 ``````````````````
@@ -359,38 +368,3 @@ Some examples::
     weekmask = "Mon Tue Wed Thu Fri"
     # any amount of whitespace is allowed; abbreviations are case-sensitive.
     weekmask = "MonTue Wed  Thu\tFri"
-
-Changes with NumPy 1.11
-=======================
-
-In prior versions of NumPy, the datetime64 type always stored
-times in UTC. By default, creating a datetime64 object from a string or
-printing it would convert from or to local time::
-
-    # old behavior
-    >>>> np.datetime64('2000-01-01T00:00:00')
-    numpy.datetime64('2000-01-01T00:00:00-0800')  # note the timezone offset -08:00
-
-A consensus of datetime64 users agreed that this behavior is undesirable
-and at odds with how datetime64 is usually used (e.g., by pandas_). For
-most use cases, a timezone naive datetime type is preferred, similar to the
-``datetime.datetime`` type in the Python standard library. Accordingly,
-datetime64 no longer assumes that input is in local time, nor does it print
-local times::
-
-    >>>> np.datetime64('2000-01-01T00:00:00')
-    numpy.datetime64('2000-01-01T00:00:00')
-
-For backwards compatibility, datetime64 still parses timezone offsets, which
-it handles by converting to UTC. However, the resulting datetime is timezone
-naive::
-
-    >>> np.datetime64('2000-01-01T00:00:00-08')
-    DeprecationWarning: parsing timezone aware datetimes is deprecated; this will raise an error in the future
-    numpy.datetime64('2000-01-01T08:00:00')
-
-As a corollary to this change, we no longer prohibit casting between datetimes
-with date units and datetimes with timeunits. With timezone naive datetimes,
-the rule for casting from dates to times is no longer ambiguous.
-
-.. _pandas: http://pandas.pydata.org

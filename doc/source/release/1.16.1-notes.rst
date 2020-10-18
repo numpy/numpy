@@ -58,7 +58,7 @@ Enhancements
 Compatibility notes
 ===================
 
-* The changed error message emited by array comparison testing functions may
+* The changed error message emitted by array comparison testing functions may
   affect doctests. See below for detail.
 
 * Casting from double and single denormals to float16 has been corrected.  In

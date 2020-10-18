@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark, get_squares_
 
 import numpy as np
@@ -152,7 +150,7 @@ class Scalar(Benchmark):
         (self.y + self.z)
 
 
-class ArgPack(object):
+class ArgPack:
     __slots__ = ['args', 'kwargs']
     def __init__(self, *args, **kwargs):
         self.args = args

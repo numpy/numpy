@@ -3,9 +3,11 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from __future__ import division, absolute_import, print_function
-
-from .overrides import set_module
+from .overrides import (
+    array_function_dispatch,
+    set_array_function_like_doc,
+    set_module,
+)
 from .multiarray import array
 
 
@@ -13,8 +15,14 @@ __all__ = [
     "asarray", "asanyarray", "ascontiguousarray", "asfortranarray", "require",
 ]
 
+
+def _asarray_dispatcher(a, dtype=None, order=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def asarray(a, dtype=None, order=None):
+def asarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an array.
 
     Parameters
@@ -25,10 +33,16 @@ def asarray(a, dtype=None, order=None):
         of lists and ndarrays.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major (C-style) or
-        column-major (Fortran-style) memory representation.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style), 
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
         Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -82,11 +96,20 @@ def asarray(a, dtype=None, order=None):
     True
 
     """
+    if like is not None:
+        return _asarray_with_like(a, dtype=dtype, order=order, like=like)
+
     return array(a, dtype, copy=False, order=order)
 
 
+_asarray_with_like = array_function_dispatch(
+    _asarray_dispatcher
+)(asarray)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def asanyarray(a, dtype=None, order=None):
+def asanyarray(a, dtype=None, order=None, *, like=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
 
     Parameters
@@ -97,9 +120,16 @@ def asanyarray(a, dtype=None, order=None):
         tuples of lists, and ndarrays.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major (C-style) or column-major
-        (Fortran-style) memory representation.  Defaults to 'C'.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array a.
+        'C' row-major (C-style), 
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'C'.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -135,11 +165,24 @@ def asanyarray(a, dtype=None, order=None):
     True
 
     """
+    if like is not None:
+        return _asanyarray_with_like(a, dtype=dtype, order=order, like=like)
+
     return array(a, dtype, copy=False, order=order, subok=True)
 
 
+_asanyarray_with_like = array_function_dispatch(
+    _asarray_dispatcher
+)(asanyarray)
+
+
+def _asarray_contiguous_fortran_dispatcher(a, dtype=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def ascontiguousarray(a, dtype=None):
+def ascontiguousarray(a, dtype=None, *, like=None):
     """
     Return a contiguous array (ndim >= 1) in memory (C order).
 
@@ -149,6 +192,9 @@ def ascontiguousarray(a, dtype=None):
         Input array.
     dtype : str or dtype object, optional
         Data-type of returned array.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -176,11 +222,20 @@ def ascontiguousarray(a, dtype=None):
     so it will not preserve 0-d arrays.  
 
     """
+    if like is not None:
+        return _ascontiguousarray_with_like(a, dtype=dtype, like=like)
+
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
+_ascontiguousarray_with_like = array_function_dispatch(
+    _asarray_contiguous_fortran_dispatcher
+)(ascontiguousarray)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def asfortranarray(a, dtype=None):
+def asfortranarray(a, dtype=None, *, like=None):
     """
     Return an array (ndim >= 1) laid out in Fortran order in memory.
 
@@ -190,6 +245,9 @@ def asfortranarray(a, dtype=None):
         Input array.
     dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -217,11 +275,24 @@ def asfortranarray(a, dtype=None):
     so it will not preserve 0-d arrays.  
 
     """
+    if like is not None:
+        return _asfortranarray_with_like(a, dtype=dtype, like=like)
+
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 
+_asfortranarray_with_like = array_function_dispatch(
+    _asarray_contiguous_fortran_dispatcher
+)(asfortranarray)
+
+
+def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
-def require(a, dtype=None, requirements=None):
+def require(a, dtype=None, requirements=None, *, like=None):
     """
     Return an ndarray of the provided type that satisfies requirements.
 
@@ -245,6 +316,9 @@ def require(a, dtype=None, requirements=None):
        * 'WRITEABLE' ('W')    - ensure a writable array
        * 'OWNDATA' ('O')      - ensure an array that owns its own data
        * 'ENSUREARRAY', ('E') - ensure a base array, instead of a subclass
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -288,6 +362,14 @@ def require(a, dtype=None, requirements=None):
       UPDATEIFCOPY : False
 
     """
+    if like is not None:
+        return _require_with_like(
+            a,
+            dtype=dtype,
+            requirements=requirements,
+            like=like,
+        )
+
     possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
                       'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
                       'A': 'A', 'ALIGNED': 'A',
@@ -322,3 +404,8 @@ def require(a, dtype=None, requirements=None):
             arr = arr.copy(order)
             break
     return arr
+
+
+_require_with_like = array_function_dispatch(
+    _require_dispatcher
+)(require)

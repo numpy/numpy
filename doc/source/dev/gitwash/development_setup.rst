@@ -1,145 +1,178 @@
-====================================
-Getting started with Git development
-====================================
+.. _development-setup:
 
-This section and the next describe in detail how to set up git for working
-with the NumPy source code.  If you have git already set up, skip to
-:ref:`development-workflow`.
+##############################################################################
+Setting up git for NumPy development
+##############################################################################
 
-Basic Git setup
-###############
+To contribute code or documentation, you first need
 
-* :ref:`install-git`.
-* Introduce yourself to Git::
+#. git installed on your machine
+#. a GitHub account
+#. a fork of NumPy
 
-      git config --global user.email you@yourdomain.example.com
-      git config --global user.name "Your Name Comes Here"
 
-.. _forking:
+******************************************************************************
+Install git
+******************************************************************************
 
-Making your own copy (fork) of NumPy
-####################################
+You may already have git; check by typing ``git --version``. If it's
+installed you'll see some variation of ``git version 2.11.0``.
+If instead you see ``command is not recognized``, ``command not
+found``, etc.,
+`install git <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_.
 
-You need to do this only once.  The instructions here are very similar
-to the instructions at http://help.github.com/forking/ - please see that
-page for more detail.  We're repeating some of it here just to give the
-specifics for the NumPy_ project, and to suggest some default names.
+Then set your name and email: ::
+
+  git config --global user.email you@yourdomain.example.com
+  git config --global user.name "Your Name"
 
 .. _set-up-and-configure-a-github-account:
 
-Set up and configure a github_ account
-======================================
+******************************************************************************
+Create a GitHub account
+******************************************************************************
 
-If you don't have a github_ account, go to the github_ page, and make one.
+If you don't have a GitHub account, visit https://github.com/join to create
+one.
 
-You then need to configure your account to allow write access - see the
-``Generating SSH keys`` help on `github help`_.
+.. _forking:
 
-Create your own forked copy of NumPy_
-=========================================
+******************************************************************************
+Create a NumPy fork
+******************************************************************************
 
-#. Log into your github_ account.
-#. Go to the NumPy_ github home at `NumPy github`_.
-#. Click on the *fork* button:
+``Forking`` has two steps -- visit GitHub to create a fork repo in your
+account, then make a copy of it on your own machine.
+
+Create the fork repo
+==============================================================================
+
+#. Log into your GitHub account.
+#. Go to the `NumPy GitHub home <https://github.com/numpy/numpy>`_.
+#. At the upper right of the page, click ``Fork``:
 
    .. image:: forking_button.png
 
-   After a short pause, you should find yourself at the home page for
-   your own forked copy of NumPy_.
+   You'll see
 
-.. include:: git_links.inc
+   .. image:: forking_message.png
+
+   and then you'll be taken to the home page of your forked copy:
+
+   .. image:: forked_page.png
 
 
 .. _set-up-fork:
 
-Set up your fork
-################
+Make the local copy
+==============================================================================
 
-First you follow the instructions for :ref:`forking`.
+#. In the directory where you want the copy created, run ::
 
-Overview
-========
+    git clone https://github.com/your-user-name/numpy.git
 
-::
+   You'll see something like: ::
 
-   git clone https://github.com/your-user-name/numpy.git
-   cd numpy
-   git remote add upstream https://github.com/numpy/numpy.git
+    $ git clone https://github.com/your-user-name/numpy.git
+    Cloning into 'numpy'...
+    remote: Enumerating objects: 12, done.
+    remote: Counting objects: 100% (12/12), done.
+    remote: Compressing objects: 100% (12/12), done.
+    remote: Total 175837 (delta 0), reused 0 (delta 0), pack-reused 175825
+    Receiving objects: 100% (175837/175837), 78.16 MiB | 9.87 MiB/s, done.
+    Resolving deltas: 100% (139317/139317), done.
 
-In detail
-=========
+   A directory ``numpy`` is created on your machine. (If you already have
+   a numpy directory, GitHub will choose a different name like ``numpy-1``.)
+   ::
 
-Clone your fork
----------------
-
-#. Clone your fork to the local computer with ``git clone
-   https://github.com/your-user-name/numpy.git``
-#. Investigate.  Change directory to your new repo: ``cd numpy``. Then
-   ``git branch -a`` to show you all branches.  You'll get something
-   like::
-
-      * master
-      remotes/origin/master
-
-   This tells you that you are currently on the ``master`` branch, and
-   that you also have a ``remote`` connection to ``origin/master``.
-   What remote repository is ``remote/origin``? Try ``git remote -v`` to
-   see the URLs for the remote.  They will point to your github_ fork.
-
-   Now you want to connect to the upstream `NumPy github`_ repository, so
-   you can merge in changes from trunk.
+    $ ls -l
+    total 0
+    drwxrwxrwx 1 bjn bjn 4096 Jun 20 07:20 numpy
 
 .. _linking-to-upstream:
 
-Linking your repository to the upstream repo
---------------------------------------------
+#. Give the name ``upstream`` to the main NumPy repo: ::
 
-::
+    cd numpy
+    git remote add upstream https://github.com/numpy/numpy.git
 
-   cd numpy
-   git remote add upstream https://github.com/numpy/numpy.git
+#. Set up your repository so ``git pull`` pulls from ``upstream`` by
+   default: ::
 
-``upstream`` here is just the arbitrary name we're using to refer to the
-main NumPy_ repository at `NumPy github`_.
+    git config branch.master.remote upstream
+    git config branch.master.merge refs/heads/master
 
-Just for your own satisfaction, show yourself that you now have a new
-'remote', with ``git remote -v show``, giving you something like::
+******************************************************************************
+Look it over
+******************************************************************************
 
-   upstream	https://github.com/numpy/numpy.git (fetch)
-   upstream	https://github.com/numpy/numpy.git (push)
-   origin	https://github.com/your-user-name/numpy.git (fetch)
-   origin	https://github.com/your-user-name/numpy.git (push)
+#. The branches shown by ``git branch -a`` will include
 
-To keep in sync with changes in NumPy, you want to set up your repository
-so it pulls from ``upstream`` by default.  This can be done with::
+   - the ``master`` branch you just cloned on your own machine
+   - the ``master`` branch from your fork on GitHub, which git named
+     ``origin`` by default
+   - the ``master`` branch on the the main NumPy repo, which you named
+     ``upstream``.
 
-   git config branch.master.remote upstream
-   git config branch.master.merge refs/heads/master
+   ::
 
-You may also want to have easy access to all pull requests sent to the
-NumPy repository::
+     master
+     remotes/origin/master
+     remotes/upstream/master
 
-   git config --add remote.upstream.fetch '+refs/pull/*/head:refs/remotes/upstream/pr/*'
+   If ``upstream`` isn't there, it will be added after you access the
+   NumPy repo with a command like ``git fetch`` or ``git pull``.
 
-Your config file should now look something like (from
-``$ cat .git/config``)::
 
-   [core]
-           repositoryformatversion = 0
-           filemode = true
-           bare = false
-           logallrefupdates = true
-           ignorecase = true
-           precomposeunicode = false
-   [remote "origin"]
-           url = https://github.com/your-user-name/numpy.git
-           fetch = +refs/heads/*:refs/remotes/origin/*
-   [remote "upstream"]
-           url = https://github.com/numpy/numpy.git
-           fetch = +refs/heads/*:refs/remotes/upstream/*
-           fetch = +refs/pull/*/head:refs/remotes/upstream/pr/*
-   [branch "master"]
-           remote = upstream
-           merge = refs/heads/master
+#. The repos shown by ``git remote -v show`` will include your fork on GitHub
+   and the main repo: ::
+
+    upstream	https://github.com/numpy/numpy.git (fetch)
+    upstream	https://github.com/numpy/numpy.git (push)
+    origin	https://github.com/your-user-name/numpy.git (fetch)
+    origin	https://github.com/your-user-name/numpy.git (push)
+
+#. ``git config --list`` will include ::
+
+    user.email=your_email@example.com
+    user.name=Your Name
+    remote.origin.url=git@github.com:your-github-id/numpy.git
+    remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+    branch.master.remote=upstream
+    branch.master.merge=refs/heads/master
+    remote.upstream.url=https://github.com/numpy/numpy.git
+    remote.upstream.fetch=+refs/heads/*:refs/remotes/upstream/*
 
 .. include:: git_links.inc
+
+
+******************************************************************************
+Optional: set up SSH keys to avoid passwords
+******************************************************************************
+
+Cloning your NumPy fork repo required no password, because it read the remote
+repo without changing it. Later, though, submitting your pull requests will
+write to it, and GitHub will ask for your username and password -- even though
+it's your own repo. You can eliminate this authentication without compromising
+security by `setting up SSH keys \
+<https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_.
+
+**If you set up the keys before cloning**, the instructions above change
+slightly. Instead of ::
+
+  git clone https://github.com/your-user-name/numpy.git
+
+run ::
+
+  git clone git@github.com:numpy/numpy.git
+
+and instead of showing an ``https`` URL,  ``git remote -v`` will show ::
+
+  origin  git@github.com:your-user-name/numpy.git (fetch)
+  origin  git@github.com:your-user-name/numpy.git (push)
+
+
+**If you have cloned already** and want to start using SSH, see
+`Switching remote URLs from HTTPS to SSH \
+<https://help.github.com/en/github/using-git/changing-a-remotes-url#switching-remote-urls-from-https-to-ssh>`_.

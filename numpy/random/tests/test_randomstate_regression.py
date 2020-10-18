@@ -5,13 +5,12 @@ import pytest
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises,
     )
-from numpy.compat import long
 import numpy as np
 
 from numpy import random
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -52,13 +51,6 @@ class TestRegression(object):
         msg = "Frequency was %f, should be < 0.23" % freq
         assert_(freq < 0.23, msg)
 
-    def test_permutation_longs(self):
-        random.seed(1234)
-        a = random.permutation(12)
-        random.seed(1234)
-        b = random.permutation(long(12))
-        assert_array_equal(a, b)
-
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
         for t in [[1, 2, 3, None],
@@ -68,7 +60,8 @@ class TestRegression(object):
             random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
-            assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
+            expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
+            assert_array_equal(np.array(shuffled, dtype=object), expected)
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
@@ -128,7 +121,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         random.seed(1234)
-        a = np.array([np.arange(1), np.arange(4)])
+        a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
             random.shuffle(a)
@@ -147,7 +140,7 @@ class TestRegression(object):
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
-        class M(object):
+        class M:
             a = np.arange(5)
 
             def __array__(self):
