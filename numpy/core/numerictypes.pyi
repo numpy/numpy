@@ -24,3 +24,6 @@ def sctype2char(sctype: object) -> str: ...
 def find_common_type(
     array_types: Sequence[DtypeLike], scalar_types: Sequence[DtypeLike]
 ) -> dtype: ...
+
+# TODO: Add annotations for the following objects:
+# typeDict, nbytes, cast, ScalarType & typecodes
