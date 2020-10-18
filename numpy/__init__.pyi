@@ -141,7 +141,7 @@ from numpy.core._asarray import (
     require as require,
 )
 
-from numpy.core.numeric import(
+from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
     ones_like as ones_like,
@@ -170,6 +170,17 @@ from numpy.core.numeric import(
     isclose as isclose,
     array_equal as array_equal,
     array_equiv as array_equiv,
+)
+
+from numpy.core.numerictypes import (
+    maximum_sctype as maximum_sctype,
+    issctype as issctype,
+    obj2sctype as obj2sctype,
+    issubclass_ as issubclass_,
+    issubsctype as issubsctype,
+    issubdtype as issubdtype,
+    sctype2char as sctype2char,
+    find_common_type as find_common_type,
 )
 
 # Add an object to `__all__` if their stubs are defined in an external file;
@@ -2149,26 +2160,3 @@ class AxisError(ValueError, IndexError):
     def __init__(
         self, axis: int, ndim: Optional[int] = ..., msg_prefix: Optional[str] = ...
     ) -> None: ...
-
-# Functions from np.core.numerictypes
-_DefaultType = TypeVar("_DefaultType")
-
-def maximum_sctype(t: DtypeLike) -> dtype: ...
-def issctype(rep: object) -> bool: ...
-@overload
-def obj2sctype(rep: object) -> Optional[generic]: ...
-@overload
-def obj2sctype(rep: object, default: None) -> Optional[generic]: ...
-@overload
-def obj2sctype(
-    rep: object, default: Type[_DefaultType]
-) -> Union[generic, Type[_DefaultType]]: ...
-def issubclass_(arg1: object, arg2: Union[object, Tuple[object, ...]]) -> bool: ...
-def issubsctype(
-    arg1: Union[ndarray, DtypeLike], arg2: Union[ndarray, DtypeLike]
-) -> bool: ...
-def issubdtype(arg1: DtypeLike, arg2: DtypeLike) -> bool: ...
-def sctype2char(sctype: object) -> str: ...
-def find_common_type(
-    array_types: Sequence[DtypeLike], scalar_types: Sequence[DtypeLike]
-) -> dtype: ...
