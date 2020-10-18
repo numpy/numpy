@@ -141,6 +141,11 @@ from numpy.core._asarray import (
     require as require,
 )
 
+from numpy.core._type_aliases import (
+    sctypes as sctypes,
+    sctypeDict as sctypeDict,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
@@ -460,8 +465,6 @@ save: Any
 savetxt: Any
 savez: Any
 savez_compressed: Any
-sctypeDict: Any
-sctypes: Any
 select: Any
 set_printoptions: Any
 set_string_function: Any
