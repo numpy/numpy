@@ -49,3 +49,4 @@ code.
    generalized-ufuncs
    coremath
    deprecations
+   data_memory
