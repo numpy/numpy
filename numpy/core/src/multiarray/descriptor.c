@@ -1497,15 +1497,36 @@ _convert_from_any(PyObject *obj, int align)
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
-        return _convert_from_tuple(obj, align);
+        if (Py_EnterRecursiveCall(
+                " while trying to convert the given data type from"
+                " a tuple object" ) != 0) {
+            return NULL;
+        }
+        PyArray_Descr *ret = _convert_from_tuple(obj, align);
+        Py_LeaveRecursiveCall();
+        return ret;
     }
     else if (PyList_Check(obj)) {
         /* or a list */
-        return _convert_from_array_descr(obj, align);
+        if (Py_EnterRecursiveCall(
+                " while trying to convert the given data type from"
+                " a list object" ) != 0) {
+            return NULL;
+        }
+        PyArray_Descr *ret = _convert_from_array_descr(obj, align);
+        Py_LeaveRecursiveCall();
+        return ret;
     }
     else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
         /* or a dictionary */
-        return _convert_from_dict(obj, align);
+        if (Py_EnterRecursiveCall(
+                " while trying to convert the given data type from"
+                " a dict object" ) != 0) {
+            return NULL;
+        }
+        PyArray_Descr *ret = _convert_from_dict(obj, align);
+        Py_LeaveRecursiveCall();
+        return ret;
     }
     else if (PyArray_Check(obj)) {
         PyErr_SetString(PyExc_TypeError, "Cannot construct a dtype from an array");
