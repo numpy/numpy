@@ -384,7 +384,8 @@ array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
     }
     if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
         PyArray_XDECREF(self);
-        PyDataMem_FREE(PyArray_DATA(self));
+        PyDataMem_UserFREE(PyArray_DATA(self), PyArray_NBYTES(self),
+                           PyArray_HANDLER(self)->free);
     }
     if (PyArray_BASE(self)) {
         if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||

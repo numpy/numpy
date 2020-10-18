@@ -2039,7 +2039,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_FREE(PyArray_DATA(self));
+        PyDataMem_UserFREE(PyArray_DATA(self), PyArray_NBYTES(self),
+                           PyArray_HANDLER(self)->free);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
@@ -2084,7 +2085,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 Py_RETURN_NONE;
             }
-            fa->data = PyDataMem_NEW(num);
+            fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(fa)->alloc);
             if (PyArray_DATA(self) == NULL) {
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
@@ -2132,7 +2133,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (num == 0 || elsize == 0) {
             Py_RETURN_NONE;
         }
-        fa->data = PyDataMem_NEW(num);
+        fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(fa)->alloc);
         if (PyArray_DATA(self) == NULL) {
             return PyErr_NoMemory();
         }
