@@ -195,8 +195,8 @@ npy_free_cache_dim(void * p, npy_uintp sz)
 
 
 /* malloc/free/realloc hook */
-NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook;
-NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data;
+NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook = NULL;
+NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data = NULL;
 
 /*NUMPY_API
  * Sets the allocation event hook for numpy array data.
@@ -325,12 +325,6 @@ PyDataMem_RENEW(void *ptr, size_t size)
     return result;
 }
 
-typedef void *(alloc_wrapper)(size_t, PyDataMem_AllocFunc *);
-typedef void *(zalloc_wrapper)(size_t nelems, size_t elsize);
-typedef void (PyDataMem_FreeFunc)(void *ptr, size_t size);
-typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
-typedef void *(PyDataMem_CopyFunc)(void *dst, const void *src, size_t size);
-
 /* Memory handler global default */
 static PyDataMem_Handler default_allocator = {
     "default_allocator",
@@ -401,7 +395,8 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyDataMem_FreeFunc *func)
 {
     if (func == npy_free_cache) {
         // All the logic below is conditionally handled by npy_free_cache
-        return npy_free_cache(ptr, size);
+        npy_free_cache(ptr, size);
+        return;
     }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     func(ptr, size);
