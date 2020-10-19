@@ -130,9 +130,8 @@ _try_convert_from_dtype_attr(PyObject *obj)
     if (DEPRECATE("in the future the `.dtype` attribute of a given data"
                   "type object must be a valid dtype instance. "
                   "`data_type.dtype` may need to be coerced using "
-                  "`np.dtype(data_type.dtype)`. This will raise an error "
-                  "in NumPy 1.19.") < 0) {
-        /* NumPy 1.19, 2020-02-07 */
+                  "`np.dtype(data_type.dtype)`. (Deprecated NumPy 1.20)") < 0) {
+        /* NumPy 1.20, 2020-10-19 */
         Py_DECREF(newdescr);
         return NULL;
     }

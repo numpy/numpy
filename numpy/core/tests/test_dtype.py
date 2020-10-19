@@ -1148,7 +1148,7 @@ class TestFromDTypeAttribute:
             np.dtype(vdt(1))
 
     def test_deprecation_dtype_attribute_is_dtype(self):
-        # Deprecated NumPy 1.19, 2020-02-07
+        # Deprecated NumPy 1.20, 2020-10-19
         class dt:
             dtype = "f8"
 
