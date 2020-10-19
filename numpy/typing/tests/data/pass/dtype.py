@@ -31,7 +31,7 @@ np.dtype((np.float_, float))
 
 
 class Test:
-    dtype = float
+    dtype = np.dtype(float)
 
 
 np.dtype(Test())
