@@ -122,7 +122,8 @@ Here's the short summary, complete TOC links are below:
      overall code quality benefits.  Therefore, please don't let the review
      discourage you from contributing: its only aim is to improve the quality
      of project, not to criticize (we are, after all, very grateful for the
-     time you're donating!).
+     time you're donating!). See our :ref:`Reviewer Guidelines
+     <reviewer-guidelines>` for more information.
 
    * To update your PR, make your changes on your local repository, commit,
      **run tests, and only if they succeed** push to your fork. As soon as
@@ -179,6 +180,8 @@ be merged automatically, you have to incorporate changes that have been made
 since you started into your branch. Our recommended way to do this is to
 :ref:`rebase on master<rebasing-on-master>`.
 
+.. _guidelines:
+
 Guidelines
 ----------
 
@@ -186,9 +189,11 @@ Guidelines
 * All code should be `documented <https://numpydoc.readthedocs.io/
   en/latest/format.html#docstring-standard>`_.
 * No changes are ever committed without review and approval by a core
-  team member.Please ask politely on the PR or on the `mailing list`_ if you
+  team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
 
+.. _stylistic-guidelines:
+  
 Stylistic Guidelines
 --------------------
 
@@ -232,6 +237,8 @@ and then run::
 This will create a report in ``build/coverage``, which can be viewed with::
 
   $ firefox build/coverage/index.html
+
+.. _building-docs:
 
 Building docs
 -------------
@@ -295,6 +302,7 @@ The rest of the story
    Git Basics <gitwash/index>
    development_environment
    development_workflow
+   reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
