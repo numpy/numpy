@@ -47,3 +47,6 @@ reveal_type(np.True_)  # E: numpy.bool_
 reveal_type(np.False_)  # E: numpy.bool_
 
 reveal_type(np.UFUNC_PYVALS_NAME)  # E: str
+
+reveal_type(np.sctypeDict)  # E: dict
+reveal_type(np.sctypes)  # E: TypedDict
