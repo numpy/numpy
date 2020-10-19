@@ -674,7 +674,7 @@ typedef void *(PyDataMem_ReallocFunc)(void *ptr, size_t size);
 typedef void *(PyDataMem_CopyFunc)(void *dst, const void *src, size_t size);
 
 typedef struct {
-    char name[128];  /* multiple of 64 to keep the struct unaligned */
+    char name[128];  /* multiple of 64 to keep the struct aligned */
     PyDataMem_AllocFunc *alloc;
     PyDataMem_ZeroedAllocFunc *zeroed_alloc;
     PyDataMem_FreeFunc *free;

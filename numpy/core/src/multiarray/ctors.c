@@ -804,10 +804,10 @@ PyArray_NewFromDescr_int(
         fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
     }
 
-    /* Store the functions in case the global hander is modified */
-    fa->mem_handler = current_allocator;
 
     if (data == NULL) {
+        /* Store the functions in case the global hander is modified */
+        fa->mem_handler = current_allocator;
         /*
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
@@ -836,6 +836,8 @@ PyArray_NewFromDescr_int(
         fa->flags |= NPY_ARRAY_OWNDATA;
     }
     else {
+        /* The handlers should never be called in this case, but just in case */
+        fa->mem_handler = &default_allocator;
         /*
          * If data is passed in, this object won't own it by default.
          * Caller must arrange for this to be reset if truly desired
