@@ -192,6 +192,8 @@ Guidelines
   team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
 
+.. _stylistic-guidelines:
+  
 Stylistic Guidelines
 --------------------
 

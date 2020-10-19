@@ -52,6 +52,7 @@ Reviewer Checklist
 - Should comments be added, or rather removed as unhelpful or extraneous?
 - Does the documentation follow the :ref:`NumPy guidelines<howto-document>`? Are
   the docstrings properly formatted?
+- Does the code follow NumPy's :ref:`Stylistic Guidelines<stylistic-guidelines>`?
 - If you are a maintainer, and it is not obvious from the PR description, add a
   short explanation of what a branch did to the merge message and, if closing an
   issue, also add "Closes gh-123" where 123 is the issue number.
