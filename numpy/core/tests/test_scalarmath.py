@@ -404,7 +404,7 @@ class TestConversion:
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.sctypeDict[code](np.iinfo(code).max)
+            res = np.dtype(code).type(np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 

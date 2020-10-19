@@ -192,8 +192,9 @@ else:
         )
         for n, n2 in [("long", "int"), ("unicode", "str")]
     })
+    # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
-        getattr(core.numerictypes, "typeDict"),
+        core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
     )
 

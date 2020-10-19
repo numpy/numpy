@@ -542,7 +542,7 @@ typecodes = {'Character':'c',
              'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
 
 # backwards compatibility --- deprecated name
-# Formal deprecation: Numpy 1.20.0, 2020-10-19
+# Formal deprecation: Numpy 1.20.0, 2020-10-19 (see numpy/__init__.py)
 typeDict = sctypeDict
 
 # b -> boolean
