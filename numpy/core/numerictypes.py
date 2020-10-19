@@ -5,7 +5,7 @@ This module is designed so "from numerictypes import \\*" is safe.
 Exported symbols include:
 
   Dictionary with all registered number types (including aliases):
-    typeDict
+    sctypeDict
 
   Type objects (not all will be available, depends on platform):
       see variable sctypes for which ones you have

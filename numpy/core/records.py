@@ -70,7 +70,7 @@ _byteorderconv = {'b':'>',
 # of the letter code '(2,3)f4' and ' (  2 ,  3  )  f4  '
 # are equally allowed
 
-numfmt = nt.typeDict
+numfmt = nt.sctypeDict
 
 # taken from OrderedDict recipes in the Python documentation
 # https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes

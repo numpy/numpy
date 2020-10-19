@@ -404,13 +404,13 @@ class TestConversion:
             assert_(res == tgt)
 
         for code in np.typecodes['AllInteger']:
-            res = np.typeDict[code](np.iinfo(code).max)
+            res = np.sctypeDict[code](np.iinfo(code).max)
             tgt = np.iinfo(code).max
             assert_(res == tgt)
 
     def test_int_raise_behaviour(self):
         def overflow_error_func(dtype):
-            np.typeDict[dtype](np.iinfo(dtype).max + 1)
+            np.sctypeDict[dtype](np.iinfo(dtype).max + 1)
 
         for code in 'lLqQ':
             assert_raises(OverflowError, overflow_error_func, code)
