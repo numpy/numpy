@@ -359,7 +359,7 @@ existing array rather than create a new one.
     >>> a += b                            # b is not automatically converted to integer type
     Traceback (most recent call last):
         ...
-    numpy.core._exceptions.UFuncTypeError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('int64') with casting rule 'same_kind'
+    numpy.core._exceptions.UFuncTypeError: Output of ufunc add(int64, float64, out=int64) resolved to the add(float64, float64, out=float64) loop, but np.can_cast(np.float64, np.int64, casting='same_kind') is False
 
 When operating with arrays of different types, the type of the resulting
 array corresponds to the more general or precise one (a behavior known
