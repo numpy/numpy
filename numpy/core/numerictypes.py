@@ -91,7 +91,7 @@ from numpy.core.multiarray import (
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
-__all__ = ['sctypeDict', 'typeDict', 'sctypes',
+__all__ = ['sctypeDict', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',

@@ -192,6 +192,10 @@ else:
         )
         for n, n2 in [("long", "int"), ("unicode", "str")]
     })
+    __deprecated_attrs__["typeDict"] = (
+        getattr(core.numerictypes, "typeDict"),
+        "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
