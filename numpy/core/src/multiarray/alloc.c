@@ -326,7 +326,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
 }
 
 /* Memory handler global default */
-static PyDataMem_Handler default_allocator = {
+PyDataMem_Handler default_allocator = {
     "default_allocator",
     npy_alloc_cache,      /* alloc */
     npy_alloc_cache_zero, /* zeroed_alloc */
