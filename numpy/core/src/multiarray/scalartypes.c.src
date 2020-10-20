@@ -39,9 +39,6 @@ NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
 
-/* Maintain bools repr strings, initialized in `initialize_numeric_types` */
-PyObject *_PyBool_ReprValues[2];
-
 /* TimeInteger is deleted, but still here to fill the API slot */
 NPY_NO_EXPORT PyTypeObject PyTimeIntegerArrType_Type;
 
@@ -262,8 +259,8 @@ genint_type_str(PyObject *self)
 static PyObject *
 genbool_type_str(PyObject *self)
 {
-    PyBoolScalarObject *s = (PyBoolScalarObject *)self;
-    return _PyBool_ReprValues[s->obval];
+    return PyUnicode_FromString(
+            ((PyBoolScalarObject *)self)->obval ? "numpy.True_" : "numpy.False_");
 }
 
 /*
@@ -3864,8 +3861,6 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
-    _PyBool_ReprValues[0] = Py_BuildValue("s", "numpy.False_");
-    _PyBool_ReprValues[1] = Py_BuildValue("s", "numpy.True_");
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
