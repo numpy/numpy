@@ -630,8 +630,11 @@ _buffer_get_info(PyObject *obj, npy_bool f_contiguous)
         if (item_list_length > 0) {
             item = PyList_GetItem(item_list, item_list_length - 1);
             old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
-
-            if (_buffer_info_cmp(info, old_info) != 0) {
+            if (_buffer_info_cmp(info, old_info) == 0) {
+                _buffer_info_free(info);
+                info = old_info;
+            }
+            else {
                 if (item_list_length > 1 && info->ndim > 1) {
                     /*
                      * Some arrays are C- and F-contiguous and if they have more
@@ -645,14 +648,11 @@ _buffer_get_info(PyObject *obj, npy_bool f_contiguous)
                      */
                     item = PyList_GetItem(item_list, item_list_length - 2);
                     old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
-                    if (_buffer_info_cmp(info, old_info) != 0) {
-                        old_info = NULL;
+                    if (_buffer_info_cmp(info, old_info) == 0) {
+                        _buffer_info_free(info);
+                        info = old_info;
                     }
                 }
-            }
-            if (old_info != NULL) {
-                _buffer_info_free(info);
-                info = old_info;
             }
         }
     }
