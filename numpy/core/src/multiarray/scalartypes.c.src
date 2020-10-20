@@ -34,9 +34,6 @@
 
 #include "binop_override.h"
 
-#define NP_BOOL_TRUE_REPR "numpy.True_"
-#define NP_BOOL_FALSE_REPR "numpy.False_"
-
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
@@ -265,10 +262,8 @@ genint_type_str(PyObject *self)
 static PyObject *
 genbool_type_str(PyObject *self)
 {
-    PyObject  *item;
-    item = gentype_generic_method(self, NULL, NULL, "item");
-    Py_DECREF(item);
-    return _PyBool_ReprValues[PyObject_IsTrue(item) ? 1 : 0];
+    PyBoolScalarObject *s = (PyBoolScalarObject *)self;
+    return _PyBool_ReprValues[s->obval];
 }
 
 /*
@@ -3869,8 +3864,8 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
-    _PyBool_ReprValues[0] = Py_BuildValue("s", NP_BOOL_FALSE_REPR);
-    _PyBool_ReprValues[1] = Py_BuildValue("s", NP_BOOL_TRUE_REPR);
+    _PyBool_ReprValues[0] = Py_BuildValue("s", "numpy.False_");
+    _PyBool_ReprValues[1] = Py_BuildValue("s", "numpy.True_");
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
