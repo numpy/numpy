@@ -406,7 +406,7 @@ def lexsort(keys, axis=None):
     for the primary sort order, the second-to-last key for the secondary sort
     order, and so on. The keys argument must be a sequence of objects that
     can be converted to arrays of the same shape. If a 2D array is provided
-    for the keys argument, it's rows are interpreted as the sorting keys and
+    for the keys argument, its rows are interpreted as the sorting keys and
     sorting is according to the last row, second last row etc.
 
     Parameters
