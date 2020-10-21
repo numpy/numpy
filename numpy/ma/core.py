@@ -4966,7 +4966,7 @@ class MaskedArray(ndarray):
                 [ True,  True,  True],
                 [ True,  True,  True]],
           mask=False,
-          fill_value=True)
+          fill_value=numpy.True_)
         >>> ma.nonzero(a > 3)
         (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
