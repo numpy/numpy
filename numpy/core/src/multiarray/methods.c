@@ -624,10 +624,18 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (fd == NULL) {
         goto fail;
     }
-    res1 = PyArray_ToFile(self, fd, sep, format);
-    res2 = npy_PyFile_DupClose2(file, fd, orig_pos);
-    if (res1 < 0 || res2 < 0) {
-        goto fail;
+    int res_write = PyArray_ToFile(self, fd, sep, format);
+    {
+        PyObject *type, *value, *traceback;
+        PyErr_Fetch(&type, &value, &traceback);
+        int res_close = npy_PyFile_DupClose2(file, fd, orig_pos);
+        npy_PyErr_ChainExceptions(type, value, traceback);
+        if (res_close < 0) {
+            return NULL;
+        }
+    }
+    if (res_write < 0) {
+        return NULL;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {
         goto fail;
