@@ -27,6 +27,9 @@ _Float64Codes = Any
 _Complex64Codes = Any
 _Complex128Codes = Any
 
+_NBitInt = Any
+_NBitIntP = Any
+
 byte = Any
 short = Any
 intc = Any

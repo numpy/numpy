@@ -186,6 +186,7 @@ from ._platform_aliases import (
     _Float64Codes,
     _Complex64Codes,
     _Complex128Codes,
+    _NBitInt,
 )
 from ._char_codes import (
     _BoolCodes,

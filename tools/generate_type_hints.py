@@ -4,81 +4,80 @@
 import os
 import sys
 import argparse
+import ctypes as ct
 from collections import defaultdict
 from typing import Union, Dict, IO
-
-# Import directly from `numerictypes` in order to get this script
-# to work with the main `setup.py`
-import numpy.core.numerictypes as nt
-
-if sys.version_info >= (3, 7):
-    from contextlib import nullcontext
-else:
-    from numpy.compat import contextlib_nullcontext as nullcontext
 
 __all__ = ["generate_alias"]
 
 _AnyPath = Union[str, bytes, os.PathLike]
 
-#: A set with all currently annotated `number` subclasses.
-ANNOTATED = {
-    nt.int8,
-    nt.int16,
-    nt.int32,
-    nt.int64,
-    nt.uint8,
-    nt.uint16,
-    nt.uint32,
-    nt.uint64,
-    nt.float16,
-    nt.float32,
-    nt.float64,
-    nt.complex64,
-    nt.complex128,
+ANNOTATED_CHARCODES = {
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float16",
+    "float32",
+    "float64",
+    "complex64",
+    "complex128",
 }
+
+ALLOWED_SIZES = {8, 16, 32, 64, 80, 96, 128, 256}
 
 #: A mapping with `number` aliases as keys and the name of their
 #: character-code-containing `Literal` as values.
 TO_BE_ANNOTATED = {
-    "byte": "_ByteCodes",
-    "short": "_ShortCodes",
-    "intc": "_IntCCodes",
-    "intp": "_IntPCodes",
-    "int_": "_IntCodes",
-    "longlong": "_LongLongCodes",
-    "ubyte": "_UByteCodes",
-    "ushort": "_UShortCodes",
-    "uintc": "_UIntCCodes",
-    "uintp": "_UIntPCodes",
-    "uint": "_UIntCodes",
-    "ulonglong": "_ULongLongCodes",
-    "half": "_HalfCodes",
-    "single": "_SingleCodes",
-    "float_": "_DoubleCodes",
-    "longfloat": "_LongFloatCodes",
-    "csingle": "_CSingleCodes",
-    "complex_": "_CDoubleCodes",
-    "clongfloat": "_CLongFloatCodes",
+    # `ctypes.c_void_p` is not quite a direct `np.intp` counterpart,
+    # but its size is the same
+    "byte": (ct.c_byte, "_ByteCodes", "int"),
+    "short": (ct.c_short, "_ShortCodes", "int"),
+    "intc": (ct.c_int, "_IntCCodes", "int"),
+    "intp": (ct.c_void_p, "_IntPCodes", "int"),
+    "int_": (ct.c_long, "_IntCodes", "int"),
+    "longlong": (ct.c_longlong, "_LongLongCodes", "int"),
+
+    "ubyte": (ct.c_ubyte, "_UByteCodes", "uint"),
+    "ushort": (ct.c_ushort, "_UShortCodes", "uint"),
+    "uintc": (ct.c_uint, "_UIntCCodes", "uint"),
+    "uintp": (ct.c_void_p, "_UIntPCodes", "uint"),
+    "uint": (ct.c_ulong, "_UIntCodes", "uint"),
+    "ulonglong": (ct.c_ulonglong, "_ULongLongCodes", "uint"),
+
+    "double": (ct.c_double, "_DoubleCodes", "float"),
+    "longdouble": (ct.c_longdouble, "_LongDoubleCodes", "float"),
+
+    # `ctypes` lacks `complex`-based types, so instead grab their float-based
+    # counterpart and multiply its size by 2
+    "cdouble": (ct.c_double, "_CDoubleCodes", "complex"),
+    "clongdouble": (ct.c_longdouble, "_CLongDoubleCodes", "complex"),
 }
 
-TEMPLATE = r"""{docstring}
+TEMPLATE = r'''"""THIS FILE WAS AUTOMATICALLY GENERATED."""
 
 from typing import Union, Any
 
 from numpy import (
-    int8,
-    int16,
-    int32,
-    int64,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    float16,
-    float32,
-    float64,
-    complex64,
-    complex128,
+    signedinteger,
+    unsignedinteger,
+    floating,
+    complexfloating,
+)
+
+from . import (
+    _256Bit,
+    _128Bit,
+    _96Bit,
+    _80Bit,
+    _64Bit,
+    _32Bit,
+    _16Bit,
+    _8Bit,
 )
 
 from ._char_codes import (
@@ -110,10 +109,10 @@ from ._char_codes import (
     _HalfCodes,
     _SingleCodes,
     _DoubleCodes,
-    _LongFloatCodes,
+    _LongDoubleCodes,
     _CSingleCodes,
     _CDoubleCodes,
-    _CLongFloatCodes,
+    _CLongDoubleCodes,
 )
 
 _Int8Codes = Union[_Int8CodesBase{int8}]
@@ -126,8 +125,8 @@ _UInt16Codes = Union[_UInt16CodesBase{uint16}]
 _UInt32Codes = Union[_UInt32CodesBase{uint32}]
 _UInt64Codes = Union[_UInt64CodesBase{uint64}]
 
-_Float16Codes = Union[_Float16CodesBase{float16}]
-_Float32Codes = Union[_Float32CodesBase{float32}]
+_Float16Codes = Union[_Float16CodesBase, _HalfCodes]
+_Float32Codes = Union[_Float32CodesBase, _SingleCodes]
 _Float64Codes = Union[_Float64CodesBase{float64}]
 
 _Complex64Codes = Union[_Complex64CodesBase{complex64}]
@@ -135,29 +134,44 @@ _Complex128Codes = Union[_Complex128CodesBase{complex128}]
 
 # Note that these variables are private despite the lack of underscore;
 # don't expose them to the `numpy.typing` __init__ file.
-byte = {byte}
-short = {short}
-intc = {intc}
-intp = int0 = {intp}
-int_ = {int_}
-longlong = {longlong}
+#
+# NOTE: mypy has issues parsing double assignments, don't use them
+# (e.g. `cdouble = csingle = cfloat`)
+byte = signedinteger[{byte}]
+short = signedinteger[{short}]
+intc = signedinteger[{intc}]
+intp = signedinteger[{intp}]
+int0 = intp
+int_ = signedinteger[{int_}]
+longlong = signedinteger[{longlong}]
 
-ubyte = {ubyte}
-ushort = {ushort}
-uintc = {uintc}
-uintp = uint0 = {uintp}
-uint = {uint}
-ulonglong = {ulonglong}
+ubyte = unsignedinteger[{ubyte}]
+ushort = unsignedinteger[{ushort}]
+uintc = unsignedinteger[{uintc}]
+uintp = unsignedinteger[{uintp}]
+uint0 = uintp
+uint = unsignedinteger[{uint}]
+ulonglong = unsignedinteger[{ulonglong}]
 
-half = {half}
-single = {single}
-float_ = double = {float_}
-longfloat = longdouble = {longfloat}
+half = floating[_16Bit]
+single = floating[_32Bit]
+double = floating[{double}]
+float_ = double
+longdouble = floating[{longdouble}]
+longfloat = longdouble
 
-csingle = singlecomplex = {csingle}
-complex_ = cdouble = cfloat = {complex_}
-clongfloat = longcomplex = clongdouble = {clongfloat}
-"""
+csingle = complexfloating[_32Bit, _32Bit]
+singlecomplex = csingle
+cdouble = complexfloating[{cdouble}, {cdouble}]
+complex_ = cdouble
+cfloat = cdouble
+clongdouble = complexfloating[{clongdouble}, {clongdouble}]
+longcomplex = clongdouble
+clongfloat = clongdouble
+
+# The precision of `np.int_`
+_NBitInt = {int_}
+'''
 
 
 def generate_alias(file: IO[str]) -> None:
@@ -173,19 +187,18 @@ def generate_alias(file: IO[str]) -> None:
     type_alias = {}
     char_codes: Dict[str, str] = defaultdict(str)
 
-    for name, code_names in TO_BE_ANNOTATED.items():
-        typ = getattr(nt, name)
-        if typ in ANNOTATED:
-            type_alias[name] = typ.__name__
-            char_codes[typ.__name__] += f", {code_names}"
-        else:
-            # Plan B in case an untyped class is encountered
+    for name, (ctype, code_names, prefix) in TO_BE_ANNOTATED.items():
+        size = 8 * ct.sizeof(ctype)
+        if size not in ALLOWED_SIZES:
             type_alias[name] = "Any"
+            continue
+        type_alias[name] = f"_{size}Bit"
 
-    # Generate the docstring
-    docstring = f'"""THIS FILE WAS AUTOMATICALLY GENERATED."""'
+        numbered_name = f'{prefix}{size}'
+        if numbered_name in ANNOTATED_CHARCODES:
+            char_codes[numbered_name] += f", {code_names}"
 
-    string = TEMPLATE.format(docstring=docstring, **type_alias, **char_codes)
+    string = TEMPLATE.format(**type_alias, **char_codes)
     file.write(string)
 
 
@@ -203,11 +216,10 @@ def main():
     file = args.file
 
     if file is None:
-        context = nullcontext(sys.stdout)
+        generate_alias(sys.stdout)
     else:
-        context = open(file, "w", encoding="utf8")
-    with context as f:
-        generate_alias(f)
+        with open(file, "w", encoding="utf8") as f:
+            generate_alias(f)
 
 
 if __name__ == "__main__":
