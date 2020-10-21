@@ -126,7 +126,7 @@ def outer(a: ArrayLike, b: ArrayLike, out: _ArrayType = ...) -> _ArrayType: ...
 def tensordot(
     a: ArrayLike,
     b: ArrayLike,
-    axes: _ShapeLike = ...,
+    axes: Union[int, Tuple[_ShapeLike, _ShapeLike]] = ...,
 ) -> ndarray: ...
 def roll(
     a: ArrayLike,
