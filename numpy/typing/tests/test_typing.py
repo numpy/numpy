@@ -3,6 +3,7 @@ import itertools
 import os
 import re
 from collections import defaultdict
+from typing import Optional
 
 import pytest
 try:
@@ -55,6 +56,8 @@ def test_success(path):
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(FAIL_DIR))
 def test_fail(path):
+    __tracebackhide__ = True
+
     stdout, stderr, exitcode = api.run([
         "--config-file",
         MYPY_INI,
@@ -95,16 +98,37 @@ def test_fail(path):
         target_line = lines[lineno - 1]
         if "# E:" in target_line:
             marker = target_line.split("# E:")[-1].strip()
-            assert lineno in errors, f'Extra error "{marker}"'
-            assert marker in errors[lineno]
+            expected_error = errors.get(lineno)
+            _test_fail(path, marker, expected_error, lineno)
         else:
             pytest.fail(f"Error {repr(errors[lineno])} not found")
+
+
+_FAIL_MSG1 = """Extra error at line {}
+
+Extra error: {!r}
+"""
+
+_FAIL_MSG2 = """Error mismatch at line {}
+
+Expected error: {!r}
+Observed error: {!r}
+"""
+
+
+def _test_fail(path: str, error: str, expected_error: Optional[str], lineno: int) -> None:
+    if expected_error is None:
+        raise AssertionError(_FAIL_MSG1.format(lineno, error))
+    elif error not in expected_error:
+        raise AssertionError(_FAIL_MSG2.format(lineno, expected_error, error))
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(REVEAL_DIR))
 def test_reveal(path):
+    __tracebackhide__ = True
+
     stdout, stderr, exitcode = api.run([
         "--config-file",
         MYPY_INI,
@@ -128,10 +152,23 @@ def test_reveal(path):
         )
         if match is None:
             raise ValueError(f"Unexpected reveal line format: {error_line}")
-        lineno = int(match.group('lineno'))
+        lineno = int(match.group('lineno')) - 1
         assert "Revealed type is" in error_line
-        marker = lines[lineno - 1].split("# E:")[-1].strip()
-        assert marker in error_line
+
+        marker = lines[lineno].split("# E:")[-1].strip()
+        _test_reveal(path, marker, error_line, lineno)
+
+
+_REVEAL_MSG = """Reveal mismatch at line {}
+
+Expected reveal: {!r}
+Observed reveal: {!r}
+"""
+
+
+def _test_reveal(path: str, reveal: str, expected_reveal: str, lineno: int) -> None:
+    if reveal not in expected_reveal:
+        raise AssertionError(_REVEAL_MSG.format(lineno, expected_reveal, reveal))
 
 
 @pytest.mark.slow
