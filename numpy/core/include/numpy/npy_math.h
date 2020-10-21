@@ -5,14 +5,12 @@
 extern "C" {
 #endif
 
+#include <numpy/npy_common.h>
+
 #include <math.h>
 #ifdef __SUNPRO_CC
 #include <sunmath.h>
 #endif
-#ifdef HAVE_NPY_CONFIG_H
-#include <npy_config.h>
-#endif
-#include <numpy/npy_common.h>
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
