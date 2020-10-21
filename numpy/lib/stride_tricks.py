@@ -126,10 +126,9 @@ def sliding_window_view(x, window_shape, axis=None, *,
     """
     Create a sliding window view into the array with the given window shape.
 
-    Creates a sliding window view (also known as rolling or moving window) of
-    the N dimensional array with the given window shape. The window slides
-    across each dimension of the array and extracts a subsets of the array at
-    any window position.
+    Also known as rolling or moving window, the window slides across all
+    dimensions of the array and extracts subsets of the array at all window
+    positions.
 
     Parameters
     ----------
