@@ -29,6 +29,7 @@
 #endif
 #endif
 #include "simd/simd.h"
+#include "loops_utils.h" // nomemoverlap
 #include <assert.h>
 #include <stdlib.h>
 #include <float.h>
@@ -50,37 +51,6 @@
  *    i64gather/scatter). esize = element size = 4/8 bytes for float/double.
  */
 #define MAX_STEP_SIZE 2097152
-
-/*
- * nomemoverlap - returns true if two strided arrays have an overlapping
- * region in memory. ip_size/op_size = size of the arrays which can be negative
- * indicating negative steps.
- */
-static NPY_INLINE npy_bool
-nomemoverlap(char *ip,
-             npy_intp ip_size,
-             char *op,
-             npy_intp op_size)
-{
-    char *ip_start, *ip_end, *op_start, *op_end;
-    if (ip_size < 0) {
-        ip_start = ip + ip_size;
-        ip_end = ip;
-    }
-    else {
-        ip_start = ip;
-        ip_end = ip + ip_size;
-    }
-    if (op_size < 0) {
-        op_start = op + op_size;
-        op_end = op;
-    }
-    else {
-        op_start = op;
-        op_end = op + op_size;
-    }
-    return (ip_start > op_end) | (op_start > ip_end);
-}
 
 #define IS_BINARY_STRIDE_ONE(esize, vsize) \
     ((steps[0] == esize) && \
@@ -390,7 +360,7 @@ run_@func@_avx512_skx_@TYPE@(char **args, npy_intp const *dimensions, npy_intp c
  */
 
 /**begin repeat2
- *  #func = sqrt, absolute, square, reciprocal, rint, floor, ceil, trunc#
+ *  #func = rint, floor, ceil, trunc#
  */
 
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -510,9 +480,9 @@ run_unary_avx512f_log_DOUBLE(char **args, npy_intp const *dimensions, npy_intp c
  */
 
 /**begin repeat1
- * #func = sqrt, absolute, negative, minimum, maximum#
- * #check = IS_BLOCKABLE_UNARY*3, IS_BLOCKABLE_REDUCE*2 #
- * #name = unary*3, unary_reduce*2#
+ * #func = absolute, negative, minimum, maximum#
+ * #check = IS_BLOCKABLE_UNARY*2, IS_BLOCKABLE_REDUCE*2 #
+ * #name = unary*2, unary_reduce*2#
  */
 
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -1356,33 +1326,6 @@ sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy
     }
 }
 /**end repeat1**/
-
-static void
-sse2_sqrt_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
-{
-    /* align output to VECTOR_SIZE_BYTES bytes */
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES) {
-        op[i] = @scalarf@(ip[i]);
-    }
-    assert((npy_uintp)n < (VECTOR_SIZE_BYTES / sizeof(@type@)) ||
-           npy_is_aligned(&op[i], VECTOR_SIZE_BYTES));
-    if (npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
-            @vtype@ d = @vpre@_load_@vsuf@(&ip[i]);
-            @vpre@_store_@vsuf@(&op[i], @vpre@_sqrt_@vsuf@(d));
-        }
-    }
-    else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
-            @vtype@ d = @vpre@_loadu_@vsuf@(&ip[i]);
-            @vpre@_store_@vsuf@(&op[i], @vpre@_sqrt_@vsuf@(d));
-        }
-    }
-    LOOP_BLOCKED_END {
-        op[i] = @scalarf@(ip[i]);
-    }
-}
-
 
 static NPY_INLINE
 @type@ scalar_abs_@type@(@type@ v)
@@ -2458,9 +2401,8 @@ AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *s
  */
 
 /**begin repeat1
- *  #func = sqrt, absolute, square, reciprocal, rint, ceil, floor, trunc#
- *  #vectorf = sqrt, abs, square, reciprocal, rint, ceil, floor, trunc#
- *  #replace_0_with_1 = 0, 0, 0, 1, 0, 0, 0, 0#
+ *  #func = rint, ceil, floor, trunc#
+ *  #vectorf = rint, ceil, floor, trunc#
  */
 
 #if defined @CHK@
@@ -2475,10 +2417,6 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     npy_intp num_remaining_elements = array_size;
     @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
-#if @replace_0_with_1@
-    @mask@ inv_load_mask = @isa@_invert_mask_ps(load_mask);
-#endif
-
     /*
      * Note: while generally indices are npy_intp, we ensure that our maximum index
      * will fit in an int32 as a precondition for this function via
@@ -2495,20 +2433,10 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         if (num_remaining_elements < num_lanes) {
             load_mask = @isa@_get_partial_load_mask_ps(num_remaining_elements,
                                                        num_lanes);
-#if @replace_0_with_1@
-            inv_load_mask = @isa@_invert_mask_ps(load_mask);
-#endif
         }
         @vtype@ x;
         if (stride == 1) {
             x = @isa@_masked_load_ps(load_mask, ip);
-#if @replace_0_with_1@
-            /*
-             * Replace masked elements with 1.0f to avoid divide by zero fp
-             * exception in reciprocal
-             */
-            x = @isa@_set_masked_lanes_ps(x, ones_f, inv_load_mask);
-#endif
         }
         else {
             x = @isa@_masked_gather_ps(ones_f, ip, vindex, load_mask);
@@ -2544,9 +2472,8 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  */
 
 /**begin repeat1
- *  #func = sqrt, absolute, square, reciprocal, rint, ceil, floor, trunc#
- *  #vectorf = sqrt, abs, square, reciprocal, rint, ceil, floor, trunc#
- *  #replace_0_with_1 = 0, 0, 0, 1, 0, 0, 0, 0#
+ *  #func = rint, ceil, floor, trunc#
+ *  #vectorf =  rint, ceil, floor, trunc#
  */
 
 #if defined @CHK@
@@ -2560,9 +2487,6 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_double);
     npy_intp num_remaining_elements = array_size;
     @mask@ load_mask = @isa@_get_full_load_mask_pd();
-#if @replace_0_with_1@
-    @mask@ inv_load_mask = @isa@_invert_mask_pd(load_mask);
-#endif
     @vtype@ ones_d = _mm@vsize@_set1_pd(1.0f);
 
     /*
@@ -2580,20 +2504,10 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         if (num_remaining_elements < num_lanes) {
             load_mask = @isa@_get_partial_load_mask_pd(num_remaining_elements,
                                                        num_lanes);
-#if @replace_0_with_1@
-            inv_load_mask = @isa@_invert_mask_pd(load_mask);
-#endif
         }
         @vtype@ x;
         if (stride == 1) {
             x = @isa@_masked_load_pd(load_mask, ip);
-#if @replace_0_with_1@
-            /*
-             * Replace masked elements with 1.0f to avoid divide by zero fp
-             * exception in reciprocal
-             */
-            x = @isa@_set_masked_lanes_pd(x, ones_d, @castmask@(inv_load_mask));
-#endif
         }
         else {
             x = @isa@_masked_gather_pd(ones_d, ip, vindex, @castmask@(load_mask));
