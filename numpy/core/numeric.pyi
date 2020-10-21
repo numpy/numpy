@@ -12,7 +12,7 @@ from typing import (
     Iterable,
 )
 
-from numpy import ndarray, generic, dtype, bool_, int32, int64, _OrderKACF, _OrderCF
+from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF
 from numpy.typing import ArrayLike, DtypeLike, _ShapeLike
 
 if sys.version_info >= (3, 8):
@@ -113,7 +113,7 @@ def count_nonzero(
 @overload
 def count_nonzero(
     a: ArrayLike, axis: _ShapeLike = ..., *, keepdims: bool = ...
-) -> Union[int64, int32, ndarray]: ...
+) -> Union[signedinteger[Any], ndarray]: ...  # TODO: np.intp
 def isfortran(a: Union[ndarray, generic]) -> bool: ...
 def argwhere(a: ArrayLike) -> ndarray: ...
 def flatnonzero(a: ArrayLike) -> ndarray: ...
