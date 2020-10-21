@@ -20,8 +20,8 @@ C: SubClass
 reveal_type(np.count_nonzero(i8))  # E: int
 reveal_type(np.count_nonzero(A))  # E: int
 reveal_type(np.count_nonzero(B))  # E: int
-reveal_type(np.count_nonzero(A, keepdims=True))  # E: Union[numpy.int64, numpy.int32, numpy.ndarray]
-reveal_type(np.count_nonzero(A, axis=0))  # E: Union[numpy.int64, numpy.int32, numpy.ndarray]
+reveal_type(np.count_nonzero(A, keepdims=True))  # E: Union[numpy.signedinteger[Any], numpy.ndarray]
+reveal_type(np.count_nonzero(A, axis=0))  # E: Union[numpy.signedinteger[Any], numpy.ndarray]
 
 reveal_type(np.isfortran(i8))  # E: bool
 reveal_type(np.isfortran(A))  # E: bool
