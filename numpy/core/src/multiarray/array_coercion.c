@@ -298,7 +298,7 @@ discover_dtype_from_pyobject(
         Py_INCREF(DType);
         Py_DECREF(legacy_descr);
         /* TODO: Enable warning about subclass handling */
-        if (0 && !((*flags) & GAVE_SUBCLASS_WARNING)) {
+        if ((0) && !((*flags) & GAVE_SUBCLASS_WARNING)) {
             if (DEPRECATE_FUTUREWARNING(
                     "in the future NumPy will not automatically find the "
                     "dtype for subclasses of scalars known to NumPy (i.e. "
