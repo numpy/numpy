@@ -114,9 +114,10 @@ def test_reveal(path):
     ])
 
     with open(path) as fin:
-        lines = fin.readlines()
+        lines = fin.read().replace('*', '').split("\n")
 
-    for error_line in stdout.split("\n"):
+    stdout_list = stdout.replace('*', '').split("\n")
+    for error_line in stdout_list:
         error_line = error_line.strip()
         if not error_line:
             continue
