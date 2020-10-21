@@ -590,7 +590,7 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int own;
+    int own, res1, res2;
     PyObject *file;
     FILE *fd;
     char *sep = "";
@@ -624,10 +624,9 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (fd == NULL) {
         goto fail;
     }
-    if (PyArray_ToFile(self, fd, sep, format) < 0) {
-        goto fail;
-    }
-    if (npy_PyFile_DupClose2(file, fd, orig_pos) < 0) {
+    res1 = PyArray_ToFile(self, fd, sep, format);
+    res2 = npy_PyFile_DupClose2(file, fd, orig_pos);
+    if (res1 < 0 || res2 < 0) {
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {
