@@ -637,6 +637,8 @@ _buffer_get_info(PyObject *obj, int flags)
             item = PyList_GetItem(item_list, item_list_length - 1);
             old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
             if (_buffer_info_cmp(info, old_info) != 0) {
+                old_info = NULL;  /* Can't use this one, but possibly next */
+
                 if (item_list_length > 1 && info->ndim > 1) {
                     /*
                      * Some arrays are C- and F-contiguous and if they have more
@@ -653,9 +655,6 @@ _buffer_get_info(PyObject *obj, int flags)
                     if (_buffer_info_cmp(info, old_info) != 0) {
                         old_info = NULL;
                     }
-                }
-                else {
-                    old_info = NULL;
                 }
             }
 
