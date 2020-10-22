@@ -28,13 +28,21 @@ from numpy.typing._callable import (
     _BoolBitOp,
     _BoolSub,
     _BoolTrueDiv,
+    _BoolMod,
+    _BoolDivMod,
     _TD64Div,
     _IntTrueDiv,
     _UnsignedIntOp,
     _UnsignedIntBitOp,
+    _UnsignedIntMod,
+    _UnsignedIntDivMod,
     _SignedIntOp,
     _SignedIntBitOp,
+    _SignedIntMod,
+    _SignedIntDivMod,
     _FloatOp,
+    _FloatMod,
+    _FloatDivMod,
     _ComplexOp,
     _NumberOp,
 )
@@ -1016,10 +1024,6 @@ class _ArrayOrScalarCommon(
     def __ne__(self, other): ...
     def __gt__(self, other): ...
     def __ge__(self, other): ...
-    def __mod__(self, other): ...
-    def __rmod__(self, other): ...
-    def __divmod__(self, other): ...
-    def __rdivmod__(self, other): ...
     def astype(
         self: _ArraySelf,
         dtype: DtypeLike,
@@ -1580,6 +1584,14 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def __neg__(self: _ArraySelf) -> Union[_ArraySelf, generic]: ...
     def __pos__(self: _ArraySelf) -> Union[_ArraySelf, generic]: ...
     def __abs__(self: _ArraySelf) -> Union[_ArraySelf, generic]: ...
+    def __mod__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
+    def __rmod__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
+    def __divmod__(
+        self, other: ArrayLike
+    ) -> Union[Tuple[ndarray, ndarray], Tuple[generic, generic]]: ...
+    def __rdivmod__(
+        self, other: ArrayLike
+    ) -> Union[Tuple[ndarray, ndarray], Tuple[generic, generic]]: ...
     def __add__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
     def __radd__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
     def __sub__(self, other: ArrayLike) -> Union[ndarray, generic]: ...
@@ -1690,6 +1702,10 @@ class bool_(generic):
     __rxor__: _BoolBitOp[bool_]
     __or__: _BoolBitOp[bool_]
     __ror__: _BoolBitOp[bool_]
+    __mod__: _BoolMod
+    __rmod__: _BoolMod
+    __divmod__: _BoolDivMod
+    __rdivmod__: _BoolDivMod
 
 class object_(generic):
     def __init__(self, __value: object = ...) -> None: ...
@@ -1735,6 +1751,8 @@ class integer(number[_NBit_co]):  # type: ignore
     def __index__(self) -> int: ...
     __truediv__: _IntTrueDiv[_NBit_co]
     __rtruediv__: _IntTrueDiv[_NBit_co]
+    def __mod__(self, value: Union[_IntLike, integer]) -> integer: ...
+    def __rmod__(self, value: Union[_IntLike, integer]) -> integer: ...
     def __invert__(self: _IntType) -> _IntType: ...
     # Ensure that objects annotated as `integer` support bit-wise operations
     def __lshift__(self, other: Union[_IntLike, _BoolLike]) -> integer: ...
@@ -1770,6 +1788,10 @@ class signedinteger(integer[_NBit_co]):
     __rxor__: _SignedIntBitOp[_NBit_co]
     __or__: _SignedIntBitOp[_NBit_co]
     __ror__: _SignedIntBitOp[_NBit_co]
+    __mod__: _SignedIntMod[_NBit_co]
+    __rmod__: _SignedIntMod[_NBit_co]
+    __divmod__: _SignedIntDivMod[_NBit_co]
+    __rdivmod__: _SignedIntDivMod[_NBit_co]
 
 int8 = signedinteger[_8Bit]
 int16 = signedinteger[_16Bit]
@@ -1798,6 +1820,9 @@ class timedelta64(generic):
     def __rtruediv__(self, other: timedelta64) -> float64: ...
     def __rfloordiv__(self, other: timedelta64) -> int64: ...
     def __mod__(self, other: timedelta64) -> timedelta64: ...
+    def __rmod__(self, other: timedelta64) -> timedelta64: ...
+    def __divmod__(self, other: timedelta64) -> Tuple[int64, timedelta64]: ...
+    def __rdivmod__(self, other: timedelta64) -> Tuple[int64, timedelta64]: ...
 
 class unsignedinteger(integer[_NBit_co]):
     # NOTE: `uint64 + signedinteger -> float64`
@@ -1822,6 +1847,10 @@ class unsignedinteger(integer[_NBit_co]):
     __rxor__: _UnsignedIntBitOp[_NBit_co]
     __or__: _UnsignedIntBitOp[_NBit_co]
     __ror__: _UnsignedIntBitOp[_NBit_co]
+    __mod__: _UnsignedIntMod[_NBit_co]
+    __rmod__: _UnsignedIntMod[_NBit_co]
+    __divmod__: _UnsignedIntDivMod[_NBit_co]
+    __rdivmod__: _UnsignedIntDivMod[_NBit_co]
 
 uint8 = unsignedinteger[_8Bit]
 uint16 = unsignedinteger[_16Bit]
@@ -1847,6 +1876,10 @@ class floating(inexact[_NBit_co]):
     __rfloordiv__: _FloatOp[_NBit_co]
     __pow__: _FloatOp[_NBit_co]
     __rpow__: _FloatOp[_NBit_co]
+    __mod__: _FloatMod[_NBit_co]
+    __rmod__: _FloatMod[_NBit_co]
+    __divmod__: _FloatDivMod[_NBit_co]
+    __rdivmod__: _FloatDivMod[_NBit_co]
 
 float16 = floating[_16Bit]
 float32 = floating[_32Bit]

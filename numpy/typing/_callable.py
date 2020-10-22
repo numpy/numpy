@@ -9,7 +9,15 @@ See the `Mypy documentation`_ on protocols for more details.
 """
 
 import sys
-from typing import Union, TypeVar, overload, Any, TYPE_CHECKING, NoReturn
+from typing import (
+    Union,
+    TypeVar,
+    overload,
+    Any,
+    Tuple,
+    NoReturn,
+    TYPE_CHECKING,
+)
 
 from numpy import (
     generic,
@@ -19,6 +27,7 @@ from numpy import (
     integer,
     unsignedinteger,
     signedinteger,
+    int8,
     int32,
     int64,
     floating,
@@ -49,9 +58,14 @@ else:
         HAVE_PROTOCOL = True
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
+    _T = TypeVar("_T")
+    _2Tuple = Tuple[_T, _T]
+
     _NBit_co = TypeVar("_NBit_co", covariant=True, bound=NBitBase)
     _NBit = TypeVar("_NBit", bound=NBitBase)
+
     _IntType = TypeVar("_IntType", bound=integer)
+    _FloatType = TypeVar("_FloatType", bound=floating)
     _NumberType = TypeVar("_NumberType", bound=number)
     _NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
     _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
@@ -96,6 +110,30 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         def __call__(self, __other: complex) -> complex128: ...
         @overload
         def __call__(self, __other: _NumberType) -> _NumberType: ...
+
+    class _BoolMod(Protocol):
+        @overload
+        def __call__(self, __other: _BoolLike) -> int8: ...
+        @overload  # platform dependent
+        def __call__(self, __other: int) -> signedinteger[Any]: ...
+        @overload
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(self, __other: _IntType) -> _IntType: ...
+        @overload
+        def __call__(self, __other: _FloatType) -> _FloatType: ...
+
+    class _BoolDivMod(Protocol):
+        @overload
+        def __call__(self, __other: _BoolLike) -> _2Tuple[int8]: ...
+        @overload  # platform dependent
+        def __call__(self, __other: int) -> _2Tuple[signedinteger[Any]]: ...
+        @overload
+        def __call__(self, __other: float) -> _2Tuple[float64]: ...
+        @overload
+        def __call__(self, __other: _IntType) -> _2Tuple[_IntType]: ...
+        @overload
+        def __call__(self, __other: _FloatType) -> _2Tuple[_FloatType]: ...
 
     class _TD64Div(Protocol[_NumberType_co]):
         @overload
@@ -144,6 +182,34 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
             self, __other: unsignedinteger[_NBit]
         ) -> unsignedinteger[Union[_NBit_co, _NBit]]: ...
 
+    class _UnsignedIntMod(Protocol[_NBit_co]):
+        @overload
+        def __call__(self, __other: bool) -> unsignedinteger[_NBit_co]: ...
+        @overload
+        def __call__(
+            self, __other: Union[int, signedinteger[Any]]
+        ) -> Union[signedinteger[Any], float64]: ...
+        @overload
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(
+            self, __other: unsignedinteger[_NBit]
+        ) -> unsignedinteger[Union[_NBit_co, _NBit]]: ...
+
+    class _UnsignedIntDivMod(Protocol[_NBit_co]):
+        @overload
+        def __call__(self, __other: bool) -> _2Tuple[signedinteger[_NBit_co]]: ...
+        @overload
+        def __call__(
+            self, __other: Union[int, signedinteger[Any]]
+        ) -> Union[_2Tuple[signedinteger[Any]], _2Tuple[float64]]: ...
+        @overload
+        def __call__(self, __other: float) -> _2Tuple[float64]: ...
+        @overload
+        def __call__(
+            self, __other: unsignedinteger[_NBit]
+        ) -> _2Tuple[unsignedinteger[Union[_NBit_co, _NBit]]]: ...
+
     class _SignedIntOp(Protocol[_NBit_co]):
         @overload
         def __call__(self, __other: bool) -> signedinteger[_NBit_co]: ...
@@ -168,6 +234,30 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
             self, __other: signedinteger[_NBit]
         ) -> signedinteger[Union[_NBit_co, _NBit]]: ...
 
+    class _SignedIntMod(Protocol[_NBit_co]):
+        @overload
+        def __call__(self, __other: bool) -> signedinteger[_NBit_co]: ...
+        @overload
+        def __call__(self, __other: int) -> signedinteger[Any]: ...
+        @overload
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(
+            self, __other: signedinteger[_NBit]
+        ) -> signedinteger[Union[_NBit_co, _NBit]]: ...
+
+    class _SignedIntDivMod(Protocol[_NBit_co]):
+        @overload
+        def __call__(self, __other: bool) -> _2Tuple[signedinteger[_NBit_co]]: ...
+        @overload
+        def __call__(self, __other: int) -> _2Tuple[signedinteger[Any]]: ...
+        @overload
+        def __call__(self, __other: float) -> _2Tuple[float64]: ...
+        @overload
+        def __call__(
+            self, __other: signedinteger[_NBit]
+        ) -> _2Tuple[signedinteger[Union[_NBit_co, _NBit]]]: ...
+
     class _FloatOp(Protocol[_NBit_co]):
         @overload
         def __call__(self, __other: bool) -> floating[_NBit_co]: ...
@@ -181,6 +271,30 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
         def __call__(
             self, __other: Union[integer[_NBit], floating[_NBit]]
         ) -> floating[Union[_NBit_co, _NBit]]: ...
+
+    class _FloatMod(Protocol[_NBit_co]):
+        @overload
+        def __call__(self, __other: bool) -> floating[_NBit_co]: ...
+        @overload
+        def __call__(self, __other: int) -> floating[Any]: ...
+        @overload
+        def __call__(self, __other: float) -> float64: ...
+        @overload
+        def __call__(
+            self, __other: Union[integer[_NBit], floating[_NBit]]
+        ) -> floating[Union[_NBit_co, _NBit]]: ...
+
+    class _FloatDivMod(Protocol[_NBit_co]):
+        @overload
+        def __call__(self, __other: bool) -> _2Tuple[floating[_NBit_co]]: ...
+        @overload
+        def __call__(self, __other: int) -> _2Tuple[floating[Any]]: ...
+        @overload
+        def __call__(self, __other: float) -> _2Tuple[float64]: ...
+        @overload
+        def __call__(
+            self, __other: Union[integer[_NBit], floating[_NBit]]
+        ) -> _2Tuple[floating[Union[_NBit_co, _NBit]]]: ...
 
     class _ComplexOp(Protocol[_NBit_co]):
         @overload
@@ -207,12 +321,20 @@ else:
     _BoolBitOp = Any
     _BoolSub = Any
     _BoolTrueDiv = Any
+    _BoolMod = Any
+    _BoolDivMod = Any
     _TD64Div = Any
     _IntTrueDiv = Any
     _UnsignedIntOp = Any
     _UnsignedIntBitOp = Any
+    _UnsignedIntMod = Any
+    _UnsignedIntDivMod = Any
     _SignedIntOp = Any
     _SignedIntBitOp = Any
+    _SignedIntMod = Any
+    _SignedIntDivMod = Any
     _FloatOp = Any
+    _FloatMod = Any
+    _FloatDivMod = Any
     _ComplexOp = Any
     _NumberOp = Any
