@@ -28,13 +28,9 @@ from numpy import (
     unsignedinteger,
     signedinteger,
     int8,
-    int32,
-    int64,
     floating,
-    float32,
     float64,
     complexfloating,
-    complex64,
     complex128,
 )
 from ._scalars import (
