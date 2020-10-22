@@ -23,6 +23,42 @@ i = int()
 AR = np.array([0], dtype=np.float64)
 AR.setflags(write=False)
 
+# unary ops
+
+reveal_type(-c16)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
+reveal_type(-c8)  # E: numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]
+reveal_type(-f8)  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(-f4)  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(-i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
+reveal_type(-i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
+reveal_type(-u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
+reveal_type(-u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
+reveal_type(-td)  # E: numpy.timedelta64
+reveal_type(-AR)  # E: Union[numpy.ndarray*, numpy.generic]
+
+reveal_type(+c16)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
+reveal_type(+c8)  # E: numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]
+reveal_type(+f8)  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(+f4)  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(+i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
+reveal_type(+i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
+reveal_type(+u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
+reveal_type(+u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
+reveal_type(+td)  # E: numpy.timedelta64
+reveal_type(+AR)  # E: Union[numpy.ndarray*, numpy.generic]
+
+reveal_type(abs(c16))  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(abs(c8))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(abs(f8))  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(abs(f4))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(abs(i8))  # E: numpy.signedinteger[numpy.typing._64Bit]
+reveal_type(abs(i4))  # E: numpy.signedinteger[numpy.typing._32Bit]
+reveal_type(abs(u8))  # E: numpy.unsignedinteger[numpy.typing._64Bit]
+reveal_type(abs(u4))  # E: numpy.unsignedinteger[numpy.typing._32Bit]
+reveal_type(abs(td))  # E: numpy.timedelta64
+reveal_type(abs(b_))  # E: numpy.bool_
+reveal_type(abs(AR))  # E: Union[numpy.ndarray*, numpy.generic]
+
 # Time structures
 
 reveal_type(dt + td)  # E: numpy.datetime64

@@ -23,6 +23,42 @@ i = int(1)
 AR = np.ones(1, dtype=np.float64)
 AR.setflags(write=False)
 
+# unary ops
+
+-c16
+-c8
+-f8
+-f4
+-i8
+-i4
+-u8
+-u4
+-td
+-AR
+
++c16
++c8
++f8
++f4
++i8
++i4
++u8
++u4
++td
++AR
+
+abs(c16)
+abs(c8)
+abs(f8)
+abs(f4)
+abs(i8)
+abs(i4)
+abs(u8)
+abs(u4)
+abs(td)
+abs(b_)
+abs(AR)
+
 # Time structures
 
 dt + td
