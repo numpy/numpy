@@ -616,29 +616,33 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
-    if (fd == NULL) {
-        Py_DECREF(file);
-        return NULL;
-    }
-
-    int res_write = PyArray_ToFile(self, fd, sep, format);
     PyObject *err_type, *err_value, *err_traceback;
-    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    int failed = 0;
 
-    int res_close = npy_PyFile_DupClose2(file, fd, orig_pos);
-    if (res_close < 0) {
+    if (fd != NULL) {
+        if (PyArray_ToFile(self, fd, sep, format) < 0) {
+            failed = 1;
+        }
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        if (npy_PyFile_DupClose2(file, fd, orig_pos) < 0) {
+            failed = 1;
+        }
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+    } else {
+        failed = 1;
+    }
+
+    if (own) {
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        if (npy_PyFile_CloseFile(file) < 0) {
+            failed = 1;
+        }
         npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
     }
 
-    if (own && npy_PyFile_CloseFile(file) < 0) {
-        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
-        res_close = -1;
-    }
-
-    PyErr_Restore(err_type, err_value, err_traceback);
     Py_DECREF(file);
 
-    if (res_write < 0 || res_close < 0) {
+    if (failed) {
         return NULL;
     }
     Py_RETURN_NONE;
