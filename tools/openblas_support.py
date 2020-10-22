@@ -12,9 +12,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.10'
-# Temporary build of OpenBLAS to test a fix for dynamic detection of CPU
-OPENBLAS_LONG = 'v0.3.9-452-g349b722d'
+OPENBLAS_V = '0.3.11.dev'
+OPENBLAS_LONG = 'v0.3.11-16-g4ad33c46'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64',
