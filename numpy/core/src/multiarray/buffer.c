@@ -456,8 +456,7 @@ static PyObject *_buffer_info_cache = NULL;
 
 /* Fill in the info structure */
 static _buffer_info_t*
-_buffer_info_new(
-        PyObject *obj, npy_bool f_contiguous, npy_bool format_requested)
+_buffer_info_new(PyObject *obj, int flags)
 {
     /*
      * Note that the buffer info is cached as PyLongObjects making them appear
@@ -515,6 +514,7 @@ _buffer_info_new(
              * (This is unnecessary, but has no effect in the case where
              * NPY_RELAXED_STRIDES CHECKING is disabled.)
              */
+            int f_contiguous = (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS;
             if (PyArray_IS_C_CONTIGUOUS(arr) && !(
                     f_contiguous && PyArray_IS_F_CONTIGUOUS(arr))) {
                 Py_ssize_t sd = PyArray_ITEMSIZE(arr);
@@ -548,7 +548,7 @@ _buffer_info_new(
     }
 
     /* Fill in format */
-    if (format_requested) {
+    if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
         err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
         Py_DECREF(descr);
         if (err != 0) {
@@ -605,8 +605,7 @@ _buffer_info_free(_buffer_info_t *info)
 
 /* Get buffer info from the global dictionary */
 static _buffer_info_t*
-_buffer_get_info(
-        PyObject *obj, npy_bool f_contiguous, npy_bool format_requested)
+_buffer_get_info(PyObject *obj, int flags)
 {
     PyObject *key = NULL, *item_list = NULL, *item = NULL;
     _buffer_info_t *info = NULL, *old_info = NULL;
@@ -619,7 +618,7 @@ _buffer_get_info(
     }
 
     /* Compute information */
-    info = _buffer_info_new(obj, f_contiguous, format_requested);
+    info = _buffer_info_new(obj, flags);
     if (info == NULL) {
         return NULL;
     }
@@ -774,9 +773,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
 
     /* Fill in information */
-    info = _buffer_get_info(obj,
-            (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS,
-            (flags & PyBUF_FORMAT) == PyBUF_FORMAT);
+    info = _buffer_get_info(obj, flags);
     if (info == NULL) {
         goto fail;
     }
@@ -841,7 +838,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
     }
 
     /* Fill in information */
-    info = _buffer_get_info(self, 0, (flags & PyBUF_FORMAT) == PyBUF_FORMAT);
+    info = _buffer_get_info(self, flags);
     if (info == NULL) {
         goto fail;
     }
