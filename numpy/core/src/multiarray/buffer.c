@@ -660,6 +660,12 @@ _buffer_get_info(PyObject *obj, int flags)
             }
 
             if (old_info != NULL) {
+                /*
+                 * The two info->format are considered equal if one of them
+                 * has no format set (meaning the format is arbitrary and can
+                 * be modified). If the new info has a format, but we reuse
+                 * the old one, this transfers the ownership to the old one.
+                 */
                 if (old_info->format == NULL) {
                     old_info->format = info->format;
                     info->format = NULL;
