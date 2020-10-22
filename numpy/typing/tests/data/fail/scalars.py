@@ -64,3 +64,5 @@ np.timedelta64(value=0)  # E: Unexpected keyword argument
 
 np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
 np.str_("hello", encoding='utf-8')  # E: No overload variant
+
+complex(np.bytes_("1"))  # E: No overload variant
