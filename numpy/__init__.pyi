@@ -63,8 +63,6 @@ from typing import (
     overload,
     Sequence,
     Sized,
-    SupportsAbs,
-    SupportsBytes,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
@@ -986,9 +984,7 @@ _ArrayLikeIntOrBool = Union[
 
 _ArraySelf = TypeVar("_ArraySelf", bound=_ArrayOrScalarCommon)
 
-class _ArrayOrScalarCommon(
-    SupportsInt, SupportsFloat, SupportsComplex, SupportsBytes, SupportsAbs[Any]
-):
+class _ArrayOrScalarCommon:
     @property
     def T(self: _ArraySelf) -> _ArraySelf: ...
     @property
