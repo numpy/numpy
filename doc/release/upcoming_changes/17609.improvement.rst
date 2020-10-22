@@ -1,0 +1,4 @@
+Use OpenBLAS 0.3.11
+-------------------
+CI tests and wheels will be built using OpenBLAS 0.3.11
+
