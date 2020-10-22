@@ -142,9 +142,9 @@ def download_openblas(target, arch, ilp64, is_32bit):
         typ = 'tar.gz'
     elif arch == 'windows':
         if is_32bit:
-            suffix = 'win32-gcc_7_1_0.zip'
+            suffix = 'win32-gcc_8_1_0.zip'
         else:
-            suffix = 'win_amd64-gcc_7_1_0.zip'
+            suffix = 'win_amd64-gcc_8_1_0.zip'
         filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
     if not filename:
