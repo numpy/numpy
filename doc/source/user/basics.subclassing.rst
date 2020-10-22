@@ -92,8 +92,8 @@ Implications for subclassing
 
 If we subclass ndarray, we need to deal not only with explicit
 construction of our array type, but also :ref:`view-casting` or
-:ref:`new-from-template`.  NumPy has the machinery to do this, and this
-machinery that makes subclassing slightly non-standard.
+:ref:`new-from-template`.  NumPy has the machinery to do this, and it is
+this machinery that makes subclassing slightly non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
 views and new-from-template in subclasses.
