@@ -3139,21 +3139,31 @@ calling the function). That's why several functions are provided to check for
 numpy versions. The macros :c:data:`NPY_VERSION`  and
 :c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
 extension, whereas the versions returned by the functions
-PyArray_GetNDArrayCVersion and PyArray_GetNDArrayCFeatureVersion corresponds to
-the runtime numpy's version.
+:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
+corresponds to the runtime numpy's version.
 
 The rules for ABI and API compatibilities can be summarized as follows:
 
-    * Whenever :c:data:`NPY_VERSION` != PyArray_GetNDArrayCVersion, the
+    * Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
       extension has to be recompiled (ABI incompatibility).
-    * :c:data:`NPY_VERSION` == PyArray_GetNDArrayCVersion and
-      :c:data:`NPY_FEATURE_VERSION` <= PyArray_GetNDArrayCFeatureVersion means
+    * :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
+      :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
       backward compatible changes.
 
 ABI incompatibility is automatically detected in every numpy's version. API
 incompatibility detection was added in numpy 1.4.0. If you want to supported
 many different numpy versions with one extension binary, you have to build your
-extension with the lowest NPY_FEATURE_VERSION as possible.
+extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+
+.. c:macro:: NPY_VERSION
+
+    The current version of the ndarray object (check to see if this
+    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
+    being used).
+
+.. c:macro:: NPY_FEATURE_VERSION
+
+    The current version of the C-API.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 
@@ -3436,12 +3446,6 @@ Other constants
 .. c:macro:: NPY_MAXARGS
 
     The maximum number of array arguments that can be used in functions.
-
-.. c:macro:: NPY_VERSION
-
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the numpy/arrayobject.h header is
-    being used).
 
 .. c:macro:: NPY_FALSE
 
