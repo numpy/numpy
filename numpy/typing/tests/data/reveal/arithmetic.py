@@ -47,7 +47,6 @@ reveal_type(td / f4)  # E: numpy.timedelta64
 reveal_type(td / f8)  # E: numpy.timedelta64
 reveal_type(td / td)  # E: numpy.floating[numpy.typing._64Bit]
 reveal_type(td // td)  # E: numpy.signedinteger[numpy.typing._64Bit]
-reveal_type(td % td)  # E: numpy.timedelta64
 
 # boolean
 
