@@ -156,7 +156,7 @@ def test_reveal(path):
         assert "Revealed type is" in error_line
 
         marker = lines[lineno].split("# E:")[-1].strip()
-        _test_reveal(path, marker, error_line, lineno)
+        _test_reveal(path, marker, error_line, 1 + lineno)
 
 
 _REVEAL_MSG = """Reveal mismatch at line {}
