@@ -7155,7 +7155,8 @@ class TestNewBufferProtocol:
         _multiarray_tests.get_buffer_info(obj, ("STRIDED",))
 
         # This is currently also necessary to implement pickling:
-        res = pickle.loads(pickle.dumps(obj))
+        pickle_obj = pickle.dumps(obj)
+        res = pickle.loads(pickle_obj)
         assert_array_equal(res, obj)
 
     def test_padding(self):
