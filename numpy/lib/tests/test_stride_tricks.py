@@ -486,6 +486,14 @@ class TestSlidingWindowView:
         view[0, 1] = 3
         assert_array_equal(arr, np.array([0, 3, 2, 3, 4]))
 
+    def test_subok(self):
+        arr = np.ma.arange(5)
+        assert_(not np.ma.isMaskedArray(sliding_window_view(arr, 2,
+                                                            subok=False)))
+        assert_(np.ma.isMaskedArray(sliding_window_view(arr, 2, subok=True)))
+        # Default behavior
+        assert_(not np.ma.isMaskedArray(sliding_window_view(arr, 2)))
+
 
 def as_strided_writeable():
     arr = np.ones(10)
