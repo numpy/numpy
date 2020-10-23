@@ -1199,7 +1199,7 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(d1))
     if not diff_list:
         return
-    msg = f'Differences in strings:\n{''.join(diff_list).rstrip()}'
+    msg = f"Differences in strings:\n{''.join(diff_list).rstrip()}"
     if actual != desired:
         raise AssertionError(msg)
 
