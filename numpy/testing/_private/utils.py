@@ -2336,7 +2336,7 @@ def _assert_no_gc_cycles_context(name=None):
         gc.enable()
 
     if n_objects_in_cycles:
-        ame_str = f' when calling {name}' if name is not None else ''
+        name_str = f' when calling {name}' if name is not None else ''
         raise AssertionError(
             "Reference cycles were found{}: {} objects were collected, "
             "of which {} are shown below:{}"
