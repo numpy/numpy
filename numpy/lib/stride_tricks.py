@@ -173,21 +173,21 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Notes
     -----
-    For some cases there may be more efficient approaches to calculate
-    transformations across multi-dimensional arrays, for instance
-    `scipy.signal.fftconvolve`, where combining the iterating step with the
-    calculation itself while storing partial results can result in significant
-    speedups.
+    For many applications using a sliding window view can be convenient, but
+    potentially very slow. Often specialized solutions exist, for example:
+
+    - `scipy.signal.fftconvolve`
+
+    - filtering functions in `scipy.ndimage`
+
+    - moving window functions provided by
+      `bottleneck <https://github.com/pydata/bottleneck>`_.
 
     As a rough estimate, a sliding window approach with an input size of `N`
     and a window size of `W` will scale as `O(N*W)` where frequently a special
     algorithm can achieve `O(N)`. That means that the sliding window variant
     for a window size of 100 can be a 100 times slower than a more specialized
     version.
-    For many common problems these better, specialized solutions already exist
-    in libraries such as
-    `scipy.ndimage <https://docs.scipy.org/doc/scipy/reference/ndimage.html>`_
-    or `bottleneck <https://github.com/pydata/bottleneck>`_.
 
     Nevertheless, for small window sizes, when no custom algorithm exists, or
     as a prototyping and developing tool, this function can be a good solution.
@@ -295,7 +295,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> moving_average
     array([1., 2., 3., 4.])
 
-    Note that a sliding windows approach is often **not** optimal (see Notes).
+    Note that a sliding window approach is often **not** optimal (see Notes).
     """
     window_shape = (tuple(window_shape)
                     if np.iterable(window_shape)
