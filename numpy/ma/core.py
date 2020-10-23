@@ -5698,11 +5698,11 @@ class MaskedArray(ndarray):
             result = np.array(self.filled(fill_value).min(axis=axis, out=out, **kwargs)).view(type(self))
 
             if result.ndim:
-                    # Set the mask
-                    result.__setmask__(newmask)
-                    # Get rid of Infs
-                    if newmask.ndim:
-                        np.copyto(result, result.fill_value, where=newmask)
+                # Set the mask
+                result.__setmask__(newmask)
+                # Get rid of Infs
+                if newmask.ndim:
+                    np.copyto(result, result.fill_value, where=newmask)
             elif newmask:
                 result = masked
             return result
