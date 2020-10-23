@@ -2440,10 +2440,10 @@ def check_free_memory(free_bytes):
         try:
             mem_free = _parse_size(env_value)
         except ValueError as exc:
-            raise ValueError('Invalid environment variable {env_var}: {str(exc)}')
+            raise ValueError(f'Invalid environment variable {env_var}: {exc}')
 
-        msg = ('{free_bytes/1e9} GB memory required, but environment variable '
-               'NPY_AVAILABLE_MEM={env_value} set')
+        msg = (f'{free_bytes/1e9} GB memory required, but environment variable '
+               f'NPY_AVAILABLE_MEM={env_value} set')
     else:
         mem_free = _get_mem_available()
 
@@ -2470,7 +2470,7 @@ def _parse_size(size_str):
 
     m = size_re.match(size_str.lower())
     if not m or m.group(2) not in suffixes:
-        raise ValueError(f'value {repr(size_str)} not a valid size')
+        raise ValueError(f'value {size_str!r} not a valid size')
     return int(float(m.group(1)) * suffixes[m.group(2)])
 
 
