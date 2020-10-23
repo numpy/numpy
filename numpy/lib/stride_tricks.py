@@ -331,7 +331,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
                 'window shape cannot be larger than input array shape')
         x_shape_trimmed[ax] -= dim - 1
     out_shape = tuple(x_shape_trimmed) + window_shape
-    return as_strided(x, strides=out_strides, shape=out_shape)
+    return as_strided(x, strides=out_strides, shape=out_shape,
+                      subok=subok, writeable=writeable)
 
 
 def _broadcast_to(array, shape, subok, readonly):
