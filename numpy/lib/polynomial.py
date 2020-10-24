@@ -426,7 +426,7 @@ def polyder(p, m=1):
     >>> np.polyder(p, 3)
     poly1d([6])
     >>> np.polyder(p, 4)
-    poly1d([0.])
+    poly1d([0])
 
     """
     m = int(m)
@@ -754,11 +754,11 @@ def polyval(p, x):
     >>> np.polyval([3,0,1], 5)  # 3 * 5**2 + 0 * 5**1 + 1
     76
     >>> np.polyval([3,0,1], np.poly1d(5))
-    poly1d([76.])
+    poly1d([76])
     >>> np.polyval(np.poly1d([3,0,1]), 5)
     76
     >>> np.polyval(np.poly1d([3,0,1]), np.poly1d(5))
-    poly1d([76.])
+    poly1d([76])
 
     """
     p = NX.asarray(p)
