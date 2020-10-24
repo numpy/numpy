@@ -22,7 +22,7 @@ import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings
-    )
+    )   
 from numpy import ndarray
 from numpy.compat import asbytes
 from numpy.ma.testutils import (
@@ -2748,7 +2748,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm += t(1)
                 assert_equal(xm, y + t(1))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_addition_array_type(self):
         # Test of inplace additions
@@ -2765,7 +2765,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y + a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_subtraction_scalar_type(self):
         # Test of inplace subtractions
@@ -2778,7 +2778,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm -= t(1)
                 assert_equal(xm, y - t(1))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_subtraction_array_type(self):
         # Test of inplace subtractions
@@ -2795,7 +2795,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y - a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_multiplication_scalar_type(self):
         # Test of inplace multiplication
@@ -2808,7 +2808,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm *= t(2)
                 assert_equal(xm, y * t(2))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_multiplication_array_type(self):
         # Test of inplace multiplication
@@ -2825,7 +2825,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y * a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_floor_division_scalar_type(self):
         # Test of inplace division
@@ -2861,7 +2861,7 @@ class TestMaskedArrayInPlaceArithmetics:
                     mask_or(mask_or(m, a.mask), (a == t(0)))
                 )
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_division_scalar_type(self):
         # Test of inplace division
@@ -2895,9 +2895,9 @@ class TestMaskedArrayInPlaceArithmetics:
                     warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
 
     def test_inplace_division_array_type(self):
         # Test of inplace division
@@ -2934,9 +2934,9 @@ class TestMaskedArrayInPlaceArithmetics:
                     warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
 
     def test_inplace_pow_type(self):
         # Test keeping data w/ (inplace) power
@@ -2954,7 +2954,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(x.data, xx_r.data)
                 assert_equal(x.mask, xx_r.mask)
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
 
 class TestMaskedArrayMethods:
