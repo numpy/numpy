@@ -230,13 +230,13 @@ class Base:
     def test_repr(self):
         rs = Generator(self.bit_generator(*self.data1['seed']))
         assert 'Generator' in repr(rs)
-        assert '{:#x}'.format(id(rs)).upper().replace('X', 'x') in repr(rs)
+        assert f'{id(rs):#x}'.upper().replace('X', 'x') in repr(rs)
 
     def test_str(self):
         rs = Generator(self.bit_generator(*self.data1['seed']))
         assert 'Generator' in str(rs)
         assert str(self.bit_generator.__name__) in str(rs)
-        assert '{:#x}'.format(id(rs)).upper().replace('X', 'x') not in str(rs)
+        assert f'{id(rs):#x}'.upper().replace('X', 'x') not in str(rs)
 
     def test_pickle(self):
         import pickle
