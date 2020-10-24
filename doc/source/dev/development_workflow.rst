@@ -19,7 +19,12 @@ In short:
 1. Start a new *feature branch* for each set of edits that you do.
    See :ref:`below <making-a-new-feature-branch>`.
 
-2. Hack away! See :ref:`below <editing-workflow>`
+2. Hack away! See :ref:`below <editing-workflow>`. But please do not submit
+   a PR whose only purpose is reformatting (changing code to f-strings for
+   instance). We have quite a large backlog of pull requests, and the
+   cost-benefit of reformatting code or styles is too low.  If in the process
+   of some other improvement or refactor, something in a file that is already
+   under review catches your eye, then small reformatting will be accepted.
 
 3. When finished:
 

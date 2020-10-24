@@ -93,6 +93,15 @@ Here's the short summary, complete TOC links are below:
      changed behavior in docstrings, keeping to the NumPy docstring
      :ref:`standard<howto-document>`.
 
+  * NumPy is a project with a lot of technical debt. While we apprectiate
+    efforts to refactor and clean up code, please DO NOT submit a pull request
+    whose entire purpose is to convert formatting to f-strings, or reformat
+    code to conform to coding standards. We have quite a large backlog of pull
+    requests, and the cost-benefit of reformatting code or styles is too low.
+    If in the process of some other improvement or refactor, something in a
+    file that is already under review catches your eye, then small reformatting
+    will be accepted.
+
 3. To submit your contribution:
 
    * Push your changes back to your fork on GitHub::
