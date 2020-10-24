@@ -1335,7 +1335,7 @@ Special functions for NPY_OBJECT
     locations in the structure with object data-types. No checking is
     performed but *arr* must be of data-type :c:type:`NPY_OBJECT` and be
     single-segment and uninitialized (no previous objects in
-    position). Use :c:func:`PyArray_DECREF` (*arr*) if you need to
+    position). Use :c:func:`PyArray_XDECREF` (*arr*) if you need to
     decrement all the items in the object array prior to calling this
     function.
 
@@ -1354,7 +1354,7 @@ Special functions for NPY_OBJECT
     strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
-    `Py_DECREF`` in order copy any changes back to ``base`` and
+    `Py_DECREF` in order copy any changes back to ``base`` and
     reset the READONLY flag.
 
     Returns 0 for success, -1 for failure.
