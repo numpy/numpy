@@ -814,7 +814,9 @@ PyUFunc_Type and PyUFuncObject
    .. c:member:: int identity
 
        Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
-       or :c:data:`PyUFunc_None` to indicate
+       :c:data:`PyUFunc_MinusOne`, :c:data:`PyUFunc_None`,
+       :c:data:`PyUFunc_ReorderableNone`, or
+       :c:data:`PyUFunc_IdentityValue` to indicate
        the identity for this operation. It is only used for a
        reduce-like call on an empty array.
 
