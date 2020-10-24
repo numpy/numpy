@@ -132,7 +132,7 @@ summary they are:
 
      Offsets may be chosen such that the fields overlap, though this will mean
      that assigning to one field may clobber any overlapping field's data. As
-     an exception, fields of :class:`object` type cannot overlap with
+     an exception, fields of :class:`numpy.object_` type cannot overlap with
      other fields, because of the risk of clobbering the internal object
      pointer and then dereferencing it.
 
