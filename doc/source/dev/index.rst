@@ -95,7 +95,7 @@ Here's the short summary, complete TOC links are below:
 
   * NumPy is a project with a lot of technical debt. While we appreciate
     efforts to refactor and clean up code, please DO NOT submit a pull request
-    whose entire purpose is to convert formatting to f-strings, or reformat
+    whose entire purpose is stylistic, such as converting formatting to f-strings, or reformatting
     code to conform to coding standards. We have quite a large backlog of pull
     requests, and the cost-benefit of reformatting code or styles is too low.
     If in the process of some other improvement or refactor, something in a
