@@ -63,7 +63,7 @@ This approach to the interface consists of the object having an
        Tuple whose elements are the array size in each dimension. Each
        entry is an integer (a Python :py:class:`int`).  Note that these
        integers could be larger than the platform ``int`` or ``long``
-       could hold (a Python :py:class`int` is a C ``long``). It is up to the code
+       could hold (a Python :py:class:`int` is a C ``long``). It is up to the code
        using this attribute to handle this appropriately; either by
        raising an error when overflow is possible, or by using
        ``long long`` as the C type for the shapes.
