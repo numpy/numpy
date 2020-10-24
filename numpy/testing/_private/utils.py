@@ -1733,7 +1733,7 @@ def integer_repr(x):
     elif x.dtype == np.float64:
         return _integer_repr(x, np.int64, np.int64(-2**63))
     else:
-        raise ValueError(f"Unsupported dtype {x.dtype}")
+        raise ValueError(f'Unsupported dtype {x.dtype}')
 
 
 @contextlib.contextmanager
