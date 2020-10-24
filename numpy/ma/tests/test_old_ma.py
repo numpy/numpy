@@ -27,7 +27,7 @@ pi = np.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
-        print(f'Not eq:{msg}\n{str(v)}\n----{str(w)}')
+        print(f'Not eq:{msg}\n{v}\n----{w}')
     return result
 
 
