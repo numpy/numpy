@@ -93,7 +93,7 @@ class ModuleTester:
                 reduced = reduced.tolist()
             if not cond:
                 match = 100-100.0*reduced.count(1)/len(reduced)
-                msg = build_err_msg([x, y], 
+                msg = build_err_msg([x, y],
                                     err_msg
                                     + '\n(mismatch %s%%)' % (match,),
                                     header=header,
