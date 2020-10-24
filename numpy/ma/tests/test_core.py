@@ -22,7 +22,7 @@ import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings
-    )   
+    )
 from numpy import ndarray
 from numpy.compat import asbytes
 from numpy.ma.testutils import (
