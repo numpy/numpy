@@ -69,6 +69,7 @@ PyArray_Type and PyArrayObject
    typeobject.
 
 .. c:type:: PyArrayObject
+            NPY_AO
 
    The :c:type:`PyArrayObject` C-structure contains all of the required
    information for an array. All instances of an ndarray (and its
@@ -77,7 +78,7 @@ PyArray_Type and PyArrayObject
    provided macros. If you need a shorter name, then you can make use
    of :c:type:`NPY_AO` (deprecated) which is defined to be equivalent to
    :c:type:`PyArrayObject`. Direct access to the struct fields are
-   deprecated. Use the `PyArray_*(arr)` form instead.
+   deprecated. Use the ``PyArray_*(arr)`` form instead.
 
    .. code-block:: c
 
@@ -813,7 +814,7 @@ PyUFunc_Type and PyUFuncObject
    .. c:member:: int identity
 
        Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
-       :c:data:`PyUFunc_None` or :c:data:`PyUFunc_AllOnes` to indicate
+       or :c:data:`PyUFunc_None` to indicate
        the identity for this operation. It is only used for a
        reduce-like call on an empty array.
 
@@ -1216,8 +1217,8 @@ are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
     **Object**.
 
 These type names are part of the C-API and can therefore be created in
-extension C-code. There is also a :c:data:`PyIntpArrType_Type` and a
-:c:data:`PyUIntpArrType_Type` that are simple substitutes for one of the
+extension C-code. There is also a ``PyIntpArrType_Type`` and a
+``PyUIntpArrType_Type`` that are simple substitutes for one of the
 integer types that can hold a pointer on the platform. The structure
 of these scalar objects is not exposed to C-code. The function
 :c:func:`PyArray_ScalarAsCtype` (..) can be used to extract the C-type
