@@ -60,7 +60,7 @@ def _checknames(descr, names=None):
         elif isinstance(names, str):
             new_names = names.split(',')
         else:
-            raise NameError(f'illegal input names {repr(names)}')
+            raise NameError(f'illegal input names {names!r}')
         nnames = len(new_names)
         if nnames < ndescr:
             new_names += default_names[nnames:]
