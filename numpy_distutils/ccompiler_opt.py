@@ -2521,7 +2521,7 @@ def new_ccompiler_opt(compiler, **kwargs):
     new instance of CCompilerOpt
     """
     opt = CCompilerOpt(compiler, **kwargs)
-    npy_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    npy_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "numpy"))
     header_dir = os.path.join(npy_path, *("core/src/common".split("/")))
     header_path = os.path.join(header_dir, "_cpu_dispatch.h")
     if not os.path.exists(header_path) or not opt.is_cached():
