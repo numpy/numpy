@@ -113,6 +113,9 @@ def compile(source,
             os.remove(fname)
     return status
 
-from numpy._pytesttester import PytestTester
-test = PytestTester(__name__)
-del PytestTester
+try:
+    from numpy._pytesttester import PytestTester
+    test = PytestTester(__name__)
+    del PytestTester
+except ImportError:
+    pass
