@@ -349,7 +349,7 @@ def test_all_modules_are_expected():
             modnames.append(modname)
 
     if modnames:
-        raise AssertionError("Found unexpected modules: {}".format(modnames))
+        raise AssertionError(f'Found unexpected modules: {modnames}')
 
 
 # Stuff that clearly shouldn't be in the API and is detected by the next test
