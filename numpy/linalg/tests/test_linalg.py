@@ -85,7 +85,7 @@ class LinalgCase:
         do(self.a, self.b, tags=self.tags)
 
     def __repr__(self):
-        return "<LinalgCase: %s>" % (self.name,)
+        return f'<LinalgCase: {self.name}>'
 
 
 def apply_tag(tag, cases):
@@ -349,7 +349,7 @@ class LinalgTestCase:
             try:
                 case.check(self.do)
             except Exception:
-                msg = "In test case: %r\n\n" % case
+                msg = f'In test case: {case!r}\n\n'
                 msg += traceback.format_exc()
                 raise AssertionError(msg)
 
@@ -1732,7 +1732,7 @@ class TestCholesky:
 
             b = np.matmul(c, c.transpose(t).conj())
             assert_allclose(b, a,
-                            err_msg="{} {}\n{}\n{}".format(shape, dtype, a, c),
+                            err_msg=f'{shape} {dtype}\n{a}\n{c}',
                             atol=500 * a.shape[0] * np.finfo(dtype).eps)
 
     def test_0_size(self):
