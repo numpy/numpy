@@ -55,8 +55,7 @@ __version__ = "$Revision: 1.129 $"[10:-1]
 from . import __version__
 f2py_version = __version__.version
 
-from .. import version as _numpy_version
-numpy_version = _numpy_version.version
+from .numpy_version import numpy_version
 
 import os
 import time
