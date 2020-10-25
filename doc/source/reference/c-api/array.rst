@@ -2810,11 +2810,21 @@ Data-type descriptors
     Create a new data-type object with the byteorder set according to
     *newendian*. All referenced data-type objects (in subdescr and
     fields members of the data-type object) are also changed
-    (recursively). If a byteorder of :c:data:`NPY_IGNORE` is encountered it
+    (recursively).
+
+    The value of *newendian* is one of these macros:
+
+    .. c:macro:: NPY_IGNORE
+                 NPY_SWAP
+                 NPY_NATIVE
+                 NPY_LITTLE
+                 NPY_BIG
+
+    If a byteorder of :c:data:`NPY_IGNORE` is encountered it
     is left alone. If newendian is :c:data:`NPY_SWAP`, then all byte-orders
     are swapped. Other valid newendian values are :c:data:`NPY_NATIVE`,
-    :c:data:`NPY_LITTLE`, and :c:data:`NPY_BIG` which all cause the returned
-    data-typed descriptor (and all it's
+    :c:data:`NPY_LITTLE`, and :c:data:`NPY_BIG` which all cause
+    the returned data-typed descriptor (and all it's
     referenced data-type descriptors) to have the corresponding byte-
     order.
 
@@ -3624,6 +3634,22 @@ Enumerated Types
     .. c:var:: NPY_WRAP
 
         Wraps an index to the valid range if it is out of bounds.
+
+.. c:type:: NPY_SEARCHSIDE
+
+    A variable type indicating whether the index returned should be that of
+    the first suitable location (if :c:data:`NPY_SEARCHLEFT`) or of the last
+    (if :c:data:`NPY_SEARCHRIGHT`).
+
+    .. c:var:: NPY_SEARCHLEFT
+
+    .. c:var:: NPY_SEARCHRIGHT
+
+.. c:type:: NPY_SELECTKIND
+
+    A variable type indicating the selection algorithm being used.
+
+    .. c:var:: NPY_INTROSELECT
 
 .. c:type:: NPY_CASTING
 
