@@ -9,6 +9,7 @@ import subprocess
 import shutil
 import multiprocessing
 import textwrap
+import importlib.util
 
 import distutils
 from distutils.errors import DistutilsError
@@ -2122,12 +2123,11 @@ def get_npy_pkg_dir():
     environment, and using them when cross-compiling.
 
     """
-    # XXX: import here for bootstrapping reasons
-    import numpy
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d is not None:
         return d
-    d = os.path.join(os.path.dirname(numpy.__file__),
+    spec = importlib.util.find_spec('numpy')
+    d = os.path.join(os.path.dirname(spec.origin),
             'core', 'lib', 'npy-pkg-config')
     return d
 
