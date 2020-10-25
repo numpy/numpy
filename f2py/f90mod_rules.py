@@ -17,8 +17,6 @@ __version__ = "$Revision: 1.27 $"[10:-1]
 
 f2py_version = 'See `f2py -v`'
 
-import numpy as np
-
 from . import capi_maps
 from . import func2subr
 from .crackfortran import undo_rmbadname, undo_rmbadname1
@@ -29,6 +27,10 @@ from .crackfortran import undo_rmbadname, undo_rmbadname1
 from .auxfuncs import *
 
 options = {}
+
+# Equivalent to np.intp().itemsize
+import distutils.sysconfig
+intp_itemsize = distutils.sysconfig.get_config_var("SIZEOF_UINTPTR_T")
 
 
 def findf90modules(m):
@@ -60,7 +62,7 @@ fgetdims1 = """\
             deallocate(d)
          end if
       end if
-      if ((.not.allocated(d)).and.(s(1).ge.1)) then""" % np.intp().itemsize
+      if ((.not.allocated(d)).and.(s(1).ge.1)) then""" % intp_itemsize
 
 fgetdims2 = """\
       end if
