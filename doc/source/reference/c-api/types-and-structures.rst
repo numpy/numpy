@@ -1323,13 +1323,13 @@ PyArrayInterface
 
    The :c:type:`PyArrayInterface` structure is defined so that NumPy and
    other extension modules can use the rapid array interface
-   protocol. The :obj:`__array_struct__` method of an object that
+   protocol. The :obj:`~object.__array_struct__` method of an object that
    supports the rapid array interface protocol should return a
    :c:type:`PyCObject` that contains a pointer to a :c:type:`PyArrayInterface`
    structure with the relevant details of the array. After the new
    array is created, the attribute should be ``DECREF``'d which will
    free the :c:type:`PyArrayInterface` structure. Remember to ``INCREF`` the
-   object (whose :obj:`__array_struct__` attribute was retrieved) and
+   object (whose :obj:`~object.__array_struct__` attribute was retrieved) and
    point the base member of the new :c:type:`PyArrayObject` to this same
    object. In this way the memory for the array will be managed
    correctly.
@@ -1398,7 +1398,7 @@ PyArrayInterface
    .. c:member:: PyObject *descr
 
        A Python object describing the data-type in more detail (same
-       as the *descr* key in :obj:`__array_interface__`). This can be
+       as the *descr* key in :obj:`~object.__array_interface__`). This can be
        ``NULL`` if *typekind* and *itemsize* provide enough
        information. This field is also ignored unless
        :c:data:`NPY_ARR_HAS_DESCR` flag is on in *flags*.

@@ -344,7 +344,7 @@ Type strings
 ``[(field_name, field_dtype, field_shape), ...]``
    *obj* should be a list of fields where each field is described by a
    tuple of length 2 or 3. (Equivalent to the ``descr`` item in the
-   :obj:`__array_interface__` attribute.)
+   :obj:`~object.__array_interface__` attribute.)
 
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The

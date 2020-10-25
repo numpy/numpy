@@ -259,10 +259,10 @@ Array interface
 
 .. seealso:: :ref:`arrays.interface`.
 
-==========================  ===================================
-:obj:`__array_interface__`  Python-side of the array interface
-:obj:`__array_struct__`     C-side of the array interface
-==========================  ===================================
+==================================  ===================================
+:obj:`~object.__array_interface__`  Python-side of the array interface
+:obj:`~object.__array_struct__`     C-side of the array interface
+==================================  ===================================
 
 :mod:`ctypes` foreign function interface
 ----------------------------------------
