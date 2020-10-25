@@ -32,7 +32,13 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.compat import npy_load_module
+# copied from numpy.compat to avoid importing numpy directly
+def npy_load_module(name, fn, info=None):
+    # Explicitly lazy import this to avoid paying the cost
+    # of importing importlib at startup
+    from importlib.machinery import SourceFileLoader
+    return SourceFileLoader(name, fn).load_module()
+
 
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
