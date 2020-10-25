@@ -2353,7 +2353,9 @@ it is possible to do this.
 Defining an :c:type:`NpyAuxData` is similar to defining a class in C++,
 but the object semantics have to be tracked manually since the API is in C.
 Here's an example for a function which doubles up an element using
-an element copier function as a primitive.::
+an element copier function as a primitive.
+
+.. code-block:: c
 
     typedef struct {
         NpyAuxData base;

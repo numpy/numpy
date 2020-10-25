@@ -132,6 +132,8 @@ Some example use cases:
 dtype C-level API extensions
 ============================
 
+.. highlight:: c
+
 The `PyArray_Descr`_ struct gains the following new fields::
 
   void * NA_value;
@@ -356,6 +358,8 @@ expressions like ``if a[i] is np.NA: ...``. (Of course, there is nothing nearly
 so convenient as that for NaN values now, but then, NaN values don't have their
 own global singleton.) So for now we stick to scalar indexing just returning
 ``np.NA``, but this can be revisited if anyone objects.
+
+.. highlight:: python
 
 Python API for generic NA support
 =================================
