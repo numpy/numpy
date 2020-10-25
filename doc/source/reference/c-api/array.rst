@@ -604,14 +604,14 @@ From other objects
 .. c:function:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_struct__` attribute and follows the array interface
+    :obj:`~object.__array_struct__` attribute and follows the array interface
     protocol. If the object does not contain this attribute then a
     borrowed reference to :c:data:`Py_NotImplemented` is returned.
 
 .. c:function:: PyObject* PyArray_FromInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_interface__` attribute following the array interface
+    :obj:`~object.__array_interface__` attribute following the array interface
     protocol. If the object does not contain this attribute then a
     borrowed reference to :c:data:`Py_NotImplemented` is returned.
 

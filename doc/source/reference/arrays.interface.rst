@@ -49,9 +49,9 @@ Python side
 ===========
 
 This approach to the interface consists of the object having an
-:data:`__array_interface__` attribute.
+:data:`~object.__array_interface__` attribute.
 
-.. data:: __array_interface__
+.. data:: object.__array_interface__
 
    A dictionary of items (3 required and 5 optional).  The optional
    keys in the dictionary have implied defaults if they are not
@@ -189,7 +189,7 @@ C-struct access
 This approach to the array interface allows for faster access to an
 array using only one attribute lookup and a well-defined C-structure.
 
-.. c:var:: __array_struct__
+.. data:: object.__array_struct__
 
    A :c:type:`PyCapsule` whose ``pointer`` member contains a
    pointer to a filled :c:type:`PyArrayInterface` structure.  Memory
@@ -248,7 +248,7 @@ Type description examples
 =========================
 
 For clarity it is useful to provide some examples of the type
-description and corresponding :data:`__array_interface__` 'descr'
+description and corresponding :data:`~object.__array_interface__` 'descr'
 entries.  Thanks to Scott Gilbert for these examples:
 
 In every case, the 'descr' key is optional, but of course provides
