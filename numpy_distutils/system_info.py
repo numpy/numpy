@@ -2658,7 +2658,7 @@ class numerix_info(system_info):
 class f2py_info(system_info):
     def calc_info(self):
         try:
-            import numpy.f2py as f2py
+            import f2py
         except ImportError:
             return
         f2py_dir = os.path.join(os.path.dirname(f2py.__file__), 'src')

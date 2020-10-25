@@ -35,7 +35,7 @@ def run():
         has_newnumpy = 0
 
     try:
-        from numpy.f2py import f2py2e
+        from f2py import f2py2e
         has_f2py2e = 1
     except ImportError:
         print('Failed to import f2py2e:', sys.exc_info()[1])

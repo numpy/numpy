@@ -93,7 +93,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
     """
 
-    code = ("import sys; sys.path = %s; import numpy.f2py as f2py2e; "
+    code = ("import sys; sys.path = %s; import f2py as f2py2e; "
             "f2py2e.main()" % repr(sys.path))
 
     d = get_module_dir()

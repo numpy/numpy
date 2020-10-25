@@ -93,7 +93,7 @@ def compile(source,
 
         c = [sys.executable,
              '-c',
-             'import numpy.f2py as f2py2e;f2py2e.main()'] + args
+             'import f2py as f2py2e;f2py2e.main()'] + args
         try:
             output = subprocess.check_output(c)
         except subprocess.CalledProcessError as exc:

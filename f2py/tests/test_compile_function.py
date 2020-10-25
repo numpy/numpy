@@ -7,7 +7,7 @@ import uuid
 from importlib import import_module
 import pytest
 
-import numpy.f2py
+import f2py
 
 from numpy.testing import assert_equal
 from . import util
@@ -56,7 +56,7 @@ def test_f2py_init_compile(extra_args):
         # f2py.compile code block under test
         try:
             os.chdir(moddir)
-            ret_val = numpy.f2py.compile(
+            ret_val = f2py.compile(
                 fsource,
                 modulename=modname,
                 extra_args=extra_args,
@@ -86,7 +86,7 @@ def test_f2py_init_compile(extra_args):
 def test_f2py_init_compile_failure():
     # verify an appropriate integer status value returned by
     # f2py.compile() when invalid Fortran is provided
-    ret_val = numpy.f2py.compile(b"invalid")
+    ret_val = f2py.compile(b"invalid")
     assert_equal(ret_val, 1)
 
 
@@ -102,7 +102,7 @@ def test_f2py_init_compile_bad_cmd():
         sys.executable = 'does not exist'
 
         # the OSError should take precedence over invalid Fortran
-        ret_val = numpy.f2py.compile(b"invalid")
+        ret_val = f2py.compile(b"invalid")
         assert_equal(ret_val, 127)
     finally:
         sys.executable = temp
@@ -116,7 +116,7 @@ def test_compile_from_strings(tmpdir, fsource):
     cwd = os.getcwd()
     try:
         os.chdir(str(tmpdir))
-        ret_val = numpy.f2py.compile(
+        ret_val = f2py.compile(
                 fsource,
                 modulename='test_compile_from_strings',
                 extension='.f90')

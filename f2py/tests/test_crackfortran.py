@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_array_equal
 from . import util
-from numpy.f2py import crackfortran
+from f2py import crackfortran
 import tempfile
 import textwrap
 

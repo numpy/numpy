@@ -14,7 +14,7 @@ from distutils.errors import DistutilsError, DistutilsSetupError
 
 # this import can't be done here, as it uses numpy stuff only available
 # after it's installed
-#import numpy.f2py
+#import f2py
 from numpy_distutils import log
 from numpy_distutils.misc_util import (
     fortran_ext_match, appendpath, is_string, is_sequence, get_cmd
@@ -539,8 +539,8 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file, 'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
-                import numpy.f2py
-                numpy.f2py.run_main(f2py_options
+                import f2py
+                f2py.run_main(f2py_options
                                     + ['--build-dir', target_dir, source])
             else:
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
@@ -558,8 +558,8 @@ class build_src(build_ext.build_ext):
                    and not skip_f2py:
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
-                import numpy.f2py
-                numpy.f2py.run_main(f2py_options + ['--lower',
+                import f2py
+                f2py.run_main(f2py_options + ['--lower',
                                                 '--build-dir', target_dir]+\
                                 ['-m', ext_name]+f_sources)
             else:
@@ -579,8 +579,8 @@ class build_src(build_ext.build_ext):
             extension.include_dirs.append(build_dir)
 
         if not skip_f2py:
-            import numpy.f2py
-            d = os.path.dirname(numpy.f2py.__file__)
+            import f2py
+            d = os.path.dirname(f2py.__file__)
             source_c = os.path.join(d, 'src', 'fortranobject.c')
             source_h = os.path.join(d, 'src', 'fortranobject.h')
             if newer(source_c, target_c) or newer(source_h, target_h):
