@@ -7,7 +7,7 @@ import platform
 import textwrap
 from os.path import join
 
-from numpy.distutils import log
+from numpy_distutils import log
 from distutils.dep_util import newer
 from sysconfig import get_config_var
 from numpy.compat import npy_load_module
@@ -87,7 +87,7 @@ def is_npy_no_smp():
     return 'NPY_NOSMP' in os.environ
 
 def win32_checks(deflist):
-    from numpy.distutils.misc_util import get_build_architecture
+    from numpy_distutils.misc_util import get_build_architecture
     a = get_build_architecture()
 
     # Distutils hack on AMD64 on windows
@@ -396,8 +396,8 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import (get_info, blas_opt_info,
+    from numpy_distutils.misc_util import Configuration, dot_join
+    from numpy_distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
 
     # Accelerate is buggy, disallow it. See also numpy/linalg/setup.py
@@ -1007,5 +1007,5 @@ def configuration(parent_package='',top_path=None):
     return config
 
 if __name__ == '__main__':
-    from numpy.distutils.core import setup
+    from numpy_distutils.core import setup
     setup(configuration=configuration)

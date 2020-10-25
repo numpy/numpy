@@ -3,7 +3,7 @@
 """
 import textwrap
 
-# We put them here since they could be easily reused outside numpy.distutils
+# We put them here since they could be easily reused outside numpy_distutils
 
 def check_inline(cmd):
     """Return the inline identifier (may be empty)."""

@@ -2,8 +2,8 @@ import os
 import sys
 from tempfile import TemporaryFile
 
-from numpy.distutils import exec_command
-from numpy.distutils.exec_command import get_pythonexe
+from numpy_distutils import exec_command
+from numpy_distutils.exec_command import get_pythonexe
 from numpy.testing import tempdir, assert_, assert_warns
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to

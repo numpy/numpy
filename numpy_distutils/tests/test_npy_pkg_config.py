@@ -1,6 +1,6 @@
 import os
 
-from numpy.distutils.npy_pkg_config import read_config, parse_flags
+from numpy_distutils.npy_pkg_config import read_config, parse_flags
 from numpy.testing import temppath, assert_
 
 simple = """\

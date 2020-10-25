@@ -1,4 +1,4 @@
-from numpy.distutils.fcompiler import FCompiler
+from numpy_distutils.fcompiler import FCompiler
 
 compilers = ['PathScaleFCompiler']
 
@@ -29,5 +29,5 @@ class PathScaleFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     print(customized_fcompiler(compiler='pathf95').get_version())

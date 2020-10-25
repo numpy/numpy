@@ -1,6 +1,6 @@
 from numpy.testing import assert_
 
-import numpy.distutils.fcompiler
+import numpy_distutils.fcompiler
 
 g77_version_strings = [
     ('GNU Fortran 0.5.25 20010319 (prerelease)', '0.5.25'),
@@ -30,26 +30,26 @@ gfortran_version_strings = [
 
 class TestG77Versions:
     def test_g77_version(self):
-        fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu')
+        fc = numpy_distutils.fcompiler.new_fcompiler(compiler='gnu')
         for vs, version in g77_version_strings:
             v = fc.version_match(vs)
             assert_(v == version, (vs, v))
 
     def test_not_g77(self):
-        fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu')
+        fc = numpy_distutils.fcompiler.new_fcompiler(compiler='gnu')
         for vs, _ in gfortran_version_strings:
             v = fc.version_match(vs)
             assert_(v is None, (vs, v))
 
 class TestGFortranVersions:
     def test_gfortran_version(self):
-        fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
+        fc = numpy_distutils.fcompiler.new_fcompiler(compiler='gnu95')
         for vs, version in gfortran_version_strings:
             v = fc.version_match(vs)
             assert_(v == version, (vs, v))
 
     def test_not_gfortran(self):
-        fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
+        fc = numpy_distutils.fcompiler.new_fcompiler(compiler='gnu95')
         for vs, _ in g77_version_strings:
             v = fc.version_match(vs)
             assert_(v is None, (vs, v))

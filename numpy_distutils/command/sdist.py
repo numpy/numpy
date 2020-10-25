@@ -4,7 +4,7 @@ if 'setuptools' in sys.modules:
 else:
     from distutils.command.sdist import sdist as old_sdist
 
-from numpy.distutils.misc_util import get_data_files
+from numpy_distutils.misc_util import get_data_files
 
 class sdist(old_sdist):
 

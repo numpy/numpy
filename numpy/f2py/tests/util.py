@@ -181,11 +181,11 @@ def _get_compiler_status():
 
         def configuration(parent_name='',top_path=None):
             global config
-            from numpy.distutils.misc_util import Configuration
+            from numpy_distutils.misc_util import Configuration
             config = Configuration('', parent_name, top_path)
             return config
 
-        from numpy.distutils.core import setup
+        from numpy_distutils.core import setup
         setup(configuration=configuration)
 
         config_cmd = config.get_config_cmd()
@@ -242,8 +242,8 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     Build a module via distutils and import it.
 
     """
-    from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.core import setup
+    from numpy_distutils.misc_util import Configuration
+    from numpy_distutils.core import setup
 
     d = get_module_dir()
 
@@ -265,13 +265,13 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
         sys.path = %(syspath)s
 
         def configuration(parent_name='',top_path=None):
-            from numpy.distutils.misc_util import Configuration
+            from numpy_distutils.misc_util import Configuration
             config = Configuration('', parent_name, top_path)
             %(config_code)s
             return config
 
         if __name__ == "__main__":
-            from numpy.distutils.core import setup
+            from numpy_distutils.core import setup
             setup(configuration=configuration)
         """) % dict(config_code=config_code, syspath=repr(sys.path))
 

@@ -6,9 +6,9 @@ import os
 
 from distutils.errors import CompileError, DistutilsExecError, LibError
 from distutils.unixccompiler import UnixCCompiler
-from numpy.distutils.ccompiler import replace_method
-from numpy.distutils.misc_util import _commandline_dep_string
-from numpy.distutils import log
+from numpy_distutils.ccompiler import replace_method
+from numpy_distutils.misc_util import _commandline_dep_string
+from numpy_distutils import log
 
 # Note that UnixCCompiler._compile appeared in Python 2.3
 def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):

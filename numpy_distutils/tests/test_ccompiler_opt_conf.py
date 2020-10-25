@@ -6,7 +6,7 @@ if is_standalone:
     sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
     from ccompiler_opt import CCompilerOpt
 else:
-    from numpy.distutils.ccompiler_opt import CCompilerOpt
+    from numpy_distutils.ccompiler_opt import CCompilerOpt
 
 arch_compilers = dict(
     x86 = ("gcc", "clang", "icc", "iccw", "msvc"),

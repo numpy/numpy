@@ -15,12 +15,12 @@ from distutils.errors import DistutilsError, DistutilsSetupError
 # this import can't be done here, as it uses numpy stuff only available
 # after it's installed
 #import numpy.f2py
-from numpy.distutils import log
-from numpy.distutils.misc_util import (
+from numpy_distutils import log
+from numpy_distutils.misc_util import (
     fortran_ext_match, appendpath, is_string, is_sequence, get_cmd
     )
-from numpy.distutils.from_template import process_file as process_f_file
-from numpy.distutils.conv_template import process_file as process_c_file
+from numpy_distutils.from_template import process_file as process_f_file
+from numpy_distutils.conv_template import process_file as process_c_file
 
 def subst_vars(target, source, d):
     """Substitute any occurrence of @foo@ by d['foo'] from source file into
@@ -167,7 +167,7 @@ class build_src(build_ext.build_ext):
         if not self.data_files:
             return
         log.info('building data_files sources')
-        from numpy.distutils.misc_util import get_data_files
+        from numpy_distutils.misc_util import get_data_files
         new_data_files = []
         for data in self.data_files:
             if isinstance(data, str):

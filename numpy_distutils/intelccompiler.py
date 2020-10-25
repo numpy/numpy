@@ -1,10 +1,10 @@
 import platform
 
 from distutils.unixccompiler import UnixCCompiler
-from numpy.distutils.exec_command import find_executable
-from numpy.distutils.ccompiler import simple_version_match
+from numpy_distutils.exec_command import find_executable
+from numpy_distutils.ccompiler import simple_version_match
 if platform.system() == 'Windows':
-    from numpy.distutils.msvc9compiler import MSVCCompiler
+    from numpy_distutils.msvc9compiler import MSVCCompiler
 
 
 class IntelCCompiler(UnixCCompiler):

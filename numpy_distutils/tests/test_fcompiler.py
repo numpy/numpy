@@ -1,5 +1,5 @@
 from numpy.testing import assert_
-import numpy.distutils.fcompiler
+import numpy_distutils.fcompiler
 
 customizable_flags = [
     ('f77', 'F77FLAGS'),
@@ -14,7 +14,7 @@ customizable_flags = [
 
 def test_fcompiler_flags(monkeypatch):
     monkeypatch.setenv('NPY_DISTUTILS_APPEND_FLAGS', '0')
-    fc = numpy.distutils.fcompiler.new_fcompiler(compiler='none')
+    fc = numpy_distutils.fcompiler.new_fcompiler(compiler='none')
     flag_vars = fc.flag_vars.clone(lambda *args, **kwargs: None)
 
     for opt, envvar in customizable_flags:

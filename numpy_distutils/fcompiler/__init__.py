@@ -1,7 +1,7 @@
-"""numpy.distutils.fcompiler
+"""numpy_distutils.fcompiler
 
 Contains FCompiler, an abstract base class that defines the interface
-for the numpy.distutils Fortran compiler abstraction model.
+for the numpy_distutils Fortran compiler abstraction model.
 
 Terminology:
 
@@ -26,12 +26,12 @@ from distutils.errors import DistutilsModuleError, \
      DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
 from distutils.util import split_quoted, strtobool
 
-from numpy.distutils.ccompiler import CCompiler, gen_lib_options
-from numpy.distutils import log
-from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
+from numpy_distutils.ccompiler import CCompiler, gen_lib_options
+from numpy_distutils import log
+from numpy_distutils.misc_util import is_string, all_strings, is_sequence, \
     make_temp_file, get_shared_lib_extension
-from numpy.distutils.exec_command import find_executable
-from numpy.distutils import _shell_utils
+from numpy_distutils.exec_command import find_executable
+from numpy_distutils import _shell_utils
 
 from .environment import EnvironmentConfig
 
@@ -760,7 +760,7 @@ fcompiler_aliases = None
 
 def load_all_fcompiler_classes():
     """Cache all the FCompiler classes found in modules in the
-    numpy.distutils.fcompiler package.
+    numpy_distutils.fcompiler package.
     """
     from glob import glob
     global fcompiler_class, fcompiler_aliases
@@ -771,7 +771,7 @@ def load_all_fcompiler_classes():
     fcompiler_aliases = {}
     for fname in glob(pys):
         module_name, ext = os.path.splitext(os.path.basename(fname))
-        module_name = 'numpy.distutils.fcompiler.' + module_name
+        module_name = 'numpy_distutils.fcompiler.' + module_name
         __import__ (module_name)
         module = sys.modules[module_name]
         if hasattr(module, 'compilers'):
@@ -790,7 +790,7 @@ def _find_existing_fcompiler(compiler_types,
                              osname=None, platform=None,
                              requiref90=False,
                              c_compiler=None):
-    from numpy.distutils.core import get_distribution
+    from numpy_distutils.core import get_distribution
     dist = get_distribution(always=True)
     for compiler_type in compiler_types:
         v = None
@@ -901,7 +901,7 @@ def show_fcompilers(dist=None):
     """
     if dist is None:
         from distutils.dist import Distribution
-        from numpy.distutils.command.config_compiler import config_fc
+        from numpy_distutils.command.config_compiler import config_fc
         dist = Distribution()
         dist.script_name = os.path.basename(sys.argv[0])
         dist.script_args = ['config_fc'] + sys.argv[1:]

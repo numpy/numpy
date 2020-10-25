@@ -1,6 +1,6 @@
 import sys
 
-from numpy.distutils.fcompiler import FCompiler
+from numpy_distutils.fcompiler import FCompiler
 
 compilers = ['NVHPCFCompiler']
 
@@ -11,7 +11,7 @@ class NVHPCFCompiler(FCompiler):
    
     Since august 2020 the NVIDIA HPC SDK includes the compilers formerly known as The Portland Group compilers,
     https://www.pgroup.com/index.htm.
-    See also `numpy.distutils.fcompiler.pg`.
+    See also `numpy_distutils.fcompiler.pg`.
     """
 
     compiler_type = 'nv'
@@ -51,5 +51,5 @@ class NVHPCFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     print(customized_fcompiler(compiler='nv').get_version())

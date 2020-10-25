@@ -4,7 +4,7 @@ from distutils.log import *  # noqa: F403
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
 
-from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
+from numpy_distutils.misc_util import (red_text, default_text, cyan_text,
         green_text, is_sequence, is_string)
 
 

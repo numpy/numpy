@@ -11,15 +11,16 @@ from distutils.errors import DistutilsFileError, DistutilsSetupError,\
     DistutilsError
 from distutils.file_util import copy_file
 
-from numpy.distutils import log
-from numpy.distutils.exec_command import filepath_from_subprocess_output
-from numpy.distutils.system_info import combine_paths
-from numpy.distutils.misc_util import (
+from numpy_distutils import log
+from numpy_distutils.exec_command import filepath_from_subprocess_output
+from numpy_distutils.system_info import combine_paths
+from numpy_distutils.misc_util import (
     filter_sources, get_ext_source_files, get_numpy_include_dirs,
     has_cxx_sources, has_f_sources, is_sequence
 )
-from numpy.distutils.command.config_compiler import show_fortran_compilers
-from numpy.distutils.ccompiler_opt import new_ccompiler_opt, CCompilerOpt
+from numpy_distutils.command.config_compiler import show_fortran_compilers
+from numpy_distutils.ccompiler_opt import new_ccompiler_opt, CCompilerOpt
+
 
 class build_ext (old_build_ext):
 
@@ -128,7 +129,7 @@ class build_ext (old_build_ext):
         # explicitly specify the C libraries that they use.
 
         from distutils.ccompiler import new_compiler
-        from numpy.distutils.fcompiler import new_fcompiler
+        from numpy_distutils.fcompiler import new_fcompiler
 
         compiler_type = self.compiler
         # Initialize C compiler:

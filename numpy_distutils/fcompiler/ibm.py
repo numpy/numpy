@@ -3,9 +3,9 @@ import re
 import sys
 import subprocess
 
-from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.exec_command import find_executable
-from numpy.distutils.misc_util import make_temp_file
+from numpy_distutils.fcompiler import FCompiler
+from numpy_distutils.exec_command import find_executable
+from numpy_distutils.misc_util import make_temp_file
 from distutils import log
 
 compilers = ['IBMFCompiler']
@@ -92,6 +92,6 @@ class IBMFCompiler(FCompiler):
         return ['-O3']
 
 if __name__ == '__main__':
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     log.set_verbosity(2)
     print(customized_fcompiler(compiler='ibm').get_version())

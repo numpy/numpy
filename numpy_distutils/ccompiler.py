@@ -17,11 +17,11 @@ from distutils.errors import (
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
-from numpy.distutils import log
-from numpy.distutils.exec_command import (
+from numpy_distutils import log
+from numpy_distutils.exec_command import (
     filepath_from_subprocess_output, forward_bytes_to_stdout
 )
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
+from numpy_distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       get_num_build_jobs, \
                                       _commandline_dep_string
 
@@ -119,7 +119,7 @@ def CCompiler_spawn(self, cmd, display=None):
     cmd : str
         The command to execute.
     display : str or sequence of str, optional
-        The text to add to the log file kept by `numpy.distutils`.
+        The text to add to the log file kept by `numpy_distutils`.
         If not given, `display` is equal to `cmd`.
 
     Returns
@@ -275,7 +275,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
+    from numpy_distutils.fcompiler import (FCompiler, is_f_file,
                                            has_f90_header)
     if isinstance(self, FCompiler):
         display = []
@@ -720,7 +720,7 @@ def new_compiler (plat=None,
                   verbose=None,
                   dry_run=0,
                   force=0):
-    # Try first C compilers from numpy.distutils.
+    # Try first C compilers from numpy_distutils.
     if verbose is None:
         verbose = log.get_threshold() <= log.INFO
     if plat is None:
@@ -734,12 +734,12 @@ def new_compiler (plat=None,
         if compiler is not None:
             msg = msg + " with '%s' compiler" % compiler
         raise DistutilsPlatformError(msg)
-    module_name = "numpy.distutils." + module_name
+    module_name = "numpy_distutils." + module_name
     try:
         __import__ (module_name)
     except ImportError as e:
         msg = str(e)
-        log.info('%s in numpy.distutils; trying from distutils',
+        log.info('%s in numpy_distutils; trying from distutils',
                  str(msg))
         module_name = module_name[6:]
         try:

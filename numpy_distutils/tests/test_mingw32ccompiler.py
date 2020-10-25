@@ -3,7 +3,7 @@ import subprocess
 import sys
 import pytest
 
-from numpy.distutils import mingw32ccompiler
+from numpy_distutils import mingw32ccompiler
 
 
 @pytest.mark.skipif(sys.platform != 'win32', reason='win32 only test')

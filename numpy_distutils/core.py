@@ -19,13 +19,13 @@ import warnings
 import distutils.core
 import distutils.dist
 
-from numpy.distutils.extension import Extension
-from numpy.distutils.numpy_distribution import NumpyDistribution
-from numpy.distutils.command import config, config_compiler, \
+from numpy_distutils.extension import Extension
+from numpy_distutils.numpy_distribution import NumpyDistribution
+from numpy_distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
      sdist, install_data, install_headers, install, bdist_rpm, \
      install_clib
-from numpy.distutils.misc_util import is_sequence, is_string
+from numpy_distutils.misc_util import is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,
@@ -46,7 +46,7 @@ numpy_cmdclass = {'build':            build.build,
 if have_setuptools:
     # Use our own versions of develop and egg_info to ensure that build_src is
     # handled appropriately.
-    from numpy.distutils.command import develop, egg_info
+    from numpy_distutils.command import develop, egg_info
     numpy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
     numpy_cmdclass['develop'] = develop.develop
     numpy_cmdclass['easy_install'] = easy_install.easy_install

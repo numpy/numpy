@@ -162,7 +162,7 @@ if not release:
 
 
 def configuration(parent_package='', top_path=None):
-    from numpy.distutils.misc_util import Configuration
+    from numpy_distutils.misc_util import Configuration
 
     config = Configuration(None, parent_package, top_path)
     config.set_options(ignore_setup_xxx_py=True,
@@ -241,8 +241,8 @@ def get_build_overrides():
     """
     Custom build commands to add `-std=c99` to compilation
     """
-    from numpy.distutils.command.build_clib import build_clib
-    from numpy.distutils.command.build_ext import build_ext
+    from numpy_distutils.command.build_clib import build_clib
+    from numpy_distutils.command.build_ext import build_ext
     from distutils.version import LooseVersion
 
     def _needs_gcc_c99_flag(obj):
@@ -487,7 +487,7 @@ def setup_package():
     if run_build:
         # patches distutils, even though we don't use it
         import setuptools  # noqa: F401
-        from numpy.distutils.core import setup
+        from numpy_distutils.core import setup
         if 'sdist' not in sys.argv:
             # Generate Cython sources, unless we're generating an sdist
             generate_cython()

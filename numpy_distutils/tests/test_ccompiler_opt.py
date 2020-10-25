@@ -21,7 +21,7 @@ if is_standalone:
         if not expr:
             raise AssertionError(msg)
 else:
-    from numpy.distutils.ccompiler_opt import CCompilerOpt
+    from numpy_distutils.ccompiler_opt import CCompilerOpt
     from numpy.testing import assert_, tempdir
 
 # architectures and compilers to test

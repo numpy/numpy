@@ -125,7 +125,7 @@ Options:
   -v               Print f2py version ID and exit.
 
 
-numpy.distutils options (only effective with -c):
+numpy_distutils options (only effective with -c):
 
   --fcompiler=         Specify Fortran compiler type by vendor
   --compiler=          Specify C compiler type (as defined by distutils)
@@ -144,7 +144,7 @@ numpy.distutils options (only effective with -c):
 Extra options (only effective with -c):
 
   --link-<resource>    Link extension module with <resource> as defined
-                       by numpy.distutils/system_info.py. E.g. to link
+                       by numpy_distutils/system_info.py. E.g. to link
                        with optimized LAPACK libraries (vecLib on MacOSX,
                        ATLAS elsewhere), use --link-lapack_opt.
                        See also --help-link switch.
@@ -553,7 +553,7 @@ def run_compile():
         for s in flib_flags:
             v = '--fcompiler='
             if s[:len(v)] == v:
-                from numpy.distutils import fcompiler
+                from numpy_distutils import fcompiler
                 fcompiler.load_all_fcompiler_classes()
                 allowed_keys = list(fcompiler.fcompiler_class.keys())
                 nv = ov = s[len(v):].lower()
@@ -596,7 +596,7 @@ def run_compile():
         del sys.argv[i + 1], sys.argv[i]
         sources = sys.argv[1:]
     else:
-        from numpy.distutils.command.build_src import get_f2py_modulename
+        from numpy_distutils.command.build_src import get_f2py_modulename
         pyf_files, sources = filter_files('', '[.]pyf([.]src|)', sources)
         sources = pyf_files + sources
         for f in pyf_files:
@@ -619,13 +619,13 @@ def run_compile():
         else:
             print('Invalid use of -D:', name_value)
 
-    from numpy.distutils.system_info import get_info
+    from numpy_distutils.system_info import get_info
 
     num_info = {}
     if num_info:
         include_dirs.extend(num_info.get('include_dirs', []))
 
-    from numpy.distutils.core import setup, Extension
+    from numpy_distutils.core import setup, Extension
     ext_args = {'name': modulename, 'sources': sources,
                 'include_dirs': include_dirs,
                 'library_dirs': library_dirs,
@@ -637,7 +637,7 @@ def run_compile():
                 }
 
     if sysinfo_flags:
-        from numpy.distutils.misc_util import dict_append
+        from numpy_distutils.misc_util import dict_append
         for n in sysinfo_flags:
             i = get_info(n)
             if not i:
@@ -669,7 +669,7 @@ def run_compile():
 def main():
     if '--help-link' in sys.argv[1:]:
         sys.argv.remove('--help-link')
-        from numpy.distutils.system_info import show_all
+        from numpy_distutils.system_info import show_all
         show_all()
         return
 

@@ -1,5 +1,5 @@
 from numpy.testing import assert_
-import numpy.distutils.fcompiler
+import numpy_distutils.fcompiler
 
 nag_version_strings = [('nagfor', 'NAG Fortran Compiler Release '
                         '6.2(Chiyoda) Build 6200', '6.2'),
@@ -17,6 +17,6 @@ nag_version_strings = [('nagfor', 'NAG Fortran Compiler Release '
 class TestNagFCompilerVersions:
     def test_version_match(self):
         for comp, vs, version in nag_version_strings:
-            fc = numpy.distutils.fcompiler.new_fcompiler(compiler=comp)
+            fc = numpy_distutils.fcompiler.new_fcompiler(compiler=comp)
             v = fc.version_match(vs)
             assert_(v == version)

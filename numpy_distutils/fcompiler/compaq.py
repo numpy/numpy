@@ -3,7 +3,7 @@
 import os
 import sys
 
-from numpy.distutils.fcompiler import FCompiler
+from numpy_distutils.fcompiler import FCompiler
 from distutils.errors import DistutilsPlatformError
 
 compilers = ['CompaqFCompiler']
@@ -71,7 +71,7 @@ class CompaqVisualFCompiler(FCompiler):
     fc_exe = 'DF'
 
     if sys.platform=='win32':
-        from numpy.distutils.msvccompiler import MSVCCompiler
+        from numpy_distutils.msvccompiler import MSVCCompiler
 
         try:
             m = MSVCCompiler()
@@ -116,5 +116,5 @@ class CompaqVisualFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     print(customized_fcompiler(compiler='compaq').get_version())

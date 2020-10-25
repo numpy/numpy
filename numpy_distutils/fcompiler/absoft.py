@@ -7,9 +7,9 @@
 #   generated extension modules (works for f2py v2.45.241_1936 and up)
 import os
 
-from numpy.distutils.cpuinfo import cpu
-from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
-from numpy.distutils.misc_util import cyg2win32
+from numpy_distutils.cpuinfo import cpu
+from numpy_distutils.fcompiler import FCompiler, dummy_fortran_file
+from numpy_distutils.misc_util import cyg2win32
 
 compilers = ['AbsoftFCompiler']
 
@@ -152,5 +152,5 @@ class AbsoftFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     print(customized_fcompiler(compiler='absoft').get_version())

@@ -124,7 +124,7 @@ else:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
-            from numpy.distutils.misc_util import get_shared_lib_extension
+            from numpy_distutils.misc_util import get_shared_lib_extension
             so_ext = get_shared_lib_extension()
             libname_ext = [libname + so_ext]
             # mac, windows and linux >= py3.2 shared library and loadable

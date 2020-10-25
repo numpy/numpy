@@ -1,5 +1,5 @@
-from numpy.distutils.ccompiler import simple_version_match
-from numpy.distutils.fcompiler import FCompiler
+from numpy_distutils.ccompiler import simple_version_match
+from numpy_distutils.fcompiler import FCompiler
 
 compilers = ['SunFCompiler']
 
@@ -47,5 +47,5 @@ class SunFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     print(customized_fcompiler(compiler='sun').get_version())

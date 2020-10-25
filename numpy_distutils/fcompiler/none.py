@@ -1,5 +1,5 @@
-from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils import customized_fcompiler
+from numpy_distutils.fcompiler import FCompiler
+from numpy_distutils import customized_fcompiler
 
 compilers = ['NoneFCompiler']
 

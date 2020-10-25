@@ -40,7 +40,7 @@ except ImportError:
 
 
 def customized_fcompiler(plat=None, compiler=None):
-    from numpy.distutils.fcompiler import new_fcompiler
+    from numpy_distutils.fcompiler import new_fcompiler
     c = new_fcompiler(plat=plat, compiler=compiler)
     c.customize()
     return c

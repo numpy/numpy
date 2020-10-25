@@ -3,7 +3,7 @@ import subprocess
 import json
 import sys
 
-from numpy.distutils import _shell_utils
+from numpy_distutils import _shell_utils
 
 argv_cases = [
     [r'exe'],

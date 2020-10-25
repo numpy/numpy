@@ -634,7 +634,7 @@ class _Distutils:
     @staticmethod
     def dist_log(*args, stderr=False):
         """Print a console message"""
-        from numpy.distutils import log
+        from numpy_distutils import log
         out = _Distutils._dist_str(*args)
         if stderr:
             log.warn(out)

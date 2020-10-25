@@ -1,6 +1,6 @@
 from os.path import join, sep, dirname
 
-from numpy.distutils.misc_util import (
+from numpy_distutils.misc_util import (
     appendpath, minrelpath, gpaths, get_shared_lib_extension, get_info
     )
 from numpy.testing import (

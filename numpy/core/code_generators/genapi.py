@@ -6,7 +6,7 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from numpy.distutils.conv_template import process_file as process_c_file
+from numpy_distutils.conv_template import process_file as process_c_file
 
 import hashlib
 import io

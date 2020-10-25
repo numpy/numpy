@@ -6,11 +6,11 @@ from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
 from numpy.testing import assert_, assert_equal, assert_raises
-from numpy.distutils import ccompiler, customized_ccompiler
-from numpy.distutils.system_info import system_info, ConfigParser, mkl_info
-from numpy.distutils.system_info import AliasedOptionError
-from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
-from numpy.distutils import _shell_utils
+from numpy_distutils import ccompiler, customized_ccompiler
+from numpy_distutils.system_info import system_info, ConfigParser, mkl_info
+from numpy_distutils.system_info import AliasedOptionError
+from numpy_distutils.system_info import default_lib_dirs, default_include_dirs
+from numpy_distutils import _shell_utils
 
 
 def get_class(name, notfound_action=1):
@@ -287,7 +287,7 @@ class TestSystemInfoReading:
 
 
 def test_distutils_parse_env_order(monkeypatch):
-    from numpy.distutils.system_info import _parse_env_order
+    from numpy_distutils.system_info import _parse_env_order
     env = 'NPY_TESTS_DISTUTILS_PARSE_ENV_ORDER'
 
     base_order = list('abcdef')

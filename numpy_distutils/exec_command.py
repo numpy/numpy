@@ -57,8 +57,8 @@ import subprocess
 import locale
 import warnings
 
-from numpy.distutils.misc_util import is_sequence, make_temp_file
-from numpy.distutils import log
+from numpy_distutils.misc_util import is_sequence, make_temp_file
+from numpy_distutils import log
 
 def filepath_from_subprocess_output(output):
     """

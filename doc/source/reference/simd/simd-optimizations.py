@@ -5,7 +5,7 @@ from os import sys, path
 gen_path = path.dirname(path.realpath(__file__))
 #sys.path.append(path.abspath(path.join(gen_path, *([".."]*4), "numpy", "distutils")))
 #from ccompiler_opt import CCompilerOpt
-from numpy.distutils.ccompiler_opt import CCompilerOpt
+from numpy_distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
     fake_info = ""

@@ -8,8 +8,8 @@ import hashlib
 import base64
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
-from numpy.distutils.exec_command import filepath_from_subprocess_output
-from numpy.distutils.fcompiler import FCompiler
+from numpy_distutils.exec_command import filepath_from_subprocess_output
+from numpy_distutils.fcompiler import FCompiler
 from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
@@ -539,7 +539,7 @@ def _can_target(cmd, arch):
 
 if __name__ == '__main__':
     from distutils import log
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     log.set_verbosity(2)
 
     print(customized_fcompiler('gnu').get_version())

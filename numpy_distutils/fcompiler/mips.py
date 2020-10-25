@@ -1,5 +1,5 @@
-from numpy.distutils.cpuinfo import cpu
-from numpy.distutils.fcompiler import FCompiler
+from numpy_distutils.cpuinfo import cpu
+from numpy_distutils.fcompiler import FCompiler
 
 compilers = ['MIPSFCompiler']
 
@@ -50,5 +50,5 @@ class MIPSFCompiler(FCompiler):
         return r
 
 if __name__ == '__main__':
-    from numpy.distutils import customized_fcompiler
+    from numpy_distutils import customized_fcompiler
     print(customized_fcompiler(compiler='mips').get_version())

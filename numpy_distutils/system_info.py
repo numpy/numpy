@@ -172,17 +172,17 @@ from configparser import RawConfigParser as ConfigParser
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
 import sysconfig
-from numpy.distutils import log
+from numpy_distutils import log
 from distutils.util import get_platform
 
-from numpy.distutils.exec_command import (
+from numpy_distutils.exec_command import (
     find_executable, filepath_from_subprocess_output,
     )
-from numpy.distutils.misc_util import (is_sequence, is_string,
+from numpy_distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
-from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils import customized_ccompiler as _customized_ccompiler
-from numpy.distutils import _shell_utils
+from numpy_distutils.command.config import config as cmd_config
+from numpy_distutils import customized_ccompiler as _customized_ccompiler
+from numpy_distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -834,7 +834,7 @@ class system_info:
 
     def get_info(self, notfound_action=0):
         """ Return a dictionary with items that are compatible
-            with numpy.distutils.setup keyword arguments.
+            with numpy_distutils.setup keyword arguments.
         """
         flag = 0
         if not self.has_info():
@@ -2147,7 +2147,7 @@ class openblas_info(blas_info):
         info = self.check_libs(lib_dirs, openblas_libs, [])
 
         if c.compiler_type == "msvc" and info is None:
-            from numpy.distutils.fcompiler import new_fcompiler
+            from numpy_distutils.fcompiler import new_fcompiler
             f = new_fcompiler(c_compiler=c)
             if f and f.compiler_type == 'gnu95':
                 # Try gfortran-compatible library files
@@ -2194,7 +2194,7 @@ class openblas_info(blas_info):
             else:
                 return None
 
-        # Generate numpy.distutils virtual static library file
+        # Generate numpy_distutils virtual static library file
         basename = self.__class__.__name__
         tmpdir = os.path.join(os.getcwd(), 'build', basename)
         if not os.path.isdir(tmpdir):

@@ -4,7 +4,7 @@ import weakref
 
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library, as_array
-from numpy.distutils.misc_util import get_shared_lib_extension
+from numpy_distutils.misc_util import get_shared_lib_extension
 from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
 
 try:

@@ -90,7 +90,7 @@ def get_num_build_jobs():
         number of parallel jobs that can be run
 
     """
-    from numpy.distutils.core import get_distribution
+    from numpy_distutils.core import get_distribution
     try:
         cpu_count = len(os.sched_getaffinity(0))
     except AttributeError:
@@ -751,7 +751,7 @@ class Configuration:
                         Ex.: the directory where the numpy package source sits
         package_path -- directory of package. Will be computed by magic from the
                         directory of the caller module if not specified
-                        Ex.: the directory where numpy.distutils is
+                        Ex.: the directory where numpy_distutils is
         caller_level -- frame level to caller namespace, internal parameter.
         """
         self.name = dot_join(parent_name, package_name)
@@ -875,7 +875,7 @@ class Configuration:
 
     def get_distribution(self):
         """Return the distutils distribution object for self."""
-        from numpy.distutils.core import get_distribution
+        from numpy_distutils.core import get_distribution
         return get_distribution()
 
     def _wildcard_get_subpackage(self, subpackage_name,
@@ -1500,7 +1500,7 @@ class Configuration:
         ext_args['define_macros'] = \
             self.define_macros + ext_args.get('define_macros', [])
 
-        from numpy.distutils.core import Extension
+        from numpy_distutils.core import Extension
         ext = Extension(**ext_args)
         self.ext_modules.append(ext)
 
@@ -1776,7 +1776,7 @@ class Configuration:
 
     def get_config_cmd(self):
         """
-        Returns the numpy.distutils config command instance.
+        Returns the numpy_distutils config command instance.
         """
         cmd = get_cmd('config')
         cmd.ensure_finalized()
@@ -1844,7 +1844,7 @@ class Configuration:
                         libraries=self.libraries,
                         include_dirs=self.include_dirs)
         else:
-            from numpy.distutils.core import Extension
+            from numpy_distutils.core import Extension
             assert isinstance(extlib, Extension), repr(extlib)
             extlib.libraries.extend(self.libraries)
             extlib.include_dirs.extend(self.include_dirs)
@@ -2161,7 +2161,7 @@ def get_pkg_info(pkgname, dirs=None):
     get_info
 
     """
-    from numpy.distutils.npy_pkg_config import read_config
+    from numpy_distutils.npy_pkg_config import read_config
 
     if dirs:
         dirs.append(get_npy_pkg_dir())
@@ -2214,7 +2214,7 @@ def get_info(pkgname, dirs=None):
       config.add_extension('foo', sources=['foo.c'], extra_info=npymath_info)
 
     """
-    from numpy.distutils.npy_pkg_config import parse_flags
+    from numpy_distutils.npy_pkg_config import parse_flags
     pkg_info = get_pkg_info(pkgname, dirs)
 
     # Translate LibraryInfo instance into a build_info dict
@@ -2294,7 +2294,7 @@ def generate_config_py(target):
     Usage:
         config['py_modules'].append((packagename, '__config__',generate_config_py))
     """
-    from numpy.distutils.system_info import system_info
+    from numpy_distutils.system_info import system_info
     from distutils.dir_util import mkpath
     mkpath(os.path.dirname(target))
     with open(target, 'w') as f:
@@ -2341,7 +2341,7 @@ def generate_config_py(target):
                 Notes
                 -----
                 Classes specifying the information to be printed are defined
-                in the `numpy.distutils.system_info` module.
+                in the `numpy_distutils.system_info` module.
 
                 Information may include:
 

@@ -1,5 +1,5 @@
 from distutils.core import Command
-from numpy.distutils import log
+from numpy_distutils import log
 
 #XXX: Linker flags
 
@@ -10,7 +10,7 @@ def show_fortran_compilers(_cache=None):
     elif _cache is None:
         _cache = []
     _cache.append(1)
-    from numpy.distutils.fcompiler import show_fcompilers
+    from numpy_distutils.fcompiler import show_fcompilers
     import distutils.core
     dist = distutils.core._setup_distribution
     show_fcompilers(dist)
