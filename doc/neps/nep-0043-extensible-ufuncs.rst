@@ -572,6 +572,8 @@ fast C-functions and NumPy API creates the new ``ArrayMethod`` or
 ArrayMethod Specifications
 ==========================
 
+.. highlight:: c
+
 These specifications provide a minimal initial C-API, which shall be expanded
 in the future, for example to allow specialized inner-loops.
 
@@ -696,6 +698,7 @@ to contain the following (this may extend in the future)::
         PyType_Slot *slots;
     } PyArrayMethod_Spec;
 
+.. highlight:: python
 
 Discussion and alternatives
 ===========================
@@ -810,10 +813,12 @@ Both are discussed in the next section.
 Error Handling
 """"""""""""""
 
+.. highlight:: c
+
 We expect that future inner-loops will generally set Python errors as soon
 as an error is found. This is complicated when the inner-loop is run without
 locking the GIL.  In this case the function will have to lock the GIL,
-set the Python error and return ``-1`` to indicate an error occurred::
+set the Python error and return ``-1`` to indicate an error occurred:::
 
     int
     inner_loop(PyArrayMethod_Context *context, ..., void *userdata)
@@ -891,6 +896,7 @@ is not set seems convenient, but I am uncertain about it, since I am not
 aware of any similar prior art.  This "scratch space" could also be part of
 the ``context`` in principle.
 
+.. highlight:: python
 
 Reusing existing Loops/Implementations
 ======================================
