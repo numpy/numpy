@@ -611,7 +611,8 @@ PyArrayDescr_Type and PyArray_Descr
 
         Either ``NULL`` or a dictionary containing low-level casting
         functions for user- defined data-types. Each function is
-        wrapped in a :c:type:`PyCObject *` and keyed by the data-type number.
+        wrapped in a :c:type:`PyCapsule *<PyCapsule>` and keyed by
+        the data-type number.
 
     .. c:member:: NPY_SCALARKIND scalarkind(PyArrayObject* arr)
 
@@ -1331,7 +1332,7 @@ PyArrayInterface
    other extension modules can use the rapid array interface
    protocol. The :obj:`__array_struct__` method of an object that
    supports the rapid array interface protocol should return a
-   :c:type:`PyCObject` that contains a pointer to a :c:type:`PyArrayInterface`
+   :c:type:`PyCapsule` that contains a pointer to a :c:type:`PyArrayInterface`
    structure with the relevant details of the array. After the new
    array is created, the attribute should be ``DECREF``'d which will
    free the :c:type:`PyArrayInterface` structure. Remember to ``INCREF`` the
