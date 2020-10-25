@@ -174,6 +174,9 @@ def configuration(parent_package='', top_path=None):
     config.add_data_files(('numpy', 'LICENSE.txt'))
     config.add_data_files(('numpy', 'numpy/*.pxd'))
 
+    config.add_subpackage('f2py')
+    config.add_subpackage('numpy_distutils')
+
     config.get_version('numpy/version.py')  # sets config.version
 
     return config

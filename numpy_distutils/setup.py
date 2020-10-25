@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 def configuration(parent_package='',top_path=None):
     from numpy_distutils.misc_util import Configuration
-    config = Configuration('distutils', parent_package, top_path)
+    config = Configuration('numpy_distutils', parent_package, top_path)
     config.add_subpackage('command')
     config.add_subpackage('fcompiler')
     config.add_subpackage('tests')

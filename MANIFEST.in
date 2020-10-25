@@ -21,6 +21,8 @@ include numpy/*.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
 # Note that sub-directories that don't have __init__ are apparently not
 # included by 'recursive-include', so list those separately
+recursive-include f2py *
+recursive-include numpy_distutils *
 recursive-include numpy *
 recursive-include numpy/linalg/lapack_lite *
 recursive-include tools *
