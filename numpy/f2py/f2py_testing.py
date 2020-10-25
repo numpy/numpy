@@ -1,8 +1,6 @@
 import sys
 import re
 
-from numpy.testing import jiffies, memusage
-
 
 def cmdline():
     m = re.compile(r'\A\d+\Z')
@@ -18,6 +16,9 @@ def cmdline():
 
 
 def run(runtest, test_functions, repeat=1):
+    # Avoiding importing numpy from the toplevel of the module
+    from numpy.testing import jiffies, memusage
+
     l = [(t, repr(t.__doc__.split('\n')[1].strip())) for t in test_functions]
     start_memusage = memusage()
     diff_memusage = None
