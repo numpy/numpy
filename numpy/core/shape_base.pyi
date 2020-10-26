@@ -1,13 +1,13 @@
 import sys
-from typing import TypeVar, overload, List, Sequence, Optional
+from typing import TypeVar, overload, List, Sequence
 
 from numpy import ndarray
 from numpy.typing import ArrayLike
 
 if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Literal
+    from typing import SupportsIndex
 else:
-    from typing_extensions import Literal, Protocol
+    from typing_extensions import Protocol
     class SupportsIndex(Protocol):
         def __index__(self) -> int: ...
 
