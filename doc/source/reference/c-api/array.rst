@@ -2960,7 +2960,7 @@ to.
     already a buffer object pointing to another object). If you need
     to hold on to the memory be sure to INCREF the base member. The
     chunk of memory is pointed to by *buf* ->ptr member and has length
-    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_BEHAVED`
+    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_ALIGNED`
     with the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has
     a writeable buffer interface.
 
