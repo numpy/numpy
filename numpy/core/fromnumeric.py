@@ -1840,11 +1840,11 @@ def nonzero(a):
     .. note::
 
        When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-       as ``nonzero(atleast1d(a))``.
+       as ``nonzero(atleast_1d(a))``.
 
        .. deprecated:: 1.17.0
 
-          Use `atleast1d` explicitly if this behavior is deliberate.
+          Use `atleast_1d` explicitly if this behavior is deliberate.
 
     Parameters
     ----------
