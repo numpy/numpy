@@ -12,9 +12,9 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.10'
+OPENBLAS_V = '0.3.12'
 # Temporary build of OpenBLAS to test a fix for dynamic detection of CPU
-OPENBLAS_LONG = 'v0.3.9-452-g349b722d'
+OPENBLAS_LONG = 'v0.3.12'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64',
@@ -143,9 +143,9 @@ def download_openblas(target, arch, ilp64, is_32bit):
         typ = 'tar.gz'
     elif arch == 'windows':
         if is_32bit:
-            suffix = 'win32-gcc_7_1_0.zip'
+            suffix = 'win32-gcc_8_1_0.zip'
         else:
-            suffix = 'win_amd64-gcc_7_1_0.zip'
+            suffix = 'win_amd64-gcc_8_1_0.zip'
         filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
     if not filename:
