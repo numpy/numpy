@@ -1506,10 +1506,10 @@ class TestRegression:
                 test_type(t)
 
     def test_buffer_hashlib(self):
-        from hashlib import md5
+        from hashlib import sha256
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
-        assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
+        assert_equal(sha256(x).hexdigest(), '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d')
 
     def test_0d_string_scalar(self):
         # Bug #1436; the following should succeed
