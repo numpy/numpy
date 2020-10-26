@@ -11,6 +11,7 @@ i8 = np.int64(1)
 
 A = np.array([1])
 B = A.view(SubClass).copy()
+B_stack = np.array([[1], [1]]).view(SubClass)
 C = [1]
 
 def func(i: int, j: int, **kwargs: Any) -> SubClass:
@@ -102,3 +103,26 @@ np.indices([1, 2, 3], sparse=True)
 np.fromfunction(func, (3, 5))
 
 np.identity(10)
+
+np.atleast_1d(C)
+np.atleast_1d(A)
+np.atleast_1d(C, C)
+np.atleast_1d(C, A)
+np.atleast_1d(A, A)
+
+np.atleast_2d(C)
+
+np.atleast_3d(C)
+
+np.vstack([C, C])
+np.vstack([C, A])
+np.vstack([A, A])
+
+np.hstack([C, C])
+
+np.stack([C, C])
+np.stack([C, C], axis=0)
+np.stack([C, C], out=B_stack)
+
+np.block([[C, C], [C, C]])
+np.block(A)
