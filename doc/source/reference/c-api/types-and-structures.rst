@@ -412,7 +412,8 @@ PyArrayDescr_Type and PyArray_Descr
        Metadata specific to the C implementation
        of the particular dtype. Added for NumPy 1.7.0.
 
-   .. c:member:: Npy_hash_t *hash
+   .. c:type:: npy_hash_t
+   .. c:member:: npy_hash_t *hash
 
        Currently unused. Reserved for future use in caching
        hash values.
