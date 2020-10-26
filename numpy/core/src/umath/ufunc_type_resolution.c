@@ -142,41 +142,34 @@ raise_casting_error(
 
     int nin = ufunc->nin;
     int nop = nin + ufunc->nout;
-    PyObject *froms = PyTuple_New(nop);
-    if (froms == NULL) { 
-        return -1;
-    }
-    PyObject *tos = PyTuple_New(nop);
-    if (tos == NULL) { 
+
+    PyObject *op_dtype_tup = PyTuple_New(nop);
+    if (op_dtype_tup == NULL) { 
         return -1;
     }
 
-    if (input) {
-        for (int j = 0; j < nop; j++) {
-            if (operands[j] == NULL) {
-                PyTuple_SET_ITEM(froms, j, Py_None);
-            }
-            else {
-                Py_INCREF(operands[j]);
-                PyTuple_SET_ITEM(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
-            }
-            Py_INCREF(dtypes[j]);
-            PyTuple_SET_ITEM(tos, j, (PyObject *)dtypes[j]);
-        }
+    PyObject *dtype_tup = PyTuple_New(nop);
+    if (dtype_tup == NULL) { 
+        Py_DECREF(op_dtype_tup);
+        return -1;
     }
-    else {
-        for (int j = 0; j < nop; j++) {
-            Py_INCREF(dtypes[j]);
-            PyTuple_SET_ITEM(froms, j, (PyObject *)dtypes[j]);
-            if (operands[j] == NULL) {
-                PyTuple_SET_ITEM(tos, j, Py_None);
-            }
-            else {
-                Py_INCREF(operands[j]);
-                PyTuple_SET_ITEM(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
-            }
+
+    for (int j = 0; j < nop; j++) {
+        if (operands[j] == NULL) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(op_dtype_tup, j, Py_None);
         }
+        else {
+            PyObject *op_dtype = (PyObject *)PyArray_DESCR(operands[j]);
+            Py_INCREF(op_dtype);
+            PyTuple_SET_ITEM(op_dtype_tup, j, op_dtype);
+        }
+        Py_INCREF(dtypes[j]);
+        PyTuple_SET_ITEM(dtype_tup, j, (PyObject *)dtypes[j]);
     }
+    
+    PyObject *froms = input ? op_dtype_tup : dtype_tup;
+    PyObject *tos   = input ? dtype_tup : op_dtype_tup;
 
     exc_value = Py_BuildValue(
         "ONOOi",
