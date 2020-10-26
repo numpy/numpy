@@ -2356,6 +2356,7 @@ def generate_config_py(target):
 
                 Examples
                 --------
+                >>> import numpy as np
                 >>> np.show_config()
                 blas_opt_info:
                     language = c
