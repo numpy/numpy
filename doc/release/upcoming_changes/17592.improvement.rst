@@ -1,4 +1,4 @@
 Change in ``np.bool_`` datatype element's string representation
--------------------------------------------------------------
+---------------------------------------------------------------
 
 ``np.bool_`` string representation will no longer clash with python's builtin ``True`` and ``False``. New representations of ``np.bool_(True)`` and ``np.bool_(False)`` will be ``numpy.True_`` and ``numpy.False_`` respectively.
