@@ -229,8 +229,13 @@ def get_build_overrides():
                 build_info['extra_compiler_args'] = args
             if _is_old_gcc_on_cygwin(self):
                 args = build_info.get('extra_compiler_args') or []
-                args.append('-fno-asynchronous-unwind-tables')
-                args.extend('-ffixed-xmm{0:02d}'.format(i) for i in range(16, 32))
+                args.append(
+                    '-fno-asynchronous-unwind-tables '
+                    '-ffixed-xmm16 -ffixed-xmm17 -ffixed-xmm18 -ffixed-xmm19 '
+                    '-ffixed-xmm20 -ffixed-xmm21 -ffixed-xmm22 -ffixed-xmm23 '
+                    '-ffixed-xmm24 -ffixed-xmm25 -ffixed-xmm26 -ffixed-xmm27 '
+                    '-ffixed-xmm28 -ffixed-xmm29 -ffixed-xmm30 -ffixed-xmm31'
+                )
                 build_info['extra_compiler_args'] = args
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
@@ -241,8 +246,13 @@ def get_build_overrides():
                     ext.extra_compile_args.append('-std=c99')
             if _is_old_gcc_on_cygwin(self):
                 if '-ffixed-xmm' not in ext.extra_compile_args:
-                    ext.extra_compile_args.append('-fno-asynchronous-unwind-tables')
-                    ext.extra_compile_args.extend('-ffixed-xmm{0:02d}'.format(i) for i in range(16, 32))
+                    ext.extra_compile_args.append(
+                        '-fno-asynchronous-unwind-tables '
+                        '-ffixed-xmm16 -ffixed-xmm17 -ffixed-xmm18 -ffixed-xmm19 '
+                        '-ffixed-xmm20 -ffixed-xmm21 -ffixed-xmm22 -ffixed-xmm23 '
+                        '-ffixed-xmm24 -ffixed-xmm25 -ffixed-xmm26 -ffixed-xmm27 '
+                        '-ffixed-xmm28 -ffixed-xmm29 -ffixed-xmm30 -ffixed-xmm31'
+                    )
             build_ext.build_extension(self, ext)
     return new_build_clib, new_build_ext
 
