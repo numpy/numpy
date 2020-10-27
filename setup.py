@@ -258,7 +258,7 @@ def get_build_overrides():
                     [cc, "-dumpversion"],
                     stdout=subprocess.PIPE,
                 )
-                ver = LooseVersion(out.stdout.strip().decode("ascii"))
+                ver = LooseVersion(out.stdout.strip())
                 gcc_version_lt_provided = ver < test_version
         return gcc_version_lt_provided
 
@@ -291,7 +291,7 @@ def get_build_overrides():
             if _is_using_gcc(self):
                 if '-std=c99' not in ext.extra_compile_args:
                     ext.extra_compile_args.append('-std=c99')
-            if _is_old_gcc_on_cygwin(self):
+            if _is_old_gcc_on_cygwin(self, ext):
                 if '-ffixed-xmm' not in ext.extra_compile_args:
                     ext.extra_compile_args.append(
                         '-fno-asynchronous-unwind-tables '
