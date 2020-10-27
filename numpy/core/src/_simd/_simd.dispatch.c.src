@@ -20,6 +20,7 @@
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
  */
@@ -60,6 +61,172 @@ simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
     Py_RETURN_NONE;
 }
 /**end repeat1**/
+
+/****************************************
+ * Non-contiguous/Partial Memory access
+ ****************************************/
+#if @ncont_sup@
+// Partial Load
+SIMD_IMPL_INTRIN_3(load_till_@sfx@, v@sfx@, q@sfx@, u32, @sfx@)
+SIMD_IMPL_INTRIN_2(load_tillz_@sfx@, v@sfx@, q@sfx@, u32)
+
+// Partial Store
+static PyObject *
+simd__intrin_store_till_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg nlane_arg = {.dtype = simd_data_u32};
+    simd_arg vec_arg = {.dtype = simd_data_v@sfx@};
+    if (!PyArg_ParseTuple(
+        args, "O&O&O&:store_till_@sfx@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &nlane_arg,
+        simd_arg_converter, &vec_arg
+    )) {
+        return NULL;
+    }
+    npyv_store_till_@sfx@(
+        seq_arg.data.q@sfx@, nlane_arg.data.u32, vec_arg.data.v@sfx@
+    );
+    // write-back
+    if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
+        simd_arg_free(&seq_arg);
+        return NULL;
+    }
+    simd_arg_free(&seq_arg);
+    Py_RETURN_NONE;
+}
+
+// Non-contiguous Load
+/**begin repeat1
+ * #intrin = loadn, loadn_till, loadn_tillz#
+ * #till   = 0,     1,          1#
+ * #fill   = 0,     1,          0#
+ * #format = ,    O&O&,         O&#
+ */
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg stride_arg = {.dtype = simd_data_s64};
+#if @till@
+    simd_arg nlane_arg = {.dtype = simd_data_u32};
+#endif // till
+#if @fill@
+    simd_arg fill_arg = {.dtype = simd_data_@sfx@};
+#endif
+    if (!PyArg_ParseTuple(
+        args, "@format@O&O&:@intrin@_@sfx@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &stride_arg
+#if @till@
+        ,simd_arg_converter, &nlane_arg
+#endif
+#if @fill@
+        ,simd_arg_converter, &fill_arg
+#endif
+    )) {
+        return NULL;
+    }
+    npyv_lanetype_@sfx@ *seq_ptr = seq_arg.data.q@sfx@;
+    npy_intp stride = (npy_intp)stride_arg.data.s64;
+    Py_ssize_t cur_seq_len = simd_sequence_len(seq_ptr);
+    Py_ssize_t min_seq_len = stride * npyv_nlanes_@sfx@;
+    if (stride < 0) {
+        seq_ptr += cur_seq_len -1;
+        min_seq_len = -min_seq_len;
+    }
+    if (cur_seq_len < min_seq_len) {
+        PyErr_Format(PyExc_ValueError,
+            "@intrin@_@sfx@(), according to provided stride %d, the "
+            "minimum acceptable size of the required sequence is %d, given(%d)",
+            stride, min_seq_len, cur_seq_len
+        );
+        goto err;
+    }
+    npyv_@sfx@ rvec = npyv_@intrin@_@sfx@(
+        seq_ptr, stride
+    #if @till@
+        , nlane_arg.data.u32
+    #endif
+    #if @fill@
+        , fill_arg.data.@sfx@
+    #endif
+    );
+    simd_arg ret = {
+        .dtype = simd_data_v@sfx@, .data = {.v@sfx@=rvec}
+    };
+    simd_arg_free(&seq_arg);
+    return simd_arg_to_obj(&ret);
+err:
+    simd_arg_free(&seq_arg);
+    return NULL;
+}
+/**end repeat1**/
+
+// Non-contiguous Store
+/**begin repeat1
+ * #intrin = storen, storen_till#
+ * #till   = 0,      1#
+ * #format = ,       O&#
+ */
+static PyObject *
+simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    simd_arg seq_arg = {.dtype = simd_data_q@sfx@};
+    simd_arg stride_arg = {.dtype = simd_data_s64};
+    simd_arg vec_arg = {.dtype = simd_data_v@sfx@};
+#if @till@
+    simd_arg nlane_arg = {.dtype = simd_data_u32};
+#endif
+    if (!PyArg_ParseTuple(
+        args, "@format@O&O&O&:storen_@sfx@",
+        simd_arg_converter, &seq_arg,
+        simd_arg_converter, &stride_arg
+#if @till@
+        ,simd_arg_converter, &nlane_arg
+#endif
+        ,simd_arg_converter, &vec_arg
+    )) {
+        return NULL;
+    }
+    npyv_lanetype_@sfx@ *seq_ptr = seq_arg.data.q@sfx@;
+    npy_intp stride = (npy_intp)stride_arg.data.s64;
+    Py_ssize_t cur_seq_len = simd_sequence_len(seq_ptr);
+    Py_ssize_t min_seq_len = stride * npyv_nlanes_@sfx@;
+    if (stride < 0) {
+        seq_ptr += cur_seq_len -1;
+        min_seq_len = -min_seq_len;
+    }
+    // overflow guard
+    if (cur_seq_len < min_seq_len) {
+        PyErr_Format(PyExc_ValueError,
+            "@intrin@_@sfx@(), according to provided stride %d, the"
+            "minimum acceptable size of the required sequence is %d, given(%d)",
+            stride, min_seq_len, cur_seq_len
+        );
+        goto err;
+    }
+    npyv_@intrin@_@sfx@(
+        seq_ptr, stride
+    #if @till@
+        ,nlane_arg.data.u32
+    #endif
+        ,vec_arg.data.v@sfx@
+    );
+    // write-back
+    if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
+        goto err;
+    }
+    simd_arg_free(&seq_arg);
+    Py_RETURN_NONE;
+err:
+    simd_arg_free(&seq_arg);
+    return NULL;
+}
+/**end repeat1**/
+#endif // @ncont_sup@
+
 
 /***************************
  * Misc
@@ -205,6 +372,7 @@ static PyMethodDef simd__intrinsics_methods[] = {
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
  */
@@ -218,6 +386,19 @@ static PyMethodDef simd__intrinsics_methods[] = {
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
+
+/****************************************
+ * Non-contiguous/Partial Memory access
+ ****************************************/
+#if @ncont_sup@
+/**begin repeat1
+ * #intrin = load_till, load_tillz, loadn, loadn_till, loadn_tillz,
+ *           store_till, storen, storen_till#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif // ncont_sup
+
 
 /***************************
  * Misc

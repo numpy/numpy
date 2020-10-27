@@ -11,18 +11,20 @@ class _Test_Utility:
 
     def __getattr__(self, attr):
         """
-        To call NPV intrinsics without the prefix 'npyv_' and
+        To call NPV intrinsics without the attribute 'npyv' and
         auto suffixing intrinsics according to class attribute 'sfx'
         """
         return getattr(self.npyv, attr + "_" + self.sfx)
 
-    def _data(self, n=None, reverse=False):
+    def _data(self, start=None, count=None, reverse=False):
         """
         Create list of consecutive numbers according to number of vector's lanes.
         """
-        if n is None:
-            n = 1
-        rng = range(n, n + self.nlanes)
+        if start is None:
+            start = 1
+        if count is None:
+            count = self.nlanes
+        rng = range(start, start + count)
         if reverse:
             rng = reversed(rng)
         if self._is_fp():
@@ -195,6 +197,132 @@ class _SIMD_ALL(_Test_Utility):
         self.storeh(store_h, vdata)
         assert store_h[:self.nlanes//2] == data[self.nlanes//2:]
         assert store_h != vdata  # detect overflow
+
+    def test_memory_partial_load(self):
+        if self.sfx in ("u8", "s8", "u16", "s16"):
+            return
+
+        data = self._data()
+        lanes = list(range(1, self.nlanes + 1))
+        lanes += [self.nlanes**2, self.nlanes**4] # test out of range
+        for n in lanes:
+            load_till  = self.load_till(data, n, 15)
+            data_till  = data[:n] + [15] * (self.nlanes-n)
+            assert load_till == data_till
+            load_tillz = self.load_tillz(data, n)
+            data_tillz = data[:n] + [0] * (self.nlanes-n)
+            assert load_tillz == data_tillz
+
+    def test_memory_partial_store(self):
+        if self.sfx in ("u8", "s8", "u16", "s16"):
+            return
+
+        data = self._data()
+        data_rev = self._data(reverse=True)
+        vdata = self.load(data)
+        lanes = list(range(1, self.nlanes + 1))
+        lanes += [self.nlanes**2, self.nlanes**4]
+        for n in lanes:
+            data_till = data_rev.copy()
+            data_till[:n] = data[:n]
+            store_till = self._data(reverse=True)
+            self.store_till(store_till, n, vdata)
+            assert store_till == data_till
+
+    def test_memory_noncont_load(self):
+        if self.sfx in ("u8", "s8", "u16", "s16"):
+            return
+
+        for stride in range(1, 64):
+            data = self._data(count=stride*self.nlanes)
+            data_stride = data[::stride]
+            loadn = self.loadn(data, stride)
+            assert loadn == data_stride
+
+        for stride in range(-64, 0):
+            data = self._data(stride, -stride*self.nlanes)
+            data_stride = self.load(data[::stride]) # cast unsigned
+            loadn = self.loadn(data, stride)
+            assert loadn == data_stride
+
+    def test_memory_noncont_partial_load(self):
+        if self.sfx in ("u8", "s8", "u16", "s16"):
+            return
+
+        lanes = list(range(1, self.nlanes + 1))
+        lanes += [self.nlanes**2, self.nlanes**4]
+        for stride in range(1, 64):
+            data = self._data(count=stride*self.nlanes)
+            data_stride = data[::stride]
+            for n in lanes:
+                data_stride_till = data_stride[:n] + [15] * (self.nlanes-n)
+                loadn_till = self.loadn_till(data, stride, n, 15)
+                assert loadn_till == data_stride_till
+                data_stride_tillz = data_stride[:n] + [0] * (self.nlanes-n)
+                loadn_tillz = self.loadn_tillz(data, stride, n)
+                assert loadn_tillz == data_stride_tillz
+
+        for stride in range(-64, 0):
+            data = self._data(stride, -stride*self.nlanes)
+            data_stride = list(self.load(data[::stride])) # cast unsigned
+            for n in lanes:
+                data_stride_till = data_stride[:n] + [15] * (self.nlanes-n)
+                loadn_till = self.loadn_till(data, stride, n, 15)
+                assert loadn_till == data_stride_till
+                data_stride_tillz = data_stride[:n] + [0] * (self.nlanes-n)
+                loadn_tillz = self.loadn_tillz(data, stride, n)
+                assert loadn_tillz == data_stride_tillz
+
+    def test_memory_noncont_store(self):
+        if self.sfx in ("u8", "s8", "u16", "s16"):
+            return
+
+        vdata = self.load(self._data())
+        for stride in range(1, 64):
+            data = [15] * stride * self.nlanes
+            data[::stride] = vdata
+            storen = [15] * stride * self.nlanes
+            storen += [127]*64
+            self.storen(storen, stride, vdata)
+            assert storen[:-64] == data
+            assert storen[-64:] == [127]*64 # detect overflow
+
+        for stride in range(-64, 0):
+            data = [15] * -stride * self.nlanes
+            data[::stride] = vdata
+            storen = [127]*64
+            storen += [15] * -stride * self.nlanes
+            self.storen(storen, stride, vdata)
+            assert storen[64:] == data
+            assert storen[:64] == [127]*64 # detect overflow
+
+    def test_memory_noncont_partial_store(self):
+        if self.sfx in ("u8", "s8", "u16", "s16"):
+            return
+
+        data = self._data()
+        vdata = self.load(data)
+        lanes = list(range(1, self.nlanes + 1))
+        lanes += [self.nlanes**2, self.nlanes**4]
+        for stride in range(1, 64):
+            for n in lanes:
+                data_till = [15] * stride * self.nlanes
+                data_till[::stride] = data[:n] + [15] * (self.nlanes-n)
+                storen_till = [15] * stride * self.nlanes
+                storen_till += [127]*64
+                self.storen_till(storen_till, stride, n, vdata)
+                assert storen_till[:-64] == data_till
+                assert storen_till[-64:] == [127]*64 # detect overflow
+
+        for stride in range(-64, 0):
+            for n in lanes:
+                data_till = [15] * -stride * self.nlanes
+                data_till[::stride] = data[:n] + [15] * (self.nlanes-n)
+                storen_till = [127]*64
+                storen_till += [15] * -stride * self.nlanes
+                self.storen_till(storen_till, stride, n, vdata)
+                assert storen_till[64:] == data_till
+                assert storen_till[:64] == [127]*64 # detect overflow
 
     def test_misc(self):
         broadcast_zero = self.zero()
@@ -388,7 +516,7 @@ class _SIMD_ALL(_Test_Utility):
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")
 fp_sfx  = ("f32", "f64")
 all_sfx = int_sfx + fp_sfx
-tests_registery = {
+tests_registry = {
     int_sfx : _SIMD_INT,
     fp_sfx  : _SIMD_FP,
     all_sfx : _SIMD_ALL
@@ -411,7 +539,7 @@ for target_name, npyv in targets.items():
     elif not npyv.simd_f64:
         skip_sfx["f64"] = f"target '{pretty_name}' doesn't support double-precision"
 
-    for sfxes, cls in tests_registery.items():
+    for sfxes, cls in tests_registry.items():
         for sfx in sfxes:
             skip_m = skip_sfx.get(sfx, skip)
             inhr = (cls,)
