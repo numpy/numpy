@@ -172,7 +172,7 @@ raise_casting_error(
     PyObject *tos   = input ? dtype_tup : op_dtype_tup;
 
     exc_value = Py_BuildValue(
-        "ONOOi",
+        "ONNNi",
         ufunc,
         casting_value,
         froms,
