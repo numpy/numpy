@@ -619,8 +619,8 @@ appropriate `view <numpy-ndarray-view>`_::
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
  ...                      type=np.recarray)
 
-For convenience, viewing an ndarray as type :class:`np.recarray` will
-automatically convert to :class:`np.record` datatype, so the dtype can be left
+For convenience, viewing an ndarray as type :class:`numpy.recarray` will
+automatically convert to :class:`numpy.record` datatype, so the dtype can be left
 out of the view::
 
  >>> recordarr = arr.view(np.recarray)

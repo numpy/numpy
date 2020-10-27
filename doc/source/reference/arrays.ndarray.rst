@@ -1,10 +1,10 @@
+.. currentmodule:: numpy
+
 .. _arrays.ndarray:
 
 ******************************************
 The N-dimensional array (:class:`ndarray`)
 ******************************************
-
-.. currentmodule:: numpy
 
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions

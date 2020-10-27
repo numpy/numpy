@@ -2960,9 +2960,9 @@ to.
     already a buffer object pointing to another object). If you need
     to hold on to the memory be sure to INCREF the base member. The
     chunk of memory is pointed to by *buf* ->ptr member and has length
-    *buf* ->len. The flags member of *buf* is :c:data:`NPY_BEHAVED_RO` with
-    the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable buffer
-    interface.
+    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_ALIGNED`
+    with the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has
+    a writeable buffer interface.
 
 .. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 
@@ -3136,7 +3136,7 @@ the C-API is needed then some additional steps must be taken.
           be defined in another compilation unit.
         * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
           also changes the name of the variable holding the C-API, which
-          defaults to :c:data:`PyArray_API`, to whatever the macro is
+          defaults to ``PyArray_API``, to whatever the macro is
           #defined to.
 
 Checking the API Version
