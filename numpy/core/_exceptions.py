@@ -118,8 +118,8 @@ class _UFuncOutputCastingError(_UFuncCastingError):
 
     def __str__(self):
         if self.ufunc.nout > 1:
-            from_outs = ", ".join(["out{}={}".format(i+1, f.name) for i, f in enumerate(self.from_) if i>=self.ufunc.nin])
-            to_outs = ", ".join(["out{}={}".format(i+1, t.name) for i, t in enumerate(self.to) if i>=self.ufunc.nin])
+            from_outs = "out=({})".format(", ".join(f.name for f in self.to[self.ufunc.nin:]))
+            to_outs = "out=({})".format(", ".join(t.name for t in self.to[self.ufunc.nin:]))
         else:
             from_outs = "out={}".format(self.from_[-1])
             to_outs = "out={}".format(self.to[-1])
