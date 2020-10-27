@@ -40,6 +40,11 @@ PyMODINIT_FUNC PyInit__simd(void)
                 Py_DECREF(simd_mod);                                           \
                 goto err;                                                      \
             }                                                                  \
+            Py_INCREF(simd_mod);                                               \
+            if (PyModule_AddObject(m, target_name, simd_mod) < 0) {            \
+                Py_DECREF(simd_mod);                                           \
+                goto err;                                                      \
+            }                                                                  \
         }
 
     #define ATTACH_BASELINE_MODULE(MAKE_MSVC_HAPPY)                            \
@@ -49,6 +54,11 @@ PyMODINIT_FUNC PyInit__simd(void)
                 goto err;                                                      \
             }                                                                  \
             if (PyDict_SetItemString(targets, "baseline", simd_mod) < 0) {     \
+                Py_DECREF(simd_mod);                                           \
+                goto err;                                                      \
+            }                                                                  \
+            Py_INCREF(simd_mod);                                               \
+            if (PyModule_AddObject(m, "baseline", simd_mod) < 0) {             \
                 Py_DECREF(simd_mod);                                           \
                 goto err;                                                      \
             }                                                                  \
