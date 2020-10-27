@@ -275,7 +275,8 @@ gentype_format(PyObject *self, PyObject *args)
     if (Py_TYPE(self) == &PyBoolArrType_Type) {
         obj = PyBool_FromLong(PyArrayScalar_VAL(self, Bool));
     }
-    else if (PyArray_IsScalar(self, Integer)) {
+    else if (PyArray_IsScalar(self, Integer)
+             && !PyArray_IsScalar(self, Timedelta)) {
         obj = Py_TYPE(self)->tp_as_number->nb_int(self);
     }
     else if (PyArray_IsScalar(self, Floating)) {

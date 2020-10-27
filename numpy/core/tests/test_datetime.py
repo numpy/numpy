@@ -429,6 +429,10 @@ class TestDateTime:
                             np.timedelta64)
         assert_equal(actual, expected)
 
+    def test_timedelta_nat_format(self):
+        # gh-17552
+        assert_equal('NaT', '{0}'.format(np.timedelta64('nat')))
+
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
         assert_equal(np.datetime64('2010').dtype,
