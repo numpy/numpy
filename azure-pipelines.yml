@@ -71,6 +71,9 @@ stages:
           Python36:
             PYTHON_VERSION: '3.6'
             USE_OPENBLAS: '1'
+          Python39:
+            PYTHON_VERSION: '3.9'
+            USE_OPENBLAS: '1'
           Python36-ILP64:
             PYTHON_VERSION: '3.6'
             NPY_USE_BLAS_ILP64: '1'
@@ -208,6 +211,11 @@ stages:
             PYTHON_ARCH: 'x86'
             TEST_MODE: fast
             BITS: 32
+          Python39-32bit-fast:
+            PYTHON_VERSION: '3.9'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
           Python36-64bit-full:
             PYTHON_VERSION: '3.6'
             PYTHON_ARCH: 'x64'
@@ -220,6 +228,11 @@ stages:
             BITS: 64
           Python38-64bit-full:
             PYTHON_VERSION: '3.8'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+          Python39-64bit-full:
+            PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
