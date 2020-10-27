@@ -49,9 +49,7 @@ simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
     )) {
         return NULL;
     }
-    npyv_@intrin@_@sfx@(
-        seq_arg.data.q@sfx@, vec_arg.data.v@sfx@
-    );
+    npyv_@intrin@_@sfx@(seq_arg.data.q@sfx@, vec_arg.data.v@sfx@);
     // write-back
     if (simd_sequence_fill_iterable(seq_arg.obj, seq_arg.data.q@sfx@, simd_data_q@sfx@)) {
         simd_arg_free(&seq_arg);
@@ -509,9 +507,9 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
         .m_base = PyModuleDef_HEAD_INIT,
         .m_size = -1,
     #ifdef NPY__CPU_TARGET_CURRENT
-        .m_name = "NPYV_" NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
+        .m_name = "numpy.core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
     #else
-        .m_name = "NPYV_BASELINE",
+        .m_name = "numpy.core._simd.baseline",
     #endif
     #if NPY_SIMD
         .m_methods = simd__intrinsics_methods

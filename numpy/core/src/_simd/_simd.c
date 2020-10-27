@@ -4,7 +4,7 @@ PyMODINIT_FUNC PyInit__simd(void)
 {
     static struct PyModuleDef defs = {
         .m_base = PyModuleDef_HEAD_INIT,
-        .m_name = "_simd",
+        .m_name = "numpy.core._simd",
         .m_size = -1
     };
     if (npy_cpu_init() < 0) {
