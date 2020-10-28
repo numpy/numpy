@@ -450,8 +450,10 @@ class TestArrayLike:
 
     def add_method(name, arr_class, enable_value_error=False):
         def _definition(*args, **kwargs):
-            # Check that `like=` isn't propagated downstream
-            assert 'like' not in kwargs
+            # Check that `like=` isn't propagated downstream or
+            # has correct type
+            assert ('like' not in kwargs or
+                    isinstance(kwargs["like"], TestArrayLike.MyArray))
 
             if enable_value_error and 'value_error' in kwargs:
                 raise ValueError
