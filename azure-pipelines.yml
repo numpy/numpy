@@ -217,6 +217,13 @@ stages:
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
             OPENBLAS_SUFFIX: '64_'
+          Python39-64bit-full:
+            PYTHON_VERSION: '3.9'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+            OPENBLAS_SUFFIX: '64_'
           #PyPy36-32bit:
             #PYTHON_VERSION: 'PyPy3.6'
             #PYTHON_ARCH: 'x32'
