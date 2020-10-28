@@ -2156,6 +2156,15 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
                     m1 = re_1.match(ee)
                 c2 = myeval(ee, {}, {})
                 if (a * 0.5 + b == c and a * 1.5 + b == c2):
+                    # gh-8062: return integers instead of floats if possible.
+                    try:
+                        a = int(a)
+                    except:
+                        pass
+                    try:
+                        b = int(b)
+                    except:
+                        pass
                     return a, b, x
             except Exception:
                 pass
