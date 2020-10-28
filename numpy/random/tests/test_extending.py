@@ -40,6 +40,9 @@ else:
         # too old or wrong cython, skip the test
         cython = None
 
+
+@pytest.mark.skipif(sys.platform == "win32" and sys.version_info[:2] == (3, 9),
+                    reason="temp filename problem with Python 3.9 on Windows")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 def test_cython(tmp_path):
