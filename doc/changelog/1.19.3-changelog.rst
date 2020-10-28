@@ -1,18 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.19.3 Release Notes
-==========================
-
-NumPy 1.19.3 is a small maintenace release with two major improvements:
-
-- Python 3.9 binary wheels on all supported platforms.
-- OpenBLAS fixes for Windows 10 version 2004 fmod bug.
-
-This release supports Python 3.6-3.9 and is linked with OpenBLAS 3.7 to avoid
-some of the fmod problems on Windows 10 version 2004. Microsoft is aware of the
-problem and users should upgrade when the fix becomes available, the fix here
-is limited in scope.
 
 Contributors
 ============
