@@ -48,41 +48,52 @@
 // AND
 #define npyv_and_u8  vec_and
 #define npyv_and_s8  vec_and
+#define npyv_and_b8  vec_and
 #define npyv_and_u16 vec_and
 #define npyv_and_s16 vec_and
+#define npyv_and_b16 vec_and
 #define npyv_and_u32 vec_and
 #define npyv_and_s32 vec_and
+#define npyv_and_b32 vec_and
 #define npyv_and_u64 vec_and
 #define npyv_and_s64 vec_and
+#define npyv_and_b64 vec_and
 #define npyv_and_f32 vec_and
 #define npyv_and_f64 vec_and
 
 // OR
 #define npyv_or_u8  vec_or
 #define npyv_or_s8  vec_or
+#define npyv_or_b8  vec_or
 #define npyv_or_u16 vec_or
 #define npyv_or_s16 vec_or
+#define npyv_or_b16 vec_or
 #define npyv_or_u32 vec_or
 #define npyv_or_s32 vec_or
+#define npyv_or_b32 vec_or
 #define npyv_or_u64 vec_or
 #define npyv_or_s64 vec_or
+#define npyv_or_b64 vec_or
 #define npyv_or_f32 vec_or
 #define npyv_or_f64 vec_or
 
 // XOR
 #define npyv_xor_u8  vec_xor
 #define npyv_xor_s8  vec_xor
+#define npyv_xor_b8  vec_xor
 #define npyv_xor_u16 vec_xor
 #define npyv_xor_s16 vec_xor
+#define npyv_xor_b16 vec_xor
 #define npyv_xor_u32 vec_xor
 #define npyv_xor_s32 vec_xor
+#define npyv_xor_b32 vec_xor
 #define npyv_xor_u64 vec_xor
 #define npyv_xor_s64 vec_xor
+#define npyv_xor_b64 vec_xor
 #define npyv_xor_f32 vec_xor
 #define npyv_xor_f64 vec_xor
 
 // NOT
-// note: we implement npyv_not_b*(boolen types) for internal use*/
 #define NPYV_IMPL_VSX_NOT_INT(VEC_LEN)                                 \
     NPY_FINLINE npyv_u##VEC_LEN npyv_not_u##VEC_LEN(npyv_u##VEC_LEN a) \
     { return vec_nor(a, a); }                                          \

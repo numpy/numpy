@@ -53,48 +53,64 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 // AND
 #define npyv_and_u8  _mm256_and_si256
 #define npyv_and_s8  _mm256_and_si256
+#define npyv_and_b8  _mm256_and_si256
 #define npyv_and_u16 _mm256_and_si256
 #define npyv_and_s16 _mm256_and_si256
+#define npyv_and_b16 _mm256_and_si256
 #define npyv_and_u32 _mm256_and_si256
 #define npyv_and_s32 _mm256_and_si256
+#define npyv_and_b32 _mm256_and_si256
 #define npyv_and_u64 _mm256_and_si256
 #define npyv_and_s64 _mm256_and_si256
+#define npyv_and_b64 _mm256_and_si256
 #define npyv_and_f32 _mm256_and_ps
 #define npyv_and_f64 _mm256_and_pd
 
 // OR
 #define npyv_or_u8  _mm256_or_si256
 #define npyv_or_s8  _mm256_or_si256
+#define npyv_or_b8  _mm256_or_si256
 #define npyv_or_u16 _mm256_or_si256
 #define npyv_or_s16 _mm256_or_si256
+#define npyv_or_b16 _mm256_or_si256
 #define npyv_or_u32 _mm256_or_si256
 #define npyv_or_s32 _mm256_or_si256
+#define npyv_or_b32 _mm256_or_si256
 #define npyv_or_u64 _mm256_or_si256
 #define npyv_or_s64 _mm256_or_si256
+#define npyv_or_b64 _mm256_or_si256
 #define npyv_or_f32 _mm256_or_ps
 #define npyv_or_f64 _mm256_or_pd
 
 // XOR
 #define npyv_xor_u8  _mm256_xor_si256
 #define npyv_xor_s8  _mm256_xor_si256
+#define npyv_xor_b8  _mm256_xor_si256
 #define npyv_xor_u16 _mm256_xor_si256
 #define npyv_xor_s16 _mm256_xor_si256
+#define npyv_xor_b16 _mm256_xor_si256
 #define npyv_xor_u32 _mm256_xor_si256
 #define npyv_xor_s32 _mm256_xor_si256
+#define npyv_xor_b32 _mm256_xor_si256
 #define npyv_xor_u64 _mm256_xor_si256
 #define npyv_xor_s64 _mm256_xor_si256
+#define npyv_xor_b64 _mm256_xor_si256
 #define npyv_xor_f32 _mm256_xor_ps
 #define npyv_xor_f64 _mm256_xor_pd
 
 // NOT
-#define npyv_not_u8(A) _mm256_xor_si256(A, _mm256_set1_epi32(-1))
+#define npyv_not_u8(A) _mm256_andnot_si256(A, _mm256_set1_epi32(-1))
 #define npyv_not_s8  npyv_not_u8
+#define npyv_not_b8  npyv_not_u8
 #define npyv_not_u16 npyv_not_u8
 #define npyv_not_s16 npyv_not_u8
+#define npyv_not_b16 npyv_not_u8
 #define npyv_not_u32 npyv_not_u8
 #define npyv_not_s32 npyv_not_u8
+#define npyv_not_b32 npyv_not_u8
 #define npyv_not_u64 npyv_not_u8
 #define npyv_not_s64 npyv_not_u8
+#define npyv_not_b64 npyv_not_u8
 #define npyv_not_f32(A) _mm256_xor_ps(A, _mm256_castsi256_ps(_mm256_set1_epi32(-1)))
 #define npyv_not_f64(A) _mm256_xor_pd(A, _mm256_castsi256_pd(_mm256_set1_epi32(-1)))
 
@@ -135,6 +151,7 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_cmpge_s64(A, B) npyv_not_s64(_mm256_cmpgt_epi64(B, A))
 
 // unsigned greater than
+/*
 #define NPYV_IMPL_AVX2_UNSIGNED_GT(LEN, SIGN)                    \
     NPY_FINLINE __m256i npyv_cmpgt_u##LEN(__m256i a, __m256i b)  \
     {                                                            \
@@ -147,7 +164,13 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 NPYV_IMPL_AVX2_UNSIGNED_GT(8,  0x80808080)
 NPYV_IMPL_AVX2_UNSIGNED_GT(16, 0x80008000)
 NPYV_IMPL_AVX2_UNSIGNED_GT(32, 0x80000000)
-
+*/
+NPY_FINLINE __m256i npyv_cmpgt_u8(__m256i a, __m256i b)
+{ return npyv_not_u8(_mm256_cmpeq_epi8(b, _mm256_max_epu8(b, a))); }
+NPY_FINLINE __m256i npyv_cmpgt_u16(__m256i a, __m256i b)
+{ return npyv_not_u16(_mm256_cmpeq_epi16(b, _mm256_max_epu16(b, a))); }
+NPY_FINLINE __m256i npyv_cmpgt_u32(__m256i a, __m256i b)
+{ return npyv_not_u32(_mm256_cmpeq_epi32(b, _mm256_max_epu32(b, a))); }
 NPY_FINLINE __m256i npyv_cmpgt_u64(__m256i a, __m256i b)
 {
     const __m256i sbit = _mm256_set1_epi64x(0x8000000000000000);
