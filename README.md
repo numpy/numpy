@@ -1,7 +1,7 @@
 # <img alt="NumPy" src="https://ghcdn.rawgit.org/numpy/numpy/master/branding/icons/primary/numpylogo.svg" height="60">
 
-[![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](
-    https://travis-ci.org/numpy/numpy)
+[![Travis CI](https://img.shields.io/travis/com/numpy/numpy/master?label=Travis%20CI)](
+    https://travis-ci.com/github/numpy/numpy)
 [![Azure](https://dev.azure.com/numpy/numpy/_apis/build/status/azure-pipeline%20numpy.numpy)](
     https://dev.azure.com/numpy/numpy/_build/latest?definitionId=5)
 [![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](
