@@ -19,8 +19,7 @@ from numpy.distutils.misc_util import (
     has_cxx_sources, has_f_sources, is_sequence
 )
 from numpy.distutils.command.config_compiler import show_fortran_compilers
-from numpy.distutils.ccompiler_opt import new_ccompiler_opt
-
+from numpy.distutils.ccompiler_opt import new_ccompiler_opt, CCompilerOpt
 
 class build_ext (old_build_ext):
 
@@ -39,6 +38,8 @@ class build_ext (old_build_ext):
          "specify a list of dispatched CPU optimizations"),
         ('disable-optimization', None,
          "disable CPU optimized code(dispatch,simd,fast...)"),
+        ('simd-test=', None,
+         "specify a list of CPU optimizations to be tested against NumPy SIMD interface"),
     ]
 
     help_options = old_build_ext.help_options + [
@@ -56,6 +57,7 @@ class build_ext (old_build_ext):
         self.cpu_baseline = None
         self.cpu_dispatch = None
         self.disable_optimization = None
+        self.simd_test = None
 
     def finalize_options(self):
         if self.parallel:
@@ -87,7 +89,9 @@ class build_ext (old_build_ext):
                                         ('cpu_baseline', 'cpu_baseline'),
                                         ('cpu_dispatch', 'cpu_dispatch'),
                                         ('disable_optimization', 'disable_optimization'),
+                                        ('simd_test', 'simd_test')
                                   )
+        CCompilerOpt.conf_target_groups["simd_test"] = self.simd_test
 
     def run(self):
         if not self.extensions:
