@@ -1019,6 +1019,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         N, D = sample.shape
 
     nbin = np.empty(D, int)
+    uniform_binnings = D*[False]
     edges = D*[None]
     dedges = D*[None]
     if weights is not None:
@@ -1056,6 +1057,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
                 ) from e
                 
             edges[i] = np.linspace(smin, smax, n + 1)    
+            uniform_binnings[i] = True
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
@@ -1070,11 +1072,19 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         dedges[i] = np.diff(edges[i])
 
     # Compute the bin number each sample falls into.
-    Ncount = tuple(
-        # avoid np.digitize to work around gh-11022
-        np.searchsorted(edges[i], sample[:, i], side='right')
-        for i in _range(D)
-    )
+    Ncount = D*[None]
+    for i in _range(D):
+        if uniform_binnings[i]:
+            # avoid np.searchsorted if dimension has uniform binning
+            left, right = edges[i][0], edges[i][-1]
+            nbins = len(edges[i]) - 1
+            ib = 1 + (nbins * (sample[:, i] - left) / (right - left))
+            ib[sample[:, i] < left] = 0
+            ib[sample[:, i] > right] = nbins + 1
+            Ncount[i] = ib.astype(int)
+        else:
+            # avoid np.digitize to work around gh-11022
+            Ncount[i] = np.searchsorted(edges[i], sample[:, i], side='right')
 
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right edge to be
