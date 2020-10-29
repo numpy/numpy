@@ -129,6 +129,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
     Also known as rolling or moving window, the window slides across all
     dimensions of the array and extracts subsets of the array at all window
     positions.
+    
+    .. versionadded:: 1.20.0
 
     Parameters
     ----------
