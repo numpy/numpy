@@ -4989,8 +4989,11 @@ class TestIO:
         x = np.zeros((10), dtype=object)
         with open(self.filename, 'wb') as f:
             assert_raises(IOError, lambda: x.tofile(f, sep=''))
+        # Dup-ed file handle should be closed or remove will fail on Windows OS
+        os.remove(self.filename)
 
-        # Dup-ed file handle should be closed or remove will fail.
+        # Also make sure that we close the Python handle
+        assert_raises(IOError, lambda: x.tofile(self.filename))
         os.remove(self.filename)
 
     def test_locale(self):
