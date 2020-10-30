@@ -1,6 +1,6 @@
 # NOTE: Please avoid the use of numpy.testing since NPYV intrinsics
 # may be involved in their functionality.
-import pytest
+import pytest, math
 from numpy.core._simd import targets
 
 class _Test_Utility:
@@ -80,6 +80,18 @@ class _Test_Utility:
                 cvt_intrin = "reinterpret_u{0}_{1}"
             return getattr(self.npyv, cvt_intrin.format(sfx[1:], sfx))(vector)
 
+    def _pinfinity(self):
+        v = self.npyv.setall_u32(0x7f800000)
+        return self.npyv.reinterpret_f32_u32(v)[0]
+
+    def _ninfinity(self):
+        v = self.npyv.setall_u32(0xff800000)
+        return self.npyv.reinterpret_f32_u32(v)[0]
+
+    def _nan(self):
+        v = self.npyv.setall_u32(0x7fc00000)
+        return self.npyv.reinterpret_f32_u32(v)[0]
+
 class _SIMD_INT(_Test_Utility):
     """
     To test all integer vector types at once
@@ -149,6 +161,65 @@ class _SIMD_FP(_Test_Utility):
         nfms = self.nmulsub(vdata_a, vdata_b, vdata_c)
         data_nfms = self.mul(data_fma, self.setall(-1))
         assert nfms == data_nfms
+
+    def test_abs(self):
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        data = self._data()
+        vdata = self.load(self._data())
+
+        abs_cases = ((-0, 0), (ninf, pinf), (pinf, pinf), (nan, nan))
+        for case, desired in abs_cases:
+            data_abs = [desired]*self.nlanes
+            vabs = self.abs(self.setall(case))
+            assert vabs == pytest.approx(data_abs, nan_ok=True)
+
+        vabs = self.abs(self.mul(vdata, self.setall(-1)))
+        assert vabs == data
+
+    def test_sqrt(self):
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        data = self._data()
+        vdata = self.load(self._data())
+
+        sqrt_cases = ((-0.0, -0.0), (0.0, 0.0), (-1.0, nan), (ninf, nan), (pinf, pinf))
+        for case, desired in sqrt_cases:
+            data_sqrt = [desired]*self.nlanes
+            sqrt  = self.sqrt(self.setall(case))
+            assert sqrt == pytest.approx(data_sqrt, nan_ok=True)
+
+        data_sqrt = self.load([math.sqrt(x) for x in data]) # load to truncate precision
+        sqrt = self.sqrt(vdata)
+        assert sqrt == data_sqrt
+
+    def test_square(self):
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        data = self._data()
+        vdata = self.load(self._data())
+        # square
+        square_cases = ((nan, nan), (pinf, pinf), (ninf, pinf))
+        for case, desired in square_cases:
+            data_square = [desired]*self.nlanes
+            square  = self.square(self.setall(case))
+            assert square == pytest.approx(data_square, nan_ok=True)
+
+        data_square = [x*x for x in data]
+        square = self.square(vdata)
+        assert square == data_square
+
+    def test_reciprocal(self):
+        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
+        data = self._data()
+        vdata = self.load(self._data())
+
+        recip_cases = ((nan, nan), (pinf, 0.0), (ninf, -0.0), (0.0, pinf), (-0.0, ninf))
+        for case, desired in recip_cases:
+            data_recip = [desired]*self.nlanes
+            recip = self.recip(self.setall(case))
+            assert recip == pytest.approx(data_recip, nan_ok=True)
+
+        data_recip = self.load([1/x for x in data]) # load to truncate precision
+        recip = self.recip(vdata)
+        assert recip == data_recip
 
 class _SIMD_ALL(_Test_Utility):
     """
