@@ -199,6 +199,16 @@ from numpy.core.numerictypes import (
     find_common_type as find_common_type,
 )
 
+from numpy.core.shape_base import (
+    atleast_1d as atleast_1d,
+    atleast_2d as atleast_2d,
+    atleast_3d as atleast_3d,
+    block as block,
+    hstack as hstack,
+    stack as stack,
+    vstack as vstack,
+)
+
 # Add an object to `__all__` if their stubs are defined in an external file;
 # their stubs will not be recognized otherwise.
 # NOTE: This is redundant for objects defined within this file.
@@ -262,15 +272,11 @@ asarray_chkfinite: Any
 asfarray: Any
 asmatrix: Any
 asscalar: Any
-atleast_1d: Any
-atleast_2d: Any
-atleast_3d: Any
 average: Any
 bartlett: Any
 bincount: Any
 bitwise_not: Any
 blackman: Any
-block: Any
 bmat: Any
 bool8: Any
 broadcast: Any
@@ -360,7 +366,6 @@ histogram2d: Any
 histogram_bin_edges: Any
 histogramdd: Any
 hsplit: Any
-hstack: Any
 i0: Any
 iinfo: Any
 imag: Any
@@ -494,7 +499,6 @@ singlecomplex: Any
 sort_complex: Any
 source: Any
 split: Any
-stack: Any
 string_: Any
 take_along_axis: Any
 tile: Any
@@ -527,7 +531,6 @@ vdot: Any
 vectorize: Any
 void0: Any
 vsplit: Any
-vstack: Any
 where: Any
 who: Any
 
