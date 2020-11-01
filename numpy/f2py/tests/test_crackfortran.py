@@ -93,18 +93,22 @@ class TestArrayDimCalculation(util.F2PyTest):
     # array declarations should be interpreted by f2py as integers not floats.
     # Prior to fix, test fails as generated fortran wrapper does not compile.
     code = """
-        function test(n, a)
+        function test(n, a, b)
           integer, intent(in) :: n
           real(8), intent(out) :: a(0:2*n/2)
+          real(8), intent(out) :: b(0:n/2*2)
           integer :: test
           a(:) = n
+          b(:) = 3
           test = 1
         endfunction
     """
 
     def test_issue_8062(self):
-        for n in (5, 11):
-            _, a = self.module.test(n)
+        for n in (5, 12):  # Test both odd and even n.
+            _, a, b = self.module.test(n)
             assert(a.shape == (n+1,))
             assert_array_equal(a, n)
+            assert(b.shape == (2*(n//2)+1,))
+            assert_array_equal(b, 3)
         
