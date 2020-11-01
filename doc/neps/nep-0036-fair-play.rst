@@ -74,15 +74,15 @@ Fair play rules
 1. Do not reuse the NumPy name for projects not developed by the NumPy
    community.
 
-   At time of writing, there are only a handful of `numpy`-named
-   packages developed by the community, including `numpy`,
-   `numpy-financial`, and `unumpy`.  We ask that external packages not
-   include the phrase `numpy`, i.e., avoid names such as
-   `mycompany_numpy`.
+   At time of writing, there are only a handful of ``numpy``-named
+   packages developed by the community, including ``numpy``,
+   ``numpy-financial``, and ``unumpy``.  We ask that external packages not
+   include the phrase ``numpy``, i.e., avoid names such as
+   ``mycompany_numpy``.
 
    To be clear, this rule only applies to modules (package names); it
    is perfectly acceptable to have a *submodule* of your own library
-   named `mylibrary.numpy`.
+   named ``mylibrary.numpy``.
 
    NumPy is a trademark owned by NumFOCUS.
 
@@ -93,7 +93,7 @@ Fair play rules
    which parts of NumPy have been modified.
 
    If you have to break this rule (and we implore you not
-   to!), then make it clear in the `__version__` tag that
+   to!), then make it clear in the ``__version__`` tag that
    you have modified NumPy, e.g.::
 
      >>> print(np.__version__)
