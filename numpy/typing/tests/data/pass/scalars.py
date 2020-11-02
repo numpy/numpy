@@ -148,7 +148,6 @@ complex(td)
 complex(U)
 complex(AR)
 
-
 # Misc
 c16.dtype
 c16.real
@@ -163,3 +162,38 @@ c16.strides
 c16.squeeze()
 c16.byteswap()
 c16.transpose()
+
+# Aliases
+np.str0()
+
+np.byte()
+np.short()
+np.intc()
+np.intp()
+np.int0()
+np.int_()
+np.longlong()
+
+np.ubyte()
+np.ushort()
+np.uintc()
+np.uintp()
+np.uint0()
+np.uint()
+np.ulonglong()
+
+np.half()
+np.single()
+np.double()
+np.float_()
+np.longdouble()
+np.longfloat()
+
+np.csingle()
+np.singlecomplex()
+np.cdouble()
+np.complex_()
+np.cfloat()
+np.clongdouble()
+np.clongfloat()
+np.longcomplex()

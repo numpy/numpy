@@ -66,8 +66,8 @@ reveal_type(np.partition(c, 0, axis=None))  # E: numpy.ndarray
 reveal_type(np.partition(A, 0))  # E: numpy.ndarray
 reveal_type(np.partition(B, 0))  # E: numpy.ndarray
 
-reveal_type(np.argpartition(a, 0))  # E: numpy.integer[Any]
-reveal_type(np.argpartition(b, 0))  # E: numpy.integer[Any]
+reveal_type(np.argpartition(a, 0))  # E: numpy.signedinteger[numpy.typing._
+reveal_type(np.argpartition(b, 0))  # E: numpy.signedinteger[numpy.typing._
 reveal_type(np.argpartition(c, 0))  # E: numpy.ndarray
 reveal_type(np.argpartition(A, 0))  # E: numpy.ndarray
 reveal_type(np.argpartition(B, 0))  # E: numpy.ndarray
@@ -78,18 +78,18 @@ reveal_type(np.sort(B, 0))  # E: numpy.ndarray
 reveal_type(np.argsort(A, 0))  # E: numpy.ndarray
 reveal_type(np.argsort(B, 0))  # E: numpy.ndarray
 
-reveal_type(np.argmax(A))  # E: numpy.integer[Any]
-reveal_type(np.argmax(B))  # E: numpy.integer[Any]
-reveal_type(np.argmax(A, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
-reveal_type(np.argmax(B, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
+reveal_type(np.argmax(A))  # E: numpy.signedinteger[numpy.typing._
+reveal_type(np.argmax(B))  # E: numpy.signedinteger[numpy.typing._
+reveal_type(np.argmax(A, axis=0))  # E: Union[numpy.ndarray, numpy.signedinteger[numpy.typing._
+reveal_type(np.argmax(B, axis=0))  # E: Union[numpy.ndarray, numpy.signedinteger[numpy.typing._
 
-reveal_type(np.argmin(A))  # E: numpy.integer[Any]
-reveal_type(np.argmin(B))  # E: numpy.integer[Any]
-reveal_type(np.argmin(A, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
-reveal_type(np.argmin(B, axis=0))  # E: Union[numpy.integer[Any], numpy.ndarray]
+reveal_type(np.argmin(A))  # E: numpy.signedinteger[numpy.typing._
+reveal_type(np.argmin(B))  # E: numpy.signedinteger[numpy.typing._
+reveal_type(np.argmin(A, axis=0))  # E: Union[numpy.ndarray, numpy.signedinteger[numpy.typing._
+reveal_type(np.argmin(B, axis=0))  # E: Union[numpy.ndarray, numpy.signedinteger[numpy.typing._
 
-reveal_type(np.searchsorted(A[0], 0))  # E: numpy.integer[Any]
-reveal_type(np.searchsorted(B[0], 0))  # E: numpy.integer[Any]
+reveal_type(np.searchsorted(A[0], 0))  # E: numpy.signedinteger[numpy.typing._
+reveal_type(np.searchsorted(B[0], 0))  # E: numpy.signedinteger[numpy.typing._
 reveal_type(np.searchsorted(A[0], [0]))  # E: numpy.ndarray
 reveal_type(np.searchsorted(B[0], [0]))  # E: numpy.ndarray
 
