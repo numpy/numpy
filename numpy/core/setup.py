@@ -13,6 +13,8 @@ from sysconfig import get_config_var
 from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
+is_openvms = platform.platform().startswith('OpenVMS')
+
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
@@ -682,12 +684,37 @@ def configuration(parent_package='',top_path=None):
     # Intel and Clang also don't seem happy with /GL
     is_msvc = (platform.platform().startswith('Windows') and
                platform.python_compiler().startswith('MS'))
+
+    LIBRARIES = ['npymath']
+    if is_openvms:
+        LIBRARIES.append('sys$library:pthread$rtl.exe')
+
+    EXTRA_COMPILE_ARGS = []
+    EXTRA_LINK_ARGS = []
+    DEFINE_MACROS=[]
+    if is_openvms:
+        EXTRA_LINK_ARGS = ['/DEBUG']
+        EXTRA_COMPILE_ARGS = [
+            '/DEBUG/NOOPTIMIZE/LIST',
+            # '/POINTER_SIZE=32',
+            '/WARN=DISABLE=('   \
+                # 'PTRMISMATCH,'  \
+                'NONSTANDCAST,' \
+                'MIXFUNCVOID,'  \
+                'TOOFEWACTUALS,'\
+                'PARENLITERAL,' \
+                'CMPPTRFUNVOID,' \
+                'VOIDRETURN1)',
+            '/STAND=C99',
+            '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+            ]
+
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
             build_info={
                 'include_dirs' : [],  # empty list required for creating npy_math_internal.h
-                'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+                'extra_compiler_args' : (['/GL-'] if is_msvc else EXTRA_COMPILE_ARGS),
             })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
@@ -703,7 +730,9 @@ def configuration(parent_package='',top_path=None):
                              join('src', 'common', 'mem_overlap.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
                              join('src', 'common', 'npy_extint128.h')],
-                    libraries=['npymath'])
+                    libraries=LIBRARIES,
+                    extra_compile_args=EXTRA_COMPILE_ARGS,
+                    extra_link_args=EXTRA_LINK_ARGS,)
 
     #######################################################################
     #             _multiarray_umath module - common part                  #
@@ -939,7 +968,10 @@ def configuration(parent_package='',top_path=None):
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         libraries=['npymath'],
+                         libraries=LIBRARIES,
+                         extra_compile_args=EXTRA_COMPILE_ARGS,
+                         extra_link_args=EXTRA_LINK_ARGS,
+                         define_macros=DEFINE_MACROS,
                          extra_info=extra_info)
 
     #######################################################################
@@ -950,7 +982,9 @@ def configuration(parent_package='',top_path=None):
         join('src', 'umath', '_umath_tests.c.src'),
         join('src', 'umath', '_umath_tests.dispatch.c'),
         join('src', 'common', 'npy_cpu_features.c.src'),
-    ])
+        ],
+        extra_compile_args=EXTRA_COMPILE_ARGS,
+        extra_link_args=EXTRA_LINK_ARGS,)
 
     #######################################################################
     #                   custom rational dtype module                      #

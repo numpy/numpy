@@ -6,6 +6,10 @@
 #include <intrin.h>
 #endif
 
+#ifdef __VMS
+extern RAND_INT_TYPE llabs(RAND_INT_TYPE);
+#endif
+
 #include <assert.h>
 
 /* Inline generators for internal use */

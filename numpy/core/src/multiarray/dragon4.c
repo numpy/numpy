@@ -3089,7 +3089,7 @@ Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
     if (scratch == NULL) {\
         return NULL;\
     }\
-    if (Dragon4_PrintFloat_##format(scratch, val, opt) < 0) {\
+    if (((npy_int32)Dragon4_PrintFloat_##format(scratch, val, opt)) < 0) {\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\
@@ -3126,7 +3126,7 @@ Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
     if (scratch == NULL) {\
         return NULL;\
     }\
-    if (Dragon4_PrintFloat_##format(scratch, val, opt) < 0) {\
+    if (((npy_int32)Dragon4_PrintFloat_##format(scratch, val, opt)) < 0) {\
         free_dragon4_bigint_scratch(scratch);\
         return NULL;\
     }\

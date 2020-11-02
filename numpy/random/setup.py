@@ -8,6 +8,7 @@ from numpy.distutils.system_info import platform_bits
 is_msvc = (platform.platform().startswith('Windows') and
            platform.python_compiler().startswith('MS'))
 
+is_openvms = (platform.platform().startswith('OpenVMS'))
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
@@ -50,6 +51,17 @@ def configuration(parent_package='', top_path=None):
         # Some bit generators require c99
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
+    if is_openvms:
+        EXTRA_LINK_ARGS = ['/DEBUG']
+        EXTRA_COMPILE_ARGS = [
+            '/DEBUG/NOOPTIMIZE/LIST',
+            # '/POINTER_SIZE=32',
+            '/WARN=DISABLE=('   \
+                'VOIDRETURN1)'  \
+            '/STAND=C99',
+            '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
+            ]
+
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     PCG64_DEFS = []
@@ -65,12 +77,22 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
+    EXTRA_COMPILE_ARGS = []
+    if is_msvc:
+        EXTRA_COMPILE_ARGS = ['/GL-']
+    elif is_openvms:
+        EXTRA_COMPILE_ARGS = [
+            # '/POINTER_SIZE=32',
+            '/WARN=DISABLE=(',\
+            # 'CXXPRAGMANA,'\
+            'VOIDRETURN1'\
+            ')']
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',
         build_info={
             'include_dirs' : [],  # empty list required for creating npyrandom.h
-            'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            'extra_compiler_args' : EXTRA_COMPILE_ARGS,
         })
 
     for gen in ['mt19937']:
@@ -104,10 +126,10 @@ def configuration(parent_package='', top_path=None):
         # gen.pyx
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
+                             include_dirs=['.', 'src'],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             include_dirs=['.', 'src'],
                              depends=depends + [f'{gen}.pyx', f'{gen}.pxd',],
                              define_macros=defs,
                              )
@@ -116,9 +138,9 @@ def configuration(parent_package='', top_path=None):
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
+                             include_dirs=['.', 'src'],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
-                             include_dirs=['.', 'src'],
                              extra_link_args=EXTRA_LINK_ARGS,
                              depends=depends + [f'{gen}.pyx'],
                              define_macros=defs,

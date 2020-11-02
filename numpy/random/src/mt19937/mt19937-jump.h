@@ -1,4 +1,10 @@
+#ifndef __MT19937__JUMP__DEFINED
+#define __MT19937__JUMP__DEFINED
+
+#ifndef __VMS
 #pragma once
+#endif
+
 #include "mt19937.h"
 #include <stdlib.h>
 
@@ -149,3 +155,4 @@ static const unsigned long poly_coef[624] = {
     2756464095UL, 141700479UL,  2965974322UL, 2211530172UL, 992085992UL,
     1943691492UL, 2705131817UL, 2519208889UL, 1938768395UL, 3949294294UL,
     354046666UL,  2158272751UL, 602858583UL,  0UL};
+#endif

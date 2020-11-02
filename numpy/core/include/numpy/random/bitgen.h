@@ -1,7 +1,9 @@
 #ifndef _RANDOM_BITGEN_H
 #define _RANDOM_BITGEN_H
 
+#ifndef __VMS
 #pragma once
+#endif
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>

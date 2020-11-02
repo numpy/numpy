@@ -32,6 +32,9 @@ static const char* umath_linalg_version_string = "0.1.5";
  */
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
+#ifdef __VMS
+#define __FUNCTION__ __func__
+#endif
 #define TRACE\
     do {                                        \
         fprintf (stderr,                        \
@@ -564,10 +567,17 @@ dump_ufunc_object(PyUFuncObject* ufunc)
 static NPY_INLINE void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
+#ifndef __VMS
     TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
               "\n\t\trow_strides: %td column_strides: %td"\
               "\n", name, params->rows, params->columns,
               params->row_strides, params->column_strides);
+#else
+    TRACE_TXT("\n\t%s rows: %Ld columns: %Ld"\
+              "\n\t\trow_strides: %Ld column_strides: %Ld"\
+              "\n", name, params->rows, params->columns,
+              params->row_strides, params->column_strides);
+#endif
 }
 
 static NPY_INLINE void
@@ -603,8 +613,11 @@ dump_@TYPE@_matrix(const char* name,
                    const @typ@* ptr)
 {
     size_t i, j;
-
+#ifndef __VMS
     TRACE_TXT("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
+#else
+    TRACE_TXT("\n%s %p (%d, %d)\n", name, ptr, rows, columns);
+#endif
     for (i = 0; i < rows; i++)
     {
         TRACE_TXT("| ");
@@ -730,9 +743,10 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 /* disable -Wmaybe-uninitialized as there is some code that generate false
    positives with this warning
 */
+#ifndef __VMS
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
+#endif
 /*
  *****************************************************************************
  **                             HELPER FUNCS                                **
@@ -3234,9 +3248,9 @@ static void
 }
 
 /**end repeat**/
-
+#ifndef __VMS
 #pragma GCC diagnostic pop
-
+#endif
 /* -------------------------------------------------------------------------- */
               /* gufunc registration  */
 

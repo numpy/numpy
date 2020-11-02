@@ -682,7 +682,7 @@ void npy_set_floatstatus_invalid(void)
 }
 
 #elif defined(_MSC_VER) || (defined(__osf__) && defined(__alpha)) || \
-      defined (__UCLIBC__) || (defined(__arc__) && defined(__GLIBC__))
+      defined (__UCLIBC__) || (defined(__arc__) && defined(__GLIBC__) || defined(__VMS))
 
 /*
  * By using a volatile floating point value,
@@ -751,6 +751,28 @@ int npy_clear_floatstatus_barrier(char *param)
     _clearfp();
 
     return fpstatus;
+}
+
+/*  OpenVMS  -------------------------------------------------------*/
+#elif defined(__VMS)
+
+/*
+*   TODO: create functions for OpenVMS
+*/
+
+#include <float.h>
+
+int npy_get_floatstatus_barrier(char *param)
+{
+    if (param != NULL) {
+        volatile char NPY_UNUSED(c) = *(char*)param;
+    }
+    return  0;
+}
+
+int npy_clear_floatstatus_barrier(char *param)
+{
+    return 0;
 }
 
 /*  OSF/Alpha (Tru64)  ---------------------------------------------*/

@@ -501,7 +501,7 @@ _buffer_info_new(PyObject *obj)
             info->strides = NULL;
         }
         else {
-            info->shape = (npy_intp *)((char *)info + sizeof(_buffer_info_t));
+            info->shape = (Py_ssize_t *)(npy_intp *)((char *)info + sizeof(_buffer_info_t));
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
             info->strides = info->shape + PyArray_NDIM(arr);
             for (k = 0; k < PyArray_NDIM(arr); ++k) {
@@ -723,8 +723,13 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
      * buffer is requested since `PyArray_FailUnlessWriteable` is called above
      * (and clears the `NPY_ARRAY_WARN_ON_WRITE` flag).
      */
+#ifdef __VMS
+    view->readonly$ = (!PyArray_ISWRITEABLE(self) ||
+                      PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
+#else
     view->readonly = (!PyArray_ISWRITEABLE(self) ||
                       PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
+#endif
     view->internal = NULL;
     view->len = PyArray_NBYTES(self);
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
@@ -826,7 +831,11 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
 
     Py_DECREF(descr);
 
+#ifdef __VMS
+    view->readonly$ = 1;
+#else
     view->readonly = 1;
+#endif
     view->suboffsets = NULL;
     view->obj = self;
     Py_INCREF(self);

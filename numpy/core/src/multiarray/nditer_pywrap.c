@@ -1503,7 +1503,7 @@ npyiter_next(NewNpyArrayIterObject *self)
     self->started = 1;
 
     return npyiter_value_get(self);
-};
+}
 
 static PyObject *npyiter_shape_get(NewNpyArrayIterObject *self)
 {
@@ -2230,7 +2230,7 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         return npyiter_seq_item(self, i);
     }
     else if (PySlice_Check(op)) {
-        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength;
+        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength = 0;
         if (PySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
                                  &istart, &iend, &istep, &islicelength) < 0) {
             return NULL;

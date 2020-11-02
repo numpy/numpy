@@ -946,9 +946,13 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
+                start = stop = step = n_steps = 0;
                 if (PySlice_GetIndicesEx(indices[i].object,
                                          PyArray_DIMS(self)[orig_dim],
-                                         &start, &stop, &step, &n_steps) < 0) {
+                                         (Py_ssize_t *)&start,
+                                         (Py_ssize_t *)&stop,
+                                         (Py_ssize_t *)&step,
+                                         (Py_ssize_t *)&n_steps) < 0) {
                     return -1;
                 }
                 if (n_steps <= 0) {

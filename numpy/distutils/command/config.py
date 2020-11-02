@@ -375,6 +375,10 @@ class config(old_config):
         """
         self._check_compiler()
         body = []
+        if sys.platform == 'OpenVMS':
+            body.append('#ifdef __VMS')
+            body.append('#pragma message disable INTRINSICDECL')
+            body.append('#endif')
         if decl:
             for f, v in decl.items():
                 if v:

@@ -69,6 +69,7 @@ extern fortran_int FNAME(xerbla)(char *srname, fortran_int *info);
 
 static PyObject *LapackError;
 
+#undef TRY
 #define TRY(E) if (!(E)) return NULL
 
 static int
