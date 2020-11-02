@@ -71,7 +71,7 @@ from numpy.typing._platform_aliases import (
     longfloat as longfloat,
     longdouble as longdouble,
     csingle as csingle,
-    singlecomplex as cinglecomplex,
+    singlecomplex as singlecomplex,
     cdouble as cdouble,
     complex_ as complex_,
     cfloat as cfloat,
@@ -514,7 +514,6 @@ setxor1d: Any
 shares_memory: Any
 show_config: Any
 sinc: Any
-singlecomplex: Any
 sort_complex: Any
 source: Any
 split: Any
