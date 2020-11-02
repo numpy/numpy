@@ -28,8 +28,8 @@ include_dirs = $target/lib:$LIB
 runtime_library_dirs = $target/lib
 EOF
 
-echo getting PyPy 3.6-v7.3.1
-wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.1-linux64.tar.bz2 -O pypy.tar.bz2
+echo getting PyPy 3.6-v7.3.2
+wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.2-linux64.tar.bz2 -O pypy.tar.bz2
 mkdir -p pypy3
 (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
 pypy3/bin/pypy3 -mensurepip
