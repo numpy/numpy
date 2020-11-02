@@ -58,8 +58,8 @@ Operating System :: MacOS
 
 MAJOR               = 1
 MINOR               = 19
-MICRO               = 4
-ISRELEASED          = True
+MICRO               = 5
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above

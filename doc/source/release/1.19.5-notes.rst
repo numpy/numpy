@@ -1,0 +1,6 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.19.5 Release Notes
+==========================
+
