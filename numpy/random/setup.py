@@ -52,9 +52,9 @@ def configuration(parent_package='', top_path=None):
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
     if is_openvms:
-        EXTRA_LINK_ARGS = ['/DEBUG']
+        # EXTRA_LINK_ARGS = ['/DEBUG']
         EXTRA_COMPILE_ARGS = [
-            '/DEBUG/NOOPTIMIZE/LIST',
+            # '/DEBUG/NOOPTIMIZE/LIST',
             # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
                 'VOIDRETURN1)'  \
@@ -126,10 +126,10 @@ def configuration(parent_package='', top_path=None):
         # gen.pyx
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
-                             include_dirs=['.', 'src'],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
+                             include_dirs=['.', 'src'],
                              depends=depends + [f'{gen}.pyx', f'{gen}.pxd',],
                              define_macros=defs,
                              )
@@ -138,9 +138,9 @@ def configuration(parent_package='', top_path=None):
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
-                             include_dirs=['.', 'src'],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
+                             include_dirs=['.', 'src'],
                              extra_link_args=EXTRA_LINK_ARGS,
                              depends=depends + [f'{gen}.pyx'],
                              define_macros=defs,

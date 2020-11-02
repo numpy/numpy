@@ -429,14 +429,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
          * shifted with respect to it. This adds a shift of 10+1 bits the final
          * right shift when comparing it to the one in the normal branch.
          */
-        #ifdef __VMS
-        #pragma message save
-        #pragma message disable QUESTCOMPARE
-        assert(d_exp - 998 >= 0);
-        #pragma message restore
-        #else
-        assert(d_exp - 998 >= 0);
-        #endif
+        assert(((npy_int64)(d_exp - 998)) >= 0);
         d_sig <<= (d_exp - 998);
         /* Handle rounding by adding 1 to the bit beyond half precision */
 #if NPY_HALF_ROUND_TIES_TO_EVEN

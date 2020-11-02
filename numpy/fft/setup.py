@@ -12,9 +12,9 @@ def configuration(parent_package='',top_path=None):
     EXTRA_COMPILE_ARGS = []
     EXTRA_LINK_ARGS = []
     if sys.platform == 'OpenVMS':
-        EXTRA_LINK_ARGS = ['/DEBUG']
+        # EXTRA_LINK_ARGS = ['/DEBUG']
         EXTRA_COMPILE_ARGS = [
-            '/DEBUG/NOOPTIMIZE/LIST',
+            # '/DEBUG/NOOPTIMIZE/LIST',
             # '/POINTER_SIZE=32',
             # '/WARN=DISABLE=BADALIAS',
             ]

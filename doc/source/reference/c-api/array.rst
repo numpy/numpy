@@ -1450,7 +1450,7 @@ of the constant names is deprecated in 1.7.
     :c:func:`PyArray_FromAny` and a copy had to be made of some other
     array (and the user asked for this flag to be set in such a
     situation). The base attribute then points to the "misbehaved"
-    array (which is set readonly). :c:func`PyArray_ResolveWritebackIfCopy`
+    array (which is set read_only). :c:func`PyArray_ResolveWritebackIfCopy`
     will copy its contents back to the "misbehaved"
     array (casting if necessary) and will reset the "misbehaved" array
     to :c:data:`NPY_ARRAY_WRITEABLE`. If the "misbehaved" array was not

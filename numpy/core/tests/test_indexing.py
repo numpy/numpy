@@ -637,7 +637,7 @@ class TestSubclasses:
         assert_array_equal(s_bool, a[a > 0])
         assert_array_equal(s_bool.base, a[a > 0])
 
-    def test_fancy_on_readonly(self):
+    def test_fancy_on_read_only(self):
         # Test that fancy indexing on read-only SubClass does not make a
         # read-only copy (gh-14132)
         class SubClass(np.ndarray):

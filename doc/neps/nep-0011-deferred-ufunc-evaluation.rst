@@ -244,7 +244,7 @@ The ``NPY_UPDATEIFCOPY`` documentation states:
     made because a user required certain flags in PyArray_FromAny and a
     copy had to be made of some other array (and the user asked for this
     flag to be set in such a situation). The base attribute then points
-    to the “misbehaved” array (which is set readonly). When the array
+    to the “misbehaved” array (which is set read_only). When the array
     with this flag set is deallocated, it will copy its contents back to
     the “misbehaved” array (casting if necessary) and will reset the
     “misbehaved” array to NPY_WRITEABLE. If the “misbehaved” array was
