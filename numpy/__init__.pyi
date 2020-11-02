@@ -25,6 +25,28 @@ from numpy.typing import (
     _16Bit,
     _8Bit,
 )
+from numpy.typing import (
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _Float16Codes,
+    _Float32Codes,
+    _Float64Codes,
+    _Complex64Codes,
+    _Complex128Codes,
+    _BoolCodes,
+    _Datetime64Codes,
+    _Timedelta64Codes,
+    _StrCodes,
+    _BytesCodes,
+    _VoidCodes,
+    _ObjectCodes,
+)
 from numpy.typing._callable import (
     _BoolOp,
     _BoolBitOp,
@@ -570,263 +592,112 @@ class dtype(Generic[_DTypeScalar]):
     @overload
     def __new__(
         cls,
-        dtype: Union[
-            Type[bool],
-            Literal[
-                "?",
-                "=?",
-                "<?",
-                ">?",
-                "bool",
-                "bool_",
-            ],
-        ],
+        dtype: Union[Type[bool], _BoolCodes],
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[bool_]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "uint8",
-            "u1",
-            "=u1",
-            "<u1",
-            ">u1",
-        ],
+        dtype: _UInt8Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[uint8]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "uint16",
-            "u2",
-            "=u2",
-            "<u2",
-            ">u2",
-        ],
+        dtype: _UInt16Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[uint16]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "uint32",
-            "u4",
-            "=u4",
-            "<u4",
-            ">u4",
-        ],
+        dtype: _UInt32Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[uint32]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "uint64",
-            "u8",
-            "=u8",
-            "<u8",
-            ">u8",
-        ],
+        dtype: _UInt64Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[uint64]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "int8",
-            "i1",
-            "=i1",
-            "<i1",
-            ">i1",
-        ],
+        dtype: _Int8Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[int8]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "int16",
-            "i2",
-            "=i2",
-            "<i2",
-            ">i2",
-        ],
+        dtype: _Int16Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[int16]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "int32",
-            "i4",
-            "=i4",
-            "<i4",
-            ">i4",
-        ],
+        dtype: _Int32Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[int32]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "int64",
-            "i8",
-            "=i8",
-            "<i8",
-            ">i8",
-        ],
+        dtype: _Int64Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[int64]: ...
-    # "int"/int resolve to int_, which is system dependent and as of
-    # now untyped. Long-term we'll do something fancier here.
     @overload
     def __new__(
         cls,
-        dtype: Union[Type[int], Literal["int"]],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype: ...
-    @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "float16",
-            "f4",
-            "=f4",
-            "<f4",
-            ">f4",
-            "e",
-            "=e",
-            "<e",
-            ">e",
-            "half",
-        ],
+        dtype: _Float16Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[float16]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "float32",
-            "f4",
-            "=f4",
-            "<f4",
-            ">f4",
-            "f",
-            "=f",
-            "<f",
-            ">f",
-            "single",
-        ],
+        dtype: _Float32Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[float32]: ...
     @overload
     def __new__(
         cls,
-        dtype: Union[
-            None,
-            Type[float],
-            Literal[
-                "float64",
-                "f8",
-                "=f8",
-                "<f8",
-                ">f8",
-                "d",
-                "<d",
-                ">d",
-                "float",
-                "double",
-                "float_",
-            ],
-        ],
+        dtype: Union[None, Type[float], _Float64Codes],
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[float64]: ...
     @overload
     def __new__(
         cls,
-        dtype: Literal[
-            "complex64",
-            "c8",
-            "=c8",
-            "<c8",
-            ">c8",
-            "F",
-            "=F",
-            "<F",
-            ">F",
-        ],
+        dtype: _Complex64Codes,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[complex64]: ...
     @overload
     def __new__(
         cls,
-        dtype: Union[
-            Type[complex],
-            Literal[
-                "complex128",
-                "c16",
-                "=c16",
-                "<c16",
-                ">c16",
-                "D",
-                "=D",
-                "<D",
-                ">D",
-            ],
-        ],
+        dtype: Union[Type[complex], _Complex128Codes],
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[complex128]: ...
     @overload
     def __new__(
         cls,
-        dtype: Union[
-            Type[bytes],
-            Literal[
-                "S",
-                "=S",
-                "<S",
-                ">S",
-                "bytes",
-                "bytes_",
-                "bytes0",
-            ],
-        ],
+        dtype: Union[Type[bytes], _BytesCodes],
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[bytes_]: ...
     @overload
     def __new__(
         cls,
-        dtype: Union[
-            Type[str],
-            Literal[
-                "U",
-                "=U",
-                # <U and >U intentionally not included; they are not
-                # the same dtype and which one dtype("U") translates
-                # to is platform-dependent.
-                "str",
-                "str_",
-                "str0",
-            ],
-        ],
+        dtype: Union[Type[str], _StrCodes],
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[str_]: ...
@@ -846,6 +717,14 @@ class dtype(Generic[_DTypeScalar]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[Any]: ...
+    # Catchall overload
+    @overload
+    def __new__(
+        cls,
+        dtype: Union[_VoidDtypeLike, _VoidCodes],
+        align: bool = ...,
+        copy: bool = ...,
+    ) -> dtype[void]: ...
     # Handle strings that can't be expressed as literals; i.e. s1, s2, ...
     @overload
     def __new__(
@@ -854,20 +733,12 @@ class dtype(Generic[_DTypeScalar]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[Any]: ...
-    # Catchall overload
-    @overload
-    def __new__(
-        cls,
-        dtype: _VoidDTypeLike,
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[void]: ...
-    def __eq__(self, other: DTypeLike) -> bool: ...
-    def __ne__(self, other: DTypeLike) -> bool: ...
-    def __gt__(self, other: DTypeLike) -> bool: ...
-    def __ge__(self, other: DTypeLike) -> bool: ...
-    def __lt__(self, other: DTypeLike) -> bool: ...
-    def __le__(self, other: DTypeLike) -> bool: ...
+    def __eq__(self, other: DtypeLike) -> bool: ...
+    def __ne__(self, other: DtypeLike) -> bool: ...
+    def __gt__(self, other: DtypeLike) -> bool: ...
+    def __ge__(self, other: DtypeLike) -> bool: ...
+    def __lt__(self, other: DtypeLike) -> bool: ...
+    def __le__(self, other: DtypeLike) -> bool: ...
     @property
     def alignment(self) -> int: ...
     @property
