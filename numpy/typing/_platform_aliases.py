@@ -27,28 +27,36 @@ _Float64Codes = Any
 _Complex64Codes = Any
 _Complex128Codes = Any
 
-_NBitInt = Any
-_NBitIntP = Any
-
 byte = Any
 short = Any
 intc = Any
-intp = int0 = Any
+intp = Any
+int0 = intp
 int_ = Any
 longlong = Any
 
 ubyte = Any
 ushort = Any
 uintc = Any
-uintp = uint0 = Any
+uintp = Any
+uint0 = uintp
 uint = Any
 ulonglong = Any
 
 half = Any
 single = Any
-float_ = double = Any
-longdouble = longfloat = Any
+double = Any
+float_ = double
+longdouble = Any
+longfloat = longdouble
 
-csingle = singlecomplex = Any
-cdouble = complex_ = cfloat = Any
-clongfloat = longcomplex = clongdouble = Any
+csingle = Any
+singlecomplex = csingle
+cdouble = Any
+complex_ = cdouble
+cfloat = cdouble
+clongdouble = Any
+longcomplex = clongdouble
+clongfloat = clongdouble
+
+_NBitInt = Any
