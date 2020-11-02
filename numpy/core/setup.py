@@ -628,6 +628,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
+    config.add_include_dirs(join('src', '_simd'))
 
     config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
@@ -1007,6 +1008,28 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_operand_flag_tests',
                     sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
+
+    #######################################################################
+    #                        SIMD module                                  #
+    #######################################################################
+
+    config.add_extension('_simd', sources=[
+        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', '_simd', '_simd.c'),
+        join('src', '_simd', '_simd_inc.h.src'),
+        join('src', '_simd', '_simd_data.inc.src'),
+        join('src', '_simd', '_simd.dispatch.c.src'),
+    ], depends=[
+        join('src', 'common', 'npy_cpu_dispatch.h'),
+        join('src', 'common', 'simd', 'simd.h'),
+        join('src', '_simd', '_simd.h'),
+        join('src', '_simd', '_simd_inc.h.src'),
+        join('src', '_simd', '_simd_data.inc.src'),
+        join('src', '_simd', '_simd_arg.inc'),
+        join('src', '_simd', '_simd_convert.inc'),
+        join('src', '_simd', '_simd_easyintrin.inc'),
+        join('src', '_simd', '_simd_vector.inc'),
+    ])
 
     config.add_subpackage('tests')
     config.add_data_dir('tests/data')

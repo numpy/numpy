@@ -102,7 +102,7 @@ Take this example of ufuncs interoperability with sparse matrices.::
                     [ 4,  1,  4]], dtype=int64)
 
     In [5]: np.multiply(a, bsp) # Returns NotImplemented to user, bad!
-    Out[5]: NotImplemted
+    Out[5]: NotImplemented
 
 Returning :obj:`NotImplemented` to user should not happen. Moreover::
 

@@ -15,7 +15,7 @@ Prerequisites
 You'll need to know a bit of Python. For a refresher, see the `Python
 tutorial <https://docs.python.org/tutorial/>`__.
 
-To work the examples, you'll need `matplotlib` installed
+To work the examples, you'll need ``matplotlib`` installed
 in addition to NumPy.
 
 **Learner profile**

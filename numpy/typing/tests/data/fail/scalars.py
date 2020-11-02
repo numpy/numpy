@@ -47,11 +47,7 @@ np.void("test")  # E: incompatible type
 np.generic(1)  # E: Cannot instantiate abstract class
 np.number(1)  # E: Cannot instantiate abstract class
 np.integer(1)  # E: Cannot instantiate abstract class
-np.signedinteger(1)  # E: Cannot instantiate abstract class
-np.unsignedinteger(1)  # E: Cannot instantiate abstract class
 np.inexact(1)  # E: Cannot instantiate abstract class
-np.floating(1)  # E: Cannot instantiate abstract class
-np.complexfloating(1)  # E: Cannot instantiate abstract class
 np.character("test")  # E: Cannot instantiate abstract class
 np.flexible(b"test")  # E: Cannot instantiate abstract class
 
@@ -68,3 +64,5 @@ np.timedelta64(value=0)  # E: Unexpected keyword argument
 
 np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
 np.str_("hello", encoding='utf-8')  # E: No overload variant
+
+complex(np.bytes_("1"))  # E: No overload variant

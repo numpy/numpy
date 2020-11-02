@@ -30,8 +30,8 @@ present can be determined using other members of the data type
 hierarchy. Thus, for example ``isinstance(val, np.complexfloating)``
 will return :py:data:`True` if *val* is a complex valued type, while
 ``isinstance(val, np.flexible)`` will return true if *val* is one
-of the flexible itemsize array types (:class:`string`,
-:class:`unicode`, :class:`void`).
+of the flexible itemsize array types (:class:`str_`,
+:class:`bytes_`, :class:`void`).
 
 .. figure:: figures/dtype-hierarchy.png
 
@@ -362,7 +362,7 @@ Attributes
 ==========
 
 The array scalar objects have an :obj:`array priority
-<__array_priority__>` of :c:data:`NPY_SCALAR_PRIORITY`
+<class.__array_priority__>` of :c:data:`NPY_SCALAR_PRIORITY`
 (-1,000,000.0). They also do not (yet) have a :attr:`ctypes <ndarray.ctypes>`
 attribute. Otherwise, they share the same attributes as arrays:
 

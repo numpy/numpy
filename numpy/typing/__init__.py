@@ -89,7 +89,89 @@ Although this is valid Numpy code, the type checker will complain about it,
 since its usage is discouraged.
 Please see : https://numpy.org/devdocs/reference/arrays.dtypes.html
 
+NBitBase
+~~~~~~~~
+
+.. autoclass:: numpy.typing.NBitBase
+
 """
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import sys
+    if sys.version_info >= (3, 8):
+        from typing import final
+    else:
+        from typing_extensions import final
+else:
+    def final(f): return f
+
+
+@final  # Dissallow the creation of arbitrary `NBitBase` subclasses
+class NBitBase:
+    """
+    An object representing `numpy.number` precision during static type checking.
+
+    Used exclusively for the purpose static type checking, `NBitBase`
+    represents the base of a hierachieral set of subclasses.
+    Each subsequent subclass is herein used for representing a lower level
+    of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
+
+    Examples
+    --------
+    Below is a typical usage example: `NBitBase` is herein used for annotating a
+    function that takes a float and integer of arbitrary precision as arguments
+    and returns a new float of whichever precision is largest
+    (*e.g.* ``np.float16 + np.int64 -> np.float64``).
+
+    .. code-block:: python
+
+        >>> from typing import TypeVar, TYPE_CHECKING
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> T = TypeVar("T", bound=npt.NBitBase)
+
+        >>> def add(a: "np.floating[T]", b: "np.integer[T]") -> "np.floating[T]":
+        ...     return a + b
+
+        >>> a = np.float16()
+        >>> b = np.int64()
+        >>> out = add(a, b)
+
+        >>> if TYPE_CHECKING:
+        ...     reveal_locals()
+        ...     # note: Revealed local types are:
+        ...     # note:     a: numpy.floating[numpy.typing._16Bit*]
+        ...     # note:     b: numpy.signedinteger[numpy.typing._64Bit*]
+        ...     # note:     out: numpy.floating[numpy.typing._64Bit*]
+
+    """
+
+    def __init_subclass__(cls) -> None:
+        allowed_names = {
+            "NBitBase", "_256Bit", "_128Bit", "_96Bit", "_80Bit",
+            "_64Bit", "_32Bit", "_16Bit", "_8Bit",
+        }
+        if cls.__name__ not in allowed_names:
+            raise TypeError('cannot inherit from final class "NBitBase"')
+        super().__init_subclass__()
+
+
+# Silence errors about subclassing a `@final`-decorated class
+class _256Bit(NBitBase): ...  # type: ignore[misc]
+class _128Bit(_256Bit): ...  # type: ignore[misc]
+class _96Bit(_128Bit): ...  # type: ignore[misc]
+class _80Bit(_96Bit): ...  # type: ignore[misc]
+class _64Bit(_80Bit): ...  # type: ignore[misc]
+class _32Bit(_64Bit): ...  # type: ignore[misc]
+class _16Bit(_32Bit): ...  # type: ignore[misc]
+class _8Bit(_16Bit): ...  # type: ignore[misc]
+
+# Clean up the namespace
+del TYPE_CHECKING, final
+
 from ._scalars import (
     _CharLike,
     _BoolLike,

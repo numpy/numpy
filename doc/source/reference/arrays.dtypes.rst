@@ -264,9 +264,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
-    remain zero-terminated bytes and ``np.string_`` continues to map to
-    ``np.bytes_``.
-    To use actual strings in Python 3 use ``U`` or ``np.unicode_``.
+    remain zero-terminated bytes and `numpy.string_` continues to alias
+    `numpy.bytes_`. To use actual strings in Python 3 use ``U`` or `numpy.str_`.
     For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
     used.
 
@@ -345,7 +344,7 @@ Type strings
 ``[(field_name, field_dtype, field_shape), ...]``
    *obj* should be a list of fields where each field is described by a
    tuple of length 2 or 3. (Equivalent to the ``descr`` item in the
-   :obj:`__array_interface__` attribute.)
+   :obj:`~object.__array_interface__` attribute.)
 
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The
@@ -392,9 +391,9 @@ Type strings
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
     (limited to `ctypes.c_int`) for each field, while the *titles* value is a
-    list of titles for each field (None can be used if no title is
-    desired for that field). The *titles* can be any :class:`string`
-    or :class:`unicode` object and will add another entry to the
+    list of titles for each field (``None`` can be used if no title is
+    desired for that field). The *titles* can be any object, but when a
+    :class:`str` object will add another entry to the
     fields dictionary keyed by the title and referencing the same
     field tuple which will contain the title as an additional tuple
     member.

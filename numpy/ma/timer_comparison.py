@@ -77,8 +77,7 @@ class ModuleTester:
             if not cond:
                 msg = build_err_msg([x, y],
                                     err_msg
-                                    + '\n(shapes %s, %s mismatch)' % (x.shape,
-                                                                      y.shape),
+                                    + f'\n(shapes {x.shape}, {y.shape} mismatch)',
                                     header=header,
                                     names=('x', 'y'))
                 assert cond, msg
@@ -434,4 +433,4 @@ if __name__ == '__main__':
         cur = np.sort(cur)
         print("#%i" % i + 50*'.')
         print(eval("ModuleTester.test_%i.__doc__" % i))
-        print("core_current : %.3f - %.3f" % (cur[0], cur[1]))
+        print(f'core_current : {cur[0]:.3f} - {cur[1]:.3f}')

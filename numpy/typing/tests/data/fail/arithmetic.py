@@ -10,10 +10,7 @@ dt + dt  # E: Unsupported operand types
 td - dt  # E: Unsupported operand types
 td % 1  # E: Unsupported operand types
 td / dt  # E: No overload
+td % dt  # E: Unsupported operand types
 
-# NOTE: The 1 tests below currently don't work due to the broad
-# (i.e. untyped) signature of `.__mod__()`.
-# TODO: Revisit this once annotations are added to the
-# `_ArrayOrScalarCommon` magic methods.
-
-# td % dt  # E: Unsupported operand types
+-b_  # E: Unsupported operand type
++b_  # E: Unsupported operand type

@@ -122,6 +122,9 @@ def main(argv):
                         help="Specify a list of dispatched CPU optimizations"),
     parser.add_argument("--disable-optimization", action="store_true",
                         help="Disable CPU optimized code(dispatch,simd,fast...)"),
+    parser.add_argument("--simd-test", default=None,
+                        help="Specify a list of CPU optimizations to be "
+                             "tested against NumPy SIMD interface"),
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -439,6 +442,8 @@ def build_project(args):
         cmd += ["--cpu-dispatch", args.cpu_dispatch]
     if args.disable_optimization:
         cmd += ["--disable-optimization"]
+    if args.simd_test is not None:
+        cmd += ["--simd-test", args.simd_test]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',

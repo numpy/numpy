@@ -86,3 +86,25 @@ class TestPublicPrivate():
         assert 'public' not in mod['vars']['a']['attrspec']
         assert 'private' not in mod['vars']['seta']['attrspec']
         assert 'public' in mod['vars']['seta']['attrspec']
+
+
+class TestArrayDimCalculation(util.F2PyTest):
+    # Issue gh-8062.  Calculations that occur in the dimensions of fortran
+    # array declarations should be interpreted by f2py as integers not floats.
+    # Prior to fix, test fails as generated fortran wrapper does not compile.
+    code = """
+        function test(n, a)
+          integer, intent(in) :: n
+          real(8), intent(out) :: a(0:2*n/2)
+          integer :: test
+          a(:) = n
+          test = 1
+        endfunction
+    """
+
+    def test_issue_8062(self):
+        for n in (5, 11):
+            _, a = self.module.test(n)
+            assert(a.shape == (n+1,))
+            assert_array_equal(a, n)
+        

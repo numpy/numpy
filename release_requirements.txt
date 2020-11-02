@@ -1,0 +1,10 @@
+# These packages are needed for a release in addition to those needed
+# for building, testing, and the creation of documentation.
+
+# download-wheels.py
+urllib3
+beatifulsoup4
+
+# changelog.py
+pygithub
+gitpython

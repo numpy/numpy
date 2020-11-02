@@ -323,7 +323,8 @@ NPY_NO_EXPORT int
         store_pivot(kth, kth, pivots, npiv);
         return 0;
     }
-    else if (@inexact@ && kth == num - 1) {
+    // Parenthesis around @inexact@ tells clang dead code as intentional
+    else if ((@inexact@) && kth == num - 1) {
         /* useful to check if NaN present via partition(d, (x, -1)) */
         npy_intp k;
         npy_intp maxidx = low;

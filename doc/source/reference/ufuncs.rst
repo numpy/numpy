@@ -1,5 +1,7 @@
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
+.. currentmodule:: numpy
+
 .. _ufuncs:
 
 ************************************
@@ -7,8 +9,6 @@ Universal functions (:class:`ufunc`)
 ************************************
 
 .. note: XXX: section might need to be made more reference-guideish...
-
-.. currentmodule:: numpy
 
 .. index: ufunc, universal function, arithmetic, operation
 

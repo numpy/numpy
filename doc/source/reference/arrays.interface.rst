@@ -49,9 +49,9 @@ Python side
 ===========
 
 This approach to the interface consists of the object having an
-:data:`__array_interface__` attribute.
+:data:`~object.__array_interface__` attribute.
 
-.. data:: __array_interface__
+.. data:: object.__array_interface__
 
    A dictionary of items (3 required and 5 optional).  The optional
    keys in the dictionary have implied defaults if they are not
@@ -61,12 +61,12 @@ This approach to the interface consists of the object having an
 
    **shape** (required)
        Tuple whose elements are the array size in each dimension. Each
-       entry is an integer (a Python int or long).  Note that these
-       integers could be larger than the platform "int" or "long"
-       could hold (a Python int is a C long). It is up to the code
+       entry is an integer (a Python :py:class:`int`).  Note that these
+       integers could be larger than the platform ``int`` or ``long``
+       could hold (a Python :py:class:`int` is a C ``long``). It is up to the code
        using this attribute to handle this appropriately; either by
        raising an error when overflow is possible, or by using
-       :c:data:`Py_LONG_LONG` as the C type for the shapes.
+       ``long long`` as the C type for the shapes.
 
    **typestr** (required)
        A string providing the basic type of the homogeneous array The
@@ -132,7 +132,7 @@ This approach to the interface consists of the object having an
        means the data area is read-only).
 
        This attribute can also be an object exposing the
-       :c:func:`buffer interface <PyObject_AsCharBuffer>` which
+       :ref:`buffer interface <bufferobjects>` which
        will be used to share the data. If this key is not present (or
        returns None), then memory sharing will be done
        through the buffer interface of the object itself.  In this
@@ -144,21 +144,21 @@ This approach to the interface consists of the object having an
        **Default**: None
 
    **strides** (optional)
-       Either None to indicate a C-style contiguous array or
+       Either ``None`` to indicate a C-style contiguous array or
        a Tuple of strides which provides the number of bytes needed
        to jump to the next array element in the corresponding
        dimension. Each entry must be an integer (a Python
-       :const:`int` or :const:`long`). As with shape, the values may
-       be larger than can be represented by a C "int" or "long"; the
+       :py:class:`int`). As with shape, the values may
+       be larger than can be represented by a C ``int`` or ``long``; the
        calling code should handle this appropriately, either by
-       raising an error, or by using :c:type:`Py_LONG_LONG` in C. The
-       default is None which implies a C-style contiguous
-       memory buffer.  In this model, the last dimension of the array
+       raising an error, or by using ``long long`` in C. The
+       default is ``None`` which implies a C-style contiguous
+       memory buffer. In this model, the last dimension of the array
        varies the fastest.  For example, the default strides tuple
        for an object whose array entries are 8 bytes long and whose
-       shape is (10,20,30) would be (4800, 240, 8)
+       shape is ``(10, 20, 30)`` would be ``(4800, 240, 8)``
 
-       **Default**: None (C-style contiguous)
+       **Default**: ``None`` (C-style contiguous)
 
    **mask** (optional)
        None or an object exposing the array interface.  All
@@ -172,7 +172,7 @@ This approach to the interface consists of the object having an
 
    **offset** (optional)
        An integer offset into the array data region. This can only be
-       used when data is None or returns a :class:`buffer`
+       used when data is ``None`` or returns a :class:`buffer`
        object.
 
        **Default**: 0.
@@ -189,7 +189,7 @@ C-struct access
 This approach to the array interface allows for faster access to an
 array using only one attribute lookup and a well-defined C-structure.
 
-.. c:var:: __array_struct__
+.. data:: object.__array_struct__
 
    A :c:type:`PyCapsule` whose ``pointer`` member contains a
    pointer to a filled :c:type:`PyArrayInterface` structure.  Memory
@@ -248,7 +248,7 @@ Type description examples
 =========================
 
 For clarity it is useful to provide some examples of the type
-description and corresponding :data:`__array_interface__` 'descr'
+description and corresponding :data:`~object.__array_interface__` 'descr'
 entries.  Thanks to Scott Gilbert for these examples:
 
 In every case, the 'descr' key is optional, but of course provides

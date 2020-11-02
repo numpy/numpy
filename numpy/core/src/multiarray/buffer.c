@@ -456,7 +456,7 @@ static PyObject *_buffer_info_cache = NULL;
 
 /* Fill in the info structure */
 static _buffer_info_t*
-_buffer_info_new(PyObject *obj)
+_buffer_info_new(PyObject *obj, npy_bool f_contiguous)
 {
     /*
      * Note that the buffer info is cached as PyLongObjects making them appear
@@ -504,9 +504,43 @@ _buffer_info_new(PyObject *obj)
             info->shape = (Py_ssize_t *)(npy_intp *)((char *)info + sizeof(_buffer_info_t));
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
             info->strides = info->shape + PyArray_NDIM(arr);
-            for (k = 0; k < PyArray_NDIM(arr); ++k) {
-                info->shape[k] = PyArray_DIMS(arr)[k];
-                info->strides[k] = PyArray_STRIDES(arr)[k];
+
+#if NPY_RELAXED_STRIDES_CHECKING
+            /*
+             * When NPY_RELAXED_STRIDES_CHECKING is used, some buffer users
+             * may expect a contiguous buffer to have well formatted strides
+             * also when a dimension is 1, but we do not guarantee this
+             * internally. Thus, recalculate strides for contiguous arrays.
+             * (This is unnecessary, but has no effect in the case where
+             * NPY_RELAXED_STRIDES CHECKING is disabled.)
+             */
+            if (PyArray_IS_C_CONTIGUOUS(arr) && !(
+                    f_contiguous && PyArray_IS_F_CONTIGUOUS(arr))) {
+                Py_ssize_t sd = PyArray_ITEMSIZE(arr);
+                for (k = info->ndim-1; k >= 0; --k) {
+                    info->shape[k] = PyArray_DIMS(arr)[k];
+                    info->strides[k] = sd;
+                    sd *= info->shape[k];
+                }
+            }
+            else if (PyArray_IS_F_CONTIGUOUS(arr)) {
+                Py_ssize_t sd = PyArray_ITEMSIZE(arr);
+                for (k = 0; k < info->ndim; ++k) {
+                    info->shape[k] = PyArray_DIMS(arr)[k];
+                    info->strides[k] = sd;
+                    sd *= info->shape[k];
+                }
+            }
+            else {
+#else  /* NPY_RELAXED_STRIDES_CHECKING */
+            /* We can always use the arrays strides directly */
+            {
+#endif
+
+                for (k = 0; k < PyArray_NDIM(arr); ++k) {
+                    info->shape[k] = PyArray_DIMS(arr)[k];
+                    info->strides[k] = PyArray_STRIDES(arr)[k];
+                }
             }
         }
         Py_INCREF(descr);
@@ -565,7 +599,7 @@ _buffer_info_free(_buffer_info_t *info)
 
 /* Get buffer info from the global dictionary */
 static _buffer_info_t*
-_buffer_get_info(PyObject *obj)
+_buffer_get_info(PyObject *obj, npy_bool f_contiguous)
 {
     PyObject *key = NULL, *item_list = NULL, *item = NULL;
     _buffer_info_t *info = NULL, *old_info = NULL;
@@ -578,7 +612,7 @@ _buffer_get_info(PyObject *obj)
     }
 
     /* Compute information */
-    info = _buffer_info_new(obj);
+    info = _buffer_info_new(obj, f_contiguous);
     if (info == NULL) {
         return NULL;
     }
@@ -591,14 +625,34 @@ _buffer_get_info(PyObject *obj)
     item_list = PyDict_GetItem(_buffer_info_cache, key);
 
     if (item_list != NULL) {
+        Py_ssize_t item_list_length = PyList_GET_SIZE(item_list);
         Py_INCREF(item_list);
-        if (PyList_GET_SIZE(item_list) > 0) {
-            item = PyList_GetItem(item_list, PyList_GET_SIZE(item_list) - 1);
+        if (item_list_length > 0) {
+            item = PyList_GetItem(item_list, item_list_length - 1);
             old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
-
             if (_buffer_info_cmp(info, old_info) == 0) {
                 _buffer_info_free(info);
                 info = old_info;
+            }
+            else {
+                if (item_list_length > 1 && info->ndim > 1) {
+                    /*
+                     * Some arrays are C- and F-contiguous and if they have more
+                     * than one dimension, the buffer-info may differ between
+                     * the two due to RELAXED_STRIDES_CHECKING.
+                     * If we export both buffers, the first stored one may be
+                     * the one for the other contiguity, so check both.
+                     * This is generally very unlikely in all other cases, since
+                     * in all other cases the first one will match unless array
+                     * metadata was modified in-place (which is discouraged).
+                     */
+                    item = PyList_GetItem(item_list, item_list_length - 2);
+                    old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
+                    if (_buffer_info_cmp(info, old_info) == 0) {
+                        _buffer_info_free(info);
+                        info = old_info;
+                    }
+                }
             }
         }
     }
@@ -706,7 +760,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
 
     /* Fill in information */
-    info = _buffer_get_info(obj);
+    info = _buffer_get_info(obj, (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS);
     if (info == NULL) {
         goto fail;
     }
@@ -747,35 +801,6 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
     if ((flags & PyBUF_STRIDES) == PyBUF_STRIDES) {
         view->strides = info->strides;
-
-#ifdef NPY_RELAXED_STRIDES_CHECKING
-        /*
-         * If NPY_RELAXED_STRIDES_CHECKING is on, the array may be
-         * contiguous, but it won't look that way to Python when it
-         * tries to determine contiguity by looking at the strides
-         * (since one of the elements may be -1).  In that case, just
-         * regenerate strides from shape.
-         */
-        if (PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
-                !((flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS)) {
-            Py_ssize_t sd = view->itemsize;
-            int i;
-
-            for (i = view->ndim-1; i >= 0; --i) {
-                view->strides[i] = sd;
-                sd *= view->shape[i];
-            }
-        }
-        else if (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)) {
-            Py_ssize_t sd = view->itemsize;
-            int i;
-
-            for (i = 0; i < view->ndim; ++i) {
-                view->strides[i] = sd;
-                sd *= view->shape[i];
-            }
-        }
-#endif
     }
     else {
         view->strides = NULL;
@@ -805,7 +830,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
     }
 
     /* Fill in information */
-    info = _buffer_get_info(self);
+    info = _buffer_get_info(self, 0);
     if (info == NULL) {
         goto fail;
     }

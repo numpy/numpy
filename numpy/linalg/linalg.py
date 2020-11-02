@@ -901,7 +901,7 @@ def qr(a, mode='reduced'):
             warnings.warn(msg, DeprecationWarning, stacklevel=3)
             mode = 'economic'
         else:
-            raise ValueError("Unrecognized mode '%s'" % mode)
+            raise ValueError(f"Unrecognized mode '{mode}'")
 
     a, wrap = _makearray(a)
     _assert_2d(a)

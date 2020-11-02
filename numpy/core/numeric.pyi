@@ -1,14 +1,45 @@
-from typing import Any, Optional, Union, Sequence, Tuple
+import sys
+from typing import (
+    Any,
+    Optional,
+    Union,
+    Sequence,
+    Tuple,
+    Callable,
+    List,
+    overload,
+    TypeVar,
+    Iterable,
+)
 
-from numpy import ndarray, dtype, bool_, _OrderKACF, _OrderCF
+from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF
 from numpy.typing import ArrayLike, DtypeLike, _ShapeLike
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
+_T = TypeVar("_T")
+_ArrayType = TypeVar("_ArrayType", bound=ndarray)
+
+_CorrelateMode = Literal["valid", "same", "full"]
+
+@overload
+def zeros_like(
+    a: _ArrayType,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    subok: Literal[True] = ...,
+    shape: None = ...,
+) -> _ArrayType: ...
+@overload
 def zeros_like(
     a: ArrayLike,
     dtype: DtypeLike = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: Optional[Union[int, Sequence[int]]] = ...,
+    shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
 def ones(
     shape: _ShapeLike,
@@ -17,6 +48,15 @@ def ones(
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
+@overload
+def ones_like(
+    a: _ArrayType,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    subok: Literal[True] = ...,
+    shape: None = ...,
+) -> _ArrayType: ...
+@overload
 def ones_like(
     a: ArrayLike,
     dtype: DtypeLike = ...,
@@ -24,6 +64,15 @@ def ones_like(
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
+@overload
+def empty_like(
+    a: _ArrayType,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    subok: Literal[True] = ...,
+    shape: None = ...,
+) -> _ArrayType: ...
+@overload
 def empty_like(
     a: ArrayLike,
     dtype: DtypeLike = ...,
@@ -39,6 +88,16 @@ def full(
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
+@overload
+def full_like(
+    a: _ArrayType,
+    fill_value: Any,
+    dtype: None = ...,
+    order: _OrderKACF = ...,
+    subok: Literal[True] = ...,
+    shape: None = ...,
+) -> _ArrayType: ...
+@overload
 def full_like(
     a: ArrayLike,
     fill_value: Any,
@@ -47,35 +106,38 @@ def full_like(
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
+@overload
 def count_nonzero(
-    a: ArrayLike, axis: Optional[Union[int, Tuple[int], Tuple[int, int]]] = ...
-) -> Union[int, ndarray]: ...
-def isfortran(a: ndarray) -> bool: ...
+    a: ArrayLike, axis: None = ..., *, keepdims: Literal[False] = ...
+) -> int: ...
+@overload
+def count_nonzero(
+    a: ArrayLike, axis: _ShapeLike = ..., *, keepdims: bool = ...
+) -> Union[signedinteger[Any], ndarray]: ...  # TODO: np.intp
+def isfortran(a: Union[ndarray, generic]) -> bool: ...
 def argwhere(a: ArrayLike) -> ndarray: ...
 def flatnonzero(a: ArrayLike) -> ndarray: ...
-
-_CorrelateMode = Literal["valid", "same", "full"]
-
 def correlate(a: ArrayLike, v: ArrayLike, mode: _CorrelateMode = ...) -> ndarray: ...
 def convolve(a: ArrayLike, v: ArrayLike, mode: _CorrelateMode = ...) -> ndarray: ...
-def outer(a: ArrayLike, b: ArrayLike, out: ndarray = ...) -> ndarray: ...
+@overload
+def outer(a: ArrayLike, b: ArrayLike, out: None = ...) -> ndarray: ...
+@overload
+def outer(a: ArrayLike, b: ArrayLike, out: _ArrayType = ...) -> _ArrayType: ...
 def tensordot(
     a: ArrayLike,
     b: ArrayLike,
-    axes: Union[
-        int, Tuple[int, int], Tuple[Tuple[int, int], ...], Tuple[List[int, int], ...]
-    ] = ...,
+    axes: Union[int, Tuple[_ShapeLike, _ShapeLike]] = ...,
 ) -> ndarray: ...
 def roll(
     a: ArrayLike,
-    shift: Union[int, Tuple[int, ...]],
-    axis: Optional[Union[int, Tuple[int, ...]]] = ...,
+    shift: _ShapeLike,
+    axis: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
-def rollaxis(a: ArrayLike, axis: int, start: int = ...) -> ndarray: ...
+def rollaxis(a: ndarray, axis: int, start: int = ...) -> ndarray: ...
 def moveaxis(
     a: ndarray,
-    source: Union[int, Sequence[int]],
-    destination: Union[int, Sequence[int]],
+    source: _ShapeLike,
+    destination: _ShapeLike,
 ) -> ndarray: ...
 def cross(
     a: ArrayLike,
@@ -85,16 +147,26 @@ def cross(
     axisc: int = ...,
     axis: Optional[int] = ...,
 ) -> ndarray: ...
+@overload
 def indices(
-    dimensions: Sequence[int], dtype: dtype = ..., sparse: bool = ...
-) -> Union[ndarray, Tuple[ndarray, ...]]: ...
+    dimensions: Sequence[int],
+    dtype: DtypeLike = ...,
+    sparse: Literal[False] = ...,
+) -> ndarray: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DtypeLike = ...,
+    sparse: Literal[True] = ...,
+) -> Tuple[ndarray, ...]: ...
 def fromfunction(
-    function: Callable,
-    shape: Tuple[int, int],
+    function: Callable[..., _T],
+    shape: Sequence[int],
     *,
+    dtype: DtypeLike = ...,
     like: ArrayLike = ...,
-    **kwargs,
-) -> Any: ...
+    **kwargs: Any,
+) -> _T: ...
 def isscalar(element: Any) -> bool: ...
 def binary_repr(num: int, width: Optional[int] = ...) -> str: ...
 def base_repr(number: int, base: int = ..., padding: int = ...) -> str: ...

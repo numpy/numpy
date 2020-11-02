@@ -41,11 +41,15 @@ For an idea of how to get this kind of behavior in NumPy without
 changing the Python code, consider the C++ technique of
 expression templates. These can be used to quite arbitrarily
 rearrange expressions using
-vectors or other data structures, example,::
+vectors or other data structures, example:
+
+.. code-block:: cpp
 
     A = B + C + D;
 
-can be transformed into something equivalent to::
+can be transformed into something equivalent to:
+
+.. code-block:: cpp
 
     for(i = 0; i < A.size; ++i) {
         A[i] = B[i] + C[i] + D[i];

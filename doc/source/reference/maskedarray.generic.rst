@@ -177,8 +177,8 @@ attribute. We must keep in mind that a ``True`` entry in the mask indicates an
 *invalid* data.
 
 Another possibility is to use the :func:`getmask` and :func:`getmaskarray`
-functions. :func:`getmask(x)` outputs the mask of ``x`` if ``x`` is a masked
-array, and the special value :data:`nomask` otherwise. :func:`getmaskarray(x)`
+functions. ``getmask(x)`` outputs the mask of ``x`` if ``x`` is a masked
+array, and the special value :data:`nomask` otherwise. ``getmaskarray(x)``
 outputs the mask of ``x`` if ``x`` is a masked array. If ``x`` has no invalid
 entry or is not a masked array, the function outputs  a boolean array of
 ``False`` with as many elements as ``x``.
@@ -296,11 +296,11 @@ new valid values to them::
 
 .. note::
    Unmasking an entry by direct assignment will silently fail if the masked
-   array has a *hard* mask, as shown by the :attr:`hardmask` attribute. This
-   feature was introduced to prevent overwriting the mask. To force the
-   unmasking of an entry where the array has a hard mask, the mask must first
-   to be softened using the :meth:`soften_mask` method before the allocation.
-   It can be re-hardened with :meth:`harden_mask`::
+   array has a *hard* mask, as shown by the :attr:`~MaskedArray.hardmask`
+   attribute. This feature was introduced to prevent overwriting the mask.
+   To force the unmasking of an entry where the array has a hard mask,
+   the mask must first to be softened using the :meth:`soften_mask` method
+   before the allocation. It can be re-hardened with :meth:`harden_mask`::
 
       >>> x = ma.array([1, 2, 3], mask=[0, 0, 1], hard_mask=True)
       >>> x
@@ -406,8 +406,8 @@ Operations on masked arrays
 
 Arithmetic and comparison operations are supported by masked arrays.
 As much as possible, invalid entries of a masked array are not processed,
-meaning that the corresponding :attr:`data` entries *should* be the same
-before and after the operation.
+meaning that the corresponding :attr:`~MaskedArray.data` entries
+*should* be the same before and after the operation.
 
 .. warning::
    We need to stress that this behavior may not be systematic, that masked

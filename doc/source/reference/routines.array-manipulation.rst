@@ -74,6 +74,7 @@ Joining arrays
    hstack
    dstack
    column_stack
+   row_stack
 
 Splitting arrays
 ================

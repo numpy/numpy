@@ -604,14 +604,14 @@ From other objects
 .. c:function:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_struct__` attribute and follows the array interface
+    :obj:`~object.__array_struct__` attribute and follows the array interface
     protocol. If the object does not contain this attribute then a
     borrowed reference to :c:data:`Py_NotImplemented` is returned.
 
 .. c:function:: PyObject* PyArray_FromInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
-    :obj:`__array_interface__` attribute following the array interface
+    :obj:`~object.__array_interface__` attribute following the array interface
     protocol. If the object does not contain this attribute then a
     borrowed reference to :c:data:`Py_NotImplemented` is returned.
 
@@ -1335,7 +1335,7 @@ Special functions for NPY_OBJECT
     locations in the structure with object data-types. No checking is
     performed but *arr* must be of data-type :c:type:`NPY_OBJECT` and be
     single-segment and uninitialized (no previous objects in
-    position). Use :c:func:`PyArray_DECREF` (*arr*) if you need to
+    position). Use :c:func:`PyArray_XDECREF` (*arr*) if you need to
     decrement all the items in the object array prior to calling this
     function.
 
@@ -1354,7 +1354,7 @@ Special functions for NPY_OBJECT
     strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
-    `Py_DECREF`` in order copy any changes back to ``base`` and
+    `Py_DECREF` in order copy any changes back to ``base`` and
     reset the READONLY flag.
 
     Returns 0 for success, -1 for failure.
@@ -2353,7 +2353,9 @@ it is possible to do this.
 Defining an :c:type:`NpyAuxData` is similar to defining a class in C++,
 but the object semantics have to be tracked manually since the API is in C.
 Here's an example for a function which doubles up an element using
-an element copier function as a primitive.::
+an element copier function as a primitive.
+
+.. code-block:: c
 
     typedef struct {
         NpyAuxData base;
@@ -2810,11 +2812,21 @@ Data-type descriptors
     Create a new data-type object with the byteorder set according to
     *newendian*. All referenced data-type objects (in subdescr and
     fields members of the data-type object) are also changed
-    (recursively). If a byteorder of :c:data:`NPY_IGNORE` is encountered it
+    (recursively).
+
+    The value of *newendian* is one of these macros:
+
+    .. c:macro:: NPY_IGNORE
+                 NPY_SWAP
+                 NPY_NATIVE
+                 NPY_LITTLE
+                 NPY_BIG
+
+    If a byteorder of :c:data:`NPY_IGNORE` is encountered it
     is left alone. If newendian is :c:data:`NPY_SWAP`, then all byte-orders
     are swapped. Other valid newendian values are :c:data:`NPY_NATIVE`,
-    :c:data:`NPY_LITTLE`, and :c:data:`NPY_BIG` which all cause the returned
-    data-typed descriptor (and all it's
+    :c:data:`NPY_LITTLE`, and :c:data:`NPY_BIG` which all cause
+    the returned data-typed descriptor (and all it's
     referenced data-type descriptors) to have the corresponding byte-
     order.
 
@@ -2948,9 +2960,9 @@ to.
     already a buffer object pointing to another object). If you need
     to hold on to the memory be sure to INCREF the base member. The
     chunk of memory is pointed to by *buf* ->ptr member and has length
-    *buf* ->len. The flags member of *buf* is :c:data:`NPY_BEHAVED_RO` with
-    the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable buffer
-    interface.
+    *buf* ->len. The flags member of *buf* is :c:data:`NPY_ARRAY_ALIGNED`
+    with the :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has
+    a writeable buffer interface.
 
 .. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)
 
@@ -3124,7 +3136,7 @@ the C-API is needed then some additional steps must be taken.
           be defined in another compilation unit.
         * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
           also changes the name of the variable holding the C-API, which
-          defaults to :c:data:`PyArray_API`, to whatever the macro is
+          defaults to ``PyArray_API``, to whatever the macro is
           #defined to.
 
 Checking the API Version
@@ -3139,21 +3151,31 @@ calling the function). That's why several functions are provided to check for
 numpy versions. The macros :c:data:`NPY_VERSION`  and
 :c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
 extension, whereas the versions returned by the functions
-PyArray_GetNDArrayCVersion and PyArray_GetNDArrayCFeatureVersion corresponds to
-the runtime numpy's version.
+:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
+corresponds to the runtime numpy's version.
 
 The rules for ABI and API compatibilities can be summarized as follows:
 
-    * Whenever :c:data:`NPY_VERSION` != PyArray_GetNDArrayCVersion, the
+    * Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
       extension has to be recompiled (ABI incompatibility).
-    * :c:data:`NPY_VERSION` == PyArray_GetNDArrayCVersion and
-      :c:data:`NPY_FEATURE_VERSION` <= PyArray_GetNDArrayCFeatureVersion means
+    * :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
+      :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
       backward compatible changes.
 
 ABI incompatibility is automatically detected in every numpy's version. API
 incompatibility detection was added in numpy 1.4.0. If you want to supported
 many different numpy versions with one extension binary, you have to build your
-extension with the lowest NPY_FEATURE_VERSION as possible.
+extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+
+.. c:macro:: NPY_VERSION
+
+    The current version of the ndarray object (check to see if this
+    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
+    being used).
+
+.. c:macro:: NPY_FEATURE_VERSION
+
+    The current version of the C-API.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 
@@ -3437,12 +3459,6 @@ Other constants
 
     The maximum number of array arguments that can be used in functions.
 
-.. c:macro:: NPY_VERSION
-
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the numpy/arrayobject.h header is
-    being used).
-
 .. c:macro:: NPY_FALSE
 
     Defined as 0 for use with Bool.
@@ -3620,6 +3636,22 @@ Enumerated Types
     .. c:var:: NPY_WRAP
 
         Wraps an index to the valid range if it is out of bounds.
+
+.. c:type:: NPY_SEARCHSIDE
+
+    A variable type indicating whether the index returned should be that of
+    the first suitable location (if :c:data:`NPY_SEARCHLEFT`) or of the last
+    (if :c:data:`NPY_SEARCHRIGHT`).
+
+    .. c:var:: NPY_SEARCHLEFT
+
+    .. c:var:: NPY_SEARCHRIGHT
+
+.. c:type:: NPY_SELECTKIND
+
+    A variable type indicating the selection algorithm being used.
+
+    .. c:var:: NPY_INTROSELECT
 
 .. c:type:: NPY_CASTING
 

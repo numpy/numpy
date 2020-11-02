@@ -732,40 +732,42 @@ class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
 
 
 class TestDeprecateSubarrayDTypeDuringArrayCoercion(_DeprecationTestCase):
-    message = "using a dtype with a subarray field is deprecated"
-
-    @pytest.mark.parametrize(["obj", "dtype"],
-            [([((0, 1), (1, 2)), ((2,),)], '(2,2)f4'),
-             (["1", "2"], "(2)i,")])
-    def test_deprecated_sequence(self, obj, dtype):
-        dtype = np.dtype(dtype)
-        self.assert_deprecated(lambda: np.array(obj, dtype=dtype))
-        with pytest.warns(DeprecationWarning):
-            res = np.array(obj, dtype=dtype)
-
-        # Using `arr.astype(subarray_dtype)` is also deprecated, because
-        # it uses broadcasting instead of casting each element.
-        self.assert_deprecated(lambda: res.astype(dtype))
-        expected = np.empty(len(obj), dtype=dtype)
-        for i in range(len(expected)):
-            expected[i] = obj[i]
-
-        assert_array_equal(res, expected)
+    warning_cls = FutureWarning
+    message = "(creating|casting) an array (with|to) a subarray dtype"
 
     def test_deprecated_array(self):
         # Arrays are more complex, since they "broadcast" on success:
         arr = np.array([1, 2])
+
+        self.assert_deprecated(lambda: arr.astype("(2)i,"))
+        with pytest.warns(FutureWarning):
+            res = arr.astype("(2)i,")
+
+        assert_array_equal(res, [[1, 2], [1, 2]])
+
         self.assert_deprecated(lambda: np.array(arr, dtype="(2)i,"))
-        with pytest.warns(DeprecationWarning):
+        with pytest.warns(FutureWarning):
             res = np.array(arr, dtype="(2)i,")
 
         assert_array_equal(res, [[1, 2], [1, 2]])
 
-    def test_not_deprecated(self):
-        # These error paths are not deprecated, the tests should be retained
-        # when the deprecation is finalized.
+        with pytest.warns(FutureWarning):
+            res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
+
+        assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 2], [1, 2]]])
+
+    def test_deprecated_and_error(self):
+        # These error paths do not give a warning, but will succeed in the
+        # future.
         arr = np.arange(5 * 2).reshape(5, 2)
-        with pytest.raises(ValueError):
-            arr.astype("(2,2)f")
-        with pytest.raises(ValueError):
-            np.array(arr, dtype="(2,2)f")
+        def check():
+            with pytest.raises(ValueError):
+                arr.astype("(2,2)f")
+
+        self.assert_deprecated(check)
+
+        def check():
+            with pytest.raises(ValueError):
+                np.array(arr, dtype="(2,2)f")
+
+        self.assert_deprecated(check)

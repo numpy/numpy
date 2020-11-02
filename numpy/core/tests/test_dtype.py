@@ -314,6 +314,24 @@ class TestRecord:
                        'formats':['i1', 'O'],
                        'offsets':[np.dtype('intp').itemsize, 0]})
 
+    @pytest.mark.parametrize(["obj", "dtype", "expected"],
+        [([], ("(2)f4,"), np.empty((0, 2), dtype="f4")),
+         (3, "(3)f4,", [3, 3, 3]),
+         (np.float64(2), "(2)f4,", [2, 2]),
+         ([((0, 1), (1, 2)), ((2,),)], '(2,2)f4', None),
+         (["1", "2"], "(2)i,", None)])
+    def test_subarray_list(self, obj, dtype, expected):
+        dtype = np.dtype(dtype)
+        res = np.array(obj, dtype=dtype)
+
+        if expected is None:
+            # iterate the 1-d list to fill the array
+            expected = np.empty(len(obj), dtype=dtype)
+            for i in range(len(expected)):
+                expected[i] = obj[i]
+
+        assert_array_equal(res, expected)
+
     def test_comma_datetime(self):
         dt = np.dtype('M8[D],datetime64[Y],i8')
         assert_equal(dt, np.dtype([('f0', 'M8[D]'),

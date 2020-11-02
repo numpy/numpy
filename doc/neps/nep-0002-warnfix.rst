@@ -9,6 +9,8 @@ NEP 2 — A proposal to build numpy without warning with a big set of warning fl
 :Date: 2008-09-04
 :Status: Deferred
 
+.. highlight:: c
+
 Executive summary
 =================
 
@@ -23,7 +25,9 @@ Warning flags
 =============
 
 Each compiler detects a different set of potential errors. The baseline will
-be gcc -Wall -W -Wextra. Ideally, a complete set would be nice::
+be gcc -Wall -W -Wextra. Ideally, a complete set would be nice:
+
+.. code-block:: bash
 
   -W -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -Waggregate-return
   -Wcast-align -Wcast-qual -Wnested-externs -Wshadow -Wbad-function-cast
@@ -67,9 +71,7 @@ When applied to a variable, one would get::
 
   int foo(int * NPY_UNUSED(dummy))
 
-expanded to
-
-::
+expanded to::
 
    int foo(int * __NPY_UNUSED_TAGGEDdummy __COMP_NPY_UNUSED)
 

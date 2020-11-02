@@ -604,7 +604,7 @@ def run_compile():
             if modulename:
                 break
 
-    extra_objects, sources = filter_files('', '[.](o|a|so)', sources)
+    extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
     include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
     library_dirs, sources = filter_files('-L', '', sources, remove_prefix=1)
     libraries, sources = filter_files('-l', '', sources, remove_prefix=1)
