@@ -444,8 +444,9 @@ def setup_package():
     os.chdir(src_path)
     sys.path.insert(0, src_path)
 
-    # Rewrite the version file every time
+    # Rewrite the version file and platform-specific type hints every time
     write_version_py()
+    write_type_hints()
 
     # The f2py scripts that will be installed
     if sys.platform == 'win32':
@@ -512,10 +513,6 @@ def setup_package():
 
     try:
         setup(**metadata)
-        try:
-            write_type_hints()
-        except ImportError:
-            pass
     finally:
         del sys.path[0]
         os.chdir(old_path)
