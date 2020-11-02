@@ -725,7 +725,9 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
-
+    EXPORT_SYMBOLS_MULTIARRAY_TESTS = []
+    if is_openvms:
+        EXPORT_SYMBOLS_MULTIARRAY_TESTS = ['forward_pointer']
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
                              join('src', 'common', 'mem_overlap.c')],
@@ -733,7 +735,8 @@ def configuration(parent_package='',top_path=None):
                              join('src', 'common', 'npy_extint128.h')],
                     libraries=LIBRARIES,
                     extra_compile_args=EXTRA_COMPILE_ARGS,
-                    extra_link_args=EXTRA_LINK_ARGS,)
+                    extra_link_args=EXTRA_LINK_ARGS,
+                    export_symbols=EXPORT_SYMBOLS_MULTIARRAY_TESTS)
 
     #######################################################################
     #             _multiarray_umath module - common part                  #
