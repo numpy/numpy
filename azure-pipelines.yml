@@ -242,12 +242,15 @@ stages:
         python -c "import sys; print(sys.version)"
         python -m pip install --upgrade "setuptools<49.2.0"
         python -m pip install urllib3
-        basedir = $(python numpy/tools/openblas_support.py)
-        cp -r $basedir/lib/* /usr/local/lib
-        cp $basedir/include/* /usr/local/include
+        python -m pip install -r test_requirements.txt
+        basedir=$(python ./tools/openblas_support.py)
+        sudo cp -r $basedir/lib/* /usr/local/lib
+        sudo cp $basedir/include/* /usr/local/include
+        sudo ldconfig /usr/local/lib
       displayName: 'Get OpenBLAS'
     - script: |
         python setup.py build_src --verbose-cfg bdist_wheel 
+        # do the rest in a subdirectory so 'import numpy' works
         pushd dist
         python -mpip install ./numpy*
         python ../tools/openblas_support.py --check_version
