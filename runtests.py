@@ -597,22 +597,6 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
             wfd.write(line)
     return False
 
-def write_type_hints(site_dir, filename='numpy/typing/_platform_aliases.pyi'):
-    """Generate a stub file for system-specific types and/or aliases."""
-    from tools.generate_type_hints import generate_alias
-
-    abspath = os.path.join(site_dir, filename)
-
-    log_filename = os.path.join(ROOT_DIR, 'build.log')
-    with open(log_filename, 'a') as log:
-        msg = f"creating platform-specific aliases: {abspath!r}"
-        print(msg)
-        log.write(msg)
-
-    with open(abspath, 'w', encoding='utf8') as f:
-        generate_alias(f)
-
-
 #
 # GCOV support
 #
