@@ -1977,7 +1977,8 @@ class str_(character, str):
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
-unicode_ = str0 = str_
+unicode_ = str_
+str0 = str_
 
 # TODO(alan): Platform dependent types
 # longcomplex, longdouble, longfloat
