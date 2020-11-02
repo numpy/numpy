@@ -235,8 +235,31 @@ stages:
     pool:
       vmIMage: 'ubuntu-18.04'
     steps:
-    - script: source tools/pypy-test.sh
-      displayName: 'Run PyPy3 Build / Tests'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: pypy3
+    - script: |
+        python -c "import sys; print(sys.version)"
+        python -m pip install --upgrade "setuptools<49.2.0"
+        python -m pip install urllib3
+        python -m pip install -r test_requirements.txt
+        basedir=$(python ./tools/openblas_support.py)
+        sudo cp -r $basedir/lib/* /usr/local/lib
+        sudo cp $basedir/include/* /usr/local/include
+        sudo ldconfig /usr/local/lib
+      displayName: 'Get OpenBLAS'
+    - script: |
+        python setup.py build_src --verbose-cfg bdist_wheel 
+        # do the rest in a subdirectory so 'import numpy' works
+        pushd dist
+        python -mpip install ./numpy*
+        python ../tools/openblas_support.py --check_version
+        popd
+      displayName: 'Build, check OpenBLAS version'
+    - script: |
+        python runtests.py --debug-info --show-build-log -v -- -rsx \
+                --junitxml=junit/test-results.xml --durations 10 
+      displayName: 'Test'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
