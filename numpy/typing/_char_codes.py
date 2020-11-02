@@ -49,11 +49,11 @@ if TYPE_CHECKING or HAVE_LITERAL:
     _HalfCodes = Literal["half", "e", "=e", "<e", ">e"]
     _SingleCodes = Literal["single", "f", "=f", "<f", ">f"]
     _DoubleCodes = Literal["double" "float", "float_", "d", "=d", "<d", ">d"]
-    _LongFloatCodes = Literal["longfloat", "longdouble", "g", "=g", "<g", ">g"]
+    _LongDoubleCodes = Literal["longdouble", "longfloat", "g", "=g", "<g", ">g"]
 
     _CSingleCodes = Literal["csingle", "singlecomplex", "F", "=F", "<F", ">F"]
     _CDoubleCodes = Literal["cdouble" "complex", "complex_", "cfloat", "D", "=D", "<D", ">D"]
-    _CLongFloatCodes = Literal["clongfloat", "longcomplex", "clongdouble", "G", "=G", "<G", ">G"]
+    _CLongDoubleCodes = Literal["clongdouble", "clongfloat", "longcomplex", "G", "=G", "<G", ">G"]
 
     _Datetime64Codes = Literal["datetime64", "M", "=M", "<M", ">M"]
     _Timedelta64Codes = Literal["timedelta64", "m", "=m", "<m", ">m"]
@@ -100,11 +100,11 @@ else:
     _HalfCodes = Any
     _SingleCodes = Any
     _DoubleCodes = Any
-    _LongFloatCodes = Any
+    _LongDoubleCodes = Any
 
     _CSingleCodes = Any
     _CDoubleCodes = Any
-    _CLongFloatCodes = Any
+    _CLongDoubleCodes = Any
 
     _Datetime64Codes = Any
     _Timedelta64Codes = Any
