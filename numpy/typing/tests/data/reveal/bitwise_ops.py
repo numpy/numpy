@@ -81,11 +81,11 @@ reveal_type(u4 | i4)  # E: numpy.signedinteger[Any]
 reveal_type(u4 ^ i4)  # E: numpy.signedinteger[Any]
 reveal_type(u4 & i4)  # E: numpy.signedinteger[Any]
 
-reveal_type(u4 << i)  # E: numpy.signedinteger[numpy.typing._
-reveal_type(u4 >> i)  # E: numpy.signedinteger[numpy.typing._
-reveal_type(u4 | i)  # E: numpy.signedinteger[numpy.typing._
-reveal_type(u4 ^ i)  # E: numpy.signedinteger[numpy.typing._
-reveal_type(u4 & i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(u4 << i)  # E: numpy.signedinteger[Any]
+reveal_type(u4 >> i)  # E: numpy.signedinteger[Any]
+reveal_type(u4 | i)  # E: numpy.signedinteger[Any]
+reveal_type(u4 ^ i)  # E: numpy.signedinteger[Any]
+reveal_type(u4 & i)  # E: numpy.signedinteger[Any]
 
 reveal_type(u8 << b_)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u8 >> b_)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
