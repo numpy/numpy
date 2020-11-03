@@ -1131,11 +1131,12 @@ You can transpose your array with ``arr.transpose()``. ::
          [1, 4],
          [2, 5]])
 
-You can also use ``arr.T``.
-  >>> arr.T
-  array([[0, 3],
-         [1, 4],
-         [2, 5]])
+You can also use ``arr.T``::
+
+    >>> arr.T
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
 
 To learn more about transposing and reshaping arrays, see `transpose` and
 `reshape`.
