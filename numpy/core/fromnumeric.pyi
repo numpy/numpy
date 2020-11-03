@@ -18,7 +18,7 @@ from numpy import (
     _SortSide,
 )
 from numpy.typing import (
-    DtypeLike,
+    DTypeLike,
     ArrayLike,
     _ShapeLike,
     _Shape,
@@ -198,7 +198,7 @@ def trace(
     offset: int = ...,
     axis1: int = ...,
     axis2: int = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
 ) -> Union[number, ndarray]: ...
 def ravel(a: ArrayLike, order: _OrderKACF = ...) -> ndarray: ...
@@ -246,7 +246,7 @@ def clip(
 def sum(
     a: _Number,
     axis: Optional[_ShapeLike] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike = ...,
@@ -256,7 +256,7 @@ def sum(
 def sum(
     a: ArrayLike,
     axis: _ShapeLike = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike = ...,
@@ -293,7 +293,7 @@ def any(
 def cumsum(
     a: ArrayLike,
     axis: Optional[int] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
 ) -> ndarray: ...
 @overload
@@ -383,7 +383,7 @@ def amin(
 def prod(
     a: _Number,
     axis: Optional[_ShapeLike] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: None = ...,
     keepdims: bool = ...,
     initial: _NumberLike = ...,
@@ -393,7 +393,7 @@ def prod(
 def prod(
     a: ArrayLike,
     axis: None = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
     initial: _NumberLike = ...,
@@ -403,7 +403,7 @@ def prod(
 def prod(
     a: ArrayLike,
     axis: Optional[_ShapeLike] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
     initial: _NumberLike = ...,
@@ -412,7 +412,7 @@ def prod(
 def cumprod(
     a: ArrayLike,
     axis: Optional[int] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
 ) -> ndarray: ...
 def ndim(a: ArrayLike) -> int: ...
@@ -433,7 +433,7 @@ def around(
 def mean(
     a: ArrayLike,
     axis: None = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
 ) -> number: ...
@@ -441,7 +441,7 @@ def mean(
 def mean(
     a: ArrayLike,
     axis: Optional[_ShapeLike] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
 ) -> Union[number, ndarray]: ...
@@ -449,7 +449,7 @@ def mean(
 def std(
     a: ArrayLike,
     axis: None = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: None = ...,
     ddof: int = ...,
     keepdims: Literal[False] = ...,
@@ -458,7 +458,7 @@ def std(
 def std(
     a: ArrayLike,
     axis: Optional[_ShapeLike] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     ddof: int = ...,
     keepdims: bool = ...,
@@ -467,7 +467,7 @@ def std(
 def var(
     a: ArrayLike,
     axis: None = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: None = ...,
     ddof: int = ...,
     keepdims: Literal[False] = ...,
@@ -476,7 +476,7 @@ def var(
 def var(
     a: ArrayLike,
     axis: Optional[_ShapeLike] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     ddof: int = ...,
     keepdims: bool = ...,

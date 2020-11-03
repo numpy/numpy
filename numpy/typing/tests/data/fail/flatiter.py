@@ -1,7 +1,7 @@
 from typing import Any
 
 import numpy as np
-from numpy.typing import DtypeLike, _SupportsArray
+from numpy.typing import _SupportsArray
 
 
 class Index:

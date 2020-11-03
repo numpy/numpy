@@ -1,7 +1,7 @@
 from typing import Any, List, Optional
 
 import numpy as np
-from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
+from numpy.typing import ArrayLike, DTypeLike, _SupportsArray
 
 x1: ArrayLike = True
 x2: ArrayLike = 5
@@ -18,7 +18,7 @@ x12: ArrayLike = memoryview(b'foo')
 
 
 class A:
-    def __array__(self, dtype: DtypeLike = None) -> np.ndarray:
+    def __array__(self, dtype: DTypeLike = None) -> np.ndarray:
         return np.array([1, 2, 3])
 
 
