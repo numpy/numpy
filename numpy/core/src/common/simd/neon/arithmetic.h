@@ -118,4 +118,17 @@
     NPY_FINLINE npyv_f64 npyv_nmulsub_f64(npyv_f64 a, npyv_f64 b, npyv_f64 c)
     { return vfmsq_f64(vnegq_f64(c), a, b); }
 #endif // NPY_SIMD_F64
+
+// Horizontal add: Calculates the sum of all vector elements.
+#if NPY_SIMD_F64
+    #define npyv_sum_f32 vaddvq_f32
+    #define npyv_sum_f64 vaddvq_f64
+#else
+    NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
+    {
+        float32x2_t r = vadd_f32(vget_high_f32(a), vget_low_f32(a));
+        return vget_lane_f32(vpadd_f32(r, r), 0);
+    }
+#endif
+
 #endif // _NPY_SIMD_NEON_ARITHMETIC_H
