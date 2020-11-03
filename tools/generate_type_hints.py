@@ -1,12 +1,16 @@
 #!/usr/bin/env python
-"""A script for generating stub files with platform-specific types."""
+"""A script for generating stub files with platform-specific types.
 
+The script utilizes the sizes of `ctypes` scalar types in order
+to infer the size of its `numpy.number`-based counterpart.
+
+"""
 import os
 import sys
 import argparse
 import ctypes as ct
 from collections import defaultdict
-from typing import Union, Dict, IO
+from typing import Union, Dict, IO, NamedTuple, Type
 
 __all__ = ["generate_alias"]
 
@@ -30,32 +34,47 @@ ANNOTATED_CHARCODES = {
 
 ALLOWED_SIZES = {8, 16, 32, 64, 80, 96, 128, 256}
 
-#: A mapping with `number` aliases as keys and the name of their
-#: character-code-containing `Literal` as values.
+class Value(NamedTuple):
+    """A named tuple representing the values of `TO_BE_ANNOTATED`."""
+
+    #: A `ctypes` scalar type that will be used for inferring the size of
+    #: its `numpy.number`-based counterpart
+    ctype: Type[ct._SimpleCData]
+
+    #: The name of the type-alias containing the `~numpy.number`s
+    #: respective character codes
+    code_name: str
+
+    #: The `~numpy.number` without its precision:
+    # ``"int"``, ``"uint"``, ``"float"`` or ``"complex"``
+    prefix: str
+
+
+#: A mapping with `number` aliases as keys and the `Value` 3-tuple as values.
 TO_BE_ANNOTATED = {
-    # `ctypes.c_void_p` is not quite a direct `np.intp` counterpart,
+    # NOTE: `ctypes.c_void_p` is not quite a direct `np.intp` counterpart,
     # but its size is the same
-    "byte": (ct.c_byte, "_ByteCodes", "int"),
-    "short": (ct.c_short, "_ShortCodes", "int"),
-    "intc": (ct.c_int, "_IntCCodes", "int"),
-    "intp": (ct.c_void_p, "_IntPCodes", "int"),
-    "int_": (ct.c_long, "_IntCodes", "int"),
-    "longlong": (ct.c_longlong, "_LongLongCodes", "int"),
+    "byte": Value(ct.c_byte, "_ByteCodes", "int"),
+    "short": Value(ct.c_short, "_ShortCodes", "int"),
+    "intc": Value(ct.c_int, "_IntCCodes", "int"),
+    "intp": Value(ct.c_void_p, "_IntPCodes", "int"),
+    "int_": Value(ct.c_long, "_IntCodes", "int"),
+    "longlong": Value(ct.c_longlong, "_LongLongCodes", "int"),
 
-    "ubyte": (ct.c_ubyte, "_UByteCodes", "uint"),
-    "ushort": (ct.c_ushort, "_UShortCodes", "uint"),
-    "uintc": (ct.c_uint, "_UIntCCodes", "uint"),
-    "uintp": (ct.c_void_p, "_UIntPCodes", "uint"),
-    "uint": (ct.c_ulong, "_UIntCodes", "uint"),
-    "ulonglong": (ct.c_ulonglong, "_ULongLongCodes", "uint"),
+    "ubyte": Value(ct.c_ubyte, "_UByteCodes", "uint"),
+    "ushort": Value(ct.c_ushort, "_UShortCodes", "uint"),
+    "uintc": Value(ct.c_uint, "_UIntCCodes", "uint"),
+    "uintp": Value(ct.c_void_p, "_UIntPCodes", "uint"),
+    "uint": Value(ct.c_ulong, "_UIntCodes", "uint"),
+    "ulonglong": Value(ct.c_ulonglong, "_ULongLongCodes", "uint"),
 
-    "double": (ct.c_double, "_DoubleCodes", "float"),
-    "longdouble": (ct.c_longdouble, "_LongDoubleCodes", "float"),
+    "double": Value(ct.c_double, "_DoubleCodes", "float"),
+    "longdouble": Value(ct.c_longdouble, "_LongDoubleCodes", "float"),
 
-    # `ctypes` lacks `complex`-based types, so instead grab their float-based
-    # counterpart and multiply its size by 2
-    "cdouble": (ct.c_double, "_CDoubleCodes", "complex"),
-    "clongdouble": (ct.c_longdouble, "_CLongDoubleCodes", "complex"),
+    # NOTE: `ctypes` lacks `complex`-based types, so instead grab their
+    # float-based counterpart and multiply its size by 2
+    "cdouble": Value(ct.c_double, "_CDoubleCodes", "complex"),
+    "clongdouble": Value(ct.c_longdouble, "_CLongDoubleCodes", "complex"),
 }
 
 TEMPLATE = r'''"""THIS FILE WAS AUTOMATICALLY GENERATED."""
@@ -177,6 +196,9 @@ _NBitInt = {int_}
 def generate_alias(file: IO[str]) -> None:
     """Generate a stub file with platform-specific types.
 
+    Utilizes the sizes of `ctypes` scalar types in order
+    to infer the size of its `numpy.number`-based counterpart.
+
     Parameters
     ----------
     file : file-like
@@ -187,8 +209,8 @@ def generate_alias(file: IO[str]) -> None:
     type_alias = {}
     char_codes: Dict[str, str] = defaultdict(str)
 
-    for name, (ctype, code_names, prefix) in TO_BE_ANNOTATED.items():
-        # Infert the `np.number` size based in its `ctypes` counterpart
+    for name, (ctype, code_name, prefix) in TO_BE_ANNOTATED.items():
+        # Infer the `np.number` size based in its `ctypes` counterpart
         size = 8 * ct.sizeof(ctype)
         if size not in ALLOWED_SIZES:
             type_alias[name] = "Any"
@@ -201,7 +223,7 @@ def generate_alias(file: IO[str]) -> None:
 
         numbered_name = f'{prefix}{size}'
         if numbered_name in ANNOTATED_CHARCODES:
-            char_codes[numbered_name] += f", {code_names}"
+            char_codes[numbered_name] += f", {code_name}"
 
     string = TEMPLATE.format(**type_alias, **char_codes)
     file.write(string)
