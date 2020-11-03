@@ -68,6 +68,9 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
                 (Py_ssize_t *)n_steps) < 0) {
             goto fail;
         }
+        #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+        *step_size = *(Py_ssize_t *)step_size;
+        #endif
         if (*n_steps <= 0) {
             *n_steps = 0;
             *step_size = 1;

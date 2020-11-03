@@ -955,6 +955,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                                          (Py_ssize_t *)&n_steps) < 0) {
                     return -1;
                 }
+                #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+                step = *(Py_ssize_t *)&step;
+                #endif
                 if (n_steps <= 0) {
                     /* TODO: Always points to start then, could change that */
                     n_steps = 0;

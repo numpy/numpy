@@ -68,6 +68,8 @@ def configuration(parent_package='', top_path=None):
     EXTRA_COMPILE_ARGS = []
     if sys.platform == 'OpenVMS':
         EXTRA_COMPILE_ARGS = [
+            # '/DEBUG/NOOPTIMIZE',
+            # '/LIST',
             # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
                 'NONSTANDCAST,'\
