@@ -168,7 +168,6 @@ def main(argv):
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
-        write_type_hints(site_dir)
     else:
         _temp = __import__(PROJECT_MODULE)
         site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
@@ -539,7 +538,7 @@ def asv_clear_cache(bench_path, h_commits, env_dir="env"):
     for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
         for c in h_commits:
             try: shutil.rmtree(os.path.join(asv_build_cache, c))
-            except OSError: pass 
+            except OSError: pass
 
 def asv_substitute_config(in_config, out_config, **custom_vars):
     """

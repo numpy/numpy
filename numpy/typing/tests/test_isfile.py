@@ -23,6 +23,9 @@ FILES = [
     ROOT / "polynomial" / "__init__.pyi",
     ROOT / "random" / "__init__.pyi",
     ROOT / "testing" / "__init__.pyi",
+
+    # A dynamically generated file
+    ROOT / 'typing' / '_platform_aliases.pyi',
 ]
 
 
