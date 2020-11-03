@@ -129,7 +129,7 @@ _Float16Codes = Union[_Float16CodesBase, _HalfCodes]
 _Float32Codes = Union[_Float32CodesBase, _SingleCodes]
 _Float64Codes = Union[_Float64CodesBase{float64}]
 
-_Complex64Codes = Union[_Complex64CodesBase{complex64}]
+_Complex64Codes = Union[_Complex64CodesBase, _CSingleCodes]
 _Complex128Codes = Union[_Complex128CodesBase{complex128}]
 
 # Note that these variables are private despite the lack of underscore;
@@ -188,11 +188,16 @@ def generate_alias(file: IO[str]) -> None:
     char_codes: Dict[str, str] = defaultdict(str)
 
     for name, (ctype, code_names, prefix) in TO_BE_ANNOTATED.items():
+        # Infert the `np.number` size based in its `ctypes` counterpart
         size = 8 * ct.sizeof(ctype)
         if size not in ALLOWED_SIZES:
             type_alias[name] = "Any"
             continue
         type_alias[name] = f"_{size}Bit"
+
+        # Correct for `complexfloating` consisting of 2 `floating`s
+        if prefix == "complex":
+            size *= 2
 
         numbered_name = f'{prefix}{size}'
         if numbered_name in ANNOTATED_CHARCODES:
