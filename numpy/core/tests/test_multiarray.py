@@ -22,6 +22,7 @@ from decimal import Decimal
 
 import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
+from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
@@ -7142,6 +7143,21 @@ class TestNewBufferProtocol:
         assert_raises(ValueError,
                       _multiarray_tests.get_buffer_info,
                        np.arange(5)[::2], ('SIMPLE',))
+
+    @pytest.mark.parametrize(["obj", "error"], [
+            pytest.param(np.array([1, 2], dtype=rational), ValueError, id="array"),
+            pytest.param(rational(1, 2), TypeError, id="scalar")])
+    def test_export_and_pickle_user_dtype(self, obj, error):
+        # User dtypes should export successfully when FORMAT was not requested.
+        with pytest.raises(error):
+            _multiarray_tests.get_buffer_info(obj, ("STRIDED", "FORMAT"))
+
+        _multiarray_tests.get_buffer_info(obj, ("STRIDED",))
+
+        # This is currently also necessary to implement pickling:
+        pickle_obj = pickle.dumps(obj)
+        res = pickle.loads(pickle_obj)
+        assert_array_equal(res, obj)
 
     def test_padding(self):
         for j in range(8):

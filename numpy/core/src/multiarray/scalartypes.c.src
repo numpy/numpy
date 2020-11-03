@@ -2383,6 +2383,50 @@ static PySequenceMethods voidtype_as_sequence = {
 };
 
 
+/*
+ * This function implements simple buffer export for user defined subclasses
+ * of `np.generic`. All other scalar types override the buffer export.
+ */
+static int
+gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
+        PyErr_Format(PyExc_TypeError,
+                "NumPy scalar %R can only exported as a buffer without format.",
+                self);
+        return -1;
+    }
+    PyArray_Descr *descr = PyArray_DescrFromScalar(self);
+    if (descr == NULL) {
+        return -1;
+    }
+    if (!PyDataType_ISUSERDEF(descr)) {
+        /* This path would also reject the (hopefully) impossible "object" */
+        PyErr_Format(PyExc_TypeError,
+                "user-defined scalar %R registered for built-in dtype %S? "
+                "This should be impossible.",
+                self, descr);
+        return -1;
+    }
+    view->ndim = 0;
+    view->len = descr->elsize;
+    view->itemsize = descr->elsize;
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    Py_INCREF(self);
+    view->obj = self;
+    view->buf = scalar_value(self, descr);
+    Py_DECREF(descr);
+    view->format = NULL;
+    return 0;
+}
+
+
+static PyBufferProcs gentype_arrtype_as_buffer = {
+    .bf_getbuffer = (getbufferproc)gentype_arrtype_getbuffer,
+};
+
 
 /**begin repeat
  * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
@@ -3794,6 +3838,7 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_alloc = gentype_alloc;
     PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
+    PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
     /*
