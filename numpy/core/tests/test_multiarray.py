@@ -844,7 +844,29 @@ class TestCreation:
 
     def test_void(self):
         arr = np.array([], dtype='V')
-        assert_equal(arr.dtype.kind, 'V')
+        assert arr.dtype == 'V8'  # current default
+        # Check that promotion of different length works:
+        arr = np.array([b"1234", b"12345"], dtype="V")
+        assert arr.dtype == 'V5'
+        arr = np.array([b"12345", b"1234"], dtype="V")
+        assert arr.dtype == 'V5'
+        # Check the same for the casting path:
+        arr = np.array([b"1234", b"12345"], dtype="O").astype("V")
+        assert arr.dtype == 'V5'
+
+    @pytest.mark.parametrize("idx",
+            [pytest.param(Ellipsis, id="arr"), pytest.param((), id="scalar")])
+    def test_structured_void_promotion(self, idx):
+        arr = np.array(
+            [np.array(1, dtype="i,i")[idx], np.array(2, dtype='i,i')[idx]],
+            dtype="V")
+        assert_array_equal(arr, np.array([(1, 1), (2, 2)], dtype="i,i"))
+        # The following fails to promote the two dtypes, resulting in an error
+        with pytest.raises(TypeError):
+            np.array(
+                [np.array(1, dtype="i,i")[idx], np.array(2, dtype='i,i,i')[idx]],
+                dtype="V")
+
 
     def test_too_big_error(self):
         # 45341 is the smallest integer greater than sqrt(2**31 - 1).

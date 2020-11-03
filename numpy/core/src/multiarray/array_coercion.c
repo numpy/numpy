@@ -607,7 +607,7 @@ npy_free_coercion_cache(coercion_cache_obj *next) {
  */
 static NPY_INLINE int
 handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
-        enum _dtype_discovery_flags *flags)
+        PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags)
 {
     assert(!(*flags & DESCRIPTOR_WAS_SET));
 
@@ -617,7 +617,11 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
         return 0;
     }
     PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
-    if (new_descr == NULL) {
+    if (NPY_UNLIKELY(new_descr == NULL)) {
+        if (fixed_DType != NULL) {
+            /* If a DType is fixed, promotion must not fail. */
+            return -1;
+        }
         PyErr_Clear();
         *flags |= PROMOTION_FAILED;
         /* Continue with object, since we may need the dimensionality */
@@ -663,7 +667,7 @@ handle_scalar(
     if (descr == NULL) {
         return -1;
     }
-    if (handle_promotion(out_descr, descr, flags) < 0) {
+    if (handle_promotion(out_descr, descr, fixed_DType, flags) < 0) {
         Py_DECREF(descr);
         return -1;
     }
@@ -959,7 +963,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             /* object array with no elements, no need to promote/adjust. */
             return max_dims;
         }
-        if (handle_promotion(out_descr, cast_descr, flags) < 0) {
+        if (handle_promotion(out_descr, cast_descr, fixed_DType, flags) < 0) {
             Py_DECREF(cast_descr);
             return -1;
         }

@@ -258,6 +258,18 @@ string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 static PyArray_Descr *
 void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
+    /* Specifically allow unstructured promotion (new in 1.20) */
+    if (descr1->subarray == NULL && descr1->names == NULL &&
+            descr2->subarray == NULL && descr2->names == NULL) {
+        if (descr1->elsize >= descr2->elsize) {
+            Py_INCREF(descr1);
+            return descr1;
+        }
+        else {
+            Py_INCREF(descr2);
+            return descr2;
+        }
+    }
     /*
      * We currently do not support promotion of void types unless they
      * are equivalent.
