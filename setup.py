@@ -423,7 +423,7 @@ def get_docs_url():
     if not ISRELEASED:
         return "https://numpy.org/devdocs"
     else:
-        # For releaeses, this URL ends up on pypi.
+        # For releases, this URL ends up on pypi.
         # By pinning the version, users looking at old PyPI releases can get
         # to the associated docs easily.
         return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
