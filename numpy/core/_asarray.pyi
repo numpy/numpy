@@ -2,7 +2,7 @@ import sys
 from typing import TypeVar, Union, Iterable, overload
 
 from numpy import ndarray, _OrderKACF
-from numpy.typing import ArrayLike, DtypeLike
+from numpy.typing import ArrayLike, DTypeLike
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -13,7 +13,7 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 
 def asarray(
     a: object,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderKACF = ...,
     *,
     like: ArrayLike = ...
@@ -29,16 +29,16 @@ def asanyarray(
 @overload
 def asanyarray(
     a: object,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderKACF = ...,
     *,
     like: ArrayLike = ...
 ) -> ndarray: ...
 def ascontiguousarray(
-    a: object, dtype: DtypeLike = ..., *, like: ArrayLike = ...
+    a: object, dtype: DTypeLike = ..., *, like: ArrayLike = ...
 ) -> ndarray: ...
 def asfortranarray(
-    a: object, dtype: DtypeLike = ..., *, like: ArrayLike = ...
+    a: object, dtype: DTypeLike = ..., *, like: ArrayLike = ...
 ) -> ndarray: ...
 
 _Requirements = Literal[
@@ -62,7 +62,7 @@ def require(
 @overload
 def require(
     a: object,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     requirements: Union[_E, Iterable[_RequirementsWithE]] = ...,
     *,
     like: ArrayLike = ...
@@ -70,7 +70,7 @@ def require(
 @overload
 def require(
     a: object,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     requirements: Union[None, _Requirements, Iterable[_Requirements]] = ...,
     *,
     like: ArrayLike = ...

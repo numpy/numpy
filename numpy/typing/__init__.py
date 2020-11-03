@@ -14,10 +14,10 @@ Large parts of the NumPy API have PEP-484-style type annotations. In
 addition, the following type aliases are available for users.
 
 - ``typing.ArrayLike``: objects that can be converted to arrays
-- ``typing.DtypeLike``: objects that can be converted to dtypes
+- ``typing.DTypeLike``: objects that can be converted to dtypes
 
 Roughly speaking, ``typing.ArrayLike`` is "objects that can be used as
-inputs to ``np.array``" and ``typing.DtypeLike`` is "objects that can
+inputs to ``np.array``" and ``typing.DTypeLike`` is "objects that can
 be used as inputs to ``np.dtype``".
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
@@ -184,7 +184,7 @@ from ._scalars import (
 )
 from ._array_like import _SupportsArray, ArrayLike
 from ._shape import _Shape, _ShapeLike
-from ._dtype_like import _SupportsDtype, _VoidDtypeLike, DtypeLike
+from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)

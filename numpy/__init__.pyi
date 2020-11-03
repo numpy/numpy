@@ -6,7 +6,7 @@ from abc import abstractmethod
 from numpy.core._internal import _ctypes
 from numpy.typing import (
     ArrayLike,
-    DtypeLike,
+    DTypeLike,
     _Shape,
     _ShapeLike,
     _CharLike,
@@ -15,8 +15,8 @@ from numpy.typing import (
     _FloatLike,
     _ComplexLike,
     _NumberLike,
-    _SupportsDtype,
-    _VoidDtypeLike,
+    _SupportsDType,
+    _VoidDTypeLike,
     NBitBase,
     _64Bit,
     _32Bit,
@@ -827,11 +827,11 @@ class dtype(Generic[_DTypeScalar]):
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[_DTypeScalar]: ...
-    # TODO: handle _SupportsDtype better
+    # TODO: handle _SupportsDType better
     @overload
     def __new__(
         cls,
-        dtype: _SupportsDtype,
+        dtype: _SupportsDType,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[Any]: ...
@@ -847,16 +847,16 @@ class dtype(Generic[_DTypeScalar]):
     @overload
     def __new__(
         cls,
-        dtype: _VoidDtypeLike,
+        dtype: _VoidDTypeLike,
         align: bool = ...,
         copy: bool = ...,
     ) -> dtype[void]: ...
-    def __eq__(self, other: DtypeLike) -> bool: ...
-    def __ne__(self, other: DtypeLike) -> bool: ...
-    def __gt__(self, other: DtypeLike) -> bool: ...
-    def __ge__(self, other: DtypeLike) -> bool: ...
-    def __lt__(self, other: DtypeLike) -> bool: ...
-    def __le__(self, other: DtypeLike) -> bool: ...
+    def __eq__(self, other: DTypeLike) -> bool: ...
+    def __ne__(self, other: DTypeLike) -> bool: ...
+    def __gt__(self, other: DTypeLike) -> bool: ...
+    def __ge__(self, other: DTypeLike) -> bool: ...
+    def __lt__(self, other: DTypeLike) -> bool: ...
+    def __le__(self, other: DTypeLike) -> bool: ...
     @property
     def alignment(self) -> int: ...
     @property
@@ -905,7 +905,7 @@ class dtype(Generic[_DTypeScalar]):
     @property
     def type(self) -> Type[generic]: ...
 
-_Dtype = dtype  # to avoid name conflicts with ndarray.dtype
+_DType = dtype  # to avoid name conflicts with ndarray.dtype
 
 class _flagsobj:
     aligned: bool
@@ -964,7 +964,7 @@ class flatiter(Generic[_ArraySelf]):
     def __getitem__(
         self, key: Union[_ArrayLikeInt, slice, ellipsis],
     ) -> _ArraySelf: ...
-    def __array__(self, __dtype: DtypeLike = ...) -> ndarray: ...
+    def __array__(self, __dtype: DTypeLike = ...) -> ndarray: ...
 
 _OrderKACF = Optional[Literal["K", "A", "C", "F"]]
 _OrderACF = Optional[Literal["A", "C", "F"]]
@@ -993,7 +993,7 @@ class _ArrayOrScalarCommon:
     @property
     def base(self) -> Optional[ndarray]: ...
     @property
-    def dtype(self) -> _Dtype: ...
+    def dtype(self) -> _DType: ...
     @property
     def data(self) -> memoryview: ...
     @property
@@ -1010,7 +1010,7 @@ class _ArrayOrScalarCommon:
     def shape(self) -> _Shape: ...
     @property
     def strides(self) -> _Shape: ...
-    def __array__(self, __dtype: DtypeLike = ...) -> ndarray: ...
+    def __array__(self, __dtype: DTypeLike = ...) -> ndarray: ...
     def __bool__(self) -> bool: ...
     def __bytes__(self) -> bytes: ...
     def __str__(self) -> str: ...
@@ -1025,7 +1025,7 @@ class _ArrayOrScalarCommon:
     def __ge__(self, other): ...
     def astype(
         self: _ArraySelf,
-        dtype: DtypeLike,
+        dtype: DTypeLike,
         order: _OrderKACF = ...,
         casting: _Casting = ...,
         subok: bool = ...,
@@ -1040,7 +1040,7 @@ class _ArrayOrScalarCommon:
     def flat(self: _ArraySelf) -> flatiter[_ArraySelf]: ...
     def flatten(self: _ArraySelf, order: _OrderKACF = ...) -> _ArraySelf: ...
     def getfield(
-        self: _ArraySelf, dtype: DtypeLike, offset: int = ...
+        self: _ArraySelf, dtype: DTypeLike, offset: int = ...
     ) -> _ArraySelf: ...
     @overload
     def item(self, *args: int) -> Any: ...
@@ -1085,10 +1085,10 @@ class _ArrayOrScalarCommon:
     @overload
     def view(self, type: Type[_NdArraySubClass]) -> _NdArraySubClass: ...
     @overload
-    def view(self: _ArraySelf, dtype: DtypeLike = ...) -> _ArraySelf: ...
+    def view(self: _ArraySelf, dtype: DTypeLike = ...) -> _ArraySelf: ...
     @overload
     def view(
-        self, dtype: DtypeLike, type: Type[_NdArraySubClass]
+        self, dtype: DTypeLike, type: Type[_NdArraySubClass]
     ) -> _NdArraySubClass: ...
 
     # TODO: Add proper signatures
@@ -1210,24 +1210,24 @@ class _ArrayOrScalarCommon:
     def conjugate(self: _ArraySelf) -> _ArraySelf: ...
     @overload
     def cumprod(
-        self, axis: Optional[int] = ..., dtype: DtypeLike = ..., out: None = ...,
+        self, axis: Optional[int] = ..., dtype: DTypeLike = ..., out: None = ...,
     ) -> ndarray: ...
     @overload
     def cumprod(
         self,
         axis: Optional[int] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
     @overload
     def cumsum(
-        self, axis: Optional[int] = ..., dtype: DtypeLike = ..., out: None = ...,
+        self, axis: Optional[int] = ..., dtype: DTypeLike = ..., out: None = ...,
     ) -> ndarray: ...
     @overload
     def cumsum(
         self,
         axis: Optional[int] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
     @overload
@@ -1261,7 +1261,7 @@ class _ArrayOrScalarCommon:
     def mean(
         self,
         axis: None = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: Literal[False] = ...,
     ) -> number: ...
@@ -1269,7 +1269,7 @@ class _ArrayOrScalarCommon:
     def mean(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
     ) -> Union[number, ndarray]: ...
@@ -1277,7 +1277,7 @@ class _ArrayOrScalarCommon:
     def mean(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
@@ -1313,7 +1313,7 @@ class _ArrayOrScalarCommon:
     def prod(
         self,
         axis: None = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: Literal[False] = ...,
         initial: _NumberLike = ...,
@@ -1323,7 +1323,7 @@ class _ArrayOrScalarCommon:
     def prod(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike = ...,
@@ -1333,7 +1333,7 @@ class _ArrayOrScalarCommon:
     def prod(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike = ...,
@@ -1367,7 +1367,7 @@ class _ArrayOrScalarCommon:
     def std(
         self,
         axis: None = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         ddof: int = ...,
         keepdims: Literal[False] = ...,
@@ -1376,7 +1376,7 @@ class _ArrayOrScalarCommon:
     def std(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         ddof: int = ...,
         keepdims: bool = ...,
@@ -1385,7 +1385,7 @@ class _ArrayOrScalarCommon:
     def std(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         ddof: int = ...,
         keepdims: bool = ...,
@@ -1394,7 +1394,7 @@ class _ArrayOrScalarCommon:
     def sum(
         self,
         axis: None = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: Literal[False] = ...,
         initial: _NumberLike = ...,
@@ -1404,7 +1404,7 @@ class _ArrayOrScalarCommon:
     def sum(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike = ...,
@@ -1414,7 +1414,7 @@ class _ArrayOrScalarCommon:
     def sum(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike = ...,
@@ -1448,7 +1448,7 @@ class _ArrayOrScalarCommon:
     def var(
         self,
         axis: None = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         ddof: int = ...,
         keepdims: Literal[False] = ...,
@@ -1457,7 +1457,7 @@ class _ArrayOrScalarCommon:
     def var(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
         ddof: int = ...,
         keepdims: bool = ...,
@@ -1466,7 +1466,7 @@ class _ArrayOrScalarCommon:
     def var(
         self,
         axis: Optional[_ShapeLike] = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         ddof: int = ...,
         keepdims: bool = ...,
@@ -1487,14 +1487,14 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def __new__(
         cls: Type[_ArraySelf],
         shape: Sequence[int],
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         buffer: _BufferType = ...,
         offset: int = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
     @property
-    def dtype(self) -> _Dtype: ...
+    def dtype(self) -> _DType: ...
     @property
     def ctypes(self) -> _ctypes: ...
     @property
@@ -1540,7 +1540,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
         sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
     ) -> ndarray: ...
     def setfield(
-        self, val: ArrayLike, dtype: DtypeLike, offset: int = ...
+        self, val: ArrayLike, dtype: DTypeLike, offset: int = ...
     ) -> None: ...
     def sort(
         self,
@@ -1554,7 +1554,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
         offset: int = ...,
         axis1: int = ...,
         axis2: int = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: None = ...,
     ) -> Union[number, ndarray]: ...
     @overload
@@ -1563,7 +1563,7 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
         offset: int = ...,
         axis1: int = ...,
         axis2: int = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
     # Many of these special methods are irrelevant currently, since protocols
@@ -1923,7 +1923,7 @@ class void(flexible):
     @property
     def imag(self: _ArraySelf) -> _ArraySelf: ...
     def setfield(
-        self, val: ArrayLike, dtype: DtypeLike, offset: int = ...
+        self, val: ArrayLike, dtype: DTypeLike, offset: int = ...
     ) -> None: ...
 
 class character(flexible):  # type: ignore
@@ -1961,7 +1961,7 @@ unicode_ = str0 = str_
 
 def array(
     object: object,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     *,
     copy: bool = ...,
     order: _OrderKACF = ...,
@@ -1971,14 +1971,14 @@ def array(
 ) -> ndarray: ...
 def zeros(
     shape: _ShapeLike,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
 ) -> ndarray: ...
 def empty(
     shape: _ShapeLike,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
@@ -2055,7 +2055,7 @@ class ufunc:
         keepdims: bool = ...,
         casting: _Casting = ...,
         order: _OrderKACF = ...,
-        dtype: DtypeLike = ...,
+        dtype: DTypeLike = ...,
         subok: bool = ...,
         signature: Union[str, Tuple[str]] = ...,
         # In reality this should be a length of list 3 containing an

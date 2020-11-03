@@ -13,7 +13,7 @@ from typing import (
 )
 
 from numpy import ndarray, generic, dtype, bool_, signedinteger, _OrderKACF, _OrderCF
-from numpy.typing import ArrayLike, DtypeLike, _ShapeLike
+from numpy.typing import ArrayLike, DTypeLike, _ShapeLike
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -36,14 +36,14 @@ def zeros_like(
 @overload
 def zeros_like(
     a: ArrayLike,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
 ) -> ndarray: ...
 def ones(
     shape: _ShapeLike,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
@@ -59,7 +59,7 @@ def ones_like(
 @overload
 def ones_like(
     a: ArrayLike,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
@@ -75,7 +75,7 @@ def empty_like(
 @overload
 def empty_like(
     a: ArrayLike,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
@@ -83,7 +83,7 @@ def empty_like(
 def full(
     shape: _ShapeLike,
     fill_value: Any,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
     like: ArrayLike = ...,
@@ -101,7 +101,7 @@ def full_like(
 def full_like(
     a: ArrayLike,
     fill_value: Any,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: Optional[_ShapeLike] = ...,
@@ -150,27 +150,27 @@ def cross(
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     sparse: Literal[False] = ...,
 ) -> ndarray: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     sparse: Literal[True] = ...,
 ) -> Tuple[ndarray, ...]: ...
 def fromfunction(
     function: Callable[..., _T],
     shape: Sequence[int],
     *,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     like: ArrayLike = ...,
     **kwargs: Any,
 ) -> _T: ...
 def isscalar(element: Any) -> bool: ...
 def binary_repr(num: int, width: Optional[int] = ...) -> str: ...
 def base_repr(number: int, base: int = ..., padding: int = ...) -> str: ...
-def identity(n: int, dtype: DtypeLike = ..., *, like: ArrayLike = ...) -> ndarray: ...
+def identity(n: int, dtype: DTypeLike = ..., *, like: ArrayLike = ...) -> ndarray: ...
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
