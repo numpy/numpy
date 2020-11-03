@@ -116,7 +116,6 @@
         return npyv_sub_f64(npyv_mul_f64(neg_a, b), c);
     }
 #endif // !NPY_HAVE_FMA3
-#endif // _NPY_SIMD_AVX2_ARITHMETIC_H
 
 // Horizontal add: Calculates the sum of all vector elements.
 NPY_FINLINE float npyv_sum_f32(__m256 a)
@@ -137,3 +136,7 @@ NPY_FINLINE double npyv_sum_f64(__m256d a)
     __m128d sum = _mm_add_pd(lo, hi);
     return _mm_cvtsd_f64(sum);
 }
+
+#endif // _NPY_SIMD_AVX2_ARITHMETIC_H
+
+

@@ -129,8 +129,6 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_nmulsub_f32 _mm512_fnmsub_ps
 #define npyv_nmulsub_f64 _mm512_fnmsub_pd
 
-#endif // _NPY_SIMD_AVX512_ARITHMETIC_H
-
 /***************************
  * Reduce Sum
  * there are three ways to implement reduce sum for AVX512:
@@ -173,3 +171,5 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
         return _mm_cvtsd_f64(_mm512_castpd512_pd128(sum8));
     }
 #endif
+
+#endif // _NPY_SIMD_AVX512_ARITHMETIC_H

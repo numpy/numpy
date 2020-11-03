@@ -512,6 +512,16 @@ class _SIMD_ALL(_Test_Utility):
         div = self.div(vdata_a, vdata_b)
         assert div == data_div
 
+    def test_arithmetic_reduce_sum(self):
+        if not self._is_fp():
+            return
+        # reduce sum
+        data = self._data()
+        vdata = self.load(data)
+
+        data_sum = sum(data)
+        vsum = self.sum(vdata)
+        assert vsum == data_sum
 
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")
 fp_sfx  = ("f32", "f64")
