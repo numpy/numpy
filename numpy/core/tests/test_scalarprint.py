@@ -2,13 +2,16 @@
 """ Test printing of scalar types.
 
 """
-from __future__ import division, absolute_import, print_function
+import code
+import platform
+import pytest
+import sys
 
+from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, run_module_suite
+from numpy.testing import assert_, assert_equal
 
-
-class TestRealScalars(object):
+class TestRealScalars:
     def test_str(self):
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]
@@ -28,12 +31,12 @@ class TestRealScalars(object):
 
     def test_scalar_cutoffs(self):
         # test that both the str and repr of np.float64 behaves
-        # like python floats in python3. Note that in python2
-        # the str has truncated digits, but we do not do this
+        # like python floats in python3.
         def check(v):
-            # we compare str to repr, to avoid python2 truncation behavior
+            assert_equal(str(np.float64(v)), str(v))
             assert_equal(str(np.float64(v)), repr(v))
             assert_equal(repr(np.float64(v)), repr(v))
+            assert_equal(repr(np.float64(v)), str(v))
 
         # check we use the same number of significant digits
         check(1.12345678901234567890)
@@ -44,6 +47,50 @@ class TestRealScalars(object):
         check(1e-4)
         check(1e15)
         check(1e16)
+
+    def test_py2_float_print(self):
+        # gh-10753
+        # In python2, the python float type implements an obsolete method
+        # tp_print, which overrides tp_repr and tp_str when using "print" to
+        # output to a "real file" (ie, not a StringIO). Make sure we don't
+        # inherit it.
+        x = np.double(0.1999999999999)
+        with TemporaryFile('r+t') as f:
+            print(x, file=f)
+            f.seek(0)
+            output = f.read()
+        assert_equal(output, str(x) + '\n')
+        # In python2 the value float('0.1999999999999') prints with reduced
+        # precision as '0.2', but we want numpy's np.double('0.1999999999999')
+        # to print the unique value, '0.1999999999999'.
+
+        # gh-11031
+        # Only in the python2 interactive shell and when stdout is a "real"
+        # file, the output of the last command is printed to stdout without
+        # Py_PRINT_RAW (unlike the print statement) so `>>> x` and `>>> print
+        # x` are potentially different. Make sure they are the same. The only
+        # way I found to get prompt-like output is using an actual prompt from
+        # the 'code' module. Again, must use tempfile to get a "real" file.
+
+        # dummy user-input which enters one line and then ctrl-Ds.
+        def userinput():
+            yield 'np.sqrt(2)'
+            raise EOFError
+        gen = userinput()
+        input_func = lambda prompt="": next(gen)
+
+        with TemporaryFile('r+t') as fo, TemporaryFile('r+t') as fe:
+            orig_stdout, orig_stderr = sys.stdout, sys.stderr
+            sys.stdout, sys.stderr = fo, fe
+
+            code.interact(local={'np': np}, readfunc=input_func, banner='')
+
+            sys.stdout, sys.stderr = orig_stdout, orig_stderr
+
+            fo.seek(0)
+            capture = fo.read().strip()
+
+        assert_equal(capture, repr(np.sqrt(2)))
 
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
@@ -152,6 +199,8 @@ class TestRealScalars(object):
         assert_equal(fpos64('1.5', unique=False, precision=3), "1.500")
         assert_equal(fsci32('1.5', unique=False, precision=3), "1.500e+00")
         assert_equal(fsci64('1.5', unique=False, precision=3), "1.500e+00")
+        # gh-10713
+        assert_equal(fpos64('324', unique=False, precision=5, fractional=False), "324.00")
 
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
@@ -199,6 +248,66 @@ class TestRealScalars(object):
                          "1.2" if tp != np.float16 else "1.2002")
             assert_equal(fpos(tp('1.'), trim='-'), "1")
 
+    @pytest.mark.skipif(not platform.machine().startswith("ppc64"),
+                        reason="only applies to ppc float128 values")
+    def test_ppc64_ibm_double_double128(self):
+        # check that the precision decreases once we get into the subnormal
+        # range. Unlike float64, this starts around 1e-292 instead of 1e-308,
+        # which happens when the first double is normal and the second is
+        # subnormal.
+        x = np.float128('2.123123123123123123123123123123123e-286')
+        got = [str(x/np.float128('2e' + str(i))) for i in range(0,40)]
+        expected = [
+            "1.06156156156156156156156156156157e-286",
+            "1.06156156156156156156156156156158e-287",
+            "1.06156156156156156156156156156159e-288",
+            "1.0615615615615615615615615615616e-289",
+            "1.06156156156156156156156156156157e-290",
+            "1.06156156156156156156156156156156e-291",
+            "1.0615615615615615615615615615616e-292",
+            "1.0615615615615615615615615615615e-293",
+            "1.061561561561561561561561561562e-294",
+            "1.06156156156156156156156156155e-295",
+            "1.0615615615615615615615615616e-296",
+            "1.06156156156156156156156156e-297",
+            "1.06156156156156156156156157e-298",
+            "1.0615615615615615615615616e-299",
+            "1.06156156156156156156156e-300",
+            "1.06156156156156156156155e-301",
+            "1.0615615615615615615616e-302",
+            "1.061561561561561561562e-303",
+            "1.06156156156156156156e-304",
+            "1.0615615615615615618e-305",
+            "1.06156156156156156e-306",
+            "1.06156156156156157e-307",
+            "1.0615615615615616e-308",
+            "1.06156156156156e-309",
+            "1.06156156156157e-310",
+            "1.0615615615616e-311",
+            "1.06156156156e-312",
+            "1.06156156154e-313",
+            "1.0615615616e-314",
+            "1.06156156e-315",
+            "1.06156155e-316",
+            "1.061562e-317",
+            "1.06156e-318",
+            "1.06155e-319",
+            "1.0617e-320",
+            "1.06e-321",
+            "1.04e-322",
+            "1e-323",
+            "0.0",
+            "0.0"]
+        assert_equal(got, expected)
+
+        # Note: we follow glibc behavior, but it (or gcc) might not be right.
+        # In particular we can get two values that print the same but are not
+        # equal:
+        a = np.float128('2')/np.float128('3')
+        b = np.float128(str(a))
+        assert_equal(str(a), str(b))
+        assert_(a != b)
+
     def float32_roundtrip(self):
         # gh-9360
         x = np.float32(1024 - 2**-14)
@@ -211,6 +320,3 @@ class TestRealScalars(object):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
         assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
-
-if __name__ == "__main__":
-    run_module_suite()

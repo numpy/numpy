@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import re
 import os
 import sys
@@ -8,12 +6,11 @@ import platform
 import tempfile
 import hashlib
 import base64
+import subprocess
 from subprocess import Popen, PIPE, STDOUT
-from copy import copy
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.exec_command import exec_command
-from numpy.distutils.compat import get_exception
-from numpy.distutils.system_info import system_info
+from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -24,13 +21,6 @@ TARGET_R = re.compile(r"Target: ([a-zA-Z0-9_\-]*)")
 
 def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
-
-
-if is_win64():
-    #_EXTRAFLAGS = ["-fno-leading-underscore"]
-    _EXTRAFLAGS = []
-else:
-    _EXTRAFLAGS = []
 
 
 class GnuFCompiler(FCompiler):
@@ -126,26 +116,17 @@ class GnuFCompiler(FCompiler):
             # error checking.
             if not target:
                 # If MACOSX_DEPLOYMENT_TARGET is not set in the environment,
-                # we try to get it first from the Python Makefile and then we
-                # fall back to setting it to 10.3 to maximize the set of
-                # versions we can work with.  This is a reasonable default
+                # we try to get it first from sysconfig and then
+                # fall back to setting it to 10.9 This is a reasonable default
                 # even when using the official Python dist and those derived
                 # from it.
-                import distutils.sysconfig as sc
-                g = {}
-                try:
-                    get_makefile_filename = sc.get_makefile_filename
-                except AttributeError:
-                    pass  # i.e. PyPy
-                else:
-                    filename = get_makefile_filename()
-                    sc.parse_makefile(filename, g)
-                target = g.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
-                if target == '10.3':
-                    s = 'Env. variable MACOSX_DEPLOYMENT_TARGET set to 10.3'
+                import sysconfig
+                target = sysconfig.get_config_var('MACOSX_DEPLOYMENT_TARGET')
+                if not target:
+                    target = '10.9'
+                    s = f'Env. variable MACOSX_DEPLOYMENT_TARGET set to {target}'
                     warnings.warn(s, stacklevel=2)
-
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -160,9 +141,13 @@ class GnuFCompiler(FCompiler):
         return opt
 
     def get_libgcc_dir(self):
-        status, output = exec_command(
-            self.compiler_f77 + ['-print-libgcc-file-name'], use_tee=0)
-        if not status:
+        try:
+            output = subprocess.check_output(self.compiler_f77 +
+                                            ['-print-libgcc-file-name'])
+        except (OSError, subprocess.CalledProcessError):
+            pass
+        else:
+            output = filepath_from_subprocess_output(output)
             return os.path.dirname(output)
         return None
 
@@ -177,9 +162,13 @@ class GnuFCompiler(FCompiler):
         libgfortran_dir = None
         if libgfortran_name:
             find_lib_arg = ['-print-file-name={0}'.format(libgfortran_name)]
-            status, output = exec_command(
-                self.compiler_f77 + find_lib_arg, use_tee=0)
-            if not status:
+            try:
+                output = subprocess.check_output(
+                                       self.compiler_f77 + find_lib_arg)
+            except (OSError, subprocess.CalledProcessError):
+                pass
+            else:
+                output = filepath_from_subprocess_output(output)
                 libgfortran_dir = os.path.dirname(output)
         return libgfortran_dir
 
@@ -242,7 +231,7 @@ class GnuFCompiler(FCompiler):
 
     def _c_arch_flags(self):
         """ Return detected arch flags from CFLAGS """
-        from distutils import sysconfig
+        import sysconfig
         try:
             cflags = sysconfig.get_config_vars()['CFLAGS']
         except KeyError:
@@ -257,8 +246,20 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        sep = ',' if sys.platform == 'darwin' else '='
-        return '-Wl,-rpath%s"%s"' % (sep, dir)
+        if sys.platform == 'win32':
+            # Linux/Solaris/Unix support RPATH, Windows does not
+            raise NotImplementedError
+
+        # TODO: could use -Xlinker here, if it's supported
+        assert "," not in dir
+
+        if sys.platform == 'darwin':
+            return f'-Wl,-rpath,{dir}'
+        elif sys.platform[:3] == 'aix':
+            # AIX RPATH is called LIBPATH
+            return f'-Wl,-blibpath:{dir}'
+        else:
+            return f'-Wl,-rpath={dir}'
 
 
 class Gnu95FCompiler(GnuFCompiler):
@@ -271,7 +272,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not v or v[0] != 'gfortran':
             return None
         v = v[1]
-        if v >= '4.':
+        if LooseVersion(v) >= "4":
             # gcc-4 series releases do not support -mno-cygwin option
             pass
         else:
@@ -289,11 +290,11 @@ class Gnu95FCompiler(GnuFCompiler):
     executables = {
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_f90' : [None, "-Wall", "-g",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
@@ -302,6 +303,12 @@ class Gnu95FCompiler(GnuFCompiler):
 
     module_dir_switch = '-J'
     module_include_switch = '-I'
+
+    if sys.platform[:3] == 'aix':
+        executables['linker_so'].append('-lpthread')
+        if platform.architecture()[0][:2] == '64':
+            for key in ['compiler_f77', 'compiler_f90','compiler_fix','linker_so', 'linker_exe']:
+                executables[key].append('-maix64')
 
     g2c = 'gfortran'
 
@@ -373,8 +380,12 @@ class Gnu95FCompiler(GnuFCompiler):
         return opt
 
     def get_target(self):
-        status, output = exec_command(self.compiler_f77 + ['-v'], use_tee=0)
-        if not status:
+        try:
+            output = subprocess.check_output(self.compiler_f77 + ['-v'])
+        except (OSError, subprocess.CalledProcessError):
+            pass
+        else:
+            output = filepath_from_subprocess_output(output)
             m = TARGET_R.search(output)
             if m:
                 return m.group(1)
@@ -390,8 +401,7 @@ class Gnu95FCompiler(GnuFCompiler):
                         break
                     h.update(block)
         text = base64.b32encode(h.digest())
-        if sys.version_info[0] >= 3:
-            text = text.decode('ascii')
+        text = text.decode('ascii')
         return text.rstrip('=')
 
     def _link_wrapper_lib(self, objects, output_dir, extra_dll_dir,
@@ -535,5 +545,5 @@ if __name__ == '__main__':
     print(customized_fcompiler('gnu').get_version())
     try:
         print(customized_fcompiler('g95').get_version())
-    except Exception:
-        print(get_exception())
+    except Exception as e:
+        print(e)

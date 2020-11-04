@@ -1,44 +1,37 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-numpyfilter.py INPUTFILE
+numpyfilter.py [-h] inputfile
 
 Interpret C comments as ReStructuredText, and replace them by the HTML output.
 Also, add Doxygen /** and /**< syntax automatically where appropriate.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import re
 import os
 import textwrap
-import optparse
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from numpy.compat import pickle
 
 CACHE_FILE = 'build/rst-cache.pck'
 
 def main():
-    p = optparse.OptionParser(usage=__doc__.strip())
-    options, args = p.parse_args()
+    import argparse
 
-    if len(args) != 1:
-        p.error("no input file given")
+    parser = argparse.ArgumentParser(usage=__doc__.strip())
+    parser.add_argument('input_file', help='input file')
+    args = parser.parse_args()
 
     comment_re = re.compile(r'(\n.*?)/\*(.*?)\*/', re.S)
 
     cache = load_cache()
 
-    f = open(args[0], 'r')
     try:
-        text = f.read()
-        text = comment_re.sub(lambda m: process_match(m, cache), text)
-        sys.stdout.write(text)
+        with open(args.input_file, 'r') as f:
+            text = f.read()
+            text = comment_re.sub(lambda m: process_match(m, cache), text)
+            sys.stdout.write(text)
     finally:
-        f.close()
         save_cache(cache)
 
 def filter_comment(text):
@@ -72,23 +65,18 @@ def process_match(m, cache=None):
 
 def load_cache():
     if os.path.exists(CACHE_FILE):
-        f = open(CACHE_FILE, 'rb')
-        try:
-            cache = pickle.load(f)
-        except Exception:
-            cache = {}
-        finally:
-            f.close()
+        with open(CACHE_FILE, 'rb') as f:
+            try:
+                cache = pickle.load(f)
+            except Exception:
+                cache = {}
     else:
         cache = {}
     return cache
 
 def save_cache(cache):
-    f = open(CACHE_FILE + '.new', 'wb')
-    try:
+    with open(CACHE_FILE + '.new', 'wb') as f:
         pickle.dump(cache, f)
-    finally:
-        f.close()
     os.rename(CACHE_FILE + '.new', CACHE_FILE)
 
 def render_html(text):
@@ -111,6 +99,6 @@ def render_html(text):
                                   _disable_config=1,
                                   )
     )
-    return parts['html_body'].encode('utf-8')
+    return parts['html_body']
 
 if __name__ == "__main__": main()

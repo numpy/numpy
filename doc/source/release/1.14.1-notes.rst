@@ -1,0 +1,92 @@
+==========================
+NumPy 1.14.1 Release Notes
+==========================
+
+This is a bugfix release for some problems reported following the 1.14.0 release. The major
+problems fixed are the following.
+
+* Problems with the new array printing, particularly the printing of complex
+  values, Please report any additional problems that may turn up.
+* Problems with ``np.einsum`` due to the new ``optimized=True`` default. Some
+  fixes for optimization have been applied and ``optimize=False`` is now the
+  default.
+* The sort order in ``np.unique`` when ``axis=<some-number>`` will now always
+  be lexicographic in the subarray elements. In previous NumPy versions there
+  was an optimization that could result in sorting the subarrays as unsigned
+  byte strings.
+* The change in 1.14.0 that multi-field indexing of structured arrays returns a
+  view instead of a copy has been reverted but remains on track for NumPy 1.15.
+  Affected users should read the 1.14.1 Numpy User Guide section
+  "basics/structured arrays/accessing multiple fields" for advice on how to
+  manage this transition.
+
+The Python versions supported in this release are 2.7 and 3.4 - 3.6. The Python
+3.6 wheels available from PIP are built with Python 3.6.2 and should be
+compatible with all previous versions of Python 3.6. The source releases were
+cythonized with Cython 0.26.1, which is known to **not** support the upcoming
+Python 3.7 release.  People who wish to run Python 3.7 should check out the
+NumPy repo and try building with the, as yet, unreleased master branch of
+Cython.
+
+Contributors
+============
+
+A total of 14 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Charles Harris
+* Daniel Smith
+* Dennis Weyland +
+* Eric Larson
+* Eric Wieser
+* Jarrod Millman
+* Kenichi Maehashi +
+* Marten van Kerkwijk
+* Mathieu Lamarre
+* Sebastian Berg
+* Simon Conseil
+* Simon Gibbons
+* xoviat
+
+Pull requests merged
+====================
+
+A total of 36 pull requests were merged for this release.
+
+* `#10339 <https://github.com/numpy/numpy/pull/10339>`__: BUG: restrict the __config__ modifications to win32
+* `#10368 <https://github.com/numpy/numpy/pull/10368>`__: MAINT: Adjust type promotion in linalg.norm
+* `#10375 <https://github.com/numpy/numpy/pull/10375>`__: BUG: add missing paren and remove quotes from repr of fieldless...
+* `#10395 <https://github.com/numpy/numpy/pull/10395>`__: MAINT: Update download URL in setup.py.
+* `#10396 <https://github.com/numpy/numpy/pull/10396>`__: BUG: fix einsum issue with unicode input and py2
+* `#10397 <https://github.com/numpy/numpy/pull/10397>`__: BUG: fix error message not formatted in einsum
+* `#10398 <https://github.com/numpy/numpy/pull/10398>`__: DOC: add documentation about how to handle new array printing
+* `#10403 <https://github.com/numpy/numpy/pull/10403>`__: BUG: Set einsum optimize parameter default to `False`.
+* `#10424 <https://github.com/numpy/numpy/pull/10424>`__: ENH: Fix repr of np.record objects to match np.void types #10412
+* `#10425 <https://github.com/numpy/numpy/pull/10425>`__: MAINT: Update zesty to artful for i386 testing
+* `#10431 <https://github.com/numpy/numpy/pull/10431>`__: REL: Add 1.14.1 release notes template
+* `#10435 <https://github.com/numpy/numpy/pull/10435>`__: MAINT: Use ValueError for duplicate field names in lookup (backport)
+* `#10534 <https://github.com/numpy/numpy/pull/10534>`__: BUG: Provide a better error message for out-of-order fields
+* `#10536 <https://github.com/numpy/numpy/pull/10536>`__: BUG: Resize bytes columns in genfromtxt (backport of #10401)
+* `#10537 <https://github.com/numpy/numpy/pull/10537>`__: BUG: multifield-indexing adds padding bytes: revert for 1.14.1
+* `#10539 <https://github.com/numpy/numpy/pull/10539>`__: BUG: fix np.save issue with python 2.7.5
+* `#10540 <https://github.com/numpy/numpy/pull/10540>`__: BUG: Add missing DECREF in Py2 int() cast
+* `#10541 <https://github.com/numpy/numpy/pull/10541>`__: TST: Add circleci document testing to maintenance/1.14.x
+* `#10542 <https://github.com/numpy/numpy/pull/10542>`__: BUG: complex repr has extra spaces, missing + (1.14 backport)
+* `#10550 <https://github.com/numpy/numpy/pull/10550>`__: BUG: Set missing exception after malloc
+* `#10557 <https://github.com/numpy/numpy/pull/10557>`__: BUG: In numpy.i, clear CARRAY flag if wrapped buffer is not C_CONTIGUOUS.
+* `#10558 <https://github.com/numpy/numpy/pull/10558>`__: DEP: Issue FutureWarning when malformed records detected.
+* `#10559 <https://github.com/numpy/numpy/pull/10559>`__: BUG: Fix einsum optimize logic for singleton dimensions
+* `#10560 <https://github.com/numpy/numpy/pull/10560>`__: BUG: Fix calling ufuncs with a positional output argument.
+* `#10561 <https://github.com/numpy/numpy/pull/10561>`__: BUG: Fix various Big-Endian test failures (ppc64)
+* `#10562 <https://github.com/numpy/numpy/pull/10562>`__: BUG: Make dtype.descr error for out-of-order fields.
+* `#10563 <https://github.com/numpy/numpy/pull/10563>`__: BUG: arrays not being flattened in `union1d`
+* `#10607 <https://github.com/numpy/numpy/pull/10607>`__: MAINT: Update sphinxext submodule hash.
+* `#10608 <https://github.com/numpy/numpy/pull/10608>`__: BUG: Revert sort optimization in np.unique.
+* `#10609 <https://github.com/numpy/numpy/pull/10609>`__: BUG: infinite recursion in str of 0d subclasses
+* `#10610 <https://github.com/numpy/numpy/pull/10610>`__: BUG: Align type definition with generated lapack
+* `#10612 <https://github.com/numpy/numpy/pull/10612>`__: BUG/ENH: Improve output for structured non-void types
+* `#10622 <https://github.com/numpy/numpy/pull/10622>`__: BUG: deallocate recursive closure in arrayprint.py (1.14 backport)
+* `#10624 <https://github.com/numpy/numpy/pull/10624>`__: BUG: Correctly identify comma separated dtype strings
+* `#10629 <https://github.com/numpy/numpy/pull/10629>`__: BUG: deallocate recursive closure in arrayprint.py (backport...
+* `#10630 <https://github.com/numpy/numpy/pull/10630>`__: REL: Prepare for 1.14.1 release.

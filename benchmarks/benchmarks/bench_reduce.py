@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark, TYPES1, get_squares
 
 import numpy as np
@@ -29,8 +27,10 @@ class AddReduceSeparate(Benchmark):
 
 class AnyAll(Benchmark):
     def setup(self):
-        self.zeros = np.zeros(100000, bool)
-        self.ones = np.ones(100000, bool)
+        # avoid np.zeros's lazy allocation that would
+        # cause page faults during benchmark
+        self.zeros = np.full(100000, 0, bool)
+        self.ones = np.full(100000, 1, bool)
 
     def time_all_fast(self):
         self.zeros.all()
@@ -58,6 +58,15 @@ class MinMax(Benchmark):
     def time_max(self, dtype):
         np.max(self.d)
 
+class ArgMax(Benchmark):
+    params = [np.float32, bool]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        self.d = np.zeros(200000, dtype=dtype)
+
+    def time_argmax(self, dtype):
+        np.argmax(self.d)
 
 class SmallReduction(Benchmark):
     def setup(self):

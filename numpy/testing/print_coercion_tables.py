@@ -1,13 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Prints type-coercion tables for the built-in NumPy types
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 # Generic object that can be added, but doesn't do anything else
-class GenericObject(object):
+class GenericObject:
     def __init__(self, v):
         self.v = v
 
@@ -70,22 +68,24 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
             print(char, end=' ')
         print()
 
-print("can cast")
-print_cancast_table(np.typecodes['All'])
-print()
-print("In these tables, ValueError is '!', OverflowError is '@', TypeError is '#'")
-print()
-print("scalar + scalar")
-print_coercion_table(np.typecodes['All'], 0, 0, False)
-print()
-print("scalar + neg scalar")
-print_coercion_table(np.typecodes['All'], 0, -1, False)
-print()
-print("array + scalar")
-print_coercion_table(np.typecodes['All'], 0, 0, True)
-print()
-print("array + neg scalar")
-print_coercion_table(np.typecodes['All'], 0, -1, True)
-print()
-print("promote_types")
-print_coercion_table(np.typecodes['All'], 0, 0, False, True)
+
+if __name__ == '__main__':
+    print("can cast")
+    print_cancast_table(np.typecodes['All'])
+    print()
+    print("In these tables, ValueError is '!', OverflowError is '@', TypeError is '#'")
+    print()
+    print("scalar + scalar")
+    print_coercion_table(np.typecodes['All'], 0, 0, False)
+    print()
+    print("scalar + neg scalar")
+    print_coercion_table(np.typecodes['All'], 0, -1, False)
+    print()
+    print("array + scalar")
+    print_coercion_table(np.typecodes['All'], 0, 0, True)
+    print()
+    print("array + neg scalar")
+    print_coercion_table(np.typecodes['All'], 0, -1, True)
+    print()
+    print("promote_types")
+    print_coercion_table(np.typecodes['All'], 0, 0, False, True)

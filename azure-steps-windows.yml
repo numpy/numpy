@@ -1,0 +1,90 @@
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: $(PYTHON_VERSION)
+    addToPath: true
+    architecture: $(PYTHON_ARCH)
+  condition: not(contains(variables['PYTHON_VERSION'], 'PyPy'))
+- powershell: |
+    $url = "http://buildbot.pypy.org/nightly/py3.6/pypy-c-jit-latest-win32.zip"
+    $output = "pypy.zip"
+    $wc = New-Object System.Net.WebClient
+    $wc.DownloadFile($url, $output)
+    echo "downloaded $url to $output"
+    mkdir pypy3
+    Expand-Archive $output -DestinationPath pypy3
+    move pypy3/pypy-c-*/* pypy3
+    cp pypy3/pypy3.exe pypy3/python.exe
+    $pypypath = Join-Path (Get-Item .).FullName pypy3
+    $env:Path = $pypypath + ";" + $env:Path
+    setx PATH $env:Path
+    python -mensurepip
+    echo "##vso[task.prependpath]$pypypath"
+  condition: contains(variables['PYTHON_VERSION'], 'PyPy')
+  displayName: "Install PyPy pre-release"
+
+- script: python -m pip install --upgrade pip wheel
+  displayName: 'Install tools'
+
+- script: python -m pip install -r test_requirements.txt
+  displayName: 'Install dependencies; some are optional to avoid test skips'
+
+- powershell: |
+    $ErrorActionPreference = "Stop"
+    # Download and get the path to "openblas.a". We cannot copy it
+    # to $PYTHON_EXE's directory since that is on a different drive which
+    # mingw does not like. Instead copy it to a directory and set OPENBLAS,
+    # since OPENBLAS will be picked up by the openblas discovery
+    $target = $(python tools/openblas_support.py)
+    mkdir openblas
+    echo "Copying $target to openblas/openblas$env:OPENBLAS_SUFFIX.a"
+    cp $target openblas/openblas$env:OPENBLAS_SUFFIX.a
+    If ( Test-Path env:NPY_USE_BLAS_ILP64 ){
+        echo "##vso[task.setvariable variable=OPENBLAS64_]$pwd\openblas"
+    } else {
+        echo "##vso[task.setvariable variable=OPENBLAS]$pwd\openblas"
+    }
+  displayName: 'Download / Install OpenBLAS'
+
+- powershell: |
+    choco install -y mingw --forcex86 --force --version=7.3.0
+    refreshenv
+  displayName: 'Install 32-bit mingw for 32-bit builds'
+  condition: eq(variables['BITS'], 32)
+# NOTE: for Windows builds it seems much more tractable to use runtests.py
+# vs. manual setup.py and then runtests.py for testing only
+
+- powershell: |
+    If ($(BITS) -eq 32) {
+        $env:CFLAGS = "-m32"
+        $env:LDFLAGS = "-m32"
+        $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
+    }
+    python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
+    python -m pip wheel -v -v -v --no-build-isolation --no-use-pep517 --wheel-dir=dist .
+
+    ls dist -r | Foreach-Object {
+        python -m pip install $_.FullName
+    }
+  displayName: 'Build NumPy'
+
+- bash: |
+    pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
+    python -m pip download -d destination --only-binary :all: --no-deps numpy==1.14
+    cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
+    ls $target
+  displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
+  condition: eq(variables['PYTHON_VERSION'], '3.6')
+- script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
+  displayName: 'For gh-12667; Windows DLL resolution'
+  condition: eq(variables['PYTHON_VERSION'], '3.6')
+
+- script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+  displayName: 'Run NumPy Test Suite'
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'

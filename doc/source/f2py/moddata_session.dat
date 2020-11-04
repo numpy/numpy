@@ -1,10 +1,13 @@
 >>> import moddata
->>> print moddata.mod.__doc__
-i - 'i'-scalar
-x - 'i'-array(4)
-a - 'f'-array(2,3)
-foo - Function signature:
-  foo()
+>>> print(moddata.mod.__doc__)
+i : 'i'-scalar
+x : 'i'-array(4)
+a : 'f'-array(2,3)
+b : 'f'-array(-1,-1), not allocated
+foo()
+
+Wrapper for ``foo``.
+
 
 
 >>> moddata.mod.i = 5  
@@ -20,4 +23,6 @@ foo - Function signature:
  Setting a(1,2)=a(1,2)+3
 >>> moddata.mod.a               # a is Fortran-contiguous
 array([[ 1.,  5.,  3.],
-       [ 4.,  5.,  6.]],'f')
+       [ 4.,  5.,  6.]], dtype=float32)
+>>> moddata.mod.a.flags.f_contiguous
+True

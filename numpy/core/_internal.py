@@ -1,42 +1,41 @@
 """
-A place for code to be called from core C-code.
+A place for internal code
 
 Some things are more easily handled Python.
 
 """
-from __future__ import division, absolute_import, print_function
-
+import ast
 import re
 import sys
+import platform
 
-from numpy.compat import basestring
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
 except ImportError:
     ctypes = None
-from .numerictypes import object_
 
-if (sys.byteorder == 'little'):
-    _nbo = b'<'
+IS_PYPY = platform.python_implementation() == 'PyPy'
+
+if sys.byteorder == 'little':
+    _nbo = '<'
 else:
-    _nbo = b'>'
+    _nbo = '>'
 
 def _makenames_list(adict, align):
     allfields = []
-    fnames = list(adict.keys())
-    for fname in fnames:
-        obj = adict[fname]
+
+    for fname, obj in adict.items():
         n = len(obj)
-        if not isinstance(obj, tuple) or n not in [2, 3]:
+        if not isinstance(obj, tuple) or n not in (2, 3):
             raise ValueError("entry not a 2- or 3- tuple")
-        if (n > 2) and (obj[2] == fname):
+        if n > 2 and obj[2] == fname:
             continue
         num = int(obj[1])
-        if (num < 0):
+        if num < 0:
             raise ValueError("invalid offset.")
         format = dtype(obj[0], align=align)
-        if (n > 2):
+        if n > 2:
             title = obj[2]
         else:
             title = None
@@ -68,7 +67,7 @@ def _usefields(adict, align):
             res = adict[name]
             formats.append(res[0])
             offsets.append(res[1])
-            if (len(res) > 2):
+            if len(res) > 2:
                 titles.append(res[2])
             else:
                 titles.append(None)
@@ -108,7 +107,7 @@ def _array_descr(descriptor):
     for field in ordered_fields:
         if field[1] > offset:
             num = field[1] - offset
-            result.append(('', '|V%d' % num))
+            result.append(('', f'|V{num}'))
             offset += num
         elif field[1] < offset:
             raise ValueError(
@@ -128,7 +127,7 @@ def _array_descr(descriptor):
 
     if descriptor.itemsize > offset:
         num = descriptor.itemsize - offset
-        result.append(('', '|V%d' % num))
+        result.append(('', f'|V{num}'))
 
     return result
 
@@ -143,16 +142,16 @@ def _reconstruct(subtype, shape, dtype):
 
 # format_re was originally from numarray by J. Todd Miller
 
-format_re = re.compile(br'(?P<order1>[<>|=]?)'
-                       br'(?P<repeats> *[(]?[ ,0-9L]*[)]? *)'
-                       br'(?P<order2>[<>|=]?)'
-                       br'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
-sep_re = re.compile(br'\s*,\s*')
-space_re = re.compile(br'\s+$')
+format_re = re.compile(r'(?P<order1>[<>|=]?)'
+                       r'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
+                       r'(?P<order2>[<>|=]?)'
+                       r'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
+sep_re = re.compile(r'\s*,\s*')
+space_re = re.compile(r'\s+$')
 
 # astr is a string (perhaps comma separated)
 
-_convorder = {b'=': _nbo}
+_convorder = {'=': _nbo}
 
 def _commastring(astr):
     startindex = 0
@@ -162,8 +161,9 @@ def _commastring(astr):
         try:
             (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
-            raise ValueError('format number %d of "%s" is not recognized' %
-                                            (len(result)+1, astr))
+            raise ValueError(
+                f'format number {len(result)+1} of "{astr}" is not recognized'
+                ) from None
         startindex = mo.end()
         # Separator or ending padding
         if startindex < len(astr):
@@ -177,9 +177,9 @@ def _commastring(astr):
                         (len(result)+1, astr))
                 startindex = mo.end()
 
-        if order2 == b'':
+        if order2 == '':
             order = order1
-        elif order1 == b'':
+        elif order1 == '':
             order = order2
         else:
             order1 = _convorder.get(order1, order1)
@@ -190,18 +190,18 @@ def _commastring(astr):
                     (order1, order2))
             order = order1
 
-        if order in [b'|', b'=', _nbo]:
-            order = b''
+        if order in ('|', '=', _nbo):
+            order = ''
         dtype = order + dtype
-        if (repeats == b''):
+        if (repeats == ''):
             newitem = dtype
         else:
-            newitem = (dtype, eval(repeats))
+            newitem = (dtype, ast.literal_eval(repeats))
         result.append(newitem)
 
     return result
 
-class dummy_ctype(object):
+class dummy_ctype:
     def __init__(self, cls):
         self._cls = cls
     def __mul__(self, other):
@@ -222,7 +222,7 @@ def _getintp_ctype():
         val = dummy_ctype(np.intp)
     else:
         char = dtype('p').char
-        if (char == 'i'):
+        if char == 'i':
             val = ctypes.c_int
         elif char == 'l':
             val = ctypes.c_long
@@ -236,55 +236,125 @@ _getintp_ctype.cache = None
 
 # Used for .ctypes attribute of ndarray
 
-class _missing_ctypes(object):
+class _missing_ctypes:
     def cast(self, num, obj):
-        return num
+        return num.value
 
-    def c_void_p(self, num):
-        return num
+    class c_void_p:
+        def __init__(self, ptr):
+            self.value = ptr
 
-class _ctypes(object):
+
+class _ctypes:
     def __init__(self, array, ptr=None):
+        self._arr = array
+
         if ctypes:
             self._ctypes = ctypes
+            self._data = self._ctypes.c_void_p(ptr)
         else:
+            # fake a pointer-like object that holds onto the reference
             self._ctypes = _missing_ctypes()
-        self._arr = array
-        self._data = ptr
+            self._data = self._ctypes.c_void_p(ptr)
+            self._data._objects = array
+
         if self._arr.ndim == 0:
             self._zerod = True
         else:
             self._zerod = False
 
     def data_as(self, obj):
-        return self._ctypes.cast(self._data, obj)
+        """
+        Return the data pointer cast to a particular c-types object.
+        For example, calling ``self._as_parameter_`` is equivalent to
+        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use the data as a
+        pointer to a ctypes array of floating-point data:
+        ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
+
+        The returned pointer will keep a reference to the array.
+        """
+        # _ctypes.cast function causes a circular reference of self._data in
+        # self._data._objects. Attributes of self._data cannot be released
+        # until gc.collect is called. Make a copy of the pointer first then let
+        # it hold the array reference. This is a workaround to circumvent the
+        # CPython bug https://bugs.python.org/issue12836
+        ptr = self._ctypes.cast(self._data, obj)
+        ptr._arr = self._arr
+        return ptr
 
     def shape_as(self, obj):
+        """
+        Return the shape tuple as an array of some other c-types
+        type. For example: ``self.shape_as(ctypes.c_short)``.
+        """
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
+        """
+        Return the strides tuple as an array of some other
+        c-types type. For example: ``self.strides_as(ctypes.c_longlong)``.
+        """
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.strides)
 
-    def get_data(self):
-        return self._data
+    @property
+    def data(self):
+        """
+        A pointer to the memory area of the array as a Python integer.
+        This memory area may contain data that is not aligned, or not in correct
+        byte-order. The memory area may not even be writeable. The array
+        flags and data-type of this array should be respected when passing this
+        attribute to arbitrary C-code to avoid trouble that can include Python
+        crashing. User Beware! The value of this attribute is exactly the same
+        as ``self._array_interface_['data'][0]``.
 
-    def get_shape(self):
+        Note that unlike ``data_as``, a reference will not be kept to the array:
+        code like ``ctypes.c_void_p((a + b).ctypes.data)`` will result in a
+        pointer to a deallocated array, and should be spelt
+        ``(a + b).ctypes.data_as(ctypes.c_void_p)``
+        """
+        return self._data.value
+
+    @property
+    def shape(self):
+        """
+        (c_intp*self.ndim): A ctypes array of length self.ndim where
+        the basetype is the C-integer corresponding to ``dtype('p')`` on this
+        platform. This base-type could be `ctypes.c_int`, `ctypes.c_long`, or
+        `ctypes.c_longlong` depending on the platform.
+        The c_intp type is defined accordingly in `numpy.ctypeslib`.
+        The ctypes array contains the shape of the underlying array.
+        """
         return self.shape_as(_getintp_ctype())
 
-    def get_strides(self):
+    @property
+    def strides(self):
+        """
+        (c_intp*self.ndim): A ctypes array of length self.ndim where
+        the basetype is the same as for the shape attribute. This ctypes array
+        contains the strides information from the underlying array. This strides
+        information is important for showing how many bytes must be jumped to
+        get to the next element in the array.
+        """
         return self.strides_as(_getintp_ctype())
 
-    def get_as_parameter(self):
-        return self._ctypes.c_void_p(self._data)
+    @property
+    def _as_parameter_(self):
+        """
+        Overrides the ctypes semi-magic method
 
-    data = property(get_data, None, doc="c-types data")
-    shape = property(get_shape, None, doc="c-types shape")
-    strides = property(get_strides, None, doc="c-types strides")
-    _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
+        Enables `c_func(some_array.ctypes)`
+        """
+        return self.data_as(ctypes.c_void_p)
+
+    # kept for compatibility
+    get_data = data.fget
+    get_shape = shape.fget
+    get_strides = strides.fget
+    get_as_parameter = _as_parameter_.fget
 
 
 def _newnames(datatype, order):
@@ -303,12 +373,12 @@ def _newnames(datatype, order):
                 nameslist.remove(name)
             except ValueError:
                 if name in seen:
-                    raise ValueError("duplicate field name: %s" % (name,))
+                    raise ValueError(f"duplicate field name: {name}") from None
                 else:
-                    raise ValueError("unknown field name: %s" % (name,))
+                    raise ValueError(f"unknown field name: {name}") from None
             seen.add(name)
         return tuple(list(order) + nameslist)
-    raise ValueError("unsupported order value: %s" % (order,))
+    raise ValueError(f"unsupported order value: {order}")
 
 def _copy_fields(ary):
     """Return copy of structured array with padding between fields removed.
@@ -352,7 +422,7 @@ def _getfield_is_safe(oldtype, newtype, offset):
     if newtype.hasobject or oldtype.hasobject:
         if offset == 0 and newtype == oldtype:
             return
-        if oldtype.names:
+        if oldtype.names is not None:
             for name in oldtype.names:
                 if (oldtype.fields[name][1] == offset and
                         oldtype.fields[name][0] == newtype):
@@ -444,46 +514,51 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
-def _dtype_from_pep3118(spec):
+_pep3118_unsupported_map = {
+    'u': 'UCS-2 strings',
+    '&': 'pointers',
+    't': 'bitfields',
+    'X': 'function pointers',
+}
 
-    class Stream(object):
-        def __init__(self, s):
-            self.s = s
-            self.byteorder = '@'
+class _Stream:
+    def __init__(self, s):
+        self.s = s
+        self.byteorder = '@'
 
-        def advance(self, n):
-            res = self.s[:n]
-            self.s = self.s[n:]
+    def advance(self, n):
+        res = self.s[:n]
+        self.s = self.s[n:]
+        return res
+
+    def consume(self, c):
+        if self.s[:len(c)] == c:
+            self.advance(len(c))
+            return True
+        return False
+
+    def consume_until(self, c):
+        if callable(c):
+            i = 0
+            while i < len(self.s) and not c(self.s[i]):
+                i = i + 1
+            return self.advance(i)
+        else:
+            i = self.s.index(c)
+            res = self.advance(i)
+            self.advance(len(c))
             return res
 
-        def consume(self, c):
-            if self.s[:len(c)] == c:
-                self.advance(len(c))
-                return True
-            return False
+    @property
+    def next(self):
+        return self.s[0]
 
-        def consume_until(self, c):
-            if callable(c):
-                i = 0
-                while i < len(self.s) and not c(self.s[i]):
-                    i = i + 1
-                return self.advance(i)
-            else:
-                i = self.s.index(c)
-                res = self.advance(i)
-                self.advance(len(c))
-                return res
+    def __bool__(self):
+        return bool(self.s)
 
-        @property
-        def next(self):
-            return self.s[0]
 
-        def __bool__(self):
-            return bool(self.s)
-        __nonzero__ = __bool__
-
-    stream = Stream(spec)
-
+def _dtype_from_pep3118(spec):
+    stream = _Stream(spec)
     dtype, align = __dtype_from_pep3118(stream, is_subdtype=False)
     return dtype
 
@@ -555,6 +630,11 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 stream.byteorder, stream.byteorder)
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
+        elif stream.next in _pep3118_unsupported_map:
+            desc = _pep3118_unsupported_map[stream.next]
+            raise NotImplementedError(
+                "Unrepresentable PEP 3118 data type {!r} ({})"
+                .format(stream.next, desc))
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
 
@@ -599,8 +679,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
 
         if not (is_padding and name is None):
             if name is not None and name in field_spec['names']:
-                raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
-                                   % name)
+                raise RuntimeError(f"Duplicate field name '{name}' in PEP3118 format")
             field_spec['names'].append(name)
             field_spec['formats'].append(value)
             field_spec['offsets'].append(offset)
@@ -636,7 +715,7 @@ def _fix_names(field_spec):
 
         j = 0
         while True:
-            name = 'f{}'.format(j)
+            name = f'f{j}'
             if name not in names:
                 break
             j = j + 1
@@ -679,27 +758,6 @@ def _gcd(a, b):
 def _lcm(a, b):
     return a // _gcd(a, b) * b
 
-# Exception used in shares_memory()
-class TooHardError(RuntimeError):
-    pass
-
-class AxisError(ValueError, IndexError):
-    """ Axis supplied was invalid. """
-    def __init__(self, axis, ndim=None, msg_prefix=None):
-        # single-argument form just delegates to base class
-        if ndim is None and msg_prefix is None:
-            msg = axis
-
-        # do the string formatting here, to save work in the C code
-        else:
-            msg = ("axis {} is out of bounds for array of dimension {}"
-                   .format(axis, ndim))
-            if msg_prefix is not None:
-                msg = "{}: {}".format(msg_prefix, msg)
-
-        super(AxisError, self).__init__(msg)
-
-
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
     args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
@@ -710,6 +768,13 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     return ('operand type(s) all returned NotImplemented from '
             '__array_ufunc__({!r}, {!r}, {}): {}'
             .format(ufunc, method, args_string, types_string))
+
+
+def array_function_errmsg_formatter(public_api, types):
+    """ Format the error message for when __array_ufunc__ gives up. """
+    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    return ("no implementation found for '{}' on types that implement "
+            '__array_function__: {}'.format(func_name, list(types)))
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -723,7 +788,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     if ufunc.nin == 1:
         in_args = 'x'
     else:
-        in_args = ', '.join('x{}'.format(i+1) for i in range(ufunc.nin))
+        in_args = ', '.join(f'x{i+1}' for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
@@ -756,3 +821,53 @@ def _ufunc_doc_signature_formatter(ufunc):
         out_args=out_args,
         kwargs=kwargs
     )
+
+
+def npy_ctypes_check(cls):
+    # determine if a class comes from ctypes, in order to work around
+    # a bug in the buffer protocol for those objects, bpo-10746
+    try:
+        # ctypes class are new-style, so have an __mro__. This probably fails
+        # for ctypes classes with multiple inheritance.
+        if IS_PYPY:
+            # (..., _ctypes.basics._CData, Bufferable, object)
+            ctype_base = cls.__mro__[-3]
+        else:
+            # # (..., _ctypes._CData, object)
+            ctype_base = cls.__mro__[-2]
+        # right now, they're part of the _ctypes module
+        return '_ctypes' in ctype_base.__module__
+    except Exception:
+        return False
+
+
+class recursive:
+    '''
+    A decorator class for recursive nested functions.
+    Naive recursive nested functions hold a reference to themselves:
+
+    def outer(*args):
+        def stringify_leaky(arg0, *arg1):
+            if len(arg1) > 0:
+                return stringify_leaky(*arg1)  # <- HERE
+            return str(arg0)
+        stringify_leaky(*args)
+
+    This design pattern creates a reference cycle that is difficult for a
+    garbage collector to resolve. The decorator class prevents the
+    cycle by passing the nested function in as an argument `self`:
+
+    def outer(*args):
+        @recursive
+        def stringify(self, arg0, *arg1):
+            if len(arg1) > 0:
+                return self(*arg1)
+            return str(arg0)
+        stringify(*args)
+
+    '''
+    def __init__(self, func):
+        self.func = func
+    def __call__(self, *args, **kwargs):
+        return self.func(self, *args, **kwargs)
+

@@ -3,19 +3,20 @@
  * Unfortunately, we need two different types to cover the cases where min/max
  * do and do not appear in the tuple.
  */
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#include "typeinfo.h"
 
-/* In python 2, this is not exported from Python.h */
+#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM <= 0x07030000))
+/* PyPy issue 3160 */
 #include <structseq.h>
+#endif
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "npy_pycompat.h"
 
 
-PyTypeObject PyArray_typeinfoType;
-PyTypeObject PyArray_typeinforangedType;
+static PyTypeObject PyArray_typeinfoType;
+static PyTypeObject PyArray_typeinforangedType;
 
 static PyStructSequence_Field typeinfo_fields[] = {
     {"char",      "The character used to represent the type"},
@@ -51,7 +52,7 @@ static PyStructSequence_Desc typeinforanged_desc = {
     7,                                                     /* n_in_sequence */
 };
 
-PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_typeinfo(
     char typechar, int typenum, int nbits, int align,
     PyTypeObject *type_obj)
@@ -59,11 +60,7 @@ PyArray_typeinfo(
     PyObject *entry = PyStructSequence_New(&PyArray_typeinfoType);
     if (entry == NULL)
         return NULL;
-#if defined(NPY_PY3K)
     PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("C", typechar));
-#else
-    PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("c", typechar));
-#endif
     PyStructSequence_SET_ITEM(entry, 1, Py_BuildValue("i", typenum));
     PyStructSequence_SET_ITEM(entry, 2, Py_BuildValue("i", nbits));
     PyStructSequence_SET_ITEM(entry, 3, Py_BuildValue("i", align));
@@ -77,7 +74,7 @@ PyArray_typeinfo(
     return entry;
 }
 
-PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_typeinforanged(
     char typechar, int typenum, int nbits, int align,
     PyObject *max, PyObject *min, PyTypeObject *type_obj)
@@ -85,11 +82,7 @@ PyArray_typeinforanged(
     PyObject *entry = PyStructSequence_New(&PyArray_typeinforangedType);
     if (entry == NULL)
         return NULL;
-#if defined(NPY_PY3K)
     PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("C", typechar));
-#else
-    PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("c", typechar));
-#endif
     PyStructSequence_SET_ITEM(entry, 1, Py_BuildValue("i", typenum));
     PyStructSequence_SET_ITEM(entry, 2, Py_BuildValue("i", nbits));
     PyStructSequence_SET_ITEM(entry, 3, Py_BuildValue("i", align));
@@ -105,10 +98,36 @@ PyArray_typeinforanged(
     return entry;
 }
 
-void typeinfo_init_structsequences(void)
+/* Python version needed for older PyPy */
+#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM < 0x07020000))
+    static int
+    PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc) {
+        PyStructSequence_InitType(type, desc);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
+NPY_NO_EXPORT int
+typeinfo_init_structsequences(PyObject *multiarray_dict)
 {
-    PyStructSequence_InitType(
-        &PyArray_typeinfoType, &typeinfo_desc);
-    PyStructSequence_InitType(
-        &PyArray_typeinforangedType, &typeinforanged_desc);
+    if (PyStructSequence_InitType2(
+            &PyArray_typeinfoType, &typeinfo_desc) < 0) {
+        return -1;
+    }
+    if (PyStructSequence_InitType2(
+            &PyArray_typeinforangedType, &typeinforanged_desc) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(multiarray_dict,
+            "typeinfo", (PyObject *)&PyArray_typeinfoType) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(multiarray_dict,
+            "typeinforanged", (PyObject *)&PyArray_typeinforangedType) < 0) {
+        return -1;
+    }
+    return 0;
 }

@@ -1,50 +1,45 @@
 """ Test functions for limits module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
-from numpy.testing import (
-    run_module_suite, assert_equal, assert_, assert_raises
-)
-from numpy.core.getlimits import (_discovered_machar, _float16_ma, _float32_ma,
-                                  _float64_ma, _float128_ma, _float80_ma)
+from numpy.testing import assert_equal, assert_, assert_raises
+from numpy.core.getlimits import _discovered_machar, _float_ma
 
 ##################################################
 
-class TestPythonFloat(object):
+class TestPythonFloat:
     def test_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
         assert_equal(id(ftype), id(ftype2))
 
-class TestHalf(object):
+class TestHalf:
     def test_singleton(self):
         ftype = finfo(half)
         ftype2 = finfo(half)
         assert_equal(id(ftype), id(ftype2))
 
-class TestSingle(object):
+class TestSingle:
     def test_singleton(self):
         ftype = finfo(single)
         ftype2 = finfo(single)
         assert_equal(id(ftype), id(ftype2))
 
-class TestDouble(object):
+class TestDouble:
     def test_singleton(self):
         ftype = finfo(double)
         ftype2 = finfo(double)
         assert_equal(id(ftype), id(ftype2))
 
-class TestLongdouble(object):
+class TestLongdouble:
     def test_singleton(self):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype), id(ftype2))
 
-class TestFinfo(object):
+class TestFinfo:
     def test_basic(self):
         dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
                        [np.float16, np.float32, np.float64, np.complex64,
@@ -57,7 +52,7 @@ class TestFinfo(object):
                              getattr(finfo(dt2), attr), attr)
         assert_raises(ValueError, finfo, 'i4')
 
-class TestIinfo(object):
+class TestIinfo:
     def test_basic(self):
         dts = list(zip(['i1', 'i2', 'i4', 'i8',
                    'u1', 'u2', 'u4', 'u8'],
@@ -74,7 +69,7 @@ class TestIinfo(object):
         for T in types:
             assert_equal(iinfo(T).max, T(-1))
 
-class TestRepr(object):
+class TestRepr:
     def test_iinfo_repr(self):
         expected = "iinfo(min=-32768, max=32767, dtype=int16)"
         assert_equal(repr(np.iinfo(np.int16)), expected)
@@ -101,9 +96,9 @@ def assert_ma_equal(discovered, ma_like):
 
 def test_known_types():
     # Test we are correctly compiling parameters for known types
-    for ftype, ma_like in ((np.float16, _float16_ma),
-                           (np.float32, _float32_ma),
-                           (np.float64, _float64_ma)):
+    for ftype, ma_like in ((np.float16, _float_ma[16]),
+                           (np.float32, _float_ma[32]),
+                           (np.float64, _float_ma[64])):
         assert_ma_equal(_discovered_machar(ftype), ma_like)
     # Suppress warning for broken discovery of double double on PPC
     with np.errstate(all='ignore'):
@@ -111,10 +106,10 @@ def test_known_types():
     bytes = np.dtype(np.longdouble).itemsize
     if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
         # 80-bit extended precision
-        assert_ma_equal(ld_ma, _float80_ma)
+        assert_ma_equal(ld_ma, _float_ma[80])
     elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
         # IEE 754 128-bit
-        assert_ma_equal(ld_ma, _float128_ma)
+        assert_ma_equal(ld_ma, _float_ma[128])
 
 
 def test_plausible_finfo():
@@ -124,7 +119,3 @@ def test_plausible_finfo():
         assert_(info.nmant > 1)
         assert_(info.minexp < -1)
         assert_(info.maxexp > 1)
-
-
-if __name__ == "__main__":
-    run_module_suite()

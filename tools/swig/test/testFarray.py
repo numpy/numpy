@@ -1,6 +1,4 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
 from   distutils.util import get_platform
 import os
@@ -15,7 +13,7 @@ else:          BadListError = ValueError
 
 # Add the distutils-generated build directory to the python search path and then
 # import the extension module
-libDir = "lib.%s-%s" % (get_platform(), sys.version[:3])
+libDir = "lib.{}-{}.{}".format(get_platform(), *sys.version_info[:2])
 sys.path.insert(0, os.path.join("build", libDir))
 import Farray
 

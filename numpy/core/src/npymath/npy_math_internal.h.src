@@ -654,7 +654,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     }
     else {
         /* if mod is zero ensure correct sign */
-        mod = (b > 0) ? 0.0@c@ : -0.0@c@;
+        mod = npy_copysign@c@(0, b);
     }
 
     /* snap quotient to nearest integral value */
@@ -665,7 +665,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     }
     else {
         /* if div is zero ensure correct sign */
-        floordiv = (a / b > 0) ?  0.0@c@ : -0.0@c@;
+        floordiv = npy_copysign@c@(0, a/b);
     }
 
     *modulus = mod;
@@ -715,4 +715,45 @@ npy_@func@@c@(@type@ a, @type@ b)
 {
     return npy_@func@u@c@(a < 0 ? -a : a, b < 0 ? -b : b);
 }
+/**end repeat**/
+
+/* Unlike LCM and GCD, we need byte and short variants for the shift operators,
+ * since the result is dependent on the width of the type
+ */
+/**begin repeat
+ *
+ * #type = byte, short, int, long, longlong#
+ * #c = hh,h,,l,ll#
+ */
+/**begin repeat1
+ *
+ * #u         = u,#
+ * #is_signed = 0,1#
+ */
+NPY_INPLACE npy_@u@@type@
+npy_lshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
+{
+    if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
+        return a << b;
+    }
+    else {
+        return 0;
+    }
+}
+NPY_INPLACE npy_@u@@type@
+npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
+{
+    if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
+        return a >> b;
+    }
+#if @is_signed@
+    else if (a < 0) {
+        return (npy_@u@@type@)-1;  /* preserve the sign bit */
+    }
+#endif
+    else {
+        return 0;
+    }
+}
+/**end repeat1**/
 /**end repeat**/

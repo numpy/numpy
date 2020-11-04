@@ -20,27 +20,29 @@ gzip, bz2 and xz are supported.
 Example::
 
     >>> # Create a DataSource, use os.curdir (default) for local storage.
-    >>> ds = datasource.DataSource()
+    >>> from numpy import DataSource
+    >>> ds = DataSource()
     >>>
     >>> # Open a remote file.
     >>> # DataSource downloads the file, stores it locally in:
     >>> #     './www.google.com/index.html'
     >>> # opens the file and returns a file object.
-    >>> fp = ds.open('http://www.google.com/index.html')
+    >>> fp = ds.open('http://www.google.com/') # doctest: +SKIP
     >>>
     >>> # Use the file as you normally would
-    >>> fp.read()
-    >>> fp.close()
+    >>> fp.read() # doctest: +SKIP
+    >>> fp.close() # doctest: +SKIP
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
-import sys
 import shutil
 import io
 
+from numpy.core.overrides import set_module
+
+
 _open = open
+
 
 def _check_mode(mode, encoding, newline):
     """Check mode and that encoding and newline are compatible.
@@ -65,75 +67,12 @@ def _check_mode(mode, encoding, newline):
             raise ValueError("Argument 'newline' not supported in binary mode")
 
 
-def _python2_bz2open(fn, mode, encoding, newline):
-    """Wrapper to open bz2 in text mode.
-
-    Parameters
-    ----------
-    fn : str
-        File name
-    mode : {'r', 'w'}
-        File mode. Note that bz2 Text files are not supported.
-    encoding : str
-        Ignored, text bz2 files not supported in Python2.
-    newline : str
-        Ignored, text bz2 files not supported in Python2.
-    """
-    import bz2
-
-    _check_mode(mode, encoding, newline)
-
-    if "t" in mode:
-        # BZ2File is missing necessary functions for TextIOWrapper
-        raise ValueError("bz2 text files not supported in python2")
-    else:
-        return bz2.BZ2File(fn, mode)
-
-def _python2_gzipopen(fn, mode, encoding, newline):
-    """ Wrapper to open gzip in text mode.
-
-    Parameters
-    ----------
-    fn : str, bytes, file
-        File path or opened file.
-    mode : str
-        File mode. The actual files are opened as binary, but will decoded
-        using the specified `encoding` and `newline`.
-    encoding : str
-        Encoding to be used when reading/writing as text.
-    newline : str
-        Newline to be used when reading/writing as text.
-
-    """
-    import gzip
-    # gzip is lacking read1 needed for TextIOWrapper
-    class GzipWrap(gzip.GzipFile):
-        def read1(self, n):
-            return self.read(n)
-
-    _check_mode(mode, encoding, newline)
-
-    gz_mode = mode.replace("t", "")
-
-    if isinstance(fn, (str, bytes)):
-        binary_file = GzipWrap(fn, gz_mode)
-    elif hasattr(fn, "read") or hasattr(fn, "write"):
-        binary_file = GzipWrap(None, gz_mode, fileobj=fn)
-    else:
-        raise TypeError("filename must be a str or bytes object, or a file")
-
-    if "t" in mode:
-        return io.TextIOWrapper(binary_file, encoding, newline=newline)
-    else:
-        return binary_file
-
-
 # Using a class instead of a module-level dictionary
 # to reduce the initial 'import numpy' overhead by
 # deferring the import of lzma, bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
-class _FileOpeners(object):
+class _FileOpeners:
     """
     Container for different methods to open (un-)compressed files.
 
@@ -150,6 +89,7 @@ class _FileOpeners(object):
 
     Examples
     --------
+    >>> import gzip
     >>> np.lib._datasource._file_openers.keys()
     [None, '.bz2', '.gz', '.xz', '.lzma']
     >>> np.lib._datasource._file_openers['.gz'] is gzip.open
@@ -167,19 +107,13 @@ class _FileOpeners(object):
 
         try:
             import bz2
-            if sys.version_info[0] >= 3:
-                self._file_openers[".bz2"] = bz2.open
-            else:
-                self._file_openers[".bz2"] = _python2_bz2open
+            self._file_openers[".bz2"] = bz2.open
         except ImportError:
             pass
 
         try:
             import gzip
-            if sys.version_info[0] >= 3:
-                self._file_openers[".gz"] = gzip.open
-            else:
-                self._file_openers[".gz"] = _python2_gzipopen
+            self._file_openers[".gz"] = gzip.open
         except ImportError:
             pass
 
@@ -260,7 +194,8 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-class DataSource (object):
+@set_module('numpy')
+class DataSource:
     """
     DataSource(destpath='.')
 
@@ -283,7 +218,7 @@ class DataSource (object):
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = DataSource()
+        >>> repos = np.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -295,17 +230,17 @@ class DataSource (object):
     --------
     ::
 
-        >>> ds = DataSource('/home/guido')
-        >>> urlname = 'http://www.google.com/index.html'
-        >>> gfile = ds.open('http://www.google.com/index.html')  # remote file
+        >>> ds = np.DataSource('/home/guido')
+        >>> urlname = 'http://www.google.com/'
+        >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
-        '/home/guido/www.google.com/site/index.html'
+        '/home/guido/www.google.com/index.html'
 
-        >>> ds = DataSource(None)  # use with temporary file
+        >>> ds = np.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')
-        '/tmp/tmpy4pgsP/home/guido/foobar.txt'
+        '/tmp/.../home/guido/foobar.txt'
 
     """
 
@@ -321,7 +256,7 @@ class DataSource (object):
 
     def __del__(self):
         # Remove temp directories
-        if self._istmpdest:
+        if hasattr(self, '_istmpdest') and self._istmpdest:
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
@@ -367,10 +302,7 @@ class DataSource (object):
         """Test if path is a net location.  Tests the scheme and netloc."""
 
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # BUG : URLs require a scheme string ('http://') to be used.
         #       www.google.com will fail.
@@ -387,14 +319,10 @@ class DataSource (object):
         Creates a copy of the file in the datasource cache.
 
         """
-        # We import these here because importing urllib2 is slow and
+        # We import these here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         upath = self.abspath(path)
 
@@ -404,16 +332,9 @@ class DataSource (object):
 
         # TODO: Doesn't handle compressed files!
         if self._isurl(path):
-            try:
-                openedurl = urlopen(path)
-                f = _open(upath, 'wb')
-                try:
+            with urlopen(path) as openedurl:
+                with _open(upath, 'wb') as f:
                     shutil.copyfileobj(openedurl, f)
-                finally:
-                    f.close()
-                    openedurl.close()
-            except URLError:
-                raise URLError("URL not found: %s" % path)
         else:
             shutil.copyfile(path, upath)
         return upath
@@ -473,10 +394,7 @@ class DataSource (object):
 
         """
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # TODO:  This should be more robust.  Handles case where path includes
         #        the destpath, but not other sub-paths. Failing case:
@@ -538,18 +456,15 @@ class DataSource (object):
         is accessible if it exists in either location.
 
         """
-        # We import this here because importing urllib2 is slow and
-        # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
 
-        # Test local path
+        # First test for local path
         if os.path.exists(path):
             return True
+
+        # We import this here because importing urllib is slow and
+        # a significant fraction of numpy's total import time.
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         # Test cached url
         upath = self.abspath(path)

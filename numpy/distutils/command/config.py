@@ -2,11 +2,12 @@
 # try_compile call. try_run works but is untested for most of Fortran
 # compilers (they must define linker_exe first).
 # Pearu Peterson
-from __future__ import division, absolute_import, print_function
-
-import os, signal
-import warnings
+import os
+import signal
+import subprocess
 import sys
+import textwrap
+import warnings
 
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
@@ -14,14 +15,15 @@ from distutils import log
 from distutils.file_util import copy_file
 from distutils.ccompiler import CompileError, LinkError
 import distutils
-from numpy.distutils.exec_command import exec_command
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
+                                              check_gcc_function_attribute_with_intrinsics,
                                               check_gcc_variable_attribute,
+                                              check_gcc_version_at_least,
                                               check_inline,
                                               check_restrict,
-                                              check_compiler_gcc4)
-from numpy.distutils.compat import get_exception
+                                              check_compiler_gcc)
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -49,20 +51,19 @@ class config(old_config):
             if not self.compiler.initialized:
                 try:
                     self.compiler.initialize()
-                except IOError:
-                    e = get_exception()
-                    msg = """\
-Could not initialize compiler instance: do you have Visual Studio
-installed?  If you are trying to build with MinGW, please use "python setup.py
-build -c mingw32" instead.  If you have Visual Studio installed, check it is
-correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
-VS 2010 for >= 3.3).
+                except IOError as e:
+                    msg = textwrap.dedent("""\
+                        Could not initialize compiler instance: do you have Visual Studio
+                        installed?  If you are trying to build with MinGW, please use "python setup.py
+                        build -c mingw32" instead.  If you have Visual Studio installed, check it is
+                        correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
+                        VS 2010 for >= 3.3).
 
-Original exception was: %s, and the Compiler class was %s
-============================================================================""" \
+                        Original exception was: %s, and the Compiler class was %s
+                        ============================================================================""") \
                         % (e, self.compiler.__class__.__name__)
-                    print ("""\
-============================================================================""")
+                    print(textwrap.dedent("""\
+                        ============================================================================"""))
                     raise distutils.errors.DistutilsPlatformError(msg)
 
             # After MSVC is initialized, add an explicit /MANIFEST to linker
@@ -93,16 +94,20 @@ Original exception was: %s, and the Compiler class was %s
             self.compiler = self.fcompiler
         try:
             ret = mth(*((self,)+args))
-        except (DistutilsExecError, CompileError):
-            msg = str(get_exception())
+        except (DistutilsExecError, CompileError) as e:
+            str(e)
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler
         return ret
 
     def _compile (self, body, headers, include_dirs, lang):
-        return self._wrap_method(old_config._compile, lang,
-                                 (body, headers, include_dirs, lang))
+        src, obj = self._wrap_method(old_config._compile, lang,
+                                     (body, headers, include_dirs, lang))
+        # _compile in unixcompiler.py sometimes creates .d dependency files.
+        # Clean them up.
+        self.temp_files.append(obj + '.d')
+        return src, obj
 
     def _link (self, body,
                headers, include_dirs,
@@ -117,9 +122,13 @@ Original exception was: %s, and the Compiler class was %s
                         # correct path when compiling in Cygwin but with
                         # normal Win Python
                         if d.startswith('/usr/lib'):
-                            s, o = exec_command(['cygpath', '-w', d],
-                                               use_tee=False)
-                            if not s: d = o
+                            try:
+                                d = subprocess.check_output(['cygpath',
+                                                             '-w', d])
+                            except (OSError, subprocess.CalledProcessError):
+                                pass
+                            else:
+                                d = filepath_from_subprocess_output(d)
                         library_dirs.append(d)
                     for libname in self.fcompiler.libraries or []:
                         if libname not in libraries:
@@ -163,31 +172,31 @@ Original exception was: %s, and the Compiler class was %s
     def check_decl(self, symbol,
                    headers=None, include_dirs=None):
         self._check_compiler()
-        body = """
-int main(void)
-{
-#ifndef %s
-    (void) %s;
-#endif
-    ;
-    return 0;
-}""" % (symbol, symbol)
+        body = textwrap.dedent("""
+            int main(void)
+            {
+            #ifndef %s
+                (void) %s;
+            #endif
+                ;
+                return 0;
+            }""") % (symbol, symbol)
 
         return self.try_compile(body, headers, include_dirs)
 
     def check_macro_true(self, symbol,
                          headers=None, include_dirs=None):
         self._check_compiler()
-        body = """
-int main(void)
-{
-#if %s
-#else
-#error false or undefined macro
-#endif
-    ;
-    return 0;
-}""" % (symbol,)
+        body = textwrap.dedent("""
+            int main(void)
+            {
+            #if %s
+            #else
+            #error false or undefined macro
+            #endif
+                ;
+                return 0;
+            }""") % (symbol,)
 
         return self.try_compile(body, headers, include_dirs)
 
@@ -198,14 +207,14 @@ int main(void)
         self._check_compiler()
 
         # First check the type can be compiled
-        body = r"""
-int main(void) {
-  if ((%(name)s *) 0)
-    return 0;
-  if (sizeof (%(name)s))
-    return 0;
-}
-""" % {'name': type_name}
+        body = textwrap.dedent(r"""
+            int main(void) {
+              if ((%(name)s *) 0)
+                return 0;
+              if (sizeof (%(name)s))
+                return 0;
+            }
+            """) % {'name': type_name}
 
         st = False
         try:
@@ -225,33 +234,33 @@ int main(void) {
         self._check_compiler()
 
         # First check the type can be compiled
-        body = r"""
-typedef %(type)s npy_check_sizeof_type;
-int main (void)
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
-    test_array [0] = 0
+        body = textwrap.dedent(r"""
+            typedef %(type)s npy_check_sizeof_type;
+            int main (void)
+            {
+                static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
+                test_array [0] = 0
 
-    ;
-    return 0;
-}
-"""
+                ;
+                return 0;
+            }
+            """)
         self._compile(body % {'type': type_name},
                 headers, include_dirs, 'c')
         self._clean()
 
         if expected:
-            body = r"""
-typedef %(type)s npy_check_sizeof_type;
-int main (void)
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
-    test_array [0] = 0
+            body = textwrap.dedent(r"""
+                typedef %(type)s npy_check_sizeof_type;
+                int main (void)
+                {
+                    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
+                    test_array [0] = 0
 
-    ;
-    return 0;
-}
-"""
+                    ;
+                    return 0;
+                }
+                """)
             for size in expected:
                 try:
                     self._compile(body % {'type': type_name, 'size': size},
@@ -262,17 +271,17 @@ int main (void)
                     pass
 
         # this fails to *compile* if size > sizeof(type)
-        body = r"""
-typedef %(type)s npy_check_sizeof_type;
-int main (void)
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
-    test_array [0] = 0
+        body = textwrap.dedent(r"""
+            typedef %(type)s npy_check_sizeof_type;
+            int main (void)
+            {
+                static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
+                test_array [0] = 0
 
-    ;
-    return 0;
-}
-"""
+                ;
+                return 0;
+            }
+            """)
 
         # The principle is simple: we first find low and high bounds of size
         # for the type, where low/high are looked up on a log scale. Then, we
@@ -408,15 +417,25 @@ int main (void)
         otherwise."""
         return check_restrict(self)
 
-    def check_compiler_gcc4(self):
-        """Return True if the C compiler is gcc >= 4."""
-        return check_compiler_gcc4(self)
+    def check_compiler_gcc(self):
+        """Return True if the C compiler is gcc"""
+        return check_compiler_gcc(self)
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
 
+    def check_gcc_function_attribute_with_intrinsics(self, attribute, name,
+                                                     code, include):
+        return check_gcc_function_attribute_with_intrinsics(self, attribute,
+                                                            name, code, include)
+
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
+
+    def check_gcc_version_at_least(self, major, minor=0, patchlevel=0):
+        """Return True if the GCC version is greater than or equal to the
+        specified version."""
+        return check_gcc_version_at_least(self, major, minor, patchlevel)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
@@ -426,13 +445,12 @@ int main (void)
         of the program and its output.
         """
         # 2008-11-16, RemoveMe
-        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
-                      "Usage of get_output is deprecated: please do not \n" \
-                      "use it anymore, and avoid configuration checks \n" \
-                      "involving running executable on the target machine.\n" \
+        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n"
+                      "Usage of get_output is deprecated: please do not \n"
+                      "use it anymore, and avoid configuration checks \n"
+                      "involving running executable on the target machine.\n"
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
                       DeprecationWarning, stacklevel=2)
-        from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
         exitcode, output = 255, ''
         try:
@@ -446,8 +464,24 @@ int main (void)
                 grabber.restore()
                 raise
             exe = os.path.join('.', exe)
-            exitstatus, output = exec_command(exe, execute_in='.',
-                                              use_tee=use_tee)
+            try:
+                # specify cwd arg for consistency with
+                # historic usage pattern of exec_command()
+                # also, note that exe appears to be a string,
+                # which exec_command() handled, but we now
+                # use a list for check_output() -- this assumes
+                # that exe is always a single command
+                output = subprocess.check_output([exe], cwd='.')
+            except subprocess.CalledProcessError as exc:
+                exitstatus = exc.returncode
+                output = ''
+            except OSError:
+                # preserve the EnvironmentError exit status
+                # used historically in exec_command()
+                exitstatus = 127
+                output = ''
+            else:
+                output = filepath_from_subprocess_output(output)
             if hasattr(os, 'WEXITSTATUS'):
                 exitcode = os.WEXITSTATUS(exitstatus)
                 if os.WIFSIGNALED(exitstatus):
@@ -464,7 +498,7 @@ int main (void)
         self._clean()
         return exitcode, output
 
-class GrabStdout(object):
+class GrabStdout:
 
     def __init__(self):
         self.sys_stdout = sys.stdout

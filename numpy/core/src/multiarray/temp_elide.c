@@ -62,12 +62,8 @@
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
 
-#if PY_VERSION_HEX >= 0x03060000
 /* TODO can pep523 be used to somehow? */
 #define PYFRAMEEVAL_FUNC "_PyEval_EvalFrameDefault"
-#else
-#define PYFRAMEEVAL_FUNC "PyEval_EvalFrameEx"
-#endif
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
  * becomes less than speed gained by in-place operations. Depends on stack depth
@@ -166,7 +162,7 @@ check_callers(int * cannot)
             return 0;
         }
         /* get multiarray base address */
-        if (dladdr(&PyArray_SetNumericOps, &info)) {
+        if (dladdr(&PyArray_INCREF, &info)) {
             pos_ma_start = info.dli_fbase;
             pos_ma_end = info.dli_fbase;
         }

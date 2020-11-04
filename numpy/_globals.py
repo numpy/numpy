@@ -15,9 +15,6 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
-from __future__ import division, absolute_import, print_function
-
-
 __ALL__ = [
     'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
     ]
@@ -39,7 +36,9 @@ class ModuleDeprecationWarning(DeprecationWarning):
     nose tester will let pass without making tests fail.
 
     """
-    pass
+
+
+ModuleDeprecationWarning.__module__ = 'numpy'
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -50,9 +49,12 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
-    pass
 
-class _NoValueType(object):
+
+VisibleDeprecationWarning.__module__ = 'numpy'
+
+
+class _NoValueType:
     """Special keyword value.
 
     The instance of this class may be used as the default value assigned to a
@@ -72,5 +74,6 @@ class _NoValueType(object):
 
     def __repr__(self):
         return "<no value>"
+
 
 _NoValue = _NoValueType()

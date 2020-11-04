@@ -5,8 +5,6 @@
 :version: $Id: testutils.py 3529 2007-11-13 08:01:14Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
-
 import operator
 
 import numpy as np
@@ -14,8 +12,8 @@ from numpy import ndarray, float_
 import numpy.core.umath as umath
 import numpy.testing
 from numpy.testing import (
-    TestCase, assert_, assert_allclose, assert_array_almost_equal_nulp,
-    assert_raises, build_err_msg, run_module_suite
+    assert_, assert_allclose, assert_array_almost_equal_nulp,
+    assert_raises, build_err_msg
     )
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
@@ -31,9 +29,10 @@ __all__masked = [
 # have mistakenly included them from this file. SciPy is one. That is
 # unfortunate, as some of these functions are not intended to work with
 # masked arrays. But there was no way to tell before.
+from unittest import TestCase
 __some__from_testing = [
-    'TestCase', 'assert_', 'assert_allclose',
-    'assert_array_almost_equal_nulp', 'assert_raises', 'run_module_suite',
+    'TestCase', 'assert_', 'assert_allclose', 'assert_array_almost_equal_nulp',
+    'assert_raises'
     ]
 
 __all__ = __all__masked + __some__from_testing
@@ -87,7 +86,7 @@ def _assert_equal_on_sequences(actual, desired, err_msg=''):
     """
     assert_equal(len(actual), len(desired), err_msg)
     for k in range(len(desired)):
-        assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg))
+        assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
     return
 
 
@@ -118,8 +117,8 @@ def assert_equal(actual, desired, err_msg=''):
         assert_equal(len(actual), len(desired), err_msg)
         for k, i in desired.items():
             if k not in actual:
-                raise AssertionError("%s not in %s" % (k, actual))
-            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))
+                raise AssertionError(f"{k} not in {actual}")
+            assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
         return
     # Case #2: lists .....
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
@@ -157,12 +156,12 @@ def fail_if_equal(actual, desired, err_msg='',):
         for k, i in desired.items():
             if k not in actual:
                 raise AssertionError(repr(k))
-            fail_if_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))
+            fail_if_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         fail_if_equal(len(actual), len(desired), err_msg)
         for k in range(len(desired)):
-            fail_if_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg))
+            fail_if_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
         return
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):
         return fail_if_array_equal(actual, desired, err_msg)

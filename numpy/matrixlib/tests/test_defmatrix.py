@@ -1,17 +1,15 @@
-from __future__ import division, absolute_import, print_function
-
-import collections
+import collections.abc
 
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal, assert_raises
-)
-from numpy.matrixlib.defmatrix import matrix_power
+    assert_, assert_equal, assert_almost_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
+from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
-class TestCtor(object):
+class TestCtor:
     def test_basic(self):
         A = np.array([[1, 2], [3, 4]])
         mA = matrix(A)
@@ -58,7 +56,7 @@ class TestCtor(object):
         assert_(np.all(b2 == mixresult))
 
 
-class TestProperties(object):
+class TestProperties:
     def test_sum(self):
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
@@ -191,7 +189,7 @@ class TestProperties(object):
         B = matrix([[True], [True], [False]])
         assert_array_equal(A, B)
 
-class TestCasting(object):
+class TestCasting:
     def test_basic(self):
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
@@ -210,7 +208,7 @@ class TestCasting(object):
         assert_(np.all(mA != mB))
 
 
-class TestAlgebra(object):
+class TestAlgebra:
     def test_basic(self):
         import numpy.linalg as linalg
 
@@ -261,23 +259,15 @@ class TestAlgebra(object):
                     [3., 4.]])
 
         # __rpow__
-        try:
+        with assert_raises(TypeError):
             1.0**A
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__rpow__ doesn't raise a TypeError")
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
-        try:
+        with assert_raises(TypeError):
             A*object()
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
-                      "a TypeError")
 
-class TestMatrixReturn(object):
+
+class TestMatrixReturn:
     def test_instance_methods(self):
         a = matrix([1.0], dtype='f8')
         methodargs = {
@@ -302,7 +292,7 @@ class TestMatrixReturn(object):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
-            if isinstance(f, collections.Callable):
+            if isinstance(f, collections.abc.Callable):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
@@ -319,7 +309,7 @@ class TestMatrixReturn(object):
         assert_(type(d) is np.ndarray)
 
 
-class TestIndexing(object):
+class TestIndexing:
     def test_basic(self):
         x = asmatrix(np.zeros((3, 2), float))
         y = np.zeros((3, 1), float)
@@ -328,7 +318,7 @@ class TestIndexing(object):
         assert_equal(x, [[0, 1], [0, 0], [0, 0]])
 
 
-class TestNewScalarIndexing(object):
+class TestNewScalarIndexing:
     a = matrix([[1, 2], [3, 4]])
 
     def test_dimesions(self):
@@ -395,7 +385,7 @@ class TestNewScalarIndexing(object):
         assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
 
 
-class TestPower(object):
+class TestPower:
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
         assert_(type(matrix_power(a, 2)) is np.ndarray)
@@ -406,7 +396,7 @@ class TestPower(object):
         assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])
 
 
-class TestShape(object):
+class TestShape:
 
     a = np.array([[1], [2]])
     m = matrix([[1], [2]])
@@ -454,6 +444,10 @@ class TestShape(object):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
 
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_expand_dims_matrix(self):
+        # matrices are always 2d - so expand_dims only makes sense when the
+        # type is changed away from matrix.
+        a = np.arange(10).reshape((2, 5)).view(np.matrix)
+        expanded = np.expand_dims(a, axis=1)
+        assert_equal(expanded.ndim, 3)
+        assert_(not isinstance(expanded, np.matrix))

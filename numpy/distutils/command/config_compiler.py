@@ -1,13 +1,14 @@
-from __future__ import division, absolute_import, print_function
-
 from distutils.core import Command
 from numpy.distutils import log
 
 #XXX: Linker flags
 
-def show_fortran_compilers(_cache=[]):
-    # Using cache to prevent infinite recursion
-    if _cache: return
+def show_fortran_compilers(_cache=None):
+    # Using cache to prevent infinite recursion.
+    if _cache:
+        return
+    elif _cache is None:
+        _cache = []
     _cache.append(1)
     from numpy.distutils.fcompiler import show_fcompilers
     import distutils.core

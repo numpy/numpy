@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-Usage: make_lite.py <wrapped_routines_file> <lapack_dir> <output_dir>
+Usage: make_lite.py <wrapped_routines_file> <lapack_dir>
 
 Typical invocation:
 
@@ -11,22 +11,16 @@ Requires the following to be on the path:
  * patch
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
+import re
 import subprocess
 import shutil
 
 import fortran
 import clapack_scrub
 
-PY2 = sys.version_info < (3, 0)
-
-if PY2:
-    from distutils.spawn import find_executable as which
-else:
-    from shutil import which
+from shutil import which
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
@@ -35,11 +29,14 @@ F2C_ARGS = ['-A', '-Nx800']
 
 # The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
-HEADER = '''\
+HEADER_BLURB = '''\
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
+'''
+
+HEADER = HEADER_BLURB + '''\
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -65,7 +62,7 @@ them.
 #endif
 '''
 
-class FortranRoutine(object):
+class FortranRoutine:
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
@@ -84,7 +81,7 @@ class FortranRoutine(object):
         return self._dependencies
 
     def __repr__(self):
-        return "FortranRoutine({!r}, filename={!r})".format(self.name, self.filename)
+        return f'FortranRoutine({self.name!r}, filename={self.filename!r})'
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
@@ -97,7 +94,7 @@ class UnknownFortranRoutine(FortranRoutine):
     def dependencies(self):
         return []
 
-class FortranLibrary(object):
+class FortranLibrary:
     """Container for a bunch of Fortran routines.
     """
     def __init__(self, src_dirs):
@@ -196,7 +193,7 @@ class LapackLibrary(FortranLibrary):
 def printRoutineNames(desc, routines):
     print(desc)
     for r in routines:
-        print('\t%s' % r.name)
+        print(f'\t{r.name}')
 
 def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     blas_src_dir = os.path.join(lapack_dir, 'BLAS', 'SRC')
@@ -246,7 +243,7 @@ def dumpRoutineNames(library, output_dir):
         with open(filename, 'w') as fo:
             for r in routines:
                 deps = r.dependencies()
-                fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
+                fo.write(f"{r.name}: {' '.join(deps)}\n")
 
 def concatenateRoutines(routines, output_file):
     with open(output_file, 'w') as output_fo:
@@ -281,6 +278,52 @@ def ensure_executable(name):
     except:
         raise SystemExit(name + ' not found')
 
+def create_name_header(output_dir):
+    routine_re = re.compile(r'^      (subroutine|.* function)\s+(\w+)\(.*$',
+                            re.I)
+    extern_re = re.compile(r'^extern [a-z]+ ([a-z0-9_]+)\(.*$')
+
+    # BLAS/LAPACK symbols
+    symbols = set(['xerbla'])
+    for fn in os.listdir(output_dir):
+        fn = os.path.join(output_dir, fn)
+
+        if not fn.endswith('.f'):
+            continue
+
+        with open(fn, 'r') as f:
+            for line in f:
+                m = routine_re.match(line)
+                if m:
+                    symbols.add(m.group(2).lower())
+
+    # f2c symbols
+    f2c_symbols = set()
+    with open('f2c.h', 'r') as f:
+        for line in f:
+            m = extern_re.match(line)
+            if m:
+                f2c_symbols.add(m.group(1))
+
+    with open(os.path.join(output_dir, 'lapack_lite_names.h'), 'w') as f:
+        f.write(HEADER_BLURB)
+        f.write(
+            "/*\n"
+            " * This file renames all BLAS/LAPACK and f2c symbols to avoid\n"
+            " * dynamic symbol name conflicts, in cases where e.g.\n"
+            " * integer sizes do not match with 'standard' ABI.\n"
+            " */\n")
+
+        # Rename BLAS/LAPACK symbols
+        for name in sorted(symbols):
+            f.write(f'#define {name}_ BLAS_FUNC({name})\n')
+
+        # Rename also symbols that f2c exports itself
+        f.write("\n"
+                "/* Symbols exported by f2c.c */\n")
+        for name in sorted(f2c_symbols):
+            f.write(f'#define {name} numpy_lapack_lite_{name}\n')
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
@@ -305,9 +348,9 @@ def main():
     dumpRoutineNames(library, output_dir)
 
     for typename in types:
-        fortran_file = os.path.join(output_dir, 'f2c_%s.f' % typename)
+        fortran_file = os.path.join(output_dir, f'f2c_{typename}.f')
         c_file = fortran_file[:-2] + '.c'
-        print('creating %s ...'  % c_file)
+        print(f'creating {c_file} ...')
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
 
@@ -315,11 +358,11 @@ def main():
         patch_file = os.path.basename(fortran_file) + '.patch'
         if os.path.exists(patch_file):
             subprocess.check_call(['patch', '-u', fortran_file, patch_file])
-            print("Patched {}".format(fortran_file))
+            print(f'Patched {fortran_file}')
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
-            print('f2c failed on %s' % fortran_file)
+            print(f'f2c failed on {fortran_file}')
             break
         scrubF2CSource(c_file)
 
@@ -330,12 +373,14 @@ def main():
 
         print()
 
+    create_name_header(output_dir)
+
     for fname in os.listdir(output_dir):
-        if fname.endswith('.c'):
+        if fname.endswith('.c') or fname == 'lapack_lite_names.h':
             print('Copying ' + fname)
             shutil.copy(
                 os.path.join(output_dir, fname),
-                os.path.dirname(__file__),
+                os.path.abspath(os.path.dirname(__file__)),
             )
 
 

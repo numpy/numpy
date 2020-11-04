@@ -17,8 +17,8 @@ Creating a new universal function
 Before reading this, it may help to familiarize yourself with the basics
 of C extensions for Python by reading/skimming the tutorials in Section 1
 of `Extending and Embedding the Python Interpreter
-<http://docs.python.org/extending/index.html>`_ and in `How to extend
-NumPy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
+<https://docs.python.org/extending/index.html>`_ and in :doc:`How to extend
+NumPy <c-info.how-to-extend>`
 
 The umath module is a computer-generated C-module that creates many
 ufuncs. It provides a great many examples of how to create a universal
@@ -137,7 +137,6 @@ the module.
 
 
         /* This initiates the module using the above definitions. */
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "spam",
@@ -159,17 +158,6 @@ the module.
             }
             return m;
         }
-        #else
-        PyMODINIT_FUNC initspam(void)
-        {
-            PyObject *m;
-
-            m = Py_InitModule("spam", SpamMethods);
-            if (m == NULL) {
-                return;
-            }
-        }
-        #endif
 
 To use the setup.py file, place setup.py and spammodule.c in the same
 folder. Then python setup.py build will build the module to import,
@@ -322,7 +310,6 @@ the primary thing that must be changed to create your own ufunc.
 
         static void *data[1] = {NULL};
 
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -357,30 +344,6 @@ the primary thing that must be changed to create your own ufunc.
 
             return m;
         }
-        #else
-        PyMODINIT_FUNC initnpufunc(void)
-        {
-            PyObject *m, *logit, *d;
-
-
-            m = Py_InitModule("npufunc", LogitMethods);
-            if (m == NULL) {
-                return;
-            }
-
-            import_array();
-            import_umath();
-
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
-                                            PyUFunc_None, "logit",
-                                            "logit_docstring", 0);
-
-            d = PyModule_GetDict(m);
-
-            PyDict_SetItemString(d, "logit", logit);
-            Py_DECREF(logit);
-        }
-        #endif
 
 This is a setup.py file for the above code. As before, the module
 can be build via calling python setup.py build at the command prompt,
@@ -601,7 +564,6 @@ the primary thing that must be changed to create your own ufunc.
                         NPY_LONGDOUBLE, NPY_LONGDOUBLE};
         static void *data[4] = {NULL, NULL, NULL, NULL};
 
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -636,30 +598,6 @@ the primary thing that must be changed to create your own ufunc.
 
             return m;
         }
-        #else
-        PyMODINIT_FUNC initnpufunc(void)
-        {
-            PyObject *m, *logit, *d;
-
-
-            m = Py_InitModule("npufunc", LogitMethods);
-            if (m == NULL) {
-                return;
-            }
-
-            import_array();
-            import_umath();
-
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 4, 1, 1,
-                                            PyUFunc_None, "logit",
-                                            "logit_docstring", 0);
-
-            d = PyModule_GetDict(m);
-
-            PyDict_SetItemString(d, "logit", logit);
-            Py_DECREF(logit);
-        }
-        #endif
 
 This is a setup.py file for the above code. As before, the module
 can be build via calling python setup.py build at the command prompt,
@@ -824,7 +762,6 @@ as well as all other properties of a ufunc.
 
         static void *data[1] = {NULL};
 
-        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -859,30 +796,6 @@ as well as all other properties of a ufunc.
 
             return m;
         }
-        #else
-        PyMODINIT_FUNC initnpufunc(void)
-        {
-            PyObject *m, *logit, *d;
-
-
-            m = Py_InitModule("npufunc", LogitMethods);
-            if (m == NULL) {
-                return;
-            }
-
-            import_array();
-            import_umath();
-
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 2,
-                                            PyUFunc_None, "logit",
-                                            "logit_docstring", 0);
-
-            d = PyModule_GetDict(m);
-
-            PyDict_SetItemString(d, "logit", logit);
-            Py_DECREF(logit);
-        }
-        #endif
 
 
 .. _`sec:NumPy-struct-dtype`:
@@ -893,9 +806,9 @@ Example NumPy ufunc with structured array dtype arguments
 This example shows how to create a ufunc for a structured array dtype.
 For the example we show a trivial ufunc for adding two arrays with dtype
 'u8,u8,u8'. The process is a bit different from the other examples since
-a call to PyUFunc_FromFuncAndData doesn't fully register ufuncs for
+a call to :c:func:`PyUFunc_FromFuncAndData` doesn't fully register ufuncs for
 custom dtypes and structured array dtypes. We need to also call
-PyUFunc_RegisterLoopForDescr to finish setting up the ufunc.
+:c:func:`PyUFunc_RegisterLoopForDescr` to finish setting up the ufunc.
 
 We only give the C code as the setup.py file is exactly the same as
 the setup.py file in `Example NumPy ufunc for one dtype`_, except that
@@ -976,7 +889,6 @@ The C file is given below.
 
         static void *data[1] = {NULL};
 
-        #if defined(NPY_PY3K)
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "struct_ufunc_test",
@@ -988,31 +900,18 @@ The C file is given below.
             NULL,
             NULL
         };
-        #endif
 
-        #if defined(NPY_PY3K)
         PyMODINIT_FUNC PyInit_struct_ufunc_test(void)
-        #else
-        PyMODINIT_FUNC initstruct_ufunc_test(void)
-        #endif
         {
             PyObject *m, *add_triplet, *d;
             PyObject *dtype_dict;
             PyArray_Descr *dtype;
             PyArray_Descr *dtypes[3];
 
-        #if defined(NPY_PY3K)
             m = PyModule_Create(&moduledef);
-        #else
-            m = Py_InitModule("struct_ufunc_test", StructUfuncTestMethods);
-        #endif
 
             if (m == NULL) {
-        #if defined(NPY_PY3K)
                 return NULL;
-        #else
-                return;
-        #endif
             }
 
             import_array();
@@ -1043,136 +942,8 @@ The C file is given below.
 
             PyDict_SetItemString(d, "add_triplet", add_triplet);
             Py_DECREF(add_triplet);
-        #if defined(NPY_PY3K)
             return m;
-        #endif
         }
-
-
-.. _`sec:PyUFunc-spec`:
-
-PyUFunc_FromFuncAndData Specification
-=====================================
-
-What follows is the full specification of PyUFunc_FromFuncAndData, which
-automatically generates a ufunc from a C function with the correct signature.
-
-
-.. c:function:: PyObject *PyUFunc_FromFuncAndData( \
-        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
-        int nin, int nout, int identity, char* name, char* doc, int unused)
-
-    *func*
-
-        A pointer to an array of 1-d functions to use. This array must be at
-        least ntypes long. Each entry in the array must be a
-        ``PyUFuncGenericFunction`` function. This function has the following
-        signature. An example of a valid 1d loop function is also given.
-
-    .. c:function:: void loop1d( \
-            char** args, npy_intp* dimensions, npy_intp* steps, void* data)
-
-        *args*
-
-            An array of pointers to the actual data for the input and output
-            arrays. The input arguments are given first followed by the output
-            arguments.
-
-        *dimensions*
-
-            A pointer to the size of the dimension over which this function is
-            looping.
-
-        *steps*
-
-            A pointer to the number of bytes to jump to get to the
-            next element in this dimension for each of the input and
-            output arguments.
-
-        *data*
-
-            Arbitrary data (extra arguments, function names, *etc.* )
-            that can be stored with the ufunc and will be passed in
-            when it is called.
-
-        .. code-block:: c
-
-            static void
-            double_add(char **args, npy_intp *dimensions, npy_intp *steps,
-               void *extra)
-            {
-                npy_intp i;
-                npy_intp is1 = steps[0], is2 = steps[1];
-                npy_intp os = steps[2], n = dimensions[0];
-                char *i1 = args[0], *i2 = args[1], *op = args[2];
-                for (i = 0; i < n; i++) {
-                    *((double *)op) = *((double *)i1) +
-                                      *((double *)i2);
-                    i1 += is1;
-                    i2 += is2;
-                    op += os;
-                 }
-            }
-
-    *data*
-
-        An array of data. There should be ntypes entries (or NULL) --- one for
-        every loop function defined for this ufunc. This data will be passed
-        in to the 1-d loop. One common use of this data variable is to pass in
-        an actual function to call to compute the result when a generic 1-d
-        loop (e.g. :c:func:`PyUFunc_d_d`) is being used.
-
-    *types*
-
-        An array of type-number signatures (type ``char`` ). This
-        array should be of size (nin+nout)*ntypes and contain the
-        data-types for the corresponding 1-d loop. The inputs should
-        be first followed by the outputs. For example, suppose I have
-        a ufunc that supports 1 integer and 1 double 1-d loop
-        (length-2 func and data arrays) that takes 2 inputs and
-        returns 1 output that is always a complex double, then the
-        types array would be
-
-        .. code-block:: c
-
-            static char types[3] = {NPY_INT, NPY_DOUBLE, NPY_CDOUBLE}
-
-        The bit-width names can also be used (e.g. :c:data:`NPY_INT32`,
-        :c:data:`NPY_COMPLEX128` ) if desired.
-
-    *ntypes*
-
-        The number of data-types supported. This is equal to the number of 1-d
-        loops provided.
-
-    *nin*
-
-        The number of input arguments.
-
-    *nout*
-
-        The number of output arguments.
-
-    *identity*
-
-        Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
-        :c:data:`PyUFunc_None`. This specifies what should be returned when
-        an empty array is passed to the reduce method of the ufunc.
-
-    *name*
-
-        A ``NULL`` -terminated string providing the name of this ufunc
-        (should be the Python name it will be called).
-
-    *doc*
-
-        A documentation string for this ufunc (will be used in generating the
-        response to ``{ufunc_name}.__doc__``). Do not include the function
-        signature or the name as this is generated automatically.
-
-    *unused*
-
-        Unused; kept for compatibility. Just set it to zero.
 
 .. index::
    pair: ufunc; adding new

@@ -1,22 +1,20 @@
-from __future__ import division, absolute_import, print_function
+import pytest
 
 from numpy import array
-from numpy.compat import long
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import assert_, assert_raises
 from . import util
 
 
 class TestReturnComplex(util.F2PyTest):
 
-    def check_function(self, t):
-        tname = t.__doc__.split()[0]
+    def check_function(self, t, tname):
         if tname in ['t0', 't8', 's0', 's8']:
             err = 1e-5
         else:
             err = 0.0
         assert_(abs(t(234j) - 234.0j) <= err)
         assert_(abs(t(234.6) - 234.6) <= err)
-        assert_(abs(t(long(234)) - 234.0) <= err)
+        assert_(abs(t(234) - 234.0) <= err)
         assert_(abs(t(234.6 + 3j) - (234.6 + 3j)) <= err)
         #assert_( abs(t('234')-234.)<=err)
         #assert_( abs(t('234.6')-234.6)<=err)
@@ -102,10 +100,9 @@ cf2py    intent(out) td
        end
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.parametrize('name', 't0,t8,t16,td,s0,s8,s16,sd'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name), name)
 
 
 class TestF90ReturnComplex(TestReturnComplex):
@@ -161,10 +158,6 @@ module f90_return_complex
 end module f90_return_complex
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
-            self.check_function(getattr(self.module.f90_return_complex, name))
-
-if __name__ == "__main__":
-    run_module_suite()
+    @pytest.mark.parametrize('name', 't0,t8,t16,td,s0,s8,s16,sd'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module.f90_return_complex, name), name)

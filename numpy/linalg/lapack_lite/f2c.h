@@ -7,14 +7,20 @@
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
-typedef int integer;
+#include <math.h>
+#include "numpy/npy_common.h"
+#include "npy_cblas.h"
+
+#include "lapack_lite_names.h"
+
+typedef CBLAS_INT integer;
 typedef char *address;
 typedef short int shortint;
 typedef float real;
 typedef double doublereal;
 typedef struct { real r, i; } complex;
 typedef struct { doublereal r, i; } doublecomplex;
-typedef int logical;
+typedef CBLAS_INT logical;
 typedef short int shortlogical;
 typedef char logical1;
 typedef char integer1;
@@ -35,9 +41,9 @@ typedef short flag;
 typedef short ftnlen;
 typedef short ftnint;
 #else
-typedef int flag;
-typedef int ftnlen;
-typedef int ftnint;
+typedef CBLAS_INT flag;
+typedef CBLAS_INT ftnlen;
+typedef CBLAS_INT ftnint;
 #endif
 
 /*external read, write*/
@@ -350,7 +356,7 @@ extern void s_copy(char *, char *, ftnlen, ftnlen);
 extern int s_paus(char *, ftnlen);
 extern integer s_rdfe(cilist *);
 extern integer s_rdue(cilist *);
-extern integer s_rnge(char *, integer, char *, integer);
+extern int s_rnge(char *, int, char *, int);
 extern integer s_rsfe(cilist *);
 extern integer s_rsfi(icilist *);
 extern integer s_rsle(cilist *);
@@ -378,6 +384,9 @@ extern void z_exp(doublecomplex *, doublecomplex *);
 extern void z_log(doublecomplex *, doublecomplex *);
 extern void z_sin(doublecomplex *, doublecomplex *);
 extern void z_sqrt(doublecomplex *, doublecomplex *);
+
+extern double f__cabs(double, double);
+extern double f__cabsf(float, float);
 
 #ifdef __cplusplus
 	}

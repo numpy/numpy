@@ -1,0 +1,4 @@
+The numpy.i file for swig is Python 3 only.
+-------------------------------------------
+Uses of Python 2.7 C-API functions have been updated to Python 3 only. Users
+who need the old version should take it from an older version of NumPy.

@@ -7,20 +7,16 @@ Support code for building Python extensions on Windows.
     # 3. Force windows to use g77
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
+import platform
 import sys
 import subprocess
 import re
+import textwrap
 
 # Overwrite certain distutils.ccompiler functions:
-import numpy.distutils.ccompiler
-
-if sys.version_info[0] < 3:
-    from . import log
-else:
-    from numpy.distutils import log
+import numpy.distutils.ccompiler  # noqa: F401
+from numpy.distutils import log
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)
@@ -29,11 +25,9 @@ else:
 
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
-from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
-from distutils.errors import (DistutilsExecError, CompileError,
-                              UnknownFileError)
+from distutils.errors import UnknownFileError
 from numpy.distutils.misc_util import (msvc_runtime_library,
                                        msvc_runtime_version,
                                        msvc_runtime_major,
@@ -71,11 +65,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            import re
-            p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
-                                 stdout=subprocess.PIPE)
-            out_string = p.stdout.read()
-            p.stdout.close()
+            try:
+                out_string  = subprocess.check_output(['gcc', '-dumpversion'])
+            except (OSError, CalledProcessError):
+                out_string = ""  # ignore failures to match old behavior
             result = re.search(r'(\d+\.\d+)', out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))
@@ -273,21 +266,24 @@ def find_python_dll():
 
     # search in the file system for possible candidates
     major_version, minor_version = tuple(sys.version_info[:2])
-    patterns = ['python%d%d.dll']
-
-    for pat in patterns:
-        dllname = pat % (major_version, minor_version)
-        print("Looking for %s" % dllname)
-        for folder in lib_dirs:
-            dll = os.path.join(folder, dllname)
-            if os.path.exists(dll):
-                return dll
-
+    implementation = platform.python_implementation()
+    if implementation == 'CPython':
+        dllname = f'python{major_version}{minor_version}.dll'
+    elif implementation == 'PyPy':
+        dllname = f'libpypy{major_version}-c.dll'
+    else:
+        dllname = 'Unknown platform {implementation}' 
+    print("Looking for %s" % dllname)
+    for folder in lib_dirs:
+        dll = os.path.join(folder, dllname)
+        if os.path.exists(dll):
+            return dll
+ 
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):
-    st = subprocess.Popen(["objdump.exe", "-p", dll], stdout=subprocess.PIPE)
-    return st.stdout.readlines()
+    st = subprocess.check_output(["objdump.exe", "-p", dll])
+    return st.split(b'\n')
 
 def generate_def(dll, dfile):
     """Given a dll file location,  get all its exported symbols and dump them
@@ -312,15 +308,14 @@ def generate_def(dll, dfile):
     if len(syms) == 0:
         log.warn('No symbols found in %s' % dll)
 
-    d = open(dfile, 'w')
-    d.write('LIBRARY        %s\n' % os.path.basename(dll))
-    d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
-    d.write(';DATA          PRELOAD SINGLE\n')
-    d.write('\nEXPORTS\n')
-    for s in syms:
-        #d.write('@%d    %s\n' % (s[0], s[1]))
-        d.write('%s\n' % s[1])
-    d.close()
+    with open(dfile, 'w') as d:
+        d.write('LIBRARY        %s\n' % os.path.basename(dll))
+        d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
+        d.write(';DATA          PRELOAD SINGLE\n')
+        d.write('\nEXPORTS\n')
+        for s in syms:
+            #d.write('@%d    %s\n' % (s[0], s[1]))
+            d.write('%s\n' % s[1])
 
 def find_dll(dll_name):
 
@@ -473,7 +468,7 @@ def _build_import_library_amd64():
 
     # generate import library from this symbol list
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
-    subprocess.Popen(cmd)
+    subprocess.check_call(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
@@ -507,16 +502,19 @@ def _build_import_library_x86():
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix, 'libs', def_name)
-    nm_cmd = '%s %s' % (lib2def.DEFAULT_NM, lib_file)
-    nm_output = lib2def.getnm(nm_cmd)
+    nm_output = lib2def.getnm(
+            lib2def.DEFAULT_NM + [lib_file], shell=False)
     dlist, flist = lib2def.parse_nm(nm_output)
-    lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, open(def_file, 'w'))
+    with open(def_file, 'w') as fid:
+        lib2def.output_def(dlist, flist, lib2def.DEF_HEADER, fid)
 
     dll_name = find_python_dll ()
-    args = (dll_name, def_file, out_file)
-    cmd = 'dlltool --dllname "%s" --def "%s" --output-lib "%s"' % args
-    status = os.system(cmd)
-    # for now, fail silently
+
+    cmd = ["dlltool",
+           "--dllname", dll_name,
+           "--def", def_file,
+           "--output-lib", out_file]
+    status = subprocess.check_output(cmd)
     if status:
         log.warn('Failed to build import library for gcc. Linking will fail.')
     return
@@ -549,6 +547,8 @@ if sys.platform == 'win32':
         # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0
         # on Windows XP:
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
+        # Python 3.7 uses 1415, but get_build_version returns 140 ??
+        _MSVCRVER_TO_FULLVER['140'] = "14.15.26726.0"
         if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
             major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".", 2)
             _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
@@ -573,21 +573,21 @@ def msvc_manifest_xml(maj, min):
     # embedded in the binary...
     # This template was copied directly from the python 2.6 binary (using
     # strings.exe from mingw on python.exe).
-    template = """\
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-    <security>
-      <requestedPrivileges>
-        <requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel>
-      </requestedPrivileges>
-    </security>
-  </trustInfo>
-  <dependency>
-    <dependentAssembly>
-      <assemblyIdentity type="win32" name="Microsoft.VC%(maj)d%(min)d.CRT" version="%(fullver)s" processorArchitecture="*" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
-    </dependentAssembly>
-  </dependency>
-</assembly>"""
+    template = textwrap.dedent("""\
+        <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+          <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+            <security>
+              <requestedPrivileges>
+                <requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel>
+              </requestedPrivileges>
+            </security>
+          </trustInfo>
+          <dependency>
+            <dependentAssembly>
+              <assemblyIdentity type="win32" name="Microsoft.VC%(maj)d%(min)d.CRT" version="%(fullver)s" processorArchitecture="*" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
+            </dependentAssembly>
+          </dependency>
+        </assembly>""")
 
     return template % {'fullver': fullver, 'maj': maj, 'min': min}
 

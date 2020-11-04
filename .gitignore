@@ -28,6 +28,7 @@ GRTAGS
 GSYMS
 GTAGS
 .cache
+.mypy_cache/
 
 # Compiled source #
 ###################
@@ -74,6 +75,7 @@ doc/cdoc/build
 ./.shelf
 MANIFEST
 .cache
+pip-wheel-metadata
 
 # Paver generated files #
 #########################
@@ -99,6 +101,16 @@ Icon?
 .gdb_history
 ehthumbs.db
 Thumbs.db
+.directory
+
+# pytest generated files #
+##########################
+/.pytest_cache
+
+# doc build generated files #
+#############################
+doc/source/savefig/
+
 
 # Things specific to this project #
 ###################################
@@ -119,6 +131,13 @@ numpy/core/include/numpy/config.h
 numpy/core/include/numpy/multiarray_api.txt
 numpy/core/include/numpy/ufunc_api.txt
 numpy/core/lib/
+numpy/core/src/common/npy_binsearch.h
+numpy/core/src/common/npy_cpu_features.c
+numpy/core/src/common/npy_partition.h
+numpy/core/src/common/npy_sort.h
+numpy/core/src/common/templ_common.h
+numpy/core/src/common/_cpu_dispatch.h
+numpy/core/src/multiarray/_multiarray_tests.c
 numpy/core/src/multiarray/arraytypes.c
 numpy/core/src/multiarray/einsum.c
 numpy/core/src/multiarray/lowlevel_strided_loops.c
@@ -132,26 +151,57 @@ numpy/core/src/npysort/binsearch.c
 numpy/core/src/npysort/heapsort.c
 numpy/core/src/npysort/mergesort.c
 numpy/core/src/npysort/quicksort.c
+numpy/core/src/npysort/radixsort.c
 numpy/core/src/npysort/selection.c
+numpy/core/src/npysort/timsort.c
 numpy/core/src/npysort/sort.c
 numpy/core/src/private/npy_binsearch.h
 numpy/core/src/private/npy_partition.h
 numpy/core/src/private/templ_common.h
+numpy/core/src/umath/_operand_flag_tests.c
+numpy/core/src/umath/_rational_tests.c
+numpy/core/src/umath/_struct_ufunc_tests.c
+numpy/core/src/umath/_umath_tests.c
 numpy/core/src/umath/scalarmath.c
 numpy/core/src/umath/funcs.inc
+numpy/core/src/umath/clip.[ch]
 numpy/core/src/umath/loops.[ch]
+numpy/core/src/umath/matmul.[ch]
 numpy/core/src/umath/operand_flag_tests.c
 numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
+numpy/core/src/umath/_umath_tests.dispatch.avx2.c
+numpy/core/src/umath/_umath_tests.dispatch.h
+numpy/core/src/umath/_umath_tests.dispatch.sse41.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
-doc/source/reference/generated
+doc/source/**/generated/
 benchmarks/results
+benchmarks/html
 benchmarks/env
 benchmarks/numpy
+benchmarks/_asv_compare.conf.json
 # cythonized files
 cythonize.dat
-numpy/random/mtrand/mtrand.c
-numpy/random/mtrand/randint_helpers.pxi
+numpy/random/_mtrand/_mtrand.c
+numpy/random/*.c
+numpy/random/legacy/*.c
+numpy/random/_mtrand/randint_helpers.pxi
+numpy/random/bounded_integers.pyx
+numpy/random/bounded_integers.pxd
+tools/swig/test/Array_wrap.cxx
+tools/swig/test/Farray_wrap.cxx
+tools/swig/test/Farray.py
+tools/swig/test/Flat_wrap.cxx
+tools/swig/test/Flat.py
+tools/swig/test/Fortran_wrap.cxx
+tools/swig/test/Fortran.py
+tools/swig/test/Matrix_wrap.cxx
+tools/swig/test/Matrix.py
+tools/swig/test/Tensor_wrap.cxx
+tools/swig/test/Tensor.py
+tools/swig/test/Vector.py
+tools/swig/test/Vector_wrap.cxx
+tools/swig/test/Array.py

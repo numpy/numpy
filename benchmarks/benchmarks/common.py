@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import numpy
 import random
 
@@ -112,5 +110,5 @@ def get_indexes_rand_():
     return indexes_rand_
 
 
-class Benchmark(object):
-    goal_time = 0.25
+class Benchmark:
+    pass

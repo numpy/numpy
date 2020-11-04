@@ -2,7 +2,7 @@
 
 .. _maskedarray.generic:
 
-
+.. module:: numpy.ma
 
 The :mod:`numpy.ma` module
 ==========================
@@ -74,7 +74,7 @@ To create an array with the second element invalid, we would do::
 To create a masked array where all values close to 1.e20 are invalid, we would
 do::
 
-   >>> z = masked_values([1.0, 1.e20, 3.0, 4.0], 1.e20)
+   >>> z = ma.masked_values([1.0, 1.e20, 3.0, 4.0], 1.e20)
 
 For a complete discussion of creation methods for masked arrays please see
 section :ref:`Constructing masked arrays <maskedarray.generic.constructing>`.
@@ -110,15 +110,15 @@ There are several ways to construct a masked array.
 
      >>> x = np.array([1, 2, 3])
      >>> x.view(ma.MaskedArray)
-     masked_array(data = [1 2 3],
-                  mask = False,
-            fill_value = 999999)
+     masked_array(data=[1, 2, 3],
+                  mask=False,
+            fill_value=999999)
      >>> x = np.array([(1, 1.), (2, 2.)], dtype=[('a',int), ('b', float)])
      >>> x.view(ma.MaskedArray)
-     masked_array(data = [(1, 1.0) (2, 2.0)],
-                  mask = [(False, False) (False, False)],
-            fill_value = (999999, 1e+20),
-                 dtype = [('a', '<i4'), ('b', '<f8')])
+     masked_array(data=[(1, 1.0), (2, 2.0)],
+                  mask=[(False, False), (False, False)],
+            fill_value=(999999, 1.e+20),
+                 dtype=[('a', '<i8'), ('b', '<f8')])
 
 * Yet another possibility is to use any of the following functions:
 
@@ -177,8 +177,8 @@ attribute. We must keep in mind that a ``True`` entry in the mask indicates an
 *invalid* data.
 
 Another possibility is to use the :func:`getmask` and :func:`getmaskarray`
-functions. :func:`getmask(x)` outputs the mask of ``x`` if ``x`` is a masked
-array, and the special value :data:`nomask` otherwise. :func:`getmaskarray(x)`
+functions. ``getmask(x)`` outputs the mask of ``x`` if ``x`` is a masked
+array, and the special value :data:`nomask` otherwise. ``getmaskarray(x)``
 outputs the mask of ``x`` if ``x`` is a masked array. If ``x`` has no invalid
 entry or is not a masked array, the function outputs  a boolean array of
 ``False`` with as many elements as ``x``.
@@ -195,9 +195,9 @@ index. The inverse of the mask can be calculated with the
 
    >>> x = ma.array([[1, 2], [3, 4]], mask=[[0, 1], [1, 0]])
    >>> x[~x.mask]
-   masked_array(data = [1 4],
-                mask = [False False],
-          fill_value = 999999)
+   masked_array(data=[1, 4],
+                mask=[False, False],
+          fill_value=999999)
 
 Another way to retrieve the valid data is to use the :meth:`compressed`
 method, which returns a one-dimensional :class:`~numpy.ndarray` (or one of its
@@ -223,27 +223,26 @@ as invalid is to assign the special value :attr:`masked` to them::
    >>> x = ma.array([1, 2, 3])
    >>> x[0] = ma.masked
    >>> x
-   masked_array(data = [-- 2 3],
-                mask = [ True False False],
-          fill_value = 999999)
+   masked_array(data=[--, 2, 3],
+                mask=[ True, False, False],
+          fill_value=999999)
    >>> y = ma.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
    >>> y[(0, 1, 2), (1, 2, 0)] = ma.masked
    >>> y
-   masked_array(data =
-    [[1 -- 3]
-     [4 5 --]
-     [-- 8 9]],
-                mask =
-    [[False  True False]
-     [False False  True]
-     [ True False False]],
-          fill_value = 999999)
+   masked_array(
+     data=[[1, --, 3],
+           [4, 5, --],
+           [--, 8, 9]],
+     mask=[[False,  True, False],
+           [False, False,  True],
+           [ True, False, False]],
+     fill_value=999999)
    >>> z = ma.array([1, 2, 3, 4])
    >>> z[:-2] = ma.masked
    >>> z
-   masked_array(data = [-- -- 3 4],
-                mask = [ True  True False False],
-          fill_value = 999999)
+   masked_array(data=[--, --, 3, 4],
+                mask=[ True,  True, False, False],
+          fill_value=999999)
 
 
 A second possibility is to modify the :attr:`~MaskedArray.mask` directly,
@@ -263,9 +262,10 @@ mask::
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x.mask = True
    >>> x
-   masked_array(data = [-- -- --],
-                mask = [ True  True  True],
-          fill_value = 999999)
+   masked_array(data=[--, --, --],
+                mask=[ True,  True,  True],
+          fill_value=999999,
+               dtype=int64)
 
 Finally, specific entries can be masked and/or unmasked by assigning to the
 mask a sequence of booleans::
@@ -273,9 +273,9 @@ mask a sequence of booleans::
    >>> x = ma.array([1, 2, 3])
    >>> x.mask = [0, 1, 0]
    >>> x
-   masked_array(data = [1 -- 3],
-                mask = [False  True False],
-          fill_value = 999999)
+   masked_array(data=[1, --, 3],
+                mask=[False,  True, False],
+          fill_value=999999)
 
 Unmasking an entry
 ~~~~~~~~~~~~~~~~~~
@@ -285,40 +285,46 @@ new valid values to them::
 
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x
-   masked_array(data = [1 2 --],
-                mask = [False False  True],
-          fill_value = 999999)
+   masked_array(data=[1, 2, --],
+                mask=[False, False,  True],
+          fill_value=999999)
    >>> x[-1] = 5
    >>> x
-   masked_array(data = [1 2 5],
-                mask = [False False False],
-          fill_value = 999999)
+   masked_array(data=[1, 2, 5],
+                mask=[False, False, False],
+          fill_value=999999)
 
 .. note::
    Unmasking an entry by direct assignment will silently fail if the masked
-   array has a *hard* mask, as shown by the :attr:`hardmask` attribute. This
-   feature was introduced to prevent overwriting the mask. To force the
-   unmasking of an entry where the array has a hard mask, the mask must first
-   to be softened using the :meth:`soften_mask` method before the allocation.
-   It can be re-hardened with :meth:`harden_mask`::
+   array has a *hard* mask, as shown by the :attr:`~MaskedArray.hardmask`
+   attribute. This feature was introduced to prevent overwriting the mask.
+   To force the unmasking of an entry where the array has a hard mask,
+   the mask must first to be softened using the :meth:`soften_mask` method
+   before the allocation. It can be re-hardened with :meth:`harden_mask`::
 
       >>> x = ma.array([1, 2, 3], mask=[0, 0, 1], hard_mask=True)
       >>> x
-      masked_array(data = [1 2 --],
-                   mask = [False False  True],
-             fill_value = 999999)
+      masked_array(data=[1, 2, --],
+                   mask=[False, False,  True],
+             fill_value=999999)
       >>> x[-1] = 5
       >>> x
-      masked_array(data = [1 2 --],
-                   mask = [False False  True],
-             fill_value = 999999)
+      masked_array(data=[1, 2, --],
+                   mask=[False, False,  True],
+             fill_value=999999)
       >>> x.soften_mask()
+      masked_array(data=[1, 2, --],
+                   mask=[False, False,  True],
+             fill_value=999999)
       >>> x[-1] = 5
       >>> x
-      masked_array(data = [1 2 5],
-                   mask = [False False  False],
-             fill_value = 999999)
+      masked_array(data=[1, 2, 5],
+                   mask=[False, False, False],
+             fill_value=999999)
       >>> x.harden_mask()
+      masked_array(data=[1, 2, 5],
+                   mask=[False, False, False],
+             fill_value=999999)
 
 
 To unmask all masked entries of a masked array (provided the mask isn't a hard
@@ -327,15 +333,14 @@ mask::
 
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x
-   masked_array(data = [1 2 --],
-                mask = [False False  True],
-          fill_value = 999999)
+   masked_array(data=[1, 2, --],
+                mask=[False, False,  True],
+          fill_value=999999)
    >>> x.mask = ma.nomask
    >>> x
-   masked_array(data = [1 2 3],
-                mask = [False False False],
-          fill_value = 999999)
-
+   masked_array(data=[1, 2, 3],
+                mask=[False, False, False],
+          fill_value=999999)
 
 
 Indexing and slicing
@@ -353,9 +358,7 @@ the mask is ``True``)::
    >>> x[0]
    1
    >>> x[-1]
-   masked_array(data = --,
-                mask = True,
-          fill_value = 1e+20)
+   masked
    >>> x[-1] is ma.masked
    True
 
@@ -370,10 +373,7 @@ is masked.
    >>> y[0]
    (1, 2)
    >>> y[-1]
-   masked_array(data = (3, --),
-                mask = (False, True),
-          fill_value = (999999, 999999),
-               dtype = [('a', '<i4'), ('b', '<i4')])
+   (3, --)
 
 
 When accessing a slice, the output is a masked array whose
@@ -385,19 +385,18 @@ required to ensure propagation of any modification of the mask to the original.
    >>> x = ma.array([1, 2, 3, 4, 5], mask=[0, 1, 0, 0, 1])
    >>> mx = x[:3]
    >>> mx
-   masked_array(data = [1 -- 3],
-                mask = [False  True False],
-          fill_value = 999999)
+   masked_array(data=[1, --, 3],
+                mask=[False,  True, False],
+          fill_value=999999)
    >>> mx[1] = -1
    >>> mx
-   masked_array(data = [1 -1 3],
-                mask = [False False False],
-          fill_value = 999999)
+   masked_array(data=[1, -1, 3],
+                mask=[False, False, False],
+          fill_value=999999)
    >>> x.mask
-   array([False,  True, False, False,  True])
+   array([False, False, False, False,  True])
    >>> x.data
    array([ 1, -1,  3,  4,  5])
-
 
 Accessing a field of a masked array with structured datatype returns a
 :class:`MaskedArray`.
@@ -407,8 +406,8 @@ Operations on masked arrays
 
 Arithmetic and comparison operations are supported by masked arrays.
 As much as possible, invalid entries of a masked array are not processed,
-meaning that the corresponding :attr:`data` entries *should* be the same
-before and after the operation.
+meaning that the corresponding :attr:`~MaskedArray.data` entries
+*should* be the same before and after the operation.
 
 .. warning::
    We need to stress that this behavior may not be systematic, that masked
@@ -421,9 +420,9 @@ ufuncs. Unary and binary functions that have a validity domain (such as
 constant whenever the input is masked or falls outside the validity domain::
 
    >>> ma.log([-1, 0, 1, 2])
-   masked_array(data = [-- -- 0.0 0.69314718056],
-                mask = [ True  True False False],
-          fill_value = 1e+20)
+   masked_array(data=[--, --, 0.0, 0.6931471805599453],
+                mask=[ True,  True, False, False],
+          fill_value=1e+20)
 
 Masked arrays also support standard numpy ufuncs. The output is then a masked
 array. The result of a unary ufunc is masked wherever the input is masked. The
@@ -435,10 +434,9 @@ input fall outside the validity domain::
 
    >>> x = ma.array([-1, 1, 0, 2, 3], mask=[0, 0, 0, 0, 1])
    >>> np.log(x)
-   masked_array(data = [-- -- 0.0 0.69314718056 --],
-                mask = [ True  True False False  True],
-          fill_value = 1e+20)
-
+   masked_array(data=[--, 0.0, --, 0.6931471805599453, --],
+                mask=[ True, False,  True, False,  True],
+          fill_value=1e+20)
 
 
 Examples
@@ -454,11 +452,11 @@ of anomalies (deviations from the average)::
    >>> import numpy.ma as ma
    >>> x = [0.,1.,-9999.,3.,4.]
    >>> mx = ma.masked_values (x, -9999.)
-   >>> print mx.mean()
+   >>> print(mx.mean())
    2.0
-   >>> print mx - mx.mean()
+   >>> print(mx - mx.mean())
    [-2.0 -1.0 -- 1.0 2.0]
-   >>> print mx.anom()
+   >>> print(mx.anom())
    [-2.0 -1.0 -- 1.0 2.0]
 
 
@@ -468,7 +466,7 @@ Filling in the missing data
 Suppose now that we wish to print that same data, but with the missing values
 replaced by the average value.
 
-   >>> print mx.filled(mx.mean())
+   >>> print(mx.filled(mx.mean()))
    [ 0.  1.  2.  3.  4.]
 
 
@@ -478,10 +476,10 @@ Numerical operations
 Numerical operations can be easily performed without worrying about missing
 values, dividing by zero, square roots of negative numbers, etc.::
 
-   >>> import numpy as np, numpy.ma as ma
+   >>> import numpy.ma as ma
    >>> x = ma.array([1., -1., 3., 4., 5., 6.], mask=[0,0,0,0,1,0])
    >>> y = ma.array([1., 2., 0., 4., 5., 6.], mask=[0,0,0,0,0,1])
-   >>> print np.sqrt(x/y)
+   >>> print(ma.sqrt(x/y))
    [1.0 -- -- 1.0 -- --]
 
 Four values of the output are invalid: the first one comes from taking the
@@ -492,8 +490,10 @@ the last two where the inputs were masked.
 Ignoring extreme values
 -----------------------
 
-Let's consider an array ``d`` of random floats between 0 and 1. We wish to
+Let's consider an array ``d`` of floats between 0 and 1. We wish to
 compute the average of the values of ``d`` while ignoring any data outside
-the range ``[0.1, 0.9]``::
+the range ``[0.2, 0.9]``::
 
-   >>> print ma.masked_outside(d, 0.1, 0.9).mean()
+   >>> d = np.linspace(0, 1, 20)
+   >>> print(d.mean() - ma.masked_outside(d, 0.2, 0.9).mean())
+   -0.05263157894736836

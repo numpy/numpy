@@ -1,0 +1,4 @@
+Thread-safe f2py callback functions
+-----------------------------------
+
+Callback functions in f2py are now threadsafe.

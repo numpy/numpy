@@ -22,8 +22,8 @@ Resources
 
 Information on porting to 3K:
 
-- http://wiki.python.org/moin/cporting
-- http://wiki.python.org/moin/PortingExtensionModulesToPy3k
+- https://wiki.python.org/moin/cporting
+- https://wiki.python.org/moin/PortingExtensionModulesToPy3k
 
 
 Prerequisites
@@ -355,9 +355,7 @@ The Py2/Py3 compatible structure definition looks like::
 	(binaryfunc)0,               /*nb_true_divide*/
 	0,                           /*nb_inplace_floor_divide*/
 	0,                           /*nb_inplace_true_divide*/
-    #if PY_VERSION_HEX >= 0x02050000
 	(unaryfunc)NULL,             /*nb_index*/
-    #endif
     };
 
 
@@ -394,14 +392,6 @@ There are a couple of places that need further attention:
   In some cases, this returns a buffer object on Python 2. On Python 3,
   there is no stand-alone buffer object, so we return a byte array instead.
 
-- multiarray.int_asbuffer
-
-  Converts an integer to a void* pointer -- in Python.
-
-  Should we just remove this for Py3? It doesn't seem like it is used
-  anywhere, and it doesn't sound very useful.
-
-
 The Py2/Py3 compatible PyBufferMethods definition looks like::
 
     NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
@@ -427,10 +417,6 @@ The Py2/Py3 compatible PyBufferMethods definition looks like::
 .. todo::
 
    Produce PEP 3118 format strings for array scalar objects.
-
-.. todo::
-
-   Figure out what to do with int_asbuffer
 
 .. todo::
 
@@ -812,20 +798,20 @@ Types with tp_as_sequence defined
 
 PySequenceMethods in py3k are binary compatible with py2k, but some of the
 slots have gone away. I suspect this means some functions need redefining so
-the semantics of the slots needs to be checked.
+the semantics of the slots needs to be checked::
 
-PySequenceMethods foo_sequence_methods = {
-    (lenfunc)0,                                 /* sq_length */
-    (binaryfunc)0,                              /* sq_concat */
-    (ssizeargfunc)0,                            /* sq_repeat */
-    (ssizeargfunc)0,                            /* sq_item */
-    (void *)0,                                  /* nee sq_slice */
-    (ssizeobjargproc)0,                         /* sq_ass_item */
-    (void *)0,                                  /* nee sq_ass_slice */
-    (objobjproc)0,                              /* sq_contains */
-    (binaryfunc)0,                              /* sq_inplace_concat */
-    (ssizeargfunc)0                             /* sq_inplace_repeat */
-};
+    PySequenceMethods foo_sequence_methods = {
+        (lenfunc)0,                                 /* sq_length */
+        (binaryfunc)0,                              /* sq_concat */
+        (ssizeargfunc)0,                            /* sq_repeat */
+        (ssizeargfunc)0,                            /* sq_item */
+        (void *)0,                                  /* nee sq_slice */
+        (ssizeobjargproc)0,                         /* sq_ass_item */
+        (void *)0,                                  /* nee sq_ass_slice */
+        (objobjproc)0,                              /* sq_contains */
+        (binaryfunc)0,                              /* sq_inplace_concat */
+        (ssizeargfunc)0                             /* sq_inplace_repeat */
+    };
 
 
 PyMappingMethods
@@ -840,13 +826,13 @@ Types with tp_as_mapping defined
 * multiarray/arrayobject.c
 
 PyMappingMethods in py3k look to be the same as in py2k. The semantics
-of the slots needs to be checked.
+of the slots needs to be checked::
 
-PyMappingMethods foo_mapping_methods = {
-    (lenfunc)0,                             /* mp_length */
-    (binaryfunc)0,                          /* mp_subscript */
-    (objobjargproc)0                        /* mp_ass_subscript */
-};
+    PyMappingMethods foo_mapping_methods = {
+        (lenfunc)0,                             /* mp_length */
+        (binaryfunc)0,                          /* mp_subscript */
+        (objobjargproc)0                        /* mp_ass_subscript */
+    };
 
 
 PyFile

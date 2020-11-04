@@ -7,17 +7,13 @@ an array object, and when iterated it will return sub-arrays with at most
 a user-specified number of elements.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from operator import mul
 from functools import reduce
-
-from numpy.compat import long
 
 __all__ = ['Arrayterator']
 
 
-class Arrayterator(object):
+class Arrayterator:
     """
     Buffered iterator for big arrays.
 
@@ -80,9 +76,8 @@ class Arrayterator(object):
 
     >>> for subarr in a_itor:
     ...     if not subarr.all():
-    ...         print(subarr, subarr.shape)
-    ...
-    [[[[0 1]]]] (1, 1, 1, 2)
+    ...         print(subarr, subarr.shape) # doctest: +SKIP
+    >>> # [[[[0 1]]]] (1, 1, 1, 2)
 
     """
 
@@ -111,7 +106,7 @@ class Arrayterator(object):
             if slice_ is Ellipsis:
                 fixed.extend([slice(None)] * (dims-length+1))
                 length = len(fixed)
-            elif isinstance(slice_, (int, long)):
+            elif isinstance(slice_, int):
                 fixed.append(slice(slice_, slice_+1, 1))
             else:
                 fixed.append(slice_)
@@ -160,12 +155,11 @@ class Arrayterator(object):
         ...     if not subarr:
         ...         print(subarr, type(subarr))
         ...
-        0 <type 'numpy.int32'>
+        0 <class 'numpy.int64'>
 
         """
         for block in self:
-            for value in block.flat:
-                yield value
+            yield from block.flat
 
     @property
     def shape(self):

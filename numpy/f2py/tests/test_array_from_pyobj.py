@@ -1,16 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
-import unittest
 import os
 import sys
 import copy
+import pytest
 
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
-)
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, SkipTest
-)
+    )
+from numpy.testing import assert_, assert_equal
 from numpy.core.multiarray import typeinfo
 from . import util
 
@@ -26,7 +22,7 @@ def setup_module():
 
     # Check compiler availability first
     if not util.has_c_compiler():
-        raise SkipTest("No C compiler available")
+        pytest.skip("No C compiler available")
 
     if wrap is None:
         config_code = """
@@ -59,7 +55,7 @@ def flags2names(flags):
     return info
 
 
-class Intent(object):
+class Intent:
 
     def __init__(self, intent_list=[]):
         self.intent_list = intent_list[:]
@@ -133,7 +129,7 @@ if ((intp().dtype.itemsize != 4 or clongdouble().dtype.alignment <= 8) and
     _cast_dict['CDOUBLE'] = _cast_dict['DOUBLE'] + ['CFLOAT', 'CDOUBLE']
 
 
-class Type(object):
+class Type:
     _type_cache = {}
 
     def __new__(cls, name):
@@ -194,7 +190,7 @@ class Type(object):
         return types
 
 
-class Array(object):
+class Array:
 
     def __init__(self, typ, dims, intent, obj):
         self.type = typ
@@ -295,7 +291,7 @@ class Array(object):
         return obj_attr[0] == self.arr_attr[0]
 
 
-class TestIntent(object):
+class TestIntent:
 
     def test_in_out(self):
         assert_equal(str(intent.in_.out), 'intent(in,out)')
@@ -306,9 +302,15 @@ class TestIntent(object):
         assert_(not intent.in_.is_intent('c'))
 
 
-class _test_shared_memory(object):
+class TestSharedMemory:
     num2seq = [1, 2]
     num23seq = [[1, 2, 3], [4, 5, 6]]
+
+    @pytest.fixture(autouse=True, scope='class', params=_type_names)
+    def setup_type(self, request):
+        request.cls.type = Type(request.param)
+        request.cls.array = lambda self, dims, intent, obj: \
+            Array(Type(request.param), dims, intent, obj)
 
     def test_in_from_2seq(self):
         a = self.array([2], intent.in_, self.num2seq)
@@ -575,16 +577,3 @@ class _test_shared_memory(object):
             assert_(obj.flags['FORTRAN'])  # obj attributes changed inplace!
             assert_(not obj.flags['CONTIGUOUS'])
             assert_(obj.dtype.type is self.type.dtype)  # obj changed inplace!
-
-
-for t in _type_names:
-    exec('''\
-class TestGen_%s(_test_shared_memory):
-    def setup(self):
-        self.type = Type(%r)
-    array = lambda self,dims,intent,obj: Array(Type(%r),dims,intent,obj)
-''' % (t, t, t))
-
-if __name__ == "__main__":
-    setup_module()
-    run_module_suite()

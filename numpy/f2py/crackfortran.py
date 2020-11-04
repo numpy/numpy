@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 crackfortran --- read fortran (77,90) code and extract declaration information.
 
@@ -33,7 +33,7 @@ Note: f2py directive: <commentchar>f2py<line> is read as <line>
 Note: pythonmodule is introduced to represent Python module
 
 Usage:
-  `postlist=crackfortran(files,funcs)`
+  `postlist=crackfortran(files)`
   `postlist` contains declaration information read from the list of files `files`.
   `crack2fortran(postlist)` returns a fortran code to be saved to pyf-file
 
@@ -138,8 +138,6 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import string
 import fileinput
@@ -150,7 +148,7 @@ import platform
 
 from . import __version__
 
-# The eviroment provided by auxfuncs.py is needed for some calls to eval.
+# The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
@@ -346,8 +344,6 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     cont = 0
     finalline = ''
     ll = ''
-    commentline = re.compile(
-        r'(?P<line>([^"]*["][^"]*["][^"!]*|[^\']*\'[^\']*\'[^\'!]*|[^!\'"]*))!{1}(?P<rest>.*)')
     includeline = re.compile(
         r'\s*include\s*(\'|")(?P<name>[^\'"]*)(\'|")', re.I)
     cont1 = re.compile(r'(?P<line>.*)&\s*\Z')
@@ -391,17 +387,10 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 break
             l = l[:-1]
         if not strictf77:
-            r = commentline.match(l)
-            if r:
-                l = r.group('line') + ' '  # Strip comments starting with `!'
-                rl = r.group('rest')
-                if rl[:4].lower() == 'f2py':  # f2py directive
-                    l = l + 4 * ' '
-                    r = commentline.match(rl[4:])
-                    if r:
-                        l = l + r.group('line')
-                    else:
-                        l = l + rl[4:]
+            (l, rl) = split_by_unquoted(l, '!')
+            l += ' '
+            if rl[:5].lower() == '!f2py':  # f2py directive
+                l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
         if l.strip() == '':  # Skip empty line
             cont = 0
             continue
@@ -567,7 +556,8 @@ groupbegins90 = groupbegins77 + \
     r'|module(?!\s*procedure)|python\s*module|interface|type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
-groupends = r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
+groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
+             r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
 # endifs='end\s*(if|do|where|select|while|forall)'
@@ -589,8 +579,8 @@ publicpattern = re.compile(
     beforethisafter % ('', 'public', 'public', '.*'), re.I), 'public'
 privatepattern = re.compile(
     beforethisafter % ('', 'private', 'private', '.*'), re.I), 'private'
-intrisicpattern = re.compile(
-    beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
+intrinsicpattern = re.compile(
+    beforethisafter % ('', 'intrinsic', 'intrinsic', '.*'), re.I), 'intrinsic'
 intentpattern = re.compile(beforethisafter % (
     '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
@@ -618,6 +608,25 @@ multilinepattern = re.compile(
     r"\s*(?P<before>''')(?P<this>.*?)(?P<after>''')\s*\Z", re.S), 'multiline'
 ##
 
+def split_by_unquoted(line, characters):
+    """
+    Splits the line into (line[:i], line[i:]),
+    where i is the index of first occurrence of one of the characters
+    not within quotes, or len(line) if no such index exists
+    """
+    assert not (set('"\'') & set(characters)), "cannot split by unquoted quotes"
+    r = re.compile(
+        r"\A(?P<before>({single_quoted}|{double_quoted}|{not_quoted})*)"
+        r"(?P<after>{char}.*)\Z".format(
+            not_quoted="[^\"'{}]".format(re.escape(characters)),
+            char="[{}]".format(re.escape(characters)),
+            single_quoted=r"('([^'\\]|(\\.))*')",
+            double_quoted=r'("([^"\\]|(\\.))*")'))
+    m = r.match(line)
+    if m:
+        d = m.groupdict()
+        return (d["before"], d["after"])
+    return (line, "")
 
 def _simplifyargs(argsline):
     a = []
@@ -642,12 +651,17 @@ def crackline(line, reset=0):
     global filepositiontext, currentfilename, neededmodule, expectbegin
     global skipblocksuntil, skipemptyends, previous_context, gotnextfile
 
-    if ';' in line and not (f2pyenhancementspattern[0].match(line) or
-                            multilinepattern[0].match(line)):
-        for l in line.split(';'):
-            # XXX: non-zero reset values need testing
-            assert reset == 0, repr(reset)
-            crackline(l, reset)
+    _, has_semicolon = split_by_unquoted(line, ";")
+    if has_semicolon and not (f2pyenhancementspattern[0].match(line) or
+                               multilinepattern[0].match(line)):
+        # XXX: non-zero reset values need testing
+        assert reset == 0, repr(reset)
+        # split line on unquoted semicolons
+        line, semicolon_line = split_by_unquoted(line, ";")
+        while semicolon_line:
+            crackline(line, reset)
+            line, semicolon_line = split_by_unquoted(semicolon_line[1:], ";")
+        crackline(line, reset)
         return
     if reset < 0:
         groupcounter = 0
@@ -691,7 +705,7 @@ def crackline(line, reset=0):
     for pat in [dimensionpattern, externalpattern, intentpattern, optionalpattern,
                 requiredpattern,
                 parameterpattern, datapattern, publicpattern, privatepattern,
-                intrisicpattern,
+                intrinsicpattern,
                 endifpattern, endpattern,
                 formatpattern,
                 beginpattern, functionpattern, subroutinepattern,
@@ -802,25 +816,21 @@ def markouterparen(line):
 def markoutercomma(line, comma=','):
     l = ''
     f = 0
-    cc = ''
-    for c in line:
-        if (not cc or cc == ')') and c == '(':
-            f = f + 1
-            cc = ')'
-        elif not cc and c == '\'' and (not l or l[-1] != '\\'):
-            f = f + 1
-            cc = '\''
-        elif c == cc:
-            f = f - 1
-            if f == 0:
-                cc = ''
-        elif c == comma and f == 0:
-            l = l + '@' + comma + '@'
-            continue
-        l = l + c
-    assert not f, repr((f, line, l, cc))
+    before, after = split_by_unquoted(line, comma + '()')
+    l += before
+    while after:
+        if (after[0] == comma) and (f == 0):
+            l += '@' + comma + '@'
+        else:
+            l += after[0]
+            if after[0] == '(':
+                f += 1
+            elif after[0] == ')':
+                f -= 1
+        before, after = split_by_unquoted(after[1:], comma + '()')
+        l += before
+    assert not f, repr((f, line, l))
     return l
-
 
 def unmarkouterparen(line):
     r = line.replace('@(@', '(').replace('@)@', ')')
@@ -1087,7 +1097,7 @@ def analyzeline(m, case, line):
         last_name = updatevars(typespec, selector, attr, edecl)
         if last_name is not None:
             previous_context = ('variable', last_name, groupcounter)
-    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrisic']:
+    elif case in ['dimension', 'intent', 'optional', 'required', 'external', 'public', 'private', 'intrinsic']:
         edecl = groupcache[groupcounter]['vars']
         ll = m.group('after').strip()
         i = ll.find('::')
@@ -1147,7 +1157,7 @@ def analyzeline(m, case, line):
                     else:
                         errmess('analyzeline: intent(callback) %s is already'
                                 ' in argument list' % (k))
-            if case in ['optional', 'required', 'public', 'external', 'private', 'intrisic']:
+            if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
                 edecl[k]['attrspec'].append(ap)
@@ -1739,10 +1749,12 @@ def setattrspec(decl, attr, force=0):
         decl['attrspec'].append(attr)
     elif attr == 'automatic' and 'static' not in decl['attrspec']:
         decl['attrspec'].append(attr)
-    elif attr == 'public' and 'private' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
-    elif attr == 'private' and 'public' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
+    elif attr == 'public':
+        if 'private' not in decl['attrspec']:
+            decl['attrspec'].append(attr)
+    elif attr == 'private':
+        if 'public' not in decl['attrspec']:
+            decl['attrspec'].append(attr)
     else:
         decl['attrspec'].append(attr)
     return decl
@@ -1838,10 +1850,8 @@ def postcrack2(block, tab='', param_map=None):
     if not f90modulevars:
         return block
     if isinstance(block, list):
-        ret = []
-        for g in block:
-            g = postcrack2(g, tab=tab + '\t', param_map=param_map)
-            ret.append(g)
+        ret = [postcrack2(g, tab=tab + '\t', param_map=param_map)
+               for g in block]
         return ret
     setmesstext(block)
     outmess('%sBlock: %s\n' % (tab, block['name']), 0)
@@ -1859,10 +1869,8 @@ def postcrack2(block, tab='', param_map=None):
                     val = kind['kind']
                     if val in param_map:
                         kind['kind'] = param_map[val]
-    new_body = []
-    for b in block['body']:
-        b = postcrack2(b, tab=tab + '\t', param_map=param_map)
-        new_body.append(b)
+    new_body = [postcrack2(b, tab=tab + '\t', param_map=param_map)
+                for b in block['body']]
     block['body'] = new_body
 
     return block
@@ -2095,8 +2103,9 @@ def buildimplicitrules(block):
 
 
 def myeval(e, g=None, l=None):
+    """ Like `eval` but returns only integers and floats """
     r = eval(e, g, l)
-    if type(r) in [type(0), type(0.0)]:
+    if type(r) in [int, float]:
         return r
     raise ValueError('r=%r' % (r))
 
@@ -2104,6 +2113,26 @@ getlincoef_re_1 = re.compile(r'\A\b\w+\b\Z', re.I)
 
 
 def getlincoef(e, xset):  # e = a*x+b ; x in xset
+    """
+    Obtain ``a`` and ``b`` when ``e == "a*x+b"``, where ``x`` is a symbol in
+    xset.
+
+    >>> getlincoef('2*x + 1', {'x'})
+    (2, 1, 'x')
+    >>> getlincoef('3*x + x*2 + 2 + 1', {'x'})
+    (5, 3, 'x')
+    >>> getlincoef('0', {'x'})
+    (0, 0, None)
+    >>> getlincoef('0*x', {'x'})
+    (0, 0, 'x')
+    >>> getlincoef('x*x', {'x'})
+    (None, None, None)
+
+    This can be tricked by sufficiently complex expressions
+
+    >>> getlincoef('(x - 0.5)*(x - 1.5)*(x - 1)*x + 2*x + 3', {'x'})
+    (2.0, 3.0, 'x')
+    """
     try:
         c = int(myeval(e, {}, {}))
         return 0, c, None
@@ -2148,6 +2177,15 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
                     m1 = re_1.match(ee)
                 c2 = myeval(ee, {}, {})
                 if (a * 0.5 + b == c and a * 1.5 + b == c2):
+                    # gh-8062: return integers instead of floats if possible.
+                    try:
+                        a = int(a)
+                    except:
+                        pass
+                    try:
+                        b = int(b)
+                    except:
+                        pass
                     return a, b, x
             except Exception:
                 pass
@@ -2158,6 +2196,37 @@ _varname_match = re.compile(r'\A[a-z]\w*\Z').match
 
 
 def getarrlen(dl, args, star='*'):
+    """
+    Parameters
+    ----------
+    dl : sequence of two str objects
+        dimensions of the array
+    args : Iterable[str]
+        symbols used in the expression
+    star : Any
+        unused
+
+    Returns
+    -------
+    expr : str
+        Some numeric expression as a string
+    arg : Optional[str]
+        If understood, the argument from `args` present in `expr`
+    expr2 : Optional[str]
+        If understood, an expression fragment that should be used as
+        ``"(%s%s".format(something, expr2)``.
+
+    Examples
+    --------
+    >>> getarrlen(['10*x + 20', '40*x'], {'x'})
+    ('30 * x - 19', 'x', '+19)/(30)')
+    >>> getarrlen(['1', '10*x + 20'], {'x'})
+    ('10 * x + 20', 'x', '-20)/(10)')
+    >>> getarrlen(['10*x + 20', '1'], {'x'})
+    ('-10 * x - 18', 'x', '+18)/(-10)')
+    >>> getarrlen(['20', '1'], {'x'})
+    ('-18', None, None)
+    """
     edl = []
     try:
         edl.append(myeval(dl[0], {}, {}))
@@ -2392,7 +2461,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith('power') or machine.startswith('ppc64'):
+    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 20:
             return 16
     else:
@@ -2505,7 +2574,7 @@ def _eval_scalar(value, params):
         value = value.split('_')[0]
     try:
         value = str(eval(value, {}, params))
-    except (NameError, SyntaxError):
+    except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
         errmess('"%s" in evaluating %r '
@@ -3107,11 +3176,12 @@ def true_intent_list(var):
     ret = []
     for intent in lst:
         try:
-            c = eval('isintent_%s(var)' % intent)
-        except NameError:
-            c = 0
-        if c:
-            ret.append(intent)
+            f = globals()['isintent_%s' % intent]
+        except KeyError:
+            pass
+        else:
+            if f(var):
+                ret.append(intent)
     return ret
 
 
@@ -3200,10 +3270,8 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = '%s(kind=%s)' % (vardef, selector['kind'])
         c = ' '
         if 'attrspec' in vars[a]:
-            attr = []
-            for l in vars[a]['attrspec']:
-                if l not in ['external']:
-                    attr.append(l)
+            attr = [l for l in vars[a]['attrspec']
+                    if l not in ['external']]
             if attr:
                 vardef = '%s, %s' % (vardef, ','.join(attr))
                 c = ','
@@ -3330,7 +3398,7 @@ if __name__ == "__main__":
   and also be sure that the files do not contain programs without program statement).
 """, 0)
 
-    postlist = crackfortran(files, funcs)
+    postlist = crackfortran(files)
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)

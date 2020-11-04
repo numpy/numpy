@@ -1,5 +1,7 @@
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
+.. currentmodule:: numpy
+
 .. _ufuncs:
 
 ************************************
@@ -8,15 +10,13 @@ Universal functions (:class:`ufunc`)
 
 .. note: XXX: section might need to be made more reference-guideish...
 
-.. currentmodule:: numpy
-
 .. index: ufunc, universal function, arithmetic, operation
 
 A universal function (or :term:`ufunc` for short) is a function that
 operates on :class:`ndarrays <ndarray>` in an element-by-element fashion,
 supporting :ref:`array broadcasting <ufuncs.broadcasting>`, :ref:`type
 casting <ufuncs.casting>`, and several other standard features. That
-is, a ufunc is a ":term:`vectorized`" wrapper for a function that
+is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function that
 takes a fixed number of specific inputs and produces a fixed number of
 specific outputs.
 
@@ -59,7 +59,7 @@ understood by four rules:
    entry in that dimension will be used for all calculations along
    that dimension. In other words, the stepping machinery of the
    :term:`ufunc` will simply not step along that dimension (the
-   :term:`stride` will be 0 for that dimension).
+   :ref:`stride <memory-layout>` will be 0 for that dimension).
 
 Broadcasting is used throughout NumPy to decide how to handle
 disparately shaped arrays; for example, all arithmetic operations (``+``,
@@ -70,7 +70,7 @@ arrays before operation.
 
 .. index:: broadcastable
 
-A set of arrays is called ":term:`broadcastable`" to the same shape if
+A set of arrays is called "broadcastable" to the same shape if
 the above rules produce a valid result, *i.e.*, one of the following
 is true:
 
@@ -100,7 +100,7 @@ is true:
    - *d* acts like a (5,6) array where the single value is repeated.
 
 
-.. _ufuncs.output-type:
+.. _ufuncs-output-type:
 
 Output type determination
 =========================
@@ -109,7 +109,7 @@ The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
 Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
-`overridden <ufuncs.overrides>`_.
+:ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
 all output arrays will be passed to the :obj:`~class.__array_prepare__` and
@@ -118,7 +118,7 @@ all output arrays will be passed to the :obj:`~class.__array_prepare__` and
 the highest :obj:`~class.__array_priority__` of any other input to the
 universal function. The default :obj:`~class.__array_priority__` of the
 ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
-is 1.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
+is 0.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
 
 All ufuncs can also take output arguments. If necessary, output will
 be cast to the data-type(s) of the provided output array(s). If a class
@@ -228,46 +228,47 @@ can generate this table for your system with the code given in the Figure.
 
 .. admonition:: Figure
 
-    Code segment showing the "can cast safely" table for a 32-bit system.
+    Code segment showing the "can cast safely" table for a 64-bit system.
+    Generally the output depends on the system; your system might result in
+    a different table.
 
+    >>> mark = {False: ' -', True: ' Y'}
     >>> def print_table(ntypes):
-    ...     print 'X',
-    ...     for char in ntypes: print char,
-    ...     print
+    ...     print('X ' + ' '.join(ntypes))
     ...     for row in ntypes:
-    ...         print row,
+    ...         print(row, end='')
     ...         for col in ntypes:
-    ...             print int(np.can_cast(row, col)),
-    ...         print
+    ...             print(mark[np.can_cast(row, col)], end='')
+    ...         print()
+    ...
     >>> print_table(np.typecodes['All'])
     X ? b h i l q p B H I L Q P e f d g F D G S U V O M m
-    ? 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-    b 0 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0
-    h 0 0 1 1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0
-    i 0 0 0 1 1 1 1 0 0 0 0 0 0 0 0 1 1 0 1 1 1 1 1 1 0 0
-    l 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 1 0 1 1 1 1 1 1 0 0
-    q 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 1 0 1 1 1 1 1 1 0 0
-    p 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 1 0 1 1 1 1 1 1 0 0
-    B 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
-    H 0 0 0 1 1 1 1 0 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 0 0
-    I 0 0 0 0 1 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 1 1 1 1 0 0
-    L 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 0 1 1 1 1 1 1 0 0
-    Q 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 0 1 1 1 1 1 1 0 0
-    P 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 1 1 0 1 1 1 1 1 1 0 0
-    e 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0
-    f 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0
-    d 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 1 1 1 1 1 1 0 0
-    g 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 1 1 1 1 0 0
-    F 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0
-    D 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 0
-    G 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 0 0
-    S 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 0 0
-    U 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0
-    V 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0
-    O 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0
-    M 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0
-    m 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
-
+    ? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+    b - Y Y Y Y Y Y - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
+    h - - Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
+    i - - - Y Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+    l - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+    q - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+    p - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+    B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+    H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
+    I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
+    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
+    f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
+    d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
+    g - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
+    F - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
+    D - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
+    G - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
+    S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
+    U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
+    V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+    O - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+    M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
+    m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
 
 You should note that, while included in the table for completeness,
 the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,
@@ -297,6 +298,11 @@ them by defining certain special methods.  For details, see
 :class:`ufunc`
 ==============
 
+.. autosummary::
+   :toctree: generated/
+
+   numpy.ufunc
+
 .. _ufuncs.kwargs:
 
 Optional keyword arguments
@@ -319,13 +325,33 @@ advanced usage and will not typically be used.
     .. versionadded:: 1.10
 
     The 'out' keyword argument is expected to be a tuple with one entry per
-    output (which can be `None` for arrays to be allocated by the ufunc).
+    output (which can be None for arrays to be allocated by the ufunc).
     For ufuncs with a single output, passing a single array (instead of a
     tuple holding a single array) is also valid.
 
     Passing a single array in the 'out' keyword argument to a ufunc with
     multiple outputs is deprecated, and will raise a warning in numpy 1.10,
     and an error in a future release.
+
+    If 'out' is None (the default), a uninitialized return array is created.
+    The output array is then filled with the results of the ufunc in the places
+    that the broadcast 'where' is True. If 'where' is the scalar True (the
+    default), then this corresponds to the entire output being filled.
+    Note that outputs not explicitly filled are left with their
+    uninitialized values.
+
+    .. versionadded:: 1.13
+
+    Operations where ufunc input and output operands have memory overlap are
+    defined to be the same as for equivalent operations where there
+    is no memory overlap.  Operations affected make temporary copies
+    as needed to eliminate data dependency.  As detecting these cases
+    is computationally expensive, a heuristic is used, which may in rare
+    cases result in needless temporary copies.  For operations where the
+    data dependency is simple enough for the heuristic to analyze,
+    temporary copies will not be made even if the arrays overlap, if it
+    can be deduced copies are not necessary.  As an example,
+    ``np.add(a, b, out=a)`` will not involve copies.
 
 *where*
 
@@ -335,6 +361,46 @@ advanced usage and will not typically be used.
     Values of True indicate to calculate the ufunc at that position, values
     of False indicate to leave the value in the output alone. This argument
     cannot be used for generalized ufuncs as those take non-scalar input.
+
+    Note that if an uninitialized return array is created, values of False
+    will leave those values **uninitialized**.
+
+*axes*
+
+    .. versionadded:: 1.15
+
+    A list of tuples with indices of axes a generalized ufunc should operate
+    on. For instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate
+    for matrix multiplication, the base elements are two-dimensional matrices
+    and these are taken to be stored in the two last axes of each argument.
+    The corresponding axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``.
+    For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
+    (vectors), a single integer is accepted instead of a single-element tuple,
+    and for generalized ufuncs for which all outputs are scalars, the output
+    tuples can be omitted.
+
+*axis*
+
+    .. versionadded:: 1.15
+
+    A single axis over which a generalized ufunc should operate. This is a
+    short-cut for ufuncs that operate over a single, shared core dimension,
+    equivalent to passing in ``axes`` with entries of ``(axis,)`` for each
+    single-core-dimension argument and ``()`` for all others.  For instance,
+    for a signature ``(i),(i)->()``, it is equivalent to passing in
+    ``axes=[(axis,), (axis,), ()]``.
+
+*keepdims*
+
+    .. versionadded:: 1.15
+
+    If this is set to `True`, axes which are reduced over will be left in the
+    result as a dimension with size one, so that the result will broadcast
+    correctly against the inputs. This option can only be used for generalized
+    ufuncs that operate on inputs that all have the same number of core
+    dimensions and with outputs that have no core dimensions, i.e., with
+    signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
+    the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
 *casting*
 
@@ -388,18 +454,18 @@ advanced usage and will not typically be used.
     provided by the **types** attribute of the ufunc object. For backwards
     compatibility this argument can also be provided as *sig*, although
     the long form is preferred. Note that this should not be confused with
-    the generalized ufunc signature that is stored in the **signature**
-    attribute of the of the ufunc object.
+    the generalized ufunc :ref:`signature <details-of-signature>` that is
+    stored in the **signature** attribute of the of the ufunc object.
 
 *extobj*
 
-    a list of length 1, 2, or 3 specifying the ufunc buffer-size, the
-    error mode integer, and the error call-back function. Normally, these
+    a list of length 3 specifying the ufunc buffer-size, the error
+    mode integer, and the error call-back function. Normally, these
     values are looked up in a thread-specific dictionary. Passing them
     here circumvents that look up and uses the low-level specification
-    provided for the error mode. This may be useful, for example, as an
-    optimization for calculations requiring many ufunc calls on small arrays
-    in a loop.
+    provided for the error mode. This may be useful, for example, as
+    an optimization for calculations requiring many ufunc calls on
+    small arrays in a loop.
 
 
 
@@ -446,7 +512,7 @@ keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
 will take place (with negative values counting backwards). Generally, it is an
 integer, though for :meth:`ufunc.reduce`, it can also be a tuple of `int` to
-reduce over several axes at once, or `None`, to reduce over all axes.
+reduce over several axes at once, or None, to reduce over all axes.
 The *dtype* keyword allows you to manage a very common problem that arises
 when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
@@ -521,6 +587,7 @@ Math operations
     add
     subtract
     multiply
+    matmul
     divide
     logaddexp
     logaddexp2
@@ -529,6 +596,7 @@ Math operations
     negative
     positive
     power
+    float_power
     remainder
     mod
     fmod
@@ -539,6 +607,7 @@ Math operations
     sign
     heaviside
     conj
+    conjugate
     exp
     exp2
     log
@@ -586,6 +655,8 @@ The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
     arcsinh
     arccosh
     arctanh
+    degrees
+    radians
     deg2rad
     rad2deg
 

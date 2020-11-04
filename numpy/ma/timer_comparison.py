@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import timeit
 from functools import reduce
 
@@ -15,7 +13,7 @@ np.seterr(all='ignore')
 pi = np.pi
 
 
-class ModuleTester(object):
+class ModuleTester:
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal
@@ -79,8 +77,7 @@ class ModuleTester(object):
             if not cond:
                 msg = build_err_msg([x, y],
                                     err_msg
-                                    + '\n(shapes %s, %s mismatch)' % (x.shape,
-                                                                      y.shape),
+                                    + f'\n(shapes {x.shape}, {y.shape} mismatch)',
                                     header=header,
                                     names=('x', 'y'))
                 assert cond, msg
@@ -102,9 +99,9 @@ class ModuleTester(object):
                                     header=header,
                                     names=('x', 'y'))
                 assert cond, msg
-        except ValueError:
+        except ValueError as e:
             msg = build_err_msg([x, y], err_msg, header=header, names=('x', 'y'))
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
     def assert_array_equal(self, x, y, err_msg=''):
         """
@@ -430,11 +427,10 @@ if __name__ == '__main__':
     setup_cur = "import numpy.ma.core as module\n" + setup_base
     (nrepeat, nloop) = (10, 10)
 
-    if 1:
-        for i in range(1, 8):
-            func = 'tester.test_%i()' % i
-            cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
-            cur = np.sort(cur)
-            print("#%i" % i + 50*'.')
-            print(eval("ModuleTester.test_%i.__doc__" % i))
-            print("core_current : %.3f - %.3f" % (cur[0], cur[1]))
+    for i in range(1, 8):
+        func = 'tester.test_%i()' % i
+        cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
+        cur = np.sort(cur)
+        print("#%i" % i + 50*'.')
+        print(eval("ModuleTester.test_%i.__doc__" % i))
+        print(f'core_current : {cur[0]:.3f} - {cur[1]:.3f}')

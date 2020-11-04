@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -40,6 +40,7 @@ static integer c_n1 = -1;
 static integer c__3 = 3;
 static integer c__2 = 2;
 static integer c__65 = 65;
+static integer c__6 = 6;
 static integer c__12 = 12;
 static integer c__49 = 49;
 static integer c__4 = 4;
@@ -49,7 +50,7 @@ static integer c__15 = 15;
 static integer c__14 = 14;
 static integer c__16 = 16;
 static logical c_true = TRUE_;
-static real c_b2863 = 2.f;
+static real c_b3178 = 2.f;
 
 /* Subroutine */ int sbdsdc_(char *uplo, char *compq, integer *n, real *d__,
 	real *e, real *u, integer *ldu, real *vt, integer *ldvt, real *q,
@@ -4024,6 +4025,710 @@ L50:
 /*     End of SGELQF */
 
 } /* sgelqf_ */
+
+/* Subroutine */ int sgelsd_(integer *m, integer *n, integer *nrhs, real *a,
+	integer *lda, real *b, integer *ldb, real *s, real *rcond, integer *
+	rank, real *work, integer *lwork, integer *iwork, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
+
+    /* Local variables */
+    static integer ie, il, mm;
+    static real eps, anrm, bnrm;
+    static integer itau, nlvl, iascl, ibscl;
+    static real sfmin;
+    static integer minmn, maxmn, itaup, itauq, mnthr, nwork;
+    extern /* Subroutine */ int slabad_(real *, real *), sgebrd_(integer *,
+	    integer *, real *, integer *, real *, real *, real *, real *,
+	    real *, integer *, integer *);
+    extern doublereal slamch_(char *), slange_(char *, integer *,
+	    integer *, real *, integer *, real *);
+    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static real bignum;
+    extern /* Subroutine */ int sgelqf_(integer *, integer *, real *, integer
+	    *, real *, real *, integer *, integer *), slalsd_(char *, integer
+	    *, integer *, integer *, real *, real *, real *, integer *, real *
+	    , integer *, real *, integer *, integer *), slascl_(char *
+	    , integer *, integer *, real *, real *, integer *, integer *,
+	    real *, integer *, integer *);
+    static integer wlalsd;
+    extern /* Subroutine */ int sgeqrf_(integer *, integer *, real *, integer
+	    *, real *, real *, integer *, integer *), slacpy_(char *, integer
+	    *, integer *, real *, integer *, real *, integer *),
+	    slaset_(char *, integer *, integer *, real *, real *, real *,
+	    integer *);
+    static integer ldwork;
+    extern /* Subroutine */ int sormbr_(char *, char *, char *, integer *,
+	    integer *, integer *, real *, integer *, real *, real *, integer *
+	    , real *, integer *, integer *);
+    static integer liwork, minwrk, maxwrk;
+    static real smlnum;
+    extern /* Subroutine */ int sormlq_(char *, char *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+    static logical lquery;
+    static integer smlsiz;
+    extern /* Subroutine */ int sormqr_(char *, char *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+
+
+/*
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SGELSD computes the minimum-norm solution to a real linear least
+    squares problem:
+        minimize 2-norm(| b - A*x |)
+    using the singular value decomposition (SVD) of A. A is an M-by-N
+    matrix which may be rank-deficient.
+
+    Several right hand side vectors b and solution vectors x can be
+    handled in a single call; they are stored as the columns of the
+    M-by-NRHS right hand side matrix B and the N-by-NRHS solution
+    matrix X.
+
+    The problem is solved in three steps:
+    (1) Reduce the coefficient matrix A to bidiagonal form with
+        Householder transformations, reducing the original problem
+        into a "bidiagonal least squares problem" (BLS)
+    (2) Solve the BLS using a divide and conquer approach.
+    (3) Apply back all the Householder tranformations to solve
+        the original least squares problem.
+
+    The effective rank of A is determined by treating as zero those
+    singular values which are less than RCOND times the largest singular
+    value.
+
+    The divide and conquer algorithm makes very mild assumptions about
+    floating point arithmetic. It will work on machines with a guard
+    digit in add/subtract, or on those binary machines without guard
+    digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
+    Cray-2. It could conceivably fail on hexadecimal or decimal machines
+    without guard digits, but we know of none.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of A. M >= 0.
+
+    N       (input) INTEGER
+            The number of columns of A. N >= 0.
+
+    NRHS    (input) INTEGER
+            The number of right hand sides, i.e., the number of columns
+            of the matrices B and X. NRHS >= 0.
+
+    A       (input) REAL array, dimension (LDA,N)
+            On entry, the M-by-N matrix A.
+            On exit, A has been destroyed.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,M).
+
+    B       (input/output) REAL array, dimension (LDB,NRHS)
+            On entry, the M-by-NRHS right hand side matrix B.
+            On exit, B is overwritten by the N-by-NRHS solution
+            matrix X.  If m >= n and RANK = n, the residual
+            sum-of-squares for the solution in the i-th column is given
+            by the sum of squares of elements n+1:m in that column.
+
+    LDB     (input) INTEGER
+            The leading dimension of the array B. LDB >= max(1,max(M,N)).
+
+    S       (output) REAL array, dimension (min(M,N))
+            The singular values of A in decreasing order.
+            The condition number of A in the 2-norm = S(1)/S(min(m,n)).
+
+    RCOND   (input) REAL
+            RCOND is used to determine the effective rank of A.
+            Singular values S(i) <= RCOND*S(1) are treated as zero.
+            If RCOND < 0, machine precision is used instead.
+
+    RANK    (output) INTEGER
+            The effective rank of A, i.e., the number of singular values
+            which are greater than RCOND*S(1).
+
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
+            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+
+    LWORK   (input) INTEGER
+            The dimension of the array WORK. LWORK must be at least 1.
+            The exact minimum amount of workspace needed depends on M,
+            N and NRHS. As long as LWORK is at least
+                12*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2,
+            if M is greater than or equal to N or
+                12*M + 2*M*SMLSIZ + 8*M*NLVL + M*NRHS + (SMLSIZ+1)**2,
+            if M is less than N, the code will execute correctly.
+            SMLSIZ is returned by ILAENV and is equal to the maximum
+            size of the subproblems at the bottom of the computation
+            tree (usually about 25), and
+               NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
+            For good performance, LWORK should generally be larger.
+
+            If LWORK = -1, then a workspace query is assumed; the routine
+            only calculates the optimal size of the array WORK and the
+            minimum size of the array IWORK, and returns these values as
+            the first entries of the WORK and IWORK arrays, and no error
+            message related to LWORK is issued by XERBLA.
+
+    IWORK   (workspace) INTEGER array, dimension (MAX(1,LIWORK))
+            LIWORK >= max(1, 3*MINMN*NLVL + 11*MINMN),
+            where MINMN = MIN( M,N ).
+            On exit, if INFO = 0, IWORK(1) returns the minimum LIWORK.
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+            > 0:  the algorithm for computing the SVD failed to converge;
+                  if INFO = i, i off-diagonal elements of an intermediate
+                  bidiagonal form did not converge to zero.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input arguments.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    --s;
+    --work;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+    minmn = min(*m,*n);
+    maxmn = max(*m,*n);
+    lquery = *lwork == -1;
+    if (*m < 0) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*nrhs < 0) {
+	*info = -3;
+    } else if (*lda < max(1,*m)) {
+	*info = -5;
+    } else if (*ldb < max(1,maxmn)) {
+	*info = -7;
+    }
+
+/*
+       Compute workspace.
+       (Note: Comments in the code beginning "Workspace:" describe the
+       minimal amount of workspace needed at that point in the code,
+       as well as the preferred amount for good performance.
+       NB refers to the optimal block size for the immediately
+       following subroutine, as returned by ILAENV.)
+*/
+
+    if (*info == 0) {
+	minwrk = 1;
+	maxwrk = 1;
+	liwork = 1;
+	if (minmn > 0) {
+	    smlsiz = ilaenv_(&c__9, "SGELSD", " ", &c__0, &c__0, &c__0, &c__0,
+		     (ftnlen)6, (ftnlen)1);
+	    mnthr = ilaenv_(&c__6, "SGELSD", " ", m, n, nrhs, &c_n1, (ftnlen)
+		    6, (ftnlen)1);
+/* Computing MAX */
+	    i__1 = (integer) (log((real) minmn / (real) (smlsiz + 1)) / log(
+		    2.f)) + 1;
+	    nlvl = max(i__1,0);
+	    liwork = minmn * 3 * nlvl + minmn * 11;
+	    mm = *m;
+	    if (*m >= *n && *m >= mnthr) {
+
+/*
+                Path 1a - overdetermined, with many more rows than
+                          columns.
+*/
+
+		mm = *n;
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n + *n * ilaenv_(&c__1, "SGEQRF",
+			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n + *nrhs * ilaenv_(&c__1, "SORMQR",
+			"LT", m, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)2);
+		maxwrk = max(i__1,i__2);
+	    }
+	    if (*m >= *n) {
+
+/*
+                Path 1 - overdetermined or exactly determined.
+
+   Computing MAX
+*/
+		i__1 = maxwrk, i__2 = *n * 3 + (mm + *n) * ilaenv_(&c__1,
+			"SGEBRD", " ", &mm, n, &c_n1, &c_n1, (ftnlen)6, (
+			ftnlen)1);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * 3 + *nrhs * ilaenv_(&c__1, "SORMBR"
+			, "QLT", &mm, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)3);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * 3 + (*n - 1) * ilaenv_(&c__1,
+			"SORMBR", "PLN", n, nrhs, n, &c_n1, (ftnlen)6, (
+			ftnlen)3);
+		maxwrk = max(i__1,i__2);
+/* Computing 2nd power */
+		i__1 = smlsiz + 1;
+		wlalsd = *n * 9 + (*n << 1) * smlsiz + (*n << 3) * nlvl + *n *
+			 *nrhs + i__1 * i__1;
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * 3 + wlalsd;
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = *n * 3 + mm, i__2 = *n * 3 + *nrhs, i__1 = max(i__1,
+			i__2), i__2 = *n * 3 + wlalsd;
+		minwrk = max(i__1,i__2);
+	    }
+	    if (*n > *m) {
+/* Computing 2nd power */
+		i__1 = smlsiz + 1;
+		wlalsd = *m * 9 + (*m << 1) * smlsiz + (*m << 3) * nlvl + *m *
+			 *nrhs + i__1 * i__1;
+		if (*n >= mnthr) {
+
+/*
+                   Path 2a - underdetermined, with many more columns
+                             than rows.
+*/
+
+		    maxwrk = *m + *m * ilaenv_(&c__1, "SGELQF", " ", m, n, &
+			    c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m << 1) *
+			    ilaenv_(&c__1, "SGEBRD", " ", m, m, &c_n1, &c_n1,
+			    (ftnlen)6, (ftnlen)1);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + *nrhs *
+			    ilaenv_(&c__1, "SORMBR", "QLT", m, nrhs, m, &c_n1,
+			     (ftnlen)6, (ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m - 1) *
+			    ilaenv_(&c__1, "SORMBR", "PLN", m, nrhs, m, &c_n1,
+			     (ftnlen)6, (ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+		    if (*nrhs > 1) {
+/* Computing MAX */
+			i__1 = maxwrk, i__2 = *m * *m + *m + *m * *nrhs;
+			maxwrk = max(i__1,i__2);
+		    } else {
+/* Computing MAX */
+			i__1 = maxwrk, i__2 = *m * *m + (*m << 1);
+			maxwrk = max(i__1,i__2);
+		    }
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m + *nrhs * ilaenv_(&c__1, "SORMLQ"
+			    , "LT", n, nrhs, m, &c_n1, (ftnlen)6, (ftnlen)2);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + wlalsd;
+		    maxwrk = max(i__1,i__2);
+/*
+       XXX: Ensure the Path 2a case below is triggered.  The workspace
+       calculation should use queries for all routines eventually.
+   Computing MAX
+   Computing MAX
+*/
+		    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4),
+			    i__3 = max(i__3,*nrhs), i__4 = *n - *m * 3;
+		    i__1 = maxwrk, i__2 = (*m << 2) + *m * *m + max(i__3,i__4)
+			    ;
+		    maxwrk = max(i__1,i__2);
+		} else {
+
+/*                 Path 2 - remaining underdetermined cases. */
+
+		    maxwrk = *m * 3 + (*n + *m) * ilaenv_(&c__1, "SGEBRD",
+			    " ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * 3 + *nrhs * ilaenv_(&c__1,
+			    "SORMBR", "QLT", m, nrhs, n, &c_n1, (ftnlen)6, (
+			    ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * 3 + *m * ilaenv_(&c__1, "SORM"
+			    "BR", "PLN", n, nrhs, m, &c_n1, (ftnlen)6, (ftnlen)
+			    3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * 3 + wlalsd;
+		    maxwrk = max(i__1,i__2);
+		}
+/* Computing MAX */
+		i__1 = *m * 3 + *nrhs, i__2 = *m * 3 + *m, i__1 = max(i__1,
+			i__2), i__2 = *m * 3 + wlalsd;
+		minwrk = max(i__1,i__2);
+	    }
+	}
+	minwrk = min(minwrk,maxwrk);
+	work[1] = (real) maxwrk;
+	iwork[1] = liwork;
+
+	if (*lwork < minwrk && ! lquery) {
+	    *info = -12;
+	}
+    }
+
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SGELSD", &i__1);
+	return 0;
+    } else if (lquery) {
+	return 0;
+    }
+
+/*     Quick return if possible. */
+
+    if (*m == 0 || *n == 0) {
+	*rank = 0;
+	return 0;
+    }
+
+/*     Get machine parameters. */
+
+    eps = slamch_("P");
+    sfmin = slamch_("S");
+    smlnum = sfmin / eps;
+    bignum = 1.f / smlnum;
+    slabad_(&smlnum, &bignum);
+
+/*     Scale A if max entry outside range [SMLNUM,BIGNUM]. */
+
+    anrm = slange_("M", m, n, &a[a_offset], lda, &work[1]);
+    iascl = 0;
+    if (anrm > 0.f && anrm < smlnum) {
+
+/*        Scale matrix norm up to SMLNUM. */
+
+	slascl_("G", &c__0, &c__0, &anrm, &smlnum, m, n, &a[a_offset], lda,
+		info);
+	iascl = 1;
+    } else if (anrm > bignum) {
+
+/*        Scale matrix norm down to BIGNUM. */
+
+	slascl_("G", &c__0, &c__0, &anrm, &bignum, m, n, &a[a_offset], lda,
+		info);
+	iascl = 2;
+    } else if (anrm == 0.f) {
+
+/*        Matrix all zero. Return zero solution. */
+
+	i__1 = max(*m,*n);
+	slaset_("F", &i__1, nrhs, &c_b29, &c_b29, &b[b_offset], ldb);
+	slaset_("F", &minmn, &c__1, &c_b29, &c_b29, &s[1], &c__1);
+	*rank = 0;
+	goto L10;
+    }
+
+/*     Scale B if max entry outside range [SMLNUM,BIGNUM]. */
+
+    bnrm = slange_("M", m, nrhs, &b[b_offset], ldb, &work[1]);
+    ibscl = 0;
+    if (bnrm > 0.f && bnrm < smlnum) {
+
+/*        Scale matrix norm up to SMLNUM. */
+
+	slascl_("G", &c__0, &c__0, &bnrm, &smlnum, m, nrhs, &b[b_offset], ldb,
+		 info);
+	ibscl = 1;
+    } else if (bnrm > bignum) {
+
+/*        Scale matrix norm down to BIGNUM. */
+
+	slascl_("G", &c__0, &c__0, &bnrm, &bignum, m, nrhs, &b[b_offset], ldb,
+		 info);
+	ibscl = 2;
+    }
+
+/*     If M < N make sure certain entries of B are zero. */
+
+    if (*m < *n) {
+	i__1 = *n - *m;
+	slaset_("F", &i__1, nrhs, &c_b29, &c_b29, &b[*m + 1 + b_dim1], ldb);
+    }
+
+/*     Overdetermined case. */
+
+    if (*m >= *n) {
+
+/*        Path 1 - overdetermined or exactly determined. */
+
+	mm = *m;
+	if (*m >= mnthr) {
+
+/*           Path 1a - overdetermined, with many more rows than columns. */
+
+	    mm = *n;
+	    itau = 1;
+	    nwork = itau + *n;
+
+/*
+             Compute A=Q*R.
+             (Workspace: need 2*N, prefer N+N*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgeqrf_(m, n, &a[a_offset], lda, &work[itau], &work[nwork], &i__1,
+		     info);
+
+/*
+             Multiply B by transpose(Q).
+             (Workspace: need N+NRHS, prefer N+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormqr_("L", "T", m, nrhs, n, &a[a_offset], lda, &work[itau], &b[
+		    b_offset], ldb, &work[nwork], &i__1, info);
+
+/*           Zero out below R. */
+
+	    if (*n > 1) {
+		i__1 = *n - 1;
+		i__2 = *n - 1;
+		slaset_("L", &i__1, &i__2, &c_b29, &c_b29, &a[a_dim1 + 2],
+			lda);
+	    }
+	}
+
+	ie = 1;
+	itauq = ie + *n;
+	itaup = itauq + *n;
+	nwork = itaup + *n;
+
+/*
+          Bidiagonalize R in A.
+          (Workspace: need 3*N+MM, prefer 3*N+(MM+N)*NB)
+*/
+
+	i__1 = *lwork - nwork + 1;
+	sgebrd_(&mm, n, &a[a_offset], lda, &s[1], &work[ie], &work[itauq], &
+		work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors of R.
+          (Workspace: need 3*N+NRHS, prefer 3*N+NRHS*NB)
+*/
+
+	i__1 = *lwork - nwork + 1;
+	sormbr_("Q", "L", "T", &mm, nrhs, n, &a[a_offset], lda, &work[itauq],
+		&b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	slalsd_("U", &smlsiz, n, nrhs, &s[1], &work[ie], &b[b_offset], ldb,
+		rcond, rank, &work[nwork], &iwork[1], info);
+	if (*info != 0) {
+	    goto L10;
+	}
+
+/*        Multiply B by right bidiagonalizing vectors of R. */
+
+	i__1 = *lwork - nwork + 1;
+	sormbr_("P", "L", "N", n, nrhs, n, &a[a_offset], lda, &work[itaup], &
+		b[b_offset], ldb, &work[nwork], &i__1, info);
+
+    } else /* if(complicated condition) */ {
+/* Computing MAX */
+	i__1 = *m, i__2 = (*m << 1) - 4, i__1 = max(i__1,i__2), i__1 = max(
+		i__1,*nrhs), i__2 = *n - *m * 3, i__1 = max(i__1,i__2);
+	if (*n >= mnthr && *lwork >= (*m << 2) + *m * *m + max(i__1,wlalsd)) {
+
+/*
+          Path 2a - underdetermined, with many more columns than rows
+          and sufficient workspace for an efficient algorithm.
+*/
+
+	    ldwork = *m;
+/*
+   Computing MAX
+   Computing MAX
+*/
+	    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4), i__3 =
+		    max(i__3,*nrhs), i__4 = *n - *m * 3;
+	    i__1 = (*m << 2) + *m * *lda + max(i__3,i__4), i__2 = *m * *lda +
+		    *m + *m * *nrhs, i__1 = max(i__1,i__2), i__2 = (*m << 2)
+		    + *m * *lda + wlalsd;
+	    if (*lwork >= max(i__1,i__2)) {
+		ldwork = *lda;
+	    }
+	    itau = 1;
+	    nwork = *m + 1;
+
+/*
+          Compute A=L*Q.
+          (Workspace: need 2*M, prefer M+M*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgelqf_(m, n, &a[a_offset], lda, &work[itau], &work[nwork], &i__1,
+		     info);
+	    il = nwork;
+
+/*        Copy L to WORK(IL), zeroing out above its diagonal. */
+
+	    slacpy_("L", m, m, &a[a_offset], lda, &work[il], &ldwork);
+	    i__1 = *m - 1;
+	    i__2 = *m - 1;
+	    slaset_("U", &i__1, &i__2, &c_b29, &c_b29, &work[il + ldwork], &
+		    ldwork);
+	    ie = il + ldwork * *m;
+	    itauq = ie + *m;
+	    itaup = itauq + *m;
+	    nwork = itaup + *m;
+
+/*
+          Bidiagonalize L in WORK(IL).
+          (Workspace: need M*M+5*M, prefer M*M+4*M+2*M*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgebrd_(m, m, &work[il], &ldwork, &s[1], &work[ie], &work[itauq],
+		    &work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors of L.
+          (Workspace: need M*M+4*M+NRHS, prefer M*M+4*M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("Q", "L", "T", m, nrhs, m, &work[il], &ldwork, &work[
+		    itauq], &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	    slalsd_("U", &smlsiz, m, nrhs, &s[1], &work[ie], &b[b_offset],
+		    ldb, rcond, rank, &work[nwork], &iwork[1], info);
+	    if (*info != 0) {
+		goto L10;
+	    }
+
+/*        Multiply B by right bidiagonalizing vectors of L. */
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("P", "L", "N", m, nrhs, m, &work[il], &ldwork, &work[
+		    itaup], &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Zero out below first M rows of B. */
+
+	    i__1 = *n - *m;
+	    slaset_("F", &i__1, nrhs, &c_b29, &c_b29, &b[*m + 1 + b_dim1],
+		    ldb);
+	    nwork = itau + *m;
+
+/*
+          Multiply transpose(Q) by B.
+          (Workspace: need M+NRHS, prefer M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormlq_("L", "T", n, nrhs, m, &a[a_offset], lda, &work[itau], &b[
+		    b_offset], ldb, &work[nwork], &i__1, info);
+
+	} else {
+
+/*        Path 2 - remaining underdetermined cases. */
+
+	    ie = 1;
+	    itauq = ie + *m;
+	    itaup = itauq + *m;
+	    nwork = itaup + *m;
+
+/*
+          Bidiagonalize A.
+          (Workspace: need 3*M+N, prefer 3*M+(M+N)*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgebrd_(m, n, &a[a_offset], lda, &s[1], &work[ie], &work[itauq], &
+		    work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors.
+          (Workspace: need 3*M+NRHS, prefer 3*M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("Q", "L", "T", m, nrhs, n, &a[a_offset], lda, &work[itauq]
+		    , &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	    slalsd_("L", &smlsiz, m, nrhs, &s[1], &work[ie], &b[b_offset],
+		    ldb, rcond, rank, &work[nwork], &iwork[1], info);
+	    if (*info != 0) {
+		goto L10;
+	    }
+
+/*        Multiply B by right bidiagonalizing vectors of A. */
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("P", "L", "N", n, nrhs, m, &a[a_offset], lda, &work[itaup]
+		    , &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+	}
+    }
+
+/*     Undo scaling. */
+
+    if (iascl == 1) {
+	slascl_("G", &c__0, &c__0, &anrm, &smlnum, n, nrhs, &b[b_offset], ldb,
+		 info);
+	slascl_("G", &c__0, &c__0, &smlnum, &anrm, &minmn, &c__1, &s[1], &
+		minmn, info);
+    } else if (iascl == 2) {
+	slascl_("G", &c__0, &c__0, &anrm, &bignum, n, nrhs, &b[b_offset], ldb,
+		 info);
+	slascl_("G", &c__0, &c__0, &bignum, &anrm, &minmn, &c__1, &s[1], &
+		minmn, info);
+    }
+    if (ibscl == 1) {
+	slascl_("G", &c__0, &c__0, &smlnum, &bnrm, n, nrhs, &b[b_offset], ldb,
+		 info);
+    } else if (ibscl == 2) {
+	slascl_("G", &c__0, &c__0, &bignum, &bnrm, n, nrhs, &b[b_offset], ldb,
+		 info);
+    }
+
+L10:
+    work[1] = (real) maxwrk;
+    iwork[1] = liwork;
+    return 0;
+
+/*     End of SGELSD */
+
+} /* sgelsd_ */
 
 /* Subroutine */ int sgeqr2_(integer *m, integer *n, real *a, integer *lda,
 	real *tau, real *work, integer *info)
@@ -14247,6 +14952,1389 @@ logical slaisnan_(real *sin1, real *sin2)
 #undef cr
 #undef ci
 
+
+/* Subroutine */ int slals0_(integer *icompq, integer *nl, integer *nr,
+	integer *sqre, integer *nrhs, real *b, integer *ldb, real *bx,
+	integer *ldbx, integer *perm, integer *givptr, integer *givcol,
+	integer *ldgcol, real *givnum, integer *ldgnum, real *poles, real *
+	difl, real *difr, real *z__, integer *k, real *c__, real *s, real *
+	work, integer *info)
+{
+    /* System generated locals */
+    integer givcol_dim1, givcol_offset, b_dim1, b_offset, bx_dim1, bx_offset,
+	    difr_dim1, difr_offset, givnum_dim1, givnum_offset, poles_dim1,
+	    poles_offset, i__1, i__2;
+    real r__1;
+
+    /* Local variables */
+    static integer i__, j, m, n;
+    static real dj;
+    static integer nlp1;
+    static real temp;
+    extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
+	    integer *, real *, real *);
+    extern doublereal snrm2_(integer *, real *, integer *);
+    static real diflj, difrj, dsigj;
+    extern /* Subroutine */ int sscal_(integer *, real *, real *, integer *),
+	    sgemv_(char *, integer *, integer *, real *, real *, integer *,
+	    real *, integer *, real *, real *, integer *), scopy_(
+	    integer *, real *, integer *, real *, integer *);
+    extern doublereal slamc3_(real *, real *);
+    extern /* Subroutine */ int xerbla_(char *, integer *);
+    static real dsigjp;
+    extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
+	    real *, integer *, integer *, real *, integer *, integer *), slacpy_(char *, integer *, integer *, real *, integer *,
+	    real *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SLALS0 applies back the multiplying factors of either the left or the
+    right singular vector matrix of a diagonal matrix appended by a row
+    to the right hand side matrix B in solving the least squares problem
+    using the divide-and-conquer SVD approach.
+
+    For the left singular vector matrix, three types of orthogonal
+    matrices are involved:
+
+    (1L) Givens rotations: the number of such rotations is GIVPTR; the
+         pairs of columns/rows they were applied to are stored in GIVCOL;
+         and the C- and S-values of these rotations are stored in GIVNUM.
+
+    (2L) Permutation. The (NL+1)-st row of B is to be moved to the first
+         row, and for J=2:N, PERM(J)-th row of B is to be moved to the
+         J-th row.
+
+    (3L) The left singular vector matrix of the remaining matrix.
+
+    For the right singular vector matrix, four types of orthogonal
+    matrices are involved:
+
+    (1R) The right singular vector matrix of the remaining matrix.
+
+    (2R) If SQRE = 1, one extra Givens rotation to generate the right
+         null space.
+
+    (3R) The inverse transformation of (2L).
+
+    (4R) The inverse transformation of (1L).
+
+    Arguments
+    =========
+
+    ICOMPQ (input) INTEGER
+           Specifies whether singular vectors are to be computed in
+           factored form:
+           = 0: Left singular vector matrix.
+           = 1: Right singular vector matrix.
+
+    NL     (input) INTEGER
+           The row dimension of the upper block. NL >= 1.
+
+    NR     (input) INTEGER
+           The row dimension of the lower block. NR >= 1.
+
+    SQRE   (input) INTEGER
+           = 0: the lower block is an NR-by-NR square matrix.
+           = 1: the lower block is an NR-by-(NR+1) rectangular matrix.
+
+           The bidiagonal matrix has row dimension N = NL + NR + 1,
+           and column dimension M = N + SQRE.
+
+    NRHS   (input) INTEGER
+           The number of columns of B and BX. NRHS must be at least 1.
+
+    B      (input/output) REAL array, dimension ( LDB, NRHS )
+           On input, B contains the right hand sides of the least
+           squares problem in rows 1 through M. On output, B contains
+           the solution X in rows 1 through N.
+
+    LDB    (input) INTEGER
+           The leading dimension of B. LDB must be at least
+           max(1,MAX( M, N ) ).
+
+    BX     (workspace) REAL array, dimension ( LDBX, NRHS )
+
+    LDBX   (input) INTEGER
+           The leading dimension of BX.
+
+    PERM   (input) INTEGER array, dimension ( N )
+           The permutations (from deflation and sorting) applied
+           to the two blocks.
+
+    GIVPTR (input) INTEGER
+           The number of Givens rotations which took place in this
+           subproblem.
+
+    GIVCOL (input) INTEGER array, dimension ( LDGCOL, 2 )
+           Each pair of numbers indicates a pair of rows/columns
+           involved in a Givens rotation.
+
+    LDGCOL (input) INTEGER
+           The leading dimension of GIVCOL, must be at least N.
+
+    GIVNUM (input) REAL array, dimension ( LDGNUM, 2 )
+           Each number indicates the C or S value used in the
+           corresponding Givens rotation.
+
+    LDGNUM (input) INTEGER
+           The leading dimension of arrays DIFR, POLES and
+           GIVNUM, must be at least K.
+
+    POLES  (input) REAL array, dimension ( LDGNUM, 2 )
+           On entry, POLES(1:K, 1) contains the new singular
+           values obtained from solving the secular equation, and
+           POLES(1:K, 2) is an array containing the poles in the secular
+           equation.
+
+    DIFL   (input) REAL array, dimension ( K ).
+           On entry, DIFL(I) is the distance between I-th updated
+           (undeflated) singular value and the I-th (undeflated) old
+           singular value.
+
+    DIFR   (input) REAL array, dimension ( LDGNUM, 2 ).
+           On entry, DIFR(I, 1) contains the distances between I-th
+           updated (undeflated) singular value and the I+1-th
+           (undeflated) old singular value. And DIFR(I, 2) is the
+           normalizing factor for the I-th right singular vector.
+
+    Z      (input) REAL array, dimension ( K )
+           Contain the components of the deflation-adjusted updating row
+           vector.
+
+    K      (input) INTEGER
+           Contains the dimension of the non-deflated matrix,
+           This is the order of the related secular equation. 1 <= K <=N.
+
+    C      (input) REAL
+           C contains garbage if SQRE =0 and the C-value of a Givens
+           rotation related to the right null space if SQRE = 1.
+
+    S      (input) REAL
+           S contains garbage if SQRE =0 and the S-value of a Givens
+           rotation related to the right null space if SQRE = 1.
+
+    WORK   (workspace) REAL array, dimension ( K )
+
+    INFO   (output) INTEGER
+            = 0:  successful exit.
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    bx_dim1 = *ldbx;
+    bx_offset = 1 + bx_dim1;
+    bx -= bx_offset;
+    --perm;
+    givcol_dim1 = *ldgcol;
+    givcol_offset = 1 + givcol_dim1;
+    givcol -= givcol_offset;
+    difr_dim1 = *ldgnum;
+    difr_offset = 1 + difr_dim1;
+    difr -= difr_offset;
+    poles_dim1 = *ldgnum;
+    poles_offset = 1 + poles_dim1;
+    poles -= poles_offset;
+    givnum_dim1 = *ldgnum;
+    givnum_offset = 1 + givnum_dim1;
+    givnum -= givnum_offset;
+    --difl;
+    --z__;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*icompq < 0 || *icompq > 1) {
+	*info = -1;
+    } else if (*nl < 1) {
+	*info = -2;
+    } else if (*nr < 1) {
+	*info = -3;
+    } else if (*sqre < 0 || *sqre > 1) {
+	*info = -4;
+    }
+
+    n = *nl + *nr + 1;
+
+    if (*nrhs < 1) {
+	*info = -5;
+    } else if (*ldb < n) {
+	*info = -7;
+    } else if (*ldbx < n) {
+	*info = -9;
+    } else if (*givptr < 0) {
+	*info = -11;
+    } else if (*ldgcol < n) {
+	*info = -13;
+    } else if (*ldgnum < n) {
+	*info = -15;
+    } else if (*k < 1) {
+	*info = -20;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SLALS0", &i__1);
+	return 0;
+    }
+
+    m = n + *sqre;
+    nlp1 = *nl + 1;
+
+    if (*icompq == 0) {
+
+/*
+          Apply back orthogonal transformations from the left.
+
+          Step (1L): apply back the Givens rotations performed.
+*/
+
+	i__1 = *givptr;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    srot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &givnum[i__ + givnum_dim1]);
+/* L10: */
+	}
+
+/*        Step (2L): permute rows of B. */
+
+	scopy_(nrhs, &b[nlp1 + b_dim1], ldb, &bx[bx_dim1 + 1], ldbx);
+	i__1 = n;
+	for (i__ = 2; i__ <= i__1; ++i__) {
+	    scopy_(nrhs, &b[perm[i__] + b_dim1], ldb, &bx[i__ + bx_dim1],
+		    ldbx);
+/* L20: */
+	}
+
+/*
+          Step (3L): apply the inverse of the left singular vector
+          matrix to BX.
+*/
+
+	if (*k == 1) {
+	    scopy_(nrhs, &bx[bx_offset], ldbx, &b[b_offset], ldb);
+	    if (z__[1] < 0.f) {
+		sscal_(nrhs, &c_b151, &b[b_offset], ldb);
+	    }
+	} else {
+	    i__1 = *k;
+	    for (j = 1; j <= i__1; ++j) {
+		diflj = difl[j];
+		dj = poles[j + poles_dim1];
+		dsigj = -poles[j + (poles_dim1 << 1)];
+		if (j < *k) {
+		    difrj = -difr[j + difr_dim1];
+		    dsigjp = -poles[j + 1 + (poles_dim1 << 1)];
+		}
+		if (z__[j] == 0.f || poles[j + (poles_dim1 << 1)] == 0.f) {
+		    work[j] = 0.f;
+		} else {
+		    work[j] = -poles[j + (poles_dim1 << 1)] * z__[j] / diflj /
+			     (poles[j + (poles_dim1 << 1)] + dj);
+		}
+		i__2 = j - 1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    if (z__[i__] == 0.f || poles[i__ + (poles_dim1 << 1)] ==
+			    0.f) {
+			work[i__] = 0.f;
+		    } else {
+			work[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				/ (slamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigj) - diflj) / (poles[i__ + (poles_dim1 <<
+				1)] + dj);
+		    }
+/* L30: */
+		}
+		i__2 = *k;
+		for (i__ = j + 1; i__ <= i__2; ++i__) {
+		    if (z__[i__] == 0.f || poles[i__ + (poles_dim1 << 1)] ==
+			    0.f) {
+			work[i__] = 0.f;
+		    } else {
+			work[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				/ (slamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigjp) + difrj) / (poles[i__ + (poles_dim1 <<
+				 1)] + dj);
+		    }
+/* L40: */
+		}
+		work[1] = -1.f;
+		temp = snrm2_(k, &work[1], &c__1);
+		sgemv_("T", k, nrhs, &c_b15, &bx[bx_offset], ldbx, &work[1], &
+			c__1, &c_b29, &b[j + b_dim1], ldb);
+		slascl_("G", &c__0, &c__0, &temp, &c_b15, &c__1, nrhs, &b[j +
+			b_dim1], ldb, info);
+/* L50: */
+	    }
+	}
+
+/*        Move the deflated rows of BX to B also. */
+
+	if (*k < max(m,n)) {
+	    i__1 = n - *k;
+	    slacpy_("A", &i__1, nrhs, &bx[*k + 1 + bx_dim1], ldbx, &b[*k + 1
+		    + b_dim1], ldb);
+	}
+    } else {
+
+/*
+          Apply back the right orthogonal transformations.
+
+          Step (1R): apply back the new right singular vector matrix
+          to B.
+*/
+
+	if (*k == 1) {
+	    scopy_(nrhs, &b[b_offset], ldb, &bx[bx_offset], ldbx);
+	} else {
+	    i__1 = *k;
+	    for (j = 1; j <= i__1; ++j) {
+		dsigj = poles[j + (poles_dim1 << 1)];
+		if (z__[j] == 0.f) {
+		    work[j] = 0.f;
+		} else {
+		    work[j] = -z__[j] / difl[j] / (dsigj + poles[j +
+			    poles_dim1]) / difr[j + (difr_dim1 << 1)];
+		}
+		i__2 = j - 1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    if (z__[j] == 0.f) {
+			work[i__] = 0.f;
+		    } else {
+			r__1 = -poles[i__ + 1 + (poles_dim1 << 1)];
+			work[i__] = z__[j] / (slamc3_(&dsigj, &r__1) - difr[
+				i__ + difr_dim1]) / (dsigj + poles[i__ +
+				poles_dim1]) / difr[i__ + (difr_dim1 << 1)];
+		    }
+/* L60: */
+		}
+		i__2 = *k;
+		for (i__ = j + 1; i__ <= i__2; ++i__) {
+		    if (z__[j] == 0.f) {
+			work[i__] = 0.f;
+		    } else {
+			r__1 = -poles[i__ + (poles_dim1 << 1)];
+			work[i__] = z__[j] / (slamc3_(&dsigj, &r__1) - difl[
+				i__]) / (dsigj + poles[i__ + poles_dim1]) /
+				difr[i__ + (difr_dim1 << 1)];
+		    }
+/* L70: */
+		}
+		sgemv_("T", k, nrhs, &c_b15, &b[b_offset], ldb, &work[1], &
+			c__1, &c_b29, &bx[j + bx_dim1], ldbx);
+/* L80: */
+	    }
+	}
+
+/*
+          Step (2R): if SQRE = 1, apply back the rotation that is
+          related to the right null space of the subproblem.
+*/
+
+	if (*sqre == 1) {
+	    scopy_(nrhs, &b[m + b_dim1], ldb, &bx[m + bx_dim1], ldbx);
+	    srot_(nrhs, &bx[bx_dim1 + 1], ldbx, &bx[m + bx_dim1], ldbx, c__,
+		    s);
+	}
+	if (*k < max(m,n)) {
+	    i__1 = n - *k;
+	    slacpy_("A", &i__1, nrhs, &b[*k + 1 + b_dim1], ldb, &bx[*k + 1 +
+		    bx_dim1], ldbx);
+	}
+
+/*        Step (3R): permute rows of B. */
+
+	scopy_(nrhs, &bx[bx_dim1 + 1], ldbx, &b[nlp1 + b_dim1], ldb);
+	if (*sqre == 1) {
+	    scopy_(nrhs, &bx[m + bx_dim1], ldbx, &b[m + b_dim1], ldb);
+	}
+	i__1 = n;
+	for (i__ = 2; i__ <= i__1; ++i__) {
+	    scopy_(nrhs, &bx[i__ + bx_dim1], ldbx, &b[perm[i__] + b_dim1],
+		    ldb);
+/* L90: */
+	}
+
+/*        Step (4R): apply back the Givens rotations performed. */
+
+	for (i__ = *givptr; i__ >= 1; --i__) {
+	    r__1 = -givnum[i__ + givnum_dim1];
+	    srot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &r__1);
+/* L100: */
+	}
+    }
+
+    return 0;
+
+/*     End of SLALS0 */
+
+} /* slals0_ */
+
+/* Subroutine */ int slalsa_(integer *icompq, integer *smlsiz, integer *n,
+	integer *nrhs, real *b, integer *ldb, real *bx, integer *ldbx, real *
+	u, integer *ldu, real *vt, integer *k, real *difl, real *difr, real *
+	z__, real *poles, integer *givptr, integer *givcol, integer *ldgcol,
+	integer *perm, real *givnum, real *c__, real *s, real *work, integer *
+	iwork, integer *info)
+{
+    /* System generated locals */
+    integer givcol_dim1, givcol_offset, perm_dim1, perm_offset, b_dim1,
+	    b_offset, bx_dim1, bx_offset, difl_dim1, difl_offset, difr_dim1,
+	    difr_offset, givnum_dim1, givnum_offset, poles_dim1, poles_offset,
+	     u_dim1, u_offset, vt_dim1, vt_offset, z_dim1, z_offset, i__1,
+	    i__2;
+
+    /* Local variables */
+    static integer i__, j, i1, ic, lf, nd, ll, nl, nr, im1, nlf, nrf, lvl,
+	    ndb1, nlp1, lvl2, nrp1, nlvl, sqre, inode, ndiml;
+    extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
+	    integer *, real *, real *, integer *, real *, integer *, real *,
+	    real *, integer *);
+    static integer ndimr;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *), slals0_(integer *, integer *, integer *, integer *,
+	    integer *, real *, integer *, real *, integer *, integer *,
+	    integer *, integer *, integer *, real *, integer *, real *, real *
+	    , real *, real *, integer *, real *, real *, real *, integer *),
+	    xerbla_(char *, integer *), slasdt_(integer *, integer *,
+	    integer *, integer *, integer *, integer *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SLALSA is an itermediate step in solving the least squares problem
+    by computing the SVD of the coefficient matrix in compact form (The
+    singular vectors are computed as products of simple orthorgonal
+    matrices.).
+
+    If ICOMPQ = 0, SLALSA applies the inverse of the left singular vector
+    matrix of an upper bidiagonal matrix to the right hand side; and if
+    ICOMPQ = 1, SLALSA applies the right singular vector matrix to the
+    right hand side. The singular vector matrices were generated in
+    compact form by SLALSA.
+
+    Arguments
+    =========
+
+
+    ICOMPQ (input) INTEGER
+           Specifies whether the left or the right singular vector
+           matrix is involved.
+           = 0: Left singular vector matrix
+           = 1: Right singular vector matrix
+
+    SMLSIZ (input) INTEGER
+           The maximum size of the subproblems at the bottom of the
+           computation tree.
+
+    N      (input) INTEGER
+           The row and column dimensions of the upper bidiagonal matrix.
+
+    NRHS   (input) INTEGER
+           The number of columns of B and BX. NRHS must be at least 1.
+
+    B      (input/output) REAL array, dimension ( LDB, NRHS )
+           On input, B contains the right hand sides of the least
+           squares problem in rows 1 through M.
+           On output, B contains the solution X in rows 1 through N.
+
+    LDB    (input) INTEGER
+           The leading dimension of B in the calling subprogram.
+           LDB must be at least max(1,MAX( M, N ) ).
+
+    BX     (output) REAL array, dimension ( LDBX, NRHS )
+           On exit, the result of applying the left or right singular
+           vector matrix to B.
+
+    LDBX   (input) INTEGER
+           The leading dimension of BX.
+
+    U      (input) REAL array, dimension ( LDU, SMLSIZ ).
+           On entry, U contains the left singular vector matrices of all
+           subproblems at the bottom level.
+
+    LDU    (input) INTEGER, LDU = > N.
+           The leading dimension of arrays U, VT, DIFL, DIFR,
+           POLES, GIVNUM, and Z.
+
+    VT     (input) REAL array, dimension ( LDU, SMLSIZ+1 ).
+           On entry, VT' contains the right singular vector matrices of
+           all subproblems at the bottom level.
+
+    K      (input) INTEGER array, dimension ( N ).
+
+    DIFL   (input) REAL array, dimension ( LDU, NLVL ).
+           where NLVL = INT(log_2 (N/(SMLSIZ+1))) + 1.
+
+    DIFR   (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, DIFL(*, I) and DIFR(*, 2 * I -1) record
+           distances between singular values on the I-th level and
+           singular values on the (I -1)-th level, and DIFR(*, 2 * I)
+           record the normalizing factors of the right singular vectors
+           matrices of subproblems on I-th level.
+
+    Z      (input) REAL array, dimension ( LDU, NLVL ).
+           On entry, Z(1, I) contains the components of the deflation-
+           adjusted updating row vector for subproblems on the I-th
+           level.
+
+    POLES  (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, POLES(*, 2 * I -1: 2 * I) contains the new and old
+           singular values involved in the secular equations on the I-th
+           level.
+
+    GIVPTR (input) INTEGER array, dimension ( N ).
+           On entry, GIVPTR( I ) records the number of Givens
+           rotations performed on the I-th problem on the computation
+           tree.
+
+    GIVCOL (input) INTEGER array, dimension ( LDGCOL, 2 * NLVL ).
+           On entry, for each I, GIVCOL(*, 2 * I - 1: 2 * I) records the
+           locations of Givens rotations performed on the I-th level on
+           the computation tree.
+
+    LDGCOL (input) INTEGER, LDGCOL = > N.
+           The leading dimension of arrays GIVCOL and PERM.
+
+    PERM   (input) INTEGER array, dimension ( LDGCOL, NLVL ).
+           On entry, PERM(*, I) records permutations done on the I-th
+           level of the computation tree.
+
+    GIVNUM (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, GIVNUM(*, 2 *I -1 : 2 * I) records the C- and S-
+           values of Givens rotations performed on the I-th level on the
+           computation tree.
+
+    C      (input) REAL array, dimension ( N ).
+           On entry, if the I-th subproblem is not square,
+           C( I ) contains the C-value of a Givens rotation related to
+           the right null space of the I-th subproblem.
+
+    S      (input) REAL array, dimension ( N ).
+           On entry, if the I-th subproblem is not square,
+           S( I ) contains the S-value of a Givens rotation related to
+           the right null space of the I-th subproblem.
+
+    WORK   (workspace) REAL array.
+           The dimension must be at least N.
+
+    IWORK  (workspace) INTEGER array.
+           The dimension must be at least 3 * N
+
+    INFO   (output) INTEGER
+            = 0:  successful exit.
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    bx_dim1 = *ldbx;
+    bx_offset = 1 + bx_dim1;
+    bx -= bx_offset;
+    givnum_dim1 = *ldu;
+    givnum_offset = 1 + givnum_dim1;
+    givnum -= givnum_offset;
+    poles_dim1 = *ldu;
+    poles_offset = 1 + poles_dim1;
+    poles -= poles_offset;
+    z_dim1 = *ldu;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    difr_dim1 = *ldu;
+    difr_offset = 1 + difr_dim1;
+    difr -= difr_offset;
+    difl_dim1 = *ldu;
+    difl_offset = 1 + difl_dim1;
+    difl -= difl_offset;
+    vt_dim1 = *ldu;
+    vt_offset = 1 + vt_dim1;
+    vt -= vt_offset;
+    u_dim1 = *ldu;
+    u_offset = 1 + u_dim1;
+    u -= u_offset;
+    --k;
+    --givptr;
+    perm_dim1 = *ldgcol;
+    perm_offset = 1 + perm_dim1;
+    perm -= perm_offset;
+    givcol_dim1 = *ldgcol;
+    givcol_offset = 1 + givcol_dim1;
+    givcol -= givcol_offset;
+    --c__;
+    --s;
+    --work;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*icompq < 0 || *icompq > 1) {
+	*info = -1;
+    } else if (*smlsiz < 3) {
+	*info = -2;
+    } else if (*n < *smlsiz) {
+	*info = -3;
+    } else if (*nrhs < 1) {
+	*info = -4;
+    } else if (*ldb < *n) {
+	*info = -6;
+    } else if (*ldbx < *n) {
+	*info = -8;
+    } else if (*ldu < *n) {
+	*info = -10;
+    } else if (*ldgcol < *n) {
+	*info = -19;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SLALSA", &i__1);
+	return 0;
+    }
+
+/*     Book-keeping and  setting up the computation tree. */
+
+    inode = 1;
+    ndiml = inode + *n;
+    ndimr = ndiml + *n;
+
+    slasdt_(n, &nlvl, &nd, &iwork[inode], &iwork[ndiml], &iwork[ndimr],
+	    smlsiz);
+
+/*
+       The following code applies back the left singular vector factors.
+       For applying back the right singular vector factors, go to 50.
+*/
+
+    if (*icompq == 1) {
+	goto L50;
+    }
+
+/*
+       The nodes on the bottom level of the tree were solved
+       by SLASDQ. The corresponding left and right singular vector
+       matrices are in explicit form. First apply back the left
+       singular vector matrices.
+*/
+
+    ndb1 = (nd + 1) / 2;
+    i__1 = nd;
+    for (i__ = ndb1; i__ <= i__1; ++i__) {
+
+/*
+          IC : center row of each node
+          NL : number of rows of left  subproblem
+          NR : number of rows of right subproblem
+          NLF: starting row of the left   subproblem
+          NRF: starting row of the right  subproblem
+*/
+
+	i1 = i__ - 1;
+	ic = iwork[inode + i1];
+	nl = iwork[ndiml + i1];
+	nr = iwork[ndimr + i1];
+	nlf = ic - nl;
+	nrf = ic + 1;
+	sgemm_("T", "N", &nl, nrhs, &nl, &c_b15, &u[nlf + u_dim1], ldu, &b[
+		nlf + b_dim1], ldb, &c_b29, &bx[nlf + bx_dim1], ldbx);
+	sgemm_("T", "N", &nr, nrhs, &nr, &c_b15, &u[nrf + u_dim1], ldu, &b[
+		nrf + b_dim1], ldb, &c_b29, &bx[nrf + bx_dim1], ldbx);
+/* L10: */
+    }
+
+/*
+       Next copy the rows of B that correspond to unchanged rows
+       in the bidiagonal matrix to BX.
+*/
+
+    i__1 = nd;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	ic = iwork[inode + i__ - 1];
+	scopy_(nrhs, &b[ic + b_dim1], ldb, &bx[ic + bx_dim1], ldbx);
+/* L20: */
+    }
+
+/*
+       Finally go through the left singular vector matrices of all
+       the other subproblems bottom-up on the tree.
+*/
+
+    j = pow_ii(&c__2, &nlvl);
+    sqre = 0;
+
+    for (lvl = nlvl; lvl >= 1; --lvl) {
+	lvl2 = (lvl << 1) - 1;
+
+/*
+          find the first node LF and last node LL on
+          the current level LVL
+*/
+
+	if (lvl == 1) {
+	    lf = 1;
+	    ll = 1;
+	} else {
+	    i__1 = lvl - 1;
+	    lf = pow_ii(&c__2, &i__1);
+	    ll = (lf << 1) - 1;
+	}
+	i__1 = ll;
+	for (i__ = lf; i__ <= i__1; ++i__) {
+	    im1 = i__ - 1;
+	    ic = iwork[inode + im1];
+	    nl = iwork[ndiml + im1];
+	    nr = iwork[ndimr + im1];
+	    nlf = ic - nl;
+	    nrf = ic + 1;
+	    --j;
+	    slals0_(icompq, &nl, &nr, &sqre, nrhs, &bx[nlf + bx_dim1], ldbx, &
+		    b[nlf + b_dim1], ldb, &perm[nlf + lvl * perm_dim1], &
+		    givptr[j], &givcol[nlf + lvl2 * givcol_dim1], ldgcol, &
+		    givnum[nlf + lvl2 * givnum_dim1], ldu, &poles[nlf + lvl2 *
+		     poles_dim1], &difl[nlf + lvl * difl_dim1], &difr[nlf +
+		    lvl2 * difr_dim1], &z__[nlf + lvl * z_dim1], &k[j], &c__[
+		    j], &s[j], &work[1], info);
+/* L30: */
+	}
+/* L40: */
+    }
+    goto L90;
+
+/*     ICOMPQ = 1: applying back the right singular vector factors. */
+
+L50:
+
+/*
+       First now go through the right singular vector matrices of all
+       the tree nodes top-down.
+*/
+
+    j = 0;
+    i__1 = nlvl;
+    for (lvl = 1; lvl <= i__1; ++lvl) {
+	lvl2 = (lvl << 1) - 1;
+
+/*
+          Find the first node LF and last node LL on
+          the current level LVL.
+*/
+
+	if (lvl == 1) {
+	    lf = 1;
+	    ll = 1;
+	} else {
+	    i__2 = lvl - 1;
+	    lf = pow_ii(&c__2, &i__2);
+	    ll = (lf << 1) - 1;
+	}
+	i__2 = lf;
+	for (i__ = ll; i__ >= i__2; --i__) {
+	    im1 = i__ - 1;
+	    ic = iwork[inode + im1];
+	    nl = iwork[ndiml + im1];
+	    nr = iwork[ndimr + im1];
+	    nlf = ic - nl;
+	    nrf = ic + 1;
+	    if (i__ == ll) {
+		sqre = 0;
+	    } else {
+		sqre = 1;
+	    }
+	    ++j;
+	    slals0_(icompq, &nl, &nr, &sqre, nrhs, &b[nlf + b_dim1], ldb, &bx[
+		    nlf + bx_dim1], ldbx, &perm[nlf + lvl * perm_dim1], &
+		    givptr[j], &givcol[nlf + lvl2 * givcol_dim1], ldgcol, &
+		    givnum[nlf + lvl2 * givnum_dim1], ldu, &poles[nlf + lvl2 *
+		     poles_dim1], &difl[nlf + lvl * difl_dim1], &difr[nlf +
+		    lvl2 * difr_dim1], &z__[nlf + lvl * z_dim1], &k[j], &c__[
+		    j], &s[j], &work[1], info);
+/* L60: */
+	}
+/* L70: */
+    }
+
+/*
+       The nodes on the bottom level of the tree were solved
+       by SLASDQ. The corresponding right singular vector
+       matrices are in explicit form. Apply them back.
+*/
+
+    ndb1 = (nd + 1) / 2;
+    i__1 = nd;
+    for (i__ = ndb1; i__ <= i__1; ++i__) {
+	i1 = i__ - 1;
+	ic = iwork[inode + i1];
+	nl = iwork[ndiml + i1];
+	nr = iwork[ndimr + i1];
+	nlp1 = nl + 1;
+	if (i__ == nd) {
+	    nrp1 = nr;
+	} else {
+	    nrp1 = nr + 1;
+	}
+	nlf = ic - nl;
+	nrf = ic + 1;
+	sgemm_("T", "N", &nlp1, nrhs, &nlp1, &c_b15, &vt[nlf + vt_dim1], ldu,
+		&b[nlf + b_dim1], ldb, &c_b29, &bx[nlf + bx_dim1], ldbx);
+	sgemm_("T", "N", &nrp1, nrhs, &nrp1, &c_b15, &vt[nrf + vt_dim1], ldu,
+		&b[nrf + b_dim1], ldb, &c_b29, &bx[nrf + bx_dim1], ldbx);
+/* L80: */
+    }
+
+L90:
+
+    return 0;
+
+/*     End of SLALSA */
+
+} /* slalsa_ */
+
+/* Subroutine */ int slalsd_(char *uplo, integer *smlsiz, integer *n, integer
+	*nrhs, real *d__, real *e, real *b, integer *ldb, real *rcond,
+	integer *rank, real *work, integer *iwork, integer *info)
+{
+    /* System generated locals */
+    integer b_dim1, b_offset, i__1, i__2;
+    real r__1;
+
+    /* Local variables */
+    static integer c__, i__, j, k;
+    static real r__;
+    static integer s, u, z__;
+    static real cs;
+    static integer bx;
+    static real sn;
+    static integer st, vt, nm1, st1;
+    static real eps;
+    static integer iwk;
+    static real tol;
+    static integer difl, difr;
+    static real rcnd;
+    static integer perm, nsub, nlvl, sqre, bxst;
+    extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
+	    integer *, real *, real *), sgemm_(char *, char *, integer *,
+	    integer *, integer *, real *, real *, integer *, real *, integer *
+	    , real *, real *, integer *);
+    static integer poles, sizei, nsize;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *);
+    static integer nwork, icmpq1, icmpq2;
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int slasda_(integer *, integer *, integer *,
+	    integer *, real *, real *, real *, integer *, real *, integer *,
+	    real *, real *, real *, real *, integer *, integer *, integer *,
+	    integer *, real *, real *, real *, real *, integer *, integer *),
+	    xerbla_(char *, integer *), slalsa_(integer *, integer *,
+	    integer *, integer *, real *, integer *, real *, integer *, real *
+	    , integer *, real *, integer *, real *, real *, real *, real *,
+	    integer *, integer *, integer *, integer *, real *, real *, real *
+	    , real *, integer *, integer *), slascl_(char *, integer *,
+	    integer *, real *, real *, integer *, integer *, real *, integer *
+	    , integer *);
+    static integer givcol;
+    extern integer isamax_(integer *, real *, integer *);
+    extern /* Subroutine */ int slasdq_(char *, integer *, integer *, integer
+	    *, integer *, integer *, real *, real *, real *, integer *, real *
+	    , integer *, real *, integer *, real *, integer *),
+	    slacpy_(char *, integer *, integer *, real *, integer *, real *,
+	    integer *), slartg_(real *, real *, real *, real *, real *
+	    ), slaset_(char *, integer *, integer *, real *, real *, real *,
+	    integer *);
+    static real orgnrm;
+    static integer givnum;
+    extern doublereal slanst_(char *, integer *, real *, real *);
+    extern /* Subroutine */ int slasrt_(char *, integer *, real *, integer *);
+    static integer givptr, smlszp;
+
+
+/*
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
+
+
+    Purpose
+    =======
+
+    SLALSD uses the singular value decomposition of A to solve the least
+    squares problem of finding X to minimize the Euclidean norm of each
+    column of A*X-B, where A is N-by-N upper bidiagonal, and X and B
+    are N-by-NRHS. The solution X overwrites B.
+
+    The singular values of A smaller than RCOND times the largest
+    singular value are treated as zero in solving the least squares
+    problem; in this case a minimum norm solution is returned.
+    The actual singular values are returned in D in ascending order.
+
+    This code makes very mild assumptions about floating point
+    arithmetic. It will work on machines with a guard digit in
+    add/subtract, or on those binary machines without guard digits
+    which subtract like the Cray XMP, Cray YMP, Cray C 90, or Cray 2.
+    It could conceivably fail on hexadecimal or decimal machines
+    without guard digits, but we know of none.
+
+    Arguments
+    =========
+
+    UPLO   (input) CHARACTER*1
+           = 'U': D and E define an upper bidiagonal matrix.
+           = 'L': D and E define a  lower bidiagonal matrix.
+
+    SMLSIZ (input) INTEGER
+           The maximum size of the subproblems at the bottom of the
+           computation tree.
+
+    N      (input) INTEGER
+           The dimension of the  bidiagonal matrix.  N >= 0.
+
+    NRHS   (input) INTEGER
+           The number of columns of B. NRHS must be at least 1.
+
+    D      (input/output) REAL array, dimension (N)
+           On entry D contains the main diagonal of the bidiagonal
+           matrix. On exit, if INFO = 0, D contains its singular values.
+
+    E      (input/output) REAL array, dimension (N-1)
+           Contains the super-diagonal entries of the bidiagonal matrix.
+           On exit, E has been destroyed.
+
+    B      (input/output) REAL array, dimension (LDB,NRHS)
+           On input, B contains the right hand sides of the least
+           squares problem. On output, B contains the solution X.
+
+    LDB    (input) INTEGER
+           The leading dimension of B in the calling subprogram.
+           LDB must be at least max(1,N).
+
+    RCOND  (input) REAL
+           The singular values of A less than or equal to RCOND times
+           the largest singular value are treated as zero in solving
+           the least squares problem. If RCOND is negative,
+           machine precision is used instead.
+           For example, if diag(S)*X=B were the least squares problem,
+           where diag(S) is a diagonal matrix of singular values, the
+           solution would be X(i) = B(i) / S(i) if S(i) is greater than
+           RCOND*max(S), and X(i) = 0 if S(i) is less than or equal to
+           RCOND*max(S).
+
+    RANK   (output) INTEGER
+           The number of singular values of A greater than RCOND times
+           the largest singular value.
+
+    WORK   (workspace) REAL array, dimension at least
+           (9*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2),
+           where NLVL = max(0, INT(log_2 (N/(SMLSIZ+1))) + 1).
+
+    IWORK  (workspace) INTEGER array, dimension at least
+           (3*N*NLVL + 11*N)
+
+    INFO   (output) INTEGER
+           = 0:  successful exit.
+           < 0:  if INFO = -i, the i-th argument had an illegal value.
+           > 0:  The algorithm failed to compute a singular value while
+                 working on the submatrix lying in rows and columns
+                 INFO/(N+1) through MOD(INFO,N+1).
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    --d__;
+    --e;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    --work;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*n < 0) {
+	*info = -3;
+    } else if (*nrhs < 1) {
+	*info = -4;
+    } else if (*ldb < 1 || *ldb < *n) {
+	*info = -8;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SLALSD", &i__1);
+	return 0;
+    }
+
+    eps = slamch_("Epsilon");
+
+/*     Set up the tolerance. */
+
+    if (*rcond <= 0.f || *rcond >= 1.f) {
+	rcnd = eps;
+    } else {
+	rcnd = *rcond;
+    }
+
+    *rank = 0;
+
+/*     Quick return if possible. */
+
+    if (*n == 0) {
+	return 0;
+    } else if (*n == 1) {
+	if (d__[1] == 0.f) {
+	    slaset_("A", &c__1, nrhs, &c_b29, &c_b29, &b[b_offset], ldb);
+	} else {
+	    *rank = 1;
+	    slascl_("G", &c__0, &c__0, &d__[1], &c_b15, &c__1, nrhs, &b[
+		    b_offset], ldb, info);
+	    d__[1] = dabs(d__[1]);
+	}
+	return 0;
+    }
+
+/*     Rotate the matrix if it is lower bidiagonal. */
+
+    if (*(unsigned char *)uplo == 'L') {
+	i__1 = *n - 1;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    slartg_(&d__[i__], &e[i__], &cs, &sn, &r__);
+	    d__[i__] = r__;
+	    e[i__] = sn * d__[i__ + 1];
+	    d__[i__ + 1] = cs * d__[i__ + 1];
+	    if (*nrhs == 1) {
+		srot_(&c__1, &b[i__ + b_dim1], &c__1, &b[i__ + 1 + b_dim1], &
+			c__1, &cs, &sn);
+	    } else {
+		work[(i__ << 1) - 1] = cs;
+		work[i__ * 2] = sn;
+	    }
+/* L10: */
+	}
+	if (*nrhs > 1) {
+	    i__1 = *nrhs;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		i__2 = *n - 1;
+		for (j = 1; j <= i__2; ++j) {
+		    cs = work[(j << 1) - 1];
+		    sn = work[j * 2];
+		    srot_(&c__1, &b[j + i__ * b_dim1], &c__1, &b[j + 1 + i__ *
+			     b_dim1], &c__1, &cs, &sn);
+/* L20: */
+		}
+/* L30: */
+	    }
+	}
+    }
+
+/*     Scale. */
+
+    nm1 = *n - 1;
+    orgnrm = slanst_("M", n, &d__[1], &e[1]);
+    if (orgnrm == 0.f) {
+	slaset_("A", n, nrhs, &c_b29, &c_b29, &b[b_offset], ldb);
+	return 0;
+    }
+
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, n, &c__1, &d__[1], n, info);
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, &nm1, &c__1, &e[1], &nm1,
+	    info);
+
+/*
+       If N is smaller than the minimum divide size SMLSIZ, then solve
+       the problem with another solver.
+*/
+
+    if (*n <= *smlsiz) {
+	nwork = *n * *n + 1;
+	slaset_("A", n, n, &c_b29, &c_b15, &work[1], n);
+	slasdq_("U", &c__0, n, n, &c__0, nrhs, &d__[1], &e[1], &work[1], n, &
+		work[1], n, &b[b_offset], ldb, &work[nwork], info);
+	if (*info != 0) {
+	    return 0;
+	}
+	tol = rcnd * (r__1 = d__[isamax_(n, &d__[1], &c__1)], dabs(r__1));
+	i__1 = *n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    if (d__[i__] <= tol) {
+		slaset_("A", &c__1, nrhs, &c_b29, &c_b29, &b[i__ + b_dim1],
+			ldb);
+	    } else {
+		slascl_("G", &c__0, &c__0, &d__[i__], &c_b15, &c__1, nrhs, &b[
+			i__ + b_dim1], ldb, info);
+		++(*rank);
+	    }
+/* L40: */
+	}
+	sgemm_("T", "N", n, nrhs, n, &c_b15, &work[1], n, &b[b_offset], ldb, &
+		c_b29, &work[nwork], n);
+	slacpy_("A", n, nrhs, &work[nwork], n, &b[b_offset], ldb);
+
+/*        Unscale. */
+
+	slascl_("G", &c__0, &c__0, &c_b15, &orgnrm, n, &c__1, &d__[1], n,
+		info);
+	slasrt_("D", n, &d__[1], info);
+	slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, n, nrhs, &b[b_offset],
+		ldb, info);
+
+	return 0;
+    }
+
+/*     Book-keeping and setting up some constants. */
+
+    nlvl = (integer) (log((real) (*n) / (real) (*smlsiz + 1)) / log(2.f)) + 1;
+
+    smlszp = *smlsiz + 1;
+
+    u = 1;
+    vt = *smlsiz * *n + 1;
+    difl = vt + smlszp * *n;
+    difr = difl + nlvl * *n;
+    z__ = difr + (nlvl * *n << 1);
+    c__ = z__ + nlvl * *n;
+    s = c__ + *n;
+    poles = s + *n;
+    givnum = poles + (nlvl << 1) * *n;
+    bx = givnum + (nlvl << 1) * *n;
+    nwork = bx + *n * *nrhs;
+
+    sizei = *n + 1;
+    k = sizei + *n;
+    givptr = k + *n;
+    perm = givptr + *n;
+    givcol = perm + nlvl * *n;
+    iwk = givcol + (nlvl * *n << 1);
+
+    st = 1;
+    sqre = 0;
+    icmpq1 = 1;
+    icmpq2 = 0;
+    nsub = 0;
+
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if ((r__1 = d__[i__], dabs(r__1)) < eps) {
+	    d__[i__] = r_sign(&eps, &d__[i__]);
+	}
+/* L50: */
+    }
+
+    i__1 = nm1;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if ((r__1 = e[i__], dabs(r__1)) < eps || i__ == nm1) {
+	    ++nsub;
+	    iwork[nsub] = st;
+
+/*
+             Subproblem found. First determine its size and then
+             apply divide and conquer on it.
+*/
+
+	    if (i__ < nm1) {
+
+/*              A subproblem with E(I) small for I < NM1. */
+
+		nsize = i__ - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+	    } else if ((r__1 = e[i__], dabs(r__1)) >= eps) {
+
+/*              A subproblem with E(NM1) not too small but I = NM1. */
+
+		nsize = *n - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+	    } else {
+
+/*
+                A subproblem with E(NM1) small. This implies an
+                1-by-1 subproblem at D(N), which is not solved
+                explicitly.
+*/
+
+		nsize = i__ - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+		++nsub;
+		iwork[nsub] = *n;
+		iwork[sizei + nsub - 1] = 1;
+		scopy_(nrhs, &b[*n + b_dim1], ldb, &work[bx + nm1], n);
+	    }
+	    st1 = st - 1;
+	    if (nsize == 1) {
+
+/*
+                This is a 1-by-1 subproblem and is not solved
+                explicitly.
+*/
+
+		scopy_(nrhs, &b[st + b_dim1], ldb, &work[bx + st1], n);
+	    } else if (nsize <= *smlsiz) {
+
+/*              This is a small subproblem and is solved by SLASDQ. */
+
+		slaset_("A", &nsize, &nsize, &c_b29, &c_b15, &work[vt + st1],
+			n);
+		slasdq_("U", &c__0, &nsize, &nsize, &c__0, nrhs, &d__[st], &e[
+			st], &work[vt + st1], n, &work[nwork], n, &b[st +
+			b_dim1], ldb, &work[nwork], info);
+		if (*info != 0) {
+		    return 0;
+		}
+		slacpy_("A", &nsize, nrhs, &b[st + b_dim1], ldb, &work[bx +
+			st1], n);
+	    } else {
+
+/*              A large problem. Solve it using divide and conquer. */
+
+		slasda_(&icmpq1, smlsiz, &nsize, &sqre, &d__[st], &e[st], &
+			work[u + st1], n, &work[vt + st1], &iwork[k + st1], &
+			work[difl + st1], &work[difr + st1], &work[z__ + st1],
+			 &work[poles + st1], &iwork[givptr + st1], &iwork[
+			givcol + st1], n, &iwork[perm + st1], &work[givnum +
+			st1], &work[c__ + st1], &work[s + st1], &work[nwork],
+			&iwork[iwk], info);
+		if (*info != 0) {
+		    return 0;
+		}
+		bxst = bx + st1;
+		slalsa_(&icmpq2, smlsiz, &nsize, nrhs, &b[st + b_dim1], ldb, &
+			work[bxst], n, &work[u + st1], n, &work[vt + st1], &
+			iwork[k + st1], &work[difl + st1], &work[difr + st1],
+			&work[z__ + st1], &work[poles + st1], &iwork[givptr +
+			st1], &iwork[givcol + st1], n, &iwork[perm + st1], &
+			work[givnum + st1], &work[c__ + st1], &work[s + st1],
+			&work[nwork], &iwork[iwk], info);
+		if (*info != 0) {
+		    return 0;
+		}
+	    }
+	    st = i__ + 1;
+	}
+/* L60: */
+    }
+
+/*     Apply the singular values and treat the tiny ones as zero. */
+
+    tol = rcnd * (r__1 = d__[isamax_(n, &d__[1], &c__1)], dabs(r__1));
+
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+
+/*
+          Some of the elements in D can be negative because 1-by-1
+          subproblems were not solved explicitly.
+*/
+
+	if ((r__1 = d__[i__], dabs(r__1)) <= tol) {
+	    slaset_("A", &c__1, nrhs, &c_b29, &c_b29, &work[bx + i__ - 1], n);
+	} else {
+	    ++(*rank);
+	    slascl_("G", &c__0, &c__0, &d__[i__], &c_b15, &c__1, nrhs, &work[
+		    bx + i__ - 1], n, info);
+	}
+	d__[i__] = (r__1 = d__[i__], dabs(r__1));
+/* L70: */
+    }
+
+/*     Now apply back the right singular vectors. */
+
+    icmpq2 = 1;
+    i__1 = nsub;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	st = iwork[i__];
+	st1 = st - 1;
+	nsize = iwork[sizei + i__ - 1];
+	bxst = bx + st1;
+	if (nsize == 1) {
+	    scopy_(nrhs, &work[bxst], n, &b[st + b_dim1], ldb);
+	} else if (nsize <= *smlsiz) {
+	    sgemm_("T", "N", &nsize, nrhs, &nsize, &c_b15, &work[vt + st1], n,
+		     &work[bxst], n, &c_b29, &b[st + b_dim1], ldb);
+	} else {
+	    slalsa_(&icmpq2, smlsiz, &nsize, nrhs, &work[bxst], n, &b[st +
+		    b_dim1], ldb, &work[u + st1], n, &work[vt + st1], &iwork[
+		    k + st1], &work[difl + st1], &work[difr + st1], &work[z__
+		    + st1], &work[poles + st1], &iwork[givptr + st1], &iwork[
+		    givcol + st1], n, &iwork[perm + st1], &work[givnum + st1],
+		     &work[c__ + st1], &work[s + st1], &work[nwork], &iwork[
+		    iwk], info);
+	    if (*info != 0) {
+		return 0;
+	    }
+	}
+/* L80: */
+    }
+
+/*     Unscale and sort the singular values. */
+
+    slascl_("G", &c__0, &c__0, &c_b15, &orgnrm, n, &c__1, &d__[1], n, info);
+    slasrt_("D", n, &d__[1], info);
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, n, nrhs, &b[b_offset], ldb,
+	    info);
+
+    return 0;
+
+/*     End of SLALSD */
+
+} /* slalsd_ */
 
 /* Subroutine */ int slamrg_(integer *n1, integer *n2, real *a, integer *
 	strd1, integer *strd2, integer *index)
@@ -29679,7 +31767,7 @@ L110:
 /*              Note that M is very tiny */
 
 		if (l == 0.f) {
-		    t = r_sign(&c_b2863, &ft) * r_sign(&c_b15, &gt);
+		    t = r_sign(&c_b3178, &ft) * r_sign(&c_b15, &gt);
 		} else {
 		    t = gt / r_sign(&d__, &ft) + m / t;
 		}

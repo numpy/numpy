@@ -141,6 +141,7 @@ Handling complex numbers
    real
    imag
    conj
+   conjugate
 
 
 Miscellaneous

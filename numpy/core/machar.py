@@ -5,16 +5,16 @@ floating-point arithmetic system
 Author: Pearu Peterson, September 2003
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['MachAr']
 
 from numpy.core.fromnumeric import any
-from numpy.core.numeric import errstate
+from numpy.core._ufunc_config import errstate
+from numpy.core.overrides import set_module
 
 # Need to speed this up...especially for longfloat
 
-class MachAr(object):
+@set_module('numpy')
+class MachAr:
     """
     Diagnosing machine parameters.
 
@@ -40,8 +40,8 @@ class MachAr(object):
         Smallest (most negative) power of `ibeta` consistent with there
         being no leading zeros in the mantissa.
     xmin : float
-        Floating point number ``beta**minexp`` (the smallest [in
-        magnitude] usable floating value).
+        Floating-point number ``beta**minexp`` (the smallest [in
+        magnitude] positive floating point number with full precision).
     maxexp : int
         Smallest (positive) power of `ibeta` that causes overflow.
     xmax : float

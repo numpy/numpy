@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 C declarations, CPP macros, and C functions for f2py2e.
@@ -14,8 +14,6 @@ $Date: 2005/05/06 11:42:34 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import copy
 
@@ -288,11 +286,11 @@ static int f2py_size(PyArrayObject* var, ...)
 """
 
 cppmacros[
-    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyInt_FromLong(v))'
+    'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyLong_FromLong(v))'
 cppmacros[
-    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyInt_FromLong(v))'
+    'pyobj_from_short1'] = '#define pyobj_from_short1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_int1'] = ['signed_char']
-cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyInt_FromLong(v))'
+cppmacros['pyobj_from_int1'] = '#define pyobj_from_int1(v) (PyLong_FromLong(v))'
 cppmacros[
     'pyobj_from_long1'] = '#define pyobj_from_long1(v) (PyLong_FromLong(v))'
 needs['pyobj_from_long_long1'] = ['long_long']
@@ -322,10 +320,10 @@ cppmacros[
     'pyobj_from_complex_float1'] = '#define pyobj_from_complex_float1(v) (PyComplex_FromDoubles(v.r,v.i))'
 needs['pyobj_from_string1'] = ['string']
 cppmacros[
-    'pyobj_from_string1'] = '#define pyobj_from_string1(v) (PyString_FromString((char *)v))'
+    'pyobj_from_string1'] = '#define pyobj_from_string1(v) (PyUnicode_FromString((char *)v))'
 needs['pyobj_from_string1size'] = ['string']
 cppmacros[
-    'pyobj_from_string1size'] = '#define pyobj_from_string1size(v,len) (PyUString_FromStringAndSize((char *)v, len))'
+    'pyobj_from_string1size'] = '#define pyobj_from_string1size(v,len) (PyUnicode_FromStringAndSize((char *)v, len))'
 needs['TRYPYARRAYTEMPLATE'] = ['PRINTPYOBJERR']
 cppmacros['TRYPYARRAYTEMPLATE'] = """\
 /* New SciPy */
@@ -438,9 +436,9 @@ cppmacros['GETSTRFROMPYTUPLE'] = """\
         PyObject *rv_cb_str = PyTuple_GetItem((tuple),(index));\\
         if (rv_cb_str == NULL)\\
             goto capi_fail;\\
-        if (PyString_Check(rv_cb_str)) {\\
+        if (PyBytes_Check(rv_cb_str)) {\\
             str[len-1]='\\0';\\
-            STRINGCOPYN((str),PyString_AS_STRING((PyStringObject*)rv_cb_str),(len));\\
+            STRINGCOPYN((str),PyBytes_AS_STRING((PyBytesObject*)rv_cb_str),(len));\\
         } else {\\
             PRINTPYOBJERR(rv_cb_str);\\
             PyErr_SetString(#modulename#_error,\"string object expected\");\\
@@ -542,7 +540,22 @@ cppmacros[
     'ARRSIZE'] = '#define ARRSIZE(dims,rank) (_PyArray_multiply_list(dims,rank))'
 cppmacros['OLDPYNUM'] = """\
 #ifdef OLDPYNUM
-#error You need to install Numeric Python version 13 or higher. Get it from http:/sourceforge.net/project/?group_id=1369
+#error You need to install NumPy version 0.13 or higher. See https://scipy.org/install.html
+#endif
+"""
+cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
+#ifndef F2PY_THREAD_LOCAL_DECL
+#if defined(_MSC_VER)
+#define F2PY_THREAD_LOCAL_DECL __declspec(thread)
+#elif defined(__STDC_VERSION__) \\
+      && (__STDC_VERSION__ >= 201112L) \\
+      && !defined(__STDC_NO_THREADS__)
+#include <threads.h>
+#define F2PY_THREAD_LOCAL_DECL thread_local
+#elif defined(__GNUC__) \\
+      && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 4)))
+#define F2PY_THREAD_LOCAL_DECL __thread
+#endif
 #endif
 """
 ################# C functions ###############
@@ -616,7 +629,9 @@ capi_fail:
 """
 needs['string_from_pyobj'] = ['string', 'STRINGMALLOC', 'STRINGCOPYN']
 cfuncs['string_from_pyobj'] = """\
-static int string_from_pyobj(string *str,int *len,const string inistr,PyObject *obj,const char *errmess) {
+static int
+string_from_pyobj(string *str,int *len,const string inistr,PyObject *obj,const char *errmess)
+{
     PyArrayObject *arr = NULL;
     PyObject *tmp = NULL;
 #ifdef DEBUGCFUNCS
@@ -642,11 +657,10 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         STRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
         return 1;
     }
-    if (PyString_Check(obj)) {
+    if (PyBytes_Check(obj)) {
         tmp = obj;
         Py_INCREF(tmp);
     }
-#if PY_VERSION_HEX >= 0x03000000
     else if (PyUnicode_Check(obj)) {
         tmp = PyUnicode_AsASCIIString(obj);
     }
@@ -661,207 +675,246 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
             tmp = NULL;
         }
     }
-#else
-    else {
-        tmp = PyObject_Str(obj);
-    }
-#endif
     if (tmp == NULL) goto capi_fail;
     if (*len == -1)
-        *len = PyString_GET_SIZE(tmp);
+        *len = PyBytes_GET_SIZE(tmp);
     STRINGMALLOC(*str,*len);
-    STRINGCOPYN(*str,PyString_AS_STRING(tmp),*len+1);
+    STRINGCOPYN(*str,PyBytes_AS_STRING(tmp),*len+1);
     Py_DECREF(tmp);
     return 1;
 capi_fail:
     Py_XDECREF(tmp);
     {
         PyObject* err = PyErr_Occurred();
-        if (err==NULL) err = #modulename#_error;
-        PyErr_SetString(err,errmess);
+        if (err == NULL) {
+            err = #modulename#_error;
+        }
+        PyErr_SetString(err, errmess);
     }
     return 0;
 }
 """
+
+
 needs['char_from_pyobj'] = ['int_from_pyobj']
 cfuncs['char_from_pyobj'] = """\
-static int char_from_pyobj(char* v,PyObject *obj,const char *errmess) {
-    int i=0;
-    if (int_from_pyobj(&i,obj,errmess)) {
+static int
+char_from_pyobj(char* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
         *v = (char)i;
         return 1;
     }
     return 0;
 }
 """
+
+
 needs['signed_char_from_pyobj'] = ['int_from_pyobj', 'signed_char']
 cfuncs['signed_char_from_pyobj'] = """\
-static int signed_char_from_pyobj(signed_char* v,PyObject *obj,const char *errmess) {
-    int i=0;
-    if (int_from_pyobj(&i,obj,errmess)) {
+static int
+signed_char_from_pyobj(signed_char* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
         *v = (signed_char)i;
         return 1;
     }
     return 0;
 }
 """
+
+
 needs['short_from_pyobj'] = ['int_from_pyobj']
 cfuncs['short_from_pyobj'] = """\
-static int short_from_pyobj(short* v,PyObject *obj,const char *errmess) {
-    int i=0;
-    if (int_from_pyobj(&i,obj,errmess)) {
+static int
+short_from_pyobj(short* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
         *v = (short)i;
         return 1;
     }
     return 0;
 }
 """
+
+
 cfuncs['int_from_pyobj'] = """\
-static int int_from_pyobj(int* v,PyObject *obj,const char *errmess) {
+static int
+int_from_pyobj(int* v, PyObject *obj, const char *errmess)
+{
     PyObject* tmp = NULL;
-    if (PyInt_Check(obj)) {
-        *v = (int)PyInt_AS_LONG(obj);
-        return 1;
+
+    if (PyLong_Check(obj)) {
+        *v = Npy__PyLong_AsInt(obj);
+        return !(*v == -1 && PyErr_Occurred());
     }
-    tmp = PyNumber_Int(obj);
+
+    tmp = PyNumber_Long(obj);
     if (tmp) {
-        *v = PyInt_AS_LONG(tmp);
+        *v = Npy__PyLong_AsInt(tmp);
         Py_DECREF(tmp);
-        return 1;
+        return !(*v == -1 && PyErr_Occurred());
     }
+
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
+        tmp = PySequence_GetItem(obj, 0);
     if (tmp) {
         PyErr_Clear();
-        if (int_from_pyobj(v,tmp,errmess)) {Py_DECREF(tmp); return 1;}
+        if (int_from_pyobj(v, tmp, errmess)) {
+            Py_DECREF(tmp);
+            return 1;
+        }
         Py_DECREF(tmp);
     }
     {
         PyObject* err = PyErr_Occurred();
-        if (err==NULL) err = #modulename#_error;
-        PyErr_SetString(err,errmess);
+        if (err == NULL) {
+            err = #modulename#_error;
+        }
+        PyErr_SetString(err, errmess);
     }
     return 0;
 }
 """
+
+
 cfuncs['long_from_pyobj'] = """\
-static int long_from_pyobj(long* v,PyObject *obj,const char *errmess) {
+static int
+long_from_pyobj(long* v, PyObject *obj, const char *errmess) {
     PyObject* tmp = NULL;
-    if (PyInt_Check(obj)) {
-        *v = PyInt_AS_LONG(obj);
-        return 1;
+
+    if (PyLong_Check(obj)) {
+        *v = PyLong_AsLong(obj);
+        return !(*v == -1 && PyErr_Occurred());
     }
-    tmp = PyNumber_Int(obj);
+
+    tmp = PyNumber_Long(obj);
     if (tmp) {
-        *v = PyInt_AS_LONG(tmp);
+        *v = PyLong_AsLong(tmp);
         Py_DECREF(tmp);
-        return 1;
+        return !(*v == -1 && PyErr_Occurred());
     }
+
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
+
     if (tmp) {
         PyErr_Clear();
-        if (long_from_pyobj(v,tmp,errmess)) {Py_DECREF(tmp); return 1;}
+        if (long_from_pyobj(v, tmp, errmess)) {
+            Py_DECREF(tmp);
+            return 1;
+        }
         Py_DECREF(tmp);
     }
     {
         PyObject* err = PyErr_Occurred();
-        if (err==NULL) err = #modulename#_error;
-        PyErr_SetString(err,errmess);
+        if (err == NULL) {
+            err = #modulename#_error;
+        }
+        PyErr_SetString(err, errmess);
     }
     return 0;
 }
 """
+
+
 needs['long_long_from_pyobj'] = ['long_long']
 cfuncs['long_long_from_pyobj'] = """\
-static int long_long_from_pyobj(long_long* v,PyObject *obj,const char *errmess) {
+static int
+long_long_from_pyobj(long_long* v, PyObject *obj, const char *errmess)
+{
     PyObject* tmp = NULL;
+
     if (PyLong_Check(obj)) {
         *v = PyLong_AsLongLong(obj);
-        return (!PyErr_Occurred());
+        return !(*v == -1 && PyErr_Occurred());
     }
-    if (PyInt_Check(obj)) {
-        *v = (long_long)PyInt_AS_LONG(obj);
-        return 1;
-    }
+
     tmp = PyNumber_Long(obj);
     if (tmp) {
         *v = PyLong_AsLongLong(tmp);
         Py_DECREF(tmp);
-        return (!PyErr_Occurred());
+        return !(*v == -1 && PyErr_Occurred());
     }
+
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
     if (tmp) {
         PyErr_Clear();
-        if (long_long_from_pyobj(v,tmp,errmess)) {Py_DECREF(tmp); return 1;}
+        if (long_long_from_pyobj(v, tmp, errmess)) {
+            Py_DECREF(tmp);
+            return 1;
+        }
         Py_DECREF(tmp);
     }
     {
         PyObject* err = PyErr_Occurred();
-        if (err==NULL) err = #modulename#_error;
+        if (err == NULL) {
+            err = #modulename#_error;
+        }
         PyErr_SetString(err,errmess);
     }
     return 0;
 }
 """
+
+
 needs['long_double_from_pyobj'] = ['double_from_pyobj', 'long_double']
 cfuncs['long_double_from_pyobj'] = """\
-static int long_double_from_pyobj(long_double* v,PyObject *obj,const char *errmess) {
+static int
+long_double_from_pyobj(long_double* v, PyObject *obj, const char *errmess)
+{
     double d=0;
     if (PyArray_CheckScalar(obj)){
         if PyArray_IsScalar(obj, LongDouble) {
             PyArray_ScalarAsCtype(obj, v);
             return 1;
         }
-        else if (PyArray_Check(obj) && PyArray_TYPE(obj)==NPY_LONGDOUBLE) {
+        else if (PyArray_Check(obj) && PyArray_TYPE(obj) == NPY_LONGDOUBLE) {
             (*v) = *((npy_longdouble *)PyArray_DATA(obj));
             return 1;
         }
     }
-    if (double_from_pyobj(&d,obj,errmess)) {
+    if (double_from_pyobj(&d, obj, errmess)) {
         *v = (long_double)d;
         return 1;
     }
     return 0;
 }
 """
+
+
 cfuncs['double_from_pyobj'] = """\
-static int double_from_pyobj(double* v,PyObject *obj,const char *errmess) {
+static int
+double_from_pyobj(double* v, PyObject *obj, const char *errmess)
+{
     PyObject* tmp = NULL;
     if (PyFloat_Check(obj)) {
-#ifdef __sgi
         *v = PyFloat_AsDouble(obj);
-#else
-        *v = PyFloat_AS_DOUBLE(obj);
-#endif
-        return 1;
+        return !(*v == -1.0 && PyErr_Occurred());
     }
+
     tmp = PyNumber_Float(obj);
     if (tmp) {
-#ifdef __sgi
         *v = PyFloat_AsDouble(tmp);
-#else
-        *v = PyFloat_AS_DOUBLE(tmp);
-#endif
         Py_DECREF(tmp);
-        return 1;
+        return !(*v == -1.0 && PyErr_Occurred());
     }
     if (PyComplex_Check(obj))
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyString_Check(obj) || PyUnicode_Check(obj))
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
         /*pass*/;
     else if (PySequence_Check(obj))
         tmp = PySequence_GetItem(obj,0);
@@ -878,9 +931,13 @@ static int double_from_pyobj(double* v,PyObject *obj,const char *errmess) {
     return 0;
 }
 """
+
+
 needs['float_from_pyobj'] = ['double_from_pyobj']
 cfuncs['float_from_pyobj'] = """\
-static int float_from_pyobj(float* v,PyObject *obj,const char *errmess) {
+static int
+float_from_pyobj(float* v, PyObject *obj, const char *errmess)
+{
     double d=0.0;
     if (double_from_pyobj(&d,obj,errmess)) {
         *v = (float)d;
@@ -889,11 +946,15 @@ static int float_from_pyobj(float* v,PyObject *obj,const char *errmess) {
     return 0;
 }
 """
+
+
 needs['complex_long_double_from_pyobj'] = ['complex_long_double', 'long_double',
                                            'complex_double_from_pyobj']
 cfuncs['complex_long_double_from_pyobj'] = """\
-static int complex_long_double_from_pyobj(complex_long_double* v,PyObject *obj,const char *errmess) {
-    complex_double cd={0.0,0.0};
+static int
+complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char *errmess)
+{
+    complex_double cd = {0.0,0.0};
     if (PyArray_CheckScalar(obj)){
         if PyArray_IsScalar(obj, CLongDouble) {
             PyArray_ScalarAsCtype(obj, v);
@@ -913,13 +974,17 @@ static int complex_long_double_from_pyobj(complex_long_double* v,PyObject *obj,c
     return 0;
 }
 """
+
+
 needs['complex_double_from_pyobj'] = ['complex_double']
 cfuncs['complex_double_from_pyobj'] = """\
-static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char *errmess) {
+static int
+complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess) {
     Py_complex c;
     if (PyComplex_Check(obj)) {
-        c=PyComplex_AsCComplex(obj);
-        (*v).r=c.real, (*v).i=c.imag;
+        c = PyComplex_AsCComplex(obj);
+        (*v).r = c.real;
+        (*v).i = c.imag;
         return 1;
     }
     if (PyArray_IsScalar(obj, ComplexFloating)) {
@@ -948,30 +1013,24 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
         else {
             arr = PyArray_FromScalar(obj, PyArray_DescrFromType(NPY_CDOUBLE));
         }
-        if (arr==NULL) return 0;
+        if (arr == NULL) {
+            return 0;
+        }
         (*v).r = ((npy_cdouble *)PyArray_DATA(arr))->real;
         (*v).i = ((npy_cdouble *)PyArray_DATA(arr))->imag;
         return 1;
     }
     /* Python does not provide PyNumber_Complex function :-( */
-    (*v).i=0.0;
+    (*v).i = 0.0;
     if (PyFloat_Check(obj)) {
-#ifdef __sgi
         (*v).r = PyFloat_AsDouble(obj);
-#else
-        (*v).r = PyFloat_AS_DOUBLE(obj);
-#endif
-        return 1;
-    }
-    if (PyInt_Check(obj)) {
-        (*v).r = (double)PyInt_AS_LONG(obj);
-        return 1;
+        return !((*v).r == -1.0 && PyErr_Occurred());
     }
     if (PyLong_Check(obj)) {
         (*v).r = PyLong_AsDouble(obj);
-        return (!PyErr_Occurred());
+        return !((*v).r == -1.0 && PyErr_Occurred());
     }
-    if (PySequence_Check(obj) && !(PyString_Check(obj) || PyUnicode_Check(obj))) {
+    if (PySequence_Check(obj) && !(PyBytes_Check(obj) || PyUnicode_Check(obj))) {
         PyObject *tmp = PySequence_GetItem(obj,0);
         if (tmp) {
             if (complex_double_from_pyobj(v,tmp,errmess)) {
@@ -990,10 +1049,14 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
     return 0;
 }
 """
+
+
 needs['complex_float_from_pyobj'] = [
     'complex_float', 'complex_double_from_pyobj']
 cfuncs['complex_float_from_pyobj'] = """\
-static int complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess) {
+static int
+complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess)
+{
     complex_double cd={0.0,0.0};
     if (complex_double_from_pyobj(&cd,obj,errmess)) {
         (*v).r = (float)cd.r;
@@ -1003,6 +1066,8 @@ static int complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *e
     return 0;
 }
 """
+
+
 needs['try_pyarr_from_char'] = ['pyobj_from_char1', 'TRYPYARRAYTEMPLATE']
 cfuncs[
     'try_pyarr_from_char'] = 'static int try_pyarr_from_char(PyObject* obj,char* v) {\n    TRYPYARRAYTEMPLATE(char,\'c\');\n}\n'
@@ -1040,17 +1105,25 @@ needs['try_pyarr_from_complex_double'] = [
 cfuncs[
     'try_pyarr_from_complex_double'] = 'static int try_pyarr_from_complex_double(PyObject* obj,complex_double* v) {\n    TRYCOMPLEXPYARRAYTEMPLATE(double,\'D\');\n}\n'
 
+
 needs['create_cb_arglist'] = ['CFUNCSMESS', 'PRINTPYOBJERR', 'MINMAX']
+# create the list of arguments to be used when calling back to python
 cfuncs['create_cb_arglist'] = """\
-static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofargs,const int nofoptargs,int *nofargs,PyTupleObject **args,const char *errmess) {
+static int
+create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
+                  const int nofoptargs, int *nofargs, PyTupleObject **args,
+                  const char *errmess)
+{
     PyObject *tmp = NULL;
     PyObject *tmp_fun = NULL;
-    int tot,opt,ext,siz,i,di=0;
+    Py_ssize_t tot, opt, ext, siz, i, di = 0;
     CFUNCSMESS(\"create_cb_arglist\\n\");
     tot=opt=ext=siz=0;
     /* Get the total number of arguments */
-    if (PyFunction_Check(fun))
+    if (PyFunction_Check(fun)) {
         tmp_fun = fun;
+        Py_INCREF(tmp_fun);
+    }
     else {
         di = 1;
         if (PyObject_HasAttrString(fun,\"im_func\")) {
@@ -1062,7 +1135,12 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                 tmp_fun = PyObject_GetAttrString(tmp,\"im_func\");
             else {
                 tmp_fun = fun; /* built-in function */
+                Py_INCREF(tmp_fun);
                 tot = maxnofargs;
+                if (PyCFunction_Check(fun)) {
+                    /* In case the function has a co_argcount (like on PyPy) */
+                    di = 0;
+                }
                 if (xa != NULL)
                     tot += PyTuple_Size((PyObject *)xa);
             }
@@ -1073,6 +1151,7 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
             if (xa != NULL)
                 tot += PyTuple_Size((PyObject *)xa);
             tmp_fun = fun;
+            Py_INCREF(tmp_fun);
         }
         else if (F2PyCapsule_Check(fun)) {
             tot = maxnofargs;
@@ -1083,30 +1162,32 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                 goto capi_fail;
             }
             tmp_fun = fun;
+            Py_INCREF(tmp_fun);
         }
     }
-if (tmp_fun==NULL) {
-fprintf(stderr,\"Call-back argument must be function|instance|instance.__call__|f2py-function but got %s.\\n\",(fun==NULL?\"NULL\":Py_TYPE(fun)->tp_name));
-goto capi_fail;
-}
-#if PY_VERSION_HEX >= 0x03000000
+
+    if (tmp_fun == NULL) {
+        fprintf(stderr,
+                \"Call-back argument must be function|instance|instance.__call__|f2py-function \"
+                \"but got %s.\\n\",
+                ((fun == NULL) ? \"NULL\" : Py_TYPE(fun)->tp_name));
+        goto capi_fail;
+    }
+
     if (PyObject_HasAttrString(tmp_fun,\"__code__\")) {
-        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"__code__\"),\"co_argcount\"))
-#else
-    if (PyObject_HasAttrString(tmp_fun,\"func_code\")) {
-        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"func_code\"),\"co_argcount\"))
-#endif
-            tot = PyInt_AsLong(PyObject_GetAttrString(tmp,\"co_argcount\")) - di;
-        Py_XDECREF(tmp);
+        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"__code__\"),\"co_argcount\")) {
+            PyObject *tmp_argcount = PyObject_GetAttrString(tmp,\"co_argcount\");
+            Py_DECREF(tmp);
+            if (tmp_argcount == NULL) {
+                goto capi_fail;
+            }
+            tot = PyLong_AsSsize_t(tmp_argcount) - di;
+            Py_DECREF(tmp_argcount);
+        }
     }
     /* Get the number of optional arguments */
-#if PY_VERSION_HEX >= 0x03000000
     if (PyObject_HasAttrString(tmp_fun,\"__defaults__\")) {
         if (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"__defaults__\")))
-#else
-    if (PyObject_HasAttrString(tmp_fun,\"func_defaults\")) {
-        if (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"func_defaults\")))
-#endif
             opt = PyTuple_Size(tmp);
         Py_XDECREF(tmp);
     }
@@ -1116,13 +1197,23 @@ goto capi_fail;
     /* Calculate the size of call-backs argument list */
     siz = MIN(maxnofargs+ext,tot);
     *nofargs = MAX(0,siz-ext);
+
 #ifdef DEBUGCFUNCS
-    fprintf(stderr,\"debug-capi:create_cb_arglist:maxnofargs(-nofoptargs),tot,opt,ext,siz,nofargs=%d(-%d),%d,%d,%d,%d,%d\\n\",maxnofargs,nofoptargs,tot,opt,ext,siz,*nofargs);
+    fprintf(stderr,
+            \"debug-capi:create_cb_arglist:maxnofargs(-nofoptargs),\"
+            \"tot,opt,ext,siz,nofargs = %d(-%d), %zd, %zd, %zd, %zd, %d\\n\",
+            maxnofargs, nofoptargs, tot, opt, ext, siz, *nofargs);
 #endif
-    if (siz<tot-opt) {
-        fprintf(stderr,\"create_cb_arglist: Failed to build argument list (siz) with enough arguments (tot-opt) required by user-supplied function (siz,tot,opt=%d,%d,%d).\\n\",siz,tot,opt);
+
+    if (siz < tot-opt) {
+        fprintf(stderr,
+                \"create_cb_arglist: Failed to build argument list \"
+                \"(siz) with enough arguments (tot-opt) required by \"
+                \"user-supplied function (siz,tot,opt=%zd, %zd, %zd).\\n\",
+                siz, tot, opt);
         goto capi_fail;
     }
+
     /* Initialize argument list */
     *args = (PyTupleObject *)PyTuple_New(siz);
     for (i=0;i<*nofargs;i++) {
@@ -1136,10 +1227,13 @@ goto capi_fail;
             PyTuple_SET_ITEM(*args,i,tmp);
         }
     CFUNCSMESS(\"create_cb_arglist-end\\n\");
+    Py_DECREF(tmp_fun);
     return 1;
+
 capi_fail:
-    if ((PyErr_Occurred())==NULL)
-        PyErr_SetString(#modulename#_error,errmess);
+    if (PyErr_Occurred() == NULL)
+        PyErr_SetString(#modulename#_error, errmess);
+    Py_XDECREF(tmp_fun);
     return 0;
 }
 """
@@ -1161,7 +1255,7 @@ def buildcfuncs():
 ############ Auxiliary functions for sorting needs ###################
 
 def append_needs(need, flag=1):
-    global outneeds, needs
+    # This function modifies the contents of the global `outneeds` dict.
     if isinstance(need, list):
         for n in need:
             append_needs(n, flag)
@@ -1228,7 +1322,7 @@ def append_needs(need, flag=1):
 
 
 def get_needs():
-    global outneeds, needs
+    # This function modifies the contents of the global `outneeds` dict.
     res = {}
     for n in outneeds.keys():
         out = []

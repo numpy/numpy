@@ -1,3 +1,5 @@
+.. _routines.io:
+
 Input and output
 ****************
 
@@ -14,7 +16,7 @@ NumPy binary files (NPY, NPZ)
    savez_compressed
 
 The format of these binary file types is documented in
-http://numpy.github.io/neps/npy-format.html
+:py:mod:`numpy.lib.format`
 
 Text files
 ----------
@@ -54,6 +56,7 @@ Memory mapping files
    :toctree: generated/
 
    memmap
+   lib.format.open_memmap
 
 Text formatting options
 -----------------------
@@ -63,6 +66,7 @@ Text formatting options
    set_printoptions
    get_printoptions
    set_string_function
+   printoptions
 
 Base-n representations
 ----------------------
@@ -78,3 +82,10 @@ Data sources
    :toctree: generated/
 
    DataSource
+
+Binary Format Description
+-------------------------
+.. autosummary::
+   :toctree: generated/
+
+   lib.format

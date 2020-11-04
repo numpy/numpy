@@ -1,11 +1,14 @@
-from __future__ import division, absolute_import, print_function
-
 import math
 import textwrap
 import sys
+import pytest
+import threading
+import traceback
+import time
+import random
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_equal, dec
+from numpy.testing import assert_, assert_equal, IS_PYPY
 from . import util
 
 
@@ -60,14 +63,14 @@ cf2py  intent(out) a
        end
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t,t2".split(","):
-            self.check_function(name)
+    @pytest.mark.parametrize('name', 't,t2'.split(','))
+    def test_all(self, name):
+        self.check_function(name)
 
-    @dec.slow
+    @pytest.mark.xfail(IS_PYPY,
+                       reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_docstring(self):
-        expected = """
+        expected = textwrap.dedent("""\
         a = t(fun,[fun_extra_args])
 
         Wrapper for ``t``.
@@ -92,8 +95,8 @@ cf2py  intent(out) a
           def fun(): return a
           Return objects:
             a : int
-        """
-        assert_equal(self.module.t.__doc__, textwrap.dedent(expected).lstrip())
+        """)
+        assert_equal(self.module.t.__doc__, expected)
 
     def check_function(self, name):
         t = getattr(self.module, name)
@@ -117,7 +120,7 @@ cf2py  intent(out) a
         r = t(self.module.func0._cpointer)
         assert_(r == 11, repr(r))
 
-        class A(object):
+        class A:
 
             def __call__(self):
                 return 7
@@ -130,8 +133,8 @@ cf2py  intent(out) a
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
-    @dec.knownfailureif(sys.platform=='win32',
-                        msg='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback(self):
 
         def callback(code):
@@ -144,8 +147,8 @@ cf2py  intent(out) a
         r = f(callback)
         assert_(r == 0, repr(r))
 
-    @dec.knownfailureif(sys.platform=='win32',
-                        msg='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback_array(self):
         # See gh-10027
         cu = np.zeros((1, 8), 'S1')
@@ -163,6 +166,48 @@ cf2py  intent(out) a
         res = f(callback, cu, len(cu))
         assert_(res == 0, repr(res))
 
+    def test_threadsafety(self):
+        # Segfaults if the callback handling is not threadsafe
 
-if __name__ == "__main__":
-    run_module_suite()
+        errors = []
+
+        def cb():
+            # Sleep here to make it more likely for another thread
+            # to call their callback at the same time.
+            time.sleep(1e-3)
+
+            # Check reentrancy
+            r = self.module.t(lambda: 123)
+            assert_(r == 123)
+
+            return 42
+
+        def runner(name):
+            try:
+                for j in range(50):
+                    r = self.module.t(cb)
+                    assert_(r == 42)
+                    self.check_function(name)
+            except Exception:
+                errors.append(traceback.format_exc())
+
+        threads = [threading.Thread(target=runner, args=(arg,))
+                   for arg in ("t", "t2") for n in range(20)]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        errors = "\n\n".join(errors)
+        if errors:
+            raise AssertionError(errors)
+
+
+class TestF77CallbackPythonTLS(TestF77Callback):
+    """
+    Callback tests using Python thread-local storage instead of
+    compiler-provided
+    """
+    options = ["-DF2PY_USE_PYTHON_TLS"]

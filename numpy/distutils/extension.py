@@ -6,21 +6,31 @@ modules in setup scripts.
 Overridden to support f2py.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import sys
 import re
 from distutils.extension import Extension as old_Extension
-
-if sys.version_info[0] >= 3:
-    basestring = str
 
 
 cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
 fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
 
+
 class Extension(old_Extension):
-    def __init__ (
+    """
+    Parameters
+    ----------
+    name : str
+        Extension name.
+    sources : list of str
+        List of source file locations relative to the top directory of
+        the package.
+    extra_compile_args : list of str
+        Extra command line arguments to pass to the compiler.
+    extra_f77_compile_args : list of str
+        Extra command line arguments to pass to the fortran77 compiler.
+    extra_f90_compile_args : list of str
+        Extra command line arguments to pass to the fortran90 compiler.
+    """
+    def __init__(
             self, name, sources,
             include_dirs=None,
             define_macros=None,
@@ -60,7 +70,7 @@ class Extension(old_Extension):
         self.swig_opts = swig_opts or []
         # swig_opts is assumed to be a list. Here we handle the case where it
         # is specified as a string instead.
-        if isinstance(self.swig_opts, basestring):
+        if isinstance(self.swig_opts, str):
             import warnings
             msg = "swig_opts is specified as a string instead of a list"
             warnings.warn(msg, SyntaxWarning, stacklevel=2)

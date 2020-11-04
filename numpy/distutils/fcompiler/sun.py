@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler
 
@@ -44,7 +42,7 @@ class SunFCompiler(FCompiler):
         return opt
 
     def runtime_library_dir_option(self, dir):
-        return '-R"%s"' % dir
+        return '-R%s' % dir
 
 if __name__ == '__main__':
     from distutils import log

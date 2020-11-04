@@ -1,3 +1,5 @@
+.. module:: numpy.matlib
+
 Matrix library (:mod:`numpy.matlib`)
 ************************************
 

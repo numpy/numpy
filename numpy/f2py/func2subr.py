@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -13,8 +13,6 @@ $Date: 2004/11/26 11:13:06 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.16 $"[10:-1]
 
 f2py_version = 'See `f2py -v`'

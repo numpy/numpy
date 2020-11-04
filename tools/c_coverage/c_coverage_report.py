@@ -1,12 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 A script to create C code-coverage reports based on the output of
 valgrind's callgrind tool.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import optparse
 import os
 import re
 import sys
@@ -145,39 +142,43 @@ def collect_stats(files, fd, pattern):
 
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser(
-        usage="[options] callgrind_file(s)")
-    parser.add_option(
-        '-d', '--directory', dest='directory',
-        default='coverage',
-        help='Destination directory for output [default: coverage]')
-    parser.add_option(
-        '-p', '--pattern', dest='pattern',
-        default='numpy',
-        help='Regex pattern to match against source file paths [default: numpy]')
-    parser.add_option(
-        '-f', '--format', dest='format', default=[],
-        action='append', type='choice', choices=('text', 'html'),
-        help="Output format(s) to generate, may be 'text' or 'html' [default: both]")
-    (options, args) = parser.parse_args()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'callgrind_file', nargs='+',
+        help='One or more callgrind files')
+    parser.add_argument(
+        '-d', '--directory', default='coverage',
+        help='Destination directory for output (default: %(default)s)')
+    parser.add_argument(
+        '-p', '--pattern', default='numpy',
+        help='Regex pattern to match against source file paths '
+             '(default: %(default)s)')
+    parser.add_argument(
+        '-f', '--format', action='append', default=[],
+        choices=['text', 'html'],
+        help="Output format(s) to generate. "
+             "If option not provided, both will be generated.")
+    args = parser.parse_args()
 
     files = SourceFiles()
-    for log_file in args:
+    for log_file in args.callgrind_file:
         log_fd = open(log_file, 'r')
-        collect_stats(files, log_fd, options.pattern)
+        collect_stats(files, log_fd, args.pattern)
         log_fd.close()
 
-    if not os.path.exists(options.directory):
-        os.makedirs(options.directory)
+    if not os.path.exists(args.directory):
+        os.makedirs(args.directory)
 
-    if options.format == []:
+    if args.format == []:
         formats = ['text', 'html']
     else:
-        formats = options.format
+        formats = args.format
     if 'text' in formats:
-        files.write_text(options.directory)
+        files.write_text(args.directory)
     if 'html' in formats:
         if not has_pygments:
             print("Pygments 0.11 or later is required to generate HTML")
             sys.exit(1)
-        files.write_html(options.directory)
+        files.write_html(args.directory)

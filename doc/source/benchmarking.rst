@@ -1,0 +1,1 @@
+.. include:: ../../benchmarks/README.rst

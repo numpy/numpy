@@ -1,80 +1,65 @@
 """
-Python 3 compatibility tools.
+Python 3.X compatibility tools.
 
+While this file was originally intended for Python 2 -> 3 transition,
+it is now used to create a compatibility layer between different
+minor versions of Python 3.
+
+While the active version of numpy may not support a given version of python, we
+allow downstream libraries to continue to use these shims for forward
+compatibility with numpy while they transition their code to newer versions of
+Python.
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
-           'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path']
+           'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
+           'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
 
 import sys
+import os
+from pathlib import Path
+import io
+
+import abc
+from abc import ABC as abc_ABC
+
 try:
-    from pathlib import Path
+    import pickle5 as pickle
 except ImportError:
-    Path = None
+    import pickle
 
-if sys.version_info[0] >= 3:
-    import io
+long = int
+integer_types = (int,)
+basestring = str
+unicode = str
+bytes = bytes
 
-    long = int
-    integer_types = (int,)
-    basestring = str
-    unicode = str
-    bytes = bytes
+def asunicode(s):
+    if isinstance(s, bytes):
+        return s.decode('latin1')
+    return str(s)
 
-    def asunicode(s):
-        if isinstance(s, bytes):
-            return s.decode('latin1')
-        return str(s)
-
-    def asbytes(s):
-        if isinstance(s, bytes):
-            return s
-        return str(s).encode('latin1')
-
-    def asstr(s):
-        if isinstance(s, bytes):
-            return s.decode('latin1')
-        return str(s)
-
-    def isfileobj(f):
-        return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
-
-    def open_latin1(filename, mode='r'):
-        return open(filename, mode=mode, encoding='iso-8859-1')
-
-    def sixu(s):
+def asbytes(s):
+    if isinstance(s, bytes):
         return s
+    return str(s).encode('latin1')
 
-    strchar = 'U'
+def asstr(s):
+    if isinstance(s, bytes):
+        return s.decode('latin1')
+    return str(s)
 
+def isfileobj(f):
+    return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
 
-else:
-    bytes = str
-    long = long
-    basestring = basestring
-    unicode = unicode
-    integer_types = (int, long)
-    asbytes = str
-    asstr = str
-    strchar = 'S'
+def open_latin1(filename, mode='r'):
+    return open(filename, mode=mode, encoding='iso-8859-1')
 
-    def isfileobj(f):
-        return isinstance(f, file)
+def sixu(s):
+    return s
 
-    def asunicode(s):
-        if isinstance(s, unicode):
-            return s
-        return str(s).decode('ascii')
-
-    def open_latin1(filename, mode='r'):
-        return open(filename, mode=mode)
-
-    def sixu(s):
-        return unicode(s, 'unicode_escape')
-
+strchar = 'U'
 
 def getexception():
     return sys.exc_info()[1]
@@ -93,64 +78,59 @@ def asunicode_nested(x):
 
 def is_pathlib_path(obj):
     """
-    Check whether obj is a pathlib.Path object.
+    Check whether obj is a `pathlib.Path` object.
+
+    Prefer using ``isinstance(obj, os.PathLike)`` instead of this function.
     """
-    return Path is not None and isinstance(obj, Path)
+    return isinstance(obj, Path)
 
-if sys.version_info[0] >= 3 and sys.version_info[1] >= 4:
-    def npy_load_module(name, fn, info=None):
-        """
-        Load a module.
+# from Python 3.7
+class contextlib_nullcontext:
+    """Context manager that does no additional processing.
 
-        .. versionadded:: 1.11.2
+    Used as a stand-in for a normal context manager, when a particular
+    block of code is only sometimes used with a normal context manager:
 
-        Parameters
-        ----------
-        name : str
-            Full module name.
-        fn : str
-            Path to module file.
-        info : tuple, optional
-            Only here for backward compatibility with Python 2.*.
+    cm = optional_cm if condition else nullcontext()
+    with cm:
+        # Perform operation, using optional_cm if condition is True
+    """
 
-        Returns
-        -------
-        mod : module
+    def __init__(self, enter_result=None):
+        self.enter_result = enter_result
 
-        """
-        import importlib.machinery
-        return importlib.machinery.SourceFileLoader(name, fn).load_module()
-else:
-    def npy_load_module(name, fn, info=None):
-        """
-        Load a module.
+    def __enter__(self):
+        return self.enter_result
 
-        .. versionadded:: 1.11.2
+    def __exit__(self, *excinfo):
+        pass
 
-        Parameters
-        ----------
-        name : str
-            Full module name.
-        fn : str
-            Path to module file.
-        info : tuple, optional
-            Information as returned by `imp.find_module`
-            (suffix, mode, type).
 
-        Returns
-        -------
-        mod : module
+def npy_load_module(name, fn, info=None):
+    """
+    Load a module.
 
-        """
-        import imp
-        import os
-        if info is None:
-            path = os.path.dirname(fn)
-            fo, fn, info = imp.find_module(name, [path])
-        else:
-            fo = open(fn, info[1])
-        try:
-            mod = imp.load_module(name, fo, fn, info)
-        finally:
-            fo.close()
-        return mod
+    .. versionadded:: 1.11.2
+
+    Parameters
+    ----------
+    name : str
+        Full module name.
+    fn : str
+        Path to module file.
+    info : tuple, optional
+        Only here for backward compatibility with Python 2.*.
+
+    Returns
+    -------
+    mod : module
+
+    """
+    # Explicitly lazy import this to avoid paying the cost
+    # of importing importlib at startup
+    from importlib.machinery import SourceFileLoader
+    return SourceFileLoader(name, fn).load_module()
+
+
+os_fspath = os.fspath
+os_PathLike = os.PathLike

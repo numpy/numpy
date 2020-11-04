@@ -5,14 +5,13 @@ An explanation of strides can be found in the "ndarray.rst" file in the
 NumPy reference guide.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
+from numpy.core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
 
 
-class DummyArray(object):
+class DummyArray:
     """Dummy object that just exists to hang __array_interface__ dictionaries
     and possibly keep alive a reference to a base array.
     """
@@ -120,18 +119,26 @@ def _broadcast_to(array, shape, subok, readonly):
     if any(size < 0 for size in shape):
         raise ValueError('all elements of broadcast shape must be non-'
                          'negative')
-    needs_writeable = not readonly and array.flags.writeable
-    extras = ['reduce_ok'] if needs_writeable else []
-    op_flag = 'readwrite' if needs_writeable else 'readonly'
-    broadcast = np.nditer(
+    extras = []
+    it = np.nditer(
         (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
-        op_flags=[op_flag], itershape=shape, order='C').itviews[0]
+        op_flags=['readonly'], itershape=shape, order='C')
+    with it:
+        # never really has writebackifcopy semantics
+        broadcast = it.itviews[0]
     result = _maybe_view_as_subclass(array, broadcast)
-    if needs_writeable and not result.flags.writeable:
+    # In a future version this will go away
+    if not readonly and array.flags._writeable_no_warn:
         result.flags.writeable = True
+        result.flags._warn_on_write = True
     return result
 
 
+def _broadcast_to_dispatcher(array, shape, subok=None):
+    return (array,)
+
+
+@array_function_dispatch(_broadcast_to_dispatcher, module='numpy')
 def broadcast_to(array, shape, subok=False):
     """Broadcast an array to a new shape.
 
@@ -158,6 +165,12 @@ def broadcast_to(array, shape, subok=False):
         If the array is not compatible with the new shape according to NumPy's
         broadcasting rules.
 
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_shapes
+
     Notes
     -----
     .. versionadded:: 1.10.0
@@ -177,8 +190,6 @@ def _broadcast_shape(*args):
     """Returns the shape of the arrays that would result from broadcasting the
     supplied arrays against each other.
     """
-    if not args:
-        return ()
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
     b = np.broadcast(*args[:32])
@@ -192,7 +203,55 @@ def _broadcast_shape(*args):
     return b.shape
 
 
-def broadcast_arrays(*args, **kwargs):
+@set_module('numpy')
+def broadcast_shapes(*args):
+    """
+    Broadcast the input shapes into a single shape.
+
+    :ref:`Learn more about broadcasting here <basics.broadcasting>`.
+
+    .. versionadded:: 1.20.0
+
+    Parameters
+    ----------
+    `*args` : tuples of ints, or ints
+        The shapes to be broadcast against each other.
+
+    Returns
+    -------
+    tuple
+        Broadcasted shape.
+
+    Raises
+    ------
+    ValueError
+        If the shapes are not compatible and cannot be broadcast according
+        to NumPy's broadcasting rules.
+
+    See Also
+    --------
+    broadcast
+    broadcast_arrays
+    broadcast_to
+
+    Examples
+    --------
+    >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
+    (3, 2)
+
+    >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+    (5, 6, 7)
+    """
+    arrays = [np.empty(x, dtype=[]) for x in args]
+    return _broadcast_shape(*arrays)
+
+
+def _broadcast_arrays_dispatcher(*args, subok=None):
+    return args
+
+
+@array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
+def broadcast_arrays(*args, subok=False):
     """
     Broadcast any number of arrays against each other.
 
@@ -210,29 +269,38 @@ def broadcast_arrays(*args, **kwargs):
     broadcasted : list of arrays
         These arrays are views on the original arrays.  They are typically
         not contiguous.  Furthermore, more than one element of a
-        broadcasted array may refer to a single memory location.  If you
-        need to write to the arrays, make copies first.
+        broadcasted array may refer to a single memory location. If you need
+        to write to the arrays, make copies first. While you can set the
+        ``writable`` flag True, writing to a single output value may end up
+        changing more than one location in the output array.
+
+        .. deprecated:: 1.17
+            The output is currently marked so that if written to, a deprecation
+            warning will be emitted. A future version will set the
+            ``writable`` flag False so writing to it will raise an error.
+
+    See Also
+    --------
+    broadcast
+    broadcast_to
+    broadcast_shapes
 
     Examples
     --------
     >>> x = np.array([[1,2,3]])
-    >>> y = np.array([[1],[2],[3]])
+    >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
     >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     """
     # nditer is not used here to avoid the limit of 32 arrays.
@@ -240,10 +308,6 @@ def broadcast_arrays(*args, **kwargs):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    subok = kwargs.pop('subok', False)
-    if kwargs:
-        raise TypeError('broadcast_arrays() got an unexpected keyword '
-                        'argument {!r}'.format(kwargs.keys()[0]))
     args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)
@@ -252,7 +316,5 @@ def broadcast_arrays(*args, **kwargs):
         # Common case where nothing needs to be broadcasted.
         return args
 
-    # TODO: consider making the results of broadcast_arrays readonly to match
-    # broadcast_to. This will require a deprecation cycle.
     return [_broadcast_to(array, shape, subok=subok, readonly=False)
             for array in args]

@@ -39,8 +39,6 @@ may now proceed to calculate the mean of the other values:
 .. moduleauthor:: Jarrod Millman
 
 """
-from __future__ import division, absolute_import, print_function
-
 from . import core
 from .core import *
 
@@ -51,6 +49,6 @@ __all__ = ['core', 'extras']
 __all__ += core.__all__
 __all__ += extras.__all__
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

@@ -1,8 +1,6 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 import numpy.matlib
-from numpy.testing import assert_array_equal, assert_, run_module_suite
+from numpy.testing import assert_array_equal, assert_
 
 def test_empty():
     x = numpy.matlib.empty((2,))
@@ -58,7 +56,3 @@ def test_repmat():
     y = np.array([[0, 1, 2, 3, 0, 1, 2, 3],
                   [0, 1, 2, 3, 0, 1, 2, 3]])
     assert_array_equal(x, y)
-
-
-if __name__ == "__main__":
-    run_module_suite()

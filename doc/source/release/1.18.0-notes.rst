@@ -1,0 +1,390 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.18.0 Release Notes
+==========================
+
+In addition to the usual bug fixes, this NumPy release cleans up and documents
+the new random C-API, expires a large number of old deprecations, and improves
+the appearance of the documentation. The Python versions supported are 3.5-3.8.
+This is the last NumPy release series that will support Python 3.5.
+
+Downstream developers should use Cython >= 0.29.14 for Python 3.8 support and
+OpenBLAS >= 3.7 to avoid problems on the Skylake
+architecture.
+
+
+Highlights
+==========
+
+* The C-API for ``numpy.random`` has been defined and documented.
+* Basic infrastructure for linking with 64 bit BLAS and LAPACK libraries.
+* Many documentation improvements.
+
+
+New functions
+=============
+
+Multivariate hypergeometric distribution added to ``numpy.random``
+------------------------------------------------------------------
+The method ``multivariate_hypergeometric`` has been added to the class
+`numpy.random.Generator`.  This method generates random variates from
+the multivariate hypergeometric probability distribution.
+(`gh-13794 <https://github.com/numpy/numpy/pull/13794>`__)
+
+
+Deprecations
+============
+
+``np.fromfile`` and ``np.fromstring`` will error on bad data
+------------------------------------------------------------
+
+In future numpy releases, the functions ``np.fromfile`` and ``np.fromstring``
+will throw an error when parsing bad data.
+This will now give a ``DeprecationWarning`` where previously partial or
+even invalid data was silently returned. This deprecation also affects
+the C defined functions ``PyArray_FromString`` and ``PyArray_FromFile``
+(`gh-13605 <https://github.com/numpy/numpy/pull/13605>`__)
+
+Deprecate non-scalar arrays as fill values in ``ma.fill_value``
+---------------------------------------------------------------
+Setting a ``MaskedArray.fill_value`` to a non-scalar array is deprecated
+since the logic to broadcast the fill value to the array is fragile,
+especially when slicing.
+(`gh-13698 <https://github.com/numpy/numpy/pull/13698>`__)
+
+Deprecate ``PyArray_As1D``, ``PyArray_As2D``
+--------------------------------------------
+``PyArray_As1D``, ``PyArray_As2D`` are deprecated, use
+``PyArray_AsCArray`` instead
+(`gh-14036 <https://github.com/numpy/numpy/pull/14036>`__)
+
+Deprecate ``np.alen``
+---------------------
+``np.alen`` was deprecated. Use ``len`` instead.
+(`gh-14181 <https://github.com/numpy/numpy/pull/14181>`__)
+
+Deprecate the financial functions
+---------------------------------
+In accordance with
+`NEP-32 <https://numpy.org/neps/nep-0032-remove-financial-functions.html>`_,
+the financial functions ``fv`` ``ipmt``, ``irr``, ``mirr``, ``nper``,
+``npv``, ``pmt``, ``ppmt``, ``pv`` and ``rate`` are deprecated, and will be
+removed from NumPy 1.20.The replacement for these functions is the Python package
+`numpy-financial <https://pypi.org/project/numpy-financial>`_.
+(`gh-14720 <https://github.com/numpy/numpy/pull/14720>`__)
+
+The ``axis`` argument to ``numpy.ma.mask_cols`` and ``numpy.ma.mask_row`` is deprecated
+---------------------------------------------------------------------------------------
+This argument was always ignored.
+(`gh-14996 <https://github.com/numpy/numpy/pull/14996>`__)
+
+
+Expired deprecations
+====================
+
+* ``PyArray_As1D`` and ``PyArray_As2D`` have been removed in favor of
+  ``PyArray_AsCArray``
+  (`gh-14036 <https://github.com/numpy/numpy/pull/14036>`__)
+
+* ``np.rank`` has been removed. This was deprecated in NumPy 1.10
+  and has been replaced by ``np.ndim``.
+  (`gh-14039 <https://github.com/numpy/numpy/pull/14039>`__)
+
+* The deprecation of ``expand_dims`` out-of-range axes in 1.13.0 has
+  expired.
+  (`gh-14051 <https://github.com/numpy/numpy/pull/14051>`__)
+
+* ``PyArray_FromDimsAndDataAndDescr`` and ``PyArray_FromDims`` have been
+  removed (they will always raise an error). Use ``PyArray_NewFromDescr``
+  and ``PyArray_SimpleNew`` instead.
+  (`gh-14100 <https://github.com/numpy/numpy/pull/14100>`__)
+
+* ``numeric.loads``, ``numeric.load``, ``np.ma.dump``,
+  ``np.ma.dumps``, ``np.ma.load``, ``np.ma.loads`` are removed,
+  use ``pickle`` methods instead
+  (`gh-14256 <https://github.com/numpy/numpy/pull/14256>`__)
+
+* ``arrayprint.FloatFormat``, ``arrayprint.LongFloatFormat`` has been removed,
+  use ``FloatingFormat`` instead
+
+* ``arrayprint.ComplexFormat``, ``arrayprint.LongComplexFormat`` has been
+  removed, use ``ComplexFloatingFormat`` instead
+
+* ``arrayprint.StructureFormat`` has been removed, use ``StructureVoidFormat``
+  instead
+  (`gh-14259 <https://github.com/numpy/numpy/pull/14259>`__)
+
+* ``np.testing.rand`` has been removed. This was deprecated in NumPy 1.11
+  and has been replaced by ``np.random.rand``.
+  (`gh-14325 <https://github.com/numpy/numpy/pull/14325>`__)
+
+* Class ``SafeEval`` in ``numpy/lib/utils.py`` has been removed.
+  This was deprecated in NumPy 1.10. Use ``np.safe_eval`` instead.
+  (`gh-14335 <https://github.com/numpy/numpy/pull/14335>`__)
+
+* Remove deprecated support for boolean and empty condition lists in
+  ``np.select``
+  (`gh-14583 <https://github.com/numpy/numpy/pull/14583>`__)
+
+* Array order only accepts 'C', 'F', 'A', and 'K'. More permissive options
+  were deprecated in NumPy 1.11.
+  (`gh-14596 <https://github.com/numpy/numpy/pull/14596>`__)
+
+* np.linspace parameter ``num`` must be an integer. Deprecated in NumPy 1.12.
+  (`gh-14620 <https://github.com/numpy/numpy/pull/14620>`__)
+
+* UFuncs with multiple outputs must use a tuple for the ``out`` kwarg. This
+  finishes a deprecation started in NumPy 1.10.
+  (`gh-14682 <https://github.com/numpy/numpy/pull/14682>`__)
+
+The files ``numpy/testing/decorators.py``, ``numpy/testing/noseclasses.py``
+and ``numpy/testing/nosetester.py`` have been removed.  They were never
+meant to be public (all relevant objects are present in the
+``numpy.testing`` namespace), and importing them has given a deprecation
+warning since NumPy 1.15.0
+(`gh-14567 <https://github.com/numpy/numpy/pull/14567>`__)
+
+
+Compatibility notes
+===================
+
+`numpy.lib.recfunctions.drop_fields` can no longer return None
+--------------------------------------------------------------
+If ``drop_fields`` is used to drop all fields, previously the array would
+be completely discarded and None returned. Now it returns an array of the
+same shape as the input, but with no fields. The old behavior can be retained
+with::
+
+    dropped_arr = drop_fields(arr, ['a', 'b'])
+    if dropped_arr.dtype.names == ():
+        dropped_arr = None
+
+converting the empty recarray to None
+(`gh-14510 <https://github.com/numpy/numpy/pull/14510>`__)
+
+``numpy.argmin/argmax/min/max`` returns ``NaT`` if it exists in array
+---------------------------------------------------------------------
+``numpy.argmin``, ``numpy.argmax``, ``numpy.min``, and ``numpy.max`` will return
+``NaT`` if it exists in the array.
+(`gh-14717 <https://github.com/numpy/numpy/pull/14717>`__)
+
+``np.can_cast(np.uint64, np.timedelta64, casting='safe')`` is now ``False``
+---------------------------------------------------------------------------
+Previously this was ``True`` - however, this was inconsistent with ``uint64``
+not being safely castable to ``int64``, and resulting in strange type
+resolution.
+
+If this impacts your code, cast ``uint64`` to ``int64`` first.
+(`gh-14718 <https://github.com/numpy/numpy/pull/14718>`__)
+
+Changed random variate stream from ``numpy.random.Generator.integers``
+----------------------------------------------------------------------
+There was a bug in ``numpy.random.Generator.integers`` that caused biased
+sampling of 8 and 16 bit integer types. Fixing that bug has changed the
+output stream from what it was in previous releases.
+(`gh-14777 <https://github.com/numpy/numpy/pull/14777>`__)
+
+Add more ufunc loops for ``datetime64``, ``timedelta64``
+--------------------------------------------------------
+``np.datetime('NaT')`` should behave more like ``float('Nan')``. Add needed
+infrastructure so ``np.isinf(a)`` and ``np.isnan(a)`` will run on
+``datetime64`` and ``timedelta64`` dtypes. Also added specific loops for
+``numpy.fmin`` and ``numpy.fmax`` that mask ``NaT``. This may require
+adjustment to user- facing code. Specifically, code that either disallowed the
+calls to ``numpy.isinf`` or ``numpy.isnan`` or checked that they raised an
+exception will require adaptation, and code that mistakenly called
+``numpy.fmax`` and ``numpy.fmin`` instead of ``numpy.maximum`` or
+``numpy.minimum`` respectively will require adjustment. This also affects
+``numpy.nanmax`` and ``numpy.nanmin``.
+(`gh-14841 <https://github.com/numpy/numpy/pull/14841>`__)
+
+Moved modules in ``numpy.random``
+---------------------------------
+As part of the API cleanup, the submodules in ``numpy.random``
+``bit_generator``, ``philox``, ``pcg64``, ``sfc64, ``common``, ``generator``,
+and ``bounded_integers`` were moved to ``_bit_generator``, ``_philox``,
+``_pcg64``, ``_sfc64, ``_common``, ``_generator``, and ``_bounded_integers``
+respectively to indicate that they are not part of the public interface.
+(`gh-14608 <https://github.com/numpy/numpy/pull/14608>`__)
+
+
+C API changes
+=============
+
+``PyDataType_ISUNSIZED(descr)`` now returns False for structured datatypes
+--------------------------------------------------------------------------
+Previously this returned True for any datatype of itemsize 0, but now this
+returns false for the non-flexible datatype with itemsize 0, ``np.dtype([])``.
+(`gh-14393 <https://github.com/numpy/numpy/pull/14393>`__)
+
+
+New Features
+============
+
+Add our own ``*.pxd`` cython import file
+----------------------------------------
+Added a ``numpy/__init__.pxd`` file. It will be used for ``cimport numpy``
+(`gh-12284 <https://github.com/numpy/numpy/pull/12284>`__)
+
+A tuple of axes can now be input to ``expand_dims``
+---------------------------------------------------
+The ``numpy.expand_dims`` ``axis`` keyword can now accept a tuple of
+axes.  Previously, ``axis`` was required to be an integer.
+(`gh-14051 <https://github.com/numpy/numpy/pull/14051>`__)
+
+Support for 64-bit OpenBLAS
+---------------------------
+Added support for 64-bit (ILP64) OpenBLAS. See ``site.cfg.example``
+for details.
+(`gh-15012 <https://github.com/numpy/numpy/pull/15012>`__)
+
+Add ``--f2cmap`` option to F2PY
+-------------------------------
+Allow specifying a file to load Fortran-to-C type map
+customizations from.
+(`gh-15113 <https://github.com/numpy/numpy/pull/15113>`__)
+
+
+Improvements
+============
+
+Different C numeric types of the same size have unique names
+------------------------------------------------------------
+On any given platform, two of ``np.intc``, ``np.int_``, and ``np.longlong``
+would previously appear indistinguishable through their ``repr``, despite
+their corresponding ``dtype`` having different properties.
+A similar problem existed for the unsigned counterparts to these types, and on
+some platforms for ``np.double`` and ``np.longdouble``
+
+These types now always print with a unique ``__name__``.
+(`gh-10151 <https://github.com/numpy/numpy/pull/10151>`__)
+
+``argwhere`` now produces a consistent result on 0d arrays
+----------------------------------------------------------
+On N-d arrays, ``numpy.argwhere`` now always produces an array of shape
+``(n_non_zero, arr.ndim)``, even when ``arr.ndim == 0``. Previously, the
+last axis would have a dimension of 1 in this case.
+(`gh-13610 <https://github.com/numpy/numpy/pull/13610>`__)
+
+Add ``axis`` argument for ``random.permutation`` and ``random.shuffle``
+-----------------------------------------------------------------------
+
+Previously the ``random.permutation`` and ``random.shuffle`` functions
+can only shuffle an array along the first axis; they now have a
+new argument ``axis`` which allows shuffle along a specified axis.
+(`gh-13829 <https://github.com/numpy/numpy/pull/13829>`__)
+
+``method`` keyword argument for ``np.random.multivariate_normal``
+-----------------------------------------------------------------
+A ``method`` keyword argument is now available for
+``np.random.multivariate_normal`` with possible values
+``{'svd', 'eigh', 'cholesky'}``. To use it, write
+``np.random.multivariate_normal(..., method=<method>)``.
+(`gh-14197 <https://github.com/numpy/numpy/pull/14197>`__)
+
+Add complex number support for ``numpy.fromstring``
+---------------------------------------------------
+Now ``numpy.fromstring`` can read complex numbers.
+(`gh-14227 <https://github.com/numpy/numpy/pull/14227>`__)
+
+``numpy.unique`` has consistent axes order when ``axis`` is not None
+--------------------------------------------------------------------
+Using ``moveaxis`` instead of ``swapaxes`` in ``numpy.unique``, so that the ordering of axes
+except the axis in arguments will not be broken.
+(`gh-14255 <https://github.com/numpy/numpy/pull/14255>`__)
+
+``numpy.matmul`` with boolean output now converts to boolean values
+-------------------------------------------------------------------
+Calling ``numpy.matmul`` where the output is a boolean array would fill the array
+with uint8 equivalents of the result, rather than 0/1. Now it forces the output
+to 0 or 1 (``NPY_TRUE`` or ``NPY_FALSE``).
+(`gh-14464 <https://github.com/numpy/numpy/pull/14464>`__)
+
+``numpy.random.randint`` produced incorrect value when the range was ``2**32``
+------------------------------------------------------------------------------
+The implementation introduced in 1.17.0 had an incorrect check when
+determining whether to use the 32-bit path or the full 64-bit
+path that incorrectly redirected random integer generation with a high - low
+range of ``2**32`` to the 64-bit generator.
+(`gh-14501 <https://github.com/numpy/numpy/pull/14501>`__)
+
+Add complex number support for ``numpy.fromfile``
+-------------------------------------------------
+Now ``numpy.fromfile`` can read complex numbers.
+(`gh-14730 <https://github.com/numpy/numpy/pull/14730>`__)
+
+``std=c99`` added if compiler is named ``gcc``
+----------------------------------------------
+GCC before version 5 requires the ``-std=c99`` command line argument. Newer
+compilers automatically turn on C99 mode. The compiler setup code will
+automatically add the code if the compiler name has ``gcc`` in it.
+(`gh-14771 <https://github.com/numpy/numpy/pull/14771>`__)
+
+
+Changes
+=======
+
+
+``NaT`` now sorts to the end of arrays
+--------------------------------------
+``NaT`` is now effectively treated as the largest integer for sorting
+purposes, so that it sorts to the end of arrays. This change is for consistency
+with ``NaN`` sorting behavior.
+(`gh-12658 <https://github.com/numpy/numpy/pull/12658>`__)
+(`gh-15068 <https://github.com/numpy/numpy/pull/15068>`__)
+
+Incorrect ``threshold`` in ``np.set_printoptions`` raises ``TypeError`` or ``ValueError``
+-----------------------------------------------------------------------------------------
+Previously an incorrect ``threshold`` raised ``ValueError``; it now raises ``TypeError``
+for non-numeric types and ``ValueError`` for ``nan`` values.
+(`gh-13899 <https://github.com/numpy/numpy/pull/13899>`__)
+
+Warn when saving a dtype with metadata
+--------------------------------------
+A ``UserWarning`` will be emitted when saving an array via ``numpy.save`` with
+``metadata``. Saving such an array may not preserve metadata, and if metadata
+is preserved, loading it will cause a ``ValueError``. This shortcoming in save
+and load will be addressed in a future release.
+(`gh-14142 <https://github.com/numpy/numpy/pull/14142>`__)
+
+``numpy.distutils`` append behavior changed for LDFLAGS and similar
+-------------------------------------------------------------------
+`numpy.distutils` has always overridden rather than appended to ``LDFLAGS`` and
+other similar such environment variables for compiling Fortran extensions. Now
+the default behavior has changed to appending - which is the expected behavior
+in most situations.  To preserve the old (overwriting) behavior, set the
+``NPY_DISTUTILS_APPEND_FLAGS`` environment variable to 0.  This applies to:
+``LDFLAGS``, ``F77FLAGS``, ``F90FLAGS``, ``FREEFLAGS``, ``FOPT``, ``FDEBUG``,
+and ``FFLAGS``. NumPy 1.16 and 1.17 gave build warnings in situations where this
+change in behavior would have affected the compile flags used.
+(`gh-14248 <https://github.com/numpy/numpy/pull/14248>`__)
+
+Remove ``numpy.random.entropy`` without a deprecation
+-----------------------------------------------------
+
+``numpy.random.entropy`` was added to the ``numpy.random`` namespace in 1.17.0.
+It was meant to be a private c-extension module, but was exposed as public.
+It has been replaced by ``numpy.random.SeedSequence`` so the module was
+completely removed.
+(`gh-14498 <https://github.com/numpy/numpy/pull/14498>`__)
+
+Add options to quiet build configuration and build with ``-Werror``
+-------------------------------------------------------------------
+Added two new configuration options. During the ``build_src`` subcommand, as
+part of configuring NumPy, the files ``_numpyconfig.h`` and ``config.h`` are
+created by probing support for various runtime functions and routines.
+Previously, the very verbose compiler output during this stage clouded more
+important information. By default the output is silenced. Running
+``runtests.py --debug-info`` will add ``--verbose-cfg`` to the ``build_src``
+subcommand,which will restore the previous behaviour.
+
+Adding ``CFLAGS=-Werror`` to turn warnings into errors would trigger errors
+during the configuration. Now ``runtests.py --warn-error`` will add
+``--warn-error`` to the ``build`` subcommand, which will percolate to the
+``build_ext`` and ``build_lib`` subcommands. This will add the compiler flag
+to those stages and turn compiler warnings into errors while actually building
+NumPy itself, avoiding the ``build_src`` subcommand compiler calls.
+
+(`gh-14527 <https://github.com/numpy/numpy/pull/14527>`__)
+(`gh-14518 <https://github.com/numpy/numpy/pull/14518>`__)

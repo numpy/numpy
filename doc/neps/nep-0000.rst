@@ -1,9 +1,11 @@
-=======================
-NEP Purpose and Process
-=======================
+.. _NEP00:
+
+===========================
+NEP 0 — Purpose and Process
+===========================
 
 :Author: Jarrod Millman <millman@berkeley.edu>
-:Status: Draft
+:Status: Active
 :Type: Process
 :Created: 2017-12-11
 
@@ -31,12 +33,18 @@ feature proposal [1]_.
 Types
 ^^^^^
 
-There are two kinds of NEP:
+There are three kinds of NEPs:
 
 1. A **Standards Track** NEP describes a new feature or implementation
    for NumPy.
 
-2. A **Process** NEP describes a process surrounding NumPy, or
+2. An **Informational** NEP describes a NumPy design issue, or provides
+   general guidelines or information to the Python community, but does not
+   propose a new feature. Informational NEPs do not necessarily represent a
+   NumPy community consensus or recommendation, so users and implementers are
+   free to ignore Informational NEPs or follow their advice.
+
+3. A **Process** NEP describes a process surrounding NumPy, or
    proposes a change to (or an event in) a process.  Process NEPs are
    like Standards Track NEPs but apply to areas other than the NumPy
    language itself.  They may propose an implementation, but not to
@@ -64,12 +72,21 @@ champion (a.k.a. Author) should first attempt to ascertain whether the idea is
 suitable for a NEP. Posting to the numpy-discussion `mailing list`_ is the best
 way to go about doing this.
 
-Following a discussion on the mailing list, the proposal should be submitted as
-a draft NEP via a `GitHub pull request`_ to the ``doc/neps`` directory with the
-name ``nep-<n>.rst`` where ``<n>`` is an appropriately assigned four-digit
-number (e.g., ``nep-0000.rst``). The draft must use the :doc:`nep-template`
-file. Once a formal proposal has been submitted as a PR, it should be announced
-on the mailing list.
+The proposal should be submitted as a draft NEP via a `GitHub pull
+request`_ to the ``doc/neps`` directory with the name ``nep-<n>.rst``
+where ``<n>`` is an appropriately assigned four-digit number (e.g.,
+``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
+
+Once the PR for the NEP is in place, a post should be made to the
+mailing list containing the sections up to "Backward compatibility",
+with the purpose of limiting discussion there to usage and impact.
+Discussion on the pull request will have a broader scope, also including
+details of implementation.
+
+At the earliest convenience, the PR should be merged (regardless of
+whether it is accepted during discussion).  Additional PRs may be made
+by the Author to update or expand the NEP, or by maintainers to set
+its status, discussion URL, etc.
 
 Standards Track NEPs consist of two parts, a design document and a
 reference implementation.  It is generally recommended that at least a
@@ -83,22 +100,34 @@ mark the PR as a WIP).
 Review and Resolution
 ^^^^^^^^^^^^^^^^^^^^^
 
-NEPs are discussed on the mailing list and perhaps in other forums.
-Sometimes NEPs will grow out of an existing pull request.
-The possible paths of the status of NEPs are as follows:
+NEPs are discussed on the mailing list.  The possible paths of the
+status of NEPs are as follows:
 
 .. image:: _static/nep-0000.png
 
 All NEPs should be created with the ``Draft`` status.
 
-Normally, a NEP is ``Accepted`` by consensus of all
-interested Contributors.
-In unusual cases, the `NumPy Steering Council`_ may be asked to decide whether
-a controversial NEP is ``Accepted``.
+Eventually, after discussion, there may be a consensus that the NEP
+should be accepted – see the next section for details. At this point
+the status becomes ``Accepted``.
 
 Once a NEP has been ``Accepted``, the reference implementation must be
 completed.  When the reference implementation is complete and incorporated
 into the main source code repository, the status will be changed to ``Final``.
+
+To allow gathering of additional design and interface feedback before
+committing to long term stability for a language feature or standard library
+API, a NEP may also be marked as "Provisional". This is short for
+"Provisionally Accepted", and indicates that the proposal has been accepted for
+inclusion in the reference implementation, but additional user feedback is
+needed before the full design can be considered "Final". Unlike regular
+accepted NEPs, provisionally accepted NEPs may still be Rejected or Withdrawn
+even after the related changes have been included in a Python release.
+
+Wherever possible, it is considered preferable to reduce the scope of a
+proposal to avoid the need to rely on the "Provisional" status (e.g. by
+deferring some features to later NEPs), as this status can lead to version
+compatibility challenges in the wider NumPy ecosystem.
 
 A NEP can also be assigned status ``Deferred``.  The NEP author or a
 core developer can assign the NEP this status when no progress is being made
@@ -113,11 +142,69 @@ accepted that a competing proposal is a better alternative.
 When a NEP is ``Accepted``, ``Rejected``, or ``Withdrawn``, the NEP should be
 updated accordingly. In addition to updating the status field, at the very
 least the ``Resolution`` header should be added with a link to the relevant
-post in the mailing list archives.
+thread in the mailing list archives.
 
-NEPs can also be ``Replaced`` by a different NEP, rendering the original
-obsolete.  Process NEPs may also have a status of
-``Active`` if they are never meant to be completed.  E.g. NEP 0 (this NEP).
+NEPs can also be ``Superseded`` by a different NEP, rendering the
+original obsolete.  The ``Replaced-By`` and ``Replaces`` headers
+should be added to the original and new NEPs respectively.
+
+Process NEPs may also have a status of ``Active`` if they are never
+meant to be completed, e.g. NEP 0 (this NEP).
+
+
+How a NEP becomes Accepted
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A NEP is ``Accepted`` by consensus of all interested contributors. We
+need a concrete way to tell whether consensus has been reached. When
+you think a NEP is ready to accept, send an email to the
+numpy-discussion mailing list with a subject like:
+
+  Proposal to accept NEP #<number>: <title>
+
+In the body of your email, you should:
+
+* link to the latest version of the NEP,
+
+* briefly describe any major points of contention and how they were
+  resolved,
+
+* include a sentence like: "If there are no substantive objections
+  within 7 days from this email, then the NEP will be accepted; see
+  NEP 0 for more details."
+
+For an example, see: https://mail.python.org/pipermail/numpy-discussion/2018-June/078345.html
+
+After you send the email, you should make sure to link to the email
+thread from the ``Discussion`` section of the NEP, so that people can
+find it later.
+
+Generally the NEP author will be the one to send this email, but
+anyone can do it – the important thing is to make sure that everyone
+knows when a NEP is on the verge of acceptance, and give them a final
+chance to respond. If there's some special reason to extend this final
+comment period beyond 7 days, then that's fine, just say so in the
+email. You shouldn't do less than 7 days, because sometimes people are
+travelling or similar and need some time to respond.
+
+In general, the goal is to make sure that the community has consensus,
+not provide a rigid policy for people to try to game. When in doubt,
+err on the side of asking for more feedback and looking for
+opportunities to compromise.
+
+If the final comment period passes without any substantive objections,
+then the NEP can officially be marked ``Accepted``. You should send a
+followup email notifying the list (celebratory emoji optional but
+encouraged 🎉✨), and then update the NEP by setting its ``:Status:``
+to ``Accepted``, and its ``:Resolution:`` header to a link to your
+followup email.
+
+If there *are* substantive objections, then the NEP remains in
+``Draft`` state, discussion continues as normal, and it can be
+proposed for acceptance again later once the objections are resolved.
+
+In unusual cases, the `NumPy Steering Council`_ may be asked to decide
+whether a controversial NEP is ``Accepted``.
 
 
 Maintenance
@@ -147,7 +234,9 @@ Header Preamble
 
 Each NEP must begin with a header preamble.  The headers
 must appear in the following order.  Headers marked with ``*`` are
-optional.  All other headers are required. ::
+optional.  All other headers are required.
+
+.. code-block:: rst
 
     :Author: <list of authors' real names and optionally, email addresses>
     :Status: <Draft | Active | Accepted | Deferred | Rejected |
@@ -164,9 +253,13 @@ The Author header lists the names, and optionally the email addresses
 of all the authors of the NEP.  The format of the Author header
 value must be
 
+.. code-block:: rst
+
     Random J. User <address@dom.ain>
 
 if the email address is included, and just
+
+.. code-block:: rst
 
     Random J. User
 
@@ -188,7 +281,7 @@ References and Footnotes
    `GitHub <https://github.com/numpy/numpy/tree/master/doc/neps>`_.
 
 .. [2] The URL for viewing NEPs on the web is
-   http://numpy.github.io/neps/.
+   https://www.numpy.org/neps/.
 
 .. _repo: https://github.com/numpy/numpy
 
@@ -197,7 +290,7 @@ References and Footnotes
 .. _issue tracker: https://github.com/numpy/numpy/issues
 
 .. _NumPy Steering Council:
-   https://docs.scipy.org/doc/numpy-dev/dev/governance/governance.html
+   https://docs.scipy.org/doc/numpy/dev/governance/governance.html
 
 .. _`GitHub pull request`: https://github.com/numpy/numpy/pulls
 
@@ -205,7 +298,7 @@ References and Footnotes
 
 .. _reStructuredTextPrimer: http://www.sphinx-doc.org/en/stable/rest.html
 
-.. _Sphinx: www.sphinx-doc.org/en/stable
+.. _Sphinx: http://www.sphinx-doc.org/en/stable/
 
 
 Copyright

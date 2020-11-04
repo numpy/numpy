@@ -1,18 +1,16 @@
 """ Test functions for linalg module
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 
 import numpy as np
 from numpy import linalg, arange, float64, array, dot, transpose
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_equal, assert_array_equal,
+    assert_, assert_raises, assert_equal, assert_array_equal,
     assert_array_almost_equal, assert_array_less
 )
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_eig_build(self):
         # Ticket #652
@@ -59,8 +57,8 @@ class TestRegression(object):
         assert_array_almost_equal(b, np.zeros((2, 2)))
 
     def test_norm_vector_badarg(self):
-        # Regression for #786: Froebenius norm for vectors raises
-        # TypeError.
+        # Regression for #786: Frobenius norm for vectors raises
+        # ValueError.
         assert_raises(ValueError, linalg.norm, array([1., 2., 3.]), 'fro')
 
     def test_lapack_endian(self):
@@ -148,7 +146,3 @@ class TestRegression(object):
         u_lstsq, res, rank, sv = linalg.lstsq(G, b, rcond=None)
         # check results just in case
         assert_array_almost_equal(u_lstsq, u)
-
-
-if __name__ == '__main__':
-    run_module_suite()

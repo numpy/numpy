@@ -25,15 +25,56 @@
 #include "array_assign.h"
 
 /*
+ * Check that array data is both uint-aligned and true-aligned for all array
+ * elements, as required by the copy/casting code in lowlevel_strided_loops.c
+ */
+NPY_NO_EXPORT int
+copycast_isaligned(int ndim, npy_intp const *shape,
+        PyArray_Descr *dtype, char *data, npy_intp const *strides)
+{
+    int aligned;
+    int big_aln, small_aln;
+
+    int uint_aln = npy_uint_alignment(dtype->elsize);
+    int true_aln = dtype->alignment;
+
+    /* uint alignment can be 0, meaning not uint alignable */
+    if (uint_aln == 0) {
+        return 0;
+    }
+
+    /*
+     * As an optimization, it is unnecessary to check the alignment to the
+     * smaller of (uint_aln, true_aln) if the data is aligned to the bigger of
+     * the two and the big is a multiple of the small aln. We check the bigger
+     * one first and only check the smaller if necessary.
+     */
+    if (true_aln >= uint_aln) {
+        big_aln = true_aln;
+        small_aln = uint_aln;
+    }
+    else {
+        big_aln = uint_aln;
+        small_aln = true_aln;
+    }
+
+    aligned = raw_array_is_aligned(ndim, shape, data, strides, big_aln);
+    if (aligned && big_aln % small_aln != 0) {
+        aligned = raw_array_is_aligned(ndim, shape, data, strides, small_aln);
+    }
+    return aligned;
+}
+
+/*
  * Assigns the array from 'src' to 'dst'. The strides must already have
  * been broadcast.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_assign_array(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides)
+raw_array_assign_array(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
+        PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS];
@@ -48,11 +89,9 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
-    aligned = raw_array_is_aligned(ndim,
-                        dst_data, dst_strides, dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim,
-                        src_data, src_strides, src_dtype->alignment);
+    aligned =
+        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
+        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
@@ -93,17 +132,22 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, src_strides_it[0],
-                    shape_it[0], src_itemsize, transferdata);
+        if (stransfer(
+                dst_data, dst_strides_it[0], src_data, src_strides_it[0],
+                shape_it[0], src_itemsize, transferdata) < 0) {
+            goto fail;
+        }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
                             src_data, src_strides_it);
 
     NPY_END_THREADS;
-
     NPY_AUXDATA_FREE(transferdata);
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return 0;
+fail:
+    NPY_END_THREADS;
+    NPY_AUXDATA_FREE(transferdata);
+    return -1;
 }
 
 /*
@@ -113,11 +157,11 @@ raw_array_assign_array(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides,
+raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
+        PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp *wheremask_strides)
+        npy_intp const *wheremask_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS];
@@ -133,11 +177,9 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
-    aligned = raw_array_is_aligned(ndim,
-                        dst_data, dst_strides, dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim,
-                        src_data, src_strides, src_dtype->alignment);
+    aligned =
+        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
+        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareThreeRawArrayIter(
@@ -268,19 +310,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     /* Check the casting rule */
     if (!PyArray_CanCastTypeTo(PyArray_DESCR(src),
                                 PyArray_DESCR(dst), casting)) {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Cannot cast scalar from ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(src)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" to "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(dst)));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(src), PyArray_DESCR(dst), casting, NPY_FALSE);
         goto fail;
     }
 
@@ -383,14 +414,14 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
 
         /* A straightforward where-masked assignment */
          /* Do the masked assignment with raw array iteration */
-         if (raw_array_wheremasked_assign_array(
-                 PyArray_NDIM(dst), PyArray_DIMS(dst),
-                 PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
-                 PyArray_DESCR(src), PyArray_DATA(src), src_strides,
-                 PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
-                         wheremask_strides) < 0) {
-             goto fail;
-         }
+        if (raw_array_wheremasked_assign_array(
+                PyArray_NDIM(dst), PyArray_DIMS(dst),
+                PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
+                PyArray_DESCR(src), PyArray_DATA(src), src_strides,
+                PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
+                        wheremask_strides) < 0) {
+            goto fail;
+        }
     }
 
     if (copied_src) {

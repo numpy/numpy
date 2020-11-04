@@ -1,11 +1,13 @@
 String operations
 *****************
 
-.. currentmodule:: numpy.core.defchararray
+.. currentmodule:: numpy.char
 
-This module provides a set of vectorized string operations for arrays
-of type `numpy.string_` or `numpy.unicode_`.   All of them are based on
-the string methods in the Python standard library.
+.. module:: numpy.char
+
+The `numpy.char` module provides a set of vectorized string
+operations for arrays of type `numpy.str_` or `numpy.bytes_`.
+All of them are based on the string methods in the Python standard library.
 
 String operations
 -----------------
@@ -20,6 +22,7 @@ String operations
    center
    decode
    encode
+   expandtabs
    join
    ljust
    lower
@@ -55,6 +58,7 @@ comparison.
    less_equal
    greater
    less
+   compare_chararrays
 
 String information
 ------------------
@@ -63,9 +67,11 @@ String information
    :toctree: generated/
 
    count
+   endswith
    find
    index
    isalpha
+   isalnum
    isdecimal
    isdigit
    islower
@@ -76,6 +82,7 @@ String information
    rfind
    rindex
    startswith
+   str_len
 
 Convenience class
 -----------------
@@ -83,4 +90,6 @@ Convenience class
 .. autosummary::
    :toctree: generated/
 
+   array
+   asarray
    chararray

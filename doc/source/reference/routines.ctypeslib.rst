@@ -1,3 +1,5 @@
+.. module:: numpy.ctypeslib
+
 ***********************************************************
 C-Types Foreign Function Interface (:mod:`numpy.ctypeslib`)
 ***********************************************************
@@ -6,6 +8,6 @@ C-Types Foreign Function Interface (:mod:`numpy.ctypeslib`)
 
 .. autofunction:: as_array
 .. autofunction:: as_ctypes
-.. autofunction:: ctypes_load_library
+.. autofunction:: as_ctypes_type
 .. autofunction:: load_library
 .. autofunction:: ndpointer

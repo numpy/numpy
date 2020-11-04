@@ -1,10 +1,6 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
 from   math           import sqrt
-import os
 import sys
 import unittest
 
@@ -34,7 +30,7 @@ class TensorTestCase(unittest.TestCase):
         tensor = [[[0, 1], [2, 3]],
                   [[3, 2], [1, 0]]]
         if isinstance(self.result, int):
-            self.assertEquals(norm(tensor), self.result)
+            self.assertEqual(norm(tensor), self.result)
         else:
             self.assertAlmostEqual(norm(tensor), self.result, 6)
 
@@ -79,7 +75,7 @@ class TensorTestCase(unittest.TestCase):
         max = Tensor.__dict__[self.typeStr + "Max"]
         tensor = [[[1, 2], [3, 4]],
                   [[5, 6], [7, 8]]]
-        self.assertEquals(max(tensor), 8)
+        self.assertEqual(max(tensor), 8)
 
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxBadList(self):
@@ -111,7 +107,7 @@ class TensorTestCase(unittest.TestCase):
         min = Tensor.__dict__[self.typeStr + "Min"]
         tensor = [[[9, 8], [7, 6]],
                   [[5, 4], [3, 2]]]
-        self.assertEquals(min(tensor), 2)
+        self.assertEqual(min(tensor), 2)
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMinBadList(self):
@@ -145,7 +141,7 @@ class TensorTestCase(unittest.TestCase):
                           [[0, 1, 0], [1, 0, 1], [0, 1, 0]],
                           [[1, 0, 1], [0, 1, 0], [1, 0, 1]]], self.typeCode)
         scale(tensor, 4)
-        self.assertEquals((tensor == [[[4, 0, 4], [0, 4, 0], [4, 0, 4]],
+        self.assertEqual((tensor == [[[4, 0, 4], [0, 4, 0], [4, 0, 4]],
                                       [[0, 4, 0], [4, 0, 4], [0, 4, 0]],
                                       [[4, 0, 4], [0, 4, 0], [4, 0, 4]]]).all(), True)
 
@@ -264,9 +260,9 @@ class TensorTestCase(unittest.TestCase):
         luSplit = Tensor.__dict__[self.typeStr + "LUSplit"]
         lower, upper = luSplit([[[1, 1], [1, 1]],
                                 [[1, 1], [1, 1]]])
-        self.assertEquals((lower == [[[1, 1], [1, 0]],
+        self.assertEqual((lower == [[[1, 1], [1, 0]],
                                      [[1, 0], [0, 0]]]).all(), True)
-        self.assertEquals((upper == [[[0, 0], [0, 1]],
+        self.assertEqual((upper == [[[0, 0], [0, 1]],
                                      [[0, 1], [1, 1]]]).all(), True)
 
 ######################################################################

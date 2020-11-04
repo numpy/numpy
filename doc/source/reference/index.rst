@@ -12,18 +12,23 @@ NumPy Reference
 
 This reference manual details functions, modules, and objects
 included in NumPy, describing what they are and what they do.
-For learning how to use NumPy, see also :ref:`user`.
+For learning how to use NumPy, see the :ref:`complete documentation <numpy_docs_mainpage>`.
 
 
 .. toctree::
    :maxdepth: 2
 
    arrays
+   constants
    ufuncs
    routines
+   typing
+   global_state
    distutils
-   c-api
+   distutils_guide
+   c-api/index
    internals
+   simd/simd-optimizations
    swig
 
 
@@ -34,10 +39,4 @@ Large parts of this manual originate from Travis E. Oliphant's book
 `Guide to NumPy <https://archive.org/details/NumPyBook>`__ (which generously
 entered Public Domain in August 2008). The reference documentation for many of
 the functions are written by numerous contributors and developers of
-NumPy, both prior to and during the
-`NumPy Documentation Marathon
-<http://scipy.org/Developer_Zone/DocMarathon2008>`__.
-
-Please help to improve NumPy's documentation! Instructions on how to
-join the ongoing documentation marathon can be found
-`on the scipy.org website <http://scipy.org/Developer_Zone/DocMarathon2008>`__
+NumPy.

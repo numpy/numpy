@@ -49,19 +49,57 @@ Known bugs:
   because the messages are lost at some point.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['exec_command', 'find_executable']
 
 import os
 import sys
 import subprocess
 import locale
+import warnings
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
 
+def filepath_from_subprocess_output(output):
+    """
+    Convert `bytes` in the encoding used by a subprocess into a filesystem-appropriate `str`.
+
+    Inherited from `exec_command`, and possibly incorrect.
+    """
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    output = output.decode(mylocale, errors='replace')
+    output = output.replace('\r\n', '\n')
+    # Another historical oddity
+    if output[-1:] == '\n':
+        output = output[:-1]
+    return output
+
+
+def forward_bytes_to_stdout(val):
+    """
+    Forward bytes from a subprocess call to the console, without attempting to
+    decode them.
+
+    The assumption is that the subprocess call already returned bytes in
+    a suitable encoding.
+    """
+    if hasattr(sys.stdout, 'buffer'):
+        # use the underlying binary output if there is one
+        sys.stdout.buffer.write(val)
+    elif hasattr(sys.stdout, 'encoding'):
+        # round-trip the encoding if necessary
+        sys.stdout.write(val.decode(sys.stdout.encoding))
+    else:
+        # make a best-guess at the encoding
+        sys.stdout.write(val.decode('utf8', errors='replace'))
+
+
 def temp_file_name():
+    # 2019-01-30, 1.17
+    warnings.warn('temp_file_name is deprecated since NumPy v1.17, use '
+                  'tempfile.mkstemp instead', DeprecationWarning, stacklevel=1)
     fo, name = make_temp_file()
     fo.close()
     return name
@@ -128,9 +166,7 @@ def find_executable(exe, path=None, _cache={}):
 
 def _preserve_environment( names ):
     log.debug('_preserve_environment(%r)' % (names))
-    env = {}
-    for name in names:
-        env[name] = os.environ.get(name)
+    env = {name: os.environ.get(name) for name in names}
     return env
 
 def _update_environment( **env ):
@@ -138,23 +174,13 @@ def _update_environment( **env ):
     for name, value in env.items():
         os.environ[name] = value or ''
 
-def _supports_fileno(stream):
-    """
-    Returns True if 'stream' supports the file descriptor and allows fileno().
-    """
-    if hasattr(stream, 'fileno'):
-        try:
-            stream.fileno()
-            return True
-        except IOError:
-            return False
-    else:
-        return False
-
 def exec_command(command, execute_in='', use_shell=None, use_tee=None,
                  _with_python = 1, **env ):
     """
     Return (status,output) of executed command.
+
+    .. deprecated:: 1.17
+        Use subprocess.Popen instead
 
     Parameters
     ----------
@@ -179,7 +205,10 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     Wild cards will not work for non-posix systems or when use_shell=0.
 
     """
-    log.debug('exec_command(%r,%s)' % (command,\
+    # 2019-01-30, 1.17
+    warnings.warn('exec_command is deprecated since NumPy v1.17, use '
+                  'subprocess.Popen instead', DeprecationWarning, stacklevel=1)
+    log.debug('exec_command(%r,%s)' % (command,
          ','.join(['%s=%r'%kv for kv in env.items()])))
 
     if use_tee is None:
@@ -260,18 +289,14 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         return 127, ''
 
     text, err = proc.communicate()
-    text = text.decode(locale.getpreferredencoding(False),
-                       errors='replace')
-
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    text = text.decode(mylocale, errors='replace')
     text = text.replace('\r\n', '\n')
     # Another historical oddity
     if text[-1:] == '\n':
         text = text[:-1]
-
-    # stdio uses bytes in python 2, so to avoid issues, we simply
-    # remove all non-ascii characters
-    if sys.version_info < (3, 0):
-        text = text.encode('ascii', errors='replace')
 
     if use_tee and text:
         print(text)

@@ -1,0 +1,28 @@
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* CakeWithSteak +
+* Charles Harris
+* Dan Allan
+* Hameer Abbasi
+* Lars Grueter
+* Matti Picus
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#14418 <https://github.com/numpy/numpy/pull/14418>`__: BUG: Fix aradixsort indirect indexing.
+* `#14420 <https://github.com/numpy/numpy/pull/14420>`__: DOC: Fix a minor typo in dispatch documentation.
+* `#14421 <https://github.com/numpy/numpy/pull/14421>`__: BUG: test, fix regression in converting to ctypes
+* `#14430 <https://github.com/numpy/numpy/pull/14430>`__: BUG: Do not show Override module in private error classes.
+* `#14432 <https://github.com/numpy/numpy/pull/14432>`__: BUG: Fixed maximum relative error reporting in assert_allclose.
+* `#14433 <https://github.com/numpy/numpy/pull/14433>`__: BUG: Fix uint-overflow if padding with linear_ramp and negative...
+* `#14436 <https://github.com/numpy/numpy/pull/14436>`__: BUG: Update 1.17.x with 1.18.0-dev pocketfft.py.
+* `#14446 <https://github.com/numpy/numpy/pull/14446>`__: REL: Prepare for NumPy 1.17.2 release.

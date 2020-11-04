@@ -1,14 +1,12 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal, assert_warns
-    )
+    assert_, assert_equal, assert_array_equal, assert_warns, assert_raises
+)
 
 
-class TestUfunclike(object):
+class TestUfunclike:
 
     def test_isposinf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
@@ -21,6 +19,10 @@ class TestUfunclike(object):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
+        a = a.astype(np.complex_)
+        with assert_raises(TypeError):
+            ufl.isposinf(a)
+
     def test_isneginf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
         out = nx.zeros(a.shape, bool)
@@ -31,6 +33,10 @@ class TestUfunclike(object):
         res = ufl.isneginf(a, out)
         assert_equal(res, tgt)
         assert_equal(out, tgt)
+
+        a = a.astype(np.complex_)
+        with assert_raises(TypeError):
+            ufl.isneginf(a)
 
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
@@ -52,8 +58,13 @@ class TestUfunclike(object):
                 return res
 
             def __array_wrap__(self, obj, context=None):
-                obj.metadata = self.metadata
+                if isinstance(obj, MyArray):
+                    obj.metadata = self.metadata
                 return obj
+
+            def __array_finalize__(self, obj):
+                self.metadata = getattr(obj, 'metadata', None)
+                return self
 
         a = nx.array([1.1, -1.1])
         m = MyArray(a, metadata='foo')
@@ -91,6 +102,3 @@ class TestUfunclike(object):
         out = np.array(0.0)
         actual = np.fix(x, out=out)
         assert_(actual is out)
-
-if __name__ == "__main__":
-    run_module_suite()

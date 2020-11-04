@@ -1,0 +1,94 @@
+==========================
+NumPy 1.16.4 Release Notes
+==========================
+
+The NumPy 1.16.4 release fixes bugs reported against the 1.16.3 release, and
+also backports several enhancements from master that seem appropriate for a
+release series that is the last to support Python 2.7. The wheels on PyPI are
+linked with OpenBLAS v0.3.7-dev, which should fix issues on Skylake series
+cpus.
+
+Downstream developers building this release should use Cython >= 0.29.2 and,
+if using OpenBLAS, OpenBLAS > v0.3.7. The supported Python versions are 2.7 and
+3.5-3.7.
+
+
+New deprecations
+================
+Writeable flag of C-API wrapped arrays
+--------------------------------------
+When an array is created from the C-API to wrap a pointer to data, the only
+indication we have of the read-write nature of the data is the ``writeable``
+flag set during creation. It is dangerous to force the flag to writeable.  In
+the future it will not be possible to switch the writeable flag to ``True``
+from python.  This deprecation should not affect many users since arrays
+created in such a manner are very rare in practice and only available through
+the NumPy C-API.
+
+
+Compatibility notes
+===================
+
+Potential changes to the random stream
+--------------------------------------
+Due to bugs in the application of log to random floating point numbers,
+the stream may change when sampling from ``np.random.beta``, ``np.random.binomial``,
+``np.random.laplace``, ``np.random.logistic``, ``np.random.logseries`` or
+``np.random.multinomial`` if a 0 is generated in the underlying MT19937 random stream.
+There is a 1 in :math:`10^{53}` chance of this occurring, and so the probability that
+the stream changes for any given seed is extremely small. If a 0 is encountered in the
+underlying generator, then the incorrect value produced (either ``np.inf``
+or ``np.nan``) is now dropped.
+
+
+Changes
+=======
+
+`numpy.lib.recfunctions.structured_to_unstructured` does not squeeze single-field views
+---------------------------------------------------------------------------------------
+Previously ``structured_to_unstructured(arr[['a']])`` would produce a squeezed
+result inconsistent with ``structured_to_unstructured(arr[['a', b']])``. This
+was accidental. The old behavior can be retained with
+``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
+``arr['a']``.
+
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Dennis Zollo +
+* Hunter Damron +
+* Jingbei Li +
+* Kevin Sheppard
+* Matti Picus
+* Nicola Soranzo +
+* Sebastian Berg
+* Tyler Reddy
+
+
+Pull requests merged
+====================
+
+A total of 16 pull requests were merged for this release.
+
+* `#13392 <https://github.com/numpy/numpy/pull/13392>`__: BUG: Some PyPy versions lack PyStructSequence_InitType2.
+* `#13394 <https://github.com/numpy/numpy/pull/13394>`__: MAINT, DEP: Fix deprecated ``assertEquals()``
+* `#13396 <https://github.com/numpy/numpy/pull/13396>`__: BUG: Fix structured_to_unstructured on single-field types (backport)
+* `#13549 <https://github.com/numpy/numpy/pull/13549>`__: BLD: Make CI pass again with pytest 4.5
+* `#13552 <https://github.com/numpy/numpy/pull/13552>`__: TST: Register markers in conftest.py.
+* `#13559 <https://github.com/numpy/numpy/pull/13559>`__: BUG: Removes ValueError for empty kwargs in arraymultiter_new
+* `#13560 <https://github.com/numpy/numpy/pull/13560>`__: BUG: Add TypeError to accepted exceptions in crackfortran.
+* `#13561 <https://github.com/numpy/numpy/pull/13561>`__: BUG: Handle subarrays in descr_to_dtype
+* `#13562 <https://github.com/numpy/numpy/pull/13562>`__: BUG: Protect generators from log(0.0)
+* `#13563 <https://github.com/numpy/numpy/pull/13563>`__: BUG: Always return views from structured_to_unstructured when...
+* `#13564 <https://github.com/numpy/numpy/pull/13564>`__: BUG: Catch stderr when checking compiler version
+* `#13565 <https://github.com/numpy/numpy/pull/13565>`__: BUG: longdouble(int) does not work
+* `#13587 <https://github.com/numpy/numpy/pull/13587>`__: BUG: distutils/system_info.py fix missing subprocess import (#13523)
+* `#13620 <https://github.com/numpy/numpy/pull/13620>`__: BUG,DEP: Fix writeable flag setting for arrays without base
+* `#13641 <https://github.com/numpy/numpy/pull/13641>`__: MAINT: Prepare for the 1.16.4 release.
+* `#13644 <https://github.com/numpy/numpy/pull/13644>`__: BUG: special case object arrays when printing rel-, abs-error

@@ -1,10 +1,5 @@
-#! /usr/bin/env python
-from __future__ import division
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
-from   math           import sqrt
-import os
 import sys
 import unittest
 
@@ -28,7 +23,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNorm(self):
         "Test norm function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         norm = SuperTensor.__dict__[self.typeStr + "Norm"]
         supertensor = np.arange(2*2*2*2, dtype=self.typeCode).reshape((2, 2, 2, 2))
         #Note: cludge to get an answer of the same type as supertensor.
@@ -39,7 +34,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNormBadList(self):
         "Test norm function with bad list"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         norm = SuperTensor.__dict__[self.typeStr + "Norm"]
         supertensor = [[[[0, "one"], [2, 3]], [[3, "two"], [1, 0]]], [[[0, "one"], [2, 3]], [[3, "two"], [1, 0]]]]
         self.assertRaises(BadListError, norm, supertensor)
@@ -47,7 +42,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNormWrongDim(self):
         "Test norm function with wrong dimensions"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         norm = SuperTensor.__dict__[self.typeStr + "Norm"]
         supertensor = np.arange(2*2*2, dtype=self.typeCode).reshape((2, 2, 2))
         self.assertRaises(TypeError, norm, supertensor)
@@ -55,7 +50,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNormWrongSize(self):
         "Test norm function with wrong size"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         norm = SuperTensor.__dict__[self.typeStr + "Norm"]
         supertensor = np.arange(3*2*2, dtype=self.typeCode).reshape((3, 2, 2))
         self.assertRaises(TypeError, norm, supertensor)
@@ -63,22 +58,22 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNormNonContainer(self):
         "Test norm function with non-container"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         norm = SuperTensor.__dict__[self.typeStr + "Norm"]
         self.assertRaises(TypeError, norm, None)
 
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMax(self):
         "Test max function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         max = SuperTensor.__dict__[self.typeStr + "Max"]
         supertensor = [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]]
-        self.assertEquals(max(supertensor), 8)
+        self.assertEqual(max(supertensor), 8)
 
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxBadList(self):
         "Test max function with bad list"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         max = SuperTensor.__dict__[self.typeStr + "Max"]
         supertensor = [[[[1, "two"], [3, 4]], [[5, "six"], [7, 8]]], [[[1, "two"], [3, 4]], [[5, "six"], [7, 8]]]]
         self.assertRaises(BadListError, max, supertensor)
@@ -86,29 +81,29 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxNonContainer(self):
         "Test max function with non-container"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         max = SuperTensor.__dict__[self.typeStr + "Max"]
         self.assertRaises(TypeError, max, None)
 
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxWrongDim(self):
         "Test max function with wrong dimensions"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         max = SuperTensor.__dict__[self.typeStr + "Max"]
         self.assertRaises(TypeError, max, [0, -1, 2, -3])
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMin(self):
         "Test min function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         min = SuperTensor.__dict__[self.typeStr + "Min"]
         supertensor = [[[[9, 8], [7, 6]], [[5, 4], [3, 2]]], [[[9, 8], [7, 6]], [[5, 4], [3, 2]]]]
-        self.assertEquals(min(supertensor), 2)
+        self.assertEqual(min(supertensor), 2)
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMinBadList(self):
         "Test min function with bad list"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         min = SuperTensor.__dict__[self.typeStr + "Min"]
         supertensor = [[[["nine", 8], [7, 6]], [["five", 4], [3, 2]]], [[["nine", 8], [7, 6]], [["five", 4], [3, 2]]]]
         self.assertRaises(BadListError, min, supertensor)
@@ -116,31 +111,31 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMinNonContainer(self):
         "Test min function with non-container"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         min = SuperTensor.__dict__[self.typeStr + "Min"]
         self.assertRaises(TypeError, min, True)
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMinWrongDim(self):
         "Test min function with wrong dimensions"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         min = SuperTensor.__dict__[self.typeStr + "Min"]
         self.assertRaises(TypeError, min, [[1, 3], [5, 7]])
 
     # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScale(self):
         "Test scale function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         scale = SuperTensor.__dict__[self.typeStr + "Scale"]
         supertensor = np.arange(3*3*3*3, dtype=self.typeCode).reshape((3, 3, 3, 3))
         answer = supertensor.copy()*4
         scale(supertensor, 4)
-        self.assertEquals((supertensor == answer).all(), True)
+        self.assertEqual((supertensor == answer).all(), True)
 
     # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScaleWrongType(self):
         "Test scale function with wrong type"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         scale = SuperTensor.__dict__[self.typeStr + "Scale"]
         supertensor = np.array([[[1, 0, 1], [0, 1, 0], [1, 0, 1]],
                           [[0, 1, 0], [1, 0, 1], [0, 1, 0]],
@@ -150,7 +145,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScaleWrongDim(self):
         "Test scale function with wrong dimensions"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         scale = SuperTensor.__dict__[self.typeStr + "Scale"]
         supertensor = np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1],
                           [0, 1, 0], [1, 0, 1], [0, 1, 0]], self.typeCode)
@@ -159,7 +154,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScaleWrongSize(self):
         "Test scale function with wrong size"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         scale = SuperTensor.__dict__[self.typeStr + "Scale"]
         supertensor = np.array([[[1, 0], [0, 1], [1, 0]],
                           [[0, 1], [1, 0], [0, 1]],
@@ -169,14 +164,14 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScaleNonArray(self):
         "Test scale function with non-array"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         scale = SuperTensor.__dict__[self.typeStr + "Scale"]
         self.assertRaises(TypeError, scale, True)
 
     # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testFloor(self):
         "Test floor function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         supertensor = np.arange(2*2*2*2, dtype=self.typeCode).reshape((2, 2, 2, 2))
         answer = supertensor.copy()
         answer[answer < 4] = 4
@@ -188,7 +183,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testFloorWrongType(self):
         "Test floor function with wrong type"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         floor = SuperTensor.__dict__[self.typeStr + "Floor"]
         supertensor = np.ones(2*2*2*2, dtype='c').reshape((2, 2, 2, 2))
         self.assertRaises(TypeError, floor, supertensor)
@@ -196,7 +191,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testFloorWrongDim(self):
         "Test floor function with wrong type"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         floor = SuperTensor.__dict__[self.typeStr + "Floor"]
         supertensor = np.arange(2*2*2, dtype=self.typeCode).reshape((2, 2, 2))
         self.assertRaises(TypeError, floor, supertensor)
@@ -204,14 +199,14 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testFloorNonArray(self):
         "Test floor function with non-array"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         floor = SuperTensor.__dict__[self.typeStr + "Floor"]
         self.assertRaises(TypeError, floor, object)
 
     # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
     def testCeil(self):
         "Test ceil function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         supertensor = np.arange(2*2*2*2, dtype=self.typeCode).reshape((2, 2, 2, 2))
         answer = supertensor.copy()
         answer[answer > 5] = 5
@@ -222,7 +217,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
     def testCeilWrongType(self):
         "Test ceil function with wrong type"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         ceil = SuperTensor.__dict__[self.typeStr + "Ceil"]
         supertensor = np.ones(2*2*2*2, 'c').reshape((2, 2, 2, 2))
         self.assertRaises(TypeError, ceil, supertensor)
@@ -230,7 +225,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
     def testCeilWrongDim(self):
         "Test ceil function with wrong dimensions"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         ceil = SuperTensor.__dict__[self.typeStr + "Ceil"]
         supertensor = np.arange(2*2*2, dtype=self.typeCode).reshape((2, 2, 2))
         self.assertRaises(TypeError, ceil, supertensor)
@@ -238,7 +233,7 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
     def testCeilNonArray(self):
         "Test ceil function with non-array"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         ceil = SuperTensor.__dict__[self.typeStr + "Ceil"]
         supertensor = np.arange(2*2*2*2, dtype=self.typeCode).reshape((2, 2, 2, 2)).tolist()
         self.assertRaises(TypeError, ceil, supertensor)
@@ -246,14 +241,14 @@ class SuperTensorTestCase(unittest.TestCase):
     # Test (type ARGOUT_ARRAY3[ANY][ANY][ANY]) typemap
     def testLUSplit(self):
         "Test luSplit function"
-        print >>sys.stderr, self.typeStr, "... ",
+        print(self.typeStr, "... ", file=sys.stderr)
         luSplit = SuperTensor.__dict__[self.typeStr + "LUSplit"]
         supertensor = np.ones(2*2*2*2, dtype=self.typeCode).reshape((2, 2, 2, 2))
         answer_upper = [[[[0, 0], [0, 1]], [[0, 1], [1, 1]]], [[[0, 1], [1, 1]], [[1, 1], [1, 1]]]]
         answer_lower = [[[[1, 1], [1, 0]], [[1, 0], [0, 0]]], [[[1, 0], [0, 0]], [[0, 0], [0, 0]]]]
         lower, upper = luSplit(supertensor)
-        self.assertEquals((lower == answer_lower).all(), True)
-        self.assertEquals((upper == answer_upper).all(), True)
+        self.assertEqual((lower == answer_lower).all(), True)
+        self.assertEqual((upper == answer_upper).all(), True)
 
 ######################################################################
 
@@ -381,8 +376,8 @@ if __name__ == "__main__":
     suite.addTest(unittest.makeSuite(   doubleTestCase))
 
     # Execute the test suite
-    print "Testing 4D Functions of Module SuperTensor"
-    print "NumPy version", np.__version__
-    print
+    print("Testing 4D Functions of Module SuperTensor")
+    print("NumPy version", np.__version__)
+    print()
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(bool(result.errors + result.failures))
