@@ -1005,7 +1005,8 @@ class TestTypes:
         assert res_bs.metadata == res.metadata
 
     @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+            [[np.dtype("V9"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
              [np.dtype("i8,i8"), np.dtype("i4,i4")],
             ])
     def test_invalid_void_promotion(self, dtype1, dtype2):
@@ -1015,8 +1016,7 @@ class TestTypes:
             np.promote_types(dtype1, dtype2)
 
     @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V10"), np.dtype("V9")],
-             [np.dtype("V10"), np.dtype("V10")],
+            [[np.dtype("V10"), np.dtype("V10")],
              [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
              [np.dtype("i8,i8"), np.dtype("i8,>i8")],
             ])

@@ -845,14 +845,22 @@ class TestCreation:
     def test_void(self):
         arr = np.array([], dtype='V')
         assert arr.dtype == 'V8'  # current default
-        # Check that promotion of different length works:
-        arr = np.array([b"1234", b"12345"], dtype="V")
-        assert arr.dtype == 'V5'
-        arr = np.array([b"12345", b"1234"], dtype="V")
-        assert arr.dtype == 'V5'
+        # Same length scalars (those that go to the same void) work:
+        arr = np.array([b"1234", b"1234"], dtype="V")
+        assert arr.dtype == "V4"
+
+        # Promoting different lengths will fail (pre 1.20 this worked)
+        # by going via S5 and casting to V5.
+        with pytest.raises(TypeError):
+            np.array([b"1234", b"12345"], dtype="V")
+        with pytest.raises(TypeError):
+            np.array([b"12345", b"1234"], dtype="V")
+
         # Check the same for the casting path:
-        arr = np.array([b"1234", b"12345"], dtype="O").astype("V")
-        assert arr.dtype == 'V5'
+        arr = np.array([b"1234", b"1234"], dtype="O").astype("V")
+        assert arr.dtype == "V4"
+        with pytest.raises(TypeError):
+            np.array([b"1234", b"12345"], dtype="O").astype("V")
 
     @pytest.mark.parametrize("idx",
             [pytest.param(Ellipsis, id="arr"), pytest.param((), id="scalar")])

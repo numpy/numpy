@@ -1,0 +1,10 @@
+Void dtype discovery in ``np.array``
+------------------------------------
+In calls using ``np.array(..., dtype="V")``, ``arr.astype("V")``,
+and similar a TypeError will now be correctly raised unless all
+elements have the identical void length. An example for this is::
+
+     np.array([b"1", b"12"], dtype="V")
+
+Which previously returned an array with dtype ``"V2"`` which
+cannot represent ``b"1"`` faithfully.
