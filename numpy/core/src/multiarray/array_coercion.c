@@ -602,6 +602,7 @@ npy_free_coercion_cache(coercion_cache_obj *next) {
  *
  * @param out_descr The current descriptor.
  * @param descr The newly found descriptor to promote with
+ * @param fixed_DType The user provided (fixed) DType or NULL
  * @param flags dtype discover flags to signal failed promotion.
  * @return -1 on error, 0 on success.
  */
@@ -636,13 +637,15 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
  * Handle a leave node (known scalar) during dtype and shape discovery.
  *
  * @param obj The python object or nested sequence to convert
- * @param max_dims The maximum number of dimensions.
  * @param curr_dims The current number of dimensions (depth in the recursion)
+ * @param max_dims The maximum number of dimensions.
  * @param out_shape The discovered output shape, will be filled
- * @param coercion_cache The coercion cache object to use.
- * @param DType the DType class that should be used, or NULL, if not provided.
+ * @param fixed_DType The user provided (fixed) DType or NULL
  * @param flags used signal that this is a ragged array, used internally and
  *        can be expanded if necessary.
+ * @param DType the DType class that should be used, or NULL, if not provided.
+ *
+ * @return 0 on success -1 on error
  */
 static NPY_INLINE int
 handle_scalar(
