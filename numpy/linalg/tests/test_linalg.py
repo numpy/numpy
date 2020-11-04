@@ -1221,6 +1221,13 @@ class _TestNormBase:
     dt = None
     dec = None
 
+    @staticmethod
+    def check_dtype(a, res):
+        if issubclass(a.dtype.type, np.inexact):
+            assert_equal(res.dtype, a.real.dtype)
+        else:
+            assert_(issubclass(res.dtype.type, np.floating))
+
 
 class _TestNormGeneral(_TestNormBase):
 
@@ -1241,33 +1248,33 @@ class _TestNormGeneral(_TestNormBase):
             at = a.astype(each_inexact_types)
 
             an = norm(at, -np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 0.0)
 
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
-                assert_(issubclass(an.dtype.type, np.floating))
+                self.check_dtype(at, an)
                 assert_almost_equal(an, 0.0)
 
             an = norm(at, 0)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2)
 
             an = norm(at, 1)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
 
             an = norm(at, 4)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
 
             an = norm(at, np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 1.0)
 
     def test_vector(self):
@@ -1404,37 +1411,37 @@ class _TestNorm2D(_TestNormBase):
             at = a.astype(each_inexact_types)
 
             an = norm(at, -np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
-                assert_(issubclass(an.dtype.type, np.floating))
+                self.check_dtype(at, an)
                 assert_almost_equal(an, 1.0)
 
             an = norm(at, 1)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 3.0**(1.0/2.0))
 
             an = norm(at, -2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 1.0)
 
             an = norm(at, np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 'fro')
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 'nuc')
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             # Lower bar needed to support low precision floats.
             # They end up being off by 1 in the 7th place.
             np.testing.assert_almost_equal(an, 2.7320508075688772, decimal=6)
