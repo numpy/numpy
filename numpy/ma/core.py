@@ -1489,7 +1489,7 @@ def is_mask(m):
 
     See Also
     --------
-    isMaskedArray : Test whether input is an instance of MaskedArray.
+    ma.isMaskedArray : Test whether input is an instance of MaskedArray.
 
     Examples
     --------
@@ -3538,11 +3538,12 @@ class MaskedArray(ndarray):
         Force the mask to hard.
 
         Whether the mask of a masked array is hard or soft is determined by
-        its `hardmask` property. `harden_mask` sets `hardmask` to True.
+        its `~ma.MaskedArray.hardmask` property. `harden_mask` sets
+        `~ma.MaskedArray.hardmask` to ``True``.
 
         See Also
         --------
-        hardmask
+        ma.MaskedArray.hardmask
 
         """
         self._hardmask = True
@@ -3553,11 +3554,12 @@ class MaskedArray(ndarray):
         Force the mask to soft.
 
         Whether the mask of a masked array is hard or soft is determined by
-        its `hardmask` property. `soften_mask` sets `hardmask` to False.
+        its `~ma.MaskedArray.hardmask` property. `soften_mask` sets
+        `~ma.MaskedArray.hardmask` to ``False``.
 
         See Also
         --------
-        hardmask
+        ma.MaskedArray.hardmask
 
         """
         self._hardmask = False
@@ -4461,7 +4463,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        count_masked : Count masked elements in array or along a given axis.
+        ma.count_masked : Count masked elements in array or along a given axis.
 
         Examples
         --------
@@ -5103,7 +5105,7 @@ class MaskedArray(ndarray):
 
         Notes
         -----
-        The mask is lost if `out` is not a valid :class:`MaskedArray` !
+        The mask is lost if `out` is not a valid :class:`ma.MaskedArray` !
 
         Arithmetic is modular when using integer types, and no error is
         raised on overflow.
@@ -5449,7 +5451,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        MaskedArray.sort : Describes sorting algorithms used.
+        ma.MaskedArray.sort : Describes sorting algorithms used.
         lexsort : Indirect stable sort with multiple keys.
         numpy.ndarray.sort : Inplace sort.
 
@@ -5679,7 +5681,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        minimum_fill_value
+        ma.minimum_fill_value
             Returns the minimum filling value for a given datatype.
 
         """
@@ -5813,7 +5815,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        maximum_fill_value
+        ma.maximum_fill_value
             Returns the maximum filling value for a given datatype.
 
         """
@@ -6907,11 +6909,11 @@ def compressed(x):
     Return all the non-masked data as a 1-D array.
 
     This function is equivalent to calling the "compressed" method of a
-    `MaskedArray`, see `MaskedArray.compressed` for details.
+    `ma.MaskedArray`, see `ma.MaskedArray.compressed` for details.
 
     See Also
     --------
-    MaskedArray.compressed
+    ma.MaskedArray.compressed
         Equivalent method.
 
     """
