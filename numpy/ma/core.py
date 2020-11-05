@@ -3834,7 +3834,7 @@ class MaskedArray(ndarray):
         """
         Return `a` where condition is ``True``.
 
-        If condition is a `MaskedArray`, missing values are considered
+        If condition is a `~ma.MaskedArray`, missing values are considered
         as ``False``.
 
         Parameters
@@ -3853,7 +3853,7 @@ class MaskedArray(ndarray):
         Returns
         -------
         result : MaskedArray
-            A :class:`MaskedArray` object.
+            A :class:`~ma.MaskedArray` object.
 
         Notes
         -----
