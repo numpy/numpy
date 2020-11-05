@@ -140,11 +140,11 @@ def write_version_py(filename='numpy/version.py'):
 # THIS FILE IS GENERATED FROM NUMPY SETUP.PY
 #
 # To compare versions robustly, use `numpy.lib.NumpyVersion`
-short_version = '%(version)s'
-version = '%(version)s'
-full_version = '%(full_version)s'
-git_revision = '%(git_revision)s'
-release = %(isrelease)s
+short_version: str = '%(version)s'
+version: str = '%(version)s'
+full_version: str = '%(full_version)s'
+git_revision: str = '%(git_revision)s'
+release: bool = %(isrelease)s
 
 if not release:
     version = full_version

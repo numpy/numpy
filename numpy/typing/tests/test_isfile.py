@@ -12,7 +12,6 @@ FILES = [
     ROOT / "ctypeslib.pyi",
     ROOT / "emath.pyi",
     ROOT / "rec.pyi",
-    ROOT / "version.pyi",
     ROOT / "core" / "__init__.pyi",
     ROOT / "distutils" / "__init__.pyi",
     ROOT / "f2py" / "__init__.pyi",
