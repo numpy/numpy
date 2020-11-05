@@ -67,6 +67,9 @@ Inspecting the array
    ma.size
    ma.is_masked
    ma.is_mask
+   ma.isMaskedArray
+   ma.isMA
+   ma.isarray
 
 
    ma.MaskedArray.all
