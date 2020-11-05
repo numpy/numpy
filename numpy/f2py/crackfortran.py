@@ -2103,7 +2103,10 @@ def buildimplicitrules(block):
 
 
 def myeval(e, g=None, l=None):
-    """ Like `eval` but returns only integers and floats """
+    """
+    Like `eval` but returns only integers and floats and uses integer division.
+    """
+    e = re.sub(r'/+', r'//', e)
     r = eval(e, g, l)
     if type(r) in [int, float]:
         return r
@@ -2178,14 +2181,10 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
                 c2 = myeval(ee, {}, {})
                 if (a * 0.5 + b == c and a * 1.5 + b == c2):
                     # gh-8062: return integers instead of floats if possible.
-                    try:
+                    if a.is_integer():
                         a = int(a)
-                    except:
-                        pass
-                    try:
+                    if b.is_integer():
                         b = int(b)
-                    except:
-                        pass
                     return a, b, x
             except Exception:
                 pass
