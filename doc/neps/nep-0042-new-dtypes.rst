@@ -784,7 +784,7 @@ Its ``resolve_descriptors`` function may look like::
         # This is always an "unsafe" cast, but for int64, we can represent
         # it by a simple view (if the dtypes are both canonical).
         # (represented as C-side flags here).
-        safety_and_view = NPY_UNSAFE_CASTING | NPY_CAST_IS_VIEW
+        safety_and_view = NPY_UNSAFE_CASTING | _NPY_CAST_IS_VIEW
         return safety_and_view, (from_dtype, to_dtype)
 
 .. note::
@@ -1305,7 +1305,7 @@ The external API for ``CastingImpl`` will be limited initially to defining:
   ``casting`` will be set to ``NPY_EQUIV_CASTING``, ``NPY_SAFE_CASTING``,
   ``NPY_UNSAFE_CASTING``, or ``NPY_SAME_KIND_CASTING``.
   A new, additional flag,
-  ``NPY_CAST_IS_VIEW``, can be set to indicate that no cast is necessary and a
+  ``_NPY_CAST_IS_VIEW``, can be set to indicate that no cast is necessary and a
   view is sufficient to perform the cast. The cast should return
   ``-1`` when a custom error is set and ``NPY_NO_CASTING`` to indicate
   that a generic casting error should be set (this is in most cases

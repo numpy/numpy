@@ -281,6 +281,14 @@ def test_array_astype():
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
+
+@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32", "O"])
+def test_array_astype_to_void(dt):
+    dt = np.dtype(dt)
+    arr = np.array([], dtype=dt)
+    assert arr.astype("V").dtype.itemsize == dt.itemsize
+
+
 @pytest.mark.parametrize("t",
     np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
 )

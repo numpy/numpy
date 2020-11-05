@@ -1006,9 +1006,8 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
 /*
  * Assumes src_dtype and dst_dtype are both datetimes or both timedeltas
  */
-static int
+NPY_NO_EXPORT int
 get_nbo_cast_datetime_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             PyArray_StridedUnaryOp **out_stransfer,
                             NpyAuxData **out_transferdata)
@@ -1082,12 +1081,10 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
-get_nbo_datetime_to_string_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
+NPY_NO_EXPORT int
+get_nbo_datetime_to_string_transfer_function(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *src_meta;
     _strided_datetime_cast_data *data;
@@ -1127,7 +1124,7 @@ get_nbo_datetime_to_string_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
+NPY_NO_EXPORT int
 get_datetime_to_unicode_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -1140,8 +1137,8 @@ get_datetime_to_unicode_transfer_function(int aligned,
     PyArray_Descr *str_dtype;
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
-    str_dtype = PyArray_DescrFromType(NPY_STRING);
-    str_dtype = PyArray_AdaptFlexibleDType(dst_dtype, str_dtype);
+    str_dtype = PyArray_DescrNewFromType(NPY_STRING);
+    str_dtype->elsize = dst_dtype->elsize / 4;
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
@@ -1156,10 +1153,9 @@ get_datetime_to_unicode_transfer_function(int aligned,
     }
 
     /* Get the NBO datetime to string aligned contig function */
-    if (get_nbo_datetime_to_string_transfer_function(1,
-                            src_dtype->elsize, str_dtype->elsize,
-                            src_dtype, str_dtype,
-                            &caststransfer, &castdata) != NPY_SUCCEED) {
+    if (get_nbo_datetime_to_string_transfer_function(
+            src_dtype, str_dtype,
+            &caststransfer, &castdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
         NPY_AUXDATA_FREE(todata);
         return NPY_FAIL;
@@ -1198,12 +1194,10 @@ get_datetime_to_unicode_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
-get_nbo_string_to_datetime_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
+NPY_NO_EXPORT int
+get_nbo_string_to_datetime_transfer_function(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *dst_meta;
     _strided_datetime_cast_data *data;
@@ -1250,7 +1244,7 @@ get_nbo_string_to_datetime_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
+NPY_NO_EXPORT int
 get_unicode_to_datetime_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -1263,11 +1257,12 @@ get_unicode_to_datetime_transfer_function(int aligned,
     PyArray_Descr *str_dtype;
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
-    str_dtype = PyArray_DescrFromType(NPY_STRING);
-    str_dtype = PyArray_AdaptFlexibleDType(src_dtype, str_dtype);
+    str_dtype = PyArray_DescrNewFromType(NPY_STRING);
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
+    assert(src_dtype->type_num == NPY_UNICODE);
+    str_dtype->elsize = src_dtype->elsize / 4;
 
     /* Get the cast operation from src */
     if (PyArray_GetDTypeTransferFunction(aligned,
@@ -1281,10 +1276,9 @@ get_unicode_to_datetime_transfer_function(int aligned,
     }
 
     /* Get the string to NBO datetime aligned contig function */
-    if (get_nbo_string_to_datetime_transfer_function(1,
-                            str_dtype->elsize, dst_dtype->elsize,
-                            str_dtype, dst_dtype,
-                            &caststransfer, &castdata) != NPY_SUCCEED) {
+    if (get_nbo_string_to_datetime_transfer_function(
+            str_dtype, dst_dtype,
+            &caststransfer, &castdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
         NPY_AUXDATA_FREE(todata);
         return NPY_FAIL;
@@ -1323,7 +1317,7 @@ get_unicode_to_datetime_transfer_function(int aligned,
 }
 
 
-static int
+NPY_NO_EXPORT int
 get_legacy_dtype_cast_function(
         int aligned, npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -1502,7 +1496,6 @@ get_nbo_cast_transfer_function(int aligned,
             *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
                               !PyArray_ISNBO(dst_dtype->byteorder);
             return get_nbo_cast_datetime_transfer_function(aligned,
-                                        src_stride, dst_stride,
                                         src_dtype, dst_dtype,
                                         out_stransfer, out_transferdata);
         }
@@ -1518,10 +1511,8 @@ get_nbo_cast_transfer_function(int aligned,
                     *out_needs_api = 1;
                     *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
                     return get_nbo_datetime_to_string_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
+                            src_dtype, dst_dtype,
+                            out_stransfer, out_transferdata);
 
                 case NPY_UNICODE:
                     return get_datetime_to_unicode_transfer_function(
@@ -1538,10 +1529,8 @@ get_nbo_cast_transfer_function(int aligned,
                     *out_needs_api = 1;
                     *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
                     return get_nbo_string_to_datetime_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
+                            src_dtype, dst_dtype,
+                            out_stransfer, out_transferdata);
 
                 case NPY_UNICODE:
                     return get_unicode_to_datetime_transfer_function(
@@ -1561,7 +1550,7 @@ get_nbo_cast_transfer_function(int aligned,
 }
 
 
-static int
+NPY_NO_EXPORT int
 wrap_aligned_contig_transfer_function_with_copyswapn(
         int aligned, npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -1570,7 +1559,7 @@ wrap_aligned_contig_transfer_function_with_copyswapn(
         PyArray_StridedUnaryOp *caststransfer, NpyAuxData *castdata)
 {
     NpyAuxData *todata = NULL, *fromdata = NULL;
-    PyArray_StridedUnaryOp *tobuffer, *frombuffer;
+    PyArray_StridedUnaryOp *tobuffer = NULL, *frombuffer = NULL;
     npy_intp src_itemsize = src_dtype->elsize;
     npy_intp dst_itemsize = dst_dtype->elsize;
 
@@ -3767,6 +3756,53 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     out_stransfer, out_transferdata,
                     out_needs_api);
 }
+
+
+/*
+ * Basic version of PyArray_GetDTypeTransferFunction for legacy dtype
+ * support.
+ * It supports only wrapping the copyswapn functions and the legacy
+ * cast functions registered with `PyArray_RegisterCastFunc`.
+ * This function takes the easy way out: It does not wrap
+ */
+NPY_NO_EXPORT int
+PyArray_GetLegacyDTypeTransferFunction(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api)
+{
+    /* Note: We ignore `needs_wrap`; needs-wrap is handled by another cast */
+    int needs_wrap = 0;
+
+    if (src_dtype->type_num == dst_dtype->type_num) {
+        /*
+         * This is a cast within the same dtype. For legacy user-dtypes,
+         * it is always valid to handle this using the copy swap function.
+         */
+        return wrap_copy_swap_function(aligned,
+                src_stride, dst_stride,
+                src_dtype,
+                PyArray_ISNBO(src_dtype->byteorder) !=
+                PyArray_ISNBO(dst_dtype->byteorder),
+                out_stransfer, out_transferdata);
+    }
+
+    if (get_legacy_dtype_cast_function(aligned,
+            src_stride, dst_stride,
+            src_dtype, dst_dtype,
+            move_references,
+            out_stransfer,
+            out_transferdata,
+            out_needs_api,
+            &needs_wrap) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
 
 NPY_NO_EXPORT int
 PyArray_GetMaskedDTypeTransferFunction(int aligned,

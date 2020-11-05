@@ -30,6 +30,8 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "convert_datatype.h"
+#include "legacy_dtype_implementation.h"
 
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
@@ -1480,65 +1482,6 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
     return PyArray_PutMask((PyArrayObject *)array, values, mask);
 }
 
-/*
- * Compare the field dictionaries for two types.
- *
- * Return 1 if the field types and field names of the two descrs are equal and
- * in the same order, 0 if not.
- */
-static int
-_equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
-
-    int val;
-
-    if (type1->fields == type2->fields && type1->names == type2->names) {
-        return 1;
-    }
-    if (type1->fields == NULL || type2->fields == NULL) {
-        return 0;
-    }
-
-    val = PyObject_RichCompareBool(type1->fields, type2->fields, Py_EQ);
-    if (val != 1 || PyErr_Occurred()) {
-        PyErr_Clear();
-        return 0;
-    }
-
-    val = PyObject_RichCompareBool(type1->names, type2->names, Py_EQ);
-    if (val != 1 || PyErr_Occurred()) {
-        PyErr_Clear();
-        return 0;
-    }
-
-    return 1;
-}
-
-/*
- * Compare the subarray data for two types.
- * Return 1 if they are the same, 0 if not.
- */
-static int
-_equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
-{
-    int val;
-
-    if (sub1 == sub2) {
-        return 1;
-
-    }
-    if (sub1 == NULL || sub2 == NULL) {
-        return 0;
-    }
-
-    val = PyObject_RichCompareBool(sub1->shape, sub2->shape, Py_EQ);
-    if (val != 1 || PyErr_Occurred()) {
-        PyErr_Clear();
-        return 0;
-    }
-
-    return PyArray_EquivTypes(sub1->base, sub2->base);
-}
-
 
 /*NUMPY_API
  *
@@ -1548,39 +1491,23 @@ _equivalent_subarrays(PyArray_ArrayDescr *sub1, PyArray_ArrayDescr *sub2)
 NPY_NO_EXPORT unsigned char
 PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-    int type_num1, type_num2, size1, size2;
-
-    if (type1 == type2) {
-        return NPY_TRUE;
+#if NPY_USE_NEW_CASTINGIMPL
+    /*
+     * Do not use PyArray_CanCastTypeTo because it supports legacy flexible
+     * dtypes as input.
+     */
+    NPY_CASTING safety = PyArray_GetCastSafety(type1, type2, NULL);
+    if (safety < 0) {
+        PyErr_Clear();
+        return 0;
     }
-
-    type_num1 = type1->type_num;
-    type_num2 = type2->type_num;
-    size1 = type1->elsize;
-    size2 = type2->elsize;
-
-    if (size1 != size2) {
-        return NPY_FALSE;
-    }
-    if (PyArray_ISNBO(type1->byteorder) != PyArray_ISNBO(type2->byteorder)) {
-        return NPY_FALSE;
-    }
-    if (type1->subarray || type2->subarray) {
-        return ((type_num1 == type_num2)
-                && _equivalent_subarrays(type1->subarray, type2->subarray));
-    }
-    if (type_num1 == NPY_VOID || type_num2 == NPY_VOID) {
-        return ((type_num1 == type_num2) && _equivalent_fields(type1, type2));
-    }
-    if (type_num1 == NPY_DATETIME
-            || type_num1 == NPY_TIMEDELTA
-            || type_num2 == NPY_DATETIME
-            || type_num2 == NPY_TIMEDELTA) {
-        return ((type_num1 == type_num2)
-                && has_equivalent_datetime_metadata(type1, type2));
-    }
-    return type1->kind == type2->kind;
+    /* If casting is "no casting" this dtypes are considered equivalent. */
+    return PyArray_MinCastSafety(safety, NPY_NO_CASTING) == NPY_NO_CASTING;
+#else
+    return PyArray_LegacyEquivTypes(type1, type2);
+#endif
 }
+
 
 /*NUMPY_API*/
 NPY_NO_EXPORT unsigned char
@@ -4299,6 +4226,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
+     METH_VARARGS | METH_KEYWORDS, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4317,6 +4246,7 @@ static struct PyMethodDef array_module_methods[] = {
 };
 
 #include "__multiarray_api.c"
+#include "array_method.h"
 
 /* Establish scalar-type hierarchy
  *
@@ -4767,9 +4697,20 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
+    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
+        goto err;
+    }
+    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
+        goto err;
+    }
     if (initialize_and_map_pytypes_to_dtypes() < 0) {
         goto err;
     }
+
+    if (PyArray_InitializeCasts() < 0) {
+        goto err;
+    }
+
     if (initumath(m) != 0) {
         goto err;
     }
