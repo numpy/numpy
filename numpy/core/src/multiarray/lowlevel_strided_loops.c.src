@@ -19,6 +19,8 @@
 
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
+#include "array_method.h"
+#include "usertypes.h"
 
 
 /*

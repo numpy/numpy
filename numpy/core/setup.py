@@ -794,6 +794,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
+            join('src', 'multiarray', 'dtype_transfer.h'),
             join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'einsum_debug.h'),
             join('src', 'multiarray', 'einsum_sumprod.h'),
