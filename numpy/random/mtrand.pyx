@@ -126,9 +126,9 @@ cdef class RandomState:
     `RandomState` and `Generator` expose a number of methods for generating
     random numbers drawn from a variety of probability distributions. In
     addition to the distribution-specific arguments, each method takes a
-    keyword argument `size` that defaults to ``None``. If `size` is ``None``,
-    then a single value is generated and returned. If `size` is an integer,
-    then a 1-D array filled with generated values is returned. If `size` is a
+    keyword argument *size* that defaults to ``None``. If *size* is ``None``,
+    then a single value is generated and returned. If *size* is an integer,
+    then a 1-D array filled with generated values is returned. If *size* is a
     tuple, then an array with that shape is filled and returned.
 
     **Compatibility Guarantee**
@@ -148,7 +148,7 @@ cdef class RandomState:
         an instantized BitGenerator.  If an integer or array, used as a seed for
         the MT19937 BitGenerator. Values can be any integer between 0 and
         2**32 - 1 inclusive, an array (or other sequence) of such integers,
-        or ``None`` (the default).  If `seed` is ``None``, then the `MT19937`
+        or ``None`` (the default).  If *seed* is ``None``, then the `MT19937`
         BitGenerator is initialized by reading data from ``/dev/urandom``
         (or the Windows analogue) if available or seed from the clock
         otherwise.
@@ -269,7 +269,7 @@ cdef class RandomState:
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
 
-            If `legacy` is False, or the BitGenerator is not MT19937, then
+            If *legacy* is False, or the BitGenerator is not MT19937, then
             state is returned as a dictionary.
 
         See Also
@@ -287,7 +287,7 @@ cdef class RandomState:
         if st['bit_generator'] != 'MT19937' and legacy:
             warnings.warn('get_state and legacy can only be used with the '
                           'MT19937 BitGenerator. To silence this warning, '
-                          'set `legacy` to False.', RuntimeWarning)
+                          'set *legacy* to False.', RuntimeWarning)
             legacy = False
         st['has_gauss'] = self._aug_state.has_gauss
         st['gauss'] = self._aug_state.gauss
@@ -310,7 +310,7 @@ cdef class RandomState:
         Parameters
         ----------
         state : {tuple(str, ndarray of 624 uints, int, int, float), dict}
-            The `state` tuple has the following items:
+            The *state* tuple has the following items:
 
             1. the string 'MT19937', specifying the Mersenne Twister algorithm.
             2. a 1-D array of 624 unsigned integers ``keys``.
@@ -319,7 +319,7 @@ cdef class RandomState:
             5. a float ``cached_gaussian``.
 
             If state is a dictionary, it is directly set using the BitGenerators
-            `state` property.
+            *state* property.
 
         Returns
         -------
@@ -395,7 +395,7 @@ cdef class RandomState:
         Returns
         -------
         out : float or ndarray of floats
-            Array of random floats of shape `size` (unless ``size=None``, in which
+            Array of random floats of shape *size* (unless ``size=None``, in which
             case a single float is returned).
 
         See Also
@@ -601,7 +601,7 @@ cdef class RandomState:
         Returns
         -------
         out : ndarray
-            Drawn samples, with shape `size`.
+            Drawn samples, with shape *size*.
 
         See Also
         --------
@@ -645,11 +645,11 @@ cdef class RandomState:
         """
         randint(low, high=None, size=None, dtype=int)
 
-        Return random integers from `low` (inclusive) to `high` (exclusive).
+        Return random integers from *low* (inclusive) to *high* (exclusive).
 
         Return random integers from the "discrete uniform" distribution of
-        the specified dtype in the "half-open" interval [`low`, `high`). If
-        `high` is None (the default), then results are from [0, `low`).
+        the specified dtype in the "half-open" interval [*low*, *high*). If
+        *high* is None (the default), then results are from [0, *low*).
 
         .. note::
             New code should use the ``integers`` method of a ``default_rng()``
@@ -678,13 +678,13 @@ cdef class RandomState:
         Returns
         -------
         out : int or ndarray of ints
-            `size`-shaped array of random integers from the appropriate
-            distribution, or a single such random int if `size` not provided.
+            *size*-shaped array of random integers from the appropriate
+            distribution, or a single such random int if *size* not provided.
 
         See Also
         --------
         random_integers : similar to `randint`, only for the closed
-            interval [`low`, `high`], and 1 is the lowest value if `high` is
+            interval [*low*, *high*], and 1 is the lowest value if *high* is
             omitted.
         Generator.integers: which should be used for new code.
 
@@ -784,7 +784,7 @@ cdef class RandomState:
         Returns
         -------
         out : str
-            String of length `length`.
+            String of length *length*.
 
         See Also
         --------
@@ -1239,11 +1239,11 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Random integers of type `np.int_` between `low` and `high`, inclusive.
+        Random integers of type `np.int_` between *low* and *high*, inclusive.
 
         Return random integers of type `np.int_` from the "discrete uniform"
-        distribution in the closed interval [`low`, `high`].  If `high` is
-        None (the default), then results are from [1, `low`]. The `np.int_`
+        distribution in the closed interval [*low*, *high*].  If *high* is
+        None (the default), then results are from [1, *low*]. The `np.int_`
         type translates to the C long integer type and its precision
         is platform dependent.
 
@@ -1268,13 +1268,13 @@ cdef class RandomState:
         Returns
         -------
         out : int or ndarray of ints
-            `size`-shaped array of random integers from the appropriate
-            distribution, or a single such random int if `size` not provided.
+            *size*-shaped array of random integers from the appropriate
+            distribution, or a single such random int if *size* not provided.
 
         See Also
         --------
         randint : Similar to `random_integers`, only for the half-open
-            interval [`low`, `high`), and 0 is the lowest value if `high` is
+            interval [*low*, *high*), and 0 is the lowest value if *high* is
             omitted.
 
         Notes
@@ -1590,7 +1590,7 @@ cdef class RandomState:
         Draw samples from a Gamma distribution.
 
         Samples are drawn from a Gamma distribution with specified parameters,
-        `shape` (sometimes designated "k") and `scale` (sometimes designated
+        *shape* (sometimes designated "k") and *scale* (sometimes designated
         "theta"), where both parameters are > 0.
 
         .. note::
@@ -1673,7 +1673,7 @@ cdef class RandomState:
         Draw samples from an F distribution.
 
         Samples are drawn from an F distribution with specified parameters,
-        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of
+        *dfnum* (degrees of freedom in numerator) and *dfden* (degrees of
         freedom in denominator), where both parameters must be greater than
         zero.
 
@@ -1714,8 +1714,8 @@ cdef class RandomState:
         The F statistic is used to compare in-group variances to between-group
         variances. Calculating the distribution depends on the sampling, and
         so it is a function of the respective degrees of freedom in the
-        problem.  The variable `dfnum` is the number of samples minus one, the
-        between-groups degrees of freedom, while `dfden` is the within-groups
+        problem.  The variable *dfnum* is the number of samples minus one, the
+        between-groups degrees of freedom, while *dfden* is the within-groups
         degrees of freedom, the sum of the number of samples in each group
         minus the number of groups.
 
@@ -1766,9 +1766,9 @@ cdef class RandomState:
         Draw samples from the noncentral F distribution.
 
         Samples are drawn from an F distribution with specified parameters,
-        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of
+        *dfnum* (degrees of freedom in numerator) and *dfden* (degrees of
         freedom in denominator), where both parameters > 1.
-        `nonc` is the non-centrality parameter.
+        *nonc* is the non-centrality parameter.
 
         .. note::
             New code should use the ``noncentral_f`` method of a ``default_rng()``
@@ -1850,7 +1850,7 @@ cdef class RandomState:
 
         Draw samples from a chi-square distribution.
 
-        When `df` independent random variables, each with standard normal
+        When *df* independent random variables, each with standard normal
         distributions (mean 0, variance 1), are squared and summed, the
         resulting distribution is chi-square (see Notes).  This distribution
         is often used in hypothesis testing.
@@ -1877,7 +1877,7 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            When `df` <= 0 or when an inappropriate `size` (e.g. ``size=-1``)
+            When *df* <= 0 or when an inappropriate *size* (e.g. ``size=-1``)
             is given.
 
         See Also
@@ -1886,7 +1886,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The variable obtained by summing the squares of `df` independent,
+        The variable obtained by summing the squares of *df* independent,
         standard normally distributed random variables:
 
         .. math:: Q = \\sum_{i=0}^{\\mathtt{df}} X^2_i
@@ -2083,10 +2083,10 @@ cdef class RandomState:
         """
         standard_t(df, size=None)
 
-        Draw samples from a standard Student's t distribution with `df` degrees
+        Draw samples from a standard Student's t distribution with *df* degrees
         of freedom.
 
-        A special case of the hyperbolic distribution.  As `df` gets
+        A special case of the hyperbolic distribution.  As *df* gets
         large, the result resembles that of the standard normal
         distribution (`standard_normal`).
 
@@ -2378,7 +2378,7 @@ cdef class RandomState:
         Draw samples from a Weibull distribution.
 
         Draw samples from a 1-parameter Weibull distribution with the given
-        shape parameter `a`.
+        shape parameter *a*.
 
         .. math:: X = (-ln(U))^{1/a}
 
@@ -3174,7 +3174,7 @@ cdef class RandomState:
             The value where the peak of the distribution occurs.
             The value must fulfill the condition ``left <= mode <= right``.
         right : float or array_like of floats
-            Upper limit, must be larger than `left`.
+            Upper limit, must be larger than *left*.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3416,8 +3416,8 @@ cdef class RandomState:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` successes and `p` probability of success where `n`
-        is > 0 and `p` is in the interval [0, 1].
+        parameters, *n* successes and *p* probability of success where *n*
+        is > 0 and *p* is in the interval [0, 1].
 
         .. note::
             New code should use the ``negative_binomial`` method of a ``default_rng()``
@@ -3540,7 +3540,7 @@ cdef class RandomState:
         interval :math:`\\lambda`.
 
         Because the output is limited to the range of the C int64 type, a
-        ValueError is raised when `lam` is within 10 sigma of the maximum
+        ValueError is raised when *lam* is within 10 sigma of the maximum
         representable value.
 
         References
@@ -3583,7 +3583,7 @@ cdef class RandomState:
         Draw samples from a Zipf distribution.
 
         Samples are drawn from a Zipf distribution with specified parameter
-        `a` > 1.
+        *a* > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
         continuous probability distribution that satisfies Zipf's law: the
@@ -3678,7 +3678,7 @@ cdef class RandomState:
 
         .. math:: f(k) = (1 - p)^{k - 1} p
 
-        where `p` is the probability of success of an individual trial.
+        where *p* is the probability of success of an individual trial.
 
         .. note::
             New code should use the ``geometric`` method of a ``default_rng()``
@@ -3730,8 +3730,8 @@ cdef class RandomState:
         Draw samples from a Hypergeometric distribution.
 
         Samples are drawn from a hypergeometric distribution with specified
-        parameters, `ngood` (ways to make a good selection), `nbad` (ways to make
-        a bad selection), and `nsample` (number of items sampled, which is less
+        parameters, *ngood* (ways to make a good selection), *nbad* (ways to make
+        a bad selection), and *nsample* (number of items sampled, which is less
         than or equal to the sum ``ngood + nbad``).
 
         .. note::
@@ -3750,7 +3750,7 @@ cdef class RandomState:
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
-            a single value is returned if `ngood`, `nbad`, and `nsample`
+            a single value is returned if *ngood*, *nbad*, and *nsample*
             are all scalars.  Otherwise, ``np.broadcast(ngood, nbad, nsample).size``
             samples are drawn.
 
@@ -3759,7 +3759,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized hypergeometric distribution. Each
             sample is the number of good items within a randomly selected subset of
-            size `nsample` taken from a set of `ngood` good items and `nbad` bad items.
+            size *nsample* taken from a set of *ngood* good items and *nbad* bad items.
 
         See Also
         --------
@@ -3776,10 +3776,10 @@ cdef class RandomState:
         where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
         for P(x) the probability of ``x`` good results in the drawn sample,
-        g = `ngood`, b = `nbad`, and n = `nsample`.
+        g = *ngood*, b = *nbad*, and n = *nsample*.
 
-        Consider an urn with black and white marbles in it, `ngood` of them
-        are black and `nbad` are white. If you draw `nsample` balls without
+        Consider an urn with black and white marbles in it, *ngood* of them
+        are black and *nbad* are white. If you draw *nsample* balls without
         replacement, then the hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
@@ -4010,8 +4010,8 @@ cdef class RandomState:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
+          - Spherical covariance (*cov* is a multiple of the identity matrix)
+          - Diagonal covariance (*cov* has non-negative elements, and only on
             the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
@@ -4128,7 +4128,7 @@ cdef class RandomState:
         binomial distribution.  Take an experiment with one of ``p``
         possible outcomes.  An example of such an experiment is throwing a dice,
         where the outcome can be 1 through 6.  Each sample drawn from the
-        distribution represents `n` such experiments.  Its values,
+        distribution represents *n* such experiments.  Its values,
         ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the
         outcome was ``i``.
 
@@ -4244,7 +4244,7 @@ cdef class RandomState:
 
         Draw samples from the Dirichlet distribution.
 
-        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Draw *size* samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. The Dirichlet distribution
         is a conjugate prior of a multinomial distribution in Bayesian
@@ -4488,7 +4488,7 @@ cdef class RandomState:
 
         Randomly permute a sequence, or return a permuted range.
 
-        If `x` is a multi-dimensional array, it is only shuffled along its
+        If *x* is a multi-dimensional array, it is only shuffled along its
         first index.
 
         .. note::
@@ -4498,8 +4498,8 @@ cdef class RandomState:
         Parameters
         ----------
         x : int or array_like
-            If `x` is an integer, randomly permute ``np.arange(x)``.
-            If `x` is an array, make a copy and shuffle the elements
+            If *x* is an integer, randomly permute ``np.arange(x)``.
+            If *x* is an array, make a copy and shuffle the elements
             randomly.
 
         Returns

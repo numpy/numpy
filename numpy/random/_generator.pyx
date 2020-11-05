@@ -40,7 +40,7 @@ np.import_array()
 
 cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
     """
-    Sum the values in the array `colors`.
+    Sum the values in the array *colors*.
 
     Return -1 if an overflow occurs.
     The values in *colors are assumed to be nonnegative.
@@ -145,9 +145,9 @@ cdef class Generator:
     ``Generator`` exposes a number of methods for generating random
     numbers drawn from a variety of probability distributions. In addition to
     the distribution-specific arguments, each method takes a keyword argument
-    `size` that defaults to ``None``. If `size` is ``None``, then a single
-    value is generated and returned. If `size` is an integer, then a 1-D
-    array filled with generated values is returned. If `size` is a tuple,
+    *size* that defaults to ``None``. If *size* is ``None``, then a single
+    value is generated and returned. If *size* is an integer, then a 1-D
+    array filled with generated values is returned. If *size* is a tuple,
     then an array with that shape is filled and returned.
 
     The function :func:`numpy.random.default_rng` will instantiate
@@ -260,7 +260,7 @@ cdef class Generator:
         Returns
         -------
         out : float or ndarray of floats
-            Array of random floats of shape `size` (unless ``size=None``, in which
+            Array of random floats of shape *size* (unless ``size=None``, in which
             case a single float is returned).
 
         Examples
@@ -442,21 +442,21 @@ cdef class Generator:
         """
         integers(low, high=None, size=None, dtype=np.int64, endpoint=False)
 
-        Return random integers from `low` (inclusive) to `high` (exclusive), or
-        if endpoint=True, `low` (inclusive) to `high` (inclusive). Replaces
+        Return random integers from *low* (inclusive) to *high* (exclusive), or
+        if endpoint=True, *low* (inclusive) to *high* (inclusive). Replaces
         `RandomState.randint` (with endpoint=False) and
         `RandomState.random_integers` (with endpoint=True)
 
         Return random integers from the "discrete uniform" distribution of
-        the specified dtype. If `high` is None (the default), then results are
-        from 0 to `low`.
+        the specified dtype. If *high* is None (the default), then results are
+        from 0 to *low*.
 
         Parameters
         ----------
         low : int or array-like of ints
             Lowest (signed) integers to be drawn from the distribution (unless
             ``high=None``, in which case this parameter is 0 and this value is
-            used for `high`).
+            used for *high*).
         high : int or array-like of ints, optional
             If provided, one above the largest (signed) integer to be drawn
             from the distribution (see above for behavior if ``high=None``).
@@ -476,8 +476,8 @@ cdef class Generator:
         Returns
         -------
         out : int or ndarray of ints
-            `size`-shaped array of random integers from the appropriate
-            distribution, or a single such random int if `size` not provided.
+            *size*-shaped array of random integers from the appropriate
+            distribution, or a single such random int if *size* not provided.
 
         Notes
         -----
@@ -579,7 +579,7 @@ cdef class Generator:
         Returns
         -------
         out : str
-            String of length `length`.
+            String of length *length*.
 
         Examples
         --------
@@ -607,9 +607,9 @@ cdef class Generator:
             If an int, the random sample is generated from np.arange(a).
         size : {int, tuple[int]}, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn from the 1-d `a`. If `a` has more
-            than one dimension, the `size` shape will be inserted into the
-            `axis` dimension, so the output ``ndim`` will be ``a.ndim - 1 +
+            ``m * n * k`` samples are drawn from the 1-d *a*. If *a* has more
+            than one dimension, the *size* shape will be inserted into the
+            *axis* dimension, so the output ``ndim`` will be ``a.ndim - 1 +
             len(size)``. Default is None, in which case a single value is
             returned.
         replace : bool, optional
@@ -1218,7 +1218,7 @@ cdef class Generator:
         Draw samples from a Gamma distribution.
 
         Samples are drawn from a Gamma distribution with specified parameters,
-        `shape` (sometimes designated "k") and `scale` (sometimes designated
+        *shape* (sometimes designated "k") and *scale* (sometimes designated
         "theta"), where both parameters are > 0.
 
         Parameters
@@ -1296,7 +1296,7 @@ cdef class Generator:
         Draw samples from an F distribution.
 
         Samples are drawn from an F distribution with specified parameters,
-        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of
+        *dfnum* (degrees of freedom in numerator) and *dfden* (degrees of
         freedom in denominator), where both parameters must be greater than
         zero.
 
@@ -1332,8 +1332,8 @@ cdef class Generator:
         The F statistic is used to compare in-group variances to between-group
         variances. Calculating the distribution depends on the sampling, and
         so it is a function of the respective degrees of freedom in the
-        problem.  The variable `dfnum` is the number of samples minus one, the
-        between-groups degrees of freedom, while `dfden` is the within-groups
+        problem.  The variable *dfnum* is the number of samples minus one, the
+        between-groups degrees of freedom, while *dfden* is the within-groups
         degrees of freedom, the sum of the number of samples in each group
         minus the number of groups.
 
@@ -1384,9 +1384,9 @@ cdef class Generator:
         Draw samples from the noncentral F distribution.
 
         Samples are drawn from an F distribution with specified parameters,
-        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of
+        *dfnum* (degrees of freedom in numerator) and *dfden* (degrees of
         freedom in denominator), where both parameters > 1.
-        `nonc` is the non-centrality parameter.
+        *nonc* is the non-centrality parameter.
 
         Parameters
         ----------
@@ -1461,7 +1461,7 @@ cdef class Generator:
 
         Draw samples from a chi-square distribution.
 
-        When `df` independent random variables, each with standard normal
+        When *df* independent random variables, each with standard normal
         distributions (mean 0, variance 1), are squared and summed, the
         resulting distribution is chi-square (see Notes).  This distribution
         is often used in hypothesis testing.
@@ -1484,12 +1484,12 @@ cdef class Generator:
         Raises
         ------
         ValueError
-            When `df` <= 0 or when an inappropriate `size` (e.g. ``size=-1``)
+            When *df* <= 0 or when an inappropriate *size* (e.g. ``size=-1``)
             is given.
 
         Notes
         -----
-        The variable obtained by summing the squares of `df` independent,
+        The variable obtained by summing the squares of *df* independent,
         standard normally distributed random variables:
 
         .. math:: Q = \\sum_{i=0}^{\\mathtt{df}} X^2_i
@@ -1672,10 +1672,10 @@ cdef class Generator:
         """
         standard_t(df, size=None)
 
-        Draw samples from a standard Student's t distribution with `df` degrees
+        Draw samples from a standard Student's t distribution with *df* degrees
         of freedom.
 
-        A special case of the hyperbolic distribution.  As `df` gets
+        A special case of the hyperbolic distribution.  As *df* gets
         large, the result resembles that of the standard normal
         distribution (`standard_normal`).
 
@@ -1950,7 +1950,7 @@ cdef class Generator:
         Draw samples from a Weibull distribution.
 
         Draw samples from a 1-parameter Weibull distribution with the given
-        shape parameter `a`.
+        shape parameter *a*.
 
         .. math:: X = (-ln(U))^{1/a}
 
@@ -2927,8 +2927,8 @@ cdef class Generator:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` successes and `p` probability of success where `n`
-        is > 0 and `p` is in the interval (0, 1].
+        parameters, *n* successes and *p* probability of success where *n*
+        is > 0 and *p* is in the interval (0, 1].
 
         Parameters
         ----------
@@ -3033,7 +3033,7 @@ cdef class Generator:
         interval :math:`\\lambda`.
 
         Because the output is limited to the range of the C int64 type, a
-        ValueError is raised when `lam` is within 10 sigma of the maximum
+        ValueError is raised when *lam* is within 10 sigma of the maximum
         representable value.
 
         References
@@ -3075,7 +3075,7 @@ cdef class Generator:
         Draw samples from a Zipf distribution.
 
         Samples are drawn from a Zipf distribution with specified parameter
-        `a` > 1.
+        *a* > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
         continuous probability distribution that satisfies Zipf's law: the
@@ -3164,7 +3164,7 @@ cdef class Generator:
 
         .. math:: f(k) = (1 - p)^{k - 1} p
 
-        where `p` is the probability of success of an individual trial.
+        where *p* is the probability of success of an individual trial.
 
         Parameters
         ----------
@@ -3206,8 +3206,8 @@ cdef class Generator:
         Draw samples from a Hypergeometric distribution.
 
         Samples are drawn from a hypergeometric distribution with specified
-        parameters, `ngood` (ways to make a good selection), `nbad` (ways to make
-        a bad selection), and `nsample` (number of items sampled, which is less
+        parameters, *ngood* (ways to make a good selection), *nbad* (ways to make
+        a bad selection), and *nsample* (number of items sampled, which is less
         than or equal to the sum ``ngood + nbad``).
 
         Parameters
@@ -3224,7 +3224,7 @@ cdef class Generator:
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
-            a single value is returned if `ngood`, `nbad`, and `nsample`
+            a single value is returned if *ngood*, *nbad*, and *nsample*
             are all scalars.  Otherwise, ``np.broadcast(ngood, nbad, nsample).size``
             samples are drawn.
 
@@ -3233,7 +3233,7 @@ cdef class Generator:
         out : ndarray or scalar
             Drawn samples from the parameterized hypergeometric distribution. Each
             sample is the number of good items within a randomly selected subset of
-            size `nsample` taken from a set of `ngood` good items and `nbad` bad items.
+            size *nsample* taken from a set of *ngood* good items and *nbad* bad items.
 
         See Also
         --------
@@ -3251,10 +3251,10 @@ cdef class Generator:
         where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
         for P(x) the probability of ``x`` good results in the drawn sample,
-        g = `ngood`, b = `nbad`, and n = `nsample`.
+        g = *ngood*, b = *nbad*, and n = *nsample*.
 
-        Consider an urn with black and white marbles in it, `ngood` of them
-        are black and `nbad` are white. If you draw `nsample` balls without
+        Consider an urn with black and white marbles in it, *ngood* of them
+        are black and *nbad* are white. If you draw *nsample* balls without
         replacement, then the hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
@@ -3264,10 +3264,10 @@ cdef class Generator:
         replacement (or the sample space is infinite). As the sample space
         becomes large, this distribution approaches the binomial.
 
-        The arguments `ngood` and `nbad` each must be less than `10**9`. For
+        The arguments *ngood* and *nbad* each must be less than `10**9`. For
         extremely large arguments, the algorithm that is used to compute the
         samples [4]_ breaks down because of loss of precision in floating point
-        calculations.  For such large values, if `nsample` is not also large,
+        calculations.  For such large values, if *nsample* is not also large,
         the distribution can be approximated with the binomial distribution,
         `binomial(n=nsample, p=ngood/(ngood + nbad))`.
 
@@ -3491,8 +3491,8 @@ cdef class Generator:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-          - Spherical covariance (`cov` is a multiple of the identity matrix)
-          - Diagonal covariance (`cov` has non-negative elements, and only on
+          - Spherical covariance (*cov* is a multiple of the identity matrix)
+          - Diagonal covariance (*cov* has non-negative elements, and only on
             the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
@@ -3638,7 +3638,7 @@ cdef class Generator:
         binomial distribution.  Take an experiment with one of ``p``
         possible outcomes.  An example of such an experiment is throwing a dice,
         where the outcome can be 1 through 6.  Each sample drawn from the
-        distribution represents `n` such experiments.  Its values,
+        distribution represents *n* such experiments.  Its values,
         ``X_i = [X_0, X_1, ..., X_p]``, represent the number of times the
         outcome was ``i``.
 
@@ -3810,7 +3810,7 @@ cdef class Generator:
             The number of each type of item in the collection from which
             a sample is drawn.  The values in ``colors`` must be nonnegative.
             To avoid loss of precision in the algorithm, ``sum(colors)``
-            must be less than ``10**9`` when `method` is "marginals".
+            must be less than ``10**9`` when *method* is "marginals".
         nsample : int
             The number of items selected.  ``nsample`` must not be greater
             than ``sum(colors)``.
@@ -3819,7 +3819,7 @@ cdef class Generator:
             holding the shape of the array of variates.  If the given size is,
             e.g., ``(k, m)``, then ``k * m`` variates are drawn, where one
             variate is a vector of length ``len(colors)``, and the return value
-            has shape ``(k, m, len(colors))``.  If `size` is an integer, the
+            has shape ``(k, m, len(colors))``.  If *size* is an integer, the
             output has shape ``(size, len(colors))``.  Default is None, in
             which case a single variate is returned as an array with shape
             ``(len(colors),)``.
@@ -3871,7 +3871,7 @@ cdef class Generator:
             variate[-1] = nsample
 
         The default method is "marginals".  For some cases (e.g. when
-        `colors` contains relatively small integers), the "count" method
+        *colors* contains relatively small integers), the "count" method
         can be significantly faster than the "marginals" method.  If
         performance of the algorithm is important, test the two methods
         with typical inputs to decide which works best.
@@ -4001,7 +4001,7 @@ cdef class Generator:
 
         Draw samples from the Dirichlet distribution.
 
-        Draw `size` samples of dimension k from a Dirichlet distribution. A
+        Draw *size* samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. The Dirichlet distribution
         is a conjugate prior of a multinomial distribution in Bayesian
@@ -4197,7 +4197,7 @@ cdef class Generator:
         """
         permuted(x, axis=None, out=None)
 
-        Randomly permute `x` along axis `axis`.
+        Randomly permute *x* along axis *axis*.
 
         Unlike `shuffle`, each slice along the given axis is shuffled
         independently of the others.
@@ -4207,19 +4207,19 @@ cdef class Generator:
         x : array_like, at least one-dimensional
             Array to be shuffled.
         axis : int, optional
-            Slices of `x` in this axis are shuffled. Each slice
-            is shuffled independently of the others.  If `axis` is
+            Slices of *x* in this axis are shuffled. Each slice
+            is shuffled independently of the others.  If *axis* is
             None, the flattened array is shuffled.
         out : ndarray, optional
             If given, this is the destinaton of the shuffled array.
-            If `out` is None, a shuffled copy of the array is returned.
+            If *out* is None, a shuffled copy of the array is returned.
 
         Returns
         -------
         ndarray
-            If `out` is None, a shuffled copy of `x` is returned.
-            Otherwise, the shuffled array is stored in `out`,
-            and `out` is returned
+            If *out* is None, a shuffled copy of *x* is returned.
+            Otherwise, the shuffled array is stored in *out*,
+            and *out* is returned
 
         See Also
         --------
@@ -4240,7 +4240,7 @@ cdef class Generator:
                [ 8,  9, 10, 11, 12, 13, 14, 15],
                [16, 17, 18, 19, 20, 21, 22, 23]])
 
-        Shuffle the rows of `x`:
+        Shuffle the rows of *x*:
 
         >>> y = rng.permuted(x, axis=1)
         >>> y
@@ -4248,14 +4248,14 @@ cdef class Generator:
                [15, 10, 14,  9, 12, 11,  8, 13],
                [17, 16, 20, 21, 18, 22, 23, 19]])
 
-        `x` has not been modified:
+        *x* has not been modified:
 
         >>> x
         array([[ 0,  1,  2,  3,  4,  5,  6,  7],
                [ 8,  9, 10, 11, 12, 13, 14, 15],
                [16, 17, 18, 19, 20, 21, 22, 23]])
 
-        To shuffle the rows of `x` in-place, pass `x` as the `out`
+        To shuffle the rows of *x* in-place, pass *x* as the *out*
         parameter:
 
         >>> y = rng.permuted(x, axis=1, out=x)
@@ -4359,7 +4359,7 @@ cdef class Generator:
         x : array_like
             The array or list to be shuffled.
         axis : int, optional
-            The axis which `x` is shuffled along. Default is 0.
+            The axis which *x* is shuffled along. Default is 0.
             It is only supported on `ndarray` objects.
 
         Returns
@@ -4448,11 +4448,11 @@ cdef class Generator:
         Parameters
         ----------
         x : int or array_like
-            If `x` is an integer, randomly permute ``np.arange(x)``.
-            If `x` is an array, make a copy and shuffle the elements
+            If *x* is an integer, randomly permute ``np.arange(x)``.
+            If *x* is an array, make a copy and shuffle the elements
             randomly.
         axis : int, optional
-            The axis which `x` is shuffled along. Default is 0.
+            The axis which *x* is shuffled along. Default is 0.
 
         Returns
         -------

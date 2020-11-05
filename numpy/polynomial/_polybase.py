@@ -254,9 +254,9 @@ class ABCPolyBase(abc.ABC):
     def _get_coefficients(self, other):
         """Interpret other as polynomial coefficients.
 
-        The `other` argument is checked to see if it is of the same
+        The *other* argument is checked to see if it is of the same
         class as self with identical domain and window. If so,
-        return its coefficients, otherwise return `other`.
+        return its coefficients, otherwise return *other*.
 
         .. versionadded:: 1.9.0
 
@@ -268,13 +268,13 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         coef
-            The coefficients of`other` if it is a compatible instance,
-            of ABCPolyBase, otherwise `other`.
+            The coefficients of*other* if it is a compatible instance,
+            of ABCPolyBase, otherwise *other*.
 
         Raises
         ------
         TypeError
-            When `other` is an incompatible instance of ABCPolyBase.
+            When *other* is an incompatible instance of ABCPolyBase.
 
         """
         if isinstance(other, ABCPolyBase):
@@ -655,8 +655,8 @@ class ABCPolyBase(abc.ABC):
     def cutdeg(self, deg):
         """Truncate series to the given degree.
 
-        Reduce the degree of the series to `deg` by discarding the
-        high order terms. If `deg` is greater than the current degree a
+        Reduce the degree of the series to *deg* by discarding the
+        high order terms. If *deg* is greater than the current degree a
         copy of the current series is returned. This can be useful in least
         squares where the coefficients of the high degree terms may be very
         small.
@@ -666,8 +666,8 @@ class ABCPolyBase(abc.ABC):
         Parameters
         ----------
         deg : non-negative int
-            The series is reduced to degree `deg` by discarding the high
-            order terms. The value of `deg` must be a non-negative integer.
+            The series is reduced to degree *deg* by discarding the high
+            order terms. The value of *deg* must be a non-negative integer.
 
         Returns
         -------
@@ -681,7 +681,7 @@ class ABCPolyBase(abc.ABC):
         """Remove trailing coefficients
 
         Remove trailing coefficients until a coefficient is reached whose
-        absolute value greater than `tol` or the beginning of the series is
+        absolute value greater than *tol* or the beginning of the series is
         reached. If all the coefficients would be removed the series is set
         to ``[0]``. A new series instance is returned with the new
         coefficients.  The current instance remains unchanged.
@@ -689,7 +689,7 @@ class ABCPolyBase(abc.ABC):
         Parameters
         ----------
         tol : non-negative number.
-            All trailing coefficients less than `tol` will be removed.
+            All trailing coefficients less than *tol* will be removed.
 
         Returns
         -------
@@ -701,18 +701,18 @@ class ABCPolyBase(abc.ABC):
         return self.__class__(coef, self.domain, self.window)
 
     def truncate(self, size):
-        """Truncate series to length `size`.
+        """Truncate series to length *size*.
 
-        Reduce the series to length `size` by discarding the high
-        degree terms. The value of `size` must be a positive integer. This
+        Reduce the series to length *size* by discarding the high
+        degree terms. The value of *size* must be a positive integer. This
         can be useful in least squares where the coefficients of the
         high degree terms may be very small.
 
         Parameters
         ----------
         size : positive int
-            The series is reduced to length `size` by discarding the high
-            degree terms. The value of `size` must be a positive integer.
+            The series is reduced to length *size* by discarding the high
+            degree terms. The value of *size* must be a positive integer.
 
         Returns
         -------
@@ -736,14 +736,14 @@ class ABCPolyBase(abc.ABC):
         ----------
         domain : array_like, optional
             The domain of the converted series. If the value is None,
-            the default domain of `kind` is used.
+            the default domain of *kind* is used.
         kind : class, optional
             The polynomial series type class to which the current instance
             should be converted. If kind is None, then the class of the
             current instance is used.
         window : array_like, optional
             The window of the converted series. If the value is None,
-            the default window of `kind` is used.
+            the default window of *kind* is used.
 
         Returns
         -------
@@ -811,7 +811,7 @@ class ABCPolyBase(abc.ABC):
         k : array_like
             Integration constants. The first constant is applied to the
             first integration, the second to the second, and so on. The
-            list of values must less than or equal to `m` in length and any
+            list of values must less than or equal to *m* in length and any
             missing values are set to zero.
         lbnd : Scalar
             The lower bound of the definite integral.
@@ -840,7 +840,7 @@ class ABCPolyBase(abc.ABC):
         Parameters
         ----------
         m : non-negative int
-            Find the derivative of order `m`.
+            Find the derivative of order *m*.
 
         Returns
         -------
@@ -871,7 +871,7 @@ class ABCPolyBase(abc.ABC):
     def linspace(self, n=100, domain=None):
         """Return x, y values at equally spaced points in domain.
 
-        Returns the x, y values at `n` linearly spaced points across the
+        Returns the x, y values at *n* linearly spaced points across the
         domain.  Here y is the value of the polynomial at the points x. By
         default the domain is the same as that of the series instance.
         This method is intended mostly as a plotting aid.
@@ -906,7 +906,7 @@ class ABCPolyBase(abc.ABC):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
-        `y` sampled at `x`. The domain of the returned instance can be
+        *y* sampled at *x*. The domain of the returned instance can be
         specified and this will often result in a superior fit with less
         chance of ill conditioning.
 
@@ -917,13 +917,13 @@ class ABCPolyBase(abc.ABC):
         y : array_like, shape (M,)
             y-coordinates of the M sample points ``(x[i], y[i])``.
         deg : int or 1-D array_like
-            Degree(s) of the fitting polynomials. If `deg` is a single integer
-            all terms up to and including the `deg`'th term are included in the
+            Degree(s) of the fitting polynomials. If *deg* is a single integer
+            all terms up to and including the *deg*'th term are included in the
             fit. For NumPy versions >= 1.11.0 a list of integers specifying the
             degrees of the terms to include may be used instead.
         domain : {None, [beg, end], []}, optional
             Domain to use for the returned series. If ``None``,
-            then a minimal domain that covers the points `x` is chosen.  If
+            then a minimal domain that covers the points *x* is chosen.  If
             ``[]`` the class domain is used. The default value was the
             class domain in NumPy 1.4 and ``None`` in later versions.
             The ``[]`` option was added in numpy 1.5.0.
@@ -961,12 +961,12 @@ class ABCPolyBase(abc.ABC):
             of interest, do ``new_series.convert().coef``.
 
         [resid, rank, sv, rcond] : list
-            These values are only returned if `full` = True
+            These values are only returned if *full* = True
 
             resid -- sum of squared residuals of the least squares fit
             rank -- the numerical rank of the scaled Vandermonde matrix
             sv -- singular values of the scaled Vandermonde matrix
-            rcond -- value of `rcond`.
+            rcond -- value of *rcond*.
 
             For more details, see `linalg.lstsq`.
 
@@ -1064,9 +1064,9 @@ class ABCPolyBase(abc.ABC):
 
     @classmethod
     def basis(cls, deg, domain=None, window=None):
-        """Series basis polynomial of degree `deg`.
+        """Series basis polynomial of degree *deg*.
 
-        Returns the series representing the basis polynomial of degree `deg`.
+        Returns the series representing the basis polynomial of degree *deg*.
 
         .. versionadded:: 1.7.0
 
@@ -1087,7 +1087,7 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         new_series : series
-            A series with the coefficient of the `deg` term set to one and
+            A series with the coefficient of the *deg* term set to one and
             all others zero.
 
         """
@@ -1105,7 +1105,7 @@ class ABCPolyBase(abc.ABC):
     def cast(cls, series, domain=None, window=None):
         """Convert series to series of this class.
 
-        The `series` is expected to be an instance of some polynomial
+        The *series* is expected to be an instance of some polynomial
         series of one of the types supported by by the numpy.polynomial
         module, but could be some other class that supports the convert
         method.
@@ -1130,7 +1130,7 @@ class ABCPolyBase(abc.ABC):
         -------
         new_series : series
             A series of the same kind as the calling class and equal to
-            `series` when evaluated.
+            *series* when evaluated.
 
         See Also
         --------
