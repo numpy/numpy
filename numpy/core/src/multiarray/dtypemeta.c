@@ -266,9 +266,9 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         if (descr1->subarray == NULL && descr1->names == NULL &&
                 descr2->subarray == NULL && descr2->names == NULL) {
             PyErr_SetString(PyExc_TypeError,
-                    "invalid type promotion with void datatypes of different "
-                    "length. You may use instead `np.bytes_` if the data "
-                    "contains no trailing zero bytes.");
+                    "Invalid type promotion with void datatypes of different "
+                    "lengths. Use the `np.bytes_` datatype instead to pad the "
+                    "shorter value with trailing zero bytes.");
         }
         else {
             PyErr_SetString(PyExc_TypeError,
