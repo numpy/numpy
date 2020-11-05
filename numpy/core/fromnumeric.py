@@ -1941,7 +1941,7 @@ def shape(a):
 
     See Also
     --------
-    alen
+    len
     ndarray.shape : Equivalent array method.
 
     Examples
