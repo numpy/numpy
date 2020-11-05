@@ -1,5 +1,6 @@
 ``sliding_window_view`` provides a sliding window view for numpy arrays
 -----------------------------------------------------------------------
-`numpy.sliding_window_view` constructs views on numpy arrays that offer a
-sliding or moving window access to the array. This allows for the simple
-implementation of certain algorithms, such as running means.
+`numpy.lib.stride_tricks.sliding_window_view` constructs views on numpy
+arrays that offer a sliding or moving window access to the array. This allows
+for the simple implementation of certain algorithms, such as running means.
+

@@ -9,8 +9,7 @@ import numpy as np
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes',
-           'sliding_window_view']
+__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
 
 
 class DummyArray:
@@ -67,10 +66,10 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     See also
     --------
-    broadcast_to: broadcast an array to a given shape.
+    broadcast_to : broadcast an array to a given shape.
     reshape : reshape an array.
-    sliding_window_view: userfriendly and safe function for the creation of
-        sliding window views.
+    lib.stride_tricks.sliding_window_view :
+        userfriendly and safe function for the creation of sliding window views.
 
     Notes
     -----
@@ -199,7 +198,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> x = np.arange(6)
     >>> x.shape
     (6,)
-    >>> v = np.sliding_window_view(x, 3)
+    >>> v = sliding_window_view(x, 3)
     >>> v.shape
     (4, 3)
     >>> v
@@ -219,7 +218,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
            [10, 11, 12, 13],
            [20, 21, 22, 23]])
     >>> shape = (2,2)
-    >>> v = np.sliding_window_view(x, shape)
+    >>> v = sliding_window_view(x, shape)
     >>> v.shape
     (2, 3, 2, 2)
     >>> v
@@ -238,7 +237,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     The axis can be specified explicitly:
 
-    >>> v = np.sliding_window_view(x, 3, 0)
+    >>> v = sliding_window_view(x, 3, 0)
     >>> v.shape
     (1, 4, 3)
     >>> v
@@ -250,7 +249,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     The same axis can be used several times. In that case, every use reduces
     the corresponding original dimension:
 
-    >>> v = np.sliding_window_view(x, (2, 3), (1, 1))
+    >>> v = sliding_window_view(x, (2, 3), (1, 1))
     >>> v.shape
     (3, 1, 2, 3)
     >>> v
@@ -265,7 +264,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     views which skip elements:
 
     >>> x = np.arange(7)
-    >>> np.sliding_window_view(x, 5)[:, ::2]
+    >>> sliding_window_view(x, 5)[:, ::2]
     array([[0, 2, 4],
            [1, 3, 5],
            [2, 4, 6]])
@@ -273,7 +272,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     or views which move by multiple elements
 
     >>> x = np.arange(7)
-    >>> np.sliding_window_view(x, 3)[::2, :]
+    >>> sliding_window_view(x, 3)[::2, :]
     array([[0, 1, 2],
            [2, 3, 4],
            [4, 5, 6]])
@@ -285,7 +284,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> x = np.arange(6)
     >>> x.shape
     (6,)
-    >>> v = np.sliding_window_view(x, 3)
+    >>> v = sliding_window_view(x, 3)
     >>> v.shape
     (4, 3)
     >>> v
