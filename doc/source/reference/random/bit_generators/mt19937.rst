@@ -4,7 +4,8 @@ Mersenne Twister (MT19937)
 .. currentmodule:: numpy.random
 
 .. autoclass:: MT19937
-	:exclude-members:
+    :members: __init__
+    :exclude-members: __init__
 
 State
 =====

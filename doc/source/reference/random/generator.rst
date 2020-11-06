@@ -15,7 +15,8 @@ can be changed by passing an instantized BitGenerator to ``Generator``.
 .. autofunction:: default_rng
 
 .. autoclass:: Generator
-	:exclude-members:
+    :members: __init__
+    :exclude-members: __init__
 
 Accessing the BitGenerator
 ==========================
