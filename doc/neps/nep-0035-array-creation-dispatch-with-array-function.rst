@@ -120,9 +120,9 @@ conversion, ultimately raising a
 
 Now we should look at how a library like Dask could benefit from ``like=``.
 Before we understand that, it's important to understand a bit about Dask basics
-and ensures correctness with ``__array_function__``. Note that Dask can perform
-computations on different sorts of objects, like dataframes, bags and arrays,
-here we will focus strictly on arrays, which are the objects we can use
+and how it ensures correctness with ``__array_function__``. Note that Dask can
+perform computations on different sorts of objects, like dataframes, bags and
+arrays, here we will focus strictly on arrays, which are the objects we can use
 ``__array_function__`` with.
 
 Dask uses a graph computing model, meaning it breaks down a large problem in
