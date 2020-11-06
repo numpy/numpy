@@ -1222,10 +1222,11 @@ class _TestNormBase:
     dec = None
 
     @staticmethod
-    def check_dtype(a, res):
-        if issubclass(a.dtype.type, np.inexact):
-            assert_equal(res.dtype, a.real.dtype)
+    def check_dtype(x, res):
+        if issubclass(x.dtype.type, np.inexact):
+            assert_equal(res.dtype, x.real.dtype)
         else:
+            # For integer input, don't have to test float precision of output.
             assert_(issubclass(res.dtype.type, np.floating))
 
 
@@ -1244,8 +1245,8 @@ class _TestNormGeneral(_TestNormBase):
 
         all_types = exact_types + inexact_types
 
-        for each_inexact_types in all_types:
-            at = a.astype(each_inexact_types)
+        for each_type in all_types:
+            at = a.astype(each_type)
 
             an = norm(at, -np.inf)
             self.check_dtype(at, an)
@@ -1407,8 +1408,8 @@ class _TestNorm2D(_TestNormBase):
 
         all_types = exact_types + inexact_types
 
-        for each_inexact_types in all_types:
-            at = a.astype(each_inexact_types)
+        for each_type in all_types:
+            at = a.astype(each_type)
 
             an = norm(at, -np.inf)
             self.check_dtype(at, an)
