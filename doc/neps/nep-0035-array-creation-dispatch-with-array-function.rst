@@ -8,7 +8,7 @@ NEP 35 — Array Creation Dispatching With __array_function__
 :Status: Draft
 :Type: Standards Track
 :Created: 2019-10-15
-:Updated: 2020-08-17
+:Updated: 2020-11-06
 :Resolution:
 
 Abstract
@@ -221,11 +221,14 @@ array creation, the new ``like=`` keyword shall be used for the purpose of
 dispatching.
 
 Downstream libraries will benefit from the ``like=`` argument without any
-changes to their API, given the argument is of exclusive implementation in
-NumPy. It will still be required that downstream libraries implement the
-``__array_function__`` protocol, as described by NEP 18 [1]_, and appropriately
-introduce the argument to their calls to NumPy array creation functions, as
-exemplified in :ref:`neps.like-kwarg.usage-and-impact`.
+changes to their API, given the argument only needs to be implemented by NumPy.
+It's still allowed that downstream libraries include the ``like=`` argument,
+as it can be useful in some cases, please refer to
+:ref:`neps.like-kwarg.implementation` for details on those cases. It will still
+be required that downstream libraries implement the ``__array_function__``
+protocol, as described by NEP 18 [1]_, and appropriately introduce the argument
+to their calls to NumPy array creation functions, as exemplified in
+:ref:`neps.like-kwarg.usage-and-impact`.
 
 Related work
 ------------
@@ -234,6 +237,8 @@ Other NEPs have been written to address parts of ``__array_function__``
 protocol's limitation, such as the introduction of the ``__duckarray__``
 protocol in NEP 30 [3]_, and the introduction of an overriding mechanism called
 ``uarray`` by NEP 31 [4]_.
+
+.. _neps.like-kwarg.implementation:
 
 Implementation
 --------------
@@ -252,13 +257,20 @@ This newly proposed keyword shall be removed by the ``__array_function__``
 mechanism from the keyword dictionary before dispatching. The purpose for this
 is twofold:
 
-1. The object will have no use in the downstream library's implementation; and
-2. Simplifies adoption of array creation by those libraries already opting-in
+1. Simplifies adoption of array creation by those libraries already opting-in
    to implement the ``__array_function__`` protocol, thus removing the
-   requirement to explicitly opt-in for all array creation functions.
+   requirement to explicitly opt-in for all array creation functions; and
+2. Most downstream libraries will have no use for the keyword argument, and
+   those that do may accomplish so by capturing ``self`` from
+   ``__array_function__``.
 
-Downstream libraries thus shall _NOT_ include the ``like=`` keyword to their
-array creation APIs, which is a NumPy-exclusive keyword.
+Downstream libraries thus do not require to include the ``like=`` keyword to
+their array creation APIs. In some cases (e.g., Dask), having the ``like=``
+keyword can be useful, as it would allow the implementation to identify
+array internals. As an example, Dask could benefit from the reference array
+to identify its chunk type (e.g., NumPy, CuPy, Sparse), and thus create a new
+Dask array backed by the same chunk type, something that's not possible unless
+Dask can read the reference array's attributes.
 
 Function Dispatching
 ~~~~~~~~~~~~~~~~~~~~
@@ -316,6 +328,81 @@ viable solution for NumPy functions implemented in C. However, due to the
 downsides pointed out above we have decided to discard any changes on the Python
 side and resolve those issues with a pure-C implementation. Please refer to
 [implementation]_ for details.
+
+Reading the Reference Array Downstream
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As stated in the beginning of :ref:`neps.like-kwarg.implementation` section,
+``like=`` is not propagated to the downstream library, nevertheless, it's still
+possible to access it. This requires some changes in the downstream library's
+``__array_function__`` definition, where the ``self`` attribute is in practice
+that passed via ``like=``. This is the case because we use ``like=`` as the
+dispatching array, unlike other compute functions covered by NEP-18 that usually
+dispatch on the first positional argument.
+
+An example of such use is to create a new Dask array while preserving its
+backend type:
+
+.. code:: python
+    # Returns dask.array<array, shape=(3,), dtype=int64, chunksize=(3,), chunktype=cupy.ndarray>
+    np.asarray([1, 2, 3], like=da.array(cp.array(())))
+
+    # Returns a cupy.ndarray
+    type(np.asarray([1, 2, 3], like=da.array(cp.array(()))).compute())
+
+Note how above the array is backed by ``chunktype=cupy.ndarray``, and the
+resulting array after computing it is also a ``cupy.ndarray``. If Dask does
+not use the ``like=`` argument via the ``self`` attribute from
+``__array_function__``, the example above would be backed by ``numpy.ndarray``
+instead:
+
+.. code:: python
+    # Returns dask.array<array, shape=(3,), dtype=int64, chunksize=(3,), chunktype=numpy.ndarray>
+    np.asarray([1, 2, 3], like=da.array(cp.array(())))
+
+    # Returns a numpy.ndarray
+    type(np.asarray([1, 2, 3], like=da.array(cp.array(()))).compute())
+
+Given the library would need to rely on ``self`` attribute from
+``__array_function__`` to dispatch the function with the correct reference
+array, we suggest one of two alternatives:
+
+1. Introduce a list of functions in the downstream library that do support the
+   ``like=`` argument and pass ``like=self`` when calling the function; or
+2. Inspect whether the function's signature and verify whether it includes the
+   ``like=`` argument. Note that this may incur in a higher performance penalty
+   and assumes introspection is possible, which may not be if the function is
+   a C function.
+
+To make things clearer, let's take a look at how suggestion 2 could be
+implemented in Dask. The current relevant part of ``__array_function__``
+definition in Dask is seen below:
+
+.. code:: python
+    def __array_function__(self, func, types, args, kwargs):
+        # Code not relevant for this example here
+
+        # Dispatch ``da_func`` (da.asarray, for example) with *args and **kwargs
+        da_func(*args, **kwargs)
+
+And this is how the updated code would look like:
+
+.. code:: python
+    def __array_function__(self, func, types, args, kwargs):
+        # Code not relevant for this example here
+
+        # Inspect ``da_func``'s  signature and store keyword-only arguments
+        import inspect
+        kwonlyargs = inspect.getfullargspec(da_func).kwonlyargs
+
+        # If ``like`` is contained in ``da_func``'s signature, add ``like=self``
+        # to the kwargs dictionary.
+        if 'like' in kwonlyargs:
+            kwargs['like'] = self
+
+        # Dispatch ``da_func`` (da.asarray, for example) with args and kwargs.
+        # Here, kwargs contain ``like=self`` if the function's signature does too.
+        da_func(*args, **kwargs)
 
 Alternatives
 ------------
