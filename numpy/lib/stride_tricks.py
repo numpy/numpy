@@ -119,7 +119,7 @@ def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
     return (x,)
 
 
-@array_function_dispatch(_sliding_window_view_dispatcher, module='numpy')
+@array_function_dispatch(_sliding_window_view_dispatcher)
 def sliding_window_view(x, window_shape, axis=None, *,
                         subok=False, writeable=False):
     """
