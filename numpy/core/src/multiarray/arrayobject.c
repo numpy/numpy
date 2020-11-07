@@ -432,7 +432,7 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
 static void
 array_dealloc(PyArrayObject *self)
 {
-    PyArrayObject_fields *fa = (PyArrayObject_fields *) self;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
         PyErr_WriteUnraisable(NULL);
@@ -1733,7 +1733,6 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
     /* nitems will always be 0 */
     PyObject *obj = PyObject_Malloc(type->tp_basicsize);
     PyObject_Init(obj, type);
-
     return obj;
 }
 

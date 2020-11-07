@@ -591,14 +591,33 @@ _buffer_info_cmp(_buffer_info_t *a, _buffer_info_t *b)
 
 
 /*
- * We tag the pointer by adding 2, to ensure that we are most likely to
- * notice if a C defined subclass extends our structure and does not take
- * into account that it may grow.
+ * Tag the buffer info pointer by adding 2 (unless it is NULL to simplify
+ * object initialization).
+ * The linked list of buffer-infos was appended to the array struct in
+ * NumPy 1.20. Tagging the pointer gives us a chance to raise/print
+ * a useful error message instead of crashing hard if a C-subclass uses
+ * the same field.
  */
-static int
+static NPY_INLINE void *
+buffer_info_tag(void *buffer_info)
+{
+    if (buffer_info == NULL) {
+        return buffer_info;
+    }
+    else {
+        return (void *)((uintptr_t)buffer_info + 2);
+    }
+}
+
+
+static NPY_INLINE int
 _buffer_info_untag(
         void *tagged_buffer_info, _buffer_info_t **buffer_info, PyObject *obj)
 {
+    if (tagged_buffer_info == NULL) {
+        *buffer_info = NULL;
+        return 0;
+    }
     if (NPY_UNLIKELY(((uintptr_t)tagged_buffer_info & 0x7) != 2)) {
         PyErr_Format(PyExc_RuntimeError,
                 "Object of type %S appears to be C subclassed NumPy array, "

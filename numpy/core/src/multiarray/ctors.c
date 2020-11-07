@@ -752,15 +752,15 @@ PyArray_NewFromDescr_int(
     }
 
     fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
-    ((PyArrayObject_fields *)fa)->_buffer_info = buffer_info_tag(NULL);
-
     if (fa == NULL) {
         Py_DECREF(descr);
         return NULL;
     }
+    fa->_buffer_info = NULL;
     fa->nd = nd;
     fa->dimensions = NULL;
     fa->data = NULL;
+
     if (data == NULL) {
         fa->flags = NPY_ARRAY_DEFAULT;
         if (flags) {

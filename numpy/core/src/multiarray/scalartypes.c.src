@@ -2600,18 +2600,6 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 };
 
 
-static PyObject *
-void_alloc(PyTypeObject *type, Py_ssize_t items)
-{
-    PyVoidScalarObject *self = (PyVoidScalarObject *)gentype_alloc(type, items);
-    if (self == NULL) {
-        return NULL;
-    }
-    self->_buffer_info = buffer_info_tag(NULL);
-    return (PyObject *)self;
-}
-
-
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
@@ -3031,7 +3019,6 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             npy_free_cache(destptr, memu);
             return PyErr_NoMemory();
         }
-        ((PyVoidScalarObject *)ret)->_buffer_info = buffer_info_tag(NULL);
         ((PyVoidScalarObject *)ret)->obval = destptr;
         Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
         ((PyVoidScalarObject *)ret)->descr =
@@ -4028,7 +4015,6 @@ initialize_numeric_types(void)
     /**end repeat**/
 
     PyStringArrType_Type.tp_itemsize = sizeof(char);
-    PyVoidArrType_Type.tp_alloc = void_alloc;
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
