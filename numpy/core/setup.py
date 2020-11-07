@@ -386,6 +386,10 @@ def check_mathlib(config_cmd):
                                "MATHLIB env variable")
     return mathlibs
 
+def check_libdivide():
+    return os.environ.get('NPY_USE_LIBDIVIDE') is not None
+
+
 def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
     string)."""
@@ -441,6 +445,9 @@ def configuration(parent_package='',top_path=None):
             # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB', ','.join(mathlibs)))
+
+            # Check if libdivide needs to be used
+            check_libdivide() and moredefs.append('USE_LIBDIVIDE')
 
             check_math_capabilities(config_cmd, ext, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])

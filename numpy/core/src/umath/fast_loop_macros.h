@@ -46,12 +46,21 @@ abs_ptrdiff(char *a, char *b)
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
 
-/** (ip1, ip2) -> (op1) */
-#define BINARY_LOOP\
+#define BINARY_LOOP_BASE\
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
     npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
     npy_intp n = dimensions[0];\
     npy_intp i;\
+
+#define BINARY_LOOP_FIXED\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
+
+#define BINARY_LOOP_SLIDING\
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
+
+/** (ip1, ip2) -> (op1) */
+#define BINARY_LOOP\
+    BINARY_LOOP_BASE\
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
 
 /** (ip1, ip2) -> (op1, op2) */
