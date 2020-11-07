@@ -875,8 +875,8 @@ NPY_NO_EXPORT void
     BINARY_LOOP_BASE
 
     if(!is2) {
-        struct libdivide_@div@_t fast_d = libdivide_@div@_gen(*(int*)ip2);
         const @type@ in2 = *(@type@ *)ip2;
+        struct libdivide_@div@_t fast_d = libdivide_@div@_gen(in2);
         BINARY_LOOP_FIXED {
             const @type@ in1 = *(@type@ *)ip1;
             /*
