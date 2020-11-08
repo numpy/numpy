@@ -2812,7 +2812,7 @@ class MaskedArray(ndarray):
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None, keep_mask=True,
-                hard_mask=None, shrink=True, order=None, **options):
+                hard_mask=None, shrink=True, order=None):
         """
         Create a new masked array from scratch.
 
