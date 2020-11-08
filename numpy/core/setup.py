@@ -389,6 +389,8 @@ def check_mathlib(config_cmd):
 def check_libdivide():
     return os.environ.get('NPY_USE_LIBDIVIDE') is not None
 
+def check_optimal_divisor():
+    return os.environ.get('NPY_USE_OPTIMAL_DIVISOR') is not None
 
 def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
@@ -448,6 +450,9 @@ def configuration(parent_package='',top_path=None):
 
             # Check if libdivide needs to be used
             check_libdivide() and moredefs.append('USE_LIBDIVIDE')
+
+            # Check if optimal divisor code needs to be used
+            check_optimal_divisor() and moredefs.append('USE_OPTIMAL_DIVISOR')
 
             check_math_capabilities(config_cmd, ext, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
