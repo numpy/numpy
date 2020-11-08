@@ -22,7 +22,7 @@
 
 /* Use Libdivide for faster division */
 /* TODO Explore placing specialised versions in `numpy/core/src/common/simd` */
-#ifdef USE_LIBDIVIDE
+#ifndef USE_LEGACY_DIVISION
 #include "numpy/libdivide.h"
 #endif
 
@@ -847,7 +847,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
-#ifdef USE_LIBDIVIDE
+#ifndef USE_LEGACY_DIVISION
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -874,60 +874,6 @@ NPY_NO_EXPORT void
             }
             else {
                 *((@type@ *)op1) = libdivide_@div@_do(in1, &fast_d);
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {  // XXX Lot of repeated code
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /*
-             * FIXME: On x86 at least, dividing the smallest representable integer
-             * by -1 causes a SIFGPE (division overflow). We treat this case here
-             * (to avoid a SIGFPE crash at python level), but a good solution would
-             * be to treat integer division problems separately from FPU exceptions
-             * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-             */
-            if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-                npy_set_floatstatus_divbyzero();
-                *((@type@ *)op1) = 0;
-            }
-            else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((@type@ *)op1) = in1/in2 - 1;
-            }
-            else {
-                *((@type@ *)op1) = in1/in2;
-            }
-        }
-    }
-}
-#elif defined(USE_OPTIMAL_DIVISOR)
-NPY_NO_EXPORT void
-@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP_BASE
-
-    if(!is2) {
-        const @type@ in2 = *(@type@ *)ip2;
-        const float in2_f = (float) in2;
-        BINARY_LOOP_FIXED {
-            const @type@ in1 = *(@type@ *)ip1;
-            /*
-             * FIXME: On x86 at least, dividing the smallest representable integer
-             * by -1 causes a SIFGPE (division overflow). We treat this case here
-             * (to avoid a SIGFPE crash at python level), but a good solution would
-             * be to treat integer division problems separately from FPU exceptions
-             * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-             */
-            if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-                npy_set_floatstatus_divbyzero();
-                *((@type@ *)op1) = 0;
-            }
-            else if ((in1 > 0) != (in2 > 0)) {
-                *((@type@ *)op1) = floor(in1/in2_f);
-            }
-            else {
-                *((@type@ *)op1) = in1/in2;
             }
         }
     }
