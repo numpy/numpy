@@ -328,7 +328,7 @@ SKIP_LIST = [
     "numpy.core.code_generators.numpy_api",
     "numpy.core.cversions",
     "numpy.core.generate_numpy_api",
-    "numpy.distutils.msvc9compiler",
+    "numpy_distutils.msvc9compiler",
 ]
 
 
@@ -356,7 +356,7 @@ def test_all_modules_are_expected():
 # below
 SKIP_LIST_2 = [
     'numpy.math',
-    'numpy.distutils.log.sys',
+    'numpy_distutils.log.sys',
     'numpy.doc.constants.re',
     'numpy.doc.constants.textwrap',
     'numpy.lib.emath',

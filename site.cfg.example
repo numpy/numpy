@@ -1,5 +1,5 @@
 # This file provides configuration information about non-Python dependencies for
-# numpy.distutils-using packages. Create a file like this called "site.cfg" next
+# numpy_distutils-using packages. Create a file like this called "site.cfg" next
 # to your package's setup.py file and fill in the appropriate sections. Not all
 # packages will use all sections so you should leave out sections that your
 # package does not use.
@@ -42,7 +42,7 @@
 #
 #   src_dirs
 #       List of directories that contain extracted source code for the
-#       dependency. For some dependencies, numpy.distutils will be able to build
+#       dependency. For some dependencies, numpy_distutils will be able to build
 #       them from source if binaries cannot be found. The FORTRAN BLAS and
 #       LAPACK libraries are one example. However, most dependencies are more
 #       complicated and require actual installation that you need to do
@@ -51,7 +51,7 @@
 #
 #   search_static_first
 #       Boolean (one of (0, false, no, off) for False or (1, true, yes, on) for
-#       True) to tell numpy.distutils to prefer static libraries (.a) over
+#       True) to tell numpy_distutils to prefer static libraries (.a) over
 #       shared libraries (.so). It is turned off by default.
 #           search_static_first = false
 #
@@ -269,12 +269,12 @@
 #   http://fftw.org/
 #   https://cr.yp.to/djbfft.html
 #
-# Given only this section, numpy.distutils will try to figure out which version
+# Given only this section, numpy_distutils will try to figure out which version
 # of FFTW you are using.
 #[fftw]
 #libraries = fftw3
 #
-# For djbfft, numpy.distutils will look for either djbfft.a or libdjbfft.a .
+# For djbfft, numpy_distutils will look for either djbfft.a or libdjbfft.a .
 #[djbfft]
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib

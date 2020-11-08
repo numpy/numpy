@@ -162,7 +162,7 @@ if not release:
 
 
 def configuration(parent_package='', top_path=None):
-    from numpy.distutils.misc_util import Configuration
+    from numpy_distutils.misc_util import Configuration
 
     config = Configuration(None, parent_package, top_path)
     config.set_options(ignore_setup_xxx_py=True,
@@ -173,6 +173,9 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('numpy')
     config.add_data_files(('numpy', 'LICENSE.txt'))
     config.add_data_files(('numpy', 'numpy/*.pxd'))
+
+    config.add_subpackage('f2py')
+    config.add_subpackage('numpy_distutils')
 
     config.get_version('numpy/version.py')  # sets config.version
 
@@ -241,8 +244,8 @@ def get_build_overrides():
     """
     Custom build commands to add `-std=c99` to compilation
     """
-    from numpy.distutils.command.build_clib import build_clib
-    from numpy.distutils.command.build_ext import build_ext
+    from numpy_distutils.command.build_clib import build_clib
+    from numpy_distutils.command.build_ext import build_ext
     from distutils.version import LooseVersion
 
     def _needs_gcc_c99_flag(obj):
@@ -441,13 +444,13 @@ def setup_package():
     # The f2py scripts that will be installed
     if sys.platform == 'win32':
         f2py_cmds = [
-            'f2py = numpy.f2py.f2py2e:main',
+            'f2py = f2py.f2py2e:main',
             ]
     else:
         f2py_cmds = [
-            'f2py = numpy.f2py.f2py2e:main',
-            'f2py%s = numpy.f2py.f2py2e:main' % sys.version_info[:1],
-            'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
+            'f2py = f2py.f2py2e:main',
+            'f2py%s = f2py.f2py2e:main' % sys.version_info[:1],
+            'f2py%s.%s = f2py.f2py2e:main' % sys.version_info[:2],
             ]
 
     cmdclass = {"sdist": sdist_checked, }
@@ -487,7 +490,7 @@ def setup_package():
     if run_build:
         # patches distutils, even though we don't use it
         import setuptools  # noqa: F401
-        from numpy.distutils.core import setup
+        from numpy_distutils.core import setup
         if 'sdist' not in sys.argv:
             # Generate Cython sources, unless we're generating an sdist
             generate_cython()

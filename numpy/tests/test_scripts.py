@@ -42,5 +42,5 @@ def test_f2py(f2py_cmd):
 
 
 def test_pep338():
-    stdout = subprocess.check_output([sys.executable, '-mnumpy.f2py', '-v'])
+    stdout = subprocess.check_output([sys.executable, '-mf2py', '-v'])
     assert_equal(stdout.strip(), b'2')

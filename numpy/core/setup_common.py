@@ -4,7 +4,7 @@ import warnings
 import copy
 import textwrap
 
-from numpy.distutils.misc_util import mingw32
+from numpy_distutils.misc_util import mingw32
 
 
 #-------------------

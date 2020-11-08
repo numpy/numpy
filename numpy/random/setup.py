@@ -3,14 +3,14 @@ import platform
 import sys
 from os.path import join
 
-from numpy.distutils.system_info import platform_bits
+from numpy_distutils.system_info import platform_bits
 
 is_msvc = (platform.platform().startswith('Windows') and
            platform.python_compiler().startswith('MS'))
 
 
 def configuration(parent_package='', top_path=None):
-    from numpy.distutils.misc_util import Configuration, get_mathlibs
+    from numpy_distutils.misc_util import Configuration, get_mathlibs
     config = Configuration('random', parent_package, top_path)
 
     def generate_libraries(ext, build_dir):
@@ -142,6 +142,6 @@ def configuration(parent_package='', top_path=None):
 
 
 if __name__ == '__main__':
-    from numpy.distutils.core import setup
+    from numpy_distutils.core import setup
 
     setup(configuration=configuration)

@@ -157,7 +157,7 @@ class PytestTester:
         # so fetch module for suppression here.
         with warnings.catch_warnings():
             warnings.simplefilter("always")
-            from numpy.distutils import cpuinfo
+            from numpy_distutils import cpuinfo
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.

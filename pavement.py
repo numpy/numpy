@@ -108,7 +108,7 @@ def sdist(options):
     sh('git submodule init')
     sh('git submodule update')
 
-    # To be sure to bypass paver when building sdist... paver + numpy.distutils
+    # To be sure to bypass paver when building sdist... paver + numpy_distutils
     # do not play well together.
     # Cython is run over all Cython files in setup.py, so generated C files
     # will be included.
