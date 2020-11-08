@@ -19,7 +19,12 @@
 #include "ufunc_object.h"
 
 #include <string.h> /* for memchr */
-#include <libdivide.h>
+
+/* Use Libdivide for faster division */
+/* TODO Explore placing specialised versions in `numpy/core/src/common/simd` */
+#ifdef USE_LIBDIVIDE
+#include "numpy/libdivide.h"
+#endif
 
 /*
  * cutoff blocksize for pairwise summation
