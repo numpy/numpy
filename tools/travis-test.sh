@@ -105,7 +105,7 @@ run_test()
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG
+    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG -- -rs
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then

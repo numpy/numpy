@@ -174,4 +174,29 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
+  pypy37:
+    needs: smoke_test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: get_pypy
+      run: |
+        wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.2-linux64.tar.bz2 -O pypy.tar.bz2
+        mkdir -p pypy3
+        (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
+        pypy3/bin/pypy3 -mensurepip
+        pypy3/bin/pypy3 -m pip install --upgrade pip wheel
+        if [ ! -e pypy3/bin/python ]
+        then
+            pushd pypy3/bin
+            ln -s pypy3 python
+            popd
+        fi
+        echo $PWD/pypy3/bin >> $GITHUB_PATH
+ 
+    - uses: ./.github/actions
+
        
