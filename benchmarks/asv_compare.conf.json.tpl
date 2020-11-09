@@ -78,7 +78,9 @@
 
     "build_command" : [
         "python setup.py build {numpy_build_options}",
-        "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
+        // pip ignores '--global-option' when pep517 is enabled, we also enabling pip verbose to
+        // be reached from asv `--verbose` so we can verify the build options.
+        "PIP_NO_BUILD_ISOLATION=false python {build_dir}/benchmarks/asv_pip_nopep517.py -v {numpy_global_options} --no-deps --no-index -w {build_cache_dir} {build_dir}"
     ],
     // The commits after which the regression search in `asv publish`
     // should start looking for regressions. Dictionary whose keys are

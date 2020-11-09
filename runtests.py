@@ -524,6 +524,7 @@ def asv_compare_config(bench_path, args, h_commits):
 
     is_cached = asv_substitute_config(conf_path, nconf_path,
         numpy_build_options = ' '.join([f'\\"{v}\\"' for v in build]),
+        numpy_global_options= ' '.join([f'--global-option=\\"{v}\\"' for v in ["build"] + build])
     )
     if not is_cached:
         asv_clear_cache(bench_path, h_commits)
