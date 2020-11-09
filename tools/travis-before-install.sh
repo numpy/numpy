@@ -13,7 +13,7 @@ sudo apt install gfortran eatmydata libgfortran3 libgfortran5
 
 if [ "$USE_DEBUG" ]
 then
-    sudo apt install cpython3-dbg python3-dbg python3-dev python3-setuptools
+    sudo apt install python3-dbg python3-dev python3-setuptools
 fi
 
 mkdir builds
