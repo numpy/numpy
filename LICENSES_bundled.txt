@@ -15,3 +15,8 @@ Name: dragon4
 Files: numpy/core/src/multiarray/dragon4.c
 License: MIT
   For license text, see numpy/core/src/multiarray/dragon4.c
+
+Name: libdivide
+Files: numpy/core/include/numpy/libdivide/*
+License: zlib
+  For license text, see numpy/core/include/numpy/libdivide/LICENSE.txt
