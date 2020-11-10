@@ -58,6 +58,7 @@ jobs:
     needs: smoke_test
     runs-on: ubuntu-latest
     env:
+      USE_GDB: 1
       NPY_USE_BLAS_ILP64: 1
     steps:
     - uses: actions/checkout@v2
@@ -112,6 +113,7 @@ jobs:
     needs: smoke_test
     runs-on: ubuntu-latest
     env:
+      USE_GDB: 1
       NPY_RELAXED_STRIDES_CHECKING: 0
       CHECK_BLAS: 1
       NPY_USE_BLAS_ILP64: 1
