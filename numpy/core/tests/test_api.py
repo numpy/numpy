@@ -282,12 +282,17 @@ def test_array_astype():
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
 
-@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32", "O"])
+@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32"])
 def test_array_astype_to_void(dt):
     dt = np.dtype(dt)
     arr = np.array([], dtype=dt)
     assert arr.astype("V").dtype.itemsize == dt.itemsize
 
+def test_object_array_astype_to_void():
+    # This is different to `test_array_astype_to_void` as object arrays
+    # are inspected.  The default void is "V8" (8 is the length of double)
+    arr = np.array([], dtype="O").astype("V")
+    assert arr.dtype == "V8"
 
 @pytest.mark.parametrize("t",
     np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
