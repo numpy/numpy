@@ -290,7 +290,7 @@ if sys.platform == 'win32':
     vcpkg = shutil.which('vcpkg')
     if vcpkg:
         vcpkg_dir = os.path.dirname(vcpkg)
-        if platform.architecture() == '32bit':
+        if platform.architecture()[0] == '32bit':
             specifier = 'x86'
         else:
             specifier = 'x64'
