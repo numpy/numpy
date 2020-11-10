@@ -14,6 +14,7 @@ runs:
       echo NPY_USE_BLAS_ILP64 $NPY_USE_BLAS_ILP64
       echo NUMPY_EXPERIMENTAL_ARRAY_FUNCTION $NUMPY_EXPERIMENTAL_ARRAY_FUNCTION
       echo USE_ASV $USE_ASV
+      echo USE_GDB $USE_GDB
       python -c "import sys; print(sys.version)"
 
   - name: BeforeInstall

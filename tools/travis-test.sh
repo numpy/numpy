@@ -101,11 +101,17 @@ run_test()
     $PYTHON ../tools/openblas_support.py --check_version
   fi
 
+  if [ -n "$USE_GDB" ]; then
+    COMMAND="gdb --return-child-result --batch --eval-command=run --args $PYTHON"
+  else
+    COMMAND=$PYTHON
+  fi
+
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
+    eval $COMMAND -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG
+    eval $COMMAND ../runtests.py -n -v $DURATIONS_FLAG
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then

@@ -16,6 +16,11 @@ then
     sudo apt install python3-dbg python3-dev python3-setuptools
 fi
 
+if [ "$USE_GDB" ]
+then
+    sudo apt install gdb
+fi
+
 mkdir builds
 pushd builds
 

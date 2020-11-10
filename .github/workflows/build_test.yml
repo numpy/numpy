@@ -129,6 +129,7 @@ jobs:
     needs: smoke_test
     runs-on: ubuntu-latest
     env:
+      USE_GDB: 1
       USE_WHEEL: 1
       NPY_RELAXED_STRIDES_DEBUG: 1
     steps:
