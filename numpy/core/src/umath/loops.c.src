@@ -1491,26 +1491,6 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  */
 
 /**begin repeat
- * Float types
- *  #type = npy_float, npy_double#
- *  #TYPE = FLOAT, DOUBLE#
- *  #scalarf = npy_sqrtf, npy_sqrt#
- */
-
-NPY_NO_EXPORT void
-@TYPE@_sqrt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_unary_simd_sqrt_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = @scalarf@(in1);
-        }
-    }
-}
-
-/**end repeat**/
-
-/**begin repeat
  *  #func = rint, ceil, floor, trunc#
  *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
  */
@@ -1578,53 +1558,6 @@ DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
  *  #type = npy_float, npy_double#
  *  #typesub = f, #
  */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_sqrt_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_sqrt_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = npy_sqrt@typesub@(in1);
-        }
-    }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_absolute_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_absolute_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ tmp = in1 > 0 ? in1 : -in1;
-            /* add 0 to clear -0.0 */
-            *((@type@ *)op1) = tmp + 0;
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_square_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_square_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = in1*in1;
-        }
-    }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_reciprocal_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_reciprocal_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = 1.0f/in1;
-        }
-    }
-}
 
 /**begin repeat2
  *  #func = rint, ceil, floor, trunc#
@@ -2048,33 +1981,6 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
-@TYPE@_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    char * margs[] = {args[0], args[0], args[1]};
-    npy_intp msteps[] = {steps[0], steps[0], steps[1]};
-    if (!run_binary_simd_multiply_@TYPE@(margs, dimensions, msteps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((@type@ *)op1) = in1*in1;
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    @type@ one = 1.@c@;
-    char * margs[] = {(char*)&one, args[0], args[1]};
-    npy_intp msteps[] = {0, steps[0], steps[1]};
-    if (!run_binary_simd_divide_@TYPE@(margs, dimensions, msteps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((@type@ *)op1) = 1/in1;
-        }
-    }
-}
-
-NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -2089,20 +1995,6 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op1) = in1;
     }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_unary_simd_absolute_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ tmp = in1 > 0 ? in1 : -in1;
-            /* add 0 to clear -0.0 */
-            *((@type@ *)op1) = tmp + 0;
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -2213,6 +2105,42 @@ NPY_NO_EXPORT void
 #define @TYPE@_true_divide @TYPE@_divide
 
 /**end repeat**/
+
+/*
+ *****************************************************************************
+ **                          LONGDOUBLE LOOPS                               **
+ *****************************************************************************
+ */
+
+NPY_NO_EXPORT void
+LONGDOUBLE_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble*)ip1;
+        *((npy_longdouble *)op1) = 1/in1;
+    }
+}
+
+NPY_NO_EXPORT void
+LONGDOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        const npy_longdouble tmp = in1 > 0 ? in1 : -in1;
+        /* add 0 to clear -0.0 */
+        *((npy_longdouble *)op1) = tmp + 0;
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+
+NPY_NO_EXPORT void
+LONGDOUBLE_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        *((npy_longdouble *)op1) = in1*in1;
+    }
+}
 
 /*
  *****************************************************************************

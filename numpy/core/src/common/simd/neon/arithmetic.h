@@ -63,14 +63,26 @@
 /***************************
  * Division
  ***************************/
-#ifdef __aarch64__
+#if NPY_SIMD_F64
     #define npyv_div_f32 vdivq_f32
 #else
-    NPY_FINLINE float32x4_t npyv_div_f32(float32x4_t a, float32x4_t b)
+    NPY_FINLINE npyv_f32 npyv_div_f32(npyv_f32 a, npyv_f32 b)
     {
-        float32x4_t recip = vrecpeq_f32(b);
-        recip = vmulq_f32(vrecpsq_f32(b, recip), recip);
-        return vmulq_f32(a, recip);
+        // Based on ARM doc, see https://developer.arm.com/documentation/dui0204/j/CIHDIACI
+        // estimate to 1/b
+        npyv_f32 recipe = vrecpeq_f32(b);
+        /**
+         * Newton-Raphson iteration:
+         *  x[n+1] = x[n] * (2-d * x[n])
+         * converges to (1/d) if x0 is the result of VRECPE applied to d.
+         *
+         *  NOTE: at least 3 iterations is needed to improve precision
+         */
+        recipe = vmulq_f32(vrecpsq_f32(b, recipe), recipe);
+        recipe = vmulq_f32(vrecpsq_f32(b, recipe), recipe);
+        recipe = vmulq_f32(vrecpsq_f32(b, recipe), recipe);
+        // a/b = a*recip(b)
+        return vmulq_f32(a, recipe);
     }
 #endif
 #define npyv_div_f64 vdivq_f64

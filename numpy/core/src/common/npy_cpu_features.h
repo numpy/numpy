@@ -1,8 +1,8 @@
 #ifndef _NPY_CPU_FEATURES_H_
 #define _NPY_CPU_FEATURES_H_
 
-#include "numpy/numpyconfig.h" // for NPY_VISIBILITY_HIDDEN
 #include <Python.h> // for PyObject
+#include "numpy/numpyconfig.h" // for NPY_VISIBILITY_HIDDEN
 
 #ifdef __cplusplus
 extern "C" {
