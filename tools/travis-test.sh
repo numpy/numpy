@@ -102,7 +102,7 @@ run_test()
   fi
 
   if [ -n "$USE_GDB" ]; then
-    COMMAND="gdb --return-child-result --batch --eval-command=run --args $PYTHON"
+    COMMAND="gdb --return-child-result --batch --eval-command=run --eval-command=bt --args $PYTHON"
   else
     COMMAND=$PYTHON
   fi
