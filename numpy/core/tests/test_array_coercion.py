@@ -9,6 +9,8 @@ from pytest import param
 
 from itertools import product
 
+import sys
+
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.core._multiarray_umath import _discover_array_parameters
@@ -677,6 +679,8 @@ class TestArrayLikes:
 
     @pytest.mark.skipif(
             np.dtype(np.intp).itemsize < 8, reason="Needs 64bit platform")
+    @pytest.mark.skipif(
+            sys.platform == 'OpenVMS', reason="Crashes on OpenVMS")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")

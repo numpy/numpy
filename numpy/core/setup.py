@@ -705,7 +705,9 @@ def configuration(parent_package='',top_path=None):
                 'MIXFUNCVOID,'  \
                 'TOOFEWACTUALS,'\
                 'PARENLITERAL,' \
-                'CMPPTRFUNVOID,' \
+                'CMPPTRFUNVOID,'\
+                'MACROREDEF,'   \
+                'INTCONSTTRUNC,'\
                 'VOIDRETURN1)',
             '/STAND=C99',
             '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',

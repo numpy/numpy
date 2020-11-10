@@ -58,6 +58,8 @@ def configuration(parent_package='', top_path=None):
             # '/LIST',
             # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
+                'MACROREDEF,'   \
+                'INTCONSTTRUNC,'\
                 'VOIDRETURN1)'  \
             '/STAND=C99',
             '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
@@ -86,8 +88,10 @@ def configuration(parent_package='', top_path=None):
             # '/DEBUG/NOOPTIMIZE',
             # '/LIST',
             # '/POINTER_SIZE=32',
-            '/WARN=DISABLE=(',\
+            '/WARN=DISABLE=('\
             # 'CXXPRAGMANA,'\
+            'MACROREDEF,'   \
+            'INTCONSTTRUNC,'\
             'VOIDRETURN1'\
             ')']
     config.add_installed_library('npyrandom',

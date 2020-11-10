@@ -332,6 +332,10 @@ class config(old_config):
         body.append("#ifdef _MSC_VER")
         body.append("#pragma function(%s)" % func)
         body.append("#endif")
+        # Handle OpenVMS intrinsics: disable warning.
+        body.append("#ifdef __VMS")
+        body.append("#pragma message disable INTRINSICDECL")
+        body.append("#endif")
         body.append("int main (void) {")
         if call:
             if call_args is None:
@@ -375,10 +379,10 @@ class config(old_config):
         """
         self._check_compiler()
         body = []
-        if sys.platform == 'OpenVMS':
-            body.append('#ifdef __VMS')
-            body.append('#pragma message disable INTRINSICDECL')
-            body.append('#endif')
+        # Handle OpenVMS intrinsics.
+        body.append("#ifdef __VMS")
+        body.append("#pragma message disable INTRINSICDECL")
+        body.append("#endif")
         if decl:
             for f, v in decl.items():
                 if v:

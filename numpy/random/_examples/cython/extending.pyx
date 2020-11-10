@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #cython: language_level=3
 
-from libc.stdint cimport uint32_t
+from stdint_fake cimport uint32_t
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 
 import numpy as np

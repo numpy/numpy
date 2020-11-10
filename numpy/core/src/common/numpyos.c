@@ -13,6 +13,11 @@
 
 #include "npy_pycompat.h"
 
+#ifdef __VMS
+__int64 strtoll(const char *__nptr, char **__endptr, int __base);
+unsigned __int64 strtoull(const char *__nptr, char **__endptr, int __base);
+#endif
+
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
 #ifdef HAVE_XLOCALE_H
