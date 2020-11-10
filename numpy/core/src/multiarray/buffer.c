@@ -474,18 +474,18 @@ _buffer_info_new(PyObject *obj, int flags)
             PyErr_NoMemory();
             goto fail;
         }
+        info->ndim = 0;
+        info->shape = NULL;
+        info->strides = NULL;
+
         descr = PyArray_DescrFromScalar(obj);
         if (descr == NULL) {
             goto fail;
         }
-        info->ndim = 0;
-        info->shape = NULL;
-        info->strides = NULL;
     }
     else {
         assert(PyArray_Check(obj));
         PyArrayObject * arr = (PyArrayObject *)obj;
-        descr = PyArray_DESCR(arr);
 
         info = PyObject_Malloc(sizeof(_buffer_info_t) +
                                sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2);
@@ -544,6 +544,7 @@ _buffer_info_new(PyObject *obj, int flags)
                 }
             }
         }
+        descr = PyArray_DESCR(arr);
         Py_INCREF(descr);
     }
 
@@ -560,6 +561,7 @@ _buffer_info_new(PyObject *obj, int flags)
         info->format = fmt.s;
     }
     else {
+        Py_DECREF(descr);
         info->format = NULL;
     }
     return info;
