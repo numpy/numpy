@@ -15,6 +15,7 @@ runs:
       echo USE_ASV $USE_ASV
       echo PATH $PATH
       echo python `which python`
+      echo USE_GDB $USE_GDB
       python -c "import sys; print(sys.version)"
 
   - name: BeforeInstall
