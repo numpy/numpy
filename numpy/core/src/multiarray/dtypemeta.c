@@ -263,8 +263,17 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
      * are equivalent.
      */
     if (!PyArray_CanCastTypeTo(descr1, descr2, NPY_EQUIV_CASTING)) {
-        PyErr_SetString(PyExc_TypeError,
-                "invalid type promotion with structured or void datatype(s).");
+        if (descr1->subarray == NULL && descr1->names == NULL &&
+                descr2->subarray == NULL && descr2->names == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Invalid type promotion with void datatypes of different "
+                    "lengths. Use the `np.bytes_` datatype instead to pad the "
+                    "shorter value with trailing zero bytes.");
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                    "invalid type promotion with structured datatype(s).");
+        }
         return NULL;
     }
     Py_INCREF(descr1);

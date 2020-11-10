@@ -845,7 +845,37 @@ class TestCreation:
 
     def test_void(self):
         arr = np.array([], dtype='V')
-        assert_equal(arr.dtype.kind, 'V')
+        assert arr.dtype == 'V8'  # current default
+        # Same length scalars (those that go to the same void) work:
+        arr = np.array([b"1234", b"1234"], dtype="V")
+        assert arr.dtype == "V4"
+
+        # Promoting different lengths will fail (pre 1.20 this worked)
+        # by going via S5 and casting to V5.
+        with pytest.raises(TypeError):
+            np.array([b"1234", b"12345"], dtype="V")
+        with pytest.raises(TypeError):
+            np.array([b"12345", b"1234"], dtype="V")
+
+        # Check the same for the casting path:
+        arr = np.array([b"1234", b"1234"], dtype="O").astype("V")
+        assert arr.dtype == "V4"
+        with pytest.raises(TypeError):
+            np.array([b"1234", b"12345"], dtype="O").astype("V")
+
+    @pytest.mark.parametrize("idx",
+            [pytest.param(Ellipsis, id="arr"), pytest.param((), id="scalar")])
+    def test_structured_void_promotion(self, idx):
+        arr = np.array(
+            [np.array(1, dtype="i,i")[idx], np.array(2, dtype='i,i')[idx]],
+            dtype="V")
+        assert_array_equal(arr, np.array([(1, 1), (2, 2)], dtype="i,i"))
+        # The following fails to promote the two dtypes, resulting in an error
+        with pytest.raises(TypeError):
+            np.array(
+                [np.array(1, dtype="i,i")[idx], np.array(2, dtype='i,i,i')[idx]],
+                dtype="V")
+
 
     def test_too_big_error(self):
         # 45341 is the smallest integer greater than sqrt(2**31 - 1).
