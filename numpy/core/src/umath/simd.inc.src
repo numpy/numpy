@@ -3497,7 +3497,7 @@ AVX512F_absolute_@TYPE@(@type@ * op,
         ip += 2*@num_lanes@*stride_ip1;
         num_remaining_elements -= 2*@num_lanes@;
     }
-    npy_clear_floatstatus_barrier((char*)op);
+    npy_clear_floatstatus_barrier((char*)&num_remaining_elements);
 }
 
 #endif
