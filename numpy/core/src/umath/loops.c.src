@@ -851,12 +851,13 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    static const struct libdivide_@div@_t EmptyStruct;
     BINARY_LOOP_BASE
 
     if(!is2) {
         const @type@ in2 = *(@type@ *)ip2;
-        struct libdivide_@div@_t fast_d = in2 ? libdivide_@div@_gen(in2) : EmptyStruct;
+
+        /* Creating a divisor of 0 is treated as an error by libdivide */
+        struct libdivide_@div@_t fast_d = in2 ? libdivide_@div@_gen(in2) : (struct libdivide_@div@_t){0};
         BINARY_LOOP_FIXED {
             const @type@ in1 = *(@type@ *)ip1;
             /*
