@@ -65,6 +65,11 @@ requires = [
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "performance"
+        name = "Performance improvements and changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "change"
         name = "Changes"
         showcontent = true
