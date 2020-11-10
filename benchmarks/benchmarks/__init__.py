@@ -47,7 +47,7 @@ def dirty_lock(lock_name, lock_on_count=1):
         pass
     return False
 
+
 # FIXME: there's no official way to provide extra information to the test log
 if not dirty_lock("print_cpu_features.lock"):
     show_cpu_features()
-
