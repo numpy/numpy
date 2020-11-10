@@ -11,20 +11,8 @@ env:
   PYTHON_VERSION: 3.7
 
 jobs:
-  smoke_test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
- 
+
   basic:
-    needs: smoke_test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,7 +28,6 @@ jobs:
     - uses: ./.github/actions
 
   debug:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       USE_DEBUG: 1
@@ -55,7 +42,6 @@ jobs:
     - uses: ./.github/actions
 
   blas64:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       USE_GDB: 1
@@ -71,7 +57,6 @@ jobs:
     - uses: ./.github/actions
 
   full:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       USE_WHEEL: 1
@@ -89,7 +74,6 @@ jobs:
     - uses: ./.github/actions
 
   benchmark:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       PYTHONOPTIMIZE: 2
@@ -110,7 +94,6 @@ jobs:
     - uses: ./.github/actions
 
   no_relaxed_strides:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       USE_GDB: 1
@@ -128,7 +111,6 @@ jobs:
     - uses: ./.github/actions
 
   use_wheel:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       USE_GDB: 1
@@ -145,7 +127,6 @@ jobs:
     - uses: ./.github/actions
 
   no_array_func:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
@@ -160,7 +141,6 @@ jobs:
     - uses: ./.github/actions
 
   no_openblas:
-    needs: smoke_test
     runs-on: ubuntu-latest
     env:
       BLAS: None
