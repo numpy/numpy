@@ -832,7 +832,6 @@ NPY_NO_EXPORT void
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  * #c    = ,,,l,ll#
- * #div  = s32, s32, s32, s64, s64#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -847,6 +846,19 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
+/* Using nested loops, few more fields to be added in the future */
+/**begin repeat1
+ * #kind = t, gen, do#
+ */
+/* Libdivde only supports 32 and 64 bit types
+ * We try to pick the best possible one */
+#if NPY_BITSOF_@TYPE@ <= 32
+#define libdivide_@type@_@kind@ libdivide_s32_@kind@
+#else
+#define libdivide_@type@_@kind@ libdivide_s64_@kind@
+#endif
+/**end repeat1**/
+
 #ifndef USE_LEGACY_DIVISION
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -857,7 +869,7 @@ NPY_NO_EXPORT void
         const @type@ in2 = *(@type@ *)ip2;
 
         /* Creating a divisor of 0 is treated as an error by libdivide */
-        struct libdivide_@div@_t fast_d = in2 ? libdivide_@div@_gen(in2) : (struct libdivide_@div@_t){0};
+        struct libdivide_@type@_t fast_d = in2 ? libdivide_@type@_gen(in2) : (struct libdivide_@type@_t){0};
         BINARY_LOOP_FIXED {
             const @type@ in1 = *(@type@ *)ip1;
             /*
@@ -872,10 +884,10 @@ NPY_NO_EXPORT void
                 *((@type@ *)op1) = 0;
             }
             else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((@type@ *)op1) = libdivide_@div@_do(in1, &fast_d) - 1;
+                *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d) - 1;
             }
             else {
-                *((@type@ *)op1) = libdivide_@div@_do(in1, &fast_d);
+                *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d);
             }
         }
     }
