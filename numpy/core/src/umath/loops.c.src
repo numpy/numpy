@@ -846,12 +846,11 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
-/* Using nested loops, few more fields to be added in the future */
+/* Libdivide only supports 32 and 64 bit types
+ * We try to pick the best possible one */
 /**begin repeat1
  * #kind = t, gen, do#
  */
-/* Libdivde only supports 32 and 64 bit types
- * We try to pick the best possible one */
 #if NPY_BITSOF_@TYPE@ <= 32
 #define libdivide_@type@_@kind@ libdivide_s32_@kind@
 #else
