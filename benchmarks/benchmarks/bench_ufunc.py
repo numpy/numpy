@@ -134,6 +134,17 @@ class CustomScalar(Benchmark):
         (self.d < 1)
 
 
+class CustomScalarInt(Benchmark):
+    params = [10**size for size in range(1, 8)]
+    param_names = ['size']
+
+    def setup(self, size):
+        self.x = np.arange(size)
+
+    def time_floor_divide(self, size):
+        self.x//8
+
+
 class Scalar(Benchmark):
     def setup(self):
         self.x = np.asarray(1.0)
