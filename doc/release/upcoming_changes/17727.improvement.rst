@@ -1,0 +1,8 @@
+Improved performance in integer division of NumPy arrays
+--------------------------------------------------------
+Integer division of NumPy arrays now uses libdivide.
+With builtin support for SSE2, AVX2 and AVX512 vector 
+division from libdivide and other minor improvements, 
+there is a large speedup.
+The ``//`` operator and ``np.floor_divide`` makes use
+of the new changes.
