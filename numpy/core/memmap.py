@@ -37,7 +37,10 @@ class memmap(ndarray):
     This class may at some point be turned into a factory function
     which returns a view into an mmap buffer.
 
-    Delete the memmap instance to close the memmap file.
+    Flush the memmap instance to write the changes to the file. Currently there
+    is no API to close the underlying ``mmap``. It is tricky to ensure the 
+    resource is actually closed, since it may be shared between different
+    memmap instances.
 
 
     Parameters
@@ -97,7 +100,7 @@ class memmap(ndarray):
     flush
         Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
-        changes to disk before removing the object.
+        changes to disk.
 
 
     See also
@@ -148,9 +151,9 @@ class memmap(ndarray):
     >>> fp.filename == path.abspath(filename)
     True
 
-    Deletion flushes memory changes to disk before removing the object:
+    Flushes memory changes to disk in order to read them back
 
-    >>> del fp
+    >>> fp.flush()
 
     Load the memmap and verify data was stored:
 
