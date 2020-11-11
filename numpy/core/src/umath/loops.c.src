@@ -883,11 +883,12 @@ NPY_NO_EXPORT void
                 npy_set_floatstatus_divbyzero();
                 *((@type@ *)op1) = 0;
             }
-            else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d) - 1;
-            }
             else {
                 *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d);
+
+                if((*((@type@ *)op1) <= 0) && (*((@type@ *)op1) * in2 != in1)) {
+                    *((@type@ *)op1) = *((@type@ *)op1) - 1;
+                }
             }
         }
     }
