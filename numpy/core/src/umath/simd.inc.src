@@ -2530,6 +2530,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  * #vtype = __m256, __m512#
  * #vsize = 256, 512#
  * #BYTES = 32, 64#
+ * #NUM_LANES = 8, 16#
  * #mask = __m256, __mmask16#
  * #vsub = , _mask#
  * #or_masks =_mm256_or_ps, _mm512_kor#
@@ -2573,7 +2574,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                    NPY_TRIG_OP my_trig_op)
 {
     const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @NUM_LANES@;
     npy_float large_number = 71476.0625f;
     if (my_trig_op == npy_compute_sin) {
         large_number = 117435.992f;
@@ -2622,12 +2623,12 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                                                          num_lanes);
         }
 
-        @vtype@ x;
+        @vtype@ x_in;
         if (stride == 1) {
-            x = @isa@_masked_load_ps(load_mask, ip);
+            x_in = @isa@_masked_load_ps(load_mask, ip);
         }
         else {
-            x = @isa@_masked_gather_ps(zero_f, ip, vindex, load_mask);
+            x_in = @isa@_masked_gather_ps(zero_f, ip, vindex, load_mask);
         }
 
         /*
@@ -2636,10 +2637,10 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
          * these numbers
          */
 
-        glibc_mask = @isa@_in_range_mask(x, large_number,-large_number);
+        glibc_mask = @isa@_in_range_mask(x_in, large_number,-large_number);
         glibc_mask = @and_masks@(load_mask, glibc_mask);
-        nan_mask = _mm@vsize@_cmp_ps@vsub@(x, x, _CMP_NEQ_UQ);
-        x = @isa@_set_masked_lanes_ps(x, zero_f, @or_masks@(nan_mask, glibc_mask));
+        nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, x_in, _CMP_NEQ_UQ);
+        @vtype@ x = @isa@_set_masked_lanes_ps(x_in, zero_f, @or_masks@(nan_mask, glibc_mask));
         npy_int iglibc_mask = @mask_to_int@(glibc_mask);
 
         if (iglibc_mask != @full_mask@) {
@@ -2678,20 +2679,25 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         }
 
         /* process elements using glibc for large elements */
-        if (my_trig_op == npy_compute_cos) {
-            for (int ii = 0, jj = 0; iglibc_mask != 0; ii++, jj += stride) {
-                if (iglibc_mask & 0x01) {
-                    op[ii] = npy_cosf(ip[jj]);
+        if (NPY_UNLIKELY(iglibc_mask != 0)) {
+            float NPY_DECL_ALIGNED(@BYTES@) ip_fback[@NUM_LANES@];
+            _mm@vsize@_store_ps(ip_fback, x_in);
+
+            if (my_trig_op == npy_compute_cos) {
+                for (int ii = 0; iglibc_mask != 0; ++ii) {
+                    if (iglibc_mask & 0x01) {
+                        op[ii] = npy_cosf(ip_fback[ii]);
+                    }
+                    iglibc_mask  = iglibc_mask >> 1;
                 }
-                iglibc_mask  = iglibc_mask >> 1;
             }
-        }
-        else {
-            for (int ii = 0, jj = 0; iglibc_mask != 0; ii++, jj += stride) {
-                if (iglibc_mask & 0x01) {
-                    op[ii] = npy_sinf(ip[jj]);
+            else {
+                for (int ii = 0; iglibc_mask != 0; ++ii) {
+                    if (iglibc_mask & 0x01) {
+                        op[ii] = npy_sinf(ip_fback[ii]);
+                    }
+                    iglibc_mask  = iglibc_mask >> 1;
                 }
-                iglibc_mask  = iglibc_mask >> 1;
             }
         }
         ip += num_lanes*stride;
@@ -3203,7 +3209,7 @@ AVX512F_log_DOUBLE(npy_double * op,
     __mmask8 inf_mask, nan_mask, zero_mask, negx_mask, denormal_mask,
              glibc_mask;
 
-    __m512d x;
+    __m512d x_in;
     while (num_remaining_elements > 0) {
         if (num_remaining_elements < num_lanes) {
             load_mask = avx512_get_partial_load_mask_pd(num_remaining_elements,
@@ -3211,27 +3217,27 @@ AVX512F_log_DOUBLE(npy_double * op,
         }
 
         if (1 == stride) {
-            x = avx512_masked_load_pd(load_mask, ip);
+            x_in = avx512_masked_load_pd(load_mask, ip);
         }
         else {
-            x = avx512_masked_gather_pd(zeros_d, ip, vindex, load_mask);
+            x_in = avx512_masked_gather_pd(zeros_d, ip, vindex, load_mask);
         }
 
         /* call glibc when x on [1.0 - 0x1p-4, 1.0 + 0x1.09p-4] */
-        __mmask8 m1 = _mm512_cmp_pd_mask(x, mTo_glibc_max, _CMP_LT_OQ);
-        __mmask8 m2 = _mm512_cmp_pd_mask(x, mTo_glibc_min, _CMP_GT_OQ);
+        __mmask8 m1 = _mm512_cmp_pd_mask(x_in, mTo_glibc_max, _CMP_LT_OQ);
+        __mmask8 m2 = _mm512_cmp_pd_mask(x_in, mTo_glibc_min, _CMP_GT_OQ);
         glibc_mask =  m1 & m2;
 
         if (glibc_mask != 0xFF) {
-            zero_mask = _mm512_cmp_pd_mask(x, zeros_d, _CMP_EQ_OQ);
-            inf_mask = _mm512_cmp_pd_mask(x, mInf, _CMP_EQ_OQ);
-            negx_mask = _mm512_cmp_pd_mask(x, zeros_d, _CMP_LT_OQ);
-            nan_mask = _mm512_cmp_pd_mask(x, x, _CMP_NEQ_UQ);
+            zero_mask = _mm512_cmp_pd_mask(x_in, zeros_d, _CMP_EQ_OQ);
+            inf_mask = _mm512_cmp_pd_mask(x_in, mInf, _CMP_EQ_OQ);
+            negx_mask = _mm512_cmp_pd_mask(x_in, zeros_d, _CMP_LT_OQ);
+            nan_mask = _mm512_cmp_pd_mask(x_in, x_in, _CMP_NEQ_UQ);
 
             divide_by_zero_mask = divide_by_zero_mask | (zero_mask & load_mask);
             invalid_mask = invalid_mask | negx_mask;
 
-            x = avx512_set_masked_lanes_pd(x, zeros_d, negx_mask);
+            __m512d x = avx512_set_masked_lanes_pd(x_in, zeros_d, negx_mask);
             __m512i ix = (__m512i)x;
 
             /* Normalize x when it is denormal */
@@ -3303,13 +3309,17 @@ AVX512F_log_DOUBLE(npy_double * op,
         }
 
         /* call glibc's log func when x around 1.0f */
-        for (int ii = 0, jj = 0; glibc_mask != 0; ii++, jj += stride) {
-            if (glibc_mask & 0x01) {
-                op[ii] = npy_log(ip[jj]);
-            }
-            glibc_mask  = glibc_mask >> 1;
-        }
+        if (NPY_UNLIKELY(glibc_mask != 0)) {
+            double NPY_DECL_ALIGNED(64) ip_fback[8];
+            _mm512_store_pd(ip_fback, x_in);
 
+            for (int ii = 0; glibc_mask != 0; ++ii) {
+                if (glibc_mask & 0x01) {
+                    op[ii] = npy_log(ip_fback[ii]);
+                }
+                glibc_mask  = glibc_mask >> 1;
+            }
+        }
         ip += num_lanes * stride;
         op += num_lanes;
         num_remaining_elements -= num_lanes;
