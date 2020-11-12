@@ -135,8 +135,9 @@ simd_sequence_fill_iterable(PyObject *obj, const void *ptr, simd_data_type dtype
         if (item == NULL) {
             return -1;
         }
-        if (PySequence_SetItem(obj, i, item) < 0) {
-            Py_DECREF(item);
+        int res = PySequence_SetItem(obj, i, item);
+        Py_DECREF(item);
+        if (res < 0) {
             return -1;
         }
     }

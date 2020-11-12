@@ -5494,6 +5494,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         /* DEPRECATED 2020-05-13, NumPy 1.20 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 matrix_deprecation_msg, ufunc->name, "second") < 0) {
+            Py_DECREF(ap1);
             return NULL;
         }
         ap2 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
