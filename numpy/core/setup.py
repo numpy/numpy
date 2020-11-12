@@ -386,9 +386,6 @@ def check_mathlib(config_cmd):
                                "MATHLIB env variable")
     return mathlibs
 
-def check_use_legacy_division():
-    return os.environ.get('NPY_USE_LEGACY_DIVISION') is not None
-
 def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
     string)."""
@@ -444,9 +441,6 @@ def configuration(parent_package='',top_path=None):
             # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB', ','.join(mathlibs)))
-
-            # Check if legacy division needs to be used
-            check_use_legacy_division() and moredefs.append('USE_LEGACY_DIVISION')
 
             check_math_capabilities(config_cmd, ext, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])

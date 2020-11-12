@@ -857,7 +857,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 #endif
 /**end repeat1**/
 
-#ifndef USE_LEGACY_DIVISION
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -884,6 +883,7 @@ NPY_NO_EXPORT void
             else {
                 *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d);
 
+                /* Negative quotients needs to be rounded down */
                 if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
                     *((@type@ *)op1) = *((@type@ *)op1) - 1;
                 }
@@ -905,42 +905,17 @@ NPY_NO_EXPORT void
                 npy_set_floatstatus_divbyzero();
                 *((@type@ *)op1) = 0;
             }
-            else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((@type@ *)op1) = in1/in2 - 1;
-            }
             else {
                 *((@type@ *)op1) = in1/in2;
+
+                /* Negative quotients needs to be rounded down */
+                if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
+                    *((@type@ *)op1) = *((@type@ *)op1) - 1;
+                }
             }
         }
     }
 }
-#else
-NPY_NO_EXPORT void
-@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        /*
-         * FIXME: On x86 at least, dividing the smallest representable integer
-         * by -1 causes a SIFGPE (division overflow). We treat this case here
-         * (to avoid a SIGFPE crash at python level), but a good solution would
-         * be to treat integer division problems separately from FPU exceptions
-         * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-         */
-        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-        }
-        else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-            *((@type@ *)op1) = in1/in2 - 1;
-        }
-        else {
-            *((@type@ *)op1) = in1/in2;
-        }
-    }
-}
-#endif
 
 NPY_NO_EXPORT void
 @TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
