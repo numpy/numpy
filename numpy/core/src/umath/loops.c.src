@@ -21,7 +21,6 @@
 #include <string.h> /* for memchr */
 
 /* Use Libdivide for faster division */
-/* TODO Explore placing specialised versions in `numpy/core/src/common/simd` */
 #ifndef USE_LEGACY_DIVISION
 #include "numpy/libdivide/libdivide.h"
 #endif
