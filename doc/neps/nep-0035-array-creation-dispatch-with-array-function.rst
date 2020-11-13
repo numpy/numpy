@@ -351,7 +351,7 @@ backend type:
     type(np.asarray([1, 2, 3], like=da.array(cp.array(()))).compute())
 
 Note how above the array is backed by ``chunktype=cupy.ndarray``, and the
-resulting array after computing it is also a ``cupy.ndarray``. If Dask does
+resulting array after computing it is also a ``cupy.ndarray``. If Dask did
 not use the ``like=`` argument via the ``self`` attribute from
 ``__array_function__``, the example above would be backed by ``numpy.ndarray``
 instead:
