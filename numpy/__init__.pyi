@@ -2,6 +2,8 @@ import builtins
 import sys
 import datetime as dt
 from abc import abstractmethod
+from types import TracebackType
+from contextlib import ContextDecorator
 
 from numpy.core._internal import _ctypes
 from numpy.typing import (
@@ -155,6 +157,19 @@ from numpy.core._asarray import (
 from numpy.core._type_aliases import (
     sctypes as sctypes,
     sctypeDict as sctypeDict,
+)
+
+from numpy.core._ufunc_config import (
+    seterr as seterr,
+    geterr as geterr,
+    setbufsize as setbufsize,
+    getbufsize as getbufsize,
+    seterrcall as seterrcall,
+    geterrcall as geterrcall,
+    _SupportsWrite,
+    _ErrKind,
+    _ErrFunc,
+    _ErrDictOptional,
 )
 
 from numpy.core.numeric import (
@@ -329,7 +344,6 @@ dstack: Any
 ediff1d: Any
 einsum: Any
 einsum_path: Any
-errstate: Any
 expand_dims: Any
 extract: Any
 eye: Any
@@ -353,9 +367,6 @@ fromstring: Any
 genfromtxt: Any
 get_include: Any
 get_printoptions: Any
-getbufsize: Any
-geterr: Any
-geterrcall: Any
 geterrobj: Any
 gradient: Any
 half: Any
@@ -484,10 +495,7 @@ savez_compressed: Any
 select: Any
 set_printoptions: Any
 set_string_function: Any
-setbufsize: Any
 setdiff1d: Any
-seterr: Any
-seterrcall: Any
 seterrobj: Any
 setxor1d: Any
 shares_memory: Any
@@ -2206,4 +2214,29 @@ class TooHardError(RuntimeError): ...
 class AxisError(ValueError, IndexError):
     def __init__(
         self, axis: int, ndim: Optional[int] = ..., msg_prefix: Optional[str] = ...
+    ) -> None: ...
+
+_CallType = TypeVar("_CallType", bound=Union[_ErrFunc, _SupportsWrite])
+
+class errstate(Generic[_CallType], ContextDecorator):
+    call: _CallType
+    kwargs: _ErrDictOptional
+
+    # Expand `**kwargs` into explicit keyword-only arguments
+    def __init__(
+        self,
+        *,
+        call: _CallType = ...,
+        all: Optional[_ErrKind] = ...,
+        divide: Optional[_ErrKind] = ...,
+        over: Optional[_ErrKind] = ...,
+        under: Optional[_ErrKind] = ...,
+        invalid: Optional[_ErrKind] = ...,
+    ) -> None: ...
+    def __enter__(self) -> None: ...
+    def __exit__(
+        self,
+        __exc_type: Optional[Type[BaseException]],
+        __exc_value: Optional[BaseException],
+        __traceback: Optional[TracebackType],
     ) -> None: ...
