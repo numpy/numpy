@@ -495,7 +495,6 @@ if __name__ == "__main__":
                        help="specify a rand range for the generated arrays. "
                             "NOTE: multiple ranges will be interleaved")
     args = parser.parse_args()
-
     # 1- initialize
     bench = Benchmark(filter=args.filter, strides=args.strides, sizes=args.sizes,
                       nsamples=args.nsamples, iteration=args.iteration,
@@ -504,6 +503,8 @@ if __name__ == "__main__":
                       rand_range=args.rand_range)
 
     # 2- fetch the generated tests,
+    from numpy._pytesttester import _show_numpy_info
+    _show_numpy_info()
     Colored.ok("Discovering benchmarks")
     running_tests = bench.generate_tests()
     if len(running_tests) < 1:
