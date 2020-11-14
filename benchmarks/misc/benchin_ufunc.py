@@ -248,9 +248,11 @@ class Benchmark:
             ("warmup", 0),
             ("msleep", 0),
             ("unit_scale", 1000),
-            ("metric", "gmean")
+            ("metric", "gmean"),
+            ("rand_range", None)
         ):
             setattr(self, '_' + attr, kwargs.pop(attr, dval))
+
 
     def generate_tests(self):
         tests = dict()
@@ -287,16 +289,26 @@ class Benchmark:
         return tests
 
     @staticmethod
-    def timing_ufunc(queue, test_cases, ufunc_name, nsamples, iteration, warmup, msleep):
+    def timing_ufunc(queue, test_cases, ufunc_name, nsamples, iteration, warmup, msleep, rand_range):
         @functools.lru_cache(maxsize=1024)
         def rand(size, dtype, prevent_overlap=0):
-            #return np.ones(size, dtype=dtype)
             if dtype == '?':
                 return np.random.randint(0, 1, size=size, dtype=dtype)
-            elif dtype in 'bBhHiIlLqQ':
-                return np.random.randint(1, 127, size=size, dtype=dtype)
+            elif not rand_range:
+                if dtype in 'bBhHiIlLqQ':
+                    return np.random.randint(1, 127, size=size, dtype=dtype)
+                else:
+                    return np.array(np.random.rand(size), dtype=dtype)
             else:
-                return np.array(np.random.rand(size), dtype=dtype)
+                ltype = dtype.lower() if dtype in 'GDF' else dtype
+                lrange = len(rand_range)//2
+                rand = np.empty(size, dtype=ltype)
+
+                for i, r in enumerate(zip(rand_range[0::2], rand_range[1::2])):
+                    rmin, rmax = np.array(r, dtype=ltype)
+                    rand[i::lrange] = np.random.uniform(low=rmin, high=rmax, size=size//lrange).astype(ltype)
+
+                return rand + rand*1j if dtype in 'GDF' else rand
 
         timing = Timing(
             ufunc=getattr(np, ufunc_name), nsamples=nsamples,
@@ -312,7 +324,10 @@ class Benchmark:
                 ])
                 print('.', end='', flush=True)
             except KeyboardInterrupt:
-                return
+                break
+            except Exception as err:
+                Colored.notify(f"Escape test '{name}' -> {err}")
+                continue
             result[name] = timing.metrics()
         queue.put(result)
         print("done", flush=True)
@@ -324,7 +339,7 @@ class Benchmark:
             queue = multiprocessing.Queue()
             p = multiprocessing.Process(target=self.timing_ufunc, args=(
                 queue, test_cases, ufunc_name, self._nsamples,
-                self._iteration, self._warmup, self._msleep)
+                self._iteration, self._warmup, self._msleep, self._rand_range)
             )
             p.start()
             p.join()
@@ -388,20 +403,66 @@ class Benchmark:
                     cmp_metrics.append(cmp_metric)
                 append_to(case_name, [metric] + cmp_metrics, cmp_ratios)
 
+def arg_output(arg):
+    output_path = os.path.abspath(arg)
+    output_name = os.path.splitext(os.path.basename(arg))
+    output_type, output_name = output_name[1][1:], output_name[0]
+
+    if not output_type or not output_name:
+        raise argparse.ArgumentTypeError(f"Invalid output path -> '{arg}'")
+    if output_type not in Table.FORMATS:
+        raise argparse.ArgumentTypeError(
+            f"Unsupported output format {output_type}, expected a path ends with one of ({Table.FORMATS}) -> '{arg}'"
+        )
+    return dict(path=output_path, name=output_name, type=output_type)
+
+def arg_compare(arg):
+    path = os.path.abspath(arg)
+    test_name = os.path.splitext(os.path.basename(path))[0]
+    data = {}
+    try:
+        with open(path, "r") as fd:
+            data = json.load(fd)
+    except IOError as err:
+        raise argparse.ArgumentTypeError(f"Unable to load JSON file -> {str(err)}")
+    except json.JSONDecodeError as err:
+        raise argparse.ArgumentTypeError(f"Invalid JSON file -> {path}, {str(err)}")
+    return (test_name, data)
+
+def arg_only_changed(arg):
+    try:
+        a = float(arg)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Expected a floating point number")
+    if a and a < 0.0 or a > 1.0:
+        raise argparse.ArgumentTypeError("The value must falls between 0.0 and 1.0")
+    return a
+
+class arg_rand_range(argparse.Action):
+    def __call__(self, parser, args, values, option_string=None):
+        if len(values) not in (2, 4, 8):
+            print(parser.error)
+            parser.error(f"argument {option_string}: Invalid range")
+        setattr(args, self.dest, values)
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("-o", "--output", nargs="+", metavar="[PATH.{%s}]" % ', '.join(Table.FORMATS),
-                        default=[],
-                        help=("store the benchmark test results to the given file,"
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument("-o", "--output", nargs="+", type=arg_output,
+                        metavar=f"[PATH.({', '.join(Table.FORMATS)})]", default=[],
+                        help=("store the benchmark test results to the given file, "
                               "the extension determines the output format."))
     parser.add_argument("-f", "--filter", metavar="REGEX", default=".*",
                         help="regex to filter benchmark tests")
-    parser.add_argument("-c", "--compare", nargs="+", metavar="FILE", default=[],
+    parser.add_argument("-c", "--compare", nargs="+", type=arg_compare, metavar="FILE", default=[],
                         help="list of exported JSON files to compared with")
     parser.add_argument("-d", "--export", metavar="PATH", default=None,
                         help="store the result into JSON file, to be used later with --compare")
-    parser.add_argument("--only-changed", type=float, default=0,
-                        help="show only changed results depend of the given factor,"
+    parser.add_argument("--only-changed", type=arg_only_changed, default=0,
+                        help="show only changed results depend of the given factor and"
+                             "value must falls between 0.0 and 1.0. "
                              "NOTE: this option works with '--compare'")
 
     parser.add_argument("-n", "--nsamples", type=int, default=100,
@@ -430,46 +491,19 @@ if __name__ == "__main__":
     parser.add_argument("--msleep", type=float, default=0.1,
                        help="suspends execution of the calling thread before collecting each sample "
                             "for at least milliseconds")
+    parser.add_argument("--rand-range", type=float, nargs="+", default=None, action=arg_rand_range,
+                       help="specify a rand range for the generated arrays. "
+                            "NOTE: multiple ranges will be interleaved")
     args = parser.parse_args()
 
-    # 0- validate
-    output = []
-    for out in args.output:
-        output_path = os.path.abspath(out)
-        output_name = os.path.splitext(os.path.basename(out))
-        output_type, output_name = output_name[1][1:], output_name[0]
-        if not output_type or not output_name:
-            Colored.fatal("Invalid output path in --output '%s'" % out)
-        if output_type not in Table.FORMATS:
-            Colored.fatal("Unsupported output format '%s' in --output '%s'" % (
-                          output_type, out))
-        output.append(dict(path=output_path, name=output_name, type=output_type))
-
-    if args.only_changed and args.only_changed < 0.0 or args.only_changed > 1.0:
-        Colored.fatal("Expected a numeric value in '--only-changed' falls between 0.0 and 1.0")
-
-    # 1- Loading comparable data
-    cmp_tests = dict()
-    if len(args.compare) > 0:
-        print("Loading comparable JSON data")
-        for path in args.compare:
-            path = os.path.abspath(path)
-            test_name = os.path.splitext(os.path.basename(path))[0]
-            try:
-                with open(path, "r") as fd:
-                    cmp_tests[test_name] = data = json.load(fd)
-            except IOError as err:
-                Colored.fatal("Unable to load JSON file, %s" % str(err))
-            except json.JSONDecodeError as err:
-                Colored.fatal("Invalid JSON file %s, %s" % (path, str(err)))
-
-    # 2- initialize
+    # 1- initialize
     bench = Benchmark(filter=args.filter, strides=args.strides, sizes=args.sizes,
                       nsamples=args.nsamples, iteration=args.iteration,
                       warmup=args.warmup, msleep=args.msleep, metric=args.metric,
-                      unit_scale=units_choices[args.units])
+                      unit_scale=units_choices[args.units],
+                      rand_range=args.rand_range)
 
-    # 3- fetch the generated tests,
+    # 2- fetch the generated tests,
     Colored.ok("Discovering benchmarks")
     running_tests = bench.generate_tests()
     if len(running_tests) < 1:
@@ -495,16 +529,17 @@ if __name__ == "__main__":
                 sys.exit(1)
             desc = input(Colored.text(('y or n? '), Colored.RED)).strip().lower()
 
-    # 4- Set CPU affinity for running the benchmark
+    # 3- Set CPU affinity for running the benchmark
     if args.cpu_affinity:
         Timing.set_affinity(*args.cpu_affinity[:cpu_count])
 
-    # 5- unleash the tests
+    # 4- unleash the tests
     bench.run(running_tests)
 
-    # 6- print the results
-    all_tests = [running_tests] + list(cmp_tests.values())
-    all_names = ["current"] + list(cmp_tests.keys())
+    # 5- print the results
+    cmp_tests_name, cmp_tests_data = zip(*args.compare) if args.compare else ([], [])
+    all_tests = [running_tests] + list(cmp_tests_data)
+    all_names = ["current"] + list(cmp_tests_name)
 
     final_result = bench.generate_table(
         all_names, all_tests, only_changed=args.only_changed,
@@ -512,24 +547,23 @@ if __name__ == "__main__":
     )
     print(final_result)
 
-    # 7- store results into JSON file
+    # 6- store results into JSON file
     if args.export:
         export_path = os.path.abspath(args.export)
-        Colored.notify("Exporting benchmarking result into '%s'" % export_path)
+        Colored.notify(f"Exporting benchmarking result into '{export_path}'")
         try:
             with open(export_path, "w") as fd:
                 json.dump(running_tests, fd)
         except IOError as err:
-            Colored.fatal("Failed to export benchmarking result, %s" % str(err))
+            Colored.fatal(f"Failed to export benchmarking result, '{str(err)}'")
 
-    # 8- store the results into files
-    if output:
-        for out in output:
-            Colored.notify("Writing benchmarking result into '%s'" % out["path"])
-            all_names[0] = out["name"]
-            final_result = bench.generate_table(
-                all_names, all_tests, only_changed=args.only_changed, tformat=out["type"]
-            )
-            with open(out["path"], "w") as fd:
-                fd.write("metric: %s, units: %s\n" % (args.metric, args.units))
-                fd.write(final_result)
+    # 7- store the results into files
+    for out in args.output:
+        Colored.notify(f"Writing benchmarking result into {out['path']}")
+        all_names[0] = out["name"]
+        final_result = bench.generate_table(
+            all_names, all_tests, only_changed=args.only_changed, tformat=out["type"]
+        )
+        with open(out["path"], "w") as fd:
+            fd.write(f"metric: {args.metric}, units: {args.units}\n")
+            fd.write(final_result)
