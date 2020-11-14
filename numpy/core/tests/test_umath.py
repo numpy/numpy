@@ -657,6 +657,11 @@ class TestLog:
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.log(xf), yf)
 
+        # test aliasing(issue #17761)
+        x = np.array([2, 0.937500, 3, 0.947500, 1.054697])
+        xf = np.log(x)
+        assert_almost_equal(np.log(x, out=x), xf)
+
     def test_log_strides(self):
         np.random.seed(42)
         strides = np.array([-4,-3,-2,-1,1,2,3,4])
@@ -896,6 +901,10 @@ class TestAVXFloat32Transcendental:
         x_f64 = np.float64(x_f32)
         assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=2)
         assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=2)
+        # test aliasing(issue #17761)
+        tx_f32 = x_f32.copy()
+        assert_array_max_ulp(np.sin(x_f32, out=x_f32), np.float32(np.sin(x_f64)), maxulp=2)
+        assert_array_max_ulp(np.cos(tx_f32, out=tx_f32), np.float32(np.cos(x_f64)), maxulp=2)
 
     def test_strided_float32(self):
         np.random.seed(42)
