@@ -2679,24 +2679,22 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         }
 
         /* process elements using glibc for large elements */
-        if (NPY_UNLIKELY(iglibc_mask != 0)) {
+        if (iglibc_mask != 0) {
             float NPY_DECL_ALIGNED(@BYTES@) ip_fback[@NUM_LANES@];
             _mm@vsize@_store_ps(ip_fback, x_in);
 
             if (my_trig_op == npy_compute_cos) {
-                for (int ii = 0; iglibc_mask != 0; ++ii) {
+                for (int ii = 0; ii < num_lanes; ++ii, iglibc_mask >>= 1) {
                     if (iglibc_mask & 0x01) {
                         op[ii] = npy_cosf(ip_fback[ii]);
                     }
-                    iglibc_mask  = iglibc_mask >> 1;
                 }
             }
             else {
-                for (int ii = 0; iglibc_mask != 0; ++ii) {
+                for (int ii = 0; ii < num_lanes; ++ii, iglibc_mask >>= 1) {
                     if (iglibc_mask & 0x01) {
                         op[ii] = npy_sinf(ip_fback[ii]);
                     }
-                    iglibc_mask  = iglibc_mask >> 1;
                 }
             }
         }
@@ -3309,15 +3307,14 @@ AVX512F_log_DOUBLE(npy_double * op,
         }
 
         /* call glibc's log func when x around 1.0f */
-        if (NPY_UNLIKELY(glibc_mask != 0)) {
+        if (glibc_mask != 0) {
             double NPY_DECL_ALIGNED(64) ip_fback[8];
             _mm512_store_pd(ip_fback, x_in);
 
-            for (int ii = 0; glibc_mask != 0; ++ii) {
+            for (int ii = 0; ii < 8; ++ii, glibc_mask >>= 1) {
                 if (glibc_mask & 0x01) {
                     op[ii] = npy_log(ip_fback[ii]);
                 }
-                glibc_mask  = glibc_mask >> 1;
             }
         }
         ip += num_lanes * stride;
