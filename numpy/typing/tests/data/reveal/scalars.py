@@ -9,8 +9,17 @@ reveal_type(x.real.real)  # E: numpy.floating[numpy.typing._32Bit]
 reveal_type(x.real.imag)  # E: numpy.floating[numpy.typing._32Bit]
 
 reveal_type(x.itemsize)  # E: int
-reveal_type(x.shape)  # E: tuple[builtins.int]
-reveal_type(x.strides)  # E: tuple[builtins.int]
+reveal_type(x.shape)  # E: Tuple[]
+reveal_type(x.strides)  # E: Tuple[]
+
+reveal_type(x.ndim)  # E: Literal[0]
+reveal_type(x.size)  # E: Literal[1]
+
+reveal_type(x.squeeze())  # E: numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]
+reveal_type(x.byteswap())  # E: numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]
+reveal_type(x.transpose())  # E: numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]
+
+reveal_type(x.dtype)  # E: numpy.dtype[numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]]
 
 reveal_type(np.complex64().real)  # E: numpy.floating[numpy.typing._32Bit]
 reveal_type(np.complex128().imag)  # E: numpy.floating[numpy.typing._64Bit]
