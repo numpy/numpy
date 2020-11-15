@@ -1,0 +1,5 @@
+``compat.npy_load_module`` deprecated
+-------------------------------------
+
+The undocumented ``numpy.compat.npy_load_module`` is deprecated. Use
+``SourcFileLoader`` instead.

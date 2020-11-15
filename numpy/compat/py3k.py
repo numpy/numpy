@@ -111,6 +111,8 @@ def npy_load_module(name, fn, info=None):
     Load a module.
 
     .. versionadded:: 1.11.2
+    .. deprecated:: 1.20
+        Use SourceFileLoader(name, fn).load_module() instead.
 
     Parameters
     ----------
