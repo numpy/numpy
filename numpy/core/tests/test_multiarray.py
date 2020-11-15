@@ -4985,6 +4985,17 @@ class TestIO:
             s = f.read()
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
+    def test_tofile_cleanup(self):
+        x = np.zeros((10), dtype=object)
+        with open(self.filename, 'wb') as f:
+            assert_raises(IOError, lambda: x.tofile(f, sep=''))
+        # Dup-ed file handle should be closed or remove will fail on Windows OS
+        os.remove(self.filename)
+
+        # Also make sure that we close the Python handle
+        assert_raises(IOError, lambda: x.tofile(self.filename))
+        os.remove(self.filename)
+
     def test_locale(self):
         with CommaDecimalPointLocale():
             self.test_numbers()
