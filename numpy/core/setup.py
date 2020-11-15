@@ -395,7 +395,7 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration, under_join
+    from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
     from importlib.machinery import SourceFileLoader
@@ -417,8 +417,9 @@ def configuration(parent_package='',top_path=None):
     check_api_version(C_API_VERSION, codegen_dir)
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
-    n = under_join(config.name, 'generate_umath')
-    generate_umath = SourceFileLoader(n, generate_umath_py).load_module()
+    generate_umath = SourceFileLoader('_'.join(config.name, 'generate_umath'),
+                                      generate_umath_py,
+                                     ).load_module()
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 

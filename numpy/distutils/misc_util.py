@@ -709,10 +709,6 @@ def dot_join(*args):
     return '.'.join([a for a in args if a])
 
 
-def under_join(*args):
-    return '_'.join([a for a in args if a])
-
-
 def get_frame(level=0):
     """Return frame object from call stack with given level.
     """
@@ -910,6 +906,10 @@ class Configuration:
         sys.path.insert(0, os.path.dirname(setup_py))
         try:
             from importlib.machinery import SourceFileLoader
+
+            def under_join(*args):
+                return '_'.join([a for a in args if a])
+
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = under_join(self.name, subpackage_name, setup_name)
             setup_module = SourceFileLoader(n, setup_py).load_module()
@@ -1955,10 +1955,11 @@ class Configuration:
             fn = njoin(self.local_path, f)
             if os.path.isfile(fn):
                 name = os.path.splitext(os.path.basename(fn))[0]
-                n = under_join(self.name, name)
                 try:
                     from importlib.machinery import SourceFileLoader
-                    version_module = SourceFileLoader(n, fn,).load_module()
+                    version_module = SourceFileLoader('_'.join(self.name, name),
+                                                      fn,
+                                                     ).load_module()
                 except ImportError as e:
                     self.warn(str(e))
                     version_module = None
