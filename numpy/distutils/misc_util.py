@@ -32,14 +32,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-# copied from numpy.compat to avoid importing numpy directly
-def npy_load_module(name, fn, info=None):
-    # Explicitly lazy import this to avoid paying the cost
-    # of importing importlib at startup
-    from importlib.machinery import SourceFileLoader
-    return SourceFileLoader(name, fn).load_module()
-
-
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -712,8 +704,14 @@ def get_data_files(data):
             raise TypeError(repr(s))
     return filenames
 
+
 def dot_join(*args):
     return '.'.join([a for a in args if a])
+
+
+def under_join(*args):
+    return '_'.join([a for a in args if a])
+
 
 def get_frame(level=0):
     """Return frame object from call stack with given level.
@@ -911,11 +909,10 @@ class Configuration:
         # In case setup_py imports local modules:
         sys.path.insert(0, os.path.dirname(setup_py))
         try:
+            from importlib.machinery import SourceFileLoader
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
-            n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = npy_load_module('_'.join(n.split('.')),
-                                           setup_py,
-                                           ('.py', 'U', 1))
+            n = under_join(self.name, subpackage_name, setup_name)
+            setup_module = SourceFileLoader(n, setup_py).load_module()
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1957,12 +1954,11 @@ class Configuration:
         for f in files:
             fn = njoin(self.local_path, f)
             if os.path.isfile(fn):
-                info = ('.py', 'U', 1)
                 name = os.path.splitext(os.path.basename(fn))[0]
-                n = dot_join(self.name, name)
+                n = under_join(self.name, name)
                 try:
-                    version_module = npy_load_module('_'.join(n.split('.')),
-                                                     fn, info)
+                    from importlib.machinery import SourceFileLoader
+                    version_module = SourceFileLoader(n, fn,).load_module()
                 except ImportError as e:
                     self.warn(str(e))
                     version_module = None

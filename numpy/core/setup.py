@@ -10,7 +10,6 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from sysconfig import get_config_var
-from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
 # Set to True to enable relaxed strides checking. This (mostly) means
@@ -396,9 +395,10 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration, dot_join
+    from numpy.distutils.misc_util import Configuration, under_join
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
+    from importlib.machinery import SourceFileLoader
 
     # Accelerate is buggy, disallow it. See also numpy/linalg/setup.py
     for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
@@ -417,9 +417,8 @@ def configuration(parent_package='',top_path=None):
     check_api_version(C_API_VERSION, codegen_dir)
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
-    n = dot_join(config.name, 'generate_umath')
-    generate_umath = npy_load_module('_'.join(n.split('.')),
-                                     generate_umath_py, ('.py', 'U', 1))
+    n = under_join(config.name, 'generate_umath')
+    generate_umath = SourceFileLoader(n, generate_umath_py).load_module()
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 
