@@ -417,7 +417,7 @@ def configuration(parent_package='',top_path=None):
     check_api_version(C_API_VERSION, codegen_dir)
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
-    generate_umath = SourceFileLoader('_'.join(config.name, 'generate_umath'),
+    generate_umath = SourceFileLoader('_'.join((config.name, 'generate_umath')),
                                       generate_umath_py,
                                      ).load_module()
 

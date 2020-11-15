@@ -1957,7 +1957,7 @@ class Configuration:
                 name = os.path.splitext(os.path.basename(fn))[0]
                 try:
                     from importlib.machinery import SourceFileLoader
-                    version_module = SourceFileLoader('_'.join(self.name, name),
+                    version_module = SourceFileLoader('_'.join((self.name, name)),
                                                       fn,
                                                      ).load_module()
                 except ImportError as e:
