@@ -88,13 +88,24 @@ class _UFuncInputCastingError(_UFuncCastingError):
         self.in_i = i
 
     def __str__(self):
-        # only show the number if more than one input exists
-        i_str = "{} ".format(self.in_i) if self.ufunc.nin != 1 else ""
+        if self.ufunc.nout > 1:
+            from_outs = "out=({})".format(", ".join(f.name for f in self.to[self.ufunc.nin:]))
+            to_outs = "out=({})".format(", ".join(t.name for t in self.to[self.ufunc.nin:]))
+        else:
+            from_outs = "out={}".format(self.from_[-1])
+            to_outs = "out={}".format(self.to[-1])
+
         return (
-            "Cannot cast ufunc {!r} input {}from {!r} to {!r} with casting "
-            "rule {!r}"
+            "Input of ufunc {}({}, {}) resolved to the {}({}, {}) loop, " 
+            "but can_cast({}, {}, casting='{}') is False"
         ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
+            to_outs,
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
+            from_outs,
+            self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
         )
 
 
@@ -106,13 +117,24 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         self.out_i = i
 
     def __str__(self):
-        # only show the number if more than one output exists
-        i_str = "{} ".format(self.out_i) if self.ufunc.nout != 1 else ""
+        if self.ufunc.nout > 1:
+            from_outs = "out=({})".format(", ".join(f.name for f in self.to[self.ufunc.nin:]))
+            to_outs = "out=({})".format(", ".join(t.name for t in self.to[self.ufunc.nin:]))
+        else:
+            from_outs = "out={}".format(self.from_[-1])
+            to_outs = "out={}".format(self.to[-1])
+
         return (
-            "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
-            "rule {!r}"
+            "Output of ufunc {}({}, {}) resolved to the {}({}, {}) loop, " 
+            "but can_cast({}, {}, casting='{}') is False"
         ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
+            to_outs,
+            self.ufunc.__name__,
+            ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
+            from_outs,
+            self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
         )
 
 

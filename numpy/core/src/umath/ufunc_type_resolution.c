@@ -127,9 +127,10 @@ raise_casting_error(
         PyObject *exc_type,
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr *from,
-        PyArray_Descr *to,
-        npy_intp i)
+        PyArrayObject **operands,
+        PyArray_Descr **dtypes,
+        npy_intp i,
+        bool input)
 {
     PyObject *exc_value;
     PyObject *casting_value;
@@ -139,12 +140,43 @@ raise_casting_error(
         return -1;
     }
 
+    int nin = ufunc->nin;
+    int nop = nin + ufunc->nout;
+
+    PyObject *op_dtype_tup = PyTuple_New(nop);
+    if (op_dtype_tup == NULL) { 
+        return -1;
+    }
+
+    PyObject *dtype_tup = PyTuple_New(nop);
+    if (dtype_tup == NULL) { 
+        Py_DECREF(op_dtype_tup);
+        return -1;
+    }
+
+    for (int j = 0; j < nop; j++) {
+        if (operands[j] == NULL) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(op_dtype_tup, j, Py_None);
+        }
+        else {
+            PyObject *op_dtype = (PyObject *)PyArray_DESCR(operands[j]);
+            Py_INCREF(op_dtype);
+            PyTuple_SET_ITEM(op_dtype_tup, j, op_dtype);
+        }
+        Py_INCREF(dtypes[j]);
+        PyTuple_SET_ITEM(dtype_tup, j, (PyObject *)dtypes[j]);
+    }
+    
+    PyObject *froms = input ? op_dtype_tup : dtype_tup;
+    PyObject *tos   = input ? dtype_tup : op_dtype_tup;
+
     exc_value = Py_BuildValue(
-        "ONOOi",
+        "ONNNi",
         ufunc,
         casting_value,
-        (PyObject *)from,
-        (PyObject *)to,
+        froms,
+        tos,
         i
     );
     if (exc_value == NULL){
@@ -163,8 +195,8 @@ static int
 raise_input_casting_error(
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr *from,
-        PyArray_Descr *to,
+        PyArrayObject **operands,
+        PyArray_Descr **dtypes,
         npy_intp i)
 {
     static PyObject *exc_type = NULL;
@@ -175,7 +207,7 @@ raise_input_casting_error(
         return -1;
     }
 
-    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+    return raise_casting_error(exc_type, ufunc, casting, operands, dtypes, i, true);
 }
 
 
@@ -186,8 +218,8 @@ static int
 raise_output_casting_error(
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr *from,
-        PyArray_Descr *to,
+        PyArrayObject **operands,
+        PyArray_Descr **dtypes,
         npy_intp i)
 {
     static PyObject *exc_type = NULL;
@@ -198,7 +230,7 @@ raise_output_casting_error(
         return -1;
     }
 
-    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+    return raise_casting_error(exc_type, ufunc, casting, operands, dtypes, i, false);
 }
 
 
@@ -222,13 +254,13 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
         if (i < nin) {
             if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
                 return raise_input_casting_error(
-                    ufunc, casting, PyArray_DESCR(operands[i]), dtypes[i], i);
+                    ufunc, casting, operands, dtypes, i);
             }
         } else if (operands[i] != NULL) {
             if (!PyArray_CanCastTypeTo(dtypes[i],
                                     PyArray_DESCR(operands[i]), casting)) {
                 return raise_output_casting_error(
-                    ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
+                    ufunc, casting, operands, dtypes, i);
             }
         }
     }
