@@ -71,4 +71,24 @@ NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
     return vgetq_lane_u64(bit, 0) | ((int)vgetq_lane_u64(bit, 1) << 1);
 }
 
+// round to nearest integer
+#if NPY_SIMD_F64
+    #define npyv_round_s32_f32 vcvtnq_s32_f32
+    NPY_FINLINE npyv_s32 npyv_round_s32_f64(npyv_f64 a, npyv_f64 b)
+    {
+        npyv_s64 lo = vcvtnq_s64_f64(a), hi = vcvtnq_s64_f64(b);
+        return vcombine_s32(vmovn_s64(lo), vmovn_s64(hi));
+    }
+#else
+    NPY_FINLINE npyv_s32 npyv_round_s32_f32(npyv_f32 a)
+    {
+        // halves will be rounded up. it's very costly
+        // to obey IEEE standard on arm7. tests should pass +-1 difference
+        const npyv_u32 sign = vdupq_n_u32(0x80000000);
+        const npyv_f32 half = vdupq_n_f32(0.5f);
+        npyv_f32 sign_half = vbslq_f32(sign, a, half);
+        return vcvtq_s32_f32(vaddq_f32(a, sign_half));
+    }
+#endif
+
 #endif // _NPY_SIMD_NEON_CVT_H

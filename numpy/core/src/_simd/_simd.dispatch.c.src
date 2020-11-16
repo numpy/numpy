@@ -372,15 +372,57 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 #endif
 
+/***************************
+ * Mask operations
+ ***************************/
+/**begin repeat1
+ * #intrin = ifadd, ifsub#
+ */
+ SIMD_IMPL_INTRIN_4(@intrin@_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+
 #endif // simd_sup
 /**end repeat**/
 /*************************************************************************
  * Variant
  ************************************************************************/
 SIMD_IMPL_INTRIN_0N(cleanup)
+
+/*************************************************************************
+ * A special section for f32/f64 intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// check special cases
+SIMD_IMPL_INTRIN_1(notnan_f32, vb32, vf32)
+#if NPY_SIMD_F64
+    SIMD_IMPL_INTRIN_1(notnan_f64, vb64, vf64)
+#endif
+/***************************
+ * Conversions
+ ***************************/
+// round to nearest integer (assume even)
+SIMD_IMPL_INTRIN_1(round_s32_f32, vs32, vf32)
+#if NPY_SIMD_F64
+    SIMD_IMPL_INTRIN_2(round_s32_f64, vs32, vf64, vf64)
+#endif
+
 /*************************************************************************
  * A special section for boolean intrinsics outside the main repeater
  ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// Logical
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_IMPL_INTRIN_2(and_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(or_@bsfx@,  v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(xor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
+/**end repeat**/
 /***************************
  * Conversions
  ***************************/
@@ -534,6 +576,16 @@ SIMD_INTRIN_DEF(sum_@sfx@)
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif
+
+/***************************
+ * Mask operations
+ ***************************/
+/**begin repeat1
+ * #intrin = ifadd, ifsub#
+ */
+ SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+
 #endif // simd_sup
 /**end repeat**/
 /*************************************************************************
@@ -542,8 +594,40 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 SIMD_INTRIN_DEF(cleanup)
 
 /*************************************************************************
+ * A special section for f32/f64 intrinsics outside the main repeater
+ ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// check special cases
+SIMD_INTRIN_DEF(notnan_f32)
+#if NPY_SIMD_F64
+    SIMD_INTRIN_DEF(notnan_f64)
+#endif
+/***************************
+ * Conversions
+ ***************************/
+// round to nearest integer (assume even)
+SIMD_INTRIN_DEF(round_s32_f32)
+#if NPY_SIMD_F64
+    SIMD_INTRIN_DEF(round_s32_f64)
+#endif
+
+/*************************************************************************
  * A special section for boolean intrinsics outside the main repeater
  ************************************************************************/
+/***************************
+ * Operators
+ ***************************/
+// Logical
+/**begin repeat
+ * #bsfx = b8, b16, b32, b64#
+ */
+SIMD_INTRIN_DEF(and_@bsfx@)
+SIMD_INTRIN_DEF(or_@bsfx@)
+SIMD_INTRIN_DEF(xor_@bsfx@)
+SIMD_INTRIN_DEF(not_@bsfx@)
+/**end repeat**/
 /***************************
  * Conversions
  ***************************/
@@ -588,6 +672,9 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
         goto err;
     }
     if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_fma3", NPY_SIMD_FMA3)) {
         goto err;
     }
     if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH)) {
