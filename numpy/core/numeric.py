@@ -21,7 +21,9 @@ from .multiarray import (
 from . import overrides
 from . import umath
 from . import shape_base
-from .overrides import set_array_function_like_doc, set_module
+from .overrides import (
+    array_function_dispatch_like, set_array_function_like_doc, set_module
+    )
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
@@ -198,7 +200,9 @@ def ones(shape, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _ones_with_like(shape, dtype=dtype, order=order, like=like)
+        return array_function_dispatch_like(
+            _ones_with_like, shape, dtype=dtype, order=order, like=like
+        )
 
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
@@ -334,7 +338,14 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _full_with_like(shape, fill_value, dtype=dtype, order=order, like=like)
+        return array_function_dispatch_like(
+            _full_with_like,
+            shape,
+            fill_value,
+            dtype=dtype,
+            order=order,
+            like=like,
+        )
 
     if dtype is None:
         fill_value = asarray(fill_value)
@@ -1847,7 +1858,14 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     """
     if like is not None:
-        return _fromfunction_with_like(function, shape, dtype=dtype, like=like, **kwargs)
+        return array_function_dispatch_like(
+            _fromfunction_with_like,
+            function,
+            shape,
+            dtype=dtype,
+            like=like,
+            **kwargs,
+        )
 
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
@@ -2168,7 +2186,9 @@ def identity(n, dtype=None, *, like=None):
 
     """
     if like is not None:
-        return _identity_with_like(n, dtype=dtype, like=like)
+        return array_function_dispatch_like(
+            _identity_with_like, n, dtype=dtype, like=like
+        )
 
     from numpy import eye
     return eye(n, dtype=dtype, like=like)

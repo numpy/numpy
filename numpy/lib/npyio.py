@@ -14,7 +14,9 @@ from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
-from numpy.core.overrides import set_array_function_like_doc, set_module
+from numpy.core.overrides import (
+    array_function_dispatch_like, set_array_function_like_doc, set_module
+    )
 from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -899,10 +901,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     """
 
     if like is not None:
-        return _loadtxt_with_like(
-            fname, dtype=dtype, comments=comments, delimiter=delimiter,
-            converters=converters, skiprows=skiprows, usecols=usecols,
-            unpack=unpack, ndmin=ndmin, encoding=encoding,
+        return array_function_dispatch_like(
+            _loadtxt_with_like, fname, dtype=dtype, comments=comments,
+            delimiter=delimiter, converters=converters, skiprows=skiprows,
+            usecols=usecols, unpack=unpack, ndmin=ndmin, encoding=encoding,
             max_rows=max_rows, like=like
         )
 
@@ -1751,15 +1753,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     """
 
     if like is not None:
-        return _genfromtxt_with_like(
-            fname, dtype=dtype, comments=comments, delimiter=delimiter,
-            skip_header=skip_header, skip_footer=skip_footer,
-            converters=converters, missing_values=missing_values,
-            filling_values=filling_values, usecols=usecols, names=names,
-            excludelist=excludelist, deletechars=deletechars,
-            replace_space=replace_space, autostrip=autostrip,
-            case_sensitive=case_sensitive, defaultfmt=defaultfmt,
-            unpack=unpack, usemask=usemask, loose=loose,
+        return array_function_dispatch_like(
+            _genfromtxt_with_like, fname, dtype=dtype, comments=comments,
+            delimiter=delimiter, skip_header=skip_header,
+            skip_footer=skip_footer, converters=converters,
+            missing_values=missing_values, filling_values=filling_values,
+            usecols=usecols, names=names, excludelist=excludelist,
+            deletechars=deletechars, replace_space=replace_space,
+            autostrip=autostrip, case_sensitive=case_sensitive,
+            defaultfmt=defaultfmt, unpack=unpack, usemask=usemask, loose=loose,
             invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
             like=like
         )
