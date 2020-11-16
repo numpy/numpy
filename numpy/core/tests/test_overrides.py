@@ -527,33 +527,21 @@ class TestArrayLike:
             assert array_like.function is my_func
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
-    @pytest.mark.parametrize('numpy_ref', [True, False])
+    @pytest.mark.parametrize('ref', [1, [1], MyNoArrayFunctionArray])
     @requires_array_function
-    def test_no_array_function_like(self, function, args, kwargs, numpy_ref):
+    def test_no_array_function_like(self, function, args, kwargs, ref):
         TestArrayLike.add_method('array', TestArrayLike.MyNoArrayFunctionArray)
         TestArrayLike.add_method(function, TestArrayLike.MyNoArrayFunctionArray)
         np_func = getattr(np, function)
-        my_func = getattr(TestArrayLike.MyNoArrayFunctionArray, function)
 
-        if numpy_ref is True:
-            ref = np.array(1)
-        else:
-            ref = TestArrayLike.MyNoArrayFunctionArray.array()
+        # Instantiate ref if it's the MyNoArrayFunctionArray class
+        if ref is TestArrayLike.MyNoArrayFunctionArray:
+            ref = ref.array()
 
         like_args = tuple(a() if callable(a) else a for a in args)
-        array_like = np_func(*like_args, **kwargs, like=ref)
 
-        assert type(array_like) is np.ndarray
-        if numpy_ref is True:
-            np_args = tuple(a() if callable(a) else a for a in args)
-            np_arr = np_func(*np_args, **kwargs)
-
-            # Special-case np.empty to ensure values match
-            if function == "empty":
-                np_arr.fill(1)
-                array_like.fill(1)
-
-            assert_equal(array_like, np_arr)
+        with assert_raises(ValueError):
+            np_func(*like_args, **kwargs, like=ref)
 
     @pytest.mark.parametrize('numpy_ref', [True, False])
     def test_array_like_fromfile(self, numpy_ref):
