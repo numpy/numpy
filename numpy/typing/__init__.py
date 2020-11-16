@@ -19,6 +19,28 @@ the two below:
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
+Mypy plugin
+-----------
+
+A mypy_ plugin is available for automatically assigning the (platform-dependent)
+precisions of certain `~numpy.number` subclasses, including the likes of
+`~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
+:ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
+of the affected classes.
+
+Note that while usage of the plugin is completely optional, without it the
+precision of above-mentioned classes will be inferred as `~typing.Any`.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+
 Differences from the runtime NumPy API
 --------------------------------------
 
@@ -207,6 +229,18 @@ class _8Bit(_16Bit): ...  # type: ignore[misc]
 # Clean up the namespace
 del TYPE_CHECKING, final, List
 
+from ._nbit import (
+    _NBitByte,
+    _NBitShort,
+    _NBitIntC,
+    _NBitIntP,
+    _NBitInt,
+    _NBitLongLong,
+    _NBitHalf,
+    _NBitSingle,
+    _NBitDouble,
+    _NBitLongDouble,
+)
 from ._scalars import (
     _CharLike,
     _BoolLike,

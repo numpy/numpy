@@ -21,10 +21,24 @@ from numpy.typing import (
     _SupportsDType,
     _VoidDTypeLike,
     NBitBase,
+    _256Bit,
+    _128Bit,
+    _96Bit,
+    _80Bit,
     _64Bit,
     _32Bit,
     _16Bit,
     _8Bit,
+    _NBitByte,
+    _NBitShort,
+    _NBitIntC,
+    _NBitIntP,
+    _NBitInt,
+    _NBitLongLong,
+    _NBitHalf,
+    _NBitSingle,
+    _NBitDouble,
+    _NBitLongDouble,
 )
 from numpy.typing._callable import (
     _BoolOp,
@@ -311,29 +325,22 @@ broadcast_to: Any
 busday_count: Any
 busday_offset: Any
 busdaycalendar: Any
-byte: Any
 byte_bounds: Any
 bytes0: Any
 c_: Any
 can_cast: Any
 cast: Any
-cdouble: Any
-cfloat: Any
 chararray: Any
-clongdouble: Any
-clongfloat: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any
 complex256: Any
-complex_: Any
 concatenate: Any
 conj: Any
 copy: Any
 copyto: Any
 corrcoef: Any
 cov: Any
-csingle: Any
 cumproduct: Any
 datetime_as_string: Any
 datetime_data: Any
@@ -349,7 +356,6 @@ digitize: Any
 disp: Any
 divide: Any
 dot: Any
-double: Any
 dsplit: Any
 dstack: Any
 ediff1d: Any
@@ -365,7 +371,6 @@ flip: Any
 fliplr: Any
 flipud: Any
 float128: Any
-float_: Any
 format_parser: Any
 frombuffer: Any
 fromfile: Any
@@ -377,7 +382,6 @@ genfromtxt: Any
 get_include: Any
 geterrobj: Any
 gradient: Any
-half: Any
 hamming: Any
 hanning: Any
 histogram: Any
@@ -393,12 +397,8 @@ index_exp: Any
 info: Any
 inner: Any
 insert: Any
-int0: Any
-int_: Any
-intc: Any
 interp: Any
 intersect1d: Any
-intp: Any
 is_busday: Any
 iscomplex: Any
 iscomplexobj: Any
@@ -415,10 +415,6 @@ lexsort: Any
 load: Any
 loads: Any
 loadtxt: Any
-longcomplex: Any
-longdouble: Any
-longfloat: Any
-longlong: Any
 lookfor: Any
 mafromtxt: Any
 mask_indices: Any
@@ -504,11 +500,8 @@ setdiff1d: Any
 seterrobj: Any
 setxor1d: Any
 shares_memory: Any
-short: Any
 show_config: Any
 sinc: Any
-single: Any
-singlecomplex: Any
 sort_complex: Any
 source: Any
 split: Any
@@ -527,18 +520,11 @@ triu_indices_from: Any
 typeDict: Any
 typecodes: Any
 typename: Any
-ubyte: Any
-uint: Any
-uint0: Any
-uintc: Any
-uintp: Any
-ulonglong: Any
 union1d: Any
 unique: Any
 unpackbits: Any
 unravel_index: Any
 unwrap: Any
-ushort: Any
 vander: Any
 vdot: Any
 vectorize: Any
@@ -1853,6 +1839,14 @@ int16 = signedinteger[_16Bit]
 int32 = signedinteger[_32Bit]
 int64 = signedinteger[_64Bit]
 
+byte = signedinteger[_NBitByte]
+short = signedinteger[_NBitShort]
+intc = signedinteger[_NBitIntC]
+intp = signedinteger[_NBitIntP]
+int0 = signedinteger[_NBitIntP]
+int_ = signedinteger[_NBitInt]
+longlong = signedinteger[_NBitLongLong]
+
 class timedelta64(generic):
     def __init__(
         self,
@@ -1917,6 +1911,14 @@ uint16 = unsignedinteger[_16Bit]
 uint32 = unsignedinteger[_32Bit]
 uint64 = unsignedinteger[_64Bit]
 
+ubyte = unsignedinteger[_NBitByte]
+ushort = unsignedinteger[_NBitShort]
+uintc = unsignedinteger[_NBitIntC]
+uintp = unsignedinteger[_NBitIntP]
+uint0 = unsignedinteger[_NBitIntP]
+uint = unsignedinteger[_NBitInt]
+ulonglong = unsignedinteger[_NBitLongLong]
+
 class inexact(number[_NBit_co]): ...  # type: ignore
 
 _IntType = TypeVar("_IntType", bound=integer)
@@ -1945,6 +1947,13 @@ float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 float64 = floating[_64Bit]
 
+half = floating[_NBitHalf]
+single = floating[_NBitSingle]
+double = floating[_NBitDouble]
+float_ = floating[_NBitDouble]
+longdouble = floating[_NBitLongDouble]
+longfloat = floating[_NBitLongDouble]
+
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
 # describing the two 64 bit floats representing its real and imaginary component
@@ -1971,6 +1980,15 @@ class complexfloating(inexact[_NBit_co], Generic[_NBit_co, _NBit_co2]):
 
 complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
+
+csingle = complexfloating[_NBitSingle, _NBitSingle]
+singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
+cdouble = complexfloating[_NBitDouble, _NBitDouble]
+complex_ = complexfloating[_NBitDouble, _NBitDouble]
+cfloat = complexfloating[_NBitDouble, _NBitDouble]
+clongdouble = complexfloating[_NBitLongDouble, _NBitLongDouble]
+clongfloat = complexfloating[_NBitLongDouble, _NBitLongDouble]
+longcomplex = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
 class flexible(generic): ...  # type: ignore
 
@@ -2007,15 +2025,10 @@ class str_(character, str):
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
-unicode_ = str0 = str_
+unicode_ = str_
+str0 = str_
 
-# TODO(alan): Platform dependent types
-# longcomplex, longdouble, longfloat
-# bytes, short, intc, intp, longlong
-# half, single, double, longdouble
-# uint_, int_, float_, complex_
-# float128, complex256
-# float96
+# TODO: Platform dependent types: float128, complex256, float96
 
 def array(
     object: object,
