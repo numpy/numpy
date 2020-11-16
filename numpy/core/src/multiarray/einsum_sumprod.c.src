@@ -283,7 +283,7 @@ static void
     @type@ *data_out = (@type@ *)dataptr[2];
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_two (%d)\n",
                                                             (int)count);
-    // NPYV check for @type@, in X86, 128bits intrinsincs have a side effect in optimization
+    // NPYV check for @type@
 #if @NPYV_CHK@
     /* Use aligned instructions if possible */
     const int is_aligned = EINSUM_IS_ALIGNED(data0) && EINSUM_IS_ALIGNED(data1) &&
