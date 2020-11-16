@@ -3,7 +3,7 @@ Inexact matches for mode and searchside are deprecated
 Inexact and case insensitive matches for mode and searchside were
 valid inputs earlier and will give a DeprecationWarning now.
 For example, below are some example usages which are now deprecated and will
-give a DeprecationWarning.
+give a DeprecationWarning::
 
     import numpy as np
     arr = np.array([[3, 6, 6], [4, 5, 1]])

@@ -1,6 +1,6 @@
 `numpy.broadcast_shapes` is a new user-facing function
 ------------------------------------------------------
-`broadcast_shapes` gets the resulting shape from
+`~numpy.broadcast_shapes` gets the resulting shape from
 broadcasting the given shape tuples against each other.
 
 .. code:: python
