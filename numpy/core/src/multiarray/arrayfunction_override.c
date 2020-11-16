@@ -379,11 +379,16 @@ array_implement_c_array_function_creation(
         return Py_NotImplemented;
     }
 
-    PyObject *relevant_args = PyTuple_Pack(1,
-            PyDict_GetItem(kwargs, npy_ma_str_like));
-    if (relevant_args == NULL) {
+    PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
+    if (like_arg == NULL) {
         return NULL;
     }
+    else if (!PyObject_HasAttrString(like_arg, "__array_function__")) {
+        return PyErr_Format(
+            PyExc_ValueError,
+            "The `like` object must implement the `__array_function__` protocol");
+    }
+    PyObject *relevant_args = PyTuple_Pack(1, like_arg);
     PyDict_DelItem(kwargs, npy_ma_str_like);
 
     PyObject *numpy_module = PyImport_Import(npy_ma_str_numpy);
