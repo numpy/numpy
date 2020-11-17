@@ -540,7 +540,7 @@ class TestArrayLike:
 
         like_args = tuple(a() if callable(a) else a for a in args)
 
-        with assert_raises(ValueError):
+        with assert_raises(TypeError):
             np_func(*like_args, **kwargs, like=ref)
 
     @pytest.mark.parametrize('numpy_ref', [True, False])
