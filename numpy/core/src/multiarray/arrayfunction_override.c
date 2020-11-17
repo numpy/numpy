@@ -383,7 +383,7 @@ array_implement_c_array_function_creation(
     if (like_arg == NULL) {
         return NULL;
     }
-    else if (!PyObject_HasAttrString(like_arg, "__array_function__")) {
+    else if (!get_array_function(like_arg)) {
         return PyErr_Format(
             PyExc_TypeError,
             "The `like` object must implement the `__array_function__` protocol");
