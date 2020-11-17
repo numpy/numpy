@@ -682,7 +682,8 @@ void npy_set_floatstatus_invalid(void)
 }
 
 #elif defined(_MSC_VER) || (defined(__osf__) && defined(__alpha)) || \
-      defined (__UCLIBC__) || (defined(__arc__) && defined(__GLIBC__) || defined(__VMS))
+      defined (__UCLIBC__) || (defined(__arc__) && defined(__GLIBC__) || \
+      (defined(__VMS) && defined(__ia64__)) )
 
 /*
  * By using a volatile floating point value,
@@ -754,25 +755,39 @@ int npy_clear_floatstatus_barrier(char *param)
 }
 
 /*  OpenVMS  -------------------------------------------------------*/
-#elif defined(__VMS)
+#elif defined(__VMS) && defined(__ia64__)
 
-/*
-*   TODO: create functions for OpenVMS
-*/
+#include <builtins.h>
 
-#include <float.h>
+#define IEEE_STATUS_INV (1 << (6 + 7))
+#define IEEE_STATUS_DZE (1 << (6 + 9))
+#define IEEE_STATUS_OVF (1 << (6 + 10))
+#define IEEE_STATUS_UNF (1 << (6 + 11))
 
 int npy_get_floatstatus_barrier(char *param)
 {
+    unsigned __int64 fpstatus = __getReg(_IA64_REG_AR_FPSR);
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
     if (param != NULL) {
         volatile char NPY_UNUSED(c) = *(char*)param;
     }
-    return  0;
+    return  ((IEEE_STATUS_DZE & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+            ((IEEE_STATUS_OVF & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+            ((IEEE_STATUS_UNF & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+            ((IEEE_STATUS_INV & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
 int npy_clear_floatstatus_barrier(char *param)
 {
-    return 0;
+    int fpstatus = npy_get_floatstatus_barrier(param);
+
+    unsigned __int64 fpsr_value = __getReg(_IA64_REG_AR_FPSR);
+    fpsr_value &= ~(IEEE_STATUS_INV | IEEE_STATUS_DZE | IEEE_STATUS_OVF | IEEE_STATUS_UNF);
+    __setReg(_IA64_REG_AR_FPSR, fpsr_value);
+
+    return fpstatus;
 }
 
 /*  OSF/Alpha (Tru64)  ---------------------------------------------*/
