@@ -35,7 +35,7 @@ def set_array_function_like_doc(public_api):
 
 
 def array_function_dispatch_like(func, *args, **kwargs):
-    if not hasattr(kwargs['like'], '__array_function__'):
+    if not hasattr(type(kwargs['like']), '__array_function__'):
         raise TypeError(
             'The `like` object must implement the `__array_function__` '
             'protocol.'
