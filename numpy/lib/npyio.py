@@ -1029,11 +1029,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     user_converters = converters
 
+    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
-    else:
-        byte_converters = False
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
