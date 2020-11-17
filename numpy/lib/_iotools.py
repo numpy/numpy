@@ -18,6 +18,8 @@ def _decode_line(line, encoding=None):
     ----------
     line : str or bytes
          Line to be decoded.
+    encoding : str
+         Encoding used to decode `line`.
 
     Returns
     -------
@@ -25,11 +27,10 @@ def _decode_line(line, encoding=None):
          Unicode in Python 2, a str (unicode) in Python 3.
 
     """
+    if encoding is None:
+        encoding = 'latin1'
     if type(line) is bytes:
-        if encoding is None:
-            line = line.decode('latin1')
-        else:
-            line = line.decode(encoding)
+        line = line.decode(encoding)
 
     return line
 
