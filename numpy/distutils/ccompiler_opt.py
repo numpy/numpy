@@ -276,7 +276,7 @@ class _Config:
         ),
         # IBM/Power
         ## Power7/ISA 2.06
-        VSX = dict(interest=1, headers="altivec.h"),
+        VSX = dict(interest=1, headers="altivec.h", extra_checks="VSX_ASM"),
         ## Power8/ISA 2.07
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
