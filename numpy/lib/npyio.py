@@ -965,9 +965,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if comments is not None:
             line = regex_comments.split(line, maxsplit=1)[0]
         line = line.strip('\r\n')
-        if line:
-            return line.split(delimiter)
-        return []
+        return line.split(delimiter) if line else []
 
     def read_data(chunk_size):
         """Parse each line, including the first.
