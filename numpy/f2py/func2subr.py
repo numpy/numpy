@@ -130,7 +130,7 @@ def createfuncwrapper(rout, signature=0):
             l = l + ', ' + fortranname
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
-            if line.lstrip().startswith('use '):
+            if line.lstrip().startswith('use ') and not '__user__' in line:
                 add(line)
 
     args = args[1:]
@@ -164,7 +164,10 @@ def createfuncwrapper(rout, signature=0):
             pass
         else:
             add('interface')
-            add(rout['saved_interface'].lstrip())
+            saved_interface = rout['saved_interface'].lstrip().split('\n')
+            for line in saved_interface:
+                if not ('use' in line and '__user__' in line):
+                    add(line)
             add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])
@@ -222,7 +225,7 @@ def createsubrwrapper(rout, signature=0):
 
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
-            if line.lstrip().startswith('use '):
+            if line.lstrip().startswith('use ') and not '__user__' in line:
                 add(line)
 
     dumped_args = []
@@ -247,7 +250,10 @@ def createsubrwrapper(rout, signature=0):
             pass
         else:
             add('interface')
-            add(rout['saved_interface'].lstrip())
+            saved_interface = rout['saved_interface'].lstrip().split('\n')
+            for line in saved_interface:
+                if not ('use' in line and '__user__' in line):
+                    add(line)
             add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])
