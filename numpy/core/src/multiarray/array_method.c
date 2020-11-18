@@ -50,16 +50,17 @@
  */
 static NPY_CASTING
 default_resolve_descriptors(
-        PyArrayMethod_Context *context,
+        PyArrayMethodObject *method,
+        PyArray_DTypeMeta **dtypes,
         PyArray_Descr **input_descrs,
         PyArray_Descr **output_descrs)
 {
-    int nin = context->nin;
-    int nout = context->nout;
+    int nin = method->nin;
+    int nout = method->nout;
     int all_defined = 1;
 
     for (int i = 0; i < nin + nout; i++) {
-        PyArray_DTypeMeta *dtype = context->dtypes[i];
+        PyArray_DTypeMeta *dtype = dtypes[i];
         if (dtype == NULL) {
             output_descrs[i] = NULL;
             all_defined = 0;
@@ -76,10 +77,10 @@ default_resolve_descriptors(
         }
     }
     if (all_defined) {
-        return context->method->casting;
+        return method->casting;
     }
 
-    if (NPY_UNLIKELY(nin == 0 || context->dtypes[0] == NULL)) {
+    if (NPY_UNLIKELY(nin == 0 || dtypes[0] == NULL)) {
         /* Registration should reject this, so this would be indicates a bug */
         PyErr_SetString(PyExc_RuntimeError,
                 "Invalid use of default resolver without inputs or with "
@@ -87,10 +88,10 @@ default_resolve_descriptors(
         goto fail;
     }
     /* We find the common dtype of all inputs, and use it for the unknowns */
-    PyArray_DTypeMeta *common_dtype = context->dtypes[0];
+    PyArray_DTypeMeta *common_dtype = dtypes[0];
     assert(common_dtype != NULL);
     for (int i = 1; i < nin; i++) {
-        Py_SETREF(common_dtype, PyArray_CommonDType(common_dtype, context->dtypes[i]));
+        Py_SETREF(common_dtype, PyArray_CommonDType(common_dtype, dtypes[i]));
         if (common_dtype == NULL) {
             goto fail;
         }
@@ -110,7 +111,7 @@ default_resolve_descriptors(
         }
     }
 
-    return context->method->casting;
+    return method->casting;
 
   fail:
     for (int i = 0; i < nin + nout; i++) {
@@ -207,6 +208,15 @@ validate_spec(PyArrayMethod_Spec *spec)
 }
 
 
+/**
+ * Initialize a new BoundArrayMethodObject from slots.  Slots which are
+ * not provided may be filled with defaults.
+ *
+ * @param res The new PyBoundArrayMethodObject to be filled.
+ * @param spec The specification list passed by the user.
+ * @param private Private flag to limit certain slots to use in NumPy.
+ * @return -1 on error 0 on success
+ */
 static int
 fill_arraymethod_from_slots(
         PyBoundArrayMethodObject *res, PyArrayMethod_Spec *spec,
@@ -226,26 +236,26 @@ fill_arraymethod_from_slots(
      */
     for (PyType_Slot *slot = &spec->slots[0]; slot->slot != 0; slot++) {
         switch (slot->slot) {
-            case NPY_DTMETH_resolve_descriptors:
+            case NPY_METH_resolve_descriptors:
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
-            case NPY_DTMETH_get_loop:
+            case NPY_METH_get_loop:
                 if (private) {
                     /* Only allow override for private functions initially */
                     meth->get_strided_loop = slot->pfunc;
                     continue;
                 }
                 break;
-            case NPY_DTMETH_strided_loop:
+            case NPY_METH_strided_loop:
                 meth->strided_loop = slot->pfunc;
                 continue;
-            case NPY_DTMETH_contiguous_loop:
+            case NPY_METH_contiguous_loop:
                 meth->contiguous_loop = slot->pfunc;
                 continue;
-            case NPY_DTMETH_unaligned_strided_loop:
+            case NPY_METH_unaligned_strided_loop:
                 meth->unaligned_strided_loop = slot->pfunc;
                 continue;
-            case NPY_DTMETH_unaligned_contiguous_loop:
+            case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
                 continue;
             default:
@@ -259,16 +269,16 @@ fill_arraymethod_from_slots(
 
     /* Check whether the slots are valid: */
     if (meth->resolve_descriptors == &default_resolve_descriptors) {
-        for (int i = 0; i < res->nin + res->nout; i++) {
+        for (int i = 0; i < meth->nin + meth->nout; i++) {
             if (res->dtypes[i] == NULL) {
-                if (i < res->nin) {
+                if (i < meth->nin) {
                     PyErr_Format(PyExc_TypeError,
                             "All input DTypes must be specified when using "
                             "the default `resolve_descriptors` function. "
                             "(method: %s)", spec->name);
                     return -1;
                 }
-                else if (res->nin == 0) {
+                else if (meth->nin == 0) {
                     PyErr_Format(PyExc_TypeError,
                             "Must specify output DTypes or use custom "
                             "`resolve_descriptors` when there are no inputs. "
@@ -276,7 +286,7 @@ fill_arraymethod_from_slots(
                     return -1;
                 }
             }
-            if (i >= res->nin && res->dtypes[i]->parametric) {
+            if (i >= meth->nin && res->dtypes[i]->parametric) {
                 PyErr_Format(PyExc_TypeError,
                         "must provide a `resolve_descriptors` function if any "
                         "output DType is parametric. (method: %s)",
@@ -350,8 +360,6 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
     if (res == NULL) {
         return NULL;
     }
-    res->nin = spec->nin;
-    res->nout = spec->nout;
     res->method = NULL;
 
     res->dtypes = PyMem_Malloc(sizeof(PyArray_DTypeMeta *) * nargs);
@@ -374,6 +382,8 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
     memset((char *)(res->method) + sizeof(PyObject), 0,
            sizeof(PyArrayMethodObject) - sizeof(PyObject));
 
+    res->method->nin = spec->nin;
+    res->method->nout = spec->nout;
     res->method->flags = spec->flags;
     res->method->casting = spec->casting;
     if (fill_arraymethod_from_slots(res, spec, private) < 0) {
@@ -419,11 +429,12 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
 static PyObject *
 boundarraymethod_repr(PyBoundArrayMethodObject *self)
 {
-    PyObject *dtypes = PyTuple_New(self->nin + self->nout);
+    int nargs = self->method->nin + self->method->nout;
+    PyObject *dtypes = PyTuple_New(nargs);
     if (dtypes == NULL) {
         return NULL;
     }
-    for (int i = 0; i < self->nin + self->nout; i++) {
+    for (int i = 0; i < nargs; i++) {
         Py_INCREF(self->dtypes[i]);
         PyTuple_SET_ITEM(dtypes, i, (PyObject *)self->dtypes[i]);
     }
@@ -438,8 +449,9 @@ boundarraymethod_dealloc(PyObject *self)
 {
     PyBoundArrayMethodObject *meth;
     meth = ((PyBoundArrayMethodObject *)self);
+    int nargs = meth->method->nin + meth->method->nout;
 
-    for (int i = 0; i < meth->nin + meth->nout; i++) {
+    for (int i = 0; i < nargs; i++) {
         Py_XDECREF(meth->dtypes[i]);
     }
     PyMem_Free(meth->dtypes);
@@ -461,25 +473,27 @@ static PyObject *
 boundarraymethod__resolve_descripors(
         PyBoundArrayMethodObject *self, PyObject *descr_tuple)
 {
+    int nin = self->method->nin;
+    int nout = self->method->nout;
+
     PyArray_Descr *given_descrs[NPY_MAXARGS];
     PyArray_Descr *loop_descrs[NPY_MAXARGS];
 
     if (!PyTuple_CheckExact(descr_tuple) ||
-            PyTuple_Size(descr_tuple) != self->nin + self->nout) {
+            PyTuple_Size(descr_tuple) != nin + nout) {
         PyErr_Format(PyExc_ValueError,
                 "_resolve_descriptors() takes exactly one tuple with as many "
-                "elements as the method takes arguments (%d+%d).",
-                self->nin, self->nout);
+                "elements as the method takes arguments (%d+%d).", nin, nout);
         return NULL;
     }
 
-    for (int i = 0; i < self->nin + self->nout; i++) {
+    for (int i = 0; i < nin + nout; i++) {
         PyObject *tmp = PyTuple_GetItem(descr_tuple, i);
         if (tmp == NULL) {
             return NULL;
         }
         else if (tmp == Py_None) {
-            if (i < self->nin) {
+            if (i < nin) {
                 PyErr_SetString(PyExc_ValueError,
                         "only output dtypes may be omitted (set to None).");
                 return NULL;
@@ -502,16 +516,8 @@ boundarraymethod__resolve_descripors(
         }
     }
 
-    PyArrayMethod_Context context = {
-        .caller = NULL,
-        .method = self->method,
-        .dtypes = self->dtypes,
-        .nin = self->nin,
-        .nout = self->nout,
-        .descriptors = NULL,  /* Used after resolve_descriptors */
-    };
     NPY_CASTING casting = self->method->resolve_descriptors(
-            &context, given_descrs, loop_descrs);
+            self->method, self->dtypes, given_descrs, loop_descrs);
 
     if (casting < 0 && PyErr_Occurred()) {
         return NULL;
@@ -520,11 +526,11 @@ boundarraymethod__resolve_descripors(
         return Py_BuildValue("iO", casting, Py_None);
     }
 
-    PyObject *result_tuple = PyTuple_New(self->nin + self->nout);
+    PyObject *result_tuple = PyTuple_New(nin + nout);
     if (result_tuple == NULL) {
         return NULL;
     }
-    for (int i = 0; i < self->nin + self->nout; i++) {
+    for (int i = 0; i < nin + nout; i++) {
         /* transfer ownership to the tuple. */
         PyTuple_SET_ITEM(result_tuple, i, (PyObject *)loop_descrs[i]);
     }
@@ -534,7 +540,7 @@ boundarraymethod__resolve_descripors(
      * cast-is-view flag.  If no input is parametric, it must match exactly.
      */
     int parametric = 0;
-    for (int i = 0; i < self->nin + self->nout; i++) {
+    for (int i = 0; i < nin + nout; i++) {
         if (self->dtypes[i]->parametric) {
             parametric = 1;
             break;

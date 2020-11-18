@@ -3737,9 +3737,10 @@ find_object_datetime_type(PyObject *obj, int type_num)
  */
 static NPY_CASTING
 time_to_time_resolve_descriptors(
-        PyArrayMethod_Context *NPY_UNUSED(context),
-        PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs)
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2])
 {
     /* This is a within-dtype cast, which currently must handle byteswapping */
     Py_INCREF(given_descrs[0]);
@@ -3805,7 +3806,8 @@ time_to_time_resolve_descriptors(
 /* Handles datetime<->timedelta type resolution (both directions) */
 static NPY_CASTING
 datetime_to_timedelta_resolve_descriptors(
-        PyArrayMethod_Context *context,
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
         PyArray_Descr *loop_descrs[2])
 {
@@ -3816,7 +3818,7 @@ datetime_to_timedelta_resolve_descriptors(
     if (given_descrs[1] == NULL) {
         PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(given_descrs[0]);
         assert(meta != NULL);
-        loop_descrs[1] = create_datetime_dtype(context->dtypes[1]->type_num, meta);
+        loop_descrs[1] = create_datetime_dtype(dtypes[1]->type_num, meta);
     }
     else {
         loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
@@ -3837,7 +3839,8 @@ datetime_to_timedelta_resolve_descriptors(
 /* In the current setup both strings and unicode casts support all outputs */
 static NPY_CASTING
 time_to_string_resolve_descriptors(
-        PyArrayMethod_Context *context,
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr **given_descrs,
         PyArray_Descr **loop_descrs)
 {
@@ -3862,24 +3865,25 @@ time_to_string_resolve_descriptors(
         else {
             size = 21;
         }
-        if (context->dtypes[1]->type_num == NPY_UNICODE) {
+        if (dtypes[1]->type_num == NPY_UNICODE) {
             size *= 4;
         }
-        loop_descrs[1] = PyArray_DescrNewFromType(context->dtypes[1]->type_num);
+        loop_descrs[1] = PyArray_DescrNewFromType(dtypes[1]->type_num);
         if (loop_descrs[1] == NULL) {
             Py_DECREF(loop_descrs[0]);
             return -1;
         }
         loop_descrs[1]->elsize = size;
     }
-    assert(context->method->casting == NPY_UNSAFE_CASTING);
+    assert(self->casting == NPY_UNSAFE_CASTING);
     return NPY_UNSAFE_CASTING;
 }
 
 
 static NPY_CASTING
 string_to_datetime_cast_resolve_descriptors(
-        PyArrayMethod_Context *context,
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
         PyArray_Descr *loop_descrs[2])
 {
@@ -3889,7 +3893,7 @@ string_to_datetime_cast_resolve_descriptors(
 
     if (given_descrs[1] == NULL) {
         /* NOTE: This doesn't actually work, and will error during the cast */
-        loop_descrs[1] = context->dtypes[1]->default_descr(context->dtypes[1]);
+        loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             Py_DECREF(loop_descrs[0]);
             return -1;
@@ -3923,9 +3927,9 @@ PyArray_InitializeDatetimeCasts()
         .slots = slots,
         .dtypes = dtypes,
     };
-    slots[0].slot = NPY_DTMETH_resolve_descriptors;
+    slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_time_resolve_descriptors;
-    slots[1].slot = NPY_DTMETH_get_loop;
+    slots[1].slot = NPY_METH_get_loop;
     slots[1].pfunc = NULL;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -3951,9 +3955,9 @@ PyArray_InitializeDatetimeCasts()
      * Casting between timedelta and datetime uses legacy casting loops, but
      * custom dtype resolution (to handle copying of the time unit).
      */
-    slots[0].slot = NPY_DTMETH_resolve_descriptors;
+    slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &datetime_to_timedelta_resolve_descriptors;
-    slots[1].slot = NPY_DTMETH_get_loop;
+    slots[1].slot = NPY_METH_get_loop;
     slots[1].pfunc = NULL;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -4023,9 +4027,9 @@ PyArray_InitializeDatetimeCasts()
      */
     spec.flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
 
-    slots[0].slot = NPY_DTMETH_resolve_descriptors;
+    slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_string_resolve_descriptors;
-    slots[1].slot = NPY_DTMETH_get_loop;
+    slots[1].slot = NPY_METH_get_loop;
     slots[1].pfunc = NULL;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
@@ -4063,9 +4067,9 @@ PyArray_InitializeDatetimeCasts()
     spec.casting = NPY_UNSAFE_CASTING;
 
     /* The default type resolution should work fine. */
-    slots[0].slot = NPY_DTMETH_resolve_descriptors;
+    slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &string_to_datetime_cast_resolve_descriptors;
-    slots[1].slot = NPY_DTMETH_get_loop;
+    slots[1].slot = NPY_METH_get_loop;
     slots[1].pfunc = NULL;
     slots[2].slot = 0;
     slots[2].pfunc = NULL;

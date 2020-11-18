@@ -64,14 +64,16 @@ PyArray_GetCastSafety(
 
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
-        PyArrayMethod_Context *NPY_UNUSED(context),
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta **dtypes,
         PyArray_Descr **given_descrs,
         PyArray_Descr **loop_descrs);
 
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(
-        PyArrayMethod_Context *context,
-        PyArray_Descr **NPY_UNUSED(input_descrs),
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta **dtypes,
+        PyArray_Descr **input_descrs,
         PyArray_Descr **loop_descrs);
 
 NPY_NO_EXPORT int
