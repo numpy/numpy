@@ -27,9 +27,9 @@ def _decode_line(line, encoding=None):
          Unicode in Python 2, a str (unicode) in Python 3.
 
     """
-    if encoding is None:
-        encoding = 'latin1'
     if type(line) is bytes:
+        if encoding is None:
+            encoding = "latin1"
         line = line.decode(encoding)
 
     return line
