@@ -17,7 +17,7 @@ At this time, NumPy retains the behaviour for::
 
     np.array(np.float64(np.nan), dtype=np.int64)
 
-The above changes do not affect Python scalars:
+The above changes do not affect Python scalars::
 
     np.array([float("NaN")], dtype=np.int64)
 

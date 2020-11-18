@@ -12,7 +12,7 @@ For such a ``dtype`` the following behaviour is true::
     res.dtype is dtype.base
     res.shape == arr.shape + dtype.shape
 
-But ``res`` is filled using the logic:
+But ``res`` is filled using the logic::
 
     res = np.empty(arr.shape + dtype.shape, dtype=dtype.base)
     res[...] = arr
