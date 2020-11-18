@@ -166,7 +166,9 @@ def createfuncwrapper(rout, signature=0):
             add('interface')
             saved_interface = rout['saved_interface'].lstrip().split('\n')
             for line in saved_interface:
-                if not ('use' in line and '__user__' in line):
+                if line.lstrip().startswith('use ') and '__user__' in line:
+                    continue
+                else:
                     add(line)
             add('end interface')
 
@@ -252,7 +254,9 @@ def createsubrwrapper(rout, signature=0):
             add('interface')
             saved_interface = rout['saved_interface'].lstrip().split('\n')
             for line in saved_interface:
-                if not ('use' in line and '__user__' in line):
+                if line.lstrip().startswith('use ') and '__user__' in line:
+                    continue
+                else:
                     add(line)
             add('end interface')
 
