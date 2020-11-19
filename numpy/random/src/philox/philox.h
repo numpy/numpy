@@ -32,6 +32,15 @@ static NPY_INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
   *hip = product >> 64;
   return (uint64_t)product;
 }
+#elif defined(_M_X64) || defined(_M_ARM64)
+#include <intrin.h>
+#pragma intrinsic(__umulh)
+static NPY_INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
+  uint64_t p0 = a * b;
+  uint64_t p1 = __umulh(a, b);
+  *hip = p1;
+  return p0;
+}
 #else
 #ifdef _WIN32
 #include <intrin.h>
