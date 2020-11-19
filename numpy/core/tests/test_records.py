@@ -432,7 +432,8 @@ class TestRecord:
         assert a[0] == unpickled
 
         # Also check the similar (impossible) "object scalar" path:
-        assert ctor(np.dtype("O"), data) is data
+        with pytest.warns(DeprecationWarning):
+            assert ctor(np.dtype("O"), data) is data
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
