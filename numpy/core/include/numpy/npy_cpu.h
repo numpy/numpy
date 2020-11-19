@@ -39,6 +39,12 @@
      * _M_AMD64 defined by MS compiler
      */
     #define NPY_CPU_AMD64
+#elif defined(_M_ARM64)
+    /*
+     * _M_ARM64 is defined by VS compiler >= 2017 to build native
+     * ARM64 packages on Windows
+     */
+    #define NPY_CPU_ARMEL_AARCH64
 #elif defined(__powerpc64__) && defined(__LITTLE_ENDIAN__)
     #define NPY_CPU_PPC64LE
 #elif defined(__powerpc64__) && defined(__BIG_ENDIAN__)
@@ -82,7 +88,7 @@
         #endif
     #else
         # error Unknown ARM CPU, please report this to numpy maintainers with \
-	information about your platform (OS, CPU and compiler)
+        information about your platform (OS, CPU and compiler)
     #endif
 #elif defined(__sh__) && defined(__LITTLE_ENDIAN__)
     #define NPY_CPU_SH_LE
