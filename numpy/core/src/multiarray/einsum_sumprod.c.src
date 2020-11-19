@@ -49,21 +49,6 @@
     #define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 #endif
 
-/**
- * This macro is used to enable a scalar loop which advances 4 elements at a
- * time, which appears after a main SIMD loop gated by `CHK` that unrolls by
- * `NPY_SIMD_WIDTH * unroll_by` elements, and before a non-unrolled scalar loop
- * that finishes up all the remaining scalars. The purpose of the unrolled loop
- * is to enable auto-vectorization in cases when all of the following are true:
- *
- *  - optimization is allowed
- *  - either:
- *    - we did not run the SIMD loop at all, due to NPV being disabled.
- *    - the SIMD loop was larger than 128bit, so there are likely to be many
- *      elements left to process.
- */
-#define EINSUM_UNROLL_4_SCALARS(CHK) (!defined(NPY_DISABLE_OPTIMIZATION) && (!(CHK) || NPY_SIMD > 128))
-
 /**********************************************/
 
 /**begin repeat
@@ -318,10 +303,14 @@ static void
         }
     }
     /**end repeat2**/
+    for (; count > 0; count -= vstep, data0 += vstep, data1 += vstep, data_out += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data0, count);
+        npyv_@sfx@ b = npyv_load_tillz_@sfx@(data1, count);
+        npyv_@sfx@ c = npyv_load_tillz_@sfx@(data_out, count);
+        npyv_store_till_@sfx@(data_out, count, npyv_muladd_@sfx@(a, b, c));
+    }
     npyv_cleanup();
-#endif // NPYV check for @type@
-
-#if EINSUM_UNROLL_4_SCALARS(@NPYV_CHK@)
+#else
     for (; count >= 4; count -= 4, data0 += 4, data1 += 4, data_out += 4) {
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -341,7 +330,7 @@ static void
         data_out[@i@] = @to@(abc@i@);
         /**end repeat2**/
     }
-#endif
+#endif // NPYV check for @type@
     for (; count > 0; --count, ++data0, ++data1, ++data_out) {
         const @type@ a = @from@(*data0);
         const @type@ b = @from@(*data1);
