@@ -311,6 +311,7 @@ static void
     }
     npyv_cleanup();
 #else
+#ifndef NPY_DISABLE_OPTIMIZATION
     for (; count >= 4; count -= 4, data0 += 4, data1 += 4, data_out += 4) {
         /**begin repeat2
          * #i = 0, 1, 2, 3#
@@ -330,13 +331,15 @@ static void
         data_out[@i@] = @to@(abc@i@);
         /**end repeat2**/
     }
-#endif // NPYV check for @type@
+#endif // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data0, ++data1, ++data_out) {
         const @type@ a = @from@(*data0);
         const @type@ b = @from@(*data1);
         const @type@ c = @from@(*data_out);
         *data_out = @to@(a * b + c);
     }
+#endif // NPYV check for @type@
+
 }
 
 /* Some extra specializations for the two operand case */
