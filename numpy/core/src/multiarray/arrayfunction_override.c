@@ -384,8 +384,7 @@ array_implement_c_array_function_creation(
         return NULL;
     }
     else if (!get_array_function(like_arg)) {
-        return PyErr_Format(
-            PyExc_TypeError,
+        return PyErr_Format(PyExc_TypeError,
             "The `like` object must implement the `__array_function__` protocol");
     }
     PyObject *relevant_args = PyTuple_Pack(1, like_arg);
