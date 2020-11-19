@@ -5,7 +5,6 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 """
 from .overrides import (
     array_function_dispatch,
-    array_function_dispatch_like,
     set_array_function_like_doc,
     set_module,
 )
@@ -98,9 +97,7 @@ def asarray(a, dtype=None, order=None, *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _asarray_with_like, a, dtype=dtype, order=order, like=like
-        )
+        return _asarray_with_like(a, dtype=dtype, order=order, like=like)
 
     return array(a, dtype, copy=False, order=order)
 
@@ -169,9 +166,7 @@ def asanyarray(a, dtype=None, order=None, *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _asanyarray_with_like, a, dtype=dtype, order=order, like=like
-        )
+        return _asanyarray_with_like(a, dtype=dtype, order=order, like=like)
 
     return array(a, dtype, copy=False, order=order, subok=True)
 
@@ -228,9 +223,7 @@ def ascontiguousarray(a, dtype=None, *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _ascontiguousarray_with_like, a, dtype=dtype, like=like
-        )
+        return _ascontiguousarray_with_like(a, dtype=dtype, like=like)
 
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
@@ -283,9 +276,7 @@ def asfortranarray(a, dtype=None, *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _asfortranarray_with_like, a, dtype=dtype, like=like
-        )
+        return _asfortranarray_with_like(a, dtype=dtype, like=like)
 
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
@@ -372,8 +363,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _require_with_like,
+        return _require_with_like(
             a,
             dtype=dtype,
             requirements=requirements,

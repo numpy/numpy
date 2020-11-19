@@ -8,9 +8,7 @@ from numpy.core.numeric import (
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
-from numpy.core.overrides import (
-    array_function_dispatch_like, set_array_function_like_doc, set_module
-    )
+from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
 
@@ -205,15 +203,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _eye_with_like,
-            N,
-            M=M,
-            k=k,
-            dtype=dtype,
-            order=order,
-            like=like
-        )
+        return _eye_with_like(N, M=M, k=k, dtype=dtype, order=order, like=like)
     if M is None:
         M = N
     m = zeros((N, M), dtype=dtype, order=order)
@@ -415,9 +405,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
     """
     if like is not None:
-        return array_function_dispatch_like(
-            _tri_with_like, N, M=M, k=k, dtype=dtype, like=like
-        )
+        return _tri_with_like(N, M=M, k=k, dtype=dtype, like=like)
 
     if M is None:
         M = N
