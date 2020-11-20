@@ -1194,7 +1194,7 @@ NpyIter_GetIndexPtr(NpyIter *iter)
 
     if (itflags&NPY_ITFLAG_HASINDEX) {
         /* The index is just after the data pointers */
-        return (npy_intp*)NAD_PTRS(axisdata) + nop;
+        return (npy_intp*)(NAD_PTRS(axisdata) + nop);
     }
     else {
         return NULL;
@@ -1640,7 +1640,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Value: %d\n",
-                               (int)((npy_intp*)NAD_PTRS(axisdata))[nop]);
+                               (int)(NAD_PTRS(axisdata)[nop]));
         }
     }
 
