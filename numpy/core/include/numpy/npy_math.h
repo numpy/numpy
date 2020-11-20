@@ -64,7 +64,16 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_NZERO ((npy_double)NPY_NZEROF)
 
 #define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
+#ifdef __VMS
+NPY_INLINE static long double __npy_nanld(void)
+{
+    const union { npy_uint32 __i[4]; long double __f;} __bint = {{0, 0, 0, 0xffffc000UL}};
+    return __bint.__f;
+}
+#define NPY_NANL __npy_nanld()
+#else
 #define NPY_NANL ((npy_longdouble)NPY_NANF)
+#endif
 #define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
 #define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
 
