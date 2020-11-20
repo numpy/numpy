@@ -689,3 +689,29 @@ class TestArrayLikes:
                 np.array(arr)
             with pytest.raises(MemoryError):
                 np.array([arr])
+
+    def test_bad_array_attribute_and_length(self):
+        # See gh-17785, this test may be be tricky, since there are some
+        # paths where execution may continue after a RecursionError was
+        # raised first (these _should_ be harmless, but it is hard to tell).
+        class MyArray(np.ndarray):
+            def __new__(cls, input_array):
+                obj = np.empty(len(input_array), dtype=object)
+                obj[:] = input_array
+                obj = obj.view(cls)
+                return obj
+
+        class MyNastyClass:
+            def __len__(self): return 32
+            def __getitem__(self, item): return 1
+            def __array__(self, dtype=None): return MyArray([self])
+
+        try:
+            np.array(MyNastyClass())
+        except RecursionError:
+            # A RecurionError is expected here, but if the recursion occurs
+            # at specific points (probably while checking for sequences) it
+            # may be that the creation actually succeeds (and may be fine).
+            # At the time of writing this, something like this was apparently
+            # happening on PyPy.
+            pass
