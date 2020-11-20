@@ -76,6 +76,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
     /* Increment index 0 */
     NAD_INDEX(axisdata0)++;
     /* Increment pointer 0 */
+    /* Also advance the index (if it exists), it is just beyond the pointers */
     for (istrides = 0; istrides < nstrides; ++istrides) {
         NAD_PTRS(axisdata0)[istrides] += NAD_STRIDES(axisdata0)[istrides];
     }
@@ -102,6 +103,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
     /* Increment index 1 */
     NAD_INDEX(axisdata1)++;
     /* Increment pointer 1 */
+    /* Also advance the index (if it exists), it is just beyond the pointers */
     for (istrides = 0; istrides < nstrides; ++istrides) {
         NAD_PTRS(axisdata1)[istrides] += NAD_STRIDES(axisdata1)[istrides];
     }
@@ -110,6 +112,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
         /* Reset the 1st index to 0 */
         NAD_INDEX(axisdata0) = 0;
         /* Reset the 1st pointer to the value of the 2nd */
+        /* Also reset the index (if it exists), it is just beyond the pointers */
         for (istrides = 0; istrides < nstrides; ++istrides) {
             NAD_PTRS(axisdata0)[istrides] = NAD_PTRS(axisdata1)[istrides];
         }
@@ -124,6 +127,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
     /* Increment index 2 */
     NAD_INDEX(axisdata2)++;
     /* Increment pointer 2 */
+    /* Also advance the index (if it exists), it is just beyond the pointers */
     for (istrides = 0; istrides < nstrides; ++istrides) {
         NAD_PTRS(axisdata2)[istrides] += NAD_STRIDES(axisdata2)[istrides];
     }
@@ -133,6 +137,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
         NAD_INDEX(axisdata0) = 0;
         NAD_INDEX(axisdata1) = 0;
         /* Reset the 1st and 2nd pointers to the value of the 3nd */
+        /* Also reset the index (if it exists), it is just beyond the pointers */
         for (istrides = 0; istrides < nstrides; ++istrides) {
             NAD_PTRS(axisdata0)[istrides] = NAD_PTRS(axisdata2)[istrides];
             NAD_PTRS(axisdata1)[istrides] = NAD_PTRS(axisdata2)[istrides];
@@ -145,6 +150,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
         /* Increment the index */
         NAD_INDEX(axisdata2)++;
         /* Increment the pointer */
+        /* Also advance the index (if it exists), it is just beyond the pointers */
         for (istrides = 0; istrides < nstrides; ++istrides) {
             NAD_PTRS(axisdata2)[istrides] += NAD_STRIDES(axisdata2)[istrides];
         }
@@ -158,6 +164,7 @@ npyiter_iternext_itflags@tag_itflags@_dims@tag_ndim@_iters@tag_nop@(
                 /* Reset the index to 0 */
                 NAD_INDEX(axisdata1) = 0;
                 /* Reset the pointer to the updated value */
+                /* Also reset the index (if it exists), it is just beyond the pointers */
                 for (istrides = 0; istrides < nstrides; ++istrides) {
                     NAD_PTRS(axisdata1)[istrides] =
                                         NAD_PTRS(axisdata2)[istrides];
