@@ -2172,6 +2172,7 @@ run_selectkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     }
     switch (kind) {
         case NPY_INTROSELECT: return PyUnicode_FromString("NPY_INTROSELECT");
+        case NPY_FLOYDSELECT: return PyUnicode_FromString("NPY_FLOYDSELECT");
     }
     return PyLong_FromLong(kind);
 }

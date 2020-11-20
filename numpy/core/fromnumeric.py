@@ -690,7 +690,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'introselect'}, optional
+    kind : {'introselect', 'floydselect'}, optional
         Selection algorithm. Default is 'introselect'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
@@ -721,7 +721,8 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     ================= ======= ============= ============ =======
        kind            speed   worst case    work space  stable
     ================= ======= ============= ============ =======
-    'introselect'        1        O(n)           0         no
+    'introselect'        2        O(n)           0         no
+    'floydrivest'        1        O(n^2)         0         no
     ================= ======= ============= ============ =======
 
     All the partition algorithms make temporary copies of the data when
@@ -782,7 +783,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
-    kind : {'introselect'}, optional
+    kind : {'introselect','floydselect'}, optional
         Selection algorithm. Default is 'introselect'
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument

@@ -2,7 +2,8 @@
 
 /*
  *
- * The code is loosely based on the quickselect from
+ * This code implements two selection methods: introselect and floydrivest.
+ * The introselect code is loosely based on the quickselect from
  * Nicolas Devillard - 1998 public domain
  * http://ndevilla.free.fr/median/median/
  *
@@ -11,6 +12,10 @@
  * e.g. np.roll(np.arange(x), x / 2)
  * To avoid this if it recurses too much it falls back to the
  * worst case linear median of median of group 5 pivot strategy.
+ *
+ * Floydrivest implements the Rivest-Floyd selection algorithm.
+ * http://people.csail.mit.edu/rivest/pubs/FR75b.pdf
+ * It is faster than introselect on average, but has O(n^2) worst case.
  */
 
 
@@ -48,7 +53,7 @@ static NPY_INLINE void store_pivot(npy_intp pivot, npy_intp kth,
         pivots[*npiv - 1] = pivot;
     }
     /*
-     * we only need pivots larger than current kth, larger pivots are not
+     * we only need pivots larger than current kth, smaller pivots are not
      * useful as partitions on smaller kth would reorder the stored pivots
      */
     else if (pivot >= kth && *npiv < NPY_MAX_PIVOT_STACK) {
@@ -102,6 +107,8 @@ median_of_median5_@suff@(@type@ *v, const npy_intp num,
         aintroselect_@suff@(v, tosort, nmed, nmed / 2, pivots, npiv, NULL)
 #define DUMBSELECT(v, tosort, left, num, kth) \
         adumb_select_@suff@(v, tosort + left, num, kth)
+#define RF_PARTITION(v, tosort, left, right) \
+        arf_partition_@suff@(v, tosort, left, right)
 #else
 #define IDX(x) (x)
 #define SORTEE(x) v[x]
@@ -116,6 +123,8 @@ median_of_median5_@suff@(@type@ *v, const npy_intp num,
         introselect_@suff@(v, nmed, nmed / 2, pivots, npiv, NULL)
 #define DUMBSELECT(v, tosort, left, num, kth) \
         dumb_select_@suff@(v + left, num, kth)
+#define RF_PARTITION(v, tosort, left, right) \
+        rf_partition_@suff@(v, left, right)
 #endif
 
 
@@ -131,13 +140,16 @@ static NPY_INLINE void
 #endif
                           npy_intp low, npy_intp mid, npy_intp high)
 {
-    if (@TYPE@_LT(v[IDX(high)], v[IDX(mid)]))
+    if (@TYPE@_LT(v[IDX(high)], v[IDX(mid)])) {
         SWAP(SORTEE(high), SORTEE(mid));
-    if (@TYPE@_LT(v[IDX(high)], v[IDX(low)]))
+    }
+    if (@TYPE@_LT(v[IDX(high)], v[IDX(low)])) {
         SWAP(SORTEE(high), SORTEE(low));
+    }
     /* move pivot to low */
-    if (@TYPE@_LT(v[IDX(low)], v[IDX(mid)]))
+    if (@TYPE@_LT(v[IDX(low)], v[IDX(mid)])) {
         SWAP(SORTEE(low), SORTEE(mid));
+    }
     /* move 3-lowest element to low + 1 */
     SWAP(SORTEE(mid), SORTEE(low + 1));
 }
@@ -201,14 +213,47 @@ static NPY_INLINE void
         do (*ll)++; while (@TYPE@_LT(v[IDX(*ll)], pivot));
         do (*hh)--; while (@TYPE@_LT(pivot, v[IDX(*hh)]));
 
-        if (*hh < *ll)
+        if (*hh < *ll) {
             break;
-
+        }
         SWAP(SORTEE(*ll), SORTEE(*hh));
     }
 }
-
-
+/* partition for rivest-floyd algorithm around the v[IDX(*ll)] pivot.
+Return the index of the pivot
+*/
+npy_intp @name@rf_partition_@suff@(@type@ *v,
+#if @arg@
+                                 npy_intp *tosort,
+#endif
+                                 npy_intp low,
+                                 npy_intp high)
+{
+    npy_intp i = low;
+    npy_intp j = high;
+    @type@ pivot = v[IDX(low)];
+    //if pivots stays at low, it is going to be swapped to high
+    npy_bool pivot_low = 0;
+    //ensure v[IDX(low)] >= v[IDX(high)]
+    if (@TYPE@_LT(pivot, v[IDX(high)])) {
+        SWAP(SORTEE(low), SORTEE(high));
+        pivot_low = 1;
+    }
+    while (i < j) {
+        SWAP(SORTEE(i), SORTEE(j));
+        do i++; while (@TYPE@_LT(v[IDX(i)], pivot));
+        do j--; while (@TYPE@_LT(pivot, v[IDX(j)]));
+    }
+    //now put pivot in the jth place
+    if (pivot_low) {
+        SWAP(SORTEE(low), SORTEE(j));
+    }
+    else {
+        j++;
+        SWAP(SORTEE(high), SORTEE(j));
+    }
+    return j;
+}
 /*
  * select median of median of blocks of 5
  * if used as partition pivot it splits the range into at least 30%/70%
@@ -231,8 +276,9 @@ static npy_intp
         SWAP(SORTEE(subleft + m), SORTEE(i));
     }
 
-    if (nmed > 2)
+    if (nmed > 2) {
         INTROSELECT(v, tosort, nmed, nmed / 2, pivots, npiv);
+    }
     return nmed / 2;
 }
 
@@ -270,7 +316,7 @@ static int
 /*
  * iterative median of 3 quickselect with cutoff to median-of-medians-of5
  * receives stack of already computed pivots in v to minimize the
- * partition size were kth is searched in
+ * partition size where kth is searched in
  *
  * area that needs partitioning in [...]
  * kth 0:  [8  7  6  5  4  3  2  1  0] -> med3 partitions elements [4, 2, 0]
@@ -388,10 +434,12 @@ NPY_NO_EXPORT int
             store_pivot(hh, kth, pivots, npiv);
         }
 
-        if (hh >= kth)
+        if (hh >= kth) {
             high = hh - 1;
-        if (hh <= kth)
+        }
+        if (hh <= kth) {
             low = ll;
+        }
     }
 
     /* two elements */
@@ -406,6 +454,113 @@ NPY_NO_EXPORT int
 }
 
 
+/*
+ * rivest-floyd selection algorithm
+ */
+#define C1 600
+#define C2 0.5
+#define C3 0.5
+
+/* helper function */
+void
+@name@rf_recursive_@suff@(@type@ *v,
+#if @arg@
+                          npy_intp* tosort,
+#endif
+                          npy_intp left,
+                          npy_intp right,
+                          npy_intp kth)
+{
+    while (right > left) {
+        if (right - left > C1) {
+            npy_float N = (npy_float)(right - left + 1);
+            npy_float II = (npy_float)(kth - left + 1);
+            npy_float Z = npy_log(N);
+            npy_float S = C2 * npy_exp(2*Z/3.0);
+            npy_float SD = C3 * npy_sqrt(Z*S*(N - S)/N) * npy_copysign(1, II - N/2);
+            npy_intp newleft = kth - (npy_intp)(II*S/N - SD);
+            /* why II*S/N - SD can be converted to npy_intp and subtracted from kth without numerical overflow:
+             * 1) converted to npy_intp
+             * Since N >= 600,
+             * 0 <= II <= N,
+             * S = 0.5 N^(2/3) and
+             * |SD| = 0.5 sqrt(log N * 0.5 N^(2/3) * (N - 0.5 N^(2/3) / N) <= 0.5 N^(1/3) sqrt(log N):
+             * |II*S/N - SD| <= |II*S/N| + |SD| <= |S| + |SD| < N <= npy_intp.max
+             * 2) subtracted from kth:
+             * because kth >= 0 and II*S/N - SD >= 0
+             * (Indeed, if SD > 0,
+             * then II - N/2 > 0 => II/N > 0.5 => II*S/N > 0.5 => II*S/N > 0.5 * S > SD)
+             */
+            if (newleft < left) {
+                newleft = left;
+            }
+            npy_intp newright = right;
+            if ((npy_float)(right - kth) > (N - II)*S/N + SD) {
+                newright = kth + (npy_intp)((N - II)*S/N + SD);
+            }
+            /*
+             * |(N-II)*S/N - SD| <= |II*S/N| + |SD| <= |S| + |SD| < N <= npy_intp.max
+             * we only convert (N - II) * S/N + SD to npy_intp and add to kth when
+             * kth + (N-II)*S/N + SD < right <= npy_intp.max, so the sum won't overflow.
+             */
+            @name@rf_recursive_@suff@(v,
+#if @arg@
+                               tosort,
+#endif
+                               newleft, newright, kth);
+        }
+        SWAP(SORTEE(left), SORTEE(kth));
+        npy_intp j = RF_PARTITION(v, tosort, left, right);
+        if (j <= kth) {
+            left = j+1;
+        }
+        if (kth <= j) {
+            right = j-1;
+        }
+    }
+};
+ 
+NPY_NO_EXPORT int
+@name@floydrivest_@suff@(@type@ *v,
+#if @arg@
+                         npy_intp* tosort,
+#endif
+                         npy_intp num, npy_intp kth,
+                         npy_intp * pivots, //not used
+                         npy_intp * npiv, //not used
+                         void *NOT_USED)
+{
+    npy_intp low  = 0;
+    npy_intp high = num - 1;
+    /*
+     * use a faster O(n*kth) algorithm for very small kth
+     * e.g. for interpolating percentile
+     */
+    if (kth - low < 3) {
+        DUMBSELECT(v, tosort, low, high - low + 1, kth - low);
+        return 0;
+    }
+    else if ((@inexact@) && kth == num - 1) {
+        /* useful to check if NaN present via partition(d, (x, -1)) */
+        npy_intp k;
+        npy_intp maxidx = low;
+        @type@ maxval = v[IDX(low)];
+        for (k = low + 1; k < num; k++) {
+            if (!@TYPE@_LT(v[IDX(k)], maxval)) {
+                maxidx = k;
+                maxval = v[IDX(k)];
+            }
+        }
+        SWAP(SORTEE(kth), SORTEE(maxidx));
+        return 0;
+    }
+    @name@rf_recursive_@suff@(v,
+#if @arg@
+                          tosort,
+#endif
+                          low, high, kth);
+    return 0;
+};
 #undef IDX
 #undef SWAP
 #undef SORTEE
@@ -414,6 +569,7 @@ NPY_NO_EXPORT int
 #undef UNGUARDED_PARTITION
 #undef INTROSELECT
 #undef DUMBSELECT
+#undef RF_PARTITION
 /**end repeat1**/
 
 /**end repeat**/

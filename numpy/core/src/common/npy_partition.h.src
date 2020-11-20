@@ -52,6 +52,16 @@ NPY_NO_EXPORT int aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_intp num,
                                               npy_intp * pivots,
                                               npy_intp * npiv,
                                               void *NOT_USED);
+NPY_NO_EXPORT int floydrivest_@suff@(@type@ *v, npy_intp num,
+                                             npy_intp kth,
+                                             npy_intp * pivots,
+                                             npy_intp * npiv,
+                                             void *NOT_USED);
+NPY_NO_EXPORT int afloydrivest_@suff@(@type@ *v, npy_intp* tosort, npy_intp num,
+                                              npy_intp kth,
+                                              npy_intp * pivots,
+                                              npy_intp * npiv,
+                                              void *NOT_USED);
 
 
 /**end repeat**/
@@ -80,9 +90,11 @@ static part_map _part_map[] = {
         NPY_@TYPE@,
         {
             (PyArray_PartitionFunc *)&introselect_@suff@,
+            (PyArray_PartitionFunc *)&floydrivest_@suff@,
         },
         {
             (PyArray_ArgPartitionFunc *)&aintroselect_@suff@,
+            (PyArray_ArgPartitionFunc *)&afloydrivest_@suff@,
         }
     },
 /**end repeat**/
