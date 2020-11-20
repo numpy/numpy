@@ -245,26 +245,15 @@ gentype_nonzero_number(PyObject *m1)
 static PyObject *
 genint_type_str(PyObject *self)
 {
-    PyObject  *item, *item_str, *dtype, *dtype_name;
+    PyObject  *item, *item_str;
     item = gentype_generic_method(self, NULL, NULL, "item");
     if (item == NULL) {
         return NULL;
     }
 
-    if ((dtype = PyObject_GetAttrString(self, "dtype")) == NULL) {
-        return NULL;
-    }
-
-    if ((dtype_name = PyObject_GetAttrString(dtype, "name")) == NULL) {
-        return NULL;
-    }
-
-    item_str = PyUString_FromFormat("numpy.%S(%S)", dtype_name, item);
+    item_str = PyUString_FromFormat("%s(%S)", Py_TYPE(self)->tp_name, item);
 
     Py_DECREF(item);
-    Py_DECREF(dtype);
-    Py_DECREF(dtype_name);
-
     return item_str;
 }
 
