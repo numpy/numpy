@@ -278,9 +278,9 @@ gentype_nonzero_number(PyObject *m1)
 static PyObject *
 genint_type_str(PyObject *self)
 {
-    PyObject  *item, *item_str;
-    PyArray_Descr *descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
-    void *val = scalar_value(self, descr);
+    PyObject  *item, *item_str, *dtype_name;
+    PyArray_Descr *dtype = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
+    void *val = scalar_value(self, dtype);
     switch (descr->type_num) {
         case NPY_BYTE:
             item = PyLong_FromLong(*(int8_t *)val);
@@ -320,8 +320,16 @@ genint_type_str(PyObject *self)
         return NULL;
     }
 
-    item_str = PyObject_Str(item);
+    if ((dtype_name = PyObject_GetAttrString(dtype, "name")) == NULL) {
+        return NULL;
+    }
+
+    item_str = PyUString_FromFormat("numpy.%S(%S)", dtype_name, item);
+
     Py_DECREF(item);
+    Py_DECREF(dtype);
+    Py_DECREF(dtype_name);
+
     return item_str;
 }
 
