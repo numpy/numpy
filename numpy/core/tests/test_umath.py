@@ -249,6 +249,29 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
+    @pytest.mark.parametrize("input_dtype",
+            [np.int8, np.int16, np.int32, np.int64])
+    def test_division_int_boundary(self, input_dtype):
+        class ListWithDiv(list):
+            def __floordiv__(self, divisor):
+                return [i//divisor for i in self]
+
+        iinfo = np.iinfo(input_dtype)
+
+        # Create array with min, 25th percentile, 0, 75th percentile, max
+        arr = ListWithDiv([iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max])
+        dividends = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
+        a = np.array(arr, dtype = input_dtype)
+
+        for dividend in dividends:
+            div_a = a // dividend
+            div_arr = arr // dividend
+            assert_(all(div_a == div_arr))
+
+        with np.errstate(divide='raise'):
+            with pytest.raises(FloatingPointError):
+                a // 0
+
     def test_division_complex(self):
         # check that implementation is correct
         msg = "Complex division implementation check"
