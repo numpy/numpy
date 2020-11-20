@@ -320,16 +320,9 @@ genint_type_str(PyObject *self)
         return NULL;
     }
 
-    if ((dtype_name = PyObject_GetAttrString(dtype, "name")) == NULL) {
-        return NULL;
-    }
-
-    item_str = PyUString_FromFormat("numpy.%S(%S)", dtype_name, item);
+    item_str = PyUString_FromFormat("%s(%S)", Py_TYPE(self)->tp_name, item);
 
     Py_DECREF(item);
-    Py_DECREF(dtype);
-    Py_DECREF(dtype_name);
-
     return item_str;
 }
 
