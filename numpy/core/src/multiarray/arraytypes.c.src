@@ -281,6 +281,8 @@ static PyObject *
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
+ * #checkNaN = 0, 0, 1#
+ * #suffix = F, , L#
  */
 static int
 @NAME@_setitem(PyObject *op, void *ov, void *vap)
@@ -341,8 +343,21 @@ static int
                 return -1;
             }
         }
+#if defined(__VMS) && @checkNaN@
+        if (npy_isnan(oop.real)) {
+            temp.real = NPY_NAN@suffix@;
+        } else {
+            temp.real = (@ftype@) oop.real;
+        }
+        if (npy_isnan(oop.imag)) {
+            temp.imag = NPY_NAN@suffix@;
+        } else {
+            temp.imag = (@ftype@) oop.imag;
+        }
+#else
         temp.real = (@ftype@) oop.real;
         temp.imag = (@ftype@) oop.imag;
+#endif
     }
 
     memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
@@ -416,7 +431,16 @@ string_to_long_double(PyObject*op)
         /* Probably wasn't a string, try converting it via a python double */
         PyErr_Clear();
         Py_XDECREF(b);
+#ifdef __VMS
+        npy_double dtemp = MyPyFloat_AsDouble(op);
+        if (npy_isnan(dtemp)) {
+            temp = NPY_NANL;
+        } else {
+            temp = dtemp;
+        }
+#else
         temp = (npy_longdouble) MyPyFloat_AsDouble(op);
+#endif
     }
     return temp;
 }
@@ -3338,7 +3362,7 @@ static int
             *min_ind = i;
             break;
         }
-#endif 
+#endif
         if (!@le@(mp, *ip)) {  /* negated, for correct nan handling */
             mp = *ip;
             *min_ind = i;

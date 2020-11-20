@@ -58,25 +58,35 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_PZEROF __npy_pzerof()
 #define NPY_NZEROF __npy_nzerof()
 
+#ifdef __VMS
+extern double decc$gt_dinfinity;
+extern double decc$gt_dqnan;
+extern long double decc$gx_long_dbl_infinity;
+extern long double decc$gx_long_dbl_qnan;
+
+#define NPY_INFINITY    decc$gt_dinfinity
+#define NPY_NAN         decc$gt_dqnan
+#define NPY_PZERO ((npy_double)NPY_PZEROF)
+#define NPY_NZERO ((npy_double)NPY_NZEROF)
+
+#define NPY_INFINITYL   decc$gx_long_dbl_infinity
+#define NPY_NANL        decc$gx_long_dbl_qnan
+#define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
+#define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
+
+#else
+
 #define NPY_INFINITY ((npy_double)NPY_INFINITYF)
 #define NPY_NAN ((npy_double)NPY_NANF)
 #define NPY_PZERO ((npy_double)NPY_PZEROF)
 #define NPY_NZERO ((npy_double)NPY_NZEROF)
 
 #define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
-#ifdef __VMS
-NPY_INLINE static long double __npy_nanld(void)
-{
-    const union { npy_uint32 __i[4]; long double __f;} __bint = {{0, 0, 0, 0xffffc000UL}};
-    return __bint.__f;
-}
-#define NPY_NANL __npy_nanld()
-#else
 #define NPY_NANL ((npy_longdouble)NPY_NANF)
-#endif
 #define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
 #define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
 
+#endif
 /*
  * Useful constants
  */
