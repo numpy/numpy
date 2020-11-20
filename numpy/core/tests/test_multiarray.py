@@ -206,7 +206,7 @@ class TestFlags:
             a[2] = 10
             # only warn once
             assert_(len(w) == 1)
-    
+
     @pytest.mark.parametrize(["flag", "flag_value", "writeable"],
             [("writeable", True, True),
              # Delete _warn_on_write after deprecation and simplify
@@ -1387,11 +1387,11 @@ class TestStructured:
         a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
         a[['a', 'b']] = a[['b', 'a']]
         assert_equal(a[0].item(), (2,1))
-    
+
     def test_scalar_assignment(self):
         with assert_raises(ValueError):
-            arr = np.arange(25).reshape(5, 5)                                                                               
-            arr.itemset(3)  
+            arr = np.arange(25).reshape(5, 5)
+            arr.itemset(3)
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
@@ -4827,6 +4827,7 @@ class TestIO:
         with open(self.filename, "r+b") as f:
             f.seek(d.nbytes)
             d.tofile(f)
+            os.fsync(f.fileno())
             assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
         # check append mode (gh-8329)
         open(self.filename, "w").close() # delete file contents
