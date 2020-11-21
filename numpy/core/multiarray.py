@@ -90,8 +90,8 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
-        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        'F' means F-order, 'A' means 'F' if `prototype` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
 
         .. versionadded:: 1.6.0
