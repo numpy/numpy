@@ -58,6 +58,9 @@ abs_ptrdiff(char *a, char *b)
 #define BINARY_LOOP_FIXED\
     for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
 
+#define BINARY_LOOP_ZERO\
+    for(i = 0; i < n; i++, op1 += os1)
+
 /** (ip1, ip2) -> (op1) */
 #define BINARY_LOOP\
     BINARY_LOOP_BASE\
