@@ -252,25 +252,54 @@ class TestDivision:
     @pytest.mark.parametrize("input_dtype",
             [np.int8, np.int16, np.int32, np.int64])
     def test_division_int_boundary(self, input_dtype):
-        class ListWithDiv(list):
-            def __floordiv__(self, divisor):
-                return [i//divisor for i in self]
-
         iinfo = np.iinfo(input_dtype)
 
-        # Create array with min, 25th percentile, 0, 75th percentile, max
-        arr = ListWithDiv([iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max])
-        dividends = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
-        a = np.array(arr, dtype = input_dtype)
+        # Create list with min, 25th percentile, 0, 75th percentile, max
+        lst = [iinfo.min, iinfo.min//2, 0, iinfo.max//2, iinfo.max]
+        divisors = [iinfo.min, iinfo.min//2, iinfo.max//2, iinfo.max]
+        a = np.array(lst, dtype=input_dtype)
 
-        for dividend in dividends:
-            div_a = a // dividend
-            div_arr = arr // dividend
-            assert_(all(div_a == div_arr))
+        for divisor in divisors:
+            div_a = a // divisor
+            b = a.copy(); b //= divisor
+            div_lst = [i // divisor for i in lst]
+            assert_(all(div_a == div_lst))
+            assert_(all(div_a == b))
 
         with np.errstate(divide='raise'):
             with pytest.raises(FloatingPointError):
                 a // 0
+            with pytest.raises(FloatingPointError):
+                a //= 0
+
+    @pytest.mark.parametrize(
+            "dividend,divisor,quotient",
+            [(np.timedelta64(2,'Y'), np.timedelta64(2,'M'), 12),
+             (np.timedelta64(2,'Y'), np.timedelta64(-2,'M'), -12),
+             (np.timedelta64(-2,'Y'), np.timedelta64(2,'M'), -12),
+             (np.timedelta64(-2,'Y'), np.timedelta64(-2,'M'), 12),
+             (np.timedelta64(2,'M'), np.timedelta64(-2,'Y'), -1),
+             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), 0),
+             (np.timedelta64(2,'Y'), 2, np.timedelta64(1,'Y')),
+             (np.timedelta64(2,'Y'), -2, np.timedelta64(-1,'Y')),
+             (np.timedelta64(-2,'Y'), 2, np.timedelta64(-1,'Y')),
+             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
+             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
+             (np.timedelta64(-2,'Y'), -3, np.timedelta64(0,'Y')),
+             (np.timedelta64(-2,'Y'), 0, np.timedelta64('Nat','Y')),
+            ])
+    def test_division_int_timedelta(self, dividend, divisor, quotient):
+        # If either divisor is 0 or quotient is Nat, check for division by 0
+        if divisor and (isinstance(quotient, int) or not np.isnat(quotient)):
+            assert_(dividend // divisor == quotient)
+            # Test for arrays as well
+            assert_(all(
+                np.array([dividend]*5) // divisor \
+                == np.array([quotient]*5)))
+        else:
+            with np.errstate(divide='raise', invalid='raise'):
+                with pytest.raises(FloatingPointError):
+                    dividend // divisor
 
     def test_division_complex(self):
         # check that implementation is correct
