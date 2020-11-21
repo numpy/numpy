@@ -2,6 +2,7 @@
 import collections
 import functools
 import os
+import inspect
 
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
@@ -85,6 +86,18 @@ add_docstring(
 ArgSpec = collections.namedtuple('ArgSpec', 'args varargs keywords defaults')
 
 
+def add_docstring_from_dispatcher(implementation, dispatcher):
+    """Use dispatcher to populate doc and text signature of implementation"""
+    doc = dispatcher.__doc__
+    if doc is None:
+        return
+    add_docstring(implementation, '{}{}\n--\n\n{}'.format(
+        dispatcher.__name__,
+        inspect.signature(dispatcher),
+        doc
+    ))
+
+
 def verify_matching_signatures(implementation, dispatcher):
     """Verify that a dispatcher function has the right signature."""
     implementation_spec = ArgSpec(*getargspec(implementation))
@@ -161,7 +174,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     if not ARRAY_FUNCTION_ENABLED:
         def decorator(implementation):
             if docs_from_dispatcher:
-                add_docstring(implementation, dispatcher.__doc__)
+                add_docstring_from_dispatcher(implementation, dispatcher)
             if module is not None:
                 implementation.__module__ = module
             return implementation
@@ -172,7 +185,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
             verify_matching_signatures(implementation, dispatcher)
 
         if docs_from_dispatcher:
-            add_docstring(implementation, dispatcher.__doc__)
+            add_docstring_from_dispatcher(implementation, dispatcher)
 
         @functools.wraps(implementation)
         def public_api(*args, **kwargs):

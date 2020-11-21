@@ -2,6 +2,7 @@ import sys
 import subprocess
 import pkgutil
 import types
+import inspect
 import importlib
 import warnings
 
@@ -459,3 +460,18 @@ def test_api_importable():
         raise AssertionError("Modules that are not really public but looked "
                              "public and can not be imported: "
                              "{}".format(module_names))
+
+
+@pytest.mark.skipif(sys.flags.optimize >= 2, reason='docstring stripped')
+def test_all_function_have_signature():
+    allowlist = {'concatenate', 'where'}
+
+    for key, value in inspect.getmembers(numpy):
+        if not inspect.isfunction(value):
+            continue
+        if key in allowlist:
+            continue
+        try:
+            inspect.signature(value)
+        except ValueError:
+            raise AssertionError("No signature found for {}".format(key))

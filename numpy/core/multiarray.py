@@ -78,8 +78,6 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
 def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True, shape=None)
-
     Return a new array with the same shape and type as a given array.
 
     Parameters
@@ -146,8 +144,6 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
 def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
-    concatenate((a1, a2, ...), axis=0, out=None, dtype=None, casting="same_kind")
-
     Join a sequence of arrays along an existing axis.
 
     Parameters
@@ -247,8 +243,6 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
 def inner(a, b):
     """
-    inner(a, b, /)
-
     Inner product of two arrays.
 
     Ordinary inner product of vectors for 1-D arrays (without complex
@@ -339,8 +333,6 @@ def inner(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
 def where(condition, x=None, y=None):
     """
-    where(condition, [x, y], /)
-
     Return elements chosen from `x` or `y` depending on `condition`.
 
     .. note::
@@ -414,8 +406,6 @@ def where(condition, x=None, y=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.lexsort)
 def lexsort(keys, axis=None):
     """
-    lexsort(keys, axis=-1)
-
     Perform an indirect stable sort using a sequence of keys.
 
     Given multiple sorting keys, which can be interpreted as columns in a
@@ -496,8 +486,6 @@ def lexsort(keys, axis=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.can_cast)
 def can_cast(from_, to, casting=None):
     """
-    can_cast(from_, to, casting='safe')
-
     Returns True if cast between data types can occur according to the
     casting rule.  If from is a scalar or array scalar, also returns
     True if the scalar value can be cast without overflow or truncation
@@ -611,8 +599,6 @@ def can_cast(from_, to, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
 def min_scalar_type(a):
     """
-    min_scalar_type(a, /)
-
     For scalar ``a``, returns the data type with the smallest size
     and smallest scalar kind which can hold its value.  For non-scalar
     array ``a``, returns the vector's dtype unmodified.
@@ -662,8 +648,6 @@ def min_scalar_type(a):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.result_type)
 def result_type(*arrays_and_dtypes):
     """
-    result_type(*arrays_and_dtypes)
-
     Returns the type that results from applying the NumPy
     type promotion rules to the arguments.
 
@@ -734,8 +718,6 @@ def result_type(*arrays_and_dtypes):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.dot)
 def dot(a, b, out=None):
     """
-    dot(a, b, out=None)
-
     Dot product of two arrays. Specifically,
 
     - If both `a` and `b` are 1-D arrays, it is inner product of vectors
@@ -823,8 +805,6 @@ def dot(a, b, out=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
     """
-    vdot(a, b, /)
-
     Return the dot product of two vectors.
 
     The vdot(`a`, `b`) function handles complex numbers differently than
@@ -881,8 +861,6 @@ def vdot(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
 def bincount(x, weights=None, minlength=None):
     """
-    bincount(x, /, weights=None, minlength=0)
-
     Count number of occurrences of each value in array of non-negative ints.
 
     The number of bins (of size 1) is one larger than the largest value in
@@ -958,8 +936,6 @@ def bincount(x, weights=None, minlength=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.ravel_multi_index)
 def ravel_multi_index(multi_index, dims, mode=None, order=None):
     """
-    ravel_multi_index(multi_index, dims, mode='raise', order='C')
-
     Converts a tuple of index arrays into an array of flat
     indices, applying boundary modes to the multi-index.
 
@@ -1019,8 +995,6 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
 def unravel_index(indices, shape=None, order=None):
     """
-    unravel_index(indices, shape, order='C')
-
     Converts a flat index or array of flat indices into a tuple
     of coordinate arrays.
 
@@ -1069,8 +1043,6 @@ def unravel_index(indices, shape=None, order=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.copyto)
 def copyto(dst, src, casting=None, where=None):
     """
-    copyto(dst, src, casting='same_kind', where=True)
-
     Copies values from one array to another, broadcasting as necessary.
 
     Raises a TypeError if the `casting` rule is violated, and if
@@ -1104,8 +1076,6 @@ def copyto(dst, src, casting=None, where=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
 def putmask(a, mask, values):
     """
-    putmask(a, mask, values)
-
     Changes elements of an array based on conditional and input values.
 
     Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
@@ -1149,8 +1119,6 @@ def putmask(a, mask, values):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
 def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(a, /, axis=None, bitorder='big')
-
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
     The result is padded to full bytes by inserting zero bits at the end.
@@ -1207,8 +1175,6 @@ def packbits(a, axis=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
 def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(a, /, axis=None, count=None, bitorder='big')
-
     Unpacks elements of a uint8 array into a binary-valued output array.
 
     Each element of `a` represents a bit-field that should be unpacked
@@ -1291,8 +1257,6 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
 def shares_memory(a, b, max_work=None):
     """
-    shares_memory(a, b, /, max_work=None)
-
     Determine if two arrays share memory.
 
     .. warning::
@@ -1366,8 +1330,6 @@ def shares_memory(a, b, max_work=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
 def may_share_memory(a, b, max_work=None):
     """
-    may_share_memory(a, b, /, max_work=None)
-
     Determine if two arrays might share memory
 
     A return of True does not necessarily mean that the two arrays
@@ -1407,8 +1369,6 @@ def may_share_memory(a, b, max_work=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.is_busday)
 def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     """
-    is_busday(dates, weekmask='1111100', holidays=None, busdaycal=None, out=None)
-
     Calculates which of the given dates are valid days, and which are not.
 
     .. versionadded:: 1.7.0
@@ -1462,8 +1422,6 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
                   busdaycal=None, out=None):
     """
-    busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaycal=None, out=None)
-
     First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
     counted in valid days.
@@ -1556,8 +1514,6 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 def busday_count(begindates, enddates, weekmask=None, holidays=None,
                  busdaycal=None, out=None):
     """
-    busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaycal=None, out=None)
-
     Counts the number of valid days between `begindates` and
     `enddates`, not including the day of `enddates`.
 
@@ -1624,8 +1580,6 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
     _multiarray_umath.datetime_as_string)
 def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     """
-    datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind')
-
     Convert an array of datetimes into an array of strings.
 
     Parameters
