@@ -9,28 +9,84 @@ Array creation
 Introduction
 ============
 
-There are 5 general mechanisms for creating arrays:
+There are 6 general mechanisms for creating arrays:
 
 1) Conversion from other Python structures (e.g., lists, tuples)
-2) Intrinsic numpy array creation objects (e.g., arange, ones, zeros,
+2) Intrinsic NumPy array creation objects (e.g., arange, ones, zeros,
    etc.)
-3) Reading arrays from disk, either from standard or custom formats
-4) Creating arrays from raw bytes through the use of strings or buffers
-5) Use of special library functions (e.g., random)
+3) Replicating, joining, or mutating existing arrays
+4) Reading arrays from disk, either from standard or custom formats
+5) Creating arrays from raw bytes through the use of strings or buffers
+6) Use of special library functions (e.g., random)
 
-This section will not cover means of replicating, joining, or otherwise
-expanding or mutating existing arrays. Nor will it cover creating object
-arrays or structured arrays. Both of those are covered in their own sections.
+You can use these methods to create object or structured arrays, but
+this application is outside the scope of this document. 
 
-Converting Python array_like Objects to NumPy Arrays
+Converting Python structures to NumPy Arrays
 ====================================================
+
+Python structures such as lists, tuples, and dictionaries. Lists and
+tuples are defined using ``[...]`` and ``(...)``, respectively. Lists
+and tuples lend themselves to ND-array creation:
+* a list of numbers will create a 1D array, 
+* a list of lists will create a 2D array, 
+* and further nested lists will create ND arrays
+
+::
+a1D = np.array([1,2,3])
+a2D = np.array([ [1, 2], [3, 4] ])
+a3D = np.array([ [ [1, 2], [3, 4]],
+                 [ [5, 6], [7, 8]]
+               ])
+
+lists
+
+tuples
+
+dictionary [what is a Python object?]
+
+When you use :ref:`array` to define a new array, its important to
+consider the `dtype` of the elements in the array. 
+
+NumPy arrays enable you to specify the ``dtype`` for elements in the
+array. This feature gives you more control over the underlying data
+structures and how the elements are handled in C/C++ functions. If you
+are not careful with ``dtype`` assignments, you can get unwanted
+overflow, as such 
+
+::
+  >>> a = np.array([127,128,129], dtype = int8)
+  >>> print(a)
+  [ 127 -128 -127 ]
+
+An 8-bit signed integer can represent integers from -128 to 127.
+Assigning the ``int8`` array to integers outside of this range results
+in overflow. This feature can often be misunderstood if you use it to
+perform calculations without matching ``dtypes``, for example
+
+::
+    >>> a = np.array([2, 3, 4], dtype = uint32)
+    >>> b = np.array([5, 6, 7], dtype = uint32)
+    >>> c_unsigned32 = a - b
+    >>> print('unsigned c:', c_unsigned32, c_unsigned32.dtype)
+    unsigned c: [4294967293 4294967293 4294967293] uint32
+    >>> c_signed32 = a - b.astype(int32)
+    >>> print('signed c:', c_signed32, c_signed32.dtype)
+    signed c: [-3 -3 -3] int64
+
+Notice when you perform operations with two arrays of the same
+``dtype``, the resulting array maintains the ``uint32`` type. When you
+perform operations with different ``dtype`` arrays, NumPy will try to
+assign a new type that satisfies all of the array elements involved in
+the computation, here ``unit32`` and ``int32`` can both be represented in
+the ``int64`` ``dtype``
 
 In general, numerical data arranged in an array-like structure in Python can
 be converted to arrays through the use of the array() function. The most
 obvious examples are lists and tuples. See the documentation for array() for
 details for its use. Some objects may support the array-protocol and allow
 conversion to arrays this way. A simple way to find out if the object can be
-converted to a numpy array using array() is simply to try it interactively and
+converted to a NumPy array using array() is simply to try it interactively and
 see if it works! (The Python Way).
 
 Examples: ::
@@ -41,10 +97,12 @@ Examples: ::
      and types
  >>> x = np.array([[ 1.+0.j, 2.+0.j], [ 0.+0.j, 0.+0.j], [ 1.+1.j, 3.+0.j]])
 
-Intrinsic NumPy Array Creation
-==============================
+Intrinsic NumPy array creation objects
+======================================
 
-NumPy has built-in functions for creating arrays from scratch:
+NumPy has built-in functions for creating arrays from scratch as laid
+out in the :ref:`Array creation routines <routines.array-creation>`.
+When creating NumPy 
 
 zeros(shape) will create an array filled with 0 values with the specified
 shape. The default dtype is float64. ::
@@ -101,8 +159,8 @@ Standard Binary Formats
 -----------------------
 
 Various fields have standard formats for array data. The following lists the
-ones with known python libraries to read them and return numpy arrays (there
-may be others for which it is possible to read and convert to numpy arrays so
+ones with known python libraries to read them and return NumPy arrays (there
+may be others for which it is possible to read and convert to NumPy arrays so
 check the last section as well)
 ::
 
@@ -127,8 +185,8 @@ Custom Binary Formats
 ---------------------
 
 There are a variety of approaches one can use. If the file has a relatively
-simple format then one can write a simple I/O library and use the numpy
-fromfile() function and .tofile() method to read and write numpy arrays
+simple format then one can write a simple I/O library and use the NumPy
+fromfile() function and .tofile() method to read and write NumPy arrays
 directly (mind your byteorder though!) If a good C or C++ library exists that
 read the data, one can wrap that library with a variety of techniques though
 that certainly is much more work and requires significantly more advanced
