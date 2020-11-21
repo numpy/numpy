@@ -95,7 +95,7 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
         .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `a`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
@@ -237,7 +237,7 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
         .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `a`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
@@ -374,7 +374,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
         as possible.
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `a`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
