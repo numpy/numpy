@@ -176,6 +176,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
 def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     arr = asanyarray(a)
 
+    is_float16_result = False
     rcount = _count_reduce_items(arr, axis)
     # Make this warning show up on top.
     if ddof >= rcount:
@@ -183,8 +184,12 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
                       stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
-    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
-        dtype = mu.dtype('f8')
+    if dtype is None:
+        if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+            dtype = mu.dtype('f8')
+        elif issubclass(arr.dtype.type, nt.float16):
+            dtype = mu.dtype('f4')
+            is_float16_result = True
 
     # Compute the mean.
     # Note that if dtype is not of inexact type then arraymean will
@@ -196,7 +201,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     else:
         arrmean = arrmean.dtype.type(arrmean / rcount)
 
-    # Compute sum of squared deviations from mean
+    # Compute sum of squared deviations from mean.
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
     x = asanyarray(arr - arrmean)
@@ -218,25 +223,46 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     # Compute degrees of freedom and make sure it is not negative.
     rcount = max([rcount - ddof, 0])
 
-    # divide by degrees of freedom
+    # Divide by degrees of freedom.
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
+        if is_float16_result and out is None:
+            ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(ret / rcount)
+        if is_float16_result:
+            ret = arr.dtype.type(ret / rcount)
+        else:
+            ret = ret.dtype.type(ret / rcount)
     else:
         ret = ret / rcount
 
     return ret
 
 def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+    arr = asanyarray(a)
+
+    is_float16_result = False
     ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                keepdims=keepdims)
 
+    # Cast bool, unsigned int, and int to float64 by default
+    if dtype is None:
+        if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+            dtype = mu.dtype('f8')
+        elif issubclass(arr.dtype.type, nt.float16):
+            dtype = mu.dtype('f4')
+            is_float16_result = True
+
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
+        if is_float16_result and out is None:
+            ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(um.sqrt(ret))
+        if is_float16_result:
+            ret = arr.dtype.type(um.sqrt(ret))
+        else:
+            ret = ret.dtype.type(um.sqrt(ret))
     else:
         ret = um.sqrt(ret)
 
