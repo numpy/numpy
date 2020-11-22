@@ -1634,6 +1634,47 @@ class TestMethods:
 
     sort_kinds = ['quicksort', 'heapsort', 'stable']
 
+    def test_all_where(self):
+        a = np.array([[True, False, True],
+                      [False, False, False],
+                      [True, True, True]])
+        wh_full = np.array([[True, False, True],
+                            [False, False, False],
+                            [True, False, True]])
+        wh_lower = np.array([[False],
+                             [False],
+                             [True]])
+        for _ax in [0, None]:
+            assert_equal(a.all(axis=_ax, where=wh_lower),
+                        np.all(a[wh_lower[:,0],:], axis=_ax))
+            assert_equal(np.all(a, axis=_ax, where=wh_lower),
+                         a[wh_lower[:,0],:].all(axis=_ax))
+
+        assert_equal(a.all(where=wh_full), True)
+        assert_equal(np.all(a, where=wh_full), True)
+        assert_equal(a.all(where=False), True)
+        assert_equal(np.all(a, where=False), True)
+
+    def test_any_where(self):
+        a = np.array([[True, False, True],
+                      [False, False, False],
+                      [True, True, True]])
+        wh_full = np.array([[False, True, False],
+                            [True, True, True],
+                            [False, False, False]])
+        wh_middle = np.array([[False],
+                              [True],
+                              [False]])
+        for _ax in [0, None]:
+            assert_equal(a.any(axis=_ax, where=wh_middle),
+                         np.any(a[wh_middle[:,0],:], axis=_ax))
+            assert_equal(np.any(a, axis=_ax, where=wh_middle),
+                         a[wh_middle[:,0],:].any(axis=_ax))
+        assert_equal(a.any(where=wh_full), False)
+        assert_equal(np.any(a, where=wh_full), False)
+        assert_equal(a.any(where=False), False)
+        assert_equal(np.any(a, where=False), False)
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
@@ -5626,6 +5667,33 @@ class TestStats:
         with assert_raises(np.core._exceptions.AxisError):
             np.arange(10).mean(axis=2)
 
+    def test_mean_where(self):
+        a = np.arange(16).reshape((4, 4))
+        wh_full = np.array([[False, True, False, True],
+                            [True, False, True, False],
+                            [True, True, False, False],
+                            [False, False, True, True]])
+        wh_partial = np.array([[False],
+                               [True],
+                               [True],
+                               [False]])
+        _cases = [(1, True, [1.5, 5.5, 9.5, 13.5]),
+                  (0, wh_full, [6., 5., 10., 9.]),
+                  (1, wh_full, [2., 5., 8.5, 14.5]),
+                  (0, wh_partial, [6., 7., 8., 9.])]
+        for _ax, _wh, _res in _cases:
+            assert_allclose(a.mean(axis=_ax, where=_wh),
+                            np.array(_res))
+            assert_allclose(np.mean(a, axis=_ax, where=_wh),
+                            np.array(_res))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_allclose(a.mean(axis=1, where=wh_partial),
+                            np.array([np.nan, 5.5, 9.5, np.nan]))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(a.mean(where=False), np.nan)
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(np.mean(a, where=False), np.nan)
+
     def test_var_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
@@ -5674,12 +5742,76 @@ class TestStats:
         with assert_raises(np.core._exceptions.AxisError):
             np.arange(10).var(axis=2)
 
+    def test_var_where(self):
+        a = np.arange(25).reshape((5, 5))
+        wh_full = np.array([[False, True, False, True, True],
+                            [True, False, True, True, False],
+                            [True, True, False, False, True],
+                            [False, True, True, False, True],
+                            [True, False, True, True, False]])
+        wh_partial = np.array([[False],
+                               [True],
+                               [True],
+                               [False],
+                               [True]])
+        _cases = [(0, True, [50., 50., 50., 50., 50.]),
+                  (1, True, [2., 2., 2., 2., 2.])]
+        for _ax, _wh, _res in _cases:
+            assert_allclose(a.var(axis=_ax, where=_wh),
+                            np.array(_res))
+            assert_allclose(np.var(a, axis=_ax, where=_wh),
+                            np.array(_res))
+        assert_allclose(np.var(a, axis=1, where=wh_full),
+                        np.var(a[wh_full].reshape((5, 3)), axis=1))
+        assert_allclose(np.var(a, axis=0, where=wh_partial),
+                        np.var(a[wh_partial[:,0]], axis=0))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(a.var(where=False), np.nan)
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(np.var(a, where=False), np.nan)
+
     def test_std_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
                 tgt = np.sqrt(_var(mat, axis=axis))
                 res = _std(mat, axis=axis)
                 assert_almost_equal(res, tgt)
+
+    def test_std_where(self):
+        a = np.arange(25).reshape((5,5))[::-1]
+        whf = np.array([[False, True, False, True, True],
+                        [True, False, True, False, True],
+                        [True, True, False, True, False],
+                        [True, False, True, True, False],
+                        [False, True, False, True, True]])
+        whp = np.array([[False],
+                        [False],
+                        [True],
+                        [True],
+                        [False]])
+        _cases = [
+            (0, True, 7.07106781*np.ones((5))),
+            (1, True, 1.41421356*np.ones((5))),
+            (0, whf,
+             np.array([4.0824829 , 8.16496581, 5., 7.39509973, 8.49836586])),
+            (0, whp, 2.5*np.ones((5)))
+        ]
+        for _ax, _wh, _res in _cases:
+            assert_allclose(a.std(axis=_ax, where=_wh), _res)
+            assert_allclose(np.std(a, axis=_ax, where=_wh), _res)
+
+        assert_allclose(a.std(axis=1, where=whf),
+                        np.std(a[whf].reshape((5,3)), axis=1))
+        assert_allclose(np.std(a, axis=1, where=whf),
+                        (a[whf].reshape((5,3))).std(axis=1))
+        assert_allclose(a.std(axis=0, where=whp),
+                        np.std(a[whp[:,0]], axis=0))
+        assert_allclose(np.std(a, axis=0, where=whp),
+                        (a[whp[:,0]]).std(axis=0))
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(a.std(where=False), np.nan)
+        with pytest.warns(RuntimeWarning) as w:
+            assert_equal(np.std(a, where=False), np.nan)
 
     def test_subclass(self):
         class TestArray(np.ndarray):

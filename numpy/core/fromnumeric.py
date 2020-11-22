@@ -2248,12 +2248,13 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
                           initial=initial, where=where)
 
 
-def _any_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out)
+def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
+                    where=np._NoValue):
+    return (a, where, out)
 
 
 @array_function_dispatch(_any_dispatcher)
-def any(a, axis=None, out=None, keepdims=np._NoValue):
+def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -2291,6 +2292,12 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
+    where : array_like of bool, optional
+        Elements to include in checking for any `True` values.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
+
     Returns
     -------
     any : bool or ndarray
@@ -2322,6 +2329,9 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.any(np.nan)
     True
 
+    >>> np.any([[True, False], [False, False]], where=[[False], [True]])
+    False
+
     >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
@@ -2333,15 +2343,17 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
+                          keepdims=keepdims, where=where)
 
 
-def _all_dispatcher(a, axis=None, out=None, keepdims=None):
-    return (a, out)
+def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
+                    where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_all_dispatcher)
-def all(a, axis=None, out=None, keepdims=np._NoValue):
+def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -2377,6 +2389,12 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
+    where : array_like of bool, optional
+        Elements to include in checking for all `True` values.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
+
     Returns
     -------
     all : ndarray, bool
@@ -2408,13 +2426,17 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.all([1.0, np.nan])
     True
 
+    >>> np.all([[True, True], [False, True]], where=[[True], [False]])
+    True
+
     >>> o=np.array(False)
     >>> z=np.all([-1, 4, 5], out=o)
     >>> id(z), id(o), z
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
+                          keepdims=keepdims, where=where)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
@@ -3271,12 +3293,14 @@ def around(a, decimals=0, out=None):
     return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
-def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
-    return (a, out)
+def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None, *,
+                     where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_mean_dispatcher)
-def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
+         where=np._NoValue):
     """
     Compute the arithmetic mean along the specified axis.
 
@@ -3317,6 +3341,11 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the mean. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -3366,10 +3395,19 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.mean(a, dtype=np.float64)
     0.55000000074505806 # may vary
 
+    Specifying a where argument:
+    >>> a = np.array([[5, 9, 13], [14, 10, 12], [11, 15, 19]])
+    >>> np.mean(a)
+    12.0
+    >>> np.mean(a, where=[[True], [False], [False]])
+    9.0
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
             mean = a.mean
@@ -3382,13 +3420,14 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
                           out=out, **kwargs)
 
 
-def _std_dispatcher(
-        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
-    return (a, out)
+def _std_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
+                    keepdims=None, *, where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_std_dispatcher)
-def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
+def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
+        where=np._NoValue):
     """
     Compute the standard deviation along the specified axis.
 
@@ -3430,6 +3469,12 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the standard deviation.
+        See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -3490,11 +3535,20 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     >>> np.std(a, dtype=np.float64)
     0.44999999925494177 # may vary
 
+    Specifying a where argument:
+
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> np.std(a)
+    2.614064523559687 # may vary
+    >>> np.std(a, where=[[True], [True], [False]])
+    2.0
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
-
+    if where is not np._NoValue:
+        kwargs['where'] = where
     if type(a) is not mu.ndarray:
         try:
             std = a.std
@@ -3507,13 +3561,14 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
                          **kwargs)
 
 
-def _var_dispatcher(
-        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
-    return (a, out)
+def _var_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
+                    keepdims=None, *, where=None):
+    return (a, where, out)
 
 
 @array_function_dispatch(_var_dispatcher)
-def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
+def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
+        where=np._NoValue):
     """
     Compute the variance along the specified axis.
 
@@ -3556,6 +3611,12 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the variance. See `~numpy.ufunc.reduce` for
+        details.
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -3614,10 +3675,20 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     >>> ((1-0.55)**2 + (0.1-0.55)**2)/2
     0.2025
 
+    Specifying a where argument:
+
+    >>> a = np.array([[14, 8, 11, 10], [7, 9, 10, 11], [10, 15, 5, 10]])
+    >>> np.var(a)
+    6.833333333333333 # may vary
+    >>> np.var(a, where=[[True], [True], [False]])
+    4.0
+
     """
     kwargs = {}
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwargs['where'] = where
 
     if type(a) is not mu.ndarray:
         try:
