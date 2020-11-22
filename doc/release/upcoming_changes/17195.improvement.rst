@@ -1,0 +1,5 @@
+Make the window functions exactly symmetric
+-------------------------------------------
+Make sure the window functions provided by NumPy are symmetric. There were
+previously small deviations from symmetry due to numerical precision that are
+now avoided by better arrangement of the computation.
