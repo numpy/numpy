@@ -721,7 +721,6 @@ typedef struct tagPyArrayObject {
 } PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (PyArray_Type.tp_basicsize)
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
