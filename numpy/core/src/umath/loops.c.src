@@ -21,9 +21,7 @@
 #include <string.h> /* for memchr */
 
 /* Use Libdivide for faster division */
-#ifndef USE_LEGACY_DIVISION
 #include "numpy/libdivide/libdivide.h"
-#endif
 
 /*
  * cutoff blocksize for pairwise summation
