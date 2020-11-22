@@ -1126,7 +1126,7 @@ indices for each dimension must have the same shape.
     array([[ 2,  6],
            [ 6, 10]])
     >>>
-    >>> a[:, j]                                     # i.e., a[ : , j]
+    >>> a[:, j]                                     # i.e., a[0:4, j]
     array([[[ 2,  1],
             [ 3,  3]],
     <BLANKLINE>
