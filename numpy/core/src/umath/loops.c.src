@@ -847,20 +847,20 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 
 /* Libdivide only supports 32 and 64 bit types
  * We try to pick the best possible one */
-/**begin repeat1
- * #kind = t, gen, do#
- */
 #if NPY_BITSOF_@TYPE@ <= 32
-#define libdivide_@type@_@kind@ libdivide_s32_@kind@
+#define libdivide_@type@_t libdivide_s32_t
+#define libdivide_@type@_gen libdivide_s32_gen
+#define libdivide_@type@_do libdivide_s32_do
 #else
-#define libdivide_@type@_@kind@ libdivide_s64_@kind@
+#define libdivide_@type@_t libdivide_s64_t
+#define libdivide_@type@_gen libdivide_s64_gen
+#define libdivide_@type@_do libdivide_s64_do
 #endif
-/**end repeat1**/
 
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP_BASE
+    BINARY_DEFS
 
     /* When the divisor is a constant, use libdivde for faster division */
     if (steps[1] == 0) {
@@ -868,14 +868,14 @@ NPY_NO_EXPORT void
 
         /* If divisor is 0, we need not compute anything*/
         if (in2 == 0) {
-            BINARY_LOOP_ZERO {
+            BINARY_LOOP_SLIDING {
                 npy_set_floatstatus_divbyzero();
                 *((@type@ *)op1) = 0;
             }
         }
         else {
             struct libdivide_@type@_t fast_d = libdivide_@type@_gen(in2);
-            BINARY_LOOP_FIXED {
+            BINARY_LOOP_SLIDING {
                 const @type@ in1 = *(@type@ *)ip1;
                 /*
                  * FIXME: On x86 at least, dividing the smallest representable integer
@@ -1412,7 +1412,7 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP_BASE
+    BINARY_DEFS
 
     /* When the divisor is a constant, use libdivde for faster division */
     if (steps[1] == 0) {
@@ -1420,14 +1420,14 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
 
         /* If divisor is 0, we need not compute anything */
         if (in2 == 0) {
-            BINARY_LOOP_ZERO {
+            BINARY_LOOP_SLIDING {
                 npy_set_floatstatus_divbyzero();
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
         else {
             struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-            BINARY_LOOP_FIXED {
+            BINARY_LOOP_SLIDING {
                 const npy_timedelta in1 = *(npy_timedelta *)ip1;
                 if (in1 == NPY_DATETIME_NAT) {
                     *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
@@ -1520,7 +1520,7 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     /* NOTE: This code is similar to array floor divide*/
-    BINARY_LOOP_BASE
+    BINARY_DEFS
 
     /* When the divisor is a constant, use libdivde for faster division */
     if (steps[1] == 0) {
@@ -1528,20 +1528,20 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
 
         /* If divisor is 0 or NAT, we need not compute anything */
         if (in2 == 0) {
-            BINARY_LOOP_ZERO {
+            BINARY_LOOP_SLIDING {
                 npy_set_floatstatus_divbyzero();
                 *((npy_int64 *)op1) = 0;
             }
         }
         else if (in2 == NPY_DATETIME_NAT) {
-            BINARY_LOOP_ZERO {
+            BINARY_LOOP_SLIDING {
                 npy_set_floatstatus_invalid();
                 *((npy_int64 *)op1) = 0;
             }
         }
         else {
             struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-            BINARY_LOOP_FIXED {
+             BINARY_LOOP_SLIDING {
                 const npy_timedelta in1 = *(npy_timedelta *)ip1;
                 if (in1 == NPY_DATETIME_NAT) {
                     npy_set_floatstatus_invalid();
