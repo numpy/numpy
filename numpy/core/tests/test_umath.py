@@ -275,8 +275,8 @@ class TestDivision:
                 a // 0
             with pytest.raises(FloatingPointError):
                 a //= 0
-            with pytest.raises(FloatingPointError):
-                np.array([], dtype=input_dtype) // 0
+
+            np.array([], dtype=input_dtype) // 0
 
     @pytest.mark.parametrize(
             "dividend,divisor,quotient",
@@ -285,8 +285,7 @@ class TestDivision:
              (np.timedelta64(-2,'Y'), np.timedelta64(2,'M'), -12),
              (np.timedelta64(-2,'Y'), np.timedelta64(-2,'M'), 12),
              (np.timedelta64(2,'M'), np.timedelta64(-2,'Y'), -1),
-             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), None),
-             (np.array([], dtype='timedelta64[Y]'), np.timedelta64('Nat','M'), None),
+             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), 0),
              (np.timedelta64(2,'Y'), 2, np.timedelta64(1,'Y')),
              (np.timedelta64(2,'Y'), -2, np.timedelta64(-1,'Y')),
              (np.timedelta64(-2,'Y'), 2, np.timedelta64(-1,'Y')),
@@ -294,12 +293,10 @@ class TestDivision:
              (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
              (np.timedelta64(-2,'Y'), -3, np.timedelta64(0,'Y')),
              (np.timedelta64(-2,'Y'), 0, np.timedelta64('Nat','Y')),
-             (np.array([], dtype='timedelta64[Y]'), 0, None),
             ])
     def test_division_int_timedelta(self, dividend, divisor, quotient):
-        # If either divisor is 0 or quotient is None or Nat, check for division by 0
-        if divisor and (isinstance(quotient, int) or
-                not (quotient is None or np.isnat(quotient))):
+        # If either divisor is 0 or quotient is Nat, check for division by 0
+        if divisor and (isinstance(quotient, int) or not np.isnat(quotient)):
             msg = "Timedelta floor division check"
             assert dividend // divisor == quotient, msg
 

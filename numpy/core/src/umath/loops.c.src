@@ -860,13 +860,8 @@ NPY_NO_EXPORT void
 {
     BINARY_DEFS
 
-    /* When the divisor is a constant, use libdivde for faster division */
+    /* When the divisor is a constant, use libdivide for faster division */
     if (steps[1] == 0) {
-        /* If divisor is 0, set warning*/
-        if (*(@type@ *)ip2 == 0) {
-            npy_set_floatstatus_divbyzero();
-        }
-
         /* In case of empty array, just return*/
         if (n == 0) {
             return;
@@ -876,6 +871,7 @@ NPY_NO_EXPORT void
 
         /* If divisor is 0, we need not compute anything*/
         if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
             BINARY_LOOP_SLIDING {
                 *((@type@ *)op1) = 0;
             }
@@ -1422,13 +1418,8 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
     /* NOTE: This code is similar to array floor divide*/
     BINARY_DEFS
 
-    /* When the divisor is a constant, use libdivde for faster division */
+    /* When the divisor is a constant, use libdivide for faster division */
     if (steps[1] == 0) {
-        /* If divisor is 0, set warning*/
-        if (*(npy_int64 *)ip2 == 0) {
-            npy_set_floatstatus_divbyzero();
-        }
-
         /* In case of empty array, just return*/
         if (n == 0) {
             return;
@@ -1438,6 +1429,7 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
 
         /* If divisor is 0, we need not compute anything */
         if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
             BINARY_LOOP_SLIDING {
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
@@ -1539,16 +1531,8 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
     /* NOTE: This code is similar to array floor divide*/
     BINARY_DEFS
 
-    /* When the divisor is a constant, use libdivde for faster division */
+    /* When the divisor is a constant, use libdivide for faster division */
     if (steps[1] == 0) {
-        /* If divisor is 0 or NAT, set warning*/
-        if (*(npy_timedelta *)ip2 == 0) {
-            npy_set_floatstatus_divbyzero();
-        }
-        else if(*(npy_timedelta *)ip2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-        }
-
         /* In case of empty array, just return*/
         if (n == 0) {
             return;
@@ -1558,11 +1542,13 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
 
         /* If divisor is 0 or NAT, we need not compute anything */
         if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
             BINARY_LOOP_SLIDING {
                 *((npy_int64 *)op1) = 0;
             }
         }
         else if (in2 == NPY_DATETIME_NAT) {
+            npy_set_floatstatus_invalid();
             BINARY_LOOP_SLIDING {
                 *((npy_int64 *)op1) = 0;
             }
