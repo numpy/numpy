@@ -111,6 +111,16 @@ Thumbs.db
 #############################
 doc/source/savefig/
 
+# Azure Pipeline generated files #
+##################################
+venv/*
+
+# github actions generated files #
+##################################
+log
+warnings
+_configtest.gcno
+pypy3/*
 
 # Things specific to this project #
 ###################################
