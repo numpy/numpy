@@ -6,7 +6,7 @@ defaults:
   run:
     shell: bash
 
-env: 
+env:
   DOWNLOAD_OPENBLAS: 1
   PYTHON_VERSION: 3.7
 
@@ -22,7 +22,7 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
- 
+
   basic:
     needs: smoke_test
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
 
   debug:
     needs: smoke_test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       USE_DEBUG: 1
     steps:
@@ -196,7 +196,6 @@ jobs:
             popd
         fi
         echo $PWD/pypy3/bin >> $GITHUB_PATH
- 
+
     - uses: ./.github/actions
 
-       

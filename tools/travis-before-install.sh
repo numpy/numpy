@@ -9,7 +9,7 @@ free -m
 df -h
 ulimit -a
 
-sudo apt install gfortran eatmydata libgfortran3 libgfortran5
+sudo apt install gfortran eatmydata libgfortran5
 
 if [ "$USE_DEBUG" ]
 then

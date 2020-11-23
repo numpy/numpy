@@ -72,17 +72,11 @@ run_test()
   # file does not install correctly when Python's optimization level is set
   # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
   PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt
+  DURATIONS_FLAG="--durations 10"
 
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
     export MYPYPATH=$PWD
-  fi
-
-  # pytest aborts when running --durations with python3.6-dbg, so only enable
-  # it for non-debug tests. That is a cPython bug fixed in later versions of
-  # python3.7 but python3.7-dbg is not currently available on travisCI.
-  if [ -z "$USE_DEBUG" ]; then
-    DURATIONS_FLAG="--durations 10"
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
