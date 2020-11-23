@@ -1,0 +1,4 @@
+New``__f2py_numpy_version__`` attribute for f2py generated modules.
+-------------------------------------------------------------------
+Because f2py is released together with NumPy, ``__f2py_numpy_version__``
+provides a way to track the version f2py used to generate the module.

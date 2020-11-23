@@ -1,0 +1,12 @@
+``mypy`` tests can be run via runtests.py
+-----------------------------------------
+Currently running mypy with the NumPy stubs configured requires
+either:
+
+* Installing NumPy
+* Adding the source directory to MYPYPATH and linking to the mypy.ini
+
+Both options are somewhat inconvenient, so add a ``--mypy`` option to runtests
+that handles setting things up for you. This will also be useful in the future
+for any typing codegen since it will ensure the project is built before type
+checking.
