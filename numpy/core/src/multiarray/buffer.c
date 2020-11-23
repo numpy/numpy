@@ -605,7 +605,7 @@ buffer_info_tag(void *buffer_info)
         return buffer_info;
     }
     else {
-        return (void *)((uintptr_t)buffer_info + 2);
+        return (void *)((uintptr_t)buffer_info + 3);
     }
 }
 
@@ -618,7 +618,7 @@ _buffer_info_untag(
         *buffer_info = NULL;
         return 0;
     }
-    if (NPY_UNLIKELY(((uintptr_t)tagged_buffer_info & 0x7) != 2)) {
+    if (NPY_UNLIKELY(((uintptr_t)tagged_buffer_info & 0x7) != 3)) {
         PyErr_Format(PyExc_RuntimeError,
                 "Object of type %S appears to be C subclassed NumPy array, "
                 "void scalar, or allocated in a non-standard way."
@@ -629,7 +629,7 @@ _buffer_info_untag(
                 Py_TYPE(obj));
         return -1;
     }
-    *buffer_info = (void *)((uintptr_t)tagged_buffer_info - 2);
+    *buffer_info = (void *)((uintptr_t)tagged_buffer_info - 3);
     return 0;
 }
 

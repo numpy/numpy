@@ -702,9 +702,10 @@ corrupt_or_fix_bufferinfo(PyObject *dummy, PyObject *obj)
     }
     if (*buffer_info_ptr == NULL) {
         /* set to an invalid value (as a subclass might accidentally) */
-        *buffer_info_ptr = &corrupt_or_fix_bufferinfo;
+        *buffer_info_ptr = obj;
+        assert(((uintptr_t)obj & 7) == 0);
     }
-    else if (*buffer_info_ptr == &corrupt_or_fix_bufferinfo) {
+    else if (*buffer_info_ptr == obj) {
         /* Reset to a NULL (good value) */
         *buffer_info_ptr = NULL;
     }
