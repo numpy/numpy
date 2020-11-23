@@ -263,14 +263,20 @@ class TestDivision:
             div_a = a // divisor
             b = a.copy(); b //= divisor
             div_lst = [i // divisor for i in lst]
-            assert_(all(div_a == div_lst))
-            assert_(all(div_a == b))
+
+            msg = "Integer arrays floor division check (//)"
+            assert all(div_a == div_lst), msg
+
+            msg = "Integer arrays floor division check (//=)"
+            assert all(div_a == b), msg
 
         with np.errstate(divide='raise'):
             with pytest.raises(FloatingPointError):
                 a // 0
             with pytest.raises(FloatingPointError):
                 a //= 0
+            with pytest.raises(FloatingPointError):
+                np.array([], dtype=input_dtype) // 0
 
     @pytest.mark.parametrize(
             "dividend,divisor,quotient",
@@ -279,7 +285,8 @@ class TestDivision:
              (np.timedelta64(-2,'Y'), np.timedelta64(2,'M'), -12),
              (np.timedelta64(-2,'Y'), np.timedelta64(-2,'M'), 12),
              (np.timedelta64(2,'M'), np.timedelta64(-2,'Y'), -1),
-             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), 0),
+             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), None),
+             (np.array([], dtype='timedelta64[Y]'), np.timedelta64('Nat','M'), None),
              (np.timedelta64(2,'Y'), 2, np.timedelta64(1,'Y')),
              (np.timedelta64(2,'Y'), -2, np.timedelta64(-1,'Y')),
              (np.timedelta64(-2,'Y'), 2, np.timedelta64(-1,'Y')),
@@ -287,15 +294,20 @@ class TestDivision:
              (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
              (np.timedelta64(-2,'Y'), -3, np.timedelta64(0,'Y')),
              (np.timedelta64(-2,'Y'), 0, np.timedelta64('Nat','Y')),
+             (np.array([], dtype='timedelta64[Y]'), 0, None),
             ])
     def test_division_int_timedelta(self, dividend, divisor, quotient):
-        # If either divisor is 0 or quotient is Nat, check for division by 0
-        if divisor and (isinstance(quotient, int) or not np.isnat(quotient)):
-            assert_(dividend // divisor == quotient)
+        # If either divisor is 0 or quotient is None or Nat, check for division by 0
+        if divisor and (isinstance(quotient, int) or
+                not (quotient is None or np.isnat(quotient))):
+            msg = "Timedelta floor division check"
+            assert dividend // divisor == quotient, msg
+
             # Test for arrays as well
-            assert_(all(
-                np.array([dividend]*5) // divisor \
-                == np.array([quotient]*5)))
+            msg = "Timedelta arrays floor division check"
+            dividend_array = np.array([dividend]*5)
+            quotient_array = np.array([quotient]*5)
+            assert all(dividend_array // divisor == quotient_array), msg
         else:
             with np.errstate(divide='raise', invalid='raise'):
                 with pytest.raises(FloatingPointError):
