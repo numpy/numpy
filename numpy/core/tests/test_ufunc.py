@@ -1333,6 +1333,18 @@ class TestUfunc:
         m = np.array([True], dtype=bool)
         assert_equal(np.sqrt(a, where=m), [1])
 
+    def test_where_with_broadcasting(self):
+        # See gh-17198
+        a = np.random.random((5000, 4))
+        b = np.random.random((5000, 1))
+
+        where = a > 0.3
+        out = np.full_like(a, 0)
+        np.less(a, b, where=where, out=out)
+        b_where = np.broadcast_to(b, a.shape)[where]
+        assert_array_equal((a[where] < b_where), out[where].astype(bool))
+        assert not out[~where].any()  # outside mask, out remains all 0
+
     def check_identityless_reduction(self, a):
         # np.minimum.reduce is an identityless reduction
 
