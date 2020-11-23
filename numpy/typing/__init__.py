@@ -11,14 +11,11 @@ Typing (:mod:`numpy.typing`)
   typing-extensions_ package.
 
 Large parts of the NumPy API have PEP-484-style type annotations. In
-addition, the following type aliases are available for users.
+addition a number of type aliases are available to users, most prominently
+the two below:
 
-- ``typing.ArrayLike``: objects that can be converted to arrays
-- ``typing.DTypeLike``: objects that can be converted to dtypes
-
-Roughly speaking, ``typing.ArrayLike`` is "objects that can be used as
-inputs to ``np.array``" and ``typing.DTypeLike`` is "objects that can
-be used as inputs to ``np.dtype``".
+- `ArrayLike`: objects that can be converted to arrays
+- `DTypeLike`: objects that can be converted to dtypes
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
@@ -34,13 +31,13 @@ differences.
 ArrayLike
 ~~~~~~~~~
 
-The ``ArrayLike`` type tries to avoid creating object arrays. For
+The `ArrayLike` type tries to avoid creating object arrays. For
 example,
 
 .. code-block:: python
 
     >>> np.array(x**2 for x in range(10))
-    array(<generator object <genexpr> at 0x10c004cd0>, dtype=object)
+    array(<generator object <genexpr> at ...>, dtype=object)
 
 is valid NumPy code which will create a 0-dimensional object
 array. Type checkers will complain about the above example when using
@@ -51,14 +48,14 @@ you can either use a ``# type: ignore`` comment:
 
     >>> np.array(x**2 for x in range(10))  # type: ignore
 
-or explicitly type the array like object as ``Any``:
+or explicitly type the array like object as `~typing.Any`:
 
 .. code-block:: python
 
     >>> from typing import Any
     >>> array_like: Any = (x**2 for x in range(10))
     >>> np.array(array_like)
-    array(<generator object <genexpr> at 0x1192741d0>, dtype=object)
+    array(<generator object <genexpr> at ...>, dtype=object)
 
 ndarray
 ~~~~~~~
@@ -75,10 +72,10 @@ This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should insted use the `numpy.ndarray.view`
 method to create a view of the array with a different dtype.
 
-dtype
-~~~~~
+DTypeLike
+~~~~~~~~~
 
-The ``DTypeLike`` type tries to avoid creation of dtype objects using
+The `DTypeLike` type tries to avoid creation of dtype objects using
 dictionary of fields like below:
 
 .. code-block:: python
@@ -87,14 +84,41 @@ dictionary of fields like below:
 
 Although this is valid Numpy code, the type checker will complain about it,
 since its usage is discouraged.
-Please see : https://numpy.org/devdocs/reference/arrays.dtypes.html
+Please see : :ref:`Data type objects <arrays.dtypes>`
 
-NBitBase
-~~~~~~~~
+Number Precision
+~~~~~~~~~~~~~~~~
 
-.. autoclass:: numpy.typing.NBitBase
+The precision of `numpy.number` subclasses is treated as a covariant generic
+parameter (see :class:`~NBitBase`), simplifying the annoting of proccesses
+involving precision-based casting.
+
+.. code-block:: python
+
+    >>> from typing import TypeVar
+    >>> import numpy as np
+    >>> import numpy.typing as npt
+
+    >>> T = TypeVar("T", bound=npt.NBitBase)
+    >>> def func(a: "np.floating[T]", b: "np.floating[T]") -> "np.floating[T]":
+    ...     ...
+
+Consequently, the likes of `~numpy.float16`, `~numpy.float32` and
+`~numpy.float64` are still sub-types of `~numpy.floating`, but, contrary to
+runtime, they're not necessarily considered as sub-classes.
+
+Timedelta64
+~~~~~~~~~~~
+
+The `~numpy.timedelta64` class is not considered a subclass of `~numpy.signedinteger`,
+the former only inheriting from `~numpy.generic` while static type checking.
+
+API
+---
 
 """
+# NOTE: The API section will be appended with additional entries
+# further down in this file
 
 from typing import TYPE_CHECKING
 
@@ -185,6 +209,12 @@ from ._scalars import (
 from ._array_like import _SupportsArray, ArrayLike
 from ._shape import _Shape, _ShapeLike
 from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
+
+if __doc__ is not None:
+    from ._add_docstring import _docstrings
+    __doc__ += _docstrings
+    __doc__ += f'\n.. autoclass:: numpy.typing.NBitBase\n'
+    del _docstrings
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
