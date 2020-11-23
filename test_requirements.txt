@@ -1,7 +1,7 @@
 cython==0.29.21
 wheel
 setuptools<49.2.0
-hypothesis==5.41.2
+hypothesis==5.41.3
 pytest==6.0.2
 pytz==2020.4
 pytest-cov==2.10.1
