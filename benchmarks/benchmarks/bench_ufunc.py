@@ -134,15 +134,20 @@ class CustomScalar(Benchmark):
         (self.d < 1)
 
 
-class CustomScalarInt(Benchmark):
-    params = [10**size for size in range(1, 8)]
-    param_names = ['size']
+class CustomScalarFloorDivideInt(Benchmark):
+    params = ([np.int8, np.int16, np.int32, np.int64], [8, -8, 43, -43])
+    param_names = ['dtype', 'divisors']
+    max_value = 10**7
+    min_value = -10**7
 
-    def setup(self, size):
-        self.x = np.arange(size)
+    def setup(self, dtype, divisor):
+        iinfo = np.iinfo(dtype)
+        self.x = np.arange(
+                max(iinfo.min, self.min_value),
+                min(iinfo.max, self.max_value))
 
-    def time_floor_divide(self, size):
-        self.x//8
+    def time_floor_divide_int(self, dtpye, divisor):
+        self.x // divisor
 
 
 class Scalar(Benchmark):
