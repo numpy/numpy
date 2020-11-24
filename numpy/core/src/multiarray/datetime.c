@@ -2862,6 +2862,137 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 }
 
 /*
+ * We require that if d is a PyDateTime, then
+ * hash(numpy.datetime64(d)) == hash(d).
+ * Where possible, convert dt to a PyDateTime and hash it.
+ *
+ * NOTE: "equals" across PyDate, PyDateTime and np.datetime64 is not transitive:
+ * datetime.datetime(1970, 1, 1) == np.datetime64(0, 'us')
+ * np.datetime64(0, 'us') == np.datetime64(0, 'D')
+ * datetime.datetime(1970, 1, 1) != np.datetime64(0, 'D')  # date, not datetime!
+ *
+ * But:
+ * datetime.date(1970, 1, 1) == np.datetime64(0, 'D')
+ *
+ * For hash(datetime64(0, 'D')) we could return either PyDate.hash or PyDateTime.hash.
+ * We choose PyDateTime.hash to match datetime64(0, 'us')
+ */
+NPY_NO_EXPORT npy_hash_t
+datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt)
+{
+    PyObject *obj;
+    npy_hash_t res = 0, obj_hash;
+    npy_datetimestruct dts;
+
+    if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
+        return -2;
+    }
+
+    if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+        return -1;
+    }
+
+    if (dts.year < 1 || dts.year > 9999) {
+        obj = PyBytes_FromStringAndSize((const char *)&dts, sizeof(dts));
+    } else {
+        res = dts.ps * 3 + dts.as;
+
+        obj = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
+                                         dts.hour, dts.min, dts.sec, dts.us);
+    }
+
+    if (obj == NULL) {
+        return -1;
+    }
+
+    obj_hash = PyObject_Hash(obj);
+
+    Py_DECREF(obj);
+
+    if (obj_hash == -1) {
+        return -1;
+    }
+
+    res += obj_hash;
+
+    return (res == -1) ? -2 : res;  /* avoid -1 (error) */
+}
+
+static int
+convert_timedelta_to_timedeltastruct(PyArray_DatetimeMetaData *meta,
+                                     npy_timedelta td,
+                                     npy_timedeltastruct *out)
+{
+    memset(out, 0, sizeof(npy_timedeltastruct));
+
+    /* Apply the unit multiplier (TODO: overflow treatment...) */
+    td *= meta->num;
+
+    /* Convert to days/seconds/useconds */
+    switch (meta->base) {
+        case NPY_FR_W:
+            out->day = td * 7;
+            break;
+        case NPY_FR_D:
+            out->day = td;
+            break;
+        case NPY_FR_h:
+            out->day = extract_unit_64(&td, 24LL);
+            out->sec = (npy_int32)(td * 60*60);
+            break;
+        case NPY_FR_m:
+            out->day = extract_unit_64(&td, 60LL*24);
+            out->sec = (npy_int32)(td * 60);
+            break;
+        case NPY_FR_s:
+            out->day = extract_unit_64(&td, 60LL*60*24);
+            out->sec = (npy_int32)td;
+            break;
+        case NPY_FR_ms:
+            out->day = extract_unit_64(&td, 1000LL*60*60*24);
+            out->sec = (npy_int32)extract_unit_64(&td, 1000LL);
+            out->us  = (npy_int32)(td * 1000LL);
+            break;
+        case NPY_FR_us:
+            out->day = extract_unit_64(&td, 1000LL*1000*60*60*24);
+            out->sec = (npy_int32)extract_unit_64(&td, 1000LL*1000);
+            out->us  = (npy_int32)td;
+            break;
+        case NPY_FR_ns:
+            out->day = extract_unit_64(&td, 1000LL*1000*1000*60*60*24);
+            out->sec = (npy_int32)extract_unit_64(&td, 1000LL*1000*1000);
+            out->us  = (npy_int32)extract_unit_64(&td, 1000LL);
+            out->ps  = (npy_int32)(td * 1000LL);
+            break;
+        case NPY_FR_ps:
+            out->day = extract_unit_64(&td, 1000LL*1000*1000*1000*60*60*24);
+            out->sec = (npy_int32)extract_unit_64(&td, 1000LL*1000*1000*1000);
+            out->us  = (npy_int32)extract_unit_64(&td, 1000LL*1000);
+            out->ps  = (npy_int32)td;
+            break;
+        case NPY_FR_fs:
+            out->sec = (npy_int32)extract_unit_64(&td, 1000LL*1000*1000*1000*1000);
+            out->us  = (npy_int32)extract_unit_64(&td, 1000LL*1000*1000);
+            out->ps  = (npy_int32)extract_unit_64(&td, 1000LL);
+            out->as  = (npy_int32)(td * 1000LL);
+            break;
+        case NPY_FR_as:
+            out->sec = (npy_int32)extract_unit_64(&td, 1000LL*1000*1000*1000*1000*1000);
+            out->us  = (npy_int32)extract_unit_64(&td, 1000LL*1000*1000*1000);
+            out->ps  = (npy_int32)extract_unit_64(&td, 1000LL*1000);
+            out->as  = (npy_int32)td;
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError,
+                            "NumPy timedelta metadata is corrupted with invalid "
+                            "base unit");
+            return -1;
+    }
+
+    return 0;
+}
+
+/*
  * Converts a timedelta into a PyObject *.
  *
  * Not-a-time is returned as the string "NaT".
@@ -2871,8 +3002,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 {
-    npy_timedelta value;
-    int days = 0, seconds = 0, useconds = 0;
+    npy_timedeltastruct tds;
 
     /*
      * Convert NaT (not-a-time) into None.
@@ -2892,55 +3022,81 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
         return PyLong_FromLongLong(td);
     }
 
-    value = td;
-
-    /* Apply the unit multiplier (TODO: overflow treatment...) */
-    value *= meta->num;
-
-    /* Convert to days/seconds/useconds */
-    switch (meta->base) {
-        case NPY_FR_W:
-            days = value * 7;
-            break;
-        case NPY_FR_D:
-            days = value;
-            break;
-        case NPY_FR_h:
-            days = extract_unit_64(&value, 24ULL);
-            seconds = value*60*60;
-            break;
-        case NPY_FR_m:
-            days = extract_unit_64(&value, 60ULL*24);
-            seconds = value*60;
-            break;
-        case NPY_FR_s:
-            days = extract_unit_64(&value, 60ULL*60*24);
-            seconds = value;
-            break;
-        case NPY_FR_ms:
-            days     = extract_unit_64(&value, 1000ULL*60*60*24);
-            seconds  = extract_unit_64(&value, 1000ULL);
-            useconds = value*1000;
-            break;
-        case NPY_FR_us:
-            days     = extract_unit_64(&value, 1000ULL*1000*60*60*24);
-            seconds  = extract_unit_64(&value, 1000ULL*1000);
-            useconds = value;
-            break;
-        default:
-            // unreachable, handled by the `if` above
-            assert(NPY_FALSE);
-            break;
+    if (convert_timedelta_to_timedeltastruct(meta, td, &tds) < 0) {
+        return NULL;
     }
+
     /*
      * If it would overflow the datetime.timedelta days, return a raw int
      */
-    if (days < -999999999 || days > 999999999) {
+    if (tds.day < -999999999 || tds.day > 999999999) {
         return PyLong_FromLongLong(td);
     }
     else {
-        return PyDelta_FromDSU(days, seconds, useconds);
+        return PyDelta_FromDSU(tds.day, tds.sec, tds.us);
     }
+}
+
+/*
+ * We require that if d is a PyDelta, then
+ * hash(numpy.timedelta64(d)) == hash(d).
+ * Where possible, convert dt to a PyDelta and hash it.
+ */
+NPY_NO_EXPORT npy_hash_t
+timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td)
+{
+    PyObject *obj;
+    npy_hash_t res = 0, obj_hash;
+    npy_timedeltastruct tds;
+
+    if (td == NPY_DATETIME_NAT) {
+        return -2;
+    }
+
+    if (meta->base == NPY_FR_GENERIC) {
+        /* generic compares equal to *every* other base, so no single hash works. */
+        PyErr_SetString(PyExc_ValueError, "Can't hash generic timedelta64");
+        return -1;
+    }
+
+    /* Y and M can be converted to each other but not to other units */
+
+    if (meta->base == NPY_FR_Y) {
+        res = (npy_hash_t)(td * 12);
+        return (res == -1) ? -2 : res;  /* avoid -1 (error) */
+    }
+    if (meta->base == NPY_FR_M) {
+        res = (npy_hash_t)td;
+        return (res == -1) ? -2 : res;  /* avoid -1 (error) */
+    }
+
+    if (convert_timedelta_to_timedeltastruct(meta, td, &tds) < 0) {
+        return -1;
+    }
+
+    if (tds.day < -999999999 || tds.day > 999999999) {
+        obj = PyBytes_FromStringAndSize((const char *)&tds, sizeof(tds));
+    } else {
+        res = tds.ps * 3 + tds.as;
+
+        obj = PyDelta_FromDSU(tds.day, tds.sec, tds.us);
+    }
+
+    if (obj == NULL) {
+        return -1;
+    }
+
+    obj_hash = PyObject_Hash(obj);
+
+    Py_DECREF(obj);
+
+    if (obj_hash == -1) {
+        return -1;
+    }
+
+    res += obj_hash;
+
+    return (res == -1) ? -2 : res;  /* avoid -1 (error) */
 }
 
 /*

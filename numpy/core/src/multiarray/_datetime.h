@@ -373,4 +373,10 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
 NPY_NO_EXPORT PyArray_Descr *
 find_object_datetime_type(PyObject *obj, int type_num);
 
+NPY_NO_EXPORT npy_hash_t
+datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt);
+
+NPY_NO_EXPORT npy_hash_t
+timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
+
 #endif

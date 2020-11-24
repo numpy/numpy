@@ -2336,12 +2336,14 @@ class TestRegression:
         for t in all_types:
             val = t()
 
-            try:
-                hash(val)
-            except TypeError as e:
-                assert_equal(t.__hash__, None)
+            if t.__hash__ is None:
+                assert_raises(TypeError, hash, val)
             else:
-                assert_(t.__hash__ != None)
+                try:
+                    assert_equal(hash(val), val.__hash__())
+                except ValueError:  # but not TypeError
+                    # eg. timedelta64(generic) raises ValueError.
+                    pass
 
     def test_scalar_copy(self):
         scalar_types = set(np.sctypeDict.values())
