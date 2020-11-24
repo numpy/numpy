@@ -26,14 +26,14 @@ reveal_type(A.any(axis=0))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
 reveal_type(A.any(keepdims=True))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
 reveal_type(A.any(out=B))  # E: SubClass
 
-reveal_type(f8.argmax())  # E: numpy.signedinteger[Any]
-reveal_type(A.argmax())  # E: numpy.signedinteger[Any]
-reveal_type(A.argmax(axis=0))  # E: Union[numpy.signedinteger[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.argmax())  # E: numpy.signedinteger[numpy.typing._
+reveal_type(A.argmax())  # E: numpy.signedinteger[numpy.typing._
+reveal_type(A.argmax(axis=0))  # E: Union[numpy.ndarray[Any, Any], numpy.signedinteger[numpy.typing._
 reveal_type(A.argmax(out=B))  # E: SubClass
 
-reveal_type(f8.argmin())  # E: numpy.signedinteger[Any]
-reveal_type(A.argmin())  # E: numpy.signedinteger[Any]
-reveal_type(A.argmin(axis=0))  # E: Union[numpy.signedinteger[Any], numpy.ndarray[Any, Any]]
+reveal_type(f8.argmin())  # E: numpy.signedinteger[numpy.typing._
+reveal_type(A.argmin())  # E: numpy.signedinteger[numpy.typing._
+reveal_type(A.argmin(axis=0))  # E: Union[numpy.ndarray[Any, Any], numpy.signedinteger[numpy.typing._
 reveal_type(A.argmin(out=B))  # E: SubClass
 
 reveal_type(f8.argsort())  # E: numpy.ndarray[Any, Any]
