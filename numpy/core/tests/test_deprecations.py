@@ -771,3 +771,17 @@ class TestDeprecateSubarrayDTypeDuringArrayCoercion(_DeprecationTestCase):
                 np.array(arr, dtype="(2,2)f")
 
         self.assert_deprecated(check)
+
+
+class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
+    # Deprecated 2020-11-24, NumPy 1.20
+    """
+    Technically, it should be impossible to create numpy object scalars,
+    but there was an unpickle path that would in theory allow it. That
+    path is invalid and must lead to the warning.
+    """
+    message = "Unpickling a scalar with object dtype is deprecated."
+
+    def test_deprecated(self):
+        ctor = np.core.multiarray.scalar
+        self.assert_deprecated(lambda: ctor(np.dtype("O"), 1))
