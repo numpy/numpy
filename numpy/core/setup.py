@@ -26,7 +26,7 @@ NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CH
 # Set to True to use the new casting implementation as much as implemented.
 # Allows running the full test suit to exercise the new machinery until
 # it is used as default and the old version is eventually deleted.
-NPY_USE_NEW_CASTINGIMPL = os.environ.get('NPY_USE_NEW_CASTINGIMPL', "1") != "0"
+NPY_USE_NEW_CASTINGIMPL = os.environ.get('NPY_USE_NEW_CASTINGIMPL', "0") != "0"
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
