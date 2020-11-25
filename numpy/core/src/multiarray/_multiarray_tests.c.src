@@ -2167,6 +2167,17 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return tup;
 }
 
+static PyObject *
+test_macro(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    int ret = NPY_SIZEOF_PYARRAYOBJECT;
+    if (ret < 0) {
+        return NULL;
+    }
+    return PyLong_FromLong(ret);
+}
+
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -2347,6 +2358,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"run_intp_converter",
         run_intp_converter,
+        METH_VARARGS, NULL},
+    {"test_macro",
+        test_macro,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

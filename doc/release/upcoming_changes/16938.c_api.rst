@@ -2,11 +2,12 @@ Size of ``np.ndarray`` and ``np.void_`` changed
 -----------------------------------------------
 The size of the ``PyArrayObject`` and ``PyVoidScalarObject``
 structures have changed.  The following header definition has been
-removed::
+deprecated::
 
     #define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
 
-since the size must not be considered a compile time constant.
+since the size must not be considered a compile time constant: it will
+change for different runtime versions of NumPy.
 
 The most likely relevant use are potential subclasses written in C which
 will have to be recompiled and should be updated.  Please see the

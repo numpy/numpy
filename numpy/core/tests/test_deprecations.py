@@ -785,3 +785,11 @@ class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
     def test_deprecated(self):
         ctor = np.core.multiarray.scalar
         self.assert_deprecated(lambda: ctor(np.dtype("O"), 1))
+
+
+class TestMacros(_DeprecationTestCase):
+    # 2020-11-25
+    def test_macro(self):
+        from numpy.core._multiarray_tests import test_macro
+        assert_(test_macro() > 32)
+        self.assert_deprecated(test_macro)
