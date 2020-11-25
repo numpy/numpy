@@ -91,7 +91,7 @@ the following code is valid:
     >>> x.dtype = np.bool_
 
 This sort of mutation is not allowed by the types. Users who want to
-write statically typed code should insted use the `numpy.ndarray.view`
+write statically typed code should instead use the `numpy.ndarray.view`
 method to create a view of the array with a different dtype.
 
 DTypeLike
@@ -104,15 +104,15 @@ dictionary of fields like below:
 
     >>> x = np.dtype({"field1": (float, 1), "field2": (int, 3)})
 
-Although this is valid Numpy code, the type checker will complain about it,
+Although this is valid NumPy code, the type checker will complain about it,
 since its usage is discouraged.
 Please see : :ref:`Data type objects <arrays.dtypes>`
 
-Number Precision
+Number precision
 ~~~~~~~~~~~~~~~~
 
 The precision of `numpy.number` subclasses is treated as a covariant generic
-parameter (see :class:`~NBitBase`), simplifying the annoting of proccesses
+parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 
 .. code-block:: python
@@ -171,7 +171,7 @@ class NBitBase:
     An object representing `numpy.number` precision during static type checking.
 
     Used exclusively for the purpose static type checking, `NBitBase`
-    represents the base of a hierachieral set of subclasses.
+    represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
