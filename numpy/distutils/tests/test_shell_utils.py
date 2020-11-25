@@ -29,7 +29,8 @@ argv_cases = [
 
 @pytest.fixture(params=[
     _shell_utils.WindowsParser,
-    _shell_utils.PosixParser
+    _shell_utils.PosixParser,
+    _shell_utils.OpenVMSParser,
 ])
 def Parser(request):
     return request.param
@@ -44,6 +45,9 @@ def runner(Parser):
         return lambda cmd: subprocess.check_output(cmd)
     elif Parser == _shell_utils.PosixParser:
         # posix has no non-shell string parsing
+        return lambda cmd: subprocess.check_output(cmd, shell=True)
+    elif Parser == _shell_utils.OpenVMSParser:
+        # OpenVMS case
         return lambda cmd: subprocess.check_output(cmd, shell=True)
     else:
         raise NotImplementedError
