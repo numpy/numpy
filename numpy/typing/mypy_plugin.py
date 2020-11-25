@@ -55,4 +55,5 @@ class _NumpyPlugin(Plugin):
 
 
 def plugin(version: str) -> t.Type[_NumpyPlugin]:
+    """An entry-point for mypy."""
     return _NumpyPlugin
