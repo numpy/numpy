@@ -721,11 +721,18 @@ typedef struct tagPyArrayObject {
 } PyArrayObject;
 #endif
 
-/* 2020-Nov-25 1.20 */
+/* 2020-Nov-25, NumPy 1.20 */
+/*
+ * The following macro makes some best efforts to give a deprecation warning
+ * and return the correct runtime size of the structure. The macro should
+ * be replaced with `PyArray_Type.tp_basicsize` or similar, the size
+ * may change in the future.
+ */
 #define NPY_SIZEOF_PYARRAYOBJECT \
     (DEPRECATE("NPY_SIZEOF_PYARRAYOBJECT is deprecated since it cannot be used at compile time " \
                "and is not constant across different runtime versions of NumPy\n") < 0 ? \
-               PyErr_WriteUnraisable(NULL) : NULL, PyArray_Type.tp_basicsize)
+                   (PyErr_WriteUnraisable(NULL), PyArray_Type.tp_basicsize) : \
+                   PyArray_Type.tp_basicsize)
 
 
 
