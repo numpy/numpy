@@ -1,0 +1,44 @@
+Changed behavior of ``divmod(1., 0.)`` and related functions
+------------------------------------------------------------
+The changes also assure that different compiler versions have the same behavior
+for nan or inf usages in these operations. This was previously compiler
+dependent, we now force the invalid and divide by zero flags, making the
+results the same across compilers. For example, gcc-5, gcc-8, or gcc-9 now
+result in the same behavior. The changes are tabulated below:
+
+.. list-table:: Summary of New Behavior
+   :widths: auto
+   :header-rows: 1
+
+   * - Operator
+     - Old Warning
+     - New Warning
+     - Old Result
+     - New Result
+     - Works on MacOS
+   * - np.divmod(1.0, 0.0)
+     - Invalid
+     - Invalid and Dividebyzero
+     - nan, nan
+     - inf, nan
+     - Yes
+   * - np.fmod(1.0, 0.0)
+     - Invalid
+     - Invalid
+     - nan
+     - nan
+     - No? Yes
+   * - np.floor_divide(1.0, 0.0)
+     - Invalid
+     - Dividebyzero
+     - nan
+     - inf
+     - Yes
+   * - np.remainder(1.0, 0.0)
+     - Invalid
+     - Invalid
+     - nan
+     - nan
+     - Yes
+
+
