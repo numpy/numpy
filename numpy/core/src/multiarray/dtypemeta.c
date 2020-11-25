@@ -27,6 +27,7 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 
     Py_XDECREF(self->scalar_type);
     Py_XDECREF(self->singleton);
+    Py_XDECREF(self->castingimpls);
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
@@ -565,6 +566,12 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 
     /* Let python finish the initialization (probably unnecessary) */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
+        Py_DECREF(dtype_class);
+        return -1;
+    }
+    dtype_class->castingimpls = PyDict_New();
+    if (dtype_class->castingimpls == NULL) {
+        Py_DECREF(dtype_class);
         return -1;
     }
 

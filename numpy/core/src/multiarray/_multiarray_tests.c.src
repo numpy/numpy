@@ -9,6 +9,7 @@
 #include "common.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
+#include "array_method.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -974,6 +975,79 @@ get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
     descr =  PyArray_DescrNewFromType(NPY_INTP);
     return PyArray_NewFromDescr(&PyArray_Type, descr,
                                 1, &zero, NULL, &zero, flags, NULL);
+}
+
+
+static PyObject *
+get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
+{
+    PyObject *result = PyList_New(0);
+    if (result == NULL) {
+        return NULL;
+    }
+    PyObject *classes = PyObject_CallMethod(
+            (PyObject *)&PyArrayDescr_Type, "__subclasses__", "");
+    if (classes == NULL) {
+        return NULL;
+    }
+    Py_SETREF(classes, PySequence_Fast(classes, NULL));
+    if (classes == NULL) {
+        goto fail;
+    }
+
+    Py_ssize_t nclass = PySequence_Length(classes);
+    for (Py_ssize_t  i = 0; i < nclass; i++) {
+        PyArray_DTypeMeta *from_dtype = (
+                (PyArray_DTypeMeta *)PySequence_Fast_GET_ITEM(classes, i));
+        if (from_dtype->abstract) {
+            /*
+             * TODO: In principle probably needs to recursively check this,
+             *       also we may allow casts to abstract dtypes at some point.
+             */
+            continue;
+        }
+
+        PyObject *to_dtype, *cast_obj;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(from_dtype->castingimpls, &pos, &to_dtype, &cast_obj)) {
+            if (cast_obj == Py_None) {
+                continue;
+            }
+            PyArrayMethodObject *cast = (PyArrayMethodObject *)cast_obj;
+
+            /* Pass some information about this cast out! */
+            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisisssi}",
+                    "from", from_dtype,
+                    "to", to_dtype,
+                    "legacy", (cast->name != NULL &&
+                               strncmp(cast->name, "legacy_", 7) == 0),
+                    "casting", cast->casting & ~_NPY_CAST_IS_VIEW,
+                    "requires_pyapi", cast->flags & NPY_METH_REQUIRES_PYAPI,
+                    "supports_unaligned",
+                        cast->flags & NPY_METH_SUPPORTS_UNALIGNED,
+                    "no_floatingpoint_errors",
+                        cast->flags & NPY_METH_NO_FLOATINGPOINT_ERRORS,
+                    "name", cast->name,
+                    "cast_is_view",
+                        cast->casting & _NPY_CAST_IS_VIEW);
+            if (cast_info == NULL) {
+                goto fail;
+            }
+            int res = PyList_Append(result, cast_info);
+            Py_DECREF(cast_info);
+            if (res < 0) {
+                goto fail;
+            }
+        }
+    }
+    Py_DECREF(classes);
+    return result;
+
+  fail:
+    Py_XDECREF(classes);
+    Py_XDECREF(result);
+    return NULL;
 }
 
 
@@ -2010,6 +2084,18 @@ getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
     return ret;
 }
 
+
+static PyObject *
+uses_new_casts(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+#if NPY_USE_NEW_CASTINGIMPL
+    Py_RETURN_TRUE;
+#else
+    Py_RETURN_FALSE;
+#endif
+}
+
+
 static PyObject *
 run_byteorder_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
@@ -2113,8 +2199,8 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+        default: return PyLong_FromLong(casting);
     }
-    return PyLong_FromLong(casting);
 }
 
 static PyObject *
@@ -2194,6 +2280,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_c_wrapping_array",
         get_c_wrapping_array,
         METH_O, NULL},
+    {"get_all_cast_information",
+        get_all_cast_information,
+        METH_NOARGS,
+        "Return a list with info on all available casts. Some of the info"
+        "may differ for an actual cast if it uses value-based casting "
+        "(flexible types)."},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},
@@ -2254,6 +2346,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"getset_numericops",
         getset_numericops,
         METH_NOARGS, NULL},
+    {"uses_new_casts",
+            uses_new_casts,
+            METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */

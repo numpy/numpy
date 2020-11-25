@@ -153,8 +153,9 @@ stages:
         CC: /usr/bin/clang
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python setup.py build -j 4 build_ext --inplace install
-      displayName: 'Build NumPy without OpenBLAS'
+      displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
+        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None
