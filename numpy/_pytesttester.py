@@ -6,7 +6,7 @@ boiler plate for doing that is to put the following in the module
 ``__init__.py`` file::
 
     from numpy._pytesttester import PytestTester
-    test = PytestTester(__name__).test
+    test = PytestTester(__name__)
     del PytestTester
 
 
