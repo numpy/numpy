@@ -184,7 +184,7 @@ jobs:
         fetch-depth: 0
     - name: get_pypy
       run: |
-        wget -q https://downloads.python.org/pypy/pypy3.6-v7.3.2-linux64.tar.bz2 -O pypy.tar.bz2
+        wget -q https://downloads.python.org/pypy/pypy3.7-v7.3.3-linux64.tar.bz2 -O pypy.tar.bz2
         mkdir -p pypy3
         (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
         pypy3/bin/pypy3 -mensurepip
