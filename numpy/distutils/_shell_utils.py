@@ -10,7 +10,7 @@ try:
 except ImportError:
     from pipes import quote
 
-__all__ = ['WindowsParser', 'PosixParser', 'NativeParser']
+__all__ = ['WindowsParser', 'PosixParser', 'OpenVMSParser', 'NativeParser']
 
 
 class CommandLineParser:
@@ -84,8 +84,35 @@ class PosixParser:
     def split(cmd):
         return shlex.split(cmd, posix=True)
 
+class OpenVMSParser:
+    """
+    The parsing behavior used by `subprocess.call("string", shell=True)` on Posix.
+    """
+    @staticmethod
+    def strong_dquote(s):
+        return '"' + s.replace('"', '""') + '"'
+
+    @staticmethod
+    def join(argv):
+        prog = ''
+        try:
+            import vms.decc
+            prog = 'MCR ' + vms.decc.to_vms(argv[0], 0, 0)[0]
+        except:
+            pass
+        if len(argv) == 1:
+            return prog
+        return prog + ' ' + ' '.join(OpenVMSParser.strong_dquote(arg) for arg in argv[1:])
+
+    @staticmethod
+    def split(cmd):
+        raise NotImplementedError
 
 if os.name == 'nt':
     NativeParser = WindowsParser
 elif os.name == 'posix':
-    NativeParser = PosixParser
+    import sys
+    if sys.platform == 'OpenVMS':
+        NativeParser = OpenVMSParser
+    else:
+        NativeParser = PosixParser
