@@ -1955,8 +1955,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        @type@ mod;
-        *((@type@ *)op1) = npy_divmod@c@(in1, in2, &mod);
+        *((@type@ *)op1) = npy_floor_divide@c@(in1, in2);
     }
 }
 
@@ -1966,7 +1965,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        npy_divmod@c@(in1, in2, (@type@ *)op1);
+        *((@type@ *) op1) = npy_remainder@c@(in1, in2);
     }
 }
 
@@ -2306,8 +2305,13 @@ HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        npy_half mod;
-        *((npy_half *)op1) = npy_half_divmod(in1, in2, &mod);
+
+        float fh1 = npy_half_to_float(in1);
+        float fh2 = npy_half_to_float(in2);
+        float div;
+
+        div = npy_floor_dividef(fh1, fh2);
+        *((npy_half *)op1) = npy_float_to_half(div);
     }
 }
 
@@ -2317,7 +2321,11 @@ HALF_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, v
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        npy_half_divmod(in1, in2, (npy_half *)op1);
+        float fh1 = npy_half_to_float(in1);
+        float fh2 = npy_half_to_float(in2);
+        float mod;
+        mod = npy_remainderf(fh1, fh2);
+        *((npy_half *)op1) = npy_float_to_half(mod);
     }
 }
 
