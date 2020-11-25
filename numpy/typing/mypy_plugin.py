@@ -8,6 +8,8 @@ import mypy.types
 from mypy.types import Type
 from mypy.plugin import Plugin, AnalyzeTypeContext
 
+__all__: t.List[str] = []
+
 HookFunc = t.Callable[[AnalyzeTypeContext], Type]
 
 
