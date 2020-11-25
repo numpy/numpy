@@ -724,7 +724,8 @@ typedef struct tagPyArrayObject {
 /* 2020-Nov-25 1.20 */
 #define NPY_SIZEOF_PYARRAYOBJECT \
     (DEPRECATE("NPY_SIZEOF_PYARRAYOBJECT is deprecated since it cannot be used at compile time " \
-     "and is not constant across different runtime versions of NumPy\n")<0? -1: PyArray_Type.tp_basicsize)
+               "and is not constant across different runtime versions of NumPy\n") < 0 ? \
+               PyErr_WriteUnraisable(NULL) : NULL, PyArray_Type.tp_basicsize)
 
 
 
