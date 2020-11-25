@@ -120,7 +120,7 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     import sys
@@ -130,6 +130,14 @@ if TYPE_CHECKING:
         from typing_extensions import final
 else:
     def final(f): return f
+
+if not TYPE_CHECKING:
+    __all__ = ["ArrayLike", "DTypeLike", "NBitBase"]
+else:
+    # Ensure that all objects within this module are accessible while
+    # static type checking. This includes private ones, as we need them
+    # for internal use.
+    __all__: List[str]
 
 
 @final  # Dissallow the creation of arbitrary `NBitBase` subclasses
@@ -194,7 +202,7 @@ class _16Bit(_32Bit): ...  # type: ignore[misc]
 class _8Bit(_16Bit): ...  # type: ignore[misc]
 
 # Clean up the namespace
-del TYPE_CHECKING, final
+del TYPE_CHECKING, final, List
 
 from ._scalars import (
     _CharLike,
