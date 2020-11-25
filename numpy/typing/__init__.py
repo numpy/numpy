@@ -221,7 +221,7 @@ from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
 if __doc__ is not None:
     from ._add_docstring import _docstrings
     __doc__ += _docstrings
-    __doc__ += f'\n.. autoclass:: numpy.typing.NBitBase\n'
+    __doc__ += '\n.. autoclass:: numpy.typing.NBitBase\n'
     del _docstrings
 
 from numpy._pytesttester import PytestTester
