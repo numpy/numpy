@@ -282,3 +282,20 @@ class TestCasting:
                 assert safety == expected_safety
             elif change_length > 0:
                 assert safety == Casting.safe
+
+    def test_void_to_string_special_case(self):
+        # Cover a small special case in void to string casting that could
+        # probably just as well be turned into an error (compare
+        # `test_object_to_parametric_internal_error` below).
+        assert np.array([], dtype="V5").astype("S").dtype.itemsize == 5
+        assert np.array([], dtype="V5").astype("U").dtype.itemsize == 4 * 5
+
+    def test_object_to_parametric_internal_error(self):
+        # We reject casting from object to a parametric type, without
+        # figuring out the correct instance first.
+        object_dtype = type(np.dtype(object))
+        other_dtype = type(np.dtype(str))
+        cast = get_castingimpl(object_dtype, other_dtype)
+        with pytest.raises(TypeError,
+                    match="casting from object to the parametric DType"):
+            cast._resolve_descriptors((np.dtype("O"), None))

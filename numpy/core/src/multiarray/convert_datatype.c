@@ -420,12 +420,12 @@ PyArray_CanCastSafely(int fromtype, int totype)
 #if NPY_USE_NEW_CASTINGIMPL
     PyArray_DTypeMeta *from = PyArray_DTypeFromTypeNum(fromtype);
     if (from == NULL) {
-        PyErr_WriteUnraisable(Py_None);
+        PyErr_WriteUnraisable(NULL);
         return 0;
     }
     PyArray_DTypeMeta *to = PyArray_DTypeFromTypeNum(totype);
     if (to == NULL) {
-        PyErr_WriteUnraisable(Py_None);
+        PyErr_WriteUnraisable(NULL);
         return 0;
     }
     PyObject *castingimpl = PyArray_GetCastingImpl(from, to);
@@ -433,7 +433,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
     Py_DECREF(to);
 
     if (castingimpl == NULL) {
-        PyErr_WriteUnraisable(Py_None);
+        PyErr_WriteUnraisable(NULL);
         return 0;
     }
     else if (castingimpl == Py_None) {
@@ -2489,9 +2489,9 @@ structured_to_nonstructured_resolve_descriptors(
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
         /*
-         * Special case strings here, this is probably unnecessary and
-         * should be useless (i.e. it is necessary to use empty arrays to
-         * trigger this path.).
+         * Special case strings here, it should be useless (and only actually
+         * work for empty arrays).  Possibly this should simply raise for
+         * all parametric DTypes.
          */
         if (dtypes[1]->type_num == NPY_STRING) {
             loop_descrs[1]->elsize = given_descrs[0]->elsize;
@@ -2744,7 +2744,7 @@ object_to_any_resolve_descriptors(
          * here is that e.g. "M8" input is considered to be the DType class,
          * and by allowing it here, we go back to the "M8" instance.
          */
-        if (dtypes[1]->parametric && !dtypes[1]->legacy) {
+        if (dtypes[1]->parametric) {
             PyErr_Format(PyExc_TypeError,
                     "casting from object to the parametric DType %S requires "
                     "the specified output dtype instance. "
@@ -2755,11 +2755,6 @@ object_to_any_resolve_descriptors(
         loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
-        }
-        if (dtypes[1]->type_num == NPY_VOID) {
-            /* NOTE: This appears to be behaviour as of 1.19 (void is not
-             *       adjusted) */
-            loop_descrs[1]->elsize = sizeof(PyObject *);
         }
     }
     else {
@@ -2791,6 +2786,8 @@ PyArray_GetObjectToGenericCastingImpl()
         return PyErr_NoMemory();
     }
 
+    method->nin = 1;
+    method->nout = 1;
     method->name = "object_to_any_cast";
     method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
     method->casting = NPY_UNSAFE_CASTING;
@@ -2845,6 +2842,8 @@ PyArray_GetGenericToObjectCastingImpl()
         return PyErr_NoMemory();
     }
 
+    method->nin = 1;
+    method->nout = 1;
     method->name = "any_to_object_cast";
     method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
     method->casting = NPY_SAFE_CASTING;
