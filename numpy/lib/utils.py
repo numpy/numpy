@@ -204,7 +204,7 @@ def deprecate_with_doc(msg):
 
     See Also
     --------
-    deprecate`
+    deprecate : Decorate a function such that it issues a `DeprecationWarning` 
 
     Parameters
     ----------
