@@ -40,7 +40,6 @@ def test_numpy_namespace():
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.<lambda>',
         'disp': 'numpy.lib.function_base.disp',
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
