@@ -106,7 +106,7 @@ class OpenVMSParser:
 
     @staticmethod
     def split(cmd):
-        raise NotImplementedError
+        return shlex.split(cmd, posix=True)
 
 if os.name == 'nt':
     NativeParser = WindowsParser
