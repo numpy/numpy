@@ -67,8 +67,11 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
     const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
 
     obj = (PyObject *)PyObject_Malloc(size);
+    if (obj == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
     /*
-     * Fixme. Need to check for no memory.
      * If we don't need to zero memory, we could use
      * PyObject_{New, NewVar} for this whole function.
      */
@@ -2596,16 +2599,18 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     .tp_basicsize = sizeof(PyObject),
 };
 
+
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    _dealloc_cached_buffer_info((PyObject *)v);
-
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
+    if (_buffer_info_free(v->_buffer_info, (PyObject *)v) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
     Py_TYPE(v)->tp_free(v);
 }
 

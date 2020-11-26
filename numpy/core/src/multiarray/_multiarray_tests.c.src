@@ -37,6 +37,7 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 
 #include "npy_pycompat.h"
 
+
 /** Function to test calling via ctypes */
 EXPORT(void*) forward_pointer(void *x)
 {
@@ -682,6 +683,39 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     }
     Py_INCREF(dtype);
     return (PyObject *)dtype;
+}
+
+
+PyObject *
+corrupt_or_fix_bufferinfo(PyObject *dummy, PyObject *obj)
+{
+    void **buffer_info_ptr;
+    if (PyArray_Check(obj)) {
+        buffer_info_ptr = &((PyArrayObject_fields *)obj)->_buffer_info;
+    }
+    else if (PyArray_IsScalar(obj, Void)) {
+        buffer_info_ptr = &((PyVoidScalarObject *)obj)->_buffer_info;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                "argument must be an array or void scalar");
+        return NULL;
+    }
+    if (*buffer_info_ptr == NULL) {
+        /* set to an invalid value (as a subclass might accidentally) */
+        *buffer_info_ptr = obj;
+        assert(((uintptr_t)obj & 7) == 0);
+    }
+    else if (*buffer_info_ptr == obj) {
+        /* Reset to a NULL (good value) */
+        *buffer_info_ptr = NULL;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                "buffer was already exported, this test doesn't support that");
+        return NULL;
+    }
+    Py_RETURN_NONE;
 }
 
 
@@ -2244,6 +2278,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"create_custom_field_dtype",
         create_custom_field_dtype,
         METH_VARARGS, NULL},
+    {"corrupt_or_fix_bufferinfo",
+        corrupt_or_fix_bufferinfo,
+        METH_O, NULL},
     {"incref_elide",
         incref_elide,
         METH_VARARGS, NULL},

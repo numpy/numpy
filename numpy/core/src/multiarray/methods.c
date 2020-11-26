@@ -2180,7 +2180,7 @@ static PyObject *
 array_sizeof(PyArrayObject *self)
 {
     /* object + dimension and strides */
-    Py_ssize_t nbytes = NPY_SIZEOF_PYARRAYOBJECT +
+    Py_ssize_t nbytes = Py_TYPE(self)->tp_basicsize +
         PyArray_NDIM(self) * sizeof(npy_intp) * 2;
     if (PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
         nbytes += PyArray_NBYTES(self);
