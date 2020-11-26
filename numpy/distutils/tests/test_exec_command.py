@@ -1,6 +1,7 @@
 import os
 import sys
 from tempfile import TemporaryFile
+import pytest
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
@@ -92,7 +93,7 @@ def test_exec_command_stderr():
                     with assert_warns(DeprecationWarning):
                         exec_command.exec_command("cd '.'")
 
-
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason="TODO: test OpenVMS")
 class TestExecCommand:
     def setup(self):
         self.pyexe = get_pythonexe()
