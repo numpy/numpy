@@ -193,7 +193,44 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-deprecate_with_doc = lambda msg: _Deprecate(message=msg)
+def deprecate_with_doc(message = msg):
+    """
+    Returns new _Deprecate class object. 
+    The object can be used to Issue a DeprecationWarning, by passing `func`
+    as arguement,this adds warning to `old_name`'s docstring, rebinds 
+    ``old_name.__name__`` and returns the new function object.
+
+    This function may also be used as a decorator.
+
+    See Also
+    --------
+    deprecate`
+
+    Parameters
+    ----------
+    message : str
+    	    Additional explanation of the deprecation. Displayed in the 
+       	    docstring after the warning.
+
+    Returns
+    -------
+    _Deprecate object : object
+        The _Deprecate class object.
+
+    Examples
+    --------
+    Note that ``olduint`` returns a value after printing DeprecationWarning 
+    with msg:
+
+    >>>oldobj = np.deprecate_with_doc("Use np.int_ instead.")
+    >>>olduint = oldobj(np.uint)
+    >>>DeprecationWarning: `uint64` is deprecated! #may vary
+    ... Use np.int_ instead.
+    >>>olduint(6)
+    >>>6
+    """
+
+    return _Deprecate(message=msg)  
 
 
 #--------------------------------------------
