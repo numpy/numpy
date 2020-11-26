@@ -1596,9 +1596,13 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     if (!run_unary_@isa@_absolute_@TYPE@(args, dimensions, steps)) {
         UNARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
+#ifdef __VMS
+            *((@type@ *)op1) = npy_fabs@typesub@(in1);
+#else
             const @type@ tmp = in1 > 0 ? in1 : -in1;
             /* add 0 to clear -0.0 */
             *((@type@ *)op1) = tmp + 0;
+#endif
         }
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
@@ -1853,7 +1857,7 @@ NPY_NO_EXPORT void
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) &&@IS_LDBL@
-            *((npy_bool *)op1) = !npy_isnan(in1) && !npy_isnan(in2) && (in1 @OP@ in2);
+            *((npy_bool *)op1) = !isnan@c@(in1) && !isnan@c@(in2) && (in1 @OP@ in2);
 #else
             *((npy_bool *)op1) = in1 @OP@ in2;
 #endif
@@ -2102,9 +2106,13 @@ NPY_NO_EXPORT void
     if (!run_unary_simd_absolute_@TYPE@(args, dimensions, steps)) {
         UNARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
+#ifdef __VMS
+            *((@type@ *)op1) = npy_fabs@c@(in1);
+#else
             const @type@ tmp = in1 > 0 ? in1 : -in1;
             /* add 0 to clear -0.0 */
             *((@type@ *)op1) = tmp + 0;
+#endif
         }
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
@@ -2564,6 +2572,7 @@ HALF_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, 
  * complex types
  * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #ftype = npy_float, npy_double, npy_longdouble#
+ * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#
  * #SIMD = 1, 1, 0#
@@ -2899,9 +2908,13 @@ NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
+#ifdef __VMS
+        *((@ftype@ *)op1) = npy_cabs@c@(*(@ctype@ *)ip1);
+#else
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((@ftype@ *)op1) = npy_hypot@c@(in1r, in1i);
+#endif
     }
 }
 
