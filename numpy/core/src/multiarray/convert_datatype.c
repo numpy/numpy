@@ -40,16 +40,16 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 
 
 static PyObject *
-PyArray_GetGenericToVoidCastingImpl();
+PyArray_GetGenericToVoidCastingImpl(void);
 
 static PyObject *
-PyArray_GetVoidToGenericCastingImpl();
+PyArray_GetVoidToGenericCastingImpl(void);
 
 static PyObject *
-PyArray_GetGenericToObjectCastingImpl();
+PyArray_GetGenericToObjectCastingImpl(void);
 
 static PyObject *
-PyArray_GetObjectToGenericCastingImpl();
+PyArray_GetObjectToGenericCastingImpl(void);
 
 
 /**
@@ -2019,7 +2019,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
  * file to remove `PyArray_GetStridedNumericCastFn` entirely.
  */
 static int
-PyArray_InitializeNumericCasts()
+PyArray_InitializeNumericCasts(void)
 {
     for (int from = 0; from < NPY_NTYPES; from++) {
         if (!PyTypeNum_ISNUMBER(from) && from != NPY_BOOL) {
@@ -2243,7 +2243,7 @@ string_to_string_resolve_descriptors(
  * output has to be found.
  */
 static int
-PyArray_InitializeStringCasts()
+PyArray_InitializeStringCasts(void)
 {
     int result = -1;
     PyArray_DTypeMeta *string = PyArray_DTypeFromTypeNum(NPY_STRING);
@@ -2423,7 +2423,7 @@ int give_bad_field_error(PyObject *key)
 
 
 static PyObject *
-PyArray_GetGenericToVoidCastingImpl()
+PyArray_GetGenericToVoidCastingImpl(void)
 {
     static PyArrayMethodObject *method = NULL;
 
@@ -2512,7 +2512,7 @@ structured_to_nonstructured_resolve_descriptors(
 
 
 static PyObject *
-PyArray_GetVoidToGenericCastingImpl()
+PyArray_GetVoidToGenericCastingImpl(void)
 {
     static PyArrayMethodObject *method = NULL;
 
@@ -2700,7 +2700,7 @@ void_to_void_resolve_descriptors(
  * sense, are special (similar to Object).
  */
 static int
-PyArray_InitializeVoidToVoidCast()
+PyArray_InitializeVoidToVoidCast(void)
 {
     PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
     PyArray_DTypeMeta *dtypes[2] = {Void, Void};
@@ -2772,7 +2772,7 @@ object_to_any_resolve_descriptors(
  * Casting to object is special since it is generic to all input dtypes.
  */
 static PyObject *
-PyArray_GetObjectToGenericCastingImpl()
+PyArray_GetObjectToGenericCastingImpl(void)
 {
     static PyArrayMethodObject *method = NULL;
 
@@ -2828,7 +2828,7 @@ any_to_object_resolve_descriptors(
  * Casting to object is special since it is generic to all input dtypes.
  */
 static PyObject *
-PyArray_GetGenericToObjectCastingImpl()
+PyArray_GetGenericToObjectCastingImpl(void)
 {
     static PyArrayMethodObject *method = NULL;
 
@@ -2855,7 +2855,7 @@ PyArray_GetGenericToObjectCastingImpl()
 
 
 static int
-PyArray_InitializeObjectToObjectCast()
+PyArray_InitializeObjectToObjectCast(void)
 {
     /*
      * The object dtype does not support byte order changes, so its cast

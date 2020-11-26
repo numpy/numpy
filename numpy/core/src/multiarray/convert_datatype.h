@@ -77,6 +77,6 @@ simple_cast_resolve_descriptors(
         PyArray_Descr **loop_descrs);
 
 NPY_NO_EXPORT int
-PyArray_InitializeCasts();
+PyArray_InitializeCasts(void);
 
 #endif
