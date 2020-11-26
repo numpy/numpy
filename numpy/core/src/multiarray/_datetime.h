@@ -374,6 +374,6 @@ NPY_NO_EXPORT PyArray_Descr *
 find_object_datetime_type(PyObject *obj, int type_num);
 
 NPY_NO_EXPORT int
-PyArray_InitializeDatetimeCasts();
+PyArray_InitializeDatetimeCasts(void);
 
 #endif
