@@ -193,7 +193,7 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
-def deprecate_with_doc(message = msg):
+def deprecate_with_doc(msg):
     """
     Returns new _Deprecate class object. 
     The object can be used to Issue a DeprecationWarning, by passing `func`
