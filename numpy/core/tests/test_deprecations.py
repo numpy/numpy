@@ -785,30 +785,3 @@ class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
     def test_deprecated(self):
         ctor = np.core.multiarray.scalar
         self.assert_deprecated(lambda: ctor(np.dtype("O"), 1))
-
-
-class TestMacros(_DeprecationTestCase):
-    # 2020-11-25
-    def test_macro_warning(self):
-        from numpy.core._multiarray_tests import test_macro
-
-        with pytest.warns(DeprecationWarning):
-            res = test_macro()
-
-        assert res > 32
-
-    def test_macro_error_print(self, capsys):
-        from numpy.core._multiarray_tests import test_macro
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            res = test_macro()
-
-        assert res > 32
-
-        msg = ("NPY_SIZEOF_PYARRAYOBJECT is deprecated since it cannot be "
-               "used at compile time and is not constant across different "
-               "runtime versions of NumPy\n")
-        captured = capsys.readouterr()
-        # There may also be a traceback in there, so lets match pedantic:
-        assert captured.err.count(msg) == 1
