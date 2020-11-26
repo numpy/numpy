@@ -208,7 +208,7 @@ def deprecate_with_doc(msg):
 
     Parameters
     ----------
-    message : str
+    msg : str
     	    Additional explanation of the deprecation. Displayed in the 
        	    docstring after the warning.
 
