@@ -4,10 +4,9 @@
 How to verify your first NumPy bug
 ##############################################################################
 
-This how-to will go through the process of verifying a bug_ that was submitted
+This how-to will go through the process of verifying a
+`bug <https://github.com/numpy/numpy/issues/16354>`_ that was submitted
 on the Github issues page.
-
-.. _bug: https://github.com/numpy/numpy/issues/16354
 
 Bug report:
 
@@ -54,11 +53,11 @@ your preferred method. For example, this is how to do it using `virtualenv`:
     source venv_np_bug/bin/activate
 
 ******************************************************************************
-2. Install their version of NumPy
+2. Install the NumPy version mentioned in the bug report
 ******************************************************************************
 
 If the bug was more complex, you may need to build the NumPy version they
-referenced from source (insert link for how to build here). But for this bug,
+referenced :ref:`from source <building-from-source>`. But for this bug,
 a pre-built wheel installed via `pip` will suffice:
 
 
@@ -70,9 +69,9 @@ a pre-built wheel installed via `pip` will suffice:
 3. Confirm their bug exists
 ******************************************************************************
 
-So their claim is simple enough, they say that the wrong dtype is returned
-if one of the inputs of the method `np.polymul` is a zero array. Open up a
-python terminal and type their code in and see if you can reproduce the
+Their claim is simple enough: the wrong dtype is returned 
+if one of the inputs of the method `numpy.polymul` is a zero array. Open up a
+Python terminal and type their code in and see if you can reproduce the
 bug:
 
 ::
@@ -97,12 +96,9 @@ bug:
 ******************************************************************************
 
 Now that the bug is confirmed, you could try and solve it by opening a PR.
-Although for this specific bug, it has already been solved here_. To confirm,
-first uninstall the old version of NumPy and install the latest one:
-
-.. _here: https://github.com/numpy/numpy/pull/17577
-
-::
+Although for this specific bug, it has already been solved 
+`here <https://github.com/numpy/numpy/pull/17577>`_. To confirm,
+first uninstall the old version of NumPy and install the latest one::
 
     pip uninstall numpy
     pip install numpy
@@ -130,7 +126,7 @@ Now run the code again and confirm that the bug was solved.
 5. What to do next
 ******************************************************************************
 
-Go to the NumPy issues page https://github.com/numpy/numpy/issues and see if
-you can confirm the existence of any other bugs. If you can, comment on the 
-issue saying so. Doing this helps the NumPy developers know if more than one
-user is experiencing the issue.
+Go to the `NumPy GitHub issues page <https://github.com/numpy/numpy/issues>`_
+and see if you can confirm the existence of any other bugs. If you can, comment
+on the issue saying so. Doing this helps the NumPy developers know if more than
+one user is experiencing the issue.
