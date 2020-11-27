@@ -1,3 +1,0 @@
-RPATH support on AIX added to distutils
----------------------------------------
-This allows SciPy to be built on AIX.
