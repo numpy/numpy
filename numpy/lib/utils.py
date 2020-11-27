@@ -183,8 +183,8 @@ def deprecate_with_doc(msg):
     """
     Returns new object. 
     The object can be used to Issue a DeprecationWarning, by passing `func`
-    as argument, this adds warning to `old_name`'s docstring, rebinds 
-    ``old_name.__name__`` and returns the new function object.
+    as argument, this adds warning to the to-be decorated function's
+    docstring and returns the new function object.
 
     This function may also be used as a decorator.
     
