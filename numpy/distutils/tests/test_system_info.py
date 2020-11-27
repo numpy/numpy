@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import pytest
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
@@ -203,6 +204,7 @@ class TestSystemInfoReading:
         assert_equal(tsi.get_libraries(), [self._lib1])
         assert_equal(tsi.get_runtime_lib_dirs(), [self._dir1])
 
+    @pytest.mark.skipif(sys.platform == 'OpenVMS', reason="OpenVMS is not a linux")
     def test_temp2(self):
         # Read in all information in the temp2 block
         tsi = self.c_temp2
