@@ -8319,7 +8319,7 @@ def test_equal_override():
         assert_equal(my_always_equal != array, 'ne')
         assert_equal(array != my_always_equal, 'ne')
 
-@pytest.skipif(sys.platform == 'OpenVMS', reason = 'We should use special func for each type')
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason = 'We should use special func for each type')
 def test_npymath_complex():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
