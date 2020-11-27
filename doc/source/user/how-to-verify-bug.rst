@@ -8,9 +8,13 @@ This how-to will go through the process of verifying a
 `bug <https://github.com/numpy/numpy/issues/16354>`_ that was submitted
 on the Github issues page.
 
-Bug report:
+This is the bug report:
 
-::
+.. code-block:: none
+
+    Title:
+    `np.polymul return type is np.float64 or np.complex128 when given an
+    all-zero argument`
 
     np.polymul returns an object with type np.float64 when one argument is all
     zero, and both arguments have type np.int64 or np.float32. Something
@@ -69,10 +73,9 @@ a pre-built wheel installed via `pip` will suffice:
 3. Confirm their bug exists
 ******************************************************************************
 
-Their claim is simple enough: the wrong dtype is returned 
-if one of the inputs of the method `numpy.polymul` is a zero array. Open up a
-Python terminal and type their code in and see if you can reproduce the
-bug:
+Their claim is simple enough: the wrong dtype is returned if one of the inputs
+of the method `numpy.polymul` is a zero array. Open up a Python terminal and
+type their code in and see if you can reproduce the bug:
 
 ::
 
