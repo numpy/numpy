@@ -1,6 +1,0 @@
-The random.Generator class has a new ``permuted`` function.
------------------------------------------------------------
-The new function differs from ``shuffle`` and ``permutation`` in that the
-subarrays indexed by an axis are permuted rather than the axis being treated as
-a separate 1-D array for every combination of the other indexes. For example,
-it is now possible to permute the rows or columns of a 2-D array.

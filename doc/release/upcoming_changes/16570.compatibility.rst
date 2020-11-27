@@ -1,4 +1,0 @@
-The ``operator.concat`` function now raises TypeError for array arguments
--------------------------------------------------------------------------
-The previous behavior was to fall back to addition and add the two arrays,
-which was thought to be unexpected behavior for a concatenation function.
