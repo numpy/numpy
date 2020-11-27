@@ -62,10 +62,7 @@ your preferred method. For example, this is how to do it using `virtualenv`:
 
 If the bug was more complex, you may need to build the NumPy version they
 referenced :ref:`from source <building-from-source>`. But for this bug,
-a pre-built wheel installed via `pip` will suffice:
-
-
-::
+a pre-built wheel installed via `pip` will suffice::
 
     pip install numpy==1.18.4
 
@@ -75,9 +72,7 @@ a pre-built wheel installed via `pip` will suffice:
 
 Their claim is simple enough: the wrong dtype is returned if one of the inputs
 of the method `numpy.polymul` is a zero array. Open up a Python terminal and
-type their code in and see if you can reproduce the bug:
-
-::
+type their code in and see if you can reproduce the bug::
 
     >>> import numpy as np
     >>> np.__version__
