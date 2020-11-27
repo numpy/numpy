@@ -891,6 +891,7 @@ class TestCreation:
             assert_equal(np.count_nonzero(d), 0)
 
     @pytest.mark.slow
+    @pytest.mark.skipif(sys.platform == 'OpenVMS', reason = 'Too big for OpenVMS')
     def test_zeros_big(self):
         # test big array as they might be allocated different by the system
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
@@ -8318,20 +8319,38 @@ def test_equal_override():
         assert_equal(my_always_equal != array, 'ne')
         assert_equal(array != my_always_equal, 'ne')
 
-
+@pytest.skipif(sys.platform == 'OpenVMS', reason = 'We should use special func for each type')
 def test_npymath_complex():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
-        npy_cabs, npy_carg)
+        npy_cabsf, npy_cargf, npy_cabs, npy_carg, npy_cabsl, npy_cargl)
 
-    funcs = {npy_cabs: np.absolute,
-             npy_carg: np.angle}
+    funcs = {np.absolute: (npy_cabsf, npy_cabs, npy_cabsf),
+             np.angle: (npy_cargf, npy_carg, npy_cargl)}
     vals = (1, np.inf, -np.inf, np.nan)
     types = (np.complex64, np.complex128, np.clongdouble)
 
-    for fun, npfun in funcs.items():
-        for x, y in itertools.product(vals, vals):
-            for t in types:
+    for x, y in itertools.product(vals, vals):
+        for npfun, funtuple in funcs.items():
+            for t, fun in zip(types, funtuple):
+                z = t(complex(x, y))
+                got = fun(z)
+                expected = npfun(z)
+                assert_allclose(got, expected)
+
+def test_npymath_complex_by_type():
+    # Smoketest npymath functions
+    from numpy.core._multiarray_tests import (
+        npy_cabsf, npy_cargf, npy_cabs, npy_carg, npy_cabsl, npy_cargl)
+
+    funcs = {np.absolute: (npy_cabsf, npy_cabs, npy_cabsl),
+             np.angle: (npy_cargf, npy_carg, npy_cargl)}
+    vals = (1, np.inf, -np.inf, np.nan)
+    types = (np.complex64, np.complex128, np.clongdouble)
+
+    for x, y in itertools.product(vals, vals):
+        for npfun, funtuple in funcs.items():
+            for t, fun in zip(types, funtuple):
                 z = t(complex(x, y))
                 got = fun(z)
                 expected = npfun(z)
