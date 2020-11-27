@@ -1337,8 +1337,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     --------
     scipy.interpolate
 
-    Notes
-    -----
+    Warnings
+    --------
     The x-coordinate sequence is expected to be increasing, but this is not
     explicitly enforced.  However, if the sequence `xp` is non-increasing,
     interpolation results are meaningless.
@@ -1424,6 +1424,11 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         fp = fp[asort_xp]
         xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
+    else:
+        if not np.all(np.diff(xp[np.isfinite(xp)]) > 0):
+            warnings.warn('xp is not monotonically increasing, '
+                          'interpolation results will be meaningless.',
+                          RuntimeWarning)
 
     return interp_func(x, xp, fp, left, right)
 
@@ -4245,7 +4250,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     See Also
     --------
     mgrid : Construct a multi-dimensional "meshgrid" using indexing notation.
-    ogrid : Construct an open multi-dimensional "meshgrid" using indexing 
+    ogrid : Construct an open multi-dimensional "meshgrid" using indexing
             notation.
 
     Examples
