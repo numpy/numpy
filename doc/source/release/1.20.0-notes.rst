@@ -1,6 +1,32 @@
+.. currentmodule:: numpy
+
 ==========================
 NumPy 1.20.0 Release Notes
 ==========================
+This NumPy release is the largest so made to date, some 648 PRs contributed by
+182 people have been merged. See the list of highlights below for more details.
+The Python versions supported for this release are 3.7-3.9, support for Python
+3.6 has been dropped. Highlights are
+
+- Annotations for NumPy functions. This work is ongoing and improvements can
+  be expected pending feedback from users.
+
+- Wider use of SIMD to increase execution speed of ufuncs. Much work has been
+  done in introducing universal functions that will ease use of modern
+  features across different hardware platforms. This work is ongoing.
+
+- Preliminary work in changing the dtype and casting implementations in order to
+  provide an easier path to extending dtypes. This work is ongoing but enough
+  has been done to allow experimentation and feedback.
+
+- Extensive documentation improvements comprising some 185 PR merges. This work
+  is ongoing and part of the larger project to improve NumPy's online presence
+  and usefulness to new users.
+
+- Further cleanups related to removing Python 2.7. This improves code
+  readability and removes technical debt.
+
+- Preliminary support for the upcoming Cython 3.0.
 
 
 New functions
@@ -82,8 +108,8 @@ Passing ``shape=None`` to functions with a non-optional shape argument is deprec
 ------------------------------------------------------------------------------------
 Previously, this was an alias for passing ``shape=()``.
 This deprecation is emitted by `PyArray_IntpConverter` in the C API. If your
-API is intended to support passing `None`, then you should check for `None`
-prior to invoking the converter, so as to be able to distinguish `None` and
+API is intended to support passing ``None``, then you should check for ``None``
+prior to invoking the converter, so as to be able to distinguish ``None`` and
 ``()``.
 
 (`gh-15886 <https://github.com/numpy/numpy/pull/15886>`__)
@@ -107,12 +133,12 @@ into an error. This also applies to assignments.
 
 (`gh-15900 <https://github.com/numpy/numpy/pull/15900>`__)
 
-Inexact matches for mode and searchside are deprecated
-------------------------------------------------------
-Inexact and case insensitive matches for mode and searchside were
-valid inputs earlier and will give a DeprecationWarning now.
-For example, below are some example usages which are now deprecated and will
-give a DeprecationWarning::
+Inexact matches for ``mode`` and ``searchside`` are deprecated
+--------------------------------------------------------------
+Inexact and case insensitive matches for ``mode`` and ``searchside`` were valid
+inputs earlier and will give a DeprecationWarning now.  For example, below are
+some example usages which are now deprecated and will give a
+DeprecationWarning::
 
     import numpy as np
     arr = np.array([[3, 6, 6], [4, 5, 1]])
@@ -279,7 +305,7 @@ of arrays and scalars behave consistently.
 Array coercion changes when Strings and other types are mixed
 -------------------------------------------------------------
 
-When stringss and other types are mixed, such as::
+When strings and other types are mixed, such as::
 
     np.array(["string", np.float64(3.)], dtype="S")
 
@@ -296,7 +322,7 @@ a uniform string length::
     np.array([np.float64(3.)], dtype="S")  # gives "S32"
     np.array([3.0], dtype="S")  # gives "S3"
 
-while previously the first version gave the same result as the second.
+Previously the first version gave the same result as the second.
 
 
 Array coercion restructure
@@ -307,11 +333,11 @@ users.  In extremely rare corner cases where array-likes are nested::
 
     np.array([array_like1])
 
-things will now be more consistent with::
+Things will now be more consistent with::
 
     np.array([np.array(array_like1)])
 
-which could potentially change output subtly for badly defined array-likes.
+This could potentially subtly change output for badly defined array-likes.
 We are not aware of any such case where the results were not clearly
 incorrect previously.
 
@@ -353,14 +379,14 @@ which was thought to be unexpected behavior for a concatenation function.
 
 An abstract property ``nickname`` has been removed from  ``ABCPolyBase`` as it
 was no longer used in the derived convenience classes.
-This may affect users who have derived classes from ``ABCPolyBase`` and 
-overridden the methods for representation and display, e.g. ``__str__``, 
+This may affect users who have derived classes from ``ABCPolyBase`` and
+overridden the methods for representation and display, e.g. ``__str__``,
 ``__repr__``, ``_repr_latex``, etc.
 
 (`gh-16589 <https://github.com/numpy/numpy/pull/16589>`__)
 
-float->timedelta and uint64->timedelta promotion will raise a TypeError
------------------------------------------------------------------------
+``float->timedelta`` and ``uint64->timedelta`` promotion will raise a TypeError
+-------------------------------------------------------------------------------
 Float and timedelta promotion consistently raises a TypeError.
 ``np.promote_types("float32", "m8")`` aligns with
 ``np.promote_types("m8", "float32")`` now and both raise a TypeError.
@@ -375,8 +401,8 @@ was considered a bug.
 
 (`gh-16592 <https://github.com/numpy/numpy/pull/16592>`__)
 
-`numpy.genfromtxt` now correctly unpacks structured arrays
-----------------------------------------------------------
+``numpy.genfromtxt`` now correctly unpacks structured arrays
+------------------------------------------------------------
 Previously, `numpy.genfromtxt` failed to unpack if it was called with
 ``unpack=True`` and a structured datatype was passed to the ``dtype`` argument
 (or ``dtype=None`` was passed and a structured datatype was inferred).
@@ -539,7 +565,7 @@ the functions.
 ``where`` keyword argument for ``numpy`` functions ``mean``, ``std``, ``var``
 -----------------------------------------------------------------------------
 The keyword argument ``where`` is added and allows to limit the scope in the
-caluclation of ``mean``, ``std`` and ``var`` to only a subset of elements. It
+calculation of ``mean``, ``std`` and ``var`` to only a subset of elements. It
 is available both via ``numpy`` directly or in the methods of
 ``numpy.ndarray``.
 
@@ -585,8 +611,8 @@ like the following will now work:
 
 (`gh-16558 <https://github.com/numpy/numpy/pull/16558>`__)
 
-New``__f2py_numpy_version__`` attribute for f2py generated modules.
--------------------------------------------------------------------
+New ``__f2py_numpy_version__`` attribute for f2py generated modules.
+--------------------------------------------------------------------
 Because f2py is released together with NumPy, ``__f2py_numpy_version__``
 provides a way to track the version f2py used to generate the module.
 
@@ -598,7 +624,7 @@ Currently running mypy with the NumPy stubs configured requires
 either:
 
 * Installing NumPy
-* Adding the source directory to MYPYPATH and linking to the mypy.ini
+* Adding the source directory to MYPYPATH and linking to the ``mypy.ini``
 
 Both options are somewhat inconvenient, so add a ``--mypy`` option to runtests
 that handles setting things up for you. This will also be useful in the future
@@ -607,7 +633,7 @@ checking.
 
 (`gh-17123 <https://github.com/numpy/numpy/pull/17123>`__)
 
-Negation of user-defined BLAS/LAPACK detection order
+Negation of user defined BLAS/LAPACK detection order
 ----------------------------------------------------
 `~numpy.distutils` allows negation of libraries when determining BLAS/LAPACK
 libraries.
@@ -618,7 +644,7 @@ to disallow NetLIB libraries one could do:
 
     NPY_BLAS_ORDER='^blas' NPY_LAPACK_ORDER='^lapack' python setup.py build
 
-which will use any of the accelerated libraries instead.
+That will use any of the accelerated libraries instead.
 
 (`gh-17219 <https://github.com/numpy/numpy/pull/17219>`__)
 
@@ -636,8 +662,8 @@ Support for the nvfortran compiler, a version of pgfortran, has been added.
 
 (`gh-17344 <https://github.com/numpy/numpy/pull/17344>`__)
 
-``dtype`` option for `cov` and `corrcoef`
-----------------------------------------------------
+``dtype`` option for ``cov`` and ``corrcoef``
+---------------------------------------------
 The ``dtype`` option is now available for `numpy.cov` and `numpy.corrcoef`.
 It specifies which data-type the returned result should have.
 By default the functions still return a `numpy.float64` result.
@@ -648,8 +674,8 @@ By default the functions still return a `numpy.float64` result.
 Improvements
 ============
 
-Improved string representation for polynomials (__str__)
---------------------------------------------------------
+Improved string representation for polynomials (``__str__``)
+------------------------------------------------------------
 
 The string representation (``__str__``) of all six polynomial types in
 `numpy.polynomial` has been updated to give the polynomial as a mathematical
@@ -689,16 +715,16 @@ in conjunction with the ``out`` one.
 
 (`gh-16134 <https://github.com/numpy/numpy/pull/16134>`__)
 
-Thread-safe f2py callback functions
+Thread safe f2py callback functions
 -----------------------------------
 
-Callback functions in f2py are now threadsafe.
+Callback functions in f2py are now thread safe.
 
 (`gh-16519 <https://github.com/numpy/numpy/pull/16519>`__)
 
 `numpy.core.records.fromfile` now supports file-like objects
 ------------------------------------------------------------
-`numpy.rec.fromfile` can now use file-like objects, for instance 
+`numpy.rec.fromfile` can now use file-like objects, for instance
 :py:class:`io.BytesIO`
 
 (`gh-16675 <https://github.com/numpy/numpy/pull/16675>`__)
@@ -709,15 +735,15 @@ This allows SciPy to be built on AIX.
 
 (`gh-16710 <https://github.com/numpy/numpy/pull/16710>`__)
 
-Use f90 compiler specified in command line args
---------------------------------------------------------
+Use f90 compiler specified by the command line args
+---------------------------------------------------
 
-The compiler command selection for Fortran Portland Group Compiler is changed in `numpy.distutils.fcompiler`.
-This only affects the linking command.
-This forces the use of the executable provided by the command line option (if provided)
-instead of the pgfortran executable.
-If no executable is provided to the command line option it defaults to the pgf90 executable,
-wich is an alias for pgfortran according to the PGI documentation.
+The compiler command selection for Fortran Portland Group Compiler is changed
+in `numpy.distutils.fcompiler`.  This only affects the linking command.  This
+forces the use of the executable provided by the command line option (if
+provided) instead of the pgfortran executable.  If no executable is provided to
+the command line option it defaults to the pgf90 executable, wich is an alias
+for pgfortran according to the PGI documentation.
 
 (`gh-16730 <https://github.com/numpy/numpy/pull/16730>`__)
 
@@ -749,7 +775,7 @@ Enable multi-platform SIMD compiler optimizations
 A series of improvements for NumPy infrastructure to pave the way to
 **NEP-38**, that can be summarized as follow:
 
--  **New Build Arguments** :
+-  **New Build Arguments**
 
    -  ``--cpu-baseline`` to specify the minimal set of required
       optimizations, default value is ``min`` which provides the minimum
@@ -765,29 +791,39 @@ A series of improvements for NumPy infrastructure to pave the way to
       called ``NPY_DISABLE_OPTIMIZATION`` which it can be used as
       guard for any SIMD code.
 
--  **Advanced CPU dispatcher**: A flexible cross-architecture CPU dispatcher built
-   on the top of Python/Numpy distutils, support all common compilers with a wide range of CPU features.
+-  **Advanced CPU dispatcher**
 
-   The new dispatcher requires a special file extension ``*.dispatch.c`` to mark the dispatch-able
-   **C** sources. These sources have the ability to be compiled multiple times so that each compilation process
-   represents certain CPU features and provides different #definitions and flags that affect the code paths.
+   A flexible cross-architecture CPU dispatcher built on the top of
+   Python/Numpy distutils, support all common compilers with a wide range of
+   CPU features.
+
+   The new dispatcher requires a special file extension ``*.dispatch.c`` to
+   mark the dispatch-able **C** sources. These sources have the ability to be
+   compiled multiple times so that each compilation process represents certain
+   CPU features and provides different #definitions and flags that affect the
+   code paths.
 
 -  **New auto-generated C header ``core/src/common/_cpu_dispatch.h``**
-   This header is generated by the distutils module 'ccompiler_opt', and contains all the #definitions
-   and headers of instruction sets, that had been configured through command arguments '--cpu-baseline' and '--cpu-dispatch'.
+
+   This header is generated by the distutils module ``ccompiler_opt``, and
+   contains all the #definitions and headers of instruction sets, that had been
+   configured through command arguments '--cpu-baseline' and '--cpu-dispatch'.
 
 -  **New C header ``core/src/common/npy_cpu_dispatch.h``**
 
-   This header contains all utilities that required for the whole CPU dispatching process,
-   it also can be considered as a bridge linking the new infrastructure work with NumPy CPU runtime detection.
+   This header contains all utilities that required for the whole CPU
+   dispatching process, it also can be considered as a bridge linking the new
+   infrastructure work with NumPy CPU runtime detection.
 
 -  **Add new attributes to NumPy umath module(Python level)**
 
-   -  ``__cpu_baseline__`` a list contains the minimal set of required optimizations that supported
-      by the compiler and platform according to the specified values to command argument '--cpu-baseline'.
+   - ``__cpu_baseline__`` a list contains the minimal set of required
+     optimizations that supported by the compiler and platform according to the
+     specified values to command argument '--cpu-baseline'.
 
-   -  ``__cpu_dispatch__`` a list contains the dispatched set of additional optimizations that supported by the compiler
-      and platform according to the specified values to command argument '--cpu-dispatch'.
+   - ``__cpu_dispatch__`` a list contains the dispatched set of additional
+     optimizations that supported by the compiler and platform according to the
+     specified values to command argument '--cpu-dispatch'.
 
 -  **Print the supported CPU features during the run of PytestTester**
 
@@ -842,11 +878,11 @@ result in the same behavior. The changes are tabulated below:
 
 (`gh-16161 <https://github.com/numpy/numpy/pull/16161>`__)
 
-``np.linspace`` on integers now use floor
------------------------------------------
-When using a `int` dtype in `numpy.linspace`, previously float values would
+``np.linspace`` on integers now uses floor
+------------------------------------------
+When using a ``int`` dtype in `numpy.linspace`, previously float values would
 be rounded towards zero. Now `numpy.floor` is used instead, which rounds toward
-``-inf``. This changes the results for negative values. For example, the 
+``-inf``. This changes the results for negative values. For example, the
 following would previously give::
 
     >>> np.linspace(-3, 1, 8, dtype=int)
@@ -865,9 +901,4 @@ The former result can still be obtained with::
 (`gh-16841 <https://github.com/numpy/numpy/pull/16841>`__)
 
 
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.20.0 Release Notes
-==========================
 
