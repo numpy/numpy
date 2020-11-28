@@ -1420,7 +1420,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
     PyObject *str;
-    #if (PY_VERSION_HEX >= 0x030700A2)
+    #if PY_VERSION_HEX >= 0x030700A2 && (! defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM > 0x07030300)
     const char *docstr;
     #else
     char *docstr;
