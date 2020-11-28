@@ -1,3 +1,0 @@
-The NVIDIA HPC SDK nvfortran compiler is now supported
-------------------------------------------------------
-Support for the nvfortran compiler, a version of pgfortran, has been added.
