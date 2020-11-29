@@ -7350,9 +7350,9 @@ class TestNewBufferProtocol:
     def test_export_and_pickle_user_dtype(self, obj, error):
         # User dtypes should export successfully when FORMAT was not requested.
         with pytest.raises(error):
-            _multiarray_tests.get_buffer_info(obj, ("STRIDED", "FORMAT"))
+            _multiarray_tests.get_buffer_info(obj, ("STRIDED_RO", "FORMAT"))
 
-        _multiarray_tests.get_buffer_info(obj, ("STRIDED",))
+        _multiarray_tests.get_buffer_info(obj, ("STRIDED_RO",))
 
         # This is currently also necessary to implement pickling:
         pickle_obj = pickle.dumps(obj)
