@@ -19,17 +19,21 @@ __all__ = [
 def get_include():
     """
     Return the directory that contains the NumPy \\*.h header files.
+
     Extension modules that need to compile against NumPy should use this
     function to locate the appropriate include directory.
+
     Notes
     -----
     When using ``distutils``, for example in ``setup.py``.
     ::
+
         import numpy as np
         ...
         Extension('extension_name', ...
                 include_dirs=[np.get_include()])
         ...
+
     """
     import numpy
     if numpy.show_config is None:
@@ -50,10 +54,13 @@ def _set_function_name(func, name):
 class _Deprecate:
     """
     Decorator class to deprecate old functions.
+
     Refer to `deprecate` for details.
+
     See Also
     --------
     deprecate
+
     """
 
     def __init__(self, old_name=None, new_name=None, message=None):
@@ -64,6 +71,7 @@ class _Deprecate:
     def __call__(self, func, *args, **kwargs):
         """
         Decorator call.  Refer to ``decorate``.
+
         """
         old_name = self.old_name
         new_name = self.new_name
@@ -138,7 +146,9 @@ def deprecate(*args, **kwargs):
     Issues a DeprecationWarning, adds warning to `old_name`'s
     docstring, rebinds ``old_name.__name__`` and returns the new
     function object.
+
     This function may also be used as a decorator.
+
     Parameters
     ----------
     func : function
@@ -154,18 +164,22 @@ def deprecate(*args, **kwargs):
     message : str, optional
         Additional explanation of the deprecation.  Displayed in the
         docstring after the warning.
+
     Returns
     -------
     old_func : function
         The deprecated function.
+
     Examples
     --------
     Note that ``olduint`` returns a value after printing Deprecation
     Warning:
+
     >>> olduint = np.deprecate(np.uint)
     DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
     6
+
     """
     # Deprecate may be run as a function or as a decorator
     # If run as a function, we initialise the decorator class
@@ -179,14 +193,15 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
+deprecate_with_doc = lambda msg: _Deprecate(message=msg)
 def deprecate_with_doc(msg):
     """
-    Returns new object. 
-    The object can be used to Issue a DeprecationWarning, by passing `func`
-    as argument, this adds warning to the to-be decorated function's
-    docstring and returns the new function object.
-
-    This function may also be used as a decorator.
+    Decorator to deprecate a function and change its docstring to
+    mention the deprecation. 
+    
+    It returns an object that can be used to Issue a DeprecationWarning, 
+    by passing `func` as argument, this adds warning to the to-be 
+    decorated function's docstring and returns the new function object.
     
     See Also
     --------
@@ -197,6 +212,7 @@ def deprecate_with_doc(msg):
     msg : str
     	    Additional explanation of the deprecation. Displayed in the 
        	    docstring after the warning.
+
     Returns
     -------
     obj : object
@@ -205,6 +221,7 @@ def deprecate_with_doc(msg):
     --------
     Note that ``olduint`` returns a value after printing DeprecationWarning 
     with msg:
+
     >>> oldobj = np.deprecate_with_doc("Use np.int_ instead.")
     >>> olduint = oldobj(np.uint)
     >>> olduint(6)
@@ -222,11 +239,13 @@ def deprecate_with_doc(msg):
 def byte_bounds(a):
     """
     Returns pointers to the end-points of an array.
+
     Parameters
     ----------
     a : ndarray
         Input array. It must conform to the Python-side of the array
         interface.
+
     Returns
     -------
     (low, high) : tuple of 2 integers
@@ -234,6 +253,7 @@ def byte_bounds(a):
         integer is just past the last byte of the array.  If `a` is not
         contiguous it will not use every byte between the (`low`, `high`)
         values.
+
     Examples
     --------
     >>> I = np.eye(2, dtype='f'); I.dtype
@@ -246,6 +266,7 @@ def byte_bounds(a):
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
+
     """
     ai = a.__array_interface__
     a_data = ai['data'][0]
@@ -275,21 +296,26 @@ def byte_bounds(a):
 def who(vardict=None):
     """
     Print the NumPy arrays in the given dictionary.
+
     If there is no dictionary passed in or `vardict` is None then returns
     NumPy arrays in the globals() dictionary (all NumPy arrays in the
     namespace).
+
     Parameters
     ----------
     vardict : dict, optional
         A dictionary possibly containing ndarrays.  Default is globals().
+
     Returns
     -------
     out : None
         Returns 'None'.
+
     Notes
     -----
     Prints out the name, shape, bytes and type of all of the ndarrays
     present in `vardict`.
+
     Examples
     --------
     >>> a = np.arange(10)
@@ -300,6 +326,7 @@ def who(vardict=None):
     a               10               80               int64
     b               20               160              float64
     Upper bound on total bytes  =       240
+
     >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
     ... 'idx':5}
     >>> np.who(d)
@@ -308,6 +335,7 @@ def who(vardict=None):
     x               2                16               float64
     y               3                24               float64
     Upper bound on total bytes  =       40
+
     """
     if vardict is None:
         frame = sys._getframe().f_back
@@ -416,17 +444,21 @@ def _makenamedict(module='numpy'):
 
 def _info(obj, output=sys.stdout):
     """Provide information about ndarray obj.
+
     Parameters
     ----------
     obj : ndarray
         Must be ndarray, not checked.
     output
         Where printed output goes.
+
     Notes
     -----
     Copied over from the numarray module prior to its removal.
     Adapted somewhat as only numpy is an option now.
+
     Called by info.
+
     """
     extra = ""
     tic = ""
@@ -465,6 +497,7 @@ def _info(obj, output=sys.stdout):
 def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     """
     Get help information for a function, class, or module.
+
     Parameters
     ----------
     object : object or str, optional
@@ -479,21 +512,26 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         ``stdout``.  The object has to be opened in 'w' or 'a' mode.
     toplevel : str, optional
         Start search at this level.
+
     See Also
     --------
     source, lookfor
+
     Notes
     -----
     When used interactively with an object, ``np.info(obj)`` is equivalent
     to ``help(obj)`` on the Python prompt or ``obj?`` on the IPython
     prompt.
+
     Examples
     --------
     >>> np.info(np.polyval) # doctest: +SKIP
        polyval(p, x)
          Evaluate the polynomial p at x.
          ...
+
     When using a string for `object` it is possible to get multiple results.
+
     >>> np.info('fft') # doctest: +SKIP
          *** Found in numpy ***
     Core FFT routines
@@ -503,6 +541,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     ...
          *** Repeat reference found in numpy.fft.fftpack ***
          *** Total of 3 references found. ***
+
     """
     global _namedict, _dictlist
     # Local import to speed up numpy's import time.
@@ -604,9 +643,11 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
 def source(object, output=sys.stdout):
     """
     Print or write to a file the source code for a NumPy object.
+
     The source code is only returned for objects written in Python. Many
     functions and classes are defined in C and will therefore not return
     useful information.
+
     Parameters
     ----------
     object : numpy object
@@ -616,9 +657,11 @@ def source(object, output=sys.stdout):
         If `output` not supplied then source code is printed to screen
         (sys.stdout).  File object must be created with either write 'w' or
         append 'a' modes.
+
     See Also
     --------
     lookfor, info
+
     Examples
     --------
     >>> np.source(np.interp)                        #doctest: +SKIP
@@ -629,9 +672,12 @@ def source(object, output=sys.stdout):
             return compiled_interp([x], xp, fp, left, right).item()
         else:
             return compiled_interp(x, xp, fp, left, right)
+
     The source code is only returned for objects written in Python.
+
     >>> np.source(np.array)                         #doctest: +SKIP
     Not available for this object.
+
     """
     # Local import to speed up numpy's import time.
     import inspect
@@ -657,10 +703,12 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
     """
     Do a keyword search on docstrings.
+
     A list of objects that matched the search is displayed,
     sorted by relevance. All given keywords need to be found in the
     docstring for it to be returned as a result, but the order does
     not matter.
+
     Parameters
     ----------
     what : str
@@ -673,13 +721,16 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         Whether to re-generate the docstring cache. Default is False.
     output : file-like, optional
         File-like object to write the output to. If omitted, use a pager.
+
     See Also
     --------
     source, info
+
     Notes
     -----
     Relevance is determined only roughly, by checking if the keywords occur
     in the function name, at the start of a docstring, etc.
+
     Examples
     --------
     >>> np.lookfor('binary representation') # doctest: +SKIP
@@ -692,6 +743,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     numpy.base_repr
         Return a string representation of a number in the given base system.
     ...
+
     """
     import pydoc
 
@@ -773,6 +825,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 def _lookfor_generate_cache(module, import_modules, regenerate):
     """
     Generate docstring cache for given module.
+
     Parameters
     ----------
     module : str, None, module
@@ -781,11 +834,13 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
         Whether to import sub-modules in packages.
     regenerate : bool
         Re-generate the docstring cache
+
     Returns
     -------
     cache : dict {obj_full_name: (docstring, kind, index), ...}
         Docstring cache for the module, either cached one (regenerate=False)
         or newly generated.
+
     """
     # Local import to speed up numpy's import time.
     import inspect
@@ -915,21 +970,26 @@ def _getmembers(item):
 def safe_eval(source):
     """
     Protected string evaluation.
+
     Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.
+
     Parameters
     ----------
     source : str
         The string to evaluate.
+
     Returns
     -------
     obj : object
        The result of evaluating `source`.
+
     Raises
     ------
     SyntaxError
         If the code has invalid Python syntax, or if it contains
         non-literal code.
+
     Examples
     --------
     >>> np.safe_eval('1')
@@ -938,14 +998,17 @@ def safe_eval(source):
     [1, 2, 3]
     >>> np.safe_eval('{"foo": ("bar", 10.0)}')
     {'foo': ('bar', 10.0)}
+
     >>> np.safe_eval('import os')
     Traceback (most recent call last):
       ...
     SyntaxError: invalid syntax
+
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
     ValueError: malformed node or string: <_ast.Call object at 0x...>
+
     """
     # Local import to speed up numpy's import time.
     import ast
@@ -956,6 +1019,7 @@ def _median_nancheck(data, result, axis, out):
     """
     Utility function to check median result from data for NaN values at the end
     and return NaN in that case. Input result can also be a MaskedArray.
+
     Parameters
     ----------
     data : array
