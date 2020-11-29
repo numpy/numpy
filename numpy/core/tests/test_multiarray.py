@@ -4643,6 +4643,12 @@ class TestPutmask:
         np.putmask(x[1:4], x[:3], [True, False, True])
         assert_equal(x, np.array([True, True, True, True]))
 
+    def test_writeable(self):
+        a = np.arange(12)
+        a.setflags(write = False)
+
+        with pytest.raises(Exception) as e_info:
+            np.putmask(a, a >=3, 2)
 
 class TestTake:
     def tst_basic(self, x):
