@@ -1017,7 +1017,7 @@ def polydiv(u, v):
     (array([1.5 , 1.75]), array([0.25]))
 
     """
-    truepoly = (isinstance(u, poly1d) or isinstance(v, poly1d))
+    truepoly = isinstance(u, poly1d)
     u = atleast_1d(u) + 0.0
     v = atleast_1d(v) + 0.0
     # w has the common type
