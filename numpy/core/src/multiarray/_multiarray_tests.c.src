@@ -677,11 +677,12 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
                 "invalid error argument to test function.");
     }
     if (PyArray_RegisterDataType(dtype) < 0) {
-        /* Fix original type in the error_path == 2 case. */
+        /* Fix original type in the error_path == 2 case and delete it */
         Py_SET_TYPE(dtype, original_type);
+        Py_DECREF(dtype);
         return NULL;
     }
-    Py_INCREF(dtype);
+    Py_INCREF(dtype);  /* hold on to the original (leaks a reference) */
     return (PyObject *)dtype;
 }
 
