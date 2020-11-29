@@ -576,6 +576,10 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         return NULL;
     }
 
+    if (PyArray_FailUnlessWriteable(self, "put: output array") < 0) {
+        return NULL;
+    }
+
     mask = (PyArrayObject *)PyArray_FROM_OTF(mask0, NPY_BOOL,
                                 NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
     if (mask == NULL) {
