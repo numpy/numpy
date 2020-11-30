@@ -8356,7 +8356,7 @@ def test_npymath_complex_by_type():
                 expected = npfun(z)
                 assert_allclose(got, expected)
 
-
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason = 'We should use special func for each type')
 def test_npymath_real():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
@@ -8377,6 +8377,30 @@ def test_npymath_real():
                 got = fun(z)
                 expected = npfun(z)
                 assert_allclose(got, expected)
+
+def test_npymath_real_by_type():
+    # Smoketest npymath functions
+    from numpy.core._multiarray_tests import (
+        npy_log10f, npy_coshf, npy_sinhf, npy_tanf, npy_tanhf,
+        npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh,
+        npy_log10l, npy_coshl, npy_sinhl, npy_tanl, npy_tanhl,)
+
+    funcs = {np.log10: (npy_log10f,npy_log10,npy_log10f),
+             np.cosh: (npy_coshf,npy_cosh,npy_coshl),
+             np.sinh: (npy_sinhf,npy_sinh,npy_sinhl),
+             np.tan: (npy_tanf,npy_tan,npy_tanl),
+             np.tanh: (npy_tanhf,npy_tanh,npy_tanhl)}
+    vals = (1, np.inf, -np.inf, np.nan)
+    types = (np.float32, np.float64, np.longdouble)
+
+    with np.errstate(all='ignore'):
+        for x, t in itertools.product(vals, types):
+            for npfun, funtuple in funcs.items():
+                for t, fun in zip(types, funtuple):
+                    z = t(x)
+                    got = fun(z)
+                    expected = npfun(z)
+                    assert_allclose(got, expected)
 
 def test_uintalignment_and_alignment():
     # alignment code needs to satisfy these requirements:
