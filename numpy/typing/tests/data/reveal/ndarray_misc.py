@@ -26,14 +26,14 @@ reveal_type(A.any(axis=0))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
 reveal_type(A.any(keepdims=True))  # E: Union[numpy.bool_, numpy.ndarray[Any, Any]]
 reveal_type(A.any(out=B))  # E: SubClass
 
-reveal_type(f8.argmax())  # E: numpy.signedinteger[numpy.typing._
-reveal_type(A.argmax())  # E: numpy.signedinteger[numpy.typing._
-reveal_type(A.argmax(axis=0))  # E: Union[numpy.ndarray[Any, Any], numpy.signedinteger[numpy.typing._
+reveal_type(f8.argmax())  # E: {intp}
+reveal_type(A.argmax())  # E: {intp}
+reveal_type(A.argmax(axis=0))  # E: Union[numpy.ndarray[Any, Any], {intp}]
 reveal_type(A.argmax(out=B))  # E: SubClass
 
-reveal_type(f8.argmin())  # E: numpy.signedinteger[numpy.typing._
-reveal_type(A.argmin())  # E: numpy.signedinteger[numpy.typing._
-reveal_type(A.argmin(axis=0))  # E: Union[numpy.ndarray[Any, Any], numpy.signedinteger[numpy.typing._
+reveal_type(f8.argmin())  # E: {intp}
+reveal_type(A.argmin())  # E: {intp}
+reveal_type(A.argmin(axis=0))  # E: Union[numpy.ndarray[Any, Any], {intp}]
 reveal_type(A.argmin(out=B))  # E: SubClass
 
 reveal_type(f8.argsort())  # E: numpy.ndarray[Any, Any]
@@ -53,11 +53,11 @@ reveal_type(f8.compress([0]))  # E: numpy.ndarray[Any, Any]
 reveal_type(A.compress([0]))  # E: numpy.ndarray[Any, Any]
 reveal_type(A.compress([0], out=B))  # E: SubClass
 
-reveal_type(f8.conj())  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(f8.conj())  # E: {float64}
 reveal_type(A.conj())  # E: numpy.ndarray[Any, Any]
 reveal_type(B.conj())  # E: SubClass
 
-reveal_type(f8.conjugate())  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(f8.conjugate())  # E: {float64}
 reveal_type(A.conjugate())  # E: numpy.ndarray[Any, Any]
 reveal_type(B.conjugate())  # E: SubClass
 
@@ -87,7 +87,7 @@ reveal_type(A.min(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any
 reveal_type(A.min(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
 reveal_type(A.min(out=B))  # E: SubClass
 
-reveal_type(f8.newbyteorder())  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(f8.newbyteorder())  # E: {float64}
 reveal_type(A.newbyteorder())  # E: numpy.ndarray[Any, Any]
 reveal_type(B.newbyteorder('|'))  # E: SubClass
 
@@ -103,7 +103,7 @@ reveal_type(A.ptp(axis=0))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any
 reveal_type(A.ptp(keepdims=True))  # E: Union[numpy.number[Any], numpy.ndarray[Any, Any]]
 reveal_type(A.ptp(out=B))  # E: SubClass
 
-reveal_type(f8.round())  # E: numpy.floating[numpy.typing._64Bit]
+reveal_type(f8.round())  # E: {float64}
 reveal_type(A.round())  # E: numpy.ndarray[Any, Any]
 reveal_type(A.round(out=B))  # E: SubClass
 
