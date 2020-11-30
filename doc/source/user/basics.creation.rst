@@ -87,7 +87,7 @@ then you need to specify the ``dtype`` while you create the array.
   has ~47. I'm sure there are more. 
 
 NumPy has over 40 built-in functions for creating arrays as laid
-out in the :doc:`Array creation routines <routines.array-creation>`.
+out in the :ref:`Array creation routines <routines.array-creation>`.
 There are three categories of NumPy array creation objects:
 1) 1D arrays
 2) 2D arrays
@@ -96,11 +96,13 @@ There are three categories of NumPy array creation objects:
 1 - 1D array creation objects
 -----------------------------
 
-The 1D array creation objects e.g. :func:`linspace` and :func:`arange`
-generally  need at least two inputs: start and end.  
+The 1D array creation objects e.g. :func:`numpy.linspace` and
+:func:`numpy.arange` generally  need at least two inputs ``start`` and
+``stop``. Where ``start`` is the first value in the array and ``stop``
+specifies the value of the last element in the array. 
 
-:func:`arange` creates arrays with regularly incrementing values. Check the
-docstring for complete information and examples. A few
+:func:`numpy.arange` creates arrays with regularly incrementing values.
+Check the docstring for complete information and examples. A few
 examples are shown: ::
 
  >>> arange(10)
@@ -143,7 +145,7 @@ and the rest are 0, as such::
         [0., 1., 0., 0., 0.],
         [0., 0., 1., 0., 0.]])
 
-:func:`diag()` can define either a square 2D array with given values along
+:func:`numpy.diag` can define either a square 2D array with given values along
 the diagonal _or_ if given a 2D array returns a 1D array that is
 only the diagonal elements. The two array creations can be helpful while
 doing linear algebra as such::
@@ -187,7 +189,7 @@ routine is helpful in generating linear least squares models, as such::
 3 - ND array creation objects
 -----------------------------
 
-The ND array creation objects e.g. :func:`ones`, :func:`zeros`, and
+The ND array creation objects e.g. :func:`numpy.ones`, :func:`numpy.zeros`, and
 :func:`default_rng.random` define arrays based upon the desired shape. ND
 array creation objects can create arrays with any dimension by
 specifying how many dimensions and length along that dimension in a
@@ -239,7 +241,7 @@ a regular grid.
 
 Once you have created arrays, you can replicate, join, or mutate those
 existing arrays to create new arrays. When you assign an array or its
-elements to a new variable, you have to explicitly :func:`copy` the array,
+elements to a new variable, you have to explicitly :func:`numpy.copy` the array,
 otherwise the variable is a view into the original array. Consider the
 following example, ::
 
@@ -252,7 +254,7 @@ following example, ::
 In this example, you did not create a new array. You created a variable,
 ``b`` that viewed the first 2 elements of ``a``. When you added 1 to ``b`` you
 would get the same result by adding 1 to ``a[:2]``. If you want to create a
-_new_ array, use the :func:`copy` array creation routine as such, ::
+_new_ array, use the :func:`numpy.copy` array creation routine as such, ::
 
  >>> a = array([1, 2, 3, 4])
  >>> b = a[:2].copy()
@@ -261,7 +263,7 @@ _new_ array, use the :func:`copy` array creation routine as such, ::
  a =  [1 2 3 4 5 6] b =  [2 3]
 
 There are a number of routines to join existing arrays e.g. :func:`numpy.vstack`,
-:func:`hstack`, and :func:`numpy.block`. Here is an example of joining four 2-by-2
+:func:`numpy.hstack`, and :func:`numpy.block`. Here is an example of joining four 2-by-2
 arrays into a 4-by-4 array using ``block`` ::
 
  >>> A = ones((2, 2))
@@ -329,7 +331,7 @@ Importing ``simple.csv`` is accomplished using :func:`loadtxt`::
 
 
 More generic ascii files can be read using `SciPy
-``io``<https://docs.scipy.org/doc/scipy/reference/io.html>`_ and `Pandas
+io<https://docs.scipy.org/doc/scipy/reference/io.html>`_ and `Pandas
 <https://pandas.pydata.org/>`_.
 ..
   intersphinx links for io and Pandas?
