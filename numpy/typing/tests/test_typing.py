@@ -3,9 +3,12 @@ import itertools
 import os
 import re
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, IO, Dict, List
 
 import pytest
+import numpy as np
+from numpy.typing.mypy_plugin import _PRECISION_DICT
+
 try:
     from mypy import api
 except ImportError:
@@ -123,6 +126,79 @@ def _test_fail(path: str, error: str, expected_error: Optional[str], lineno: int
         raise AssertionError(_FAIL_MSG2.format(lineno, expected_error, error))
 
 
+def _construct_format_dict():
+    dct = {k.split(".")[-1]: v.replace("numpy", "numpy.typing") for
+           k, v in _PRECISION_DICT.items()}
+
+    return {
+        "uint8": "numpy.unsignedinteger[numpy.typing._8Bit]",
+        "uint16": "numpy.unsignedinteger[numpy.typing._16Bit]",
+        "uint32": "numpy.unsignedinteger[numpy.typing._32Bit]",
+        "uint64": "numpy.unsignedinteger[numpy.typing._64Bit]",
+        "int8": "numpy.signedinteger[numpy.typing._8Bit]",
+        "int16": "numpy.signedinteger[numpy.typing._16Bit]",
+        "int32": "numpy.signedinteger[numpy.typing._32Bit]",
+        "int64": "numpy.signedinteger[numpy.typing._64Bit]",
+        "float16": "numpy.floating[numpy.typing._16Bit]",
+        "float32": "numpy.floating[numpy.typing._32Bit]",
+        "float64": "numpy.floating[numpy.typing._64Bit]",
+        "complex64": "numpy.complexfloating[numpy.typing._32Bit, numpy.typing._32Bit]",
+        "complex128": "numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]",
+
+        "ubyte": f"numpy.unsignedinteger[{dct['_NBitByte']}]",
+        "ushort": f"numpy.unsignedinteger[{dct['_NBitShort']}]",
+        "uintc": f"numpy.unsignedinteger[{dct['_NBitIntC']}]",
+        "uintp": f"numpy.unsignedinteger[{dct['_NBitIntP']}]",
+        "uint": f"numpy.unsignedinteger[{dct['_NBitInt']}]",
+        "ulonglong": f"numpy.unsignedinteger[{dct['_NBitLongLong']}]",
+        "byte": f"numpy.signedinteger[{dct['_NBitByte']}]",
+        "short": f"numpy.signedinteger[{dct['_NBitShort']}]",
+        "intc": f"numpy.signedinteger[{dct['_NBitIntC']}]",
+        "intp": f"numpy.signedinteger[{dct['_NBitIntP']}]",
+        "int_": f"numpy.signedinteger[{dct['_NBitInt']}]",
+        "longlong": f"numpy.signedinteger[{dct['_NBitLongLong']}]",
+
+        "half": f"numpy.floating[{dct['_NBitHalf']}]",
+        "single": f"numpy.floating[{dct['_NBitSingle']}]",
+        "double": f"numpy.floating[{dct['_NBitDouble']}]",
+        "longdouble": f"numpy.floating[{dct['_NBitLongDouble']}]",
+        "csingle": f"numpy.complexfloating[{dct['_NBitSingle']}, {dct['_NBitSingle']}]",
+        "cdouble": f"numpy.complexfloating[{dct['_NBitDouble']}, {dct['_NBitDouble']}]",
+        "clongdouble": f"numpy.complexfloating[{dct['_NBitLongDouble']}, {dct['_NBitLongDouble']}]",
+
+        # numpy.typing
+        "_NBitInt": dct['_NBitInt'],
+    }
+
+
+#: A dictionary with all supported format keys (as keys)
+#: and matching values
+FORMAT_DICT: Dict[str, str] = _construct_format_dict()
+
+
+def _parse_reveals(file: IO[str]) -> List[str]:
+    """Extract and parse all ``"  # E: "`` comments from the passed file-like object.
+
+    All format keys will be substituted for their respective value from `FORMAT_DICT`,
+    *e.g.* ``"{float64}"`` becomes ``"numpy.floating[numpy.typing._64Bit]"``.
+    """
+    string = file.read().replace("*", "")
+
+    # Grab all `# E:`-based comments
+    comments_array = np.char.partition(string.split("\n"), sep="  # E: ")[:, 2]
+    comments = "/n".join(comments_array)
+
+    # Only search for the `{*}` pattern within comments,
+    # otherwise there is the risk of accidently grabbing dictionaries and sets
+    key_set = set(re.findall(r"\{(.*?)\}", comments))
+    kwargs = {
+        k: FORMAT_DICT.get(k, f"<UNRECOGNIZED FORMAT KEY {k!r}>") for k in key_set
+    }
+    fmt_str = comments.format(**kwargs)
+
+    return fmt_str.split("/n")
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.parametrize("path", get_test_cases(REVEAL_DIR))
@@ -138,7 +214,7 @@ def test_reveal(path):
     ])
 
     with open(path) as fin:
-        lines = fin.read().replace('*', '').split("\n")
+        lines = _parse_reveals(fin)
 
     stdout_list = stdout.replace('*', '').split("\n")
     for error_line in stdout_list:
@@ -155,7 +231,7 @@ def test_reveal(path):
         lineno = int(match.group('lineno')) - 1
         assert "Revealed type is" in error_line
 
-        marker = lines[lineno].split("# E:")[-1].strip()
+        marker = lines[lineno]
         _test_reveal(path, marker, error_line, 1 + lineno)
 
 
