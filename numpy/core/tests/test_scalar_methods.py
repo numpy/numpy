@@ -7,6 +7,8 @@ import platform
 import pytest
 import numpy as np
 
+import warnings
+
 from numpy.testing import assert_equal, assert_raises
 
 
@@ -91,6 +93,8 @@ class TestAsIntegerRatio:
         for frac, exp in zip(frac_vals, exp_vals):
             f = np.ldexp(frac, exp, dtype=ftype)
             n, d = f.as_integer_ratio()
+
+            warnings.filterwarnings('error')
 
             try:
                 # workaround for gh-9968
