@@ -2607,7 +2607,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret = ret.reshape(ret_shape)
         return ret
     else:
-        raise ValueError("Improper number of dimensions to norm.")
+        raise ValueError("Input must be 1-D or 2-D when axis=None(unless ord is None)")
 
 
 # multi_dot
