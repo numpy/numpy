@@ -1809,7 +1809,7 @@ pairwise_sum_@TYPE@(char *a, npy_intp n, npy_intp stride)
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, , l#
  *  #C = F, , L#
- *  #IS_LDBL = 0, 0, 1#
+ *  #vms_check_nan = 0, 0, 1#
  */
 
 /**begin repeat1
@@ -1856,7 +1856,7 @@ NPY_NO_EXPORT void
         BINARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
-#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) &&@IS_LDBL@
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
             *((npy_bool *)op1) = !isnan@c@(in1) && !isnan@c@(in2) && (in1 @OP@ in2);
 #else
             *((npy_bool *)op1) = in1 @OP@ in2;

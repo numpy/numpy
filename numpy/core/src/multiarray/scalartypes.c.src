@@ -711,6 +711,7 @@ extern int npy_legacy_print_mode;
  * #name = cfloat, cdouble, clongdouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #vms_check_nan = 0, 0, 1#
  * #suff = f, d, l#
  */
 
@@ -726,7 +727,11 @@ legacy_@name@_format@kind@(@type@ val)
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+    if (
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        (!isnan(val.real)) &&
+#endif
+        val.real == 0.0 && npy_signbit(val.real) == 0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
         res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, val.imag, 0);
         if (res == NULL) {
@@ -853,6 +858,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
  * #name = float, double, longdouble#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #vms_check_nan = 0, 0, 1#
  */
 
 /* helper function choose scientific of fractional output, based on a cutoff */
@@ -892,7 +898,11 @@ c@name@type_@kind@(PyObject *self)
         return legacy_c@name@_format@kind@(val);
     }
 
-    if (val.real == 0.0 && npy_signbit(val.real) == 0) {
+    if (
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        (!isnan(val.real)) &&
+#endif
+        val.real == 0.0 && npy_signbit(val.real) == 0) {
         istr = @name@type_@kind@_either(val.imag, trim, trim, 0);
         if (istr == NULL) {
             return NULL;

@@ -281,7 +281,7 @@ static PyObject *
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
- * #checkNaN = 0, 0, 1#
+ * #vms_check_nan = 0, 0, 1#
  * #suffix = F, , L#
  */
 static int
@@ -343,7 +343,7 @@ static int
                 return -1;
             }
         }
-#if defined(__VMS) && @checkNaN@
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
         if (npy_isnan(oop.real)) {
             temp.real = NPY_NAN@suffix@;
         } else {
