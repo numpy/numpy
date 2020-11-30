@@ -282,14 +282,16 @@ class TestModulus:
                 finf = np.array(np.inf, dtype=dt)
                 fnan = np.array(np.nan, dtype=dt)
                 rem = operator.mod(fone, fzer)
-                assert_(np.isnan(rem), 'dt: %s' % dt)
+                if sys.platform != 'OpenVMS':   # OpenVMS returns zero
+                    assert_(np.isnan(rem), 'dt: %s' % dt)
                 # MSVC 2008 returns NaN here, so disable the check.
                 #rem = operator.mod(fone, finf)
                 #assert_(rem == fone, 'dt: %s' % dt)
                 rem = operator.mod(fone, fnan)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
-                assert_(np.isnan(rem), 'dt: %s' % dt)
+                if sys.platform != 'OpenVMS':   # OpenVMS returns zero
+                    assert_(np.isnan(rem), 'dt: %s' % dt)
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927
