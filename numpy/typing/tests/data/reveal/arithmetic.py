@@ -126,6 +126,9 @@ reveal_type(c16 + b_)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typ
 reveal_type(c16 + b)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
 reveal_type(c16 + c)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
 reveal_type(c16 + f)  # E: numpy.complexfloating[numpy.typing._64Bit, numpy.typing._64Bit]
+
+# note this comment is deliberate truncated as the result varies by platform,
+# and the numpy `reveal` tests use substring matching
 reveal_type(c16 + i)  # E: numpy.complexfloating[numpy.typing._
 reveal_type(c16 + AR)  # E: Any
 
