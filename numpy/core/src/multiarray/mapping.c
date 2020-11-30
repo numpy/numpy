@@ -3194,9 +3194,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     PyObject *shape2 = convert_shape_to_string(mit->nd, mit->dimensions, "");
-    if (shape2 == NULL)
+    if (shape2 == NULL) {
         Py_DECREF(shape1);
         goto finish;
+    }
 
     PyErr_Format(PyExc_ValueError,
             "shape mismatch: value array of shape %S could not be broadcast "
