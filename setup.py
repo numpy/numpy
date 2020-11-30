@@ -130,7 +130,10 @@ def get_version_info():
         GIT_REVISION = "Unknown"
 
     if not ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
+        import time
+
+        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        FULLVERSION += f'.dev0+{time_stamp}_{GIT_REVISION[:7]}'
 
     return FULLVERSION, GIT_REVISION
 
