@@ -193,6 +193,7 @@ def deprecate(*args, **kwargs):
     else:
         return _Deprecate(*args, **kwargs)
 
+
 def deprecate_with_doc(msg):
     """
     Decorator to deprecate a function and change its docstring to
@@ -223,8 +224,6 @@ def deprecate_with_doc(msg):
 
     >>> oldobj = np.deprecate_with_doc("Use np.int_ instead.")
     >>> olduint = oldobj(np.uint)
-    DeprecationWarning: `uint64` is deprecated! #may vary
-        Use np.int_ instead.
     >>> olduint(6)
     6
     """
