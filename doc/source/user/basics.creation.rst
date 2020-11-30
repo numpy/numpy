@@ -196,7 +196,7 @@ specifying how many dimensions and length along that dimension in a
 tuple or list. 
 
 :func:`numpy.zeros` will create an array filled with 0 values with the specified
-shape. The default dtype is float64. ::
+shape. The default dtype is ``float64``. ::
 
  >>> np.zeros((2, 3))
  array([[ 0., 0., 0.], 
