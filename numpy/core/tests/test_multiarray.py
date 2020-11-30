@@ -4648,7 +4648,7 @@ class TestPutmask:
         a.setflags(write = False)
 
         with pytest.raises(Exception) as e_info:
-            np.putmask(a, a >=3, 2)
+            np.putmask(a, a >= 3, 2)
 
 class TestTake:
     def tst_basic(self, x):

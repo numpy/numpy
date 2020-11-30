@@ -576,7 +576,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         return NULL;
     }
 
-    if (PyArray_FailUnlessWriteable(self, "put: output array") < 0) {
+    if (PyArray_FailUnlessWriteable(self, "putmask: output array") < 0) {
         return NULL;
     }
 
