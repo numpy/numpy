@@ -66,10 +66,11 @@ def configuration(parent_package='', top_path=None):
             return [all_sources[0]]
 
     EXTRA_COMPILE_ARGS = []
+    EXTRA_LINK_ARGS = []
     if sys.platform == 'OpenVMS':
+        # EXTRA_LINK_ARGS = ['/DEBUG']
         EXTRA_COMPILE_ARGS = [
-            # '/DEBUG/NOOPTIMIZE',
-            # '/LIST',
+            # '/DEBUG/NOOPTIMIZE/LIST/SHOW=(EXPANSION)',
             # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
                 'NONSTANDCAST,'\
@@ -84,6 +85,7 @@ def configuration(parent_package='', top_path=None):
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
         extra_compile_args=EXTRA_COMPILE_ARGS,
+        extra_link_args=EXTRA_LINK_ARGS,
     )
 
     # umath_linalg module
@@ -94,6 +96,7 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
         libraries=['npymath'],
         extra_compile_args=EXTRA_COMPILE_ARGS,
+        extra_link_args=EXTRA_LINK_ARGS,
     )
     return config
 

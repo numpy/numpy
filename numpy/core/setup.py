@@ -696,8 +696,7 @@ def configuration(parent_package='',top_path=None):
     if is_openvms:
         # EXTRA_LINK_ARGS = ['/DEBUG']
         EXTRA_COMPILE_ARGS = [
-            # '/DEBUG/NOOPTIMIZE',
-            # '/LIST',
+            # '/DEBUG/NOOPTIMIZE/LIST/SHOW=(EXPANSION)',
             # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
                 # 'PTRMISMATCH,'  \
