@@ -862,14 +862,14 @@ NPY_NO_EXPORT void
 
     /* When the divisor is a constant, use libdivide for faster division */
     if (steps[1] == 0) {
-        /* In case of empty array, just return*/
+        /* In case of empty array, just return */
         if (n == 0) {
             return;
         }
 
         const @type@ in2 = *(@type@ *)ip2;
 
-        /* If divisor is 0, we need not compute anything*/
+        /* If divisor is 0, we need not compute anything */
         if (in2 == 0) {
             npy_set_floatstatus_divbyzero();
             BINARY_LOOP_SLIDING {
@@ -1415,12 +1415,12 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    /* NOTE: This code is similar to array floor divide*/
+    /* NOTE: This code is similar to array floor divide */
     BINARY_DEFS
 
     /* When the divisor is a constant, use libdivide for faster division */
     if (steps[1] == 0) {
-        /* In case of empty array, just return*/
+        /* In case of empty array, just return */
         if (n == 0) {
             return;
         }
@@ -1528,12 +1528,12 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
 NPY_NO_EXPORT void
 TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    /* NOTE: This code is similar to array floor divide*/
+    /* NOTE: This code is similar to array floor divide */
     BINARY_DEFS
 
     /* When the divisor is a constant, use libdivide for faster division */
     if (steps[1] == 0) {
-        /* In case of empty array, just return*/
+        /* In case of empty array, just return */
         if (n == 0) {
             return;
         }

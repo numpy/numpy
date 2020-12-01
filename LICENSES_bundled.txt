@@ -18,5 +18,5 @@ License: MIT
 
 Name: libdivide
 Files: numpy/core/include/numpy/libdivide/*
-License: zlib
+License: Zlib
   For license text, see numpy/core/include/numpy/libdivide/LICENSE.txt
