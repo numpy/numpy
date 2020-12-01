@@ -1,5 +1,6 @@
 import warnings
 import pytest
+import sys
 
 import numpy as np
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
@@ -165,8 +166,9 @@ class TestNanFunctions_MinMax:
             warnings.simplefilter('always')
             # assert_equal does not work on object arrays of nan
             assert_equal(list(np.nanmin(arr, axis=1)), [1.0, 4.0, np.nan])
-            assert_(len(w) == 1, 'no warning raised')
-            assert_(issubclass(w[0].category, RuntimeWarning))
+            if sys.platform != 'OpenVMS':
+                assert_(len(w) == 1, 'no warning raised')
+                assert_(issubclass(w[0].category, RuntimeWarning))
 
 
 class TestNanFunctions_ArgminArgmax:
