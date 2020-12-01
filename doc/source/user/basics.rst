@@ -2,9 +2,9 @@
 NumPy fundamentals
 ******************
 
-These documents explain coneptual and design choices in NumPy. This is 
-a great place to learn how NumPy can be extended or get more details on
-fundamental NumPy concepts. 
+These documents clarify concepts, design decisions, and technical
+constraints in NumPy. This is a great place to understand the
+fundamental NumPy ideas and philosophy. 
 
 .. toctree::
    :maxdepth: 1
