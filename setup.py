@@ -98,7 +98,6 @@ def git_version():
 
     return GIT_REVISION
 
-
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
 # properly updated when the contents of directories change (true for distutils,
 # not sure about setuptools).
@@ -130,10 +129,10 @@ def get_version_info():
         GIT_REVISION = "Unknown"
 
     if not ISRELEASED:
-        import time
-
-        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
-        FULLVERSION += f'.dev0+{time_stamp}_{GIT_REVISION[:7]}'
+        if 'bdist_wheel' in sys.argv[1:]:
+            FULLVERSION += '.dev0'
+        else:
+            FULLVERSION += f'.dev0+{GIT_REVISION[:7]}'
 
     return FULLVERSION, GIT_REVISION
 
@@ -154,14 +153,26 @@ if not release:
 """
     FULLVERSION, GIT_REVISION = get_version_info()
 
-    a = open(filename, 'w')
-    try:
-        a.write(cnt % {'version': VERSION,
+    with open(filename, 'w') as f:
+        f.write(cnt % {'version': VERSION,
                        'full_version': FULLVERSION,
                        'git_revision': GIT_REVISION,
                        'isrelease': str(ISRELEASED)})
-    finally:
-        a.close()
+
+
+def write_setup_cfg(filename='setup.cfg'):
+    cnt = """
+# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
+[bdist_wheel]
+build_number = {}.{}
+"""
+    import time
+
+    TIME_STAMP = time.strftime("%Y%m%d%H%M%S", time.localtime())
+    FULLVERSION, GIT_REVISION = get_version_info()
+
+    with open(filename, 'w') as f:
+        f.write(cnt.format(TIME_STAMP, GIT_REVISION[:7]))
 
 
 def configuration(parent_package='', top_path=None):
@@ -441,6 +452,11 @@ def setup_package():
     # Rewrite the version file every time
     write_version_py()
 
+    # Use setup.cfg when generating development wheels in order to
+    # add a build number
+    if 'bdist_wheel' in sys.argv[1:] and not ISRELEASED:
+        write_setup_cfg()
+
     # The f2py scripts that will be installed
     if sys.platform == 'win32':
         f2py_cmds = [
@@ -481,7 +497,6 @@ def setup_package():
     )
 
     if "--force" in sys.argv:
-        run_build = True
         sys.argv.remove('--force')
     else:
         # Raise errors for unsupported commands, improve help output, etc.
@@ -511,6 +526,11 @@ def setup_package():
         os.chdir(old_path)
     return
 
+# Cleanup some possibly left over build files
+try:
+    os.remove('setup.cfg')
+except OSError:
+    pass
 
 if __name__ == '__main__':
     setup_package()
