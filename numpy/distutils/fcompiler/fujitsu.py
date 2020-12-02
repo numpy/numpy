@@ -1,9 +1,9 @@
 from numpy.distutils.fcompiler import FCompiler
 
-compilers = ['FJFCompiler']
+compilers = ['FujitsuFCompiler']
 
-class FJFCompiler(FCompiler):
-    compiler_type = 'fj'
+class FujitsuFCompiler(FCompiler):
+    compiler_type = 'fujitsu'
     description = 'Fujitsu Fortran Compiler'
 
     possible_executables = ['frt']
@@ -35,4 +35,4 @@ if __name__ == '__main__':
     from distutils import log
     from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
-    print(customized_fcompiler('fj').get_version())
+    print(customized_fcompiler('fujitsu').get_version())
