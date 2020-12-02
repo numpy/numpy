@@ -1,6 +1,0 @@
-Allow passing optimizations arguments to asv build
---------------------------------------------------
-It is now possible to pass  ``-j``, ``--cpu-baseline``, ``--cpu-dispatch`` and
-``--disable-optimization`` flags to ASV build when the ``--bench-compare``
-argument is used.
-

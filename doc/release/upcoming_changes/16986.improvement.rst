@@ -1,7 +1,0 @@
-Add NumPy declarations for Cython 3.0 and later
------------------------------------------------
-
-The pxd declarations for Cython 3.0 were improved to avoid using deprecated
-NumPy C-API features.  Extension modules built with Cython 3.0+ that use NumPy
-can now set the C macro ``NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION`` to avoid
-C compiler warnings about deprecated API usage.
