@@ -20,6 +20,7 @@ class Histogram1D(Benchmark):
 class Histogram2D(Benchmark):
     def setup(self):
         self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+        self.normal = np.random.normal(0, 1, 5000000).reshape((-1,2))
 
     def time_full_coverage(self):
         np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))
@@ -29,6 +30,9 @@ class Histogram2D(Benchmark):
 
     def time_fine_binning(self):
         np.histogramdd(self.d, (10000, 10000), ((0, 100), (0, 100)))
+
+    def time_normal_distribution(self):
+        np.histogramdd(self.normal, (1000, 1000), ((-10, 10), (-10, 10)))
 
 
 class Bincount(Benchmark):
