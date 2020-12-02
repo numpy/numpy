@@ -1,6 +1,7 @@
 import os
 import platform
 import sys
+import re
 from os.path import join
 
 from numpy.distutils.system_info import platform_bits
@@ -9,6 +10,18 @@ is_msvc = (platform.platform().startswith('Windows') and
            platform.python_compiler().startswith('MS'))
 
 is_openvms = (platform.platform().startswith('OpenVMS'))
+
+if is_openvms:
+    def get_export_symbols_from_h(header_path):
+        regxp = re.compile(r'DECLDIR (\S+)+ (\S+?)\s*\(')
+        symbols = []
+        with open(header_path) as fid:
+            for line in fid:
+                m = regxp.search(line)
+                if m:
+                    symbols.append(m[2])
+        return symbols
+
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
@@ -141,6 +154,10 @@ def configuration(parent_package='', top_path=None):
         config.add_data_files(f'{gen}.pxd')
     for gen in ['_generator', '_bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
+        export_symbols = []
+        if is_openvms and gen == '_generator':
+            distributions_h_path = os.path.join(os.path.dirname(__file__), '../core/include/numpy/random', 'distributions.h')
+            export_symbols = get_export_symbols_from_h(distributions_h_path)
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
                              libraries=EXTRA_LIBRARIES,
@@ -149,6 +166,7 @@ def configuration(parent_package='', top_path=None):
                              extra_link_args=EXTRA_LINK_ARGS,
                              depends=depends + [f'{gen}.pyx'],
                              define_macros=defs,
+                             export_symbols=export_symbols,
                              )
     config.add_data_files('_bounded_integers.pxd')
     config.add_extension('mtrand',
