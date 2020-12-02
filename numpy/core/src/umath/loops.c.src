@@ -570,7 +570,7 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #isa = , _avx2#
  * #ISA = , AVX2#
- * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX2#
+ * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX2)#
  * #ATTR = , NPY_GCC_TARGET_AVX2#
  */
 
