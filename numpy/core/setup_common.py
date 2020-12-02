@@ -51,7 +51,7 @@ def is_released(config):
     """Return True if a released version of numpy is detected."""
     from distutils.version import LooseVersion
 
-    v = config.get_version('../version.py')
+    v = config.get_version('../_version.py')
     if v is None:
         raise ValueError("Could not get version")
     pv = LooseVersion(vstring=v).version
