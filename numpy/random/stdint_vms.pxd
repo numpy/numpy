@@ -1,4 +1,4 @@
-cdef extern from "stdint_fake.h":
+cdef extern from "numpy/stdint_vms.h":
     ctypedef signed char             int8_t;
     ctypedef signed short            int16_t;
     ctypedef signed int              int32_t;

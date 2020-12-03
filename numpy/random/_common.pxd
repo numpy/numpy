@@ -1,7 +1,7 @@
 #cython: language_level=3
 
 IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_fake cimport uint32_t, uint64_t, int32_t, int64_t
+    from stdint_vms cimport uint32_t, uint64_t, int32_t, int64_t
 ELSE:
     from libc.stdint cimport uint32_t, uint64_t, int32_t, int64_t
 

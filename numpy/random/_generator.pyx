@@ -15,7 +15,7 @@ from numpy.core.multiarray import normalize_axis_index
 from .c_distributions cimport *
 from libc cimport string
 IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_fake cimport (uint8_t, uint16_t, uint32_t, uint64_t,
+    from stdint_vms cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
 ELSE:
     from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,

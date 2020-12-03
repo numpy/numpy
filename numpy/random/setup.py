@@ -19,7 +19,7 @@ if is_openvms:
             for line in fid:
                 m = regxp.search(line)
                 if m:
-                    symbols.append(m[2])
+                    symbols.append(m[3])
         return symbols
 
 

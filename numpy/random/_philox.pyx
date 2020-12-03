@@ -9,7 +9,7 @@ import numpy as np
 cimport numpy as np
 
 IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_fake cimport uint32_t, uint64_t
+    from stdint_vms cimport uint32_t, uint64_t
 ELSE:
     from libc.stdint cimport uint32_t, uint64_t
 from ._common cimport uint64_to_double, int_to_array, wrap_int

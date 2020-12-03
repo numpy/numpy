@@ -12,7 +12,7 @@ cimport numpy as np
 
 from libc cimport string
 IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_fake cimport int64_t, uint64_t
+    from stdint_vms cimport int64_t, uint64_t
 ELSE:
     from libc.stdint cimport int64_t, uint64_t
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
