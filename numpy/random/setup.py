@@ -13,7 +13,7 @@ is_openvms = (platform.platform().startswith('OpenVMS'))
 
 if is_openvms:
     def get_export_symbols_from_h(header_path):
-        regxp = re.compile(r'DECLDIR (\S+)+ (\S+?)\s*\(')
+        regxp = re.compile(r'DECLDIR ((\S+) )+(\S+?)\s*\(')
         symbols = []
         with open(header_path) as fid:
             for line in fid:
