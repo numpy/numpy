@@ -196,12 +196,12 @@ def deprecate(*args, **kwargs):
 
 def deprecate_with_doc(msg):
     """
-    Decorator to deprecate a function and change its docstring to
-    mention the deprecation. 
+    Deprecates a function and includes the deprecation in its docstring.
     
-    It returns an object that can be used to Issue a DeprecationWarning, 
-    by passing `func` as argument, this adds warning to the to-be 
-    decorated function's docstring and returns the new function object.
+    This function is used as a decorator. It returns an object that can be 
+    used to issue a DeprecationWarning, by passing the to-be decorated 
+    function as argument, this adds warning to the to-be decorated function's 
+    docstring and returns the new function object.
     
     See Also
     --------
@@ -210,8 +210,8 @@ def deprecate_with_doc(msg):
     Parameters
     ----------
     msg : str
-    	    Additional explanation of the deprecation. Displayed in the 
-       	    docstring after the warning.
+        Additional explanation of the deprecation. Displayed in the 
+        docstring after the warning.
 
     Returns
     -------
@@ -219,12 +219,14 @@ def deprecate_with_doc(msg):
 
     Examples
     --------
-    Note that ``olduint`` returns a value after printing DeprecationWarning 
-    with msg:
+    Note that ``olduint`` returns a value after raising DeprecationWarning 
+    with `msg`:
 
     >>> oldobj = np.deprecate_with_doc("Use np.int_ instead.")
     >>> olduint = oldobj(np.uint)
     >>> olduint(6)
+    DeprecationWarning: `uint64` is deprecated! #may vary 
+        Use np.int_ instead.		        	
     6
     """
     return _Deprecate(message=msg)  
