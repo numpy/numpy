@@ -81,6 +81,10 @@ run_test()
   PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt
   DURATIONS_FLAG="--durations 10"
 
+  echo "milestone pip list"
+  pip list
+  echo "milestone pip list EOO"
+
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
     export MYPYPATH=$PWD

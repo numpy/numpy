@@ -1,4 +1,4 @@
-Building and installing NumPy
+building and installing NumPy
 +++++++++++++++++++++++++++++
 
 **IMPORTANT**: the below notes are about building NumPy, which for most users
