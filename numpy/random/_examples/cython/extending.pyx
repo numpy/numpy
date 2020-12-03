@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 #cython: language_level=3
 
-from stdint_fake cimport uint32_t
+IF UNAME_SYSNAME == 'OpenVMS':
+    from stdint_fake cimport uint32_t
+ELSE:
+    from libc.stdint cimport uint32_t
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 
 import numpy as np

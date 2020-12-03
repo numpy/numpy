@@ -1,7 +1,10 @@
 import numpy as np
 cimport numpy as np
 
-from stdint_fake cimport uint32_t, uint64_t
+IF UNAME_SYSNAME == 'OpenVMS':
+    from stdint_fake cimport uint32_t, uint64_t
+ELSE:
+    from libc.stdint cimport uint32_t, uint64_t
 from ._common cimport uint64_to_double, wrap_int
 from numpy.random cimport BitGenerator
 

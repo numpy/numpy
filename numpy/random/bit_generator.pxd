@@ -1,5 +1,8 @@
 cimport numpy as np
-from stdint_fake cimport uint32_t, uint64_t
+IF UNAME_SYSNAME == 'OpenVMS':
+    from stdint_fake cimport uint32_t, uint64_t
+ELSE:
+    from libc.stdint cimport uint32_t, uint64_t
 
 cdef extern from "numpy/random/bitgen.h":
     struct bitgen:

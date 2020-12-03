@@ -7,7 +7,10 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from stdint_fake cimport uint16_t, uint64_t
+IF UNAME_SYSNAME == 'OpenVMS':
+    from stdint_fake cimport uint16_t, uint64_t
+ELSE:
+    from libc.stdint cimport uint16_t, uint64_t
 from numpy.random cimport bitgen_t
 from numpy.random import PCG64
 from numpy.random.c_distributions cimport (

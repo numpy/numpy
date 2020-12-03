@@ -11,7 +11,10 @@ cimport cython
 cimport numpy as np
 
 from libc cimport string
-from stdint_fake cimport int64_t, uint64_t
+IF UNAME_SYSNAME == 'OpenVMS':
+    from stdint_fake cimport int64_t, uint64_t
+ELSE:
+    from libc.stdint cimport int64_t, uint64_t
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8,)
