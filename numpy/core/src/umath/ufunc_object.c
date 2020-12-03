@@ -95,8 +95,6 @@ _get_wrap_prepare_args(ufunc_full_args full_args) {
 
 /* ---------------------------------------------------------------- */
 
-static int
-_does_loop_use_arrays(void *data);
 
 /*UFUNC_API*/
 NPY_NO_EXPORT int
@@ -1577,10 +1575,6 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                     &innerloop, &innerloopdata, &needs_api) < 0) {
         return -1;
     }
-    /* If the loop wants the arrays, provide them. */
-    if (_does_loop_use_arrays(innerloopdata)) {
-        innerloopdata = (void*)op;
-    }
 
     /* First check for the trivial cases that don't need an iterator */
     if (trivial_loop_ok) {
@@ -2822,11 +2816,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         _find_array_prepare(full_args, arr_prep, nin, nout);
     }
 
-    /* If the loop wants the arrays, provide them */
-    if (_does_loop_use_arrays(innerloopdata)) {
-        innerloopdata = (void*)op;
-    }
-
     /*
      * Set up the iterator per-op flags.  For generalized ufuncs, we
      * can't do buffering, so must COPY or UPDATEIFCOPY.
@@ -3287,21 +3276,20 @@ fail:
 
 /*UFUNC_API*/
 NPY_NO_EXPORT int
-PyUFunc_GenericFunction(PyUFuncObject *ufunc,
-        PyObject *args, PyObject *kwds, PyArrayObject **op)
+PyUFunc_GenericFunction(PyUFuncObject *NPY_UNUSED(ufunc),
+        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds),
+        PyArrayObject **NPY_UNUSED(op))
 {
-    /* NumPy 1.19, 2020-01-24 */
-    if (DEPRECATE(
-            "PyUFunc_GenericFunction() C-API function is deprecated "
-            "and expected to be removed rapidly. If you are using it (i.e. see "
-            "this warning/error), please notify the NumPy developers. "
+    /* Removed in NumPy 1.21. */
+    PyErr_SetString(PyExc_RuntimeError,
+            "PyUFunc_GenericFunction() C-API function is removed. "
+            "If you are using it (i.e. see this warning/error), please notify "
+            "the NumPy developers. "
             "As of now it is expected that any use case is served better by "
             "the direct use of `PyObject_Call(ufunc, args, kwargs)`. "
             "PyUFunc_GenericFunction function has slightly different "
-            "untested behaviour.") < 0) {
-        return -1;
-    }
-    return PyUFunc_GenericFunction_int(ufunc, args, kwds, op);
+            "untested behaviour.");
+    return -1;
 }
 
 
@@ -5016,44 +5004,27 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     return (PyObject *)ufunc;
 }
 
-/* Specify that the loop specified by the given index should use the array of
- * input and arrays as the data pointer to the loop.
- */
+
 /*UFUNC_API*/
 NPY_NO_EXPORT int
-PyUFunc_SetUsesArraysAsData(void **data, size_t i)
+PyUFunc_SetUsesArraysAsData(void **NPY_UNUSED(data), size_t NPY_UNUSED(i))
 {
-    /* NumPy 1.19, 2020-01-24 */
-    if (DEPRECATE(
-            "PyUFunc_SetUsesArraysAsData() C-API function is deprecated "
-            "and expected to be removed rapidly. If you are using it (i.e. see "
-            "this warning/error), please notify the NumPy developers. "
-            "It is currently assumed that this function is simply unused and "
+    /*
+     * Removed in NumPy 1.21.  This function was previously used to pass in
+     * the original arrays as the last "user data" argument to the ufunc
+     * inner loop.
+     * This was probably never used outside of NumPy itself (maybe not even
+     * inside NumPy, it may have been used for early datetimes).
+     * The new ArrayMethod API will allow anyone to achieve the same.
+     */
+    PyErr_SetString(PyExc_RuntimeError,
+            "PyUFunc_SetUsesArraysAsData() C-API function was removed. "
+            "If you are using it (i.e. see this warning/error), please notify "
+            "the NumPy developers. "
+            "It was assumed that this function is simply unused and "
             "its removal will facilitate the implementation of better "
-            "approaches.") < 0) {
-        return -1;
-    }
-    data[i] = (void*)PyUFunc_SetUsesArraysAsData;
-    return 0;
-}
-
-/*
- * Return 1 if the given data pointer for the loop specifies that it needs the
- * arrays as the data pointer.
- *
- * NOTE: This is easier to specify with the type_resolver
- *       in the ufunc object.
- *
- * TODO: Remove this, since this is already basically broken
- *       with the addition of the masked inner loops and
- *       not worth fixing since the new loop selection functions
- *       have access to the full dtypes and can dynamically allocate
- *       arbitrary auxiliary data.
- */
-static int
-_does_loop_use_arrays(void *data)
-{
-    return (data == PyUFunc_SetUsesArraysAsData);
+            "approaches (see NEP 43).");
+    return -1;
 }
 
 

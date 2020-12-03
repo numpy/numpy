@@ -1,0 +1,5 @@
+* The C-API function ``PyUFunc_SetUsesArraysAsData`` and corresponding
+  mechanism have been disabled. (Deprecated NumPy 1.19)
+* The C-API function ``PyUFunc_GenericFunction`` has been disabled.
+  In most cases ``PyObject_Call(ufunc, args, kwargs)`` should be a
+  good alternative. (Deprecated NumPy 1.19)
