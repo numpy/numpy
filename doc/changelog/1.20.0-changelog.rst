@@ -191,7 +191,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 650 pull requests were merged for this release.
+A total of 653 pull requests were merged for this release.
 
 * `#13516 <https://github.com/numpy/numpy/pull/13516>`__: ENH: enable multi-platform SIMD compiler optimizations
 * `#14779 <https://github.com/numpy/numpy/pull/14779>`__: NEP 36 (fair play)
@@ -843,3 +843,6 @@ A total of 650 pull requests were merged for this release.
 * `#17869 <https://github.com/numpy/numpy/pull/17869>`__: BUG, TST: use python-version not PYTHON_VERSION
 * `#17879 <https://github.com/numpy/numpy/pull/17879>`__: BUG: Fix buffer readflag errors and small leaks
 * `#17893 <https://github.com/numpy/numpy/pull/17893>`__: DOC: Prepare for 1.20.0 release
+* `#17898 <https://github.com/numpy/numpy/pull/17898>`__: MAINT: Remove remaining uses of Python 3.6.
+* `#17899 <https://github.com/numpy/numpy/pull/17899>`__: TST: use latest pypy37 not pypy36
+* `#17901 <https://github.com/numpy/numpy/pull/17901>`__: MAINT: clean up a spurious warning in numpy/typing/setup.py
