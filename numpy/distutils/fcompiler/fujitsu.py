@@ -36,6 +36,8 @@ class FujitsuFCompiler(FCompiler):
         return ['-g']
     def runtime_library_dir_option(self, dir):
         return f'-Wl,-rpath={dir}'
+    def get_libraries(self):
+        return ['fj90f', 'fj90i', 'fjsrcinfo']
 
 if __name__ == '__main__':
     from distutils import log
