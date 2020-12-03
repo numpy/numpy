@@ -5,7 +5,7 @@ hypothesis==5.41.3
 pytest==6.0.2
 pytz==2020.4
 pytest-cov==2.10.1
-pickle5; python_version == '3.7'
+pickle5; python_version == '3.7' and platform_python_implementation != 'PyPy'
 pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
 # for numpy.random.test.test_extending
 cffi
