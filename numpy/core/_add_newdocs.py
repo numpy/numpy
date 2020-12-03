@@ -2570,7 +2570,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None, keepdims=False)
+    a.all(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if all elements evaluate to True.
 
@@ -2585,7 +2585,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None, keepdims=False)
+    a.any(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -3242,7 +3242,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None, keepdims=False)
+    a.mean(axis=None, dtype=None, out=None, keepdims=False, *, where=True)
 
     Returns the average of the array elements along given axis.
 
@@ -3813,7 +3813,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4100,7 +4100,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the variance of the array elements, along given axis.
 
