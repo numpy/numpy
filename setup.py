@@ -26,8 +26,8 @@ import textwrap
 import warnings
 
 
-if sys.version_info[:2] < (3, 6):
-    raise RuntimeError("Python version >= 3.6 required.")
+if sys.version_info[:2] < (3, 7):
+    raise RuntimeError("Python version >= 3.7 required.")
 
 import builtins
 
@@ -40,7 +40,6 @@ License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
@@ -473,7 +472,7 @@ def setup_package():
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
         cmdclass=cmdclass,
-        python_requires='>=3.6',
+        python_requires='>=3.7',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds
