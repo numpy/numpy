@@ -57,8 +57,8 @@ Operating System :: MacOS
 MAJOR               = 1
 MINOR               = 20
 MICRO               = 0
-ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+ISRELEASED          = True
+VERSION             = '%d.%d.%drc1' % (MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
