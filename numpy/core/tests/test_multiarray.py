@@ -8323,16 +8323,16 @@ def test_equal_override():
 def test_npymath_complex():
     # Smoketest npymath functions
     from numpy.core._multiarray_tests import (
-        npy_cabsf, npy_cargf, npy_cabs, npy_carg, npy_cabsl, npy_cargl)
+        npy_cabs, npy_carg)
 
-    funcs = {np.absolute: (npy_cabsf, npy_cabs, npy_cabsf),
-             np.angle: (npy_cargf, npy_carg, npy_cargl)}
+    funcs = {npy_cabs: np.absolute,
+             npy_carg: np.angle}
     vals = (1, np.inf, -np.inf, np.nan)
     types = (np.complex64, np.complex128, np.clongdouble)
 
-    for x, y in itertools.product(vals, vals):
-        for npfun, funtuple in funcs.items():
-            for t, fun in zip(types, funtuple):
+    for fun, npfun in funcs.items():
+        for x, y in itertools.product(vals, vals):
+            for t in types:
                 z = t(complex(x, y))
                 got = fun(z)
                 expected = npfun(z)
