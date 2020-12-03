@@ -17,7 +17,9 @@
 #ifndef NPY_RELAXED_STRIDES_DEBUG
     #define NPY_RELAXED_STRIDES_DEBUG 0
 #endif
-
+#ifndef NPY_USE_NEW_CASTINGIMPL
+    #define NPY_USE_NEW_CASTINGIMPL 0
+#endif
 /*
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
