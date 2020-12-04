@@ -292,9 +292,6 @@ class TestModulus:
                 rem = operator.mod(finf, fone)
                 if sys.platform != 'OpenVMS':   # OpenVMS returns zero
                     assert_(np.isnan(rem), 'dt: %s' % dt)
-                for op in [floordiv_and_mod, divmod]:
-                    div, mod = op(fone, fzer)
-                    assert_(np.isinf(div)) and assert_(np.isnan(mod))
 
     def test_inplace_floordiv_handling(self):
         # issue gh-12927

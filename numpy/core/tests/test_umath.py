@@ -395,14 +395,6 @@ class TestRemainder:
                 rem = np.remainder(finf, fone)
                 if sys.platform != 'OpenVMS':   # OpenVMS returns zero
                     assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                rem = np.remainder(fnan, fzer)
-                fmod = np.fmod(fnan, fzer)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
-                rem = np.remainder(fnan, fone)
-                fmod = np.fmod(fnan, fone)
-                assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
-                assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
 
 
 class TestCbrt:
