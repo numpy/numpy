@@ -8473,6 +8473,22 @@ class TestArange:
         assert_raises(ZeroDivisionError, np.arange, 0, 0, 0)
         assert_raises(ZeroDivisionError, np.arange, 0.0, 0.0, 0.0)
 
+    def test_require_range(self):
+        assert_raises(TypeError, np.arange)
+        assert_raises(TypeError, np.arange, step=3)
+        assert_raises(TypeError, np.arange, dtype='int64')
+        assert_raises(TypeError, np.arange, start=4)
+
+    def test_start_stop_kwarg(self):
+        keyword_stop = np.arange(stop=3)
+        keyword_zerotostop = np.arange(start=0, stop=3)
+        keyword_start_stop = np.arange(start=3, stop=9)
+
+        assert len(keyword_stop) == 3
+        assert len(keyword_zerotostop) == 3
+        assert len(keyword_start_stop) == 6
+        assert_array_equal(keyword_stop, keyword_zerotostop)
+
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """
