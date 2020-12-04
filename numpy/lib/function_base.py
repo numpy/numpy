@@ -487,15 +487,29 @@ def asarray_chkfinite(a, dtype=None, order=None):
     return a
 
 
-def _piecewise_dispatcher(x, condlist, funclist, *args, **kw):
-    yield x
-    # support the undocumented behavior of allowing scalars
-    if np.iterable(condlist):
-        yield from condlist
+def _check_condlist(condlist):
+    """If condlist is not an ndarray in boolean format or scalar bool, abort."""
+    deprecated_ints = False
+    for i, cond in enumerate(condlist):
+        if cond.dtype.type is not np.bool_:
+            if np.issubdtype(cond.dtype, np.integer):
+                # A previous implementation accepted int ndarrays accidentally.
+                # Supported here deliberately, but deprecated.
+                condlist[i] = condlist[i].astype(bool)
+                deprecated_ints = True
+            else:
+                raise ValueError(
+                    'invalid entry in condlist: should be boolean ndarray')
+
+    if deprecated_ints:
+        msg = "piecewise condlists containing integer ndarrays is deprecated " \
+            "and will be removed in the future. Use `.astype(bool)` to " \
+            "convert to bools."
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    return condlist
 
 
-@array_function_dispatch(_piecewise_dispatcher)
-def piecewise(x, condlist, funclist, *args, **kw):
+def piecewise(xi, condlist, funclist, *args, **kw):
     """
     Evaluate a piecewise-defined function.
 
@@ -504,34 +518,35 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Parameters
     ----------
-    x : ndarray or scalar
-        The input domain.
+    xi : tuple
+        input arguments to the functions in funclist, i.e., (x0, x1,...., xn)
     condlist : list of bool arrays or bool scalars
         Each boolean array corresponds to a function in `funclist`.  Wherever
-        `condlist[i]` is True, `funclist[i](x)` is used as the output value.
-
-        Each boolean array in `condlist` selects a piece of `x`,
-        and should therefore be of the same shape as `x`.
+        `condlist[i]` is True, `funclist[i](x0,x1,...,xn)` is used as the 
+        output value.
+ 
+        Each boolean array in `condlist` selects a piece of `xi`,
+        and should therefore be of the same shape as `xi`.
 
         The length of `condlist` must correspond to that of `funclist`.
         If one extra function is given, i.e. if
         ``len(funclist) == len(condlist) + 1``, then that extra function
         is the default value, used wherever all conditions are false.
-    funclist : list of callables, f(x,*args,**kw), or scalars
+    funclist : list of callables, f(*xi, *args, **kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
-        condition is True.  It should take a 1d array as input and give an 1d
-        array or a scalar value as output.  If, instead of a callable,
+        condition is True.  It should take an array as input and give an array
+        or a scalar value as output.  If, instead of a callable,
         a scalar is provided then a constant function (``lambda x: scalar``) is
         assumed.
     args : tuple, optional
         Any further arguments given to `piecewise` are passed to the functions
         upon execution, i.e., if called ``piecewise(..., ..., 1, 'a')``, then
-        each function is called as ``f(x, 1, 'a')``.
+        each function is called as ``f(x0, x1,..., xn, 1, 'a')``.
     kw : dict, optional
         Keyword arguments used in calling `piecewise` are passed to the
         functions upon execution, i.e., if called
         ``piecewise(..., ..., alpha=1)``, then each function is called as
-        ``f(x, alpha=1)``.
+        ``f(x0, x1,..., xn, alpha=1)``.
 
     Returns
     -------
@@ -549,17 +564,17 @@ def piecewise(x, condlist, funclist, *args, **kw):
     Notes
     -----
     This is similar to choose or select, except that functions are
-    evaluated on elements of `x` that satisfy the corresponding condition from
+    evaluated on elements of `xi` that satisfy the corresponding condition from
     `condlist`.
 
     The result is::
 
-            |--
-            |funclist[0](x[condlist[0]])
-      out = |funclist[1](x[condlist[1]])
-            |...
-            |funclist[n2](x[condlist[n2]])
-            |--
+          |--
+          |funclist[0](x0[condlist[0]],x1[condlist[0]],...,xn[condlist[0]])
+    out = |funclist[1](x0[condlist[1]],x1[condlist[1]],...,xn[condlist[1]])
+          |...
+          |funclist[n2](x0[condlist[n2]],x1[condlist[n2]],...,xn[condlist[n2]])
+          |--
 
     Examples
     --------
@@ -569,51 +584,82 @@ def piecewise(x, condlist, funclist, *args, **kw):
     >>> np.piecewise(x, [x < 0, x >= 0], [-1, 1])
     array([-1., -1., -1.,  1.,  1.,  1.])
 
-    Define the absolute value, which is ``-x`` for ``x <0`` and ``x`` for
+    Define the absolute value, which is ``-x`` for ``x < 0`` and ``x`` for
     ``x >= 0``.
 
-    >>> np.piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
+    >>> np.piecewise((x,), [x < 0, x >= 0], [lambda x: -x, lambda x: x])
     array([2.5,  1.5,  0.5,  0.5,  1.5,  2.5])
 
     Apply the same function to a scalar value.
 
     >>> y = -2
-    >>> np.piecewise(y, [y < 0, y >= 0], [lambda x: -x, lambda x: x])
+    >>> np.piecewise((y,), [y < 0, y >= 0], [lambda x: -x, lambda x: x])
     array(2)
 
+    Define the absolute value, which is ``-x * y`` for ``x * y <0`` and
+    ``x * y`` for ``x * y >= 0``
+    >>> X, Y = np.meshgrid(x, x)
+    >>> np.piecewise((X, Y), [X * Y < 0, ],
+    ...              [lambda x, y: -x * y, lambda x, y: x * y])
+    array([[ 6.25,  3.75,  1.25,  1.25,  3.75,  6.25],
+           [ 3.75,  2.25,  0.75,  0.75,  2.25,  3.75],
+           [ 1.25,  0.75,  0.25,  0.25,  0.75,  1.25],
+           [ 1.25,  0.75,  0.25,  0.25,  0.75,  1.25],
+           [ 3.75,  2.25,  0.75,  0.75,  2.25,  3.75],
+           [ 6.25,  3.75,  1.25,  1.25,  3.75,  6.25]])
     """
-    x = asanyarray(x)
-    n2 = len(funclist)
+    def otherwise_condition(condlist):
+        return ~np.logical_or.reduce(condlist, axis=0)  # pylint: disable=no-member
+
+    def ok_shapes(condlist, funclist):
+        nc, nf = len(condlist), len(funclist)
+        return nc in [nf-1, nf]
+
+    def check_shapes(condlist, funclist):
+        if not ok_shapes(condlist, funclist):
+            n = len(condlist)
+            raise ValueError("with {} condition(s), either {} "
+                             "or {} functions are expected".format(n, n, n+1))
+
+    if not isinstance(xi, tuple):
+        xi = (xi,)
+
+    xi = np.broadcast_arrays(*xi)
 
     # undocumented: single condition is promoted to a list of one condition
-    if isscalar(condlist) or (
-            not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0):
-        condlist = [condlist]
+    if (np.isscalar(condlist)
+            # or not ok_shapes(condlist, funclist)
+            or (not isinstance(condlist[0], (list, ndarray)) and xi[0].ndim != 0)):
+        condlist = (condlist,)
 
-    condlist = array(condlist, dtype=bool)
-    n = len(condlist)
+    check_shapes(condlist, funclist)
 
-    if n == n2 - 1:  # compute the "otherwise" condition.
-        condelse = ~np.any(condlist, axis=0, keepdims=True)
-        condlist = np.concatenate([condlist, condelse], axis=0)
-        n += 1
-    elif n != n2:
-        raise ValueError(
-            "with {} condition(s), either {} or {} functions are expected"
-            .format(n, n, n+1)
-        )
+    condlist = np.broadcast_arrays(*condlist)
+    if len(condlist) == len(funclist) - 1:
+        condlist.append(otherwise_condition(condlist))
 
-    y = zeros(x.shape, x.dtype)
-    for k in range(n):
-        item = funclist[k]
-        if not isinstance(item, collections.abc.Callable):
-            y[condlist[k]] = item
-        else:
-            vals = x[condlist[k]]
-            if vals.size > 0:
-                y[condlist[k]] = item(vals, *args, **kw)
+    condlist = _check_condlist(condlist)
 
-    return y
+    values = [func(*tuple(np.extract(cond, x) for x in xi), *args, **kw)
+              if isinstance(func, collections.Callable) else func
+              for cond, func in zip(condlist, funclist)]
+
+    shape = np.broadcast_arrays(xi[0], condlist[0])[0].shape
+    fillvalue = 0
+    out = np.full(shape, fillvalue, np.result_type(*values))
+    for cond, func, value in zip(condlist, funclist, values):
+        if cond.any():
+            if isinstance(func, collections.Callable):
+                np.place(out, cond, value)
+            else:  # func is a scalar value
+                np.copyto(out, value, where=cond)
+                # np.putmask(out, cond, func)
+    if xi[0].ndim == 0 and out.size == 1:
+        # make sure scalar input gives scalar output
+        if out.ndim == 0:
+            return out[()]
+        return out[0]
+    return out
 
 
 def _select_dispatcher(condlist, choicelist, default=None):
