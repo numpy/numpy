@@ -344,6 +344,7 @@ static int
             }
         }
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        // OpenVMS has a bug in compiler: double NaN turns to long double Inf
         if (npy_isnan(oop.real)) {
             temp.real = NPY_NAN@suffix@;
         } else {
@@ -432,6 +433,7 @@ string_to_long_double(PyObject*op)
         PyErr_Clear();
         Py_XDECREF(b);
 #ifdef __VMS
+        // OpenVMS has a bug in compiler: double NaN turns to long double Inf
         npy_double dtemp = MyPyFloat_AsDouble(op);
         if (npy_isnan(dtemp)) {
             temp = NPY_NANL;

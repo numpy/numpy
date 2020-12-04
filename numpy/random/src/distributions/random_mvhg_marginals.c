@@ -4,7 +4,6 @@
 #else
 #include <stdint.h>
 #endif
-
 #include <stddef.h>
 #include <stdbool.h>
 #include <math.h>

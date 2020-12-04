@@ -25,6 +25,11 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
 
+# Set to True to use the new casting implementation as much as implemented.
+# Allows running the full test suit to exercise the new machinery until
+# it is used as default and the old version is eventually deleted.
+NPY_USE_NEW_CASTINGIMPL = os.environ.get('NPY_USE_NEW_CASTINGIMPL', "0") != "0"
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -470,6 +475,10 @@ def configuration(parent_package='',top_path=None):
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
+            # Use the new experimental casting implementation in NumPy 1.20:
+            if NPY_USE_NEW_CASTINGIMPL:
+                moredefs.append(('NPY_USE_NEW_CASTINGIMPL', 1))
+
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
             moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
@@ -693,13 +702,11 @@ def configuration(parent_package='',top_path=None):
     EXTRA_COMPILE_ARGS = []
     EXTRA_LINK_ARGS = []
     DEFINE_MACROS=[]
-    if is_openvms:
-        # EXTRA_LINK_ARGS = ['/DEBUG']
+    if is_msvc:
+        EXTRA_COMPILE_ARGS = ['/GL-']
+    elif is_openvms:
         EXTRA_COMPILE_ARGS = [
-            # '/DEBUG/NOOPTIMIZE/LIST/SHOW=(EXPANSION)',
-            # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
-                # 'PTRMISMATCH,'  \
                 'NONSTANDCAST,' \
                 'MIXFUNCVOID,'  \
                 'TOOFEWACTUALS,'\
@@ -712,12 +719,13 @@ def configuration(parent_package='',top_path=None):
             '/PREFIX_LIBRARY_ENTRIES=ALL_ENTRIES',
             ]
 
+
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
             build_info={
                 'include_dirs' : [],  # empty list required for creating npy_math_internal.h
-                'extra_compiler_args' : (['/GL-'] if is_msvc else EXTRA_COMPILE_ARGS),
+                'extra_compiler_args' : EXTRA_COMPILE_ARGS,
             })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
@@ -803,6 +811,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
             join('src', 'multiarray', 'array_coercion.h'),
+            join('src', 'multiarray', 'array_method.h'),
             join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
@@ -818,6 +827,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),
+            join('src', 'multiarray', 'legacy_dtype_implementation.h'),
             join('src', 'multiarray', 'mapping.h'),
             join('src', 'multiarray', 'methods.h'),
             join('src', 'multiarray', 'multiarraymodule.h'),
@@ -858,6 +868,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
             join('src', 'multiarray', 'array_coercion.c'),
+            join('src', 'multiarray', 'array_method.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'arrayfunction_override.c'),
@@ -884,6 +895,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'hashdescr.c'),
             join('src', 'multiarray', 'item_selection.c'),
             join('src', 'multiarray', 'iterators.c'),
+            join('src', 'multiarray', 'legacy_dtype_implementation.c'),
             join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
@@ -938,6 +950,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
+            join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h.src'),
@@ -985,9 +998,9 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_umath_tests', sources=[
-        join('src', 'umath', '_umath_tests.c.src'),
-        join('src', 'umath', '_umath_tests.dispatch.c'),
-        join('src', 'common', 'npy_cpu_features.c.src'),
+            join('src', 'umath', '_umath_tests.c.src'),
+            join('src', 'umath', '_umath_tests.dispatch.c'),
+            join('src', 'common', 'npy_cpu_features.c.src'),
         ],
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,)

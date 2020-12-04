@@ -21,11 +21,11 @@ reveal_type(i8 | i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 ^ i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 & i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
 
-reveal_type(i8 << AR)  # E: Union[numpy.ndarray, numpy.integer[Any]]
-reveal_type(i8 >> AR)  # E: Union[numpy.ndarray, numpy.integer[Any]]
-reveal_type(i8 | AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
-reveal_type(i8 ^ AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
-reveal_type(i8 & AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
+reveal_type(i8 << AR)  # E: Any
+reveal_type(i8 >> AR)  # E: Any
+reveal_type(i8 | AR)  # E: Any
+reveal_type(i8 ^ AR)  # E: Any
+reveal_type(i8 & AR)  # E: Any
 
 reveal_type(i4 << i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
 reveal_type(i4 >> i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
@@ -63,11 +63,11 @@ reveal_type(u8 | u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u8 ^ u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(u8 & u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 
-reveal_type(u8 << AR)  # E: Union[numpy.ndarray, numpy.integer[Any]]
-reveal_type(u8 >> AR)  # E: Union[numpy.ndarray, numpy.integer[Any]]
-reveal_type(u8 | AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
-reveal_type(u8 ^ AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
-reveal_type(u8 & AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
+reveal_type(u8 << AR)  # E: Any
+reveal_type(u8 >> AR)  # E: Any
+reveal_type(u8 | AR)  # E: Any
+reveal_type(u8 ^ AR)  # E: Any
+reveal_type(u8 & AR)  # E: Any
 
 reveal_type(u4 << u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
 reveal_type(u4 >> u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
@@ -105,11 +105,11 @@ reveal_type(b_ | b_)  # E: numpy.bool_
 reveal_type(b_ ^ b_)  # E: numpy.bool_
 reveal_type(b_ & b_)  # E: numpy.bool_
 
-reveal_type(b_ << AR)  # E: Union[numpy.ndarray, numpy.integer[Any]]
-reveal_type(b_ >> AR)  # E: Union[numpy.ndarray, numpy.integer[Any]]
-reveal_type(b_ | AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
-reveal_type(b_ ^ AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
-reveal_type(b_ & AR)  # E: Union[numpy.ndarray, numpy.integer[Any], numpy.bool_]
+reveal_type(b_ << AR)  # E: Any
+reveal_type(b_ >> AR)  # E: Any
+reveal_type(b_ | AR)  # E: Any
+reveal_type(b_ ^ AR)  # E: Any
+reveal_type(b_ & AR)  # E: Any
 
 reveal_type(b_ << b)  # E: numpy.signedinteger[numpy.typing._8Bit]
 reveal_type(b_ >> b)  # E: numpy.signedinteger[numpy.typing._8Bit]
@@ -128,4 +128,4 @@ reveal_type(~i4)  # E: numpy.signedinteger[numpy.typing._32Bit]
 reveal_type(~u8)  # E: numpy.unsignedinteger[numpy.typing._64Bit]
 reveal_type(~u4)  # E: numpy.unsignedinteger[numpy.typing._32Bit]
 reveal_type(~b_)  # E: numpy.bool_
-reveal_type(~AR)  # E: Union[numpy.ndarray*, numpy.integer[Any], numpy.bool_]
+reveal_type(~AR)  # E: Any

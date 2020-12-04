@@ -35,7 +35,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 {
     int type_num;
     int align;
-    npy_intp memloc;
+    uintptr_t memloc;
     if (descr == NULL) {
         descr = PyArray_DescrFromScalar(scalar);
         type_num = descr->type_num;
@@ -168,7 +168,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
      * Use the alignment flag to figure out where the data begins
      * after a PyObject_HEAD
      */
-    memloc = (npy_intp)scalar;
+    memloc = (uintptr_t)scalar;
     memloc += sizeof(PyObject);
     /* now round-up to the nearest alignment value */
     align = descr->alignment;

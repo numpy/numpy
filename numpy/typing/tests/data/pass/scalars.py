@@ -147,3 +147,19 @@ complex(b_)
 complex(td)
 complex(U)
 complex(AR)
+
+
+# Misc
+c16.dtype
+c16.real
+c16.imag
+c16.real.real
+c16.real.imag
+c16.ndim
+c16.size
+c16.itemsize
+c16.shape
+c16.strides
+c16.squeeze()
+c16.byteswap()
+c16.transpose()

@@ -12,7 +12,6 @@
 #include <stdint.h>
 #endif
 
-
 /* Must match the declaration in numpy/random/<any>.pxd */
 
 typedef struct bitgen {

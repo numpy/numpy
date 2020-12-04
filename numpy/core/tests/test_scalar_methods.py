@@ -94,7 +94,8 @@ class TestAsIntegerRatio:
             f = np.ldexp(frac, exp, dtype=ftype)
             n, d = f.as_integer_ratio()
 
-            warnings.filterwarnings('error')
+            if platform.system() == 'OpenVMS':
+                warnings.filterwarnings('error')
 
             try:
                 # workaround for gh-9968

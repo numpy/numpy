@@ -22,7 +22,6 @@ if is_openvms:
                     symbols.append(m[3])
         return symbols
 
-
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
     config = Configuration('random', parent_package, top_path)
@@ -65,10 +64,7 @@ def configuration(parent_package='', top_path=None):
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
     if is_openvms:
-        # EXTRA_LINK_ARGS = ['/DEBUG']
         EXTRA_COMPILE_ARGS = [
-            # '/DEBUG/NOOPTIMIZE/LIST/SHOW=(EXPANSION)',
-            # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('   \
                 'MACROREDEF,'   \
                 'INTCONSTTRUNC,'\
@@ -97,10 +93,7 @@ def configuration(parent_package='', top_path=None):
         EXTRA_COMPILE_ARGS = ['/GL-']
     elif is_openvms:
         EXTRA_COMPILE_ARGS = [
-            # '/DEBUG/NOOPTIMIZE/LIST',
-            # '/POINTER_SIZE=32',
             '/WARN=DISABLE=('\
-            # 'CXXPRAGMANA,'\
             'MACROREDEF,'   \
             'INTCONSTTRUNC,'\
             'VOIDRETURN1'\
@@ -182,6 +175,7 @@ def configuration(parent_package='', top_path=None):
                          define_macros=defs + LEGACY_DEFS,
                          )
     config.add_data_files(*depends)
+    config.add_data_files('*.pyi')
     return config
 
 

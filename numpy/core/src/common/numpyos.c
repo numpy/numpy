@@ -555,7 +555,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         if (endptr != NULL) {
             *endptr = (char*)p;
         }
-        return NPY_NANL;
+        return NPY_NANL;    // long double NaN
     }
     else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
         p += 3;
@@ -565,7 +565,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         if (endptr != NULL) {
             *endptr = (char*)p;
         }
-        return result*NPY_INFINITYL;
+        return result*NPY_INFINITYL;     // long double Inf
     }
     /* End of ##1 */
 

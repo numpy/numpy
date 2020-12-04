@@ -19,18 +19,26 @@ _collect_results = {}
 hypothesis.configuration.set_hypothesis_home_dir(
     os.path.join(tempfile.gettempdir(), ".hypothesis")
 )
-# See https://hypothesis.readthedocs.io/en/latest/settings.html
+
+# We register two custom profiles for Numpy - for details see
+# https://hypothesis.readthedocs.io/en/latest/settings.html
+# The first is designed for our own CI runs; the latter also 
+# forces determinism and is designed for use via np.test()
 hypothesis.settings.register_profile(
     name="numpy-profile", deadline=None, print_blob=True,
 )
-# We try loading the profile defined by np.test(), which disables the
-# database and forces determinism, and fall back to the profile defined
-# above if we're running pytest directly.  The odd dance is required
-# because np.test() executes this file *after* its own setup code.
-try:
-    hypothesis.settings.load_profile("np.test() profile")
-except hypothesis.errors.InvalidArgument:  # profile not found
-    hypothesis.settings.load_profile("numpy-profile")
+hypothesis.settings.register_profile(
+    name="np.test() profile",
+    deadline=None, print_blob=True, database=None, derandomize=True,
+    suppress_health_check=hypothesis.HealthCheck.all(),
+)
+# Note that the default profile is chosen based on the presence 
+# of pytest.ini, but can be overriden by passing the 
+# --hypothesis-profile=NAME argument to pytest.
+_pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
+hypothesis.settings.load_profile(
+    "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
+)
 
 
 def pytest_configure(config):

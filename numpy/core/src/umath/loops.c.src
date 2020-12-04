@@ -20,6 +20,9 @@
 
 #include <string.h> /* for memchr */
 
+/* Use Libdivide for faster division */
+#include "numpy/libdivide/libdivide.h"
+
 /*
  * cutoff blocksize for pairwise summation
  * decreasing it decreases errors slightly as more pairs are summed but
@@ -570,7 +573,7 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #isa = , _avx2#
  * #ISA = , AVX2#
- * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX2#
+ * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX2)#
  * #ATTR = , NPY_GCC_TARGET_AVX2#
  */
 
@@ -840,28 +843,88 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
+/* Libdivide only supports 32 and 64 bit types
+ * We try to pick the best possible one */
+#if NPY_BITSOF_@TYPE@ <= 32
+#define libdivide_@type@_t libdivide_s32_t
+#define libdivide_@type@_gen libdivide_s32_gen
+#define libdivide_@type@_do libdivide_s32_do
+#else
+#define libdivide_@type@_t libdivide_s64_t
+#define libdivide_@type@_gen libdivide_s64_gen
+#define libdivide_@type@_do libdivide_s64_do
+#endif
+
 NPY_NO_EXPORT void
 @TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        /*
-         * FIXME: On x86 at least, dividing the smallest representable integer
-         * by -1 causes a SIFGPE (division overflow). We treat this case here
-         * (to avoid a SIGFPE crash at python level), but a good solution would
-         * be to treat integer division problems separately from FPU exceptions
-         * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
-         */
-        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
+    BINARY_DEFS
+
+    /* When the divisor is a constant, use libdivide for faster division */
+    if (steps[1] == 0) {
+        /* In case of empty array, just return */
+        if (n == 0) {
+            return;
         }
-        else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-            *((@type@ *)op1) = in1/in2 - 1;
+
+        const @type@ in2 = *(@type@ *)ip2;
+
+        /* If divisor is 0, we need not compute anything */
+        if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            BINARY_LOOP_SLIDING {
+                *((@type@ *)op1) = 0;
+            }
         }
         else {
-            *((@type@ *)op1) = in1/in2;
+            struct libdivide_@type@_t fast_d = libdivide_@type@_gen(in2);
+            BINARY_LOOP_SLIDING {
+                const @type@ in1 = *(@type@ *)ip1;
+                /*
+                 * FIXME: On x86 at least, dividing the smallest representable integer
+                 * by -1 causes a SIFGPE (division overflow). We treat this case here
+                 * (to avoid a SIGFPE crash at python level), but a good solution would
+                 * be to treat integer division problems separately from FPU exceptions
+                 * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
+                 */
+                if (in1 == NPY_MIN_@TYPE@ && in2 == -1) {
+                    npy_set_floatstatus_divbyzero();
+                    *((@type@ *)op1) = 0;
+                }
+                else {
+                    *((@type@ *)op1) = libdivide_@type@_do(in1, &fast_d);
+
+                    /* Negative quotients needs to be rounded down */
+                    if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
+                        *((@type@ *)op1) = *((@type@ *)op1) - 1;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        BINARY_LOOP_SLIDING {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ in2 = *(@type@ *)ip2;
+            /*
+             * FIXME: On x86 at least, dividing the smallest representable integer
+             * by -1 causes a SIFGPE (division overflow). We treat this case here
+             * (to avoid a SIGFPE crash at python level), but a good solution would
+             * be to treat integer division problems separately from FPU exceptions
+             * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
+             */
+            if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
+                npy_set_floatstatus_divbyzero();
+                *((@type@ *)op1) = 0;
+            }
+            else {
+                *((@type@ *)op1) = in1/in2;
+
+                /* Negative quotients needs to be rounded down */
+                if (((in1 > 0) != (in2 > 0)) && (*((@type@ *)op1) * in2 != in1)) {
+                    *((@type@ *)op1) = *((@type@ *)op1) - 1;
+                }
+            }
         }
     }
 }
@@ -1352,14 +1415,48 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+    /* NOTE: This code is similar to array floor divide */
+    BINARY_DEFS
+
+    /* When the divisor is a constant, use libdivide for faster division */
+    if (steps[1] == 0) {
+        /* In case of empty array, just return */
+        if (n == 0) {
+            return;
+        }
+
         const npy_int64 in2 = *(npy_int64 *)ip2;
-        if (in1 == NPY_DATETIME_NAT || in2 == 0) {
-            *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+
+        /* If divisor is 0, we need not compute anything */
+        if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            BINARY_LOOP_SLIDING {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
         }
         else {
-            *((npy_timedelta *)op1) = in1 / in2;
+            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
+            BINARY_LOOP_SLIDING {
+                const npy_timedelta in1 = *(npy_timedelta *)ip1;
+                if (in1 == NPY_DATETIME_NAT) {
+                    *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+                }
+                else {
+                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);;
+                }
+            }
+        }
+    }
+    else {
+        BINARY_LOOP_SLIDING {
+            const npy_timedelta in1 = *(npy_timedelta *)ip1;
+            const npy_int64 in2 = *(npy_int64 *)ip2;
+            if (in1 == NPY_DATETIME_NAT || in2 == 0) {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
+            else {
+                *((npy_timedelta *)op1) = in1 / in2;
+            }
         }
     }
 }
@@ -1431,23 +1528,69 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
 NPY_NO_EXPORT void
 TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-            *((npy_int64 *)op1) = 0;
+    /* NOTE: This code is similar to array floor divide */
+    BINARY_DEFS
+
+    /* When the divisor is a constant, use libdivide for faster division */
+    if (steps[1] == 0) {
+        /* In case of empty array, just return */
+        if (n == 0) {
+            return;
         }
-        else if (in2 == 0) {
+
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+
+        /* If divisor is 0 or NAT, we need not compute anything */
+        if (in2 == 0) {
             npy_set_floatstatus_divbyzero();
-            *((npy_int64 *)op1) = 0;
+            BINARY_LOOP_SLIDING {
+                *((npy_int64 *)op1) = 0;
+            }
+        }
+        else if (in2 == NPY_DATETIME_NAT) {
+            npy_set_floatstatus_invalid();
+            BINARY_LOOP_SLIDING {
+                *((npy_int64 *)op1) = 0;
+            }
         }
         else {
-            if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((npy_int64 *)op1) = in1/in2 - 1;
+            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
+             BINARY_LOOP_SLIDING {
+                const npy_timedelta in1 = *(npy_timedelta *)ip1;
+                if (in1 == NPY_DATETIME_NAT) {
+                    npy_set_floatstatus_invalid();
+                    *((npy_int64 *)op1) = 0;
+                }
+                else {
+                    *((npy_int64 *)op1) = libdivide_s64_do(in1, &fast_d);
+
+                    /* Negative quotients needs to be rounded down */
+                    if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
+                        *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        BINARY_LOOP_SLIDING {
+            const npy_timedelta in1 = *(npy_timedelta *)ip1;
+            const npy_timedelta in2 = *(npy_timedelta *)ip2;
+            if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+                npy_set_floatstatus_invalid();
+                *((npy_int64 *)op1) = 0;
+            }
+            else if (in2 == 0) {
+                npy_set_floatstatus_divbyzero();
+                *((npy_int64 *)op1) = 0;
             }
             else {
                 *((npy_int64 *)op1) = in1/in2;
+
+                /* Negative quotients needs to be rounded down */
+                if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
+                    *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
+                }
             }
         }
     }
@@ -1489,26 +1632,6 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  **                             FLOAT LOOPS                                 **
  *****************************************************************************
  */
-
-/**begin repeat
- * Float types
- *  #type = npy_float, npy_double#
- *  #TYPE = FLOAT, DOUBLE#
- *  #scalarf = npy_sqrtf, npy_sqrt#
- */
-
-NPY_NO_EXPORT void
-@TYPE@_sqrt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_unary_simd_sqrt_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = @scalarf@(in1);
-        }
-    }
-}
-
-/**end repeat**/
 
 /**begin repeat
  *  #func = rint, ceil, floor, trunc#
@@ -1578,57 +1701,6 @@ DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
  *  #type = npy_float, npy_double#
  *  #typesub = f, #
  */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_sqrt_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_sqrt_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = npy_sqrt@typesub@(in1);
-        }
-    }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_absolute_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_absolute_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-#ifdef __VMS
-            *((@type@ *)op1) = npy_fabs@typesub@(in1);
-#else
-            const @type@ tmp = in1 > 0 ? in1 : -in1;
-            /* add 0 to clear -0.0 */
-            *((@type@ *)op1) = tmp + 0;
-#endif
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_square_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_square_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = in1*in1;
-        }
-    }
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_reciprocal_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_reciprocal_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = 1.0f/in1;
-        }
-    }
-}
 
 /**begin repeat2
  *  #func = rint, ceil, floor, trunc#
@@ -1857,6 +1929,7 @@ NPY_NO_EXPORT void
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+            // OpenVMS has a bug: long double NaN fails most of all operations
             *((npy_bool *)op1) = !isnan@c@(in1) && !isnan@c@(in2) && (in1 @OP@ in2);
 #else
             *((npy_bool *)op1) = in1 @OP@ in2;
@@ -2031,8 +2104,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        @type@ mod;
-        *((@type@ *)op1) = npy_divmod@c@(in1, in2, &mod);
+        *((@type@ *)op1) = npy_floor_divide@c@(in1, in2);
     }
 }
 
@@ -2042,7 +2114,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        npy_divmod@c@(in1, in2, (@type@ *)op1);
+        *((@type@ *) op1) = npy_remainder@c@(in1, in2);
     }
 }
 
@@ -2053,33 +2125,6 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         *((@type@ *)op1) = npy_divmod@c@(in1, in2, (@type@ *)op2);
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    char * margs[] = {args[0], args[0], args[1]};
-    npy_intp msteps[] = {steps[0], steps[0], steps[1]};
-    if (!run_binary_simd_multiply_@TYPE@(margs, dimensions, msteps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((@type@ *)op1) = in1*in1;
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    @type@ one = 1.@c@;
-    char * margs[] = {(char*)&one, args[0], args[1]};
-    npy_intp msteps[] = {0, steps[0], steps[1]};
-    if (!run_binary_simd_divide_@TYPE@(margs, dimensions, msteps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((@type@ *)op1) = 1/in1;
-        }
     }
 }
 
@@ -2098,24 +2143,6 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op1) = in1;
     }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_unary_simd_absolute_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-#ifdef __VMS
-            *((@type@ *)op1) = npy_fabs@c@(in1);
-#else
-            const @type@ tmp = in1 > 0 ? in1 : -in1;
-            /* add 0 to clear -0.0 */
-            *((@type@ *)op1) = tmp + 0;
-#endif
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -2226,6 +2253,47 @@ NPY_NO_EXPORT void
 #define @TYPE@_true_divide @TYPE@_divide
 
 /**end repeat**/
+
+/*
+ *****************************************************************************
+ **                          LONGDOUBLE LOOPS                               **
+ *****************************************************************************
+ */
+
+NPY_NO_EXPORT void
+LONGDOUBLE_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble*)ip1;
+        *((npy_longdouble *)op1) = 1/in1;
+    }
+}
+
+NPY_NO_EXPORT void
+LONGDOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+#ifdef __VMS
+        // the trick with 'add 0 ...' does not work in OpenVMS
+        *((npy_longdouble *)op1) = npy_fabsl(in1);
+#else
+        const npy_longdouble tmp = in1 > 0 ? in1 : -in1;
+        /* add 0 to clear -0.0 */
+        *((npy_longdouble *)op1) = tmp + 0;
+#endif
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+
+NPY_NO_EXPORT void
+LONGDOUBLE_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        *((npy_longdouble *)op1) = in1*in1;
+    }
+}
 
 /*
  *****************************************************************************
@@ -2391,8 +2459,13 @@ HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        npy_half mod;
-        *((npy_half *)op1) = npy_half_divmod(in1, in2, &mod);
+
+        float fh1 = npy_half_to_float(in1);
+        float fh2 = npy_half_to_float(in2);
+        float div;
+
+        div = npy_floor_dividef(fh1, fh2);
+        *((npy_half *)op1) = npy_float_to_half(div);
     }
 }
 
@@ -2402,7 +2475,11 @@ HALF_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, v
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        npy_half_divmod(in1, in2, (npy_half *)op1);
+        float fh1 = npy_half_to_float(in1);
+        float fh2 = npy_half_to_float(in2);
+        float mod;
+        mod = npy_remainderf(fh1, fh2);
+        *((npy_half *)op1) = npy_float_to_half(mod);
     }
 }
 
@@ -2909,6 +2986,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
 #ifdef __VMS
+        // npy_hypot does not passes the tests in OpenVMS
         *((@ftype@ *)op1) = npy_cabs@c@(*(@ctype@ *)ip1);
 #else
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];

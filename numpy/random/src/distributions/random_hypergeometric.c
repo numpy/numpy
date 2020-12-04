@@ -6,7 +6,6 @@
 #include <stdint.h>
 #endif
 
-
 /*
  *  Generate a sample from the hypergeometric distribution.
  *

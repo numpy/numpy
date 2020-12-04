@@ -428,35 +428,27 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
 
 /*
- * Global information about all active buffers
+ * Information about all active buffers is stored as a linked list on
+ * the ndarray. The initial pointer is currently tagged to have a chance of
+ * detecting incompatible subclasses.
  *
  * Note: because for backward compatibility we cannot define bf_releasebuffer,
  * we must manually keep track of the additional data required by the buffers.
  */
 
 /* Additional per-array data required for providing the buffer interface */
-typedef struct {
+typedef struct _buffer_info_t_tag {
     char *format;
     int ndim;
     Py_ssize_t *strides;
     Py_ssize_t *shape;
+    struct _buffer_info_t_tag *next;
 } _buffer_info_t;
 
-/*
- * { id(array): [list of pointers to _buffer_info_t, the last one is latest] }
- *
- * Because shape, strides, and format can be different for different buffers,
- * we may need to keep track of multiple buffer infos for each array.
- *
- * However, when none of them has changed, the same buffer info may be reused.
- *
- * Thread-safety is provided by GIL.
- */
-static PyObject *_buffer_info_cache = NULL;
 
 /* Fill in the info structure */
 static _buffer_info_t*
-_buffer_info_new(PyObject *obj, npy_bool f_contiguous)
+_buffer_info_new(PyObject *obj, int flags)
 {
     /*
      * Note that the buffer info is cached as PyLongObjects making them appear
@@ -474,18 +466,18 @@ _buffer_info_new(PyObject *obj, npy_bool f_contiguous)
             PyErr_NoMemory();
             goto fail;
         }
+        info->ndim = 0;
+        info->shape = NULL;
+        info->strides = NULL;
+
         descr = PyArray_DescrFromScalar(obj);
         if (descr == NULL) {
             goto fail;
         }
-        info->ndim = 0;
-        info->shape = NULL;
-        info->strides = NULL;
     }
     else {
         assert(PyArray_Check(obj));
         PyArrayObject * arr = (PyArrayObject *)obj;
-        descr = PyArray_DESCR(arr);
 
         info = PyObject_Malloc(sizeof(_buffer_info_t) +
                                sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2);
@@ -501,7 +493,7 @@ _buffer_info_new(PyObject *obj, npy_bool f_contiguous)
             info->strides = NULL;
         }
         else {
-            info->shape = (Py_ssize_t *)(npy_intp *)((char *)info + sizeof(_buffer_info_t));
+            info->shape = (Py_ssize_t *)((char *)info + sizeof(_buffer_info_t));
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
             info->strides = info->shape + PyArray_NDIM(arr);
 
@@ -514,6 +506,7 @@ _buffer_info_new(PyObject *obj, npy_bool f_contiguous)
              * (This is unnecessary, but has no effect in the case where
              * NPY_RELAXED_STRIDES CHECKING is disabled.)
              */
+            int f_contiguous = (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS;
             if (PyArray_IS_C_CONTIGUOUS(arr) && !(
                     f_contiguous && PyArray_IS_F_CONTIGUOUS(arr))) {
                 Py_ssize_t sd = PyArray_ITEMSIZE(arr);
@@ -543,20 +536,27 @@ _buffer_info_new(PyObject *obj, npy_bool f_contiguous)
                 }
             }
         }
+        descr = PyArray_DESCR(arr);
         Py_INCREF(descr);
     }
 
     /* Fill in format */
-    err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
-    Py_DECREF(descr);
-    if (err != 0) {
-        goto fail;
+    if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
+        err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
+        Py_DECREF(descr);
+        if (err != 0) {
+            goto fail;
+        }
+        if (_append_char(&fmt, '\0') < 0) {
+            goto fail;
+        }
+        info->format = fmt.s;
     }
-    if (_append_char(&fmt, '\0') < 0) {
-        goto fail;
+    else {
+        Py_DECREF(descr);
+        info->format = NULL;
     }
-    info->format = fmt.s;
-
+    info->next = NULL;
     return info;
 
 fail:
@@ -572,9 +572,10 @@ _buffer_info_cmp(_buffer_info_t *a, _buffer_info_t *b)
     Py_ssize_t c;
     int k;
 
-    c = strcmp(a->format, b->format);
-    if (c != 0) return c;
-
+    if (a->format != NULL && b->format != NULL) {
+        c = strcmp(a->format, b->format);
+        if (c != 0) return c;
+    }
     c = a->ndim - b->ndim;
     if (c != 0) return c;
 
@@ -588,132 +589,160 @@ _buffer_info_cmp(_buffer_info_t *a, _buffer_info_t *b)
     return 0;
 }
 
-static void
-_buffer_info_free(_buffer_info_t *info)
+
+/*
+ * Tag the buffer info pointer by adding 2 (unless it is NULL to simplify
+ * object initialization).
+ * The linked list of buffer-infos was appended to the array struct in
+ * NumPy 1.20. Tagging the pointer gives us a chance to raise/print
+ * a useful error message instead of crashing hard if a C-subclass uses
+ * the same field.
+ */
+static NPY_INLINE void *
+buffer_info_tag(void *buffer_info)
 {
-    if (info->format) {
-        PyObject_Free(info->format);
+    if (buffer_info == NULL) {
+        return buffer_info;
     }
-    PyObject_Free(info);
+    else {
+        return (void *)((uintptr_t)buffer_info + 3);
+    }
 }
 
-/* Get buffer info from the global dictionary */
-static _buffer_info_t*
-_buffer_get_info(PyObject *obj, npy_bool f_contiguous)
+
+static NPY_INLINE int
+_buffer_info_untag(
+        void *tagged_buffer_info, _buffer_info_t **buffer_info, PyObject *obj)
 {
-    PyObject *key = NULL, *item_list = NULL, *item = NULL;
-    _buffer_info_t *info = NULL, *old_info = NULL;
-
-    if (_buffer_info_cache == NULL) {
-        _buffer_info_cache = PyDict_New();
-        if (_buffer_info_cache == NULL) {
-            return NULL;
-        }
+    if (tagged_buffer_info == NULL) {
+        *buffer_info = NULL;
+        return 0;
     }
+    if (NPY_UNLIKELY(((uintptr_t)tagged_buffer_info & 0x7) != 3)) {
+        PyErr_Format(PyExc_RuntimeError,
+                "Object of type %S appears to be C subclassed NumPy array, "
+                "void scalar, or allocated in a non-standard way."
+                "NumPy reserves the right to change the size of these "
+                "structures. Projects are required to take this into account "
+                "by either recompiling against a specific NumPy version or "
+                "padding the struct and enforcing a maximum NumPy version.",
+                Py_TYPE(obj));
+        return -1;
+    }
+    *buffer_info = (void *)((uintptr_t)tagged_buffer_info - 3);
+    return 0;
+}
 
-    /* Compute information */
-    info = _buffer_info_new(obj, f_contiguous);
+
+/*
+ * NOTE: for backward compatibility (esp. with PyArg_ParseTuple("s#", ...))
+ * we do *not* define bf_releasebuffer at all.
+ *
+ * Instead, any extra data allocated with the buffer is released only in
+ * array_dealloc.
+ *
+ * Ensuring that the buffer stays in place is taken care by refcounting;
+ * ndarrays do not reallocate if there are references to them, and a buffer
+ * view holds one reference.
+ *
+ * This is stored in the array's _buffer_info slot (currently as a void *).
+ */
+static void
+_buffer_info_free_untagged(void *_buffer_info)
+{
+    _buffer_info_t *next = _buffer_info;
+    while (next != NULL) {
+        _buffer_info_t *curr = next;
+        next = curr->next;
+        if (curr->format) {
+            PyObject_Free(curr->format);
+        }
+        /* Shape is allocated as part of info */
+        PyObject_Free(curr);
+    }
+}
+
+
+/*
+ * Checks whether the pointer is tagged, and then frees the cache list.
+ * (The tag check is only for transition due to changed structure size in 1.20)
+ */
+NPY_NO_EXPORT int
+_buffer_info_free(void *buffer_info, PyObject *obj)
+{
+    _buffer_info_t *untagged_buffer_info;
+    if (_buffer_info_untag(buffer_info, &untagged_buffer_info, obj) < 0) {
+        return -1;
+    }
+    _buffer_info_free_untagged(untagged_buffer_info);
+    return 0;
+}
+
+
+/*
+ * Get the buffer info returning either the old one (passed in) or a new
+ * buffer info which adds holds on to (and thus replaces) the old one.
+ */
+static _buffer_info_t*
+_buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
+{
+    _buffer_info_t *info = NULL;
+    _buffer_info_t *stored_info;  /* First currently stored buffer info */
+
+    if (_buffer_info_untag(*buffer_info_cache_ptr, &stored_info, obj) < 0) {
+        return NULL;
+    }
+    _buffer_info_t *old_info = stored_info;
+
+    /* Compute information (it would be nice to skip this in simple cases) */
+    info = _buffer_info_new(obj, flags);
     if (info == NULL) {
         return NULL;
     }
 
-    /* Check if it is identical with an old one; reuse old one, if yes */
-    key = PyLong_FromVoidPtr((void*)obj);
-    if (key == NULL) {
-        goto fail;
-    }
-    item_list = PyDict_GetItem(_buffer_info_cache, key);
+    if (old_info != NULL && _buffer_info_cmp(info, old_info) != 0) {
+        _buffer_info_t *next_info = old_info->next;
+        old_info = NULL;  /* Can't use this one, but possibly next */
 
-    if (item_list != NULL) {
-        Py_ssize_t item_list_length = PyList_GET_SIZE(item_list);
-        Py_INCREF(item_list);
-        if (item_list_length > 0) {
-            item = PyList_GetItem(item_list, item_list_length - 1);
-            old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
-            if (_buffer_info_cmp(info, old_info) == 0) {
-                _buffer_info_free(info);
-                info = old_info;
-            }
-            else {
-                if (item_list_length > 1 && info->ndim > 1) {
-                    /*
-                     * Some arrays are C- and F-contiguous and if they have more
-                     * than one dimension, the buffer-info may differ between
-                     * the two due to RELAXED_STRIDES_CHECKING.
-                     * If we export both buffers, the first stored one may be
-                     * the one for the other contiguity, so check both.
-                     * This is generally very unlikely in all other cases, since
-                     * in all other cases the first one will match unless array
-                     * metadata was modified in-place (which is discouraged).
-                     */
-                    item = PyList_GetItem(item_list, item_list_length - 2);
-                    old_info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
-                    if (_buffer_info_cmp(info, old_info) == 0) {
-                        _buffer_info_free(info);
-                        info = old_info;
-                    }
-                }
-            }
+         if (info->ndim > 1 && next_info != NULL) {
+             /*
+              * Some arrays are C- and F-contiguous and if they have more
+              * than one dimension, the buffer-info may differ between
+              * the two due to RELAXED_STRIDES_CHECKING.
+              * If we export both buffers, the first stored one may be
+              * the one for the other contiguity, so check both.
+              * This is generally very unlikely in all other cases, since
+              * in all other cases the first one will match unless array
+              * metadata was modified in-place (which is discouraged).
+              */
+             if (_buffer_info_cmp(info, next_info) == 0) {
+                 old_info = next_info;
+             }
+         }
+    }
+    if (old_info != NULL) {
+        /*
+         * The two info->format are considered equal if one of them
+         * has no format set (meaning the format is arbitrary and can
+         * be modified). If the new info has a format, but we reuse
+         * the old one, this transfers the ownership to the old one.
+         */
+        if (old_info->format == NULL) {
+            old_info->format = info->format;
+            info->format = NULL;
         }
+        _buffer_info_free_untagged(info);
+        info = old_info;
     }
     else {
-        item_list = PyList_New(0);
-        if (item_list == NULL) {
-            goto fail;
-        }
-        if (PyDict_SetItem(_buffer_info_cache, key, item_list) != 0) {
-            goto fail;
-        }
+        /* Insert new info as first item in the linked buffer-info list. */
+        info->next = stored_info;
+        *buffer_info_cache_ptr = buffer_info_tag(info);
     }
 
-    if (info != old_info) {
-        /* Needs insertion */
-        item = PyLong_FromVoidPtr((void*)info);
-        if (item == NULL) {
-            goto fail;
-        }
-        PyList_Append(item_list, item);
-        Py_DECREF(item);
-    }
-
-    Py_DECREF(item_list);
-    Py_DECREF(key);
     return info;
-
-fail:
-    if (info != NULL && info != old_info) {
-        _buffer_info_free(info);
-    }
-    Py_XDECREF(item_list);
-    Py_XDECREF(key);
-    return NULL;
 }
 
-/* Clear buffer info from the global dictionary */
-static void
-_buffer_clear_info(PyObject *arr)
-{
-    PyObject *key, *item_list, *item;
-    _buffer_info_t *info;
-    int k;
-
-    if (_buffer_info_cache == NULL) {
-        return;
-    }
-
-    key = PyLong_FromVoidPtr((void*)arr);
-    item_list = PyDict_GetItem(_buffer_info_cache, key);
-    if (item_list != NULL) {
-        for (k = 0; k < PyList_GET_SIZE(item_list); ++k) {
-            item = PyList_GET_ITEM(item_list, k);
-            info = (_buffer_info_t*)PyLong_AsVoidPtr(item);
-            _buffer_info_free(info);
-        }
-        PyDict_DelItem(_buffer_info_cache, key);
-    }
-
-    Py_DECREF(key);
-}
 
 /*
  * Retrieving buffers for ndarray
@@ -759,8 +788,9 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         goto fail;
     }
 
-    /* Fill in information */
-    info = _buffer_get_info(obj, (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS);
+    /* Fill in information (and add it to _buffer_info if necessary) */
+    info = _buffer_get_info(
+            &((PyArrayObject_fields *)self)->_buffer_info, obj, flags);
     if (info == NULL) {
         goto fail;
     }
@@ -778,6 +808,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
      * (and clears the `NPY_ARRAY_WARN_ON_WRITE` flag).
      */
 #ifdef __VMS
+    // 'readonly' is reserved word for OpenVMS compiler
     view->readonly$ = (!PyArray_ISWRITEABLE(self) ||
                       PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
 #else
@@ -815,94 +846,53 @@ fail:
 }
 
 /*
- * Retrieving buffers for scalars
+ * Retrieving buffers for void scalar (which can contain any complex types),
+ * defined in buffer.c since it requires the complex format building logic.
  */
-int
+NPY_NO_EXPORT int
 void_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    _buffer_info_t *info = NULL;
-    PyArray_Descr *descr = NULL;
-    int elsize;
+    PyVoidScalarObject *scalar = (PyVoidScalarObject *)self;
 
     if (flags & PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
-        goto fail;
+        return -1;
     }
 
-    /* Fill in information */
-    info = _buffer_get_info(self, 0);
-    if (info == NULL) {
-        goto fail;
-    }
-
-    view->ndim = info->ndim;
-    view->shape = info->shape;
-    view->strides = info->strides;
-
-    if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
-        view->format = info->format;
-    } else {
-        view->format = NULL;
-    }
-
-    descr = PyArray_DescrFromScalar(self);
-    view->buf = (void *)scalar_value(self, descr);
-    elsize = descr->elsize;
-    view->len = elsize;
-    if (PyArray_IsScalar(self, Datetime) || PyArray_IsScalar(self, Timedelta)) {
-        elsize = 1; /* descr->elsize,char is 8,'M', but we return 1,'B' */
-    }
-    view->itemsize = elsize;
-
-    Py_DECREF(descr);
-
+    view->ndim = 0;
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    view->len = scalar->descr->elsize;
+    view->itemsize = scalar->descr->elsize;
 #ifdef __VMS
+    // 'readonly' is reserved word for OpenVMS compiler
     view->readonly$ = 1;
 #else
     view->readonly = 1;
 #endif
     view->suboffsets = NULL;
-    view->obj = self;
     Py_INCREF(self);
-    return 0;
+    view->obj = self;
+    view->buf = scalar->obval;
 
-fail:
-    view->obj = NULL;
-    return -1;
-}
+    if (((flags & PyBUF_FORMAT) != PyBUF_FORMAT)) {
+        /* It is unnecessary to find the correct format */
+        view->format = NULL;
+        return 0;
+    }
 
-/*
- * NOTE: for backward compatibility (esp. with PyArg_ParseTuple("s#", ...))
- * we do *not* define bf_releasebuffer at all.
- *
- * Instead, any extra data allocated with the buffer is released only in
- * array_dealloc.
- *
- * Ensuring that the buffer stays in place is taken care by refcounting;
- * ndarrays do not reallocate if there are references to them, and a buffer
- * view holds one reference.
- */
-
-NPY_NO_EXPORT void
-_dealloc_cached_buffer_info(PyObject *self)
-{
-    int reset_error_state = 0;
-    PyObject *ptype, *pvalue, *ptraceback;
-
-    /* This function may be called when processing an exception --
-     * we need to stash the error state to avoid confusing PyDict
+    /*
+     * If a format is being exported, we need to use _buffer_get_info
+     * to find the correct format.  This format must also be stored, since
+     * at least in theory it can change (in practice it should never change).
      */
-
-    if (PyErr_Occurred()) {
-        reset_error_state = 1;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    if (info == NULL) {
+        return -1;
     }
-
-    _buffer_clear_info(self);
-
-    if (reset_error_state) {
-        PyErr_Restore(ptype, pvalue, ptraceback);
-    }
+    view->format = info->format;
+    return 0;
 }
 
 

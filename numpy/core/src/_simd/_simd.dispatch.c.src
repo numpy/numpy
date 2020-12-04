@@ -16,10 +16,12 @@
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sum_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
@@ -351,6 +353,21 @@ SIMD_IMPL_INTRIN_3(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 #endif // fused_sup
 
+#if @sum_sup@
+SIMD_IMPL_INTRIN_1(sum_@sfx@, @sfx@, v@sfx@)
+#endif // sum_sup
+
+/***************************
+ * Math
+ ***************************/
+#if @fp_only@
+/**begin repeat1
+ * #intrin  = sqrt, recip, abs, square#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif
+
 #endif // simd_sup
 /**end repeat**/
 /***************************
@@ -366,10 +383,12 @@ static PyMethodDef simd__intrinsics_methods[] = {
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sum_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
@@ -483,6 +502,21 @@ SIMD_INTRIN_DEF(div_@sfx@)
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif // fused_sup
+
+#if @sum_sup@
+SIMD_INTRIN_DEF(sum_@sfx@)
+#endif // sum_sup
+
+/***************************
+ * Math
+ ***************************/
+#if @fp_only@
+/**begin repeat1
+ * #intrin  = sqrt, recip, abs, square#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif
 
 #endif // simd_sup
 /**end repeat**/

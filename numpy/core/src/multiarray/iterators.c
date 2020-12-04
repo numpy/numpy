@@ -60,7 +60,14 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         i = 0;
     }
     else if (PySlice_Check(op)) {
-        npy_intp stop = i = *step_size = *n_steps = 0;
+        npy_intp stop;
+        #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+        // we should clear all bits in values before passing them
+        stop = 0;
+        i = 0;
+        *step_size = 0;
+        *n_steps = 0;
+        #endif
         if (PySlice_GetIndicesEx(op, max,
                 (Py_ssize_t *)&i,
                 (Py_ssize_t *)&stop,
@@ -69,6 +76,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
             goto fail;
         }
         #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+        // propogate a sign
         *step_size = *(Py_ssize_t *)step_size;
         #endif
         if (*n_steps <= 0) {

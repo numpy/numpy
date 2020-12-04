@@ -922,6 +922,25 @@ class TestTypes:
         assert_equal(np.promote_types('u8', 'S1'), np.dtype('S20'))
         assert_equal(np.promote_types('u8', 'S30'), np.dtype('S30'))
 
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V6"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+             [np.dtype("i8,i8"), np.dtype("i4,i4")],
+            ])
+    def test_invalid_void_promotion(self, dtype1, dtype2):
+        # Mainly test structured void promotion, which currently allows
+        # byte-swapping, but nothing else:
+        with pytest.raises(TypeError):
+            np.promote_types(dtype1, dtype2)
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V10"), np.dtype("V10")],
+             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
+             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
+            ])
+    def test_valid_void_promotion(self, dtype1, dtype2):
+        assert np.promote_types(dtype1, dtype2) is dtype1
+
     @pytest.mark.parametrize("dtype",
            list(np.typecodes["All"]) +
            ["i,i", "S3", "S100", "U3", "U100", rational])

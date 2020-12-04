@@ -81,7 +81,7 @@ class FortranRoutine:
         return self._dependencies
 
     def __repr__(self):
-        return return f'FortranRoutine({self.name!r}, filename={self.filename!r})'
+        return f'FortranRoutine({self.name!r}, filename={self.filename!r})'
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file

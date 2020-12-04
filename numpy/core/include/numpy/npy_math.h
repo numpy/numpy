@@ -5,14 +5,12 @@
 extern "C" {
 #endif
 
+#include <numpy/npy_common.h>
+
 #include <math.h>
 #ifdef __SUNPRO_CC
 #include <sunmath.h>
 #endif
-#ifdef HAVE_NPY_CONFIG_H
-#include <npy_config.h>
-#endif
-#include <numpy/npy_common.h>
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
@@ -58,7 +56,7 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_PZEROF __npy_pzerof()
 #define NPY_NZEROF __npy_nzerof()
 
-#ifdef __VMS
+#if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT)
 /* Note: OpenVMS QNAN has a non-zero sign bit */
 extern double decc$gt_dinfinity;
 extern double decc$gt_dqnan;
@@ -90,6 +88,7 @@ extern long double decc$gx_long_dbl_snan;
 #define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
 
 #endif
+
 /*
  * Useful constants
  */
@@ -235,7 +234,7 @@ double npy_spacing(double x);
 
 /* use builtins to avoid function calls in tight loops
  * only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISNAN
+#ifdef HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
     #ifndef NPY_HAVE_DECL_ISNAN
@@ -251,7 +250,7 @@ double npy_spacing(double x);
 
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISFINITE
+#ifdef HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
     #ifndef NPY_HAVE_DECL_ISFINITE
@@ -266,7 +265,7 @@ double npy_spacing(double x);
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
-#if HAVE___BUILTIN_ISINF
+#ifdef HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
     #ifndef NPY_HAVE_DECL_ISINF

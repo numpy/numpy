@@ -6,29 +6,37 @@ trigger:
       - master
       - maintenance/*
 
+
 pr:
   branches:
     include:
     - '*'  # must quote since "*" is a YAML reserved character; we want a string
 
+
 stages:
+
 - stage: InitialTests
   jobs:
+
+
   - job: WindowsFast
     pool:
       vmImage: 'VS2017-Win2016'
     strategy:
       matrix:
-          Python36-64bit-fast:
-            PYTHON_VERSION: '3.6'
-            PYTHON_ARCH: 'x64'
+          Python37-32bit-fast:
+            PYTHON_VERSION: '3.7'
+            PYTHON_ARCH: 'x86'
             TEST_MODE: fast
-            BITS: 64
+            BITS: 32
     steps:
     - template: azure-steps-windows.yml
 
+
 - stage: ComprehensiveTests
   jobs:
+
+
   - job: Linux_Python_38_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-18.04'
@@ -55,6 +63,8 @@ stages:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for Python 3.8-32 bit full Linux'
+
+
   - job: macOS
     pool:
       # NOTE: at time of writing, there is a danger
@@ -68,21 +78,13 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python36:
-            PYTHON_VERSION: '3.6'
+          Python37:
+            PYTHON_VERSION: '3.7'
             USE_OPENBLAS: '1'
-          Python36-ILP64:
-            PYTHON_VERSION: '3.6'
+          Python37-ILP64:
+            PYTHON_VERSION: '3.7'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
-          # Disable this job: the azure images do not create the problematic
-          # symlink from Accelerate to OpenBLAS. We still have the test
-          # at import to detect a buggy Accelerate, just cannot easily trigger
-          # it with azure.
-          # Accelerate:
-          #   PYTHON_VERSION: '3.6'
-          #   USE_OPENBLAS: '0'
-
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
@@ -151,8 +153,9 @@ stages:
         CC: /usr/bin/clang
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python setup.py build -j 4 build_ext --inplace install
-      displayName: 'Build NumPy without OpenBLAS'
+      displayName: 'Build NumPy without OpenBLAS and new casting'
       env:
+        NPY_USE_NEW_CASTINGIMPL: 1
         BLAS: None
         LAPACK: None
         ATLAS: None
@@ -188,35 +191,36 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
+        testRunTitle: 'Publish test results for Python 3.7 64-bit full Mac OS'
+
+
   - job: Windows
     pool:
       vmImage: 'VS2017-Win2016'
     strategy:
       maxParallel: 6
       matrix:
-          Python38-32bit-fast:
-            PYTHON_VERSION: '3.8'
-            PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
-            BITS: 32
-          Python36-64bit-full:
-            PYTHON_VERSION: '3.6'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: full
-            BITS: 64
+          # Python37 32 bit fast tested in InitialTest stage.
           Python37-64bit-full:
             PYTHON_VERSION: '3.7'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+          Python38-32bit-fast:
+            PYTHON_VERSION: '3.8'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
           Python38-64bit-full:
             PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
-            NPY_USE_BLAS_ILP64: '1'
-            OPENBLAS_SUFFIX: '64_'
+          Python39-32bit-fast:
+            PYTHON_VERSION: '3.9'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
           Python39-64bit-full:
             PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x64'
@@ -224,40 +228,28 @@ stages:
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
             OPENBLAS_SUFFIX: '64_'
-          #PyPy36-32bit:
-            #PYTHON_VERSION: 'PyPy3.6'
-            #PYTHON_ARCH: 'x32'
-            #TEST_MODE: fast
-            #BITS: 32
     steps:
     - template: azure-steps-windows.yml
-  - job: Linux_PyPy3
-    pool:
-      vmIMage: 'ubuntu-18.04'
-    steps:
-    - script: source tools/pypy-test.sh
-      displayName: 'Run PyPy3 Build / Tests'
-    - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-        testResultsFiles: '**/test-*.xml'
-        testRunTitle: 'Publish test results for PyPy3'
-        failTaskOnFailedTests: true
+
+
   - job: Linux_gcc48
     pool:
+      # ubuntu-20.04 does not provide a gcc-4.8 package
       vmImage: 'ubuntu-18.04'
     steps:
     - script: |
+            sudo apt install python3.7
+            sudo apt install python3.7-dev
             if ! `gcc-4.8 2>/dev/null`; then
                 sudo apt install gcc-4.8
             fi
       displayName: 'add gcc 4.8'
     - script: |
             # python3 has no setuptools, so install one to get us going
-            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
-            python3 -m pip install --user -r test_requirements.txt
+            python3.7 -m pip install --user --upgrade pip 'setuptools<49.2.0'
+            python3.7 -m pip install --user -r test_requirements.txt
             CPPFLAGS='' CC=gcc-4.8 F77=gfortran-5 F90=gfortran-5 \
-            python3 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+            python3.7 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run gcc4.8 Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()

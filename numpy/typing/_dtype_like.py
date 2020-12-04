@@ -15,36 +15,36 @@ else:
     else:
         HAVE_PROTOCOL = True
 
-_DtypeLikeNested = Any  # TODO: wait for support for recursive types
+_DTypeLikeNested = Any  # TODO: wait for support for recursive types
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
     # Mandatory keys
-    class _DtypeDictBase(TypedDict):
+    class _DTypeDictBase(TypedDict):
         names: Sequence[str]
-        formats: Sequence[_DtypeLikeNested]
+        formats: Sequence[_DTypeLikeNested]
 
     # Mandatory + optional keys
-    class _DtypeDict(_DtypeDictBase, total=False):
+    class _DTypeDict(_DTypeDictBase, total=False):
         offsets: Sequence[int]
         titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
         itemsize: int
         aligned: bool
 
     # A protocol for anything with the dtype attribute
-    class _SupportsDtype(Protocol):
-        dtype: _DtypeLikeNested
+    class _SupportsDType(Protocol):
+        dtype: _DTypeLikeNested
 
 else:
-    _DtypeDict = Any
-    _SupportsDtype = Any
+    _DTypeDict = Any
+    _SupportsDType = Any
 
 
 # Would create a dtype[np.void]
-_VoidDtypeLike = Union[
+_VoidDTypeLike = Union[
     # (flexible_dtype, itemsize)
-    Tuple[_DtypeLikeNested, int],
+    Tuple[_DTypeLikeNested, int],
     # (fixed_dtype, shape)
-    Tuple[_DtypeLikeNested, _ShapeLike],
+    Tuple[_DTypeLikeNested, _ShapeLike],
     # [(field_name, field_dtype, field_shape), ...]
     #
     # The type here is quite broad because NumPy accepts quite a wide
@@ -53,29 +53,29 @@ _VoidDtypeLike = Union[
     List[Any],
     # {'names': ..., 'formats': ..., 'offsets': ..., 'titles': ...,
     #  'itemsize': ...}
-    _DtypeDict,
+    _DTypeDict,
     # (base_dtype, new_dtype)
-    Tuple[_DtypeLikeNested, _DtypeLikeNested],
+    Tuple[_DTypeLikeNested, _DTypeLikeNested],
 ]
 
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
-DtypeLike = Union[
+DTypeLike = Union[
     dtype,
     # default data type (float64)
     None,
     # array-scalar types and generic types
     type,  # TODO: enumerate these when we add type hints for numpy scalars
     # anything with a dtype attribute
-    _SupportsDtype,
+    _SupportsDType,
     # character codes, type strings or comma-separated fields, e.g., 'float64'
     str,
-    _VoidDtypeLike,
+    _VoidDTypeLike,
 ]
 
 # NOTE: while it is possible to provide the dtype as a dict of
 # dtype-like objects (e.g. `{'field1': ..., 'field2': ..., ...}`),
 # this syntax is officially discourged and
-# therefore not included in the Union defining `DtypeLike`.
+# therefore not included in the Union defining `DTypeLike`.
 #
 # See https://github.com/numpy/numpy/issues/16891 for more details.

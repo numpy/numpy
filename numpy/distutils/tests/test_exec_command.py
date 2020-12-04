@@ -93,7 +93,7 @@ def test_exec_command_stderr():
                     with assert_warns(DeprecationWarning):
                         exec_command.exec_command("cd '.'")
 
-@pytest.mark.skipif(sys.platform == 'OpenVMS', reason="TODO: test OpenVMS")
+@pytest.mark.skipif(sys.platform == 'OpenVMS', reason="TODO: write test for OpenVMS")
 class TestExecCommand:
     def setup(self):
         self.pyexe = get_pythonexe()

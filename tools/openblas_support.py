@@ -14,7 +14,7 @@ from urllib.error import HTTPError
 
 OPENBLAS_V = '0.3.12'
 # Temporary build of OpenBLAS to test a fix for dynamic detection of CPU
-OPENBLAS_LONG = 'v0.3.12'
+OPENBLAS_LONG = 'v0.3.12-buffersize20'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64',
@@ -84,8 +84,6 @@ sha256_vals = {
     "f68fea21fbc73d06b7566057cad2ed8c7c0eb71fabf9ed8a609f86e5bc60ce5e",
     "openblas64_-v0.3.10-manylinux2014_aarch64.tar.gz":
     "15e6eed8cb0df8b88e52baa136ffe1769c517e9de7bcdfd81ec56420ae1069e9",
-    "openblas64_-v0.3.10-win_amd64-gcc_7_1_0.zip":
-    "aea3f9c8bdfe0b837f0d2739a6c755b12b6838f6c983e4ede71b4e1b576e6e77",
 }
 
 

@@ -67,8 +67,11 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
     const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
 
     obj = (PyObject *)PyObject_Malloc(size);
+    if (obj == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
     /*
-     * Fixme. Need to check for no memory.
      * If we don't need to zero memory, we could use
      * PyObject_{New, NewVar} for this whole function.
      */
@@ -274,7 +277,8 @@ gentype_format(PyObject *self, PyObject *args)
     if (Py_TYPE(self) == &PyBoolArrType_Type) {
         obj = PyBool_FromLong(PyArrayScalar_VAL(self, Bool));
     }
-    else if (PyArray_IsScalar(self, Integer)) {
+    else if (PyArray_IsScalar(self, Integer)
+             && !PyArray_IsScalar(self, Timedelta)) {
         obj = Py_TYPE(self)->tp_as_number->nb_int(self);
     }
     else if (PyArray_IsScalar(self, Floating)) {
@@ -729,6 +733,7 @@ legacy_@name@_format@kind@(@type@ val)
      */
     if (
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        // OpenVMS compiler has a bug: long double Nan is equal to any value
         (!isnan(val.real)) &&
 #endif
         val.real == 0.0 && npy_signbit(val.real) == 0) {
@@ -900,6 +905,7 @@ c@name@type_@kind@(PyObject *self)
 
     if (
 #if defined(__VMS) && defined(_IEEE_FP) && defined(__X_FLOAT) && @vms_check_nan@
+        // OpenVMS compiler has a bug: long double Nan is equal to any value
         (!isnan(val.real)) &&
 #endif
         val.real == 0.0 && npy_signbit(val.real) == 0) {
@@ -1751,13 +1757,8 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         if (arr == NULL) {
             return NULL;
         }
-        /* arr.item() */
-        PyObject *val = PyArray_GETITEM(arr, PyArray_DATA(arr));
-        Py_DECREF(arr);
-        if (val == NULL) {
-            return NULL;
-        }
-        PyObject *tup = Py_BuildValue("NN", obj, val);
+        /* Use the whole array which handles sturctured void correctly */
+        PyObject *tup = Py_BuildValue("NN", obj, arr);
         if (tup == NULL) {
             return NULL;
         }
@@ -2393,6 +2394,60 @@ static PySequenceMethods voidtype_as_sequence = {
 };
 
 
+/*
+ * This function implements simple buffer export for user defined subclasses
+ * of `np.generic`. All other scalar types override the buffer export.
+ */
+static int
+gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
+        PyErr_Format(PyExc_TypeError,
+                "NumPy scalar %R can only exported as a buffer without format.",
+                self);
+        return -1;
+    }
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
+        return -1;
+    }
+    PyArray_Descr *descr = PyArray_DescrFromScalar(self);
+    if (descr == NULL) {
+        return -1;
+    }
+    if (!PyDataType_ISUSERDEF(descr)) {
+        /* This path would also reject the (hopefully) impossible "object" */
+        PyErr_Format(PyExc_TypeError,
+                "user-defined scalar %R registered for built-in dtype %S? "
+                "This should be impossible.",
+                self, descr);
+        return -1;
+    }
+    view->ndim = 0;
+    view->len = descr->elsize;
+    view->itemsize = descr->elsize;
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1; /* assume general (user) scalars are readonly. */
+#else
+    view->readonly = 1;  /* assume general (user) scalars are readonly. */
+#endif
+    Py_INCREF(self);
+    view->obj = self;
+    view->buf = scalar_value(self, descr);
+    Py_DECREF(descr);
+    view->format = NULL;
+    return 0;
+}
+
+
+static PyBufferProcs gentype_arrtype_as_buffer = {
+    .bf_getbuffer = (getbufferproc)gentype_arrtype_getbuffer,
+};
+
 
 /**begin repeat
  * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
@@ -2411,6 +2466,7 @@ static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
     Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
@@ -2423,6 +2479,12 @@ static int
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1;
+#else
+    view->readonly = 1;
+#endif
     Py_INCREF(self);
     view->obj = self;
     view->buf = &(scalar->obval);
@@ -2449,6 +2511,7 @@ static int
 unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
     PyUnicodeScalarObject *scalar = (PyUnicodeScalarObject *)self;
@@ -2460,6 +2523,12 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1;
+#else
+    view->readonly = 1;
+#endif
     Py_INCREF(self);
     view->obj = self;
 
@@ -2489,7 +2558,7 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
         view->format = scalar->buffer_fmt;
     }
     else {
-        scalar->buffer_fmt = PyObject_Malloc(22);
+        scalar->buffer_fmt = PyMem_Malloc(22);
         if (scalar->buffer_fmt == NULL) {
             Py_SETREF(view->obj, NULL);
             return -1;
@@ -2516,6 +2585,7 @@ static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
     Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
@@ -2527,6 +2597,12 @@ static int
     view->shape = &length;
     view->strides = NULL;
     view->suboffsets = NULL;
+#ifdef __VMS
+    // 'readonly' is reserved
+    view->readonly$ = 1;
+#else
+    view->readonly = 1;
+#endif
     Py_INCREF(self);
     view->obj = self;
 
@@ -2566,16 +2642,18 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     .tp_basicsize = sizeof(PyObject),
 };
 
+
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    _dealloc_cached_buffer_info((PyObject *)v);
-
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
+    if (_buffer_info_free(v->_buffer_info, (PyObject *)v) < 0) {
+        PyErr_WriteUnraisable(NULL);
+    }
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -2616,6 +2694,7 @@ unicode_arrtype_dealloc(PyObject *v)
 {
     /* note: may be null if it was never requested */
     PyMem_Free(PyArrayScalar_VAL(v, Unicode));
+    PyMem_Free(((PyUnicodeScalarObject *)v)->buffer_fmt);
     /* delegate to the base class */
     PyUnicode_Type.tp_dealloc(v);
 }
@@ -3804,6 +3883,7 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_alloc = gentype_alloc;
     PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
+    PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
     /*

@@ -290,7 +290,7 @@ if sys.platform == 'win32':
     vcpkg = shutil.which('vcpkg')
     if vcpkg:
         vcpkg_dir = os.path.dirname(vcpkg)
-        if platform.architecture() == '32bit':
+        if platform.architecture()[0] == '32bit':
             specifier = 'x86'
         else:
             specifier = 'x64'
@@ -2019,6 +2019,14 @@ class blas64__opt_info(blas_ilp64_opt_info):
     symbol_suffix = '64_'
 
 
+class cblas_info(system_info):
+    section = 'cblas'
+    dir_env_var = 'CBLAS'
+    # No default as it's used only in blas_info
+    _lib_names = []
+    notfounderror = BlasNotFoundError
+
+
 class blas_info(system_info):
     section = 'blas'
     dir_env_var = 'BLAS'
@@ -2040,6 +2048,13 @@ class blas_info(system_info):
             # often not installed when mingw is being used. This rough
             # treatment is not desirable, but windows is tricky.
             info['language'] = 'f77'  # XXX: is it generally true?
+            # If cblas is given as an option, use those
+            cblas_info_obj = cblas_info()
+            cblas_opt = cblas_info_obj.get_option_single('cblas_libs', 'libraries')
+            cblas_libs = cblas_info_obj.get_libs(cblas_opt, None)
+            if cblas_libs:
+                info['libraries'] = cblas_libs + blas_libs
+                info['define_macros'] = [('HAVE_CBLAS', None)]
         else:
             lib = self.get_cblas_libs(info)
             if lib is not None:

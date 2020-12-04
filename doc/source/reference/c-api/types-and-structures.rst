@@ -79,6 +79,8 @@ PyArray_Type and PyArrayObject
    of :c:type:`NPY_AO` (deprecated) which is defined to be equivalent to
    :c:type:`PyArrayObject`. Direct access to the struct fields are
    deprecated. Use the ``PyArray_*(arr)`` form instead.
+   As of NumPy 1.20, the size of this struct is not considered part of
+   the NumPy ABI (see note at the end of the member list).
 
    .. code-block:: c
 
@@ -92,6 +94,7 @@ PyArray_Type and PyArrayObject
           PyArray_Descr *descr;
           int flags;
           PyObject *weakreflist;
+          /* version dependend private members */
       } PyArrayObject;
 
    .. c:macro:: PyObject_HEAD
@@ -172,6 +175,27 @@ PyArray_Type and PyArrayObject
 
        This member allows array objects to have weak references (using the
        weakref module).
+
+   .. note::
+
+      Further members are considered private and version dependend. If the size
+      of the struct is important for your code, special care must be taken.
+      A possible use-case when this is relevant is subclassing in C.
+      If your code relies on ``sizeof(PyArrayObject)`` to be constant,
+      you must add the following check at import time:
+
+      .. code-block:: c
+
+         if (sizeof(PyArrayObject) < PyArray_Type.tp_basicsize) {
+             PyErr_SetString(PyExc_ImportError,
+                "Binary incompatibility with NumPy, must recompile/update X.");
+             return NULL;
+         }
+
+      To ensure that your code does not have to be compiled for a specific
+      NumPy version, you may add a constant, leaving room for changes in NumPy.
+      A solution guaranteed to be compatible with any future NumPy version
+      requires the use of a runtime calculate offset and allocation size.
 
 
 PyArrayDescr_Type and PyArray_Descr

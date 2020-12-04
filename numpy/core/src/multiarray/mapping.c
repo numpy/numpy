@@ -946,7 +946,13 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
-                start = stop = step = n_steps = 0;
+                #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+                // we should clear all bits in values before passing them
+                start = 0;
+                stop = 0;
+                step = 0;
+                n_steps = 0;
+                #endif
                 if (PySlice_GetIndicesEx(indices[i].object,
                                          PyArray_DIMS(self)[orig_dim],
                                          (Py_ssize_t *)&start,
@@ -956,6 +962,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                     return -1;
                 }
                 #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+                // propogate a sign
                 step = *(Py_ssize_t *)&step;
                 #endif
                 if (n_steps <= 0) {
@@ -3201,9 +3208,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     PyObject *shape2 = convert_shape_to_string(mit->nd, mit->dimensions, "");
-    if (shape2 == NULL)
+    if (shape2 == NULL) {
         Py_DECREF(shape1);
         goto finish;
+    }
 
     PyErr_Format(PyExc_ValueError,
             "shape mismatch: value array of shape %S could not be broadcast "

@@ -204,7 +204,7 @@ class TestSystemInfoReading:
         assert_equal(tsi.get_libraries(), [self._lib1])
         assert_equal(tsi.get_runtime_lib_dirs(), [self._dir1])
 
-    @pytest.mark.skipif(sys.platform == 'OpenVMS', reason="OpenVMS is not a linux")
+    @pytest.mark.skipif(sys.platform == 'OpenVMS', reason="TODO: write test for OpenVMS")
     def test_temp2(self):
         # Read in all information in the temp2 block
         tsi = self.c_temp2

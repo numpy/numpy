@@ -90,14 +90,14 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
-        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        'F' means F-order, 'A' means 'F' if `prototype` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
-        type of 'a', otherwise it will be a base-class array. Defaults
+        type of `prototype`, otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
         Overrides the shape of the result. If order='K' and the number of
@@ -999,7 +999,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
-def unravel_index(indices, shape=None, order=None, dims=None):
+def unravel_index(indices, shape=None, order=None):
     """
     unravel_index(indices, shape, order='C')
 
@@ -1045,9 +1045,6 @@ def unravel_index(indices, shape=None, order=None, dims=None):
     (3, 1, 4, 1)
 
     """
-    if dims is not None:
-        warnings.warn("'shape' argument should be used instead of 'dims'",
-                      DeprecationWarning, stacklevel=3)
     return (indices,)
 
 

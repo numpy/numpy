@@ -153,6 +153,9 @@ class TestBuiltin:
                       'formats': ['f4', 'i4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
+        # But it is currently an equivalent cast:
+        assert np.can_cast(x, y, casting="equiv")
+
 
 class TestRecord:
     def test_equivalent_record(self):

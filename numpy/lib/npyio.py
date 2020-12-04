@@ -965,10 +965,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if comments is not None:
             line = regex_comments.split(line, maxsplit=1)[0]
         line = line.strip('\r\n')
-        if line:
-            return line.split(delimiter)
-        else:
-            return []
+        return line.split(delimiter) if line else []
 
     def read_data(chunk_size):
         """Parse each line, including the first.
@@ -1030,11 +1027,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     user_converters = converters
 
+    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
-    else:
-        byte_converters = False
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints

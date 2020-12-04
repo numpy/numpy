@@ -3317,7 +3317,7 @@ python-defined :c:data:`WITH_THREADS` constant unless the environment
 variable ``NPY_NOSMP`` is set in which case
 :c:data:`NPY_ALLOW_THREADS` is defined to be 0.
 
-.. c:macro:: NPY_ALLOW_THREADS
+.. c:macro:: NPY_ALLOW_THREADS 
 
 .. c:macro:: WITH_THREADS
 

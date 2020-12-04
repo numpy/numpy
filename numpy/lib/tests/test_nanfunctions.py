@@ -166,7 +166,7 @@ class TestNanFunctions_MinMax:
             warnings.simplefilter('always')
             # assert_equal does not work on object arrays of nan
             assert_equal(list(np.nanmin(arr, axis=1)), [1.0, 4.0, np.nan])
-            if sys.platform != 'OpenVMS':
+            if sys.platform != 'OpenVMS':   # OpenVMS does not produce warnings
                 assert_(len(w) == 1, 'no warning raised')
                 assert_(issubclass(w[0].category, RuntimeWarning))
 

@@ -11,7 +11,6 @@
 #include <stdint.h>
 #endif
 
-
 #include "numpy/npy_math.h"
 #include "numpy/random/bitgen.h"
 

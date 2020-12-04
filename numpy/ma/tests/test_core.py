@@ -244,6 +244,10 @@ class TestMaskedArray:
                                         'offsets':[0,8]})
         array(x)  # used to fail due to 'V' padding field in x.dtype.descr
 
+    def test_unknown_keyword_parameter(self):
+        with pytest.raises(TypeError, match="unexpected keyword argument"):
+            MaskedArray([1, 2, 3], maks=[0, 1, 0])  # `mask` is misspelled.
+
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         xm.fill_value = -9999
@@ -4601,7 +4605,7 @@ class TestMaskedArrayFunctions:
         class M(MaskedArray):
             pass
 
-        test = np.ma.compressed(M(shape=(0,1,2)))
+        test = np.ma.compressed(M([[[]], [[]]]))
         assert_equal(test.ndim, 1)
 
         # with .compressed() overridden
@@ -4609,7 +4613,7 @@ class TestMaskedArrayFunctions:
             def compressed(self):
                 return 42
 
-        test = np.ma.compressed(M(shape=(0,1,2)))
+        test = np.ma.compressed(M([[[]], [[]]]))
         assert_equal(test, 42)
 
     def test_convolve(self):

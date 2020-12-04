@@ -26,8 +26,8 @@ import textwrap
 import warnings
 
 
-if sys.version_info[:2] < (3, 6):
-    raise RuntimeError("Python version >= 3.6 required.")
+if sys.version_info[:2] < (3, 7):
+    raise RuntimeError("Python version >= 3.7 required.")
 
 import builtins
 
@@ -40,7 +40,6 @@ License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
@@ -56,7 +55,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 20
+MINOR               = 21
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -130,7 +129,10 @@ def get_version_info():
         GIT_REVISION = "Unknown"
 
     if not ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
+        import time
+
+        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        FULLVERSION += f'.dev0+{time_stamp}_{GIT_REVISION[:7]}'
 
     return FULLVERSION, GIT_REVISION
 
@@ -140,11 +142,11 @@ def write_version_py(filename='numpy/version.py'):
 # THIS FILE IS GENERATED FROM NUMPY SETUP.PY
 #
 # To compare versions robustly, use `numpy.lib.NumpyVersion`
-short_version = '%(version)s'
-version = '%(version)s'
-full_version = '%(full_version)s'
-git_revision = '%(git_revision)s'
-release = %(isrelease)s
+short_version: str = '%(version)s'
+version: str = '%(version)s'
+full_version: str = '%(full_version)s'
+git_revision: str = '%(git_revision)s'
+release: bool = %(isrelease)s
 
 if not release:
     version = full_version
@@ -423,7 +425,7 @@ def get_docs_url():
     if not ISRELEASED:
         return "https://numpy.org/devdocs"
     else:
-        # For releaeses, this URL ends up on pypi.
+        # For releases, this URL ends up on pypi.
         # By pinning the version, users looking at old PyPI releases can get
         # to the associated docs easily.
         return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
@@ -470,7 +472,7 @@ def setup_package():
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
         cmdclass=cmdclass,
-        python_requires='>=3.6',
+        python_requires='>=3.7',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds

@@ -12,7 +12,6 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 #include <stdint.h>
 #endif
 
-
 /* This is a fixed-increment version of Java 8's SplittableRandom generator
    See http://dx.doi.org/10.1145/2714064.2660195 and
    http://docs.oracle.com/javase/8/docs/api/java/util/SplittableRandom.html
