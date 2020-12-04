@@ -2643,6 +2643,7 @@ HALF_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, 
  * complex types
  * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #ftype = npy_float, npy_double, npy_longdouble#
+ * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#
  * #SIMD = 1, 1, 0#
