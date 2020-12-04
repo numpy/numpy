@@ -5020,6 +5020,33 @@ class TestIO:
             res = np.fromstring(x_str, dtype="(3,4)i4")
             assert_array_equal(x, res)
 
+    def test_parsing_subarray_unsupported(self):
+        # We currently do not support parsing subarray dtypes
+        data = "12,42,13," * 50
+        with pytest.raises(ValueError):
+            expected = np.fromstring(data, dtype="(3,)i", sep=",")
+
+        with open(self.filename, "w") as f:
+            f.write(data)
+
+        with pytest.raises(ValueError):
+            np.fromfile(self.filename, dtype="(3,)i", sep=",")
+
+    def test_read_shorter_than_count_subarray(self):
+        # Test that requesting more values does not cause any problems
+        # in conjuction with subarray dimensions being absored into the
+        # array dimension.
+        expected = np.arange(511 * 10, dtype="i").reshape(-1, 10)
+
+        binary = expected.tobytes()
+        with pytest.raises(ValueError):
+            with pytest.warns(DeprecationWarning):
+                np.fromstring(binary, dtype="(10,)i", count=10000)
+
+        expected.tofile(self.filename)
+        res = np.fromfile(self.filename, dtype="(10,)i", count=10000)
+        assert_array_equal(res, expected)
+
 
 class TestFromBuffer:
     @pytest.mark.parametrize('byteorder', ['<', '>'])
