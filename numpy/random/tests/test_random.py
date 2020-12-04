@@ -916,6 +916,12 @@ class TestRandomDist:
         # account for i386 extended precision DBL_MAX / 1e17 + DBL_MAX >
         # DBL_MAX by increasing fmin a bit
         np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
+    
+    def test_uniform_neg_range(self):
+        func = np.random.uniform
+        assert_raises(ValueError, func, 2, 1)
+        assert_raises(ValueError, func,  [1, 2], [1, 1])
+        assert_raises(ValueError, func,  [[0, 1],[2, 3]], 2)
 
     def test_scalar_exception_propagation(self):
         # Tests that exceptions are correctly propagated in distributions
