@@ -742,7 +742,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # flag as it everywhere, so we should return the scalar flag.
         if isinstance(x_id, bool) or x_id.ndim == 0:
             return bool_(x_id)
-        elif isinstance(x_id, bool) or y_id.ndim == 0:
+        elif isinstance(y_id, bool) or y_id.ndim == 0:
             return bool_(y_id)
         else:
             return y_id
