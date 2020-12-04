@@ -253,6 +253,18 @@ library.
 Compatibility notes
 ===================
 
+``isinstance(dtype, np.dtype)`` and not ``type(dtype) is not np.dtype``
+-----------------------------------------------------------------------
+NumPy dtypes are not direct instances of ``np.dtype`` anymore.  Code that
+may have used ``type(dtype) is np.dtype`` will always return ``False`` and
+must be updated to use the correct version ``isinstance(dtype, np.dtype)``.
+
+This change also affects the C-side macro ``PyArray_DescrCheck`` if compiled
+against a NumPy older than 1.16.6. If code uses this macro and wishes to
+compile against an older version of NumPy, it must replace the macro
+(see also `C API changes`_ section).
+
+
 Same kind casting in concatenate with ``axis=None``
 ---------------------------------------------------
 When `~numpy.concatenate` is called with ``axis=None``,
@@ -523,6 +535,23 @@ cannot represent ``b"1"`` faithfully.
 
 C API changes
 =============
+
+The ``PyArray_DescrCheck`` macro is modified
+--------------------------------------------
+The ``PyArray_DescrCheck`` macro has been updated since NumPy 1.16.6 to be::
+
+    #define PyArray_DescrCheck(op) PyObject_TypeCheck(op, &PyArrayDescr_Type)
+
+Starting with NumPy 1.20 code that is compiled against an earlier version
+will be API incompatible with NumPy 1.20.
+The fix is to either compile against 1.16.6 (if the NumPy 1.16 release is
+the oldest release you wish to support), or manually inline the macro by
+replacing it with the new definition::
+
+    PyObject_TypeCheck(op, &PyArrayDescr_Type)
+
+which is compatible with all NumPy versions.
+
 
 Size of ``np.ndarray`` and ``np.void_`` changed
 -----------------------------------------------
