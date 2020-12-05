@@ -6,8 +6,7 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
-#include "npy_config.h"
+#include "numpy/npy_common.h"
 
 #include "npy_pycompat.h"
 
@@ -61,7 +60,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
-        #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+        #if NPY_SIZEOF_PY_INTPTR_T != NPY_SIZEOF_OFF_T
         // we should clear all bits in values before passing them
         stop = 0;
         i = 0;
@@ -75,7 +74,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
                 (Py_ssize_t *)n_steps) < 0) {
             goto fail;
         }
-        #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+        #if NPY_SIZEOF_PY_INTPTR_T != NPY_SIZEOF_OFF_T
         // propogate a sign
         *step_size = *(Py_ssize_t *)step_size;
         #endif

@@ -946,7 +946,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                 }
                 break;
             case HAS_SLICE:
-                #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+                #if NPY_SIZEOF_PY_INTPTR_T != NPY_SIZEOF_OFF_T
                 // we should clear all bits in values before passing them
                 start = 0;
                 stop = 0;
@@ -961,7 +961,7 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                                          (Py_ssize_t *)&n_steps) < 0) {
                     return -1;
                 }
-                #if NPY_SIZEOF_PY_INTP != NPY_SIZEOF_OFF_T
+                #if NPY_SIZEOF_PY_INTPTR_T != NPY_SIZEOF_OFF_T
                 // propogate a sign
                 step = *(Py_ssize_t *)&step;
                 #endif
