@@ -201,6 +201,13 @@ class memmap(ndarray):
     >>> fpo
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)
 
+    Close the file so that it is not locked:
+    >>> fp._mmap.close()
+    >>> newfp._mmap.close()
+    >>> fpr._mmap.close()
+    >>> fpc._mmap.close()
+    >>> fpo._mmap.close()
+ 
     """
 
     __array_priority__ = -100.0
