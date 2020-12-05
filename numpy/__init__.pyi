@@ -914,8 +914,6 @@ class dtype(Generic[_DTypeScalar]):
     @property
     def type(self) -> Type[generic]: ...
 
-_DType = dtype  # to avoid name conflicts with ndarray.dtype
-
 class _flagsobj:
     aligned: bool
     updateifcopy: bool
@@ -1438,10 +1436,16 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
 
+_DType = TypeVar("_DType", bound=dtype[Any])
+
+# TODO: Set the `bound` to something more suitable once we
+# have proper shape support
+_ShapeType = TypeVar("_ShapeType", bound=Any)
+
 _BufferType = Union[ndarray, bytes, bytearray, memoryview]
 _Casting = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
 
-class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
+class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType]):
     @property
     def base(self) -> Optional[ndarray]: ...
     @property
@@ -1465,8 +1469,6 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
     ) -> _ArraySelf: ...
-    @property
-    def dtype(self) -> _DType: ...
     @property
     def ctypes(self) -> _ctypes: ...
     @property
@@ -1626,6 +1628,9 @@ class ndarray(_ArrayOrScalarCommon, Iterable, Sized, Container):
     def __iand__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     def __ixor__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
     def __ior__(self: _ArraySelf, other: ArrayLike) -> _ArraySelf: ...
+    # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
+    @property
+    def dtype(self) -> _DType: ...
 
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
@@ -1645,8 +1650,6 @@ class generic(_ArrayOrScalarCommon):
     @property
     def base(self) -> None: ...
     @property
-    def dtype(self: _ScalarType) -> _DType[_ScalarType]: ...
-    @property
     def ndim(self) -> Literal[0]: ...
     @property
     def size(self) -> Literal[1]: ...
@@ -1665,6 +1668,9 @@ class generic(_ArrayOrScalarCommon):
         self: _ScalarType, axis: Union[Literal[0], Tuple[()]] = ...
     ) -> _ScalarType: ...
     def transpose(self: _ScalarType, __axes: Tuple[()] = ...) -> _ScalarType: ...
+    # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
+    @property
+    def dtype(self: _ScalarType) -> dtype[_ScalarType]: ...
 
 class number(generic, Generic[_NBit_co]):  # type: ignore
     @property
