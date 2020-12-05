@@ -36,12 +36,11 @@ Record arrays allow us to access fields as properties::
 import os
 import warnings
 from collections import Counter, OrderedDict
+from contextlib import nullcontext
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import (
-    os_fspath, contextlib_nullcontext
-)
+from numpy.compat import os_fspath
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
@@ -914,7 +913,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface.
         # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
-        ctx = contextlib_nullcontext(fd)
+        ctx = nullcontext(fd)
     else:
         # open file
         ctx = open(os_fspath(fd), 'rb')

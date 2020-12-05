@@ -4,6 +4,7 @@ and the Python code for the NumPy-namespace function
 
 """
 import warnings
+from contextlib import nullcontext
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
@@ -11,7 +12,7 @@ from numpy.core._asarray import asanyarray
 from numpy.core import numerictypes as nt
 from numpy.core import _exceptions
 from numpy._globals import _NoValue
-from numpy.compat import pickle, os_fspath, contextlib_nullcontext
+from numpy.compat import pickle, os_fspath
 
 # save those O(100) nanoseconds!
 umr_maximum = um.maximum.reduce
@@ -279,7 +280,7 @@ def _ptp(a, axis=None, out=None, keepdims=False):
 
 def _dump(self, file, protocol=2):
     if hasattr(file, 'write'):
-        ctx = contextlib_nullcontext(file)
+        ctx = nullcontext(file)
     else:
         ctx = open(os_fspath(file), "wb")
     with ctx as f:
