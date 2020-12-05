@@ -1640,7 +1640,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Value: %d\n",
-                               (int)(NAD_PTRS(axisdata)[nop]));
+                               (intptr_t)(NAD_PTRS(axisdata)[nop]));
         }
     }
 
