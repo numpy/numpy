@@ -445,7 +445,7 @@ def linkcode_resolve(domain, info):
 
 from pygments.lexers import CLexer
 from pygments.lexer import inherit, bygroups
-from pygments.token import Comment
+from pygments.token import Comment, Keyword
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
@@ -453,6 +453,8 @@ class NumPyLexer(CLexer):
     tokens = {
         'statements': [
             (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
+            (r'\$[A-Z][A-Za-z]*', Keyword.Constant),
+            (r'{{.*}}', Keyword.Constant),
             inherit,
-        ],
+        ]
     }

@@ -474,6 +474,9 @@ to produce ``.h`` files).
 
 .. _conv_template.py: https://github.com/numpy/numpy/blob/master/numpy/distutils/conv_template.py
 
+.. automodule:: numpy.distutils.pyas_template
+   :members:
+
 Useful functions in ``numpy.distutils.misc_util``
 -------------------------------------------------
 

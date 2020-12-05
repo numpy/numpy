@@ -223,6 +223,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.command.install_headers",
     "distutils.command.sdist",
     "distutils.conv_template",
+    "distutils.pyas_template",
     "distutils.core",
     "distutils.extension",
     "distutils.fcompiler",

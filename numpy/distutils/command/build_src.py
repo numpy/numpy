@@ -21,6 +21,7 @@ from numpy.distutils.misc_util import (
     )
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
+from numpy.distutils.pyas_template import process_file as process_pyas_file
 
 def subst_vars(target, source, d):
     """Substitute any occurrence of @foo@ by d['foo'] from source file into
@@ -405,6 +406,24 @@ class build_src(build_ext.build_ext):
         return new_sources, files
 
     def template_sources(self, sources, extension):
+        def process_conv(source, target_file, base):
+            if _f_pyf_ext_match(base):
+                log.info("from_template:> " + target_file)
+                outstr = process_f_file(source)
+            else:
+                log.info("conv_template:> " + target_file)
+                outstr = process_c_file(source)
+            with open(target_file, 'w') as fid:
+                fid.write(outstr)
+
+        def process_pyas(source, target_file, base):
+            log.info("pyas_template:> " + target_file)
+            process_pyas_file(source, target_file)
+
+        tpl_handler = {
+            '.src'  : process_conv,
+            '.pyas' : process_pyas
+        }
         new_sources = []
         if is_sequence(extension):
             depends = extension[1].get('depends')
@@ -412,24 +431,21 @@ class build_src(build_ext.build_ext):
         else:
             depends = extension.depends
             include_dirs = extension.include_dirs
+
         for source in sources:
             (base, ext) = os.path.splitext(source)
-            if ext == '.src':  # Template file
+            tph = tpl_handler.get(ext)
+            if tph:  # Template file
                 if self.inplace:
                     target_dir = os.path.dirname(base)
                 else:
                     target_dir = appendpath(self.build_src, os.path.dirname(base))
                 self.mkpath(target_dir)
+
                 target_file = os.path.join(target_dir, os.path.basename(base))
                 if (self.force or newer_group([source] + depends, target_file)):
-                    if _f_pyf_ext_match(base):
-                        log.info("from_template:> %s" % (target_file))
-                        outstr = process_f_file(source)
-                    else:
-                        log.info("conv_template:> %s" % (target_file))
-                        outstr = process_c_file(source)
-                    with open(target_file, 'w') as fid:
-                        fid.write(outstr)
+                    tph(source, target_file, base)
+
                 if _header_ext_match(target_file):
                     d = os.path.dirname(target_file)
                     if d not in include_dirs:
