@@ -24,7 +24,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    pickle
     )
 
 
@@ -517,7 +517,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     # [1 2] [1 3]
     """
     if hasattr(file, 'write'):
-        file_ctx = contextlib_nullcontext(file)
+        file_ctx = contextlib.nullcontext(file)
     else:
         file = os_fspath(file)
         if not file.endswith('.npy'):
@@ -1792,7 +1792,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid_ctx = contextlib.closing(fid)
         else:
             fid = fname
-            fid_ctx = contextlib_nullcontext(fid)
+            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
