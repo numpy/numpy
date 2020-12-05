@@ -2878,7 +2878,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     static char *kwd[] = {"start", "stop", "step", "dtype", "like", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&$O:arange", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "|OOOO&$O:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
@@ -2886,6 +2886,18 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
                 &like)) {
         Py_XDECREF(typecode);
         return NULL;
+    }
+
+    if (o_stop == NULL) {
+        if (args == NULL || PyTuple_GET_SIZE(args) == 0){
+            PyErr_SetString(PyExc_TypeError,
+                "arange() requires stop to be specified.");
+            return NULL;
+        }
+    }
+    else if (o_start == NULL) {
+        o_start = o_stop;
+        o_stop = NULL;
     }
 
     array_function_result = array_implement_c_array_function_creation(

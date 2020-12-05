@@ -1,6 +1,0 @@
-``outer`` and ``ufunc.outer`` deprecated for matrix
----------------------------------------------------
-``np.matrix`` use with `~numpy.outer` or generic ufunc outer
-calls such as ``numpy.add.outer``. Previously, matrix was
-converted to an array here. This will not be done in the future
-requiring a manual conversion to arrays.

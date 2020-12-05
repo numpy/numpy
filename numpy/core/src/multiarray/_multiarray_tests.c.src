@@ -37,6 +37,7 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 
 #include "npy_pycompat.h"
 
+
 /** Function to test calling via ctypes */
 EXPORT(void*) forward_pointer(void *x)
 {

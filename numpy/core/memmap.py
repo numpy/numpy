@@ -38,7 +38,7 @@ class memmap(ndarray):
     which returns a view into an mmap buffer.
 
     Flush the memmap instance to write the changes to the file. Currently there
-    is no API to close the underlying ``mmap``. It is tricky to ensure the
+    is no API to close the underlying ``mmap``. It is tricky to ensure the 
     resource is actually closed, since it may be shared between different
     memmap instances.
 
