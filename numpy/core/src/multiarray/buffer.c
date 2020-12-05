@@ -494,7 +494,9 @@ _buffer_info_new(PyObject *obj, int flags)
         }
         else {
             info->shape = (Py_ssize_t *)((char *)info + sizeof(_buffer_info_t));
+#ifndef __VMS
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
+#endif
             info->strides = info->shape + PyArray_NDIM(arr);
 
 #if NPY_RELAXED_STRIDES_CHECKING
