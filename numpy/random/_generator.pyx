@@ -859,8 +859,8 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The default value is 1.0. high - low must be
-            non-negative.
+            less than high.  high - low must be non-negative.  The default value
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -886,10 +886,6 @@ cdef class Generator:
         anywhere within the interval ``[a, b)``, and zero elsewhere.
 
         When ``high`` == ``low``, values of ``low`` will be returned.
-        If ``high`` < ``low``, the results are officially undefined
-        and may eventually raise an error, i.e. do not rely on this
-        function to behave when passed arguments satisfying that
-        inequality condition.
 
         Examples
         --------

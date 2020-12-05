@@ -1026,8 +1026,7 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than or equal to high.  The default value is 1.0. high - low must be
-            non-negative.
+            less than or equal to high.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1096,7 +1095,7 @@ cdef class RandomState:
         """
         cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
-        cdef double _low, _high, rng
+        cdef double _low, _high, range
         cdef object temp
 
         alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ALIGNED)
@@ -1105,13 +1104,13 @@ cdef class RandomState:
         if np.PyArray_NDIM(alow) == np.PyArray_NDIM(ahigh) == 0:
             _low = PyFloat_AsDouble(low)
             _high = PyFloat_AsDouble(high)
-            rng = _high - _low
-            if not np.isfinite(rng):
-                raise OverflowError('High - low range exceeds valid bounds')
+            range = _high - _low
+            if not np.isfinite(range):
+                raise OverflowError('Range exceeds valid bounds')
 
             return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                         _low, '', CONS_NONE,
-                        rng, 'high - low', CONS_NON_NEGATIVE,
+                        range, '', CONS_NONE,
                         0.0, '', CONS_NONE,
                         None)
 
@@ -1124,7 +1123,7 @@ cdef class RandomState:
             raise OverflowError('Range exceeds valid bounds')
         return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                     alow, '', CONS_NONE,
-                    arange, 'high - low', CONS_NON_NEGATIVE,
+                    arange, '', CONS_NONE,
                     0.0, '', CONS_NONE,
                     None)
 
