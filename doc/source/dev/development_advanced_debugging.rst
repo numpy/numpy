@@ -46,6 +46,8 @@ Debug builds of Python are easily available for example on ``debian`` systems,
 and can be used on all platforms.
 Running a test or terminal is usually as easy as::
 
+    python3.8d runtests.py
+    # or
     python3.8d runtests.py --ipython
 
 and were already mentioned in :ref:`Debugging <debugging>`.
@@ -65,7 +67,7 @@ A Python debug build will help:
 Use together with ``pytest``
 ----------------------------
 
-Running the test suit only with a debug python build will not find many
+Running the test suite only with a debug python build will not find many
 errors on its own. An additional advantage of a debug build of Python is that
 it allows detecting memory leaks.
 
@@ -85,7 +87,7 @@ Unfortunately, ``pytest`` itself may leak memory, but good results can usually
 from ``numpy/conftest.py`` (This may change with new ``pytest-leaks`` versions
 or ``pytest`` updates).
 
-This allows to run the test suit, or part of it, conveniently::
+This allows to run the test suite, or part of it, conveniently::
 
     python3.8d runtests.py -t numpy/core/tests/test_multiarray.py -- -R2:3 -s
 
@@ -129,7 +131,7 @@ Valgrind helps:
       arr.astype(dtype=dtype)
 
   Has incorrect reference counting for ``dtype``, this is a bug, but valgrind
-  cannot see it because ``np.dtype(np.int64)`` returns always the same object.
+  cannot see it because ``np.dtype(np.int64)`` always returns the same object.
   However, not all dtypes are singletons, so this might leak memory for
   different input.
   In rare cases NumPy uses ``malloc`` and not the Python memory allocators
@@ -152,20 +154,21 @@ Things to be aware of:
 - Caches can mean that errors (specifically memory leaks) may not be detected
   or are only detect at a later, unrelated time.
 
-A big advantage of valgrind is that it has no requirements aside valgrind
+A big advantage of valgrind is that it has no requirements aside from valgrind
 itself (although you probably want to use debug builds for better tracebacks).
 
 
 Use together with ``pytest``
 ----------------------------
-You can run the test suit with valgrind which will work may be sufficient
+You can run the test suite with valgrind which may be sufficient
 when you are only interested in a few tests::
 
-    PYTHOMMALLOC=malloc valgrind python runtests.py -t numpy/core/tests/test_multiarray.py -- --continue-on-collection-errors
+    PYTHOMMALLOC=malloc valgrind python runtests.py \
+     -t numpy/core/tests/test_multiarray.py -- --continue-on-collection-errors
 
 Note the ``--continue-on-collection-errors``, which is currently necessary due to
 missing ``longdouble`` support causing failures (this will usually not be
-necessary if you do not run the full test suit).
+necessary if you do not run the full test suite).
 
 If you wish to detect memory leaks you will also require ``--show-leak-kinds=definite``
 and possibly more valgrind options.  Just as for ``pytest-leaks`` certain
@@ -183,4 +186,3 @@ which:
 
 Please refer to its ``README`` for more information (it includes an example
 command for NumPy).
-
