@@ -201,6 +201,13 @@ class memmap(ndarray):
     >>> fpo
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)
 
+    Close all memmaps:
+ 
+    >>> fp.close()
+    >>> newfp.close()
+    >>> fpr.close()
+    >>> fpc.close()
+    >>> fpo.close()
     """
 
     __array_priority__ = -100.0
@@ -335,3 +342,11 @@ class memmap(ndarray):
         if type(res) is memmap and res._mmap is None:
             return res.view(type=ndarray)
         return res
+
+      def close(self):
+        """
+        Close the memmap file and reduce reference count by 1.
+        If the reference count is zero, the file is unlocked.
+        """
+        if self._mmap:
+            self._mmap.close()
