@@ -649,7 +649,7 @@ def column_stack(tup):
 
     arrays = []
     for v in tup:
-        arr = array(v, copy=False, subok=True)
+        arr = asanyarray(v)
         if arr.ndim < 2:
             arr = array(arr, copy=False, subok=True, ndmin=2).T
         arrays.append(arr)

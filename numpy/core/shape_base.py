@@ -8,8 +8,7 @@ import warnings
 
 from . import numeric as _nx
 from . import overrides
-from ._asarray import array, asanyarray
-from .multiarray import normalize_axis_index
+from .multiarray import array, asanyarray, normalize_axis_index
 from . import fromnumeric as _from_nx
 
 

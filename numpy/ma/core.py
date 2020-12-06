@@ -3895,7 +3895,7 @@ class MaskedArray(ndarray):
 
         # Force the condition to a regular ndarray and forget the missing
         # values.
-        condition = np.array(condition, copy=False, subok=False)
+        condition = np.asarray(condition)
 
         _new = _data.compress(condition, axis=axis, out=out).view(type(self))
         _new._update_from(self)
