@@ -71,8 +71,7 @@ Running the test suite only with a debug python build will not find many
 errors on its own. An additional advantage of a debug build of Python is that
 it allows detecting memory leaks.
 
-A tool to make this easier is `pytest-leaks <https://github.com/abalkin/pytest-leaks>`_,
-which can be installed using ``pip``.
+A tool to make this easier is `pytest-leaks`_, which can be installed using ``pip``.
 Unfortunately, ``pytest`` itself may leak memory, but good results can usually
 (currently) be achieved by removing::
 
@@ -98,6 +97,7 @@ output was detected as a leak).
 Note that some tests are known (or even designed) to leak references, we try
 to mark them, but expect some false positives.
 
+.. _pytest-leaks: https://github.com/abalkin/pytest-leaks
 
 ``valgrind``
 ============
@@ -175,8 +175,7 @@ and possibly more valgrind options.  Just as for ``pytest-leaks`` certain
 tests are known to leak cause errors in valgrind and may or may not be marked
 as such.
 
-We have developed `pytest-valgrind <https://github.com/seberg/pytest-valgrind>`_
-which:
+We have developed `pytest-valgrind`_ which:
 
 - Reports errors for each test individually
 
@@ -186,3 +185,6 @@ which:
 
 Please refer to its ``README`` for more information (it includes an example
 command for NumPy).
+
+.. _pytest-valgrind: https://github.com/seberg/pytest-valgrind
+
