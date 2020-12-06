@@ -8,7 +8,7 @@ from contextlib import nullcontext
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
-from numpy.core._asarray import asanyarray
+from numpy.core.multiarray import asanyarray
 from numpy.core import numerictypes as nt
 from numpy.core import _exceptions
 from numpy._globals import _NoValue

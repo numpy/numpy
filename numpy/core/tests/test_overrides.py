@@ -577,5 +577,6 @@ class TestArrayLike:
 
         ref = self.MyArray.array()
 
-        with assert_raises(ValueError):
+        with assert_raises(TypeError):
+            # Raises the error about `value_error` being invalid first
             np.array(1, value_error=True, like=ref)

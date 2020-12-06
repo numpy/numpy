@@ -213,7 +213,7 @@ call_array_function(PyObject* argument, PyObject* method,
  *          to NotImplemented to indicate the default implementation should
  *          be used.
  */
-NPY_NO_EXPORT PyObject *
+static PyObject *
 array_implement_array_function_internal(
     PyObject *public_api, PyObject *relevant_args,
     PyObject *args, PyObject *kwargs)
@@ -364,66 +364,99 @@ array_implement_array_function(
     return res;
 }
 
-
 /*
  * Implements the __array_function__ protocol for C array creation functions
  * only. Added as an extension to NEP-18 in an effort to bring NEP-35 to
  * life with minimal dispatch overhead.
+ *
+ * The caller must ensure that `like != NULL`.
  */
 NPY_NO_EXPORT PyObject *
 array_implement_c_array_function_creation(
-    const char *function_name, PyObject *args, PyObject *kwargs)
+    const char *function_name, PyObject *like,
+    PyObject *args, PyObject *kwargs,
+    PyObject *const *fast_args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    if (kwargs == NULL) {
-        return Py_NotImplemented;
-    }
+    PyObject *relevant_args = NULL;
+    PyObject *numpy_module = NULL;
+    PyObject *public_api = NULL;
+    PyObject *result = NULL;
 
-    /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
-     * in downstream libraries. If that key isn't present, return NULL and
-     * let originating call to continue. If the key is present but doesn't
-     * implement `__array_function__`, raise a `TypeError`.
-     */
-    if (!PyDict_Contains(kwargs, npy_ma_str_like)) {
-        return Py_NotImplemented;
-    }
-
-    PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
-    if (like_arg == NULL) {
-        return NULL;
-    }
-    else if (!get_array_function(like_arg)) {
+    if (!get_array_function(like)) {
         return PyErr_Format(PyExc_TypeError,
                 "The `like` argument must be an array-like that implements "
                 "the `__array_function__` protocol.");
     }
-    PyObject *relevant_args = PyTuple_Pack(1, like_arg);
-    PyDict_DelItem(kwargs, npy_ma_str_like);
 
-    PyObject *numpy_module = PyImport_Import(npy_ma_str_numpy);
-    if (numpy_module == NULL) {
-        Py_DECREF(relevant_args);
-        return NULL;
+    if (fast_args != NULL) {
+        /*
+         * Convert from vectorcall convention, since the protocol requires
+         * the normal convention.  We have to do this late to ensure the
+         * normal path where NotImplemented is returned is fast.
+         */
+        assert(args == NULL);
+        assert(kwargs == NULL);
+        args = PyTuple_New(len_args);
+        if (args == NULL) {
+            return NULL;
+        }
+        for (Py_ssize_t i = 0; i < len_args; i++) {
+            Py_INCREF(fast_args[i]);
+            PyTuple_SET_ITEM(args, i, fast_args[i]);
+        }
+        if (kwnames != NULL) {
+            kwargs = PyDict_New();
+            if (kwargs == NULL) {
+                Py_DECREF(args);
+            }
+            Py_ssize_t nkwargs = PyTuple_GET_SIZE(kwnames);
+            for (Py_ssize_t i = 0; i < nkwargs; i++) {
+                PyObject *key = PyTuple_GET_ITEM(kwnames, i);
+                PyObject *value = fast_args[i+len_args];
+                if (PyDict_SetItem(kwargs, key, value) < 0) {
+                    Py_DECREF(args);
+                    Py_DECREF(kwargs);
+                }
+            }
+        }
     }
 
-    PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
+    relevant_args = PyTuple_Pack(1, like);
+    if (relevant_args == NULL) {
+        goto finish;
+    }
+    /* The like argument must be present in the keyword arguments, remove it */
+    if (PyDict_DelItem(kwargs, npy_ma_str_like) < 0) {
+        goto finish;
+    }
+
+    numpy_module = PyImport_Import(npy_ma_str_numpy);
+    if (numpy_module == NULL) {
+        goto finish;
+    }
+
+    public_api = PyObject_GetAttrString(numpy_module, function_name);
     Py_DECREF(numpy_module);
     if (public_api == NULL) {
-        Py_DECREF(relevant_args);
-        return NULL;
+        goto finish;
     }
     if (!PyCallable_Check(public_api)) {
-        Py_DECREF(relevant_args);
-        Py_DECREF(public_api);
-        return PyErr_Format(PyExc_RuntimeError,
-                            "numpy.%s is not callable.",
-                            function_name);
+        PyErr_Format(PyExc_RuntimeError,
+                "numpy.%s is not callable.", function_name);
+        goto finish;
     }
 
-    PyObject* result = array_implement_array_function_internal(
+    result = array_implement_array_function_internal(
             public_api, relevant_args, args, kwargs);
 
-    Py_DECREF(relevant_args);
-    Py_DECREF(public_api);
+  finish:
+    if (kwnames != NULL) {
+        /* args and kwargs were converted from vectorcall convention */
+        Py_XDECREF(args);
+        Py_XDECREF(kwargs);
+    }
+    Py_XDECREF(relevant_args);
+    Py_XDECREF(public_api);
     return result;
 }
 
