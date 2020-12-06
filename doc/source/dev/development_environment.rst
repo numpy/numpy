@@ -207,6 +207,8 @@ repo, use one of::
     $ git reset --hard
 
 
+.. _debugging:
+
 Debugging
 ---------
 
