@@ -69,11 +69,12 @@ def test_join_matches_subprocess(Parser, runner, argv):
 
 
 @pytest.mark.parametrize('argv', argv_cases)
-@pytest.mark.skipif(sys.platform == 'OpenVMS', reason='OpenVMS has no symmetric join/split')
 def test_roundtrip(Parser, argv):
     """
     Test that split is the inverse operation of join
     """
+    if Parser == _shell_utils.OpenVMSParser:
+        pytest.skip('OpenVMSParser has no symmetric join/split')
     try:
         joined = Parser.join(argv)
         assert argv == Parser.split(joined)
