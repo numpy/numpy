@@ -2986,7 +2986,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
 #ifdef __VMS
-        // npy_hypot does not passes the tests in OpenVMS
+        // npy_hypot does not pass the tests in OpenVMS
         *((@ftype@ *)op1) = npy_cabs@c@(*(@ctype@ *)ip1);
 #else
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];

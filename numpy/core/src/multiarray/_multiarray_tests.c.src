@@ -1300,7 +1300,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 {
     PyObject *A = NULL;
     PyObject *U = NULL;
-    npy_int64 b_input = 0;
+    npy_int64 b_input = 0;        // diophantine functions assume 'b_input' is npy_int64
     Py_ssize_t max_work = -1;
     int simplify = 0;
     int require_ub_nontrivial = 0;
@@ -1309,7 +1309,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 
     diophantine_term_t terms[2*NPY_MAXDIMS+2];
     npy_int64 x[2*NPY_MAXDIMS+2];
-    npy_int64 b;        // diophantine functions assume 'b' is npy_int64
+    npy_int64 b;
     unsigned int nterms, j;
     mem_overlap_t result = MEM_OVERLAP_YES;
     PyObject *retval = NULL;
