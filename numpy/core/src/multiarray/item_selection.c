@@ -4,6 +4,11 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#ifndef MIN
+#define MIN(a, b) ((a < b) ? (a) : (b))
+#endif
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -27,7 +32,7 @@
 #include "alloc.h"
 #include "arraytypes.h"
 #include "array_coercion.h"
-
+#include "simd/simd.h"
 
 static NPY_GCC_OPT_3 NPY_INLINE int
 npy_fasttake_impl(
@@ -2124,6 +2129,46 @@ count_nonzero_bytes_384(const npy_uint64 * w)
     return r;
 }
 
+#if NPY_SIMD
+static NPY_INLINE npy_intp
+count_nonzero_bytes(const char *d, npy_uintp unrollx)
+{
+    int count = 0;
+    int i = 0;
+
+    const int vstep = npyv_nlanes_u8;
+    const npyv_u8 vone = npyv_setall_u8(1);
+    const npyv_u8 vzero = npyv_setall_u8(0);
+    npyv_u8 vt;
+    npyv_u8 vsum32 = npyv_zero_u32();
+    while (i < unrollx)
+    {
+        npyv_u16 vsum16 = npyv_zero_u16();
+        int j = i;
+        while (j < MIN(unrollx, i + 65535 * npyv_nlanes_u16))
+        {
+            int k = j;
+            npyv_u8 vsum8 = npyv_zero_u8();
+            for (; k < MIN(unrollx, j + 255 * vstep); k += vstep)
+            {
+                vt = npyv_cmpeq_u8(npyv_load_u8(d + k), vzero);
+                vt = npyv_and_u8(vt, vone);
+                vsum8 = npyv_add_u8(vsum8, vt);
+            }
+            npyv_u16 part1, part2;
+            npyv_expand_u8_u16(vsum8, &part1, &part2);
+            vsum16 = npyv_add_u16(vsum16, npyv_add_u16(part1, part2));
+            j = k;
+        }
+        npyv_u32 part1, part2;
+        npyv_expand_u16_u32(vsum16, &part1, &part2);
+        vsum32 = npyv_add_u32(vsum32, npyv_add_u32(part1, part2));
+        i = j;
+    }
+    count = i - npyv_sum_u32(vsum32);
+    return count;
+}
+#endif
 /*
  * Counts the number of True values in a raw boolean array. This
  * is a low-overhead function which does no heap allocations.
@@ -2133,6 +2178,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 NPY_NO_EXPORT npy_intp
 count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides)
 {
+    
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp i, coord[NPY_MAXDIMS];
@@ -2154,13 +2200,17 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
     }
 
     NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
-
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
         NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             /* Process the innermost dimension */
             const char *d = data;
             const char *e = data + shape[0];
+#if NPY_SIMD
+            npy_uintp stride = shape[0] & -npyv_nlanes_u8;
+            count += count_nonzero_bytes(d, stride);
+            d += stride;
+#else
             if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
                     npy_is_aligned(d, sizeof(npy_uint64))) {
                 npy_uintp stride = 6 * sizeof(npy_uint64);
@@ -2168,6 +2218,7 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
                     count += count_nonzero_bytes_384((const npy_uint64 *)d);
                 }
             }
+#endif
             for (; d < e; ++d) {
                 count += (*d != 0);
             }
