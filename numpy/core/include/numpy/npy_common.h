@@ -10,16 +10,6 @@
 #include <npy_config.h>
 #endif
 
-// compile time environment variables
-#ifndef NPY_RELAXED_STRIDES_CHECKING
-    #define NPY_RELAXED_STRIDES_CHECKING 0
-#endif
-#ifndef NPY_RELAXED_STRIDES_DEBUG
-    #define NPY_RELAXED_STRIDES_DEBUG 0
-#endif
-#ifndef NPY_USE_NEW_CASTINGIMPL
-    #define NPY_USE_NEW_CASTINGIMPL 0
-#endif
 /*
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
