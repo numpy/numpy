@@ -235,20 +235,30 @@ to define string equality, will be added to a ufunc.
     class StringEquality(BoundArrayMethod):
         nin = 1
         nout = 1
+        # DTypes are stored on the BoundArrayMethod and not on the internal
+        # ArrayMethod, to reference cyles.
         DTypes = (String, String, Bool)
 
-        def resolve_descriptors(context, given_descrs):
+        def resolve_descriptors(self: ArrayMethod, DTypes, given_descrs):
             """The strided loop supports all input string dtype instances
             and always returns a boolean. (String is always native byte order.)
 
             Defining this function is not necessary, since NumPy can provide
             it by default.
+
+            The `self` argument here refers to the unbound array method, so
+            that DTypes are passed in explicitly.
             """
-            assert isinstance(given_descrs[0], context.DTypes[0])
-            assert isinstance(given_descrs[1], context.DTypes[1])
+            assert isinstance(given_descrs[0], DTypes[0])
+            assert isinstance(given_descrs[1], DTypes[1])
+            assert given_descrs[2] is None or isinstance(given_descrs[2], DTypes[2])
             
+            out_descr = given_descrs[2]  # preserve input (e.g. metadata)
+            if given_descrs[2] is None:
+                out_descr = DTypes[2]()
+
             # The operation is always "safe" casting (most ufuncs are)
-            return (given_descrs[0], given_descrs[1], context.DTypes[2]()), "safe"
+            return (given_descrs[0], given_descrs[1], out_descr), "safe"
 
         def strided_loop(context, dimensions, data, strides, innerloop_data):
             """The 1-D strided loop, similar to those used in current ufuncs"""
@@ -422,9 +432,8 @@ a new ``ArrayMethod`` object:
         # More general flags:
         flags: int
 
-        @staticmethod
-        def resolve_descriptors(
-                Context: context, Tuple[DType]: given_descrs)-> Casting, Tuple[DType]:
+        def resolve_descriptors(self,
+                Tuple[DTypeMeta], Tuple[DType|None]: given_descrs) -> Casting, Tuple[DType]:
             """Returns the safety of the operation (casting safety) and the
             """
             # A default implementation can be provided for non-parametric
@@ -468,8 +477,6 @@ With ``Context`` providing mostly static information about the function call:
         int : nin = 1
         # The number of output arguments:
         int : nout = 1
-        # The DTypes this Method operates on/is defined for:
-        Tuple[DTypeMeta] : dtypes
         # The actual dtypes instances the inner-loop operates on:
         Tuple[DType] : descriptors
 
@@ -616,7 +623,8 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
 
       NPY_CASTING
       resolve_descriptors(
-              PyArrayMethod_Context *context,
+              PyArrayMethodObject *self,
+              PyArray_DTypeMeta *dtypes,
               PyArray_Descr *given_dtypes[nin+nout],
               PyArray_Descr *loop_dtypes[nin+nout]);
 
@@ -652,20 +660,20 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
 * The optional ``get_loop`` function will not be public initially, to avoid
   finalizing the API which requires design choices also with casting:
 
-  .. code-block::
+  .. code-block:: C
 
         innerloop *
         get_loop(
             PyArrayMethod_Context *context,
-            /* (move_references is currently used internally for casting) */
             int aligned, int move_references,
             npy_intp *strides,
             PyArray_StridedUnaryOp **out_loop,
             NpyAuxData **innerloop_data,
             NPY_ARRAYMETHOD_FLAGS *flags);
   
-  The ``NPY_ARRAYMETHOD_FLAGS`` can indicate whether the Python API is required
-  and floating point errors must be checked.
+  ``NPY_ARRAYMETHOD_FLAGS`` can indicate whether the Python API is required
+  and floating point errors must be checked. ``move_references`` is used
+  internally for NumPy casting at this time.
 
 * The inner-loop function::
 
@@ -739,6 +747,13 @@ casting can be prepared.
 While the returned casting-safety (``NPY_CASTING``) will almost always be
 "safe" for universal functions, including it has two big advantages:
 
+* ``-1`` indicates that an error occurred. If a Python error is set, it will
+  be raised.  If no Python error is set this will be considered an "impossible"
+  cast and a custom error will be set. (This distinction is important for the
+  ``np.can_cast()`` function, which should raise the first one and return
+  ``False`` in the second case, it is not noteworthy for typical ufuncs).
+  *This point is under consideration, we may use ``-1`` to indicate
+  a general error, and use a different return value for an impossible cast.*
 * Returning the casting safety is central to NEP 42 for casting and
   allows the unmodified use of ``ArrayMethod`` there.
 * There may be a future desire to implement fast but unsafe implementations.
