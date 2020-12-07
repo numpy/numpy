@@ -6,10 +6,7 @@ import sys
 import numpy as np
 cimport numpy as np
 
-IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_vms cimport uintptr_t
-ELSE:
-    from libc.stdint cimport uintptr_t
+from libc.stdint cimport uintptr_t
 
 __all__ = ['interface']
 

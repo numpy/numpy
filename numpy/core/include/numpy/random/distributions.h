@@ -5,11 +5,7 @@
 #include "numpy/npy_common.h"
 #include <stddef.h>
 #include <stdbool.h>
-#if defined(__VMS) && __CRTL_VER <= 80400000
-#include "numpy/stdint_vms.h"
-#else
 #include <stdint.h>
-#endif
 
 #include "numpy/npy_math.h"
 #include "numpy/random/bitgen.h"

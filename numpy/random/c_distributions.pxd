@@ -2,10 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 from numpy cimport npy_intp
 
-IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_vms cimport (uint64_t, int32_t, int64_t)
-ELSE:
-    from libc.stdint cimport (uint64_t, int32_t, int64_t)
+from libc.stdint cimport (uint64_t, int32_t, int64_t)
 from numpy.random cimport bitgen_t
 
 cdef extern from "numpy/random/distributions.h":

@@ -1,10 +1,6 @@
 
 #include <math.h>
-#if defined(__VMS) && __CRTL_VER <= 80400000
-#include "numpy/stdint_vms.h"
-#else
 #include <stdint.h>
-#endif
 
 
 /*

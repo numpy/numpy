@@ -15,11 +15,7 @@
 #define LIBDIVIDE_VERSION_MAJOR 3
 #define LIBDIVIDE_VERSION_MINOR 0
 
-#if defined(__VMS) && __CRTL_VER <= 80400000
-#include "numpy/stdint_vms.h"
-#else
 #include <stdint.h>
-#endif
 
 #if defined(__cplusplus)
     #include <cstdlib>

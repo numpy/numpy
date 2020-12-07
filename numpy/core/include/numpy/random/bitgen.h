@@ -6,11 +6,7 @@
 #endif
 #include <stddef.h>
 #include <stdbool.h>
-#if defined(__VMS) && __CRTL_VER <= 80400000
-#include "numpy/stdint_vms.h"
-#else
 #include <stdint.h>
-#endif
 
 /* Must match the declaration in numpy/random/<any>.pxd */
 

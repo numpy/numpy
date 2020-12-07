@@ -14,11 +14,7 @@ from numpy.core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
-IF UNAME_SYSNAME == 'OpenVMS':
-    from stdint_vms cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int32_t, int64_t, INT64_MAX, SIZE_MAX)
-ELSE:
-    from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
+from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
