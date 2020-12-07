@@ -132,6 +132,12 @@
 #endif // NPY_SIMD_F64
 
 // Horizontal add: Calculates the sum of all vector elements.
+NPY_FINLINE int npyv_sum_u32(npyv_u32 a)
+{
+    uint32x2_t a0 = vpadd_u32(vget_low_u32(a), vget_high_u32(a)); 
+    return (unsigned)vget_lane_u32(vpadd_u32(a0, vget_high_u32(a)),0);
+}
+
 #if NPY_SIMD_F64
     #define npyv_sum_f32 vaddvq_f32
     #define npyv_sum_f64 vaddvq_f64

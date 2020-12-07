@@ -51,4 +51,17 @@
 #define npyv_cvt_b32_f32(A) npyv_cvt_b32_u32(_mm512_castps_si512(A))
 #define npyv_cvt_b64_f64(A) npyv_cvt_b64_u64(_mm512_castpd_si512(A))
 
+// expand
+NPY_FINLINE void npyv_expand_u8_u16(npyv_u8 data, npyv_u16 *low, npyv_u16 *high) {
+    const __m512i z = _mm512_setzero_si512();
+    *low = _mm512_unpacklo_epi8(data, z);
+    *high = _mm512_unpackhi_epi8(data, z);
+}
+
+NPY_FINLINE void npyv_expand_u16_u32(npyv_u16 data, npyv_u32 *low, npyv_u32 *high) {
+    const __m512i z = _mm512_setzero_si512();
+    *low = _mm512_unpacklo_epi16(data, z);
+    *high = _mm512_unpackhi_epi16(data, z);
+}
+
 #endif // _NPY_SIMD_AVX512_CVT_H
