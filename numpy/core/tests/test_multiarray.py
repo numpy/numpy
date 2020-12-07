@@ -4644,8 +4644,8 @@ class TestPutmask:
         assert_equal(x, np.array([True, True, True, True]))
 
     def test_writeable(self):
-        a = np.arange(5);
-        a.setflags(write = False)
+        a = np.arange(5)
+        a.flags.writeable = False
 
         with pytest.raises(ValueError):
             np.putmask(a, a >= 2, 3)
