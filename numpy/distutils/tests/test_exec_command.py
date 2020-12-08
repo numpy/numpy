@@ -116,7 +116,7 @@ class TestExecCommand:
         assert_(s == 0)
         assert_(o == '')
 
-        s, o = exec_command.exec_command('echo "$AAA"', AAA='Tere', **kws)
+        s, o = exec_command.exec_command('echo "$AAA"', AAA='Tere', _BPXK_AUTOCVT='ON', **kws)
         assert_(s == 0)
         assert_(o == 'Tere')
 
@@ -130,7 +130,7 @@ class TestExecCommand:
             assert_(s == 0)
             assert_(o == 'Hi')
 
-            s, o = exec_command.exec_command('echo "$BBB"', BBB='Hey', **kws)
+            s, o = exec_command.exec_command('echo "$BBB"', BBB='Hey', _BPXK_AUTOCVT='ON', **kws)
             assert_(s == 0)
             assert_(o == 'Hey')
 

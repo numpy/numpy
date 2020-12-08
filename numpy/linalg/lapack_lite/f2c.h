@@ -151,6 +151,15 @@ struct Namelist {
 	};
 typedef struct Namelist Namelist;
 
+#ifdef __MVS__
+#ifdef abs
+#undef abs
+#endif
+#ifdef dabs
+#undef dabs
+#endif
+#endif
+
 #ifndef abs
 #define abs(x) ((x) >= 0 ? (x) : -(x))
 #endif
