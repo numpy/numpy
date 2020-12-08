@@ -2140,7 +2140,7 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
     const npyv_u8 vone = npyv_setall_u8(1);
     const npyv_u8 vzero = npyv_setall_u8(0);
     npyv_u8 vt;
-    npyv_u8 vsum32 = npyv_zero_u32();
+    npyv_u32 vsum32 = npyv_zero_u32();
     while (i < unrollx)
     {
         npyv_u16 vsum16 = npyv_zero_u16();

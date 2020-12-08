@@ -30,13 +30,15 @@
 #define npyv_cvt_b64_f64(A) ((npyv_b64) A)
 
 NPY_FINLINE void npyv_expand_u8_u16(npyv_u8 data, npyv_u16 *low, npyv_u16 *high) {
-    *low = vec_unpackhu(data);
-    *high = vec_unpacklu(data);
+    npyv_u8 zero = npyv_zero_u8();
+    *low = (npyv_u16)vec_mergel(data, zero);
+    *high = (npyv_u16)vec_mergeh(data, zero);
 }
 
 NPY_FINLINE void npyv_expand_u16_u32(npyv_u16 data, npyv_u32 *low, npyv_u32 *high) {
-    *low = vec_unpackhu(data);
-    *high = vec_unpacklu(data);
+    npyv_u16 zero = npyv_zero_u16();
+    *low = (npyv_u32)vec_mergel(data, zero);
+    *high = (npyv_u32)vec_mergeh(data, zero);
 }
 
 #endif // _NPY_SIMD_VSX_CVT_H
