@@ -2135,7 +2135,7 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 {
     int count = 0;
     int i = 0;
-
+    
     const int vstep = npyv_nlanes_u8;
     const npyv_u8 vone = npyv_setall_u8(1);
     const npyv_u8 vzero = npyv_setall_u8(0);
@@ -2145,7 +2145,7 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
     {
         npyv_u16 vsum16 = npyv_zero_u16();
         int j = i;
-        while (j < MIN(unrollx, i + 65535 * npyv_nlanes_u16))
+        while (j < MIN(unrollx, i + 65280 * npyv_nlanes_u16))
         {
             int k = j;
             npyv_u8 vsum8 = npyv_zero_u8();
