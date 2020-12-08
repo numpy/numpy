@@ -2131,7 +2131,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 
 #if NPY_SIMD
 static NPY_INLINE npy_intp
-count_nonzero_bytes(const char *d, npy_uintp unrollx)
+count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 {
     int count = 0;
     int i = 0;
@@ -2208,7 +2208,7 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
             const char *e = data + shape[0];
 #if NPY_SIMD
             npy_uintp stride = shape[0] & -npyv_nlanes_u8;
-            count += count_nonzero_bytes(d, stride);
+            count += count_nonzero_bytes((const npy_uint8 *)d, stride);
             d += stride;
 #else
             if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
