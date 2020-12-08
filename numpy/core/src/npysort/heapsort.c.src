@@ -183,11 +183,10 @@ heapsort_@suff@(void *start, npy_intp n, void *varr)
 {
     PyArrayObject *arr = varr;
     size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
-#ifdef __MVS__
-    @type@ *tmp = malloc(MAX(1, PyArray_ITEMSIZE(arr)));
-#else
+    if (len == 0) { 
+        return 0; 
+    } 
     @type@ *tmp = malloc(PyArray_ITEMSIZE(arr));
-#endif
     @type@ *a = (@type@ *)start - len;
     npy_intp i, j, l;
 
@@ -302,11 +301,11 @@ npy_heapsort(void *start, npy_intp num, void *varr)
     PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
-#ifdef __MVS__
-    char *tmp = malloc(MAX(1, elsize));
-#else
+
+    if (elsize == 0) {
+        return 0;
+    }
     char *tmp = malloc(elsize);
-#endif
     char *a = (char *)start - elsize;
     npy_intp i, j, l;
 
