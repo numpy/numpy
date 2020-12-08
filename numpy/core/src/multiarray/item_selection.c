@@ -5,10 +5,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
-#endif
-
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -2139,17 +2135,17 @@ count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
     const int vstep = npyv_nlanes_u8;
     const npyv_u8 vone = npyv_setall_u8(1);
     const npyv_u8 vzero = npyv_setall_u8(0);
-    npyv_u8 vt;
+    npyv_b8 vt;
     npyv_u32 vsum32 = npyv_zero_u32();
     while (i < unrollx)
     {
         npyv_u16 vsum16 = npyv_zero_u16();
         int j = i;
-        while (j < MIN(unrollx, i + 65280 * npyv_nlanes_u16))
+        while (j < PyArray_MIN(unrollx, i + 0xFF00 * npyv_nlanes_u16))
         {
             int k = j;
             npyv_u8 vsum8 = npyv_zero_u8();
-            for (; k < MIN(unrollx, j + 255 * vstep); k += vstep)
+            for (; k < PyArray_MIN(unrollx, j + 0xFF * vstep); k += vstep)
             {
                 vt = npyv_cmpeq_u8(npyv_load_u8(d + k), vzero);
                 vt = npyv_and_u8(vt, vone);
