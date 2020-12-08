@@ -349,6 +349,7 @@ class memmap(ndarray):
         
         It has no effect if no file is memory-mapped.
         For further information, see `memmap`.
+        
         Parameters
         ----------
         None
