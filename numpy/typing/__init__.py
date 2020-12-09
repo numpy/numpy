@@ -210,9 +210,11 @@ del TYPE_CHECKING, final, List
 from ._scalars import (
     _CharLike,
     _BoolLike,
+    _UIntLike,
     _IntLike,
     _FloatLike,
     _ComplexLike,
+    _TD64Like,
     _NumberLike,
     _ScalarLike,
     _VoidLike,
