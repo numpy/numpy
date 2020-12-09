@@ -405,4 +405,4 @@ class memmap(ndarray):
         memmap
 
         """
-        return True if self._mmap is None else False
+        return True if self._mmap is None else self._mmap.closed
