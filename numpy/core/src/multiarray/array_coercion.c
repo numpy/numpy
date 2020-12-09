@@ -922,6 +922,53 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             Py_DECREF(arr);
             arr = NULL;
         }
+        else if (curr_dims > 0 && curr_dims != max_dims) {
+            /*
+             * Deprecated 2020-12-09, NumPy 1.20
+             *
+             * See https://github.com/numpy/numpy/issues/17965
+             * Shapely had objects which are not sequences but did export
+             * the array-interface (and so are arguably array-like).
+             * Previously numpy would not use array-like information during
+             * shape discovery, so that it ended up acting as if this was
+             * an (unknown) scalar but with the specified dtype.
+             * Thus we ignore "scalars" here, as the value stored in the
+             * array should be acceptable.
+             */
+            if (PyArray_NDIM(arr) > 0 && NPY_UNLIKELY(!PySequence_Check(obj))) {
+                if (PyErr_WarnFormat(PyExc_FutureWarning, 1,
+                        "The input object of type '%s' is an array-like "
+                        "implementing one of the corresponding protocols "
+                        "(`__array__`, `__array_interface__` or "
+                        "`__array_struct__`); but not a sequence (or 0-D). "
+                        "In the future, this object will be coerced as if it "
+                        "was first converted using `np.array(obj)`. "
+                        "To retain the old behaviour, you have to either "
+                        "modify the type '%s', or assign to an empty array "
+                        "created with `np.empty(correct_shape, dtype=object)`.",
+                        Py_TYPE(obj)->tp_name, Py_TYPE(obj)->tp_name) < 0) {
+                    Py_DECREF(arr);
+                    return -1;
+                }
+                /*
+                 * Strangely enough, even though we threw away the result here,
+                 * we did use it during descriptor discovery, so promote it:
+                 */
+                if (update_shape(curr_dims, &max_dims, out_shape,
+                        0, NULL, NPY_FALSE, flags) < 0) {
+                    *flags |= FOUND_RAGGED_ARRAY;
+                    Py_DECREF(arr);
+                    return max_dims;
+                }
+                if (!(*flags & DESCRIPTOR_WAS_SET) && handle_promotion(
+                        out_descr, PyArray_DESCR(arr), fixed_DType, flags) < 0) {
+                    Py_DECREF(arr);
+                    return -1;
+                }
+                Py_DECREF(arr);
+                return max_dims;
+            }
+        }
     }
     if (arr != NULL) {
         /*
