@@ -202,11 +202,31 @@ class memmap(ndarray):
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)
 
     Close all memmap files:
+
     >>> fp.close()
     >>> newfp.close()
     >>> fpr.close()
     >>> fpc.close()
+    
+    Check if the memmap file is closed:
+    >>> fpo.closed()
+    False
+    
+    Close fpo
     >>> fpo.close()
+    
+    Check if the memmap file is closed:
+    >>> fpo.closed()
+    True
+    
+    Use context manager to read the file into memmap:
+    
+    >>> with np.memmap(filename, dtype='float32', mode='r') as fpcon:
+    >>>     fpcon
+    memmap([[  0.,   1.,   2.,   3.],
+            [  4.,   5.,   6.,   7.],
+            [  8.,   9.,  10.,  11.]], dtype=float32)
+
     """
 
     __array_priority__ = -100.0
