@@ -30,16 +30,20 @@
 #define npyv_cvt_b64_f64(A) _mm_castpd_si128(A)
 
 // expand
-NPY_FINLINE void npyv_expand_u8_u16(npyv_u8 data, npyv_u16 *low, npyv_u16 *high) {
+NPY_FINLINE npyv_u16x2 npyv_expand_u8_u16(npyv_u8 data) {
+    npyv_u16x2 r;
     const __m128i z = _mm_setzero_si128();
-    *low = _mm_unpacklo_epi8(data, z);
-    *high = _mm_unpackhi_epi8(data, z);
+    r.val[0] = _mm_unpacklo_epi8(data, z);
+    r.val[1] = _mm_unpackhi_epi8(data, z);
+    return r;
 }
 
-NPY_FINLINE void npyv_expand_u16_u32(npyv_u16 data, npyv_u32 *low, npyv_u32 *high) {
+NPY_FINLINE npyv_u32x2 npyv_expand_u16_u32(npyv_u16 data) {
+    npyv_u32x2 r;
     const __m128i z = _mm_setzero_si128();
-    *low = _mm_unpacklo_epi16(data, z);
-    *high = _mm_unpackhi_epi16(data, z);
+    r.val[0]  = _mm_unpacklo_epi16(data, z);
+    r.val[1]  = _mm_unpackhi_epi16(data, z);
+    return r;
 }
 
 #endif // _NPY_SIMD_SSE_CVT_H

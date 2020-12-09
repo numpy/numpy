@@ -540,6 +540,23 @@ class _SIMD_ALL(_Test_Utility):
         true_vsfx = from_boolean(true_vb)
         assert false_vsfx != true_vsfx
 
+    def test_conversion_expand(self):
+        if self.sfx == "u8":
+            totype = "u16"
+        elif self.sfx == "u16":
+            totype = "u32"
+        else:
+            return
+        data = self._data()
+        expand = getattr(self.npyv, "expand_%s_%s" % (self.sfx, totype))
+        vdata = self.load(data)
+        edata = expand(vdata)
+        # lower half part
+        data_lo = data[:self.nlanes//2]
+        # higher half part
+        data_hi = data[self.nlanes//2:]
+        assert edata == (data_lo, data_hi)
+
     def test_arithmetic_subadd(self):
         if self._is_fp():
             data_a = self._data()
@@ -584,7 +601,7 @@ class _SIMD_ALL(_Test_Utility):
         assert div == data_div
 
     def test_arithmetic_reduce_sum(self):
-        if not self._is_fp():
+        if self.sfx not in ("u32", "f32", "f64"):
             return
         # reduce sum
         data = self._data()

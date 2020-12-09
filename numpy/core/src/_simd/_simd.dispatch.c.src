@@ -15,13 +15,15 @@
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #esfx      = u16, s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #expand_sup =1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
- * #sum_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   0,   0,   1,   1#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
@@ -319,7 +321,9 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
  ***************************/
 SIMD_IMPL_INTRIN_1(cvt_@sfx@_@bsfx@, v@sfx@,  v@bsfx@)
 SIMD_IMPL_INTRIN_1(cvt_@bsfx@_@sfx@, v@bsfx@, v@sfx@)
-
+#if @expand_sup@
+SIMD_IMPL_INTRIN_1(expand_@sfx@_@esfx@, v@esfx@x2, v@sfx@)
+#endif // expand_sup
 /***************************
  * Arithmetic
  ***************************/
@@ -382,13 +386,15 @@ static PyMethodDef simd__intrinsics_methods[] = {
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #esfx      = u16, s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #expand_sup =1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
  * #div_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #fused_sup = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
- * #sum_sup   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
+ * #sum_sup   = 0,  0,  0,   0,   1,   0,   0,   0,   1,   1#
  * #ncont_sup = 0,  0,  0,   0,   1,   1,   1,   1,   1,   1#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
@@ -469,7 +475,9 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  ***************************/
 SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
 SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
-
+#if @expand_sup@
+SIMD_INTRIN_DEF(expand_@sfx@_@esfx@)
+#endif // expand_sup
 /***************************
  * Arithmetic
  ***************************/

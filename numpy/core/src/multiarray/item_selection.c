@@ -2126,44 +2126,66 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 }
 
 #if NPY_SIMD
+
+/* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
+static NPY_INLINE npyv_u8
+count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end)
+{
+    const npyv_u8 vone = npyv_setall_u8(1);
+    const npyv_u8 vzero = npyv_setall_u8(0);
+
+    npy_intp n = 0;
+    npyv_u8 vsum8 = npyv_zero_u8();
+    while (*d < end && n <= 0xFE) {
+        npyv_u8 vt = npyv_cvt_u8_b8(npyv_cmpeq_u8(npyv_load_u8(*d), vzero));
+        vt = npyv_and_u8(vt, vone);
+        vsum8 = npyv_add_u8(vsum8, vt);
+        *d += npyv_nlanes_u8;
+        n++;
+    }
+    return vsum8;
+}
+
+static NPY_INLINE npyv_u16
+count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end)
+{
+    npyv_u16 vsum16 = npyv_zero_u16();
+    npy_intp n = 0;
+    while (*d < end && n <= 0xFF00) {
+        npyv_u8 vsum8 = count_zero_bytes_u8(d, end);
+        npyv_u16x2 part = npyv_expand_u8_u16(vsum8);
+        vsum16 = npyv_add_u16(vsum16, npyv_add_u16(part.val[0], part.val[1]));
+        n += 0xFF;
+    }
+    return vsum16;
+}
+
+static NPY_INLINE npyv_u32
+count_zero_bytes_u32(const npy_uint8 **d, const npy_uint8 *end)
+{
+    npyv_u32 vsum32 = npyv_zero_u32();
+    npy_intp n = 0;
+    while (*d < end && n <= 0xFFFF0000) {
+        npyv_u16 vsum16 = count_zero_bytes_u16(d, end);
+        npyv_u32x2 part = npyv_expand_u16_u32(vsum16);
+        vsum32 = npyv_add_u32(vsum32, npyv_add_u32(part.val[0], part.val[1]));
+        n += 0xFFFF;
+    }
+    return vsum32;
+}
+
 static NPY_INLINE npy_intp
 count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 {
-    int count = 0;
-    int i = 0;
-    
-    const int vstep = npyv_nlanes_u8;
-    const npyv_u8 vone = npyv_setall_u8(1);
-    const npyv_u8 vzero = npyv_setall_u8(0);
-    npyv_b8 vt;
-    npyv_u32 vsum32 = npyv_zero_u32();
-    while (i < unrollx)
-    {
-        npyv_u16 vsum16 = npyv_zero_u16();
-        int j = i;
-        while (j < PyArray_MIN(unrollx, i + 0xFF00 * npyv_nlanes_u16))
-        {
-            int k = j;
-            npyv_u8 vsum8 = npyv_zero_u8();
-            for (; k < PyArray_MIN(unrollx, j + 0xFF * vstep); k += vstep)
-            {
-                vt = npyv_cmpeq_u8(npyv_load_u8(d + k), vzero);
-                vt = npyv_and_u8(vt, vone);
-                vsum8 = npyv_add_u8(vsum8, vt);
-            }
-            npyv_u16 part1, part2;
-            npyv_expand_u8_u16(vsum8, &part1, &part2);
-            vsum16 = npyv_add_u16(vsum16, npyv_add_u16(part1, part2));
-            j = k;
-        }
-        npyv_u32 part1, part2;
-        npyv_expand_u16_u32(vsum16, &part1, &part2);
-        vsum32 = npyv_add_u32(vsum32, npyv_add_u32(part1, part2));
-        i = j;
+    npy_intp zero_count = 0;
+    const npy_uint8 *end = d + unrollx;
+    while (d < end) {
+        npyv_u32 vsum32 = count_zero_bytes_u32(&d, end);
+        zero_count += npyv_sum_u32(vsum32);
     }
-    count = i - npyv_sum_u32(vsum32);
-    return count;
+    return unrollx - zero_count;
 }
+
 #endif
 /*
  * Counts the number of True values in a raw boolean array. This
