@@ -381,7 +381,6 @@ class memmap(ndarray):
         """
         if self._mmap is not None:
             self._mmap.close()
-            self._mmap = None
 
     def __enter__(self):
         return self
