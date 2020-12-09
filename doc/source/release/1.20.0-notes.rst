@@ -184,6 +184,43 @@ Use ``next(it)`` instead of ``it.ndincr()``.
 
 (`gh-17233 <https://github.com/numpy/numpy/pull/17233>`__)
 
+ArrayLike objects which do not define ``__len__`` and ``__getitem__``
+---------------------------------------------------------------------
+Objects which define one of the protocols ``__array__``,
+``__array_interface__``, or ``__array_struct__`` but are not sequences
+(usually defined by having a ``__len__`` and ``__getitem__``) will behave
+differently during array-coercion in the future.
+
+When nested inside sequences, such as ``np.array([array_like])``, these
+were handled as a single Python object rather than an array.
+In the future they will behave identically to::
+
+    np.array([np.array(array_like)])
+
+This change should only have an effect if ``np.array(array_like)`` is not 0-D.
+The solution to this warning may depend on the object:
+
+* Some array-likes may expect the new behaviour, and users can ignore the
+  warning.  The object can choose to expose the sequence protocol to opt-in
+  to the new behaviour.
+* For example, ``shapely`` will allow conversion to an array-like using
+  ``line.coords`` rather than ``np.asarray(line)``. Users may work around
+  the warning, or use the new convention when it becomes available.
+
+Unfortunately, using the new behaviour can only be achieved by
+calling ``np.array(array_like)``.
+
+If you wish to ensure that the old behaviour remains unchanged, please create
+an object array and then fill it explicitly, for example::
+
+    arr = np.empty(3, dtype=object)
+    arr[:] = [array_like1, array_like2, array_like3]
+
+This will ensure NumPy knows to not enter the array-like and use it as
+a object instead.
+
+(`gh-17973 <https://github.com/numpy/numpy/pull/17973>`__)
+
 
 Future Changes
 ==============
@@ -349,9 +386,15 @@ Things will now be more consistent with::
 
     np.array([np.array(array_like1)])
 
-This could potentially subtly change output for badly defined array-likes.
-We are not aware of any such case where the results were not clearly
-incorrect previously.
+This can subtly change output for some badly defined array-likes.
+One example for this are array-like objects which are not also sequences
+of matching shape.
+In NumPy 1.20, a warning will be given when an array-like is not also a
+sequence (but behaviour remains identical, see deprecations).
+If an array like is also a sequence (defines ``__getitem__`` and ``__len__``)
+NumPy will now only use the result given by ``__array__``,
+``__array_interface__``, or ``__array_struct__``. This will result in
+differences when the (nested) sequence describes a different shape.
 
 (`gh-16200 <https://github.com/numpy/numpy/pull/16200>`__)
 
