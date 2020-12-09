@@ -1968,6 +1968,13 @@ class Configuration:
                     version = getattr(version_module, a, None)
                     if version is not None:
                         break
+
+                # Try if versioneer module
+                try:
+                    version = version_module.get_versions()['version']
+                except AttributeError:
+                    version = None
+
                 if version is not None:
                     break
 
