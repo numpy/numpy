@@ -361,3 +361,28 @@ class memmap(ndarray):
         """
         if self._mmap is not None:
             self._mmap.close()
+            self._mmap = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
+    def closed(self):
+        """
+        Return True if the memmap is already closed, 
+        otherwise return False.
+
+        For further information, see `memmap`.
+
+        Parameters
+        ----------
+        None
+
+        See Also
+        --------
+        memmap
+
+        """
+        return True if self._mmap is None else False
