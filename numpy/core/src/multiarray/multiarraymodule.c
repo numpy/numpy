@@ -1470,7 +1470,9 @@ array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 NPY_NO_EXPORT unsigned char
 PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
-#if NPY_USE_NEW_CASTINGIMPL
+    if (type1 == type2) {
+        return 1;
+    }
     /*
      * Do not use PyArray_CanCastTypeTo because it supports legacy flexible
      * dtypes as input.
@@ -1482,9 +1484,6 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     }
     /* If casting is "no casting" this dtypes are considered equivalent. */
     return PyArray_MinCastSafety(safety, NPY_NO_CASTING) == NPY_NO_CASTING;
-#else
-    return PyArray_LegacyEquivTypes(type1, type2);
-#endif
 }
 
 
@@ -3357,7 +3356,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     PyObject *from_obj = NULL;
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
-    npy_bool ret;
+    int ret;
     PyObject *retobj = NULL;
     NPY_CASTING casting = NPY_SAFE_CASTING;
     static char *kwlist[] = {"from_", "to", "casting", NULL};
@@ -3486,6 +3485,10 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
             arr[narr] = (PyArrayObject *)PyArray_FROM_O(obj);
             if (arr[narr] == NULL) {
                 goto finish;
+            }
+            if (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj) ||
+                    PyComplex_CheckExact(obj)) {
+                ((PyArrayObject_fields *)arr[narr])->flags |= _NPY_ARRAY_WAS_PYSCALAR;
             }
             ++narr;
         }
