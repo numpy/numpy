@@ -2892,6 +2892,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
         if (args == NULL || PyTuple_GET_SIZE(args) == 0){
             PyErr_SetString(PyExc_TypeError,
                 "arange() requires stop to be specified.");
+            Py_XDECREF(typecode);
             return NULL;
         }
     }
