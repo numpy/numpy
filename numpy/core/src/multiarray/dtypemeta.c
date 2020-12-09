@@ -32,6 +32,14 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 }
 
 static PyObject *
+dtypemeta_alloc(PyTypeObject *NPY_UNUSED(type), Py_ssize_t NPY_UNUSED(items))
+{
+    PyErr_SetString(PyExc_TypeError,
+            "DTypes can only be created using the NumPy API.");
+    return NULL;
+}
+
+static PyObject *
 dtypemeta_new(PyTypeObject *NPY_UNUSED(type),
         PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
@@ -690,6 +698,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
     .tp_members = dtypemeta_members,
     .tp_base = NULL,  /* set to PyType_Type at import time */
+    .tp_alloc = dtypemeta_alloc,
     .tp_init = (initproc)dtypemeta_init,
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,

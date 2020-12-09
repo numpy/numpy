@@ -15,6 +15,8 @@ typedef struct coercion_cache_obj {
     int depth;  /* the dimension at which this object was found. */
 } coercion_cache_obj;
 
+NPY_NO_EXPORT PyArray_DTypeMeta *
+npy_discover_dtype_from_pytype(PyTypeObject *pytype);
 
 NPY_NO_EXPORT int
 _PyArray_MapPyTypeToDType(

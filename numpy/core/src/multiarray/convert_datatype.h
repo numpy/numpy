@@ -20,8 +20,10 @@ PyArray_ObjectType(PyObject *op, int minimum_type);
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn);
 
-NPY_NO_EXPORT PyArray_DTypeMeta *
-PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_LegacyResultType(
+        npy_intp narrs, PyArrayObject **arr,
+        npy_intp ndtypes, PyArray_Descr **dtypes);
 
 NPY_NO_EXPORT int
 PyArray_ValidType(int type);
@@ -29,7 +31,7 @@ PyArray_ValidType(int type);
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind);
 
-/* Like PyArray_CanCastArrayTo */
+/* Used by PyArray_CanCastArrayTo and in the legacy ufunc type resolution */
 NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
                     PyArray_Descr *to, NPY_CASTING casting);

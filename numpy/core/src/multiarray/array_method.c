@@ -34,6 +34,7 @@
 #include "arrayobject.h"
 #include "array_method.h"
 #include "dtypemeta.h"
+#include "common_dtype.h"
 #include "convert_datatype.h"
 
 
