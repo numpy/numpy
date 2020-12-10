@@ -222,10 +222,8 @@ class memmap(ndarray):
     Use context manager to read the file into memmap:
     
     >>> with np.memmap(filename, dtype='float32', mode='r') as fpcon:
-    ...     fpcon
-    memmap([[  0.,   1.,   2.,   3.],
-            [  4.,   5.,   6.,   7.],
-            [  8.,   9.,  10.,  11.]], dtype=float32)
+    ...     print(fpcon)
+    [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11.]
 
     """
 
