@@ -56,7 +56,11 @@ NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
 {
     npyv_u16x2 r;
     __m256i lo = _mm512_castsi512_si256(data);
+#ifdef NPY_HAVE_AVX512DQ
     __m256i hi = _mm512_extracti32x8_epi32(data, 1);
+#else
+    __m256i hi = _mm512_extracti64x4_epi64(data, 1);
+#endif
 #ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu8_epi16(lo);
     r.val[1] = _mm512_cvtepu8_epi16(hi);
@@ -75,7 +79,11 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
 {
     npyv_u32x2 r;
     __m256i lo = _mm512_castsi512_si256(data);
+#ifdef NPY_HAVE_AVX512DQ
     __m256i hi = _mm512_extracti32x8_epi32(data, 1);
+#else
+    __m256i hi = _mm512_extracti64x4_epi64(data, 1);
+#endif
 #ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu16_epi32(lo);
     r.val[1] = _mm512_cvtepu16_epi32(hi);
