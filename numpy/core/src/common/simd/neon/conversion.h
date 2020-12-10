@@ -29,14 +29,14 @@
 #define npyv_cvt_b32_f32(BL) vreinterpretq_u32_f32(BL)
 #define npyv_cvt_b64_f64(BL) vreinterpretq_u64_f64(BL)
 
-NPY_FINLINE npyv_u16x2 npyv_expand_u8_u16(npyv_u8 data) {
+NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data) {
     npyv_u16x2 r;
     r.val[0] = vmovl_u8(vget_low_u8(data));
     r.val[1] = vmovl_u8(vget_high_u8(data));
     return r;
 }
 
-NPY_FINLINE npyv_u32x2 npyv_expand_u16_u32(npyv_u16 data) {
+NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
     npyv_u32x2 r;
     r.val[0] = vmovl_u16(vget_low_u16(data));
     r.val[1] = vmovl_u16(vget_high_u16(data));

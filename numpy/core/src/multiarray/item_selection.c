@@ -2153,7 +2153,7 @@ count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end)
     npy_intp n = 0;
     while (*d < end && n <= 0xFF00) {
         npyv_u8 vsum8 = count_zero_bytes_u8(d, end);
-        npyv_u16x2 part = npyv_expand_u8_u16(vsum8);
+        npyv_u16x2 part = npyv_expand_u16_u8(vsum8);
         vsum16 = npyv_add_u16(vsum16, npyv_add_u16(part.val[0], part.val[1]));
         n += 0xFF;
     }
@@ -2167,7 +2167,7 @@ count_zero_bytes_u32(const npy_uint8 **d, const npy_uint8 *end)
     npy_intp n = 0;
     while (*d < end && n <= 0xFFFF0000) {
         npyv_u16 vsum16 = count_zero_bytes_u16(d, end);
-        npyv_u32x2 part = npyv_expand_u16_u32(vsum16);
+        npyv_u32x2 part = npyv_expand_u32_u16(vsum16);
         vsum32 = npyv_add_u32(vsum32, npyv_add_u32(part.val[0], part.val[1]));
         n += 0xFFFF;
     }

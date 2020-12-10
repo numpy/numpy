@@ -548,7 +548,7 @@ class _SIMD_ALL(_Test_Utility):
         else:
             return
         data = self._data()
-        expand = getattr(self.npyv, "expand_%s_%s" % (self.sfx, totype))
+        expand = getattr(self.npyv, "expand_%s_%s" % (totype, self.sfx))
         vdata = self.load(data)
         edata = expand(vdata)
         # lower half part

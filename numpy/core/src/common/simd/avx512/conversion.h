@@ -52,17 +52,29 @@
 #define npyv_cvt_b64_f64(A) npyv_cvt_b64_u64(_mm512_castpd_si512(A))
 
 // expand
-NPY_FINLINE npyv_u16x2 npyv_expand_u8_u16(npyv_u8 data) {
+NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data) {
     npyv_u16x2 r;
+#ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu8_epi16(_mm512_castsi512_si256(data));
     r.val[1] = _mm512_cvtepu8_epi16(_mm512_extracti32x8_epi32(data, 1));
+#else
+    __m512i zero = npyv_zero_u8();
+    r.val[0] = _mm512_unpacklo_epi8(data, zero);
+    r.val[1] = _mm512_unpackhi_epi8(data, zero);
+#endif
     return r;
 }
 
-NPY_FINLINE npyv_u32x2 npyv_expand_u16_u32(npyv_u16 data) {
-    npyv_u16x2 r;
+NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
+    npyv_u32x2 r;
+#ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu16_epi32(_mm512_castsi512_si256(data));
     r.val[1] = _mm512_cvtepu16_epi32(_mm512_extracti32x8_epi32(data, 1));
+#else
+    __m512i zero = npyv_zero_u16();
+    r.val[0] = _mm512_unpacklo_epi16(data, zero);
+    r.val[1] = _mm512_unpackhi_epi16(data, zero);
+#endif
     return r;
 }
 

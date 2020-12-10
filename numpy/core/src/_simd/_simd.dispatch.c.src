@@ -322,7 +322,7 @@ SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_1(cvt_@sfx@_@bsfx@, v@sfx@,  v@bsfx@)
 SIMD_IMPL_INTRIN_1(cvt_@bsfx@_@sfx@, v@bsfx@, v@sfx@)
 #if @expand_sup@
-SIMD_IMPL_INTRIN_1(expand_@sfx@_@esfx@, v@esfx@x2, v@sfx@)
+SIMD_IMPL_INTRIN_1(expand_@esfx@_@sfx@, v@esfx@x2, v@sfx@)
 #endif // expand_sup
 /***************************
  * Arithmetic
@@ -476,7 +476,7 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 SIMD_INTRIN_DEF(cvt_@sfx@_@bsfx@)
 SIMD_INTRIN_DEF(cvt_@bsfx@_@sfx@)
 #if @expand_sup@
-SIMD_INTRIN_DEF(expand_@sfx@_@esfx@)
+SIMD_INTRIN_DEF(expand_@esfx@_@sfx@)
 #endif // expand_sup
 /***************************
  * Arithmetic

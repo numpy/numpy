@@ -30,7 +30,7 @@
 #define npyv_cvt_b64_f64(A) _mm_castpd_si128(A)
 
 // expand
-NPY_FINLINE npyv_u16x2 npyv_expand_u8_u16(npyv_u8 data) {
+NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data) {
     npyv_u16x2 r;
     const __m128i z = _mm_setzero_si128();
     r.val[0] = _mm_unpacklo_epi8(data, z);
@@ -38,7 +38,7 @@ NPY_FINLINE npyv_u16x2 npyv_expand_u8_u16(npyv_u8 data) {
     return r;
 }
 
-NPY_FINLINE npyv_u32x2 npyv_expand_u16_u32(npyv_u16 data) {
+NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
     npyv_u32x2 r;
     const __m128i z = _mm_setzero_si128();
     r.val[0]  = _mm_unpacklo_epi16(data, z);
