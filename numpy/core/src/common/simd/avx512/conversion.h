@@ -55,12 +55,8 @@
 NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
 {
     npyv_u16x2 r;
-    __m256i lo = _mm512_castsi512_si256(data);
-#ifdef NPY_HAVE_AVX512DQ
-    __m256i hi = _mm512_extracti32x8_epi32(data, 1);
-#else
-    __m256i hi = _mm512_extracti64x4_epi64(data, 1);
-#endif
+    __m256i lo = npyv512_lower_si256(data);
+    __m256i hi = npyv512_higher_si256(data, 1);
 #ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu8_epi16(lo);
     r.val[1] = _mm512_cvtepu8_epi16(hi);
@@ -69,8 +65,8 @@ NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
     __m256i loehi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(lo, 1));
     __m256i hielo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(hi));
     __m256i hiehi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(hi, 1));
-    r.val[0] = _mm512_inserti64x4(_mm512_castsi256_si512(loelo), loehi, 1);
-    r.val[1] = _mm512_inserti64x4(_mm512_castsi256_si512(hielo), hiehi, 1);
+    r.val[0] = npyv512_combine_si256(loelo, loehi);
+    r.val[1] = npyv512_combine_si256(hielo, hiehi);
 #endif
     return r;
 }
@@ -78,12 +74,8 @@ NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
 NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
 {
     npyv_u32x2 r;
-    __m256i lo = _mm512_castsi512_si256(data);
-#ifdef NPY_HAVE_AVX512DQ
-    __m256i hi = _mm512_extracti32x8_epi32(data, 1);
-#else
-    __m256i hi = _mm512_extracti64x4_epi64(data, 1);
-#endif
+    __m256i lo = npyv512_lower_si256(data);
+    __m256i hi = npyv512_higher_si256(data, 1);
 #ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu16_epi32(lo);
     r.val[1] = _mm512_cvtepu16_epi32(hi);
@@ -92,8 +84,8 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
     __m256i loehi = _mm256_cvtepu16_epi32(_mm256_extracti128_si256(lo, 1));
     __m256i hielo = _mm256_cvtepu16_epi32(_mm256_castsi256_si128(hi));
     __m256i hiehi = _mm256_cvtepu16_epi32(_mm256_extracti128_si256(hi, 1));
-    r.val[0] = _mm512_inserti64x4(_mm512_castsi256_si512(loelo), loehi, 1);
-    r.val[1] = _mm512_inserti64x4(_mm512_castsi256_si512(hielo), hiehi, 1);
+    r.val[0] = npyv512_combine_si256(loelo, loehi);
+    r.val[1] = npyv512_combine_si256(hielo, hiehi);
 #endif
     return r;
 }

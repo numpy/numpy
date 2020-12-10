@@ -147,7 +147,7 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 
 NPY_FINLINE int npyv_sum_u32(npyv_u32 a)
 {
-    __m256i half = _mm256_add_epi32(_mm512_castsi512_si256(a), _mm512_extracti32x8_epi32(a, 1));
+    __m256i half = _mm256_add_epi32(npyv512_lower_si256(a), npyv512_higher_si256(a));
     __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));
     quarter = _mm_hadd_epi32(quarter, quarter);
     return _mm_cvtsi128_si32(_mm_hadd_epi32(quarter, quarter));
