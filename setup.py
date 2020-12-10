@@ -24,13 +24,49 @@ import sys
 import subprocess
 import textwrap
 import warnings
+import versioneer
+import builtins
 
+# This is a bit hackish: we are setting a global variable so that the main
+# numpy __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.  While ugly, it's
+# a lot more robust than what was previously being used.
+builtins.__NUMPY_SETUP__ = True
 
+# Needed for backwards code compatibility below and in some CI scripts.
+# The version components are changed from ints to strings, but only VERSION
+# seems to matter outside of this module and it was already a str.
+FULLVERSION = versioneer.get_version()
+ISRELEASED = 'dev' not in FULLVERSION
+MAJOR, MINOR, MICRO = FULLVERSION.split('.')[:3]
+VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
+
+# Python supported version checks
 if sys.version_info[:2] < (3, 7):
     raise RuntimeError("Python version >= 3.7 required.")
 
-import builtins
+# The first version not in the `Programming Language :: Python :: ...` classifiers above
+if sys.version_info >= (3, 10):
+    warnings.warn(
+        f"NumPy {VERSION} may not yet support Python "
+        f"{sys.version_info.major}.{sys.version_info.minor}.",
+        RuntimeWarning,
+    )
 
+# BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
+# properly updated when the contents of directories change (true for distutils,
+# not sure about setuptools).
+if os.path.exists('MANIFEST'):
+    os.remove('MANIFEST')
+
+# We need to import setuptools here in order for it to persist in sys.modules.
+# Its presence/absence is used in subclassing setup in numpy/distutils/core.py,
+# which may not be the most robust design.
+import setuptools
+
+# Initialize cmdclass from versioneer
+from numpy.distutils.core import numpy_cmdclass
+cmdclass = versioneer.get_cmdclass(numpy_cmdclass)
 
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable
@@ -53,114 +89,6 @@ Operating System :: POSIX
 Operating System :: Unix
 Operating System :: MacOS
 """
-
-MAJOR               = 1
-MINOR               = 21
-MICRO               = 0
-ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
-
-# The first version not in the `Programming Language :: Python :: ...` classifiers above
-if sys.version_info >= (3, 10):
-    warnings.warn(
-        f"NumPy {VERSION} may not yet support Python "
-        f"{sys.version_info.major}.{sys.version_info.minor}.",
-        RuntimeWarning,
-    )
-
-
-# Return the git revision as a string
-def git_version():
-    def _minimal_ext_cmd(cmd):
-        # construct minimal environment
-        env = {}
-        for k in ['SYSTEMROOT', 'PATH', 'HOME']:
-            v = os.environ.get(k)
-            if v is not None:
-                env[k] = v
-        # LANGUAGE is used on win32
-        env['LANGUAGE'] = 'C'
-        env['LANG'] = 'C'
-        env['LC_ALL'] = 'C'
-        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
-        return out
-
-    try:
-        out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
-        GIT_REVISION = out.strip().decode('ascii')
-    except (subprocess.SubprocessError, OSError):
-        GIT_REVISION = "Unknown"
-
-    if not GIT_REVISION:
-        # this shouldn't happen but apparently can (see gh-8512)
-        GIT_REVISION = "Unknown"
-
-    return GIT_REVISION
-
-
-# BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
-# properly updated when the contents of directories change (true for distutils,
-# not sure about setuptools).
-if os.path.exists('MANIFEST'):
-    os.remove('MANIFEST')
-
-# This is a bit hackish: we are setting a global variable so that the main
-# numpy __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet.  While ugly, it's
-# a lot more robust than what was previously being used.
-builtins.__NUMPY_SETUP__ = True
-
-
-def get_version_info():
-    # Adding the git rev number needs to be done inside write_version_py(),
-    # otherwise the import of numpy.version messes up the build under Python 3.
-    FULLVERSION = VERSION
-    if os.path.exists('.git'):
-        GIT_REVISION = git_version()
-    elif os.path.exists('numpy/version.py'):
-        # must be a source distribution, use existing version file
-        try:
-            from numpy.version import git_revision as GIT_REVISION
-        except ImportError:
-            raise ImportError("Unable to import git_revision. Try removing "
-                              "numpy/version.py and the build directory "
-                              "before building.")
-    else:
-        GIT_REVISION = "Unknown"
-
-    if not ISRELEASED:
-        import time
-
-        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime())
-        FULLVERSION += f'.dev0+{time_stamp}_{GIT_REVISION[:7]}'
-
-    return FULLVERSION, GIT_REVISION
-
-
-def write_version_py(filename='numpy/version.py'):
-    cnt = """
-# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
-#
-# To compare versions robustly, use `numpy.lib.NumpyVersion`
-short_version: str = '%(version)s'
-version: str = '%(version)s'
-full_version: str = '%(full_version)s'
-git_revision: str = '%(git_revision)s'
-release: bool = %(isrelease)s
-
-if not release:
-    version = full_version
-"""
-    FULLVERSION, GIT_REVISION = get_version_info()
-
-    a = open(filename, 'w')
-    try:
-        a.write(cnt % {'version': VERSION,
-                       'full_version': FULLVERSION,
-                       'git_revision': GIT_REVISION,
-                       'isrelease': str(ISRELEASED)})
-    finally:
-        a.close()
 
 
 def configuration(parent_package='', top_path=None):
@@ -230,13 +158,13 @@ class concat_license_files():
             f.write(self.bsd_text)
 
 
-from distutils.command.sdist import sdist
-class sdist_checked(sdist):
+sdist_class = cmdclass['sdist']
+class sdist_checked(sdist_class):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
         with concat_license_files():
-            sdist.run(self)
+            sdist_class.run(self)
 
 
 def get_build_overrides():
@@ -320,7 +248,8 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src',
+                     'version')
 
     for command in good_commands:
         if command in args:
@@ -422,7 +351,7 @@ def parse_setuppy_commands():
 
 
 def get_docs_url():
-    if not ISRELEASED:
+    if 'dev' in VERSION:
         return "https://numpy.org/devdocs"
     else:
         # For releases, this URL ends up on pypi.
@@ -437,9 +366,6 @@ def setup_package():
     os.chdir(src_path)
     sys.path.insert(0, src_path)
 
-    # Rewrite the version file every time
-    write_version_py()
-
     # The f2py scripts that will be installed
     if sys.platform == 'win32':
         f2py_cmds = [
@@ -452,7 +378,7 @@ def setup_package():
             'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
             ]
 
-    cmdclass = {"sdist": sdist_checked, }
+    cmdclass["sdist"] = sdist_checked
     metadata = dict(
         name='numpy',
         maintainer="NumPy Developers",
@@ -471,6 +397,7 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
+        version=versioneer.get_version(),
         cmdclass=cmdclass,
         python_requires='>=3.7',
         zip_safe=False,
@@ -486,10 +413,11 @@ def setup_package():
         # Raise errors for unsupported commands, improve help output, etc.
         run_build = parse_setuppy_commands()
 
-    if run_build:
+    if run_build and 'version' not in sys.argv:
         # patches distutils, even though we don't use it
-        import setuptools  # noqa: F401
+        #from setuptools import setup
         from numpy.distutils.core import setup
+
         if 'sdist' not in sys.argv:
             # Generate Cython sources, unless we're generating an sdist
             generate_cython()
@@ -498,10 +426,8 @@ def setup_package():
         # Customize extension building
         cmdclass['build_clib'], cmdclass['build_ext'] = get_build_overrides()
     else:
+        #from numpy.distutils.core import setup
         from setuptools import setup
-        # Version number is added to metadata inside configuration() if build
-        # is run.
-        metadata['version'] = get_version_info()[0]
 
     try:
         setup(**metadata)

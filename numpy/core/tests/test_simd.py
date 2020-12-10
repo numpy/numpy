@@ -92,6 +92,32 @@ class _Test_Utility:
         v = self.npyv.setall_u32(0x7fc00000)
         return self.npyv.reinterpret_f32_u32(v)[0]
 
+class _SIMD_BOOL(_Test_Utility):
+    """
+    To test all boolean vector types at once
+    """
+    def _data(self, start=None, count=None, reverse=False):
+        nlanes = getattr(self.npyv, "nlanes_u" + self.sfx[1:])
+        true_mask = self._true_mask()
+        rng = range(nlanes)
+        if reverse:
+            rng = reversed(rng)
+        return [true_mask if x % 2 else 0 for x in rng]
+
+    def _load_b(self, data):
+        len_str = self.sfx[1:]
+        load = getattr(self.npyv, "load_u" + len_str)
+        cvt = getattr(self.npyv, f"cvt_b{len_str}_u{len_str}")
+        return cvt(load(data))
+
+    def test_tobits(self):
+        data2bits = lambda data: sum([int(x != 0) << i for i, x in enumerate(data, 0)])
+        for data in (self._data(), self._data(reverse=True)):
+            vdata = self._load_b(data)
+            data_bits = data2bits(data)
+            tobits = bin(self.tobits(vdata))
+            assert tobits == bin(data_bits)
+
 class _SIMD_INT(_Test_Utility):
     """
     To test all integer vector types at once
@@ -459,6 +485,18 @@ class _SIMD_ALL(_Test_Utility):
         vzip  = self.zip(vdata_a, vdata_b)
         assert vzip == (data_zipl, data_ziph)
 
+    def test_reorder_rev64(self):
+        # Reverse elements of each 64-bit lane
+        ssize = self._scalar_size()
+        if ssize == 64:
+            return
+        data_rev64 = [
+            y for x in range(0, self.nlanes, 64//ssize)
+              for y in reversed(range(x, x + 64//ssize))
+        ]
+        rev64 = self.rev64(self.load(range(self.nlanes)))
+        assert rev64 == data_rev64
+
     def test_operators_comparison(self):
         if self._is_fp():
             data_a = self._data()
@@ -611,10 +649,12 @@ class _SIMD_ALL(_Test_Utility):
         vsum = self.sum(vdata)
         assert vsum == data_sum
 
+bool_sfx = ("b8", "b16", "b32", "b64")
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")
 fp_sfx  = ("f32", "f64")
 all_sfx = int_sfx + fp_sfx
 tests_registry = {
+    bool_sfx: _SIMD_BOOL,
     int_sfx : _SIMD_INT,
     fp_sfx  : _SIMD_FP,
     all_sfx : _SIMD_ALL

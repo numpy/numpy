@@ -432,8 +432,6 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
-    if args.debug_info:
-        cmd += ["build_src", "--verbose-cfg"]
     if args.warn_error:
         cmd += ["--warn-error"]
     if args.cpu_baseline:
@@ -444,6 +442,8 @@ def build_project(args):
         cmd += ["--disable-optimization"]
     if args.simd_test is not None:
         cmd += ["--simd-test", args.simd_test]
+    if args.debug_info:
+        cmd += ["build_src", "--verbose-cfg"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',
@@ -538,7 +538,7 @@ def asv_clear_cache(bench_path, h_commits, env_dir="env"):
     for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
         for c in h_commits:
             try: shutil.rmtree(os.path.join(asv_build_cache, c))
-            except OSError: pass 
+            except OSError: pass
 
 def asv_substitute_config(in_config, out_config, **custom_vars):
     """

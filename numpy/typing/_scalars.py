@@ -7,12 +7,16 @@ import numpy as np
 
 _CharLike = Union[str, bytes]
 
+# The 6 `<X>Like` type-aliases below represent all scalars that can be
+# coerced into `<X>` (with the casting rule `same_kind`)
 _BoolLike = Union[bool, np.bool_]
-_IntLike = Union[int, np.integer]
+_UIntLike = Union[_BoolLike, np.unsignedinteger]
+_IntLike = Union[_BoolLike, int, np.integer]
 _FloatLike = Union[_IntLike, float, np.floating]
 _ComplexLike = Union[_FloatLike, complex, np.complexfloating]
-_NumberLike = Union[int, float, complex, np.number, np.bool_]
+_TD64Like = Union[_IntLike, np.timedelta64]
 
+_NumberLike = Union[int, float, complex, np.number, np.bool_]
 _ScalarLike = Union[
     int,
     float,
