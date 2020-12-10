@@ -48,8 +48,9 @@ class TypeDescription:
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
-    dispatch: list
-        Available SIMD ufunc loops, dispatched at runtime in specified order
+    dispatch: str or None, optional
+        Dispatch-able source name without its extension '.dispatch.c' that contains the definition of ufunc,
+        dispatched at runtime depending on the specified targets of the dispatch-able source.
         Currently only supported for simples types (see make_arrays)
     """
     def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None, dispatch=None):
@@ -119,11 +120,12 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None, dispatch=None)
             simdt = [k for k, v in simd if t in v]
         else:
             simdt = []
+
         # [(dispatch file name without extension '.dispatch.c*', list of types)]
         if dispatch:
-            dispt = [k for k, v in dispatch if t in v]
+            dispt = ([k for k, v in dispatch if t in v]+[None])[0]
         else:
-            dispt = []
+            dispt = None
         tds.append(TypeDescription(
             t, f=fd, in_=i, out=o, astype=astype, simd=simdt, dispatch=dispt
         ))
@@ -1000,6 +1002,7 @@ def make_arrays(funcdict):
     # later
     code1list = []
     code2list = []
+    dispdict  = {}
     names = sorted(funcdict.keys())
     for name in names:
         uf = funcdict[name]
@@ -1010,6 +1013,7 @@ def make_arrays(funcdict):
         sub = 0
 
         for t in uf.type_descriptions:
+
             if t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
                 datalist.append('(void *)NULL')
@@ -1023,7 +1027,8 @@ def make_arrays(funcdict):
             elif t.func_data is None:
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
-                funclist.append('%s_%s' % (tname, name))
+                cfunc_name = f"{tname}_{name}"
+                funclist.append(cfunc_name)
                 if t.simd is not None:
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
@@ -1036,16 +1041,8 @@ def make_arrays(funcdict):
                             ISA=vt.upper(), isa=vt,
                             fname=name, type=tname, idx=k
                         ))
-                if t.dispatch is not None:
-                    for dname in t.dispatch:
-                        code2list.append(textwrap.dedent("""\
-                        #ifndef NPY_DISABLE_OPTIMIZATION
-                        #include "{dname}.dispatch.h"
-                        #endif
-                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name});
-                        """).format(
-                            dname=dname, name=name, tname=tname, k=k
-                        ))
+                if t.dispatch:
+                    dispdict.setdefault(t.dispatch, []).append((tname, k, cfunc_name))
             else:
                 funclist.append('NULL')
                 try:
@@ -1091,6 +1088,17 @@ def make_arrays(funcdict):
                          % (name, datanames))
         code1list.append("static char %s_signatures[] = {%s};"
                          % (name, signames))
+
+    for dname, funcs in dispdict.items():
+        code2list.append(textwrap.dedent(f"""
+            #ifndef NPY_DISABLE_OPTIMIZATION
+            #include "{dname}.dispatch.h"
+            #endif
+        """))
+        for (ufunc_name, func_idx, cfunc_name) in funcs:
+            code2list.append(textwrap.dedent(f"""\
+                NPY_CPU_DISPATCH_CALL_XB({ufunc_name}_functions[{func_idx}] = {cfunc_name});
+            """))
     return "\n".join(code1list), "\n".join(code2list)
 
 def make_ufuncs(funcdict):
