@@ -56,7 +56,7 @@ NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
 {
     npyv_u16x2 r;
     __m256i lo = npyv512_lower_si256(data);
-    __m256i hi = npyv512_higher_si256(data, 1);
+    __m256i hi = npyv512_higher_si256(data);
 #ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu8_epi16(lo);
     r.val[1] = _mm512_cvtepu8_epi16(hi);
@@ -75,7 +75,7 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
 {
     npyv_u32x2 r;
     __m256i lo = npyv512_lower_si256(data);
-    __m256i hi = npyv512_higher_si256(data, 1);
+    __m256i hi = npyv512_higher_si256(data);
 #ifdef NPY_HAVE_AVX512BW
     r.val[0] = _mm512_cvtepu16_epi32(lo);
     r.val[1] = _mm512_cvtepu16_epi32(hi);
