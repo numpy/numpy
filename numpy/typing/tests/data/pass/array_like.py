@@ -25,13 +25,13 @@ class A:
 x13: ArrayLike = A()
 
 scalar: _SupportsArray = np.int64(1)
-scalar.__array__(np.float64)
+scalar.__array__(None)
 array: _SupportsArray = np.array(1)
-array.__array__(np.float64)
+array.__array__(None)
 
 a: _SupportsArray = A()
-a.__array__(np.int64)
-a.__array__(dtype=np.int64)
+a.__array__(None)
+a.__array__(dtype=None)
 
 # Escape hatch for when you mean to make something like an object
 # array.
