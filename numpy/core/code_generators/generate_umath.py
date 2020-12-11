@@ -46,18 +46,19 @@ class TypeDescription:
         If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
         instead of PyUFunc_x_x/PyUFunc_xx_x.
     cfunc_alias : str or none, optional
-        replaces the suffix of C function name instead of using ufunc_name,
-        e.g. "FLOAT_{cfunc_alias}" instead of "FLOAT_{ufunc_name}" (see make_arrays)
+        appended to inner loop C function name, e.g. FLOAT_{cfunc_alias} (see make_arrays)
         NOTE: it doesn't support 'astype'
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
     dispatch: str or None, optional
-        Dispatch-able source name without its extension '.dispatch.c' that contains the definition of ufunc,
-        dispatched at runtime depending on the specified targets of the dispatch-able source.
+        Dispatch-able source name without its extension '.dispatch.c' that
+        contains the definition of ufunc, dispatched at runtime depending on the
+        specified targets of the dispatch-able source.
         NOTE: it doesn't support 'astype'
     """
-    def __init__(self, type, f=None, in_=None, out=None, astype=None, cfunc_alias=None, simd=None, dispatch=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None, cfunc_alias=None,
+                 simd=None, dispatch=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -96,7 +97,8 @@ def build_func_data(types, f):
     func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
-def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None, simd=None, dispatch=None):
+def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None,
+       simd=None, dispatch=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -132,7 +134,8 @@ def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None, simd=No
         else:
             dispt = None
         tds.append(TypeDescription(
-            t, f=fd, in_=i, out=o, astype=astype, cfunc_alias=cfunc_alias, simd=simdt, dispatch=dispt
+            t, f=fd, in_=i, out=o, astype=astype, cfunc_alias=cfunc_alias,
+            simd=simdt, dispatch=dispt
         ))
     return tds
 
@@ -287,7 +290,7 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
           'PyUFunc_AdditionTypeResolver',
-          TD(notimes_or_obj, simd=[('avx512f', cmplxvec),('avx2', ints)]),
+          TD(notimes_or_obj, simd=[('avx2', ints)], dispatch=[('loops_arithm_fp', 'fdFD')]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'mM', 'M'),
@@ -298,7 +301,7 @@ defdict = {
     Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolver',
-          TD(ints + inexact, simd=[('avx512f', cmplxvec),('avx2', ints)]),
+          TD(ints + inexact, simd=[('avx2', ints)], dispatch=[('loops_arithm_fp', 'fdFD')]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'MM', 'm'),
@@ -309,7 +312,7 @@ defdict = {
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.multiply'),
           'PyUFunc_MultiplicationTypeResolver',
-          TD(notimes_or_obj, simd=[('avx512f', cmplxvec),('avx2', ints)]),
+          TD(notimes_or_obj, simd=[('avx2', ints)], dispatch=[('loops_arithm_fp', 'fdFD')]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'qm', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
@@ -333,10 +336,10 @@ defdict = {
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.true_divide'),
           'PyUFunc_TrueDivisionTypeResolver',
-          TD(flts+cmplx),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
-           TypeDescription('m', FullTypeDescr, 'md', 'm'),
-           TypeDescription('m', FullTypeDescr, 'mm', 'd'),
+          TD(flts+cmplx, cfunc_alias='divide', dispatch=[('loops_arithm_fp', 'fd')]),
+          [TypeDescription('m', FullTypeDescr, 'mq', 'm', cfunc_alias='divide'),
+           TypeDescription('m', FullTypeDescr, 'md', 'm', cfunc_alias='divide'),
+           TypeDescription('m', FullTypeDescr, 'mm', 'd', cfunc_alias='divide'),
           ],
           TD(O, f='PyNumber_TrueDivide'),
           ),
