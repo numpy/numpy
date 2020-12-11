@@ -22,7 +22,7 @@ _DType = TypeVar("_DType", bound="dtype[Any]")
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
     # The `_SupportsArray` protocol only cares about the default dtype
-    # (i.e. `dtype=None`) ofthe to-be returned array.
+    # (i.e. `dtype=None`) of the to-be returned array.
     # Concrete implementations of the protocol are responsible for adding
     # any and all remaining overloads
     class _SupportsArray(Protocol[_DType]):
