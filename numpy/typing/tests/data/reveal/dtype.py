@@ -1,5 +1,7 @@
 import numpy as np
 
+dtype_obj: np.dtype[np.str_]
+
 reveal_type(np.dtype(np.float64))  # E: numpy.dtype[numpy.floating[numpy.typing._64Bit]]
 reveal_type(np.dtype(np.int64))  # E: numpy.dtype[numpy.signedinteger[numpy.typing._64Bit]]
 
@@ -31,3 +33,9 @@ reveal_type(np.dtype("S8"))  # E: numpy.dtype
 
 # Void
 reveal_type(np.dtype(("U", 10)))  # E: numpy.dtype[numpy.void]
+
+# Methods and attributes
+reveal_type(dtype_obj.base)  # E: numpy.dtype[numpy.str_]
+reveal_type(dtype_obj.subdtype)  # E: Union[Tuple[numpy.dtype[numpy.str_], builtins.tuple[builtins.int]], None]
+reveal_type(dtype_obj.newbyteorder())  # E: numpy.dtype[numpy.str_]
+reveal_type(dtype_obj.type)  # E: Type[numpy.str_]
