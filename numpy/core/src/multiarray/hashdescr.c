@@ -165,7 +165,7 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
         }
 
         foffset = PyTuple_GET_ITEM(value, 1);
-        if (!PyInt_Check(foffset)) {
+        if (!PyLong_Check(foffset)) {
             PyErr_SetString(PyExc_SystemError,
                     "(Hash) Second item in compound dtype tuple not an int ???");
             return -1;
@@ -208,7 +208,7 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
             PyList_Append(l, item);
         }
     }
-    else if (PyInt_Check(adescr->shape)) {
+    else if (PyLong_Check(adescr->shape)) {
         PyList_Append(l, adescr->shape);
     }
     else {

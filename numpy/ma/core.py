@@ -443,9 +443,9 @@ def _check_fill_value(fill_value, ndtype):
         if isinstance(fill_value, (ndarray, np.void)):
             try:
                 fill_value = np.array(fill_value, copy=False, dtype=ndtype)
-            except ValueError:
+            except ValueError as e:
                 err_msg = "Unable to transform %s to dtype %s"
-                raise ValueError(err_msg % (fill_value, ndtype))
+                raise ValueError(err_msg % (fill_value, ndtype)) from e
         else:
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
@@ -460,12 +460,12 @@ def _check_fill_value(fill_value, ndtype):
             # Also in case of converting string arrays.
             try:
                 fill_value = np.array(fill_value, copy=False, dtype=ndtype)
-            except (OverflowError, ValueError):
+            except (OverflowError, ValueError) as e:
                 # Raise TypeError instead of OverflowError or ValueError.
                 # OverflowError is seldom used, and the real problem here is
                 # that the passed fill_value is not compatible with the ndtype.
                 err_msg = "Cannot convert fill_value %s to dtype %s"
-                raise TypeError(err_msg % (fill_value, ndtype))
+                raise TypeError(err_msg % (fill_value, ndtype)) from e
     return np.array(fill_value)
 
 
@@ -1489,7 +1489,7 @@ def is_mask(m):
 
     See Also
     --------
-    isMaskedArray : Test whether input is an instance of MaskedArray.
+    ma.isMaskedArray : Test whether input is an instance of MaskedArray.
 
     Examples
     --------
@@ -2812,7 +2812,7 @@ class MaskedArray(ndarray):
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None, keep_mask=True,
-                hard_mask=None, shrink=True, order=None, **options):
+                hard_mask=None, shrink=True, order=None):
         """
         Create a new masked array from scratch.
 
@@ -3538,11 +3538,12 @@ class MaskedArray(ndarray):
         Force the mask to hard.
 
         Whether the mask of a masked array is hard or soft is determined by
-        its `hardmask` property. `harden_mask` sets `hardmask` to True.
+        its `~ma.MaskedArray.hardmask` property. `harden_mask` sets
+        `~ma.MaskedArray.hardmask` to ``True``.
 
         See Also
         --------
-        hardmask
+        ma.MaskedArray.hardmask
 
         """
         self._hardmask = True
@@ -3553,11 +3554,12 @@ class MaskedArray(ndarray):
         Force the mask to soft.
 
         Whether the mask of a masked array is hard or soft is determined by
-        its `hardmask` property. `soften_mask` sets `hardmask` to False.
+        its `~ma.MaskedArray.hardmask` property. `soften_mask` sets
+        `~ma.MaskedArray.hardmask` to ``False``.
 
         See Also
         --------
-        hardmask
+        ma.MaskedArray.hardmask
 
         """
         self._hardmask = False
@@ -3832,7 +3834,7 @@ class MaskedArray(ndarray):
         """
         Return `a` where condition is ``True``.
 
-        If condition is a `MaskedArray`, missing values are considered
+        If condition is a `~ma.MaskedArray`, missing values are considered
         as ``False``.
 
         Parameters
@@ -3851,7 +3853,7 @@ class MaskedArray(ndarray):
         Returns
         -------
         result : MaskedArray
-            A :class:`MaskedArray` object.
+            A :class:`~ma.MaskedArray` object.
 
         Notes
         -----
@@ -4461,7 +4463,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        count_masked : Count masked elements in array or along a given axis.
+        ma.count_masked : Count masked elements in array or along a given axis.
 
         Examples
         --------
@@ -5103,7 +5105,7 @@ class MaskedArray(ndarray):
 
         Notes
         -----
-        The mask is lost if `out` is not a valid :class:`MaskedArray` !
+        The mask is lost if `out` is not a valid :class:`ma.MaskedArray` !
 
         Arithmetic is modular when using integer types, and no error is
         raised on overflow.
@@ -5389,7 +5391,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        numpy.ndarray.around : corresponding function for ndarrays
+        numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
@@ -5449,7 +5451,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        MaskedArray.sort : Describes sorting algorithms used.
+        ma.MaskedArray.sort : Describes sorting algorithms used.
         lexsort : Indirect stable sort with multiple keys.
         numpy.ndarray.sort : Inplace sort.
 
@@ -5679,7 +5681,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        minimum_fill_value
+        ma.minimum_fill_value
             Returns the minimum filling value for a given datatype.
 
         """
@@ -5813,7 +5815,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        maximum_fill_value
+        ma.maximum_fill_value
             Returns the maximum filling value for a given datatype.
 
         """
@@ -6907,11 +6909,11 @@ def compressed(x):
     Return all the non-masked data as a 1-D array.
 
     This function is equivalent to calling the "compressed" method of a
-    `MaskedArray`, see `MaskedArray.compressed` for details.
+    `ma.MaskedArray`, see `ma.MaskedArray.compressed` for details.
 
     See Also
     --------
-    MaskedArray.compressed
+    ma.MaskedArray.compressed
         Equivalent method.
 
     """

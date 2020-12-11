@@ -24,7 +24,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    pickle
     )
 
 
@@ -86,7 +86,7 @@ class BagObj:
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
-            raise AttributeError(key)
+            raise AttributeError(key) from None
 
     def __dir__(self):
         """
@@ -446,9 +446,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                                  "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except Exception:
+            except Exception as e:
                 raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file))
+                    "Failed to interpret file %s as a pickle" % repr(file)) from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -517,7 +517,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     # [1 2] [1 3]
     """
     if hasattr(file, 'write'):
-        file_ctx = contextlib_nullcontext(file)
+        file_ctx = contextlib.nullcontext(file)
     else:
         file = os_fspath(file)
         if not file.endswith('.npy'):
@@ -965,10 +965,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if comments is not None:
             line = regex_comments.split(line, maxsplit=1)[0]
         line = line.strip('\r\n')
-        if line:
-            return line.split(delimiter)
-        else:
-            return []
+        return line.split(delimiter) if line else []
 
     def read_data(chunk_size):
         """Parse each line, including the first.
@@ -1030,11 +1027,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     user_converters = converters
 
+    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
-    else:
-        byte_converters = False
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
@@ -1435,10 +1431,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 try:
                     v = format % tuple(row) + newline
-                except TypeError:
+                except TypeError as e:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
-                                    % (str(X.dtype), format))
+                                    % (str(X.dtype), format)) from e
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1796,7 +1792,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid_ctx = contextlib.closing(fid)
         else:
             fid = fname
-            fid_ctx = contextlib_nullcontext(fid)
+            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(

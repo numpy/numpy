@@ -34,7 +34,7 @@ Basic Slicing and Indexing
 Basic slicing extends Python's basic concept of slicing to N
 dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
 (constructed by ``start:stop:step`` notation inside of brackets), an
-integer, or a tuple of slice objects and integers. :const:`Ellipsis`
+integer, or a tuple of slice objects and integers. :py:data:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
 well.
 
@@ -43,7 +43,7 @@ well.
   In order to remain backward compatible with a common usage in
   Numeric, basic slicing is also initiated if the selection object is
   any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
-  :class:`slice` objects, the :const:`Ellipsis` object, or the :const:`newaxis`
+  :class:`slice` objects, the :py:data:`Ellipsis` object, or the :const:`newaxis`
   object, but not for integer arrays or other embedded sequences.
 
 .. index::
@@ -129,7 +129,7 @@ concepts to remember include:
               [5],
               [6]]])
 
-- :const:`Ellipsis` expands to the number of ``:`` objects needed for the
+- :py:data:`Ellipsis` expands to the number of ``:`` objects needed for the
   selection tuple to index all dimensions. In most cases, this means that
   length of the expanded selection tuple is ``x.ndim``. There may only be a
   single ellipsis present.
@@ -333,7 +333,7 @@ the subspace defined by the basic indexing (excluding integers) and the
 subspace from the advanced indexing part. Two cases of index combination
 need to be distinguished:
 
-* The advanced indexes are separated by a slice, :const:`Ellipsis` or :const:`newaxis`.
+* The advanced indexes are separated by a slice, :py:data:`Ellipsis` or :const:`newaxis`.
   For example ``x[arr1, :, arr2]``.
 * The advanced indexes are all next to each other.
   For example ``x[..., arr1, arr2, :]`` but *not* ``x[arr1, :, 1]``
@@ -453,7 +453,7 @@ also supports boolean arrays and will work without any surprises.
     array([[ 3,  5],
            [ 9, 11]])
 
-    Without the ``np.ix_`` call or only the diagonal elements would be
+    Without the ``np.ix_`` call, only the diagonal elements would be
     selected.
 
     Or without ``np.ix_`` (compare the integer array examples):

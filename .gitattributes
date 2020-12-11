@@ -7,14 +7,17 @@ doc/release/*.rst merge=union
 # Highlight our custom templating language as C, since it's hopefully better
 # than nothing. This also affects repo statistics.
 *.c.src linguist-language=C
+*.inc.src linguist-language=C
 *.h.src linguist-language=C
 
 # Mark some files as vendored
 numpy/linalg/lapack_lite/f2c.c linguist-vendored
 numpy/linalg/lapack_lite/f2c.h linguist-vendored
 tools/npy_tempita/* linguist-vendored
+numpy/core/include/numpy/libdivide/* linguist-vendored
 
 # Mark some files as generated
 numpy/linalg/lapack_lite/f2c_*.c linguist-generated
 numpy/linalg/lapack_lite/lapack_lite_names.h linguist-generated
 
+numpy/_version.py export-subst

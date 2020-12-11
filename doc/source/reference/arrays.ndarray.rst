@@ -1,10 +1,10 @@
+.. currentmodule:: numpy
+
 .. _arrays.ndarray:
 
 ******************************************
 The N-dimensional array (:class:`ndarray`)
 ******************************************
-
-.. currentmodule:: numpy
 
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions
@@ -259,10 +259,10 @@ Array interface
 
 .. seealso:: :ref:`arrays.interface`.
 
-==========================  ===================================
-:obj:`__array_interface__`  Python-side of the array interface
-:obj:`__array_struct__`     C-side of the array interface
-==========================  ===================================
+==================================  ===================================
+:obj:`~object.__array_interface__`  Python-side of the array interface
+:obj:`~object.__array_struct__`     C-side of the array interface
+==================================  ===================================
 
 :mod:`ctypes` foreign function interface
 ----------------------------------------
@@ -469,7 +469,7 @@ Comparison operators:
    ndarray.__eq__
    ndarray.__ne__
 
-Truth value of an array (:func:`bool()`):
+Truth value of an array (:class:`bool() <bool>`):
 
 .. autosummary::
    :toctree: generated/
@@ -604,9 +604,9 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__setitem__
    ndarray.__contains__
 
-Conversion; the operations :func:`int()`, :func:`float()` and
-:func:`complex()`.
-. They work only on arrays that have one element in them
+Conversion; the operations :class:`int() <int>`,
+:class:`float() <float>` and :class:`complex() <complex>`.
+They work only on arrays that have one element in them
 and return the appropriate scalar.
 
 .. autosummary::

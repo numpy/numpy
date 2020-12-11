@@ -1,6 +1,7 @@
 import sys
 import datetime as dt
 
+import pytest
 import numpy as np
 
 
@@ -62,16 +63,6 @@ np.str_("hello")
 np.str_(b"hello", 'utf-8')
 np.str_(b"hello", encoding='utf-8')
 
-# Protocols
-float(np.int8(4))
-int(np.int16(5))
-np.int8(np.float32(6))
-
-# TODO(alan): test after https://github.com/python/typeshed/pull/2004
-# complex(np.int32(8))
-
-abs(np.int8(4))
-
 # Array-ish semantics
 np.int8().real
 np.int16().imag
@@ -108,22 +99,67 @@ np.timedelta64(dt.timedelta(2))
 np.timedelta64(None)
 np.timedelta64(None, "D")
 
-dt_64 = np.datetime64(0, "D")
-td_64 = np.timedelta64(1, "h")
-
-dt_64 + td_64
-dt_64 - dt_64
-dt_64 - td_64
-
-td_64 + td_64
-td_64 - td_64
-td_64 / 1.0
-td_64 / td_64
-td_64 % td_64
-
 np.void(1)
 np.void(np.int64(1))
 np.void(True)
 np.void(np.bool_(True))
 np.void(b"test")
 np.void(np.bytes_("test"))
+
+# Protocols
+i8 = np.int64()
+u8 = np.uint64()
+f8 = np.float64()
+c16 = np.complex128()
+b_ = np.bool_()
+td = np.timedelta64()
+U = np.str_("1")
+S = np.bytes_("1")
+AR = np.array(1, dtype=np.float64)
+
+int(i8)
+int(u8)
+int(f8)
+int(b_)
+int(td)
+int(U)
+int(S)
+int(AR)
+with pytest.warns(np.ComplexWarning):
+    int(c16)
+
+float(i8)
+float(u8)
+float(f8)
+float(b_)
+float(td)
+float(U)
+float(S)
+float(AR)
+with pytest.warns(np.ComplexWarning):
+    float(c16)
+
+complex(i8)
+complex(u8)
+complex(f8)
+complex(c16)
+complex(b_)
+complex(td)
+complex(U)
+complex(AR)
+
+
+# Misc
+c16.dtype
+c16.real
+c16.imag
+c16.real.real
+c16.real.imag
+c16.ndim
+c16.size
+c16.itemsize
+c16.shape
+c16.strides
+c16.squeeze()
+c16.byteswap()
+c16.transpose()

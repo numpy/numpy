@@ -137,6 +137,7 @@ def configuration(parent_package='', top_path=None):
                          define_macros=defs + LEGACY_DEFS,
                          )
     config.add_data_files(*depends)
+    config.add_data_files('*.pyi')
     return config
 
 

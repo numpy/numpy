@@ -342,9 +342,16 @@ array_implement_array_function(
     }
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
-     * in downstream libraries.
+     * in downstream libraries. If `like=` is specified but doesn't
+     * implement `__array_function__`, raise a `TypeError`.
      */
     if (kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
+        PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
+        if (like_arg && !get_array_function(like_arg)) {
+            return PyErr_Format(PyExc_TypeError,
+                    "The `like` argument must be an array-like that implements "
+                    "the `__array_function__` protocol.");
+        }
         PyDict_DelItem(kwargs, npy_ma_str_like);
     }
 
@@ -373,30 +380,39 @@ array_implement_c_array_function_creation(
 
     /* Remove `like=` kwarg, which is NumPy-exclusive and thus not present
      * in downstream libraries. If that key isn't present, return NULL and
-     * let originating call to continue.
+     * let originating call to continue. If the key is present but doesn't
+     * implement `__array_function__`, raise a `TypeError`.
      */
     if (!PyDict_Contains(kwargs, npy_ma_str_like)) {
         return Py_NotImplemented;
     }
 
-    PyObject *relevant_args = PyTuple_Pack(1,
-            PyDict_GetItem(kwargs, npy_ma_str_like));
-    if (relevant_args == NULL) {
+    PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
+    if (like_arg == NULL) {
         return NULL;
     }
+    else if (!get_array_function(like_arg)) {
+        return PyErr_Format(PyExc_TypeError,
+                "The `like` argument must be an array-like that implements "
+                "the `__array_function__` protocol.");
+    }
+    PyObject *relevant_args = PyTuple_Pack(1, like_arg);
     PyDict_DelItem(kwargs, npy_ma_str_like);
 
     PyObject *numpy_module = PyImport_Import(npy_ma_str_numpy);
     if (numpy_module == NULL) {
+        Py_DECREF(relevant_args);
         return NULL;
     }
 
     PyObject *public_api = PyObject_GetAttrString(numpy_module, function_name);
     Py_DECREF(numpy_module);
     if (public_api == NULL) {
+        Py_DECREF(relevant_args);
         return NULL;
     }
     if (!PyCallable_Check(public_api)) {
+        Py_DECREF(relevant_args);
         Py_DECREF(public_api);
         return PyErr_Format(PyExc_RuntimeError,
                             "numpy.%s is not callable.",
@@ -406,6 +422,7 @@ array_implement_c_array_function_creation(
     PyObject* result = array_implement_array_function_internal(
             public_api, relevant_args, args, kwargs);
 
+    Py_DECREF(relevant_args);
     Py_DECREF(public_api);
     return result;
 }

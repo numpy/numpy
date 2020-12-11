@@ -17,23 +17,6 @@ ndarray_func(np.array([1, 2]))
 array == 1
 array.dtype == float
 
-# Array creation routines checks
-np.array(1, dtype=float)
-np.array(1, copy=False)
-np.array(1, order='F')
-np.array(1, order=None)
-np.array(1, subok=True)
-np.array(1, ndmin=3)
-np.array(1, str, copy=True, order='C', subok=False, ndmin=2)
-
-ndarray_func(np.zeros([1, 2]))
-ndarray_func(np.ones([1, 2]))
-ndarray_func(np.empty([1, 2]))
-
-ndarray_func(np.zeros_like(array))
-ndarray_func(np.ones_like(array))
-ndarray_func(np.empty_like(array))
-
 # Dtype construction
 np.dtype(float)
 np.dtype(np.float64)

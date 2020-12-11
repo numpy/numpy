@@ -578,6 +578,28 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_ToString(self, order);
 }
 
+/* Like PyArray_ToFile but takes the file as a python object */
+static int
+PyArray_ToFileObject(PyArrayObject *self, PyObject *file, char *sep, char *format)
+{
+    npy_off_t orig_pos = 0;
+    FILE *fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
+
+    if (fd == NULL) {
+        return -1;
+    }
+
+    int write_ret = PyArray_ToFile(self, fd, sep, format);
+    PyObject *err_type, *err_value, *err_traceback;
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    int close_ret = npy_PyFile_DupClose2(file, fd, orig_pos);
+    npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+
+    if (write_ret || close_ret) {
+        return -1;
+    }
+    return 0;
+}
 
 /* This should grow an order= keyword to be consistent
  */
@@ -587,10 +609,8 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int own;
     PyObject *file;
-    FILE *fd;
     char *sep = "";
     char *format = "";
-    npy_off_t orig_pos = 0;
     static char *kwlist[] = {"file", "sep", "format", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ss:tofile", kwlist,
@@ -615,25 +635,22 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         own = 0;
     }
 
-    fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
-    if (fd == NULL) {
-        goto fail;
-    }
-    if (PyArray_ToFile(self, fd, sep, format) < 0) {
-        goto fail;
-    }
-    if (npy_PyFile_DupClose2(file, fd, orig_pos) < 0) {
-        goto fail;
-    }
-    if (own && npy_PyFile_CloseFile(file) < 0) {
-        goto fail;
-    }
-    Py_DECREF(file);
-    Py_RETURN_NONE;
+    int file_ret = PyArray_ToFileObject(self, file, sep, format);
+    int close_ret = 0;
 
-fail:
+    if (own) {
+        PyObject *err_type, *err_value, *err_traceback;
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        close_ret = npy_PyFile_CloseFile(file);
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+    }
+
     Py_DECREF(file);
-    return NULL;
+
+    if (file_ret || close_ret) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -842,6 +859,21 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         ret = (PyArrayObject *)PyArray_NewLikeArray(
                                     self, order, dtype, subok);
         if (ret == NULL) {
+            return NULL;
+        }
+        /* NumPy 1.20, 2020-10-01 */
+        if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
+                DEPRECATE_FUTUREWARNING(
+                    "casting an array to a subarray dtype "
+                    "will not using broadcasting in the future, but cast each "
+                    "element to the new dtype and then append the dtype's shape "
+                    "to the new array. You can opt-in to the new behaviour, by "
+                    "additional field to the cast: "
+                    "`arr.astype(np.dtype([('f', dtype)]))['f']`.\n"
+                    "This may lead to a different result or to current failures "
+                    "succeeding.  "
+                    "(FutureWarning since NumPy 1.20)") < 0) {
+            Py_DECREF(ret);
             return NULL;
         }
 
@@ -2148,7 +2180,7 @@ static PyObject *
 array_sizeof(PyArrayObject *self)
 {
     /* object + dimension and strides */
-    Py_ssize_t nbytes = NPY_SIZEOF_PYARRAYOBJECT +
+    Py_ssize_t nbytes = Py_TYPE(self)->tp_basicsize +
         PyArray_NDIM(self) * sizeof(npy_intp) * 2;
     if (PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
         nbytes += PyArray_NBYTES(self);

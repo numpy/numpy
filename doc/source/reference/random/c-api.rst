@@ -181,6 +181,5 @@ Generate a single integer
 
 Generate random uint64 numbers in closed interval [off, off + rng].
 
-.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bint use_masked)
-
+.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bool use_masked)
 

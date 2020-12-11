@@ -178,6 +178,10 @@ class TestUfuncGenericLoops:
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
+def _pickleable_module_global():
+    pass
+
+
 class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -194,6 +198,15 @@ class TestUfunc:
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
+
+    def test_pickle_name_is_qualname(self):
+        # This tests that a simplification of our ufunc pickle code will
+        # lead to allowing qualnames as names.  Future ufuncs should
+        # possible add a specific qualname, or a hook into pickling instead
+        # (dask+numba may benefit).
+        _pickleable_module_global.ufunc = umt._pickleable_module_global_ufunc
+        obj = pickle.loads(pickle.dumps(_pickleable_module_global.ufunc))
+        assert obj is umt._pickleable_module_global_ufunc
 
     def test_reduceat_shifting_sum(self):
         L = 6
@@ -1319,6 +1332,18 @@ class TestUfunc:
         a = np.array([1], dtype=np.float64)
         m = np.array([True], dtype=bool)
         assert_equal(np.sqrt(a, where=m), [1])
+
+    def test_where_with_broadcasting(self):
+        # See gh-17198
+        a = np.random.random((5000, 4))
+        b = np.random.random((5000, 1))
+
+        where = a > 0.3
+        out = np.full_like(a, 0)
+        np.less(a, b, where=where, out=out)
+        b_where = np.broadcast_to(b, a.shape)[where]
+        assert_array_equal((a[where] < b_where), out[where].astype(bool))
+        assert not out[~where].any()  # outside mask, out remains all 0
 
     def check_identityless_reduction(self, a):
         # np.minimum.reduce is an identityless reduction

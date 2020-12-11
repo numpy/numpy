@@ -46,6 +46,13 @@ setup_base()
   # the advantage that it tests that numpy is 'pip install' compatible,
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
+    # activates '-Werror=undef' when DEBUG isn't enabled since _cffi_backend'
+    # extension breaks the build due to the following error:
+    #
+    # error: "HAVE_FFI_PREP_CIF_VAR" is not defined, evaluates to 0 [-Werror=undef]
+    # #if !HAVE_FFI_PREP_CIF_VAR && defined(__arm64__) && defined(__APPLE__)
+    #
+    export CFLAGS="$CFLAGS -Werror=undef"
     $PIP install -v . 2>&1 | tee log
   else
     # The job run with USE_DEBUG=1 on travis needs this.
@@ -72,17 +79,11 @@ run_test()
   # file does not install correctly when Python's optimization level is set
   # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
   PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt
+  DURATIONS_FLAG="--durations 10"
 
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
     export MYPYPATH=$PWD
-  fi
-
-  # pytest aborts when running --durations with python3.6-dbg, so only enable
-  # it for non-debug tests. That is a cPython bug fixed in later versions of
-  # python3.7 but python3.7-dbg is not currently available on travisCI.
-  if [ -z "$USE_DEBUG" ]; then
-    DURATIONS_FLAG="--durations 10"
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -105,7 +106,7 @@ run_test()
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG
+    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG -- -rs
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then

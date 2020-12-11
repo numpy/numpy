@@ -1,9 +1,29 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- encoding:utf-8 -*-
 """
-Download NumPy wheels from Anaconda staging area.
+Script to download NumPy wheels from the Anaconda staging area.
+
+Usage::
+
+    $ ./tools/download-wheels.py <version> -w <optional-wheelhouse>
+
+The default wheelhouse is ``release/installers``.
+
+Dependencies
+------------
+
+- beautifulsoup4
+- urllib3
+
+Examples
+--------
+
+While in the repository root::
+
+    $ python tools/download-wheels.py 1.19.0
+    $ python tools/download-wheels.py 1.19.0 -w ~/wheelhouse
 
 """
-import sys
 import os
 import re
 import shutil
@@ -17,6 +37,7 @@ __version__ = '0.1'
 # Edit these for other projects.
 STAGING_URL = 'https://anaconda.org/multibuild-wheels-staging/numpy'
 PREFIX = 'numpy'
+
 
 def get_wheel_names(version):
     """ Get wheel names from Anaconda HTML directory.
@@ -69,7 +90,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "version",
-         help="NumPy version to download.")
+        help="NumPy version to download.")
     parser.add_argument(
         "-w", "--wheelhouse",
         default=os.path.join(os.getcwd(), "release", "installers"),

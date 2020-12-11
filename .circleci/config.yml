@@ -13,7 +13,11 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      - checkout
+      - checkout:
+      - run:
+          name: pull changes from merge
+          command: |
+            if [[ -v CI_PULL_REQUEST ]] ; then git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge" ; fi
 
       - run:
           name: create virtual environment, install dependencies
@@ -49,10 +53,19 @@ jobs:
             python tools/refguide_check.py --rst
 
       - run:
+          name: build devdocs w/ref warnings
+          command: |
+            . venv/bin/activate
+            cd doc
+            # Don't use -q, show warning summary"
+            SPHINXOPTS="-n" make -e html || echo "ignoring errors for now, see gh-13114"
+
+      - run:
           name: build devdocs
           command: |
             . venv/bin/activate
             cd doc
+            make clean
             SPHINXOPTS=-q make -e html
 
       - run:

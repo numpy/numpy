@@ -10,6 +10,8 @@ NEP 45 — C Style Guide
 :Created: 2012-02-26
 :Resolution: https://github.com/numpy/numpy/issues/11911
 
+.. highlight:: c
+
 Abstract
 --------
 

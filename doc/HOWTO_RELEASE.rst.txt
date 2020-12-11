@@ -460,6 +460,15 @@ The scipy.org should be a PR at https://github.com/scipy/scipy.org. The file
 that needs modification is ``www/index.rst``. Search for ``News``.
 
 
+Update oldest-supported-numpy
+-----------------------------
+If this release is the first one to support a new Python version, or the first
+to provide wheels for a new platform or PyPy version, the version pinnings
+in https://github.com/scipy/oldest-supported-numpy should be updated.
+Either submit a PR with changes to ``setup.cfg`` there, or open an issue with
+info on needed changes.
+
+
 Announce to the lists
 ---------------------
 The release should be announced on the mailing lists of

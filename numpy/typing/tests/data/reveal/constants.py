@@ -40,5 +40,13 @@ reveal_type(np.SHIFT_OVERFLOW)  # E: int
 reveal_type(np.SHIFT_UNDERFLOW)  # E: int
 reveal_type(np.UFUNC_BUFSIZE_DEFAULT)  # E: int
 reveal_type(np.WRAP)  # E: int
-reveal_type(np.little_endian)  # E: int
 reveal_type(np.tracemalloc_domain)  # E: int
+
+reveal_type(np.little_endian)  # E: bool
+reveal_type(np.True_)  # E: numpy.bool_
+reveal_type(np.False_)  # E: numpy.bool_
+
+reveal_type(np.UFUNC_PYVALS_NAME)  # E: str
+
+reveal_type(np.sctypeDict)  # E: dict
+reveal_type(np.sctypes)  # E: TypedDict

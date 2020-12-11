@@ -132,7 +132,7 @@ summary they are:
 
      Offsets may be chosen such that the fields overlap, though this will mean
      that assigning to one field may clobber any overlapping field's data. As
-     an exception, fields of :class:`numpy.object` type cannot overlap with
+     an exception, fields of :class:`numpy.object_` type cannot overlap with
      other fields, because of the risk of clobbering the internal object
      pointer and then dereferencing it.
 
@@ -545,7 +545,7 @@ Viewing Structured Arrays Containing Objects
 --------------------------------------------
 
 In order to prevent clobbering object pointers in fields of
-:class:`numpy.object` type, numpy currently does not allow views of structured
+:class:`object` type, numpy currently does not allow views of structured
 arrays containing objects.
 
 Structure Comparison
@@ -575,11 +575,14 @@ Record Arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
-:class:`numpy.recarray`, and associated helper functions in the
-:mod:`numpy.lib.recfunctions` submodule (aliased as ``numpy.rec``), that allows
-access to fields of structured arrays by attribute instead of only by index.
-Record arrays also use a special datatype, :class:`numpy.record`, that allows
+:class:`numpy.recarray` that allows access to fields of structured arrays by
+attribute instead of only by index.
+Record arrays use a special datatype, :class:`numpy.record`, that allows
 field access by attribute on the structured scalars obtained from the array.
+The :mod:`numpy.rec` module provides functions for creating recarrays from
+various objects.
+Additional helper functions for creating and manipulating structured arrays
+can be found in :mod:`numpy.lib.recfunctions`.
 
 The simplest way to create a record array is with ``numpy.rec.array``::
 
@@ -616,8 +619,8 @@ appropriate `view <numpy-ndarray-view>`_::
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
  ...                      type=np.recarray)
 
-For convenience, viewing an ndarray as type :class:`np.recarray` will
-automatically convert to :class:`np.record` datatype, so the dtype can be left
+For convenience, viewing an ndarray as type :class:`numpy.recarray` will
+automatically convert to :class:`numpy.record` datatype, so the dtype can be left
 out of the view::
 
  >>> recordarr = arr.view(np.recarray)

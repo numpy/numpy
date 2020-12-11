@@ -957,6 +957,8 @@ so the later code will raise exceptions as desired.
 C Implementation Details
 ************************
 
+.. highlight:: c
+
 The first version to implement is the array masks, because it is
 the more general approach. The mask itself is an array, but since
 it is intended to never be directly accessible from Python, it won't
@@ -1159,32 +1161,32 @@ Acknowledgments
 In addition to feedback from Travis Oliphant and others at Enthought,
 this NEP has been revised based on a great deal of feedback from
 the NumPy-Discussion mailing list. The people participating in
-the discussion are::
+the discussion are:
 
-    Nathaniel Smith
-    Robert Kern
-    Charles Harris
-    Gael Varoquaux
-    Eric Firing
-    Keith Goodman
-    Pierre GM
-    Christopher Barker
-    Josef Perktold
-    Ben Root
-    Laurent Gautier
-    Neal Becker
-    Bruce Southey
-    Matthew Brett
-    Wes McKinney
-    Lluís
-    Olivier Delalleau
-    Alan G Isaac
-    E. Antero Tammi
-    Jason Grout
-    Dag Sverre Seljebotn
-    Joe Harrington
-    Gary Strangman
-    Chris Jordan-Squire
-    Peter
+- Nathaniel Smith
+- Robert Kern
+- Charles Harris
+- Gael Varoquaux
+- Eric Firing
+- Keith Goodman
+- Pierre GM
+- Christopher Barker
+- Josef Perktold
+- Ben Root
+- Laurent Gautier
+- Neal Becker
+- Bruce Southey
+- Matthew Brett
+- Wes McKinney
+- Lluís
+- Olivier Delalleau
+- Alan G Isaac
+- E. Antero Tammi
+- Jason Grout
+- Dag Sverre Seljebotn
+- Joe Harrington
+- Gary Strangman
+- Chris Jordan-Squire
+- Peter
 
 I apologize if I missed anyone.

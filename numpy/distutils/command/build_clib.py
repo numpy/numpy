@@ -259,57 +259,56 @@ class build_clib(old_build_clib):
         if requiref90:
             self.mkpath(module_build_dir)
 
-        dispatch_objects = []
-        if not self.disable_optimization:
-            dispatch_sources  = [
-                c_sources.pop(c_sources.index(src))
-                for src in c_sources[:] if src.endswith(".dispatch.c")
-            ]
-            if dispatch_sources:
-                if not self.inplace:
-                    build_src = self.get_finalized_command("build_src").build_src
-                else:
-                    build_src = None
-                dispatch_objects = self.compiler_opt.try_dispatch(
-                    dispatch_sources,
-                    output_dir=self.build_temp,
-                    src_dir=build_src,
-                    macros=macros,
-                    include_dirs=include_dirs,
-                    debug=self.debug,
-                    extra_postargs=extra_postargs
-                )
-            extra_args_baseopt = extra_postargs + self.compiler_opt.cpu_baseline_flags()
-        else:
-            extra_args_baseopt = extra_postargs
-            macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
-
         if compiler.compiler_type == 'msvc':
             # this hack works around the msvc compiler attributes
             # problem, msvc uses its own convention :(
             c_sources += cxx_sources
             cxx_sources = []
 
+        # filtering C dispatch-table sources when optimization is not disabled,
+        # otherwise treated as normal sources.
+        copt_c_sources = []
+        copt_baseline_flags = []
+        copt_macros = []
+        if not self.disable_optimization:
+            copt_build_src = None if self.inplace else self.get_finalized_command("build_src").build_src
+            copt_c_sources = [
+                c_sources.pop(c_sources.index(src))
+                for src in c_sources[:] if src.endswith(".dispatch.c")
+            ]
+            copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
+        else:
+            copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
+
         objects = []
+        if copt_c_sources:
+            log.info("compiling C dispatch-able sources")
+            objects += self.compiler_opt.try_dispatch(copt_c_sources,
+                                                      output_dir=self.build_temp,
+                                                      src_dir=copt_build_src,
+                                                      macros=macros + copt_macros,
+                                                      include_dirs=include_dirs,
+                                                      debug=self.debug,
+                                                      extra_postargs=extra_postargs)
+
         if c_sources:
             log.info("compiling C sources")
-            objects = compiler.compile(c_sources,
-                                       output_dir=self.build_temp,
-                                       macros=macros,
-                                       include_dirs=include_dirs,
-                                       debug=self.debug,
-                                       extra_postargs=extra_args_baseopt)
-        objects.extend(dispatch_objects)
+            objects += compiler.compile(c_sources,
+                                        output_dir=self.build_temp,
+                                        macros=macros + copt_macros,
+                                        include_dirs=include_dirs,
+                                        debug=self.debug,
+                                        extra_postargs=extra_postargs + copt_baseline_flags)
 
         if cxx_sources:
             log.info("compiling C++ sources")
             cxx_compiler = compiler.cxx_compiler()
             cxx_objects = cxx_compiler.compile(cxx_sources,
                                                output_dir=self.build_temp,
-                                               macros=macros,
+                                               macros=macros + copt_macros,
                                                include_dirs=include_dirs,
                                                debug=self.debug,
-                                               extra_postargs=extra_postargs)
+                                               extra_postargs=extra_postargs + copt_baseline_flags)
             objects.extend(cxx_objects)
 
         if f_sources or fmodule_sources:

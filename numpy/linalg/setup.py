@@ -80,6 +80,7 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
         libraries=['npymath'],
     )
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == '__main__':

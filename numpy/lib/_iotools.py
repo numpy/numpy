@@ -18,6 +18,8 @@ def _decode_line(line, encoding=None):
     ----------
     line : str or bytes
          Line to be decoded.
+    encoding : str
+         Encoding used to decode `line`.
 
     Returns
     -------
@@ -27,9 +29,8 @@ def _decode_line(line, encoding=None):
     """
     if type(line) is bytes:
         if encoding is None:
-            line = line.decode('latin1')
-        else:
-            line = line.decode(encoding)
+            encoding = "latin1"
+        line = line.decode(encoding)
 
     return line
 

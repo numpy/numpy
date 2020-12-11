@@ -29,4 +29,26 @@
 #define npyv_cvt_b32_f32(A) ((npyv_b32) A)
 #define npyv_cvt_b64_f64(A) ((npyv_b64) A)
 
+// convert boolean vector to integer bitfield
+NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
+{
+    const npyv_u8 qperm = npyv_set_u8(120, 112, 104, 96, 88, 80, 72, 64, 56, 48, 40, 32, 24, 16, 8, 0);
+    return vec_extract((npyv_u32)vec_vbpermq((npyv_u8)a, qperm), 2);
+}
+NPY_FINLINE npy_uint64 npyv_tobits_b16(npyv_b16 a)
+{
+    const npyv_u8 qperm = npyv_setf_u8(128, 112, 96, 80, 64, 48, 32, 16, 0);
+    return vec_extract((npyv_u32)vec_vbpermq((npyv_u8)a, qperm), 2);
+}
+NPY_FINLINE npy_uint64 npyv_tobits_b32(npyv_b32 a)
+{
+    const npyv_u8 qperm = npyv_setf_u8(128, 96, 64, 32, 0);
+    return vec_extract((npyv_u32)vec_vbpermq((npyv_u8)a, qperm), 2);
+}
+NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
+{
+    npyv_u64 bit = npyv_shri_u64((npyv_u64)a, 63);
+    return vec_extract(bit, 0) | (int)vec_extract(bit, 1) << 1;
+}
+
 #endif // _NPY_SIMD_VSX_CVT_H

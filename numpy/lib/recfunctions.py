@@ -513,7 +513,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
 
     Nested fields are supported.
 
-    ..versionchanged: 1.18.0
+    .. versionchanged:: 1.18.0
         `drop_fields` returns an array with 0 fields if all fields are dropped,
         rather than returning ``None`` as it did previously.
 

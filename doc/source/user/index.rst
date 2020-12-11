@@ -3,18 +3,17 @@
 .. _user:
 
 ################
-NumPy User Guide
+NumPy user guide
 ################
 
-This guide is intended as an introductory overview of NumPy and
-explains how to install and make use of the most important features of
-NumPy. For detailed reference documentation of the functions and
-classes contained in the package, see the :ref:`reference`.
+This guide is an overview and explains the important features;
+details are found in :ref:`reference`.
 
 .. toctree::
    :maxdepth: 1
 
-   setting-up
+   whatisnumpy
+   Installation <https://numpy.org/install/>
    quickstart
    absolute_beginners
    basics
@@ -26,7 +25,10 @@ classes contained in the package, see the :ref:`reference`.
    howtos_index
 
 
-.. These are stuck here to avoid the "WARNING: document isn't included in any
+.. Links to these files are placed directly in the top-level html
+   (doc/source/_templates/indexcontent.html, which appears for the URLs
+   numpy.org/devdocs and numpy.org/doc/XX) and are not in any toctree, so
+   we include them here to avoid a "WARNING: document isn't included in any
    toctree" message
 
 .. toctree::
@@ -39,5 +41,5 @@ classes contained in the package, see the :ref:`reference`.
    ../docs/index
    ../bugs
    ../release
-   ../about
+   ../doc_conventions
    ../license

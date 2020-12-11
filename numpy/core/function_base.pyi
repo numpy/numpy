@@ -1,8 +1,8 @@
 import sys
 from typing import overload, Tuple, Union, Sequence, Any
 
-from numpy import ndarray, inexact, _NumberLike
-from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
+from numpy import ndarray, inexact
+from numpy.typing import ArrayLike, DTypeLike, _SupportsArray, _NumberLike
 
 if sys.version_info >= (3, 8):
     from typing import SupportsIndex, Literal
@@ -24,7 +24,7 @@ def linspace(
     num: SupportsIndex = ...,
     endpoint: bool = ...,
     retstep: Literal[False] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> ndarray: ...
 @overload
@@ -34,7 +34,7 @@ def linspace(
     num: SupportsIndex = ...,
     endpoint: bool = ...,
     retstep: Literal[True] = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> Tuple[ndarray, inexact]: ...
 def logspace(
@@ -43,7 +43,7 @@ def logspace(
     num: SupportsIndex = ...,
     endpoint: bool = ...,
     base: _ArrayLikeNumber = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> ndarray: ...
 def geomspace(
@@ -51,6 +51,6 @@ def geomspace(
     stop: _ArrayLikeNumber,
     num: SupportsIndex = ...,
     endpoint: bool = ...,
-    dtype: DtypeLike = ...,
+    dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> ndarray: ...

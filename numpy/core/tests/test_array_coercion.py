@@ -309,6 +309,13 @@ class TestScalarDiscovery:
                 # coercion should also raise (error type may change)
                 with pytest.raises(Exception):
                     np.array(scalar, dtype=dtype)
+
+                if (isinstance(scalar, rational) and
+                        np.issubdtype(dtype, np.signedinteger)):
+                    return
+
+                with pytest.raises(Exception):
+                    np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
                 with pytest.raises(Exception):
@@ -324,6 +331,46 @@ class TestScalarDiscovery:
             ass[()] = scalar
             assert_array_equal(ass, cast)
 
+    @pytest.mark.parametrize("dtype_char", np.typecodes["All"])
+    def test_default_dtype_instance(self, dtype_char):
+        if dtype_char in "SU":
+            dtype = np.dtype(dtype_char + "1")
+        elif dtype_char == "V":
+            # Legacy behaviour was to use V8. The reason was float64 being the
+            # default dtype and that having 8 bytes.
+            dtype = np.dtype("V8")
+        else:
+            dtype = np.dtype(dtype_char)
+
+        discovered_dtype, _ = _discover_array_parameters([], type(dtype))
+
+        assert discovered_dtype == dtype
+        assert discovered_dtype.itemsize == dtype.itemsize
+
+    @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
+    def test_scalar_to_int_coerce_does_not_cast(self, dtype):
+        """
+        Signed integers are currently different in that they do not cast other
+        NumPy scalar, but instead use scalar.__int__(). The harcoded
+        exception to this rule is `np.array(scalar, dtype=integer)`.
+        """
+        dtype = np.dtype(dtype)
+        invalid_int = np.ulonglong(-1)
+
+        float_nan = np.float64(np.nan)
+
+        for scalar in [float_nan, invalid_int]:
+            # This is a special case using casting logic and thus not failing:
+            coerced = np.array(scalar, dtype=dtype)
+            cast = np.array(scalar).astype(dtype)
+            assert_array_equal(coerced, cast)
+
+            # However these fail:
+            with pytest.raises((ValueError, OverflowError)):
+                np.array([scalar], dtype=dtype)
+            with pytest.raises((ValueError, OverflowError)):
+                cast[()] = scalar
+
 
 class TestTimeScalars:
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
@@ -333,13 +380,21 @@ class TestTimeScalars:
              param(np.datetime64("NaT", "generic"), id="datetime64[generic](NaT)"),
              param(np.datetime64(1, "D"), id="datetime64[D]")],)
     def test_coercion_basic(self, dtype, scalar):
+        # Note the `[scalar]` is there because np.array(scalar) uses stricter
+        # `scalar.__int__()` rules for backward compatibility right now.
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
-        ass = np.ones((), dtype=dtype)
-        ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
-
         assert_array_equal(arr, cast)
-        assert_array_equal(cast, cast)
+
+        ass = np.ones((), dtype=dtype)
+        if issubclass(dtype, np.integer):
+            with pytest.raises(TypeError):
+                # raises, as would np.array([scalar], dtype=dtype), this is
+                # conversion from times, but behaviour of integers.
+                ass[()] = scalar
+        else:
+            ass[()] = scalar
+            assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("scalar",
@@ -619,3 +674,18 @@ class TestArrayLikes:
         assert arr[()] is ArrayLike
         arr = np.array([ArrayLike])
         assert arr[0] is ArrayLike
+
+    @pytest.mark.skipif(
+            np.dtype(np.intp).itemsize < 8, reason="Needs 64bit platform")
+    def test_too_large_array_error_paths(self):
+        """Test the error paths, including for memory leaks"""
+        arr = np.array(0, dtype="uint8")
+        # Guarantees that a contiguous copy won't work:
+        arr = np.broadcast_to(arr, 2**62)
+
+        for i in range(5):
+            # repeat, to ensure caching cannot have an effect:
+            with pytest.raises(MemoryError):
+                np.array(arr)
+            with pytest.raises(MemoryError):
+                np.array([arr])

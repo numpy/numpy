@@ -14,7 +14,7 @@ Prerequisites
 
 Building NumPy requires the following installed software:
 
-1) Python__ 3.6.x or newer.
+1) Python__ 3.7.x or newer.
 
    Please note that the Python development headers also need to be installed,
    e.g., on Debian/Ubuntu one needs to install both `python3` and
@@ -30,8 +30,8 @@ Building NumPy requires the following installed software:
 
    This is required for testing NumPy, but not for using it.
 
-Python__ http://www.python.org
-pytest__ http://pytest.readthedocs.io
+Python__ https://www.python.org/
+pytest__ https://docs.pytest.org/en/stable/
 Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 
 
@@ -39,12 +39,12 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 
    If you want to build NumPy in order to work on NumPy itself, use
    ``runtests.py``.  For more details, see
-   https://docs.scipy.org/doc/numpy/dev/development_environment.html
+   https://numpy.org/devdocs/dev/development_environment.html
 
 .. note::
 
-   More extensive information on building NumPy (and SciPy) is maintained at
-   https://scipy.github.io/devdocs/building/
+   More extensive information on building NumPy is maintained at
+   https://numpy.org/devdocs/user/building.html#building-from-source
 
 
 Basic Installation
@@ -69,7 +69,7 @@ NPY_NUM_BUILD_JOBS.
 Choosing compilers
 ==================
 
-NumPy needs a C compiler, and for development versions also Cython.  A Fortran
+NumPy needs a C compiler, and for development versions also needs Cython.  A Fortran
 compiler isn't needed to build NumPy itself; the ``numpy.f2py`` tests will be
 skipped when running the test suite if no Fortran compiler is available.  For
 building Scipy a Fortran compiler is needed though, so we include some details
@@ -87,7 +87,7 @@ Windows
 -------
 
 On Windows, building from source can be difficult (in particular if you need to
-build SciPy as well, because that requires a Fortran compiler).  Currently, the
+build SciPy as well, because that requires a Fortran compiler). Currently, the
 most robust option is to use MSVC (for NumPy only). If you also need SciPy,
 you can either use MSVC + Intel Fortran or the Intel compiler suite.
 Intel itself maintains a good `application note
@@ -151,7 +151,7 @@ Or by preloading a specific BLAS library with::
 Build issues
 ============
 
-If you run into build issues and need help, the NumPy
+If you run into build issues and need help, the NumPy and SciPy
 `mailing list <https://scipy.org/scipylib/mailing-lists.html>`_ is the best
-place to ask.  If the issue is clearly a bug in NumPy, please file an issue (or
+place to ask. If the issue is clearly a bug in NumPy, please file an issue (or
 even better, a pull request) at https://github.com/numpy/numpy.

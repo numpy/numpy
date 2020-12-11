@@ -48,7 +48,9 @@ warnings).
 
 To use the NPY_NO_DEPRECATED_API mechanism, you need to #define it to
 the target API version of NumPy before #including any NumPy headers.
-If you want to confirm that your code is clean against 1.7, use::
+If you want to confirm that your code is clean against 1.7, use:
+
+.. code-block:: c
 
     #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 

@@ -276,7 +276,7 @@ class _Config:
         ),
         # IBM/Power
         ## Power7/ISA 2.06
-        VSX = dict(interest=1, headers="altivec.h"),
+        VSX = dict(interest=1, headers="altivec.h", extra_checks="VSX_ASM"),
         ## Power8/ISA 2.07
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
@@ -2372,19 +2372,18 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         else:
             dispatch_rows.append(("Generated", ''))
             for tar in self.feature_sorted(target_sources):
-                tar_as_seq = [tar] if isinstance(tar, str) else tar
                 sources = target_sources[tar]
-                name = tar if isinstance(tar, str) else '(%s)' % ' '.join(tar)
+                pretty_name = tar if isinstance(tar, str) else '(%s)' % ' '.join(tar)
                 flags = ' '.join(self.feature_flags(tar))
                 implies = ' '.join(self.feature_sorted(self.feature_implies(tar)))
                 detect = ' '.join(self.feature_detect(tar))
                 extra_checks = []
-                for name in tar_as_seq:
+                for name in ((tar,) if isinstance(tar, str) else tar):
                     extra_checks += self.feature_extra_checks(name)
                 extra_checks = (' '.join(extra_checks) if extra_checks else "none")
 
                 dispatch_rows.append(('', ''))
-                dispatch_rows.append((name, implies))
+                dispatch_rows.append((pretty_name, implies))
                 dispatch_rows.append(("Flags", flags))
                 dispatch_rows.append(("Extra checks", extra_checks))
                 dispatch_rows.append(("Detect", detect))
