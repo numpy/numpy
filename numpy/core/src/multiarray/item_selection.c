@@ -2145,7 +2145,7 @@ count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end)
         vt = npyv_and_u8(vt, vone);
         vsum8 = npyv_add_u8(vsum8, vt);
         *d += npyv_nlanes_u8;
-        n++;
+        n+= npyv_nlanes_u8;
     }
     return vsum8;
 }
