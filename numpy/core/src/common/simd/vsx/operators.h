@@ -213,11 +213,4 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
 
-NPY_FINLINE npy_uint64 npyv_movemask_b8(npyv_b8 mask)
-{
-    const npyv_u8 bperm = {120, 112, 104, 96, 88, 80, 72, 64, 56, 48, 40, 32, 24, 16, 8, 0};
-    npyv_s32 vmask = (npyv_s32)vec_vbpermq((npyv_u8)mask, bperm);
-    return (npy_uint64)vec_extract(vmask, 2);
-}
-
 #endif // _NPY_SIMD_VSX_OPERATORS_H

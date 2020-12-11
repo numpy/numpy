@@ -255,7 +255,4 @@ NPY_FINLINE __m128i npyv_shr_s64(__m128i a, int c)
 #define npyv_cmpge_f32(a, b)  _mm_castps_si128(_mm_cmpge_ps(a, b))
 #define npyv_cmpge_f64(a, b)  _mm_castpd_si128(_mm_cmpge_pd(a, b))
 
-// Create mask from the most significant bit of each 8-bit element
-#define npyv_movemask_b8(a) _mm_movemask_epi8(a)
-
 #endif // _NPY_SIMD_SSE_OPERATORS_H

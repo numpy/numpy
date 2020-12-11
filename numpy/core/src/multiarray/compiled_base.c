@@ -1531,7 +1531,7 @@ pack_inner(const char *inptr,
             if (order == PACK_ORDER_BIG) {
                 va = npyv_rev64_u8(va);
             }
-            npy_uint64 bb = npyv_movemask_b8(npyv_cmpneq_u8(va, v_zero));
+            npy_uint64 bb = npyv_tobits_b8(npyv_cmpneq_u8(va, v_zero));
             for (int i = 0; i < vstep; ++i) {
                 memcpy(outptr, (char*)&bb + i, 1);
                 outptr += out_stride;

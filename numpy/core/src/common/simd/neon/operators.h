@@ -215,13 +215,4 @@
 #define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
 
-// Create mask from the most significant bit of each 8-bit element
-NPY_INLINE int32_t npyv_movemask_b8(uint8x16_t input)
-{
-    int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-    uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-    uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-    return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
-}
-
 #endif // _NPY_SIMD_NEON_OPERATORS_H

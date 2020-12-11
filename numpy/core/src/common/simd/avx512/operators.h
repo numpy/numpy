@@ -256,18 +256,4 @@
 #define npyv_cmpge_f32(A, B)  _mm512_cmp_ps_mask(A, B, _CMP_GE_OQ)
 #define npyv_cmpge_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_GE_OQ)
 
-// Create mask from the most significant bit of each 8-bit element
-// AVX512F & AVX512BW
-NPY_FINLINE npy_uint64 npyv_movemask_b8(npyv_b8 mask)
-{
-#ifdef NPY_HAVE_AVX512BW_MASK
-    return (npy_uint64)_cvtmask64_u64(mask);
-#elif NPY_HAVE_AVX512BW
-    return (npy_uint64)mask;
-#else
-    int mask_lo = _mm256_movemask_epi8(_mm512_castsi512_si256(mask));
-    int mask_hi = _mm256_movemask_epi8(_mm512_extracti64x4_epi64(mask, 1));
-    return (unsigned)mask_lo | ((npy_uint64)(unsigned)mask_hi << 32);
-#endif
-}
 #endif // _NPY_SIMD_AVX512_OPERATORS_H
