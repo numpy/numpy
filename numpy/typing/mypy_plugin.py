@@ -32,7 +32,7 @@ def _get_precision_dict() -> t.Dict[str, str]:
     ]
     ret = {}
     for name, typ in names:
-        n: int = 8 * typ().dtype.alignment
+        n: int = 8 * typ().dtype.itemsize
         ret[f'numpy.typing._nbit.{name}'] = f"numpy._{n}Bit"
     return ret
 
