@@ -45,15 +45,19 @@ class TypeDescription:
     astype : dict or None, optional
         If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
         instead of PyUFunc_x_x/PyUFunc_xx_x.
+    cfunc_alias : str or none, optional
+        replaces the suffix of C function name instead of using ufunc_name,
+        e.g. "FLOAT_{cfunc_alias}" instead of "FLOAT_{ufunc_name}" (see make_arrays)
+        NOTE: it doesn't support 'astype'
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
     dispatch: str or None, optional
         Dispatch-able source name without its extension '.dispatch.c' that contains the definition of ufunc,
         dispatched at runtime depending on the specified targets of the dispatch-able source.
-        Currently only supported for simples types (see make_arrays)
+        NOTE: it doesn't support 'astype'
     """
-    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None, dispatch=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None, cfunc_alias=None, simd=None, dispatch=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -65,6 +69,7 @@ class TypeDescription:
         if out is not None:
             out = out.replace('P', type)
         self.out = out
+        self.cfunc_alias = cfunc_alias
         self.simd = simd
         self.dispatch = dispatch
 
@@ -91,7 +96,7 @@ def build_func_data(types, f):
     func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
-def TD(types, f=None, astype=None, in_=None, out=None, simd=None, dispatch=None):
+def TD(types, f=None, astype=None, in_=None, out=None, cfunc_alias=None, simd=None, dispatch=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -127,7 +132,7 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None, dispatch=None)
         else:
             dispt = None
         tds.append(TypeDescription(
-            t, f=fd, in_=i, out=o, astype=astype, simd=simdt, dispatch=dispt
+            t, f=fd, in_=i, out=o, astype=astype, cfunc_alias=cfunc_alias, simd=simdt, dispatch=dispt
         ))
     return tds
 
@@ -1013,38 +1018,33 @@ def make_arrays(funcdict):
         sub = 0
 
         for t in uf.type_descriptions:
-
+            cfunc_alias = t.cfunc_alias if t.cfunc_alias else name
+            cfunc_fname = None
             if t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
                 datalist.append('(void *)NULL')
-                funclist.append(
-                        '%s_%s_%s_%s' % (tname, t.in_, t.out, name))
+                cfunc_fname = f"{tname}_{t.in_}_{t.out}_{cfunc_alias}"
             elif isinstance(t.func_data, FuncNameSuffix):
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
-                funclist.append(
-                        '%s_%s_%s' % (tname, name, t.func_data.suffix))
+                cfunc_fname = f"{tname}_{cfunc_alias}_{t.func_data.suffix}"
             elif t.func_data is None:
                 datalist.append('(void *)NULL')
                 tname = english_upper(chartoname[t.type])
-                cfunc_name = f"{tname}_{name}"
-                funclist.append(cfunc_name)
+                cfunc_fname = f"{tname}_{cfunc_alias}"
                 if t.simd is not None:
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
                         #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
                         if (NPY_CPU_HAVE({ISA})) {{
-                            {fname}_functions[{idx}] = {type}_{fname}_{isa};
+                            {fname}_functions[{idx}] = {cname}_{isa};
                         }}
                         #endif
                         """).format(
                             ISA=vt.upper(), isa=vt,
-                            fname=name, type=tname, idx=k
+                            fname=name, cname=cfunc_fname, idx=k
                         ))
-                if t.dispatch:
-                    dispdict.setdefault(t.dispatch, []).append((tname, k, cfunc_name))
             else:
-                funclist.append('NULL')
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
                 except KeyError as e:
@@ -1073,6 +1073,13 @@ def make_arrays(funcdict):
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
                 sub += 1
+
+            if cfunc_fname:
+                funclist.append(cfunc_fname)
+                if t.dispatch:
+                    dispdict.setdefault(t.dispatch, []).append((name, k, cfunc_fname))
+            else:
+                funclist.append('NULL')
 
             for x in t.in_ + t.out:
                 siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
