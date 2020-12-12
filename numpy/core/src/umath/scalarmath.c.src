@@ -15,6 +15,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
+#include "scalartypes.h"
 
 #include "npy_import.h"
 #include "npy_pycompat.h"
@@ -1351,7 +1352,8 @@ static PyObject*
     case 0:
         break;
     case -1:
-        /* can't cast both safely use different add function */
+        /* can't cast both safely.
+         * Try fastpath if `other` is not complex */
         pyscalar = descr_from_basic_scalar(other, &value_descr);
         if(NPY_LIKELY(pyscalar > 0)) {
             if(value_descr->type_num < NPY_CFLOAT) {
