@@ -62,11 +62,12 @@ VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
+    fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
-        f"NumPy {VERSION} may not yet support Python "
-        f"{sys.version_info.major}.{sys.version_info.minor}.",
+        fmt.format(VERSION, *sys.version_info[:2]),
         RuntimeWarning,
     )
+    del fmt
 
 
 # Return the git revision as a string
