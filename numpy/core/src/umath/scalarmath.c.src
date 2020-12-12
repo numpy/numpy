@@ -611,6 +611,46 @@ descr_from_basic_scalar(PyObject *obj, PyArray_Descr **descr)
 }
 
 
+/**
+ * This function attempts to compare NumPy or Python scalars
+ * The operation is done by casting to array and getting `item`
+ * which is then used to called the item's richcompare
+ *
+ * @param self The first object which will be converted to scalar item
+ * @param other The second object to compare to
+ * @returns Py_False or Py_True if richcompare is successfull
+ *          , otherwise NULL
+ */
+static PyObject*
+do_richcompare_on_scalars(PyObject *self, PyObject *other, int cmp_op) {
+    PyObject *arr, *item, *meth, *ret;
+
+    arr = PyArray_FromScalar(self, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+
+    meth = PyObject_GetAttrString(arr, "item");
+    if (meth == NULL) {
+        Py_DECREF(arr);
+        return NULL;
+    }
+
+    item = PyObject_CallObject(meth, NULL);
+    if (item == NULL) {
+        Py_DECREF(arr);
+        Py_DECREF(meth);
+        return NULL;
+    }
+
+    ret = PyObject_RichCompare(item, other, cmp_op);
+    Py_DECREF(arr);
+    Py_DECREF(meth);
+    Py_DECREF(item);
+    return ret;
+}
+
+
 /* The general strategy for commutative binary operators is to
  *
  * 1) Convert the types to the common type if both are scalars (0 return)
@@ -1302,7 +1342,8 @@ static PyObject*
 @name@_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
     npy_@name@ arg1, arg2;
-    int out=0;
+    int out=0, pyscalar=0;
+    PyArray_Descr *value_descr;
 
     RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
@@ -1311,6 +1352,12 @@ static PyObject*
         break;
     case -1:
         /* can't cast both safely use different add function */
+        pyscalar = descr_from_basic_scalar(other, &value_descr);
+        if(NPY_LIKELY(pyscalar > 0)) {
+            if(value_descr->type_num < NPY_CFLOAT) {
+                return do_richcompare_on_scalars(self, other, cmp_op);
+            }
+        }
     case -2:
         /* use ufunc */
         if (PyErr_Occurred()) {
