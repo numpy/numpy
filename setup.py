@@ -47,11 +47,11 @@ if sys.version_info[:2] < (3, 7):
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
+    fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
-        f"NumPy {VERSION} may not yet support Python "
-        f"{sys.version_info.major}.{sys.version_info.minor}.",
-        RuntimeWarning,
-    )
+        fmt.format(VERSION, *sys.version_info[:2]),
+        RuntimeWarning)
+    del fmt
 
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
 # properly updated when the contents of directories change (true for distutils,
