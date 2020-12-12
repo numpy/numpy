@@ -569,6 +569,47 @@ static void
 
 /*** END OF BASIC CODE **/
 
+/**
+ * Find the descriptor for a builtin or Python numerical scalar.
+ * This function should only be used for scalar math fast paths.
+ *
+ * @param obj The object for which to find the descriptor
+ * @param descr The descriptor that was found.
+ * @returns 1 if the other object is a Python type and thus must not
+ *          handle the operation, otherwise 0. -1 _without_ an error set
+ *          if no descriptor was found.
+ */
+static int
+descr_from_basic_scalar(PyObject *obj, PyArray_Descr **descr)
+{
+    /* TODO: We could try giving defined scalars a chance... */
+    int type_num = PyArray_TypeNumFromNumPyScalarType(
+            (PyObject *)Py_TYPE(obj), 0);
+    if (type_num != NPY_NOTYPE) {
+        *descr = PyArray_DescrFromType(type_num);
+        return 0;
+    }
+    else if (PyFloat_CheckExact(obj)) {
+        *descr = PyArray_DescrFromType(NPY_DOUBLE);
+        return 1;
+    }
+    else if (PyLong_CheckExact(obj)) {
+        int overflow;
+        if (PyLong_AsLongAndOverflow(obj, &overflow) < 0) {
+            /* overflow must have occurred */
+            assert(overflow != 0);
+            return -1;
+        }
+        *descr = PyArray_DescrFromType(NPY_LONG);
+        return 1;
+    }
+    else if (PyComplex_CheckExact(obj)) {
+        *descr = PyArray_DescrFromType(NPY_CDOUBLE);
+        return 1;
+    }
+    return -1;
+}
+
 
 /* The general strategy for commutative binary operators is to
  *
