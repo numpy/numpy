@@ -2811,31 +2811,32 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
-    if (!type) {
-        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-    }
+    if (!type) type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
 
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            &PyArray_Type, type,
-            nd, dims, NULL, NULL,
-            is_f_order, NULL, NULL,
-            1, 0);
+    /*
+     * PyArray_NewFromDescr steals a ref,
+     * but we need to look at type later.
+     * */
+    Py_INCREF(type);
 
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    /* handle objects */
-    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        if (_zerofill(ret) < 0) {
+    PyObject *zero = PyLong_FromLong(0);
+    
+    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                                type, nd, dims,
+                                                NULL, NULL,
+                                                is_f_order, zero);
+    if (ret != NULL && PyDataType_REFCHK(type)) {
+        PyArray_FillObjectArray(ret, zero);
+        if (PyErr_Occurred()) {
             Py_DECREF(ret);
+            Py_DECREF(type);
             return NULL;
         }
     }
 
-
+    Py_DECREF(type);
+    
     return (PyObject *)ret;
-
 }
 
 /*NUMPY_API
