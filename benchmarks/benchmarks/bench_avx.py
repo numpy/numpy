@@ -39,6 +39,19 @@ class AVX_UFunc(Benchmark):
     def time_ufunc(self, ufuncname, stride, dtype):
         self.f(self.arr[::stride])
 
+class AVX_UFunc_log(Benchmark):
+    params = [stride, dtype]
+    param_names = ['stride', 'dtype']
+    timeout = 10
+
+    def setup(self, stride, dtype):
+        np.seterr(all='ignore')
+        N = 10000
+        self.arr = np.array(np.random.random_sample(stride*N), dtype=dtype)
+
+    def time_log(self, stride, dtype):
+        np.log(self.arr[::stride])
+
 avx_bfuncs = ['maximum',
               'minimum']
 

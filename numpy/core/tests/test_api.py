@@ -281,6 +281,19 @@ def test_array_astype():
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
+
+@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32"])
+def test_array_astype_to_void(dt):
+    dt = np.dtype(dt)
+    arr = np.array([], dtype=dt)
+    assert arr.astype("V").dtype.itemsize == dt.itemsize
+
+def test_object_array_astype_to_void():
+    # This is different to `test_array_astype_to_void` as object arrays
+    # are inspected.  The default void is "V8" (8 is the length of double)
+    arr = np.array([], dtype="O").astype("V")
+    assert arr.dtype == "V8"
+
 @pytest.mark.parametrize("t",
     np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
 )
@@ -316,6 +329,29 @@ def test_string_to_boolean_cast_errors(dtype, out_dtype):
         arr = np.array([invalid], dtype=dtype)
         with assert_raises(ValueError):
             arr.astype(out_dtype)
+
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("scalar_type",
+        [np.complex64, np.complex128, np.clongdouble])
+def test_string_to_complex_cast(str_type, scalar_type):
+    value = scalar_type(b"1+3j")
+    assert scalar_type(value) == 1+3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
+    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    arr = np.zeros(1, dtype=scalar_type)
+    arr[0] = value
+    assert arr[0] == 1+3j
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_none_to_nan_cast(dtype):
+    # Note that at the time of writing this test, the scalar constructors
+    # reject None
+    arr = np.zeros(1, dtype=dtype)
+    arr[0] = None
+    assert np.isnan(arr)[0]
+    assert np.isnan(np.array(None, dtype=dtype))[()]
+    assert np.isnan(np.array([None], dtype=dtype))[0]
+    assert np.isnan(np.array(None).astype(dtype))[()]
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)

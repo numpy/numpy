@@ -12,7 +12,6 @@
 #include "abstractdtypes.h"
 #include "usertypes.h"
 
-#include "common.h"
 #include "npy_buffer.h"
 
 #include "get_attr_string.h"
@@ -127,26 +126,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     return 0;
 }
 
-
-/* new reference */
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *c_str)
-{
-    PyArray_Descr *descr = NULL;
-    PyObject *stringobj = PyString_FromString(c_str);
-
-    if (stringobj == NULL) {
-        return NULL;
-    }
-    if (PyArray_DescrConverter(stringobj, &descr) != NPY_SUCCEED) {
-        Py_DECREF(stringobj);
-        return NULL;
-    }
-    Py_DECREF(stringobj);
-    return descr;
-}
-
-
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
 {
@@ -169,7 +148,7 @@ NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
 {
     if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
-        PyObject *zero = PyInt_FromLong(0);
+        PyObject *zero = PyLong_FromLong(0);
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
         if (PyErr_Occurred()) {
@@ -254,7 +233,6 @@ NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
-    PyObject *ret, *tmp;
 
     /*
      * Negative dimension indicates "newaxis", which can
@@ -264,40 +242,40 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     for (i = 0; i < n && vals[i] < 0; i++);
 
     if (i == n) {
-        return PyUString_FromFormat("()%s", ending);
-    }
-    else {
-        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
-        if (ret == NULL) {
-            return NULL;
-        }
+        return PyUnicode_FromFormat("()%s", ending);
     }
 
+    PyObject *ret = PyUnicode_FromFormat("%" NPY_INTP_FMT, vals[i++]);
+    if (ret == NULL) {
+        return NULL;
+    }
     for (; i < n; ++i) {
+        PyObject *tmp;
+
         if (vals[i] < 0) {
-            tmp = PyUString_FromString(",newaxis");
+            tmp = PyUnicode_FromString(",newaxis");
         }
         else {
-            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+            tmp = PyUnicode_FromFormat(",%" NPY_INTP_FMT, vals[i]);
         }
         if (tmp == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
 
-        PyUString_ConcatAndDel(&ret, tmp);
+        Py_SETREF(ret, PyUnicode_Concat(ret, tmp));
+        Py_DECREF(tmp);
         if (ret == NULL) {
             return NULL;
         }
     }
 
     if (i == 1) {
-        tmp = PyUString_FromFormat(",)%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S,)%s", ret, ending));
     }
     else {
-        tmp = PyUString_FromFormat(")%s", ending);
+        Py_SETREF(ret, PyUnicode_FromFormat("(%S)%s", ret, ending));
     }
-    PyUString_ConcatAndDel(&ret, tmp);
     return ret;
 }
 
@@ -310,7 +288,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
              *shape1 = NULL, *shape2 = NULL,
              *shape1_i = NULL, *shape2_j = NULL;
 
-    format = PyUString_FromString("shapes %s and %s not aligned:"
+    format = PyUnicode_FromString("shapes %s and %s not aligned:"
                                   " %d (dim %d) != %d (dim %d)");
 
     shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
@@ -333,7 +311,7 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
         goto end;
     }
 
-    errmsg = PyUString_Format(format, fmt_args);
+    errmsg = PyUnicode_Format(format, fmt_args);
     if (errmsg != NULL) {
         PyErr_SetObject(PyExc_ValueError, errmsg);
     }
@@ -373,10 +351,7 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
     off  = PyTuple_GET_ITEM(value, 1);
 
-    if (PyInt_Check(off)) {
-        *offset = PyInt_AsSsize_t(off);
-    }
-    else if (PyLong_Check(off)) {
+    if (PyLong_Check(off)) {
         *offset = PyLong_AsSsize_t(off);
     }
     else {

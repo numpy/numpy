@@ -17,7 +17,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
-#include <numpy/npy_cpu.h>
 
 #include "npy_pycompat.h"
 
@@ -106,7 +105,7 @@ get_bool_setdstone_transfer_function(npy_intp dst_stride,
 /*************************** COPY REFERENCES *******************************/
 
 /* Moves references from src to dst */
-static void
+static int
 _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -114,27 +113,28 @@ _strided_to_strided_move_references(char *dst, npy_intp dst_stride,
 {
     PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+        memcpy(&src_ref, src, sizeof(src_ref));
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
 
         /* Release the reference in dst */
         NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
         Py_XDECREF(dst_ref);
         /* Move the reference */
         NPY_DT_DBG_REFTRACE("move src ref", src_ref);
-        NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
+        memcpy(dst, &src_ref, sizeof(src_ref));
         /* Set the source reference to NULL */
         src_ref = NULL;
-        NPY_COPY_PYOBJECT_PTR(src, &src_ref);
+        memcpy(src, &src_ref, sizeof(src_ref));
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /* Copies references from src to dst */
-static void
+static int
 _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -142,12 +142,12 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
 {
     PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+        memcpy(&src_ref, src, sizeof(src_ref));
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
 
         /* Copy the reference */
         NPY_DT_DBG_REFTRACE("copy src ref", src_ref);
-        NPY_COPY_PYOBJECT_PTR(dst, &src_ref);
+        memcpy(dst, &src_ref, sizeof(src_ref));
         /* Claim the reference */
         Py_XINCREF(src_ref);
         /* Release the reference in dst */
@@ -158,6 +158,7 @@ _strided_to_strided_copy_references(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -188,7 +189,7 @@ static NpyAuxData *_strided_zero_pad_data_clone(NpyAuxData *data)
  * Does a strided to strided zero-padded copy for the case where
  * dst_itemsize > src_itemsize
  */
-static void
+static int
 _strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -205,13 +206,14 @@ _strided_to_strided_zero_pad_copy(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /*
  * Does a strided to strided zero-padded copy for the case where
  * dst_itemsize < src_itemsize
  */
-static void
+static int
 _strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -226,13 +228,14 @@ _strided_to_strided_truncate_copy(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /*
  * Does a strided to strided zero-padded or truncated copy for the case where
  * unicode swapping is needed.
  */
-static void
+static int
 _strided_to_strided_unicode_copyswap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -260,6 +263,7 @@ _strided_to_strided_unicode_copyswap(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -379,7 +383,7 @@ static NpyAuxData *_align_wrap_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -395,47 +399,50 @@ _strided_to_strided_contig_align_wrap(char *dst, npy_intp dst_stride,
             *todata = d->todata,
             *fromdata = d->fromdata;
     char *bufferin = d->bufferin, *bufferout = d->bufferout;
-    npy_bool init_dest = d->init_dest, out_needs_api = d->out_needs_api;
+    npy_bool init_dest = d->init_dest;
 
     for(;;) {
-        /*
-         * The caller does not know if a previous call resulted in a Python
-         * exception. Much of the Python API is unsafe while an exception is in
-         * flight, so just skip all the work. Someone higher in the call stack
-         * will check for errors and propagate them.
-         */
-        if (out_needs_api && PyErr_Occurred()) {
-            return;
-        }
         if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
-            tobuffer(bufferin, inner_src_itemsize, src, src_stride,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    src_itemsize, todata);
+            if (tobuffer(
+                    bufferin, inner_src_itemsize, src, src_stride,
+                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE, src_itemsize, todata) < 0) {
+                return -1;
+            }
             if (init_dest) {
                 memset(bufferout, 0,
-                        dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
+                       dst_itemsize*NPY_LOWLEVEL_BUFFER_BLOCKSIZE);
             }
-            wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    inner_src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize,
-                                    NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                    dst_itemsize, fromdata);
+            if (wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
+                        NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                        inner_src_itemsize, wrappeddata) < 0) {
+                return -1;
+            }
+            if (frombuffer(dst, dst_stride, bufferout, dst_itemsize,
+                           NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                           dst_itemsize, fromdata) < 0) {
+                return -1;
+            }
             N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
             src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
             dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
         }
         else {
-            tobuffer(bufferin, inner_src_itemsize, src, src_stride, N,
-                                            src_itemsize, todata);
+            if (tobuffer(bufferin, inner_src_itemsize, src, src_stride,
+                         N, src_itemsize, todata) < 0) {
+                return -1;
+            }
             if (init_dest) {
                 memset(bufferout, 0, dst_itemsize*N);
             }
-            wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize, N,
-                                            inner_src_itemsize, wrappeddata);
-            frombuffer(dst, dst_stride, bufferout, dst_itemsize, N,
-                                            dst_itemsize, fromdata);
-            return;
+            if (wrapped(bufferout, dst_itemsize, bufferin, inner_src_itemsize,
+                        N, inner_src_itemsize, wrappeddata) < 0) {
+                return -1;
+            }
+            if (frombuffer(dst, dst_stride, bufferout, dst_itemsize,
+                           N, dst_itemsize, fromdata) < 0) {
+                return -1;
+            }
+            return 0;
         }
     }
 }
@@ -538,7 +545,7 @@ static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_wrap_copy_swap(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -546,7 +553,9 @@ _strided_to_strided_wrap_copy_swap(char *dst, npy_intp dst_stride,
 {
     _wrap_copy_swap_data *d = (_wrap_copy_swap_data *)data;
 
+    /* We assume that d->copyswapn should not be able to error. */
     d->copyswapn(dst, dst_stride, src, src_stride, N, d->swap, d->arr);
+    return 0;
 }
 
 /* This only gets used for custom data types and for Unicode when swapping */
@@ -603,6 +612,7 @@ typedef struct {
     NpyAuxData base;
     PyArray_VectorUnaryFunc *castfunc;
     PyArrayObject *aip, *aop;
+    npy_bool needs_api;
 } _strided_cast_data;
 
 /* strided cast data free function */
@@ -630,7 +640,7 @@ static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -639,17 +649,29 @@ _aligned_strided_to_strided_cast(char *dst, npy_intp dst_stride,
     _strided_cast_data *d = (_strided_cast_data *)data;
     PyArray_VectorUnaryFunc *castfunc = d->castfunc;
     PyArrayObject *aip = d->aip, *aop = d->aop;
+    npy_bool needs_api = d->needs_api;
 
     while (N > 0) {
         castfunc(src, dst, 1, aip, aop);
+        /*
+         * Since error handling in ufuncs is not ideal (at the time of
+         * writing this, an error could be in process before calling this
+         * function. For most of NumPy history these checks were completely
+         * missing, so this is hopefully OK for the time being (until ufuncs
+         * are fixed).
+         */
+        if (needs_api && PyErr_Occurred()) {
+            return -1;
+        }
         dst += dst_stride;
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
 /* This one requires src be of type NPY_OBJECT */
-static void
+static int
 _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -658,31 +680,49 @@ _aligned_strided_to_strided_cast_decref_src(char *dst, npy_intp dst_stride,
     _strided_cast_data *d = (_strided_cast_data *)data;
     PyArray_VectorUnaryFunc *castfunc = d->castfunc;
     PyArrayObject *aip = d->aip, *aop = d->aop;
+    npy_bool needs_api = d->needs_api;
     PyObject *src_ref;
 
     while (N > 0) {
         castfunc(src, dst, 1, aip, aop);
-
-        /* After casting, decrement the source ref */
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-        NPY_DT_DBG_REFTRACE("dec src ref (cast object -> not object)", src_ref);
+        /*
+         * See comment in `_aligned_strided_to_strided_cast`, an error could
+         * in principle be set before `castfunc` is called.
+         */
+        if (needs_api && PyErr_Occurred()) {
+            return -1;
+        }
+        /* After casting, decrement the source ref and set it to NULL */
+        memcpy(&src_ref, src, sizeof(src_ref));
         Py_XDECREF(src_ref);
+        memset(src, 0, sizeof(PyObject *));
+        NPY_DT_DBG_REFTRACE("dec src ref (cast object -> not object)", src_ref);
 
         dst += dst_stride;
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _aligned_contig_to_contig_cast(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp NPY_UNUSED(itemsize),
                         NpyAuxData *data)
 {
     _strided_cast_data *d = (_strided_cast_data *)data;
+    npy_bool needs_api = d->needs_api;
 
     d->castfunc(src, dst, N, d->aip, d->aop);
+    /*
+     * See comment in `_aligned_strided_to_strided_cast`, an error could
+     * in principle be set before `castfunc` is called.
+     */
+    if (needs_api && PyErr_Occurred()) {
+        return -1;
+    }
+    return 0;
 }
 
 static int
@@ -777,7 +817,7 @@ static NpyAuxData *_strided_datetime_cast_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -792,12 +832,12 @@ _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
 
         if (convert_datetime_to_datetimestruct(&d->src_meta,
                                                dt, &dts) < 0) {
-            dt = NPY_DATETIME_NAT;
+            return -1;
         }
         else {
             if (convert_datetimestruct_to_datetime(&d->dst_meta,
                                                    &dts, &dt) < 0) {
-                dt = NPY_DATETIME_NAT;
+                return -1;
             }
         }
 
@@ -807,9 +847,10 @@ _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -838,9 +879,10 @@ _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _aligned_strided_to_strided_datetime_cast(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp src_stride,
@@ -870,9 +912,10 @@ _aligned_strided_to_strided_datetime_cast(char *dst,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -888,28 +931,26 @@ _strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
 
         if (convert_datetime_to_datetimestruct(&d->src_meta,
                                                dt, &dts) < 0) {
-            /* For an error, produce a 'NaT' string */
-            dts.year = NPY_DATETIME_NAT;
+            return -1;
         }
 
         /* Initialize the destination to all zeros */
         memset(dst, 0, dst_itemsize);
 
-        /*
-         * This may also raise an error, but the caller needs
-         * to use PyErr_Occurred().
-         */
-        make_iso_8601_datetime(&dts, dst, dst_itemsize,
+        if (make_iso_8601_datetime(&dts, dst, dst_itemsize,
                                 0, 0, d->src_meta.base, -1,
-                                NPY_UNSAFE_CASTING);
+                                NPY_UNSAFE_CASTING) < 0) {
+            return -1;
+        }
 
         dst += dst_stride;
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -934,7 +975,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
             if (parse_iso_8601_datetime(tmp_buffer, src_itemsize,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
                                     &dts, NULL, NULL) < 0) {
-                dt = NPY_DATETIME_NAT;
+                return -1;
             }
         }
         /* Otherwise parse the data in place */
@@ -942,7 +983,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
             if (parse_iso_8601_datetime(src, tmp - src,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
                                     &dts, NULL, NULL) < 0) {
-                dt = NPY_DATETIME_NAT;
+                return -1;
             }
         }
 
@@ -950,7 +991,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
         if (dt != NPY_DATETIME_NAT &&
                 convert_datetimestruct_to_datetime(&d->dst_meta,
                                                &dts, &dt) < 0) {
-            dt = NPY_DATETIME_NAT;
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -959,14 +1000,14 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
 /*
  * Assumes src_dtype and dst_dtype are both datetimes or both timedeltas
  */
-static int
+NPY_NO_EXPORT int
 get_nbo_cast_datetime_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             PyArray_StridedUnaryOp **out_stransfer,
                             NpyAuxData **out_transferdata)
@@ -1040,12 +1081,10 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
-get_nbo_datetime_to_string_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
+NPY_NO_EXPORT int
+get_nbo_datetime_to_string_transfer_function(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *src_meta;
     _strided_datetime_cast_data *data;
@@ -1085,7 +1124,7 @@ get_nbo_datetime_to_string_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
+NPY_NO_EXPORT int
 get_datetime_to_unicode_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -1098,8 +1137,8 @@ get_datetime_to_unicode_transfer_function(int aligned,
     PyArray_Descr *str_dtype;
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
-    str_dtype = PyArray_DescrFromType(NPY_STRING);
-    str_dtype = PyArray_AdaptFlexibleDType(dst_dtype, str_dtype);
+    str_dtype = PyArray_DescrNewFromType(NPY_STRING);
+    str_dtype->elsize = dst_dtype->elsize / 4;
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
@@ -1114,10 +1153,9 @@ get_datetime_to_unicode_transfer_function(int aligned,
     }
 
     /* Get the NBO datetime to string aligned contig function */
-    if (get_nbo_datetime_to_string_transfer_function(1,
-                            src_dtype->elsize, str_dtype->elsize,
-                            src_dtype, str_dtype,
-                            &caststransfer, &castdata) != NPY_SUCCEED) {
+    if (get_nbo_datetime_to_string_transfer_function(
+            src_dtype, str_dtype,
+            &caststransfer, &castdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
         NPY_AUXDATA_FREE(todata);
         return NPY_FAIL;
@@ -1156,12 +1194,10 @@ get_datetime_to_unicode_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
-get_nbo_string_to_datetime_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
+NPY_NO_EXPORT int
+get_nbo_string_to_datetime_transfer_function(
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata)
 {
     PyArray_DatetimeMetaData *dst_meta;
     _strided_datetime_cast_data *data;
@@ -1208,7 +1244,7 @@ get_nbo_string_to_datetime_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
+NPY_NO_EXPORT int
 get_unicode_to_datetime_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -1221,11 +1257,12 @@ get_unicode_to_datetime_transfer_function(int aligned,
     PyArray_Descr *str_dtype;
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
-    str_dtype = PyArray_DescrFromType(NPY_STRING);
-    str_dtype = PyArray_AdaptFlexibleDType(src_dtype, str_dtype);
+    str_dtype = PyArray_DescrNewFromType(NPY_STRING);
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
+    assert(src_dtype->type_num == NPY_UNICODE);
+    str_dtype->elsize = src_dtype->elsize / 4;
 
     /* Get the cast operation from src */
     if (PyArray_GetDTypeTransferFunction(aligned,
@@ -1239,10 +1276,9 @@ get_unicode_to_datetime_transfer_function(int aligned,
     }
 
     /* Get the string to NBO datetime aligned contig function */
-    if (get_nbo_string_to_datetime_transfer_function(1,
-                            str_dtype->elsize, dst_dtype->elsize,
-                            str_dtype, dst_dtype,
-                            &caststransfer, &castdata) != NPY_SUCCEED) {
+    if (get_nbo_string_to_datetime_transfer_function(
+            str_dtype, dst_dtype,
+            &caststransfer, &castdata) != NPY_SUCCEED) {
         Py_DECREF(str_dtype);
         NPY_AUXDATA_FREE(todata);
         return NPY_FAIL;
@@ -1280,95 +1316,21 @@ get_unicode_to_datetime_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static int
-get_nbo_cast_transfer_function(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            int move_references,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            int *out_needs_api,
-                            int *out_needs_wrap)
+
+NPY_NO_EXPORT int
+get_legacy_dtype_cast_function(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
+        int *out_needs_api, int *out_needs_wrap)
 {
     _strided_cast_data *data;
     PyArray_VectorUnaryFunc *castfunc;
     PyArray_Descr *tmp_dtype;
-    npy_intp shape = 1, src_itemsize = src_dtype->elsize,
-            dst_itemsize = dst_dtype->elsize;
-
-    if (PyTypeNum_ISNUMBER(src_dtype->type_num) &&
-                    PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
-        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                          !PyArray_ISNBO(dst_dtype->byteorder);
-        return get_nbo_cast_numeric_transfer_function(aligned,
-                                    src_stride, dst_stride,
-                                    src_dtype->type_num, dst_dtype->type_num,
-                                    out_stransfer, out_transferdata);
-    }
-
-    if (src_dtype->type_num == NPY_DATETIME ||
-            src_dtype->type_num == NPY_TIMEDELTA ||
-            dst_dtype->type_num == NPY_DATETIME ||
-            dst_dtype->type_num == NPY_TIMEDELTA) {
-        /* A parameterized type, datetime->datetime sometimes needs casting */
-        if ((src_dtype->type_num == NPY_DATETIME &&
-                    dst_dtype->type_num == NPY_DATETIME) ||
-                (src_dtype->type_num == NPY_TIMEDELTA &&
-                    dst_dtype->type_num == NPY_TIMEDELTA)) {
-            *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                              !PyArray_ISNBO(dst_dtype->byteorder);
-            return get_nbo_cast_datetime_transfer_function(aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-        }
-
-        /*
-         * Datetime <-> string conversions can be handled specially.
-         * The functions may raise an error if the strings have no
-         * space, or can't be parsed properly.
-         */
-        if (src_dtype->type_num == NPY_DATETIME) {
-            switch (dst_dtype->type_num) {
-                case NPY_STRING:
-                    *out_needs_api = 1;
-                    *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
-                    return get_nbo_datetime_to_string_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-
-                case NPY_UNICODE:
-                    return get_datetime_to_unicode_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata,
-                                        out_needs_api);
-            }
-        }
-        else if (dst_dtype->type_num == NPY_DATETIME) {
-            switch (src_dtype->type_num) {
-                case NPY_STRING:
-                    *out_needs_api = 1;
-                    *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
-                    return get_nbo_string_to_datetime_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata);
-
-                case NPY_UNICODE:
-                    return get_unicode_to_datetime_transfer_function(
-                                        aligned,
-                                        src_stride, dst_stride,
-                                        src_dtype, dst_dtype,
-                                        out_stransfer, out_transferdata,
-                                        out_needs_api);
-            }
-        }
-    }
+    npy_intp shape = 1;
+    npy_intp src_itemsize = src_dtype->elsize;
+    npy_intp dst_itemsize = dst_dtype->elsize;
 
     *out_needs_wrap = !aligned ||
                       !PyArray_ISNBO(src_dtype->byteorder) ||
@@ -1422,6 +1384,7 @@ get_nbo_cast_transfer_function(int aligned,
     data->base.free = &_strided_cast_data_free;
     data->base.clone = &_strided_cast_data_clone;
     data->castfunc = castfunc;
+    data->needs_api = *out_needs_api;
     /*
      * TODO: This is a hack so the cast functions have an array.
      *       The cast functions shouldn't need that.  Also, since we
@@ -1500,6 +1463,162 @@ get_nbo_cast_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
+
+static int
+get_nbo_cast_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            int move_references,
+                            PyArray_StridedUnaryOp **out_stransfer,
+                            NpyAuxData **out_transferdata,
+                            int *out_needs_api,
+                            int *out_needs_wrap)
+{
+    if (PyTypeNum_ISNUMBER(src_dtype->type_num) &&
+                    PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
+        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                          !PyArray_ISNBO(dst_dtype->byteorder);
+        return get_nbo_cast_numeric_transfer_function(aligned,
+                                    src_stride, dst_stride,
+                                    src_dtype->type_num, dst_dtype->type_num,
+                                    out_stransfer, out_transferdata);
+    }
+
+    if (src_dtype->type_num == NPY_DATETIME ||
+            src_dtype->type_num == NPY_TIMEDELTA ||
+            dst_dtype->type_num == NPY_DATETIME ||
+            dst_dtype->type_num == NPY_TIMEDELTA) {
+        /* A parameterized type, datetime->datetime sometimes needs casting */
+        if ((src_dtype->type_num == NPY_DATETIME &&
+                    dst_dtype->type_num == NPY_DATETIME) ||
+                (src_dtype->type_num == NPY_TIMEDELTA &&
+                    dst_dtype->type_num == NPY_TIMEDELTA)) {
+            *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                              !PyArray_ISNBO(dst_dtype->byteorder);
+            return get_nbo_cast_datetime_transfer_function(aligned,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+        }
+
+        /*
+         * Datetime <-> string conversions can be handled specially.
+         * The functions may raise an error if the strings have no
+         * space, or can't be parsed properly.
+         */
+        if (src_dtype->type_num == NPY_DATETIME) {
+            switch (dst_dtype->type_num) {
+                case NPY_STRING:
+                    *out_needs_api = 1;
+                    *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
+                    return get_nbo_datetime_to_string_transfer_function(
+                            src_dtype, dst_dtype,
+                            out_stransfer, out_transferdata);
+
+                case NPY_UNICODE:
+                    return get_datetime_to_unicode_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata,
+                                        out_needs_api);
+            }
+        }
+        else if (dst_dtype->type_num == NPY_DATETIME) {
+            switch (src_dtype->type_num) {
+                case NPY_STRING:
+                    *out_needs_api = 1;
+                    *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
+                    return get_nbo_string_to_datetime_transfer_function(
+                            src_dtype, dst_dtype,
+                            out_stransfer, out_transferdata);
+
+                case NPY_UNICODE:
+                    return get_unicode_to_datetime_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata,
+                                        out_needs_api);
+            }
+        }
+    }
+
+    return get_legacy_dtype_cast_function(
+            aligned, src_stride, dst_stride, src_dtype, dst_dtype,
+            move_references, out_stransfer, out_transferdata,
+            out_needs_api, out_needs_wrap);
+}
+
+
+NPY_NO_EXPORT int
+wrap_aligned_contig_transfer_function_with_copyswapn(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        PyArray_StridedUnaryOp **out_stransfer, NpyAuxData **out_transferdata,
+        int *out_needs_api,
+        PyArray_StridedUnaryOp *caststransfer, NpyAuxData *castdata)
+{
+    NpyAuxData *todata = NULL, *fromdata = NULL;
+    PyArray_StridedUnaryOp *tobuffer = NULL, *frombuffer = NULL;
+    npy_intp src_itemsize = src_dtype->elsize;
+    npy_intp dst_itemsize = dst_dtype->elsize;
+
+    /* Get the copy/swap operation from src */
+    PyArray_GetDTypeCopySwapFn(
+            aligned, src_stride, src_itemsize, src_dtype, &tobuffer, &todata);
+
+    if (!PyDataType_REFCHK(dst_dtype)) {
+        /* Copying from buffer is a simple copy/swap operation */
+        PyArray_GetDTypeCopySwapFn(
+                aligned, dst_itemsize, dst_stride, dst_dtype,
+                &frombuffer, &fromdata);
+    }
+    else {
+        /*
+         * Since the buffer is initialized to NULL, need to move the
+         * references in order to DECREF the existing data.
+         */
+         /* Object types cannot be byte swapped */
+        assert(PyDataType_ISNOTSWAPPED(dst_dtype));
+        /* The loop already needs the python api if this is reached */
+        assert(*out_needs_api);
+
+        if (PyArray_GetDTypeTransferFunction(
+                aligned, dst_itemsize, dst_stride,
+                dst_dtype, dst_dtype, 1,
+                &frombuffer, &fromdata, out_needs_api) != NPY_SUCCEED) {
+            return NPY_FAIL;
+        }
+    }
+
+    if (frombuffer == NULL || tobuffer == NULL) {
+        NPY_AUXDATA_FREE(castdata);
+        NPY_AUXDATA_FREE(todata);
+        NPY_AUXDATA_FREE(fromdata);
+        return NPY_FAIL;
+    }
+
+    *out_stransfer = caststransfer;
+
+    /* Wrap it all up in a new transfer function + data */
+    if (wrap_aligned_contig_transfer_function(
+                        src_itemsize, dst_itemsize,
+                        tobuffer, todata,
+                        frombuffer, fromdata,
+                        caststransfer, castdata,
+                        PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
+                        *out_needs_api,
+                        out_stransfer, out_transferdata) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE(castdata);
+        NPY_AUXDATA_FREE(todata);
+        NPY_AUXDATA_FREE(fromdata);
+        return NPY_FAIL;
+    }
+
+    return NPY_SUCCEED;
+}
+
+
 static int
 get_cast_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
@@ -1510,10 +1629,8 @@ get_cast_transfer_function(int aligned,
                             int *out_needs_api)
 {
     PyArray_StridedUnaryOp *caststransfer;
-    NpyAuxData *castdata, *todata = NULL, *fromdata = NULL;
+    NpyAuxData *castdata;
     int needs_wrap = 0;
-    npy_intp src_itemsize = src_dtype->elsize,
-            dst_itemsize = dst_dtype->elsize;
 
     if (get_nbo_cast_transfer_function(aligned,
                             src_stride, dst_stride,
@@ -1538,64 +1655,10 @@ get_cast_transfer_function(int aligned,
     }
     /* Otherwise, we have to copy and/or swap to aligned temporaries */
     else {
-        PyArray_StridedUnaryOp *tobuffer, *frombuffer;
-
-        /* Get the copy/swap operation from src */
-        PyArray_GetDTypeCopySwapFn(aligned,
-                                src_stride, src_itemsize,
-                                src_dtype,
-                                &tobuffer, &todata);
-
-        if (!PyDataType_REFCHK(dst_dtype)) {
-            /* Copying from buffer is a simple copy/swap operation */
-            PyArray_GetDTypeCopySwapFn(aligned,
-                                    dst_itemsize, dst_stride,
-                                    dst_dtype,
-                                    &frombuffer, &fromdata);
-        }
-        else {
-            /*
-             * Since the buffer is initialized to NULL, need to move the
-             * references in order to DECREF the existing data.
-             */
-             /* Object types cannot be byte swapped */
-            assert(PyDataType_ISNOTSWAPPED(dst_dtype));
-            /* The loop already needs the python api if this is reached */
-            assert(*out_needs_api);
-
-            if (PyArray_GetDTypeTransferFunction(
-                    aligned, dst_itemsize, dst_stride,
-                    dst_dtype, dst_dtype, 1,
-                    &frombuffer, &fromdata, out_needs_api) != NPY_SUCCEED) {
-                return NPY_FAIL;
-            }
-        }
-
-        if (frombuffer == NULL || tobuffer == NULL) {
-            NPY_AUXDATA_FREE(castdata);
-            NPY_AUXDATA_FREE(todata);
-            NPY_AUXDATA_FREE(fromdata);
-            return NPY_FAIL;
-        }
-
-        *out_stransfer = caststransfer;
-
-        /* Wrap it all up in a new transfer function + data */
-        if (wrap_aligned_contig_transfer_function(
-                            src_itemsize, dst_itemsize,
-                            tobuffer, todata,
-                            frombuffer, fromdata,
-                            caststransfer, castdata,
-                            PyDataType_FLAGCHK(dst_dtype, NPY_NEEDS_INIT),
-                            *out_needs_api,
-                            out_stransfer, out_transferdata) != NPY_SUCCEED) {
-            NPY_AUXDATA_FREE(castdata);
-            NPY_AUXDATA_FREE(todata);
-            NPY_AUXDATA_FREE(fromdata);
-            return NPY_FAIL;
-        }
-
-        return NPY_SUCCEED;
+        return wrap_aligned_contig_transfer_function_with_copyswapn(
+                aligned, src_stride, dst_stride, src_dtype, dst_dtype,
+                out_stransfer, out_transferdata, out_needs_api,
+                caststransfer, castdata);
     }
 }
 
@@ -1652,7 +1715,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_one_to_n(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -1664,18 +1727,19 @@ _strided_to_strided_one_to_n(char *dst, npy_intp dst_stride,
     npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
 
     while (N > 0) {
-        subtransfer(dst, dst_itemsize,
-                    src, 0,
-                    subN, src_itemsize,
-                    subdata);
+        if (subtransfer(
+                dst, dst_itemsize, src, 0, subN, src_itemsize, subdata) < 0) {
+            return -1;
+        }
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -1688,21 +1752,21 @@ _strided_to_strided_one_to_n_with_finish(char *dst, npy_intp dst_stride,
     npy_intp subN = d->N, dst_itemsize = d->dst_itemsize;
 
     while (N > 0) {
-        subtransfer(dst, dst_itemsize,
-                    src, 0,
-                    subN, src_itemsize,
-                    subdata);
+        if (subtransfer(
+                dst, dst_itemsize, src, 0, subN, src_itemsize, subdata) < 0) {
+            return -1;
+        }
 
-
-        stransfer_finish_src(NULL, 0,
-                            src, 0,
-                            1, src_itemsize,
-                            data_finish_src);
+        if (stransfer_finish_src(
+                NULL, 0, src, 0, 1, src_itemsize, data_finish_src) < 0) {
+            return -1;
+        }
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 /*
@@ -1846,7 +1910,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_n_to_n(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -1859,18 +1923,19 @@ _strided_to_strided_n_to_n(char *dst, npy_intp dst_stride,
                 dst_subitemsize = d->dst_itemsize;
 
     while (N > 0) {
-        subtransfer(dst, dst_subitemsize,
-                    src, src_subitemsize,
-                    subN, src_subitemsize,
-                    subdata);
-
+        if (subtransfer(
+                dst, dst_subitemsize, src, src_subitemsize,
+                subN, src_subitemsize, subdata) < 0) {
+            return -1;
+        }
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _contig_to_contig_n_to_n(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -1882,10 +1947,12 @@ _contig_to_contig_n_to_n(char *dst, npy_intp NPY_UNUSED(dst_stride),
     npy_intp subN = d->N, src_subitemsize = d->src_itemsize,
                 dst_subitemsize = d->dst_itemsize;
 
-    subtransfer(dst, dst_subitemsize,
-                src, src_subitemsize,
-                subN*N, src_subitemsize,
-                subdata);
+    if (subtransfer(
+            dst, dst_subitemsize, src, src_subitemsize,
+            subN*N, src_subitemsize, subdata) < 0) {
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -2049,7 +2116,7 @@ static NpyAuxData *_subarray_broadcast_data_clone( NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -2072,10 +2139,11 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
             count = offsetruns[run].count;
             dst_ptr = dst + loop_index*dst_subitemsize;
             if (offset != -1) {
-                subtransfer(dst_ptr, dst_subitemsize,
-                            src + offset, src_subitemsize,
-                            count, src_subitemsize,
-                            subdata);
+                if (subtransfer(
+                        dst_ptr, dst_subitemsize, src + offset, src_subitemsize,
+                        count, src_subitemsize, subdata) < 0) {
+                    return -1;
+                }
             }
             else {
                 memset(dst_ptr, 0, count*dst_subitemsize);
@@ -2087,10 +2155,11 @@ _strided_to_strided_subarray_broadcast(char *dst, npy_intp dst_stride,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
-static void
+static int
 _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -2118,16 +2187,19 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
             count = offsetruns[run].count;
             dst_ptr = dst + loop_index*dst_subitemsize;
             if (offset != -1) {
-                subtransfer(dst_ptr, dst_subitemsize,
-                            src + offset, src_subitemsize,
-                            count, src_subitemsize,
-                            subdata);
+                if (subtransfer(
+                        dst_ptr, dst_subitemsize, src + offset, src_subitemsize,
+                        count, src_subitemsize, subdata) < 0) {
+                    return -1;
+                }
             }
             else {
                 if (stransfer_decdstref != NULL) {
-                    stransfer_decdstref(NULL, 0, dst_ptr, dst_subitemsize,
-                                        count, dst_subitemsize,
-                                        data_decdstref);
+                    if (stransfer_decdstref(
+                            NULL, 0, dst_ptr, dst_subitemsize,
+                            count, dst_subitemsize, data_decdstref) < 0) {
+                        return -1;
+                    }
                 }
                 memset(dst_ptr, 0, count*dst_subitemsize);
             }
@@ -2135,15 +2207,18 @@ _strided_to_strided_subarray_broadcast_withrefs(char *dst, npy_intp dst_stride,
         }
 
         if (stransfer_decsrcref != NULL) {
-            stransfer_decsrcref(NULL, 0, src, src_subitemsize,
-                                    src_subN, src_subitemsize,
-                                    data_decsrcref);
+            if (stransfer_decsrcref(
+                    NULL, 0, src, src_subitemsize,
+                    src_subN, src_subitemsize, data_decsrcref) < 0) {
+                return -1;
+            }
         }
 
         src += src_stride;
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -2500,7 +2575,7 @@ static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -2515,11 +2590,13 @@ _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
         field = &d->fields;
         if (N > NPY_LOWLEVEL_BUFFER_BLOCKSIZE) {
             for (i = 0; i < field_count; ++i, ++field) {
-                field->stransfer(dst + field->dst_offset, dst_stride,
-                                 src + field->src_offset, src_stride,
-                                 NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
-                                 field->src_itemsize,
-                                 field->data);
+                if (field->stransfer(
+                        dst + field->dst_offset, dst_stride,
+                        src + field->src_offset, src_stride,
+                        NPY_LOWLEVEL_BUFFER_BLOCKSIZE,
+                        field->src_itemsize, field->data) < 0) {
+                    return -1;
+                }
             }
             N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
             src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
@@ -2527,13 +2604,15 @@ _strided_to_strided_field_transfer(char *dst, npy_intp dst_stride,
         }
         else {
             for (i = 0; i < field_count; ++i, ++field) {
-                field->stransfer(dst + field->dst_offset, dst_stride,
-                                 src + field->src_offset, src_stride,
-                                 N,
-                                 field->src_itemsize,
-                                 field->data);
+                if (field->stransfer(
+                        dst + field->dst_offset, dst_stride,
+                        src + field->src_offset, src_stride,
+                        N,
+                        field->src_itemsize, field->data) < 0) {
+                    return -1;
+                }
             }
-            return;
+            return 0;
         }
     }
 }
@@ -2947,7 +3026,8 @@ static NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void _strided_masked_wrapper_decsrcref_transfer_function(
+static int
+_strided_masked_wrapper_decsrcref_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_bool *mask, npy_intp mask_stride,
@@ -2969,8 +3049,11 @@ static void _strided_masked_wrapper_decsrcref_transfer_function(
         /* Skip masked values, still calling decsrcref for move_references */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 1);
-        decsrcref_stransfer(NULL, 0, src, src_stride,
-                            subloopsize, src_itemsize, decsrcref_transferdata);
+        if (decsrcref_stransfer(
+                NULL, 0, src, src_stride,
+                subloopsize, src_itemsize, decsrcref_transferdata) < 0) {
+            return -1;
+        }
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
@@ -2981,15 +3064,20 @@ static void _strided_masked_wrapper_decsrcref_transfer_function(
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
-        unmasked_stransfer(dst, dst_stride, src, src_stride,
-                            subloopsize, src_itemsize, unmasked_transferdata);
+        if (unmasked_stransfer(
+                dst, dst_stride, src, src_stride,
+                subloopsize, src_itemsize, unmasked_transferdata) < 0) {
+            return -1;
+        }
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
     }
+    return 0;
 }
 
-static void _strided_masked_wrapper_transfer_function(
+static int
+_strided_masked_wrapper_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_bool *mask, npy_intp mask_stride,
@@ -3020,18 +3108,22 @@ static void _strided_masked_wrapper_transfer_function(
         /* Process unmasked values */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 0);
-        unmasked_stransfer(dst, dst_stride, src, src_stride,
-                            subloopsize, src_itemsize, unmasked_transferdata);
+        if (unmasked_stransfer(
+                dst, dst_stride, src, src_stride,
+                subloopsize, src_itemsize, unmasked_transferdata) < 0) {
+            return -1;
+        }
         dst += subloopsize * dst_stride;
         src += subloopsize * src_stride;
         N -= subloopsize;
     }
+    return 0;
 }
 
 
 /************************* DEST BOOL SETONE *******************************/
 
-static void
+static int
 _null_to_strided_set_bool_one(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3046,9 +3138,10 @@ _null_to_strided_set_bool_one(char *dst,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _null_to_contig_set_bool_one(char *dst,
                         npy_intp NPY_UNUSED(dst_stride),
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3058,6 +3151,7 @@ _null_to_contig_set_bool_one(char *dst,
     /* bool type is one byte, so can just use the char */
 
     memset(dst, 1, N);
+    return 0;
 }
 
 /* Only for the bool type, sets the destination to 1 */
@@ -3101,7 +3195,7 @@ static NpyAuxData *_dst_memset_zero_data_clone(NpyAuxData *data)
     return (NpyAuxData *)newdata;
 }
 
-static void
+static int
 _null_to_strided_memset_zero(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3116,9 +3210,10 @@ _null_to_strided_memset_zero(char *dst,
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
-static void
+static int
 _null_to_contig_memset_zero(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3129,9 +3224,10 @@ _null_to_contig_memset_zero(char *dst,
     npy_intp dst_itemsize = d->dst_itemsize;
 
     memset(dst, 0, N*dst_itemsize);
+    return 0;
 }
 
-static void
+static int
 _null_to_strided_reference_setzero(char *dst,
                         npy_intp dst_stride,
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3141,19 +3237,17 @@ _null_to_strided_reference_setzero(char *dst,
     PyObject *dst_ref = NULL;
 
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&dst_ref, dst);
+        memcpy(&dst_ref, dst, sizeof(dst_ref));
 
-        /* Release the reference in dst */
+        /* Release the reference in dst and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec dest ref (to set zero)", dst_ref);
         Py_XDECREF(dst_ref);
-
-        /* Set it to zero */
-        dst_ref = NULL;
-        NPY_COPY_PYOBJECT_PTR(dst, &dst_ref);
+        memset(dst, 0, sizeof(PyObject *));
 
         dst += dst_stride;
         --N;
     }
+    return 0;
 }
 
 NPY_NO_EXPORT int
@@ -3250,7 +3344,7 @@ get_setdstzero_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-static void
+static int
 _dec_src_ref_nop(char *NPY_UNUSED(dst),
                         npy_intp NPY_UNUSED(dst_stride),
                         char *NPY_UNUSED(src), npy_intp NPY_UNUSED(src_stride),
@@ -3259,9 +3353,10 @@ _dec_src_ref_nop(char *NPY_UNUSED(dst),
                         NpyAuxData *NPY_UNUSED(data))
 {
     /* NOP */
+    return 0;
 }
 
-static void
+static int
 _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
                         npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp src_stride,
@@ -3271,15 +3366,16 @@ _strided_to_null_dec_src_ref_reference(char *NPY_UNUSED(dst),
 {
     PyObject *src_ref = NULL;
     while (N > 0) {
-        NPY_COPY_PYOBJECT_PTR(&src_ref, src);
-
-        /* Release the reference in src */
+        /* Release the reference in src and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec src ref (null dst)", src_ref);
+        memcpy(&src_ref, src, sizeof(src_ref));
         Py_XDECREF(src_ref);
+        memset(src, 0, sizeof(PyObject *));
 
         src += src_stride;
         --N;
     }
+    return 0;
 }
 
 
@@ -3660,6 +3756,53 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     out_stransfer, out_transferdata,
                     out_needs_api);
 }
+
+
+/*
+ * Basic version of PyArray_GetDTypeTransferFunction for legacy dtype
+ * support.
+ * It supports only wrapping the copyswapn functions and the legacy
+ * cast functions registered with `PyArray_RegisterCastFunc`.
+ * This function takes the easy way out: It does not wrap
+ */
+NPY_NO_EXPORT int
+PyArray_GetLegacyDTypeTransferFunction(int aligned,
+        npy_intp src_stride, npy_intp dst_stride,
+        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+        int move_references,
+        PyArray_StridedUnaryOp **out_stransfer,
+        NpyAuxData **out_transferdata,
+        int *out_needs_api)
+{
+    /* Note: We ignore `needs_wrap`; needs-wrap is handled by another cast */
+    int needs_wrap = 0;
+
+    if (src_dtype->type_num == dst_dtype->type_num) {
+        /*
+         * This is a cast within the same dtype. For legacy user-dtypes,
+         * it is always valid to handle this using the copy swap function.
+         */
+        return wrap_copy_swap_function(aligned,
+                src_stride, dst_stride,
+                src_dtype,
+                PyArray_ISNBO(src_dtype->byteorder) !=
+                PyArray_ISNBO(dst_dtype->byteorder),
+                out_stransfer, out_transferdata);
+    }
+
+    if (get_legacy_dtype_cast_function(aligned,
+            src_stride, dst_stride,
+            src_dtype, dst_dtype,
+            move_references,
+            out_stransfer,
+            out_transferdata,
+            out_needs_api,
+            &needs_wrap) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
 
 NPY_NO_EXPORT int
 PyArray_GetMaskedDTypeTransferFunction(int aligned,

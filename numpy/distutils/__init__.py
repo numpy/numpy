@@ -18,9 +18,7 @@ LAPACK, and for setting include paths and similar build options, please see
 ``site.cfg.example`` in the root of the NumPy repository or sdist.
 
 """
-# from setuptools v49.2.0, setuptools warns if distutils is imported first,
-# so pre-emptively import setuptools
-import setuptools
+
 # Must import local ccompiler ASAP in order to get
 # customized CCompiler.spawn effective.
 from . import ccompiler

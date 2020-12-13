@@ -28,7 +28,7 @@
 static PyObject *
 array_ndim_get(PyArrayObject *self)
 {
-    return PyInt_FromLong(PyArray_NDIM(self));
+    return PyLong_FromLong(PyArray_NDIM(self));
 }
 
 static PyObject *
@@ -217,7 +217,7 @@ array_protocol_descr_get(PyArrayObject *self)
     if (dobj == NULL) {
         return NULL;
     }
-    PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
     PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
     res = PyList_New(1);
     if (res == NULL) {
@@ -244,8 +244,9 @@ array_dataptr_get(PyArrayObject *self)
 {
     return Py_BuildValue("NO",
                          PyLong_FromVoidPtr(PyArray_DATA(self)),
-                         (PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE ? Py_False :
-                          Py_True));
+                         ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE) &&
+                          !(PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) ?
+                         Py_False : Py_True);
 }
 
 static PyObject *
@@ -274,10 +275,6 @@ array_interface_get(PyArrayObject *self)
         return NULL;
     }
 
-    if (array_might_be_written(self) < 0) {
-        Py_DECREF(dict);
-        return NULL;
-    }
     int ret;
 
     /* dataptr */
@@ -321,7 +318,7 @@ array_interface_get(PyArrayObject *self)
         return NULL;
     }
 
-    obj = PyInt_FromLong(3);
+    obj = PyLong_FromLong(3);
     ret = PyDict_SetItemString(dict, "version", obj);
     Py_DECREF(obj);
     if (ret < 0) {
@@ -416,7 +413,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
 static PyObject *
 array_itemsize_get(PyArrayObject *self)
 {
-    return PyInt_FromLong((long) PyArray_DESCR(self)->elsize);
+    return PyLong_FromLong((long) PyArray_DESCR(self)->elsize);
 }
 
 static PyObject *
@@ -424,13 +421,13 @@ array_size_get(PyArrayObject *self)
 {
     npy_intp size=PyArray_SIZE(self);
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) size);
+    return PyLong_FromLong((long) size);
 #else
     if (size > NPY_MAX_LONG || size < NPY_MIN_LONG) {
         return PyLong_FromLongLong(size);
     }
     else {
-        return PyInt_FromLong((long) size);
+        return PyLong_FromLong((long) size);
     }
 #endif
 }
@@ -440,13 +437,13 @@ array_nbytes_get(PyArrayObject *self)
 {
     npy_intp nbytes = PyArray_NBYTES(self);
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) nbytes);
+    return PyLong_FromLong((long) nbytes);
 #else
     if (nbytes > NPY_MAX_LONG || nbytes < NPY_MIN_LONG) {
         return PyLong_FromLongLong(nbytes);
     }
     else {
-        return PyInt_FromLong((long) nbytes);
+        return PyLong_FromLong((long) nbytes);
     }
 #endif
 }
@@ -624,13 +621,7 @@ static PyObject *
 array_struct_get(PyArrayObject *self)
 {
     PyArrayInterface *inter;
-    PyObject *ret;
 
-    if (PyArray_ISWRITEABLE(self)) {
-        if (array_might_be_written(self) < 0) {
-            return NULL;
-        }
-    }
     inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
         return PyErr_NoMemory();
@@ -640,6 +631,11 @@ array_struct_get(PyArrayObject *self)
     inter->typekind = PyArray_DESCR(self)->kind;
     inter->itemsize = PyArray_DESCR(self)->elsize;
     inter->flags = PyArray_FLAGS(self);
+    if (inter->flags & NPY_ARRAY_WARN_ON_WRITE) {
+        /* Export a warn-on-write array as read-only */
+        inter->flags = inter->flags & ~NPY_ARRAY_WARN_ON_WRITE;
+        inter->flags = inter->flags & ~NPY_ARRAY_WRITEABLE;
+    }
     /* reset unused flags */
     inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_UPDATEIFCOPY |NPY_ARRAY_OWNDATA);
     if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NPY_ARRAY_NOTSWAPPED;
@@ -676,8 +672,14 @@ array_struct_get(PyArrayObject *self)
     else {
         inter->descr = NULL;
     }
+    PyObject *ret = PyCapsule_New(inter, NULL, gentype_struct_free);
+    if (ret == NULL) {
+        return NULL;
+    }
     Py_INCREF(self);
-    ret = NpyCapsule_FromVoidPtrAndDesc(inter, self, gentype_struct_free);
+    if (PyCapsule_SetContext(ret, self) < 0) {
+        return NULL;
+    }
     return ret;
 }
 

@@ -30,7 +30,7 @@ Enumerated Types
 There is a list of enumerated types defined providing the basic 24
 data types plus some useful generic names. Whenever the code requires
 a type number, one of these enumerated types is requested. The types
-are all called :c:data:`NPY_{NAME}`:
+are all called ``NPY_{NAME}``:
 
 .. c:var:: NPY_BOOL
 
@@ -183,23 +183,23 @@ Some useful aliases of the above types are
 
 Other useful related constants are
 
-.. c:var:: NPY_NTYPES
+.. c:macro:: NPY_NTYPES
 
     The total number of built-in NumPy types. The enumeration covers
     the range from 0 to NPY_NTYPES-1.
 
-.. c:var:: NPY_NOTYPE
+.. c:macro:: NPY_NOTYPE
 
     A signal value guaranteed not to be a valid type enumeration number.
 
-.. c:var:: NPY_USERDEF
+.. c:macro:: NPY_USERDEF
 
     The start of type numbers used for Custom Data types.
 
 The various character codes indicating certain types are also part of
 an enumerated list. References to type characters (should they be
 needed at all) should always use these enumerations. The form of them
-is :c:data:`NPY_{NAME}LTR` where ``{NAME}`` can be
+is ``NPY_{NAME}LTR`` where ``{NAME}`` can be
 
     **BOOL**, **BYTE**, **UBYTE**, **SHORT**, **USHORT**, **INT**,
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
@@ -221,24 +221,17 @@ Defines
 Max and min values for integers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. c:var:: NPY_MAX_INT{bits}
-
-.. c:var:: NPY_MAX_UINT{bits}
-
-.. c:var:: NPY_MIN_INT{bits}
-
+``NPY_MAX_INT{bits}``, ``NPY_MAX_UINT{bits}``, ``NPY_MIN_INT{bits}``
     These are defined for ``{bits}`` = 8, 16, 32, 64, 128, and 256 and provide
     the maximum (minimum) value of the corresponding (unsigned) integer
     type. Note: the actual integer type may not be available on all
     platforms (i.e. 128-bit and 256-bit integers are rare).
 
-.. c:var:: NPY_MIN_{type}
-
+``NPY_MIN_{type}``
     This is defined for ``{type}`` = **BYTE**, **SHORT**, **INT**,
     **LONG**, **LONGLONG**, **INTP**
 
-.. c:var:: NPY_MAX_{type}
-
+``NPY_MAX_{type}``
     This is defined for all defined for ``{type}`` = **BYTE**, **UBYTE**,
     **SHORT**, **USHORT**, **INT**, **UINT**, **LONG**, **ULONG**,
     **LONGLONG**, **ULONGLONG**, **INTP**, **UINTP**
@@ -247,8 +240,8 @@ Max and min values for integers
 Number of bits in data types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All :c:data:`NPY_SIZEOF_{CTYPE}` constants have corresponding
-:c:data:`NPY_BITSOF_{CTYPE}` constants defined. The :c:data:`NPY_BITSOF_{CTYPE}`
+All ``NPY_SIZEOF_{CTYPE}`` constants have corresponding
+``NPY_BITSOF_{CTYPE}`` constants defined. The ``NPY_BITSOF_{CTYPE}``
 constants provide the number of bits in the data type.  Specifically,
 the available ``{CTYPE}s`` are
 
@@ -263,7 +256,7 @@ All of the numeric data types (integer, floating point, and complex)
 have constants that are defined to be a specific enumerated type
 number. Exactly which enumerated type a bit-width type refers to is
 platform dependent. In particular, the constants available are
-:c:data:`PyArray_{NAME}{BITS}` where ``{NAME}`` is **INT**, **UINT**,
+``PyArray_{NAME}{BITS}`` where ``{NAME}`` is **INT**, **UINT**,
 **FLOAT**, **COMPLEX** and ``{BITS}`` can be 8, 16, 32, 64, 80, 96, 128,
 160, 192, 256, and 512.  Obviously not all bit-widths are available on
 all platforms for all the kinds of numeric types. Commonly 8-, 16-,
@@ -397,8 +390,8 @@ There are also typedefs for signed integers, unsigned integers,
 floating point, and complex floating point types of specific bit-
 widths. The available type names are
 
-    :c:type:`npy_int{bits}`, :c:type:`npy_uint{bits}`, :c:type:`npy_float{bits}`,
-    and :c:type:`npy_complex{bits}`
+    ``npy_int{bits}``, ``npy_uint{bits}``, ``npy_float{bits}``,
+    and ``npy_complex{bits}``
 
 where ``{bits}`` is the number of bits in the type and can be **8**,
 **16**, **32**, **64**, 128, and 256 for integer types; 16, **32**
@@ -414,6 +407,12 @@ Printf Formatting
 For help in printing, the following strings are defined as the correct
 format specifier in printf and related commands.
 
-    :c:data:`NPY_LONGLONG_FMT`, :c:data:`NPY_ULONGLONG_FMT`,
-    :c:data:`NPY_INTP_FMT`, :c:data:`NPY_UINTP_FMT`,
-    :c:data:`NPY_LONGDOUBLE_FMT`
+.. c:macro:: NPY_LONGLONG_FMT
+
+.. c:macro:: NPY_ULONGLONG_FMT
+
+.. c:macro:: NPY_INTP_FMT
+
+.. c:macro:: NPY_UINTP_FMT
+
+.. c:macro:: NPY_LONGDOUBLE_FMT

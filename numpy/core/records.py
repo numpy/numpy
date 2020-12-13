@@ -36,12 +36,11 @@ Record arrays allow us to access fields as properties::
 import os
 import warnings
 from collections import Counter, OrderedDict
+from contextlib import nullcontext
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import (
-    isfileobj, os_fspath, contextlib_nullcontext
-)
+from numpy.compat import os_fspath
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
@@ -374,7 +373,7 @@ class recarray(ndarray):
 
     See Also
     --------
-    rec.fromrecords : Construct a record array from data.
+    core.records.fromrecords : Construct a record array from data.
     record : fundamental data-type for `recarray`.
     format_parser : determine a data-type from formats, names, titles.
 
@@ -630,7 +629,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
-    
+
     >>> x1 = np.array([1, 2, 3, 4])
     >>> x2 = np.array(['a', 'dd', 'xyz', '12'])
     >>> x3 = np.array([1.1, 2, 3,4])
@@ -847,13 +846,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     return _array
 
 def get_remaining_size(fd):
+    pos = fd.tell()
     try:
-        fn = fd.fileno()
-    except AttributeError:
-        return os.path.getsize(fd.name) - fd.tell()
-    st = os.fstat(fn)
-    size = st.st_size - fd.tell()
-    return size
+        fd.seek(0, 2)
+        return fd.tell() - pos
+    finally:
+        fd.seek(pos, 0)
 
 def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
@@ -911,9 +909,11 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, int):
         shape = (shape,)
 
-    if isfileobj(fd):
+    if hasattr(fd, 'readinto'):
+        # GH issue 2504. fd supports io.RawIOBase or io.BufferedIOBase interface.
+        # Example of fd: gzip, BytesIO, BufferedReader
         # file already opened
-        ctx = contextlib_nullcontext(fd)
+        ctx = nullcontext(fd)
     else:
         # open file
         ctx = open(os_fspath(fd), 'rb')
@@ -957,7 +957,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     """
     Construct a record array from a wide-variety of objects.
 
-    A general-purpose record array constructor that dispatches to the 
+    A general-purpose record array constructor that dispatches to the
     appropriate `recarray` creation function based on the inputs (see Notes).
 
     Parameters
@@ -995,7 +995,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     `obj` is a string, then call the `fromstring` constructor. If `obj` is a
     list or a tuple, then if the first object is an `~numpy.ndarray`, call
     `fromarrays`, otherwise call `fromrecords`. If `obj` is a
-    `~numpy.recarray`, then make a copy of the data in the recarray 
+    `~numpy.recarray`, then make a copy of the data in the recarray
     (if ``copy=True``) and use the new formats, names, and titles. If `obj`
     is a file, then call `fromfile`. Finally, if obj is an `ndarray`, then
     return ``obj.view(recarray)``, making a copy of the data if ``copy=True``.
@@ -1036,7 +1036,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     array('def', dtype='<U3')
     """
 
-    if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
+    if ((isinstance(obj, (type(None), str)) or hasattr(obj, 'readinto')) and
            formats is None and dtype is None):
         raise ValueError("Must define formats (or dtype) if object is "
                          "None, string, or an open file")
@@ -1078,7 +1078,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             new = new.copy()
         return new
 
-    elif isfileobj(obj):
+    elif hasattr(obj, 'readinto'):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, ndarray):

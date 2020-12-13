@@ -234,7 +234,9 @@ Header Preamble
 
 Each NEP must begin with a header preamble.  The headers
 must appear in the following order.  Headers marked with ``*`` are
-optional.  All other headers are required. ::
+optional.  All other headers are required.
+
+.. code-block:: rst
 
     :Author: <list of authors' real names and optionally, email addresses>
     :Status: <Draft | Active | Accepted | Deferred | Rejected |
@@ -251,9 +253,13 @@ The Author header lists the names, and optionally the email addresses
 of all the authors of the NEP.  The format of the Author header
 value must be
 
+.. code-block:: rst
+
     Random J. User <address@dom.ain>
 
 if the email address is included, and just
+
+.. code-block:: rst
 
     Random J. User
 

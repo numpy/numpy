@@ -10,28 +10,52 @@ UFunc API
 Constants
 ---------
 
-.. c:var:: UFUNC_ERR_{HANDLER}
+``UFUNC_ERR_{HANDLER}``
+    .. c:macro:: UFUNC_ERR_IGNORE
 
-    ``{HANDLER}`` can be **IGNORE**, **WARN**, **RAISE**, or **CALL**
+    .. c:macro:: UFUNC_ERR_WARN
 
-.. c:var:: UFUNC_{THING}_{ERR}
+    .. c:macro:: UFUNC_ERR_RAISE
 
-    ``{THING}`` can be **MASK**, **SHIFT**, or **FPE**, and ``{ERR}`` can
-    be **DIVIDEBYZERO**, **OVERFLOW**, **UNDERFLOW**, and **INVALID**.
+    .. c:macro:: UFUNC_ERR_CALL
 
-.. c:var:: PyUFunc_{VALUE}
+``UFUNC_{THING}_{ERR}``
+    .. c:macro:: UFUNC_MASK_DIVIDEBYZERO
 
-    .. c:var:: PyUFunc_One
+    .. c:macro:: UFUNC_MASK_OVERFLOW
 
-    .. c:var:: PyUFunc_Zero
+    .. c:macro:: UFUNC_MASK_UNDERFLOW
 
-    .. c:var:: PyUFunc_MinusOne
+    .. c:macro:: UFUNC_MASK_INVALID
 
-    .. c:var:: PyUFunc_ReorderableNone
+    .. c:macro:: UFUNC_SHIFT_DIVIDEBYZERO
 
-    .. c:var:: PyUFunc_None
+    .. c:macro:: UFUNC_SHIFT_OVERFLOW
 
-    .. c:var:: PyUFunc_IdentityValue
+    .. c:macro:: UFUNC_SHIFT_UNDERFLOW
+
+    .. c:macro:: UFUNC_SHIFT_INVALID
+
+    .. c:macro:: UFUNC_FPE_DIVIDEBYZERO
+
+    .. c:macro:: UFUNC_FPE_OVERFLOW
+
+    .. c:macro:: UFUNC_FPE_UNDERFLOW
+
+    .. c:macro:: UFUNC_FPE_INVALID
+
+``PyUFunc_{VALUE}``
+    .. c:macro:: PyUFunc_One
+
+    .. c:macro:: PyUFunc_Zero
+
+    .. c:macro:: PyUFunc_MinusOne
+
+    .. c:macro:: PyUFunc_ReorderableNone
+
+    .. c:macro:: PyUFunc_None
+
+    .. c:macro:: PyUFunc_IdentityValue
 
 
 Macros
@@ -48,6 +72,66 @@ Macros
 
     Used in universal function code to re-acquire the Python GIL if it
     was released (because loop->obj was not true).
+
+
+Types
+-----
+
+.. c:type:: PyUFuncGenericFunction
+
+    pointers to functions that actually implement the underlying
+    (element-by-element) function :math:`N` times with the following
+    signature:
+
+    .. c:function:: void loopfunc(\
+            char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
+
+        *args*
+
+            An array of pointers to the actual data for the input and output
+            arrays. The input arguments are given first followed by the output
+            arguments.
+
+        *dimensions*
+
+            A pointer to the size of the dimension over which this function is
+            looping.
+
+        *steps*
+
+            A pointer to the number of bytes to jump to get to the
+            next element in this dimension for each of the input and
+            output arguments.
+
+        *data*
+
+            Arbitrary data (extra arguments, function names, *etc.* )
+            that can be stored with the ufunc and will be passed in
+            when it is called.
+
+        This is an example of a func specialized for addition of doubles
+        returning doubles.
+
+        .. code-block:: c
+
+            static void
+            double_add(char **args,
+                       npy_intp const *dimensions,
+                       npy_intp const *steps,
+                       void *extra)
+            {
+                npy_intp i;
+                npy_intp is1 = steps[0], is2 = steps[1];
+                npy_intp os = steps[2], n = dimensions[0];
+                char *i1 = args[0], *i2 = args[1], *op = args[2];
+                for (i = 0; i < n; i++) {
+                    *((double *)op) = *((double *)i1) +
+                                      *((double *)i2);
+                    i1 += is1;
+                    i2 += is2;
+                    op += os;
+                 }
+            }
 
 
 Functions
@@ -71,60 +155,7 @@ Functions
 
     :param func:
         Must to an array of length *ntypes* containing
-        :c:type:`PyUFuncGenericFunction` items. These items are pointers to
-        functions that actually implement the underlying
-        (element-by-element) function :math:`N` times with the following
-        signature:
-
-        .. c:function:: void loopfunc(
-                char** args, npy_intp const *dimensions, npy_intp const *steps, void* data)
-
-            *args*
-
-                An array of pointers to the actual data for the input and output
-                arrays. The input arguments are given first followed by the output
-                arguments.
-
-            *dimensions*
-
-                A pointer to the size of the dimension over which this function is
-                looping.
-
-            *steps*
-
-                A pointer to the number of bytes to jump to get to the
-                next element in this dimension for each of the input and
-                output arguments.
-
-            *data*
-
-                Arbitrary data (extra arguments, function names, *etc.* )
-                that can be stored with the ufunc and will be passed in
-                when it is called.
-
-            This is an example of a func specialized for addition of doubles
-            returning doubles.
-
-            .. code-block:: c
-
-                static void
-                double_add(char **args,
-                           npy_intp const *dimensions,
-                           npy_intp const *steps,
-                           void *extra)
-                {
-                    npy_intp i;
-                    npy_intp is1 = steps[0], is2 = steps[1];
-                    npy_intp os = steps[2], n = dimensions[0];
-                    char *i1 = args[0], *i2 = args[1], *op = args[2];
-                    for (i = 0; i < n; i++) {
-                        *((double *)op) = *((double *)i1) +
-                                          *((double *)i2);
-                        i1 += is1;
-                        i2 += is2;
-                        op += os;
-                     }
-                }
+        :c:type:`PyUFuncGenericFunction` items.
 
     :param data:
         Should be ``NULL`` or a pointer to an array of size *ntypes*
@@ -269,7 +300,7 @@ Functions
 .. c:function:: int PyUFunc_checkfperr(int errmask, PyObject* errobj)
 
     A simple interface to the IEEE error-flag checking support. The
-    *errmask* argument is a mask of :c:data:`UFUNC_MASK_{ERR}` bitmasks
+    *errmask* argument is a mask of ``UFUNC_MASK_{ERR}`` bitmasks
     indicating which errors to check for (and how to check for
     them). The *errobj* must be a Python tuple with two elements: a
     string containing the name which will be used in any communication
@@ -459,9 +490,9 @@ structure.
 Importing the API
 -----------------
 
-.. c:var:: PY_UFUNC_UNIQUE_SYMBOL
+.. c:macro:: PY_UFUNC_UNIQUE_SYMBOL
 
-.. c:var:: NO_IMPORT_UFUNC
+.. c:macro:: NO_IMPORT_UFUNC
 
 .. c:function:: void import_ufunc(void)
 

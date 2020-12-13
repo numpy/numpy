@@ -411,7 +411,7 @@ def rfft(a, n=None, axis=-1, norm=None):
 @array_function_dispatch(_fft_dispatcher)
 def irfft(a, n=None, axis=-1, norm=None):
     """
-    Compute the inverse of the n-point DFT for real input.
+    Computes the inverse of `rfft`.
 
     This function computes the inverse of the one-dimensional *n*-point
     discrete Fourier Transform of real input computed by `rfft`.
@@ -1249,7 +1249,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
 @array_function_dispatch(_fftn_dispatcher)
 def irfftn(a, s=None, axes=None, norm=None):
     """
-    Compute the inverse of the N-dimensional FFT of real input.
+    Computes the inverse of `rfftn`.
 
     This function computes the inverse of the N-dimensional discrete
     Fourier Transform for real input over any number of axes in an
@@ -1359,7 +1359,7 @@ def irfftn(a, s=None, axes=None, norm=None):
 @array_function_dispatch(_fftn_dispatcher)
 def irfft2(a, s=None, axes=(-2, -1), norm=None):
     """
-    Compute the 2-dimensional inverse FFT of a real array.
+    Computes the inverse of `rfft2`.
 
     Parameters
     ----------
@@ -1388,6 +1388,10 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
 
     See Also
     --------
+    rfft2 : The forward two-dimensional FFT of real input,
+            of which `irfft2` is the inverse.
+    rfft : The one-dimensional FFT for real input.
+    irfft : The inverse of the one-dimensional FFT of real input.
     irfftn : Compute the inverse of the N-dimensional FFT of real input.
 
     Notes

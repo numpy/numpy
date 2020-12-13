@@ -9,6 +9,7 @@ import subprocess
 import shutil
 import multiprocessing
 import textwrap
+import importlib.util
 
 import distutils
 from distutils.errors import DistutilsError
@@ -1900,15 +1901,16 @@ class Configuration:
                 revision0 = f.read().strip()
 
             branch_map = {}
-            for line in file(branch_cache_fn, 'r'):
-                branch1, revision1  = line.split()[:2]
-                if revision1==revision0:
-                    branch0 = branch1
-                try:
-                    revision1 = int(revision1)
-                except ValueError:
-                    continue
-                branch_map[branch1] = revision1
+            with open(branch_cache_fn, 'r') as f:
+                for line in f:
+                    branch1, revision1  = line.split()[:2]
+                    if revision1==revision0:
+                        branch0 = branch1
+                    try:
+                        revision1 = int(revision1)
+                    except ValueError:
+                        continue
+                    branch_map[branch1] = revision1
 
             return branch_map.get(branch0)
 
@@ -1966,6 +1968,13 @@ class Configuration:
                     version = getattr(version_module, a, None)
                     if version is not None:
                         break
+
+                # Try if versioneer module
+                try:
+                    version = version_module.get_versions()['version']
+                except AttributeError:
+                    version = None
+
                 if version is not None:
                     break
 
@@ -2121,12 +2130,11 @@ def get_npy_pkg_dir():
     environment, and using them when cross-compiling.
 
     """
-    # XXX: import here for bootstrapping reasons
-    import numpy
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d is not None:
         return d
-    d = os.path.join(os.path.dirname(numpy.__file__),
+    spec = importlib.util.find_spec('numpy')
+    d = os.path.join(os.path.dirname(spec.origin),
             'core', 'lib', 'npy-pkg-config')
     return d
 
@@ -2355,6 +2363,7 @@ def generate_config_py(target):
 
                 Examples
                 --------
+                >>> import numpy as np
                 >>> np.show_config()
                 blas_opt_info:
                     language = c

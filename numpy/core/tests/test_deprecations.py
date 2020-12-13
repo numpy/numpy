@@ -81,6 +81,8 @@ class _DeprecationTestCase:
         kwargs : dict
             Keyword arguments for `function`
         """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
         # reset the log
         self.log[:] = []
 
@@ -615,7 +617,7 @@ class BuiltInRoundComplexDType(_DeprecationTestCase):
             self.assert_deprecated(round, args=(scalar,))
             self.assert_deprecated(round, args=(scalar, 0))
             self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-    
+
     def test_not_deprecated(self):
         for scalar_type in self.not_deprecated_types:
             scalar = scalar_type(0)
@@ -678,3 +680,108 @@ class TestDeprecatedGlobals(_DeprecationTestCase):
         # from np.compat
         self.assert_deprecated(lambda: np.long)
         self.assert_deprecated(lambda: np.unicode)
+
+
+class TestMatrixInOuter(_DeprecationTestCase):
+    # 2020-05-13 NumPy 1.20.0
+    message = (r"add.outer\(\) was passed a numpy matrix as "
+               r"(first|second) argument.")
+
+    def test_deprecated(self):
+        arr = np.array([1, 2, 3])
+        m = np.array([1, 2, 3]).view(np.matrix)
+        self.assert_deprecated(np.add.outer, args=(m, m), num=2)
+        self.assert_deprecated(np.add.outer, args=(arr, m))
+        self.assert_deprecated(np.add.outer, args=(m, arr))
+        self.assert_not_deprecated(np.add.outer, args=(arr, arr))
+
+
+class TestRaggedArray(_DeprecationTestCase):
+    # 2020-07-24, NumPy 1.20.0
+    message = "setting an array element with a sequence"
+
+    def test_deprecated(self):
+        arr = np.ones((1, 1))
+        # Deprecated if the array is a leave node:
+        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64))
+        # And when it is an assignment into a lower dimensional subarray:
+        self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
+        self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
+
+
+class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
+    # NumPy 1.20, 2020-09-03
+    message = "concatenate with `axis=None` will use same-kind casting"
+
+    def test_deprecated(self):
+        self.assert_deprecated(np.concatenate,
+                args=(([0.], [1.]),),
+                kwargs=dict(axis=None, out=np.empty(2, dtype=np.int64)))
+
+    def test_not_deprecated(self):
+        self.assert_not_deprecated(np.concatenate,
+                args=(([0.], [1.]),),
+                kwargs={'axis': None, 'out': np.empty(2, dtype=np.int64),
+                        'casting': "unsafe"})
+
+        with assert_raises(TypeError):
+            # Tests should notice if the deprecation warning is given first...
+            np.concatenate(([0.], [1.]), out=np.empty(2, dtype=np.int64),
+                           casting="same_kind")
+
+
+class TestDeprecateSubarrayDTypeDuringArrayCoercion(_DeprecationTestCase):
+    warning_cls = FutureWarning
+    message = "(creating|casting) an array (with|to) a subarray dtype"
+
+    def test_deprecated_array(self):
+        # Arrays are more complex, since they "broadcast" on success:
+        arr = np.array([1, 2])
+
+        self.assert_deprecated(lambda: arr.astype("(2)i,"))
+        with pytest.warns(FutureWarning):
+            res = arr.astype("(2)i,")
+
+        assert_array_equal(res, [[1, 2], [1, 2]])
+
+        self.assert_deprecated(lambda: np.array(arr, dtype="(2)i,"))
+        with pytest.warns(FutureWarning):
+            res = np.array(arr, dtype="(2)i,")
+
+        assert_array_equal(res, [[1, 2], [1, 2]])
+
+        with pytest.warns(FutureWarning):
+            res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
+
+        assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 2], [1, 2]]])
+
+    def test_deprecated_and_error(self):
+        # These error paths do not give a warning, but will succeed in the
+        # future.
+        arr = np.arange(5 * 2).reshape(5, 2)
+        def check():
+            with pytest.raises(ValueError):
+                arr.astype("(2,2)f")
+
+        self.assert_deprecated(check)
+
+        def check():
+            with pytest.raises(ValueError):
+                np.array(arr, dtype="(2,2)f")
+
+        self.assert_deprecated(check)
+
+
+class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
+    # Deprecated 2020-11-24, NumPy 1.20
+    """
+    Technically, it should be impossible to create numpy object scalars,
+    but there was an unpickle path that would in theory allow it. That
+    path is invalid and must lead to the warning.
+    """
+    message = "Unpickling a scalar with object dtype is deprecated."
+
+    def test_deprecated(self):
+        ctor = np.core.multiarray.scalar
+        self.assert_deprecated(lambda: ctor(np.dtype("O"), 1))

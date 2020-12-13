@@ -17,7 +17,7 @@ include test_requirements.txt
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
 include numpy/py.typed
 include numpy/random/include/*
-include numpy/__init__.pxd
+include numpy/*.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
 # Note that sub-directories that don't have __init__ are apparently not
 # included by 'recursive-include', so list those separately
@@ -48,3 +48,5 @@ global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~
 # Exclude license file that we append to the main license when running
 # `python setup.py sdist`
 exclude LICENSES_bundled.txt
+include versioneer.py
+include numpy/_version.py

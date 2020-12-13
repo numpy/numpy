@@ -14,7 +14,7 @@ from . import format
 from ._datasource import DataSource
 from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
-from numpy.core.overrides import set_module
+from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -23,8 +23,8 @@ from ._iotools import (
     )
 
 from numpy.compat import (
-    asbytes, asstr, asunicode, bytes, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    asbytes, asstr, asunicode, os_fspath, os_PathLike,
+    pickle
     )
 
 
@@ -86,7 +86,7 @@ class BagObj:
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
-            raise AttributeError(key)
+            raise AttributeError(key) from None
 
     def __dir__(self):
         """
@@ -178,6 +178,9 @@ class NpzFile(Mapping):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
+    # Make __exit__ safe if zipfile_factory raises an exception
+    zip = None
+    fid = None
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None):
@@ -197,8 +200,6 @@ class NpzFile(Mapping):
         self.f = BagObj(self)
         if own_fid:
             self.fid = fid
-        else:
-            self.fid = None
 
     def __enter__(self):
         return self
@@ -445,9 +446,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                                  "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except Exception:
+            except Exception as e:
                 raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file))
+                    "Failed to interpret file %s as a pickle" % repr(file)) from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -516,7 +517,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     # [1 2] [1 3]
     """
     if hasattr(file, 'write'):
-        file_ctx = contextlib_nullcontext(file)
+        file_ctx = contextlib.nullcontext(file)
     else:
         file = os_fspath(file)
         if not file.endswith('.npy'):
@@ -711,44 +712,14 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     zipf = zipfile_factory(file, mode="w", compression=compression)
 
-    if sys.version_info >= (3, 6):
-        # Since Python 3.6 it is possible to write directly to a ZIP file.
-        for key, val in namedict.items():
-            fname = key + '.npy'
-            val = np.asanyarray(val)
-            # always force zip64, gh-10776
-            with zipf.open(fname, 'w', force_zip64=True) as fid:
-                format.write_array(fid, val,
-                                   allow_pickle=allow_pickle,
-                                   pickle_kwargs=pickle_kwargs)
-    else:
-        # Stage arrays in a temporary file on disk, before writing to zip.
-
-        # Import deferred for startup time improvement
-        import tempfile
-        # Since target file might be big enough to exceed capacity of a global
-        # temporary directory, create temp file side-by-side with the target file.
-        file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-        fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
-        os.close(fd)
-        try:
-            for key, val in namedict.items():
-                fname = key + '.npy'
-                fid = open(tmpfile, 'wb')
-                try:
-                    format.write_array(fid, np.asanyarray(val),
-                                       allow_pickle=allow_pickle,
-                                       pickle_kwargs=pickle_kwargs)
-                    fid.close()
-                    fid = None
-                    zipf.write(tmpfile, arcname=fname)
-                except IOError as exc:
-                    raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-                finally:
-                    if fid:
-                        fid.close()
-        finally:
-            os.remove(tmpfile)
+    for key, val in namedict.items():
+        fname = key + '.npy'
+        val = np.asanyarray(val)
+        # always force zip64, gh-10776
+        with zipf.open(fname, 'w', force_zip64=True) as fid:
+            format.write_array(fid, val,
+                               allow_pickle=allow_pickle,
+                               pickle_kwargs=pickle_kwargs)
 
     zipf.close()
 
@@ -789,10 +760,17 @@ def _getconv(dtype):
 _loadtxt_chunksize = 50000
 
 
+def _loadtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+                        converters=None, skiprows=None, usecols=None, unpack=None,
+                        ndmin=None, encoding=None, max_rows=None, *, like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None):
+            ndmin=0, encoding='bytes', max_rows=None, *, like=None):
     r"""
     Load data from a text file.
 
@@ -837,8 +815,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
-        data-type, arrays are returned for each field.  Default is False.
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
@@ -859,6 +838,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         is to read all the lines.
 
         .. versionadded:: 1.16.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -915,6 +897,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
            [ 19.22,  64.31],
            [-17.57,  63.94]])
     """
+
+    if like is not None:
+        return _loadtxt_with_like(
+            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            converters=converters, skiprows=skiprows, usecols=usecols,
+            unpack=unpack, ndmin=ndmin, encoding=encoding,
+            max_rows=max_rows, like=like
+        )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Nested functions used by loadtxt.
@@ -975,10 +965,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if comments is not None:
             line = regex_comments.split(line, maxsplit=1)[0]
         line = line.strip('\r\n')
-        if line:
-            return line.split(delimiter)
-        else:
-            return []
+        return line.split(delimiter) if line else []
 
     def read_data(chunk_size):
         """Parse each line, including the first.
@@ -1040,11 +1027,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     user_converters = converters
 
+    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
-    else:
-        byte_converters = False
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
@@ -1198,6 +1184,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return X.T
     else:
         return X
+
+
+_loadtxt_with_like = array_function_dispatch(
+    _loadtxt_dispatcher
+)(loadtxt)
 
 
 def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
@@ -1440,10 +1431,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 try:
                     v = format % tuple(row) + newline
-                except TypeError:
+                except TypeError as e:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
-                                    % (str(X.dtype), format))
+                                    % (str(X.dtype), format)) from e
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1496,7 +1487,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     -----
     Dtypes for structured arrays can be specified in several forms, but all
     forms specify at least the data type and field name. For details see
-    `doc.structured_arrays`.
+    `basics.rec`.
 
     Examples
     --------
@@ -1553,6 +1544,18 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
+def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+                           skip_header=None, skip_footer=None, converters=None,
+                           missing_values=None, filling_values=None, usecols=None,
+                           names=None, excludelist=None, deletechars=None,
+                           replace_space=None, autostrip=None, case_sensitive=None,
+                           defaultfmt=None, unpack=None, usemask=None, loose=None,
+                           invalid_raise=None, max_rows=None, encoding=None, *,
+                           like=None):
+    return (like,)
+
+
+@set_array_function_like_doc
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
@@ -1561,7 +1564,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes'):
+               invalid_raise=True, max_rows=None, encoding='bytes', *,
+               like=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1633,7 +1637,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         If 'lower', field names are converted to lower case.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``
+        unpacked using ``x, y, z = genfromtxt(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
@@ -1658,6 +1664,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to None the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1736,6 +1745,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
       dtype=[('f0', 'S12'), ('f1', 'S12')])
 
     """
+
+    if like is not None:
+        return _genfromtxt_with_like(
+            fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            skip_header=skip_header, skip_footer=skip_footer,
+            converters=converters, missing_values=missing_values,
+            filling_values=filling_values, usecols=usecols, names=names,
+            excludelist=excludelist, deletechars=deletechars,
+            replace_space=replace_space, autostrip=autostrip,
+            case_sensitive=case_sensitive, defaultfmt=defaultfmt,
+            unpack=unpack, usemask=usemask, loose=loose,
+            invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
+            like=like
+        )
+
     if max_rows is not None:
         if skip_footer:
             raise ValueError(
@@ -1768,7 +1792,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid_ctx = contextlib.closing(fid)
         else:
             fid = fname
-            fid_ctx = contextlib_nullcontext(fid)
+            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
@@ -2244,9 +2268,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask:
         output = output.view(MaskedArray)
         output._mask = outputmask
+    output = np.squeeze(output)
     if unpack:
-        return output.squeeze().T
-    return output.squeeze()
+        if names is None:
+            return output.T
+        elif len(names) == 1:
+            # squeeze single-name dtypes too
+            return output[names[0]]
+        else:
+            # For structured arrays with multiple fields,
+            # return an array for each field.
+            return [output[field] for field in names]
+    return output
+
+
+_genfromtxt_with_like = array_function_dispatch(
+    _genfromtxt_dispatcher
+)(genfromtxt)
 
 
 def ndfromtxt(fname, **kwargs):

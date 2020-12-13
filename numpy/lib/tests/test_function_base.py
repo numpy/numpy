@@ -1166,26 +1166,68 @@ class TestAngle:
 
 class TestTrimZeros:
 
-    """
-    Only testing for integer splits.
+    a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
+    b = a.astype(float)
+    c = a.astype(complex)
+    d = a.astype(object)
 
-    """
+    def values(self):
+        attr_names = ('a', 'b', 'c', 'd')
+        return (getattr(self, name) for name in attr_names)
 
     def test_basic(self):
-        a = np.array([0, 0, 1, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 2, 3, 4]))
+        slc = np.s_[2:-1]
+        for arr in self.values():
+            res = trim_zeros(arr)
+            assert_array_equal(res, arr[slc])
 
     def test_leading_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 4]))
+        slc = np.s_[:-1]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='b')
+            assert_array_equal(res, arr[slc])
 
     def test_trailing_skip(self):
-        a = np.array([0, 0, 1, 0, 2, 3, 0, 4, 0])
-        res = trim_zeros(a)
-        assert_array_equal(res, np.array([1, 0, 2, 3, 0, 4]))
+        slc = np.s_[2:]
+        for arr in self.values():
+            res = trim_zeros(arr, trim='F')
+            assert_array_equal(res, arr[slc])
 
+    def test_all_zero(self):
+        for _arr in self.values():
+            arr = np.zeros_like(_arr, dtype=_arr.dtype)
+
+            res1 = trim_zeros(arr, trim='B')
+            assert len(res1) == 0
+
+            res2 = trim_zeros(arr, trim='f')
+            assert len(res2) == 0
+
+    def test_size_zero(self):
+        arr = np.zeros(0)
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
+    @pytest.mark.parametrize(
+        'arr',
+        [np.array([0, 2**62, 0]),
+         np.array([0, 2**63, 0]),
+         np.array([0, 2**64, 0])]
+    )
+    def test_overflow(self, arr):
+        slc = np.s_[1:2]
+        res = trim_zeros(arr)
+        assert_array_equal(res, arr[slc])
+
+    def test_no_trim(self):
+        arr = np.array([None, 1, None])
+        res = trim_zeros(arr)
+        assert_array_equal(arr, res)
+
+
+    def test_list_to_list(self):
+        res = trim_zeros(self.a.tolist())
+        assert isinstance(res, list)
 
 class TestExtins:
 
@@ -1763,28 +1805,28 @@ class TestFilterwindows:
     def test_hanning(self):
         # check symmetry
         w = hanning(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
 
     def test_hamming(self):
         # check symmetry
         w = hamming(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
 
     def test_bartlett(self):
         # check symmetry
         w = bartlett(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
     def test_blackman(self):
         # check symmetry
         w = blackman(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
@@ -1981,6 +2023,12 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_corrcoef_dtype(self, test_type):
+        cast_A = self.A.astype(test_type)
+        res = corrcoef(cast_A, dtype=test_type)
+        assert test_type == res.dtype
+
 
 class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
@@ -2081,6 +2129,12 @@ class TestCov:
                             aweights=self.unit_weights),
                         self.res1)
 
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_cov_dtype(self, test_type):
+        cast_x1 = self.x1.astype(test_type)
+        res = cov(cast_x1, dtype=test_type)
+        assert test_type == res.dtype
+
 
 class Test_I0:
 
@@ -2089,8 +2143,9 @@ class Test_I0:
             i0(0.5),
             np.array(1.0634833707413234))
 
-        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549])
-        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049])
+        # need at least one test above 8, as the implementation is piecewise
+        A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549, 10.0])
+        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049, 2815.71662847])
         assert_almost_equal(i0(A), expected)
         assert_almost_equal(i0(-A), expected)
 
@@ -2127,6 +2182,10 @@ class Test_I0:
 
         assert_array_equal(exp, res)
 
+    def test_complex(self):
+        a = np.array([0, 1 + 2j])
+        with pytest.raises(TypeError, match="i0 not supported for complex values"):
+            res = i0(a)
 
 class TestKaiser:
 

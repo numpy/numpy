@@ -23,13 +23,6 @@ def is_win64():
     return sys.platform == "win32" and platform.architecture()[0] == "64bit"
 
 
-if is_win64():
-    #_EXTRAFLAGS = ["-fno-leading-underscore"]
-    _EXTRAFLAGS = []
-else:
-    _EXTRAFLAGS = []
-
-
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
     compiler_aliases = ('g77', )
@@ -133,7 +126,7 @@ class GnuFCompiler(FCompiler):
                     target = '10.9'
                     s = f'Env. variable MACOSX_DEPLOYMENT_TARGET set to {target}'
                     warnings.warn(s, stacklevel=2)
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = str(target)
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -238,7 +231,7 @@ class GnuFCompiler(FCompiler):
 
     def _c_arch_flags(self):
         """ Return detected arch flags from CFLAGS """
-        from distutils import sysconfig
+        import sysconfig
         try:
             cflags = sysconfig.get_config_vars()['CFLAGS']
         except KeyError:
@@ -297,11 +290,11 @@ class Gnu95FCompiler(GnuFCompiler):
     executables = {
         'version_cmd'  : ["<F90>", "-dumpversion"],
         'compiler_f77' : [None, "-Wall", "-g", "-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_f90' : [None, "-Wall", "-g",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'compiler_fix' : [None, "-Wall",  "-g","-ffixed-form",
-                          "-fno-second-underscore"] + _EXTRAFLAGS,
+                          "-fno-second-underscore"],
         'linker_so'    : ["<F90>", "-Wall", "-g"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],

@@ -8,12 +8,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
 sys.path.pop(0)
 
-Zero = "PyInt_FromLong(0)"
-One = "PyInt_FromLong(1)"
+Zero = "PyLong_FromLong(0)"
+One = "PyLong_FromLong(1)"
 True_ = "(Py_INCREF(Py_True), Py_True)"
 False_ = "(Py_INCREF(Py_False), Py_False)"
 None_ = object()
-AllOnes = "PyInt_FromLong(-1)"
+AllOnes = "PyLong_FromLong(-1)"
 MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
 ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
@@ -48,8 +48,11 @@ class TypeDescription:
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
+    dispatch: list
+        Available SIMD ufunc loops, dispatched at runtime in specified order
+        Currently only supported for simples types (see make_arrays)
     """
-    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None):
+    def __init__(self, type, f=None, in_=None, out=None, astype=None, simd=None, dispatch=None):
         self.type = type
         self.func_data = f
         if astype is None:
@@ -62,6 +65,7 @@ class TypeDescription:
             out = out.replace('P', type)
         self.out = out
         self.simd = simd
+        self.dispatch = dispatch
 
     def finish_signature(self, nin, nout):
         if self.in_ is None:
@@ -86,7 +90,7 @@ def build_func_data(types, f):
     func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
-def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
+def TD(types, f=None, astype=None, in_=None, out=None, simd=None, dispatch=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
@@ -115,7 +119,14 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
             simdt = [k for k, v in simd if t in v]
         else:
             simdt = []
-        tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype, simd=simdt))
+        # [(dispatch file name without extension '.dispatch.c*', list of types)]
+        if dispatch:
+            dispt = [k for k, v in dispatch if t in v]
+        else:
+            dispt = []
+        tds.append(TypeDescription(
+            t, f=fd, in_=i, out=o, astype=astype, simd=simdt, dispatch=dispt
+        ))
     return tds
 
 class Ufunc:
@@ -341,14 +352,14 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.square'),
           None,
-          TD(ints+inexact, simd=[('avx2', ints), ('fma', 'fd'), ('avx512f', 'FDfd')]),
+          TD(ints+inexact, simd=[('avx2', ints), ('avx512f', 'FD')], dispatch=[('loops_unary_fp', 'fd')]),
           TD(O, f='Py_square'),
           ),
 'reciprocal':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.reciprocal'),
           None,
-          TD(ints+inexact, simd=[('avx2', ints), ('fma', 'fd'), ('avx512f','fd')]),
+          TD(ints+inexact, simd=[('avx2', ints)], dispatch=[('loops_unary_fp', 'fd')]),
           TD(O, f='Py_reciprocal'),
           ),
 # This is no longer used as numpy.ones_like, however it is
@@ -378,7 +389,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.absolute'),
           'PyUFunc_AbsoluteTypeResolver',
-          TD(bints+flts+timedeltaonly, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
+          TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd')]),
           TD(cmplx, simd=[('avx512f', cmplxvec)], out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
@@ -726,6 +737,7 @@ defdict = {
           None,
           TD('e', f='log', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
+          TD('d', simd=[('avx512f', 'd')]),
           TD('fdg' + cmplx, f='log'),
           TD(P, f='log'),
           ),
@@ -755,7 +767,7 @@ defdict = {
           docstrings.get('numpy.core.umath.sqrt'),
           None,
           TD('e', f='sqrt', astype={'e':'f'}),
-          TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
+          TD(inexactvec, dispatch=[('loops_unary_fp', 'fd')]),
           TD('fdg' + cmplx, f='sqrt'),
           TD(P, f='sqrt'),
           ),
@@ -1023,6 +1035,16 @@ def make_arrays(funcdict):
                         """).format(
                             ISA=vt.upper(), isa=vt,
                             fname=name, type=tname, idx=k
+                        ))
+                if t.dispatch is not None:
+                    for dname in t.dispatch:
+                        code2list.append(textwrap.dedent("""\
+                        #ifndef NPY_DISABLE_OPTIMIZATION
+                        #include "{dname}.dispatch.h"
+                        #endif
+                        NPY_CPU_DISPATCH_CALL_XB({name}_functions[{k}] = {tname}_{name});
+                        """).format(
+                            dname=dname, name=name, tname=tname, k=k
                         ))
             else:
                 funclist.append('NULL')

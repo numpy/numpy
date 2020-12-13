@@ -188,6 +188,16 @@ Standard acronyms to start the commit message with are::
    REL: related to releasing numpy
 
 
+.. _workflow_mailing_list:
+
+Get the mailing list's opinion
+=======================================================
+
+If you plan a new feature or API change, it's wisest to first email the
+NumPy `mailing list <https://mail.python.org/mailman/listinfo/numpy-discussion>`_
+asking for comment. If you haven't heard back in a week, it's
+OK to ping the list again.
+
 .. _asking-for-merging:
 
 Asking for your changes to be merged with the main repo
@@ -197,15 +207,24 @@ When you feel your work is finished, you can create a pull request (PR). Github
 has a nice help page that outlines the process for `filing pull requests`_.
 
 If your changes involve modifications to the API or addition/modification of a
-function, you should
+function, add a release note to the ``doc/release/upcoming_changes/``
+directory, following the instructions and format in the
+``doc/release/upcoming_changes/README.rst`` file.
 
-- send an email to the `NumPy mailing list`_ with a link to your PR along with
-  a description of and a motivation for your changes. This may generate
-  changes and feedback. It might be prudent to start with this step if your
-  change may be controversial.
-- add a release note to the ``doc/release/upcoming_changes/`` directory,
-  following the instructions and format in the
-  ``doc/release/upcoming_changes/README.rst`` file.
+
+.. _workflow_PR_timeline:
+
+Getting your PR reviewed
+========================
+
+We review pull requests as soon as we can, typically within a week. If you get
+no review comments within two weeks, feel free to ask for feedback by
+adding a comment on your PR (this will notify maintainers).
+
+If your PR is large or complicated, asking for input on the numpy-discussion
+mailing list may also be useful.
+
+
 
 .. _rebasing-on-master:
 
@@ -290,7 +309,7 @@ Rewriting commit history
 
    Do this only for your own feature branches.
 
-There's an embarrassing typo in a commit you made? Or perhaps the you
+There's an embarrassing typo in a commit you made? Or perhaps you
 made several false starts you would like the posterity not to see.
 
 This can be done via *interactive rebasing*.

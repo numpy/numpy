@@ -34,21 +34,19 @@ def install_temp(request, tmp_path):
     here = os.path.dirname(__file__)
     ext_dir = os.path.join(here, "examples")
 
-    tmp_path = tmp_path._str
-    cytest = os.path.join(tmp_path, "cytest")
+    cytest = str(tmp_path / "cytest")
 
     shutil.copytree(ext_dir, cytest)
     # build the examples and "install" them into a temporary directory
 
-    install_log = os.path.join(tmp_path, "tmp_install_log.txt")
+    install_log = str(tmp_path / "tmp_install_log.txt")
     subprocess.check_call(
         [
             sys.executable,
             "setup.py",
             "build",
             "install",
-            "--prefix",
-            os.path.join(tmp_path, "installdir"),
+            "--prefix", str(tmp_path / "installdir"),
             "--single-version-externally-managed",
             "--record",
             install_log,
@@ -126,3 +124,11 @@ def test_get_datetime64_unit(install_temp):
     result = checks.get_dt64_unit(td64)
     expected = 5
     assert result == expected
+
+
+def test_abstract_scalars(install_temp):
+    import checks
+
+    assert checks.is_integer(1)
+    assert checks.is_integer(np.int8(1))
+    assert checks.is_integer(np.uint64(1))

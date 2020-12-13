@@ -6,6 +6,10 @@
 #ifndef _NPY_UMATH_LOOPS_H_
 #define _NPY_UMATH_LOOPS_H_
 
+#ifndef NPY_NO_EXPORT
+    #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
+#endif
+
 #define BOOL_invert BOOL_logical_not
 #define BOOL_add BOOL_logical_or
 #define BOOL_bitwise_and BOOL_logical_and
@@ -167,32 +171,29 @@ NPY_NO_EXPORT void
  **                             FLOAT LOOPS                                 **
  *****************************************************************************
  */
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_unary_fp.dispatch.h"
+#endif
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
+/**begin repeat1
+ * #kind = sqrt, absolute, square, reciprocal#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+/**end repeat1**/
+/**end repeat**/
 
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
-NPY_NO_EXPORT void
-@TYPE@_sqrt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
 /**begin repeat1
  * #func = maximum, minimum#
  */
 NPY_NO_EXPORT void
 @TYPE@_@func@_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-/**end repeat1**/
-
-/**begin repeat1
- * #isa = avx512f, fma#
- */
-
-/**begin repeat2
- * #func = sqrt, absolute, square, reciprocal#
- */
-NPY_NO_EXPORT void
-@TYPE@_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-/**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
 
@@ -201,6 +202,12 @@ DOUBLE_exp(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
 
 NPY_NO_EXPORT void
 DOUBLE_exp_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+DOUBLE_log(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+DOUBLE_log_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /**begin repeat
  *  #func = sin, cos, exp, log#

@@ -313,17 +313,17 @@ Construction and Destruction
     Flags that may be passed in ``flags``, applying to the whole
     iterator, are:
 
-        .. c:var:: NPY_ITER_C_INDEX
+        .. c:macro:: NPY_ITER_C_INDEX
 
             Causes the iterator to track a raveled flat index matching C
             order. This option cannot be used with :c:data:`NPY_ITER_F_INDEX`.
 
-        .. c:var:: NPY_ITER_F_INDEX
+        .. c:macro:: NPY_ITER_F_INDEX
 
             Causes the iterator to track a raveled flat index matching Fortran
             order. This option cannot be used with :c:data:`NPY_ITER_C_INDEX`.
 
-        .. c:var:: NPY_ITER_MULTI_INDEX
+        .. c:macro:: NPY_ITER_MULTI_INDEX
 
             Causes the iterator to track a multi-index.
             This prevents the iterator from coalescing axes to
@@ -336,7 +336,7 @@ Construction and Destruction
             However, it is possible to remove axes again and use the iterator
             normally if the size is small enough after removal.
 
-        .. c:var:: NPY_ITER_EXTERNAL_LOOP
+        .. c:macro:: NPY_ITER_EXTERNAL_LOOP
 
             Causes the iterator to skip iteration of the innermost
             loop, requiring the user of the iterator to handle it.
@@ -344,7 +344,7 @@ Construction and Destruction
             This flag is incompatible with :c:data:`NPY_ITER_C_INDEX`,
             :c:data:`NPY_ITER_F_INDEX`, and :c:data:`NPY_ITER_MULTI_INDEX`.
 
-        .. c:var:: NPY_ITER_DONT_NEGATE_STRIDES
+        .. c:macro:: NPY_ITER_DONT_NEGATE_STRIDES
 
             This only affects the iterator when :c:type:`NPY_KEEPORDER` is
             specified for the order parameter.  By default with
@@ -355,7 +355,7 @@ Construction and Destruction
             but don't want an axis reversed. This is the behavior of
             ``numpy.ravel(a, order='K')``, for instance.
 
-        .. c:var:: NPY_ITER_COMMON_DTYPE
+        .. c:macro:: NPY_ITER_COMMON_DTYPE
 
             Causes the iterator to convert all the operands to a common
             data type, calculated based on the ufunc type promotion rules.
@@ -364,7 +364,7 @@ Construction and Destruction
             If the common data type is known ahead of time, don't use this
             flag.  Instead, set the requested dtype for all the operands.
 
-        .. c:var:: NPY_ITER_REFS_OK
+        .. c:macro:: NPY_ITER_REFS_OK
 
             Indicates that arrays with reference types (object
             arrays or structured arrays containing an object type)
@@ -373,7 +373,7 @@ Construction and Destruction
             :c:func:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
             it may not release the GIL during iteration.
 
-        .. c:var:: NPY_ITER_ZEROSIZE_OK
+        .. c:macro:: NPY_ITER_ZEROSIZE_OK
 
             Indicates that arrays with a size of zero should be permitted.
             Since the typical iteration loop does not naturally work with
@@ -381,7 +381,7 @@ Construction and Destruction
             than zero before entering the iteration loop.
             Currently only the operands are checked, not a forced shape.
 
-        .. c:var:: NPY_ITER_REDUCE_OK
+        .. c:macro:: NPY_ITER_REDUCE_OK
 
             Permits writeable operands with a dimension with zero
             stride and size greater than one.  Note that such operands
@@ -400,7 +400,7 @@ Construction and Destruction
             after initializing the allocated operand to prepare the
             buffers.
 
-        .. c:var:: NPY_ITER_RANGED
+        .. c:macro:: NPY_ITER_RANGED
 
             Enables support for iteration of sub-ranges of the full
             ``iterindex`` range ``[0, NpyIter_IterSize(iter))``.  Use
@@ -414,7 +414,7 @@ Construction and Destruction
             would require special handling, effectively making it more
             like the buffered version.
 
-        .. c:var:: NPY_ITER_BUFFERED
+        .. c:macro:: NPY_ITER_BUFFERED
 
             Causes the iterator to store buffering data, and use buffering
             to satisfy data type, alignment, and byte-order requirements.
@@ -441,7 +441,7 @@ Construction and Destruction
             the inner loops may become smaller depending
             on the structure of the reduction.
 
-        .. c:var:: NPY_ITER_GROWINNER
+        .. c:macro:: NPY_ITER_GROWINNER
 
             When buffering is enabled, this allows the size of the inner
             loop to grow when buffering isn't necessary.  This option
@@ -449,7 +449,7 @@ Construction and Destruction
             data, rather than anything with small cache-friendly arrays
             of temporary values for each inner loop.
 
-        .. c:var:: NPY_ITER_DELAY_BUFALLOC
+        .. c:macro:: NPY_ITER_DELAY_BUFALLOC
 
             When buffering is enabled, this delays allocation of the
             buffers until :c:func:`NpyIter_Reset` or another reset function is
@@ -465,7 +465,7 @@ Construction and Destruction
             Then, call :c:func:`NpyIter_Reset` to allocate and fill the buffers
             with their initial values.
 
-        .. c:var:: NPY_ITER_COPY_IF_OVERLAP
+        .. c:macro:: NPY_ITER_COPY_IF_OVERLAP
 
             If any write operand has overlap with any read operand, eliminate all
             overlap by making temporary copies (enabling UPDATEIFCOPY for write
@@ -484,9 +484,9 @@ Construction and Destruction
 
     Flags that may be passed in ``op_flags[i]``, where ``0 <= i < nop``:
 
-        .. c:var:: NPY_ITER_READWRITE
-        .. c:var:: NPY_ITER_READONLY
-        .. c:var:: NPY_ITER_WRITEONLY
+        .. c:macro:: NPY_ITER_READWRITE
+        .. c:macro:: NPY_ITER_READONLY
+        .. c:macro:: NPY_ITER_WRITEONLY
 
             Indicate how the user of the iterator will read or write
             to ``op[i]``.  Exactly one of these flags must be specified
@@ -495,13 +495,13 @@ Construction and Destruction
             semantics. The data will be written back to the original array
             when ``NpyIter_Deallocate`` is called.
 
-        .. c:var:: NPY_ITER_COPY
+        .. c:macro:: NPY_ITER_COPY
 
             Allow a copy of ``op[i]`` to be made if it does not
             meet the data type or alignment requirements as specified
             by the constructor flags and parameters.
 
-        .. c:var:: NPY_ITER_UPDATEIFCOPY
+        .. c:macro:: NPY_ITER_UPDATEIFCOPY
 
             Triggers :c:data:`NPY_ITER_COPY`, and when an array operand
             is flagged for writing and is copied, causes the data
@@ -513,9 +513,9 @@ Construction and Destruction
             to back to ``op[i]`` on calling ``NpyIter_Deallocate``, instead of
             doing the unnecessary copy operation.
 
-        .. c:var:: NPY_ITER_NBO
-        .. c:var:: NPY_ITER_ALIGNED
-        .. c:var:: NPY_ITER_CONTIG
+        .. c:macro:: NPY_ITER_NBO
+        .. c:macro:: NPY_ITER_ALIGNED
+        .. c:macro:: NPY_ITER_CONTIG
 
             Causes the iterator to provide data for ``op[i]``
             that is in native byte order, aligned according to
@@ -534,7 +534,7 @@ Construction and Destruction
             the NBO flag overrides it and the requested data type is
             converted to be in native byte order.
 
-        .. c:var:: NPY_ITER_ALLOCATE
+        .. c:macro:: NPY_ITER_ALLOCATE
 
             This is for output arrays, and requires that the flag
             :c:data:`NPY_ITER_WRITEONLY` or :c:data:`NPY_ITER_READWRITE`
@@ -557,7 +557,7 @@ Construction and Destruction
             getting the i-th object in the returned C array.  The caller
             must call Py_INCREF on it to claim a reference to the array.
 
-        .. c:var:: NPY_ITER_NO_SUBTYPE
+        .. c:macro:: NPY_ITER_NO_SUBTYPE
 
             For use with :c:data:`NPY_ITER_ALLOCATE`, this flag disables
             allocating an array subtype for the output, forcing
@@ -566,12 +566,12 @@ Construction and Destruction
             TODO: Maybe it would be better to introduce a function
             ``NpyIter_GetWrappedOutput`` and remove this flag?
 
-        .. c:var:: NPY_ITER_NO_BROADCAST
+        .. c:macro:: NPY_ITER_NO_BROADCAST
 
             Ensures that the input or output matches the iteration
             dimensions exactly.
 
-        .. c:var:: NPY_ITER_ARRAYMASK
+        .. c:macro:: NPY_ITER_ARRAYMASK
 
             .. versionadded:: 1.7
 
@@ -595,7 +595,7 @@ Construction and Destruction
             modified. This is useful when the mask should be a combination
             of input masks.
 
-        .. c:var:: NPY_ITER_WRITEMASKED
+        .. c:macro:: NPY_ITER_WRITEMASKED
 
             .. versionadded:: 1.7
 
@@ -613,7 +613,7 @@ Construction and Destruction
             returns true from the corresponding element in the ARRAYMASK
             operand.
 
-        .. c:var:: NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+        .. c:macro:: NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
 
             In memory overlap checks, assume that operands with
             ``NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE`` enabled are accessed only
@@ -707,7 +707,7 @@ Construction and Destruction
 
     :c:func:`NpyIter_Deallocate` must be called for each copy.
 
-.. c:function:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)``
+.. c:function:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)
 
     Removes an axis from iteration.  This requires that
     :c:data:`NPY_ITER_MULTI_INDEX` was set for iterator creation, and does
@@ -1264,7 +1264,7 @@ functions provide that information.
     NPY_MAX_INTP is placed in the stride.
 
     Once the iterator is prepared for iteration (after a reset if
-    :c:data:`NPY_DELAY_BUFALLOC` was used), call this to get the strides
+    :c:data:`NPY_ITER_DELAY_BUFALLOC` was used), call this to get the strides
     which may be used to select a fast inner loop function.  For example,
     if the stride is 0, that means the inner loop can always load its
     value into a variable once, then use the variable throughout the loop,

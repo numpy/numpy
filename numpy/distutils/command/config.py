@@ -20,9 +20,10 @@ from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_gcc_function_attribute_with_intrinsics,
                                               check_gcc_variable_attribute,
+                                              check_gcc_version_at_least,
                                               check_inline,
                                               check_restrict,
-                                              check_compiler_gcc4)
+                                              check_compiler_gcc)
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -416,9 +417,9 @@ class config(old_config):
         otherwise."""
         return check_restrict(self)
 
-    def check_compiler_gcc4(self):
-        """Return True if the C compiler is gcc >= 4."""
-        return check_compiler_gcc4(self)
+    def check_compiler_gcc(self):
+        """Return True if the C compiler is gcc"""
+        return check_compiler_gcc(self)
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
@@ -430,6 +431,11 @@ class config(old_config):
 
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
+
+    def check_gcc_version_at_least(self, major, minor=0, patchlevel=0):
+        """Return True if the GCC version is greater than or equal to the
+        specified version."""
+        return check_gcc_version_at_least(self, major, minor, patchlevel)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,

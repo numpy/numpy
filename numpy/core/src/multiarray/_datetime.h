@@ -200,17 +200,15 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
                                         PyArray_DatetimeMetaData *out_meta);
 
 /*
- * 'ret' is a PyUString containing the datetime string, and this
- * function appends the metadata string to it.
+ * Returns datetime metadata as a new reference a Unicode object.
+ * Returns NULL on error.
  *
  * If 'skip_brackets' is true, skips the '[]'.
  *
- * This function steals the reference 'ret'
  */
 NPY_NO_EXPORT PyObject *
-append_metastr_to_string(PyArray_DatetimeMetaData *meta,
-                                    int skip_brackets,
-                                    PyObject *ret);
+metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets);
+
 
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date
@@ -374,5 +372,8 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
  */
 NPY_NO_EXPORT PyArray_Descr *
 find_object_datetime_type(PyObject *obj, int type_num);
+
+NPY_NO_EXPORT int
+PyArray_InitializeDatetimeCasts(void);
 
 #endif

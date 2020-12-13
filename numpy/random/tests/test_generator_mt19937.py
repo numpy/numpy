@@ -18,20 +18,20 @@ JUMP_TEST_DATA = [
     {
         "seed": 0,
         "steps": 10,
-        "initial": {"key_md5": "64eaf265d2203179fb5ffb73380cd589", "pos": 9},
-        "jumped": {"key_md5": "8cb7b061136efceef5217a9ce2cc9a5a", "pos": 598},
+        "initial": {"key_sha256": "bb1636883c2707b51c5b7fc26c6927af4430f2e0785a8c7bc886337f919f9edf", "pos": 9},
+        "jumped": {"key_sha256": "ff682ac12bb140f2d72fba8d3506cf4e46817a0db27aae1683867629031d8d55", "pos": 598},
     },
     {
         "seed":384908324,
         "steps":312,
-        "initial": {"key_md5": "e99708a47b82ff51a2c7b0625b81afb5", "pos": 311},
-        "jumped": {"key_md5": "2ecdbfc47a895b253e6e19ccb2e74b90", "pos": 276},
+        "initial": {"key_sha256": "16b791a1e04886ccbbb4d448d6ff791267dc458ae599475d08d5cced29d11614", "pos": 311},
+        "jumped": {"key_sha256": "a0110a2cf23b56be0feaed8f787a7fc84bef0cb5623003d75b26bdfa1c18002c", "pos": 276},
     },
     {
         "seed": [839438204, 980239840, 859048019, 821],
         "steps": 511,
-        "initial": {"key_md5": "9fcd6280df9199785e17e93162ce283c", "pos": 510},
-        "jumped": {"key_md5": "433b85229f2ed853cde06cd872818305", "pos": 475},
+        "initial": {"key_sha256": "d306cf01314d51bd37892d874308200951a35265ede54d200f1e065004c3e9ea", "pos": 510},
+        "jumped": {"key_sha256": "0e00ab449f01a5195a83b4aee0dfbc2ce8d46466a640b92e33977d2e42f777f8", "pos": 475},
     },
 ]
 
@@ -483,18 +483,18 @@ class TestIntegers:
             assert_array_equal(scalar, array)
 
     def test_repeatability(self, endpoint):
-        # We use a md5 hash of generated sequences of 1000 samples
+        # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool':   'b3300e66d2bb59e493d255d47c3a6cbe',
-               'int16':  '39624ead49ad67e37545744024d2648b',
-               'int32':  '5c4810373f979336c6c0c999996e47a1',
-               'int64':  'ab126c15edff26f55c50d2b7e37391ac',
-               'int8':   'ba71ccaffeeeb9eeb1860f8075020b9c',
-               'uint16': '39624ead49ad67e37545744024d2648b',
-               'uint32': '5c4810373f979336c6c0c999996e47a1',
-               'uint64': 'ab126c15edff26f55c50d2b7e37391ac',
-               'uint8':  'ba71ccaffeeeb9eeb1860f8075020b9c'}
+        tgt = {'bool':   '053594a9b82d656f967c54869bc6970aa0358cf94ad469c81478459c6a90eee3',
+               'int16':  '54de9072b6ee9ff7f20b58329556a46a447a8a29d67db51201bf88baa6e4e5d4',
+               'int32':  'd3a0d5efb04542b25ac712e50d21f39ac30f312a5052e9bbb1ad3baa791ac84b',
+               'int64':  '14e224389ac4580bfbdccb5697d6190b496f91227cf67df60989de3d546389b1',
+               'int8':   '0e203226ff3fbbd1580f15da4621e5f7164d0d8d6b51696dd42d004ece2cbec1',
+               'uint16': '54de9072b6ee9ff7f20b58329556a46a447a8a29d67db51201bf88baa6e4e5d4',
+               'uint32': 'd3a0d5efb04542b25ac712e50d21f39ac30f312a5052e9bbb1ad3baa791ac84b',
+               'uint64': '14e224389ac4580bfbdccb5697d6190b496f91227cf67df60989de3d546389b1',
+               'uint8':  '0e203226ff3fbbd1580f15da4621e5f7164d0d8d6b51696dd42d004ece2cbec1'}
 
         for dt in self.itype[1:]:
             random = Generator(MT19937(1234))
@@ -507,14 +507,14 @@ class TestIntegers:
                 val = random.integers(0, 6 - endpoint, size=1000, endpoint=endpoint,
                                  dtype=dt).byteswap()
 
-            res = hashlib.md5(val).hexdigest()
+            res = hashlib.sha256(val).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         random = Generator(MT19937(1234))
         val = random.integers(0, 2 - endpoint, size=1000, endpoint=endpoint,
                          dtype=bool).view(np.int8)
-        res = hashlib.md5(val).hexdigest()
+        res = hashlib.sha256(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
     def test_repeatability_broadcasting(self, endpoint):
@@ -905,12 +905,12 @@ class TestRandomDist:
         assert actual.dtype == np.int64
 
     def test_choice_large_sample(self):
-        choice_hash = 'd44962a0b1e92f4a3373c23222244e21'
+        choice_hash = '4266599d12bfcfb815213303432341c06b4349f5455890446578877bb322e222'
         random = Generator(MT19937(self.seed))
         actual = random.choice(10000, 5000, replace=False)
         if sys.byteorder != 'little':
             actual = actual.byteswap()
-        res = hashlib.md5(actual.view(np.int8)).hexdigest()
+        res = hashlib.sha256(actual.view(np.int8)).hexdigest()
         assert_(choice_hash == res)
 
     def test_bytes(self):
@@ -1038,6 +1038,56 @@ class TestRandomDist:
         arr = np.arange(9).reshape((3, 3))
         assert_raises(np.AxisError, random.permutation, arr, 3)
         assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
+
+    @pytest.mark.parametrize("dtype", [int, object])
+    @pytest.mark.parametrize("axis, expected",
+                             [(None, np.array([[3, 7, 0, 9, 10, 11],
+                                               [8, 4, 2, 5,  1,  6]])),
+                              (0, np.array([[6, 1, 2, 9, 10, 11],
+                                            [0, 7, 8, 3,  4,  5]])),
+                              (1, np.array([[ 5, 3,  4, 0, 2, 1],
+                                            [11, 9, 10, 6, 8, 7]]))])
+    def test_permuted(self, dtype, axis, expected):
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6).astype(dtype)
+        random.permuted(x, axis=axis, out=x)
+        assert_array_equal(x, expected)
+
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6).astype(dtype)
+        y = random.permuted(x, axis=axis)
+        assert y.dtype == dtype
+        assert_array_equal(y, expected)
+
+    def test_permuted_with_strides(self):
+        random = Generator(MT19937(self.seed))
+        x0 = np.arange(22).reshape(2, 11)
+        x1 = x0.copy()
+        x = x0[:, ::3]
+        y = random.permuted(x, axis=1, out=x)
+        expected = np.array([[0, 9, 3, 6],
+                             [14, 20, 11, 17]])
+        assert_array_equal(y, expected)
+        x1[:, ::3] = expected
+        # Verify that the original x0 was modified in-place as expected.
+        assert_array_equal(x1, x0)
+
+    def test_permuted_empty(self):
+        y = random.permuted([])
+        assert_array_equal(y, [])
+
+    @pytest.mark.parametrize('outshape', [(2, 3), 5])
+    def test_permuted_out_with_wrong_shape(self, outshape):
+        a = np.array([1, 2, 3])
+        out = np.zeros(outshape, dtype=a.dtype)
+        with pytest.raises(ValueError, match='same shape'):
+            random.permuted(a, out=out)
+
+    def test_permuted_out_with_wrong_type(self):
+        out = np.zeros((3, 5), dtype=np.int32)
+        x = np.ones((3, 5))
+        with pytest.raises(TypeError, match='Cannot cast'):
+            random.permuted(x, axis=1, out=out)
 
     def test_beta(self):
         random = Generator(MT19937(self.seed))
@@ -2374,7 +2424,7 @@ class TestSingleEltArrayInput:
 @pytest.mark.parametrize("config", JUMP_TEST_DATA)
 def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
-    # the md5 hashes of the initial and the final states' keys and
+    # the sha256 hashes of the initial and the final states' keys and
     # the position of of the initial and the final state.
     # These were produced using the original C implementation.
     seed = config["seed"]
@@ -2386,17 +2436,17 @@ def test_jumped(config):
     key = mt19937.state["state"]["key"]
     if sys.byteorder == 'big':
         key = key.byteswap()
-    md5 = hashlib.md5(key)
+    sha256 = hashlib.sha256(key)
     assert mt19937.state["state"]["pos"] == config["initial"]["pos"]
-    assert md5.hexdigest() == config["initial"]["key_md5"]
+    assert sha256.hexdigest() == config["initial"]["key_sha256"]
 
     jumped = mt19937.jumped()
     key = jumped.state["state"]["key"]
     if sys.byteorder == 'big':
         key = key.byteswap()
-    md5 = hashlib.md5(key)
+    sha256 = hashlib.sha256(key)
     assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
-    assert md5.hexdigest() == config["jumped"]["key_md5"]
+    assert sha256.hexdigest() == config["jumped"]["key_sha256"]
 
 
 def test_broadcast_size_error():
@@ -2422,6 +2472,16 @@ def test_broadcast_size_error():
     out = np.empty(size)
     with pytest.raises(ValueError):
         random.standard_gamma(shape, out=out)
+
+    # 2 arg
+    with pytest.raises(ValueError):
+        random.binomial(1, [0.3, 0.7], size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], 0.3, size=(2, 1))
+    with pytest.raises(ValueError):
+        random.binomial([1, 2], [0.3, 0.7], size=(2, 1))
+    with pytest.raises(ValueError):
+        random.multinomial([2, 2], [.3, .7], size=(2, 1))
 
     # 3 arg
     a = random.chisquare(5, size=3)

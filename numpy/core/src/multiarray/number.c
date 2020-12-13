@@ -397,14 +397,21 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
     PyObject *temp;
     const int optimize_fpexps = 1;
 
-    if (PyInt_Check(o2)) {
-        *out_exponent = (double)PyInt_AsLong(o2);
+    if (PyLong_Check(o2)) {
+        long tmp = PyLong_AsLong(o2);
+        if (error_converting(tmp)) {
+            PyErr_Clear();
+            return NPY_NOSCALAR;
+        }
+        *out_exponent = (double)tmp;
         return NPY_INTPOS_SCALAR;
     }
+
     if (optimize_fpexps && PyFloat_Check(o2)) {
         *out_exponent = PyFloat_AsDouble(o2);
         return NPY_FLOAT_SCALAR;
     }
+
     if (PyArray_Check(o2)) {
         if ((PyArray_NDIM((PyArrayObject *)o2) == 0) &&
                 ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
@@ -442,13 +449,13 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
     else if (PyIndex_Check(o2)) {
         PyObject* value = PyNumber_Index(o2);
         Py_ssize_t val;
-        if (value==NULL) {
+        if (value == NULL) {
             if (PyErr_Occurred()) {
                 PyErr_Clear();
             }
             return NPY_NOSCALAR;
         }
-        val = PyInt_AsSsize_t(value);
+        val = PyLong_AsSsize_t(value);
         if (error_converting(val)) {
             PyErr_Clear();
             return NPY_NOSCALAR;
@@ -826,7 +833,7 @@ _array_nonzero(PyArrayObject *mp)
     n = PyArray_SIZE(mp);
     if (n == 1) {
         int res;
-        if (Npy_EnterRecursiveCall(" while converting array to bool")) {
+        if (Py_EnterRecursiveCall(" while converting array to bool")) {
             return -1;
         }
         res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
@@ -880,7 +887,7 @@ array_scalar_forward(PyArrayObject *v,
     /* Need to guard against recursion if our array holds references */
     if (PyDataType_REFCHK(PyArray_DESCR(v))) {
         PyObject *res;
-        if (Npy_EnterRecursiveCall(where) != 0) {
+        if (Py_EnterRecursiveCall(where) != 0) {
             Py_DECREF(scalar);
             return NULL;
         }

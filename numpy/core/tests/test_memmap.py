@@ -11,7 +11,8 @@ from numpy import (
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, suppress_warnings
+    assert_, assert_equal, assert_array_equal, suppress_warnings, IS_PYPY,
+    break_cycles
     )
 
 class TestMemmap:
@@ -25,6 +26,10 @@ class TestMemmap:
 
     def teardown(self):
         self.tmpfp.close()
+        self.data = None
+        if IS_PYPY:
+            break_cycles()
+            break_cycles()
         shutil.rmtree(self.tempdir)
 
     def test_roundtrip(self):

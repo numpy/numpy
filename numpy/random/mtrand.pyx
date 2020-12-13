@@ -22,6 +22,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_GT_1, LEGACY_CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+            validate_output_shape
         )
 
 cdef extern from "numpy/random/distributions.h":
@@ -382,7 +383,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``random`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -452,7 +453,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``beta`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -502,7 +503,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``exponential`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -551,7 +552,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_exponential`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -652,7 +653,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``integers`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -773,7 +774,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``bytes`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -811,7 +812,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``choice`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1016,7 +1017,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``uniform`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1184,7 +1185,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         If positive int_like arguments are provided, `randn` generates an array
         of shape ``(d0, d1, ..., dn)``, filled
@@ -1338,7 +1339,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1413,7 +1414,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1513,7 +1514,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_gamma`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1594,7 +1595,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``gamma`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1683,7 +1684,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``f`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1771,7 +1772,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``noncentral_f`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1856,7 +1857,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``chisquare`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1929,7 +1930,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``noncentral_chisquare`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2015,7 +2016,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_cauchy`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2091,7 +2092,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_t`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2196,7 +2197,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``vonmises`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2294,7 +2295,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``pareto`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2388,7 +2389,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``weibull`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2484,7 +2485,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``power`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2595,7 +2596,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``laplace`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2686,7 +2687,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``gumbel`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2808,7 +2809,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``logistic`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2895,7 +2896,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``lognormal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3008,7 +3009,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``rayleigh`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3090,7 +3091,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``wald`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3163,7 +3164,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``triangular`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3270,7 +3271,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``binomial`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3374,6 +3375,7 @@ cdef class RandomState:
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
+            validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -3419,7 +3421,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``negative_binomial`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3504,7 +3506,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``poisson`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3590,7 +3592,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``zipf`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3680,7 +3682,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``geometric`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3734,7 +3736,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``hypergeometric`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3865,7 +3867,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``logseries`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3958,7 +3960,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``multivariate_normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4132,7 +4134,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``multinomial`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4250,7 +4252,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``dirichlet`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4396,7 +4398,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``shuffle`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4491,7 +4493,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``permutation`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------

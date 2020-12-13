@@ -2103,8 +2103,9 @@ def buildimplicitrules(block):
 
 
 def myeval(e, g=None, l=None):
+    """ Like `eval` but returns only integers and floats """
     r = eval(e, g, l)
-    if type(r) in [type(0), type(0.0)]:
+    if type(r) in [int, float]:
         return r
     raise ValueError('r=%r' % (r))
 
@@ -2112,6 +2113,26 @@ getlincoef_re_1 = re.compile(r'\A\b\w+\b\Z', re.I)
 
 
 def getlincoef(e, xset):  # e = a*x+b ; x in xset
+    """
+    Obtain ``a`` and ``b`` when ``e == "a*x+b"``, where ``x`` is a symbol in
+    xset.
+
+    >>> getlincoef('2*x + 1', {'x'})
+    (2, 1, 'x')
+    >>> getlincoef('3*x + x*2 + 2 + 1', {'x'})
+    (5, 3, 'x')
+    >>> getlincoef('0', {'x'})
+    (0, 0, None)
+    >>> getlincoef('0*x', {'x'})
+    (0, 0, 'x')
+    >>> getlincoef('x*x', {'x'})
+    (None, None, None)
+
+    This can be tricked by sufficiently complex expressions
+
+    >>> getlincoef('(x - 0.5)*(x - 1.5)*(x - 1)*x + 2*x + 3', {'x'})
+    (2.0, 3.0, 'x')
+    """
     try:
         c = int(myeval(e, {}, {}))
         return 0, c, None
@@ -2166,6 +2187,37 @@ _varname_match = re.compile(r'\A[a-z]\w*\Z').match
 
 
 def getarrlen(dl, args, star='*'):
+    """
+    Parameters
+    ----------
+    dl : sequence of two str objects
+        dimensions of the array
+    args : Iterable[str]
+        symbols used in the expression
+    star : Any
+        unused
+
+    Returns
+    -------
+    expr : str
+        Some numeric expression as a string
+    arg : Optional[str]
+        If understood, the argument from `args` present in `expr`
+    expr2 : Optional[str]
+        If understood, an expression fragment that should be used as
+        ``"(%s%s".format(something, expr2)``.
+
+    Examples
+    --------
+    >>> getarrlen(['10*x + 20', '40*x'], {'x'})
+    ('30 * x - 19', 'x', '+19)/(30)')
+    >>> getarrlen(['1', '10*x + 20'], {'x'})
+    ('10 * x + 20', 'x', '-20)/(10)')
+    >>> getarrlen(['10*x + 20', '1'], {'x'})
+    ('-10 * x - 18', 'x', '+18)/(-10)')
+    >>> getarrlen(['20', '1'], {'x'})
+    ('-18', None, None)
+    """
     edl = []
     try:
         edl.append(myeval(dl[0], {}, {}))

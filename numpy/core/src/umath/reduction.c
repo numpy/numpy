@@ -16,7 +16,6 @@
 #include "npy_config.h"
 #include <numpy/arrayobject.h>
 
-#include "npy_config.h"
 #include "npy_pycompat.h"
 #include "ctors.h"
 
@@ -254,7 +253,6 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         }
         op_flags[2] = NPY_ITER_READONLY;
     }
-
     /* Set up result array axes mapping, operand and wheremask use default */
     int result_axes[NPY_MAXDIMS];
     int *op_axes[3] = {result_axes, NULL, NULL};
@@ -363,7 +361,6 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
         if (loop(iter, dataptr, strideptr, countptr,
                         iternext, needs_api, skip_first_count, data) < 0) {
-
             goto fail;
         }
     }
@@ -379,7 +376,10 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
     Py_INCREF(result);
 
-    NpyIter_Deallocate(iter);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_DECREF(result);
+        return NULL;
+    }
     return result;
 
 fail:

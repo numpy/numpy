@@ -1,8 +1,11 @@
-import sys
-from typing import Any, overload, Sequence, TYPE_CHECKING, Union
+from __future__ import annotations
 
-from numpy import ndarray
-from ._dtype_like import DtypeLike
+import sys
+from typing import Any, overload, Sequence, TYPE_CHECKING, Union, TypeVar
+
+from numpy import ndarray, dtype
+from ._scalars import _ScalarLike
+from ._dtype_like import DTypeLike
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -15,12 +18,15 @@ else:
     else:
         HAVE_PROTOCOL = True
 
+_DType = TypeVar("_DType", bound="dtype[Any]")
+
 if TYPE_CHECKING or HAVE_PROTOCOL:
-    class _SupportsArray(Protocol):
-        @overload
-        def __array__(self, __dtype: DtypeLike = ...) -> ndarray: ...
-        @overload
-        def __array__(self, dtype: DtypeLike = ...) -> ndarray: ...
+    # The `_SupportsArray` protocol only cares about the default dtype
+    # (i.e. `dtype=None`) of the to-be returned array.
+    # Concrete implementations of the protocol are responsible for adding
+    # any and all remaining overloads
+    class _SupportsArray(Protocol[_DType]):
+        def __array__(self, dtype: None = ...) -> ndarray[Any, _DType]: ...
 else:
     _SupportsArray = Any
 
@@ -31,4 +37,9 @@ else:
 # is resolved. See also the mypy issue:
 #
 # https://github.com/python/typing/issues/593
-ArrayLike = Union[bool, int, float, complex, _SupportsArray, Sequence]
+ArrayLike = Union[
+    _ScalarLike,
+    Sequence[_ScalarLike],
+    Sequence[Sequence[Any]],  # TODO: Wait for support for recursive types
+    "_SupportsArray[Any]",
+]

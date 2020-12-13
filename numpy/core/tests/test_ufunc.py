@@ -1,5 +1,6 @@
 import warnings
 import itertools
+import sys
 
 import pytest
 
@@ -11,7 +12,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose,
+    assert_allclose, HAS_REFCOUNT,
     )
 from numpy.compat import pickle
 
@@ -177,6 +178,10 @@ class TestUfuncGenericLoops:
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
+def _pickleable_module_global():
+    pass
+
+
 class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -193,6 +198,15 @@ class TestUfunc:
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
+
+    def test_pickle_name_is_qualname(self):
+        # This tests that a simplification of our ufunc pickle code will
+        # lead to allowing qualnames as names.  Future ufuncs should
+        # possible add a specific qualname, or a hook into pickling instead
+        # (dask+numba may benefit).
+        _pickleable_module_global.ufunc = umt._pickleable_module_global_ufunc
+        obj = pickle.loads(pickle.dumps(_pickleable_module_global.ufunc))
+        assert obj is umt._pickleable_module_global_ufunc
 
     def test_reduceat_shifting_sum(self):
         L = 6
@@ -1319,6 +1333,18 @@ class TestUfunc:
         m = np.array([True], dtype=bool)
         assert_equal(np.sqrt(a, where=m), [1])
 
+    def test_where_with_broadcasting(self):
+        # See gh-17198
+        a = np.random.random((5000, 4))
+        b = np.random.random((5000, 1))
+
+        where = a > 0.3
+        out = np.full_like(a, 0)
+        np.less(a, b, where=where, out=out)
+        b_where = np.broadcast_to(b, a.shape)[where]
+        assert_array_equal((a[where] < b_where), out[where].astype(bool))
+        assert not out[~where].any()  # outside mask, out remains all 0
+
     def check_identityless_reduction(self, a):
         # np.minimum.reduce is an identityless reduction
 
@@ -2074,3 +2100,60 @@ def test_ufunc_warn_with_nan(ufunc):
     else:
         raise ValueError('ufunc with more than 2 inputs')
 
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_ufunc_casterrors():
+    # Tests that casting errors are correctly reported and buffers are
+    # cleared.
+    # The following array can be added to itself as an object array, but
+    # the result cannot be cast to an integer output:
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * int(np.BUFSIZE * 1.5) +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.ones(len(arr), dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # Output casting failure:
+        np.add(arr, arr, out=out, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+    with pytest.raises(ValueError):
+        # Input casting failure:
+        np.add(arr, arr, out=out, dtype=np.intp, casting="unsafe")
+
+    assert count == sys.getrefcount(value)
+    # output is unchanged after the error, this shows that the iteration
+    # was aborted (this is not necessarily defined behaviour)
+    assert out[-1] == 1
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.parametrize("offset",
+        [0, np.BUFSIZE//2, int(1.5*np.BUFSIZE)])
+def test_reduce_casterrors(offset):
+    # Test reporting of casting errors in reductions, we test various
+    # offsets to where the casting error will occur, since these may occur
+    # at different places during the reduction procedure. For example
+    # the first item may be special.
+    value = 123  # relies on python cache (leak-check will still find it)
+    arr = np.array([value] * offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    out = np.array(-1, dtype=np.intp)
+
+    count = sys.getrefcount(value)
+    with pytest.raises(ValueError):
+        # This is an unsafe cast, but we currently always allow that:
+        np.add.reduce(arr, dtype=np.intp, out=out)
+    assert count == sys.getrefcount(value)
+    # If an error occurred during casting, the operation is done at most until
+    # the error occurs (the result of which would be `value * offset`) and -1
+    # if the error happened immediately.
+    # This does not define behaviour, the output is invalid and thus undefined
+    assert out[()] < value * offset

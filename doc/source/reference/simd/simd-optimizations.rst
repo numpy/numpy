@@ -29,8 +29,8 @@ Build options for compilation
   safely run on a wide range of platforms within the processor family.
 
 - ``--cpu-dispatch``: dispatched set of additional optimizations.
-  The default value for ``x86`` is ``max -xop -fma4`` which enables all CPU
-  features, except for AMD legacy features.
+  The default value is ``max -xop -fma4`` which enables all CPU
+  features, except for AMD legacy features(in case of X86).
 
 The command arguments are available in ``build``, ``build_clib``, and
 ``build_ext``.
@@ -38,12 +38,23 @@ if ``build_clib`` or ``build_ext`` are not specified by the user, the arguments 
 ``build`` will be used instead, which also holds the default values.
 
 Optimization names can be CPU features or groups of features that gather
-several features or special options to perform a series of procedures.
+several features or :ref:`special options <special-options>` to perform a series of procedures.
 
 
 The following tables show the current supported optimizations sorted from the lowest to the highest interest.
 
 .. include:: simd-optimizations-tables.inc
+
+----
+
+.. _tables-diff:
+
+While the above tables are based on the GCC Compiler, the following tables showing the differences in the
+other compilers:
+
+.. include:: simd-optimizations-tables-diff.inc
+
+.. _special-options:
 
 Special options
 ~~~~~~~~~~~~~~~
@@ -80,7 +91,7 @@ NOTES
 
 - The order of the requsted optimizations doesn't matter.
 
-- Either commas or spaces can be used as a separator, e.g. ``--cpu-dispatch``\ = 
+- Either commas or spaces can be used as a separator, e.g. ``--cpu-dispatch``\ =
   "avx2 avx512f" or ``--cpu-dispatch``\ = "avx2, avx512f" both work, but the
   arguments must be enclosed in quotes.
 
@@ -113,6 +124,25 @@ NOTES
 
 Special cases
 ~~~~~~~~~~~~~
+
+**Interrelated CPU features**: Some exceptional conditions force us to link some features together when it come to certain compilers or architectures, resulting in the impossibility of building them separately.
+These conditions can be divided into two parts, as follows:
+
+- **Architectural compatibility**: The need to align certain CPU features that are assured
+  to be supported by successive generations of the same architecture, for example:
+
+  - On ppc64le `VSX(ISA 2.06)` and `VSX2(ISA 2.07)` both imply one another since the
+    first generation that supports little-endian mode is Power-8`(ISA 2.07)`
+  - On AArch64 `NEON` `FP16` `VFPV4` `ASIMD` implies each other since they are part of the
+    hardware baseline.
+
+- **Compilation compatibility**: Not all **C/C++** compilers provide independent support for all CPU
+  features. For example, **Intel**'s compiler doesn't provide separated flags for `AVX2` and `FMA3`,
+  it makes sense since all Intel CPUs that comes with `AVX2` also support `FMA3` and vice versa,
+  but this approach is incompatible with other **x86** CPUs from **AMD** or **VIA**.
+  Therefore, there are differences in the depiction of CPU features between the C/C++ compilers,
+  as shown in the :ref:`tables above <tables-diff>`.
+
 
 Behaviors and Errors
 ~~~~~~~~~~~~~~~~~~~~
@@ -224,7 +254,7 @@ Definitely, yes. But the :ref:`dispatch-able sources <dispatchable-sources>` are
 treated differently.
 
 What if the user specifies certain **baseline features** during the
-build but at runtime the machine doesn't support even these 
+build but at runtime the machine doesn't support even these
 features? Will the compiled code be called via one of these definitions, or
 maybe the compiler itself auto-generated/vectorized certain piece of code
 based on the provided command line compiler flags?
@@ -304,7 +334,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
 
   .. code:: c
 
-      /* 
+      /*
        * this definition is used by NumPy utilities as suffixes for the
        * exported symbols
        */

@@ -5,23 +5,12 @@ NumPy Documentation
 ###################
 
 .. toctree::
+   :maxdepth: 1
 
-   user/setting-up
-   user/quickstart
-   user/absolute_beginners
-   user/tutorials_index
-   user/howtos_index
-   reference/index
-   user/explanations_index
-   f2py/index
-   glossary
-   dev/index
-   dev/underthehood
-   docs/index
-   docs/howto_document
-   benchmarking
-   bugs
-   release
-   about
-   license
+   User Guide <user/index>
+   API reference <reference/index>
+   Development <dev/index>
 
+.. This is not really the index page, that is found in
+   _templates/indexcontent.html The toctree content here will be added to the
+   top of the template header

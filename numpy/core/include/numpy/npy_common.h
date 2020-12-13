@@ -1,22 +1,34 @@
 #ifndef _NPY_COMMON_H_
 #define _NPY_COMMON_H_
 
+/* need Python.h for npy_intp, npy_uintp */
+#include <Python.h>
+
 /* numpconfig.h is auto-generated */
 #include "numpyconfig.h"
 #ifdef HAVE_NPY_CONFIG_H
 #include <npy_config.h>
 #endif
 
-/* need Python.h for npy_intp, npy_uintp */
-#include <Python.h>
-
+// compile time environment variables
+#ifndef NPY_RELAXED_STRIDES_CHECKING
+    #define NPY_RELAXED_STRIDES_CHECKING 0
+#endif
+#ifndef NPY_RELAXED_STRIDES_DEBUG
+    #define NPY_RELAXED_STRIDES_DEBUG 0
+#endif
+#ifndef NPY_USE_NEW_CASTINGIMPL
+    #define NPY_USE_NEW_CASTINGIMPL 0
+#endif
 /*
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
  */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
 #ifndef NPY_INLINE_MATH
-#define NPY_INLINE_MATH 1
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    #define NPY_INLINE_MATH 1
+#else
+    #define NPY_INLINE_MATH 0
 #endif
 #endif
 
@@ -262,11 +274,10 @@ typedef Py_uintptr_t npy_uintp;
 #define constchar char
 
 /* NPY_INTP_FMT Note:
- *      Unlike the other NPY_*_FMT macros which are used with
- *      PyOS_snprintf, NPY_INTP_FMT is used with PyErr_Format and
- *      PyString_Format. These functions use different formatting
- *      codes which are portably specified according to the Python
- *      documentation. See ticket #1795.
+ *      Unlike the other NPY_*_FMT macros, which are used with PyOS_snprintf,
+ *      NPY_INTP_FMT is used with PyErr_Format and PyUnicode_FromFormat. Those
+ *      functions use different formatting codes that are portably specified
+ *      according to the Python documentation. See issue gh-2388.
  */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT

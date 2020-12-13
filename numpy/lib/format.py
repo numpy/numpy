@@ -41,7 +41,7 @@ Capabilities
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
   able to create a solution in their preferred programming language to
-  read most ``.npy`` files that he has been given without much
+  read most ``.npy`` files that they have been given without much
   documentation.
 
 - Allows memory-mapping of the data. See `open_memmep`.
@@ -746,7 +746,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
             # Friendlier error message
             raise UnicodeError("Unpickling a python object failed: %r\n"
                                "You may need to pass the encoding= option "
-                               "to numpy.load" % (err,))
+                               "to numpy.load" % (err,)) from err
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

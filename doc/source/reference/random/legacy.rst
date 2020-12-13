@@ -133,7 +133,7 @@ Many of the RandomState methods above are exported as functions in
 - It uses a `RandomState` rather than the more modern `Generator`.
 
 For backward compatible legacy reasons, we cannot change this. See
-`random-quick-start`.
+:ref:`random-quick-start`.
 
 .. autosummary::
    :toctree: generated/

@@ -47,6 +47,7 @@ Utility
    show_config
    deprecate
    deprecate_with_doc
+   broadcast_shapes
 
 Matlab-like Functions
 ---------------------
