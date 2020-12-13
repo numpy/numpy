@@ -2818,15 +2818,14 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
      * but we need to look at type later.
      * */
     Py_INCREF(type);
-
-    PyObject *zero = PyLong_FromLong(0);
     
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                                type, nd, dims,
-                                                NULL, NULL,
-                                                is_f_order, zero);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+            &PyArray_Type, type,
+            nd, dims, NULL, NULL,
+            is_f_order, NULL, NULL,
+            1, 0);
     if (ret != NULL && PyDataType_REFCHK(type)) {
-        PyArray_FillObjectArray(ret, zero);
+        PyArray_FillObjectArray(ret, PyLong_FromLong(0));
         if (PyErr_Occurred()) {
             Py_DECREF(ret);
             Py_DECREF(type);
