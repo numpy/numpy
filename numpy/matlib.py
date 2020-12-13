@@ -144,8 +144,8 @@ def zeros(shape, dtype=None, order='C'):
     matrix([[0.,  0.]])
 
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
-    a.fill(0)
+    a = empty(shape, dtype=dtype, order=order)
+    a *= 0
     return a
 
 def identity(n,dtype=None):
