@@ -174,19 +174,19 @@ References and footnotes
 .. [1] Financial functions,
    https://numpy.org/doc/1.17/reference/routines.financial.html
 
-.. [2] Numpy-discussion mailing list, "Simple financial functions for NumPy",
+.. [2] NumPy-Discussion mailing list, "Simple financial functions for NumPy",
    https://mail.python.org/pipermail/numpy-discussion/2008-April/032353.html
 
-.. [3] Numpy-discussion mailing list, "add xirr to numpy financial functions?",
+.. [3] NumPy-Discussion mailing list, "add xirr to numpy financial functions?",
    https://mail.python.org/pipermail/numpy-discussion/2009-May/042645.html
 
-.. [4] Numpy-discussion mailing list, "Definitions of pv, fv, nper, pmt, and rate",
+.. [4] NumPy-Discussion mailing list, "Definitions of pv, fv, nper, pmt, and rate",
    https://mail.python.org/pipermail/numpy-discussion/2009-June/043188.html
 
 .. [5] Get financial functions out of main namespace,
    https://github.com/numpy/numpy/issues/2880
 
-.. [6] Numpy-discussion mailing list, "Deprecation of financial routines",
+.. [6] NumPy-Discussion mailing list, "Deprecation of financial routines",
    https://mail.python.org/pipermail/numpy-discussion/2013-August/067409.html
 
 .. [7] ``component: numpy.lib.financial`` issues,
@@ -198,7 +198,7 @@ References and footnotes
 .. [9] Quansight-Labs/python-api-inspect,
    https://github.com/Quansight-Labs/python-api-inspect/
 
-.. [10] Numpy-discussion mailing list, "NEP 32: Remove the financial functions
+.. [10] NumPy-Discussion mailing list, "NEP 32: Remove the financial functions
    from NumPy"
    https://mail.python.org/pipermail/numpy-discussion/2019-September/079965.html
 
@@ -206,7 +206,7 @@ References and footnotes
    remove the financial functions.
    https://mail.google.com/mail/u/0/h/1w0mjgixc4rpe/?&th=16d5c38be45f77c4&q=nep+32&v=c&s=q
 
-.. [12] Numpy-discussion mailing list, "Proposal to accept NEP 32: Remove the
+.. [12] NumPy-Discussion mailing list, "Proposal to accept NEP 32: Remove the
    financial functions from NumPy"
    https://mail.python.org/pipermail/numpy-discussion/2019-September/080074.html
 
