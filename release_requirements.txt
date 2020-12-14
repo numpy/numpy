@@ -14,4 +14,4 @@ twine
 
 # building and notes
 Paver
-towncrier
+git+https://github.com/hawkowl/towncrier.git@master
