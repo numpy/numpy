@@ -156,7 +156,7 @@ Removing complete submodules
 This year there have been suggestions to consider removing some or all of
 ``numpy.distutils``, ``numpy.f2py``, ``numpy.linalg``, and ``numpy.random``.
 The motivation was that all these cost maintenance effort, and that they slow
-down work on the core of Numpy (ndarrays, dtypes and ufuncs).
+down work on the core of NumPy (ndarrays, dtypes and ufuncs).
 
 The impact on downstream libraries and users would be very large, and
 maintenance of these modules would still have to happen.  Therefore this is
