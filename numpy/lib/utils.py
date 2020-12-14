@@ -219,15 +219,15 @@ def deprecate_with_doc(msg):
 
     Examples
     --------
-    Note that ``olduint`` returns a value after raising DeprecationWarning 
-    with `msg`:
+    >>> @np.deprecate_with_doc("Use newfunc instead")
+    ... def oldfunc(a):
+    ...	    return a
+    >>> oldfunc(3)
+    3
+    >>> oldfunc.__doc__
+    `oldfunc` is deprecated!
+        Use newfunc instead
 
-    >>> oldobj = np.deprecate_with_doc("Use np.int_ instead.")
-    >>> olduint = oldobj(np.uint)
-    >>> olduint(6)
-    DeprecationWarning: `uint64` is deprecated! #may vary 
-        Use np.int_ instead.		        	
-    6
     """
     return _Deprecate(message=msg)  
 
