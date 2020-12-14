@@ -1666,6 +1666,21 @@ class TestRandomDist:
         # DBL_MAX by increasing fmin a bit
         random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
+    def test_uniform_zero_range(self):
+        func = random.uniform
+        result = func(1.5, 1.5)
+        assert_allclose(result, 1.5)
+        result = func([0.0, np.pi], [0.0, np.pi])
+        assert_allclose(result, [0.0, np.pi])
+        result = func([[2145.12], [2145.12]], [2145.12, 2145.12])
+        assert_allclose(result, 2145.12 + np.zeros((2, 2)))
+
+    def test_uniform_neg_range(self):
+        func = random.uniform
+        assert_raises(ValueError, func, 2, 1)
+        assert_raises(ValueError, func,  [1, 2], [1, 1])
+        assert_raises(ValueError, func,  [[0, 1],[2, 3]], 2)
+
     def test_scalar_exception_propagation(self):
         # Tests that exceptions are correctly propagated in distributions
         # when called with objects that throw exceptions when converted to
