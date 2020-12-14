@@ -481,7 +481,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
               instead of this function for more consistent floating point
               comparisons.
 
-    The test verifies that the elements of ``actual`` and ``desired`` satisfy.
+    The test verifies that the elements of `actual` and `desired` satisfy.
 
         ``abs(desired-actual) < 1.5 * 10**(-decimal)``
 
