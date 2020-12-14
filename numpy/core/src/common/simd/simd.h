@@ -10,11 +10,7 @@
 #include "numpy/npy_common.h"
 #include "npy_cpu_dispatch.h"
 #include "simd_utils.h"
-#ifndef NPY_HAVE_AVX2
-    #include <immintrin.h>
-    #define NPY_HAVE_AVX
-    #define NPY_HAVE_AVX2
-#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
