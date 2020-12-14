@@ -225,7 +225,8 @@ def deprecate_with_doc(msg):
     >>> oldfunc(3)
     3
     >>> oldfunc.__doc__
-    `oldfunc` is deprecated!\nUse newfunc instead
+    `oldfunc` is deprecated!
+        Use newfunc instead
 
     """
     return _Deprecate(message=msg)  
