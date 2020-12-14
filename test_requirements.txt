@@ -1,5 +1,5 @@
 cython==0.29.21
-wheel<=0.35.1
+wheel<0.36.3
 setuptools<49.2.0
 hypothesis==5.41.5
 pytest==6.0.2
