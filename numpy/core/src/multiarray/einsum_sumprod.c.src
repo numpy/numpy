@@ -589,7 +589,7 @@ finish_after_unrolled_loop:
     goto finish_after_unrolled_loop;
 }
 
-static void
+static NPY_GCC_OPT_3 void
 @name@_sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
                                 npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
