@@ -47,11 +47,11 @@ if sys.version_info[:2] < (3, 7):
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
+    fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
-        f"NumPy {VERSION} may not yet support Python "
-        f"{sys.version_info.major}.{sys.version_info.minor}.",
-        RuntimeWarning,
-    )
+        fmt.format(VERSION, *sys.version_info[:2]),
+        RuntimeWarning)
+    del fmt
 
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
 # properly updated when the contents of directories change (true for distutils,
@@ -60,8 +60,10 @@ if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
 
 # We need to import setuptools here in order for it to persist in sys.modules.
-# Its presence/absence is used in subclassing setup in numpy/distutils/core.py,
-# which may not be the most robust design.
+# Its presence/absence is used in subclassing setup in numpy/distutils/core.py.
+# However, we need to run the distutils version of sdist, so import that first
+# so that it is in sys.modules
+import numpy.distutils.command.sdist
 import setuptools
 
 # Initialize cmdclass from versioneer
@@ -158,13 +160,14 @@ class concat_license_files():
             f.write(self.bsd_text)
 
 
-sdist_class = cmdclass['sdist']
-class sdist_checked(sdist_class):
+# Need to inherit from versioneer version of sdist to get the encoded
+# version information.
+class sdist_checked(cmdclass['sdist']):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
         with concat_license_files():
-            sdist_class.run(self)
+            super().run()
 
 
 def get_build_overrides():
