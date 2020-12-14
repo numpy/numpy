@@ -579,14 +579,12 @@ class _SIMD_ALL(_Test_Utility):
         assert false_vsfx != true_vsfx
 
     def test_conversion_expand(self):
-        if self.sfx == "u8":
-            totype = "u16"
-        elif self.sfx == "u16":
-            totype = "u32"
-        else:
+        if self.sfx not in ("u8", "u16"):
             return
-        data = self._data()
-        expand = getattr(self.npyv, "expand_%s_%s" % (totype, self.sfx))
+        totype = self.sfx[0]+str(int(self.sfx[1:])*2)
+        expand = getattr(self.npyv, f"expand_{totype}_{self.sfx}")
+        # close enough from the edge to detect any deviation
+        data  = self._data(self._int_max() - self.nlanes)
         vdata = self.load(data)
         edata = expand(vdata)
         # lower half part

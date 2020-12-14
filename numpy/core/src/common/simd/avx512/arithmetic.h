@@ -145,7 +145,7 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
  * intel compiler/GCC 7.1/Clang 4, we still need to support older GCC.
  ***************************/
 
-NPY_FINLINE int npyv_sum_u32(npyv_u32 a)
+NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     __m256i half = _mm256_add_epi32(npyv512_lower_si256(a), npyv512_higher_si256(a));
     __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));

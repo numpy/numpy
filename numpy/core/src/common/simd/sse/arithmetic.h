@@ -150,7 +150,7 @@ NPY_FINLINE __m128i npyv_mul_u8(__m128i a, __m128i b)
 
 // Horizontal add: Calculates the sum of all vector elements.
 
-NPY_FINLINE int npyv_sum_u32(__m128i a)
+NPY_FINLINE npy_uint32 npyv_sum_u32(__m128i a)
 {
     __m128i t = _mm_add_epi32(a, _mm_srli_si128(a, 8));
     t = _mm_add_epi32(t, _mm_srli_si128(t, 4));

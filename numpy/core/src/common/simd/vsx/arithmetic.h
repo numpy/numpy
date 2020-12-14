@@ -118,7 +118,7 @@
 
 // Horizontal add: Calculates the sum of all vector elements.
 
-NPY_FINLINE int npyv_sum_u32(npyv_u32 a)
+NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
 {
     const npyv_u32 rs = vec_add(a, vec_sld(a, a, 8));
     return vec_extract(vec_add(rs, vec_sld(rs, rs, 4)), 0);

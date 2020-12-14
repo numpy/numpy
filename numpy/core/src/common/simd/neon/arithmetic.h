@@ -137,7 +137,7 @@
     #define npyv_sum_f32 vaddvq_f32
     #define npyv_sum_f64 vaddvq_f64
 #else
-    NPY_FINLINE int npyv_sum_u32(npyv_u32 a)
+    NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
     {
         uint32x2_t a0 = vpadd_u32(vget_low_u32(a), vget_high_u32(a)); 
         return (unsigned)vget_lane_u32(vpadd_u32(a0, vget_high_u32(a)),0);

@@ -118,7 +118,7 @@
 #endif // !NPY_HAVE_FMA3
 
 // Horizontal add: Calculates the sum of all vector elements.
-NPY_FINLINE int npyv_sum_u32(__m256i a)
+NPY_FINLINE npy_uint32 npyv_sum_u32(__m256i a)
 {
     __m256i s0 = _mm256_hadd_epi32(a, a);
             s0 = _mm256_hadd_epi32(s0, s0);
