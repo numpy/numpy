@@ -1483,7 +1483,7 @@ pack_inner(const char *inptr,
            char *outptr,
            npy_intp n_out,
            npy_intp out_stride,
-           char order)
+           PACK_ORDER order)
 {
     /*
      * Loop through the elements of inptr.
@@ -1519,10 +1519,26 @@ pack_inner(const char *inptr,
             bb[1] = npyv_tobits_b8(npyv_cmpneq_u8(v1, v_zero));
             bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
             bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
-            for(int i = 0; i < 4; i++) {
-                for (int j = 0; j < vstep; j++) {
-                    memcpy(outptr, (char*)&bb[i] + j, 1);
-                    outptr += out_stride;
+            if(out_stride == 1 && 
+                npy_is_aligned(outptr, sizeof(npy_uint64))) {
+                npy_uint64 *ptr64 = (npy_uint64*)outptr;
+            #if NPY_SIMD_WIDTH == 16
+                npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
+                ptr64[0] = bcomp;
+            #elif NPY_SIMD_WIDTH == 32
+                ptr64[0] = bb[0] | (bb[1] << 32);
+                ptr64[1] = bb[2] | (bb[3] << 32);
+            #else
+                ptr64[0] = bb[0]; ptr64[1] = bb[1];
+                ptr64[2] = bb[2]; ptr64[3] = bb[3];
+            #endif
+                outptr += vstepx4;
+            } else {
+                for(int i = 0; i < 4; i++) {
+                    for (int j = 0; j < vstep; j++) {
+                        memcpy(outptr, (char*)&bb[i] + j, 1);
+                        outptr += out_stride;
+                    }
                 }
             }
         }
