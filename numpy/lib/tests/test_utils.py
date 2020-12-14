@@ -4,7 +4,7 @@ import pytest
 
 from numpy.core import arange
 from numpy.testing import assert_, assert_equal, assert_raises_regex
-from numpy.lib import deprecate
+from numpy.lib import deprecate, deprecate_with_doc
 import numpy.lib.utils as utils
 
 from io import StringIO
@@ -58,6 +58,7 @@ def old_func6(self, x):
     """
     return x
 new_func6 = deprecate(old_func6)
+
 
 @deprecate_with_doc(msg="Rather use new_func7")
 def old_func7(self,x):
