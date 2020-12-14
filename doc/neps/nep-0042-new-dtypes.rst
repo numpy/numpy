@@ -8,10 +8,10 @@ NEP 42 — New and extensible DTypes
 :Author: Sebastian Berg
 :Author: Ben Nathanson
 :Author: Marten van Kerkwijk
-:Status: Draft
+:Status: Accepted
 :Type: Standard
 :Created: 2019-07-17
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2020-October/081038.html
 
 .. note::
 
