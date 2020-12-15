@@ -25,6 +25,9 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "convert_datatype.h"
+#include "array_method.h"
+#include "dtypemeta.h"
+#include "usertypes.h"
 
 /*
  * Computes the python `ret, d = divmod(d, unit)`.
@@ -1434,18 +1437,20 @@ raise_if_datetime64_metadata_cast_error(char *object_type,
         return 0;
     }
     else {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromFormat("Cannot cast %s "
-                    "from metadata ", object_type);
-        errmsg = append_metastr_to_string(src_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" to "));
-        errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *src = metastr_to_unicode(src_meta, 0);
+        if (src == NULL) {
+            return -1;
+        }
+        PyObject *dst = metastr_to_unicode(dst_meta, 0);
+        if (dst == NULL) {
+            Py_DECREF(src);
+            return -1;
+        }
+        PyErr_Format(PyExc_TypeError,
+            "Cannot cast %s from metadata %S to %S according to the rule %s",
+            object_type, src, dst, npy_casting_to_string(casting));
+        Py_DECREF(src);
+        Py_DECREF(dst);
         return -1;
     }
 }
@@ -1466,18 +1471,20 @@ raise_if_timedelta64_metadata_cast_error(char *object_type,
         return 0;
     }
     else {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromFormat("Cannot cast %s "
-                    "from metadata ", object_type);
-        errmsg = append_metastr_to_string(src_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" to "));
-        errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromFormat(" according to the rule %s",
-                        npy_casting_to_string(casting)));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *src = metastr_to_unicode(src_meta, 0);
+        if (src == NULL) {
+            return -1;
+        }
+        PyObject *dst = metastr_to_unicode(dst_meta, 0);
+        if (dst == NULL) {
+            Py_DECREF(src);
+            return -1;
+        }
+        PyErr_Format(PyExc_TypeError,
+             "Cannot cast %s from metadata %S to %S according to the rule %s",
+             object_type, src, dst, npy_casting_to_string(casting));
+        Py_DECREF(src);
+        Py_DECREF(dst);
         return -1;
     }
 }
@@ -1600,32 +1607,38 @@ compute_datetime_metadata_greatest_common_divisor(
     return 0;
 
 incompatible_units: {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromString("Cannot get "
-                    "a common metadata divisor for "
-                    "NumPy datetime metadata ");
-        errmsg = append_metastr_to_string(meta1, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" and "));
-        errmsg = append_metastr_to_string(meta2, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" because they have "
-                    "incompatible nonlinear base time units"));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *umeta1 = metastr_to_unicode(meta1, 0);
+        if (umeta1 == NULL) {
+            return -1;
+        }
+        PyObject *umeta2 = metastr_to_unicode(meta2, 0);
+        if (umeta2 == NULL) {
+            Py_DECREF(umeta1);
+            return -1;
+        }
+        PyErr_Format(PyExc_TypeError,
+            "Cannot get a common metadata divisor for Numpy datatime "
+            "metadata %S and %S because they have incompatible nonlinear "
+            "base time units.", umeta1, umeta2);
+        Py_DECREF(umeta1);
+        Py_DECREF(umeta2);
         return -1;
     }
 units_overflow: {
-        PyObject *errmsg;
-        errmsg = PyUnicode_FromString("Integer overflow "
-                    "getting a common metadata divisor for "
-                    "NumPy datetime metadata ");
-        errmsg = append_metastr_to_string(meta1, 0, errmsg);
-        PyUString_ConcatAndDel(&errmsg,
-                PyUnicode_FromString(" and "));
-        errmsg = append_metastr_to_string(meta2, 0, errmsg);
-        PyErr_SetObject(PyExc_OverflowError, errmsg);
-        Py_DECREF(errmsg);
+        PyObject *umeta1 = metastr_to_unicode(meta1, 0);
+        if (umeta1 == NULL) {
+            return -1;
+        }
+        PyObject *umeta2 = metastr_to_unicode(meta2, 0);
+        if (umeta2 == NULL) {
+            Py_DECREF(umeta1);
+            return -1;
+        }
+        PyErr_Format(PyExc_OverflowError,
+            "Integer overflow getting a common metadata divisor for "
+            "NumPy datetime metadata %S and %S.", umeta1, umeta2);
+        Py_DECREF(umeta1);
+        Py_DECREF(umeta2);
         return -1;
     }
 }
@@ -1950,35 +1963,27 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
 }
 
 /*
- * 'ret' is a PyUString containing the datetime string, and this
- * function appends the metadata string to it.
+ * Return the datetime metadata as a Unicode object.
+ *
+ * Returns new reference, NULL on error.
  *
  * If 'skip_brackets' is true, skips the '[]'.
  *
- * This function steals the reference 'ret'
  */
 NPY_NO_EXPORT PyObject *
-append_metastr_to_string(PyArray_DatetimeMetaData *meta,
-                                    int skip_brackets,
-                                    PyObject *ret)
+metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets)
 {
-    PyObject *res;
     int num;
     char const *basestr;
-
-    if (ret == NULL) {
-        return NULL;
-    }
 
     if (meta->base == NPY_FR_GENERIC) {
         /* Without brackets, give a string "generic" */
         if (skip_brackets) {
-            PyUString_ConcatAndDel(&ret, PyUnicode_FromString("generic"));
-            return ret;
+            return PyUnicode_FromString("generic");
         }
-        /* But with brackets, append nothing */
+        /* But with brackets, return nothing */
         else {
-            return ret;
+            return PyUnicode_FromString("");
         }
     }
 
@@ -1994,24 +1999,22 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 
     if (num == 1) {
         if (skip_brackets) {
-            res = PyUnicode_FromFormat("%s", basestr);
+            return PyUnicode_FromFormat("%s", basestr);
         }
         else {
-            res = PyUnicode_FromFormat("[%s]", basestr);
+            return PyUnicode_FromFormat("[%s]", basestr);
         }
     }
     else {
         if (skip_brackets) {
-            res = PyUnicode_FromFormat("%d%s", num, basestr);
+            return PyUnicode_FromFormat("%d%s", num, basestr);
         }
         else {
-            res = PyUnicode_FromFormat("[%d%s]", num, basestr);
+            return PyUnicode_FromFormat("[%d%s]", num, basestr);
         }
     }
-
-    PyUString_ConcatAndDel(&ret, res);
-    return ret;
 }
+
 
 /*
  * Adjusts a datetimestruct based on a seconds offset. Assumes
@@ -3725,3 +3728,375 @@ find_object_datetime_type(PyObject *obj, int type_num)
         return NULL;
     }
 }
+
+
+
+
+/*
+ * Describes casting within datetimes or timedelta
+ */
+static NPY_CASTING
+time_to_time_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2])
+{
+    /* This is a within-dtype cast, which currently must handle byteswapping */
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    if (given_descrs[1] == NULL) {
+        loop_descrs[1] = ensure_dtype_nbo(given_descrs[0]);
+    }
+    else {
+        Py_INCREF(given_descrs[1]);
+        loop_descrs[1] = given_descrs[1];
+    }
+
+    int is_timedelta = given_descrs[0]->type_num == NPY_TIMEDELTA;
+
+    if (given_descrs[0] == given_descrs[1]) {
+        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+    }
+
+    NPY_CASTING byteorder_may_allow_view = 0;
+    if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
+            PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
+        byteorder_may_allow_view = _NPY_CAST_IS_VIEW;
+    }
+    PyArray_DatetimeMetaData *meta1, *meta2;
+    meta1 = get_datetime_metadata_from_dtype(loop_descrs[0]);
+    assert(meta1 != NULL);
+    meta2 = get_datetime_metadata_from_dtype(loop_descrs[1]);
+    assert(meta2 != NULL);
+
+    if (meta1->base == meta2->base && meta1->num == meta2->num) {
+        if (byteorder_may_allow_view) {
+            return NPY_NO_CASTING | byteorder_may_allow_view;
+        }
+        return NPY_EQUIV_CASTING;
+    }
+    else if (meta1->base == NPY_FR_GENERIC) {
+        return NPY_SAFE_CASTING | byteorder_may_allow_view;
+    }
+    else if (meta2->base == NPY_FR_GENERIC) {
+        /* TODO: This is actually an invalid cast (casting will error) */
+        return NPY_UNSAFE_CASTING;
+    }
+    else if (is_timedelta && (
+            /* jump between time units and date units is unsafe for timedelta */
+            (meta1->base <= NPY_FR_M && meta2->base > NPY_FR_M) ||
+            (meta1->base > NPY_FR_M && meta2->base <= NPY_FR_M))) {
+        return NPY_UNSAFE_CASTING;
+    }
+    else if (meta1->base <= meta2->base) {
+        /* Casting to a more precise unit is currently considered safe */
+        if (datetime_metadata_divides(meta1, meta2, is_timedelta)) {
+            /* If it divides, we consider it to be a safe cast */
+            return NPY_SAFE_CASTING;
+        }
+        else {
+            return NPY_SAME_KIND_CASTING;
+        }
+    }
+    return NPY_SAME_KIND_CASTING;
+}
+
+
+/* Handles datetime<->timedelta type resolution (both directions) */
+static NPY_CASTING
+datetime_to_timedelta_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2])
+{
+    loop_descrs[0] = ensure_dtype_nbo(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return -1;
+    }
+    if (given_descrs[1] == NULL) {
+        PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(given_descrs[0]);
+        assert(meta != NULL);
+        loop_descrs[1] = create_datetime_dtype(dtypes[1]->type_num, meta);
+    }
+    else {
+        loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+    }
+    if (loop_descrs[1] == NULL) {
+        Py_DECREF(loop_descrs[0]);
+        return -1;
+    }
+    /*
+     * Mostly NPY_UNSAFE_CASTING is not true, the cast will fail.
+     * TODO: Once ufuncs use dtype specific promotion rules,
+     *       this is likely unnecessary
+     */
+    return NPY_UNSAFE_CASTING;
+}
+
+
+/* In the current setup both strings and unicode casts support all outputs */
+static NPY_CASTING
+time_to_string_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr **given_descrs,
+        PyArray_Descr **loop_descrs)
+{
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    if (given_descrs[1] != NULL) {
+        /*
+         * At the time of writing, NumPy does not check the length here,
+         * but will error if filling fails.
+         */
+        Py_INCREF(given_descrs[1]);
+        loop_descrs[1] = given_descrs[1];
+    }
+    else {
+        /* Find the correct string length, possibly based on the unit */
+        int size;
+        if (given_descrs[0]->type_num == NPY_DATETIME) {
+            PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(given_descrs[0]);
+            assert(meta != NULL);
+            size = get_datetime_iso_8601_strlen(0, meta->base);
+        }
+        else {
+            size = 21;
+        }
+        if (dtypes[1]->type_num == NPY_UNICODE) {
+            size *= 4;
+        }
+        loop_descrs[1] = PyArray_DescrNewFromType(dtypes[1]->type_num);
+        if (loop_descrs[1] == NULL) {
+            Py_DECREF(loop_descrs[0]);
+            return -1;
+        }
+        loop_descrs[1]->elsize = size;
+    }
+    assert(self->casting == NPY_UNSAFE_CASTING);
+    return NPY_UNSAFE_CASTING;
+}
+
+
+static NPY_CASTING
+string_to_datetime_cast_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2])
+{
+    /* We currently support byte-swapping, so any (unicode) string is OK */
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+
+    if (given_descrs[1] == NULL) {
+        /* NOTE: This doesn't actually work, and will error during the cast */
+        loop_descrs[1] = dtypes[1]->default_descr(dtypes[1]);
+        if (loop_descrs[1] == NULL) {
+            Py_DECREF(loop_descrs[0]);
+            return -1;
+        }
+    }
+    else {
+        Py_INCREF(given_descrs[1]);
+        loop_descrs[1] = given_descrs[1];
+    }
+
+    return NPY_UNSAFE_CASTING;
+}
+
+
+/*
+ * This registers the castingimpl for all datetime related casts.
+ */
+NPY_NO_EXPORT int
+PyArray_InitializeDatetimeCasts()
+{
+    int result = -1;
+
+    PyType_Slot slots[3];
+    PyArray_DTypeMeta *dtypes[2];
+    PyArrayMethod_Spec spec = {
+        .name = "datetime_casts",
+        .nin = 1,
+        .nout = 1,
+        .casting = NPY_NO_CASTING,
+        .flags = NPY_METH_SUPPORTS_UNALIGNED,
+        .slots = slots,
+        .dtypes = dtypes,
+    };
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &time_to_time_resolve_descriptors;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = NULL;
+    slots[2].slot = 0;
+    slots[2].pfunc = NULL;
+
+    PyArray_DTypeMeta *datetime = PyArray_DTypeFromTypeNum(NPY_DATETIME);
+    PyArray_DTypeMeta *timedelta = PyArray_DTypeFromTypeNum(NPY_TIMEDELTA);
+    PyArray_DTypeMeta *string = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *tmp = NULL;
+
+    dtypes[0] = datetime;
+    dtypes[1] = datetime;
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 1) < 0) {
+        goto fail;
+    }
+    dtypes[0] = timedelta;
+    dtypes[1] = timedelta;
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 1) < 0) {
+        goto fail;
+    }
+
+    /*
+     * Casting between timedelta and datetime uses legacy casting loops, but
+     * custom dtype resolution (to handle copying of the time unit).
+     */
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &datetime_to_timedelta_resolve_descriptors;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = NULL;
+    slots[2].slot = 0;
+    slots[2].pfunc = NULL;
+
+    spec.name = "timedelta_and_datetime_cast";
+    dtypes[0] = timedelta;
+    dtypes[1] = datetime;
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 1) < 0) {
+        goto fail;
+    }
+    spec.name = "datetime_to_timedelta_cast";
+    dtypes[0] = datetime;
+    dtypes[1] = timedelta;
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 1) < 0) {
+        goto fail;
+    }
+
+    /*
+     * Cast from numeric types to times.  These use the cast functions
+     * as stored on the datatype, which should be replaced at some point.
+     * Some of these casts can fail (casting to unitless datetime), but these
+     * are rather special.
+     */
+    for (int num = 0; num < NPY_NTYPES; num++) {
+        if (!PyTypeNum_ISNUMBER(num) && num != NPY_BOOL) {
+            continue;
+        }
+
+        Py_XSETREF(tmp, PyArray_DTypeFromTypeNum(num));
+
+        if (PyArray_AddLegacyWrapping_CastingImpl(
+                tmp, datetime, NPY_UNSAFE_CASTING) < 0) {
+            goto fail;
+        }
+        if (PyArray_AddLegacyWrapping_CastingImpl(
+                datetime, tmp, NPY_UNSAFE_CASTING) < 0) {
+            goto fail;
+        }
+
+        NPY_CASTING to_timedelta_casting = NPY_UNSAFE_CASTING;
+        if (PyTypeNum_ISINTEGER(num) || num == NPY_BOOL) {
+            /* timedelta casts like int64 right now... */
+            if (PyTypeNum_ISUNSIGNED(num) && tmp->singleton->elsize == 8) {
+                to_timedelta_casting = NPY_SAME_KIND_CASTING;
+            }
+            else {
+                to_timedelta_casting = NPY_SAFE_CASTING;
+            }
+        }
+        if (PyArray_AddLegacyWrapping_CastingImpl(
+                tmp, timedelta, to_timedelta_casting) < 0) {
+            goto fail;
+        }
+        if (PyArray_AddLegacyWrapping_CastingImpl(
+                timedelta, tmp, NPY_UNSAFE_CASTING) < 0) {
+            goto fail;
+        }
+    }
+
+    /*
+     * Cast times to string and unicode
+     */
+    spec.casting = NPY_UNSAFE_CASTING;
+    /*
+     * Casts can error and need API (unicodes needs it for string->unicode).
+     * Unicode handling is currently implemented via a legacy cast.
+     */
+    spec.flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &time_to_string_resolve_descriptors;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = NULL;
+    slots[2].slot = 0;
+    slots[2].pfunc = NULL;
+
+    for (int num = NPY_DATETIME; num <= NPY_TIMEDELTA; num++) {
+        for (int str = NPY_STRING; str <= NPY_UNICODE; str++) {
+            dtypes[0] = PyArray_DTypeFromTypeNum(num);
+            dtypes[1] = PyArray_DTypeFromTypeNum(str);
+
+            int res = PyArray_AddCastingImplementation_FromSpec(&spec, 1);
+            Py_SETREF(dtypes[0], NULL);
+            Py_SETREF(dtypes[1], NULL);
+            if (res < 0) {
+                return -1;
+            }
+        }
+    }
+
+    /*
+     * Cast strings to timedelta are currently only legacy casts
+     */
+    if (PyArray_AddLegacyWrapping_CastingImpl(
+            string, timedelta, NPY_UNSAFE_CASTING) < 0) {
+        goto fail;
+    }
+    if (PyArray_AddLegacyWrapping_CastingImpl(
+            unicode, timedelta, NPY_UNSAFE_CASTING) < 0) {
+        goto fail;
+    }
+
+    /*
+     * Cast strings to datetime
+     */
+    dtypes[1] = datetime;
+    spec.casting = NPY_UNSAFE_CASTING;
+
+    /* The default type resolution should work fine. */
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &string_to_datetime_cast_resolve_descriptors;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = NULL;
+    slots[2].slot = 0;
+    slots[2].pfunc = NULL;
+
+    dtypes[0] = string;
+    spec.flags = NPY_METH_SUPPORTS_UNALIGNED;
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 1) < 0) {
+        goto fail;
+    }
+
+    dtypes[0] = unicode;
+    /*
+     * Unicode handling is currently implemented via a legacy cast, which
+     * requires the Python API.
+     */
+    spec.flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 1) < 0) {
+        goto fail;
+    }
+
+    result = 0;
+  fail:
+    Py_DECREF(datetime);
+    Py_DECREF(timedelta);
+    Py_DECREF(string);
+    Py_DECREF(unicode);
+    Py_XDECREF(tmp);
+    return result;
+}
+

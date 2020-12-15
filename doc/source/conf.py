@@ -6,6 +6,62 @@ import sys
 # Minimum version, enforced by sphinx
 needs_sphinx = '2.2.0'
 
+
+# This is a nasty hack to use platform-agnostic names for types in the
+# documentation.
+
+# must be kept alive to hold the patched names
+_name_cache = {}
+
+def replace_scalar_type_names():
+    """ Rename numpy types to use the canonical names to make sphinx behave """
+    import ctypes
+
+    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+
+    class PyObject(ctypes.Structure):
+        pass
+
+    class PyTypeObject(ctypes.Structure):
+        pass
+
+    PyObject._fields_ = [
+        ('ob_refcnt', Py_ssize_t),
+        ('ob_type', ctypes.POINTER(PyTypeObject)),
+    ]
+
+
+    PyTypeObject._fields_ = [
+        # varhead
+        ('ob_base', PyObject),
+        ('ob_size', Py_ssize_t),
+        # declaration
+        ('tp_name', ctypes.c_char_p),
+    ]
+
+    # prevent numpy attaching docstrings to the scalar types
+    assert 'numpy.core._add_newdocs_scalars' not in sys.modules
+    sys.modules['numpy.core._add_newdocs_scalars'] = object()
+
+    import numpy
+
+    # change the __name__ of the scalar types
+    for name in [
+        'byte', 'short', 'intc', 'int_', 'longlong',
+        'ubyte', 'ushort', 'uintc', 'uint', 'ulonglong',
+        'half', 'single', 'double', 'longdouble',
+        'half', 'csingle', 'cdouble', 'clongdouble',
+    ]:
+        typ = getattr(numpy, name)
+        c_typ = PyTypeObject.from_address(id(typ))
+        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+
+    # now generate the docstrings as usual
+    del sys.modules['numpy.core._add_newdocs_scalars']
+    import numpy.core._add_newdocs_scalars
+
+replace_scalar_type_names()
+
 # -----------------------------------------------------------------------------
 # General configuration
 # -----------------------------------------------------------------------------
@@ -240,6 +296,8 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'scipy-lecture-notes': ('https://scipy-lectures.org', None),
 }
 
 
@@ -323,6 +381,17 @@ for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
 else:
     print("NOTE: linkcode extension not found -- no links to source generated")
 
+
+def _get_c_source_file(obj):
+    if issubclass(obj, numpy.generic):
+        return r"core/src/multiarray/scalartypes.c.src"
+    elif obj is numpy.ndarray:
+        return r"core/src/multiarray/arrayobject.c"
+    else:
+        # todo: come up with a better way to generate these
+        return None
+
+
 def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
@@ -353,24 +422,32 @@ def linkcode_resolve(domain, info):
     else:
         obj = unwrap(obj)
 
-    try:
-        fn = inspect.getsourcefile(obj)
-    except Exception:
-        fn = None
-    if not fn:
-        return None
+    fn = None
+    lineno = None
 
-    try:
-        source, lineno = inspect.getsourcelines(obj)
-    except Exception:
-        lineno = None
+    # Make a poor effort at linking C extension types
+    if isinstance(obj, type) and obj.__module__ == 'numpy':
+        fn = _get_c_source_file(obj)
+
+    if fn is None:
+        try:
+            fn = inspect.getsourcefile(obj)
+        except Exception:
+            fn = None
+        if not fn:
+            return None
+
+        try:
+            source, lineno = inspect.getsourcelines(obj)
+        except Exception:
+            lineno = None
+
+        fn = relpath(fn, start=dirname(numpy.__file__))
 
     if lineno:
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
-
-    fn = relpath(fn, start=dirname(numpy.__file__))
 
     if 'dev' in numpy.__version__:
         return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
@@ -380,15 +457,15 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 from pygments.lexers import CLexer
-import copy
+from pygments.lexer import inherit, bygroups
+from pygments.token import Comment
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = copy.deepcopy(CLexer.tokens)
-    # Extend the regex for valid identifiers with @
-    for k, val in tokens.items():
-        for i, v in enumerate(val):
-            if isinstance(v, tuple):
-                if isinstance(v[0], str):
-                    val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
+    tokens = {
+        'statements': [
+            (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
+            inherit,
+        ],
+    }

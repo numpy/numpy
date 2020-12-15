@@ -125,32 +125,36 @@ class TestSetOps:
         assert_array_equal([7, 1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5, 6, 1], ediff1d(two_elem, to_begin=[5, 6]))
 
-    @pytest.mark.parametrize("ary, prepend, append", [
+    @pytest.mark.parametrize("ary, prepend, append, expected", [
         # should fail because trying to cast
         # np.nan standard floating point value
         # into an integer array:
         (np.array([1, 2, 3], dtype=np.int64),
          None,
-         np.nan),
+         np.nan,
+         'to_end'),
         # should fail because attempting
         # to downcast to int type:
         (np.array([1, 2, 3], dtype=np.int64),
          np.array([5, 7, 2], dtype=np.float32),
-         None),
+         None,
+         'to_begin'),
         # should fail because attempting to cast
         # two special floating point values
-        # to integers (on both sides of ary):
+        # to integers (on both sides of ary),
+        # `to_begin` is in the error message as the impl checks this first:
         (np.array([1., 3., 9.], dtype=np.int8),
          np.nan,
-         np.nan),
+         np.nan,
+         'to_begin'),
          ])
-    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append):
+    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append, expected):
         # verify resolution of gh-11490
 
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'must be compatible'
+        msg = 'dtype of `{}` must be compatible'.format(expected)
         with assert_raises_regex(TypeError, msg):
             ediff1d(ary=ary,
                     to_end=append,

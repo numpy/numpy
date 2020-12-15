@@ -1090,7 +1090,7 @@ To learn more about finding the unique elements in an array, see `unique`.
 Transposing and reshaping a matrix
 ----------------------------------
 
-*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T()``
+*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T``
 
 -----
 
@@ -1114,7 +1114,7 @@ You simply need to pass in the new dimensions that you want for the matrix. ::
 
 .. image:: images/np_reshape.png
 
-You can also use ``.transpose`` to reverse or change the axes of an array
+You can also use ``.transpose()`` to reverse or change the axes of an array
 according to the values you specify.
 
 If you start with this array::
@@ -1131,6 +1131,13 @@ You can transpose your array with ``arr.transpose()``. ::
          [1, 4],
          [2, 5]])
 
+You can also use ``arr.T``::
+
+    >>> arr.T
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+
 To learn more about transposing and reshaping arrays, see `transpose` and
 `reshape`.
 
@@ -1138,12 +1145,12 @@ To learn more about transposing and reshaping arrays, see `transpose` and
 How to reverse an array
 -----------------------
 
-*This section covers* ``np.flip``
+*This section covers* ``np.flip()``
 
 -----
 
 NumPy's ``np.flip()`` function allows you to flip, or reverse, the contents of
-an array along an axis. When using ``np.flip``, specify the array you would like
+an array along an axis. When using ``np.flip()``, specify the array you would like
 to reverse and the axis. If you don't specify the axis, NumPy will reverse the
 contents along all of the axes of your input array.
 

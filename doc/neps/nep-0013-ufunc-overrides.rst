@@ -46,8 +46,8 @@ right behaviour, hence the change in name.)
 
 The ``__array_ufunc__`` as described below requires that any
 corresponding Python binary operations (``__mul__`` et al.) should be
-implemented in a specific way and be compatible with Numpy's ndarray
-semantics. Objects that do not satisfy this cannot override any Numpy
+implemented in a specific way and be compatible with NumPy's ndarray
+semantics. Objects that do not satisfy this cannot override any NumPy
 ufuncs.  We do not specify a future-compatible path by which this
 requirement can be relaxed --- any changes here require corresponding
 changes in 3rd party code.
@@ -102,7 +102,7 @@ Take this example of ufuncs interoperability with sparse matrices.::
                     [ 4,  1,  4]], dtype=int64)
 
     In [5]: np.multiply(a, bsp) # Returns NotImplemented to user, bad!
-    Out[5]: NotImplemted
+    Out[5]: NotImplemented
 
 Returning :obj:`NotImplemented` to user should not happen. Moreover::
 
@@ -132,7 +132,7 @@ However, this behavior is more confusing than useful, and having a
 :exc:`TypeError` would be preferable.
 
 This proposal will *not* resolve the issue with scipy.sparse matrices,
-which have multiplication semantics incompatible with numpy arrays.
+which have multiplication semantics incompatible with NumPy arrays.
 However, the aim is to enable writing other custom array types that have
 strictly ndarray compatible semantics.
 
@@ -246,7 +246,7 @@ three groups:
 - *Incompatible*: neither above nor below A; types for which no
   (indirect) upcasting is possible.
 
-Note that the legacy behaviour of numpy ufuncs is to try to convert
+Note that the legacy behaviour of NumPy ufuncs is to try to convert
 unknown objects to :class:`ndarray` via :func:`np.asarray`.  This is
 equivalent to placing :class:`ndarray` above these objects in the graph.
 Since we above defined :class:`ndarray` to return `NotImplemented` for
@@ -454,7 +454,7 @@ implements the following behavior:
 A class wishing to modify the interaction with :class:`ndarray` in
 binary operations therefore has two options:
 
-1. Implement ``__array_ufunc__`` and follow Numpy semantics for Python
+1. Implement ``__array_ufunc__`` and follow NumPy semantics for Python
    binary operations (see below).
 
 2. Set ``__array_ufunc__ = None``, and implement Python binary
@@ -678,7 +678,7 @@ NA     ``abs``      :func:`absolute`
 Future extensions to other functions
 ------------------------------------
 
-Some numpy functions could be implemented as (generalized) Ufunc, in
+Some NumPy functions could be implemented as (generalized) Ufunc, in
 which case it would be possible for them to be overridden by the
 ``__array_ufunc__`` method.  A prime candidate is :func:`~numpy.matmul`,
 which currently is not a Ufunc, but could be relatively easily be

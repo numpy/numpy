@@ -109,11 +109,11 @@ class CSAIterator:
 class ComplicatedSubArray(SubArray):
 
     def __str__(self):
-        return 'myprefix {0} mypostfix'.format(self.view(SubArray))
+        return f'myprefix {self.view(SubArray)} mypostfix'
 
     def __repr__(self):
         # Return a repr that does not start with 'name('
-        return '<{0} {1}>'.format(self.__class__.__name__, self)
+        return f'<{self.__class__.__name__} {self}>'
 
     def _validate_input(self, value):
         if not isinstance(value, ComplicatedSubArray):
@@ -317,8 +317,8 @@ class TestSubclassing:
         assert_startswith(repr(mx), 'masked_array')
         xsub = SubArray(x)
         mxsub = masked_array(xsub, mask=[True, False, True, False, False])
-        assert_startswith(repr(mxsub),
-            'masked_{0}(data=[--, 1, --, 3, 4]'.format(SubArray.__name__))
+        assert_startswith(repr(mxsub), 
+            f'masked_{SubArray.__name__}(data=[--, 1, --, 3, 4]')
 
     def test_subclass_str(self):
         """test str with subclass that has overridden str, setitem"""

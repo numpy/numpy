@@ -1,6 +1,0 @@
-The first element of the ``__array_interface__["data"]`` tuple  must be an integer
-----------------------------------------------------------------------------------
-This has been the documented interface for many years, but there was still
-code that would accept a byte string representation of the pointer address.
-That code has been removed, passing the address as a byte string will now
-raise an error.

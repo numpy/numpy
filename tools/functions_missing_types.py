@@ -27,6 +27,9 @@ EXCLUDE_LIST = {
         "division",
         "print_function",
         "warnings",
+        "sys",
+        "os",
+        "math",
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
         "alen",
@@ -34,6 +37,7 @@ EXCLUDE_LIST = {
         "add_newdoc",
         "add_newdoc_ufunc",
         "core",
+        "compat",
         "fastCopyAndTranspose",
         "get_array_wrap",
         "int_asbuffer",

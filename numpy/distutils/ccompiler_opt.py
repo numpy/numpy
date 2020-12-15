@@ -152,6 +152,18 @@ class _Config:
             By default(None), treated as True if the feature contains at
             least one applicable flag. see `feature_can_autovec()`
 
+        "extra_checks": str or list, optional
+            Extra test case names for the CPU feature that need to be tested
+            against the compiler.
+
+            Each test case must have a C file named ``extra_xxxx.c``, where
+            ``xxxx`` is the case name in lower case, under 'conf_check_path'.
+            It should contain at least one intrinsic or function related to the test case.
+
+            If the compiler able to successfully compile the C file then `CCompilerOpt`
+            will add a C ``#define`` for it into the main dispatch header, e.g.
+            ```#define {conf_c_prefix}_XXXX`` where ``XXXX`` is the case name in upper case.
+
         **NOTES**:
             * space can be used as separator with options that supports "str or list"
             * case-sensitive for all values and feature name must be in upper-case.
@@ -230,7 +242,10 @@ class _Config:
         F16C   = dict(interest=11, implies="AVX"),
         FMA3   = dict(interest=12, implies="F16C"),
         AVX2   = dict(interest=13, implies="F16C"),
-        AVX512F = dict(interest=20, implies="FMA3 AVX2", implies_detect=False),
+        AVX512F = dict(
+            interest=20, implies="FMA3 AVX2", implies_detect=False,
+            extra_checks="AVX512F_REDUCE"
+        ),
         AVX512CD = dict(interest=21, implies="AVX512F"),
         AVX512_KNL = dict(
             interest=40, implies="AVX512CD", group="AVX512ER AVX512PF",
@@ -243,7 +258,8 @@ class _Config:
         ),
         AVX512_SKX = dict(
             interest=42, implies="AVX512CD", group="AVX512VL AVX512BW AVX512DQ",
-            detect="AVX512_SKX", implies_detect=False
+            detect="AVX512_SKX", implies_detect=False,
+            extra_checks="AVX512BW_MASK"
         ),
         AVX512_CLX = dict(
             interest=43, implies="AVX512_SKX", group="AVX512VNNI",
@@ -260,7 +276,7 @@ class _Config:
         ),
         # IBM/Power
         ## Power7/ISA 2.06
-        VSX = dict(interest=1, headers="altivec.h"),
+        VSX = dict(interest=1, headers="altivec.h", extra_checks="VSX_ASM"),
         ## Power8/ISA 2.07
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
@@ -673,7 +689,7 @@ class _Distutils:
         # intel and msvc compilers don't raise
         # fatal errors when flags are wrong or unsupported
         ".*("
-        "warning D9002|"  # msvc, it should be work with any language. 
+        "warning D9002|"  # msvc, it should be work with any language.
         "invalid argument for option" # intel
         ").*"
     )
@@ -1137,7 +1153,7 @@ class _Feature:
                 continue
             # list is used internally for these options
             for option in (
-                "implies", "group", "detect", "headers", "flags"
+                "implies", "group", "detect", "headers", "flags", "extra_checks"
             ) :
                 oval = feature.get(option)
                 if isinstance(oval, str):
@@ -1439,7 +1455,7 @@ class _Feature:
             self.conf_check_path, "cpu_%s.c" % name.lower()
         )
         if not os.path.exists(test_path):
-            self.dist_fatal("feature test file is not exist", path)
+            self.dist_fatal("feature test file is not exist", test_path)
 
         test = self.dist_test(test_path, force_flags + self.cc_flags["werror"])
         if not test:
@@ -1487,6 +1503,45 @@ class _Feature:
             can = valid_flags and any(valid_flags)
         return can
 
+    @_Cache.me
+    def feature_extra_checks(self, name):
+        """
+        Return a list of supported extra checks after testing them against
+        the compiler.
+
+        Parameters
+        ----------
+        names: str
+            CPU feature name in uppercase.
+        """
+        assert isinstance(name, str)
+        d = self.feature_supported[name]
+        extra_checks = d.get("extra_checks", [])
+        if not extra_checks:
+            return []
+
+        self.dist_log("Testing extra checks for feature '%s'" % name, extra_checks)
+        flags = self.feature_flags(name)
+        available = []
+        not_available = []
+        for chk in extra_checks:
+            test_path = os.path.join(
+                self.conf_check_path, "extra_%s.c" % chk.lower()
+            )
+            if not os.path.exists(test_path):
+                self.dist_fatal("extra check file does not exist", test_path)
+
+            is_supported = self.dist_test(test_path, flags + self.cc_flags["werror"])
+            if is_supported:
+                available.append(chk)
+            else:
+                not_available.append(chk)
+
+        if not_available:
+            self.dist_log("testing failed for checks", not_available, stderr=True)
+        return available
+
+
     def feature_c_preprocessor(self, feature_name, tabs=0):
         """
         Generate C preprocessor definitions and include headers of a CPU feature.
@@ -1520,14 +1575,18 @@ class _Feature:
         prepr += [
             "#include <%s>" % h for h in feature.get("headers", [])
         ]
-        group = feature.get("group", [])
-        for f in group:
-            # Guard features in case of duplicate definitions
+
+        extra_defs = feature.get("group", [])
+        extra_defs += self.feature_extra_checks(feature_name)
+        for edef in extra_defs:
+            # Guard extra definitions in case of duplicate with
+            # another feature
             prepr += [
-                "#ifndef %sHAVE_%s" % (self.conf_c_prefix, f),
-                "\t#define %sHAVE_%s 1" % (self.conf_c_prefix, f),
+                "#ifndef %sHAVE_%s" % (self.conf_c_prefix, edef),
+                "\t#define %sHAVE_%s 1" % (self.conf_c_prefix, edef),
                 "#endif",
             ]
+
         if tabs > 0:
             prepr = [('\t'*tabs) + l for l in prepr]
         return '\n'.join(prepr)
@@ -2127,7 +2186,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
         See Also
         --------
-        parse_targets() :
+        parse_targets :
             Parsing the configuration statements of dispatch-able sources.
         """
         to_compile = {}
@@ -2269,6 +2328,12 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         baseline_rows.append((
             "Flags", (' '.join(baseline_flags) if baseline_flags else "none")
         ))
+        extra_checks = []
+        for name in baseline_names:
+            extra_checks += self.feature_extra_checks(name)
+        baseline_rows.append((
+            "Extra checks", (' '.join(extra_checks) if extra_checks else "none")
+        ))
 
         ########## dispatch ##########
         if self.cc_noopt:
@@ -2308,13 +2373,19 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             dispatch_rows.append(("Generated", ''))
             for tar in self.feature_sorted(target_sources):
                 sources = target_sources[tar]
-                name = tar if isinstance(tar, str) else '(%s)' % ' '.join(tar)
+                pretty_name = tar if isinstance(tar, str) else '(%s)' % ' '.join(tar)
                 flags = ' '.join(self.feature_flags(tar))
                 implies = ' '.join(self.feature_sorted(self.feature_implies(tar)))
                 detect = ' '.join(self.feature_detect(tar))
+                extra_checks = []
+                for name in ((tar,) if isinstance(tar, str) else tar):
+                    extra_checks += self.feature_extra_checks(name)
+                extra_checks = (' '.join(extra_checks) if extra_checks else "none")
+
                 dispatch_rows.append(('', ''))
-                dispatch_rows.append((name, implies))
+                dispatch_rows.append((pretty_name, implies))
                 dispatch_rows.append(("Flags", flags))
+                dispatch_rows.append(("Extra checks", extra_checks))
                 dispatch_rows.append(("Detect", detect))
                 for src in sources:
                     dispatch_rows.append(("", src))

@@ -9,6 +9,7 @@ import subprocess
 import shutil
 import multiprocessing
 import textwrap
+import importlib.util
 
 import distutils
 from distutils.errors import DistutilsError
@@ -1967,6 +1968,13 @@ class Configuration:
                     version = getattr(version_module, a, None)
                     if version is not None:
                         break
+
+                # Try if versioneer module
+                try:
+                    version = version_module.get_versions()['version']
+                except AttributeError:
+                    version = None
+
                 if version is not None:
                     break
 
@@ -2122,12 +2130,11 @@ def get_npy_pkg_dir():
     environment, and using them when cross-compiling.
 
     """
-    # XXX: import here for bootstrapping reasons
-    import numpy
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d is not None:
         return d
-    d = os.path.join(os.path.dirname(numpy.__file__),
+    spec = importlib.util.find_spec('numpy')
+    d = os.path.join(os.path.dirname(spec.origin),
             'core', 'lib', 'npy-pkg-config')
     return d
 
@@ -2356,6 +2363,7 @@ def generate_config_py(target):
 
                 Examples
                 --------
+                >>> import numpy as np
                 >>> np.show_config()
                 blas_opt_info:
                     language = c

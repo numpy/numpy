@@ -19,8 +19,7 @@ from numpy.distutils.misc_util import (
     has_cxx_sources, has_f_sources, is_sequence
 )
 from numpy.distutils.command.config_compiler import show_fortran_compilers
-from numpy.distutils.ccompiler_opt import new_ccompiler_opt
-
+from numpy.distutils.ccompiler_opt import new_ccompiler_opt, CCompilerOpt
 
 class build_ext (old_build_ext):
 
@@ -39,6 +38,8 @@ class build_ext (old_build_ext):
          "specify a list of dispatched CPU optimizations"),
         ('disable-optimization', None,
          "disable CPU optimized code(dispatch,simd,fast...)"),
+        ('simd-test=', None,
+         "specify a list of CPU optimizations to be tested against NumPy SIMD interface"),
     ]
 
     help_options = old_build_ext.help_options + [
@@ -56,6 +57,7 @@ class build_ext (old_build_ext):
         self.cpu_baseline = None
         self.cpu_dispatch = None
         self.disable_optimization = None
+        self.simd_test = None
 
     def finalize_options(self):
         if self.parallel:
@@ -87,7 +89,9 @@ class build_ext (old_build_ext):
                                         ('cpu_baseline', 'cpu_baseline'),
                                         ('cpu_dispatch', 'cpu_dispatch'),
                                         ('disable_optimization', 'disable_optimization'),
+                                        ('simd_test', 'simd_test')
                                   )
+        CCompilerOpt.conf_target_groups["simd_test"] = self.simd_test
 
     def run(self):
         if not self.extensions:
@@ -406,52 +410,49 @@ class build_ext (old_build_ext):
 
         include_dirs = ext.include_dirs + get_numpy_include_dirs()
 
-        dispatch_objects = []
+        # filtering C dispatch-table sources when optimization is not disabled,
+        # otherwise treated as normal sources.
+        copt_c_sources = []
+        copt_baseline_flags = []
+        copt_macros = []
         if not self.disable_optimization:
-            dispatch_sources  = [
+            copt_build_src = None if self.inplace else self.get_finalized_command("build_src").build_src
+            copt_c_sources = [
                 c_sources.pop(c_sources.index(src))
                 for src in c_sources[:] if src.endswith(".dispatch.c")
             ]
-            if dispatch_sources:
-                if not self.inplace:
-                    build_src = self.get_finalized_command("build_src").build_src
-                else:
-                    build_src = None
-                dispatch_objects = self.compiler_opt.try_dispatch(
-                    dispatch_sources,
-                    output_dir=output_dir,
-                    src_dir=build_src,
-                    macros=macros,
-                    include_dirs=include_dirs,
-                    debug=self.debug,
-                    extra_postargs=extra_args,
-                    **kws
-                )
-            extra_args_baseopt = extra_args + self.compiler_opt.cpu_baseline_flags()
+            copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
         else:
-            extra_args_baseopt = extra_args
-            macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
+            copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
 
         c_objects = []
+        if copt_c_sources:
+            log.info("compiling C dispatch-able sources")
+            c_objects += self.compiler_opt.try_dispatch(copt_c_sources,
+                                                        output_dir=output_dir,
+                                                        src_dir=copt_build_src,
+                                                        macros=macros + copt_macros,
+                                                        include_dirs=include_dirs,
+                                                        debug=self.debug,
+                                                        extra_postargs=extra_args,
+                                                        **kws)
         if c_sources:
             log.info("compiling C sources")
-            c_objects = self.compiler.compile(c_sources,
-                                              output_dir=output_dir,
-                                              macros=macros,
-                                              include_dirs=include_dirs,
-                                              debug=self.debug,
-                                              extra_postargs=extra_args_baseopt,
-                                              **kws)
-        c_objects.extend(dispatch_objects)
-
+            c_objects += self.compiler.compile(c_sources,
+                                               output_dir=output_dir,
+                                               macros=macros + copt_macros,
+                                               include_dirs=include_dirs,
+                                               debug=self.debug,
+                                               extra_postargs=extra_args + copt_baseline_flags,
+                                               **kws)
         if cxx_sources:
             log.info("compiling C++ sources")
             c_objects += cxx_compiler.compile(cxx_sources,
                                               output_dir=output_dir,
-                                              macros=macros,
+                                              macros=macros + copt_macros,
                                               include_dirs=include_dirs,
                                               debug=self.debug,
-                                              extra_postargs=extra_args,
+                                              extra_postargs=extra_args + copt_baseline_flags,
                                               **kws)
 
         extra_postargs = []

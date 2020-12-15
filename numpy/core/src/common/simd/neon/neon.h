@@ -72,3 +72,4 @@ typedef float64x2x3_t npyv_f64x3;
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "math.h"

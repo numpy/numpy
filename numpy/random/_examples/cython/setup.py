@@ -19,7 +19,7 @@ inc_path = np.get_include()
 lib_path = join(np.get_include(), '..', '..', 'random', 'lib')
 
 extending = Extension("extending",
-                      sources=[join(path, 'extending.pyx')],
+                      sources=[join('.', 'extending.pyx')],
                       include_dirs=[
                             np.get_include(),
                             join(path, '..', '..')
@@ -27,7 +27,7 @@ extending = Extension("extending",
                       define_macros=defs,
                       )
 distributions = Extension("extending_distributions",
-                          sources=[join(path, 'extending_distributions.pyx')],
+                          sources=[join('.', 'extending_distributions.pyx')],
                           include_dirs=[inc_path],
                           library_dirs=[lib_path],
                           libraries=['npyrandom'],

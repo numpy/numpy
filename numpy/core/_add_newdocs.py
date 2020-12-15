@@ -9,8 +9,6 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 """
 
-from numpy.core import numerictypes as _numerictypes
-from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
 from numpy.core.overrides import array_function_like_doc
 
@@ -607,6 +605,7 @@ add_newdoc('numpy.core', 'broadcast',
     --------
     broadcast_arrays
     broadcast_to
+    broadcast_shapes
 
     Examples
     --------
@@ -2571,7 +2570,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None, keepdims=False)
+    a.all(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if all elements evaluate to True.
 
@@ -2586,7 +2585,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None, keepdims=False)
+    a.any(axis=None, out=None, keepdims=False, *, where=True)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -2618,7 +2617,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
     """
     a.argmin(axis=None, out=None)
 
-    Return indices of the minimum values along the given axis of `a`.
+    Return indices of the minimum values along the given axis.
 
     Refer to `numpy.argmin` for detailed documentation.
 
@@ -3243,7 +3242,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None, keepdims=False)
+    a.mean(axis=None, dtype=None, out=None, keepdims=False, *, where=True)
 
     Returns the average of the array elements along given axis.
 
@@ -3814,7 +3813,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4101,7 +4100,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
 
     Returns the variance of the array elements, along given axis.
 
@@ -6283,183 +6282,3 @@ add_newdoc('numpy.core.numerictypes', 'character',
     Abstract base class of all character string scalar types.
 
     """)
-
-
-##############################################################################
-#
-# Documentation for concrete scalar classes
-#
-##############################################################################
-
-def numeric_type_aliases(aliases):
-    def type_aliases_gen():
-        for alias, doc in aliases:
-            try:
-                alias_type = getattr(_numerictypes, alias)
-            except AttributeError:
-                # The set of aliases that actually exist varies between platforms
-                pass
-            else:
-                yield (alias_type, alias, doc)
-    return list(type_aliases_gen())
-
-
-possible_aliases = numeric_type_aliases([
-    ('int8', '8-bit signed integer (-128 to 127)'),
-    ('int16', '16-bit signed integer (-32768 to 32767)'),
-    ('int32', '32-bit signed integer (-2147483648 to 2147483647)'),
-    ('int64', '64-bit signed integer (-9223372036854775808 to 9223372036854775807)'),
-    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
-    ('uint8', '8-bit unsigned integer (0 to 255)'),
-    ('uint16', '16-bit unsigned integer (0 to 65535)'),
-    ('uint32', '32-bit unsigned integer (0 to 4294967295)'),
-    ('uint64', '64-bit unsigned integer (0 to 18446744073709551615)'),
-    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
-    ('float16', '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'),
-    ('float32', '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'),
-    ('float64', '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'),
-    ('float96', '96-bit extended-precision floating-point number type'),
-    ('float128', '128-bit extended-precision floating-point number type'),
-    ('complex64', 'Complex number type composed of 2 32-bit-precision floating-point numbers'),
-    ('complex128', 'Complex number type composed of 2 64-bit-precision floating-point numbers'),
-    ('complex192', 'Complex number type composed of 2 96-bit extended-precision floating-point numbers'),
-    ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
-    ])
-
-
-def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
-    o = getattr(_numerictypes, obj)
-
-    character_code = dtype(o).char
-    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``np.{}``.\n    ".format(obj)
-    alias_doc = ''.join("Alias: ``np.{}``.\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join("Alias *on this platform*: ``np.{}``: {}.\n    ".format(alias, doc)
-                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
-
-    docstring = """
-    {doc}
-    Character code: ``'{character_code}'``.
-    {canonical_name_doc}{alias_doc}
-    """.format(doc=doc.strip(), character_code=character_code,
-               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
-
-    add_newdoc('numpy.core.numerictypes', obj, docstring)
-
-
-add_newdoc_for_scalar_type('bool_', ['bool8'],
-    """
-    Boolean type (True or False), stored as a byte.
-    """)
-
-add_newdoc_for_scalar_type('byte', [],
-    """
-    Signed integer type, compatible with C ``char``.
-    """)
-
-add_newdoc_for_scalar_type('short', [],
-    """
-    Signed integer type, compatible with C ``short``.
-    """)
-
-add_newdoc_for_scalar_type('intc', [],
-    """
-    Signed integer type, compatible with C ``int``.
-    """)
-
-add_newdoc_for_scalar_type('int_', [],
-    """
-    Signed integer type, compatible with Python `int` anc C ``long``.
-    """)
-
-add_newdoc_for_scalar_type('longlong', [],
-    """
-    Signed integer type, compatible with C ``long long``.
-    """)
-
-add_newdoc_for_scalar_type('ubyte', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned char``.
-    """)
-
-add_newdoc_for_scalar_type('ushort', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned short``.
-    """)
-
-add_newdoc_for_scalar_type('uintc', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned int``.
-    """)
-
-add_newdoc_for_scalar_type('uint', [],
-    """
-    Unsigned integer type, compatible with C ``unsigned long``.
-    """)
-
-add_newdoc_for_scalar_type('ulonglong', [],
-    """
-    Signed integer type, compatible with C ``unsigned long long``.
-    """)
-
-add_newdoc_for_scalar_type('half', [],
-    """
-    Half-precision floating-point number type.
-    """)
-
-add_newdoc_for_scalar_type('single', [],
-    """
-    Single-precision floating-point number type, compatible with C ``float``.
-    """)
-
-add_newdoc_for_scalar_type('double', ['float_'],
-    """
-    Double-precision floating-point number type, compatible with Python `float`
-    and C ``double``.
-    """)
-
-add_newdoc_for_scalar_type('longdouble', ['longfloat'],
-    """
-    Extended-precision floating-point number type, compatible with C
-    ``long double`` but not necessarily with IEEE 754 quadruple-precision.
-    """)
-
-add_newdoc_for_scalar_type('csingle', ['singlecomplex'],
-    """
-    Complex number type composed of two single-precision floating-point
-    numbers.
-    """)
-
-add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'],
-    """
-    Complex number type composed of two double-precision floating-point
-    numbers, compatible with Python `complex`.
-    """)
-
-add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
-    """
-    Complex number type composed of two extended-precision floating-point
-    numbers.
-    """)
-
-add_newdoc_for_scalar_type('object_', [],
-    """
-    Any Python object.
-    """)
-
-# TODO: work out how to put this on the base class, np.floating
-for float_name in ('half', 'single', 'double', 'longdouble'):
-    add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
-        """
-        {ftype}.as_integer_ratio() -> (int, int)
-
-        Return a pair of integers, whose ratio is exactly equal to the original
-        floating point number, and with a positive denominator.
-        Raise OverflowError on infinities and a ValueError on NaNs.
-
-        >>> np.{ftype}(10.0).as_integer_ratio()
-        (10, 1)
-        >>> np.{ftype}(0.0).as_integer_ratio()
-        (0, 1)
-        >>> np.{ftype}(-.25).as_integer_ratio()
-        (-1, 4)
-        """.format(ftype=float_name)))

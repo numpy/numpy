@@ -130,11 +130,15 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    from .version import git_revision as __git_revision__
-    from .version import version as __version__
-
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
+
+    # get the version using versioneer
+    from ._version import get_versions
+    vinfo = get_versions()
+    __version__ = vinfo.get("closest-tag", vinfo["version"])
+    __git_version__ = vinfo.get("full-revisionid")
+    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -247,7 +251,7 @@ else:
             except KeyError:
                 pass
             else:
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
                 def _expired(*args, **kwds):
                     raise RuntimeError(msg)
@@ -384,3 +388,8 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

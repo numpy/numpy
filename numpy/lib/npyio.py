@@ -24,7 +24,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    pickle
     )
 
 
@@ -86,7 +86,7 @@ class BagObj:
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
-            raise AttributeError(key)
+            raise AttributeError(key) from None
 
     def __dir__(self):
         """
@@ -446,9 +446,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                                  "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
-            except Exception:
+            except Exception as e:
                 raise IOError(
-                    "Failed to interpret file %s as a pickle" % repr(file))
+                    "Failed to interpret file %s as a pickle" % repr(file)) from e
 
 
 def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
@@ -517,7 +517,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     # [1 2] [1 3]
     """
     if hasattr(file, 'write'):
-        file_ctx = contextlib_nullcontext(file)
+        file_ctx = contextlib.nullcontext(file)
     else:
         file = os_fspath(file)
         if not file.endswith('.npy'):
@@ -539,10 +539,11 @@ def _savez_dispatcher(file, *args, **kwds):
 def savez(file, *args, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
-    If arguments are passed in with no keywords, the corresponding variable
-    names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
-    arguments are given, the corresponding variable names, in the ``.npz``
-    file will match the keyword names.
+    Provide arrays as keyword arguments to store them under the
+    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+
+    If arrays are specified as positional arguments, i.e., ``savez(fn,
+    x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -552,13 +553,12 @@ def savez(file, *args, **kwds):
         ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
-        Arrays to save to the file. Since it is not possible for Python to
-        know the names of the arrays outside `savez`, the arrays will be saved
-        with names "arr_0", "arr_1", and so on. These arguments can be any
-        expression.
+        Arrays to save to the file. Please use keyword arguments (see
+        `kwds` below) to assign names to arrays.  Arrays specified as
+        args will be named "arr_0", "arr_1", and so on.
     kwds : Keyword arguments, optional
-        Arrays to save to the file. Arrays will be saved in the file with the
-        keyword names.
+        Arrays to save to the file. Each array will be saved to the
+        output file with its corresponding keyword name.
 
     Returns
     -------
@@ -613,6 +613,7 @@ def savez(file, *args, **kwds):
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
     """
     _savez(file, args, kwds, False)
 
@@ -627,9 +628,11 @@ def savez_compressed(file, *args, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
-    If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored filenames are
-    arr_0, arr_1, etc.
+    Provide arrays as keyword arguments to store them under the
+    corresponding name in the output file: ``savez(fn, x=x, y=y)``.
+
+    If arrays are specified as positional arguments, i.e., ``savez(fn,
+    x, y)``, their names will be `arr_0`, `arr_1`, etc.
 
     Parameters
     ----------
@@ -639,13 +642,12 @@ def savez_compressed(file, *args, **kwds):
         ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
-        Arrays to save to the file. Since it is not possible for Python to
-        know the names of the arrays outside `savez`, the arrays will be saved
-        with names "arr_0", "arr_1", and so on. These arguments can be any
-        expression.
+        Arrays to save to the file. Please use keyword arguments (see
+        `kwds` below) to assign names to arrays.  Arrays specified as
+        args will be named "arr_0", "arr_1", and so on.
     kwds : Keyword arguments, optional
-        Arrays to save to the file. Arrays will be saved in the file with the
-        keyword names.
+        Arrays to save to the file. Each array will be saved to the
+        output file with its corresponding keyword name.
 
     Returns
     -------
@@ -712,44 +714,14 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     zipf = zipfile_factory(file, mode="w", compression=compression)
 
-    if sys.version_info >= (3, 6):
-        # Since Python 3.6 it is possible to write directly to a ZIP file.
-        for key, val in namedict.items():
-            fname = key + '.npy'
-            val = np.asanyarray(val)
-            # always force zip64, gh-10776
-            with zipf.open(fname, 'w', force_zip64=True) as fid:
-                format.write_array(fid, val,
-                                   allow_pickle=allow_pickle,
-                                   pickle_kwargs=pickle_kwargs)
-    else:
-        # Stage arrays in a temporary file on disk, before writing to zip.
-
-        # Import deferred for startup time improvement
-        import tempfile
-        # Since target file might be big enough to exceed capacity of a global
-        # temporary directory, create temp file side-by-side with the target file.
-        file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')
-        fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')
-        os.close(fd)
-        try:
-            for key, val in namedict.items():
-                fname = key + '.npy'
-                fid = open(tmpfile, 'wb')
-                try:
-                    format.write_array(fid, np.asanyarray(val),
-                                       allow_pickle=allow_pickle,
-                                       pickle_kwargs=pickle_kwargs)
-                    fid.close()
-                    fid = None
-                    zipf.write(tmpfile, arcname=fname)
-                except IOError as exc:
-                    raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-                finally:
-                    if fid:
-                        fid.close()
-        finally:
-            os.remove(tmpfile)
+    for key, val in namedict.items():
+        fname = key + '.npy'
+        val = np.asanyarray(val)
+        # always force zip64, gh-10776
+        with zipf.open(fname, 'w', force_zip64=True) as fid:
+            format.write_array(fid, val,
+                               allow_pickle=allow_pickle,
+                               pickle_kwargs=pickle_kwargs)
 
     zipf.close()
 
@@ -845,8 +817,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
-        data-type, arrays are returned for each field.  Default is False.
+        unpacked using ``x, y, z = loadtxt(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
@@ -994,10 +967,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         if comments is not None:
             line = regex_comments.split(line, maxsplit=1)[0]
         line = line.strip('\r\n')
-        if line:
-            return line.split(delimiter)
-        else:
-            return []
+        return line.split(delimiter) if line else []
 
     def read_data(chunk_size):
         """Parse each line, including the first.
@@ -1059,11 +1029,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     user_converters = converters
 
+    byte_converters = False
     if encoding == 'bytes':
         encoding = None
         byte_converters = True
-    else:
-        byte_converters = False
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
@@ -1464,10 +1433,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 try:
                     v = format % tuple(row) + newline
-                except TypeError:
+                except TypeError as e:
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
-                                    % (str(X.dtype), format))
+                                    % (str(X.dtype), format)) from e
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1670,7 +1639,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         If 'lower', field names are converted to lower case.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
-        unpacked using ``x, y, z = loadtxt(...)``
+        unpacked using ``x, y, z = genfromtxt(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
     usemask : bool, optional
         If True, return a masked array.
         If False, return a regular array.
@@ -1823,7 +1794,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             fid_ctx = contextlib.closing(fid)
         else:
             fid = fname
-            fid_ctx = contextlib_nullcontext(fid)
+            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
@@ -2299,9 +2270,18 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if usemask:
         output = output.view(MaskedArray)
         output._mask = outputmask
+    output = np.squeeze(output)
     if unpack:
-        return output.squeeze().T
-    return output.squeeze()
+        if names is None:
+            return output.T
+        elif len(names) == 1:
+            # squeeze single-name dtypes too
+            return output[names[0]]
+        else:
+            # For structured arrays with multiple fields,
+            # return an array for each field.
+            return [output[field] for field in names]
+    return output
 
 
 _genfromtxt_with_like = array_function_dispatch(

@@ -233,7 +233,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || PySlice_Check(index)
             || PyArray_Check(index)
             || !PySequence_Check(index)
-            || PyBaseString_Check(index)) {
+            || PyUnicode_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
@@ -1407,7 +1407,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-    if (PyBaseString_Check(ind)) {
+    if (PyUnicode_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1418,10 +1418,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             return 0;
         }
         else if (tup == NULL){
-            PyObject *errmsg = PyUnicode_FromString("no field of name ");
-            PyUString_Concat(&errmsg, ind);
-            PyErr_SetObject(PyExc_ValueError, errmsg);
-            Py_DECREF(errmsg);
+            PyErr_Format(PyExc_ValueError, "no field of name %S", ind);
             return 0;
         }
         if (_unpack_field(tup, &fieldtype, &offset) < 0) {
@@ -1471,7 +1468,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyErr_Clear();
                 return -1;
             }
-            is_string = PyBaseString_Check(item);
+            is_string = PyUnicode_Check(item);
             Py_DECREF(item);
             if (!is_string) {
                 return -1;
@@ -2345,7 +2342,6 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
     int consec_status = -1;
     int axis, broadcast_axis;
     npy_intp dimension;
-    PyObject *errmsg, *tmp;
 
     for (i = 0; i < mit->nd_fancy; i++) {
         mit->dimensions[i] = 1;
@@ -2433,35 +2429,38 @@ mapiter_fill_info(PyArrayMapIterObject *mit, npy_index_info *indices,
 
     return 0;
 
-  broadcast_error:
+broadcast_error: ;  // Declarations cannot follow labels, add empty statement.
     /*
      * Attempt to set a meaningful exception. Could also find out
      * if a boolean index was converted.
      */
-    errmsg = PyUnicode_FromString("shape mismatch: indexing arrays could not "
-                                  "be broadcast together with shapes ");
+    PyObject *errmsg = PyUnicode_FromString("");
     if (errmsg == NULL) {
         return -1;
     }
-
     for (i = 0; i < index_num; i++) {
         if (!(indices[i].type & HAS_FANCY)) {
             continue;
         }
-        tmp = convert_shape_to_string(
-                    PyArray_NDIM((PyArrayObject *)indices[i].object),
-                    PyArray_SHAPE((PyArrayObject *)indices[i].object),
-                    " ");
+
+        int ndim = PyArray_NDIM((PyArrayObject *)indices[i].object);
+        npy_intp *shape = PyArray_SHAPE((PyArrayObject *)indices[i].object);
+        PyObject *tmp = convert_shape_to_string(ndim, shape, " ");
         if (tmp == NULL) {
+            Py_DECREF(errmsg);
             return -1;
         }
-        PyUString_ConcatAndDel(&errmsg, tmp);
+
+        Py_SETREF(errmsg, PyUnicode_Concat(errmsg, tmp));
+        Py_DECREF(tmp);
         if (errmsg == NULL) {
             return -1;
         }
     }
 
-    PyErr_SetObject(PyExc_IndexError, errmsg);
+    PyErr_Format(PyExc_IndexError,
+            "shape mismatch: indexing arrays could not "
+            "be broadcast together with shapes %S", errmsg);
     Py_DECREF(errmsg);
     return -1;
 }
@@ -2653,7 +2652,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype)
 {
-    PyObject *errmsg, *tmp;
     /* For shape reporting on error */
     PyArrayObject *original_extra_op = extra_op;
 
@@ -3183,45 +3181,30 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     goto finish;
 
   broadcast_error:
-    errmsg = PyUnicode_FromString("shape mismatch: value array "
-                    "of shape ");
-    if (errmsg == NULL) {
-        goto finish;
-    }
-
     /* Report the shape of the original array if it exists */
     if (original_extra_op == NULL) {
         original_extra_op = extra_op;
     }
 
-    tmp = convert_shape_to_string(PyArray_NDIM(original_extra_op),
-                                  PyArray_DIMS(original_extra_op), " ");
-    if (tmp == NULL) {
-        goto finish;
-    }
-    PyUString_ConcatAndDel(&errmsg, tmp);
-    if (errmsg == NULL) {
+    int extra_ndim = PyArray_NDIM(original_extra_op);
+    npy_intp *extra_dims = PyArray_DIMS(original_extra_op);
+    PyObject *shape1 = convert_shape_to_string(extra_ndim, extra_dims, " ");
+    if (shape1 == NULL) {
         goto finish;
     }
 
-    tmp = PyUnicode_FromString("could not be broadcast to indexing "
-                    "result of shape ");
-    PyUString_ConcatAndDel(&errmsg, tmp);
-    if (errmsg == NULL) {
+    PyObject *shape2 = convert_shape_to_string(mit->nd, mit->dimensions, "");
+    if (shape2 == NULL) {
+        Py_DECREF(shape1);
         goto finish;
     }
 
-    tmp = convert_shape_to_string(mit->nd, mit->dimensions, "");
-    if (tmp == NULL) {
-        goto finish;
-    }
-    PyUString_ConcatAndDel(&errmsg, tmp);
-    if (errmsg == NULL) {
-        goto finish;
-    }
+    PyErr_Format(PyExc_ValueError,
+            "shape mismatch: value array of shape %S could not be broadcast "
+            "to indexing result of shape %S", shape1, shape2);
 
-    PyErr_SetObject(PyExc_ValueError, errmsg);
-    Py_DECREF(errmsg);
+    Py_DECREF(shape1);
+    Py_DECREF(shape2);
 
   finish:
     Py_XDECREF(extra_op);
@@ -3320,7 +3303,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
     Py_XDECREF(a_copy);
     Py_XDECREF(subspace);
     Py_XDECREF((PyObject *)mit);
-    for (i=0; i < index_num; i++) {
+    for (i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
     return NULL;

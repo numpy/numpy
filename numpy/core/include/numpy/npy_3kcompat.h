@@ -28,6 +28,30 @@ extern "C" {
  * PyInt -> PyLong
  */
 
+
+/*
+ * This is a renamed copy of the Python non-limited API function _PyLong_AsInt. It is
+ * included here because it is missing from the PyPy API. It completes the PyLong_As*
+ * group of functions and can be useful in replacing PyInt_Check.
+ */
+static NPY_INLINE int
+Npy__PyLong_AsInt(PyObject *obj)
+{
+    int overflow;
+    long result = PyLong_AsLongAndOverflow(obj, &overflow);
+
+    /* INT_MAX and INT_MIN are defined in Python.h */
+    if (overflow || result > INT_MAX || result < INT_MIN) {
+        /* XXX: could be cute and give a different
+           message for overflow == -1 */
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int too large to convert to C int");
+        return -1;
+    }
+    return (int)result;
+}
+
+
 #if defined(NPY_PY3K)
 /* Return True only if the long fits in a C long */
 static NPY_INLINE int PyInt_Check(PyObject *op) {
@@ -38,6 +62,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PyLong_AsLongAndOverflow(op, &overflow);
     return (overflow == 0);
 }
+
 
 #define PyInt_FromLong PyLong_FromLong
 #define PyInt_AsLong PyLong_AsLong

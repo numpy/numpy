@@ -244,6 +244,10 @@ class TestMaskedArray:
                                         'offsets':[0,8]})
         array(x)  # used to fail due to 'V' padding field in x.dtype.descr
 
+    def test_unknown_keyword_parameter(self):
+        with pytest.raises(TypeError, match="unexpected keyword argument"):
+            MaskedArray([1, 2, 3], maks=[0, 1, 0])  # `mask` is misspelled.
+
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         xm.fill_value = -9999
@@ -2748,7 +2752,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm += t(1)
                 assert_equal(xm, y + t(1))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_addition_array_type(self):
         # Test of inplace additions
@@ -2765,7 +2769,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y + a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_subtraction_scalar_type(self):
         # Test of inplace subtractions
@@ -2778,7 +2782,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm -= t(1)
                 assert_equal(xm, y - t(1))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_subtraction_array_type(self):
         # Test of inplace subtractions
@@ -2795,7 +2799,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y - a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_multiplication_scalar_type(self):
         # Test of inplace multiplication
@@ -2808,7 +2812,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm *= t(2)
                 assert_equal(xm, y * t(2))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_multiplication_array_type(self):
         # Test of inplace multiplication
@@ -2825,7 +2829,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y * a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_floor_division_scalar_type(self):
         # Test of inplace division
@@ -2861,7 +2865,7 @@ class TestMaskedArrayInPlaceArithmetics:
                     mask_or(mask_or(m, a.mask), (a == t(0)))
                 )
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
     def test_inplace_division_scalar_type(self):
         # Test of inplace division
@@ -2895,9 +2899,9 @@ class TestMaskedArrayInPlaceArithmetics:
                     warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
 
     def test_inplace_division_array_type(self):
         # Test of inplace division
@@ -2934,9 +2938,9 @@ class TestMaskedArrayInPlaceArithmetics:
                     warnings.warn(str(e), stacklevel=1)
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, "Failed on type=%s." % t)
+                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
 
     def test_inplace_pow_type(self):
         # Test keeping data w/ (inplace) power
@@ -2954,7 +2958,7 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(x.data, xx_r.data)
                 assert_equal(x.mask, xx_r.mask)
 
-                assert_equal(len(w), 0, "Failed on type=%s." % t)
+                assert_equal(len(w), 0, f'Failed on type={t}.')
 
 
 class TestMaskedArrayMethods:
@@ -3858,8 +3862,6 @@ class TestMaskedArrayMathMethods:
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
-    @pytest.mark.skipif(sys.platform=='win32' and sys.version_info < (3, 6),
-                        reason='Fails on Python < 3.6 on Windows, gh-9671')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
@@ -4603,7 +4605,7 @@ class TestMaskedArrayFunctions:
         class M(MaskedArray):
             pass
 
-        test = np.ma.compressed(M(shape=(0,1,2)))
+        test = np.ma.compressed(M([[[]], [[]]]))
         assert_equal(test.ndim, 1)
 
         # with .compressed() overridden
@@ -4611,7 +4613,7 @@ class TestMaskedArrayFunctions:
             def compressed(self):
                 return 42
 
-        test = np.ma.compressed(M(shape=(0,1,2)))
+        test = np.ma.compressed(M([[[]], [[]]]))
         assert_equal(test, 42)
 
     def test_convolve(self):

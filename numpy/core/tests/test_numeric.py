@@ -922,6 +922,25 @@ class TestTypes:
         assert_equal(np.promote_types('u8', 'S1'), np.dtype('S20'))
         assert_equal(np.promote_types('u8', 'S30'), np.dtype('S30'))
 
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V6"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+             [np.dtype("i8,i8"), np.dtype("i4,i4")],
+            ])
+    def test_invalid_void_promotion(self, dtype1, dtype2):
+        # Mainly test structured void promotion, which currently allows
+        # byte-swapping, but nothing else:
+        with pytest.raises(TypeError):
+            np.promote_types(dtype1, dtype2)
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V10"), np.dtype("V10")],
+             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
+             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
+            ])
+    def test_valid_void_promotion(self, dtype1, dtype2):
+        assert np.promote_types(dtype1, dtype2) is dtype1
+
     @pytest.mark.parametrize("dtype",
            list(np.typecodes["All"]) +
            ["i,i", "S3", "S100", "U3", "U100", rational])
@@ -941,7 +960,7 @@ class TestTypes:
             return
 
         res = np.promote_types(dtype, dtype)
-        if res.char in "?bhilqpBHILQPefdgFDGOmM":
+        if res.char in "?bhilqpBHILQPefdgFDGOmM" or dtype.type is rational:
             # Metadata is lost for simple promotions (they create a new dtype)
             assert res.metadata is None
         else:
@@ -976,41 +995,20 @@ class TestTypes:
             # Promotion failed, this test only checks metadata
             return
 
-        # The rules for when metadata is preserved and which dtypes metadta
-        # will be used are very confusing and depend on multiple paths.
-        # This long if statement attempts to reproduce this:
-        if dtype1.type is rational or dtype2.type is rational:
-            # User dtype promotion preserves byte-order here:
-            if np.can_cast(res, dtype1):
-                assert res.metadata == dtype1.metadata
-            else:
-                assert res.metadata == dtype2.metadata
-
-        elif res.char in "?bhilqpBHILQPefdgFDGOmM":
+        if res.char in "?bhilqpBHILQPefdgFDGOmM" or res.type is rational:
             # All simple types lose metadata (due to using promotion table):
             assert res.metadata is None
-        elif res.kind in "SU" and dtype1 == dtype2:
-            # Strings give precedence to the second dtype:
-            assert res is dtype2
         elif res == dtype1:
             # If one result is the result, it is usually returned unchanged:
             assert res is dtype1
         elif res == dtype2:
-            # If one result is the result, it is usually returned unchanged:
-            assert res is dtype2
-        elif dtype1.kind == "S" and dtype2.kind == "U":
-            # Promotion creates a new unicode dtype from scratch
-            assert res.metadata is None
-        elif dtype1.kind == "U" and dtype2.kind == "S":
-            # Promotion creates a new unicode dtype from scratch
-            assert res.metadata is None
-        elif res.kind in "SU" and dtype2.kind != res.kind:
-            # We build on top of dtype1:
-            assert res.metadata == dtype1.metadata
-        elif res.kind in "SU" and res.kind == dtype1.kind:
-            assert res.metadata == dtype1.metadata
-        elif res.kind in "SU" and res.kind == dtype2.kind:
-            assert res.metadata == dtype2.metadata
+            # dtype1 may have been cast to the same type/kind as dtype2.
+            # If the resulting dtype is identical we currently pick the cast
+            # version of dtype1, which lost the metadata:
+            if np.promote_types(dtype1, dtype2.kind) == dtype2:
+                res.metadata is None
+            else:
+                res.metadata == metadata2
         else:
             assert res.metadata is None
 
@@ -1025,6 +1023,24 @@ class TestTypes:
             assert res_bs == res
         assert res_bs.metadata == res.metadata
 
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V6"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+             [np.dtype("i8,i8"), np.dtype("i4,i4")],
+            ])
+    def test_invalid_void_promotion(self, dtype1, dtype2):
+        # Mainly test structured void promotion, which currently allows
+        # byte-swapping, but nothing else:
+        with pytest.raises(TypeError):
+            np.promote_types(dtype1, dtype2)
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V10"), np.dtype("V10")],
+             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
+             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
+            ])
+    def test_valid_void_promotion(self, dtype1, dtype2):
+        assert np.promote_types(dtype1, dtype2) is dtype1
 
     def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))

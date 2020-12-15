@@ -52,7 +52,7 @@ else:
 
 
 import sys
-import os
+import os, glob
 
 # In case we are run from the source directory, we don't want to import the
 # project from there:
@@ -122,6 +122,9 @@ def main(argv):
                         help="Specify a list of dispatched CPU optimizations"),
     parser.add_argument("--disable-optimization", action="store_true",
                         help="Disable CPU optimized code(dispatch,simd,fast...)"),
+    parser.add_argument("--simd-test", default=None,
+                        help="Specify a list of CPU optimizations to be "
+                             "tested against NumPy SIMD interface"),
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -230,8 +233,9 @@ def main(argv):
         config = os.path.join(
             site_dir,
             "numpy",
-            "tests",
             "typing",
+            "tests",
+            "data",
             "mypy.ini",
         )
 
@@ -309,8 +313,16 @@ def main(argv):
             out = subprocess.check_output(['git', 'rev-parse', commit_a])
             commit_a = out.strip().decode('ascii')
 
+            # generate config file with the required build options
+            asv_cfpath = [
+                '--config', asv_compare_config(
+                    os.path.join(ROOT_DIR, 'benchmarks'), args,
+                    # to clear the cache if the user changed build options
+                    (commit_a, commit_b)
+                )
+            ]
             cmd = ['asv', 'continuous', '-e', '-f', '1.05',
-                   commit_a, commit_b] + bench_args
+                   commit_a, commit_b] + asv_cfpath + bench_args
             ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
 
@@ -359,7 +371,6 @@ def main(argv):
         sys.exit(0)
     else:
         sys.exit(1)
-
 
 def build_project(args):
     """
@@ -421,8 +432,6 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
-    if args.debug_info:
-        cmd += ["build_src", "--verbose-cfg"]
     if args.warn_error:
         cmd += ["--warn-error"]
     if args.cpu_baseline:
@@ -431,6 +440,10 @@ def build_project(args):
         cmd += ["--cpu-dispatch", args.cpu_dispatch]
     if args.disable_optimization:
         cmd += ["--disable-optimization"]
+    if args.simd_test is not None:
+        cmd += ["--simd-test", args.simd_test]
+    if args.debug_info:
+        cmd += ["build_src", "--verbose-cfg"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',
@@ -490,6 +503,98 @@ def build_project(args):
 
     return site_dir, site_dir_noarch
 
+def asv_compare_config(bench_path, args, h_commits):
+    """
+    Fill the required build options through custom variable
+    'numpy_build_options' and return the generated config path.
+    """
+    conf_path = os.path.join(bench_path, "asv_compare.conf.json.tpl")
+    nconf_path = os.path.join(bench_path, "_asv_compare.conf.json")
+
+    # add custom build
+    build = []
+    if args.parallel > 1:
+        build += ["-j", str(args.parallel)]
+    if args.cpu_baseline:
+        build += ["--cpu-baseline", args.cpu_baseline]
+    if args.cpu_dispatch:
+        build += ["--cpu-dispatch", args.cpu_dispatch]
+    if args.disable_optimization:
+        build += ["--disable-optimization"]
+
+    is_cached = asv_substitute_config(conf_path, nconf_path,
+        numpy_build_options = ' '.join([f'\\"{v}\\"' for v in build]),
+    )
+    if not is_cached:
+        asv_clear_cache(bench_path, h_commits)
+    return nconf_path
+
+def asv_clear_cache(bench_path, h_commits, env_dir="env"):
+    """
+    Force ASV to clear the cache according to specified commit hashes.
+    """
+    # FIXME: only clear the cache from the current environment dir
+    asv_build_pattern = os.path.join(bench_path, env_dir, "*", "asv-build-cache")
+    for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
+        for c in h_commits:
+            try: shutil.rmtree(os.path.join(asv_build_cache, c))
+            except OSError: pass
+
+def asv_substitute_config(in_config, out_config, **custom_vars):
+    """
+    A workaround to allow substituting custom tokens within
+    ASV configuration file since there's no official way to add custom
+    variables(e.g. env vars).
+
+    Parameters
+    ----------
+    in_config : str
+        The path of ASV configuration file, e.g. '/path/to/asv.conf.json'
+    out_config : str
+        The path of generated configuration file,
+        e.g. '/path/to/asv_substituted.conf.json'.
+
+    The other keyword arguments represent the custom variables.
+
+    Returns
+    -------
+    True(is cached) if 'out_config' is already generated with
+    the same '**custom_vars' and updated with latest 'in_config',
+    False otherwise.
+
+    Examples
+    --------
+    See asv_compare_config().
+    """
+    assert in_config != out_config
+    assert len(custom_vars) > 0
+
+    def sdbm_hash(*factors):
+        chash = 0
+        for f in factors:
+            for char in str(f):
+                chash  = ord(char) + (chash << 6) + (chash << 16) - chash
+                chash &= 0xFFFFFFFF
+        return chash
+
+    vars_hash = sdbm_hash(custom_vars, os.path.getmtime(in_config))
+    try:
+        with open(out_config, "r") as wfd:
+            hash_line = wfd.readline().split('hash:')
+            if len(hash_line) > 1 and int(hash_line[1]) == vars_hash:
+                return True
+    except IOError:
+        pass
+
+    custom_vars = {f'{{{k}}}':v for k, v in custom_vars.items()}
+    with open(in_config, "r") as rfd, open(out_config, "w") as wfd:
+        wfd.write(f"// hash:{vars_hash}\n")
+        wfd.write("// This file is automatically generated by runtests.py\n")
+        for line in rfd:
+            for key, val in custom_vars.items():
+                line = line.replace(key, val)
+            wfd.write(line)
+    return False
 
 #
 # GCOV support

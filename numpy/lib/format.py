@@ -746,7 +746,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
             # Friendlier error message
             raise UnicodeError("Unpickling a python object failed: %r\n"
                                "You may need to pass the encoding= option "
-                               "to numpy.load" % (err,))
+                               "to numpy.load" % (err,)) from err
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

@@ -8,30 +8,33 @@ jobs:
     docker:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/python:3.6.6
+      - image: circleci/python:3.8.4
 
     working_directory: ~/repo
 
     steps:
-      - checkout
+      - checkout:
+      - run:
+          name: pull changes from merge
+          command: |
+            if [[ -v CI_PULL_REQUEST ]] ; then git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge" ; fi
 
       - run:
           name: create virtual environment, install dependencies
           command: |
-            python3 -m venv venv
-            ln -s $(which python3) venv/bin/python3.6
-            . venv/bin/activate
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
+            python3.8 -m venv venv
+            . venv/bin/activate
 
       - run:
           name: build numpy
           command: |
             . venv/bin/activate
-            pip install --upgrade pip 'setuptools<49.2.0'
-            pip install -r test_requirements.txt
+            pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
+            pip install --progress-bar=off -r test_requirements.txt
             pip install .
-            pip install -r doc_requirements.txt
+            pip install --progress-bar=off -r doc_requirements.txt
 
       - run:
           name: create release notes
@@ -50,10 +53,19 @@ jobs:
             python tools/refguide_check.py --rst
 
       - run:
+          name: build devdocs w/ref warnings
+          command: |
+            . venv/bin/activate
+            cd doc
+            # Don't use -q, show warning summary"
+            SPHINXOPTS="-n" make -e html || echo "ignoring errors for now, see gh-13114"
+
+      - run:
           name: build devdocs
           command: |
             . venv/bin/activate
             cd doc
+            make clean
             SPHINXOPTS=-q make -e html
 
       - run:
