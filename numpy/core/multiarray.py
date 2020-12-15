@@ -284,8 +284,8 @@ def inner(a, b):
 
     or explicitly::
 
-        np.inner(a, b)[i0,...,ir-1,j0,...,js-1]
-             = sum(a[i0,...,ir-1,:]*b[j0,...,js-1,:])
+        np.inner(a, b)[i0,...,ir-2,j0,...,js-2]
+             = sum(a[i0,...,ir-2,:]*b[j0,...,js-2,:])
 
     In addition `a` or `b` may be scalars, in which case::
 
