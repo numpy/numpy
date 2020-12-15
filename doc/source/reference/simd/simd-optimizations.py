@@ -8,7 +8,7 @@ gen_path = path.dirname(path.realpath(__file__))
 from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
-    fake_info = ""
+    fake_info = ("arch", "compiler", "extra_args")
     # disable caching no need for it
     conf_nocache = True
     def __init__(self, *args, **kwargs):
@@ -101,7 +101,7 @@ def features_table_sections(name, ftable=None, gtable=None, tab_size=4):
     return content
 
 def features_table(arch, cc="gcc", pretty_name=None, **kwargs):
-    FakeCCompilerOpt.fake_info = arch + cc
+    FakeCCompilerOpt.fake_info = (arch, cc, '')
     ccopt = FakeCCompilerOpt(cpu_baseline="max")
     features = ccopt.cpu_baseline_names()
     ftable = ccopt.gen_features_table(features, **kwargs)
@@ -112,12 +112,12 @@ def features_table(arch, cc="gcc", pretty_name=None, **kwargs):
     return features_table_sections(pretty_name, ftable, gtable, **kwargs)
 
 def features_table_diff(arch, cc, cc_vs="gcc", pretty_name=None, **kwargs):
-    FakeCCompilerOpt.fake_info = arch + cc
+    FakeCCompilerOpt.fake_info = (arch, cc, '')
     ccopt = FakeCCompilerOpt(cpu_baseline="max")
     fnames = ccopt.cpu_baseline_names()
     features = {f:ccopt.feature_implies(f) for f in fnames}
 
-    FakeCCompilerOpt.fake_info = arch + cc_vs
+    FakeCCompilerOpt.fake_info = (arch, cc_vs, '')
     ccopt_vs = FakeCCompilerOpt(cpu_baseline="max")
     fnames_vs = ccopt_vs.cpu_baseline_names()
     features_vs = {f:ccopt_vs.feature_implies(f) for f in fnames_vs}

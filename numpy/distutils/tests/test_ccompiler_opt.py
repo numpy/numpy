@@ -82,7 +82,7 @@ class _Test_CCompilerOpt(object):
         self._opt = None
 
     def nopt(self, *args, **kwargs):
-        FakeCCompilerOpt.fake_info = self.arch + '_' + self.cc
+        FakeCCompilerOpt.fake_info = (self.arch, self.cc, "")
         return FakeCCompilerOpt(*args, **kwargs)
 
     def opt(self):
