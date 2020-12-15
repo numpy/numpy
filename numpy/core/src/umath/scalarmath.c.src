@@ -614,41 +614,44 @@ descr_from_basic_scalar(PyObject *obj, PyArray_Descr **descr)
 
 /**
  * This function attempts to compare NumPy or Python scalars
- * The operation is done by casting to array and getting `item`
- * which is then used to called the item's richcompare
+ * The operation is done by getting value of both scalars
+ * and calling richcompare on them.
  *
  * @param self The first object which will be converted to scalar item
  * @param other The second object to compare to
+ * @param other The value of comparison operator
  * @returns Py_False or Py_True if richcompare is successfull
- *          , otherwise NULL
+ *          , otherwise NULL.
  */
 static PyObject*
 do_richcompare_on_scalars(PyObject *self, PyObject *other, int cmp_op) {
-    PyObject *arr, *item, *meth, *ret;
+    PyObject *item_self, *item_other, *ret;
+    PyArray_Descr *self_descr, *other_descr;
+    void *data_self, *data_other;
+    int pyscalar_self, pyscalar_other;
 
-    arr = PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
+    pyscalar_self = descr_from_basic_scalar(self, &self_descr);
+    pyscalar_other = descr_from_basic_scalar(other, &other_descr);
+
+    if (NPY_LIKELY(pyscalar_self > 0 && pyscalar_other > 0)) {
+        data_self = scalar_value(self, NULL);
+        data_other = scalar_value(other, NULL);
+
+        item_self = self_descr->f->getitem(data_self, NULL);
+        item_other = other_descr->f->getitem(data_other, NULL);
+
+        Py_DECREF(item_other);
+        Py_DECREF(item_self);
+
+        ret = PyObject_RichCompare(item_self, item_other, cmp_op);
+
+        Py_DECREF(self_descr);
+        Py_DECREF(other_descr);
+
+        return ret;
     }
 
-    meth = PyObject_GetAttrString(arr, "item");
-    if (meth == NULL) {
-        Py_DECREF(arr);
-        return NULL;
-    }
-
-    item = PyObject_CallObject(meth, NULL);
-    if (item == NULL) {
-        Py_DECREF(arr);
-        Py_DECREF(meth);
-        return NULL;
-    }
-
-    ret = PyObject_RichCompare(item, other, cmp_op);
-    Py_DECREF(arr);
-    Py_DECREF(meth);
-    Py_DECREF(item);
-    return ret;
+    return NULL;
 }
 
 
@@ -1343,8 +1346,8 @@ static PyObject*
 @name@_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
     npy_@name@ arg1, arg2;
-    int out=0, pyscalar=0;
-    PyArray_Descr *value_descr;
+    int out=0;
+    PyObject *ret;
 
     RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
@@ -1352,13 +1355,11 @@ static PyObject*
     case 0:
         break;
     case -1:
-        /* can't cast both safely.
-         * Try fastpath if `other` is not complex */
-        pyscalar = descr_from_basic_scalar(other, &value_descr);
-        if(NPY_LIKELY(pyscalar > 0)) {
-            if(value_descr->type_num < NPY_CFLOAT) {
-                return do_richcompare_on_scalars(self, other, cmp_op);
-            }
+        /* can't cast both safely to same type.
+         * Try fastpath else use ufuncs */
+        ret = do_richcompare_on_scalars(self, other, cmp_op);
+        if (ret != NULL) {
+            return ret;
         }
     case -2:
         /* use ufunc */
