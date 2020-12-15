@@ -20,6 +20,11 @@ typedef enum {
     PACK_ORDER_BIG
 } PACK_ORDER;
 
+#ifdef NPY_CPU_ARMV7
+    #define ISARMV7 1
+#else
+    #define ISARMV7 0
+#endif
 /*
  * Returns -1 if the array is monotonic decreasing,
  * +1 if the array is monotonic increasing,
@@ -1520,7 +1525,7 @@ pack_inner(const char *inptr,
             bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
             bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
             if(out_stride == 1 && 
-                npy_is_aligned(outptr, sizeof(npy_uint64))) {
+                (!ISARMV7 || npy_is_aligned(outptr, sizeof(npy_uint64)))) {
                 npy_uint64 *ptr64 = (npy_uint64*)outptr;
             #if NPY_SIMD_WIDTH == 16
                 npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
