@@ -259,12 +259,16 @@ def inner(a, b):
     Returns
     -------
     out : ndarray
-        `out.shape = a.shape[:-1] + b.shape[:-1]`
+        Returns the inner product of `a` and `b`. If `a` and `b` are both
+        scalars or both 1-D arrays then a scalar is returned; otherwise
+        an array is returned.
+        `out.shape = (*a.shape[:-1], *b.shape[:-1])`
 
     Raises
     ------
     ValueError
-        If the last dimension of `a` and `b` has different size.
+        If both `a` and `b` are nonscalar and their last dimensions have
+        different sizes.
 
     See Also
     --------
@@ -300,13 +304,24 @@ def inner(a, b):
     >>> np.inner(a, b)
     2
 
-    A multidimensional example:
+    A multidimensional examples:
 
     >>> a = np.arange(24).reshape((2,3,4))
     >>> b = np.arange(4)
-    >>> np.inner(a, b)
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (2, 3)
+    >>> c
     array([[ 14,  38,  62],
            [ 86, 110, 134]])
+
+    >>> a = np.arange(2).reshape((1,1,2))
+    >>> b = np.arange(6).reshape((3,2))
+    >>> c = np.inner(a, b)
+    >>> c.shape
+    (1, 1, 3)
+    >>> c
+    array([[[1, 3, 5]]])
 
     An example where `b` is a scalar:
 
