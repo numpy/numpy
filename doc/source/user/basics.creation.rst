@@ -350,9 +350,3 @@ knowledge to interface with C or C++.
 NumPy is a fundamental library in the Python Scientific Computing stack. 
 Many Python libraries, including SciPy, Pandas, and OpenCV, can create,
 operate on, and work with NumPy arrays. 
-<<<<<<< HEAD
-
-=======
-..
-  These libraries could benefit from a few examples, but it may be
-  outside the scope of this explanation
