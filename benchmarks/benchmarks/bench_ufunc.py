@@ -150,21 +150,6 @@ class CustomScalarFloorDivideInt(Benchmark):
         self.x // divisor
 
 
-class CustomScalarEqual(Benchmark):
-    params = (
-        [np.int8, np.int16, np.int32, np.int64,
-         np.uint8, np.uint16, np.uint32, np.uint64,
-         np.float32, np.float64])
-    param_names = ['dtype']
-
-    def setup(self, dtype):
-        self.scalar_x = dtype(np.random.randint(-128, 127))
-        self.scalar_y = np.random.randint(-128, 127)
-
-    def time_scalar_equality(self, dtype):
-        for i in range(10**6):
-            self.scalar_x == self.scalar_y
-
 class Scalar(Benchmark):
     def setup(self):
         self.x = np.asarray(1.0)

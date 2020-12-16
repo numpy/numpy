@@ -1,3 +1,4 @@
+from random import randint
 from .common import Benchmark, TYPES1
 
 import numpy as np
@@ -31,3 +32,6 @@ class ScalarMath(Benchmark):
         n = self.num
         res = abs(abs(abs(abs(abs(abs(abs(abs(abs(abs(n))))))))))
 
+    def time_compare(self, typename):
+        n = self.num
+        res = [n == randint(-128, 127) for _ in range(10)]
