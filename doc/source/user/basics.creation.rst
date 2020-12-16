@@ -49,7 +49,7 @@ assignments, you can get unwanted overflow, as such
 
 ::
 
- >>> a = array([127,128,129], dtype = int8)
+ >>> a = array([127, 128, 129], dtype=int8)
  >>> print(a)
  [ 127 -128 -127 ]
 
@@ -57,7 +57,7 @@ An 8-bit signed integer represents integers from -128 to 127.
 Assigning the ``int8`` array to integers outside of this range results
 in overflow. This feature can often be misunderstood. If you
 perform calculations with mismatching ``dtypes``, you can get unwanted
-result,  for example: ::
+results,  for example::
 
     >>> a = array([2, 3, 4], dtype = uint32)
     >>> b = array([5, 6, 7], dtype = uint32)
@@ -97,13 +97,13 @@ There are three categories of NumPy array creation objects:
 -----------------------------
 
 The 1D array creation objects e.g. :func:`numpy.linspace` and
-:func:`numpy.arange` generally  need at least two inputs ``start`` and
-``stop``. Where ``start`` is the first value in the array and ``stop``
+:func:`numpy.arange` generally need at least two inputs, ``start`` and
+``stop``, where ``start`` is the first value in the array and ``stop``
 specifies the value of the last element in the array. 
 
 :func:`numpy.arange` creates arrays with regularly incrementing values.
 Check the docstring for complete information and examples. A few
-examples are shown: ::
+examples are shown::
 
  >>> arange(10)
  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -114,7 +114,7 @@ examples are shown: ::
 
 Note: there are some subtleties regarding ``dtype``. In the second
 example, the ``dtype`` is defined. In the third example, the array is
-``dtype = float`` to accomodate the step size of ``0.1``. 
+``dtype=float`` to accomodate the step size of ``0.1``. 
 
 :func:`numpy.linspace` will create arrays with a specified number of elements, and
 spaced equally between the specified beginning and end values. For
@@ -133,28 +133,28 @@ number of elements and the starting and end point. The previous
 The 2D array creation objects e.g. :func:`numpy.eye`, :func:`numpy.diag`, and :func:`numpy.vander`
 define properties of special matrices represented as 2D arrays. 
 
-``eye(n,m)`` defines a 2D identity matrix. The elements where i=j are 1
+``np.eye(n, m)`` defines a 2D identity matrix. The elements where i=j are 1
 and the rest are 0, as such::
 
  >>> eye(3)
  array([[1., 0., 0.],
         [0., 1., 0.],
         [0., 0., 1.]])
- >>> eye(3,5)
+ >>> eye(3, 5)
  array([[1., 0., 0., 0., 0.],
         [0., 1., 0., 0., 0.],
         [0., 0., 1., 0., 0.]])
 
 :func:`numpy.diag` can define either a square 2D array with given values along
 the diagonal _or_ if given a 2D array returns a 1D array that is
-only the diagonal elements. The two array creations can be helpful while
-doing linear algebra as such::
+only the diagonal elements. The two array creation functions can be helpful while
+doing linear algebra, as such::
  
- >>> diag([1,2,3])
+ >>> diag([1, 2, 3])
  array([[1, 0, 0],
        [0, 2, 0],
        [0, 0, 3]])
- >>> diag([1,2,3],1)
+ >>> diag([1, 2, 3], 1)
  array([[0, 1, 0, 0],
         [0, 0, 2, 0],
         [0, 0, 0, 3],
@@ -163,7 +163,7 @@ doing linear algebra as such::
  >>> diag(a)
  array([1, 4])
 
-``vander(x,n)`` defines a Vandermonde matrix as a 2D NumPy array. Each column
+``vander(x, n)`` defines a Vandermonde matrix as a 2D NumPy array. Each column
 of the Vandermonde matrix is a decreasing power of the input 1D array or
 list or tuple,
 ``x`` where the highest polynomial order is ``n-1``. This array creation
@@ -277,7 +277,7 @@ arrays into a 4-by-4 array using ``block`` ::
         [ 0.,  0., -3.,  0. ],
         [ 0.,  0.,  0., -4. ]])
 
-Other routines use similar syntax to join ND arrays, check the
+Other routines use similar syntax to join ND arrays. Check the
 routine's documentation for further examples and syntax. 
 
 4) Reading arrays from disk, either from standard or custom formats
@@ -330,18 +330,15 @@ Importing ``simple.csv`` is accomplished using :func:`loadtxt`::
         [3., 9.]])
 
 
-More generic ascii files can be read using `SciPy
-io<https://docs.scipy.org/doc/scipy/reference/io.html>`_ and `Pandas
+More generic ASCII files can be read using `scipy.io` and `Pandas
 <https://pandas.pydata.org/>`_.
-..
-  intersphinx links for io and Pandas?
 
 5) Creating arrays from raw bytes through the use of strings or buffers
 =======================================================================
 
 There are a variety of approaches one can use. If the file has a relatively
 simple format then one can write a simple I/O library and use the NumPy
-fromfile() function and .tofile() method to read and write NumPy arrays
+`fromfile()` function and `.tofile()` method to read and write NumPy arrays
 directly (mind your byteorder though!) If a good C or C++ library exists that
 read the data, one can wrap that library with a variety of techniques though
 that certainly is much more work and requires significantly more advanced
@@ -353,4 +350,9 @@ knowledge to interface with C or C++.
 NumPy is a fundamental library in the Python Scientific Computing stack. 
 Many Python libraries, including SciPy, Pandas, and OpenCV, can create,
 operate on, and work with NumPy arrays. 
+<<<<<<< HEAD
 
+=======
+..
+  These libraries could benefit from a few examples, but it may be
+  outside the scope of this explanation
