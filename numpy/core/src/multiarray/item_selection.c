@@ -2138,14 +2138,14 @@ count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end)
     const npyv_u8 vone = npyv_setall_u8(1);
     const npyv_u8 vzero = npyv_zero_u8();
 
-    npy_intp n = 0;
+    npy_intp lane_max = 0;
     npyv_u8 vsum8 = npyv_zero_u8();
-    while (*d < end && n <= 0xFE) {
+    while (*d < end && lane_max <= 0xFE) {
         npyv_u8 vt = npyv_cvt_u8_b8(npyv_cmpeq_u8(npyv_load_u8(*d), vzero));
         vt = npyv_and_u8(vt, vone);
         vsum8 = npyv_add_u8(vsum8, vt);
         *d += npyv_nlanes_u8;
-        n += npyv_nlanes_u8;
+        lane_max += 1;
     }
     return vsum8;
 }
@@ -2154,12 +2154,12 @@ static NPY_INLINE NPY_GCC_OPT_3 npyv_u16
 count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end)
 {
     npyv_u16 vsum16 = npyv_zero_u16();
-    npy_intp n = 0;
-    while (*d < end && n <= 0xFF00) {
+    npy_intp lane_max = 0;
+    while (*d < end && lane_max <= 0xFF00-0xFF) {
         npyv_u8 vsum8 = count_zero_bytes_u8(d, end);
         npyv_u16x2 part = npyv_expand_u16_u8(vsum8);
         vsum16 = npyv_add_u16(vsum16, npyv_add_u16(part.val[0], part.val[1]));
-        n += 0xFF;
+        lane_max += 0xFF*2;
     }
     return vsum16;
 }
@@ -2168,12 +2168,13 @@ static NPY_INLINE NPY_GCC_OPT_3 npyv_u32
 count_zero_bytes_u32(const npy_uint8 **d, const npy_uint8 *end)
 {
     npyv_u32 vsum32 = npyv_zero_u32();
-    npy_intp n = 0;
-    while (*d < end && n <= 0xFFFF0000) {
+    npy_intp lane_max = 0;
+    // The last accumulation needs to adjustment (2**32-1)/nlanes to avoid overflow.
+    while (*d < end && lane_max <= (0xFFFF0000-0xFFFF)/npyv_nlanes_u32) {
         npyv_u16 vsum16 = count_zero_bytes_u16(d, end);
         npyv_u32x2 part = npyv_expand_u32_u16(vsum16);
         vsum32 = npyv_add_u32(vsum32, npyv_add_u32(part.val[0], part.val[1]));
-        n += 0xFFFF;
+        lane_max += 0xFFFF*2;
     }
     return vsum32;
 }
