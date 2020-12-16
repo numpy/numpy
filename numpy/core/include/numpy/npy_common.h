@@ -10,6 +10,14 @@
 #include <npy_config.h>
 #endif
 
+// int*, int64* should be propertly aligned on ARMv7 to avoid bus error
+#if !defined(NPY_STRONG_ALIGNMENT) && defined(__arm__) && !(defined(__aarch64__) || defined(_M_ARM64))
+#define NPY_STRONG_ALIGNMENT 1
+#endif
+#if !defined(NPY_STRONG_ALIGNMENT)
+#define NPY_STRONG_ALIGNMENT 0
+#endif
+
 // compile time environment variables
 #ifndef NPY_RELAXED_STRIDES_CHECKING
     #define NPY_RELAXED_STRIDES_CHECKING 0
