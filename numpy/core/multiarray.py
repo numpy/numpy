@@ -259,10 +259,10 @@ def inner(a, b):
     Returns
     -------
     out : ndarray
-        Returns the inner product of `a` and `b`. If `a` and `b` are both
+        If `a` and `b` are both
         scalars or both 1-D arrays then a scalar is returned; otherwise
         an array is returned.
-        `out.shape = (*a.shape[:-1], *b.shape[:-1])`
+        ``out.shape = (*a.shape[:-1], *b.shape[:-1])``
 
     Raises
     ------
