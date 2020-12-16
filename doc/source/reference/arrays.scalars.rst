@@ -108,6 +108,11 @@ Integer types
    :members: __init__
    :exclude-members: __init__
 
+.. note::
+
+   The numpy integer types mirror the behavior of C integers, and can therefore
+   be subject to :ref:`overflow-errors`.
+
 Signed integer types
 ++++++++++++++++++++
 
@@ -168,6 +173,25 @@ Inexact types
 .. autoclass:: numpy.inexact
    :members: __init__
    :exclude-members: __init__
+
+.. note::
+
+   The printing behavior of inexact scalars is to use as few digits as possible
+   to display the result unambiguously. This means that equal values at
+   different precisions will display differently::
+
+       >>> f16 = np.float16("0.1")
+       >>> f32 = np.float32(f16)
+       >>> f64 = np.float64(f32)
+       >>> f16 == f32 == f64
+       True
+       >>> f16, f32, f64
+       (0.1, 0.099975586, 0.0999755859375)
+
+   Note that none of these floats hold the exact value :math:`\frac{1}{10}`;
+   ``f16`` prints as ``0.1`` because it is as close to that value as possible,
+   whereas the other types do not as they have more precision and therefore have
+   closer values.
 
 Floating-point types
 ++++++++++++++++++++
