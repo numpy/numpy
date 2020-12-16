@@ -315,7 +315,7 @@ created and filled with the result.
     >>> c = a - b
     >>> c
     array([20, 29, 38, 47])
-    >>> b ** 2
+    >>> b**2
     array([0, 1, 4, 9])
     >>> 10 * np.sin(a)
     array([ 9.12945251, -9.88031624,  7.4511316 , -2.62374854])
@@ -500,7 +500,7 @@ and other Python sequences.
 
 ::
 
-    >>> a = np.arange(10) ** 3
+    >>> a = np.arange(10)**3
     >>> a
     array([  0,   1,   8,  27,  64, 125, 216, 343, 512, 729])
     >>> a[2]
@@ -515,7 +515,7 @@ and other Python sequences.
     >>> a[::-1]  # reversed a
     array([ 729,  512,  343,  216,  125, 1000,   27, 1000,    1, 1000])
     >>> for i in a:
-    ...     print(i ** (1 / 3.))
+    ...     print(i**(1 / 3.))
     ...
     9.999999999999998
     1.0
@@ -1065,7 +1065,7 @@ Indexing with Arrays of Indices
 
 ::
 
-    >>> a = np.arange(12) ** 2  # the first 12 square numbers
+    >>> a = np.arange(12)**2  # the first 12 square numbers
     >>> i = np.array([1, 1, 3, 8, 5])  # an array of indices
     >>> a[i]  # the elements of `a` at the positions `i`
     array([ 1,  1,  9, 64, 25])
@@ -1263,8 +1263,8 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...     divtime = maxit + np.zeros(z.shape, dtype=int)
     ...
     ...     for i in range(maxit):
-    ...         z = z ** 2 + c
-    ...         diverge = z * np.conj(z) > 2 ** 2       # who is diverging
+    ...         z = z**2 + c
+    ...         diverge = z * np.conj(z) > 2**2       # who is diverging
     ...         div_now = diverge & (divtime == maxit)  # who is diverging now
     ...         divtime[div_now] = i                    # note when
     ...         z[diverge] = 2                          # avoid diverging too much
