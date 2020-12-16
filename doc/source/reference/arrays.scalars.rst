@@ -178,7 +178,7 @@ Inexact types
 
    The printing behavior of inexact scalars is to use as few digits as possible
    to display the result unambiguously. This means that equal values at
-   different precisions will display differently::
+   different precisions may display differently::
 
        >>> f16 = np.float16("0.1")
        >>> f32 = np.float32(f16)
