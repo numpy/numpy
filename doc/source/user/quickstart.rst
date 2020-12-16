@@ -177,7 +177,7 @@ The function ``zeros`` creates an array full of zeros, the function
 ``ones`` creates an array full of ones, and the function ``empty``
 creates an array whose initial content is random and depends on the
 state of the memory. By default, the dtype of the created array is
-``float64``.
+``float64``, but it can be specified via the key word argument ``dtype``.
 
 ::
 
@@ -185,7 +185,7 @@ state of the memory. By default, the dtype of the created array is
     array([[0., 0., 0., 0.],
            [0., 0., 0., 0.],
            [0., 0., 0., 0.]])
-    >>> np.ones((2, 3, 4), dtype=np.int16)  # dtype can also be specified
+    >>> np.ones((2, 3, 4), dtype=np.int16)
     array([[[1, 1, 1, 1],
             [1, 1, 1, 1],
             [1, 1, 1, 1]],
@@ -193,8 +193,8 @@ state of the memory. By default, the dtype of the created array is
            [[1, 1, 1, 1],
             [1, 1, 1, 1],
             [1, 1, 1, 1]]], dtype=int16)
-    >>> np.empty((2, 3))  # uninitialized, the result may vary
-    array([[3.73603959e-262, 6.02658058e-154, 6.55490914e-260],
+    >>> np.empty((2, 3))
+    array([[3.73603959e-262, 6.02658058e-154, 6.55490914e-260],  # may vary
            [5.30498948e-313, 3.14673309e-307, 1.00000000e+000]])
 
 To create sequences of numbers, NumPy provides the ``arange`` function
