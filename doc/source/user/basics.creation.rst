@@ -19,18 +19,18 @@ There are 6 general mechanisms for creating arrays:
 5) Creating arrays from raw bytes through the use of strings or buffers
 6) Use of special library functions (e.g., random)
 
-You can use these methods to create ND arrays or :ref:`structured_arrays`.
-This document will cover general methods for ND array creation. 
+You can use these methods to create  ndarrays or :ref:`structured_arrays`.
+This document will cover general methods for ndarray creation. 
 
 1) Converting Python structures to NumPy Arrays
 ===============================================
 
 NumPy arrays can be defined using Python structures such as lists and
 tuples. Lists and tuples are defined using ``[...]`` and ``(...)``,
-respectively. Lists and tuples can define ND-array creation:
+respectively. Lists and tuples can define ndarray creation:
 * a list of numbers will create a 1D array, 
 * a list of lists will create a 2D array, 
-* further nested lists will create ND arrays
+* further nested lists will create ndarrays
 
 ::
 
@@ -91,7 +91,7 @@ out in the :ref:`Array creation routines <routines.array-creation>`.
 There are three categories of NumPy array creation objects:
 1) 1D arrays
 2) 2D arrays
-3) ND arrays
+3) ndarrays
 
 1 - 1D array creation objects
 -----------------------------
@@ -186,12 +186,13 @@ routine is helpful in generating linear least squares models, as such::
         [27,  9,  3,  1],
         [64, 16,  4,  1]])
  
-3 - ND array creation objects
+3 - ndarray creation objects
 -----------------------------
 
-The ND array creation objects e.g. :func:`numpy.ones`, :func:`numpy.zeros`, and
-:func:`default_rng.random` define arrays based upon the desired shape. ND
-array creation objects can create arrays with any dimension by
+The ndarray creation objects e.g. :func:`numpy.ones`, :func:`numpy.zeros`, and
+:func:`default_rng.random` define arrays based upon the desired
+shape. The  
+ndarray creation objects can create arrays with any dimension by
 specifying how many dimensions and length along that dimension in a
 tuple or list. 
 
@@ -277,7 +278,7 @@ arrays into a 4-by-4 array using ``block`` ::
         [ 0.,  0., -3.,  0. ],
         [ 0.,  0.,  0., -4. ]])
 
-Other routines use similar syntax to join ND arrays. Check the
+Other routines use similar syntax to join ndarrays. Check the
 routine's documentation for further examples and syntax. 
 
 4) Reading arrays from disk, either from standard or custom formats
