@@ -304,7 +304,7 @@ def inner(a, b):
     >>> np.inner(a, b)
     2
 
-    A multidimensional examples:
+    Some multidimensional examples:
 
     >>> a = np.arange(24).reshape((2,3,4))
     >>> b = np.arange(4)
