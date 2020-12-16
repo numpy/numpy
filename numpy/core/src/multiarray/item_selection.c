@@ -2150,7 +2150,7 @@ count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end)
     return vsum8;
 }
 
-static NPY_INLINE npyv_u16
+static NPY_INLINE NPY_GCC_OPT_3 npyv_u16
 count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end)
 {
     npyv_u16 vsum16 = npyv_zero_u16();
@@ -2164,7 +2164,7 @@ count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end)
     return vsum16;
 }
 
-static NPY_INLINE npyv_u32
+static NPY_INLINE NPY_GCC_OPT_3 npyv_u32
 count_zero_bytes_u32(const npy_uint8 **d, const npy_uint8 *end)
 {
     npyv_u32 vsum32 = npyv_zero_u32();
@@ -2178,7 +2178,7 @@ count_zero_bytes_u32(const npy_uint8 **d, const npy_uint8 *end)
     return vsum32;
 }
 
-static NPY_INLINE npy_intp
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
 count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
 {
     npy_intp zero_count = 0;
