@@ -1502,6 +1502,7 @@ pack_inner(const char *inptr,
         npy_intp vn_out = n_out - (remain ? 1 : 0);
         const int vstep = npyv_nlanes_u64;
         const int vstepx4 = vstep * 4;
+        const int isAligned = npy_is_aligned(outptr, sizeof(npy_uint64));
         vn_out -= (vn_out & (vstep - 1));
         for (; index <= vn_out - vstepx4; index += vstepx4, inptr += npyv_nlanes_u8 * 4) {
             npyv_u8 v0 = npyv_load_u8((const npy_uint8*)inptr);
@@ -1520,7 +1521,7 @@ pack_inner(const char *inptr,
             bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
             bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
             if(out_stride == 1 && 
-                (!NPY_STRONG_ALIGNMENT || npy_is_aligned(outptr, sizeof(npy_uint64)))) {
+                (!NPY_STRONG_ALIGNMENT || isAligned)) {
                 npy_uint64 *ptr64 = (npy_uint64*)outptr;
             #if NPY_SIMD_WIDTH == 16
                 npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
