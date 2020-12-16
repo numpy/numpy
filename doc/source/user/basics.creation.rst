@@ -19,7 +19,7 @@ There are 6 general mechanisms for creating arrays:
 5) Creating arrays from raw bytes through the use of strings or buffers
 6) Use of special library functions (e.g., random)
 
-You can use these methods to create ND arrays or :doc:`structured_arrays`.
+You can use these methods to create ND arrays or :ref:`structured_arrays`.
 This document will cover general methods for ND array creation. 
 
 1) Converting Python structures to NumPy Arrays
@@ -346,8 +346,6 @@ directly (mind your byteorder though!) If a good C or C++ library exists that
 read the data, one can wrap that library with a variety of techniques though
 that certainly is much more work and requires significantly more advanced
 knowledge to interface with C or C++.
-..
-  This section I can update, but its outside my experience
 
 6) Use of special library functions (e.g., SciPy, Pandas, and OpenCV)
 =====================================================================
@@ -355,7 +353,4 @@ knowledge to interface with C or C++.
 NumPy is a fundamental library in the Python Scientific Computing stack. 
 Many Python libraries, including SciPy, Pandas, and OpenCV, can create,
 operate on, and work with NumPy arrays. 
-..
-  These libraries could benefit from a few examples, but it may be
-  outside the scope of this explanation
 
