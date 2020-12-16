@@ -34,11 +34,11 @@ respectively. Lists and tuples can define ndarray creation:
 
 ::
 
- >>> a1D = array([1, 2, 3, 4])
- >>> a2D = array([ [1, 2], [3, 4] ])
- >>> a3D = array([ [ [1, 2], [3, 4]],
-                 [ [5, 6], [7, 8]]
-                 ])
+ >>> a1D = np.array([1, 2, 3, 4])
+ >>> a2D = np.array([[1, 2], [3, 4]])
+ >>> a3D = np.array([[[1, 2], [3, 4]],
+                    [[5, 6], [7, 8]]
+                    ])
 
 When you use :func:`numpy.array` to define a new array, consider the
 :doc:`dtype <basics.types>` of the elements in the array. You should
@@ -49,7 +49,7 @@ assignments, you can get unwanted overflow, as such
 
 ::
 
- >>> a = array([127, 128, 129], dtype=int8)
+ >>> a = np.array([127, 128, 129], dtype=np.int8)
  >>> print(a)
  [ 127 -128 -127 ]
 
@@ -59,12 +59,12 @@ in overflow. This feature can often be misunderstood. If you
 perform calculations with mismatching ``dtypes``, you can get unwanted
 results,  for example::
 
-    >>> a = array([2, 3, 4], dtype = uint32)
-    >>> b = array([5, 6, 7], dtype = uint32)
+    >>> a = array([2, 3, 4], dtype = np.uint32)
+    >>> b = array([5, 6, 7], dtype = np.uint32)
     >>> c_unsigned32 = a - b
     >>> print('unsigned c:', c_unsigned32, c_unsigned32.dtype)
     unsigned c: [4294967293 4294967293 4294967293] uint32
-    >>> c_signed32 = a - b.astype(int32)
+    >>> c_signed32 = a - b.astype(np.int32)
     >>> print('signed c:', c_signed32, c_signed32.dtype)
     signed c: [-3 -3 -3] int64
 
@@ -105,11 +105,11 @@ specifies the value of the last element in the array.
 Check the docstring for complete information and examples. A few
 examples are shown::
 
- >>> arange(10)
+ >>> np.arange(10)
  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
- >>> arange(2, 10, dtype=float)
+ >>> np.arange(2, 10, dtype=float)
  array([ 2., 3., 4., 5., 6., 7., 8., 9.])
- >>> arange(2, 3, 0.1)
+ >>> np.arange(2, 3, 0.1)
  array([ 2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
 
 Note: there are some subtleties regarding ``dtype``. In the second
@@ -120,7 +120,7 @@ example, the ``dtype`` is defined. In the third example, the array is
 spaced equally between the specified beginning and end values. For
 example: ::
 
- >>> linspace(1., 4., 6)
+ >>> np.linspace(1., 4., 6)
  array([ 1. ,  1.6,  2.2,  2.8,  3.4,  4. ])
 
 The advantage of this creation object is that you guarantee the
@@ -136,11 +136,11 @@ define properties of special matrices represented as 2D arrays.
 ``np.eye(n, m)`` defines a 2D identity matrix. The elements where i=j are 1
 and the rest are 0, as such::
 
- >>> eye(3)
+ >>> np.eye(3)
  array([[1., 0., 0.],
         [0., 1., 0.],
         [0., 0., 1.]])
- >>> eye(3, 5)
+ >>> np.eye(3, 5)
  array([[1., 0., 0., 0., 0.],
         [0., 1., 0., 0., 0.],
         [0., 0., 1., 0., 0.]])
@@ -150,17 +150,17 @@ the diagonal _or_ if given a 2D array returns a 1D array that is
 only the diagonal elements. The two array creation functions can be helpful while
 doing linear algebra, as such::
  
- >>> diag([1, 2, 3])
+ >>> np.diag([1, 2, 3])
  array([[1, 0, 0],
        [0, 2, 0],
        [0, 0, 3]])
- >>> diag([1, 2, 3], 1)
+ >>> np.diag([1, 2, 3], 1)
  array([[0, 1, 0, 0],
         [0, 0, 2, 0],
         [0, 0, 0, 3],
         [0, 0, 0, 0]])
  >>> a = np.array([[1, 2], [3, 4]])
- >>> diag(a)
+ >>> np.diag(a)
  array([1, 4])
 
 ``vander(x, n)`` defines a Vandermonde matrix as a 2D NumPy array. Each column
@@ -169,18 +169,18 @@ list or tuple,
 ``x`` where the highest polynomial order is ``n-1``. This array creation
 routine is helpful in generating linear least squares models, as such::
  
- >>> vander(np.linspace(0, 2, 5), 2)
+ >>> np.vander(np.linspace(0, 2, 5), 2)
  array([[0.  , 0.  , 1.  ],
         [0.25, 0.5 , 1.  ],
         [1.  , 1.  , 1.  ],
         [2.25, 1.5 , 1.  ],
         [4.  , 2.  , 1.  ]])
- >>> vander([1, 2, 3, 4], 2)
+ >>> np.vander([1, 2, 3, 4], 2)
  array([[1, 1],
         [2, 1],
         [3, 1],
         [4, 1]])
- >>> vander((1, 2, 3, 4), 4)
+ >>> np.vander((1, 2, 3, 4), 4)
  array([[ 1,  1,  1,  1],
         [ 8,  4,  2,  1],
         [27,  9,  3,  1],
@@ -246,7 +246,7 @@ elements to a new variable, you have to explicitly :func:`numpy.copy` the array,
 otherwise the variable is a view into the original array. Consider the
 following example, ::
 
- >>> a = array([1, 2, 3, 4, 5, 6])
+ >>> a = np.array([1, 2, 3, 4, 5, 6])
  >>> b = a[:2]
  >>> b += 1
  >>> print('a = ', a, 'b = ', b)
@@ -257,7 +257,7 @@ In this example, you did not create a new array. You created a variable,
 would get the same result by adding 1 to ``a[:2]``. If you want to create a
 _new_ array, use the :func:`numpy.copy` array creation routine as such, ::
 
- >>> a = array([1, 2, 3, 4])
+ >>> a = np.array([1, 2, 3, 4])
  >>> b = a[:2].copy()
  >>> b += 1
  >>> print('a = ', a, 'b = ', b)
@@ -267,12 +267,12 @@ There are a number of routines to join existing arrays e.g. :func:`numpy.vstack`
 :func:`numpy.hstack`, and :func:`numpy.block`. Here is an example of joining four 2-by-2
 arrays into a 4-by-4 array using ``block`` ::
 
- >>> A = ones((2, 2))
- >>> B = eye((2, 2))
- >>> C = zeros((2, 2))
- >>> D = diag((-3, -4))
- >>> block([[A, B], 
-            [C, D]])
+ >>> A = np.ones((2, 2))
+ >>> B = np.eye((2, 2))
+ >>> C = np.zeros((2, 2))
+ >>> D = np.diag((-3, -4))
+ >>> np.block([[A, B], 
+               [C, D]])
  array([[ 1.,  1.,  1.,  0. ],
         [ 1.,  1.,  0.,  1. ],
         [ 0.,  0., -3.,  0. ],
@@ -299,7 +299,6 @@ check the last section as well)
 
  HDF5: h5py
  FITS: Astropy
- # ?? anything else??
 
 Examples of formats that cannot be read directly but for which it is not hard to
 convert are those formats supported by libraries like PIL (able to read and
