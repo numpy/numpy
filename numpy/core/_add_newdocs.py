@@ -1147,13 +1147,13 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
-    fromiter(iterable, dtype, count=-1, *, like=None)
+    fromiter(iter, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
 
     Parameters
     ----------
-    iterable : iterable object
+    iter : iterable object
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.

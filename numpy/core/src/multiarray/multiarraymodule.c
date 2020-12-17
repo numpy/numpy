@@ -4085,6 +4085,42 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 }
 
 
+static PyObject *
+_reload_guard(PyObject *NPY_UNUSED(self)) {
+    static int initialized = 0;
+
+#if !defined(PYPY_VERSION)
+    if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
+        if (PyErr_WarnEx(PyExc_UserWarning,
+                "NumPy was imported from a Python sub-interpreter but "
+                "NumPy does not properly support sub-interpreters. "
+                "This will likely work for most users but might cause hard to "
+                "track down issues or subtle bugs. "
+                "A common user of the rare sub-interpreter feature is wsgi "
+                "which also allows single-interpreter mode.\n"
+                "Improvements in the case of bugs are welcome, but is not "
+                "on the NumPy roadmap, and full support may require "
+                "significant effort to achieve.", 2) < 0) {
+            return NULL;
+        }
+        /* No need to give the other warning in a sub-interpreter as well... */
+        initialized = 1;
+        Py_RETURN_NONE;
+    }
+#endif
+    if (initialized) {
+        if (PyErr_WarnEx(PyExc_UserWarning,
+                "The NumPy module was reloaded (imported a second time). "
+                "This can in some cases result in small but subtle issues "
+                "and is discouraged.", 2) < 0) {
+            return NULL;
+        }
+    }
+    initialized = 1;
+    Py_RETURN_NONE;
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4276,6 +4312,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
+    {"_reload_guard", (PyCFunction)_reload_guard,
+        METH_NOARGS,
+        "Give a warning on reload and big warning in sub-interpreters."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

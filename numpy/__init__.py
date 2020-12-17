@@ -389,7 +389,12 @@ else:
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
 
+    # Give a warning if NumPy is reloaded or imported on a sub-interpreter
+    # We do this from python, since the C-module may not be reloaded and
+    # it is tidier organized.
+    core.multiarray._multiarray_umath._reload_guard()
 
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
+

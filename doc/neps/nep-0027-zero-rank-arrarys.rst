@@ -57,7 +57,7 @@ However there are some important differences:
 Motivation for Array Scalars
 ----------------------------
 
-Numpy's design decision to provide 0-d arrays and array scalars in addition to
+NumPy's design decision to provide 0-d arrays and array scalars in addition to
 native python types goes against one of the fundamental python design
 principles that there should be only one obvious way to do it.  In this section
 we will try to explain why it is necessary to have three different ways to
@@ -109,7 +109,7 @@ arrays to scalars were summarized as follows:
     are something like Python lists (which except for
     Object arrays they are not).
 
-Numpy implements a solution that is designed to have all the pros and none of the cons above.
+NumPy implements a solution that is designed to have all the pros and none of the cons above.
 
     Create Python scalar types for all of the 21 types and also
     inherit from the three that already exist. Define equivalent
