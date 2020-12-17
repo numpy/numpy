@@ -117,7 +117,8 @@ class _UFuncOutputCastingError(_UFuncCastingError):
 # Exception used in shares_memory()
 @set_module('numpy')
 class TooHardError(RuntimeError):
-    pass
+    def __str__(self):
+        return ("max_work Exceeded")
 
 
 @set_module('numpy')
