@@ -705,7 +705,7 @@ static NPY_GCC_OPT_3 void
     *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + accum);
 }
 
-static void
+static NPY_GCC_OPT_3 void
 @name@_sum_of_products_stride0_contig_outstride0_two(int nop, char **dataptr,
                                 npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
@@ -715,7 +715,7 @@ static void
     *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value0 * accum);
 }
 
-static void
+static NPY_GCC_OPT_3 void
 @name@_sum_of_products_contig_stride0_outstride0_two(int nop, char **dataptr,
                                 npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
@@ -824,7 +824,7 @@ static void
 
 #if @nop@ == 1
 
-static void
+static NPY_GCC_OPT_3 void
 @name@_sum_of_products_contig_outstride0_one(int nop, char **dataptr,
                                 npy_intp const *strides, npy_intp count)
 {
