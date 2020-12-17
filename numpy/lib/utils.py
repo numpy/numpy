@@ -217,17 +217,6 @@ def deprecate_with_doc(msg):
     -------
     obj : object
 
-    Examples
-    --------
-    >>> @np.deprecate_with_doc("Use newfunc instead")
-    ... def oldfunc(a):
-    ...	    return a
-    >>> oldfunc(3)
-    3
-    >>> oldfunc.__doc__
-    `oldfunc` is deprecated!
-    Use newfunc instead
-
     """
     return _Deprecate(message=msg)  
 
