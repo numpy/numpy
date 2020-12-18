@@ -741,7 +741,13 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     if (!PySequence_Check(obj) ||
             PySequence_Length(obj) < 0) {
         *maxndim = 0;
-        PyErr_Clear();
+        if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                return -1;
+            }
+            PyErr_Clear();
+        }
         return 0;
     }
 
@@ -780,7 +786,14 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         return 0;
     }
     else if (PyErr_Occurred()) {
-        /* TODO[gh-14801]: propagate crashes during attribute access? */
+        /*
+         * Clear all but clearly fatal errors (previously cleared all).
+         * 1.20+ does not clear any errors here.
+         */
+        if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                PyErr_ExceptionMatches(PyExc_MemoryError)) {
+            return -1;
+        }
         PyErr_Clear();
     }
 
@@ -1740,7 +1753,8 @@ PyArray_GetArrayParamsFromObject_int(PyObject *op,
         else {
             *out_dtype = NULL;
             if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, out_dtype) < 0) {
-                if (PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                if (PyErr_ExceptionMatches(PyExc_MemoryError) ||
+                        PyErr_ExceptionMatches(PyExc_RecursionError)) {
                     return -1;
                 }
                 /* Return NPY_OBJECT for most exceptions */
@@ -2404,7 +2418,14 @@ PyArray_FromInterface(PyObject *origin)
                                                     "__array_interface__");
     if (iface == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            /*
+             * Clear all but clearly fatal errors (previously cleared all).
+             * 1.20+ does not clear any errors here.
+             */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                return NULL;
+            }
         }
         return Py_NotImplemented;
     }
@@ -2672,7 +2693,15 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            /*
+             * Clear all but clearly fatal errors (previously cleared all).
+             * 1.20+ does not clear any errors here.
+             */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                return NULL;
+            }
+            PyErr_Clear();
         }
         return Py_NotImplemented;
     }

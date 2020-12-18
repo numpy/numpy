@@ -818,6 +818,37 @@ class TestCreation:
 
         assert_raises(ValueError, np.array, x())
 
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    @pytest.mark.parametrize("attribute",
+        ["__array_interface__", "__array__", "__array_struct__"])
+    def test_bad_array_like_attributes(self, attribute, error):
+        # Check that errors during attribute retrieval are raised unless
+        # they are Attribute errors.
+
+        class BadInterface:
+           def __getattr__(self, attr):
+               if attr == attribute:
+                   raise error
+               super().__getattr__(attr)
+
+        with pytest.raises(error):
+            np.array(BadInterface())
+
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    def test_bad_array_like_bad_length(self, error):
+        # RecursionError and MemoryError are considered "critical" in
+        # sequences. We could expand this more generally though. (NumPy 1.20)
+        class BadSequence:
+            def __len__(self):
+                raise error
+            def __getitem__(self):
+                # must have getitem to be a Sequence
+                return 1
+
+        with pytest.raises(error):
+            np.array(BadSequence())
+
+
     def test_from_string(self):
         types = np.typecodes['AllInteger'] + np.typecodes['Float']
         nstr = ['123', '123']
