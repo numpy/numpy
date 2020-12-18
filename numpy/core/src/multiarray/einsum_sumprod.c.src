@@ -95,7 +95,7 @@
  */
 
 #if !@complex@
-static @temptype@ @name@_sum_of_arr(@type@ **data, npy_intp count)
+static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ **data, npy_intp count)
 {
     @temptype@ accum = 0;
 #if @NPYV_CHK@ // NPYV check for @type@
