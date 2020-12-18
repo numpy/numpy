@@ -2124,7 +2124,7 @@ PyArray_FromInterface(PyObject *origin)
 
     if (iface == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            return NULL;
         }
         return Py_NotImplemented;
     }
@@ -2392,7 +2392,7 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            return NULL;
         }
         return Py_NotImplemented;
     }

@@ -979,14 +979,28 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * and to handle it recursively. That is, unless we have hit the
      * dimension limit.
      */
-    npy_bool is_sequence = (PySequence_Check(obj) && PySequence_Size(obj) >= 0);
+    npy_bool is_sequence = PySequence_Check(obj);
+    if (is_sequence) {
+        is_sequence = PySequence_Size(obj) >= 0;
+        if (NPY_UNLIKELY(!is_sequence)) {
+            /* NOTE: This should likely just raise all errors */
+            if (PyErr_ExceptionMatches(PyExc_RecursionError) ||
+                    PyErr_ExceptionMatches(PyExc_MemoryError)) {
+                /*
+                 * Consider these unrecoverable errors, continuing execution
+                 * might crash the interpreter.
+                 */
+                return -1;
+            }
+            PyErr_Clear();
+        }
+    }
     if (NPY_UNLIKELY(*flags & DISCOVER_TUPLES_AS_ELEMENTS) &&
             PyTuple_Check(obj)) {
         is_sequence = NPY_FALSE;
     }
     if (curr_dims == max_dims || !is_sequence) {
         /* Clear any PySequence_Size error which would corrupts further calls */
-        PyErr_Clear();
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
                 flags, NULL);
