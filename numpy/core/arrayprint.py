@@ -524,7 +524,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     Parameters
     ----------
-    a : array_like
+    a : ndarray
         Input array.
     max_line_width : int, optional
         Inserts newlines if text is longer than `max_line_width`.
