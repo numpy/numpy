@@ -19,11 +19,12 @@ another function, or deprecated, or ...)
 Another use of this helper script is to check validity of code samples
 in docstrings::
 
-    $ python refguide_check.py --doctests ma
+    $ python tools/refguide_check.py --doctests ma
 
 or in RST-based documentations::
 
-    $ python refguide_check.py --rst docs
+    $ python tools/refguide_check.py --rst doc/source
+
 """
 import copy
 import doctest
