@@ -176,7 +176,7 @@ jobs:
 
   pypy37:
     needs: smoke_test
-    runs-on: Ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
