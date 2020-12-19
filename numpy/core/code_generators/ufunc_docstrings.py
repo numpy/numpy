@@ -185,7 +185,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     Notes
     -----
     `arccos` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `cos(z) = x`. The convention is to return
+    many numbers `z` such that ``cos(z) = x``. The convention is to return
     the angle `z` whose real part lies in `[0, pi]`.
 
     For real-valued input data types, `arccos` always returns real output.
@@ -193,7 +193,7 @@ add_newdoc('numpy.core.umath', 'arccos',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arccos` is a complex analytic function that
-    has branch cuts `[-inf, -1]` and `[1, inf]` and is continuous from
+    has branch cuts ``[-inf, -1]`` and `[1, inf]` and is continuous from
     above on the former and from below on the latter.
 
     The inverse `cos` is also known as `acos` or cos^-1.
@@ -245,7 +245,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     -----
     `arccosh` is a multivalued function: for each `x` there are infinitely
     many numbers `z` such that `cosh(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `[-pi, pi]` and the real part in
+    `z` whose imaginary part lies in ``[-pi, pi]`` and the real part in
     ``[0, inf]``.
 
     For real-valued input data types, `arccosh` always returns real output.
@@ -406,7 +406,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     it yields ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arctan` is a complex analytic function that
-    has [`1j, infj`] and [`-1j, -infj`] as branch cuts, and is continuous
+    has [``1j, infj``] and [``-1j, -infj``] as branch cuts, and is continuous
     from the left on the former and from the right on the latter.
 
     The inverse tangent is also known as `atan` or tan^{-1}.
@@ -544,7 +544,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     Notes
     -----
     `arctanh` is a multivalued function: for each `x` there are infinitely
-    many numbers `z` such that `tanh(z) = x`. The convention is to return
+    many numbers `z` such that ``tanh(z) = x``. The convention is to return
     the `z` whose imaginary part lies in `[-pi/2, pi/2]`.
 
     For real-valued input data types, `arctanh` always returns real output.
@@ -765,7 +765,7 @@ add_newdoc('numpy.core.umath', 'ceil',
     Return the ceiling of the input, element-wise.
 
     The ceil of the scalar `x` is the smallest integer `i`, such that
-    `i >= x`.  It is often denoted as :math:`\\lceil x \\rceil`.
+    ``i >= x``.  It is often denoted as :math:`\\lceil x \\rceil`.
 
     Parameters
     ----------
