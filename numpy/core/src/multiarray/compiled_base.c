@@ -13,7 +13,12 @@
 #include "alloc.h"
 #include "ctors.h"
 #include "common.h"
+#include "simd/simd.h"
 
+typedef enum {
+    PACK_ORDER_LITTLE = 0,
+    PACK_ORDER_BIG
+} PACK_ORDER;
 
 /*
  * Returns -1 if the array is monotonic decreasing,
@@ -1465,27 +1470,12 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     Py_RETURN_NONE;
 }
 
-#if defined NPY_HAVE_SSE2_INTRINSICS
-#include <emmintrin.h>
-#endif
-
-#ifdef NPY_HAVE_NEON
-    typedef npy_uint64 uint64_unaligned __attribute__((aligned(16)));
-    static NPY_INLINE int32_t
-    sign_mask(uint8x16_t input)
-    {
-        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
-    }
-#endif
 /*
  * This function packs boolean values in the input array into the bits of a
  * byte array. Truth values are determined as usual: 0 is false, everything
  * else is true.
  */
-static NPY_INLINE void
+static NPY_GCC_OPT_3 NPY_INLINE void
 pack_inner(const char *inptr,
            npy_intp element_size,   /* in bytes */
            npy_intp n_in,
@@ -1493,7 +1483,7 @@ pack_inner(const char *inptr,
            char *outptr,
            npy_intp n_out,
            npy_intp out_stride,
-           char order)
+           PACK_ORDER order)
 {
     /*
      * Loop through the elements of inptr.
@@ -1505,62 +1495,64 @@ pack_inner(const char *inptr,
     npy_intp index = 0;
     int remain = n_in % 8;              /* uneven bits */
 
-#if defined NPY_HAVE_SSE2_INTRINSICS && defined HAVE__M_FROM_INT64
+#if NPY_SIMD
     if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        __m128i zero = _mm_setzero_si128();
+        npyv_u8 v_zero = npyv_zero_u8();
         /* don't handle non-full 8-byte remainder */
         npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
-        for (index = 0; index < vn_out; index += 2) {
-            unsigned int r;
-            npy_uint64 a = *(npy_uint64*)inptr;
-            npy_uint64 b = *(npy_uint64*)(inptr + 8);
-            if (order == 'b') {
-                a = npy_bswap8(a);
-                b = npy_bswap8(b);
+        const int vstep = npyv_nlanes_u64;
+        const int vstepx4 = vstep * 4;
+        const int isAligned = npy_is_aligned(outptr, sizeof(npy_uint64));
+        vn_out -= (vn_out & (vstep - 1));
+        for (; index <= vn_out - vstepx4; index += vstepx4, inptr += npyv_nlanes_u8 * 4) {
+            npyv_u8 v0 = npyv_load_u8((const npy_uint8*)inptr);
+            npyv_u8 v1 = npyv_load_u8((const npy_uint8*)inptr + npyv_nlanes_u8 * 1);
+            npyv_u8 v2 = npyv_load_u8((const npy_uint8*)inptr + npyv_nlanes_u8 * 2);
+            npyv_u8 v3 = npyv_load_u8((const npy_uint8*)inptr + npyv_nlanes_u8 * 3);
+            if (order == PACK_ORDER_BIG) {
+                v0 = npyv_rev64_u8(v0);
+                v1 = npyv_rev64_u8(v1);
+                v2 = npyv_rev64_u8(v2);
+                v3 = npyv_rev64_u8(v3);
             }
-            
-            /* note x86 can load unaligned */
-            __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
-            /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
-            v = _mm_cmpeq_epi8(v, zero);
-            v = _mm_cmpeq_epi8(v, zero);
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            r = _mm_movemask_epi8(v);
-            /* store result */
-            memcpy(outptr, &r, 1);
-            outptr += out_stride;
-            memcpy(outptr, (char*)&r + 1, 1);
-            outptr += out_stride;
-            inptr += 16;
+            npy_uint64 bb[4];
+            bb[0] = npyv_tobits_b8(npyv_cmpneq_u8(v0, v_zero));
+            bb[1] = npyv_tobits_b8(npyv_cmpneq_u8(v1, v_zero));
+            bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
+            bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
+            if(out_stride == 1 && 
+                (!NPY_STRONG_ALIGNMENT || isAligned)) {
+                npy_uint64 *ptr64 = (npy_uint64*)outptr;
+            #if NPY_SIMD_WIDTH == 16
+                npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
+                ptr64[0] = bcomp;
+            #elif NPY_SIMD_WIDTH == 32
+                ptr64[0] = bb[0] | (bb[1] << 32);
+                ptr64[1] = bb[2] | (bb[3] << 32);
+            #else
+                ptr64[0] = bb[0]; ptr64[1] = bb[1];
+                ptr64[2] = bb[2]; ptr64[3] = bb[3];
+            #endif
+                outptr += vstepx4;
+            } else {
+                for(int i = 0; i < 4; i++) {
+                    for (int j = 0; j < vstep; j++) {
+                        memcpy(outptr, (char*)&bb[i] + j, 1);
+                        outptr += out_stride;
+                    }
+                }
+            }
         }
-    }
-#elif defined NPY_HAVE_NEON
-    if (in_stride == 1 && element_size == 1 && n_out > 2) {
-        /* don't handle non-full 8-byte remainder */
-        npy_intp vn_out = n_out - (remain ? 1 : 0);
-        vn_out -= (vn_out & 1);
-        for (index = 0; index < vn_out; index += 2) {
-            unsigned int r;
-            npy_uint64 a = *((uint64_unaligned*)inptr);
-            npy_uint64 b = *((uint64_unaligned*)(inptr + 8));
-            if (order == 'b') {
-                a = npy_bswap8(a);
-                b = npy_bswap8(b);
+        for (; index < vn_out; index += vstep, inptr += npyv_nlanes_u8) {
+            npyv_u8 va = npyv_load_u8((const npy_uint8*)inptr);
+            if (order == PACK_ORDER_BIG) {
+                va = npyv_rev64_u8(va);
             }
-            uint64x2_t v = vcombine_u64(vcreate_u64(a), vcreate_u64(b));
-            uint64x2_t zero = vdupq_n_u64(0);
-            /* false -> 0x00 and true -> 0xFF */
-            v = vreinterpretq_u64_u8(vmvnq_u8(vceqq_u8(vreinterpretq_u8_u64(v), vreinterpretq_u8_u64(zero))));
-            /* extract msb of 16 bytes and pack it into 16 bit */
-            uint8x16_t input = vreinterpretq_u8_u64(v);
-            r = sign_mask(input);
-            /* store result */
-            memcpy(outptr, &r, 1);
-            outptr += out_stride;
-            memcpy(outptr, (char*)&r + 1, 1);
-            outptr += out_stride;
-            inptr += 16;
+            npy_uint64 bb = npyv_tobits_b8(npyv_cmpneq_u8(va, v_zero));
+            for (int i = 0; i < vstep; ++i) {
+                memcpy(outptr, (char*)&bb + i, 1);
+                outptr += out_stride;
+            }
         }
     }
 #endif
@@ -1571,14 +1563,11 @@ pack_inner(const char *inptr,
     /* Don't reset index. Just handle remainder of above block */
     for (; index < n_out; index++) {
         unsigned char build = 0;
-        int i, maxi;
-        npy_intp j;
-
-        maxi = (index == n_out - 1) ? remain : 8;
-        if (order == 'b') {
-            for (i = 0; i < maxi; i++) {
+        int maxi = (index == n_out - 1) ? remain : 8;
+        if (order == PACK_ORDER_BIG) {
+            for (int i = 0; i < maxi; i++) {
                 build <<= 1;
-                for (j = 0; j < element_size; j++) {
+                for (npy_intp j = 0; j < element_size; j++) {
                     build |= (inptr[j] != 0);
                 }
                 inptr += in_stride;
@@ -1589,9 +1578,9 @@ pack_inner(const char *inptr,
         }
         else
         {
-            for (i = 0; i < maxi; i++) {
+            for (int i = 0; i < maxi; i++) {
                 build >>= 1;
-                for (j = 0; j < element_size; j++) {
+                for (npy_intp j = 0; j < element_size; j++) {
                     build |= (inptr[j] != 0) ? 128 : 0;
                 }
                 inptr += in_stride;
@@ -1685,13 +1674,13 @@ pack_bits(PyObject *input, int axis, char order)
         Py_XDECREF(ot);
         goto fail;
     }
-
+    const PACK_ORDER ordere = order == 'b' ? PACK_ORDER_BIG : PACK_ORDER_LITTLE;
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(out, axis));
     while (PyArray_ITER_NOTDONE(it)) {
         pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
                    PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
                    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
-                   PyArray_STRIDE(out, axis), order);
+                   PyArray_STRIDE(out, axis), ordere);
         PyArray_ITER_NEXT(it);
         PyArray_ITER_NEXT(ot);
     }
