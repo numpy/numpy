@@ -140,7 +140,7 @@ by a tuple of elements. Here we use a base entropy value and an integer
 .. end_block
 
 Note that the sequences produced by the latter method will be distinct from
-those constructed via `~SeepSequence.spawn`.
+those constructed via `~SeedSequence.spawn`.
 
 
 .. autosummary::
