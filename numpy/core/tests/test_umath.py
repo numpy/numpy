@@ -708,6 +708,11 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.log, np.float32(-1.0))
 
+        # See https://github.com/numpy/numpy/issues/18005 
+        with assert_no_warnings():
+            a = np.array(1e9, dtype='float32')
+            np.log(a)
+
     def test_sincos_values(self):
         with np.errstate(all='ignore'):
             x = [np.nan,  np.nan, np.nan, np.nan]
