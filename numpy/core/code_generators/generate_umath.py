@@ -46,7 +46,7 @@ class TypeDescription:
         If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
         instead of PyUFunc_x_x/PyUFunc_xx_x.
     cfunc_alias : str or none, optional
-        appended to inner loop C function name, e.g. FLOAT_{cfunc_alias} (see make_arrays)
+        Appended to inner loop C function name, e.g., FLOAT_{cfunc_alias}. See make_arrays.
         NOTE: it doesn't support 'astype'
     simd: list
         Available SIMD ufunc loops, dispatched at runtime in specified order
