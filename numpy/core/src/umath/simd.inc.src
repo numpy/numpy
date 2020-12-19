@@ -1549,7 +1549,7 @@ fma_get_exponent(__m256 x)
     __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
     __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
 
-    __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
     __m256 temp = _mm256_mul_ps(temp1, two_power_100);
     x = _mm256_blendv_ps(x, temp, denormal_mask);
 
@@ -1576,7 +1576,7 @@ fma_get_mantissa(__m256 x)
     __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
     __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
 
-    __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    volatile __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
     __m256 temp = _mm256_mul_ps(temp1, two_power_100);
     x = _mm256_blendv_ps(x, temp, denormal_mask);
 
