@@ -28,6 +28,8 @@ if sys.version_info > (3, 8):
 else:
     from typing_extensions import Literal, TypedDict
 
+_FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
+
 class _FormatDict(TypedDict, total=False):
     bool: Callable[[bool_], str]
     int: Callable[[integer[Any]], str]
@@ -56,7 +58,7 @@ class _FormatOptions(TypedDict):
     infstr: str
     formatter: Optional[_FormatDict]
     sign: Literal["-", "+", " "]
-    floatmode: Literal["fixed", "unique", "maxprec", "maxprec_equal"]
+    floatmode: _FloatMode
     legacy: Literal[False, "1.13"]
 
 def set_printoptions(
@@ -69,9 +71,7 @@ def set_printoptions(
     infstr: Optional[str] = ...,
     formatter: Optional[_FormatDict] = ...,
     sign: Optional[Literal["-", "+", " "]] = ...,
-    floatmode: Optional[
-        Literal["fixed", "unique", "maxprec", "maxprec_equal"]
-    ] = ...,
+    floatmode: Optional[_FloatMode] = ...,
     *,
     legacy: Optional[Literal[False, "1.13"]] = ...
 ) -> None: ...
@@ -83,7 +83,7 @@ def array2string(
     suppress_small: Optional[bool] = ...,
     separator: str = ...,
     prefix: str = ...,
-    # NOTE With the `style` argument being deprecated,
+    # NOTE: With the `style` argument being deprecated,
     # all arguments between `formatter` and `suffix` are de facto
     # keyworld-only arguments
     *,
@@ -91,7 +91,7 @@ def array2string(
     threshold: Optional[int] = ...,
     edgeitems: Optional[int] = ...,
     sign: Optional[Literal["-", "+", " "]] = ...,
-    floatmode: Optional[Literal["fixed", "unique", "maxprec", "maxprec_equal"]] = ...,
+    floatmode: Optional[_FloatMode] = ...,
     suffix: str = ...,
     legacy: Optional[Literal[False, "1.13"]] = ...,
 ) -> str: ...
@@ -139,9 +139,7 @@ def printoptions(
     infstr: Optional[str] = ...,
     formatter: Optional[_FormatDict] = ...,
     sign: Optional[Literal["-", "+", " "]] = ...,
-    floatmode: Optional[
-        Literal["fixed", "unique", "maxprec", "maxprec_equal"]
-    ] = ...,
+    floatmode: Optional[_FloatMode] = ...,
     *,
     legacy: Optional[Literal[False, "1.13"]] = ...
 ) -> _GeneratorContextManager[_FormatOptions]: ...
