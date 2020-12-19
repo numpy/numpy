@@ -40,7 +40,6 @@ class _FormatDict(TypedDict, total=False):
     void: Callable[[void], str]
     numpystr: Callable[[_CharLike], str]
     object: Callable[[object], str]
-    str: Callable[[Any], str]  # Unused but still present?
     all: Callable[[object], str]
     int_kind: Callable[[integer[Any]], str]
     float_kind: Callable[[floating[Any]], str]
