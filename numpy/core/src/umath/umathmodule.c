@@ -35,11 +35,11 @@ static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
 object_ufunc_type_resolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
-{
+                            NPY_CASTING casting,
+                            PyArrayObject **operands,
+                            PyObject *type_tup,
+                            PyArray_Descr **out_dtypes
+){
     int i, nop = ufunc->nin + ufunc->nout;
 
     out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
@@ -60,8 +60,8 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
                             PyArray_Descr **NPY_UNUSED(dtypes),
                             PyUFuncGenericFunction *out_innerloop,
                             void **out_innerloopdata,
-                            int *out_needs_api)
-{
+                            int *out_needs_api
+){
     *out_innerloop = ufunc->functions[0];
     *out_innerloopdata = ufunc->data[0];
     *out_needs_api = 1;
@@ -70,7 +70,8 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
 }
 
 PyObject *
-ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds
+){
     PyObject *function, *pyname = NULL;
     int nin, nout, i, nargs;
     PyUFunc_PyFuncData *fdata;
@@ -216,45 +217,45 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_out = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_where = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axes = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axis = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_keepdims = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_casting = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_order = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_dtype = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_subok = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_signature = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_sig = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_extobj = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_out            = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_where          = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axes           = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axis           = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_keepdims       = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_casting        = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_order          = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_dtype          = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_subok          = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_signature      = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_sig            = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_extobj         = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare  = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap     = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_ufunc          = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name    = NULL;
 
 /* intern some strings used in ufuncs, returns 0 on success */
 static int
 intern_strings(void)
 {
-    if (!(npy_um_str_out = PyUnicode_InternFromString("out"))) return -1;
-    if (!(npy_um_str_where = PyUnicode_InternFromString("where"))) return -1;
-    if (!(npy_um_str_axes = PyUnicode_InternFromString("axes"))) return -1;
-    if (!(npy_um_str_axis = PyUnicode_InternFromString("axis"))) return -1;
-    if (!(npy_um_str_keepdims = PyUnicode_InternFromString("keepdims"))) return -1;
-    if (!(npy_um_str_casting = PyUnicode_InternFromString("casting"))) return -1;
-    if (!(npy_um_str_order = PyUnicode_InternFromString("order"))) return -1;
-    if (!(npy_um_str_dtype = PyUnicode_InternFromString("dtype"))) return -1;
-    if (!(npy_um_str_subok = PyUnicode_InternFromString("subok"))) return -1;
-    if (!(npy_um_str_signature = PyUnicode_InternFromString("signature"))) return -1;
-    if (!(npy_um_str_sig = PyUnicode_InternFromString("sig"))) return -1;
-    if (!(npy_um_str_extobj = PyUnicode_InternFromString("extobj"))) return -1;
-    if (!(npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__"))) return -1;
-    if (!(npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__"))) return -1;
-    if (!(npy_um_str_array_finalize = PyUnicode_InternFromString("__array_finalize__"))) return -1;
-    if (!(npy_um_str_ufunc = PyUnicode_InternFromString("__array_ufunc__"))) return -1;
-    if (!(npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME))) return -1;
+    if (!(npy_um_str_out            = PyUnicode_InternFromString("out")))                 return -1;
+    if (!(npy_um_str_where          = PyUnicode_InternFromString("where")))               return -1;
+    if (!(npy_um_str_axes           = PyUnicode_InternFromString("axes")))                return -1;
+    if (!(npy_um_str_axis           = PyUnicode_InternFromString("axis")))                return -1;
+    if (!(npy_um_str_keepdims       = PyUnicode_InternFromString("keepdims")))            return -1;
+    if (!(npy_um_str_casting        = PyUnicode_InternFromString("casting")))             return -1;
+    if (!(npy_um_str_order          = PyUnicode_InternFromString("order")))               return -1;
+    if (!(npy_um_str_dtype          = PyUnicode_InternFromString("dtype")))               return -1;
+    if (!(npy_um_str_subok          = PyUnicode_InternFromString("subok")))               return -1;
+    if (!(npy_um_str_signature      = PyUnicode_InternFromString("signature")))           return -1;
+    if (!(npy_um_str_sig            = PyUnicode_InternFromString("sig")))                 return -1;
+    if (!(npy_um_str_extobj         = PyUnicode_InternFromString("extobj")))              return -1;
+    if (!(npy_um_str_array_prepare  = PyUnicode_InternFromString("__array_prepare__")))   return -1;
+    if (!(npy_um_str_array_wrap     = PyUnicode_InternFromString("__array_wrap__")))      return -1;
+    if (!(npy_um_str_array_finalize = PyUnicode_InternFromString("__array_finalize__")))  return -1;
+    if (!(npy_um_str_ufunc          = PyUnicode_InternFromString("__array_ufunc__")))     return -1;
+    if (!(npy_um_str_pyvals_name    = PyUnicode_InternFromString(UFUNC_PYVALS_NAME)))     return -1;
     return 0;
 }
 
@@ -308,11 +309,11 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
-    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
+    PyModule_AddObject(m, "PINF",  PyFloat_FromDouble(NPY_INFINITY));
+    PyModule_AddObject(m, "NINF",  PyFloat_FromDouble(-NPY_INFINITY));
     PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
-    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
+    PyModule_AddObject(m, "NAN",   PyFloat_FromDouble(NPY_NAN));
 
     s = PyDict_GetItemString(d, "true_divide");
     PyDict_SetItemString(d, "divide", s);
