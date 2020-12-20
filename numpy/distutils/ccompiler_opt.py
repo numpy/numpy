@@ -2300,19 +2300,25 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
     def report(self, full=False):
         report = []
+        platform_rows = []
         baseline_rows = []
         dispatch_rows = []
+        report.append(("Platform", platform_rows))
+        report.append(("", ""))
         report.append(("CPU baseline", baseline_rows))
         report.append(("", ""))
         report.append(("CPU dispatch", dispatch_rows))
 
+        ########## platform ##########
+        platform_rows.append(("Architecture", (
+            "unsupported" if self.cc_on_noarch else self.cc_march)
+        ))
+        platform_rows.append(("Compiler", (
+            "unix-like"   if self.cc_is_nocc   else self.cc_name)
+        ))
         ########## baseline ##########
         if self.cc_noopt:
-            baseline_rows.append((
-                "Requested", "optimization disabled %s" % (
-                    "(unsupported arch)" if self.cc_on_noarch else ""
-                )
-            ))
+            baseline_rows.append(("Requested", "optimization disabled"))
         else:
             baseline_rows.append(("Requested", repr(self._requested_baseline)))
 
@@ -2333,11 +2339,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
         ########## dispatch ##########
         if self.cc_noopt:
-            dispatch_rows.append((
-                "Requested", "optimization disabled %s" % (
-                    "(unsupported arch)" if self.cc_on_noarch else ""
-                )
-            ))
+            baseline_rows.append(("Requested", "optimization disabled"))
         else:
             dispatch_rows.append(("Requested", repr(self._requested_dispatch)))
 
