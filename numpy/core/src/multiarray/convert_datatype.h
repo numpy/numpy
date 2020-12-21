@@ -49,6 +49,10 @@ npy_set_invalid_cast_error(
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
 
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_FindConcatenationDescriptor(
+        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype);
+
 NPY_NO_EXPORT int
 PyArray_AddCastingImplmentation(PyBoundArrayMethodObject *meth);
 

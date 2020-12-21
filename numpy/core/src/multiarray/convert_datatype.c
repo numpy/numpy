@@ -871,6 +871,73 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
 }
 
 
+/*
+ * Helper to find the target descriptor for multiple arrays given an input
+ * one that may be a DType class (e.g. "U" or "S").
+ * Works with arrays, since that is what `concatenate` works with. However,
+ * unlike `np.array(...)` or `arr.astype()` we will never inspect the array's
+ * content, which means that object arrays can only be cast to strings if a
+ * fixed width is provided (same for string -> generic datetime).
+ *
+ * As this function uses `PyArray_ExtractDTypeAndDescriptor`, it should
+ * eventually be refactored to move the step to an earlier point.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_FindConcatenationDescriptor(
+        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype)
+{
+    if (requested_dtype == NULL) {
+        return PyArray_ResultType(n, arrays, 0, NULL);
+    }
+
+    PyArray_DTypeMeta *common_dtype;
+    PyArray_Descr *result = NULL;
+    if (PyArray_ExtractDTypeAndDescriptor(
+            requested_dtype, &result, &common_dtype) < 0) {
+        return NULL;
+    }
+    if (result != NULL) {
+        if (result->subarray != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "The dtype `%R` is not a valid dtype for concatenation "
+                    "since it is a subarray dtype (the subarray dimensions "
+                    "would be added as array dimensions).", result);
+            Py_DECREF(result);
+            return NULL;
+        }
+        goto finish;
+    }
+    assert(n > 0);  /* concatenate requires at least one array input. */
+    PyArray_Descr *descr = PyArray_DESCR(arrays[0]);
+    result = PyArray_CastDescrToDType(descr, common_dtype);
+    if (result == NULL || n == 1) {
+        goto finish;
+    }
+    /*
+     * This could short-cut a bit, calling `common_instance` directly and/or
+     * returning the `default_descr()` directly. Avoiding that (for now) as
+     * it would duplicate code from `PyArray_PromoteTypes`.
+     */
+    for (npy_intp i = 1; i < n; i++) {
+        descr = PyArray_DESCR(arrays[i]);
+        PyArray_Descr *curr = PyArray_CastDescrToDType(descr, common_dtype);
+        if (curr == NULL) {
+            Py_SETREF(result, NULL);
+            goto finish;
+        }
+        Py_SETREF(result, PyArray_PromoteTypes(result, curr));
+        Py_DECREF(curr);
+        if (result == NULL) {
+            goto finish;
+        }
+    }
+
+  finish:
+    Py_DECREF(common_dtype);
+    return result;
+}
+
+
 /**
  * This function defines the common DType operator.
  *
