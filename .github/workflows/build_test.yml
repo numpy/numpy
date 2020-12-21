@@ -199,3 +199,18 @@ jobs:
 
     - uses: ./.github/actions
 
+  sdist:
+    needs: smoke_test
+    runs-on: ubuntu-latest
+    env:
+      USE_SDIST: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
