@@ -174,6 +174,18 @@ from numpy.core._ufunc_config import (
     _ErrDictOptional,
 )
 
+from numpy.core.arrayprint import (
+    set_printoptions as set_printoptions,
+    get_printoptions as get_printoptions,
+    array2string as array2string,
+    format_float_scientific as format_float_scientific,
+    format_float_positional as format_float_positional,
+    array_repr as array_repr,
+    array_str as array_str,
+    set_string_function as set_string_function,
+    printoptions as printoptions,
+)
+
 from numpy.core.numeric import (
     zeros_like as zeros_like,
     ones as ones,
@@ -281,10 +293,7 @@ append: Any
 apply_along_axis: Any
 apply_over_axes: Any
 arange: Any
-array2string: Any
-array_repr: Any
 array_split: Any
-array_str: Any
 asarray_chkfinite: Any
 asfarray: Any
 asmatrix: Any
@@ -357,8 +366,6 @@ fliplr: Any
 flipud: Any
 float128: Any
 float_: Any
-format_float_positional: Any
-format_float_scientific: Any
 format_parser: Any
 frombuffer: Any
 fromfile: Any
@@ -368,7 +375,6 @@ fromregex: Any
 fromstring: Any
 genfromtxt: Any
 get_include: Any
-get_printoptions: Any
 geterrobj: Any
 gradient: Any
 half: Any
@@ -469,7 +475,6 @@ polyint: Any
 polymul: Any
 polysub: Any
 polyval: Any
-printoptions: Any
 product: Any
 promote_types: Any
 put_along_axis: Any
@@ -495,8 +500,6 @@ savetxt: Any
 savez: Any
 savez_compressed: Any
 select: Any
-set_printoptions: Any
-set_string_function: Any
 setdiff1d: Any
 seterrobj: Any
 setxor1d: Any

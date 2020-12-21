@@ -708,8 +708,8 @@ def polyval(p, x):
 
         ``p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]``
 
-    If `x` is a sequence, then `p(x)` is returned for each element of `x`.
-    If `x` is another polynomial then the composite polynomial `p(x(t))`
+    If `x` is a sequence, then ``p(x)`` is returned for each element of ``x``.
+    If `x` is another polynomial then the composite polynomial ``p(x(t))``
     is returned.
 
     Parameters

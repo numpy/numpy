@@ -1,7 +1,6 @@
 #ifndef _NPY_SIMD_H_
     #error "Not a standalone header"
 #endif
-
 #define NPY_SIMD 256
 #define NPY_SIMD_WIDTH 32
 #define NPY_SIMD_F64 1

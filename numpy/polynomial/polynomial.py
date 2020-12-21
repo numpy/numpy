@@ -156,7 +156,7 @@ def polyfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    where the `r_n` are the roots specified in `roots`.  If a zero has
+    where the ``r_n`` are the roots specified in `roots`.  If a zero has
     multiplicity n, then it must appear in `roots` n times. For instance,
     if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
     then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
@@ -192,11 +192,11 @@ def polyfromroots(roots):
     Notes
     -----
     The coefficients are determined by multiplying together linear factors
-    of the form `(x - r_i)`, i.e.
+    of the form ``(x - r_i)``, i.e.
 
     .. math:: p(x) = (x - r_0) (x - r_1) ... (x - r_n)
 
-    where ``n == len(roots) - 1``; note that this implies that `1` is always
+    where ``n == len(roots) - 1``; note that this implies that ``1`` is always
     returned for :math:`a_n`.
 
     Examples

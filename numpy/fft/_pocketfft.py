@@ -160,7 +160,7 @@ def fft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        if `axes` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -272,7 +272,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axes` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -358,7 +358,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axis` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -461,7 +461,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axis` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -556,7 +556,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axis` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See also
     --------

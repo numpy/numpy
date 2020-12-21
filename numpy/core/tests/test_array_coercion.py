@@ -38,8 +38,18 @@ def arraylikes():
 
     yield subclass
 
+    class _SequenceLike():
+        # We are giving a warning that array-like's were also expected to be
+        # sequence-like in `np.array([array_like])`, this can be removed
+        # when the deprecation exired (started NumPy 1.20)
+        def __len__(self):
+            raise TypeError
+
+        def __getitem__(self):
+            raise TypeError
+
     # Array-interface
-    class ArrayDunder:
+    class ArrayDunder(_SequenceLike):
         def __init__(self, a):
             self.a = a
 
@@ -52,7 +62,7 @@ def arraylikes():
     yield param(memoryview, id="memoryview")
 
     # Array-interface
-    class ArrayInterface:
+    class ArrayInterface(_SequenceLike):
         def __init__(self, a):
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
@@ -60,7 +70,7 @@ def arraylikes():
     yield param(ArrayInterface, id="__array_interface__")
 
     # Array-Struct
-    class ArrayStruct:
+    class ArrayStruct(_SequenceLike):
         def __init__(self, a):
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__

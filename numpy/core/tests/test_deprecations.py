@@ -773,6 +773,92 @@ class TestDeprecateSubarrayDTypeDuringArrayCoercion(_DeprecationTestCase):
         self.assert_deprecated(check)
 
 
+class TestFutureWarningArrayLikeNotIterable(_DeprecationTestCase):
+    # Deprecated 2020-12-09, NumPy 1.20
+    warning_cls = FutureWarning
+    message = "The input object of type.*but not a sequence"
+
+    @pytest.mark.parametrize("protocol",
+            ["__array__", "__array_interface__", "__array_struct__"])
+    def test_deprecated(self, protocol):
+        """Test that these objects give a warning since they are not 0-D,
+        not coerced at the top level `np.array(obj)`, but nested, and do
+        *not* define the sequence protocol.
+
+        NOTE: Tests for the versions including __len__ and __getitem__ exist
+              in `test_array_coercion.py` and they can be modified or ammended
+              when this deprecation expired.
+        """
+        blueprint = np.arange(10)
+        MyArr = type("MyArr", (), {protocol: getattr(blueprint, protocol)})
+        self.assert_deprecated(lambda: np.array([MyArr()], dtype=object))
+
+    @pytest.mark.parametrize("protocol",
+             ["__array__", "__array_interface__", "__array_struct__"])
+    def test_0d_not_deprecated(self, protocol):
+        # 0-D always worked (albeit it would use __float__ or similar for the
+        # conversion, which may not happen anymore)
+        blueprint = np.array(1.)
+        MyArr = type("MyArr", (), {protocol: getattr(blueprint, protocol)})
+        myarr = MyArr()
+
+        self.assert_not_deprecated(lambda: np.array([myarr], dtype=object))
+        res = np.array([myarr], dtype=object)
+        expected = np.empty(1, dtype=object)
+        expected[0] = myarr
+        assert_array_equal(res, expected)
+
+    @pytest.mark.parametrize("protocol",
+             ["__array__", "__array_interface__", "__array_struct__"])
+    def test_unnested_not_deprecated(self, protocol):
+        blueprint = np.arange(10)
+        MyArr = type("MyArr", (), {protocol: getattr(blueprint, protocol)})
+        myarr = MyArr()
+
+        self.assert_not_deprecated(lambda: np.array(myarr))
+        res = np.array(myarr)
+        assert_array_equal(res, blueprint)
+
+    @pytest.mark.parametrize("protocol",
+             ["__array__", "__array_interface__", "__array_struct__"])
+    def test_strange_dtype_handling(self, protocol):
+        """The old code would actually use the dtype from the array, but
+        then end up not using the array (for dimension discovery)
+        """
+        blueprint = np.arange(10).astype("f4")
+        MyArr = type("MyArr", (), {protocol: getattr(blueprint, protocol),
+                                   "__float__": lambda _: 0.5})
+        myarr = MyArr()
+
+        # Make sure we warn (and capture the FutureWarning)
+        with pytest.warns(FutureWarning, match=self.message):
+            res = np.array([[myarr]])
+
+        assert res.shape == (1, 1)
+        assert res.dtype == "f4"
+        assert res[0, 0] == 0.5
+
+    @pytest.mark.parametrize("protocol",
+             ["__array__", "__array_interface__", "__array_struct__"])
+    def test_assignment_not_deprecated(self, protocol):
+        # If the result is dtype=object we do not unpack a nested array or
+        # array-like, if it is nested at exactly the right depth.
+        # NOTE: We actually do still call __array__, etc. but ignore the result
+        #       in the end. For `dtype=object` we could optimize that away.
+        blueprint = np.arange(10).astype("f4")
+        MyArr = type("MyArr", (), {protocol: getattr(blueprint, protocol),
+                                   "__float__": lambda _: 0.5})
+        myarr = MyArr()
+
+        res = np.empty(3, dtype=object)
+        def set():
+            res[:] = [myarr, myarr, myarr]
+        self.assert_not_deprecated(set)
+        assert res[0] is myarr
+        assert res[1] is myarr
+        assert res[2] is myarr
+
+
 class TestDeprecatedUnpickleObjectScalar(_DeprecationTestCase):
     # Deprecated 2020-11-24, NumPy 1.20
     """

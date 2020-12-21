@@ -105,6 +105,44 @@ If you need to generate a good seed "offline", then ``SeedSequence().entropy``
 or using ``secrets.randbits(128)`` from the standard library are both
 convenient ways.
 
+If you need to run several stochastic simulations in parallel, best practice
+is to construct a random generator instance for each simulation. 
+To make sure that the random streams have distinct initial states, you can use
+the `spawn` method of `~SeedSequence`. For instance, here we construct a list
+of 12 instances:
+
+.. code-block:: python
+
+    from numpy.random import PCG64, SeedSequence
+    
+    # High quality initial entropy
+    entropy = 0x87351080e25cb0fad77a44a3be03b491
+    base_seq = SeedSequence(entropy)
+    child_seqs = base_seq.spawn(12)    # a list of 12 SeedSequences
+    generators = [PCG64(seq) for seq in child_seqs]
+
+.. end_block
+
+
+An alternative way is to use the fact that a `~SeedSequence` can be initialized
+by a tuple of elements. Here we use a base entropy value and an integer
+``worker_id``
+
+.. code-block:: python
+
+    from numpy.random import PCG64, SeedSequence
+
+    # High quality initial entropy
+    entropy = 0x87351080e25cb0fad77a44a3be03b491    
+    sequences = [SeedSequence((entropy, worker_id)) for worker_id in range(12)]
+    generators = [PCG64(seq) for seq in sequences]
+
+.. end_block
+
+Note that the sequences produced by the latter method will be distinct from
+those constructed via `~SeedSequence.spawn`.
+
+
 .. autosummary::
     :toctree: generated/
 
