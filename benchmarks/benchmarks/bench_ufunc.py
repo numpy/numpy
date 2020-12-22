@@ -135,10 +135,10 @@ class CustomScalar(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = ([np.int8, np.int16, np.int32, np.int64], [8, -8, 43, -43, 0])
+    params = ([*np.sctypes['int'], *np.sctypes['uint']], [8, -8, 43, -43, 0])
     param_names = ['dtype', 'divisors']
-    max_value = 10**7
-    min_value = -10**7
+    max_value = 10**2
+    min_value = -10**2
 
     def setup(self, dtype, divisor):
         iinfo = np.iinfo(dtype)
