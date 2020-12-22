@@ -19,6 +19,28 @@ the two below:
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
+Mypy plugin
+-----------
+
+A mypy_ plugin is available for automatically assigning the (platform-dependent)
+precisions of certain `~numpy.number` subclasses, including the likes of
+`~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
+:ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
+of the affected classes.
+
+Note that while usage of the plugin is completely optional, without it the
+precision of above-mentioned classes will be inferred as `~typing.Any`.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+
 Differences from the runtime NumPy API
 --------------------------------------
 
@@ -69,7 +91,7 @@ the following code is valid:
     >>> x.dtype = np.bool_
 
 This sort of mutation is not allowed by the types. Users who want to
-write statically typed code should insted use the `numpy.ndarray.view`
+write statically typed code should instead use the `numpy.ndarray.view`
 method to create a view of the array with a different dtype.
 
 DTypeLike
@@ -82,15 +104,15 @@ dictionary of fields like below:
 
     >>> x = np.dtype({"field1": (float, 1), "field2": (int, 3)})
 
-Although this is valid Numpy code, the type checker will complain about it,
+Although this is valid NumPy code, the type checker will complain about it,
 since its usage is discouraged.
 Please see : :ref:`Data type objects <arrays.dtypes>`
 
-Number Precision
+Number precision
 ~~~~~~~~~~~~~~~~
 
 The precision of `numpy.number` subclasses is treated as a covariant generic
-parameter (see :class:`~NBitBase`), simplifying the annoting of proccesses
+parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 
 .. code-block:: python
@@ -149,7 +171,7 @@ class NBitBase:
     An object representing `numpy.number` precision during static type checking.
 
     Used exclusively for the purpose static type checking, `NBitBase`
-    represents the base of a hierachieral set of subclasses.
+    represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
@@ -207,6 +229,59 @@ class _8Bit(_16Bit): ...  # type: ignore[misc]
 # Clean up the namespace
 del TYPE_CHECKING, final, List
 
+from ._nbit import (
+    _NBitByte,
+    _NBitShort,
+    _NBitIntC,
+    _NBitIntP,
+    _NBitInt,
+    _NBitLongLong,
+    _NBitHalf,
+    _NBitSingle,
+    _NBitDouble,
+    _NBitLongDouble,
+)
+from ._char_codes import (
+    _BoolCodes,
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _Float16Codes,
+    _Float32Codes,
+    _Float64Codes,
+    _Complex64Codes,
+    _Complex128Codes,
+    _ByteCodes,
+    _ShortCodes,
+    _IntCCodes,
+    _IntPCodes,
+    _IntCodes,
+    _LongLongCodes,
+    _UByteCodes,
+    _UShortCodes,
+    _UIntCCodes,
+    _UIntPCodes,
+    _UIntCodes,
+    _ULongLongCodes,
+    _HalfCodes,
+    _SingleCodes,
+    _DoubleCodes,
+    _LongDoubleCodes,
+    _CSingleCodes,
+    _CDoubleCodes,
+    _CLongDoubleCodes,
+    _DT64Codes,
+    _TD64Codes,
+    _StrCodes,
+    _BytesCodes,
+    _VoidCodes,
+    _ObjectCodes,
+)
 from ._scalars import (
     _CharLike,
     _BoolLike,
