@@ -42,4 +42,12 @@ NPY_FINLINE npy_uint64 npyv_tobits_b32(npyv_b32 a)
 NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
 { return (npy_uint8)_mm_movemask_pd(_mm_castsi128_pd(a)); }
 
+// round to nearest integer (assuming even)
+#define npyv_round_s32_f32 _mm_cvtps_epi32
+NPY_FINLINE npyv_s32 npyv_round_s32_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128i lo = _mm_cvtpd_epi32(a), hi = _mm_cvtpd_epi32(b);
+    return _mm_unpacklo_epi64(lo, hi);
+}
+
 #endif // _NPY_SIMD_SSE_CVT_H
