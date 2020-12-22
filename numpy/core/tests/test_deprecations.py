@@ -954,18 +954,18 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
             @np.testing.dec.deprecated()
             def deprecated_func():
                 import warnings
-                warnings.warn("TEST: deprecated func", DeprecationWarning)
+                warnings.warn("TEST: deprecated func", DeprecationWarning, stacklevel=1)
 
             @np.testing.dec.deprecated()
             def deprecated_func2():
                 import warnings
-                warnings.warn("AHHHH")
+                warnings.warn("AHHHH", stacklevel=1)
                 raise ValueError
 
             @np.testing.dec.deprecated()
             def deprecated_func3():
                 import warnings
-                warnings.warn("AHHHH")
+                warnings.warn("AHHHH", stacklevel=1)
 
             # marked as deprecated, but does not raise DeprecationWarning
             assert_raises(AssertionError, non_deprecated_func)
