@@ -24,8 +24,17 @@ import sys
 import subprocess
 import textwrap
 import warnings
-import versioneer
 import builtins
+
+
+# Python supported version checks. Keep right after stdlib imports to ensure we
+# get a sensible error for older Python versions
+if sys.version_info[:2] < (3, 7):
+    raise RuntimeError("Python version >= 3.7 required.")
+
+
+import versioneer
+
 
 # This is a bit hackish: we are setting a global variable so that the main
 # numpy __init__ can detect if it is being loaded by the setup routine, to
@@ -40,10 +49,6 @@ FULLVERSION = versioneer.get_version()
 ISRELEASED = 'dev' not in FULLVERSION
 MAJOR, MINOR, MICRO = FULLVERSION.split('.')[:3]
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
-
-# Python supported version checks
-if sys.version_info[:2] < (3, 7):
-    raise RuntimeError("Python version >= 3.7 required.")
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
 if sys.version_info >= (3, 10):
