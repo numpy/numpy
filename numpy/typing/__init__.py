@@ -219,9 +219,25 @@ from ._scalars import (
     _ScalarLike,
     _VoidLike,
 )
-from ._array_like import _SupportsArray, ArrayLike
 from ._shape import _Shape, _ShapeLike
 from ._dtype_like import _SupportsDType, _VoidDTypeLike, DTypeLike
+from ._array_like import (
+    ArrayLike,
+    _ArrayLike,
+    _NestedSequence,
+    _SupportsArray,
+    _ArrayLikeBool,
+    _ArrayLikeUInt,
+    _ArrayLikeInt,
+    _ArrayLikeFloat,
+    _ArrayLikeComplex,
+    _ArrayLikeTD64,
+    _ArrayLikeDT64,
+    _ArrayLikeObject,
+    _ArrayLikeVoid,
+    _ArrayLikeStr,
+    _ArrayLikeBytes,
+)
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings
