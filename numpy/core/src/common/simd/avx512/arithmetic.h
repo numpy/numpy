@@ -130,7 +130,7 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
 #define npyv_nmulsub_f64 _mm512_fnmsub_pd
 
 /***************************
- * Reduce Sum
+ * Reduce Sum: Calculates the sum of all vector elements.
  * there are three ways to implement reduce sum for AVX512:
  * 1- split(256) /add /split(128) /add /hadd /hadd /extract
  * 2- shuff(cross) /add /shuff(cross) /add /shuff /add /shuff /add /extract
@@ -144,6 +144,15 @@ NPY_FINLINE __m512i npyv_mul_u8(__m512i a, __m512i b)
  * The third one is almost the same as the second one but only works for
  * intel compiler/GCC 7.1/Clang 4, we still need to support older GCC.
  ***************************/
+
+NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
+{
+    __m256i half = _mm256_add_epi32(npyv512_lower_si256(a), npyv512_higher_si256(a));
+    __m128i quarter = _mm_add_epi32(_mm256_castsi256_si128(half), _mm256_extracti128_si256(half, 1));
+    quarter = _mm_hadd_epi32(quarter, quarter);
+    return _mm_cvtsi128_si32(_mm_hadd_epi32(quarter, quarter));
+}
+
 #ifdef NPY_HAVE_AVX512F_REDUCE
     #define npyv_sum_f32 _mm512_reduce_add_ps
     #define npyv_sum_f64 _mm512_reduce_add_pd

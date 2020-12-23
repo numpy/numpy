@@ -4,6 +4,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -27,7 +28,7 @@
 #include "alloc.h"
 #include "arraytypes.h"
 #include "array_coercion.h"
-
+#include "simd/simd.h"
 
 static NPY_GCC_OPT_3 NPY_INLINE int
 npy_fasttake_impl(
@@ -2128,6 +2129,80 @@ count_nonzero_bytes_384(const npy_uint64 * w)
     return r;
 }
 
+#if NPY_SIMD
+
+/* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
+static NPY_INLINE NPY_GCC_OPT_3 npyv_u8
+count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_count)
+{
+    const npyv_u8 vone = npyv_setall_u8(1);
+    const npyv_u8 vzero = npyv_zero_u8();
+
+    npy_intp lane_max = 0;
+    npyv_u8 vsum8 = npyv_zero_u8();
+    while (*d < end && lane_max <= max_count - 1) {
+        // we count zeros because `cmpeq` cheaper than `cmpneq` for most archs
+        npyv_u8 vt = npyv_cvt_u8_b8(npyv_cmpeq_u8(npyv_load_u8(*d), vzero));
+        vt = npyv_and_u8(vt, vone);
+        vsum8 = npyv_add_u8(vsum8, vt);
+        *d += npyv_nlanes_u8;
+        lane_max += 1;
+    }
+    return vsum8;
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 npyv_u16x2
+count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_count)
+{
+    npyv_u16x2 vsum16;
+    vsum16.val[0] = vsum16.val[1] = npyv_zero_u16();
+    npy_intp lane_max = 0;
+    while (*d < end && lane_max <= max_count - NPY_MAX_UINT8) {
+        npyv_u8 vsum8 = count_zero_bytes_u8(d, end, NPY_MAX_UINT8);
+        npyv_u16x2 part = npyv_expand_u16_u8(vsum8);
+        vsum16.val[0] = npyv_add_u16(vsum16.val[0], part.val[0]);
+        vsum16.val[1] = npyv_add_u16(vsum16.val[1], part.val[1]);
+        lane_max += NPY_MAX_UINT8;
+    }
+    return vsum16;
+}
+
+/*
+ * Counts the number of non-zero values in a raw array.
+ * The one loop process is shown below(take SSE2 with 128bits vector for example):
+ *          |------------16 lanes---------|          
+ *[vsum8]   255 255 255 ... 255 255 255 255 count_zero_bytes_u8: counting 255*16 elements
+ *                          !!
+ *           |------------8 lanes---------|          
+ *[vsum16]   65535 65535 65535 ...   65535  count_zero_bytes_u16: counting (2*16-1)*16 elements
+ *           65535 65535 65535 ...   65535
+ *                          !!
+ *           |------------4 lanes---------|          
+ *[sum_32_0] 65535    65535   65535   65535  count_nonzero_bytes
+ *           65535    65535   65535   65535
+ *[sum_32_1] 65535    65535   65535   65535
+ *           65535    65535   65535   65535
+ *                          !!
+ *                     (2*16-1)*16
+*/
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_bytes(const npy_uint8 *d, npy_uintp unrollx)
+{
+    npy_intp zero_count = 0;
+    const npy_uint8 *end = d + unrollx;
+    while (d < end) {
+        npyv_u16x2 vsum16 = count_zero_bytes_u16(&d, end, NPY_MAX_UINT16);
+        npyv_u32x2 sum_32_0 = npyv_expand_u32_u16(vsum16.val[0]);
+        npyv_u32x2 sum_32_1 = npyv_expand_u32_u16(vsum16.val[1]);
+        zero_count += npyv_sum_u32(npyv_add_u32(
+                npyv_add_u32(sum_32_0.val[0], sum_32_0.val[1]),
+                npyv_add_u32(sum_32_1.val[0], sum_32_1.val[1])
+        ));
+    }
+    return unrollx - zero_count;
+}
+
+#endif
 /*
  * Counts the number of True values in a raw boolean array. This
  * is a low-overhead function which does no heap allocations.
@@ -2137,6 +2212,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
 NPY_NO_EXPORT npy_intp
 count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides)
 {
+    
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp i, coord[NPY_MAXDIMS];
@@ -2158,13 +2234,17 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
     }
 
     NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
-
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
         NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             /* Process the innermost dimension */
             const char *d = data;
             const char *e = data + shape[0];
+#if NPY_SIMD
+            npy_uintp stride = shape[0] & -npyv_nlanes_u8;
+            count += count_nonzero_bytes((const npy_uint8 *)d, stride);
+            d += stride;
+#else
             if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
                     npy_is_aligned(d, sizeof(npy_uint64))) {
                 npy_uintp stride = 6 * sizeof(npy_uint64);
@@ -2172,6 +2252,7 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
                     count += count_nonzero_bytes_384((const npy_uint64 *)d);
                 }
             }
+#endif
             for (; d < e; ++d) {
                 count += (*d != 0);
             }

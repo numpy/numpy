@@ -29,6 +29,25 @@
 #define npyv_cvt_b32_f32(A) ((npyv_b32) A)
 #define npyv_cvt_b64_f64(A) ((npyv_b64) A)
 
+//expand
+NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
+{
+    npyv_u16x2 r;
+    npyv_u8 zero = npyv_zero_u8();
+    r.val[0] = (npyv_u16)vec_mergeh(data, zero);
+    r.val[1] = (npyv_u16)vec_mergel(data, zero);
+    return r;
+}
+
+NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
+{
+    npyv_u32x2 r;
+    npyv_u16 zero = npyv_zero_u16();
+    r.val[0] = (npyv_u32)vec_mergeh(data, zero);
+    r.val[1] = (npyv_u32)vec_mergel(data, zero);
+    return r;
+}
+
 // convert boolean vector to integer bitfield
 NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
 {

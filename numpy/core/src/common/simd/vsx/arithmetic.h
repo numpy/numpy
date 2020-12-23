@@ -117,6 +117,13 @@
 #define npyv_nmulsub_f64 vec_nmadd
 
 // Horizontal add: Calculates the sum of all vector elements.
+
+NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
+{
+    const npyv_u32 rs = vec_add(a, vec_sld(a, a, 8));
+    return vec_extract(vec_add(rs, vec_sld(rs, rs, 4)), 0);
+}
+
 NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
 {
     npyv_f32 sum = vec_add(a, npyv_combineh_f32(a, a));

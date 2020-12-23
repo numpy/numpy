@@ -71,6 +71,21 @@ NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
     return vgetq_lane_u64(bit, 0) | ((int)vgetq_lane_u64(bit, 1) << 1);
 }
 
+//expand
+NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data) {
+    npyv_u16x2 r;
+    r.val[0] = vmovl_u8(vget_low_u8(data));
+    r.val[1] = vmovl_u8(vget_high_u8(data));
+    return r;
+}
+
+NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
+    npyv_u32x2 r;
+    r.val[0] = vmovl_u16(vget_low_u16(data));
+    r.val[1] = vmovl_u16(vget_high_u16(data));
+    return r;
+}
+
 // round to nearest integer
 #if NPY_SIMD_F64
     #define npyv_round_s32_f32 vcvtnq_s32_f32

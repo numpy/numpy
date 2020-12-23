@@ -51,6 +51,45 @@
 #define npyv_cvt_b32_f32(A) npyv_cvt_b32_u32(_mm512_castps_si512(A))
 #define npyv_cvt_b64_f64(A) npyv_cvt_b64_u64(_mm512_castpd_si512(A))
 
+// expand
+NPY_FINLINE npyv_u16x2 npyv_expand_u16_u8(npyv_u8 data)
+{
+    npyv_u16x2 r;
+    __m256i lo = npyv512_lower_si256(data);
+    __m256i hi = npyv512_higher_si256(data);
+#ifdef NPY_HAVE_AVX512BW
+    r.val[0] = _mm512_cvtepu8_epi16(lo);
+    r.val[1] = _mm512_cvtepu8_epi16(hi);
+#else
+    __m256i loelo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(lo));
+    __m256i loehi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(lo, 1));
+    __m256i hielo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(hi));
+    __m256i hiehi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(hi, 1));
+    r.val[0] = npyv512_combine_si256(loelo, loehi);
+    r.val[1] = npyv512_combine_si256(hielo, hiehi);
+#endif
+    return r;
+}
+
+NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
+{
+    npyv_u32x2 r;
+    __m256i lo = npyv512_lower_si256(data);
+    __m256i hi = npyv512_higher_si256(data);
+#ifdef NPY_HAVE_AVX512BW
+    r.val[0] = _mm512_cvtepu16_epi32(lo);
+    r.val[1] = _mm512_cvtepu16_epi32(hi);
+#else
+    __m256i loelo = _mm256_cvtepu16_epi32(_mm256_castsi256_si128(lo));
+    __m256i loehi = _mm256_cvtepu16_epi32(_mm256_extracti128_si256(lo, 1));
+    __m256i hielo = _mm256_cvtepu16_epi32(_mm256_castsi256_si128(hi));
+    __m256i hiehi = _mm256_cvtepu16_epi32(_mm256_extracti128_si256(hi, 1));
+    r.val[0] = npyv512_combine_si256(loelo, loehi);
+    r.val[1] = npyv512_combine_si256(hielo, hiehi);
+#endif
+    return r;
+}
+
 // convert boolean vectors to integer bitfield
 NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
 {
