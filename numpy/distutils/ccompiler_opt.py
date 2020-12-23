@@ -579,45 +579,41 @@ class _Distutils:
         return test
 
     def dist_info(self):
-        """Return a string containing all environment information, required
-        by the abstract class '_CCompiler' to discovering the platform
-        environment, also used as a cache factor in order to detect
-        any changes from outside.
+        """
+        Return a tuple containing info about (platform, compiler, extra_args),
+        required by the abstract class '_CCompiler' for discovering the
+        platform environment. This is also used as a cache factor in order
+        to detect any changes happening from outside.
         """
         if hasattr(self, "_dist_info"):
             return self._dist_info
-        # play it safe
-        cc_info = ""
-        compiler = getattr(self._ccompiler, "compiler", None)
-        if compiler is not None:
-            if isinstance(compiler, str):
-                cc_info += compiler
-            elif hasattr(compiler, "__iter__"):
-                cc_info += ' '.join(compiler)
-        # in case if 'compiler' attribute doesn't provide anything
-        cc_type = getattr(self._ccompiler, "compiler_type", "")
-        if cc_type in ("intelem", "intelemw", "mingw64"):
-            cc_info += "x86_64"
+
+        cc_type = getattr(self._ccompiler, "compiler_type", '')
+        if cc_type in ("intelem", "intelemw"):
+            platform = "x86_64"
         elif cc_type in ("intel", "intelw", "intele"):
-            cc_info += "x86"
-        elif cc_type in ("msvc", "mingw32"):
-            import platform
-            if platform.architecture()[0] == "32bit":
-                cc_info += "x86"
-            else:
-                cc_info += "x86_64"
+            platform = "x86"
         else:
-            # the last hope, too bad for cross-compiling
-            import platform
-            cc_info += platform.machine()
+            from distutils.util import get_platform
+            platform = get_platform()
 
-        cc_info += cc_type
-        cflags = os.environ.get("CFLAGS", "")
-        if cflags not in cc_info:
-            cc_info += cflags
+        cc_info = getattr(self._ccompiler, "compiler", getattr(self._ccompiler, "compiler_so", ''))
+        if not cc_type or cc_type == "unix":
+            if hasattr(cc_info, "__iter__"):
+                compiler = cc_info[0]
+            else:
+                compiler = str(cc_info)
+        else:
+            compiler = cc_type
 
-        self._dist_info = cc_info
-        return cc_info
+        if hasattr(cc_info, "__iter__") and len(cc_info) > 1:
+            extra_args = ' '.join(cc_info[1:])
+        else:
+            extra_args  = os.environ.get("CFLAGS", "")
+            extra_args += os.environ.get("CPPFLAGS", "")
+
+        self._dist_info = (platform, compiler, extra_args)
+        return self._dist_info
 
     @staticmethod
     def dist_error(*args):
@@ -893,57 +889,56 @@ class _CCompiler(object):
     def __init__(self):
         if hasattr(self, "cc_is_cached"):
             return
-        to_detect = (
-            #        attr                regex
-            (
-                ("cc_on_x64",      "^(x|x86_|amd)64"),
-                ("cc_on_x86",      "^(x86|i386|i686)"),
-                ("cc_on_ppc64le",  "^(powerpc|ppc)64(el|le)"),
-                ("cc_on_ppc64",    "^(powerpc|ppc)64"),
-                ("cc_on_armhf",    "^arm"),
-                ("cc_on_aarch64",  "^aarch64"),
-                # priority is given to first of string
-                # if it fail we search in the rest, due
-                # to append platform.machine() at the end,
-                # check method 'dist_info()' for more clarification.
-                ("cc_on_x64",      ".*(x|x86_|amd)64.*"),
-                ("cc_on_x86",      ".*(x86|i386|i686).*"),
-                ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*"),
-                ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
-                ("cc_on_armhf",    ".*arm.*"),
-                ("cc_on_aarch64",  ".*aarch64.*"),
-                # undefined platform
-                ("cc_on_noarch",    ""),
-            ),
-            (
-                ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
-                ("cc_is_clang",    ".*clang.*"),
-                ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
-                ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
-                ("cc_is_msvc",     ".*msvc.*"),
-                ("cc_is_nocc",     ""),
-            ),
-               (("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*"),),
-               (("cc_has_native", ".*(-march=native|-xHost|/QxHost).*"),),
-               # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
-               (("cc_noopt", ".*DISABLE_OPT.*"),),
+        #      attr                regex
+        detect_arch = (
+            ("cc_on_x64",      ".*(x|x86_|amd)64.*"),
+            ("cc_on_x86",      ".*(win32|x86|i386|i686).*"),
+            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*"),
+            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
+            ("cc_on_aarch64",  ".*(aarch64|arm64).*"),
+            ("cc_on_armhf",    ".*arm.*"),
+            # undefined platform
+            ("cc_on_noarch",    ""),
         )
-        for section in to_detect:
+        detect_compiler = (
+            ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
+            ("cc_is_clang",    ".*clang.*"),
+            ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
+            ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
+            ("cc_is_msvc",     ".*msvc.*"),
+            # undefined compiler will be treat it as gcc
+            ("cc_is_nocc",     ""),
+        )
+        detect_args = (
+           ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*"),
+           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*"),
+           # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
+           ("cc_noopt", ".*DISABLE_OPT.*"),
+        )
+
+        dist_info = self.dist_info()
+        platform, compiler_info, extra_args = dist_info
+        # set False to all attrs
+        for section in (detect_arch, detect_compiler, detect_args):
             for attr, rgex in section:
                 setattr(self, attr, False)
 
-        dist_info = self.dist_info()
-        for section in to_detect:
-            for attr, rgex in section:
-                if rgex and not re.match(rgex, dist_info, re.IGNORECASE):
+        for detect, searchin in ((detect_arch, platform), (detect_compiler, compiler_info)):
+            for attr, rgex in detect:
+                if rgex and not re.match(rgex, searchin, re.IGNORECASE):
                     continue
                 setattr(self, attr, True)
                 break
 
+        for attr, rgex in detect_args:
+            if rgex and not re.match(rgex, extra_args, re.IGNORECASE):
+                continue
+            setattr(self, attr, True)
+
         if self.cc_on_noarch:
             self.dist_log(
-                "unable to detect CPU arch via compiler info, "
-                "optimization is disabled \ninfo << %s >> " % dist_info,
+                "unable to detect CPU architecture which lead to disable the optimization. "
+                f"check dist_info:<<\n{dist_info}\n>>",
                 stderr=True
             )
             self.cc_noopt = True
@@ -958,8 +953,9 @@ class _CCompiler(object):
             but still has the same gcc optimization flags.
             """
             self.dist_log(
-                "unable to detect compiler name via info <<\n%s\n>> "
-                "treating it as a gcc" % dist_info,
+                "unable to detect compiler type which leads to treating it as GCC. "
+                "this is a normal behavior if you're using gcc-like compiler such as MinGW or IBM/XLC."
+                f"check dist_info:<<\n{dist_info}\n>>",
                 stderr=True
             )
             self.cc_is_gcc = True
@@ -2304,19 +2300,25 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
     def report(self, full=False):
         report = []
+        platform_rows = []
         baseline_rows = []
         dispatch_rows = []
+        report.append(("Platform", platform_rows))
+        report.append(("", ""))
         report.append(("CPU baseline", baseline_rows))
         report.append(("", ""))
         report.append(("CPU dispatch", dispatch_rows))
 
+        ########## platform ##########
+        platform_rows.append(("Architecture", (
+            "unsupported" if self.cc_on_noarch else self.cc_march)
+        ))
+        platform_rows.append(("Compiler", (
+            "unix-like"   if self.cc_is_nocc   else self.cc_name)
+        ))
         ########## baseline ##########
         if self.cc_noopt:
-            baseline_rows.append((
-                "Requested", "optimization disabled %s" % (
-                    "(unsupported arch)" if self.cc_on_noarch else ""
-                )
-            ))
+            baseline_rows.append(("Requested", "optimization disabled"))
         else:
             baseline_rows.append(("Requested", repr(self._requested_baseline)))
 
@@ -2337,11 +2339,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
 
         ########## dispatch ##########
         if self.cc_noopt:
-            dispatch_rows.append((
-                "Requested", "optimization disabled %s" % (
-                    "(unsupported arch)" if self.cc_on_noarch else ""
-                )
-            ))
+            baseline_rows.append(("Requested", "optimization disabled"))
         else:
             dispatch_rows.append(("Requested", repr(self._requested_dispatch)))
 
