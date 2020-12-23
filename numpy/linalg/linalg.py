@@ -11,7 +11,7 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
+           'svd', 'eig', 'eigh', 'lstsq', 'sqnorm', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError', 'multi_dot']
 
 import functools
@@ -2355,6 +2355,245 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     return result
 
 
+def _sqnorm_dispatcher(x, ord = None, axis=None, keepdims=None):
+    return (x,)
+
+
+@array_function_dispatch(_sqnorm_dispatcher)
+def sqnorm(x, ord = None, axis=None, keepdims=False):
+    """
+    Matrix or vector squared norm (quadrance).
+
+    This function is able to return the squared Euclidean (Frobenius) norm.
+    For notation consisntency with ``numpy.linalg.norm`` this function is
+    also able to return one of eight different matrix norms (possibly
+    squared), or one of an infinite number of vector element powers sum
+    (described below), depending on the value of the ``ord`` parameter.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.  If `axis` is None, `x` must be 1-D or 2-D, unless `ord`
+        is None. If both `axis` and `ord` are None, the squared 2-norm of
+        ``x.ravel`` will be returned.
+    ord : {non-zero int, inf, -inf, 'fro', 'nuc'}, optional
+        Order of the norm (see table under ``Notes``). inf means numpy's
+        `inf` object. The default is None.
+    axis : {None, int, 2-tuple of ints}, optional.
+        If `axis` is an integer, it specifies the axis of `x` along which to
+        compute the vector norms.  If `axis` is a 2-tuple, it specifies the
+        axes that hold 2-D matrices, and the matrix norms of these matrices
+        are computed.  If `axis` is None then either a vector norm (when `x`
+        is 1-D) or a matrix norm (when `x` is 2-D) is returned. The default
+        is None.
+    keepdims : bool, optional
+        If this is set to True, the axes which are normed over are left in the
+        result as dimensions with size one.  With this option the result will
+        broadcast correctly against the original `x`.
+
+    Returns
+    -------
+    n : float or ndarray
+        Squared norm of the matrix or vector(s).
+
+    See Also
+    --------
+    numpy.linalg.norm : Returns the norm.
+
+    Notes
+    -----
+    The following can be calculated:
+
+    =====  ====================================  ==========================
+    ord    for matrices                          for vectors
+    =====  ====================================  ==========================
+    None   squared Frobenius norm                squared 2-norm
+    'fro'  squared Frobenius norm                --
+    'nuc'  nuclear norm                          --
+    inf    max(sum(abs(x), axis=1))              max(abs(x))
+    -inf   min(sum(abs(x), axis=1))              min(abs(x))
+    0      --                                    sum(x != 0)
+    1      max(sum(abs(x), axis=0))              as below
+    -1     min(sum(abs(x), axis=0))              as below
+    2      sq. 2-norm (largest sq. sing. value)  as below
+    -2     smallest sq. singular value           as below
+    other  --                                    sum(abs(x)**ord)
+    =====  ====================================  ==========================
+
+    The squared Frobenius norm is given by:
+
+        :math:`||A||^2_F = \\sum_{i,j} abs(a_{i,j})^2`
+
+    The nuclear norm is the sum of the singular values.
+
+    Both the Frobenius and nuclear norm orders are only defined for
+    matrices and raise a ValueError when ``x.ndim != 2``.
+
+    Examples
+    --------
+    >>> from numpy import linalg as LA
+    >>> a = np.arange(9) - 4
+    >>> a
+    array([-4, -3, -2, ...,  2,  3,  4])
+    >>> b = a.reshape((3, 3))
+    >>> b
+    array([[-4, -3, -2],
+           [-1,  0,  1],
+           [ 2,  3,  4]])
+
+    >>> LA.sqnorm(a)
+    60.0
+    >>> LA.sqnorm(b)
+    60.0
+    >>> LA.sqnorm(b, 'fro')
+    60.0
+    >>> LA.sqnorm(a, np.inf)
+    4.0
+    >>> LA.sqnorm(b, np.inf)
+    9.0
+    >>> LA.sqnorm(a, -np.inf)
+    0.0
+    >>> LA.sqnorm(b, -np.inf)
+    2.0
+
+    >>> LA.sqnorm(a, 1)
+    20.0
+    >>> LA.sqnorm(b, 1)
+    7.0
+    >>> LA.sqnorm(a, -1)
+    inf
+    >>> LA.norm(b, -1)
+    6.0
+    >>> LA.sqnorm(a, 2)
+    60.0
+    >>> LA.sqnorm(b, 2)
+    54.0
+
+    >>> LA.sqnorm(a, -2)
+    inf
+    >>> LA.sqnorm(b, -2)
+    3.4485722632612527e-32 # may vary
+    >>> LA.sqnorm(a, 3)
+    200.0
+    >>> LA.sqnorm(a, -3)
+    inf
+
+    Using the `axis` argument to compute vector norms:
+
+    >>> c = np.array([[ 1, 2, 3],
+    ...               [-1, 1, 4]])
+    >>> LA.sqnorm(c, axis=0)
+    array([ 2.,  5.,  25.])
+    >>> LA.sqnorm(c, axis=1)
+    array([ 14.,  18.])
+    >>> LA.sqnorm(c, ord=1, axis=1)
+    array([ 6.,  6.])
+
+    Using the `axis` argument to compute matrix norms:
+
+    >>> m = np.arange(8).reshape(2,2,2)
+    >>> LA.sqnorm(m, axis=(1,2))
+    array([  14.,  126.])
+    >>> LA.sqnorm(m[0, :, :]), LA.sqnorm(m[1, :, :])
+    (14.0, 126.0)
+
+    """
+    x = asarray(x)
+
+    if not issubclass(x.dtype.type, (inexact, object_)):
+        x = x.astype(float)
+
+    # Immediately handle some default, simple, fast, and common cases.
+    if axis is None:
+        ndim = x.ndim
+        if ((ord is None) or
+            (ord in ('f', 'fro') and ndim == 2) or
+            (ord == 2 and ndim == 1)):
+
+            x = x.ravel(order='K')
+            if isComplexType(x.dtype.type):
+                ret = dot(x.real, x.real) + dot(x.imag, x.imag)
+            else:
+                ret = dot(x, x)
+            if keepdims:
+                ret = ret.reshape(ndim*[1])
+            return ret
+
+    # Normalize the `axis` argument to a tuple.
+    nd = x.ndim
+    if axis is None:
+        axis = tuple(range(nd))
+    elif not isinstance(axis, tuple):
+        try:
+            axis = int(axis)
+        except Exception as e:
+            raise TypeError("'axis' must be None, an integer or a tuple of integers") from e
+        axis = (axis,)
+
+    if len(axis) == 1:
+        if ord == Inf:
+            return abs(x).max(axis=axis, keepdims=keepdims)
+        elif ord == -Inf:
+            return abs(x).min(axis=axis, keepdims=keepdims)
+        elif ord == 0:
+            # Zero norm
+            return (x != 0).astype(x.real.dtype).sum(axis=axis, keepdims=keepdims)
+        elif ord == 1:
+            # special case for speedup
+            return add.reduce(abs(x), axis=axis, keepdims=keepdims)
+        elif ord is None or ord == 2:
+            # special case for speedup
+            s = (x.conj() * x).real
+            return add.reduce(s, axis=axis, keepdims=keepdims)
+        # None of the str-type keywords for ord ('fro', 'nuc')
+        # are valid for vectors
+        elif isinstance(ord, str):
+            raise ValueError(f"Invalid norm order '{ord}' for vectors")
+        else:
+            absx = abs(x)
+            absx **= ord
+            ret = add.reduce(absx, axis=axis, keepdims=keepdims)
+            return ret
+    elif len(axis) == 2:
+        row_axis, col_axis = axis
+        row_axis = normalize_axis_index(row_axis, nd)
+        col_axis = normalize_axis_index(col_axis, nd)
+        if row_axis == col_axis:
+            raise ValueError('Duplicate axes given.')
+        if ord in (2, -2):
+            ret = norm(x, ord=ord, axis=axis, keepdims=keepdims) ** 2
+        elif ord == 1:
+            if col_axis > row_axis:
+                col_axis -= 1
+            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
+        elif ord == Inf:
+            if row_axis > col_axis:
+                row_axis -= 1
+            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
+        elif ord == -1:
+            if col_axis > row_axis:
+                col_axis -= 1
+            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
+        elif ord == -Inf:
+            if row_axis > col_axis:
+                row_axis -= 1
+            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
+        elif ord in [None, 'fro', 'f']:
+            ret = add.reduce((x.conj() * x).real, axis=axis)
+        elif ord == 'nuc':
+            ret = _multi_svd_norm(x, row_axis, col_axis, sum)
+        else:
+            raise ValueError("Invalid norm order for matrices.")
+        if keepdims:
+            ret_shape = list(x.shape)
+            ret_shape[axis[0]] = 1
+            ret_shape[axis[1]] = 1
+            ret = ret.reshape(ret_shape)
+        return ret
+    else:
+        raise ValueError("Improper number of dimensions to norm.")
+
+
 def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
     return (x,)
 
@@ -2522,14 +2761,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             (ord in ('f', 'fro') and ndim == 2) or
             (ord == 2 and ndim == 1)):
 
-            x = x.ravel(order='K')
-            if isComplexType(x.dtype.type):
-                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
-            else:
-                sqnorm = dot(x, x)
-            ret = sqrt(sqnorm)
-            if keepdims:
-                ret = ret.reshape(ndim*[1])
+            ret = sqrt(sqnorm(x, keepdims=keepdims))
             return ret
 
     # Normalize the `axis` argument to a tuple.
@@ -2544,30 +2776,14 @@ def norm(x, ord=None, axis=None, keepdims=False):
         axis = (axis,)
 
     if len(axis) == 1:
-        if ord == Inf:
-            return abs(x).max(axis=axis, keepdims=keepdims)
-        elif ord == -Inf:
-            return abs(x).min(axis=axis, keepdims=keepdims)
-        elif ord == 0:
-            # Zero norm
-            return (x != 0).astype(x.real.dtype).sum(axis=axis, keepdims=keepdims)
-        elif ord == 1:
-            # special case for speedup
-            return add.reduce(abs(x), axis=axis, keepdims=keepdims)
+        ret = sqnorm(x, ord=ord, axis=axis, keepdims=keepdims)
+        if ord in (Inf, -Inf, 0, 1):
+            return ret
         elif ord is None or ord == 2:
             # special case for speedup
-            s = (x.conj() * x).real
-            return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
-        # None of the str-type keywords for ord ('fro', 'nuc')
-        # are valid for vectors
-        elif isinstance(ord, str):
-            raise ValueError(f"Invalid norm order '{ord}' for vectors")
+            return sqrt(ret)
         else:
-            absx = abs(x)
-            absx **= ord
-            ret = add.reduce(absx, axis=axis, keepdims=keepdims)
-            ret **= (1 / ord)
-            return ret
+            return ret ** (1 / ord)
     elif len(axis) == 2:
         row_axis, col_axis = axis
         row_axis = normalize_axis_index(row_axis, nd)
@@ -2578,28 +2794,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret =  _multi_svd_norm(x, row_axis, col_axis, amax)
         elif ord == -2:
             ret = _multi_svd_norm(x, row_axis, col_axis, amin)
-        elif ord == 1:
-            if col_axis > row_axis:
-                col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
-        elif ord == Inf:
-            if row_axis > col_axis:
-                row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
-        elif ord == -1:
-            if col_axis > row_axis:
-                col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
-        elif ord == -Inf:
-            if row_axis > col_axis:
-                row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
-        elif ord in [None, 'fro', 'f']:
-            ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
-        elif ord == 'nuc':
-            ret = _multi_svd_norm(x, row_axis, col_axis, sum)
         else:
-            raise ValueError("Invalid norm order for matrices.")
+            ret = sqnorm(x, ord=ord, axis=axis, keepdims=keepdims)
+            if ord in [None, 'fro', 'f']:
+                ret = sqrt(ret)
         if keepdims:
             ret_shape = list(x.shape)
             ret_shape[axis[0]] = 1
