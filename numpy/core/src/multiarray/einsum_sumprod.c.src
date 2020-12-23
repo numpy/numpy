@@ -133,12 +133,12 @@ static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ *data, npy_intp count)
 #else
 #ifndef NPY_DISABLE_OPTIMIZATION
     for (; count > 4; count -= 4, data += 4) {
-        const @temptype@ a01 = @from@(*data) + @from@(*(data + 1));
-        const @temptype@ a23 = @from@(*(data + 2)) + @from@(*(data + 3));
+        const @temptype@ a01 = @from@(*data) + @from@(data[1]);
+        const @temptype@ a23 = @from@(data[2]) + @from@(data[3]);
         accum +=  a01 + a23;
     }
 #endif // !NPY_DISABLE_OPTIMIZATION
-    for (; count > 0; --count, data += 1) {
+    for (; count > 0; --count, data++) {
         accum += @from@(*data);
     }
 #endif // NPYV check for @type@
