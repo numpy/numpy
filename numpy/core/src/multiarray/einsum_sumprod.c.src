@@ -95,12 +95,12 @@
  */
 
 #if !@complex@
-static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ **data, npy_intp count)
+static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ *data, npy_intp count)
 {
     @temptype@ accum = 0;
 #if @NPYV_CHK@ // NPYV check for @type@
     /* Use aligned instructions if possible */
-    const int is_aligned = EINSUM_IS_ALIGNED(*data);
+    const int is_aligned = EINSUM_IS_ALIGNED(data);
     const int vstep = npyv_nlanes_@sfx@;
     npyv_@sfx@ vaccum = npyv_zero_@sfx@();
     const npy_intp vstepx4 = vstep * 4;
@@ -111,11 +111,11 @@ static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ **data, npy_intp count)
      * #st = storea, store#
      */
     @cond@ {
-        for (; count >= vstepx4; count -= vstepx4, *data += vstepx4) {
+        for (; count >= vstepx4; count -= vstepx4, data += vstepx4) {
             /**begin repeat2
              * #i = 0, 1, 2, 3#
              */
-            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(*data + vstep * @i@);
+            npyv_@sfx@ a@i@ = npyv_@ld@_@sfx@(data + vstep * @i@);
             /**end repeat2**/
             npyv_@sfx@ a01   = npyv_add_@sfx@(a0, a1);
             npyv_@sfx@ a23   = npyv_add_@sfx@(a2, a3);
@@ -124,22 +124,22 @@ static NPY_GCC_OPT_3 @temptype@ @name@_sum_of_arr(@type@ **data, npy_intp count)
         }
     }
     /**end repeat1**/
-    for (; count > 0; count -= vstep, *data += vstep) {
-        npyv_@sfx@ a = npyv_load_tillz_@sfx@(*data, count);
+    for (; count > 0; count -= vstep, data += vstep) {
+        npyv_@sfx@ a = npyv_load_tillz_@sfx@(data, count);
         vaccum = npyv_add_@sfx@(a, vaccum);
     }
     accum = npyv_sum_@sfx@(vaccum);
     npyv_cleanup();
 #else
 #ifndef NPY_DISABLE_OPTIMIZATION
-    for (; count > 4; count -= 4, *data += 4) {
-        const @temptype@ a01 = @from@(**data) + @from@(*(*data + 1));
-        const @temptype@ a23 = @from@(*(*data + 2)) + @from@(*(*data + 3));
+    for (; count > 4; count -= 4, data += 4) {
+        const @temptype@ a01 = @from@(*data) + @from@(*(data + 1));
+        const @temptype@ a23 = @from@(*(data + 2)) + @from@(*(data + 3));
         accum +=  a01 + a23;
     }
 #endif // !NPY_DISABLE_OPTIMIZATION
-    for (; count > 0; --count, *data += 1) {
-        accum += @from@(**data);
+    for (; count > 0; --count, data += 1) {
+        accum += @from@(*data);
     }
 #endif // NPYV check for @type@
     return accum;
@@ -711,7 +711,7 @@ static NPY_GCC_OPT_3 void
 {
     @type@ *data1 = (@type@ *)dataptr[1];
     @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
-    @temptype@ accum = @name@_sum_of_arr(&data1, count);
+    @temptype@ accum = @name@_sum_of_arr(data1, count);
     *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value0 * accum);
 }
 
@@ -721,7 +721,7 @@ static NPY_GCC_OPT_3 void
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
-    @temptype@ accum = @name@_sum_of_arr(&data0, count);
+    @temptype@ accum = @name@_sum_of_arr(data0, count);
     *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value1 * accum);
 }
 
@@ -831,7 +831,7 @@ static NPY_GCC_OPT_3 void
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_outstride0_one (%d)\n", (int)count);
 #if !@complex@
     @type@ *data = (@type@ *)dataptr[0];
-    @temptype@ accum = @name@_sum_of_arr(&data, count);
+    @temptype@ accum = @name@_sum_of_arr(data, count);
     *((@type@ *)dataptr[1]) = @to@(accum + @from@(*((@type@ *)dataptr[1])));
 #else
     @temptype@ accum_re = 0, accum_im = 0;
