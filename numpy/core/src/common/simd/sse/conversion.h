@@ -59,4 +59,12 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
     return r;
 }
 
+// round to nearest integer (assuming even)
+#define npyv_round_s32_f32 _mm_cvtps_epi32
+NPY_FINLINE npyv_s32 npyv_round_s32_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128i lo = _mm_cvtpd_epi32(a), hi = _mm_cvtpd_epi32(b);
+    return _mm_unpacklo_epi64(lo, hi);
+}
+
 #endif // _NPY_SIMD_SSE_CVT_H

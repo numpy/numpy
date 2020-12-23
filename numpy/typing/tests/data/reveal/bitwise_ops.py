@@ -39,11 +39,11 @@ reveal_type(i8 | i4)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 ^ i4)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 & i4)  # E: numpy.signedinteger[numpy.typing._64Bit]
 
-reveal_type(i8 << i)  # E: numpy.signedinteger[Any]
-reveal_type(i8 >> i)  # E: numpy.signedinteger[Any]
-reveal_type(i8 | i)  # E: numpy.signedinteger[Any]
-reveal_type(i8 ^ i)  # E: numpy.signedinteger[Any]
-reveal_type(i8 & i)  # E: numpy.signedinteger[Any]
+reveal_type(i8 << i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(i8 >> i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(i8 | i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(i8 ^ i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(i8 & i)  # E: numpy.signedinteger[numpy.typing._
 
 reveal_type(i8 << b_)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(i8 >> b_)  # E: numpy.signedinteger[numpy.typing._64Bit]
@@ -117,11 +117,11 @@ reveal_type(b_ | b)  # E: numpy.bool_
 reveal_type(b_ ^ b)  # E: numpy.bool_
 reveal_type(b_ & b)  # E: numpy.bool_
 
-reveal_type(b_ << i)  # E: numpy.signedinteger[Any]
-reveal_type(b_ >> i)  # E: numpy.signedinteger[Any]
-reveal_type(b_ | i)  # E: numpy.signedinteger[Any]
-reveal_type(b_ ^ i)  # E: numpy.signedinteger[Any]
-reveal_type(b_ & i)  # E: numpy.signedinteger[Any]
+reveal_type(b_ << i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(b_ >> i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(b_ | i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(b_ ^ i)  # E: numpy.signedinteger[numpy.typing._
+reveal_type(b_ & i)  # E: numpy.signedinteger[numpy.typing._
 
 reveal_type(~i8)  # E: numpy.signedinteger[numpy.typing._64Bit]
 reveal_type(~i4)  # E: numpy.signedinteger[numpy.typing._32Bit]

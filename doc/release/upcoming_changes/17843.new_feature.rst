@@ -1,0 +1,22 @@
+Added a mypy plugin for handling platform-specific `numpy.number` precisions
+----------------------------------------------------------------------------
+
+A mypy_ plugin is now available for automatically assigning the (platform-dependent)
+precisions of certain `~numpy.number` subclasses, including the likes of
+`~numpy.int_`, `~numpy.intp` and `~numpy.longlong`. See the documentation on
+:ref:`scalar types <arrays.scalars.built-in>` for a comprehensive overview
+of the affected classes.
+
+Note that while usage of the plugin is completely optional, without it the
+precision of above-mentioned classes will be inferred as `~typing.Any`.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html

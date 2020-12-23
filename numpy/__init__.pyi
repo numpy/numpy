@@ -21,10 +21,65 @@ from numpy.typing import (
     _SupportsDType,
     _VoidDTypeLike,
     NBitBase,
+    _256Bit,
+    _128Bit,
+    _96Bit,
+    _80Bit,
     _64Bit,
     _32Bit,
     _16Bit,
     _8Bit,
+    _NBitByte,
+    _NBitShort,
+    _NBitIntC,
+    _NBitIntP,
+    _NBitInt,
+    _NBitLongLong,
+    _NBitHalf,
+    _NBitSingle,
+    _NBitDouble,
+    _NBitLongDouble,
+)
+from numpy.typing import (
+    _BoolCodes,
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _Float16Codes,
+    _Float32Codes,
+    _Float64Codes,
+    _Complex64Codes,
+    _Complex128Codes,
+    _ByteCodes,
+    _ShortCodes,
+    _IntCCodes,
+    _IntPCodes,
+    _IntCodes,
+    _LongLongCodes,
+    _UByteCodes,
+    _UShortCodes,
+    _UIntCCodes,
+    _UIntPCodes,
+    _UIntCodes,
+    _ULongLongCodes,
+    _HalfCodes,
+    _SingleCodes,
+    _DoubleCodes,
+    _LongDoubleCodes,
+    _CSingleCodes,
+    _CDoubleCodes,
+    _CLongDoubleCodes,
+    _DT64Codes,
+    _TD64Codes,
+    _StrCodes,
+    _BytesCodes,
+    _VoidCodes,
+    _ObjectCodes,
 )
 from numpy.typing._callable import (
     _BoolOp,
@@ -311,29 +366,22 @@ broadcast_to: Any
 busday_count: Any
 busday_offset: Any
 busdaycalendar: Any
-byte: Any
 byte_bounds: Any
 bytes0: Any
 c_: Any
 can_cast: Any
 cast: Any
-cdouble: Any
-cfloat: Any
 chararray: Any
-clongdouble: Any
-clongfloat: Any
 column_stack: Any
 common_type: Any
 compare_chararrays: Any
 complex256: Any
-complex_: Any
 concatenate: Any
 conj: Any
 copy: Any
 copyto: Any
 corrcoef: Any
 cov: Any
-csingle: Any
 cumproduct: Any
 datetime_as_string: Any
 datetime_data: Any
@@ -349,7 +397,6 @@ digitize: Any
 disp: Any
 divide: Any
 dot: Any
-double: Any
 dsplit: Any
 dstack: Any
 ediff1d: Any
@@ -365,7 +412,6 @@ flip: Any
 fliplr: Any
 flipud: Any
 float128: Any
-float_: Any
 format_parser: Any
 frombuffer: Any
 fromfile: Any
@@ -377,7 +423,6 @@ genfromtxt: Any
 get_include: Any
 geterrobj: Any
 gradient: Any
-half: Any
 hamming: Any
 hanning: Any
 histogram: Any
@@ -393,12 +438,8 @@ index_exp: Any
 info: Any
 inner: Any
 insert: Any
-int0: Any
-int_: Any
-intc: Any
 interp: Any
 intersect1d: Any
-intp: Any
 is_busday: Any
 iscomplex: Any
 iscomplexobj: Any
@@ -415,10 +456,6 @@ lexsort: Any
 load: Any
 loads: Any
 loadtxt: Any
-longcomplex: Any
-longdouble: Any
-longfloat: Any
-longlong: Any
 lookfor: Any
 mafromtxt: Any
 mask_indices: Any
@@ -504,11 +541,8 @@ setdiff1d: Any
 seterrobj: Any
 setxor1d: Any
 shares_memory: Any
-short: Any
 show_config: Any
 sinc: Any
-single: Any
-singlecomplex: Any
 sort_complex: Any
 source: Any
 split: Any
@@ -527,18 +561,11 @@ triu_indices_from: Any
 typeDict: Any
 typecodes: Any
 typename: Any
-ubyte: Any
-uint: Any
-uint0: Any
-uintc: Any
-uintp: Any
-ulonglong: Any
 union1d: Any
 unique: Any
 unpackbits: Any
 unravel_index: Any
 unwrap: Any
-ushort: Any
 vander: Any
 vdot: Any
 vectorize: Any
@@ -569,269 +596,108 @@ class dtype(Generic[_DTypeScalar]):
     #
     # so we have to make sure the overloads for the narrowest type is
     # first.
+    # Builtin types
     @overload
-    def __new__(
-        cls,
-        dtype: Union[
-            Type[bool],
-            Literal[
-                "?",
-                "=?",
-                "<?",
-                ">?",
-                "bool",
-                "bool_",
-            ],
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[bool_]: ...
+    def __new__(cls, dtype: Type[bool], align: bool = ..., copy: bool = ...) -> dtype[bool_]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "uint8",
-            "u1",
-            "=u1",
-            "<u1",
-            ">u1",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[uint8]: ...
+    def __new__(cls, dtype: Type[int], align: bool = ..., copy: bool = ...) -> dtype[int_]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "uint16",
-            "u2",
-            "=u2",
-            "<u2",
-            ">u2",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[uint16]: ...
+    def __new__(cls, dtype: Optional[Type[float]], align: bool = ..., copy: bool = ...) -> dtype[float_]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "uint32",
-            "u4",
-            "=u4",
-            "<u4",
-            ">u4",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[uint32]: ...
+    def __new__(cls, dtype: Type[complex], align: bool = ..., copy: bool = ...) -> dtype[complex_]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "uint64",
-            "u8",
-            "=u8",
-            "<u8",
-            ">u8",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[uint64]: ...
+    def __new__(cls, dtype: Type[str], align: bool = ..., copy: bool = ...) -> dtype[str_]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "int8",
-            "i1",
-            "=i1",
-            "<i1",
-            ">i1",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[int8]: ...
+    def __new__(cls, dtype: Type[bytes], align: bool = ..., copy: bool = ...) -> dtype[bytes_]: ...
+
+    # `unsignedinteger` string-based representations
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "int16",
-            "i2",
-            "=i2",
-            "<i2",
-            ">i2",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[int16]: ...
+    def __new__(cls, dtype: _UInt8Codes, align: bool = ..., copy: bool = ...) -> dtype[uint8]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "int32",
-            "i4",
-            "=i4",
-            "<i4",
-            ">i4",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[int32]: ...
+    def __new__(cls, dtype: _UInt16Codes, align: bool = ..., copy: bool = ...) -> dtype[uint16]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "int64",
-            "i8",
-            "=i8",
-            "<i8",
-            ">i8",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[int64]: ...
-    # "int"/int resolve to int_, which is system dependent and as of
-    # now untyped. Long-term we'll do something fancier here.
+    def __new__(cls, dtype: _UInt32Codes, align: bool = ..., copy: bool = ...) -> dtype[uint32]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Union[Type[int], Literal["int"]],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype: ...
+    def __new__(cls, dtype: _UInt64Codes, align: bool = ..., copy: bool = ...) -> dtype[uint64]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "float16",
-            "f4",
-            "=f4",
-            "<f4",
-            ">f4",
-            "e",
-            "=e",
-            "<e",
-            ">e",
-            "half",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[float16]: ...
+    def __new__(cls, dtype: _UByteCodes, align: bool = ..., copy: bool = ...) -> dtype[ubyte]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "float32",
-            "f4",
-            "=f4",
-            "<f4",
-            ">f4",
-            "f",
-            "=f",
-            "<f",
-            ">f",
-            "single",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[float32]: ...
+    def __new__(cls, dtype: _UShortCodes, align: bool = ..., copy: bool = ...) -> dtype[ushort]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Union[
-            None,
-            Type[float],
-            Literal[
-                "float64",
-                "f8",
-                "=f8",
-                "<f8",
-                ">f8",
-                "d",
-                "<d",
-                ">d",
-                "float",
-                "double",
-                "float_",
-            ],
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[float64]: ...
+    def __new__(cls, dtype: _UIntCCodes, align: bool = ..., copy: bool = ...) -> dtype[uintc]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Literal[
-            "complex64",
-            "c8",
-            "=c8",
-            "<c8",
-            ">c8",
-            "F",
-            "=F",
-            "<F",
-            ">F",
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[complex64]: ...
+    def __new__(cls, dtype: _UIntPCodes, align: bool = ..., copy: bool = ...) -> dtype[uintp]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Union[
-            Type[complex],
-            Literal[
-                "complex128",
-                "c16",
-                "=c16",
-                "<c16",
-                ">c16",
-                "D",
-                "=D",
-                "<D",
-                ">D",
-            ],
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[complex128]: ...
+    def __new__(cls, dtype: _UIntCodes, align: bool = ..., copy: bool = ...) -> dtype[uint]: ...
     @overload
-    def __new__(
-        cls,
-        dtype: Union[
-            Type[bytes],
-            Literal[
-                "S",
-                "=S",
-                "<S",
-                ">S",
-                "bytes",
-                "bytes_",
-                "bytes0",
-            ],
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[bytes_]: ...
+    def __new__(cls, dtype: _ULongLongCodes, align: bool = ..., copy: bool = ...) -> dtype[ulonglong]: ...
+
+    # `signedinteger` string-based representations
     @overload
-    def __new__(
-        cls,
-        dtype: Union[
-            Type[str],
-            Literal[
-                "U",
-                "=U",
-                # <U and >U intentionally not included; they are not
-                # the same dtype and which one dtype("U") translates
-                # to is platform-dependent.
-                "str",
-                "str_",
-                "str0",
-            ],
-        ],
-        align: bool = ...,
-        copy: bool = ...,
-    ) -> dtype[str_]: ...
+    def __new__(cls, dtype: _Int8Codes, align: bool = ..., copy: bool = ...) -> dtype[int8]: ...
+    @overload
+    def __new__(cls, dtype: _Int16Codes, align: bool = ..., copy: bool = ...) -> dtype[int16]: ...
+    @overload
+    def __new__(cls, dtype: _Int32Codes, align: bool = ..., copy: bool = ...) -> dtype[int32]: ...
+    @overload
+    def __new__(cls, dtype: _Int64Codes, align: bool = ..., copy: bool = ...) -> dtype[int64]: ...
+    @overload
+    def __new__(cls, dtype: _ByteCodes, align: bool = ..., copy: bool = ...) -> dtype[byte]: ...
+    @overload
+    def __new__(cls, dtype: _ShortCodes, align: bool = ..., copy: bool = ...) -> dtype[short]: ...
+    @overload
+    def __new__(cls, dtype: _IntCCodes, align: bool = ..., copy: bool = ...) -> dtype[intc]: ...
+    @overload
+    def __new__(cls, dtype: _IntPCodes, align: bool = ..., copy: bool = ...) -> dtype[intp]: ...
+    @overload
+    def __new__(cls, dtype: _IntCodes, align: bool = ..., copy: bool = ...) -> dtype[int_]: ...
+    @overload
+    def __new__(cls, dtype: _LongLongCodes, align: bool = ..., copy: bool = ...) -> dtype[longlong]: ...
+
+    # `floating` string-based representations
+    @overload
+    def __new__(cls, dtype: _Float16Codes, align: bool = ..., copy: bool = ...) -> dtype[float16]: ...
+    @overload
+    def __new__(cls, dtype: _Float32Codes, align: bool = ..., copy: bool = ...) -> dtype[float32]: ...
+    @overload
+    def __new__(cls, dtype: _Float64Codes, align: bool = ..., copy: bool = ...) -> dtype[float64]: ...
+    @overload
+    def __new__(cls, dtype: _HalfCodes, align: bool = ..., copy: bool = ...) -> dtype[half]: ...
+    @overload
+    def __new__(cls, dtype: _SingleCodes, align: bool = ..., copy: bool = ...) -> dtype[single]: ...
+    @overload
+    def __new__(cls, dtype: _DoubleCodes, align: bool = ..., copy: bool = ...) -> dtype[double]: ...
+    @overload
+    def __new__(cls, dtype: _LongDoubleCodes, align: bool = ..., copy: bool = ...) -> dtype[longdouble]: ...
+
+    # `complexfloating` string-based representations
+    @overload
+    def __new__(cls, dtype: _Complex64Codes, align: bool = ..., copy: bool = ...) -> dtype[complex64]: ...
+    @overload
+    def __new__(cls, dtype: _Complex128Codes, align: bool = ..., copy: bool = ...) -> dtype[complex128]: ...
+    @overload
+    def __new__(cls, dtype: _CSingleCodes, align: bool = ..., copy: bool = ...) -> dtype[csingle]: ...
+    @overload
+    def __new__(cls, dtype: _CDoubleCodes, align: bool = ..., copy: bool = ...) -> dtype[cdouble]: ...
+    @overload
+    def __new__(cls, dtype: _CLongDoubleCodes, align: bool = ..., copy: bool = ...) -> dtype[clongdouble]: ...
+
+    # Miscellaneous string-based representations
+    @overload
+    def __new__(cls, dtype: _BoolCodes, align: bool = ..., copy: bool = ...) -> dtype[bool_]: ...
+    @overload
+    def __new__(cls, dtype: _TD64Codes, align: bool = ..., copy: bool = ...) -> dtype[timedelta64]: ...
+    @overload
+    def __new__(cls, dtype: _DT64Codes, align: bool = ..., copy: bool = ...) -> dtype[datetime64]: ...
+    @overload
+    def __new__(cls, dtype: _StrCodes, align: bool = ..., copy: bool = ...) -> dtype[str_]: ...
+    @overload
+    def __new__(cls, dtype: _BytesCodes, align: bool = ..., copy: bool = ...) -> dtype[bytes_]: ...
+    @overload
+    def __new__(cls, dtype: _VoidCodes, align: bool = ..., copy: bool = ...) -> dtype[void]: ...
+    @overload
+    def __new__(cls, dtype: _ObjectCodes, align: bool = ..., copy: bool = ...) -> dtype[object_]: ...
+
     # dtype of a dtype is the same dtype
     @overload
     def __new__(
@@ -1104,21 +970,21 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
     @overload
-    def argmax(self, axis: None = ..., out: None = ...) -> signedinteger: ...
+    def argmax(self, axis: None = ..., out: None = ...) -> intp: ...
     @overload
     def argmax(
         self, axis: _ShapeLike = ..., out: None = ...
-    ) -> Union[signedinteger, ndarray]: ...
+    ) -> Union[ndarray, intp]: ...
     @overload
     def argmax(
         self, axis: Optional[_ShapeLike] = ..., out: _NdArraySubClass = ...
     ) -> _NdArraySubClass: ...
     @overload
-    def argmin(self, axis: None = ..., out: None = ...) -> signedinteger: ...
+    def argmin(self, axis: None = ..., out: None = ...) -> intp: ...
     @overload
     def argmin(
         self, axis: _ShapeLike = ..., out: None = ...
-    ) -> Union[signedinteger, ndarray]: ...
+    ) -> Union[ndarray, intp]: ...
     @overload
     def argmin(
         self, axis: Optional[_ShapeLike] = ..., out: _NdArraySubClass = ...
@@ -1853,6 +1719,14 @@ int16 = signedinteger[_16Bit]
 int32 = signedinteger[_32Bit]
 int64 = signedinteger[_64Bit]
 
+byte = signedinteger[_NBitByte]
+short = signedinteger[_NBitShort]
+intc = signedinteger[_NBitIntC]
+intp = signedinteger[_NBitIntP]
+int0 = signedinteger[_NBitIntP]
+int_ = signedinteger[_NBitInt]
+longlong = signedinteger[_NBitLongLong]
+
 class timedelta64(generic):
     def __init__(
         self,
@@ -1917,6 +1791,14 @@ uint16 = unsignedinteger[_16Bit]
 uint32 = unsignedinteger[_32Bit]
 uint64 = unsignedinteger[_64Bit]
 
+ubyte = unsignedinteger[_NBitByte]
+ushort = unsignedinteger[_NBitShort]
+uintc = unsignedinteger[_NBitIntC]
+uintp = unsignedinteger[_NBitIntP]
+uint0 = unsignedinteger[_NBitIntP]
+uint = unsignedinteger[_NBitInt]
+ulonglong = unsignedinteger[_NBitLongLong]
+
 class inexact(number[_NBit_co]): ...  # type: ignore
 
 _IntType = TypeVar("_IntType", bound=integer)
@@ -1945,6 +1827,13 @@ float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 float64 = floating[_64Bit]
 
+half = floating[_NBitHalf]
+single = floating[_NBitSingle]
+double = floating[_NBitDouble]
+float_ = floating[_NBitDouble]
+longdouble = floating[_NBitLongDouble]
+longfloat = floating[_NBitLongDouble]
+
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
 # describing the two 64 bit floats representing its real and imaginary component
@@ -1971,6 +1860,15 @@ class complexfloating(inexact[_NBit_co], Generic[_NBit_co, _NBit_co2]):
 
 complex64 = complexfloating[_32Bit, _32Bit]
 complex128 = complexfloating[_64Bit, _64Bit]
+
+csingle = complexfloating[_NBitSingle, _NBitSingle]
+singlecomplex = complexfloating[_NBitSingle, _NBitSingle]
+cdouble = complexfloating[_NBitDouble, _NBitDouble]
+complex_ = complexfloating[_NBitDouble, _NBitDouble]
+cfloat = complexfloating[_NBitDouble, _NBitDouble]
+clongdouble = complexfloating[_NBitLongDouble, _NBitLongDouble]
+clongfloat = complexfloating[_NBitLongDouble, _NBitLongDouble]
+longcomplex = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
 class flexible(generic): ...  # type: ignore
 
@@ -2007,15 +1905,10 @@ class str_(character, str):
         self, __value: bytes, encoding: str = ..., errors: str = ...
     ) -> None: ...
 
-unicode_ = str0 = str_
+unicode_ = str_
+str0 = str_
 
-# TODO(alan): Platform dependent types
-# longcomplex, longdouble, longfloat
-# bytes, short, intc, intp, longlong
-# half, single, double, longdouble
-# uint_, int_, float_, complex_
-# float128, complex256
-# float96
+# TODO: Platform dependent types: float128, complex256, float96
 
 def array(
     object: object,

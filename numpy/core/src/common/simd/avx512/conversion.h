@@ -121,4 +121,12 @@ NPY_FINLINE npy_uint64 npyv_tobits_b32(npyv_b32 a)
 NPY_FINLINE npy_uint64 npyv_tobits_b64(npyv_b64 a)
 { return (npy_uint8)a; }
 
+// round to nearest integer (assuming even)
+#define npyv_round_s32_f32 _mm512_cvtps_epi32
+NPY_FINLINE npyv_s32 npyv_round_s32_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m256i lo = _mm512_cvtpd_epi32(a), hi = _mm512_cvtpd_epi32(b);
+    return npyv512_combine_si256(lo, hi);
+}
+
 #endif // _NPY_SIMD_AVX512_CVT_H
