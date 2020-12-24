@@ -4556,13 +4556,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    /*
-     * Before calling PyType_Ready, initialize the tp_hash slot in
-     * PyArray_Type to work around mingw32 not being able initialize
-     * static structure slots with functions from the Python C_API.
-     */
-    PyArray_Type.tp_hash = PyObject_HashNotImplemented;
-
     if (PyType_Ready(&PyUFunc_Type) < 0) {
         goto err;
     }
