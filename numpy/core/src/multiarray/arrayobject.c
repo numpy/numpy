@@ -1754,10 +1754,6 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_as_number = &array_as_number,
     .tp_as_sequence = &array_as_sequence,
     .tp_as_mapping = &array_as_mapping,
-    /*
-     * The tp_hash slot will be set PyObject_HashNotImplemented when the
-     * module is loaded.
-     */
     .tp_str = (reprfunc)array_str,
     .tp_as_buffer = &array_as_buffer,
     .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
