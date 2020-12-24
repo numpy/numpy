@@ -103,7 +103,7 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw)
 }
 
 
-int
+NPY_NO_EXPORT int
 mergesort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
     @type@ *pl, *pr, *pw;
@@ -166,7 +166,7 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw)
 }
 
 
-int
+NPY_NO_EXPORT int
 amergesort_@suff@(void *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
 {
     npy_intp *pl, *pr, *pw;
@@ -245,7 +245,7 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
 }
 
 
-int
+NPY_NO_EXPORT int
 mergesort_@suff@(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -326,7 +326,7 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, size_t l
 }
 
 
-int
+NPY_NO_EXPORT int
 amergesort_@suff@(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -407,7 +407,7 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
 }
 
 
-int
+NPY_NO_EXPORT int
 npy_mergesort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -485,7 +485,7 @@ npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
 }
 
 
-int
+NPY_NO_EXPORT int
 npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;

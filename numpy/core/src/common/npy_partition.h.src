@@ -42,12 +42,12 @@
  *         npy_cdouble, npy_clongdouble#
  */
 
-NPY_VISIBILITY_HIDDEN int introselect_@suff@(@type@ *v, npy_intp num,
+NPY_NO_EXPORT int introselect_@suff@(@type@ *v, npy_intp num,
                                              npy_intp kth,
                                              npy_intp * pivots,
                                              npy_intp * npiv,
                                              void *NOT_USED);
-NPY_VISIBILITY_HIDDEN int aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_intp num,
+NPY_NO_EXPORT int aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_intp num,
                                               npy_intp kth,
                                               npy_intp * pivots,
                                               npy_intp * npiv,

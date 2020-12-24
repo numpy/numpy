@@ -50,8 +50,9 @@
 # Version 13 (NumPy 1.17) No change.
 # Version 13 (NumPy 1.18) No change.
 # Version 13 (NumPy 1.19) No change.
-# Version 13 (NumPy 1.20) No change.
 0x0000000d = 5b0e8bbded00b166125974fc71e80a33
 
-# Version 14 (NumPy 1.19) DType related API additions
+# Version 14 (NumPy 1.20)
+# DType related API additions.
+# A new field was added to the end of PyArrayObject_fields.
 0x0000000e = 17a0f366e55ec05e5c5c149123478452

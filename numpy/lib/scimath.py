@@ -14,6 +14,22 @@ module provide the mathematically valid answers in the complex plane::
 Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
 
+Functions
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   sqrt
+   log
+   log2
+   logn
+   log10
+   power
+   arccos
+   arcsin
+   arctanh
+
 """
 import numpy.core.numeric as nx
 import numpy.core.numerictypes as nt
@@ -556,10 +572,10 @@ def arctanh(x):
     Compute the inverse hyperbolic tangent of `x`.
 
     Return the "principal value" (for a description of this, see
-    `numpy.arctanh`) of `arctanh(x)`. For real `x` such that
-    `abs(x) < 1`, this is a real number.  If `abs(x) > 1`, or if `x` is
+    `numpy.arctanh`) of ``arctanh(x)``. For real `x` such that
+    ``abs(x) < 1``, this is a real number.  If `abs(x) > 1`, or if `x` is
     complex, the result is complex. Finally, `x = 1` returns``inf`` and
-    `x=-1` returns ``-inf``.
+    ``x=-1`` returns ``-inf``.
 
     Parameters
     ----------
@@ -581,7 +597,7 @@ def arctanh(x):
     -----
     For an arctanh() that returns ``NAN`` when real `x` is not in the
     interval ``(-1,1)``, use `numpy.arctanh` (this latter, however, does
-    return +/-inf for `x = +/-1`).
+    return +/-inf for ``x = +/-1``).
 
     Examples
     --------

@@ -12,83 +12,12 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.10'
-# Temporary build of OpenBLAS to test a fix for dynamic detection of CPU
-OPENBLAS_LONG = 'v0.3.9-452-g349b722d'
+OPENBLAS_V = '0.3.13'
+OPENBLAS_LONG = 'v0.3.13'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86_64',
                  'i686', 'ppc64le', 's390x']
-sha256_vals = {
-    "openblas-v0.3.7-527-g79fd006c-win_amd64-gcc_7_1_0.zip":
-    "7249d68c02e6b6339e06edfeab1fecddf29ee1e67a3afaa77917c320c43de840",
-    "openblas64_-v0.3.7-527-g79fd006c-win_amd64-gcc_7_1_0.zip":
-    "6488e0961a5926e47242f63b63b41cfdd661e6f1d267e8e313e397cde4775c17",
-    "openblas-v0.3.7-527-g79fd006c-win32-gcc_7_1_0.zip":
-    "5fb0867ca70b1d0fdbf68dd387c0211f26903d74631420e4aabb49e94aa3930d",
-    "openblas-v0.3.7-527-g79fd006c-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
-    "69434bd626bbc495da9ce8c36b005d140c75e3c47f94e88c764a199e820f9259",
-    "openblas64_-v0.3.7-527-g79fd006c-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
-    "093f6d953e3fa76a86809be67bd1f0b27656671b5a55b233169cfaa43fd63e22",
-    "openblas-v0.3.7-527-g79fd006c-manylinux2014_aarch64.tar.gz":
-    "42676c69dc48cd6e412251b39da6b955a5a0e00323ddd77f9137f7c259d35319",
-    "openblas64_-v0.3.7-527-g79fd006c-manylinux2014_aarch64.tar.gz":
-    "5aec167af4052cf5e9e3e416c522d9794efabf03a2aea78b9bb3adc94f0b73d8",
-    "openblas-v0.3.7-527-g79fd006c-manylinux2010_x86_64.tar.gz":
-    "fa67c6cc29d4cc5c70a147c80526243239a6f95fc3feadcf83a78176cd9c526b",
-    "openblas64_-v0.3.7-527-g79fd006c-manylinux2010_x86_64.tar.gz":
-    "9ad34e89a5307dcf5823bf5c020580d0559a0c155fe85b44fc219752e61852b0",
-    "openblas-v0.3.7-527-g79fd006c-manylinux2010_i686.tar.gz":
-    "0b8595d316c8b7be84ab1f1d5a0c89c1b35f7c987cdaf61d441bcba7ab4c7439",
-    "openblas-v0.3.7-527-g79fd006c-manylinux2014_ppc64le.tar.gz":
-    "3e1c7d6472c34e7210e3605be4bac9ddd32f613d44297dc50cf2d067e720c4a9",
-    "openblas64_-v0.3.7-527-g79fd006c-manylinux2014_ppc64le.tar.gz":
-    "a0885873298e21297a04be6cb7355a585df4fa4873e436b4c16c0a18fc9073ea",
-    "openblas-v0.3.7-527-g79fd006c-manylinux2014_s390x.tar.gz":
-    "79b454320817574e20499d58f05259ed35213bea0158953992b910607b17f240",
-    "openblas64_-v0.3.7-527-g79fd006c-manylinux2014_s390x.tar.gz":
-    "9fddbebf5301518fc4a5d2022a61886544a0566868c8c014359a1ee6b17f2814",
-    "openblas-v0.3.7-527-g79fd006c-manylinux1_i686.tar.gz":
-    "24fb92684ec4676185fff5c9340f50c3db6075948bcef760e9c715a8974e4680",
-    "openblas-v0.3.7-527-g79fd006c-manylinux1_x86_64.tar.gz":
-    "ebb8236b57a1b4075fd5cdc3e9246d2900c133a42482e5e714d1e67af5d00e62",
-    "openblas-v0.3.10-win_amd64-gcc_7_1_0.zip":
-    "e5356a2aa4aa7ed9233b2ca199fdd445f55ba227f004ebc63071dfa2426e9b09",
-    "openblas64_-v0.3.10-win_amd64-gcc_7_1_0.zip":
-    "aea3f9c8bdfe0b837f0d2739a6c755b12b6838f6c983e4ede71b4e1b576e6e77",
-    "openblas-v0.3.10-win32-gcc_7_1_0.zip":
-    "af1ad3172b23f7c6ef2234151a71d3be4d92010dad4dfb25d07cf5a20f009202",
-    "openblas64_-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
-    "38b61c58d63048731d6884fea7b63f8cbd610e85b138c6bac0e39fd77cd4699b",
-    "openblas-v0.3.10-manylinux2014_aarch64.tar.gz":
-    "c4444b9836ec26f7772fae02851961bf73177ff2aa436470e56fab8a1ef8d405",
-    "openblas-v0.3.10-manylinux2010_x86_64.tar.gz":
-    "cb7988c4a015aece9c49b1169f51c4ac2287fb9aab8114c8ab67792138ffc85e",
-    "openblas-v0.3.10-manylinux2010_i686.tar.gz":
-    "dc637801dd80ebd6394ea8b4a97f8858e4224870ea9214de08bebbdddd8e206e",
-    "openblas-v0.3.10-manylinux1_x86_64.tar.gz":
-    "ec1f9e9b2a62d5cb9e2634b88ee2da7cb6b07702d5a0e8b190d680a31adfa23a",
-    "openblas-v0.3.10-manylinux1_i686.tar.gz":
-    "b13d9d14e6bd452c0fbadb5cd5fda05b98b1e14043edb13ead90694d4cc07f0e",
-    "openblas-v0.3.10-manylinux2014_ppc64le.tar.gz":
-    "1cbc8176986099cf0cbb8f64968d5a14880d602d4b3c59a91d75b69b8760cde3",
-    "openblas-v0.3.10-manylinux2014_s390x.tar.gz":
-    "fa6722f0b12507ab0a65f38501ed8435b573df0adc0b979f47cdc4c9e9599475",
-    "openblas-v0.3.10-macosx_10_9_x86_64-gf_1becaaa.tar.gz":
-    "c6940b5133e687ae7a4f9c7c794f6a6d92b619cf41e591e5db07aab5da118199",
-    "openblas64_-v0.3.10-manylinux2014_s390x.tar.gz":
-    "e0347dd6f3f3a27d2f5e76d382e8a4a68e2e92f5f6a10e54ef65c7b14b44d0e8",
-    "openblas64_-v0.3.10-manylinux2014_ppc64le.tar.gz":
-    "4b96a51ac767ec0aabb821c61bcd3420e82e987fc93f7e1f85aebb2a845694eb",
-    "openblas64_-v0.3.10-manylinux2010_x86_64.tar.gz":
-    "f68fea21fbc73d06b7566057cad2ed8c7c0eb71fabf9ed8a609f86e5bc60ce5e",
-    "openblas64_-v0.3.10-manylinux2014_aarch64.tar.gz":
-    "15e6eed8cb0df8b88e52baa136ffe1769c517e9de7bcdfd81ec56420ae1069e9",
-    "openblas64_-v0.3.10-win_amd64-gcc_7_1_0.zip":
-    "aea3f9c8bdfe0b837f0d2739a6c755b12b6838f6c983e4ede71b4e1b576e6e77",
-}
-
-
 IS_32BIT = sys.maxsize < 2**32
 
 
@@ -143,9 +72,9 @@ def download_openblas(target, arch, ilp64, is_32bit):
         typ = 'tar.gz'
     elif arch == 'windows':
         if is_32bit:
-            suffix = 'win32-gcc_7_1_0.zip'
+            suffix = 'win32-gcc_8_1_0.zip'
         else:
-            suffix = 'win_amd64-gcc_7_1_0.zip'
+            suffix = 'win_amd64-gcc_8_1_0.zip'
         filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
         typ = 'zip'
     if not filename:
@@ -164,15 +93,6 @@ def download_openblas(target, arch, ilp64, is_32bit):
     data = response.read()
     # Verify hash
     key = os.path.basename(filename)
-    sha256_returned = hashlib.sha256(data).hexdigest()
-    if 0:
-        if key not in sha256_vals:
-            raise ValueError(
-                f'\nkey "{key}" with hash "{sha256_returned}" not in sha256_vals\n')
-        sha256_expected = sha256_vals[key]
-        if sha256_returned != sha256_expected:
-            # print(f'\nkey "{key}" with hash "{sha256_returned}" mismatch\n')
-            raise ValueError(f'sha256 hash mismatch for filename {filename}')
     print("Saving to file", file=sys.stderr)
     with open(target, 'wb') as fid:
         fid.write(data)

@@ -1,0 +1,7 @@
+Improved performance in integer division of NumPy arrays
+--------------------------------------------------------
+Integer division of NumPy arrays now uses `libdivide <https://libdivide.com/>` 
+when the divisor is a constant. With the usage of libdivde and
+other minor optimizations, there is a large speedup.
+The ``//`` operator and ``np.floor_divide`` makes use
+of the new changes.

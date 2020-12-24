@@ -370,7 +370,7 @@ Construction and Destruction
             arrays or structured arrays containing an object type)
             may be accepted and used in the iterator.  If this flag
             is enabled, the caller must be sure to check whether
-            :c:func:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
+            :c:expr:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
             it may not release the GIL during iteration.
 
         .. c:macro:: NPY_ITER_ZEROSIZE_OK
@@ -738,7 +738,7 @@ Construction and Destruction
     the iterator.  Any cached functions or pointers from the iterator
     must be retrieved again!
 
-    After calling this function, :c:func:`NpyIter_HasMultiIndex(iter)` will
+    After calling this function, :c:expr:`NpyIter_HasMultiIndex(iter)` will
     return false.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
@@ -1264,7 +1264,7 @@ functions provide that information.
     NPY_MAX_INTP is placed in the stride.
 
     Once the iterator is prepared for iteration (after a reset if
-    :c:data:`NPY_DELAY_BUFALLOC` was used), call this to get the strides
+    :c:data:`NPY_ITER_DELAY_BUFALLOC` was used), call this to get the strides
     which may be used to select a fast inner loop function.  For example,
     if the stride is 0, that means the inner loop can always load its
     value into a variable once, then use the variable throughout the loop,

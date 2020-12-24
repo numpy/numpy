@@ -269,7 +269,7 @@ struct NpyIter_AD {
 #define NAD_STRIDES(axisdata) ( \
         &(axisdata)->ad_flexdata + 0)
 #define NAD_PTRS(axisdata) ((char **) \
-        &(axisdata)->ad_flexdata + 1*(nop+1))
+        (&(axisdata)->ad_flexdata + 1*(nop+1)))
 
 #define NAD_NSTRIDES() \
         ((nop) + ((itflags&NPY_ITFLAG_HASINDEX) ? 1 : 0))

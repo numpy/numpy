@@ -12,6 +12,11 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+// printif debug tracing
+#ifndef NPY_UF_DBG_TRACING
+    #define NPY_UF_DBG_TRACING 0
+#endif
+
 #include <stdbool.h>
 
 #include "Python.h"
@@ -36,17 +41,17 @@ npy_casting_to_py_object(NPY_CASTING casting)
 {
     switch (casting) {
         case NPY_NO_CASTING:
-            return PyUString_FromString("no");
+            return PyUnicode_FromString("no");
         case NPY_EQUIV_CASTING:
-            return PyUString_FromString("equiv");
+            return PyUnicode_FromString("equiv");
         case NPY_SAFE_CASTING:
-            return PyUString_FromString("safe");
+            return PyUnicode_FromString("safe");
         case NPY_SAME_KIND_CASTING:
-            return PyUString_FromString("same_kind");
+            return PyUnicode_FromString("same_kind");
         case NPY_UNSAFE_CASTING:
-            return PyUString_FromString("unsafe");
+            return PyUnicode_FromString("unsafe");
         default:
-            return PyInt_FromLong(casting);
+            return PyLong_FromLong(casting);
     }
 }
 
@@ -236,21 +241,6 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
     return 0;
 }
 
-/*
- * Returns a new reference to type if it is already NBO, otherwise
- * returns a copy converted to NBO.
- */
-static PyArray_Descr *
-ensure_dtype_nbo(PyArray_Descr *type)
-{
-    if (PyArray_ISNBO(type->byteorder)) {
-        Py_INCREF(type);
-        return type;
-    }
-    else {
-        return PyArray_DescrNewByteorder(type, NPY_NATIVE);
-    }
-}
 
 /*UFUNC_API
  *
@@ -1336,7 +1326,6 @@ find_userloop(PyUFuncObject *ufunc,
                 void **out_innerloopdata)
 {
     npy_intp i, nin = ufunc->nin, j, nargs = nin + ufunc->nout;
-    PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1356,7 +1345,7 @@ find_userloop(PyUFuncObject *ufunc,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1368,9 +1357,11 @@ find_userloop(PyUFuncObject *ufunc,
             else if (obj == NULL) {
                 continue;
             }
-            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-                 funcdata != NULL;
-                 funcdata = funcdata->next) {
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
+            for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
 
                 for (j = 0; j < nargs; ++j) {
@@ -1744,7 +1735,6 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                         char *out_err_dst_typecode)
 {
     npy_intp i, nop = self->nin + self->nout;
-    PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1764,7 +1754,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1776,9 +1766,11 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             else if (obj == NULL) {
                 continue;
             }
-            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-                 funcdata != NULL;
-                 funcdata = funcdata->next) {
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
+            for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 switch (ufunc_loop_matches(self, op,
                             input_casting, output_casting,
@@ -1816,7 +1808,6 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                         PyArray_Descr **out_dtype)
 {
     int i, j, nin = self->nin, nop = nin + self->nout;
-    PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1831,7 +1822,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
 
             last_userdef = type_num;
 
-            key = PyInt_FromLong(type_num);
+            key = PyLong_FromLong(type_num);
             if (key == NULL) {
                 return -1;
             }
@@ -1844,9 +1835,11 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                 continue;
             }
 
-            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-                 funcdata != NULL;
-                 funcdata = funcdata->next) {
+            PyUFunc_Loop1d *funcdata = PyCapsule_GetPointer(obj, NULL);
+            if (funcdata == NULL) {
+                return -1;
+            }
+            for (; funcdata != NULL; funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 int matched = 1;
 

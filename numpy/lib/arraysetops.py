@@ -1,28 +1,17 @@
 """
 Set operations for arrays based on sorting.
 
-:Contains:
-  unique,
-  isin,
-  ediff1d,
-  intersect1d,
-  setxor1d,
-  in1d,
-  union1d,
-  setdiff1d
-
-:Notes:
+Notes
+-----
 
 For floating point arrays, inaccurate results may appear due to usual round-off
 and floating point comparison issues.
 
 Speed could be gained in some operations by an implementation of
-sort(), that can provide directly the permutation vectors, avoiding
-thus calls to argsort().
+`numpy.sort`, that can provide directly the permutation vectors, thus avoiding
+calls to `numpy.argsort`.
 
-To do: Optionally return indices analogously to unique for all functions.
-
-:Author: Robert Cimrman
+Original author: Robert Cimrman
 
 """
 import functools
@@ -104,7 +93,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     else:
         to_begin = np.asanyarray(to_begin)
         if not np.can_cast(to_begin, dtype_req, casting="same_kind"):
-            raise TypeError("dtype of `to_end` must be compatible "
+            raise TypeError("dtype of `to_begin` must be compatible "
                             "with input `ary` under the `same_kind` rule.")
 
         to_begin = to_begin.ravel()
@@ -278,7 +267,7 @@ def unique(ar, return_index=False, return_inverse=False,
         ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.AxisError(axis, ar.ndim)
+        raise np.AxisError(axis, ar.ndim) from None
 
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
@@ -300,10 +289,10 @@ def unique(ar, return_index=False, return_inverse=False,
             # array with shape `(len(ar),)`.  Because `dtype` in this case has
             # itemsize 0, the total size of the result is still 0 bytes.
             consolidated = np.empty(len(ar), dtype=dtype)
-    except TypeError:
+    except TypeError as e:
         # There's no good way to do this for object arrays, etc...
         msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
+        raise TypeError(msg.format(dt=ar.dtype)) from e
 
     def reshape_uniq(uniq):
         n = len(uniq)

@@ -9,6 +9,13 @@ free -m
 df -h
 ulimit -a
 
+sudo apt install gfortran eatmydata libgfortran5
+
+if [ "$USE_DEBUG" ]
+then
+    sudo apt install python3-dbg python3-dev python3-setuptools
+fi
+
 mkdir builds
 pushd builds
 

@@ -40,7 +40,7 @@ def test_numpy_namespace():
         'byte_bounds': 'numpy.lib.utils.byte_bounds',
         'compare_chararrays': 'numpy.core._multiarray_umath.compare_chararrays',
         'deprecate': 'numpy.lib.utils.deprecate',
-        'deprecate_with_doc': 'numpy.lib.utils.<lambda>',
+        'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
         'disp': 'numpy.lib.function_base.disp',
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
@@ -145,18 +145,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "distutils.log",
     "distutils.system_info",
     "doc",
-    "doc.basics",
-    "doc.broadcasting",
-    "doc.byteswapping",
     "doc.constants",
-    "doc.creation",
-    "doc.dispatch",
-    "doc.glossary",
-    "doc.indexing",
-    "doc.internals",
-    "doc.misc",
-    "doc.structured_arrays",
-    "doc.subclassing",
     "doc.ufuncs",
     "f2py",
     "fft",
@@ -181,6 +170,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "random",
     "testing",
     "typing",
+    "typing.mypy_plugin",
     "version",
 ]]
 
@@ -251,8 +241,10 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.fcompiler.none",
     "distutils.fcompiler.pathf95",
     "distutils.fcompiler.pg",
+    "distutils.fcompiler.nv",
     "distutils.fcompiler.sun",
     "distutils.fcompiler.vast",
+    "distutils.fcompiler.fujitsu",
     "distutils.from_template",
     "distutils.intelccompiler",
     "distutils.lib2def",
@@ -359,7 +351,7 @@ def test_all_modules_are_expected():
             modnames.append(modname)
 
     if modnames:
-        raise AssertionError("Found unexpected modules: {}".format(modnames))
+        raise AssertionError(f'Found unexpected modules: {modnames}')
 
 
 # Stuff that clearly shouldn't be in the API and is detected by the next test
@@ -367,18 +359,6 @@ def test_all_modules_are_expected():
 SKIP_LIST_2 = [
     'numpy.math',
     'numpy.distutils.log.sys',
-    'numpy.distutils.system_info.copy',
-    'numpy.distutils.system_info.distutils',
-    'numpy.distutils.system_info.log',
-    'numpy.distutils.system_info.os',
-    'numpy.distutils.system_info.platform',
-    'numpy.distutils.system_info.re',
-    'numpy.distutils.system_info.shutil',
-    'numpy.distutils.system_info.subprocess',
-    'numpy.distutils.system_info.sys',
-    'numpy.distutils.system_info.tempfile',
-    'numpy.distutils.system_info.textwrap',
-    'numpy.distutils.system_info.warnings',
     'numpy.doc.constants.re',
     'numpy.doc.constants.textwrap',
     'numpy.lib.emath',

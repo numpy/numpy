@@ -392,7 +392,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         else {
             val = PyArray_DIM(arrnew,i);
         }
-        PyTuple_SET_ITEM(newshape, i, PyInt_FromLong((long)val));
+        PyTuple_SET_ITEM(newshape, i, PyLong_FromLong((long)val));
     }
     arr2 = (PyArrayObject *)PyArray_Reshape(arr1, newshape);
     Py_DECREF(arr1);
@@ -1023,7 +1023,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (min != NULL) {
         if (PyArray_ISUNSIGNED(self)) {
             int cmp;
-            zero = PyInt_FromLong(0);
+            zero = PyLong_FromLong(0);
             cmp = PyObject_RichCompareBool(min, zero, Py_LT);
             if (cmp == -1) {
                 Py_DECREF(zero);

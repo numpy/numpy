@@ -42,6 +42,7 @@ Indexing-like operations
    diag
    diagonal
    select
+   lib.stride_tricks.sliding_window_view
    lib.stride_tricks.as_strided
 
 Inserting data into arrays

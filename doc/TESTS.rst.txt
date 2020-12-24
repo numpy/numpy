@@ -145,7 +145,7 @@ can label it with ``pytest.mark.slow``::
 
   @pytest.mark.slow
   def test_big(self):
-      print 'Big, slow test'
+      print('Big, slow test')
 
 Similarly for methods::
 
@@ -162,21 +162,21 @@ name; thus::
 
   def setup():
       """Module-level setup"""
-      print 'doing setup'
+      print('doing setup')
 
   def teardown():
       """Module-level teardown"""
-      print 'doing teardown'
+      print('doing teardown')
 
 
   class TestMe:
       def setup():
           """Class-level setup"""
-          print 'doing setup'
+          print('doing setup')
 
       def teardown():
           """Class-level teardown"""
-          print 'doing teardown'
+          print('doing teardown')
 
 
 Setup and teardown functions to functions and methods are known as "fixtures",

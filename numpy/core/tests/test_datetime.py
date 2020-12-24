@@ -26,6 +26,7 @@ class TestDateTime:
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
+                     'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]' % unit)
             assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
@@ -428,6 +429,10 @@ class TestDateTime:
         expected = np.array(datetime.timedelta(seconds=20),
                             np.timedelta64)
         assert_equal(actual, expected)
+
+    def test_timedelta_nat_format(self):
+        # gh-17552
+        assert_equal('NaT', '{0}'.format(np.timedelta64('nat')))
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
@@ -1653,8 +1658,9 @@ class TestDateTime:
                      '1959-10-13T12:34:56')
         assert_equal(np.datetime_as_string(np.datetime64(datetime, 'ms')),
                      '1959-10-13T12:34:56.789')
-        assert_equal(np.datetime_as_string(np.datetime64(datetime, 'us')),
-                     '1959-10-13T12:34:56.789012')
+        for us in ['us', 'μs', b'us']:  # check non-ascii and bytes too
+            assert_equal(np.datetime_as_string(np.datetime64(datetime, us)),
+                         '1959-10-13T12:34:56.789012')
 
         datetime = '1969-12-31T23:34:56.789012345678901234'
 
@@ -2389,3 +2395,19 @@ class TestDateTimeData:
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
+
+    def test_bytes(self):
+        # byte units are converted to unicode
+        dt = np.datetime64('2000', (b'ms', 5))
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+        dt = np.datetime64('2000', b'5ms')
+        assert np.datetime_data(dt.dtype) == ('ms', 5)
+
+    def test_non_ascii(self):
+        # μs is normalized to μ
+        dt = np.datetime64('2000', ('μs', 5))
+        assert np.datetime_data(dt.dtype) == ('us', 5)
+
+        dt = np.datetime64('2000', '5μs')
+        assert np.datetime_data(dt.dtype) == ('us', 5)

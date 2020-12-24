@@ -14,7 +14,7 @@ from numpy.testing import (
         assert_raises_regex, assert_warns, suppress_warnings,
         _assert_valid_refcount, HAS_REFCOUNT,
         )
-from numpy.testing._private.utils import _no_tracing
+from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
 
 try:
@@ -1506,10 +1506,10 @@ class TestRegression:
                 test_type(t)
 
     def test_buffer_hashlib(self):
-        from hashlib import md5
+        from hashlib import sha256
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
-        assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
+        assert_equal(sha256(x).hexdigest(), '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d')
 
     def test_0d_string_scalar(self):
         # Bug #1436; the following should succeed
@@ -2488,3 +2488,39 @@ class TestRegression:
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
+
+    def test_complex_conversion_error(self):
+        # gh-17068
+        with pytest.raises(TypeError, match=r"Unable to convert dtype.*"):
+            complex(np.array("now", np.datetime64))
+
+    def test__array_interface__descr(self):
+        # gh-17068
+        dt = np.dtype(dict(names=['a', 'b'],
+                           offsets=[0, 0],
+                           formats=[np.int64, np.int64]))
+        descr = np.array((1, 1), dtype=dt).__array_interface__['descr']
+        assert descr == [('', '|V8')]  # instead of [(b'', '|V8')]
+
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @requires_memory(free_bytes=9e9)
+    def test_dot_big_stride(self):
+        # gh-17111
+        # blas stride = stride//itemsize > int32 max
+        int32_max = np.iinfo(np.int32).max
+        n = int32_max + 3
+        a = np.empty([n], dtype=np.float32)
+        b = a[::n-1]
+        b[...] = 1
+        assert b.strides[0] > int32_max * b.dtype.itemsize
+        assert np.dot(b, b) == 2.0
+
+    def test_frompyfunc_name(self):
+        # name conversion was failing for python 3 strings
+        # resulting in the default '?' name. Also test utf-8
+        # encoding using non-ascii name.
+        def cassé(x):
+            return x
+
+        f = np.frompyfunc(cassé, 1, 1)
+        assert str(f) == "<ufunc 'cassé (vectorized)'>"

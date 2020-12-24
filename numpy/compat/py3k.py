@@ -18,7 +18,7 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
 
 import sys
 import os
-from pathlib import Path, PurePath
+from pathlib import Path
 import io
 
 import abc
@@ -78,11 +78,11 @@ def asunicode_nested(x):
 
 def is_pathlib_path(obj):
     """
-    Check whether obj is a pathlib.Path object.
+    Check whether obj is a `pathlib.Path` object.
 
-    Prefer using `isinstance(obj, os_PathLike)` instead of this function.
+    Prefer using ``isinstance(obj, os.PathLike)`` instead of this function.
     """
-    return Path is not None and isinstance(obj, Path)
+    return isinstance(obj, Path)
 
 # from Python 3.7
 class contextlib_nullcontext:
@@ -94,6 +94,9 @@ class contextlib_nullcontext:
     cm = optional_cm if condition else nullcontext()
     with cm:
         # Perform operation, using optional_cm if condition is True
+
+    .. note::
+        Prefer using `contextlib.nullcontext` instead of this context manager.
     """
 
     def __init__(self, enter_result=None):
@@ -132,55 +135,5 @@ def npy_load_module(name, fn, info=None):
     return SourceFileLoader(name, fn).load_module()
 
 
-# Backport os.fs_path, os.PathLike, and PurePath.__fspath__
-if sys.version_info[:2] >= (3, 6):
-    os_fspath = os.fspath
-    os_PathLike = os.PathLike
-else:
-    def _PurePath__fspath__(self):
-        return str(self)
-
-    class os_PathLike(abc_ABC):
-        """Abstract base class for implementing the file system path protocol."""
-
-        @abc.abstractmethod
-        def __fspath__(self):
-            """Return the file system path representation of the object."""
-            raise NotImplementedError
-
-        @classmethod
-        def __subclasshook__(cls, subclass):
-            if PurePath is not None and issubclass(subclass, PurePath):
-                return True
-            return hasattr(subclass, '__fspath__')
-
-
-    def os_fspath(path):
-        """Return the path representation of a path-like object.
-        If str or bytes is passed in, it is returned unchanged. Otherwise the
-        os.PathLike interface is used to get the path representation. If the
-        path representation is not str or bytes, TypeError is raised. If the
-        provided path is not str, bytes, or os.PathLike, TypeError is raised.
-        """
-        if isinstance(path, (str, bytes)):
-            return path
-
-        # Work from the object's type to match method resolution of other magic
-        # methods.
-        path_type = type(path)
-        try:
-            path_repr = path_type.__fspath__(path)
-        except AttributeError:
-            if hasattr(path_type, '__fspath__'):
-                raise
-            elif PurePath is not None and issubclass(path_type, PurePath):
-                return _PurePath__fspath__(path)
-            else:
-                raise TypeError("expected str, bytes or os.PathLike object, "
-                                "not " + path_type.__name__)
-        if isinstance(path_repr, (str, bytes)):
-            return path_repr
-        else:
-            raise TypeError("expected {}.__fspath__() to return str or bytes, "
-                            "not {}".format(path_type.__name__,
-                                            type(path_repr).__name__))
+os_fspath = os.fspath
+os_PathLike = os.PathLike

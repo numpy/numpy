@@ -1750,73 +1750,70 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     return 1;
 
 broadcast_error: {
-        PyObject *errmsg, *tmp;
         npy_intp remdims[NPY_MAXDIMS];
-        char *tmpstr;
 
         if (op_axes == NULL) {
-            errmsg = PyUString_FromString("operands could not be broadcast "
-                                          "together with shapes ");
-            if (errmsg == NULL) {
+            PyObject *shape1 = PyUnicode_FromString("");
+            if (shape1 == NULL) {
                 return 0;
             }
             for (iop = 0; iop < nop; ++iop) {
                 if (op[iop] != NULL) {
-                    tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
-                                                    PyArray_DIMS(op[iop]),
-                                                    " ");
+                    int ndims = PyArray_NDIM(op[iop]);
+                    npy_intp *dims = PyArray_DIMS(op[iop]);
+                    PyObject *tmp = convert_shape_to_string(ndims, dims, " ");
                     if (tmp == NULL) {
-                        Py_DECREF(errmsg);
+                        Py_DECREF(shape1);
                         return 0;
                     }
-                    PyUString_ConcatAndDel(&errmsg, tmp);
-                    if (errmsg == NULL) {
+                    Py_SETREF(shape1, PyUnicode_Concat(shape1, tmp));
+                    Py_DECREF(tmp);
+                    if (shape1 == NULL) {
                         return 0;
                     }
                 }
             }
-            if (itershape != NULL) {
-                tmp = PyUString_FromString("and requested shape ");
-                if (tmp == NULL) {
-                    Py_DECREF(errmsg);
-                    return 0;
-                }
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    return 0;
-                }
-
-                tmp = convert_shape_to_string(ndim, itershape, "");
-                if (tmp == NULL) {
-                    Py_DECREF(errmsg);
-                    return 0;
-                }
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    return 0;
-                }
-
+            if (itershape == NULL) {
+                PyErr_Format(PyExc_ValueError,
+                        "operands could not be broadcast together with "
+                        "shapes %S", shape1);
+                Py_DECREF(shape1);
+                return 0;
             }
-            PyErr_SetObject(PyExc_ValueError, errmsg);
-            Py_DECREF(errmsg);
+            else {
+                PyObject *shape2 = convert_shape_to_string(ndim, itershape, "");
+                if (shape2 == NULL) {
+                    Py_DECREF(shape1);
+                    return 0;
+                }
+                PyErr_Format(PyExc_ValueError,
+                        "operands could not be broadcast together with "
+                        "shapes %S and requested shape %S", shape1, shape2);
+                Py_DECREF(shape1);
+                Py_DECREF(shape2);
+                return 0;
+            }
         }
         else {
-            errmsg = PyUString_FromString("operands could not be broadcast "
-                                          "together with remapped shapes "
-                                          "[original->remapped]: ");
+            PyObject *shape1 = PyUnicode_FromString("");
+            if (shape1 == NULL) {
+                return 0;
+            }
             for (iop = 0; iop < nop; ++iop) {
                 if (op[iop] != NULL) {
                     int *axes = op_axes[iop];
+                    int ndims = PyArray_NDIM(op[iop]);
+                    npy_intp *dims = PyArray_DIMS(op[iop]);
+                    char *tmpstr = (axes == NULL) ? " " : "->";
 
-                    tmpstr = (axes == NULL) ? " " : "->";
-                    tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
-                                                    PyArray_DIMS(op[iop]),
-                                                    tmpstr);
+                    PyObject *tmp = convert_shape_to_string(ndims, dims, tmpstr);
                     if (tmp == NULL) {
+                        Py_DECREF(shape1);
                         return 0;
                     }
-                    PyUString_ConcatAndDel(&errmsg, tmp);
-                    if (errmsg == NULL) {
+                    Py_SETREF(shape1, PyUnicode_Concat(shape1, tmp));
+                    Py_DECREF(tmp);
+                    if (shape1 == NULL) {
                         return 0;
                     }
 
@@ -1831,80 +1828,83 @@ broadcast_error: {
                                 remdims[idim] = -1;
                             }
                         }
-                        tmp = convert_shape_to_string(ndim, remdims, " ");
+                        PyObject *tmp = convert_shape_to_string(ndim, remdims, " ");
                         if (tmp == NULL) {
+                            Py_DECREF(shape1);
                             return 0;
                         }
-                        PyUString_ConcatAndDel(&errmsg, tmp);
-                        if (errmsg == NULL) {
+                        Py_SETREF(shape1, PyUnicode_Concat(shape1, tmp));
+                        Py_DECREF(tmp);
+                        if (shape1 == NULL) {
                             return 0;
                         }
                     }
                 }
             }
-            if (itershape != NULL) {
-                tmp = PyUString_FromString("and requested shape ");
-                if (tmp == NULL) {
-                    Py_DECREF(errmsg);
-                    return 0;
-                }
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    return 0;
-                }
-
-                tmp = convert_shape_to_string(ndim, itershape, "");
-                if (tmp == NULL) {
-                    Py_DECREF(errmsg);
-                    return 0;
-                }
-                PyUString_ConcatAndDel(&errmsg, tmp);
-                if (errmsg == NULL) {
-                    return 0;
-                }
-
+            if (itershape == NULL) {
+                PyErr_Format(PyExc_ValueError,
+                        "operands could not be broadcast together with "
+                        "remapped shapes [original->remapped]: %S", shape1);
+                Py_DECREF(shape1);
+                return 0;
             }
-            PyErr_SetObject(PyExc_ValueError, errmsg);
-            Py_DECREF(errmsg);
+            else {
+                PyObject *shape2 = convert_shape_to_string(ndim, itershape, "");
+                if (shape2 == NULL) {
+                    Py_DECREF(shape1);
+                    return 0;
+                }
+                PyErr_Format(PyExc_ValueError,
+                        "operands could not be broadcast together with "
+                        "remapped shapes [original->remapped]: %S and "
+                        "requested shape %S", shape1, shape2);
+                Py_DECREF(shape1);
+                Py_DECREF(shape2);
+                return 0;
+            }
         }
-
-        return 0;
     }
 
 operand_different_than_broadcast: {
-        npy_intp remdims[NPY_MAXDIMS];
-        PyObject *errmsg, *tmp;
+        /* operand shape */
+        int ndims = PyArray_NDIM(op[iop]);
+        npy_intp *dims = PyArray_DIMS(op[iop]);
+        PyObject *shape1 = convert_shape_to_string(ndims, dims, "");
+        if (shape1 == NULL) {
+            return 0;
+        }
 
-        /* Start of error message */
-        if (op_flags[iop] & NPY_ITER_READONLY) {
-            errmsg = PyUString_FromString("non-broadcastable operand "
-                                          "with shape ");
+        /* Broadcast shape */
+        PyObject *shape2 = convert_shape_to_string(ndim, broadcast_shape, "");
+        if (shape2 == NULL) {
+            Py_DECREF(shape1);
+            return 0;
+        }
+
+        if (op_axes == NULL || op_axes[iop] == NULL) {
+            /* operand shape not remapped */
+
+            if (op_flags[iop] & NPY_ITER_READONLY) {
+                PyErr_Format(PyExc_ValueError,
+                    "non-broadcastable operand with shape %S doesn't "
+                    "match the broadcast shape %S", shape1, shape2);
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                    "non-broadcastable output operand with shape %S doesn't "
+                    "match the broadcast shape %S", shape1, shape2);
+            }
+            Py_DECREF(shape1);
+            Py_DECREF(shape2);
+            return 0;
         }
         else {
-            errmsg = PyUString_FromString("non-broadcastable output "
-                                          "operand with shape ");
-        }
-        if (errmsg == NULL) {
-            return 0;
-        }
+            /* operand shape remapped */
 
-        /* Operand shape */
-        tmp = convert_shape_to_string(PyArray_NDIM(op[iop]),
-                                        PyArray_DIMS(op[iop]), "");
-        if (tmp == NULL) {
-            return 0;
-        }
-        PyUString_ConcatAndDel(&errmsg, tmp);
-        if (errmsg == NULL) {
-            return 0;
-        }
-        /* Remapped operand shape */
-        if (op_axes != NULL && op_axes[iop] != NULL) {
+            npy_intp remdims[NPY_MAXDIMS];
             int *axes = op_axes[iop];
-
             for (idim = 0; idim < ndim; ++idim) {
-                npy_intp i = axes[ndim-idim-1];
-
+                npy_intp i = axes[ndim - idim - 1];
                 if (i >= 0 && i < PyArray_NDIM(op[iop])) {
                     remdims[idim] = PyArray_DIM(op[iop], i);
                 }
@@ -1913,48 +1913,30 @@ operand_different_than_broadcast: {
                 }
             }
 
-            tmp = PyUString_FromString(" [remapped to ");
-            if (tmp == NULL) {
+            PyObject *shape3 = convert_shape_to_string(ndim, remdims, "");
+            if (shape3 == NULL) {
+                Py_DECREF(shape1);
+                Py_DECREF(shape2);
                 return 0;
             }
-            PyUString_ConcatAndDel(&errmsg, tmp);
-            if (errmsg == NULL) {
-                return 0;
+
+            if (op_flags[iop] & NPY_ITER_READONLY) {
+                PyErr_Format(PyExc_ValueError,
+                    "non-broadcastable operand with shape %S "
+                    "[remapped to %S] doesn't match the broadcast shape %S",
+                    shape1, shape3, shape2);
             }
-
-            tmp = convert_shape_to_string(ndim, remdims, "]");
-            if (tmp == NULL) {
-                return 0;
+            else {
+                PyErr_Format(PyExc_ValueError,
+                    "non-broadcastable output operand with shape %S "
+                    "[remapped to %S] doesn't match the broadcast shape %S",
+                    shape1, shape3, shape2);
             }
-            PyUString_ConcatAndDel(&errmsg, tmp);
-            if (errmsg == NULL) {
-                return 0;
-            }
-        }
-
-        tmp = PyUString_FromString(" doesn't match the broadcast shape ");
-        if (tmp == NULL) {
+            Py_DECREF(shape1);
+            Py_DECREF(shape2);
+            Py_DECREF(shape3);
             return 0;
         }
-        PyUString_ConcatAndDel(&errmsg, tmp);
-        if (errmsg == NULL) {
-            return 0;
-        }
-
-        /* Broadcast shape */
-        tmp = convert_shape_to_string(ndim, broadcast_shape, "");
-        if (tmp == NULL) {
-            return 0;
-        }
-        PyUString_ConcatAndDel(&errmsg, tmp);
-        if (errmsg == NULL) {
-            return 0;
-        }
-
-        PyErr_SetObject(PyExc_ValueError, errmsg);
-        Py_DECREF(errmsg);
-
-        return 0;
     }
 }
 

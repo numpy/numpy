@@ -160,7 +160,7 @@ def fft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        if `axes` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -272,7 +272,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axes` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -358,7 +358,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axis` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -461,7 +461,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axis` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See Also
     --------
@@ -556,7 +556,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     Raises
     ------
     IndexError
-        If `axis` is larger than the last axis of `a`.
+        If `axis` is not a valid axis of `a`.
 
     See also
     --------
@@ -1242,6 +1242,15 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     This is really just `rfftn` with different default behavior.
     For more details see `rfftn`.
 
+    Examples
+    --------
+    >>> a = np.mgrid[:5, :5][0]
+    >>> np.fft.rfft2(a)
+    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        ],
+           [-12.5+17.20477401j,   0.  +0.j        ,   0.  +0.j        ],
+           [-12.5 +4.0614962j ,   0.  +0.j        ,   0.  +0.j        ],
+           [-12.5 -4.0614962j ,   0.  +0.j        ,   0.  +0.j        ],
+           [-12.5-17.20477401j,   0.  +0.j        ,   0.  +0.j        ]])
     """
     return rfftn(a, s, axes, norm)
 
@@ -1399,5 +1408,15 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     This is really `irfftn` with different defaults.
     For more details see `irfftn`.
 
+    Examples
+    --------
+    >>> a = np.mgrid[:5, :5][0]
+    >>> A = np.fft.rfft2(a)
+    >>> np.fft.irfft2(A, s=a.shape)
+    array([[0., 0., 0., 0., 0.],
+           [1., 1., 1., 1., 1.],
+           [2., 2., 2., 2., 2.],
+           [3., 3., 3., 3., 3.],
+           [4., 4., 4., 4., 4.]])
     """
     return irfftn(a, s, axes, norm)

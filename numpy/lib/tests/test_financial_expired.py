@@ -3,10 +3,11 @@ import pytest
 import numpy as np
 
 
+@pytest.mark.skipif(sys.version_info[:2] < (3, 7),
+                    reason="requires python 3.7 or higher")
 def test_financial_expired():
-    if sys.version_info[:2] >= (3, 7):
-        match = 'NEP 32'
-    else:
-        match = None
-    with pytest.raises(AttributeError, match=match):
-        np.fv
+    match = 'NEP 32'
+    with pytest.warns(DeprecationWarning, match=match):
+        func = np.fv
+    with pytest.raises(RuntimeError, match=match):
+        func(1, 2, 3)

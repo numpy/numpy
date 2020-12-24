@@ -30,6 +30,7 @@ def configuration(parent_package='', top_path=None):
     config.add_data_files(
         'src/fortranobject.c',
         'src/fortranobject.h')
+    config.add_data_files('*.pyi')
     return config
 
 

@@ -60,7 +60,7 @@ def _checknames(descr, names=None):
         elif isinstance(names, str):
             new_names = names.split(',')
         else:
-            raise NameError("illegal input names %s" % repr(names))
+            raise NameError(f'illegal input names {names!r}')
         nnames = len(new_names)
         if nnames < ndescr:
             new_names += default_names[nnames:]
@@ -198,8 +198,8 @@ class MaskedRecords(MaskedArray):
         fielddict = ndarray.__getattribute__(self, 'dtype').fields
         try:
             res = fielddict[attr][:2]
-        except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+        except (TypeError, KeyError) as e:
+            raise AttributeError(f'record array has no attribute {attr}') from e
         # So far, so good
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
@@ -274,7 +274,7 @@ class MaskedRecords(MaskedArray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError("record array has no attribute %s" % attr)
+            raise AttributeError(f'record array has no attribute {attr}')
 
         if val is masked:
             _fill_value = _localdict['_fill_value']
@@ -337,13 +337,13 @@ class MaskedRecords(MaskedArray):
 
         """
         if self.size > 1:
-            mstr = ["(%s)" % ",".join([str(i) for i in s])
+            mstr = [f"({','.join([str(i) for i in s])})"
                     for s in zip(*[getattr(self, f) for f in self.dtype.names])]
-            return "[%s]" % ", ".join(mstr)
+            return f"[{', '.join(mstr)}]"
         else:
-            mstr = ["%s" % ",".join([str(i) for i in s])
+            mstr = [f"{','.join([str(i) for i in s])}"
                     for s in zip([getattr(self, f) for f in self.dtype.names])]
-            return "(%s)" % ", ".join(mstr)
+            return f"({', '.join(mstr)})"
 
     def __repr__(self):
         """
@@ -657,7 +657,7 @@ def openfile(fname):
     try:
         f = open(fname)
     except IOError:
-        raise IOError("No such file: '%s'" % fname)
+        raise IOError(f"No such file: '{fname}'")
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f

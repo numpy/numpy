@@ -100,4 +100,39 @@
 #define npyv_div_f32 vec_div
 #define npyv_div_f64 vec_div
 
+/***************************
+ * FUSED
+ ***************************/
+// multiply and add, a*b + c
+#define npyv_muladd_f32 vec_madd
+#define npyv_muladd_f64 vec_madd
+// multiply and subtract, a*b - c
+#define npyv_mulsub_f32 vec_msub
+#define npyv_mulsub_f64 vec_msub
+// negate multiply and add, -(a*b) + c
+#define npyv_nmuladd_f32 vec_nmsub // equivalent to -(a*b - c)
+#define npyv_nmuladd_f64 vec_nmsub
+// negate multiply and subtract, -(a*b) - c
+#define npyv_nmulsub_f32 vec_nmadd // equivalent to -(a*b + c)
+#define npyv_nmulsub_f64 vec_nmadd
+
+// Horizontal add: Calculates the sum of all vector elements.
+
+NPY_FINLINE npy_uint32 npyv_sum_u32(npyv_u32 a)
+{
+    const npyv_u32 rs = vec_add(a, vec_sld(a, a, 8));
+    return vec_extract(vec_add(rs, vec_sld(rs, rs, 4)), 0);
+}
+
+NPY_FINLINE float npyv_sum_f32(npyv_f32 a)
+{
+    npyv_f32 sum = vec_add(a, npyv_combineh_f32(a, a));
+    return vec_extract(sum, 0) + vec_extract(sum, 1);
+}
+
+NPY_FINLINE double npyv_sum_f64(npyv_f64 a)
+{
+    return vec_extract(a, 0) + vec_extract(a, 1);
+}
+
 #endif // _NPY_SIMD_VSX_ARITHMETIC_H

@@ -48,6 +48,62 @@ typedef double     npyv_lanetype_f64;
     #define NPY_SIMD 0
     #define NPY_SIMD_WIDTH 0
     #define NPY_SIMD_F64 0
+    #define NPY_SIMD_FMA3 0
+#endif
+
+// enable emulated mask operations for all SIMD extension except for AVX512
+#if !defined(NPY_HAVE_AVX512F) && NPY_SIMD && NPY_SIMD < 512
+    #include "emulate_maskop.h"
+#endif
+
+/**
+ * Some SIMD extensions currently(AVX2, AVX512F) require (de facto)
+ * a maximum number of strides sizes when dealing with non-contiguous memory access.
+ *
+ * Therefore the following functions must be used to check the maximum
+ * acceptable limit of strides before using any of non-contiguous load/store intrinsics.
+ *
+ * For instance:
+ *  npy_intp ld_stride = step[0] / sizeof(float);
+ *  npy_intp st_stride = step[1] / sizeof(float);
+ *
+ *  if (npyv_loadable_stride_f32(ld_stride) && npyv_storable_stride_f32(st_stride)) {
+ *      for (;;)
+ *          npyv_f32 a = npyv_loadn_f32(ld_pointer, ld_stride);
+ *          // ...
+ *          npyv_storen_f32(st_pointer, st_stride, a);
+ *  }
+ *  else {
+ *      for (;;)
+ *          // C scalars
+ *  }
+ */
+#ifndef NPY_SIMD_MAXLOAD_STRIDE32
+    #define NPY_SIMD_MAXLOAD_STRIDE32 0
+#endif
+#ifndef NPY_SIMD_MAXSTORE_STRIDE32
+    #define NPY_SIMD_MAXSTORE_STRIDE32 0
+#endif
+#ifndef NPY_SIMD_MAXLOAD_STRIDE64
+    #define NPY_SIMD_MAXLOAD_STRIDE64 0
+#endif
+#ifndef NPY_SIMD_MAXSTORE_STRIDE64
+    #define NPY_SIMD_MAXSTORE_STRIDE64 0
+#endif
+#define NPYV_IMPL_MAXSTRIDE(SFX, MAXLOAD, MAXSTORE) \
+    NPY_FINLINE int npyv_loadable_stride_##SFX(npy_intp stride) \
+    { return MAXLOAD > 0 ? llabs(stride) <= MAXLOAD : 1; } \
+    NPY_FINLINE int npyv_storable_stride_##SFX(npy_intp stride) \
+    { return MAXSTORE > 0 ? llabs(stride) <= MAXSTORE : 1; }
+#if NPY_SIMD
+    NPYV_IMPL_MAXSTRIDE(u32, NPY_SIMD_MAXLOAD_STRIDE32, NPY_SIMD_MAXSTORE_STRIDE32)
+    NPYV_IMPL_MAXSTRIDE(s32, NPY_SIMD_MAXLOAD_STRIDE32, NPY_SIMD_MAXSTORE_STRIDE32)
+    NPYV_IMPL_MAXSTRIDE(f32, NPY_SIMD_MAXLOAD_STRIDE32, NPY_SIMD_MAXSTORE_STRIDE32)
+    NPYV_IMPL_MAXSTRIDE(u64, NPY_SIMD_MAXLOAD_STRIDE64, NPY_SIMD_MAXSTORE_STRIDE64)
+    NPYV_IMPL_MAXSTRIDE(s64, NPY_SIMD_MAXLOAD_STRIDE64, NPY_SIMD_MAXSTORE_STRIDE64)
+#endif
+#if NPY_SIMD_F64
+    NPYV_IMPL_MAXSTRIDE(f64, NPY_SIMD_MAXLOAD_STRIDE64, NPY_SIMD_MAXSTORE_STRIDE64)
 #endif
 
 #ifdef __cplusplus

@@ -5,6 +5,7 @@
 #define NPY_SIMD 128
 #define NPY_SIMD_WIDTH 16
 #define NPY_SIMD_F64 1
+#define NPY_SIMD_FMA3 1 // native support
 
 typedef __vector unsigned char      npyv_u8;
 typedef __vector signed char        npyv_s8;
@@ -62,3 +63,4 @@ typedef struct { npyv_f64 val[3]; } npyv_f64x3;
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "math.h"

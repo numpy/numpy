@@ -132,7 +132,7 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
                     "(Hash) names and fields inconsistent ???");
             return -1;
         }
-        if (!PyUString_Check(key)) {
+        if (!PyUnicode_Check(key)) {
             PyErr_SetString(PyExc_SystemError,
                     "(Hash) key of dtype dict not a string ???");
             return -1;
@@ -165,7 +165,7 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
         }
 
         foffset = PyTuple_GET_ITEM(value, 1);
-        if (!PyInt_Check(foffset)) {
+        if (!PyLong_Check(foffset)) {
             PyErr_SetString(PyExc_SystemError,
                     "(Hash) Second item in compound dtype tuple not an int ???");
             return -1;
@@ -208,7 +208,7 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
             PyList_Append(l, item);
         }
     }
-    else if (PyInt_Check(adescr->shape)) {
+    else if (PyLong_Check(adescr->shape)) {
         PyList_Append(l, adescr->shape);
     }
     else {

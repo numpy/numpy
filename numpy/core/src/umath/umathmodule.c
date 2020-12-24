@@ -75,7 +75,8 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     int nin, nout, i, nargs;
     PyUFunc_PyFuncData *fdata;
     PyUFuncObject *self;
-    char *fname, *str, *types, *doc;
+    const char *fname = NULL;
+    char *str, *types, *doc;
     Py_ssize_t fname_len = -1;
     void * ptr, **data;
     int offset[2];
@@ -95,12 +96,12 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 
     pyname = PyObject_GetAttrString(function, "__name__");
     if (pyname) {
-        (void) PyString_AsStringAndSize(pyname, &fname, &fname_len);
+        fname = PyUnicode_AsUTF8AndSize(pyname, &fname_len);
     }
-    if (PyErr_Occurred()) {
+    if (fname == NULL) {
+        PyErr_Clear();
         fname = "?";
         fname_len = 1;
-        PyErr_Clear();
     }
 
     /*
@@ -237,23 +238,23 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 static int
 intern_strings(void)
 {
-    if (!(npy_um_str_out = PyUString_InternFromString("out"))) return -1;
-    if (!(npy_um_str_where = PyUString_InternFromString("where"))) return -1;
-    if (!(npy_um_str_axes = PyUString_InternFromString("axes"))) return -1;
-    if (!(npy_um_str_axis = PyUString_InternFromString("axis"))) return -1;
-    if (!(npy_um_str_keepdims = PyUString_InternFromString("keepdims"))) return -1;
-    if (!(npy_um_str_casting = PyUString_InternFromString("casting"))) return -1;
-    if (!(npy_um_str_order = PyUString_InternFromString("order"))) return -1;
-    if (!(npy_um_str_dtype = PyUString_InternFromString("dtype"))) return -1;
-    if (!(npy_um_str_subok = PyUString_InternFromString("subok"))) return -1;
-    if (!(npy_um_str_signature = PyUString_InternFromString("signature"))) return -1;
-    if (!(npy_um_str_sig = PyUString_InternFromString("sig"))) return -1;
-    if (!(npy_um_str_extobj = PyUString_InternFromString("extobj"))) return -1;
-    if (!(npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__"))) return -1;
-    if (!(npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__"))) return -1;
-    if (!(npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__"))) return -1;
-    if (!(npy_um_str_ufunc = PyUString_InternFromString("__array_ufunc__"))) return -1;
-    if (!(npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME))) return -1;
+    if (!(npy_um_str_out = PyUnicode_InternFromString("out"))) return -1;
+    if (!(npy_um_str_where = PyUnicode_InternFromString("where"))) return -1;
+    if (!(npy_um_str_axes = PyUnicode_InternFromString("axes"))) return -1;
+    if (!(npy_um_str_axis = PyUnicode_InternFromString("axis"))) return -1;
+    if (!(npy_um_str_keepdims = PyUnicode_InternFromString("keepdims"))) return -1;
+    if (!(npy_um_str_casting = PyUnicode_InternFromString("casting"))) return -1;
+    if (!(npy_um_str_order = PyUnicode_InternFromString("order"))) return -1;
+    if (!(npy_um_str_dtype = PyUnicode_InternFromString("dtype"))) return -1;
+    if (!(npy_um_str_subok = PyUnicode_InternFromString("subok"))) return -1;
+    if (!(npy_um_str_signature = PyUnicode_InternFromString("signature"))) return -1;
+    if (!(npy_um_str_sig = PyUnicode_InternFromString("sig"))) return -1;
+    if (!(npy_um_str_extobj = PyUnicode_InternFromString("extobj"))) return -1;
+    if (!(npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__"))) return -1;
+    if (!(npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__"))) return -1;
+    if (!(npy_um_str_array_finalize = PyUnicode_InternFromString("__array_finalize__"))) return -1;
+    if (!(npy_um_str_ufunc = PyUnicode_InternFromString("__array_ufunc__"))) return -1;
+    if (!(npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME))) return -1;
     return 0;
 }
 

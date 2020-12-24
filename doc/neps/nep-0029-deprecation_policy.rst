@@ -1,7 +1,7 @@
 .. _NEP29:
 
 ==================================================================================
-NEP 29 — Recommend Python and Numpy version support as a community policy standard
+NEP 29 — Recommend Python and NumPy version support as a community policy standard
 ==================================================================================
 
 
@@ -77,7 +77,7 @@ release in November 2020 should support Python 3.7 and newer.
 The current Python release cadence is 18 months so a 42 month window
 ensures that there will always be at least two minor versions of Python
 in the window.  The window is extended 6 months beyond the anticipated two-release
-interval for Python to provides resilience against small fluctuations /
+interval for Python to provide resilience against small fluctuations /
 delays in its release schedule.
 
 Because Python minor version support is based only on historical
@@ -111,8 +111,10 @@ Jun 23, 2020 3.7+   1.15+
 Jul 23, 2020 3.7+   1.16+
 Jan 13, 2021 3.7+   1.17+
 Jul 26, 2021 3.7+   1.18+
-Dec 26, 2021 3.8+   1.18+
-Apr 14, 2023 3.9+   1.18+
+Dec 22, 2021 3.7+   1.19+
+Dec 26, 2021 3.8+   1.19+
+Jun 21, 2022 3.8+   1.20+
+Apr 14, 2023 3.9+   1.20+
 ============ ====== =====
 
 
@@ -122,12 +124,14 @@ Drop Schedule
 ::
 
   On next release, drop support for Python 3.5 (initially released on Sep 13, 2015)
-  On Jan 07, 2020 drop support for Numpy 1.14 (initially released on Jan 06, 2018)
+  On Jan 07, 2020 drop support for NumPy 1.14 (initially released on Jan 06, 2018)
   On Jun 23, 2020 drop support for Python 3.6 (initially released on Dec 23, 2016)
-  On Jul 23, 2020 drop support for Numpy 1.15 (initially released on Jul 23, 2018)
-  On Jan 13, 2021 drop support for Numpy 1.16 (initially released on Jan 13, 2019)
-  On Jul 26, 2021 drop support for Numpy 1.17 (initially released on Jul 26, 2019)
+  On Jul 23, 2020 drop support for NumPy 1.15 (initially released on Jul 23, 2018)
+  On Jan 13, 2021 drop support for NumPy 1.16 (initially released on Jan 13, 2019)
+  On Jul 26, 2021 drop support for NumPy 1.17 (initially released on Jul 26, 2019)
+  On Dec 22, 2021 drop support for NumPy 1.18 (initially released on Dec 22, 2019)
   On Dec 26, 2021 drop support for Python 3.7 (initially released on Jun 27, 2018)
+  On Jun 21, 2022 drop support for NumPy 1.19 (initially released on Jun 20, 2020)
   On Apr 14, 2023 drop support for Python 3.8 (initially released on Oct 14, 2019)
 
 
@@ -245,16 +249,18 @@ Code to generate support and drop schedule tables ::
 
   from datetime import datetime, timedelta
 
-  data = """Jan 15, 2017: Numpy 1.12
+  data = """Jan 15, 2017: NumPy 1.12
   Sep 13, 2015: Python 3.5
   Dec 23, 2016: Python 3.6
   Jun 27, 2018: Python 3.7
-  Jun 07, 2017: Numpy 1.13
-  Jan 06, 2018: Numpy 1.14
-  Jul 23, 2018: Numpy 1.15
-  Jan 13, 2019: Numpy 1.16
-  Jul 26, 2019: Numpy 1.17
+  Jun 07, 2017: NumPy 1.13
+  Jan 06, 2018: NumPy 1.14
+  Jul 23, 2018: NumPy 1.15
+  Jan 13, 2019: NumPy 1.16
+  Jul 26, 2019: NumPy 1.17
   Oct 14, 2019: Python 3.8
+  Dec 22, 2019: NumPy 1.18
+  Jun 20, 2020: NumPy 1.19
   """
 
   releases = []
@@ -274,8 +280,12 @@ Code to generate support and drop schedule tables ::
 
   releases = sorted(releases, key=lambda x: x[0])
 
-  minpy = '3.9+'
-  minnum = '1.18+'
+
+  py_major,py_minor = sorted([int(x) for x in r[2].split('.')] for r in releases if r[1] == 'Python')[-1]
+  minpy = f"{py_major}.{py_minor+1}+"
+
+  num_major,num_minor = sorted([int(x) for x in r[2].split('.')] for r in releases if r[1] == 'NumPy')[-1]
+  minnum = f"{num_major}.{num_minor+1}+"
 
   toprint_drop_dates = ['']
   toprint_support_table = []
@@ -289,14 +299,14 @@ Code to generate support and drop schedule tables ::
           minnum = v+'+'
       else:
           minpy = v+'+'
-
-  for e in toprint_drop_dates[::-1]:
+  print("On next release, drop support for Python 3.5 (initially released on Sep 13, 2015)")
+  for e in toprint_drop_dates[-4::-1]:
       print(e)
 
   print('============ ====== =====')
   print('Date         Python NumPy')
   print('------------ ------ -----')
-  for e in toprint_support_table[::-1]:
+  for e in toprint_support_table[-4::-1]:
       print(e)
   print('============ ====== =====')
 

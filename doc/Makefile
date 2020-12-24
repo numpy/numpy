@@ -49,7 +49,7 @@ help:
 	@echo "  show      to show the html output in a browser"
 
 clean:
-	-rm -rf build/* 
+	-rm -rf build/*
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
 gitwash-update:
@@ -66,7 +66,7 @@ gitwash-update:
 
 # Build the current numpy version, and extract docs from it.
 # We have to be careful of some issues:
-# 
+#
 # - Everything must be done using the same Python version
 # - We must use eggs (otherwise they might override PYTHONPATH on import).
 # - Different versions of easy_install install to different directories (!)
@@ -80,8 +80,7 @@ UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" 
 
 NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
-GITVER ?= $(shell cd ..; $(PYTHON) -c "from setup import git_version; \
-				print(git_version()[:10])")
+GITVER ?= $(shell cd ..; $(PYTHON) -c "import versioneer as v; print(v.get_versions()['full-revisionid'][:10])")
 
 version-check:
 ifeq "$(GITVER)" "Unknown"
@@ -163,7 +162,7 @@ endif
 	@echo "    <!-- insert here -->"
 	@echo in build/merge/index.html,
 	@echo then \"git commit\", \"git push\"
-	
+
 
 #------------------------------------------------------------------------------
 # Basic Sphinx generation rules for different formats

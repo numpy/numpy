@@ -107,4 +107,13 @@ NPYV_IMPL_NEON_COMBINE(npyv_f64, f64)
 #define npyv_zip_u64 npyv_combine_u64
 #define npyv_zip_s64 npyv_combine_s64
 
+// Reverse elements of each 64-bit lane
+#define npyv_rev64_u8  vrev64q_u8
+#define npyv_rev64_s8  vrev64q_s8
+#define npyv_rev64_u16 vrev64q_u16
+#define npyv_rev64_s16 vrev64q_s16
+#define npyv_rev64_u32 vrev64q_u32
+#define npyv_rev64_s32 vrev64q_s32
+#define npyv_rev64_f32 vrev64q_f32
+
 #endif // _NPY_SIMD_NEON_REORDER_H

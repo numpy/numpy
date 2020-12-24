@@ -1,10 +1,16 @@
 #ifndef _NPY_SIMD_H_
     #error "Not a standalone header"
 #endif
-
 #define NPY_SIMD 256
 #define NPY_SIMD_WIDTH 32
 #define NPY_SIMD_F64 1
+#ifdef NPY_HAVE_FMA3
+    #define NPY_SIMD_FMA3 1 // native support
+#else
+    #define NPY_SIMD_FMA3 0 // fast emulated
+#endif
+// Enough limit to allow us to use _mm256_i32gather_*
+#define NPY_SIMD_MAXLOAD_STRIDE32 (0x7fffffff / 8)
 
 typedef __m256i npyv_u8;
 typedef __m256i npyv_s8;
@@ -65,3 +71,4 @@ typedef struct { __m256d val[3]; } npyv_f64x3;
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "math.h"

@@ -126,7 +126,7 @@ class GnuFCompiler(FCompiler):
                     target = '10.9'
                     s = f'Env. variable MACOSX_DEPLOYMENT_TARGET set to {target}'
                     warnings.warn(s, stacklevel=2)
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = str(target)
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -231,7 +231,7 @@ class GnuFCompiler(FCompiler):
 
     def _c_arch_flags(self):
         """ Return detected arch flags from CFLAGS """
-        from distutils import sysconfig
+        import sysconfig
         try:
             cflags = sysconfig.get_config_vars()['CFLAGS']
         except KeyError:

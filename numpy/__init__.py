@@ -130,11 +130,15 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    from .version import git_revision as __git_revision__
-    from .version import version as __version__
-
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
+
+    # get the version using versioneer
+    from ._version import get_versions
+    vinfo = get_versions()
+    __version__ = vinfo.get("closest-tag", vinfo["version"])
+    __git_version__ = vinfo.get("full-revisionid")
+    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -215,12 +219,11 @@ else:
     del Arrayterator
 
     # These names were removed in NumPy 1.20.  For at least one release,
-    # attempts to access these names in the numpy namespace will have an
-    # error message that refers to NEP 32 and points to the numpy_financial
-    # library.
+    # attempts to access these names in the numpy namespace will trigger
+    # a warning, and calling the function will raise an exception.
     _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
                         'ppmt', 'pv', 'rate']
-    __expired_attrs__ = {
+    __expired_functions__ = {
         name: (f'In accordance with NEP 32, the function {name} was removed '
                'from NumPy version 1.20.  A replacement for this function '
                'is available in the numpy_financial library: '
@@ -241,13 +244,19 @@ else:
         # module level getattr is only supported in 3.7 onwards
         # https://www.python.org/dev/peps/pep-0562/
         def __getattr__(attr):
-            # Raise AttributeError for expired attributes
+            # Warn for expired attributes, and return a dummy function
+            # that always raises an exception.
             try:
-                msg = __expired_attrs__[attr]
+                msg = __expired_functions__[attr]
             except KeyError:
                 pass
             else:
-                raise AttributeError(msg)
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
+                def _expired(*args, **kwds):
+                    raise RuntimeError(msg)
+
+                return _expired
 
             # Emit warnings for deprecated attributes
             try:
@@ -379,3 +388,13 @@ else:
 
     # Note that this will currently only make a difference on Linux
     core.multiarray._set_madvise_hugepage(use_hugepage)
+
+    # Give a warning if NumPy is reloaded or imported on a sub-interpreter
+    # We do this from python, since the C-module may not be reloaded and
+    # it is tidier organized.
+    core.multiarray._multiarray_umath._reload_guard()
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+

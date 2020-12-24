@@ -578,6 +578,28 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_ToString(self, order);
 }
 
+/* Like PyArray_ToFile but takes the file as a python object */
+static int
+PyArray_ToFileObject(PyArrayObject *self, PyObject *file, char *sep, char *format)
+{
+    npy_off_t orig_pos = 0;
+    FILE *fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
+
+    if (fd == NULL) {
+        return -1;
+    }
+
+    int write_ret = PyArray_ToFile(self, fd, sep, format);
+    PyObject *err_type, *err_value, *err_traceback;
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    int close_ret = npy_PyFile_DupClose2(file, fd, orig_pos);
+    npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+
+    if (write_ret || close_ret) {
+        return -1;
+    }
+    return 0;
+}
 
 /* This should grow an order= keyword to be consistent
  */
@@ -587,10 +609,8 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int own;
     PyObject *file;
-    FILE *fd;
     char *sep = "";
     char *format = "";
-    npy_off_t orig_pos = 0;
     static char *kwlist[] = {"file", "sep", "format", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|ss:tofile", kwlist,
@@ -615,25 +635,22 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         own = 0;
     }
 
-    fd = npy_PyFile_Dup2(file, "wb", &orig_pos);
-    if (fd == NULL) {
-        goto fail;
-    }
-    if (PyArray_ToFile(self, fd, sep, format) < 0) {
-        goto fail;
-    }
-    if (npy_PyFile_DupClose2(file, fd, orig_pos) < 0) {
-        goto fail;
-    }
-    if (own && npy_PyFile_CloseFile(file) < 0) {
-        goto fail;
-    }
-    Py_DECREF(file);
-    Py_RETURN_NONE;
+    int file_ret = PyArray_ToFileObject(self, file, sep, format);
+    int close_ret = 0;
 
-fail:
+    if (own) {
+        PyObject *err_type, *err_value, *err_traceback;
+        PyErr_Fetch(&err_type, &err_value, &err_traceback);
+        close_ret = npy_PyFile_CloseFile(file);
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
+    }
+
     Py_DECREF(file);
-    return NULL;
+
+    if (file_ret || close_ret) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -842,6 +859,21 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         ret = (PyArrayObject *)PyArray_NewLikeArray(
                                     self, order, dtype, subok);
         if (ret == NULL) {
+            return NULL;
+        }
+        /* NumPy 1.20, 2020-10-01 */
+        if ((PyArray_NDIM(self) != PyArray_NDIM(ret)) &&
+                DEPRECATE_FUTUREWARNING(
+                    "casting an array to a subarray dtype "
+                    "will not using broadcasting in the future, but cast each "
+                    "element to the new dtype and then append the dtype's shape "
+                    "to the new array. You can opt-in to the new behaviour, by "
+                    "additional field to the cast: "
+                    "`arr.astype(np.dtype([('f', dtype)]))['f']`.\n"
+                    "This may lead to a different result or to current failures "
+                    "succeeding.  "
+                    "(FutureWarning since NumPy 1.20)") < 0) {
+            Py_DECREF(ret);
             return NULL;
         }
 
@@ -1508,14 +1540,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else {
         PyObject *itemp, *otemp;
         PyObject *res;
-        NPY_COPY_PYOBJECT_PTR(&itemp, iptr);
-        NPY_COPY_PYOBJECT_PTR(&otemp, optr);
+        memcpy(&itemp, iptr, sizeof(itemp));
+        memcpy(&otemp, optr, sizeof(otemp));
         Py_XINCREF(itemp);
         /* call deepcopy on this argument */
         res = PyObject_CallFunctionObjArgs(deepcopy, itemp, visit, NULL);
         Py_XDECREF(itemp);
         Py_XDECREF(otemp);
-        NPY_COPY_PYOBJECT_PTR(optr, &res);
+        memcpy(optr, &res, sizeof(res));
     }
 
 }
@@ -1676,7 +1708,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
                      Py_BuildValue("ONc",
                                    (PyObject *)Py_TYPE(self),
                                    Py_BuildValue("(N)",
-                                                 PyInt_FromLong(0)),
+                                                 PyLong_FromLong(0)),
                                    /* dummy data-type */
                                    'b'));
 
@@ -1701,7 +1733,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+    PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
     PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self,
                                                       "shape"));
     descr = PyArray_DESCR(self);
@@ -1763,7 +1795,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 #if PY_VERSION_HEX >= 0x03080000
     /* we expect protocol 5 to be available in Python 3.8 */
     pickle_module = PyImport_ImportModule("pickle");
-#elif PY_VERSION_HEX >= 0x03060000
+#else
     pickle_module = PyImport_ImportModule("pickle5");
     if (pickle_module == NULL) {
         /* for protocol 5, raise a clear ImportError if pickle5 is not found
@@ -1772,10 +1804,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
                 "requires the pickle5 module for Python >=3.6 and <3.8");
         return NULL;
     }
-#else
-    PyErr_SetString(PyExc_ValueError, "pickle protocol 5 is not available "
-                                      "for Python < 3.6");
-    return NULL;
 #endif
     if (pickle_module == NULL){
         return NULL;
@@ -2152,7 +2180,7 @@ static PyObject *
 array_sizeof(PyArrayObject *self)
 {
     /* object + dimension and strides */
-    Py_ssize_t nbytes = NPY_SIZEOF_PYARRAYOBJECT +
+    Py_ssize_t nbytes = Py_TYPE(self)->tp_basicsize +
         PyArray_NDIM(self) * sizeof(npy_intp) * 2;
     if (PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
         nbytes += PyArray_NBYTES(self);
@@ -2585,9 +2613,10 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArrayObject *arr;
     PyArray_Descr *dtype;
     PyObject *c;
+
     if (PyArray_SIZE(self) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
+        PyErr_SetString(PyExc_TypeError,
+                "only length-1 arrays can be converted to Python scalars");
         return NULL;
     }
 
@@ -2598,38 +2627,18 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
     if (!PyArray_CanCastArrayTo(self, dtype, NPY_SAME_KIND_CASTING) &&
             !(PyArray_TYPE(self) == NPY_OBJECT)) {
-        PyObject *err, *msg_part;
+        PyObject *descr = (PyObject*)PyArray_DESCR(self);
+
         Py_DECREF(dtype);
-        err = PyString_FromString("unable to convert ");
-        if (err == NULL) {
-            return NULL;
-        }
-        msg_part = PyObject_Repr((PyObject*)PyArray_DESCR(self));
-        if (msg_part == NULL) {
-            Py_DECREF(err);
-            return NULL;
-        }
-        PyString_ConcatAndDel(&err, msg_part);
-        if (err == NULL) {
-            return NULL;
-        }
-        msg_part = PyString_FromString(", to complex.");
-        if (msg_part == NULL) {
-            Py_DECREF(err);
-            return NULL;
-        }
-        PyString_ConcatAndDel(&err, msg_part);
-        if (err == NULL) {
-            return NULL;
-        }
-        PyErr_SetObject(PyExc_TypeError, err);
-        Py_DECREF(err);
+        PyErr_Format(PyExc_TypeError,
+                "Unable to convert %R to complex", descr);
         return NULL;
     }
 
     if (PyArray_TYPE(self) == NPY_OBJECT) {
         /* let python try calling __complex__ on the object. */
         PyObject *args, *res;
+
         Py_DECREF(dtype);
         args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
         if (args == NULL) {

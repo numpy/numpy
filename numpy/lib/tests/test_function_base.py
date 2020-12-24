@@ -1225,6 +1225,10 @@ class TestTrimZeros:
         assert_array_equal(arr, res)
 
 
+    def test_list_to_list(self):
+        res = trim_zeros(self.a.tolist())
+        assert isinstance(res, list)
+
 class TestExtins:
 
     def test_basic(self):
@@ -1801,28 +1805,28 @@ class TestFilterwindows:
     def test_hanning(self):
         # check symmetry
         w = hanning(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.500, 4)
 
     def test_hamming(self):
         # check symmetry
         w = hamming(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.9400, 4)
 
     def test_bartlett(self):
         # check symmetry
         w = bartlett(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 4.4444, 4)
 
     def test_blackman(self):
         # check symmetry
         w = blackman(10)
-        assert_array_almost_equal(w, flipud(w), 7)
+        assert_equal(w, flipud(w))
         # check known value
         assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
@@ -2019,6 +2023,12 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_corrcoef_dtype(self, test_type):
+        cast_A = self.A.astype(test_type)
+        res = corrcoef(cast_A, dtype=test_type)
+        assert test_type == res.dtype
+
 
 class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
@@ -2118,6 +2128,12 @@ class TestCov:
         assert_allclose(cov(self.x1, fweights=self.unit_frequencies,
                             aweights=self.unit_weights),
                         self.res1)
+
+    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    def test_cov_dtype(self, test_type):
+        cast_x1 = self.x1.astype(test_type)
+        res = cov(cast_x1, dtype=test_type)
+        assert test_type == res.dtype
 
 
 class Test_I0:
