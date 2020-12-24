@@ -110,10 +110,11 @@
     information about your platform (OS, CPU and compiler)
 #endif
 
-#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 1
-#else
+// int*, int64* should be propertly aligned on ARMv7 to avoid bus error
+#if defined(__arm__) && !(defined(__aarch64__) || defined(_M_ARM64))
 #define NPY_CPU_HAVE_UNALIGNED_ACCESS 0
+#else
+#define NPY_CPU_HAVE_UNALIGNED_ACCESS 1
 #endif
 
 #endif
