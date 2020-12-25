@@ -207,7 +207,8 @@ def unique(ar, return_index=False, return_inverse=False,
     effect that we end up with a 1-D array of structured types that can be
     treated in the same way as any other 1-D array. The result is that the
     flattened subarrays are sorted in lexicographic order starting with the
-    first element.
+    first element. If nan values are in the input array, singe nan is put
+    to the end of the sorted unique values.
 
     Examples
     --------
@@ -325,7 +326,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
     floats = (float, np.float16, np.float32, np.float64)
-    if (aux.shape[0] > 0 and isinstance(aux[-1], floats) and np.isnan(aux[-1])):
+    if aux.shape[0] > 0 and isinstance(aux[-1], floats) and np.isnan(aux[-1]):
         aux_firstnan = np.searchsorted(aux, np.nan, side='left')
         mask[1:aux_firstnan] = (aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
         mask[aux_firstnan] = True
