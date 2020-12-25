@@ -110,11 +110,11 @@
     information about your platform (OS, CPU and compiler)
 #endif
 
-// int*, int64* should be propertly aligned on ARMv7 to avoid bus error
-#if defined(__arm__) && !(defined(__aarch64__) || defined(_M_ARM64))
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 0
-#else
-#define NPY_CPU_HAVE_UNALIGNED_ACCESS 1
+#if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64) || defined(__aarch64__) || defined(__powerpc64__)
+    #define NPY_STRONG_ALIGNMENT 0
+#endif
+#ifndef NPY_STRONG_ALIGNMENT
+    #define NPY_STRONG_ALIGNMENT 1
 #endif
 
 #endif
