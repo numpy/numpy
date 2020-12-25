@@ -533,7 +533,14 @@ class TestUnique:
 
         # test for ticket 2111
         a = [2, np.nan, 1, np.nan]
-        assert_array_equal(np.unique(a), [1, 2, np.nan])
+        ua = [1, 2, np.nan]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
