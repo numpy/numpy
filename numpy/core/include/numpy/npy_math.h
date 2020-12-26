@@ -151,15 +151,6 @@ NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
 
 /*
- * avx function has a common API for both sin & cos. This enum is used to
- * distinguish between the two
- */
-typedef enum {
-    npy_compute_sin,
-    npy_compute_cos
-} NPY_TRIG_OP;
-
-/*
  * C99 double math funcs
  */
 NPY_INPLACE double npy_sin(double x);

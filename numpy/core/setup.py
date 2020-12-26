@@ -929,6 +929,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
+            join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
             ]
 
     umath_deps = [
