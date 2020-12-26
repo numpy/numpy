@@ -167,8 +167,8 @@ class TestRegression:
         try:
             try:
                 np.who({'foo': np.array(1)})
-            except Exception:
-                raise AssertionError("ticket #1243")
+            except Exception as e:
+                raise AssertionError("ticket #1243") from e
         finally:
             sys.stdout.close()
             sys.stdout = oldstdout
@@ -199,8 +199,8 @@ class TestRegression:
         dlist = [np.float64, np.int32, np.int32]
         try:
             append_fields(base, names, data, dlist)
-        except Exception:
-            raise AssertionError()
+        except Exception as e:
+            raise AssertionError() from e
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
@@ -228,8 +228,8 @@ class TestRegression:
         a = np.zeros(2, dtype=bool)
         try:
             np.nansum(a)
-        except Exception:
-            raise AssertionError()
+        except Exception as e:
+            raise AssertionError() from e
 
     def test_py3_compat(self):
         # gh-2561
@@ -241,7 +241,7 @@ class TestRegression:
         out = open(os.devnull, 'w')
         try:
             np.info(C(), output=out)
-        except AttributeError:
-            raise AssertionError()
+        except AttributeError as e:
+            raise AssertionError() from e
         finally:
             out.close()
