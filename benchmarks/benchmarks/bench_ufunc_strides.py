@@ -2,7 +2,7 @@ from .common import Benchmark
 
 import numpy as np
 
-avx_ufuncs = ['sin',
+unary_ufuncs = ['sin',
               'cos',
               'exp',
               'log',
@@ -20,14 +20,15 @@ avx_ufuncs = ['sin',
               'isinf',
               'signbit']
 stride = [1, 2, 4]
+stride_out = [1, 2, 4]
 dtype  = ['f', 'd']
 
-class AVX_UFunc(Benchmark):
-    params = [avx_ufuncs, stride, dtype]
-    param_names = ['avx_based_ufunc', 'stride', 'dtype']
+class Unary(Benchmark):
+    params = [unary_ufuncs, stride, stride_out, dtype]
+    param_names = ['ufunc', 'stride_in', 'stride_out', 'dtype']
     timeout = 10
 
-    def setup(self, ufuncname, stride, dtype):
+    def setup(self, ufuncname, stride, stride_out, dtype):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, ufuncname)
@@ -35,9 +36,10 @@ class AVX_UFunc(Benchmark):
             raise NotImplementedError()
         N = 10000
         self.arr = np.ones(stride*N, dtype)
+        self.arr_out = np.empty(stride_out*N, dtype)
 
-    def time_ufunc(self, ufuncname, stride, dtype):
-        self.f(self.arr[::stride])
+    def time_ufunc(self, ufuncname, stride, stride_out, dtype):
+        self.f(self.arr[::stride], self.arr_out[::stride_out])
 
 class AVX_UFunc_log(Benchmark):
     params = [stride, dtype]
