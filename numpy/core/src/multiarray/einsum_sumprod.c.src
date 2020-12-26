@@ -1024,55 +1024,15 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 #  endif
 }
 
-/* For now, a catch all function for objects */
-static void
-object_sum_of_products_@noplabel@(int nop, char **dataptr,
-                                npy_intp const *strides, npy_intp count)
-{
-    PyObject *tmp1, *tmp2 = NULL;
-
-    while(count--){
-        tmp1 = *(PyObject **)dataptr[0];
-        if(!tmp1){
-            return;
-        }
-        int i;
-        for(i = 1; i < nop; ++i){
-            Py_XDECREF(tmp2);
-            if((*(PyObject **)dataptr[i]) == NULL){
-                return;
-            }
-            tmp2 = PyNumber_Multiply(tmp1, *(PyObject **)dataptr[i]);
-            if(!tmp2){
-                return;
-            }
-            tmp1 = tmp2;
-        }
-
-        if(*(PyObject **)dataptr[i] == NULL){
-            Py_XDECREF(tmp2);
-            return;
-        }
-
-        tmp2 = PyNumber_Add(tmp1, *(PyObject **)dataptr[i]);
-        if(i != 0){
-            Py_XDECREF(tmp1);
-        }
-        if(!tmp2){
-            return;
-        }
-        Py_XDECREF(*(PyObject **)dataptr[nop]);
-        *(PyObject **)dataptr[nop] = tmp2;
-        tmp2 = 0;
-        for (i = 0; i <= nop; ++i){
-            dataptr[i] += strides[i];
-        }
-    }
-}
 /**end repeat**/
 
 /**begin repeat
- * #fn_name = object_sum_of_products_contig_one,
+ * #fn_name = 
+ *  object_sum_of_products_any,
+ *  object_sum_of_products_one,
+ *  object_sum_of_products_two,
+ *  object_sum_of_products_three,
+ *  object_sum_of_products_contig_one,
  *  object_sum_of_products_contig_two, 
  *  object_sum_of_products_stride0_contig_outcontig_two,
  *  object_sum_of_products_contig_stride0_outcontig_two,
@@ -1099,13 +1059,15 @@ static void
             return;
         }
         int i;
+        Py_INCREF(tmp1);
         for(i = 1; i < nop; ++i){
-            Py_XDECREF(tmp2);
             if((*(PyObject **)dataptr[i]) == NULL){
                 return;
             }
-            tmp2 = PyNumber_Multiply(tmp1, *(PyObject **)dataptr[i]);
+            tmp2 = PyNumber_Multiply(*(PyObject **)dataptr[i], tmp1);
+            Py_XDECREF(tmp1);
             if(!tmp2){
+                /* Potential raised Exception */
                 return;
             }
             tmp1 = tmp2;
@@ -1116,13 +1078,14 @@ static void
             return;
         }
 
-        tmp2 = PyNumber_Add(tmp1, *(PyObject **)dataptr[i]);
-        if(nop > 1){
-            Py_XDECREF(tmp1);
-        }
+        tmp2 = PyNumber_Add(*(PyObject **)dataptr[i], tmp1);
+        Py_XDECREF(tmp1);
+        
         if(!tmp2){
+            /* Potential raised Exception */
             return;
         }
+        
         Py_XDECREF(*(PyObject **)dataptr[nop]);
         *(PyObject **)dataptr[nop] = tmp2;
         tmp2 = 0;
