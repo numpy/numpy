@@ -325,9 +325,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
-    floats = (float, np.float16, np.float32, np.float64)
-    if aux.shape[0] > 0 and isinstance(aux[-1], floats) and np.isnan(aux[-1]):
-        aux_firstnan = np.searchsorted(aux, np.nan, side='left')
+    if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
+        # Ensure that `NaT` is used for time-like dtypes
+        nan = np.array(np.nan, dtype=aux.dtype)
+        aux_firstnan = np.searchsorted(aux, nan, side='left')
         mask[1:aux_firstnan] = (aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
         mask[aux_firstnan] = True
         mask[aux_firstnan + 1:] = False
