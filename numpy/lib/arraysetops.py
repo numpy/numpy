@@ -207,7 +207,7 @@ def unique(ar, return_index=False, return_inverse=False,
     effect that we end up with a 1-D array of structured types that can be
     treated in the same way as any other 1-D array. The result is that the
     flattened subarrays are sorted in lexicographic order starting with the
-    first element. If nan values are in the input array, singe nan is put
+    first element. If nan values are in the input array, a single nan is put
     to the end of the sorted unique values.
 
     Examples
