@@ -12,7 +12,7 @@ i4: np.int32
 f8: np.float64
 f4: np.float32
 
-reveal_type(add(f8, i8))  # E: numpy.floating[numpy.typing._64Bit]
-reveal_type(add(f4, i8))  # E: numpy.floating[numpy.typing._64Bit]
-reveal_type(add(f8, i4))  # E: numpy.floating[numpy.typing._64Bit]
-reveal_type(add(f4, i4))  # E: numpy.floating[numpy.typing._32Bit]
+reveal_type(add(f8, i8))  # E: {float64}
+reveal_type(add(f4, i8))  # E: {float64}
+reveal_type(add(f8, i4))  # E: {float64}
+reveal_type(add(f4, i4))  # E: {float32}
