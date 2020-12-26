@@ -531,9 +531,33 @@ class TestUnique:
         assert_equal(a3_idx.dtype, np.intp)
         assert_equal(a3_inv.dtype, np.intp)
 
-        # test for ticket 2111
-        a = [2, np.nan, 1, np.nan]
-        ua = [1, 2, np.nan]
+        # test for ticket 2111 - float
+        a = [2.0, np.nan, 1.0, np.nan]
+        ua = [1.0, 2.0, np.nan]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - datetime64
+        nat = np.datetime64('nat')
+        a = [np.datetime64('2020-12-26'), nat, np.datetime64('2020-12-24'), nat]
+        ua = [np.datetime64('2020-12-24'), np.datetime64('2020-12-26'), nat]
+        ua_idx = [2, 0, 1]
+        ua_inv = [1, 2, 0, 2]
+        ua_cnt = [1, 1, 2]
+        assert_equal(np.unique(a), ua)
+        assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
+        assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
+        assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+
+        # test for ticket 2111 - timedelta
+        nat = np.timedelta64('nat')
+        a = [np.timedelta64(1, 'D'), nat, np.timedelta64(1, 'h'), nat]
+        ua = [np.timedelta64(1, 'h'), np.timedelta64(1, 'D'), nat]
         ua_idx = [2, 0, 1]
         ua_inv = [1, 2, 0, 2]
         ua_cnt = [1, 1, 2]
