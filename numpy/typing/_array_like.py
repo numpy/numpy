@@ -12,6 +12,7 @@ from numpy import (
     integer,
     floating,
     complexfloating,
+    number,
     timedelta64,
     datetime64,
     object_,
@@ -98,6 +99,10 @@ _ArrayLikeFloat_co = _ArrayLike[
 ]
 _ArrayLikeComplex_co = _ArrayLike[
     "dtype[Union[bool_, integer[Any], floating[Any], complexfloating[Any, Any]]]",
+    Union[bool, int, float, complex],
+]
+_ArrayLikeNumber_co = _ArrayLike[
+    "dtype[Union[bool_, number[Any]]]",
     Union[bool, int, float, complex],
 ]
 _ArrayLikeTD64_co = _ArrayLike[
