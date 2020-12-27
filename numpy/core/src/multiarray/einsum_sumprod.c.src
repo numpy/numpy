@@ -1051,45 +1051,37 @@ static void
 @fn_name@(int nop, char **dataptr,
                                 npy_intp const *strides, npy_intp count)
 {
-    PyObject *tmp1, *tmp2 = NULL;
-
     while(count--){
-        tmp1 = *(PyObject **)dataptr[0];
-        if(!tmp1){
-            return;
+        PyObject *prod = *(PyObject **)dataptr[0];
+        if (!prod) {
+            prod = Py_None;  // convention is to treat nulls as None
         }
-        int i;
-        Py_INCREF(tmp1);
-        for(i = 1; i < nop; ++i){
-            if((*(PyObject **)dataptr[i]) == NULL){
+        Py_INCREF(prod);
+        for (int i = 1; i < nop; ++i){
+            PyObject *curr = *(PyObject **)dataptr[i];
+            if (!curr) {
+                curr = Py_None;  // convention is to treat nulls as None
+            }
+            Py_SETREF(prod, PyNumber_Multiply(curr, prod));
+            if (!prod) {
                 return;
             }
-            tmp2 = PyNumber_Multiply(*(PyObject **)dataptr[i], tmp1);
-            Py_XDECREF(tmp1);
-            if(!tmp2){
-                /* Potential raised Exception */
-                return;
-            }
-            tmp1 = tmp2;
         }
 
-        if(*(PyObject **)dataptr[i] == NULL){
-            Py_XDECREF(tmp2);
+        if (*(PyObject **)dataptr[nop] == NULL) {
+            Py_DECREF(prod);
             return;
         }
 
-        tmp2 = PyNumber_Add(*(PyObject **)dataptr[i], tmp1);
-        Py_XDECREF(tmp1);
-        
-        if(!tmp2){
-            /* Potential raised Exception */
+        PyObject *sum = PyNumber_Add(*(PyObject **)dataptr[nop], prod);
+        Py_DECREF(prod);
+        if (!sum) {
             return;
         }
         
         Py_XDECREF(*(PyObject **)dataptr[nop]);
-        *(PyObject **)dataptr[nop] = tmp2;
-        tmp2 = 0;
-        for (i = 0; i <= nop; ++i){
+        *(PyObject **)dataptr[nop] = sum;
+        for (int i = 0; i <= nop; ++i) {
             dataptr[i] += strides[i];
         }
     }
