@@ -8,6 +8,8 @@ See the `Mypy documentation`_ on protocols for more details.
 
 """
 
+from __future__ import annotations
+
 import sys
 from typing import (
     Union,
@@ -21,6 +23,7 @@ from typing import (
 
 from numpy import (
     ndarray,
+    dtype,
     generic,
     bool_,
     timedelta64,
@@ -44,7 +47,7 @@ from ._scalars import (
     _NumberLike_co,
 )
 from . import NBitBase
-from ._array_like import ArrayLike
+from ._array_like import ArrayLike, _ArrayOrScalar
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
@@ -58,8 +61,9 @@ else:
         HAVE_PROTOCOL = True
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
-    _T = TypeVar("_T")
-    _2Tuple = Tuple[_T, _T]
+    _T1 = TypeVar("_T1")
+    _T2 = TypeVar("_T2")
+    _2Tuple = Tuple[_T1, _T1]
 
     _NBit1 = TypeVar("_NBit1", bound=NBitBase)
     _NBit2 = TypeVar("_NBit2", bound=NBitBase)
@@ -316,11 +320,11 @@ if TYPE_CHECKING or HAVE_PROTOCOL:
     class _NumberOp(Protocol):
         def __call__(self, __other: _NumberLike_co) -> Any: ...
 
-    class _ComparisonOp(Protocol[_T]):
+    class _ComparisonOp(Protocol[_T1, _T2]):
         @overload
-        def __call__(self, __other: _T) -> bool_: ...
+        def __call__(self, __other: _T1) -> bool_: ...
         @overload
-        def __call__(self, __other: ArrayLike) -> Union[ndarray, bool_]: ...
+        def __call__(self, __other: _T2) -> _ArrayOrScalar[bool_]: ...
 
 else:
     _BoolOp = Any

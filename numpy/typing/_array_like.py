@@ -34,6 +34,7 @@ else:
         HAVE_PROTOCOL = True
 
 _T = TypeVar("_T")
+_ScalarType = TypeVar("_ScalarType", bound=generic)
 _DType = TypeVar("_DType", bound="dtype[Any]")
 
 if TYPE_CHECKING or HAVE_PROTOCOL:
@@ -121,3 +122,10 @@ _ArrayLikeBytes_co = _ArrayLike[
     "dtype[bytes_]",
     bytes,
 ]
+
+if TYPE_CHECKING:
+    _ArrayND = ndarray[Any, dtype[_ScalarType]]
+    _ArrayOrScalar = Union[_ScalarType, _ArrayND[_ScalarType]]
+else:
+    _ArrayND = Any
+    _ArrayOrScalar = Any
