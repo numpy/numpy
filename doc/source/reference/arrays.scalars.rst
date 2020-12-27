@@ -176,8 +176,12 @@ Inexact types
 
 .. note::
 
-   The printing behavior of inexact scalars is to use as few digits as possible
-   to display the result unambiguously. This means that equal values at
+   Inexact scalars are printed using the fewest decimal digits needed to
+   distinguish their value from other values of the same datatype,
+   by judicious rounding. See the ``unique`` parameter of
+   `format_float_positional` and `format_float_scientific`.
+
+   This means that variables with equal binary values but whose datatypes are of
    different precisions may display differently::
 
        >>> f16 = np.float16("0.1")
