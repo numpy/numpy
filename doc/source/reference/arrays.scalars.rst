@@ -196,6 +196,17 @@ Inexact types
    ``f16`` prints as ``0.1`` because it is as close to that value as possible,
    whereas the other types do not as they have more precision and therefore have
    closer values.
+   
+   Conversely, the same value approximated at different precisions may compare
+   unequal despite printing identically:
+   
+       >>> f16 = np.float16("0.1")
+       >>> f32 = np.float32("0.1")
+       >>> f64 = np.float64("0.1")
+       >>> f16 == f32 == f64
+       False
+       >>> f16, f32, f64
+       (0.1, 0.1, 0.1)
 
 Floating-point types
 ++++++++++++++++++++
