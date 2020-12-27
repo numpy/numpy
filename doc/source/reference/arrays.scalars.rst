@@ -197,8 +197,8 @@ Inexact types
    whereas the other types do not as they have more precision and therefore have
    closer values.
    
-   Conversely, the same value approximated at different precisions may compare
-   unequal despite printing identically:
+   Conversely, floating-point scalars of different precisions which approximate
+   the same decimal value may compare unequal despite printing identically:
    
        >>> f16 = np.float16("0.1")
        >>> f32 = np.float32("0.1")
